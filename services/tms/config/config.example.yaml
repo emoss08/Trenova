@@ -165,25 +165,6 @@ ai:
   streamIdleTimeout: 5m # How long a streamed reply may go silent; reasoning models think for minutes before their first token
   maxRetries: 2 # Retries for transient failures
 
-  # Where an interactive reply is produced.
-  #
-  # Off runs the turn inside the request that asked for it, which is how it
-  # has always worked and what an install without a Temporal server gets. On
-  # hands it to a worker on agent-chat-queue: the reply then survives an API
-  # restart, and somebody who closes the tab can come back to it. Turning it
-  # on needs a worker polling that queue and a reachable Temporal, or every
-  # question fails -- the client asks /assistant/capabilities/ first so it
-  # falls back rather than breaking, but nothing will be answered durably.
-  durableTurns: false
-
-  # A turn's events are published to a redis stream so a reader can rejoin
-  # one. It is a tail buffer, never the transcript: that is in postgres and
-  # outlives all of this.
-  turnStreamKeyPrefix: assistant:turn # Key space for a turn's events
-  turnStreamMaxLen: 10000 # Events kept per turn before the oldest are trimmed
-  turnStreamTtl: 1h # How long a running turn's events live
-  turnStreamBlockTimeout: 5s # How long one read waits; bounds how fast a dead worker is noticed
-
   # Reading uploaded documents with a model, and the OCR pipeline that feeds it.
   documentExtraction: false # Let a model classify and extract uploaded documents
   maxInputChars: 24000 # Max extracted text sent to a model

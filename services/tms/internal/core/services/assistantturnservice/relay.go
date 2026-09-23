@@ -3,6 +3,7 @@ package assistantturnservice
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -21,48 +22,34 @@ type RelayRequest struct {
 
 // Relay follows a turn's events until it ends.
 //
-// There are three ways a turn stops producing, and a reader has to be told the
-// truth about which one happened:
+// The events live in the turn's workflow, so there is no stream to expire and
+// no way for a reader to arrive before it exists. There are two ways a relay
+// ends, and a reader is told the truth about both:
 //
-// The turn finished. Its last frame says so, the relay forwards it and stops.
+// The turn said how it ended. Its last frame is forwarded and the relay stops.
 //
-// The turn is over but nothing said so — the writer died between its last
-// event and its ending. Silence alone cannot prove this, because a model
-// thinking for a minute is also silent, so every quiet interval re-reads the
-// turn's record. A record that says the turn ended, with no frame to match,
-// is the proof.
-//
-// The stream expired. The events are a tail buffer with an hour on them; the
-// conversation is permanent. A reader who comes back after that is not told
-// the reply failed — it did not — but that the answer is in the thread.
+// The turn's workflow closed before the reader caught up, which happens to a
+// reader who comes back after the turn finished, or one who fell far enough
+// behind that the workflow stopped waiting for it. The turn's record says how
+// it ended, and the reader is sent to read the conversation, which has it all.
 func (s *Service) Relay(
 	ctx context.Context,
 	req RelayRequest,
 	onFrame serviceports.TurnFrameFunc,
 ) error {
 	turn := req.Turn
-	ref := streamRef(turn)
 
 	// A turn that was already over before anybody attached needs no stream at
 	// all: the answer is written down, and saying so immediately beats
-	// blocking on a key that may not exist.
-	if turn.Status.Terminal() {
+	// reading a workflow that has closed.
+	if turn.Status.Terminal() || turn.WorkflowID == "" {
 		s.metrics.RecordStreamAttach("already_ended")
 
-		return onFrame(closingFrame(turn))
+		return onFrame(closingFrame(s.current(ctx, turn)))
 	}
 
-	live, err := s.reader.Exists(ctx, ref)
-	if err != nil {
-		return err
-	}
-	if !live {
-		s.metrics.RecordStreamAttach("expired")
-
-		return onFrame(s.expiredFrame(ctx, turn))
-	}
-
-	if req.Cursor == "" {
+	fresh := req.Cursor == ""
+	if fresh {
 		s.metrics.RecordStreamAttach("live")
 	} else {
 		// A cursor means somebody came back to a reply they had already
@@ -71,111 +58,97 @@ func (s *Service) Relay(
 		s.metrics.RecordStreamAttach("resumed")
 	}
 
-	// seen guards the ending: a turn whose record says it finished, whose
-	// stream never said so, must still close the reader's connection.
-	var sawTerminal bool
-	err = s.reader.Read(ctx, serviceports.ReadTurnStreamRequest{
-		Ref:    ref,
+	attached := time.Now()
+	spoke := false
+	sawTerminal := false
+	err := s.reader.Read(ctx, serviceports.ReadTurnStreamRequest{
+		Ref:    streamRef(turn),
 		Cursor: req.Cursor,
 		OnFrame: func(frame serviceports.TurnStreamFrame) error {
+			if fresh && !spoke {
+				spoke = true
+				s.metrics.RecordFirstEvent(time.Since(attached).Seconds())
+			}
 			if frame.Terminal() {
 				sawTerminal = true
 			}
 
 			return onFrame(frame)
 		},
-		OnIdle: func() error {
-			if s.stillRunning(ctx, turn) {
-				return nil
-			}
-
-			// The record says it is over and the stream never said so.
-			if fErr := onFrame(closingFrame(turn)); fErr != nil {
-				return fErr
-			}
-
-			return errRelayStopped
-		},
 	})
 	switch {
-	case err == nil, errors.Is(err, errRelayStopped):
-		return nil
+	case err == nil:
 	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
 		// The reader left. Nothing is wrong with the turn.
 		return nil
+	case sawTerminal:
+		return nil
 	default:
-		if sawTerminal {
-			return nil
-		}
-
 		return err
 	}
+
+	if sawTerminal {
+		return nil
+	}
+
+	// The workflow closed without this reader seeing how the turn ended.
+	s.metrics.RecordStreamAttach("closed_before_end")
+
+	return onFrame(closingFrame(s.current(ctx, turn)))
 }
 
-// stillRunning re-reads the turn's record. A read that fails is treated as
-// still running: the relay keeps waiting rather than telling a reader their
-// reply ended because the database hiccupped.
-func (s *Service) stillRunning(ctx context.Context, turn *conversation.AssistantTurn) bool {
+// current re-reads a turn's record, for how it ended. A read that fails keeps
+// what the caller already had: the reader is sent to the conversation either
+// way, and a failed read is no reason to tell them anything worse.
+func (s *Service) current(
+	ctx context.Context,
+	turn *conversation.AssistantTurn,
+) *conversation.AssistantTurn {
 	current, err := s.turns.GetByID(ctx, repositories.GetAssistantTurnRequest{
 		ID:         turn.ID,
 		TenantInfo: tenantOf(turn),
 	})
 	if err != nil {
-		s.l.Warn("could not check whether a turn is still running",
+		s.l.Warn("could not read how a turn ended",
 			zap.String("turn", turn.ID.String()),
 			zap.Error(err),
 		)
 
-		return true
+		return turn
 	}
 
-	if current.Status.Terminal() {
-		turn.Status = current.Status
-		turn.ErrorMessage = current.ErrorMessage
-
-		return false
-	}
-
-	return true
+	return current
 }
 
-// expiredFrame explains a turn whose events are gone.
-func (s *Service) expiredFrame(
-	ctx context.Context,
-	turn *conversation.AssistantTurn,
-) serviceports.TurnStreamFrame {
-	if s.stillRunning(ctx, turn) {
-		// Running, with no stream to follow. Rare — it means the events aged
-		// out from under a turn still going — and the honest thing is to say
-		// the live view is gone rather than invent an ending.
-		return errorFrame(
-			"This reply is still being written, but the live view of it has expired. " +
-				"It will appear in the conversation when it finishes.",
-		)
-	}
-
-	return closingFrame(turn)
-}
-
-// closingFrame is the ending a reader gets when the stream could not supply
-// one. It names the turn so the client refetches the thread rather than
-// trusting whatever half a reply it has on screen.
-func closingFrame(turn *conversation.AssistantTurn) serviceports.TurnStreamFrame {
+// ClosingEvent is the ending a reader gets when the turn's own ending cannot
+// be given to them: it names the turn, so the client refetches the thread
+// rather than trusting whatever half a reply it has on screen.
+func ClosingEvent(turn *conversation.AssistantTurn) serviceports.StreamEvent {
 	if turn.Status == conversation.AssistantTurnStatusFailed && turn.ErrorMessage != "" {
-		return errorFrame("This reply did not finish. What ran has been kept in the conversation.")
+		return serviceports.StreamEvent{
+			Event: serviceports.AssistantEventError,
+			Data: map[string]any{
+				"message": "This reply did not finish. What ran has been kept in the conversation.",
+			},
+		}
 	}
 
-	return frameOf(serviceports.AssistantEventDone, map[string]any{
-		"turnId":   turn.ID.String(),
-		"threadId": turn.ThreadID.String(),
-		"status":   string(turn.Status),
-		// replay says the ending was reconstructed from the turn's record
-		// rather than forwarded from the turn itself, so a client knows to go
-		// and read the conversation instead of trusting what it has.
-		"replay": true,
-	})
+	return serviceports.StreamEvent{
+		Event: serviceports.AssistantEventDone,
+		Data: map[string]any{
+			"turnId":   turn.ID.String(),
+			"threadId": turn.ThreadID.String(),
+			"status":   string(turn.Status),
+			// replay says the ending was reconstructed from the turn's record
+			// rather than forwarded from the turn itself, so a client knows to
+			// go and read the conversation instead of trusting what it has.
+			"replay": true,
+		},
+	}
 }
 
-func errorFrame(message string) serviceports.TurnStreamFrame {
-	return frameOf(serviceports.AssistantEventError, map[string]any{"message": message})
+func closingFrame(turn *conversation.AssistantTurn) serviceports.TurnStreamFrame {
+	event := ClosingEvent(turn)
+
+	return frameOf(event.Event, event.Data)
 }

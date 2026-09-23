@@ -56,22 +56,23 @@ func (s *stubTurns) MarkWorkflow(
 	return nil
 }
 
-// stubReader stands in for the redis stream.
+// stubReader stands in for the turn's workflow stream. After the frames it
+// returns nil, which is what a stream does when the workflow has closed.
 type stubReader struct {
-	exists bool
 	frames []serviceports.TurnStreamFrame
-	// idles is how many empty read windows pass before the frames run out.
-	idles int
-}
-
-func (s *stubReader) Exists(context.Context, serviceports.TurnStreamRef) (bool, error) {
-	return s.exists, nil
+	err    error
+	reads  int
+	ref    serviceports.TurnStreamRef
+	cursor string
 }
 
 func (s *stubReader) Read(
 	_ context.Context,
 	req serviceports.ReadTurnStreamRequest,
 ) error {
+	s.reads++
+	s.ref = req.Ref
+	s.cursor = req.Cursor
 	for _, frame := range s.frames {
 		if err := req.OnFrame(frame); err != nil {
 			return err
@@ -81,16 +82,7 @@ func (s *stubReader) Read(
 		}
 	}
 
-	for range s.idles {
-		if req.OnIdle == nil {
-			break
-		}
-		if err := req.OnIdle(); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return s.err
 }
 
 func newRelay(turns *stubTurns, reader *stubReader) *Service {
@@ -104,18 +96,27 @@ func runningTurn() *conversation.AssistantTurn {
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
 		Status:         conversation.AssistantTurnStatusRunning,
+		WorkflowID:     "assistant-turn:atrn_1",
 	}
 }
 
-func collect(t *testing.T, svc *Service, turn *conversation.AssistantTurn) []serviceports.TurnStreamFrame {
+func collect(
+	t *testing.T,
+	svc *Service,
+	turn *conversation.AssistantTurn,
+) []serviceports.TurnStreamFrame {
 	t.Helper()
 
 	seen := make([]serviceports.TurnStreamFrame, 0, 4)
-	err := svc.Relay(t.Context(), RelayRequest{Turn: turn}, func(f serviceports.TurnStreamFrame) error {
-		seen = append(seen, f)
+	err := svc.Relay(
+		t.Context(),
+		RelayRequest{Turn: turn},
+		func(f serviceports.TurnStreamFrame) error {
+			seen = append(seen, f)
 
-		return nil
-	})
+			return nil
+		},
+	)
 	require.NoError(t, err)
 
 	return seen
@@ -125,24 +126,29 @@ func TestRelay_ForwardsTheTurnsOwnEnding(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
-	svc := newRelay(&stubTurns{turn: turn}, &stubReader{
-		exists: true,
+	reader := &stubReader{
 		frames: []serviceports.TurnStreamFrame{
-			{ID: "1-0", Event: serviceports.AssistantEventDelta, Data: []byte(`{"text":"hi"}`)},
-			{ID: "1-1", Event: serviceports.AssistantEventDone, Data: []byte(`{}`)},
+			{ID: "0", Event: serviceports.AssistantEventDelta, Data: []byte(`{"text":"hi"}`)},
+			{ID: "1", Event: serviceports.AssistantEventDone, Data: []byte(`{}`)},
 		},
-	})
+	}
+	svc := newRelay(&stubTurns{turn: turn}, reader)
 
 	seen := collect(t, svc, turn)
 
 	require.Len(t, seen, 2)
-	assert.Equal(t, "1-1", seen[1].ID, "the turn's own ending is forwarded, cursor and all")
+	assert.Equal(t, "1", seen[1].ID, "the turn's own ending is forwarded, cursor and all")
+	assert.Equal(
+		t,
+		turn.WorkflowID,
+		reader.ref.WorkflowID,
+		"the stream is read from the turn's workflow",
+	)
 }
 
-// The writer died between its last event and its ending. Silence alone cannot
-// prove that — a model thinking for a minute is also silent — so the turn's
-// record is what settles it.
-func TestRelay_ClosesAReaderWhoseTurnDiedWithoutSayingSo(t *testing.T) {
+// The workflow closed before the reader caught up: a reader who fell behind,
+// or came back late. The turn's record says how it ended.
+func TestRelay_ClosesAReaderWhoseTurnClosedBeforeTheyCaughtUp(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
@@ -152,11 +158,9 @@ func TestRelay_ClosesAReaderWhoseTurnDiedWithoutSayingSo(t *testing.T) {
 		Status:   conversation.AssistantTurnStatusCompleted,
 	}
 	svc := newRelay(&stubTurns{turn: record}, &stubReader{
-		exists: true,
 		frames: []serviceports.TurnStreamFrame{
-			{ID: "1-0", Event: serviceports.AssistantEventDelta, Data: []byte(`{"text":"hi"}`)},
+			{ID: "0", Event: serviceports.AssistantEventDelta, Data: []byte(`{"text":"hi"}`)},
 		},
-		idles: 3,
 	})
 
 	seen := collect(t, svc, turn)
@@ -168,68 +172,60 @@ func TestRelay_ClosesAReaderWhoseTurnDiedWithoutSayingSo(t *testing.T) {
 	assert.Empty(t, seen[1].ID, "an invented frame has no position to resume from")
 }
 
-// A quiet turn is not a dead one. The relay must keep waiting rather than
-// inventing an ending for a model that is still thinking.
-func TestRelay_KeepsWaitingWhileTheTurnIsStillRunning(t *testing.T) {
+func TestRelay_ResumesFromTheReadersCursor(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
-	turns := &stubTurns{turn: turn}
-	svc := newRelay(turns, &stubReader{exists: true, idles: 3})
+	reader := &stubReader{frames: []serviceports.TurnStreamFrame{
+		{ID: "8", Event: serviceports.AssistantEventDone, Data: []byte(`{}`)},
+	}}
+	svc := newRelay(&stubTurns{turn: turn}, reader)
 
-	seen := collect(t, svc, turn)
+	err := svc.Relay(t.Context(), RelayRequest{Turn: turn, Cursor: "7"},
+		func(serviceports.TurnStreamFrame) error { return nil })
+	require.NoError(t, err)
 
-	assert.Empty(t, seen, "nothing is invented for a turn that is merely quiet")
-	assert.Equal(t, 3, turns.gets, "every quiet interval re-reads the record")
+	assert.Equal(t, "7", reader.cursor)
 }
 
-// A database that hiccups must not end somebody's reply.
-func TestRelay_TreatsAnUnreadableRecordAsStillRunning(t *testing.T) {
+// A reader who leaves is not a failure of the turn.
+func TestRelay_IsQuietWhenTheReaderLeaves(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
-	svc := newRelay(
-		&stubTurns{turn: turn, err: errors.New("connection refused")},
-		&stubReader{exists: true, idles: 2},
-	)
+	svc := newRelay(&stubTurns{turn: turn}, &stubReader{err: context.Canceled})
 
-	seen := collect(t, svc, turn)
+	err := svc.Relay(t.Context(), RelayRequest{Turn: turn},
+		func(serviceports.TurnStreamFrame) error { return nil })
 
-	assert.Empty(t, seen)
+	assert.NoError(t, err)
 }
 
-// The events are a tail buffer; the conversation is permanent. A reader who
-// comes back after the buffer aged out is told where the answer is, not that
-// the reply failed.
-func TestRelay_SendsAReaderToTheConversationWhenTheStreamHasExpired(t *testing.T) {
+func TestRelay_ReportsAStreamThatCouldNotBeRead(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
-	record := &conversation.AssistantTurn{
-		ID:       turn.ID,
-		ThreadID: turn.ThreadID,
-		Status:   conversation.AssistantTurnStatusCompleted,
-	}
-	svc := newRelay(&stubTurns{turn: record}, &stubReader{exists: false})
+	svc := newRelay(&stubTurns{turn: turn}, &stubReader{err: errors.New("temporal is down")})
 
-	seen := collect(t, svc, turn)
+	err := svc.Relay(t.Context(), RelayRequest{Turn: turn},
+		func(serviceports.TurnStreamFrame) error { return nil })
 
-	require.Len(t, seen, 1)
-	assert.Equal(t, serviceports.AssistantEventDone, seen[0].Event)
-	assert.Contains(t, string(seen[0].Data), turn.ThreadID.String())
+	assert.Error(t, err)
 }
 
-func TestRelay_SaysSoWhenALiveTurnHasLostItsStream(t *testing.T) {
+// A failed turn is not dressed up as a finished one.
+func TestRelay_SaysAFailedTurnDidNotFinish(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
-	svc := newRelay(&stubTurns{turn: turn}, &stubReader{exists: false})
+	turn.Status = conversation.AssistantTurnStatusFailed
+	turn.ErrorMessage = "provider down"
+	svc := newRelay(&stubTurns{turn: turn}, &stubReader{})
 
 	seen := collect(t, svc, turn)
 
 	require.Len(t, seen, 1)
 	assert.Equal(t, serviceports.AssistantEventError, seen[0].Event)
-	assert.Contains(t, string(seen[0].Data), "still being written")
 }
 
 // A turn already over before anybody attached needs no stream at all.
@@ -238,11 +234,12 @@ func TestRelay_AnswersATurnThatWasAlreadyOverWithoutReadingTheStream(t *testing.
 
 	turn := runningTurn()
 	turn.Status = conversation.AssistantTurnStatusRefused
-	reader := &stubReader{exists: true}
+	reader := &stubReader{}
 	svc := newRelay(&stubTurns{turn: turn}, reader)
 
 	seen := collect(t, svc, turn)
 
 	require.Len(t, seen, 1)
 	assert.Contains(t, string(seen[0].Data), string(conversation.AssistantTurnStatusRefused))
+	assert.Zero(t, reader.reads)
 }

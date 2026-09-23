@@ -24,7 +24,13 @@ type ActivityNamer interface {
 // derives the registered name from the method name, so this is the same set
 // of keys it will use.
 func (r *DomainRegistry) ActivityNames() []string {
-	structType := reflect.TypeOf(r.activities)
+	return ActivityNamesOf(r.activities)
+}
+
+// ActivityNamesOf is every activity Temporal will register from an activities
+// struct, for a registry that registers more than one.
+func ActivityNamesOf(activities any) []string {
+	structType := reflect.TypeOf(activities)
 	if structType == nil {
 		return nil
 	}

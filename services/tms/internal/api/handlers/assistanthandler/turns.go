@@ -4,13 +4,21 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/gin-gonic/gin"
+	"go.temporal.io/api/enums/v1"
+	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/temporal"
 	"go.uber.org/zap"
 )
 
@@ -78,10 +86,9 @@ func (h *Handler) streamTurn(c *gin.Context) {
 		Turn:   turn,
 		Cursor: cursorFrom(c),
 	}, func(frame serviceports.TurnStreamFrame) error {
-		// The frame's payload came out of redis already encoded and leaves
-		// the same way: decoding it here to encode it again would spend the
-		// stream's throughput learning nothing, and would let a frame this
-		// relay cannot parse kill a turn it was only meant to carry.
+		// The frame's payload arrives already encoded and leaves the same
+		// way: decoding it here to encode it again would spend the stream's
+		// throughput learning nothing.
 		stream.EmitRaw(frame.ID, frame.Event, frame.Data)
 
 		return nil
@@ -110,9 +117,25 @@ func cursorFrom(c *gin.Context) string {
 	return c.Query("after")
 }
 
-// startTurnRequest is a question asked of a conversation, answered by a worker.
-type startTurnRequest struct {
-	sendMessageRequest
+// startTurnResponse is a question handed to a worker: the turn to watch and
+// where to watch it.
+type startTurnResponse struct {
+	TurnID    pulid.ID                         `json:"turnId"`
+	ThreadID  pulid.ID                         `json:"threadId"`
+	StreamURL string                           `json:"streamUrl"`
+	Status    conversation.AssistantTurnStatus `json:"status"`
+	// Thread is set when asking the question made the thread, as a quick
+	// question does.
+	Thread *conversation.Thread `json:"thread,omitempty"`
+}
+
+func turnStarted(turn *conversation.AssistantTurn) startTurnResponse {
+	return startTurnResponse{
+		TurnID:    turn.ID,
+		ThreadID:  turn.ThreadID,
+		StreamURL: "/api/v1/assistant/turns/" + turn.ID.String() + "/stream/",
+		Status:    turn.Status,
+	}
 }
 
 // startTurn hands a question to a worker and returns immediately.
@@ -122,39 +145,187 @@ type startTurnRequest struct {
 // this request ending, whether that is a deploy, a dropped connection or
 // somebody closing the tab.
 func (h *Handler) startTurn(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
 	threadID, err := pulid.Parse(c.Param("threadID"))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	var body startTurnRequest
+	var body sendMessageRequest
 	if err = c.ShouldBindJSON(&body); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	turn, err := h.turns.StartDurable(
+	turn, _, err := h.askWorker(c, threadID, &body)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusAccepted, turnStarted(turn))
+}
+
+// sendMessage asks a question and answers with the saved turn, for a caller
+// that would rather wait than follow a stream. The turn is the same one a
+// streaming reader follows; this request just waits for its workflow.
+func (h *Handler) sendMessage(c *gin.Context) {
+	threadID, err := pulid.Parse(c.Param("threadID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var body sendMessageRequest
+	if err = c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	_, run, err := h.askWorker(c, threadID, &body)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var outcome assistantjobs.AssistantTurnResult
+	if err = run.Get(c.Request.Context(), &outcome); err != nil {
+		if temporal.IsCanceledError(err) {
+			h.eh.HandleError(c, errortypes.NewBusinessError(
+				"This reply was stopped. What was said so far has been kept in the conversation.",
+			))
+			return
+		}
+		h.eh.HandleError(c, err)
+		return
+	}
+	if outcome.Result == nil {
+		h.eh.HandleError(c, errortypes.NewBusinessError(outcome.Message))
+		return
+	}
+
+	// A refusal is a successful request with a declined answer, not an error: the
+	// turn was processed, recorded, and explained.
+	c.JSON(http.StatusOK, outcome.Result)
+}
+
+// ask starts a quick question: the hidden thread it is answered on, and the
+// turn answering it. The thread comes back first so the reader can open it in
+// the Desk even if the answer fails.
+func (h *Handler) ask(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var body askRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	actor := requestActorFromAuthContext(authCtx)
+	thread, err := h.service.StartAsk(c.Request.Context(), &serviceports.AskRequest{
+		Content:    body.Content,
+		Page:       body.Context.page(),
+		Mentions:   body.Mentions,
+		TenantInfo: tenantFromAuthContext(authCtx),
+	}, &actor)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	turn, _, err := h.askWorker(c, thread.ID, &sendMessageRequest{
+		Content:  body.Content,
+		Context:  body.Context,
+		Mentions: body.Mentions,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	response := turnStarted(turn)
+	response.Thread = thread
+	c.JSON(http.StatusAccepted, response)
+}
+
+// askWorker records a turn and starts the workflow that answers it.
+func (h *Handler) askWorker(
+	c *gin.Context,
+	threadID pulid.ID,
+	body *sendMessageRequest,
+) (*conversation.AssistantTurn, client.WorkflowRun, error) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var run client.WorkflowRun
+	turn, err := h.turns.StartTurn(
 		c.Request.Context(),
 		assistantturnservice.StartRequest{
 			ThreadID:   threadID,
 			UserID:     authCtx.UserID,
 			TenantInfo: tenantFromAuthContext(authCtx),
 		},
-		h.turnStarter(c, threadID, authCtx, body),
+		func(turn *conversation.AssistantTurn) (string, error) {
+			started, err := h.startWorkflow(c, turn, authCtx, body)
+			if err != nil {
+				return "", err
+			}
+			run = started
+
+			return started.GetID(), nil
+		},
 	)
 	if err != nil {
-		h.eh.HandleError(c, err)
-		return
+		return nil, nil, err
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{
-		"turnId":    turn.ID,
-		"threadId":  threadID,
-		"streamUrl": "/api/v1/assistant/turns/" + turn.ID.String() + "/stream/",
-		"status":    turn.Status,
+	return turn, run, nil
+}
+
+// startWorkflow starts the execution answering a turn.
+//
+// It is kept apart from the service that records the turn so that service
+// stays ignorant of Temporal: the record is the product's, the execution is an
+// implementation of it, and the one that outlives the other is the record.
+func (h *Handler) startWorkflow(
+	c *gin.Context,
+	turn *conversation.AssistantTurn,
+	authCtx *authctx.AuthContext,
+	body *sendMessageRequest,
+) (client.WorkflowRun, error) {
+	providerID, providerChosen := body.provider()
+
+	return h.workflows.StartWorkflow(c.Request.Context(), client.StartWorkflowOptions{
+		ID:        assistantjobs.WorkflowIDFor(turn.ID),
+		TaskQueue: temporaltype.TaskQueueAgentChat.String(),
+		// One turn, one execution. A duplicate start is a bug rather than a
+		// second question, and rejecting it is how it stays visible.
+		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
+		StaticSummary:         "Assistant turn",
+		// Somebody is watching this one. Fairness by organization keeps one
+		// busy tenant from queueing everybody else's replies behind its own.
+		Priority: temporal.Priority{
+			PriorityKey: agentflow.PriorityInteractive,
+			FairnessKey: authCtx.OrganizationID.String(),
+		},
+	}, assistantjobs.AssistantTurnWorkflowName, &assistantjobs.AssistantTurnPayload{
+		BasePayload: temporaltype.BasePayload{
+			OrganizationID: authCtx.OrganizationID,
+			BusinessUnitID: authCtx.BusinessUnitID,
+			UserID:         authCtx.UserID,
+			Timestamp:      timeutils.NowUnix(),
+		},
+		TurnID:   turn.ID,
+		ThreadID: turn.ThreadID,
+		Actor:    requestActorFromAuthContext(authCtx),
+		Content:  body.Content,
+		Request: assistantjobs.AssistantTurnRequest{
+			Page:                  body.page(),
+			Mentions:              body.Mentions,
+			AttachmentDocumentIDs: body.AttachmentDocumentIDs,
+			PreferredProviderID:   providerID,
+			ProviderChosen:        providerChosen,
+			FollowUpProposalID:    body.FollowUpProposalID,
+		},
 	})
 }
 
@@ -178,7 +349,10 @@ func (h *Handler) stopTurn(c *gin.Context) {
 		return
 	}
 
-	if err = h.turns.Stop(c.Request.Context(), turn, h.cancelTurn(c)); err != nil {
+	err = h.turns.Stop(c.Request.Context(), turn, func(workflowID string) error {
+		return h.workflows.CancelWorkflow(c.Request.Context(), workflowID, "")
+	})
+	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

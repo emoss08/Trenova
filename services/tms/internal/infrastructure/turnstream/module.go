@@ -5,12 +5,7 @@ import (
 	"go.uber.org/fx"
 )
 
-// Module provides the turn stream to both processes: the worker publishes to
-// it and the API relays from it, so it belongs in the options they share.
+// Module provides the reader of a turn's stream to the API, which relays it.
 var Module = fx.Module("turnstream",
-	fx.Provide(
-		New,
-		func(s *Service) serviceports.TurnStreamPublisher { return s },
-		func(s *Service) serviceports.TurnStreamReader { return s },
-	),
+	fx.Provide(fx.Annotate(New, fx.As(new(serviceports.TurnStreamReader)))),
 )

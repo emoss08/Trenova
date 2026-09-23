@@ -69,15 +69,19 @@ func startRequest() StartRequest {
 	}
 }
 
-func TestStartDurable_RecordsTheWorkflowCarryingTheTurn(t *testing.T) {
+func TestStartTurn_RecordsTheWorkflowCarryingTheTurn(t *testing.T) {
 	t.Parallel()
 
 	turns := &recordingTurns{}
 	svc := newDurable(turns)
 
-	turn, err := svc.StartDurable(t.Context(), startRequest(), func(*conversation.AssistantTurn) (string, error) {
-		return "assistant-turn:atrn_1", nil
-	})
+	turn, err := svc.StartTurn(
+		t.Context(),
+		startRequest(),
+		func(*conversation.AssistantTurn) (string, error) {
+			return "assistant-turn:atrn_1", nil
+		},
+	)
 	require.NoError(t, err)
 
 	assert.Equal(t, "assistant-turn:atrn_1", turns.marked)
@@ -88,15 +92,19 @@ func TestStartDurable_RecordsTheWorkflowCarryingTheTurn(t *testing.T) {
 
 // A turn left Running with nothing running it holds the conversation's one
 // live slot until it expires, and refuses every later question.
-func TestStartDurable_ClosesTheRecordWhenNothingPickedTheTurnUp(t *testing.T) {
+func TestStartTurn_ClosesTheRecordWhenNothingPickedTheTurnUp(t *testing.T) {
 	t.Parallel()
 
 	turns := &recordingTurns{}
 	svc := newDurable(turns)
 
-	_, err := svc.StartDurable(t.Context(), startRequest(), func(*conversation.AssistantTurn) (string, error) {
-		return "", errors.New("temporal is unreachable")
-	})
+	_, err := svc.StartTurn(
+		t.Context(),
+		startRequest(),
+		func(*conversation.AssistantTurn) (string, error) {
+			return "", errors.New("temporal is unreachable")
+		},
+	)
 	require.Error(t, err)
 
 	require.Len(t, turns.completed, 1)
@@ -144,9 +152,8 @@ func TestStop_IsQuietAboutATurnThatHasAlreadyEnded(t *testing.T) {
 	assert.False(t, called)
 }
 
-// A turn still running inside the request that asked for it has no execution
-// to cancel; its reader aborting is what stops it, exactly as before.
-func TestStop_LeavesAnInProcessTurnToItsReader(t *testing.T) {
+// A turn whose start never reached a worker has no execution to cancel.
+func TestStop_HasNothingToCancelForATurnNothingPickedUp(t *testing.T) {
 	t.Parallel()
 
 	svc := newDurable(&recordingTurns{})

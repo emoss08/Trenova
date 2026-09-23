@@ -1,11 +1,9 @@
 package metrics
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -19,38 +17,50 @@ func newAssistantForTest(t *testing.T) (*Assistant, *prometheus.Registry) {
 	return NewAssistant(registry, zap.NewNop(), true), registry
 }
 
-// The label is the point. The issue this work comes from asks for the durable
-// runtime to be compared against the one it replaces, and a figure that does
-// not say which runtime produced it cannot answer that.
-func TestAssistant_KeepsTheTwoRuntimesApart(t *testing.T) {
+func TestAssistant_CountsTurnsByHowTheyEnded(t *testing.T) {
 	t.Parallel()
 
 	assistant, registry := newAssistantForTest(t)
 
-	assistant.RecordTurn(TransportInProcess, "Completed", 3, 1)
-	assistant.RecordTurn(TransportDurable, "Completed", 4, 2)
-	assistant.RecordTurn(TransportDurable, "Failed", 1, -1)
+	assistant.RecordTurn("Completed", 3)
+	assistant.RecordTurn("Completed", 4)
+	assistant.RecordTurn("Failed", 1)
 
-	assert.Equal(t, 1, countOf(t, registry,
-		"trenova_assistant_turns_total", TransportInProcess, "Completed"))
-	assert.Equal(t, 1, countOf(t, registry,
-		"trenova_assistant_turns_total", TransportDurable, "Completed"))
-	assert.Equal(t, 1, countOf(t, registry,
-		"trenova_assistant_turns_total", TransportDurable, "Failed"))
+	assert.Equal(t, 2, countOf(t, registry, "trenova_assistant_turns_total", "Completed"))
+	assert.Equal(t, 1, countOf(t, registry, "trenova_assistant_turns_total", "Failed"))
 }
 
-// A turn that never said anything is not one that answered instantly, and a
-// histogram that recorded it as zero would report the worst case as the best.
-func TestAssistant_DoesNotCountASilentTurnAsInstant(t *testing.T) {
+// A turn that never said anything is not one that answered instantly. Only a
+// reader who saw the first event records how long it took.
+func TestAssistant_RecordsFirstEventsOnlyWhenOneArrived(t *testing.T) {
 	t.Parallel()
 
 	assistant, registry := newAssistantForTest(t)
 
-	assistant.RecordTurn(TransportDurable, "Failed", 5, -1)
+	assistant.RecordTurn("Failed", 5)
+	assert.Zero(t, firstEventSamples(t, registry),
+		"finishing a turn says nothing about when it first spoke")
 
-	assert.Equal(t, 0,
-		testutil.CollectAndCount(registry, "trenova_assistant_turn_first_event_seconds"),
-		"a turn that never spoke contributes no first-event observation")
+	assistant.RecordFirstEvent(0.8)
+	assert.Equal(t, uint64(1), firstEventSamples(t, registry))
+}
+
+func firstEventSamples(t *testing.T, registry *prometheus.Registry) uint64 {
+	t.Helper()
+
+	families, err := registry.Gather()
+	require.NoError(t, err)
+
+	for _, family := range families {
+		if family.GetName() != "trenova_assistant_turn_first_event_seconds" {
+			continue
+		}
+		for _, metric := range family.GetMetric() {
+			return metric.GetHistogram().GetSampleCount()
+		}
+	}
+
+	return 0
 }
 
 // A stop that silently cancelled nothing is the failure mode worth seeing:
@@ -60,27 +70,12 @@ func TestAssistant_SeparatesAStopThatCancelledFromOneThatDidNot(t *testing.T) {
 
 	assistant, registry := newAssistantForTest(t)
 
-	assistant.RecordTurnStopped(TransportDurable, "cancelled")
-	assistant.RecordTurnStopped(TransportInProcess, "no_execution")
+	assistant.RecordTurnStopped("cancelled")
+	assistant.RecordTurnStopped("already_ended")
 
-	assert.Equal(t, 1, countOf(t, registry,
-		"trenova_assistant_turns_stopped_total", TransportDurable, "cancelled"))
-	assert.Equal(t, 1, countOf(t, registry,
-		"trenova_assistant_turns_stopped_total", TransportInProcess, "no_execution"))
-}
-
-func TestAssistant_CountsBytesOnlyForAPublishThatLanded(t *testing.T) {
-	t.Parallel()
-
-	assistant, registry := newAssistantForTest(t)
-
-	assistant.RecordStreamPublish("delta", 120, nil)
-	assistant.RecordStreamPublish("delta", 500, errors.New("connection refused"))
-
-	assert.Equal(t, 1, countOf(t, registry, "trenova_assistant_stream_events_total", "delta", "success"))
-	assert.Equal(t, 1, countOf(t, registry, "trenova_assistant_stream_events_total", "delta", "error"))
-	assert.InDelta(t, 120.0, gaugeOf(t, registry, "trenova_assistant_stream_bytes_total"), 0.01,
-		"bytes that never reached redis were not published")
+	assert.Equal(t, 1, countOf(t, registry, "trenova_assistant_turns_stopped_total", "cancelled"))
+	assert.Equal(t, 1,
+		countOf(t, registry, "trenova_assistant_turns_stopped_total", "already_ended"))
 }
 
 // A collector is something a caller may legitimately not have: a test builds
@@ -91,11 +86,10 @@ func TestAssistant_IsSafeWhenThereIsNoCollector(t *testing.T) {
 	var absent *Assistant
 
 	assert.NotPanics(t, func() {
-		absent.RecordTurn(TransportDurable, "Completed", 1, 1)
-		absent.RecordFirstEvent(TransportDurable, 1)
-		absent.RecordTurnStopped(TransportDurable, "cancelled")
+		absent.RecordTurn("Completed", 1)
+		absent.RecordFirstEvent(1)
+		absent.RecordTurnStopped("cancelled")
 		absent.RecordStepReplayed("AssistantTurn", "Completed")
-		absent.RecordStreamPublish("delta", 10, nil)
 		absent.RecordStreamAttach("resumed")
 	})
 }
@@ -126,25 +120,6 @@ func countOf(t *testing.T, registry *prometheus.Registry, name string, labels ..
 	}
 
 	return 0
-}
-
-func gaugeOf(t *testing.T, registry *prometheus.Registry, name string) float64 {
-	t.Helper()
-
-	families, err := registry.Gather()
-	require.NoError(t, err)
-
-	total := 0.0
-	for _, family := range families {
-		if family.GetName() != name {
-			continue
-		}
-		for _, metric := range family.GetMetric() {
-			total += metric.GetCounter().GetValue()
-		}
-	}
-
-	return total
 }
 
 func carriesAll(got, want []string) bool {

@@ -205,7 +205,12 @@ func TestPlanArtifact_ListsItsStepsInOrder(t *testing.T) {
 
 	planID := pulid.MustNew("apl_")
 	other := pulid.MustNew("apl_")
-	plan := &agent.AgentPlan{ID: planID, RunID: pulid.MustNew("ar_"), Title: "Cover the move", StepCount: 2}
+	plan := &agent.AgentPlan{
+		ID:        planID,
+		RunID:     pulid.MustNew("ar_"),
+		Title:     "Cover the move",
+		StepCount: 2,
+	}
 	steps := []*agent.AgentProposal{
 		{ID: pulid.MustNew("ap_"), PlanID: &planID, PlanStep: 1, ToolName: "assign_move"},
 		{ID: pulid.MustNew("ap_"), PlanID: &other, PlanStep: 1, ToolName: "email_customer"},
@@ -234,9 +239,15 @@ func TestArtifactRecorder_KeepsAndAnnouncesWhatATurnProduced(t *testing.T) {
 	svc := &Service{logger: zap.NewNop(), artifacts: repo}
 	thread := &conversation.Thread{ID: pulid.MustNew("thr_")}
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	recorder := svc.newArtifactRecorder(t.Context(), thread, tenant, testActor(), func(event serviceports.StreamEvent) {
-		events = append(events, event)
-	})
+	recorder := svc.newArtifactRecorder(
+		t.Context(),
+		thread,
+		tenant,
+		testActor(),
+		func(event serviceports.StreamEvent) {
+			events = append(events, event)
+		},
+	)
 
 	recorder.observe(observation("get_customer", map[string]any{"id": "cus_1", "name": "Acme"}))
 	recorder.observe(observation("list_customers", map[string]any{"rows": []any{}}))
@@ -273,7 +284,16 @@ func TestArtifactRecorder_NilIsSafe(t *testing.T) {
 	assert.Nil(t, recorder.artifacts())
 
 	svc := &Service{logger: zap.NewNop()}
-	assert.Nil(t, svc.newArtifactRecorder(t.Context(), &conversation.Thread{}, pagination.TenantInfo{}, testActor(), nil))
+	assert.Nil(
+		t,
+		svc.newArtifactRecorder(
+			t.Context(),
+			&conversation.Thread{},
+			pagination.TenantInfo{},
+			testActor(),
+			nil,
+		),
+	)
 }
 
 // A draft never holds its own decision state. Listing reads the status off
@@ -285,9 +305,23 @@ func TestListThreadArtifacts_DraftStatusFollowsTheProposal(t *testing.T) {
 	sent := pulid.MustNew("ap_")
 	rejected := pulid.MustNew("ap_")
 	repo := &stubArtifactRepo{listed: []*assistantartifact.Artifact{
-		{ID: pulid.MustNew("art_"), Kind: assistantartifact.KindEmailDraft, Status: assistantartifact.StatusPending, ProposalID: sent},
-		{ID: pulid.MustNew("art_"), Kind: assistantartifact.KindEmailDraft, Status: assistantartifact.StatusPending, ProposalID: rejected},
-		{ID: pulid.MustNew("art_"), Kind: assistantartifact.KindEntityCard, Status: assistantartifact.StatusReady},
+		{
+			ID:         pulid.MustNew("art_"),
+			Kind:       assistantartifact.KindEmailDraft,
+			Status:     assistantartifact.StatusPending,
+			ProposalID: sent,
+		},
+		{
+			ID:         pulid.MustNew("art_"),
+			Kind:       assistantartifact.KindEmailDraft,
+			Status:     assistantartifact.StatusPending,
+			ProposalID: rejected,
+		},
+		{
+			ID:     pulid.MustNew("art_"),
+			Kind:   assistantartifact.KindEntityCard,
+			Status: assistantartifact.StatusReady,
+		},
 	}}
 	svc := &Service{
 		logger:        zap.NewNop(),
@@ -299,7 +333,10 @@ func TestListThreadArtifacts_DraftStatusFollowsTheProposal(t *testing.T) {
 		}},
 	}
 
-	listed, err := svc.ListThreadArtifacts(t.Context(), repositories.GetThreadRequest{ID: thread.ID})
+	listed, err := svc.ListThreadArtifacts(
+		t.Context(),
+		repositories.GetThreadRequest{ID: thread.ID},
+	)
 	require.NoError(t, err)
 	require.Len(t, listed, 3)
 	assert.Equal(t, assistantartifact.StatusSent, listed[0].Status)

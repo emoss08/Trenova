@@ -13,9 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -29,7 +27,6 @@ type Params struct {
 	Service              serviceports.AssistantService
 	Turns                *assistantturnservice.Service
 	Workflows            serviceports.WorkflowStarter
-	Config               *config.Config
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	Logger               *zap.Logger
@@ -39,7 +36,6 @@ type Handler struct {
 	service   serviceports.AssistantService
 	turns     *assistantturnservice.Service
 	workflows serviceports.WorkflowStarter
-	ai        *config.AIConfig
 	eh        *helpers.ErrorHandler
 	pm        *middleware.PermissionMiddleware
 	logger    *zap.Logger
@@ -50,24 +46,10 @@ func New(p Params) *Handler {
 		service:   p.Service,
 		turns:     p.Turns,
 		workflows: p.Workflows,
-		ai:        aiConfigOf(p.Config),
 		eh:        p.ErrorHandler,
 		pm:        p.PermissionMiddleware,
 		logger:    p.Logger.Named("assistanthandler"),
 	}
-}
-
-// aiConfigOf tolerates a handler built without configuration.
-//
-// Every getter on AIConfig is nil-safe on its receiver, which is what lets a
-// test construct this handler to assert its routes without standing up a whole
-// configuration. Reaching through a nil Config here would take that away.
-func aiConfigOf(cfg *config.Config) *config.AIConfig {
-	if cfg == nil {
-		return nil
-	}
-
-	return cfg.GetAIConfig()
 }
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
@@ -78,13 +60,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	// response is a projection, so this does not widen access to the provider
 	// records themselves.
 	api.GET("/providers/", h.pm.RequirePermission(resource, permission.OpRead), h.listProviders)
-	// Which way to ask a question. The two paths roll forward independently,
-	// so the client asks rather than assumes.
-	api.GET(
-		"/capabilities/",
-		h.pm.RequirePermission(resource, permission.OpRead),
-		h.capabilities,
-	)
 	api.GET("/threads/", h.pm.RequirePermission(resource, permission.OpRead), h.listThreads)
 	api.POST("/threads/", h.pm.RequirePermission(resource, permission.OpCreate), h.startThread)
 	// A quick question makes a thread of its own, so it needs what starting
@@ -126,11 +101,6 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpCreate),
 		h.sendMessage,
 	)
-	api.POST(
-		"/threads/:threadID/messages/stream/",
-		h.pm.RequirePermission(resource, permission.OpCreate),
-		h.sendMessageStream,
-	)
 	// A reply is watched through the turn producing it rather than through the
 	// request that asked for one. That is what lets a reader who closed the tab
 	// come back to a reply still being written: the events are somewhere other
@@ -145,8 +115,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.streamTurn,
 	)
-	// Asking a question durably: the worker answers it, this returns the turn
-	// to watch. Creating a turn is creating a message, so it is gated the same
+	// Asking a question: a worker answers it, and this returns the turn to
+	// watch. Creating a turn is creating a message, so it is gated the same
 	// way as sending one.
 	api.POST(
 		"/threads/:threadID/turns/",
@@ -563,194 +533,6 @@ func (r *sendMessageRequest) provider() (pulid.ID, bool) {
 
 func (r *sendMessageRequest) page() *agent.PageContext {
 	return r.Context.page()
-}
-
-func (h *Handler) sendMessage(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	threadID, err := pulid.Parse(c.Param("threadID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	var body sendMessageRequest
-	if err = c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	actor := requestActorFromAuthContext(authCtx)
-	providerID, providerChosen := body.provider()
-	result, err := h.service.SendMessage(c.Request.Context(), &serviceports.SendMessageRequest{
-		ThreadID:              threadID,
-		Content:               body.Content,
-		Page:                  body.page(),
-		TenantInfo:            tenantFromAuthContext(authCtx),
-		PreferredProviderID:   providerID,
-		ProviderChosen:        providerChosen,
-		AttachmentDocumentIDs: body.AttachmentDocumentIDs,
-		Mentions:              body.Mentions,
-		FollowUpProposalID:    body.FollowUpProposalID,
-	}, &actor)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	// A refusal is a successful request with a declined answer, not an error: the
-	// turn was processed, recorded, and explained.
-	c.JSON(http.StatusOK, result)
-}
-
-// sendMessageStream runs the same turn as sendMessage but reports it as
-// server-sent events while it happens: the guard's decision, each piece of the
-// reply, each tool as it starts and finishes, and finally the saved result. A
-// failure after the stream has opened is reported as an error event, since the
-// status line has already been sent.
-func (h *Handler) sendMessageStream(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	threadID, err := pulid.Parse(c.Param("threadID"))
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	var body sendMessageRequest
-	if err = c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	stream, err := helpers.OpenEventStream(c, helpers.EventStreamOptions{})
-	if err != nil {
-		h.eh.HandleError(c, errortypes.NewBusinessError("Streaming is not supported"))
-		return
-	}
-	defer stream.Close()
-
-	emit := func(event serviceports.StreamEvent) {
-		if emitErr := stream.Emit(event.Event, event.Data); emitErr != nil {
-			h.logger.Error("assistant stream event lost",
-				zap.String("event", event.Event),
-				zap.Error(emitErr),
-			)
-		}
-	}
-
-	// The turn is recorded before it runs, and everything it says is published
-	// under that id as well as written here. The connection stays the fast
-	// path; the stream is what a reader who lost it can come back to.
-	turn, err := h.turns.Start(c.Request.Context(), assistantturnservice.StartRequest{
-		ThreadID:   threadID,
-		UserID:     authCtx.UserID,
-		TenantInfo: tenantFromAuthContext(authCtx),
-	})
-	if err != nil {
-		emit(serviceports.StreamEvent{
-			Event: serviceports.AssistantEventError,
-			Data:  gin.H{"message": h.streamErrorMessage(err)},
-		})
-		return
-	}
-	emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventTurn,
-		Data:  serviceports.AssistantTurnEvent{TurnID: turn.ID, ThreadID: threadID},
-	})
-
-	observed, closeStream := h.turns.Observe(c.Request.Context(), turn, emit)
-
-	actor := requestActorFromAuthContext(authCtx)
-	providerID, providerChosen := body.provider()
-	result, err := h.service.SendMessageStream(c.Request.Context(), &serviceports.SendMessageRequest{
-		ThreadID:              threadID,
-		Content:               body.Content,
-		Page:                  body.page(),
-		TenantInfo:            tenantFromAuthContext(authCtx),
-		PreferredProviderID:   providerID,
-		ProviderChosen:        providerChosen,
-		AttachmentDocumentIDs: body.AttachmentDocumentIDs,
-		Mentions:              body.Mentions,
-		FollowUpProposalID:    body.FollowUpProposalID,
-	}, &actor, observed)
-	if err != nil {
-		ending := serviceports.StreamEvent{
-			Event: serviceports.AssistantEventError,
-			Data:  gin.H{"message": h.streamErrorMessage(err)},
-		}
-		emit(ending)
-		closeStream(ending)
-		h.turns.Complete(c.Request.Context(), turn, assistantturnservice.StatusFor(false, err), err)
-
-		return
-	}
-
-	ending := serviceports.StreamEvent{Event: serviceports.AssistantEventDone, Data: result}
-	emit(ending)
-	closeStream(ending)
-	h.turns.Complete(
-		c.Request.Context(), turn, assistantturnservice.StatusFor(result.Refused, nil), nil,
-	)
-}
-
-// ask streams a quick question's answer. The thread it runs on is announced
-// first, so the reader can open it in the Desk even if the answer fails; the
-// rest of the stream is the same as a message on a thread.
-func (h *Handler) ask(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	var body askRequest
-	if err := c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	stream, err := helpers.OpenEventStream(c, helpers.EventStreamOptions{})
-	if err != nil {
-		h.eh.HandleError(c, errortypes.NewBusinessError("Streaming is not supported"))
-		return
-	}
-	defer stream.Close()
-
-	emit := func(event serviceports.StreamEvent) {
-		if emitErr := stream.Emit(event.Event, event.Data); emitErr != nil {
-			h.logger.Error("assistant ask event lost",
-				zap.String("event", event.Event),
-				zap.Error(emitErr),
-			)
-		}
-	}
-
-	actor := requestActorFromAuthContext(authCtx)
-	result, err := h.service.Ask(c.Request.Context(), &serviceports.AskRequest{
-		Content:    body.Content,
-		Page:       body.Context.page(),
-		Mentions:   body.Mentions,
-		TenantInfo: tenantFromAuthContext(authCtx),
-	}, &actor, emit)
-	if err != nil {
-		emit(serviceports.StreamEvent{
-			Event: "error",
-			Data:  gin.H{"message": h.streamErrorMessage(err)},
-		})
-		return
-	}
-
-	emit(serviceports.StreamEvent{Event: serviceports.AssistantEventDone, Data: result})
-}
-
-// streamErrorMessage picks what the reader may see. A business or validation
-// error is written for them; anything else is an internal fault whose wording
-// belongs in the log, not on their screen.
-func (h *Handler) streamErrorMessage(err error) string {
-	if errortypes.IsBusinessError(err) || errortypes.IsMultiError(err) {
-		return err.Error()
-	}
-
-	h.logger.Error("assistant stream failed", zap.Error(err))
-
-	return "The assistant could not finish this reply. Try again in a moment."
 }
 
 func (h *Handler) listProviders(c *gin.Context) {

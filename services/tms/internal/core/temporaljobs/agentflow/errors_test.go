@@ -127,3 +127,66 @@ func TestRetryPolicyForLeavesCancellationAlone(t *testing.T) {
 	err := fmt.Errorf("stream: %w", context.Canceled)
 	assert.Same(t, err, retryPolicyFor(err))
 }
+
+// The error a workflow is handed is Temporal's own type. The saved turn still
+// has to say whether the provider refused the request or could not be
+// reached, so the kind of failure travels in the error's details.
+func TestFailureSurvivesTheActivityBoundary(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		err   error
+		check func(t *testing.T, err error)
+	}{
+		{
+			name: "a provider's refusal",
+			err:  providerError{status: http.StatusBadRequest},
+			check: func(t *testing.T, err error) {
+				var failure serviceports.ProviderFailure
+				require.ErrorAs(t, err, &failure)
+				assert.Equal(t, http.StatusBadRequest, failure.ProviderStatus())
+				assert.False(t, failure.ProviderRetryable())
+			},
+		},
+		{
+			name: "every provider resting",
+			err:  serviceports.ErrProvidersResting,
+			check: func(t *testing.T, err error) {
+				assert.ErrorIs(t, err, serviceports.ErrProvidersResting)
+			},
+		},
+		{
+			name: "a provider that never answered in time",
+			err:  fmt.Errorf("stream: %w", context.DeadlineExceeded),
+			check: func(t *testing.T, err error) {
+				assert.ErrorIs(t, err, context.DeadlineExceeded)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			converter := temporal.GetDefaultFailureConverter()
+			crossed := converter.FailureToError(converter.ErrorToFailure(retryPolicyFor(tt.err)))
+			failure := FailureOf(crossed)
+			require.NotNil(t, failure)
+			assert.False(t, failure.Stopped)
+			tt.check(t, failure.Err())
+		})
+	}
+}
+
+func TestFailureOfAStopIsAStop(t *testing.T) {
+	t.Parallel()
+
+	failure := FailureOf(temporal.NewCanceledError())
+	require.NotNil(t, failure)
+	assert.True(t, failure.Stopped)
+	assert.ErrorIs(t, failure.Err(), context.Canceled)
+
+	assert.Nil(t, FailureOf(nil))
+	assert.NoError(t, (*Failure)(nil).Err())
+}

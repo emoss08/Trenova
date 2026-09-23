@@ -16,27 +16,21 @@ import (
 // quick question goes to; an organization has a handful of chat agents.
 const askAgentPageLimit = 100
 
-// Ask answers a quick question from the palette. It is the same turn as any
-// other, on a thread created for the question and hidden until it is kept:
-// the general assistant answers it, the page and the mentions ride along,
-// and what the turn produced is saved so "Open in Desk" has somewhere to go.
-func (s *Service) Ask(
+// StartAsk opens the thread a quick question from the palette is answered on.
+// It is the same turn as any other, on a thread created for the question and
+// hidden until it is kept: the general assistant answers it, and what the turn
+// produced is saved there so "Open in Desk" has somewhere to go.
+func (s *Service) StartAsk(
 	ctx context.Context,
 	req *services.AskRequest,
 	actor *services.RequestActor,
-	emit services.AssistantStreamEmitter,
-) (*services.SendMessageResult, error) {
-	if emit == nil {
-		emit = func(services.StreamEvent) {}
-	}
-
+) (*conversation.Thread, error) {
 	content := strings.TrimSpace(req.Content)
 	multiErr := errortypes.NewMultiError()
 	if content == "" {
 		multiErr.Add("content", errortypes.ErrRequired, "Question cannot be empty")
 	}
-	page := req.Page.Normalized()
-	if page != nil {
+	if page := req.Page.Normalized(); page != nil {
 		page.Validate("context", multiErr)
 	}
 	validateMentions(req.Mentions, multiErr)
@@ -49,25 +43,12 @@ func (s *Service) Ask(
 		return nil, err
 	}
 
-	thread, err := s.StartThread(ctx, &services.StartThreadRequest{
+	return s.StartThread(ctx, &services.StartThreadRequest{
 		AgentDefinitionID: definition.ID,
 		Title:             truncateRunes(content, maxTitleRunes),
 		TenantInfo:        req.TenantInfo,
 		Origin:            conversation.ThreadOriginAsk,
 	}, actor)
-	if err != nil {
-		return nil, err
-	}
-
-	emit(services.StreamEvent{Event: services.AssistantEventThread, Data: thread})
-
-	return s.SendMessageStream(ctx, &services.SendMessageRequest{
-		ThreadID:   thread.ID,
-		Content:    content,
-		Page:       page,
-		TenantInfo: req.TenantInfo,
-		Mentions:   req.Mentions,
-	}, actor, emit)
 }
 
 // askAgent picks who answers a quick question: the organization's general

@@ -26,12 +26,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
 	// EventsTopic carries everything a reader of the run sees, in order.
-	EventsTopic = "events"
+	EventsTopic = temporaltype.StreamEventsTopic
 
 	// streamBatchInterval is how long the model activity holds streamed text
 	// before publishing it. Each publish is a signal in the run's history, so
@@ -99,10 +100,7 @@ const (
 )
 
 // StreamItem is one event on a run's stream, as the reader receives it.
-type StreamItem struct {
-	Event string `json:"event"`
-	Data  any    `json:"data"`
-}
+type StreamItem = temporaltype.StreamItem
 
 // RunContext is what a run's activities need to know about the run, as data.
 //
@@ -110,9 +108,12 @@ type StreamItem struct {
 // acts as whoever it acts as, and a worker that reconstructed an actor from a
 // tenant would be inventing an authority nobody granted.
 type RunContext struct {
-	Definition          *agentdefinition.Definition    `json:"definition"`
-	Actor               *serviceports.RequestActor     `json:"actor"`
-	Input               string                         `json:"input"`
+	Definition *agentdefinition.Definition `json:"definition"`
+	Actor      *serviceports.RequestActor  `json:"actor"`
+	Input      string                      `json:"input"`
+	// Timezone is the organization's, which is what a tool reads a bare date
+	// in.
+	Timezone            string                         `json:"timezone,omitempty"`
 	RunID               pulid.ID                       `json:"runId,omitzero"`
 	ThreadID            pulid.ID                       `json:"threadId,omitzero"`
 	Unattended          bool                           `json:"unattended"`
@@ -125,6 +126,26 @@ type RunContext struct {
 	PriorityKey int `json:"priorityKey"`
 }
 
+// NewRunContext is a run request as the data a run's activities carry. The
+// services on the request stay behind: whichever activity needs one supplies
+// its own.
+func NewRunContext(req *serviceports.RunRequest, priorityKey int) RunContext {
+	return RunContext{
+		Definition:          req.Definition,
+		Actor:               req.Actor,
+		Input:               req.Input,
+		Timezone:            req.Context.Timezone,
+		RunID:               req.RunID,
+		ThreadID:            req.ThreadID,
+		Unattended:          req.Unattended,
+		Proposals:           req.Proposals,
+		StepOwner:           req.StepOwner,
+		PreferredProviderID: req.PreferredProviderID,
+		PinProvider:         req.PinProvider,
+		PriorityKey:         priorityKey,
+	}
+}
+
 // request is the run as the runtime reads it. The ledger and the observer are
 // deliberately absent: they are services, and whichever activity needs one
 // supplies its own.
@@ -132,6 +153,7 @@ func (rc *RunContext) request() *serviceports.RunRequest {
 	return &serviceports.RunRequest{
 		Definition:          rc.Definition,
 		Actor:               rc.Actor,
+		Context:             agentdefinition.RuntimeContext{Timezone: rc.Timezone},
 		Input:               rc.Input,
 		RunID:               rc.RunID,
 		ThreadID:            rc.ThreadID,

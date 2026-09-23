@@ -17,6 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// TurnRequest is one question as the guard and the runtime read it.
 type TurnRequest struct {
 	Definition *agentdefinition.Definition
 	Actor      *serviceports.RequestActor
@@ -32,9 +33,6 @@ type TurnRequest struct {
 	// Subject is the record the conversation is about, when it was opened
 	// from one.
 	Subject *agentdefinition.RuntimeSubject
-	// ToolObserver sees each tool result as it lands, for the artifacts the
-	// turn produces.
-	ToolObserver serviceports.ToolObserver
 	// Attachments and Mentions are what the person handed over with the
 	// message: files, and records named from the composer.
 	Attachments []agentdefinition.RuntimeAttachment
@@ -50,67 +48,62 @@ type TurnResult struct {
 	Provider pulid.ID
 }
 
-func (s *Service) Run(ctx context.Context, req *TurnRequest) (*TurnResult, error) {
-	return s.RunObserved(ctx, req, nil)
-}
-
-func (s *Service) RunObserved(
+// admit asks the scope guard about a question and, when it may be answered,
+// builds the run request that answers it. A refused question gets no run
+// request: the point of guarding first is that the expensive call never
+// happens.
+func (s *Service) admit(
 	ctx context.Context,
 	req *TurnRequest,
-	emit serviceports.AssistantStreamEmitter,
-) (*TurnResult, error) {
-	if emit == nil {
-		emit = func(serviceports.StreamEvent) {}
-	}
-
+) (agentguard.Decision, *serviceports.RunRequest) {
 	decision := s.guard.Evaluate(ctx, agentguard.EvaluateRequest{
 		TenantInfo: req.Actor.TenantInfo(),
 		Input:      req.Input,
 		Recent:     recentTurns(req.History),
 	})
 	if !decision.Allowed {
-		emit(refusedEvent(decision))
-
-		return &TurnResult{
-			Reply:    decision.Message,
-			Decision: decision,
-			Messages: []conversation.Message{
-				scopedMessage(conversation.RoleUser, req.Input, decision, true),
-				scopedMessage(conversation.RoleAssistant, decision.Message, decision, true),
-			},
-		}, nil
+		return decision, nil
 	}
 
-	emit(serviceports.StreamEvent{
-		Event: serviceports.AssistantEventAccepted,
-		Data: serviceports.AssistantAcceptedEvent{
-			Content:       req.Input,
-			ScopeStage:    string(decision.Stage),
-			ScopeCategory: string(decision.Category),
-		},
-	})
-
 	runtimeContext := s.buildContext(ctx, req)
-
 	runtimeContext.PendingProposals = pendingProposals(req.Proposals)
 
-	run, err := s.runtime.Run(ctx, &serviceports.RunRequest{
+	return decision, &serviceports.RunRequest{
 		Definition:          req.Definition,
 		Actor:               req.Actor,
 		Context:             runtimeContext,
 		History:             req.History,
 		Input:               req.Input,
-		Emit:                emit,
 		PreferredProviderID: req.PreferredProviderID,
 		// A model the person picked is the model they get; an administrator's
 		// default on the agent is only where the order starts.
-		PinProvider:  !req.PreferredProviderID.IsNil(),
-		ThreadID:     req.ThreadID,
-		Proposals:    req.Proposals,
-		ToolObserver: req.ToolObserver,
-	})
+		PinProvider: !req.PreferredProviderID.IsNil(),
+		ThreadID:    req.ThreadID,
+		Proposals:   req.Proposals,
+	}
+}
+
+// turnResultOf is what a turn came to, in the shape the conversation keeps:
+// the refusal, the interrupted turn closed with a note, or the answer.
+func turnResultOf(
+	input string,
+	decision agentguard.Decision,
+	run *serviceports.RunResult,
+	err error,
+) *TurnResult {
+	if !decision.Allowed {
+		return &TurnResult{
+			Reply:    decision.Message,
+			Decision: decision,
+			Messages: []conversation.Message{
+				scopedMessage(conversation.RoleUser, input, decision, true),
+				scopedMessage(conversation.RoleAssistant, decision.Message, decision, true),
+			},
+		}
+	}
+
 	if err != nil {
-		return interruptedTurn(req, decision, run, err), err
+		return interruptedTurn(input, decision, run, err)
 	}
 
 	result := &TurnResult{
@@ -123,14 +116,14 @@ func (s *Service) RunObserved(
 	}
 
 	if len(result.Messages) > 0 {
-		result.Messages[0] = scopedMessage(conversation.RoleUser, req.Input, decision, false)
+		result.Messages[0] = scopedMessage(conversation.RoleUser, input, decision, false)
 	}
 
 	if run.OutputRefused {
 		result.Decision = outputDecision(run, result.Messages)
 	}
 
-	return result, nil
+	return result
 }
 
 func (s *Service) buildContext(
@@ -290,7 +283,7 @@ func failureReason(err error) string {
 // discarding the turn erased the write from the record while leaving it in the
 // database.
 func interruptedTurn(
-	req *TurnRequest,
+	input string,
 	decision agentguard.Decision,
 	run *serviceports.RunResult,
 	err error,
@@ -303,7 +296,7 @@ func interruptedTurn(
 	notice := closingNotice(err, len(run.Messages) > 1)
 
 	messages := make([]conversation.Message, 0, len(run.Messages)+2)
-	messages = append(messages, scopedMessage(conversation.RoleUser, req.Input, decision, false))
+	messages = append(messages, scopedMessage(conversation.RoleUser, input, decision, false))
 	if len(run.Messages) > 1 {
 		messages = append(messages, run.Messages[1:]...)
 	}
@@ -340,7 +333,10 @@ func scopedMessage(
 	}
 }
 
-func outputDecision(run *serviceports.RunResult, messages []conversation.Message) agentguard.Decision {
+func outputDecision(
+	run *serviceports.RunResult,
+	messages []conversation.Message,
+) agentguard.Decision {
 	decision := agentguard.Decision{
 		Allowed:     false,
 		Stage:       agentguard.StageOutput,

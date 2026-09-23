@@ -40,7 +40,10 @@ type turnContext struct {
 }
 
 // validateMentions bounds and checks the records a person named.
-func validateMentions(mentions []agent.EntityRef, multiErr *errortypes.MultiError) []agent.EntityRef {
+func validateMentions(
+	mentions []agent.EntityRef,
+	multiErr *errortypes.MultiError,
+) []agent.EntityRef {
 	normalized := agent.NormalizeEntityRefs(mentions)
 	agent.ValidateEntityRefs("mentions", normalized, multiErr)
 
@@ -72,7 +75,9 @@ func (s *Service) resolveAttachments(
 		return nil, nil, multiErr
 	}
 	if s.documents == nil {
-		return nil, nil, errortypes.NewBusinessError("Attachments are not available on this deployment")
+		return nil, nil, errortypes.NewBusinessError(
+			"Attachments are not available on this deployment",
+		)
 	}
 
 	stored := make([]conversation.MessageAttachment, 0, len(ids))
@@ -100,7 +105,11 @@ func (s *Service) resolveAttachments(
 		if doc.UploadedByID != actor.UserID ||
 			doc.ResourceType != AttachmentResourceType ||
 			doc.ResourceID != thread.ID.String() {
-			multiErr.Add(field, errortypes.ErrInvalid, "Attachment does not belong to this conversation")
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				"Attachment does not belong to this conversation",
+			)
 			continue
 		}
 
@@ -110,7 +119,10 @@ func (s *Service) resolveAttachments(
 			ContentType: doc.FileType,
 			FileSize:    doc.FileSize,
 		})
-		runtime = append(runtime, s.describeAttachment(ctx, doc.ID, doc.OriginalName, doc.FileType, tenant))
+		runtime = append(
+			runtime,
+			s.describeAttachment(ctx, doc.ID, doc.OriginalName, doc.FileType, tenant),
+		)
 	}
 	if multiErr.HasErrors() {
 		return nil, nil, multiErr

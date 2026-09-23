@@ -107,8 +107,10 @@ func newTranscriptService(
 	return &Service{
 		logger:        zap.NewNop(),
 		conversations: conversations,
-		definitions:   &stubDefinitions{definition: &agentdefinition.Definition{Name: "Dispatch desk"}},
-		proposals:     proposals,
+		definitions: &stubDefinitions{
+			definition: &agentdefinition.Definition{Name: "Dispatch desk"},
+		},
+		proposals: proposals,
 	}
 }
 

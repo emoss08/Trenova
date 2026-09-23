@@ -83,7 +83,7 @@ func TestSendMessageStream_StoresAttachmentsAndMentionsOnTheUserTurn(t *testing.
 	}}
 
 	customer := pulid.MustNew("cust_")
-	result, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	result, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "Does this match what we quoted?",
 		TenantInfo:            actor.TenantInfo(),
@@ -102,7 +102,11 @@ func TestSendMessageStream_StoresAttachmentsAndMentionsOnTheUserTurn(t *testing.
 	assert.Equal(t, "rate-con.pdf", user.Attachments[0].FileName)
 	assert.Equal(t, "application/pdf", user.Attachments[0].ContentType)
 	require.Len(t, user.Mentions, 1)
-	assert.Equal(t, agent.EntityRef{Type: "customer", ID: customer.String(), Label: "Acme Foods"}, user.Mentions[0])
+	assert.Equal(
+		t,
+		agent.EntityRef{Type: "customer", ID: customer.String(), Label: "Acme Foods"},
+		user.Mentions[0],
+	)
 	for _, message := range conversations.appended[1:] {
 		assert.Nil(t, message.Attachments)
 		assert.Nil(t, message.Mentions)
@@ -146,7 +150,7 @@ func TestSendMessageStream_RefusesAnAttachmentThatIsNotTheirs(t *testing.T) {
 		"a shipment's file":     shipmentFile.ID,
 		"an unknown document":   pulid.MustNew("doc_"),
 	} {
-		_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+		_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 			ThreadID:              conversations.thread.ID,
 			Content:               "Read this",
 			TenantInfo:            actor.TenantInfo(),
@@ -172,7 +176,7 @@ func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 	for i := range tooManyFiles {
 		tooManyFiles[i] = pulid.MustNew("doc_")
 	}
-	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "Read these",
 		TenantInfo:            actor.TenantInfo(),
@@ -182,7 +186,7 @@ func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 	assert.Equal(t, "attachmentDocumentIds", multiErr.Errors[0].Field)
 
-	_, err = svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err = svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Who is this",
 		TenantInfo: actor.TenantInfo(),
@@ -210,7 +214,7 @@ func TestSendMessageStream_NamesAPendingAttachment(t *testing.T) {
 	svc.documents = &stubDocuments{docs: map[pulid.ID]*document.Document{doc.ID: doc}}
 	svc.contents = &stubContents{err: errors.New("no content yet")}
 
-	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:              conversations.thread.ID,
 		Content:               "What is this?",
 		TenantInfo:            actor.TenantInfo(),
@@ -230,7 +234,7 @@ func TestSendMessageStream_RendersTheTableView(t *testing.T) {
 	actor := testActor()
 
 	rows := 17
-	_, err := svc.SendMessageStream(t.Context(), &serviceports.SendMessageRequest{
+	_, err := svc.sendMessage(t.Context(), &serviceports.SendMessageRequest{
 		ThreadID:   conversations.thread.ID,
 		Content:    "Why are these late?",
 		TenantInfo: actor.TenantInfo(),
@@ -238,7 +242,9 @@ func TestSendMessageStream_RendersTheTableView(t *testing.T) {
 			Path: "/shipments",
 			View: &agent.PageView{
 				Resource: "shipment",
-				Sort:     []domaintypes.SortField{{Field: "createdAt", Direction: dbtype.SortDirectionDesc}},
+				Sort: []domaintypes.SortField{
+					{Field: "createdAt", Direction: dbtype.SortDirectionDesc},
+				},
 				RowCount: &rows,
 			},
 		},
@@ -319,7 +325,9 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 	svc := newService(completion, &stubQueryRegistry{}, &stubActionRegistry{})
 	dispatch := chatDefinition("Dispatch", agentdefinition.TemplateDispatchAssistant)
 	general := chatDefinition("Assistant", agentdefinition.TemplateGeneralAssistant)
-	definitions := &stubDefinitionList{definitions: []*agentdefinition.Definition{dispatch, general}}
+	definitions := &stubDefinitionList{
+		definitions: []*agentdefinition.Definition{dispatch, general},
+	}
 	conversations := &creatingConversations{}
 	svc.definitions = definitions
 	svc.conversations = conversations
@@ -327,7 +335,7 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 
 	var events []string
 	var announced *conversation.Thread
-	result, err := svc.Ask(t.Context(), &serviceports.AskRequest{
+	result, err := svc.ask(t.Context(), &serviceports.AskRequest{
 		Content:    "How many loads are late today?",
 		TenantInfo: actor.TenantInfo(),
 		Page:       &agent.PageContext{Path: "/dispatch"},
@@ -342,7 +350,12 @@ func TestAsk_AnswersOnAHiddenThreadWithTheGeneralAssistant(t *testing.T) {
 	assert.True(t, definitions.last.EnabledOnly)
 	assert.True(t, definitions.last.ChatOnly)
 	require.NotNil(t, conversations.created)
-	assert.Equal(t, general.ID, conversations.created.AgentDefinitionID, "the general assistant answers")
+	assert.Equal(
+		t,
+		general.ID,
+		conversations.created.AgentDefinitionID,
+		"the general assistant answers",
+	)
 	assert.Equal(t, conversation.ThreadOriginAsk, conversations.created.Origin)
 	assert.Equal(t, "How many loads are late today?", conversations.created.Title)
 	require.NotNil(t, announced)
@@ -364,7 +377,7 @@ func TestAsk_FallsBackToAnyChatAgentAndRefusesWithNone(t *testing.T) {
 	svc.conversations = conversations
 	actor := testActor()
 
-	_, err := svc.Ask(t.Context(), &serviceports.AskRequest{
+	_, err := svc.ask(t.Context(), &serviceports.AskRequest{
 		Content:    "Anything late?",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)
@@ -372,14 +385,14 @@ func TestAsk_FallsBackToAnyChatAgentAndRefusesWithNone(t *testing.T) {
 	assert.Equal(t, dispatch.ID, conversations.created.AgentDefinitionID)
 
 	definitions.definitions = nil
-	_, err = svc.Ask(t.Context(), &serviceports.AskRequest{
+	_, err = svc.ask(t.Context(), &serviceports.AskRequest{
 		Content:    "Anything late?",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 
-	_, err = svc.Ask(t.Context(), &serviceports.AskRequest{
+	_, err = svc.ask(t.Context(), &serviceports.AskRequest{
 		Content:    "   ",
 		TenantInfo: actor.TenantInfo(),
 	}, actor, nil)

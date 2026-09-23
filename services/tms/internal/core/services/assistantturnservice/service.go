@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -21,31 +20,25 @@ import (
 type Params struct {
 	fx.In
 
-	Logger     *zap.Logger
-	Turns      repositories.AssistantTurnRepository
-	Stream     serviceports.TurnStreamPublisher
-	Reader     serviceports.TurnStreamReader
-	Metrics    *metrics.Registry                  `optional:"true"`
-	Trajectory serviceports.AgentRunEventRecorder `optional:"true"`
+	Logger  *zap.Logger
+	Turns   repositories.AssistantTurnRepository
+	Reader  serviceports.TurnStreamReader
+	Metrics *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
-	l          *zap.Logger
-	turns      repositories.AssistantTurnRepository
-	stream     serviceports.TurnStreamPublisher
-	reader     serviceports.TurnStreamReader
-	metrics    *metrics.Assistant
-	trajectory serviceports.AgentRunEventRecorder
+	l       *zap.Logger
+	turns   repositories.AssistantTurnRepository
+	reader  serviceports.TurnStreamReader
+	metrics *metrics.Assistant
 }
 
 func New(p Params) *Service {
 	return &Service{
-		l:          p.Logger.Named("service.assistantturn"),
-		turns:      p.Turns,
-		stream:     p.Stream,
-		reader:     p.Reader,
-		metrics:    assistantMetrics(p.Metrics),
-		trajectory: p.Trajectory,
+		l:       p.Logger.Named("service.assistantturn"),
+		turns:   p.Turns,
+		reader:  p.Reader,
+		metrics: assistantMetrics(p.Metrics),
 	}
 }
 
@@ -112,85 +105,6 @@ func (s *Service) Get(
 	return s.turns.GetByID(ctx, req)
 }
 
-// Observe wraps an emitter so everything it carries is also published to the
-// turn's stream, where a second reader — or the same one after a reconnect —
-// can find it.
-//
-// The returned close must be called exactly once, with the event that ended
-// the turn. A stream that ends without one is how a relay learns its writer
-// died, so forgetting it makes a finished turn look like a crashed one.
-func (s *Service) Observe(
-	ctx context.Context,
-	turn *conversation.AssistantTurn,
-	emit serviceports.AssistantStreamEmitter,
-) (serviceports.AssistantStreamEmitter, func(serviceports.StreamEvent)) {
-	ref := serviceports.TurnStreamRef{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: turn.OrganizationID,
-			BuID:  turn.BusinessUnitID,
-		},
-		TurnID: turn.ID,
-	}
-	pub := newPublisher(s.stream, ref, s.l, s.metrics)
-
-	// The same events, kept. The publisher above feeds a screen and its stream
-	// is gone a quarter of an hour after the reply ends; this feeds the record
-	// that answers what the assistant did months later.
-	trajectory := s.trajectoryFor(ctx, ref.TenantInfo, turn)
-
-	// The publish rides a context cancellation cannot reach. The turn's own
-	// context dies the moment the reader closes the tab, which is precisely
-	// when the events are worth keeping: the turn runs on, and somebody may
-	// come back for what it said.
-	keep := context.WithoutCancel(ctx)
-
-	// When the turn first said anything. It is measured here rather than from
-	// the turn's record because the record knows when the turn started and
-	// how it ended, not when the person stopped looking at nothing — which is
-	// the figure a durable hop could plausibly have made worse, and therefore
-	// the one worth watching.
-	began := time.Now()
-	var spoke time.Time
-
-	observed := func(event serviceports.StreamEvent) {
-		if spoke.IsZero() {
-			spoke = time.Now()
-			s.metrics.RecordFirstEvent(transportOf(turn), spoke.Sub(began).Seconds())
-		}
-		if emit != nil {
-			emit(event)
-		}
-		pub.emit(keep, event)
-		serviceports.RecordTrajectory(trajectory, keep, event)
-	}
-
-	return observed, func(final serviceports.StreamEvent) {
-		pub.close(keep, final)
-		serviceports.RecordTrajectory(trajectory, keep, final)
-		serviceports.FlushTrajectory(trajectory, keep)
-	}
-}
-
-// trajectoryFor opens the durable writer for a turn, when there is one to open.
-//
-// The recorder is optional: an installation without it still answers questions,
-// it just does not keep an account of how. Every call through the returned
-// writer is nil-safe, so nothing downstream has to know which case it is in.
-func (s *Service) trajectoryFor(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	turn *conversation.AssistantTurn,
-) serviceports.AgentRunEventWriter {
-	if s.trajectory == nil {
-		return nil
-	}
-
-	return s.trajectory.Recorder(ctx, tenantInfo, serviceports.RunStepOwner{
-		Kind: serviceports.RunStepOwnerAssistantTurn,
-		ID:   turn.ID,
-	})
-}
-
 // Complete closes the turn's record.
 func (s *Service) Complete(
 	ctx context.Context,
@@ -220,26 +134,7 @@ func (s *Service) Complete(
 		)
 	}
 
-	s.metrics.RecordTurn(
-		transportOf(turn),
-		string(status),
-		elapsedSince(turn.StartedAt),
-		// The first event is not known here. A turn's record carries when it
-		// started and how it ended, not when it first spoke, so that figure
-		// is observed by whoever held the stream.
-		-1,
-	)
-}
-
-// transportOf says where a turn ran, which is what makes the durable path
-// comparable against the one it replaces. A turn with no execution behind it
-// ran in the request that asked for it.
-func transportOf(turn *conversation.AssistantTurn) string {
-	if turn.WorkflowID == "" {
-		return metrics.TransportInProcess
-	}
-
-	return metrics.TransportDurable
+	s.metrics.RecordTurn(string(status), elapsedSince(turn.StartedAt))
 }
 
 func elapsedSince(startedAt int64) float64 {
@@ -269,18 +164,20 @@ func tenantOf(turn *conversation.AssistantTurn) pagination.TenantInfo {
 }
 
 func streamRef(turn *conversation.AssistantTurn) serviceports.TurnStreamRef {
-	return serviceports.TurnStreamRef{TenantInfo: tenantOf(turn), TurnID: turn.ID}
+	return serviceports.TurnStreamRef{
+		TenantInfo: tenantOf(turn),
+		TurnID:     turn.ID,
+		WorkflowID: turn.WorkflowID,
+	}
 }
 
-var errRelayStopped = fmt.Errorf("relay stopped")
-
-// StartDurable records a turn and hands it to a worker.
+// StartTurn records a turn and hands it to a worker.
 //
 // The reply is produced somewhere the request cannot reach, which is the whole
 // point: an API restart no longer ends every conversation in flight, and the
 // reader follows the turn's stream rather than holding a connection open for
 // the length of an answer.
-func (s *Service) StartDurable(
+func (s *Service) StartTurn(
 	ctx context.Context,
 	req StartRequest,
 	start func(turn *conversation.AssistantTurn) (string, error),
@@ -313,10 +210,8 @@ func (s *Service) StartDurable(
 
 // Stop ends a turn somebody is no longer waiting for.
 //
-// Stopping used to be a property of the connection: aborting the request
-// cancelled the context the loop ran on, and that was what stopped the model.
-// With the work on a worker, closing a reader stops nothing — the turn runs
-// on, and bills for it. So stopping is now something asked for explicitly.
+// Closing a reader stops nothing: the turn runs on a worker, and bills for it.
+// So stopping is asked for explicitly, and cancels the turn's workflow.
 func (s *Service) Stop(
 	ctx context.Context,
 	turn *conversation.AssistantTurn,
@@ -325,27 +220,26 @@ func (s *Service) Stop(
 	if turn.Status.Terminal() {
 		// Already over. Saying so beats reporting a failure for something the
 		// person got what they wanted from.
-		s.metrics.RecordTurnStopped(transportOf(turn), "already_ended")
+		s.metrics.RecordTurnStopped("already_ended")
 
 		return nil
 	}
 
 	if turn.WorkflowID == "" {
-		// A turn still running in the request that asked for it. Its reader
-		// aborting is what stops it, exactly as before, and there is no
-		// execution to cancel.
-		s.metrics.RecordTurnStopped(metrics.TransportInProcess, "no_execution")
+		// Nothing was ever handed to a worker: the start failed and closed
+		// the record, or is closing it now. There is no execution to cancel.
+		s.metrics.RecordTurnStopped("no_execution")
 
 		return nil
 	}
 
 	if err := cancel(turn.WorkflowID); err != nil {
-		s.metrics.RecordTurnStopped(metrics.TransportDurable, "error")
+		s.metrics.RecordTurnStopped("error")
 
 		return fmt.Errorf("stop this reply: %w", err)
 	}
 
-	s.metrics.RecordTurnStopped(metrics.TransportDurable, "cancelled")
+	s.metrics.RecordTurnStopped("cancelled")
 
 	return nil
 }

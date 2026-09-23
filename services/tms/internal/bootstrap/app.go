@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/runstepledger"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
@@ -130,6 +131,7 @@ func Options() fx.Option {
 		telematicsjobs.Module,
 		shipmentjobs.Module,
 		agentjobs.Module,
+		agentflow.Module,
 		assistantjobs.Module,
 		agenttoolservice.Module,
 		agentquerytoolservice.Module,
@@ -141,7 +143,7 @@ func Options() fx.Option {
 		turnstream.Module,
 		watchtowersources.Module,
 		proposalrecorder.Module,
-		fx.Provide(assistantservice.New),
+		assistantservice.Module,
 		assistantturnservice.Module,
 		completionrouter.Module,
 		recurringshipmentjobs.Module,
