@@ -237,6 +237,8 @@ func TestErrRebuildsWhatTheCallReturned(t *testing.T) {
 	assert.ErrorIs(t, Err(cross(fmt.Errorf("parse: %w", serviceports.ErrModelSchemaValidation))),
 		serviceports.ErrModelSchemaValidation)
 
+	assert.ErrorIs(t, Err(temporal.NewTimeoutError(0, nil)), context.DeadlineExceeded)
+
 	plain := errors.New("not a model call")
 	assert.Same(t, plain, Err(plain))
 }

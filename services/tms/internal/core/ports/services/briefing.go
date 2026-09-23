@@ -46,6 +46,12 @@ type ListBriefingsRequest struct {
 	Limit      int
 }
 
+// BriefingDayWriter writes a day's briefing on a worker, for a person waiting
+// on the page.
+type BriefingDayWriter interface {
+	WriteForDay(ctx context.Context, req WriteBriefingRequest) (*WriteBriefingResult, error)
+}
+
 type BriefingService interface {
 	WriteForDay(ctx context.Context, req WriteBriefingRequest) (*WriteBriefingResult, error)
 	// Today is the reader's page for the organization's current day, or

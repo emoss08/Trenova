@@ -289,6 +289,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentdefinitionservice.New,
 	aiproviderservice.NewProber,
 	aiproviderservice.New,
+	func(s *aiproviderservice.Service) services.AIProviderService { return s },
+	func(s *aiproviderservice.Service) services.AIProviderProbe { return s },
 	aiusageservice.New,
 	agentrunservice.New,
 	agentsubjectservice.New,

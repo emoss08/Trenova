@@ -92,7 +92,7 @@ func (a *Activities) ModelCallActivity(
 		}
 	}
 
-	stopBeating := heartbeat(ctx)
+	stopBeating := modelcall.Heartbeat(ctx)
 	defer stopBeating()
 
 	reply, err := a.runtime.StreamCompletion(ctx, in.Request, emit)
@@ -243,26 +243,4 @@ func closeStream(ctx context.Context, stream *workflowstreams.Client, l *zap.Log
 	if err := stream.Close(flushCtx); err != nil {
 		l.Warn("could not flush the last of a run's stream", zap.Error(err))
 	}
-}
-
-// heartbeat tells Temporal the activity is alive on a timer rather than on
-// output, and stops when the returned function is called.
-func heartbeat(ctx context.Context) func() {
-	done := make(chan struct{})
-	go func() {
-		ticker := time.NewTicker(modelHeartbeatEvery)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-done:
-				return
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				activity.RecordHeartbeat(ctx)
-			}
-		}
-	}()
-
-	return func() { close(done) }
 }

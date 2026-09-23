@@ -55,6 +55,24 @@ type TestAIProviderResult struct {
 	Detail         string `json:"detail,omitempty"`
 }
 
+// AIProviderProbe runs a provider's test where the test runs: on a worker, in
+// the activity a person's Test request waits on.
+type AIProviderProbe interface {
+	RunTest(
+		ctx context.Context,
+		req repositories.GetAIProviderByIDRequest,
+	) (*TestAIProviderResult, error)
+}
+
+// AIProviderTester hands a provider's test to a worker and waits for its
+// outcome.
+type AIProviderTester interface {
+	Test(
+		ctx context.Context,
+		req repositories.GetAIProviderByIDRequest,
+	) (*TestAIProviderResult, error)
+}
+
 type AIProviderService interface {
 	List(
 		ctx context.Context,

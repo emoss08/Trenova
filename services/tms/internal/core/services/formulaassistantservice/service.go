@@ -35,7 +35,7 @@ type Params struct {
 	fx.In
 
 	Logger          *zap.Logger
-	Completion      serviceports.CompletionService
+	Completion      serviceports.StructuredCompleter
 	FormulaService  *formula.Service
 	TemplateService *formulatemplateservice.Service
 	RateMatrixRepo  repositories.RateMatrixRepository
@@ -44,7 +44,7 @@ type Params struct {
 
 type Service struct {
 	l               *zap.Logger
-	completion      serviceports.CompletionService
+	completion      serviceports.StructuredCompleter
 	formulaService  *formula.Service
 	templateService *formulatemplateservice.Service
 	rateMatrixRepo  repositories.RateMatrixRepository

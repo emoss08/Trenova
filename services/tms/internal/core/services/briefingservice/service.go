@@ -44,7 +44,9 @@ type Params struct {
 	Writer       *briefingwriter.Service
 	Permissions  services.PermissionEngine
 	Realtime     services.RealtimeService `optional:"true"`
-	Sources      briefingfacts.Sources
+	// Days writes a page a person asked for again, on a worker.
+	Days    services.BriefingDayWriter
+	Sources briefingfacts.Sources
 }
 
 type Service struct {
@@ -55,6 +57,7 @@ type Service struct {
 	writer       *briefingwriter.Service
 	permissions  services.PermissionEngine
 	realtime     services.RealtimeService
+	days         services.BriefingDayWriter
 	now          func() int64
 }
 
@@ -69,6 +72,7 @@ func New(p Params) *Service {
 		writer:       p.Writer,
 		permissions:  p.Permissions,
 		realtime:     p.Realtime,
+		days:         p.Days,
 		now:          timeutils.NowUnix,
 	}
 }
@@ -299,7 +303,7 @@ func (s *Service) Regenerate(
 	}
 
 	role := roleOrDefault(req.RoleKey)
-	result, err := s.WriteForDay(ctx, services.WriteBriefingRequest{
+	result, err := s.days.WriteForDay(ctx, services.WriteBriefingRequest{
 		TenantInfo:   req.TenantInfo,
 		Roles:        []briefing.RoleKey{role},
 		BriefingDate: req.BriefingDate,

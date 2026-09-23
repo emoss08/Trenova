@@ -184,7 +184,7 @@ func (fx *workflowEffects) priority() temporal.Priority {
 func (fx *workflowEffects) modelOptions() workflow.ActivityOptions {
 	return workflow.ActivityOptions{
 		StartToCloseTimeout: modelCallTimeout,
-		HeartbeatTimeout:    modelHeartbeatTimeout,
+		HeartbeatTimeout:    modelcall.HeartbeatTimeout,
 		WaitForCancellation: true,
 		Priority:            fx.priority(),
 		Summary:             "Ask the model",

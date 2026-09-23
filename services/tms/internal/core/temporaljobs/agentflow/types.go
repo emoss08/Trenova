@@ -46,17 +46,6 @@ const (
 	// dead call early is the heartbeat, not this.
 	modelCallTimeout = 10 * time.Minute
 
-	// modelHeartbeatEvery is how often a model call says it is alive, whether
-	// or not tokens are arriving. Heartbeating only on output meant a model
-	// thinking silently for longer than the heartbeat timeout was killed
-	// mid-thought.
-	modelHeartbeatEvery = 10 * time.Second
-
-	// modelHeartbeatTimeout is how long silence means the worker is gone, so
-	// the call moves to another worker quickly rather than after the full call
-	// timeout.
-	modelHeartbeatTimeout = 45 * time.Second
-
 	// modelCallAttempts bounds Temporal's retries of a model call. The router
 	// already falls through providers and waits out a busy one within each
 	// attempt, so these attempts are for what outlasts that: a worker lost

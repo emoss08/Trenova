@@ -26,6 +26,8 @@ type Params struct {
 	Encryption   *encryptionservice.Service
 	Prober       *Prober
 	AuditService services.AuditService
+	// Tester runs a test on a worker, which calls back into RunTest.
+	Tester services.AIProviderTester
 }
 
 // EndpointProber issues a live call against a configured endpoint.
@@ -43,15 +45,22 @@ type Service struct {
 	encryption *encryptionservice.Service
 	prober     EndpointProber
 	audit      services.AuditService
+	tester     services.AIProviderTester
 }
 
-func New(p Params) services.AIProviderService {
+var (
+	_ services.AIProviderService = (*Service)(nil)
+	_ services.AIProviderProbe   = (*Service)(nil)
+)
+
+func New(p Params) *Service {
 	return &Service{
 		l:          p.Logger.Named("service.aiprovider"),
 		repo:       p.Repo,
 		encryption: p.Encryption,
 		prober:     p.Prober,
 		audit:      p.AuditService,
+		tester:     p.Tester,
 	}
 }
 
@@ -205,7 +214,23 @@ func (s *Service) Delete(
 	return nil
 }
 
+// Test probes a saved provider and records the outcome on it. The probe runs
+// on a worker; the provider is read here first so one that does not exist is
+// reported as such rather than as a failed test.
 func (s *Service) Test(
+	ctx context.Context,
+	req repositories.GetAIProviderByIDRequest,
+) (*services.TestAIProviderResult, error) {
+	if _, err := s.repo.GetByID(ctx, req); err != nil {
+		return nil, err
+	}
+
+	return s.tester.Test(ctx, req)
+}
+
+// RunTest issues the live probe and records its outcome. It is what the
+// worker runs for Test.
+func (s *Service) RunTest(
 	ctx context.Context,
 	req repositories.GetAIProviderByIDRequest,
 ) (*services.TestAIProviderResult, error) {

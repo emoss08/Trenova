@@ -252,15 +252,17 @@ func (f *Failure) Err() error {
 }
 
 // Err returns the model call's failure from an error workflow code or a
-// workflow's caller was handed, as the error the call itself returned. An
-// error that carries no model failure comes back as it is.
+// workflow's caller was handed, as the error the call itself returned. A call
+// that ran out of time is context.DeadlineExceeded, as it would have been in
+// the request. An error that carries neither comes back as it is.
 func Err(err error) error {
 	var appErr *temporal.ApplicationError
-	if !errors.As(err, &appErr) || !appErr.HasDetails() {
-		return err
+	var timeout *temporal.TimeoutError
+	if (errors.As(err, &appErr) && appErr.HasDetails()) || errors.As(err, &timeout) {
+		return FailureOf(err).Err()
 	}
 
-	return FailureOf(err).Err()
+	return err
 }
 
 func (r *refusal) err() error {

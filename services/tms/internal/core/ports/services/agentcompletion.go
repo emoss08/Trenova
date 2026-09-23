@@ -195,6 +195,17 @@ type BackgroundOutcome struct {
 	FailureMessage  string
 }
 
+// StructuredCompleter answers one structured question. A service answering a
+// person's request takes this rather than the CompletionService: the call runs
+// as a workflow on a worker, retried the way the provider's answer says, and
+// the request waits for its result.
+type StructuredCompleter interface {
+	CompleteStructured(
+		ctx context.Context,
+		req *StructuredCompletionRequest,
+	) (*StructuredCompletionResult, error)
+}
+
 type CompletionService interface {
 	CompleteStructured(
 		ctx context.Context,

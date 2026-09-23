@@ -48,7 +48,7 @@ type ServiceParams struct {
 	fx.In
 
 	Logger        *zap.Logger
-	Completion    serviceports.CompletionService
+	Completion    serviceports.StructuredCompleter
 	Permissions   serviceports.PermissionEngine
 	Catalog       *filtercatalog.Catalog
 	Organizations repositories.OrganizationRepository
@@ -56,7 +56,7 @@ type ServiceParams struct {
 
 type Service struct {
 	logger        *zap.Logger
-	completion    serviceports.CompletionService
+	completion    serviceports.StructuredCompleter
 	permissions   serviceports.PermissionEngine
 	catalog       *filtercatalog.Catalog
 	organizations repositories.OrganizationRepository
