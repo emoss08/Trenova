@@ -1,14 +1,13 @@
 import { JsonViewer } from "@/components/elements/json-viewer";
 import { humanizeToolName } from "@/components/assistant/proposal-state";
 import { Button } from "@trenova/shared/components/ui/button";
-import {
-  DescriptionItem,
-  DescriptionList,
-} from "@trenova/shared/components/ui/description-list";
+import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
 import type { AssistantArtifact } from "@/types/assistant";
-import { CodeIcon } from "lucide-react";
+import { ArrowUpRightIcon, CodeIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router";
 import { entityCardFrom } from "./artifact-payloads";
 
 /** The most a card lists before the rest is behind the raw view. */
@@ -32,10 +31,21 @@ export function EntityCardArtifact({ artifact }: { artifact: AssistantArtifact }
           {humanizeToolName(card.entity)}
           {card.id !== "" ? ` · ${card.id}` : ""}
         </span>
+        {card.path !== "" && (
+          <Button
+            size="xs"
+            variant="ghost"
+            className="ml-auto h-6 px-1.5 text-2xs"
+            render={<Link to={card.path} />}
+          >
+            <ArrowUpRightIcon className="size-3" />
+            {t("Open")}
+          </Button>
+        )}
         <Button
           size="xs"
           variant="ghost"
-          className="text-muted-foreground ml-auto h-6 px-1.5 text-2xs"
+          className={cn("text-muted-foreground h-6 px-1.5 text-2xs", card.path === "" && "ml-auto")}
           onClick={() => setRaw((value) => !value)}
         >
           <CodeIcon className="size-3" />

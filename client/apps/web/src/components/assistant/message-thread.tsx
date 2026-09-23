@@ -7,6 +7,7 @@ import { useAssistantStore } from "@/stores/assistant-store";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import type {
   AssistantArtifact,
+  AssistantArtifactEvent,
   AssistantPageContext,
   AssistantPlan,
   AssistantProposal,
@@ -50,6 +51,7 @@ import { useComposerContext } from "./use-composer-context";
 import { usePageContext } from "./use-page-context";
 import { useThreadHistory } from "./use-thread-history";
 import { VirtualThread, type VirtualThreadRow } from "./virtual-thread";
+import { useFollowNavigation } from "./follow-navigation";
 
 /**
  * Space between the last message and the composer's fade, beyond the
@@ -57,6 +59,9 @@ import { VirtualThread, type VirtualThreadRow } from "./virtual-thread";
  * reads as cut off.
  */
 const COMPOSER_CLEARANCE = 16;
+
+/** A stable empty list, so a thread with no live turn does not re-run the follower each render. */
+const NO_ARTIFACTS: readonly AssistantArtifactEvent[] = [];
 
 export function MessageThread({
   thread,
@@ -69,6 +74,7 @@ export function MessageThread({
   onOpenArtifact,
   onLiveArtifact,
   onWorkingChange,
+  onNavigate,
   openingQuestion,
   onOpeningQuestionSent,
   agentAccent = false,
@@ -88,6 +94,11 @@ export function MessageThread({
   onLiveArtifact?: (id: string) => void;
   /** Told while a turn is running, for surfaces that show it outside the thread. */
   onWorkingChange?: (working: boolean) => void;
+  /**
+   * Told just before the app follows a page the assistant opened, so a
+   * surface the move takes away can hand the conversation on first.
+   */
+  onNavigate?: () => void;
   /** A question asked before this thread existed; sent once, as its first message. */
   openingQuestion?: string;
   onOpeningQuestionSent?: () => void;
@@ -242,6 +253,9 @@ export function MessageThread({
       onLiveArtifact?.(liveArtifactId);
     }
   }, [liveArtifactId, onLiveArtifact]);
+
+  // "Take me there": a page the assistant opened is followed as it arrives.
+  useFollowNavigation(turn?.artifacts ?? NO_ARTIFACTS, onNavigate);
 
   // Each turn's artifacts, by the message that produced them or, before the
   // message id was tied on, by the tool call that did.

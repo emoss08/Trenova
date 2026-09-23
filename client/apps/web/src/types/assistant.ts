@@ -60,6 +60,7 @@ export const artifactKindSchema = z.enum([
   "inbound_message",
   "run_diff",
   "document",
+  "navigation",
 ]);
 
 export const artifactStatusSchema = z.enum(["Pending", "Ready", "Failed", "Sent"]);
@@ -447,6 +448,8 @@ export const assistantArtifactEventSchema = z.object({
   status: artifactStatusSchema,
   title: z.string(),
   sourceToolCallId: z.string().optional().default(""),
+  /** Where a navigation artifact moves the app; empty for every other kind. */
+  path: z.string().optional().default(""),
 });
 
 /**

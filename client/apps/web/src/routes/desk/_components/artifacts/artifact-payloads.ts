@@ -1,3 +1,4 @@
+import { isAppPath } from "@/lib/app-path";
 import type { ReportPreviewColumn } from "@/lib/graphql/reports";
 import type { AssistantArtifact } from "@/types/assistant";
 import { toTitleCase } from "@trenova/shared/lib/utils";
@@ -331,7 +332,16 @@ export type EntityCardArtifact = {
   id: string;
   facts: EntityFact[];
   record: Record<string, unknown>;
+  /** Where the record opens in the app; empty when its kind has no page. */
+  path: string;
 };
+
+/** A link the server put on an artifact, kept only when it stays in the app. */
+function appPathOf(value: unknown): string {
+  const path = stringOf(value);
+
+  return isAppPath(path) ? path : "";
+}
 
 /** Keys every record carries that say nothing about it. */
 const STRUCTURAL_KEYS = new Set(["id", "organizationId", "businessUnitId", "version"]);
@@ -364,6 +374,27 @@ export function entityCardFrom(artifact: AssistantArtifact): EntityCardArtifact 
     id: stringOf(record.id),
     facts,
     record,
+    path: appPathOf(artifact.payload.path),
+  };
+}
+
+export type NavigationArtifact = {
+  path: string;
+  name: string;
+  location: string;
+};
+
+/** Where the assistant took the person, or null when it names nowhere in the app. */
+export function navigationFrom(artifact: AssistantArtifact): NavigationArtifact | null {
+  const path = appPathOf(artifact.payload.path);
+  if (path === "") {
+    return null;
+  }
+
+  return {
+    path,
+    name: stringOf(artifact.payload.name) || artifact.title,
+    location: stringOf(artifact.payload.location),
   };
 }
 

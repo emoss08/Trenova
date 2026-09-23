@@ -1,7 +1,9 @@
+import { isAppPath } from "@/lib/app-path";
 import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
 import { cn } from "@trenova/shared/lib/utils";
 import { Children, memo, type ComponentProps, type ReactNode } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
+import { Link, useInRouterContext } from "react-router";
 import remarkGfm from "remark-gfm";
 
 const HIGHLIGHTED_LANGS = new Set(["json", "javascript", "graphql", "plsql"]);
@@ -48,6 +50,31 @@ function CodeBlock({ className, children }: ComponentProps<"code">) {
   );
 }
 
+const LINK_CLASS = "text-foreground underline underline-offset-2";
+
+/**
+ * A link in a reply. A page of this app opens in place, the way every other
+ * link in the app does, so "open [Rate matrices](/billing/…)" keeps the
+ * person in their session; anything else opens in a new tab. An unsafe
+ * scheme never gets here: react-markdown empties it first.
+ */
+function MarkdownLink({ href, children }: ComponentProps<"a">) {
+  const inRouter = useInRouterContext();
+  if (inRouter && isAppPath(href)) {
+    return (
+      <Link to={href} className={LINK_CLASS}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
+      {children}
+    </a>
+  );
+}
+
 const components: Components = {
   p: ({ children }) => <p className="my-1.5 leading-relaxed first:mt-0 last:mb-0">{children}</p>,
   h1: ({ children }) => (
@@ -63,16 +90,7 @@ const components: Components = {
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
   em: ({ children }) => <em>{children}</em>,
-  a: ({ href, children }) => (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-foreground underline underline-offset-2"
-    >
-      {children}
-    </a>
-  ),
+  a: ({ href, children }) => <MarkdownLink href={href}>{children}</MarkdownLink>,
   blockquote: ({ children }) => (
     <blockquote className="border-border text-muted-foreground my-2 border-l-2 pl-3">
       {children}

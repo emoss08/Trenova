@@ -369,6 +369,7 @@ describe("reduceTurn artifacts", () => {
       status,
       title: "Revenue by customer",
       sourceToolCallId: "call_1",
+      path: "",
     },
   });
 

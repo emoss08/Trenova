@@ -20,6 +20,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { DocumentArtifact } from "./document-artifact";
 import { EmailDraftArtifact } from "./email-draft-artifact";
 import { EntityCardArtifact } from "./entity-card-artifact";
+import { NavigationArtifact } from "./navigation-artifact";
 import { PlanArtifact } from "./plan-artifact";
 import { ReportPreviewArtifact } from "./report-preview-artifact";
 import { ReportRunArtifact } from "./report-run-artifact";
@@ -127,6 +128,8 @@ function ArtifactBody({ artifact }: { artifact: AssistantArtifact }) {
       return <RunDiffArtifact artifact={artifact} />;
     case "document":
       return <DocumentArtifact artifact={artifact} />;
+    case "navigation":
+      return <NavigationArtifact artifact={artifact} />;
     default:
       return (
         <p className="text-muted-foreground p-4 text-sm">
@@ -307,6 +310,7 @@ export function isRenderableArtifactKind(kind: AssistantArtifact["kind"]): boole
       "rate_explanation",
       "run_diff",
       "document",
+      "navigation",
     ].includes(kind)
   );
 }

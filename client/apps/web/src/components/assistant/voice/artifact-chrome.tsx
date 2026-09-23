@@ -5,6 +5,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ArtifactKind, ArtifactStatus } from "@/types/assistant";
 import {
+  CompassIcon,
   FileTextIcon,
   GitCompareArrowsIcon,
   IdCardIcon,
@@ -36,6 +37,7 @@ export const ARTIFACT_KINDS: Record<ArtifactKind, { label: string; icon: LucideI
   inbound_message: { label: "Message", icon: InboxIcon },
   run_diff: { label: "Changes", icon: GitCompareArrowsIcon },
   document: { label: "Document", icon: ScrollTextIcon },
+  navigation: { label: "Page", icon: CompassIcon },
 };
 
 /** Where an artifact is, as a tone: severity, not category. */
