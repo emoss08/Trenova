@@ -23,7 +23,24 @@ const (
 // false positive the other rules out.
 //
 // "on" is deliberately absent — "reason" ends in it.
-var dateKeySuffixes = []string{"at", "date", "expiry", "expires", "time"}
+var dateKeySuffixes = []string{"at", "date", "expiry", "expires"}
+
+// instantKeySuffixes are the field-name endings of an instant whose hour
+// matters. A delivery window read as a date alone told the model the stop had
+// no window at all, and it said so.
+var instantKeySuffixes = []string{"time", "windowstart", "windowend", "arrival", "departure", "eta"}
+
+// Keys that say nothing to the model about the record in front of it. The
+// tenant is the one the conversation is in, and a nested record's version and
+// audit stamps repeat on every commodity, stop and charge of a shipment; the
+// get_shipment the Dispatch desk read carried twenty of each.
+//
+// A record's own version stays at the top level, where a write that checks it
+// reads it from.
+var (
+	tenantKeys      = []string{"organizationId", "businessUnitId"}
+	nestedNoiseKeys = []string{"version", "createdAt", "updatedAt"}
+)
 
 // humanizeDates rewrites every epoch integer a tool returned into a date a
 // reader can act on, before the result reaches the model.
@@ -60,12 +77,44 @@ func humanizeDates(value any, now int64, timezone string) any {
 	}
 }
 
+// trimRecord takes out what a record carries for the database rather than for
+// the reader: the tenant everywhere, and the version and audit stamps of every
+// record nested inside another. depth is zero for the result itself and for
+// each row of a top-level list.
+func trimRecord(value any, depth int) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		for _, key := range tenantKeys {
+			delete(typed, key)
+		}
+		if depth > 0 {
+			for _, key := range nestedNoiseKeys {
+				delete(typed, key)
+			}
+		}
+		for key, nested := range typed {
+			typed[key] = trimRecord(nested, depth+1)
+		}
+
+		return typed
+	case []any:
+		for i, nested := range typed {
+			typed[i] = trimRecord(nested, depth)
+		}
+
+		return typed
+	default:
+		return value
+	}
+}
+
 // describeInstant renders one instant as the date it falls on in the
 // organization's zone. The zone matters at the edges, which are exactly where
 // compliance questions live: a card expiring at 00:30 local time is tomorrow's
 // problem to the person asking, whatever a UTC clock says.
 func describeInstant(key string, value any, now int64, timezone string) (string, bool) {
-	if !isDateKey(key) {
+	withClock := hasKeySuffix(key, instantKeySuffixes)
+	if !withClock && !hasKeySuffix(key, dateKeySuffixes) {
 		return "", false
 	}
 
@@ -81,12 +130,16 @@ func describeInstant(key string, value any, now int64, timezone string) (string,
 		return "", false
 	}
 
+	if withClock {
+		return timeutils.DescribeUnixInstantIn(seconds, now, timezone), true
+	}
+
 	return timeutils.DescribeUnixDateIn(seconds, now, timezone), true
 }
 
-func isDateKey(key string) bool {
+func hasKeySuffix(key string, suffixes []string) bool {
 	lowered := strings.ToLower(key)
-	for _, suffix := range dateKeySuffixes {
+	for _, suffix := range suffixes {
 		if strings.HasSuffix(lowered, suffix) {
 			return true
 		}
@@ -142,7 +195,7 @@ func encodeToolResult(data any, now int64, timezone string) (string, error) {
 		return "", err
 	}
 
-	humanized, err := sonic.ConfigStd.Marshal(humanizeDates(document, now, timezone))
+	humanized, err := sonic.ConfigStd.Marshal(humanizeDates(trimRecord(document, 0), now, timezone))
 	if err != nil {
 		return "", err
 	}

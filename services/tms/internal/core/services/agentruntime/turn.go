@@ -28,7 +28,10 @@ type Turn struct {
 	repeats   *repeatGuard
 	counts    *ordinals
 	questions map[string]struct{}
-	result    *serviceports.RunResult
+	// callIDs is every tool call id the conversation holds, so a provider
+	// that reuses one is given a fresh id rather than a clash.
+	callIDs map[string]struct{}
+	result  *serviceports.RunResult
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -42,7 +45,13 @@ type TurnEffects interface {
 	// Find answers find_tools and loads what it found into the turn.
 	Find(t *Turn, arguments map[string]any) string
 	Emit(event serviceports.StreamEvent)
-	Observe(observation serviceports.ToolObservation)
+	// Observe hands a finished call to whatever shows it to the person, and
+	// returns the outcome with what it showed folded into what the model
+	// reads. A published document is kept here.
+	Observe(t *Turn, call serviceports.ToolCall, outcome ToolOutcome) ToolOutcome
+	// NewCallID mints a tool call id, for a provider that gave none or reused
+	// one. Minting is random, so workflow code has it recorded.
+	NewCallID() string
 }
 
 // ModelReply is one completion as the loop sees it.
@@ -66,6 +75,9 @@ type ToolOutcome struct {
 	Content string                      `json:"content"`
 	Failed  bool                        `json:"failed"`
 	Action  *serviceports.PendingAction `json:"action,omitempty"`
+	// Publishes marks a document still to be kept. What the model reads is
+	// written once it has been.
+	Publishes bool `json:"publishes,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -73,11 +85,23 @@ type ToolOutcome struct {
 }
 
 func (o toolOutcome) exported() ToolOutcome {
-	return ToolOutcome{Content: o.content, Failed: o.failed, Action: o.action, Data: o.data}
+	return ToolOutcome{
+		Content:   o.content,
+		Failed:    o.failed,
+		Action:    o.action,
+		Publishes: o.publishes,
+		Data:      o.data,
+	}
 }
 
 func (o ToolOutcome) internal() toolOutcome {
-	return toolOutcome{content: o.Content, failed: o.Failed, action: o.Action, data: o.Data}
+	return toolOutcome{
+		content:   o.Content,
+		failed:    o.Failed,
+		action:    o.Action,
+		publishes: o.Publishes,
+		data:      o.Data,
+	}
 }
 
 // Request is what the turn was asked. Effects read it; the loop does not
@@ -98,6 +122,7 @@ type TurnState struct {
 	Failures  map[string]string      `json:"failures,omitempty"`
 	Ordinals  map[string]int         `json:"ordinals,omitempty"`
 	Questions []string               `json:"questions,omitempty"`
+	CallIDs   []string               `json:"callIds,omitempty"`
 	Result    serviceports.RunResult `json:"result"`
 }
 
@@ -116,6 +141,7 @@ func (t *Turn) State() TurnState {
 	// Sorted, because a map ranges in a different order every time and this
 	// may be built in workflow code, which has to replay identically.
 	questions := slices.Sorted(maps.Keys(t.questions))
+	callIDs := slices.Sorted(maps.Keys(t.callIDs))
 
 	return TurnState{
 		Budget:    t.budget,
@@ -125,6 +151,7 @@ func (t *Turn) State() TurnState {
 		Failures:  maps.Clone(t.repeats.failures),
 		Ordinals:  maps.Clone(t.counts.seen),
 		Questions: questions,
+		CallIDs:   callIDs,
 		Result:    *t.result,
 	}
 }
@@ -150,6 +177,11 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 		questions[question] = struct{}{}
 	}
 
+	callIDs := make(map[string]struct{}, len(state.CallIDs))
+	for _, id := range state.CallIDs {
+		callIDs[id] = struct{}{}
+	}
+
 	failures := state.Failures
 	if failures == nil {
 		failures = make(map[string]string, 4)
@@ -169,6 +201,7 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 		repeats:   &repeatGuard{failures: failures},
 		counts:    &ordinals{seen: seen},
 		questions: questions,
+		callIDs:   callIDs,
 		result:    &result,
 	}
 }
@@ -219,8 +252,10 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		input:      req.Input,
 		history:    req.History,
 		unattended: req.Unattended,
+		publishes:  req.KeepsDocuments(),
 	})
 	runtimeContext.ToolsDisclosed = tools.disclosed
+	runtimeContext.Artifacts = tools.offers(publishArtifactName)
 	// The prompt describes the set the person may use, not the agent's whole
 	// configuration: a tool named there and refused when called reads as
 	// the system refusing rather than the person lacking the right.
@@ -245,6 +280,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		repeats:   repeats,
 		counts:    counts,
 		questions: askedQuestions(req.History),
+		callIDs:   usedCallIDs(req.History),
 		result: &serviceports.RunResult{
 			Messages: []conversation.Message{{
 				Role:    conversation.RoleUser,
@@ -343,10 +379,36 @@ func (fx *localEffects) Find(t *Turn, arguments map[string]any) string {
 
 func (fx *localEffects) Emit(event serviceports.StreamEvent) { fx.emit(event) }
 
-func (fx *localEffects) Observe(observation serviceports.ToolObservation) {
-	if fx.observer != nil {
-		fx.observer(observation)
-	}
+func (fx *localEffects) Observe(
+	_ *Turn,
+	call serviceports.ToolCall,
+	outcome ToolOutcome,
+) ToolOutcome {
+	return fx.s.observe(fx.observer, call, outcome.internal()).exported()
+}
+
+func (*localEffects) NewCallID() string { return NewCallID() }
+
+// ObserveCall hands a finished call to observe and folds what it showed the
+// person into what the model reads. It is what a durable tool activity runs
+// after the call, where the call's raw result exists.
+func (s *Service) ObserveCall(
+	observe serviceports.ToolObserver,
+	call serviceports.ToolCall,
+	outcome ToolOutcome,
+) ToolOutcome {
+	return s.observe(observe, call, outcome.internal()).exported()
+}
+
+// PublishStep keeps a document a publish call asked for, and says what the
+// model reads about it. A durable turn runs it in an activity: the document is
+// read again from the call, because what the loop parsed stays in workflow
+// code.
+func (s *Service) PublishStep(
+	observe serviceports.ToolObserver,
+	call serviceports.ToolCall,
+) ToolOutcome {
+	return s.observe(observe, call, publishOutcome(call.Arguments)).exported()
 }
 
 func deltaEvent(text string) serviceports.StreamEvent {

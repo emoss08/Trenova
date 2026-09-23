@@ -1,7 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { runTurn, turnFailureDetail } from "./follow-turn";
+import { followTurn, runTurn, turnFailureDetail } from "./follow-turn";
+import type { ActiveTurn } from "@/services/assistant";
 import type {
   AssistantPageContext,
   AssistantStreamEvent,
@@ -36,8 +37,8 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
 
   const [turn, setTurn] = useState<TurnState | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  // The turn a worker is producing, when one is. Stopping needs it: the work
-  // is not on this request, so aborting the reader stops nothing.
+  // The turn a worker is producing, when one is. Stopping needs it: with the
+  // work off this request, aborting the reader stops nothing.
   const turnIdRef = useRef<string | null>(null);
   const lastContextRef = useRef<AssistantPageContext | null>(null);
   // The model the last send asked for, so a retry asks the same one rather
@@ -165,12 +166,16 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     [absorbTurn, t],
   );
 
-  const send = useCallback(
+  /**
+   * Follows one turn from its first event to the saved thread: folds its
+   * events into the view, and hands over to the refetched history once it
+   * ends. A question the person asks and a reply they rejoin are the same
+   * thing from here on; only how the events arrive differs.
+   */
+  const follow = useCallback(
     async (
-      content: string,
-      context?: AssistantPageContext | null,
-      providerId = "",
-      extras: TurnContext = {},
+      initial: TurnState,
+      run: (onEvent: (event: AssistantStreamEvent) => void, signal: AbortSignal) => Promise<void>,
     ) => {
       // Sending over a reply still arriving cuts it off. The server keeps
       // what had run by then, so the thread is refetched to show it rather
@@ -191,49 +196,24 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         }
       };
 
-      const pageContext = context === undefined ? (getContext?.() ?? null) : context;
-      lastContextRef.current = pageContext;
-      lastProviderRef.current = providerId;
-      lastContextExtrasRef.current = extras;
-
       let terminal = false;
-      let finished = false;
+      let ended = false;
       let done: SendMessageResult | null = null;
-      setTurn(initialTurnState(content, pageContext, extras));
+      setTurn(initial);
 
       const onEvent = (event: AssistantStreamEvent) => {
         setTurn((state) => (state ? reduceTurn(state, event) : state));
         if (event.event === "done") {
           terminal = true;
-          finished = true;
-          // Null when the server rebuilt the ending from the turn's record:
-          // the saved conversation has the answer, and settling refetches it.
+          ended = true;
           done = event.data;
         } else if (event.event === "refused" || event.event === "error") {
           terminal = true;
         }
       };
 
-      turnIdRef.current = null;
       try {
-        const attachments = (extras.attachments ?? []).map((item) => item.documentId);
-        await runTurn(
-          () =>
-            apiService.assistantService.startTurn(threadId, content, {
-              context: pageContext,
-              providerId,
-              attachmentDocumentIds: attachments,
-              mentions: extras.mentions ?? [],
-              followUpProposalId: extras.followUpProposalId,
-            }),
-          {
-            signal: controller.signal,
-            onTurnStarted: (started) => {
-              turnIdRef.current = started.turnId;
-            },
-            onEvent,
-          },
-        );
+        await run(onEvent, controller.signal);
       } catch (error) {
         if (controller.signal.aborted) {
           return;
@@ -258,7 +238,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         return;
       }
 
-      if (finished) {
+      // An ending rebuilt from the turn's record carries no result; settling
+      // on it refetches the conversation, which holds what was saved.
+      if (ended) {
         await settle(done);
       } else {
         // A refusal is complete in itself and has been saved. A server error
@@ -277,14 +259,106 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         });
       }
     },
-    [fail, getContext, refreshThread, settle, t, threadId],
+    [fail, refreshThread, settle, t],
+  );
+
+  /**
+   * Follows a reply the server is producing for this conversation: one this
+   * page lost when it was closed or reloaded, or one the application started,
+   * such as the agent reporting what came of a decision.
+   */
+  const followActive = useCallback(
+    async (active: ActiveTurn) => {
+      const followUp = active.origin === "DecisionFollowUp";
+      turnIdRef.current = active.id;
+      await follow(
+        initialTurnState(followUp ? "" : (active.input ?? ""), null, { followUp }),
+        (onEvent, signal) => followTurn(active.id, { signal, onEvent }),
+      );
+    },
+    [follow],
+  );
+
+  /** The reply the server is producing for this conversation, if any. */
+  const activeTurn = useCallback(async (): Promise<ActiveTurn | null> => {
+    try {
+      return await apiService.assistantService.activeTurn(threadId);
+    } catch {
+      return null;
+    }
+  }, [threadId]);
+
+  const following = useCallback(
+    () => abortRef.current !== null && !abortRef.current.signal.aborted,
+    [],
+  );
+
+  /**
+   * Picks up the reply the conversation is producing, when this view is not
+   * already following one. Nothing happens when the conversation is quiet.
+   */
+  const rejoin = useCallback(async () => {
+    if (following()) {
+      return;
+    }
+    const active = await activeTurn();
+    // A question sent while the lookup was out owns the view now.
+    if (active === null || following()) {
+      return;
+    }
+    await followActive(active);
+  }, [activeTurn, followActive, following]);
+
+  const send = useCallback(
+    async (
+      content: string,
+      context?: AssistantPageContext | null,
+      providerId = "",
+      extras: TurnContext = {},
+    ) => {
+      // A reply the server is producing that this view has not picked up — the
+      // agent answering a decision made elsewhere, most often — is followed to
+      // its end first. Asking over it used to fail with "already working on a
+      // reply" while nothing on screen said anything was.
+      if (!following()) {
+        const running = await activeTurn();
+        if (running !== null && !following()) {
+          await followActive(running);
+        }
+      }
+
+      const pageContext = context === undefined ? (getContext?.() ?? null) : context;
+      lastContextRef.current = pageContext;
+      lastProviderRef.current = providerId;
+      lastContextExtrasRef.current = extras;
+      turnIdRef.current = null;
+
+      const attachments = (extras.attachments ?? []).map((item) => item.documentId);
+      await follow(initialTurnState(content, pageContext, extras), (onEvent, signal) =>
+        runTurn(
+          () =>
+            apiService.assistantService.startTurn(threadId, content, {
+              context: pageContext,
+              providerId,
+              attachmentDocumentIds: attachments,
+              mentions: extras.mentions ?? [],
+            }),
+          {
+            signal,
+            onTurnStarted: (started) => {
+              turnIdRef.current = started.turnId;
+            },
+            onEvent,
+          },
+        ),
+      );
+    },
+    [activeTurn, follow, followActive, following, getContext, threadId],
   );
 
   const stop = useCallback(() => {
-    // A turn on a worker has to be told. Aborting the reader used to stop the
-    // model, because the model was running on the request being aborted; with
-    // the work moved off it, abandoning the reader leaves the turn running and
-    // billing for an answer nobody will read.
+    // A turn on a worker has to be told: abandoning the reader leaves the turn
+    // running and billing for an answer nobody will read.
     const running = turnIdRef.current;
     if (running !== null) {
       turnIdRef.current = null;
@@ -308,6 +382,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     turn,
     isActive: isTurnActive(turn),
     send,
+    rejoin,
     stop,
     dismiss,
     retry: turn

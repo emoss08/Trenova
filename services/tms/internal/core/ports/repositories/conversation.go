@@ -16,6 +16,11 @@ type GetThreadRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+type GetThreadOwnedRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type ListThreadsRequest struct {
 	UserID     pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -66,6 +71,11 @@ type DeleteStaleThreadsRequest struct {
 type ConversationRepository interface {
 	CreateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	GetThread(ctx context.Context, req GetThreadRequest) (*conversation.Thread, error)
+	// GetThreadOwned reads a thread within a tenant whoever owns it, so the
+	// application can act in a conversation on its owner's behalf. It is
+	// never reached from a request: a person reads threads through GetThread,
+	// scoped to themselves.
+	GetThreadOwned(ctx context.Context, req GetThreadOwnedRequest) (*conversation.Thread, error)
 	ListThreads(
 		ctx context.Context,
 		req ListThreadsRequest,

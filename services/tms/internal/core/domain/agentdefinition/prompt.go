@@ -124,6 +124,9 @@ type RuntimeContext struct {
 	// has not decided yet. The model is told so it points them at the card
 	// rather than proposing the same change again.
 	PendingProposals []PendingProposal
+	// Artifacts says the conversation keeps what the turn produces beside it:
+	// lists as tables, records as cards, and documents the model publishes.
+	Artifacts bool
 }
 
 // PendingProposal is one undecided proposal as the prompt names it.
@@ -176,11 +179,24 @@ func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
 		builder.WriteString(section)
 	}
 
+	if rc.Artifacts && d.OutputMode != OutputReport {
+		builder.WriteString("\n\n")
+		builder.WriteString(artifactSection)
+	}
+
 	builder.WriteString("\n\n")
 	builder.WriteString(d.buildOutputSection())
 
 	return builder.String()
 }
+
+// artifactSection tells the model what the person already sees. Without it a
+// model that listed twenty-five shipments reprinted all of them as a markdown
+// table under the table the person was looking at, and a model asked to
+// "publish the details in an artifact" said it had no way to.
+const artifactSection = `## Artifacts
+This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not copy those rows or fields into your reply; answer with what matters (the count, the few rows that answer the question, what needs attention) and point to it.
+When the person asks for a write-up, a summary, a brief, a handover or an artifact, or when your answer would run past a screen, publish it with publish_artifact and reply in two or three sentences. Do this without being asked. To change a document you published, publish it again with its artifactId.`
 
 func (d *Definition) buildGuardrailSection() string {
 	rules := make([]string, 0, len(d.Guardrails))

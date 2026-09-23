@@ -118,9 +118,52 @@ func (fx *workflowEffects) Emit(event serviceports.StreamEvent) {
 	}
 }
 
-// Observe is a no-op here: a durable run observes each tool where the tool
-// ran, in its activity, because only there does the raw result exist.
-func (*workflowEffects) Observe(serviceports.ToolObservation) {}
+// Observe keeps a published document, in an activity of its own. Any other
+// call was observed where it ran, in its activity, because only there does its
+// raw result exist, and what it showed is already in the outcome.
+func (fx *workflowEffects) Observe(
+	_ *agentruntime.Turn,
+	call serviceports.ToolCall,
+	outcome agentruntime.ToolOutcome,
+) agentruntime.ToolOutcome {
+	if !outcome.Publishes {
+		return outcome
+	}
+
+	var a *Activities
+	ctx := workflow.WithActivityOptions(fx.ctx, fx.publishOptions())
+
+	var result ToolResult
+	err := workflow.ExecuteActivity(ctx, a.PublishArtifactActivity, &PublishInput{
+		Run:  fx.run,
+		Call: call,
+	}).Get(ctx, &result)
+	if err != nil {
+		return agentruntime.ToolOutcome{
+			Content: fmt.Sprintf("Tool %q could not keep the document just now. "+
+				"Put the text in your reply instead.", call.Name),
+			Failed: true,
+		}
+	}
+
+	fx.outcome.Artifacts = append(fx.outcome.Artifacts, result.Artifacts...)
+
+	return result.Outcome
+}
+
+// NewCallID mints a call id once and records it, so a replay reads back the
+// same id rather than minting another.
+func (fx *workflowEffects) NewCallID() string {
+	var id string
+	encoded := workflow.SideEffect(fx.ctx, func(workflow.Context) any {
+		return agentruntime.NewCallID()
+	})
+	if err := encoded.Get(&id); err != nil {
+		workflow.GetLogger(fx.ctx).Error("could not read a recorded call id", "error", err)
+	}
+
+	return id
+}
 
 func (fx *workflowEffects) priority() temporal.Priority {
 	priority := temporal.Priority{PriorityKey: fx.run.PriorityKey}
@@ -166,6 +209,15 @@ func (fx *workflowEffects) toolOptions(name string) workflow.ActivityOptions {
 			MaximumAttempts:        3,
 			NonRetryableErrorTypes: []string{ErrTypeUnknownTool, ErrTypeBadToolInput},
 		},
+	}
+}
+
+func (fx *workflowEffects) publishOptions() workflow.ActivityOptions {
+	return workflow.ActivityOptions{
+		StartToCloseTimeout: findTimeout,
+		Priority:            fx.priority(),
+		Summary:             "Publish a document",
+		RetryPolicy:         &temporal.RetryPolicy{MaximumAttempts: 3},
 	}
 }
 

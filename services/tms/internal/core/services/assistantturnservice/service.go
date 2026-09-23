@@ -58,6 +58,10 @@ type StartRequest struct {
 	ThreadID   pulid.ID
 	UserID     pulid.ID
 	TenantInfo pagination.TenantInfo
+	// Origin and Input say what the turn answers. An empty origin is a
+	// person's question.
+	Origin conversation.AssistantTurnOrigin
+	Input  string
 }
 
 // Start records that a conversation is about to produce a reply.
@@ -74,6 +78,8 @@ func (s *Service) Start(
 		BusinessUnitID: req.TenantInfo.BuID,
 		ThreadID:       req.ThreadID,
 		UserID:         req.UserID,
+		Origin:         req.Origin,
+		Input:          req.Input,
 		Status:         conversation.AssistantTurnStatusRunning,
 	})
 	if err != nil {
@@ -226,8 +232,19 @@ func (s *Service) Stop(
 	}
 
 	if turn.WorkflowID == "" {
-		// Nothing was ever handed to a worker: the start failed and closed
-		// the record, or is closing it now. There is no execution to cancel.
+		// Recorded but never handed to a worker, so there is no execution to
+		// cancel. Closing the record is what frees the conversation's one
+		// live slot for the next question.
+		err := s.turns.Complete(ctx, repositories.CompleteAssistantTurnRequest{
+			ID:         turn.ID,
+			TenantInfo: tenantOf(turn),
+			Status:     conversation.AssistantTurnStatusStopped,
+		})
+		if err != nil {
+			s.metrics.RecordTurnStopped("error")
+
+			return fmt.Errorf("stop this reply: %w", err)
+		}
 		s.metrics.RecordTurnStopped("no_execution")
 
 		return nil

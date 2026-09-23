@@ -1,5 +1,5 @@
 import type { AssistantMessage, AssistantPlan, AssistantProposal } from "@/types/assistant";
-import { classifyProposal, type ProposalPresentation } from "./proposal-state";
+import { classifyProposal, turnEndByMessage, type ProposalPresentation } from "./proposal-state";
 
 /**
  * What a plan card should show. The states are the proposal card's, because
@@ -93,7 +93,7 @@ export function groupPlans(
   proposals: readonly AssistantProposal[],
   messages: readonly AssistantMessage[],
 ): { byMessage: Map<string, PlanGroup[]>; orphans: PlanGroup[]; standalone: AssistantProposal[] } {
-  const knownMessageIds = new Set(messages.map((message) => message.id));
+  const ends = turnEndByMessage(messages);
   const stepsByPlan = new Map<string, AssistantProposal[]>();
   for (const plan of plans) {
     stepsByPlan.set(plan.id, []);
@@ -114,8 +114,8 @@ export function groupPlans(
   for (const plan of plans) {
     const steps = (stepsByPlan.get(plan.id) ?? []).sort((a, b) => a.planStep - b.planStep);
     const group: PlanGroup = { plan, steps };
-    const anchor = steps[0]?.sourceMessageId ?? "";
-    if (anchor === "" || !knownMessageIds.has(anchor)) {
+    const anchor = ends.get(steps[0]?.sourceMessageId ?? "") ?? "";
+    if (anchor === "") {
       orphans.push(group);
       continue;
     }

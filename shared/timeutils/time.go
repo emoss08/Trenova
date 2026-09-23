@@ -3,6 +3,7 @@ package timeutils
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -162,4 +163,15 @@ func DescribeUnixDateIn(ts, now int64, timezone string) string {
 	default:
 		return fmt.Sprintf("%s (%d days ago)", date, -days)
 	}
+}
+
+// DescribeUnixInstantIn is DescribeUnixDateIn with the time of day, for an
+// instant whose hour matters: an appointment window, an arrival, a departure.
+// "2026-09-24 14:00 CDT (in 2 days)" keeps the date first, so the value still
+// reads back into a date filter.
+func DescribeUnixInstantIn(ts, now int64, timezone string) string {
+	clock := time.Unix(ts, 0).In(LoadLocation(timezone)).Format("15:04 MST")
+	date, distance, _ := strings.Cut(DescribeUnixDateIn(ts, now, timezone), " ")
+
+	return date + " " + clock + " " + distance
 }

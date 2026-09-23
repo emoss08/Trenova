@@ -67,6 +67,9 @@ type SendMessageRequest struct {
 	// is a note the service writes from the decision, so the agent reports
 	// what happened rather than leaving an approval unanswered.
 	FollowUpProposalID pulid.ID
+	// FollowUpPlanID is FollowUpProposalID for a plan: the turn that follows
+	// its decision says how far its steps got.
+	FollowUpPlanID pulid.ID
 }
 
 // AskRequest is a quick question from anywhere in the application. It runs
@@ -434,4 +437,23 @@ type AssistantProviderOption struct {
 	// Trusted is shown because it decides whether this choice can serve work
 	// that reaches financial records.
 	Trusted bool `json:"trusted"`
+}
+
+// DecisionFollowUpRequest names a decision on a proposal or a plan an agent
+// raised. RunID is the run that raised it, which says whether it came from a
+// conversation.
+type DecisionFollowUpRequest struct {
+	TenantInfo pagination.TenantInfo
+	RunID      pulid.ID
+	ProposalID pulid.ID
+	PlanID     pulid.ID
+}
+
+// DecisionFollowUps has the agent report what came of a decision, in the
+// conversation that raised it, wherever the decision was made: the card in
+// the thread, the Desk's decisions, AI Control or a plan. It never fails the
+// decision; a follow-up that cannot start is logged, and the outcome still
+// reaches the agent on the conversation's next turn.
+type DecisionFollowUps interface {
+	FollowUp(ctx context.Context, req DecisionFollowUpRequest)
 }

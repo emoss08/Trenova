@@ -95,7 +95,43 @@ export function isDecidable(proposal: AssistantProposal): boolean {
 }
 
 /**
- * Groups proposals under the assistant message that asked for them.
+ * The last assistant message of the turn each message belongs to.
+ *
+ * A turn that proposes a change ends in words about it: "I've proposed a new
+ * report... approve it and I'll run it". The call that raised the proposal
+ * came earlier in the turn, so a card placed under that call sat above the
+ * sentence asking the person to decide it. Cards anchor to the end of their
+ * turn instead, under the words that introduce them.
+ */
+export function turnEndByMessage(messages: readonly AssistantMessage[]): Map<string, string> {
+  const ends = new Map<string, string>();
+  let turn: string[] = [];
+  let last = "";
+  const close = () => {
+    for (const id of turn) {
+      ends.set(id, last);
+    }
+    turn = [];
+    last = "";
+  };
+
+  for (const message of messages) {
+    if (message.role === "User") {
+      close();
+      continue;
+    }
+    if (message.role === "Assistant") {
+      turn.push(message.id);
+      last = message.id;
+    }
+  }
+  close();
+
+  return ends;
+}
+
+/**
+ * Groups proposals under the end of the turn that asked for them.
  *
  * A proposal whose source message is missing from the thread is not dropped: it
  * comes back under `orphans` and is rendered at the end, because a pending write
@@ -107,21 +143,22 @@ export function groupProposalsByMessage(
   proposals: readonly AssistantProposal[],
   messages: readonly AssistantMessage[],
 ): { byMessage: Map<string, AssistantProposal[]>; orphans: AssistantProposal[] } {
-  const knownMessageIds = new Set(messages.map((message) => message.id));
+  const ends = turnEndByMessage(messages);
   const byMessage = new Map<string, AssistantProposal[]>();
   const orphans: AssistantProposal[] = [];
 
   for (const proposal of proposals) {
-    if (proposal.sourceMessageId === "" || !knownMessageIds.has(proposal.sourceMessageId)) {
+    const anchor = ends.get(proposal.sourceMessageId);
+    if (proposal.sourceMessageId === "" || anchor === undefined) {
       orphans.push(proposal);
       continue;
     }
 
-    const existing = byMessage.get(proposal.sourceMessageId);
+    const existing = byMessage.get(anchor);
     if (existing) {
       existing.push(proposal);
     } else {
-      byMessage.set(proposal.sourceMessageId, [proposal]);
+      byMessage.set(anchor, [proposal]);
     }
   }
 
@@ -213,4 +250,30 @@ export function pollIntervalFor(
     );
 
   return running ? RUNNING_POLL_INTERVAL_MS : false;
+}
+
+/**
+ * Which of a thread's proposals and plans have been decided, and to what, as
+ * one comparable value.
+ *
+ * The thread watches it to learn that something was decided somewhere else —
+ * the Desk's decisions, AI Control, another tab — which is when the server
+ * starts the turn reporting it and this view should pick that turn up. It
+ * changes only when a decision lands or an outcome follows one; a list that
+ * refetches unchanged leaves it alone.
+ */
+export function decidedSignature(
+  proposals: readonly AssistantProposal[],
+  plans: readonly AssistantPlan[],
+): string {
+  const decided = [
+    ...proposals
+      .filter((proposal) => proposal.status !== "Pending")
+      .map((proposal) => `p:${proposal.id}:${proposal.status}`),
+    ...plans
+      .filter((plan) => plan.status !== "Pending")
+      .map((plan) => `l:${plan.id}:${plan.status}`),
+  ];
+
+  return decided.sort().join("|");
 }

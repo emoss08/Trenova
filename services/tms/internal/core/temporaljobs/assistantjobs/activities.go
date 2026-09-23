@@ -411,6 +411,6 @@ func (o *artifactObserver) ObserveTool(
 	run agentflow.RunContext,
 	observation serviceports.ToolObservation,
 	emit serviceports.AssistantStreamEmitter,
-) []*assistantartifact.Artifact {
+) (*serviceports.ShownArtifact, []*assistantartifact.Artifact, error) {
 	return o.assistant.ObserveTool(ctx, run.ThreadID, run.Actor, observation, emit)
 }

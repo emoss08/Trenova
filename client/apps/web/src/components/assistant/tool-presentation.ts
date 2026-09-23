@@ -58,6 +58,7 @@ const TOOL_TITLES: Record<string, string> = {
   list_location_categories: "List location categories",
   ask_user: "Ask you to choose",
   find_tools: "Look for a tool",
+  publish_artifact: "Publish a document",
   list_reports: "Browse reports",
   run_report: "Start report",
   get_report_run: "Check report run",
@@ -133,6 +134,7 @@ const SUBJECT_KEYS = [
   "id",
   "number",
   "name",
+  "title",
 ];
 
 export type ToolCallDescription = {

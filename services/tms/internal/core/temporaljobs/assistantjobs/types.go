@@ -76,6 +76,7 @@ func (p *AssistantTurnPayload) sendRequest() *serviceports.SendMessageRequest {
 		AttachmentDocumentIDs: p.Request.AttachmentDocumentIDs,
 		Mentions:              p.Request.Mentions,
 		FollowUpProposalID:    p.Request.FollowUpProposalID,
+		FollowUpPlanID:        p.Request.FollowUpPlanID,
 	}
 }
 
@@ -87,6 +88,7 @@ type AssistantTurnRequest struct {
 	PreferredProviderID   pulid.ID           `json:"preferredProviderId,omitempty"`
 	ProviderChosen        bool               `json:"providerChosen"`
 	FollowUpProposalID    pulid.ID           `json:"followUpProposalId,omitempty"`
+	FollowUpPlanID        pulid.ID           `json:"followUpPlanId,omitempty"`
 }
 
 // AssistantTurnResult is what the turn came to.

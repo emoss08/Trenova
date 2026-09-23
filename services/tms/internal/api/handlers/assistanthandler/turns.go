@@ -8,15 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/gin-gonic/gin"
-	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/zap"
@@ -263,6 +259,8 @@ func (h *Handler) askWorker(
 			ThreadID:   threadID,
 			UserID:     authCtx.UserID,
 			TenantInfo: tenantFromAuthContext(authCtx),
+			Origin:     conversation.AssistantTurnOriginPerson,
+			Input:      body.Content,
 		},
 		func(turn *conversation.AssistantTurn) (string, error) {
 			started, err := h.startWorkflow(c, turn, authCtx, body)
@@ -294,39 +292,19 @@ func (h *Handler) startWorkflow(
 ) (client.WorkflowRun, error) {
 	providerID, providerChosen := body.provider()
 
-	return h.workflows.StartWorkflow(c.Request.Context(), client.StartWorkflowOptions{
-		ID:        assistantjobs.WorkflowIDFor(turn.ID),
-		TaskQueue: temporaltype.TaskQueueAgentChat.String(),
-		// One turn, one execution. A duplicate start is a bug rather than a
-		// second question, and rejecting it is how it stays visible.
-		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
-		StaticSummary:         "Assistant turn",
-		// Somebody is watching this one. Fairness by organization keeps one
-		// busy tenant from queueing everybody else's replies behind its own.
-		Priority: temporal.Priority{
-			PriorityKey: agentflow.PriorityInteractive,
-			FairnessKey: authCtx.OrganizationID.String(),
-		},
-	}, assistantjobs.AssistantTurnWorkflowName, &assistantjobs.AssistantTurnPayload{
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: authCtx.OrganizationID,
-			BusinessUnitID: authCtx.BusinessUnitID,
-			UserID:         authCtx.UserID,
-			Timestamp:      timeutils.NowUnix(),
-		},
-		TurnID:   turn.ID,
-		ThreadID: turn.ThreadID,
-		Actor:    requestActorFromAuthContext(authCtx),
-		Content:  body.Content,
-		Request: assistantjobs.AssistantTurnRequest{
-			Page:                  body.page(),
-			Mentions:              body.Mentions,
-			AttachmentDocumentIDs: body.AttachmentDocumentIDs,
-			PreferredProviderID:   providerID,
-			ProviderChosen:        providerChosen,
-			FollowUpProposalID:    body.FollowUpProposalID,
-		},
-	})
+	return assistantjobs.StartTurnWorkflow(c.Request.Context(), h.workflows, turn,
+		assistantjobs.TurnStart{
+			Actor:   requestActorFromAuthContext(authCtx),
+			Content: body.Content,
+			Request: assistantjobs.AssistantTurnRequest{
+				Page:                  body.page(),
+				Mentions:              body.Mentions,
+				AttachmentDocumentIDs: body.AttachmentDocumentIDs,
+				PreferredProviderID:   providerID,
+				ProviderChosen:        providerChosen,
+				FollowUpProposalID:    body.FollowUpProposalID,
+			},
+		})
 }
 
 // stopTurn ends a reply nobody is waiting for any more.

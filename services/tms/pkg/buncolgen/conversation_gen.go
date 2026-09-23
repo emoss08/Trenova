@@ -56,6 +56,8 @@ var AssistantTurnColumns = struct {
 	UserID         Column // "user_id" → qualified: "atrn.user_id"
 	RunID          Column // "run_id" → qualified: "atrn.run_id"
 	WorkflowID     Column // "workflow_id" → qualified: "atrn.workflow_id"
+	Origin         Column // "origin" → qualified: "atrn.origin"
+	Input          Column // "input" → qualified: "atrn.input"
 	Status         Column // "status" → qualified: "atrn.status"
 	ErrorMessage   Column // "error_message" → qualified: "atrn.error_message"
 	StartedAt      Column // "started_at" → qualified: "atrn.started_at"
@@ -71,6 +73,8 @@ var AssistantTurnColumns = struct {
 	UserID:         NewColumn("user_id", "atrn"),
 	RunID:          NewColumn("run_id", "atrn"),
 	WorkflowID:     NewColumn("workflow_id", "atrn"),
+	Origin:         NewColumn("origin", "atrn"),
+	Input:          NewColumn("input", "atrn"),
 	Status:         NewColumn("status", "atrn"),
 	ErrorMessage:   NewColumn("error_message", "atrn"),
 	StartedAt:      NewColumn("started_at", "atrn"),
@@ -92,6 +96,8 @@ var AssistantTurnFieldMap = map[string]string{
 	"userId":         "user_id",
 	"runId":          "run_id",
 	"workflowId":     "workflow_id",
+	"origin":         "origin",
+	"input":          "input",
 	"status":         "status",
 	"errorMessage":   "error_message",
 	"startedAt":      "started_at",
@@ -111,6 +117,8 @@ var AssistantTurnInsertableColumns = []string{
 	"user_id",
 	"run_id",
 	"workflow_id",
+	"origin",
+	"input",
 	"status",
 	"error_message",
 	"started_at",
@@ -190,6 +198,8 @@ var AssistantTurnFilter = struct {
 	UserID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
 	RunID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
 	WorkflowID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workflowId" → DB: "workflow_id"
+	Origin         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "origin" → DB: "origin"
+	Input          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "input" → DB: "input"
 	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	ErrorMessage   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
 	StartedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
@@ -218,6 +228,12 @@ var AssistantTurnFilter = struct {
 	},
 	WorkflowID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("workflowId", op, value)
+	},
+	Origin: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("origin", op, value)
+	},
+	Input: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("input", op, value)
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)

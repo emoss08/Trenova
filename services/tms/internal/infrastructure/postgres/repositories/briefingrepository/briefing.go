@@ -51,26 +51,7 @@ func (r *repository) Upsert(
 	ctx context.Context,
 	entity *briefing.Briefing,
 ) (*briefing.Briefing, error) {
-	cols := buncolgen.BriefingColumns
-	target := "CONFLICT (" + cols.OrganizationID.Name + ", " + cols.BusinessUnitID.Name + ", " +
-		cols.RoleKey.Name + ", " + cols.BriefingDate.Name + ", COALESCE(" + cols.UserID.Name +
-		", '')) DO UPDATE"
-
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
-		Model(entity).
-		On(target).
-		Set(cols.RunID.SetExcluded()).
-		Set(cols.Status.SetExcluded()).
-		Set(cols.Headline.SetExcluded()).
-		Set(cols.Sections.SetExcluded()).
-		Set(cols.Facts.SetExcluded()).
-		Set(cols.Narrated.SetExcluded()).
-		Set(cols.FailureReason.SetExcluded()).
-		Set(cols.Version.SetExpr("{} + 1")).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Returning("*").
-		Exec(ctx); err != nil {
+	if _, err := buildUpsert(r.db.DBForContext(ctx), entity).Exec(ctx); err != nil {
 		r.l.Error("failed to upsert briefing",
 			zap.String("role", string(entity.RoleKey)),
 			zap.String("date", entity.BriefingDate),
@@ -80,6 +61,27 @@ func (r *repository) Upsert(
 	}
 
 	return entity, nil
+}
+
+func buildUpsert(db bun.IDB, entity *briefing.Briefing) *bun.InsertQuery {
+	cols := buncolgen.BriefingColumns
+	target := "CONFLICT (" + cols.OrganizationID.Name + ", " + cols.BusinessUnitID.Name + ", " +
+		cols.RoleKey.Name + ", " + cols.BriefingDate.Name + ", COALESCE(" + cols.UserID.Name +
+		", '')) DO UPDATE"
+
+	return db.NewInsert().
+		Model(entity).
+		On(target).
+		Set(cols.RunID.SetExcluded()).
+		Set(cols.Status.SetExcluded()).
+		Set(cols.Headline.SetExcluded()).
+		Set(cols.Sections.SetExcluded()).
+		Set(cols.Facts.SetExcluded()).
+		Set(cols.Narrated.SetExcluded()).
+		Set(cols.FailureReason.SetExcluded()).
+		Set(cols.Version.IncConflict(1)).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Returning("*")
 }
 
 func (r *repository) GetByID(

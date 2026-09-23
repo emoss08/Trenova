@@ -20,6 +20,9 @@ type toolOutcome struct {
 	// data is what a query tool returned, before it was encoded for the
 	// model. The caller may turn it into something a person sees.
 	data any
+	// publishes marks a document the observer has to keep; its result is
+	// written once the observer says what it kept.
+	publishes bool
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {
@@ -65,6 +68,8 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			}
 		}
 
+		call.Arguments = aliasedArguments(tool.ParamSchema(), call.Arguments)
+
 		return s.runQueryTool(ctx, req, tool, call)
 	}
 
@@ -80,7 +85,10 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	}
 
 	tier := req.Definition.EffectiveTier(call.Name, tool.DefaultAutonomyTier())
-	call.Arguments = declaredArguments(tool.ParamSchema(), call.Arguments)
+	call.Arguments = declaredArguments(
+		tool.ParamSchema(),
+		aliasedArguments(tool.ParamSchema(), call.Arguments),
+	)
 	if selfScoped {
 		// Whose records these are is the runtime's to say, not the model's:
 		// anything the model sent under this key is overwritten. A copy, so

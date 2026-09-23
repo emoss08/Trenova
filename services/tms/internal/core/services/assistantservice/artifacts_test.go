@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,6 +23,20 @@ type stubArtifactRepo struct {
 
 	upserts []*assistantartifact.Artifact
 	listed  []*assistantartifact.Artifact
+	stored  map[pulid.ID]*assistantartifact.Artifact
+}
+
+func (r *stubArtifactRepo) GetByID(
+	_ context.Context,
+	req repositories.GetArtifactRequest,
+) (*assistantartifact.Artifact, error) {
+	artifact, ok := r.stored[req.ID]
+	if !ok {
+		return nil, errortypes.NewNotFoundError("Artifact not found")
+	}
+	copied := *artifact
+
+	return &copied, nil
 }
 
 func (r *stubArtifactRepo) Upsert(

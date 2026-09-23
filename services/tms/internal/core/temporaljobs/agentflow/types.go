@@ -187,6 +187,12 @@ type ToolInput struct {
 	Call agentruntime.DispatchCall `json:"call"`
 }
 
+// PublishInput is a document the model asked to publish, as its call.
+type PublishInput struct {
+	Run  RunContext            `json:"run"`
+	Call serviceports.ToolCall `json:"call"`
+}
+
 type ToolResult struct {
 	Outcome agentruntime.ToolOutcome `json:"outcome"`
 	// Artifacts are what the call produced for a person to see beside the

@@ -40,7 +40,15 @@ export async function runTurn(
   await followTurn(started.turnId, options);
 }
 
-async function followTurn(turnId: string, options: RunTurnOptions): Promise<void> {
+/**
+ * Follows a turn already under way from its first event: one this page lost
+ * when it was closed or reloaded, or one the application started, such as the
+ * agent reporting what came of a decision.
+ */
+export async function followTurn(
+  turnId: string,
+  options: Pick<RunTurnOptions, "signal" | "onEvent">,
+): Promise<void> {
   let cursor = "";
   let terminal = false;
   let attempt = 0;

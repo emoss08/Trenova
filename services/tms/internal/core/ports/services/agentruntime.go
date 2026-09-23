@@ -60,6 +60,10 @@ type RunRequest struct {
 	// what a person would want to see — a report's rows, a record — into
 	// artifacts beside the conversation.
 	ToolObserver ToolObserver
+	// Publishes says the run has somewhere to keep a document it publishes
+	// even though no observer rides on this request: a durable turn keeps it
+	// in an activity of its own, where the observer lives.
+	Publishes bool
 	// History is the conversation so far, oldest first, excluding Input.
 	History []conversation.Message
 	Input   string
@@ -121,8 +125,32 @@ type ToolObservation struct {
 	Action *PendingAction
 }
 
-// ToolObserver is told about each tool call as it finishes.
-type ToolObserver func(observation ToolObservation)
+// KeepsDocuments reports whether a run may publish a document: somewhere
+// beside the conversation is ready to keep it.
+func (r *RunRequest) KeepsDocuments() bool {
+	return r.ToolObserver != nil || r.Publishes
+}
+
+// ShownArtifact is what the person now sees for a tool call, so the model can
+// be told it is there rather than repeating it.
+type ShownArtifact struct {
+	ID    pulid.ID
+	Kind  string
+	Title string
+}
+
+// PublishedDocument is a write-up the model asked to keep beside the
+// conversation. ArtifactID, when set, names the document it revises.
+type PublishedDocument struct {
+	Title      string
+	Body       string
+	ArtifactID pulid.ID
+}
+
+// ToolObserver is told about each tool call as it finishes, and answers with
+// the artifact it showed the person for it, if any. An error is a document
+// that could not be kept, which the model is told.
+type ToolObserver func(observation ToolObservation) (*ShownArtifact, error)
 
 type RunResult struct {
 	Reply    string

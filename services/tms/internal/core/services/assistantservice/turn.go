@@ -119,7 +119,7 @@ func (s *Service) prepareTurn(
 	actor *services.RequestActor,
 ) (*TurnPlan, *services.RunRequest, error) {
 	content := strings.TrimSpace(req.Content)
-	followUp := req.FollowUpProposalID.IsNotNil()
+	followUp := req.FollowUpProposalID.IsNotNil() || req.FollowUpPlanID.IsNotNil()
 	multiErr := errortypes.NewMultiError()
 	switch {
 	case content == "" && !followUp:
@@ -127,6 +127,9 @@ func (s *Service) prepareTurn(
 	case content != "" && followUp:
 		multiErr.Add("content", errortypes.ErrInvalid,
 			"A decision follow-up carries no message; the decision is its input")
+	case req.FollowUpProposalID.IsNotNil() && req.FollowUpPlanID.IsNotNil():
+		multiErr.Add("followUpPlanId", errortypes.ErrInvalid,
+			"A follow-up answers one decision: a proposal or a plan, not both")
 	}
 	page := req.Page.Normalized()
 	if page != nil {
@@ -188,6 +191,7 @@ func (s *Service) prepareTurn(
 		content, err = s.decisionNote(ctx, decisionNoteParams{
 			thread:     thread,
 			proposalID: req.FollowUpProposalID,
+			planID:     req.FollowUpPlanID,
 			history:    history,
 			tenant:     req.TenantInfo,
 		})
@@ -226,6 +230,9 @@ func (s *Service) prepareTurn(
 		Proposals:           turnReq.Proposals,
 	}
 	if runReq != nil {
+		// A conversation keeps what the turn publishes beside it, in the
+		// activity that runs the publish rather than on this request.
+		runReq.Publishes = s.artifacts != nil
 		plan.Timezone = runReq.Context.Timezone
 		plan.Turn = s.runtime.OpenTurn(ctx, runReq).State()
 	}
@@ -361,22 +368,23 @@ func (s *Service) FinishTurn(
 
 // ObserveTool keeps what a finished tool call produced for a person to see
 // beside the conversation, and says so on emit. It runs where the tool ran,
-// the only place its raw result exists, and returns what it kept so the turn
-// can tie each artifact to its message once the turn is saved.
+// the only place its raw result exists. It answers with what the person now
+// sees, for the model to be told, and with what it kept, so the turn can tie
+// each artifact to its message once the turn is saved.
 func (s *Service) ObserveTool(
 	ctx context.Context,
 	threadID pulid.ID,
 	actor *services.RequestActor,
 	observation services.ToolObservation,
 	emit services.AssistantStreamEmitter,
-) []*assistantartifact.Artifact {
+) (*services.ShownArtifact, []*assistantartifact.Artifact, error) {
 	thread := &conversation.Thread{ID: threadID}
 	recorder := s.newArtifactRecorder(ctx, thread, actor.TenantInfo(), actor, emit)
 	if recorder == nil {
-		return nil
+		return nil, nil, nil
 	}
 
-	recorder.observe(observation)
+	shown, err := recorder.observe(observation)
 
-	return recorder.recorded
+	return shown, recorder.recorded, err
 }

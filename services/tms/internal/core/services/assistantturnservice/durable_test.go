@@ -152,12 +152,17 @@ func TestStop_IsQuietAboutATurnThatHasAlreadyEnded(t *testing.T) {
 	assert.False(t, called)
 }
 
-// A turn whose start never reached a worker has no execution to cancel.
-func TestStop_HasNothingToCancelForATurnNothingPickedUp(t *testing.T) {
+// A turn recorded but never handed to a worker has no execution to cancel.
+// Stopping it closes its record, which frees the conversation's one live slot.
+func TestStop_ClosesTheRecordOfATurnNothingPickedUp(t *testing.T) {
 	t.Parallel()
 
-	svc := newDurable(&recordingTurns{})
-	turn := &conversation.AssistantTurn{Status: conversation.AssistantTurnStatusRunning}
+	turns := &recordingTurns{}
+	svc := newDurable(turns)
+	turn := &conversation.AssistantTurn{
+		ID:     pulid.MustNew("atrn_"),
+		Status: conversation.AssistantTurnStatusRunning,
+	}
 
 	called := false
 	require.NoError(t, svc.Stop(t.Context(), turn, func(string) error {
@@ -166,5 +171,8 @@ func TestStop_HasNothingToCancelForATurnNothingPickedUp(t *testing.T) {
 		return nil
 	}))
 
-	assert.False(t, called)
+	assert.False(t, called, "there is no workflow to cancel")
+	require.Len(t, turns.completed, 1)
+	assert.Equal(t, turn.ID, turns.completed[0].ID)
+	assert.Equal(t, conversation.AssistantTurnStatusStopped, turns.completed[0].Status)
 }

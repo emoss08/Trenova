@@ -97,7 +97,9 @@ capped at a minute. The failure's kind travels in the error's details, so the
 saved turn still says whether the provider refused or was unavailable.
 
 `assistant_turns` gives a reply an identity while it is still being written.
-A partial unique index enforces one live turn per thread.
+A partial unique index enforces one live turn per thread. Its `origin` and
+`input` say what the turn answers, so a reader who rejoins it shows the right
+heading: the person's question, or the decision it reports.
 
 ### Stopping
 
@@ -105,6 +107,10 @@ A partial unique index enforces one live turn per thread.
 flight is cancelled; what had happened by then is saved on a disconnected
 context, and the execution is recorded as cancelled. The client aborts its
 reader at once so the person sees it stop without waiting for the round trip.
+
+A turn recorded but never handed to a worker, because its start failed, has
+no execution to cancel; Stop closes its record as `Stopped`, which frees the
+thread's one live slot.
 
 ### The turn stream
 
@@ -125,9 +131,37 @@ workflow waits for that, at most 15 s, before it closes. A reader who arrives
 after the workflow closed gets an ending rebuilt from the turn's record
 (`done` with `replay: true`), which tells the client to read the conversation.
 
+Before sending, the client asks for the thread's active turn and follows it to
+its end first, so a question asked while a decision's follow-up is still
+answering waits for it on screen instead of failing with "already working on a
+reply".
+
 Each publish is a signal in the turn's history and each read a poll update, so
 a streamed reply adds a few hundred history events. That is why chat is one
 workflow per turn rather than one per thread.
+
+### Decision follow-ups
+
+A decision on a proposal or plan that a conversation raised is answered in that
+conversation, whoever decided it and wherever: the card in the thread, the
+Desk's decisions, AI Control, or a plan's approval.
+
+`agentdecisionservice` and `agentplanservice` call `DecisionFollowUps` after the
+decision is recorded **and the change has run or failed**, so the report is of
+the outcome, not the click. A plan's steps are decided with `WithinPlan` and
+start nothing of their own; the plan reports once, after its last step.
+`assistantfollowupservice` finds the conversation through the run
+(`subject_type = AssistantThread`) and opens a turn with origin
+`DecisionFollowUp`, **as the thread's owner** — the decider may be someone else,
+but the report is addressed to the owner with the owner's access. The turn's
+input is a `DecisionNote` the assistant service writes from the decision.
+
+The turn is a turn workflow like any other, recorded and started before the
+decision returns, so the client rejoins it through `GET /assistant/threads/:id/turns/active/` — which it also does when a
+thread opens, and whenever one of the thread's proposals or plans stops waiting.
+A conversation already producing a reply is not interrupted: the follow-up is
+skipped and the outcome reaches the agent on that turn, since every turn is told
+what became of the conversation's proposals.
 
 ## What is written down
 

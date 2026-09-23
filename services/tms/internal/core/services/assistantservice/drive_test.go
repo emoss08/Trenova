@@ -57,9 +57,13 @@ func (s *Service) sendMessage(
 	var artifacts []*assistantartifact.Artifact
 	if runReq != nil {
 		runReq.Emit = emit
-		runReq.ToolObserver = func(observation serviceports.ToolObservation) {
-			artifacts = append(artifacts,
-				s.ObserveTool(ctx, plan.ThreadID, actor, observation, emit)...)
+		runReq.ToolObserver = func(
+			observation serviceports.ToolObservation,
+		) (*serviceports.ShownArtifact, error) {
+			shown, kept, err := s.ObserveTool(ctx, plan.ThreadID, actor, observation, emit)
+			artifacts = append(artifacts, kept...)
+
+			return shown, err
 		}
 		run, runErr = s.runtime.Run(ctx, runReq)
 	}

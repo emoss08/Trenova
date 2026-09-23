@@ -1,12 +1,14 @@
-import type { AssistantMessage, AssistantProposal } from "@/types/assistant";
+import type { AssistantMessage, AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import {
   argumentRows,
   classifyProposal,
+  decidedSignature,
   groupProposalsByMessage,
   humanizeToolName,
   isDecidable,
   pollIntervalFor,
+  turnEndByMessage,
 } from "../proposal-state";
 
 function proposal(overrides: Partial<AssistantProposal> = {}): AssistantProposal {
@@ -148,12 +150,39 @@ describe("groupProposalsByMessage", () => {
 
     const { byMessage, orphans } = groupProposalsByMessage(
       [first, second, third],
-      [message({ id: "amsg_1" }), message({ id: "amsg_2" })],
+      [
+        message({ id: "amsg_1" }),
+        message({ id: "amsg_u", role: "User" }),
+        message({ id: "amsg_2" }),
+      ],
     );
 
     expect(byMessage.get("amsg_1")).toEqual([first, third]);
     expect(byMessage.get("amsg_2")).toEqual([second]);
     expect(orphans).toEqual([]);
+  });
+
+  // The message that called the tool is the model's "let me set that up", not
+  // its question. The card belongs under the words that ask for the decision,
+  // which are the turn's last.
+  it("shows a proposal under the last thing the turn said", () => {
+    const made = proposal({ id: "ap_1", sourceMessageId: "amsg_call" });
+
+    const { byMessage } = groupProposalsByMessage(
+      [made],
+      [
+        message({ id: "amsg_ask", role: "User" }),
+        message({ id: "amsg_call" }),
+        message({ id: "amsg_tool", role: "Tool" }),
+        message({ id: "amsg_final" }),
+        message({ id: "amsg_next", role: "User" }),
+        message({ id: "amsg_later" }),
+      ],
+    );
+
+    expect(byMessage.get("amsg_final")).toEqual([made]);
+    expect(byMessage.has("amsg_call")).toBe(false);
+    expect(byMessage.has("amsg_later")).toBe(false);
   });
 
   // A pending write nobody can see is worse than one shown out of position.
@@ -175,6 +204,25 @@ describe("groupProposalsByMessage", () => {
     const { orphans } = groupProposalsByMessage([untied], [message({ id: "amsg_1" })]);
 
     expect(orphans).toEqual([untied]);
+  });
+});
+
+describe("turnEndByMessage", () => {
+  it("maps every assistant message to the last one before the next question", () => {
+    const ends = turnEndByMessage([
+      message({ id: "u1", role: "User" }),
+      message({ id: "a1" }),
+      message({ id: "t1", role: "Tool" }),
+      message({ id: "a2" }),
+      message({ id: "u2", role: "User" }),
+      message({ id: "a3" }),
+    ]);
+
+    expect(ends.get("a1")).toBe("a2");
+    expect(ends.get("a2")).toBe("a2");
+    expect(ends.get("a3")).toBe("a3");
+    expect(ends.has("u1")).toBe(false);
+    expect(ends.has("t1")).toBe(false);
   });
 });
 
@@ -272,5 +320,46 @@ describe("pollIntervalFor", () => {
     expect(pollIntervalFor([], [plan({ failedStep: 1 })])).toBe(false);
     expect(pollIntervalFor([], [plan({ status: "Completed", completedSteps: 2 })])).toBe(false);
     expect(pollIntervalFor([], [plan({ status: "Pending" })])).toBe(false);
+  });
+});
+
+/**
+ * A decision made anywhere changes what the thread watches.
+ *
+ * The server starts the turn reporting a decision; the thread picks it up when
+ * this changes, which is how a proposal approved from the Desk's decisions or
+ * AI Control is answered in the conversation that raised it.
+ */
+describe("decidedSignature", () => {
+  const plan = (overrides: Partial<AssistantPlan>) =>
+    ({ id: "apl_1", status: "Pending", ...overrides }) as AssistantPlan;
+
+  it("ignores what is still waiting and a refetch that changed nothing", () => {
+    const waiting = decidedSignature([proposal()], [plan({})]);
+
+    expect(waiting).toBe("");
+    expect(decidedSignature([proposal()], [plan({})])).toBe(waiting);
+  });
+
+  it("changes when a proposal is decided, and again when its outcome lands", () => {
+    const pending = decidedSignature([proposal()], []);
+    const accepted = decidedSignature([proposal({ status: "Accepted" })], []);
+    const executed = decidedSignature([proposal({ status: "Executed" })], []);
+
+    expect(accepted).not.toBe(pending);
+    expect(executed).not.toBe(accepted);
+  });
+
+  it("changes when a plan is decided", () => {
+    expect(decidedSignature([], [plan({ status: "Approved" })])).not.toBe(
+      decidedSignature([], [plan({})]),
+    );
+  });
+
+  it("does not depend on the order the server listed them in", () => {
+    const first = proposal({ id: "ap_1", status: "Rejected" });
+    const second = proposal({ id: "ap_2", status: "Executed" });
+
+    expect(decidedSignature([first, second], [])).toBe(decidedSignature([second, first], []));
   });
 });

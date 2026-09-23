@@ -83,8 +83,8 @@ export type TurnState = {
 export type TurnContext = {
   attachments?: AssistantMessageAttachment[];
   mentions?: AssistantEntityRef[];
-  /** The proposal whose decision this turn follows up, in place of words. */
-  followUpProposalId?: string;
+  /** The turn reports a decision rather than answering words of the person's own. */
+  followUp?: boolean;
 };
 
 export function initialTurnState(
@@ -104,7 +104,7 @@ export function initialTurnState(
     artifacts: [],
     attachments: context.attachments ?? [],
     mentions: context.mentions ?? [],
-    followUp: context.followUpProposalId !== undefined,
+    followUp: context.followUp ?? false,
     thread: null,
   };
 }

@@ -315,6 +315,15 @@ export function emailDraftFrom(artifact: AssistantArtifact): EmailDraftArtifact 
   };
 }
 
+export type DocumentArtifact = {
+  body: string;
+};
+
+/** A write-up the agent published: markdown, read as it was written. */
+export function documentFrom(artifact: AssistantArtifact): DocumentArtifact {
+  return { body: stringOf(artifact.payload.body) };
+}
+
 export type EntityFact = { key: string; value: string };
 
 export type EntityCardArtifact = {

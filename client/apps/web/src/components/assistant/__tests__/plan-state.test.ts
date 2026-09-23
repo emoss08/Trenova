@@ -127,6 +127,17 @@ describe("groupPlans", () => {
     expect(grouped.standalone.map((item) => item.id)).toEqual(["aprop_9"]);
   });
 
+  it("puts a plan under the last thing its turn said", () => {
+    const grouped = groupPlans([plan()], steps, [
+      message("amsg_1"),
+      message("amsg_2"),
+      { ...message("amsg_3"), role: "User" },
+    ]);
+
+    expect(grouped.byMessage.get("amsg_2")?.map((group) => group.plan.id)).toEqual(["apl_1"]);
+    expect(grouped.byMessage.has("amsg_1")).toBe(false);
+  });
+
   it("keeps a plan whose message is gone rather than dropping it", () => {
     const grouped = groupPlans([plan()], steps, [message("amsg_other")]);
 

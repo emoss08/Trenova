@@ -18,16 +18,17 @@ import (
 )
 
 // ToolObserver turns what a tool call returned into what a person sees beside
-// the run, such as a chat's artifacts. It runs inside the tool activity, the
-// only place the tool's raw result exists, and returns what it made so the
-// run can account for it when the turn is saved.
+// the run, such as a chat's artifacts, and keeps a document the model
+// published. It runs inside an activity, where the call's raw result exists.
+// It answers with what the person now sees, for the model to be told, and with
+// what it kept, so the run can account for it when the turn is saved.
 type ToolObserver interface {
 	ObserveTool(
 		ctx context.Context,
 		run RunContext,
 		observation serviceports.ToolObservation,
 		emit serviceports.AssistantStreamEmitter,
-	) []*assistantartifact.Artifact
+	) (*serviceports.ShownArtifact, []*assistantartifact.Artifact, error)
 }
 
 type ActivitiesParams struct {
@@ -154,29 +155,63 @@ func (a *Activities) runTool(
 	req.Attempt = int(activity.GetInfo(ctx).Attempt)
 
 	outcome := a.runtime.DispatchStep(ctx, req, in.Call)
-	result := &ToolResult{Outcome: outcome}
+	observe, kept, done := a.observing(ctx, in.Run)
+	defer done()
+	outcome = a.runtime.ObserveCall(observe, in.Call.Call, outcome)
 
-	if a.observer != nil && !in.Run.ThreadID.IsNil() {
-		stream, events, err := openStream(ctx)
-		if err != nil {
-			a.l.Warn("tool ran, but its result could not be shown beside the run",
-				zap.String("tool", name), zap.Error(err))
+	return &ToolResult{Outcome: outcome, Artifacts: *kept}, nil
+}
 
-			return result, nil
-		}
-		defer closeStream(ctx, stream, a.l)
+// PublishArtifactActivity keeps a document the model published, and says what
+// the model reads about it.
+func (a *Activities) PublishArtifactActivity(
+	ctx context.Context,
+	in *PublishInput,
+) (*ToolResult, error) {
+	observe, kept, done := a.observing(ctx, in.Run)
+	defer done()
+	outcome := a.runtime.PublishStep(observe, in.Call)
 
-		result.Artifacts = a.observer.ObserveTool(ctx, in.Run, serviceports.ToolObservation{
-			Call:   in.Call.Call,
-			Data:   outcome.Data,
-			Failed: outcome.Failed,
-			Action: outcome.Action,
-		}, func(event serviceports.StreamEvent) {
-			events.Publish(StreamItem{Event: event.Event, Data: event.Data}, true)
-		})
+	return &ToolResult{Outcome: outcome, Artifacts: *kept}, nil
+}
+
+// observing is the observer for one activity, with where what it keeps is
+// collected and a function that flushes what it published. A run with nothing
+// beside it, a desk's most often, has no observer.
+func (a *Activities) observing(
+	ctx context.Context,
+	run RunContext,
+) (serviceports.ToolObserver, *[]*assistantartifact.Artifact, func()) {
+	kept := new([]*assistantartifact.Artifact)
+	if a.observer == nil || run.ThreadID.IsNil() {
+		return nil, kept, func() {}
 	}
 
-	return result, nil
+	stream, events, err := openStream(ctx)
+	if err != nil {
+		// The call still counts; the reader misses its announcement and sees
+		// the artifact when the conversation is read.
+		a.l.Warn("a run's stream could not be opened for what a call showed",
+			zap.String("run", run.ThreadID.String()), zap.Error(err))
+	}
+	emit := func(event serviceports.StreamEvent) {
+		if events != nil {
+			events.Publish(StreamItem{Event: event.Event, Data: event.Data}, true)
+		}
+	}
+
+	observe := func(observation serviceports.ToolObservation) (*serviceports.ShownArtifact, error) {
+		shown, artifacts, err := a.observer.ObserveTool(ctx, run, observation, emit)
+		*kept = append(*kept, artifacts...)
+
+		return shown, err
+	}
+
+	return observe, kept, func() {
+		if stream != nil {
+			closeStream(ctx, stream, a.l)
+		}
+	}
 }
 
 func openStream(

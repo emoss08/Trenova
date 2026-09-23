@@ -48,12 +48,24 @@ func (r *repository) Upsert(
 	ctx context.Context,
 	item *watchtower.Item,
 ) (*watchtower.Item, bool, error) {
+	if _, err := buildUpsert(r.db.DBForContext(ctx), item).Exec(ctx); err != nil {
+		r.l.Error("failed to upsert watchtower item",
+			zap.String("kind", string(item.SourceKind)),
+			zap.String("source", item.SourceID),
+			zap.Error(err))
+
+		return nil, false, fmt.Errorf("upsert watchtower item: %w", err)
+	}
+
+	return item, item.Inserted, nil
+}
+
+func buildUpsert(db bun.IDB, item *watchtower.Item) *bun.InsertQuery {
 	cols := buncolgen.ItemColumns
 	target := "CONFLICT (" + cols.OrganizationID.Name + ", " + cols.BusinessUnitID.Name + ", " +
 		cols.SourceKind.Name + ", " + cols.SourceID.Name + ") DO UPDATE"
 
-	if _, err := r.db.DBForContext(ctx).
-		NewInsert().
+	return db.NewInsert().
 		Model(item).
 		On(target).
 		Set(cols.Severity.SetExcluded()).
@@ -65,19 +77,9 @@ func (r *repository) Upsert(
 		Set(cols.Path.SetExcluded()).
 		Set(cols.OccurredAt.SetExcluded()).
 		Set(cols.ResolvedAt.Set(), nil).
-		Set(cols.Version.SetExpr("{} + 1")).
+		Set(cols.Version.IncConflict(1)).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Returning("*, (xmax = 0) AS inserted").
-		Exec(ctx); err != nil {
-		r.l.Error("failed to upsert watchtower item",
-			zap.String("kind", string(item.SourceKind)),
-			zap.String("source", item.SourceID),
-			zap.Error(err))
-
-		return nil, false, fmt.Errorf("upsert watchtower item: %w", err)
-	}
-
-	return item, item.Inserted, nil
+		Returning("*, (xmax = 0) AS inserted")
 }
 
 func (r *repository) Resolve(
