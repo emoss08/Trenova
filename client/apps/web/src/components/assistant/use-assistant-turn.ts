@@ -1,8 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
-import { durableTurnsAvailable, runDurableTurn } from "./durable-turn";
-import { AssistantStreamError } from "@/services/assistant";
+import { durableTurnsAvailable, followExistingTurn, runDurableTurn } from "./durable-turn";
+import { AssistantStreamError, type ActiveTurn } from "@/services/assistant";
 import type {
   AssistantPageContext,
   AssistantStreamEvent,
@@ -166,12 +166,16 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     [absorbTurn, t],
   );
 
-  const send = useCallback(
+  /**
+   * Follows one turn from its first event to the saved thread: folds its
+   * events into the view, and hands over to the refetched history once it
+   * ends. A question the person asks and a reply they rejoin are the same
+   * thing from here on; only how the events arrive differs.
+   */
+  const follow = useCallback(
     async (
-      content: string,
-      context?: AssistantPageContext | null,
-      providerId = "",
-      extras: TurnContext = {},
+      initial: TurnState,
+      run: (onEvent: (event: AssistantStreamEvent) => void, signal: AbortSignal) => Promise<void>,
     ) => {
       // Sending over a reply still arriving cuts it off. The server keeps
       // what had run by then, so the thread is refetched to show it rather
@@ -192,14 +196,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         }
       };
 
-      const pageContext = context === undefined ? (getContext?.() ?? null) : context;
-      lastContextRef.current = pageContext;
-      lastProviderRef.current = providerId;
-      lastContextExtrasRef.current = extras;
-
       let terminal = false;
       let done: SendMessageResult | null = null;
-      setTurn(initialTurnState(content, pageContext, extras));
+      setTurn(initial);
 
       const onEvent = (event: AssistantStreamEvent) => {
         setTurn((state) => (state ? reduceTurn(state, event) : state));
@@ -211,39 +210,8 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         }
       };
 
-      turnIdRef.current = null;
       try {
-        const attachments = (extras.attachments ?? []).map((item) => item.documentId);
-        if (await durableTurnsAvailable()) {
-          await runDurableTurn({
-            threadId,
-            content,
-            context: pageContext,
-            providerId,
-            attachmentDocumentIds: attachments,
-            mentions: extras.mentions ?? [],
-            followUpProposalId: extras.followUpProposalId,
-            signal: controller.signal,
-            onTurnStarted: (id) => {
-              turnIdRef.current = id;
-            },
-            onEvent,
-          });
-        } else {
-          await apiService.assistantService.streamMessage(
-            threadId,
-            content,
-            onEvent,
-            controller.signal,
-            {
-              context: pageContext,
-              providerId,
-              attachmentDocumentIds: attachments,
-              mentions: extras.mentions ?? [],
-              followUpProposalId: extras.followUpProposalId,
-            },
-          );
-        }
+        await run(onEvent, controller.signal);
       } catch (error) {
         if (controller.signal.aborted) {
           return;
@@ -291,8 +259,81 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         });
       }
     },
-    [fail, getContext, refreshThread, settle, t, threadId],
+    [fail, refreshThread, settle, t],
   );
+
+  const send = useCallback(
+    async (
+      content: string,
+      context?: AssistantPageContext | null,
+      providerId = "",
+      extras: TurnContext = {},
+    ) => {
+      const pageContext = context === undefined ? (getContext?.() ?? null) : context;
+      lastContextRef.current = pageContext;
+      lastProviderRef.current = providerId;
+      lastContextExtrasRef.current = extras;
+      turnIdRef.current = null;
+
+      const attachments = (extras.attachments ?? []).map((item) => item.documentId);
+      await follow(initialTurnState(content, pageContext, extras), async (onEvent, signal) => {
+        if (await durableTurnsAvailable()) {
+          await runDurableTurn({
+            threadId,
+            content,
+            context: pageContext,
+            providerId,
+            attachmentDocumentIds: attachments,
+            mentions: extras.mentions ?? [],
+            signal,
+            onTurnStarted: (id) => {
+              turnIdRef.current = id;
+            },
+            onEvent,
+          });
+          return;
+        }
+        await apiService.assistantService.streamMessage(threadId, content, onEvent, signal, {
+          context: pageContext,
+          providerId,
+          attachmentDocumentIds: attachments,
+          mentions: extras.mentions ?? [],
+        });
+      });
+    },
+    [follow, getContext, threadId],
+  );
+
+  /**
+   * Picks up a reply the conversation is already producing: one this page
+   * lost when it was closed or reloaded, or one the application started,
+   * such as the agent reporting what came of a decision. Nothing happens
+   * when the conversation is quiet or this view is already following a turn.
+   */
+  const rejoin = useCallback(async () => {
+    if (abortRef.current !== null && !abortRef.current.signal.aborted) {
+      return;
+    }
+
+    let active: ActiveTurn | null;
+    try {
+      active = await apiService.assistantService.activeTurn(threadId);
+    } catch {
+      return;
+    }
+    // A question sent while the lookup was out owns the view now.
+    if (active === null || (abortRef.current !== null && !abortRef.current.signal.aborted)) {
+      return;
+    }
+
+    const followUp = active.origin === "DecisionFollowUp";
+    const turnId = active.id;
+    turnIdRef.current = turnId;
+    await follow(
+      initialTurnState(followUp ? "" : (active.input ?? ""), null, { followUp }),
+      (onEvent, signal) => followExistingTurn(turnId, { signal, onEvent }),
+    );
+  }, [follow, threadId]);
 
   const stop = useCallback(() => {
     // A turn on a worker has to be told. Aborting the reader used to stop the
@@ -322,6 +363,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     turn,
     isActive: isTurnActive(turn),
     send,
+    rejoin,
     stop,
     dismiss,
     retry: turn

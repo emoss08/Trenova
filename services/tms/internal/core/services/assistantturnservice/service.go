@@ -65,6 +65,10 @@ type StartRequest struct {
 	ThreadID   pulid.ID
 	UserID     pulid.ID
 	TenantInfo pagination.TenantInfo
+	// Origin and Input say what the turn answers. An empty origin is a
+	// person's question.
+	Origin conversation.AssistantTurnOrigin
+	Input  string
 }
 
 // Start records that a conversation is about to produce a reply.
@@ -81,6 +85,8 @@ func (s *Service) Start(
 		BusinessUnitID: req.TenantInfo.BuID,
 		ThreadID:       req.ThreadID,
 		UserID:         req.UserID,
+		Origin:         req.Origin,
+		Input:          req.Input,
 		Status:         conversation.AssistantTurnStatusRunning,
 	})
 	if err != nil {
@@ -348,4 +354,26 @@ func (s *Service) Stop(
 	s.metrics.RecordTurnStopped(metrics.TransportDurable, "cancelled")
 
 	return nil
+}
+
+// Ending is the event that closes a turn's stream: the saved result, or a
+// sentence saying why there is none. Every path that runs a turn ends it the
+// same way, so a reader cannot tell a worker's reply from a request's.
+func Ending(
+	result *serviceports.SendMessageResult,
+	cause error,
+) serviceports.StreamEvent {
+	if cause != nil {
+		message := "The assistant could not finish this reply. Try again in a moment."
+		if errors.Is(cause, context.Canceled) {
+			message = "Stopped. What was said so far has been kept in the conversation."
+		}
+
+		return serviceports.StreamEvent{
+			Event: serviceports.AssistantEventError,
+			Data:  map[string]any{"message": message},
+		}
+	}
+
+	return serviceports.StreamEvent{Event: serviceports.AssistantEventDone, Data: result}
 }

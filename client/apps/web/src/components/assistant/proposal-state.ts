@@ -214,3 +214,29 @@ export function pollIntervalFor(
 
   return running ? RUNNING_POLL_INTERVAL_MS : false;
 }
+
+/**
+ * Which of a thread's proposals and plans have been decided, and to what, as
+ * one comparable value.
+ *
+ * The thread watches it to learn that something was decided somewhere else —
+ * the Desk's decisions, AI Control, another tab — which is when the server
+ * starts the turn reporting it and this view should pick that turn up. It
+ * changes only when a decision lands or an outcome follows one; a list that
+ * refetches unchanged leaves it alone.
+ */
+export function decidedSignature(
+  proposals: readonly AssistantProposal[],
+  plans: readonly AssistantPlan[],
+): string {
+  const decided = [
+    ...proposals
+      .filter((proposal) => proposal.status !== "Pending")
+      .map((proposal) => `p:${proposal.id}:${proposal.status}`),
+    ...plans
+      .filter((plan) => plan.status !== "Pending")
+      .map((plan) => `l:${plan.id}:${plan.status}`),
+  ];
+
+  return decided.sort().join("|");
+}

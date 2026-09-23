@@ -160,6 +160,7 @@ func (a *Activities) answer(
 		AttachmentDocumentIDs: payload.Request.AttachmentDocumentIDs,
 		Mentions:              payload.Request.Mentions,
 		FollowUpProposalID:    payload.Request.FollowUpProposalID,
+		FollowUpPlanID:        payload.Request.FollowUpPlanID,
 	}, &payload.Actor, beats)
 
 	status := assistantturnservice.StatusFor(false, runErr)
@@ -167,7 +168,7 @@ func (a *Activities) answer(
 		status = assistantturnservice.StatusFor(result.Refused, nil)
 	}
 
-	ending := endingFor(result, runErr)
+	ending := assistantturnservice.Ending(result, runErr)
 	closeStream(ending)
 	a.settleTurn(ctx, payload, tenant, status, runErr)
 	a.turns.Complete(ctx, turn, status, runErr)
@@ -227,23 +228,4 @@ func heartbeater(
 		emit(event)
 		activity.RecordHeartbeat(ctx, event.Event)
 	}
-}
-
-func endingFor(
-	result *serviceports.SendMessageResult,
-	cause error,
-) serviceports.StreamEvent {
-	if cause != nil {
-		message := "The assistant could not finish this reply. Try again in a moment."
-		if errors.Is(cause, context.Canceled) {
-			message = "Stopped. What was said so far has been kept in the conversation."
-		}
-
-		return serviceports.StreamEvent{
-			Event: serviceports.AssistantEventError,
-			Data:  map[string]any{"message": message},
-		}
-	}
-
-	return serviceports.StreamEvent{Event: serviceports.AssistantEventDone, Data: result}
 }

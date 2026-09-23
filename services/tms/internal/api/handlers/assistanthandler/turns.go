@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
@@ -142,6 +143,8 @@ func (h *Handler) startTurn(c *gin.Context) {
 			ThreadID:   threadID,
 			UserID:     authCtx.UserID,
 			TenantInfo: tenantFromAuthContext(authCtx),
+			Origin:     conversation.AssistantTurnOriginPerson,
+			Input:      body.Content,
 		},
 		h.turnStarter(c, threadID, authCtx, body),
 	)

@@ -40,6 +40,9 @@ type Params struct {
 	Activity     services.AgentActivityPublisher `optional:"true"`
 	// Watchtower takes a decided proposal off the feed.
 	Watchtower services.WatchtowerProjector `optional:"true"`
+	// FollowUps has the conversation that raised a proposal report what came
+	// of deciding it.
+	FollowUps services.DecisionFollowUps `optional:"true"`
 }
 
 type Service struct {
@@ -56,6 +59,7 @@ type Service struct {
 	memories     services.AgentMemoryService
 	activity     services.AgentActivityPublisher
 	watchtower   services.WatchtowerProjector
+	followUps    services.DecisionFollowUps
 }
 
 func New(p Params) services.AgentDecisionService {
@@ -73,6 +77,7 @@ func New(p Params) services.AgentDecisionService {
 		memories:     p.Memories,
 		activity:     p.Activity,
 		watchtower:   p.Watchtower,
+		followUps:    p.FollowUps,
 	}
 }
 
@@ -209,6 +214,16 @@ func (s *Service) DecideWithOutcome(
 	}
 
 	s.announce(ctx, proposal, req.TenantInfo, auditActor)
+
+	// Last, once the change has run or failed: the report is of the outcome,
+	// not of the click. A plan's steps are reported once, by the plan.
+	if !req.WithinPlan && s.followUps != nil {
+		s.followUps.FollowUp(ctx, services.DecisionFollowUpRequest{
+			TenantInfo: req.TenantInfo,
+			RunID:      proposal.RunID,
+			ProposalID: proposal.ID,
+		})
+	}
 
 	return &services.DecisionOutcome{Decision: created, ExecutionError: execErr}, nil
 }

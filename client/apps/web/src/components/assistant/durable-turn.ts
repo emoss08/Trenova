@@ -43,7 +43,6 @@ export type DurableTurnOptions = {
   providerId: string;
   attachmentDocumentIds: string[];
   mentions: unknown[];
-  followUpProposalId?: string;
   signal: AbortSignal;
   /** Called once the worker has the question, before any of the answer. */
   onTurnStarted: (turnId: string) => void;
@@ -66,7 +65,6 @@ export async function runDurableTurn(options: DurableTurnOptions): Promise<void>
     providerId: options.providerId,
     attachmentDocumentIds: options.attachmentDocumentIds,
     mentions: options.mentions as never,
-    followUpProposalId: options.followUpProposalId,
   });
   options.onTurnStarted(started.turnId);
 

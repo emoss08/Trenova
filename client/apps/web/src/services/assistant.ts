@@ -63,6 +63,10 @@ export type ActiveTurn = {
   threadId: string;
   status: string;
   workflowId?: string;
+  /** What started the turn: the person, or the application reporting a decision. */
+  origin?: "Person" | "DecisionFollowUp";
+  /** The question the turn answers, when a person asked one. */
+  input?: string;
 };
 
 /** Where a stream that never opened went wrong, for the reader. */
@@ -92,8 +96,6 @@ export type SendMessageOptions = {
   attachmentDocumentIds?: readonly string[];
   /** Records named from the composer. */
   mentions?: readonly AssistantEntityRef[];
-  /** Asks for the turn that follows a decision on this proposal, in place of content. */
-  followUpProposalId?: string;
 };
 
 /** A quick question from anywhere: no thread yet, the answer makes one. */
@@ -447,7 +449,6 @@ function messageBody(content: string, options: SendMessageOptions): Record<strin
     providerId: options.providerId ?? "",
     attachmentDocumentIds: options.attachmentDocumentIds ?? [],
     mentions: options.mentions ?? [],
-    ...(options.followUpProposalId ? { followUpProposalId: options.followUpProposalId } : {}),
   };
 }
 
