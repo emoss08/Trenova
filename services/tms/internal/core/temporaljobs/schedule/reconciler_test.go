@@ -9,8 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	commonpb "go.temporal.io/api/common/v1"
+	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
+	"go.temporal.io/sdk/converter"
 	"go.temporal.io/sdk/temporal"
 )
 
@@ -20,10 +22,13 @@ type mockScheduleHandle struct {
 	deleteErr    error
 	invokeUpdate bool
 	updateCalled bool
+	deleteCalled bool
+	lastUpdate   *client.ScheduleUpdate
 }
 
 func (m *mockScheduleHandle) GetID() string { return m.id }
 func (m *mockScheduleHandle) Delete(_ context.Context) error {
+	m.deleteCalled = true
 	return m.deleteErr
 }
 func (m *mockScheduleHandle) Backfill(_ context.Context, _ client.ScheduleBackfillOptions) error {
@@ -37,7 +42,7 @@ func (m *mockScheduleHandle) Update(_ context.Context, opts client.ScheduleUpdat
 				Schedule: client.Schedule{},
 			},
 		}
-		_, _ = opts.DoUpdate(input)
+		m.lastUpdate, _ = opts.DoUpdate(input)
 	}
 	return m.updateErr
 }
@@ -1059,4 +1064,113 @@ func TestReconcileWithRetry_MaxRetriesExhausted_WithResultErrors(t *testing.T) {
 	require.Error(t, err)
 	require.NotNil(t, result)
 	assert.True(t, result.HasErrors())
+}
+
+func ownerMemo(t *testing.T, owner string) *commonpb.Memo {
+	t.Helper()
+
+	payload, err := converter.GetDefaultDataConverter().ToPayload(owner)
+	require.NoError(t, err)
+
+	return &commonpb.Memo{Fields: map[string]*commonpb.Payload{ManagedByMemoKey: payload}}
+}
+
+// Other code keeps schedules in the same namespace, starting with one per agent
+// definition. The reconciler must only ever delete its own.
+func TestReconcile_LeavesSchedulesItDidNotCreate(t *testing.T) {
+	t.Parallel()
+
+	logger := newTestLogger()
+	registry := NewRegistry(logger)
+
+	desk := &mockScheduleHandle{id: "agent-definition/agdef_1"}
+	legacy := &mockScheduleHandle{id: "retired-static-schedule"}
+	retired := &mockScheduleHandle{id: "retired-registry-schedule"}
+
+	mc := &mockTemporalClient{
+		scheduleClient: &mockScheduleClient{
+			listIter: &mockScheduleListIterator{
+				entries: []*client.ScheduleListEntry{
+					{ID: desk.id, Memo: ownerMemo(t, "agent-definition")},
+					{ID: legacy.id},
+					{ID: retired.id, Memo: ownerMemo(t, ManagedByRegistry)},
+				},
+			},
+			handles: map[string]*mockScheduleHandle{
+				desk.id:    desk,
+				legacy.id:  legacy,
+				retired.id: retired,
+			},
+		},
+	}
+
+	result, err := NewReconciler(mc, registry, logger).Reconcile(t.Context())
+	require.NoError(t, err)
+
+	assert.False(t, desk.deleteCalled, "a schedule marked as another owner's must survive")
+	assert.True(t, legacy.deleteCalled, "an unmarked schedule predates the marker and is the registry's")
+	assert.True(t, retired.deleteCalled)
+	assert.ElementsMatch(t, []string{legacy.id, retired.id}, result.Deleted)
+}
+
+// The hash lives in the note because the note, unlike the schedule memo, can be
+// rewritten by an update. Reading it from there is what stops every schedule
+// being rewritten on every start.
+func TestNeedsUpdate_ReadsTheHashFromTheNote(t *testing.T) {
+	t.Parallel()
+
+	desired := &Schedule{ID: "s", Spec: Every(time.Minute), Workflow: dummyWorkflow, TaskQueue: "q"}
+	r := &Reconciler{}
+
+	assert.False(t, r.needsUpdate(&client.ScheduleListEntry{Note: registryNote(desired.Hash())}, desired))
+	assert.True(t, r.needsUpdate(&client.ScheduleListEntry{Note: registryNote("stale")}, desired))
+}
+
+// Overlap and paused are hashed, so a change to either is detected. It has to
+// be applied as well, not only reported.
+func TestReconcile_UpdateAppliesOverlapPausedAndTheNewHash(t *testing.T) {
+	t.Parallel()
+
+	logger := newTestLogger()
+	registry := NewRegistry(logger)
+	desired := &Schedule{
+		ID:            "paused-one",
+		Spec:          Every(time.Hour),
+		Workflow:      dummyWorkflow,
+		TaskQueue:     "test-queue",
+		OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_BUFFER_ONE,
+		Paused:        true,
+	}
+	registry.RegisterProvider(&testProvider{schedules: []*Schedule{desired}})
+
+	handle := &mockScheduleHandle{id: desired.ID, invokeUpdate: true}
+	mc := &mockTemporalClient{
+		scheduleClient: &mockScheduleClient{
+			listIter: &mockScheduleListIterator{
+				entries: []*client.ScheduleListEntry{{ID: desired.ID, Note: registryNote("stale")}},
+			},
+			handles: map[string]*mockScheduleHandle{desired.ID: handle},
+		},
+	}
+
+	_, err := NewReconciler(mc, registry, logger).Reconcile(t.Context())
+	require.NoError(t, err)
+	require.NotNil(t, handle.lastUpdate)
+
+	got := handle.lastUpdate.Schedule
+	assert.Equal(t, enums.SCHEDULE_OVERLAP_POLICY_BUFFER_ONE, got.Policy.Overlap)
+	assert.True(t, got.State.Paused)
+	assert.Equal(t, registryNote(desired.Hash()), got.State.Note)
+}
+
+func TestToScheduleOptions_MarksTheScheduleAsTheRegistrys(t *testing.T) {
+	t.Parallel()
+
+	sched := &Schedule{ID: "s", Spec: Every(time.Minute), Workflow: dummyWorkflow, TaskQueue: "q"}
+	opts := sched.ToScheduleOptions()
+
+	assert.Equal(t, ManagedByRegistry, opts.Memo[ManagedByMemoKey])
+	hash, ok := hashFromNote(opts.Note)
+	require.True(t, ok)
+	assert.Equal(t, sched.Hash(), hash)
 }
