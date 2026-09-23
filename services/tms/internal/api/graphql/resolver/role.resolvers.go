@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -68,6 +69,10 @@ func (r *roleResolver) CoreResponsibility(ctx context.Context, obj *permission.R
 
 func (r *roleResolver) MaxSensitivity(ctx context.Context, obj *permission.Role) (string, error) {
 	return obj.MaxSensitivity.String(), nil
+}
+
+func (r *roleResolver) Agents(ctx context.Context, obj *permission.Role) ([]*agentdefinition.Definition, error) {
+	return r.roleAgents(ctx, obj)
 }
 
 func (r *Resolver) Role() generated.RoleResolver { return &roleResolver{r} }

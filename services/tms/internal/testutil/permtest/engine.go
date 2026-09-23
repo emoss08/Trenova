@@ -3,6 +3,7 @@ package permtest
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -93,4 +94,46 @@ func (e *Engine) SimulatePermissions(
 	*services.SimulatePermissionsRequest,
 ) (*services.EffectivePermissions, error) {
 	return &services.EffectivePermissions{}, nil
+}
+
+func (e *Engine) AgentsUsable(
+	context.Context,
+	*services.RequestActor,
+	permission.Operation,
+) (*services.UsableAgents, error) {
+	return &services.UsableAgents{Assistant: true}, nil
+}
+
+func (e *Engine) MayUseAgent(
+	context.Context,
+	*services.RequestActor,
+	*agentdefinition.Definition,
+) (bool, error) {
+	return true, nil
+}
+
+func (e *Engine) RoleCoverage(
+	_ context.Context,
+	req *services.RoleCoverageRequest,
+) ([]services.RoleCoverage, error) {
+	return FullCoverage(req), nil
+}
+
+// FullCoverage is every requested role covering everything, for an engine
+// that allows all.
+func FullCoverage(req *services.RoleCoverageRequest) []services.RoleCoverage {
+	if req == nil {
+		return []services.RoleCoverage{}
+	}
+
+	out := make([]services.RoleCoverage, 0, len(req.RoleIDs))
+	for _, id := range req.RoleIDs {
+		out = append(out, services.RoleCoverage{
+			RoleID:           id,
+			Coverage:         agentdefinition.CoverageFull,
+			MissingResources: []permission.Resource{},
+		})
+	}
+
+	return out
 }

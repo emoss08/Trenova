@@ -74,7 +74,7 @@ func (s *Service) ListPending(
 	if err != nil {
 		return nil, err
 	}
-	if shadow {
+	if shadow || withheld(req.Usable) {
 		return &services.PendingDecisionsPage{Items: []services.PendingDecision{}}, nil
 	}
 
@@ -92,6 +92,7 @@ func (s *Service) ListPending(
 		AgentDefinitionID:        req.AgentDefinitionID,
 		ToolName:                 strings.TrimSpace(req.ToolName),
 		ExcludeShadowDefinitions: true,
+		Audience:                 audienceOf(req.Usable),
 		Now:                      timeutils.NowUnix(),
 	}
 	if req.After != "" {
@@ -204,31 +205,51 @@ func (s *Service) loadEntries(
 	return items, nil
 }
 
-func (s *Service) Count(ctx context.Context, tenant pagination.TenantInfo) (int, error) {
+func (s *Service) Count(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	usable *services.UsableAgents,
+) (int, error) {
 	shadow, err := s.shadow.Organization(ctx, tenant)
 	if err != nil {
 		return 0, err
 	}
-	if shadow {
+	if shadow || withheld(usable) {
 		return 0, nil
 	}
 
 	return s.queue.CountPending(ctx, repositories.ListPendingDecisionsRequest{
 		TenantInfo:               tenant,
 		ExcludeShadowDefinitions: true,
+		Audience:                 audienceOf(usable),
 		Now:                      timeutils.NowUnix(),
 	})
+}
+
+// withheld reports a reader who may use no agent at all, so nothing any
+// agent raised is theirs to see.
+func withheld(usable *services.UsableAgents) bool {
+	return usable != nil && !usable.Assistant
+}
+
+func audienceOf(usable *services.UsableAgents) *repositories.AgentAudience {
+	if usable == nil {
+		return nil
+	}
+
+	return usable.Audience()
 }
 
 func (s *Service) Summary(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
+	usable *services.UsableAgents,
 ) (*repositories.PendingDecisionSummary, error) {
 	shadow, err := s.shadow.Organization(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-	if shadow {
+	if shadow || withheld(usable) {
 		return &repositories.PendingDecisionSummary{
 			ByAgent: []repositories.PendingDecisionAgentCount{},
 			ByTool:  []repositories.PendingDecisionToolCount{},
@@ -238,6 +259,7 @@ func (s *Service) Summary(
 	return s.queue.Summary(ctx, repositories.PendingDecisionSummaryRequest{
 		TenantInfo:               tenant,
 		ExcludeShadowDefinitions: true,
+		Audience:                 audienceOf(usable),
 		Now:                      timeutils.NowUnix(),
 	})
 }

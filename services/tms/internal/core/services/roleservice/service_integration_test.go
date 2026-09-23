@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -534,6 +535,29 @@ func (e *integrationPermEngine) SimulatePermissions(
 	_ *services.SimulatePermissionsRequest,
 ) (*services.EffectivePermissions, error) {
 	return nil, nil
+}
+
+func (e *integrationPermEngine) AgentsUsable(
+	_ context.Context,
+	_ *services.RequestActor,
+	_ permission.Operation,
+) (*services.UsableAgents, error) {
+	return &services.UsableAgents{Assistant: true}, nil
+}
+
+func (e *integrationPermEngine) MayUseAgent(
+	_ context.Context,
+	_ *services.RequestActor,
+	_ *agentdefinition.Definition,
+) (bool, error) {
+	return true, nil
+}
+
+func (e *integrationPermEngine) RoleCoverage(
+	_ context.Context,
+	_ *services.RoleCoverageRequest,
+) ([]services.RoleCoverage, error) {
+	return []services.RoleCoverage{}, nil
 }
 
 func setupIntegrationService(t *testing.T) (*Service, *bun.DB) {

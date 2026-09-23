@@ -169,6 +169,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recurringshipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/reportrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleassignmentrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleagentgrantrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rolerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/routingguiderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/schedulingrepository"
@@ -288,6 +289,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	passwordresetrepository.New,
 	rbacrepository.New,
 	rolerepository.New,
+	roleagentgrantrepository.New,
 	roleassignmentrepository.New,
 	usstaterepository.New,
 	customfieldrepository.New,

@@ -29,6 +29,24 @@ enum AgentOutputMode {
   Report
 }
 
+"Who may use an agent, among the people who may use the assistant."
+enum AgentAccessMode {
+  "Everyone who may use the assistant."
+  Everyone
+  "Only the roles granted it, and the roles that inherit them. Nobody when no role is."
+  Roles
+}
+
+"How much of an agent a role could use."
+enum AgentAudienceCoverage {
+  "The role grants everything the agent's tools need."
+  Full
+  "The role may use the assistant but lacks some of what the agent's tools need."
+  Partial
+  "The role may not use the assistant."
+  None
+}
+
 enum AgentContextProvider {
   Organization
   Clock
@@ -107,6 +125,13 @@ type AgentDefinition {
   listed, and refused when asked.
   """
   delegates: [AgentDefinition!]!
+  "Who may use the agent. A system agent is always Everyone."
+  accessMode: AgentAccessMode!
+  """
+  The roles granted the agent, whatever its access mode. They decide who may use
+  it only while accessMode is Roles. Empty for a reader who may not read roles.
+  """
+  accessRoles: [Role!]!
   """
   Up to four opening questions: the template's own when the agent was made from
   one, otherwise drawn from the tools it holds. Only questions the agent can
@@ -135,7 +160,103 @@ type AgentDefinitionConnection {
   totalCount: Int
 }
 
+"""
+An agent as the person asking it sees it: who it is and what to ask it. Its
+instructions, tools' settings and budget are an administrator's, and are not
+here.
+"""
+type MyAgent {
+  id: ID!
+  name: String!
+  description: String!
+  "The starter this agent was created from, if any."
+  template: AgentTemplate
+  "Chosen icon name; empty falls back to the icon the starter template implies."
+  icon: String!
+  "Chosen accent name; empty falls back to an accent derived from the agent id."
+  accent: String!
+  toolNames: [String!]!
+  "Set on the agents the platform itself creates and fires."
+  systemKey: String!
+  "Up to four opening questions the agent can answer with its tools."
+  starters: [AgentStarter!]!
+}
+
+type MyAgentEdge {
+  node: MyAgent!
+  cursor: String!
+}
+
+type MyAgentConnection {
+  edges: [MyAgentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"Where an agent came from."
+enum MyAgentOrigin {
+  All
+  "Made from one of the platform's templates."
+  Template
+  "Built by hand."
+  Custom
+}
+
+input MyAgentsInput {
+  first: Int = 20
+  after: String
+  "Matched against the agent's name and description."
+  search: String
+  origin: MyAgentOrigin = All
+  "Agents already shown, so a page never repeats them. At most 100."
+  excludeIds: [ID!]
+  "Only these agents. At most 100."
+  ids: [ID!]
+}
+
+input SetAgentAccessInput {
+  accessMode: AgentAccessMode!
+  """
+  The roles granted the agent, replacing those granted now. Kept whatever the
+  mode, so an agent opened to everyone and restricted again keeps its audience.
+  """
+  roleIds: [ID!]!
+}
+
+"How much of an agent one role could use, and whether it is granted the agent."
+type AgentAudienceRole {
+  role: Role!
+  coverage: AgentAudienceCoverage!
+  "Resources the agent's tools need that the role does not grant; empty unless coverage is Partial."
+  missingResources: [String!]!
+  granted: Boolean!
+}
+
+"Who an agent could be given to."
+type AgentAudienceSuggestion {
+  agentId: ID!
+  accessMode: AgentAccessMode!
+  "Every role in the organization, by name."
+  roles: [AgentAudienceRole!]!
+  """
+  While the agent is open to everyone, the tools it holds that reach
+  restricted or confidential data. Empty while it is restricted to roles.
+  """
+  sensitiveTools: [String!]!
+}
+
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentDefinition(id: ID!): AgentDefinition
+  "The chat agents the caller may use, enabled and by name."
+  myAgents(input: MyAgentsInput!): MyAgentConnection!
+  "Each role's coverage of an agent's tools, for choosing who may use it."
+  suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion!
+}
+
+extend type Mutation {
+  "Sets who may use an agent. Needs permission to update agents and roles."
+  setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!
+  "Replaces the agents a role is granted."
+  setRoleAgentAccess(roleId: ID!, agentIds: [ID!]!): Role!
 }

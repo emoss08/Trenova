@@ -282,6 +282,8 @@ var LocationCategorySpec TypeSpec
 
 var ManualJournalSpec TypeSpec
 
+var MyAgentSpec TypeSpec
+
 var NotificationSpec TypeSpec
 
 var OSHAAnnualSummarySpec TypeSpec
@@ -1046,6 +1048,14 @@ func init() {
 			{
 				Name:        "delegates",
 				FieldMapKey: "delegateIds",
+			},
+			{
+				Name:        "accessMode",
+				FieldMapKey: "accessMode",
+			},
+			{
+				Name:    "accessRoles",
+				Special: "accessRoles",
 			},
 			{
 				Name:    "starters",
@@ -13374,6 +13384,53 @@ func init() {
 		},
 	}
 
+	MyAgentSpec = TypeSpec{
+		TypeName: "MyAgent",
+		FieldMap: buncolgen.DefinitionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "template",
+				FieldMapKey: "template",
+			},
+			{
+				Name:        "icon",
+				FieldMapKey: "icon",
+			},
+			{
+				Name:        "accent",
+				FieldMapKey: "accent",
+			},
+			{
+				Name:        "toolNames",
+				FieldMapKey: "toolNames",
+			},
+			{
+				Name:        "systemKey",
+				FieldMapKey: "systemKey",
+			},
+			{
+				Name:    "starters",
+				Special: "starters",
+			},
+		},
+	}
+
 	NotificationSpec = TypeSpec{
 		TypeName: "Notification",
 		FieldMap: buncolgen.NotificationFieldMap,
@@ -16015,6 +16072,10 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "agents",
+				Special: "agents",
 			},
 		},
 	}

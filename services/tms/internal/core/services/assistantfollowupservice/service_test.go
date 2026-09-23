@@ -6,11 +6,14 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -102,17 +105,43 @@ type fixture struct {
 	conversations *fakeConversations
 	workflows     *fakeWorkflows
 	turns         *fakeTurns
+	permissions   *agentruntimetest.StubPermissions
+	agent         *agentdefinition.Definition
 	tenant        pagination.TenantInfo
 	thread        *conversation.Thread
 }
 
+type fakeDefinitions struct {
+	repositories.AgentDefinitionRepository
+	definition *agentdefinition.Definition
+}
+
+func (f *fakeDefinitions) GetByID(
+	_ context.Context,
+	req repositories.GetAgentDefinitionByIDRequest,
+) (*agentdefinition.Definition, error) {
+	if f.definition == nil || f.definition.ID != req.ID {
+		return nil, errortypes.NewNotFoundError("AgentDefinition not found")
+	}
+
+	return f.definition, nil
+}
+
 func newFixture(subject agent.SubjectType) *fixture {
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	definition := &agentdefinition.Definition{
+		ID:          pulid.MustNew("agdef_"),
+		Name:        "Report Builder",
+		Enabled:     true,
+		TriggerMode: agentdefinition.TriggerChat,
+		AccessMode:  agentdefinition.AccessEveryone,
+	}
 	thread := &conversation.Thread{
-		ID:             pulid.MustNew("athr_"),
-		UserID:         pulid.MustNew("usr_"),
-		OrganizationID: tenant.OrgID,
-		BusinessUnitID: tenant.BuID,
+		ID:                pulid.MustNew("athr_"),
+		UserID:            pulid.MustNew("usr_"),
+		OrganizationID:    tenant.OrgID,
+		BusinessUnitID:    tenant.BuID,
+		AgentDefinitionID: definition.ID,
 	}
 	f := &fixture{
 		runs: &fakeRuns{run: &agent.AgentRun{
@@ -123,6 +152,8 @@ func newFixture(subject agent.SubjectType) *fixture {
 		conversations: &fakeConversations{thread: thread},
 		workflows:     &fakeWorkflows{},
 		turns:         &fakeTurns{},
+		permissions:   &agentruntimetest.StubPermissions{},
+		agent:         definition,
 		tenant:        tenant,
 		thread:        thread,
 	}
@@ -130,6 +161,8 @@ func newFixture(subject agent.SubjectType) *fixture {
 		l:             zap.NewNop(),
 		runs:          f.runs,
 		conversations: f.conversations,
+		definitions:   &fakeDefinitions{definition: definition},
+		permissions:   f.permissions,
 		turns:         f.turns,
 		workflows:     f.workflows,
 	}
@@ -248,3 +281,61 @@ func TestFollowUp_RefusesARequestThatNamesNoSingleDecision(t *testing.T) {
 
 	assert.Empty(t, f.turns.started)
 }
+
+/*
+A person who lost access to the conversation's agent keeps the conversation to
+read, and the decision stands, but the agent is not asked to report it: the
+turn would run as someone who may no longer use it.
+*/
+func TestFollowUp_SkipsWhenTheOwnerMayNoLongerUseTheAgent(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]func(f *fixture){
+		"the agent is restricted to roles the owner does not hold": func(f *fixture) {
+			f.agent.AccessMode = agentdefinition.AccessRoles
+		},
+		"the owner may no longer use the assistant": func(f *fixture) {
+			f.permissions.Denied = map[string]bool{"assistant:create": true}
+		},
+		"the agent is gone": func(f *fixture) {
+			f.service.definitions = &fakeDefinitions{}
+		},
+	}
+
+	for name, change := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			f := newFixture(agent.SubjectAssistantThread)
+			change(f)
+
+			f.service.FollowUp(t.Context(), serviceports.DecisionFollowUpRequest{
+				TenantInfo: f.tenant,
+				RunID:      f.runs.run.ID,
+				ProposalID: pulid.MustNew("aprop_"),
+			})
+
+			assert.Empty(t, f.turns.started)
+			assert.Empty(t, f.workflows.payloads)
+		})
+	}
+}
+
+// A grant through one of the owner's roles keeps the report coming.
+func TestFollowUp_ReportsWhenTheOwnersRoleIsGrantedTheAgent(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(agent.SubjectAssistantThread)
+	f.agent.AccessMode = agentdefinition.AccessRoles
+	f.permissions.GrantedAgents = []pulid.ID{f.agent.ID}
+
+	f.service.FollowUp(t.Context(), serviceports.DecisionFollowUpRequest{
+		TenantInfo: f.tenant,
+		RunID:      f.runs.run.ID,
+		ProposalID: pulid.MustNew("aprop_"),
+	})
+
+	require.Len(t, f.turns.started, 1)
+	assert.Len(t, f.workflows.payloads, 1)
+}
+

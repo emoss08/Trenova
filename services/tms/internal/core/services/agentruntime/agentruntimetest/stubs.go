@@ -5,8 +5,10 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type ScriptedCompletion struct {
@@ -244,6 +246,33 @@ type StubPermissions struct {
 
 	Denied   map[string]bool
 	Requests []*serviceports.PermissionCheckRequest
+	// GrantedAgents are the agents restricted to roles that the person's
+	// roles grant.
+	GrantedAgents []pulid.ID
+}
+
+func (p *StubPermissions) AgentsUsable(
+	_ context.Context,
+	_ *serviceports.RequestActor,
+	operation permission.Operation,
+) (*serviceports.UsableAgents, error) {
+	return &serviceports.UsableAgents{
+		Assistant:  !p.Denied[permission.ResourceAssistant.String()+":"+string(operation)],
+		GrantedIDs: p.GrantedAgents,
+	}, nil
+}
+
+func (p *StubPermissions) MayUseAgent(
+	ctx context.Context,
+	actor *serviceports.RequestActor,
+	definition *agentdefinition.Definition,
+) (bool, error) {
+	usable, err := p.AgentsUsable(ctx, actor, permission.OpCreate)
+	if err != nil {
+		return false, err
+	}
+
+	return usable.Allows(definition), nil
 }
 
 func (p *StubPermissions) Check(

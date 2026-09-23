@@ -59,6 +59,7 @@ type Params struct {
 	PermissionCacheRepo   repositories.PermissionCacheRepository
 	AccessPolicyCacheRepo repositories.AccessPolicyCacheRepository
 	UserRepository        repositories.UserRepository
+	AgentGrants           repositories.RoleAgentGrantRepository `optional:"true"`
 	Registry              *permission.Registry
 	RouteRegistry         *permission.RouteRegistry
 	Metrics               *metrics.Registry
@@ -73,6 +74,7 @@ type engine struct {
 	cacheRepo     repositories.PermissionCacheRepository
 	policyCache   repositories.AccessPolicyCacheRepository
 	userRepo      repositories.UserRepository
+	agentGrants   repositories.RoleAgentGrantRepository
 	registry      *permission.Registry
 	routeRegistry *permission.RouteRegistry
 	metrics       *metrics.Registry
@@ -89,6 +91,7 @@ func NewEngine(p Params) services.PermissionEngine {
 		cacheRepo:     p.PermissionCacheRepo,
 		policyCache:   p.AccessPolicyCacheRepo,
 		userRepo:      p.UserRepository,
+		agentGrants:   p.AgentGrants,
 		registry:      p.Registry,
 		routeRegistry: p.RouteRegistry,
 		metrics:       p.Metrics,
@@ -1134,9 +1137,15 @@ func (e *engine) computePermissions(
 		e.mergeRolePermissionsIntoCache(resources, role.Permissions)
 	}
 
+	agentIDs, err := e.grantedAgentIDs(ctx, orgID, roles)
+	if err != nil {
+		return nil, err
+	}
+
 	return &repositories.CachedPermissions{
 		MaxSensitivity: string(maxSensitivity),
 		Resources:      resources,
+		AgentIDs:       agentIDs,
 		ExpiresAt:      timeutils.NowUnix() + int64(cacheTTL.Seconds()),
 	}, nil
 }

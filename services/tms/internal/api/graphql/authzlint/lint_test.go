@@ -141,3 +141,34 @@ func TestSelfScopedNameRule(t *testing.T) {
 		assert.False(t, selfScopedName.MatchString(name), name)
 	}
 }
+
+// Who may use which agent is decided by these operations. The self-scoped
+// ones are named My<Thing>, which would let them pass on authentication
+// alone, so each is held to a permission check of its own.
+func TestAgentAccessResolversAreAuthorized(t *testing.T) {
+	t.Parallel()
+
+	roots, err := Analyze(resolverDir)
+	require.NoError(t, err)
+
+	verdicts := make(map[string]Verdict, len(roots))
+	for _, root := range roots {
+		verdicts[root.Key()] = root.Verdict
+	}
+
+	for _, key := range []string{
+		"queryResolver.MyAgents",
+		"queryResolver.SuggestedAgentAudience",
+		"mutationResolver.SetAgentAccess",
+		"mutationResolver.SetRoleAgentAccess",
+		"mutationResolver.DecideMyProposal",
+		"queryResolver.PendingDecisions",
+		"queryResolver.PendingDecisionSummary",
+	} {
+		verdict, ok := verdicts[key]
+		require.True(t, ok, "%s is not a root resolver", key)
+		assert.Equal(t, VerdictPermission, verdict, "%s must reach a permission check", key)
+		_, listed := authOnlyAllowlist[key]
+		assert.False(t, listed, "%s must not be allowlisted as auth-only", key)
+	}
+}

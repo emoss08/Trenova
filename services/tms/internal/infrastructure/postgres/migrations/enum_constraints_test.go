@@ -46,6 +46,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(agentdefinition.AllTemplates()),
 		},
 		{
+			name:   "ck_agent_definitions_access_mode",
+			values: stringsOf(agentdefinition.AllAccessModes()),
+		},
+		{
 			name:   "ck_assistant_artifacts_kind",
 			values: stringsOf(assistantartifact.AllKinds()),
 		},

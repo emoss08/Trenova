@@ -83,6 +83,7 @@ var DefinitionColumns = struct {
 	PreferredProviderID    Column // "preferred_provider_id" → qualified: "agdef.preferred_provider_id"
 	SystemKey              Column // "system_key" → qualified: "agdef.system_key"
 	DelegateIDs            Column // "delegate_ids" → qualified: "agdef.delegate_ids"
+	AccessMode             Column // "access_mode" → qualified: "agdef.access_mode"
 	LastRunAt              Column // "last_run_at" → qualified: "agdef.last_run_at"
 	NextRunAt              Column // "next_run_at" → qualified: "agdef.next_run_at"
 	Version                Column // "version" → qualified: "agdef.version"
@@ -123,6 +124,7 @@ var DefinitionColumns = struct {
 	PreferredProviderID:    NewColumn("preferred_provider_id", "agdef"),
 	SystemKey:              NewColumn("system_key", "agdef"),
 	DelegateIDs:            NewColumn("delegate_ids", "agdef"),
+	AccessMode:             NewColumn("access_mode", "agdef"),
 	LastRunAt:              NewColumn("last_run_at", "agdef"),
 	NextRunAt:              NewColumn("next_run_at", "agdef"),
 	Version:                NewColumn("version", "agdef"),
@@ -169,6 +171,7 @@ var DefinitionFieldMap = map[string]string{
 	"preferredProviderId":    "preferred_provider_id",
 	"systemKey":              "system_key",
 	"delegateIds":            "delegate_ids",
+	"accessMode":             "access_mode",
 	"lastRunAt":              "last_run_at",
 	"nextRunAt":              "next_run_at",
 	"version":                "version",
@@ -213,6 +216,7 @@ var DefinitionInsertableColumns = []string{
 	"preferred_provider_id",
 	"system_key",
 	"delegate_ids",
+	"access_mode",
 	"last_run_at",
 	"next_run_at",
 	"version",
@@ -317,6 +321,7 @@ var DefinitionFilter = struct {
 	PreferredProviderID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preferredProviderId" → DB: "preferred_provider_id"
 	SystemKey              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "systemKey" → DB: "system_key"
 	DelegateIDs            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateIds" → DB: "delegate_ids"
+	AccessMode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accessMode" → DB: "access_mode"
 	LastRunAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastRunAt" → DB: "last_run_at"
 	NextRunAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "nextRunAt" → DB: "next_run_at"
 	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
@@ -424,6 +429,9 @@ var DefinitionFilter = struct {
 	},
 	DelegateIDs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("delegateIds", op, value)
+	},
+	AccessMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("accessMode", op, value)
 	},
 	LastRunAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("lastRunAt", op, value)

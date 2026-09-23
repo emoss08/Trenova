@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,6 +23,33 @@ type subjectPermissions struct {
 
 	allowed map[string]bool
 	asked   []string
+	// granted are the agents restricted to roles that the person's roles
+	// grant.
+	granted []pulid.ID
+}
+
+func (p *subjectPermissions) AgentsUsable(
+	_ context.Context,
+	_ *serviceports.RequestActor,
+	operation permission.Operation,
+) (*serviceports.UsableAgents, error) {
+	return &serviceports.UsableAgents{
+		Assistant:  p.allowed[permission.ResourceAssistant.String()+":"+string(operation)],
+		GrantedIDs: p.granted,
+	}, nil
+}
+
+func (p *subjectPermissions) MayUseAgent(
+	ctx context.Context,
+	actor *serviceports.RequestActor,
+	definition *agentdefinition.Definition,
+) (bool, error) {
+	usable, err := p.AgentsUsable(ctx, actor, permission.OpCreate)
+	if err != nil {
+		return false, err
+	}
+
+	return usable.Allows(definition), nil
 }
 
 func (p *subjectPermissions) Check(
@@ -58,7 +86,7 @@ func subjectService(
 	definition *agentdefinition.Definition,
 	allowed ...string,
 ) (*Service, *creatingConversations, *subjectPermissions) {
-	permissions := &subjectPermissions{allowed: map[string]bool{}}
+	permissions := &subjectPermissions{allowed: map[string]bool{"assistant:create": true}}
 	for _, key := range allowed {
 		permissions.allowed[key] = true
 	}
@@ -166,7 +194,10 @@ func TestDescribeSubject_WithholdsARecordThePersonCanNoLongerRead(t *testing.T) 
 	assert.Empty(t, subject.Notes, "only the kind and id are named")
 	assert.Zero(t, subjects.described, "the record is never loaded")
 
-	svc.permissions = &subjectPermissions{allowed: map[string]bool{"worker:read": true}}
+	svc.permissions = &subjectPermissions{allowed: map[string]bool{
+		"assistant:create": true,
+		"worker:read":      true,
+	}}
 	subject = svc.describeSubject(t.Context(), thread, testActor(), pagination.TenantInfo{})
 	require.NotNil(t, subject)
 	assert.NotEmpty(t, subject.Notes)

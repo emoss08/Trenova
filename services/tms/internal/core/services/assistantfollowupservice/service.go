@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"go.uber.org/fx"
@@ -28,6 +29,8 @@ type Params struct {
 	Logger        *zap.Logger
 	Runs          repositories.AgentRunRepository
 	Conversations repositories.ConversationRepository
+	Definitions   repositories.AgentDefinitionRepository
+	Permissions   serviceports.PermissionEngine
 	Turns         *assistantturnservice.Service
 	Workflows     serviceports.WorkflowStarter
 }
@@ -36,6 +39,8 @@ type Service struct {
 	l             *zap.Logger
 	runs          repositories.AgentRunRepository
 	conversations repositories.ConversationRepository
+	definitions   repositories.AgentDefinitionRepository
+	permissions   serviceports.PermissionEngine
 	turns         turnStarter
 	workflows     serviceports.WorkflowStarter
 }
@@ -54,6 +59,8 @@ func New(p Params) serviceports.DecisionFollowUps {
 		l:             p.Logger.Named("service.assistantfollowup"),
 		runs:          p.Runs,
 		conversations: p.Conversations,
+		definitions:   p.Definitions,
+		permissions:   p.Permissions,
 		turns:         p.Turns,
 		workflows:     p.Workflows,
 	}
@@ -96,6 +103,9 @@ func (s *Service) FollowUp(ctx context.Context, req serviceports.DecisionFollowU
 		UserID:         thread.UserID,
 		OrganizationID: thread.OrganizationID,
 		BusinessUnitID: thread.BusinessUnitID,
+	}
+	if !s.ownerMayUseAgent(ctx, thread, &actor, req.TenantInfo) {
+		return
 	}
 	start := assistantturnservice.StartRequest{
 		ThreadID:   thread.ID,
@@ -148,6 +158,52 @@ func (s *Service) threadFor(
 		ID:         run.SubjectID,
 		TenantInfo: tenant,
 	})
+}
+
+// ownerMayUseAgent reports whether the conversation's owner may still use its
+// agent. One who lost access keeps the conversation to read, and the decision
+// stands, but the agent is not asked to report it: the turn would be refused.
+func (s *Service) ownerMayUseAgent(
+	ctx context.Context,
+	thread *conversation.Thread,
+	owner *serviceports.RequestActor,
+	tenant pagination.TenantInfo,
+) bool {
+	if s.definitions == nil || s.permissions == nil {
+		s.l.Warn("decision follow-up skipped: agent access cannot be checked",
+			zap.String("thread", thread.ID.String()),
+		)
+		return false
+	}
+
+	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+		ID:         thread.AgentDefinitionID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		s.l.Info("decision follow-up skipped: the conversation's agent could not be read",
+			zap.String("thread", thread.ID.String()),
+			zap.Error(err),
+		)
+		return false
+	}
+
+	allowed, err := s.permissions.MayUseAgent(ctx, owner, definition)
+	if err != nil {
+		s.l.Warn("decision follow-up skipped: agent access could not be checked",
+			zap.String("thread", thread.ID.String()),
+			zap.Error(err),
+		)
+		return false
+	}
+	if !allowed {
+		s.l.Info("decision follow-up skipped: the owner may no longer use the agent",
+			zap.String("thread", thread.ID.String()),
+			zap.String("agent", definition.ID.String()),
+		)
+	}
+
+	return allowed
 }
 
 // logStartFailure records a follow-up that never began. The conversation
