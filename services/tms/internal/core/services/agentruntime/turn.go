@@ -285,19 +285,35 @@ type localEffects struct {
 }
 
 func (fx *localEffects) Complete(
-	t *Turn,
+	_ *Turn,
 	req *serviceports.ChatCompletionRequest,
 ) (ModelReply, error) {
-	streamCtx, cancelStream := context.WithCancel(fx.ctx)
+	return fx.s.StreamCompletion(fx.ctx, req, fx.Emit)
+}
+
+// StreamCompletion asks the model for one reply and streams it to emit as it
+// arrives: the text, the thinking, and any restart. A reply that falls into a
+// loop is cut off the moment it is seen, so the provider stops writing, and is
+// reported as Looped rather than returned as an answer.
+//
+// It is the model call wherever a turn runs: inline for a turn in process, and
+// inside the model activity for a durable one, where emit publishes to the
+// run's stream.
+func (s *Service) StreamCompletion(
+	ctx context.Context,
+	req *serviceports.ChatCompletionRequest,
+	emit serviceports.AssistantStreamEmitter,
+) (ModelReply, error) {
+	streamCtx, cancelStream := context.WithCancel(ctx)
 	defer cancelStream()
 
 	guard := newReplyGuard(cancelStream)
-	req.ReasoningSink = func(delta string) { fx.Emit(reasoningEvent(delta)) }
-	req.RetrySink = func(notice serviceports.ChatRetryNotice) { fx.Emit(retryEvent(notice)) }
+	req.ReasoningSink = func(delta string) { emit(reasoningEvent(delta)) }
+	req.RetrySink = func(notice serviceports.ChatRetryNotice) { emit(retryEvent(notice)) }
 
-	completion, err := fx.s.completion.StreamChat(streamCtx, req, func(delta string) {
+	completion, err := s.completion.StreamChat(streamCtx, req, func(delta string) {
 		if guard.feed(delta) {
-			fx.Emit(deltaEvent(delta))
+			emit(deltaEvent(delta))
 		}
 	})
 	cancelStream()
@@ -307,6 +323,9 @@ func (fx *localEffects) Complete(
 
 	return ModelReply{Completion: completion, Looped: guard.looped(completion.Text)}, nil
 }
+
+// KnowsTool reports whether name is a registered tool, read or write.
+func (s *Service) KnowsTool(name string) bool { return s.toolNamed(name) != nil }
 
 func (fx *localEffects) Dispatch(t *Turn, call DispatchCall) ToolOutcome {
 	return fx.s.guardedDispatch(fx.ctx, guardedDispatchParams{
@@ -355,4 +374,48 @@ func retryEvent(notice serviceports.ChatRetryNotice) serviceports.StreamEvent {
 			WaitSeconds: notice.WaitSeconds,
 		},
 	}
+}
+
+// DispatchStep runs one tool call the loop decided to make, claimed in the
+// run's ledger when req carries one. It is what a durable tool activity calls:
+// the loop decides in workflow code, and the call runs here, where a database
+// and the tools can be reached.
+func (s *Service) DispatchStep(
+	ctx context.Context,
+	req *serviceports.RunRequest,
+	call DispatchCall,
+) ToolOutcome {
+	return s.guardedDispatch(ctx, guardedDispatchParams{
+		req:            req,
+		call:           call.Call,
+		completionText: call.CompletionText,
+		proposedSoFar:  call.ProposedSoFar,
+		ordinal:        call.Ordinal,
+	}).exported()
+}
+
+// FindFor answers find_tools for a turn held as data, and names the tools it
+// made callable so the turn can load the same ones. An empty search names what
+// exists beyond the agent only when the actor could use it, which takes a
+// permission check, so this runs where permissions can be read.
+func (s *Service) FindFor(
+	ctx context.Context,
+	req *serviceports.RunRequest,
+	state ToolSetState,
+	arguments map[string]any,
+) (string, []string) {
+	set := restoreToolSet(state)
+	set.usable = func(name string) bool {
+		return len(s.permittedTools(ctx, req.Actor, []string{name})) == 1
+	}
+
+	before := len(set.specs)
+	content := s.resolveFind(set, arguments)
+
+	loaded := make([]string, 0, len(set.specs)-before)
+	for _, spec := range set.specs[before:] {
+		loaded = append(loaded, spec.Name)
+	}
+
+	return content, loaded
 }

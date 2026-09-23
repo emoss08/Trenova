@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/shopspring/decimal"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -240,4 +241,12 @@ type ProviderFailure interface {
 	error
 	ProviderStatus() int
 	ProviderRetryable() bool
+}
+
+// ProviderBackoff is a provider failure that said how long to wait before
+// asking again, from a Retry-After header or its equivalent. Zero means it
+// said nothing.
+type ProviderBackoff interface {
+	error
+	ProviderRetryAfter() time.Duration
 }

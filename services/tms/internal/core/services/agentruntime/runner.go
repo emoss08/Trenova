@@ -47,7 +47,7 @@ type Service struct {
 	budgets     serviceports.AgentBudgetService
 }
 
-func New(p Params) serviceports.AgentRuntime {
+func New(p Params) *Service {
 	return &Service{
 		logger:      p.Logger.Named("service.agentruntime"),
 		completion:  p.Completion,
