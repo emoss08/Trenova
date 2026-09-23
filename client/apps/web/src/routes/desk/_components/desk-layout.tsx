@@ -1,6 +1,7 @@
 import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity/agent-identity";
 import { conversationPath } from "@/lib/conversation-path";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
+import { DeskMark } from "@/components/assistant/voice/desk-thinking";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
@@ -276,7 +277,15 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       <DeskShell
         accent={accent}
         working={working}
-        lead={<AgentTile agent={activeAgent} size="md" />}
+        lead={
+          activeThread ? (
+            <AgentTile agent={activeAgent} size="md" />
+          ) : (
+            // The room's own mark when no one is being talked to: the desk,
+            // at rest, where the agent's tile will sit once a conversation opens.
+            <DeskMark pose="idle" className="text-foreground-muted mx-1.5" />
+          )
+        }
         title={
           activeThread ? (
             <DeskTitleField

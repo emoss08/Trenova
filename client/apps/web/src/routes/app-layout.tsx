@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import { Metadata } from "@/components/metadata";
 import { SidebarLayout } from "@/components/navigation";
 import { usePermissionPolling } from "@/hooks/use-permission-polling";
@@ -131,4 +132,15 @@ export function AppSession({ children }: { children: (outlet: ReactNode) => Reac
 
 export function AppLayout() {
   return <AppSession>{(outlet) => <SidebarLayout>{outlet}</SidebarLayout>}</AppSession>;
+}
+
+// AppErrorLayout is AppLayout's error element. It draws the same frame around the failure
+// rather than replacing the whole window. It skips the session's polling and gates: the
+// failure may be in them, and if the frame itself throws the root boundary takes over.
+export function AppErrorLayout() {
+  return (
+    <SidebarLayout>
+      <RouteErrorBoundary embedded />
+    </SidebarLayout>
+  );
 }

@@ -128,6 +128,7 @@ const (
 	ResourceAIProvider      Resource = "ai_provider"
 	ResourceAgentDefinition Resource = "agent_definition"
 	ResourceAgentMemory     Resource = "agent_memory"
+	ResourceAgentFeedback   Resource = "agent_feedback"
 	ResourceAssistant       Resource = "assistant"
 	ResourceInsight         Resource = "insight"
 	ResourceWatchtower      Resource = "watchtower"

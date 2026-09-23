@@ -2368,6 +2368,38 @@ func (ec *executionContext) fieldContext_AgentMemory_lastUsedAt(_ context.Contex
 	return graphql.NewScalarFieldContext("AgentMemory", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
+func (ec *executionContext) _AgentMemory_evidence(ctx context.Context, field graphql.CollectedField, obj *agent.Memory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemory_evidence(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Evidence, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *agent.MemoryEvidence) graphql.Marshaler {
+			return ec.marshalOAgentMemoryEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryEvidence(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemory_evidence(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentMemory",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentMemoryEvidence(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AgentMemory_version(ctx context.Context, field graphql.CollectedField, obj *agent.Memory) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2577,6 +2609,213 @@ func (ec *executionContext) _AgentMemoryEdge_cursor(ctx context.Context, field g
 }
 func (ec *executionContext) fieldContext_AgentMemoryEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AgentMemoryEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryEvidence_feedbackIds(ctx context.Context, field graphql.CollectedField, obj *agent.MemoryEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryEvidence_feedbackIds(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FeedbackIDs, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐIDᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryEvidence_feedbackIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryEvidence", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryEvidence_patternKey(ctx context.Context, field graphql.CollectedField, obj *agent.MemoryEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryEvidence_patternKey(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PatternKey, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryEvidence_patternKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryEvidence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryEvidence_ratingCount(ctx context.Context, field graphql.CollectedField, obj *agent.MemoryEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryEvidence_ratingCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RatingCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryEvidence_ratingCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryEvidence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryEvidence_distinctUsers(ctx context.Context, field graphql.CollectedField, obj *agent.MemoryEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryEvidence_distinctUsers(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DistinctUsers, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryEvidence_distinctUsers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryEvidence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryEvidence_distinctThreads(ctx context.Context, field graphql.CollectedField, obj *agent.MemoryEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryEvidence_distinctThreads(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DistinctThreads, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryEvidence_distinctThreads(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryEvidence", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryEvidence_reason(ctx context.Context, field graphql.CollectedField, obj *agent.MemoryEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryEvidence_reason(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Reason, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryEvidence_reason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryEvidence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryEvidence_quotes(ctx context.Context, field graphql.CollectedField, obj *agent.MemoryEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryEvidence_quotes(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Quotes, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryEvidence_quotes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryEvidence", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryEvidence_firstRatedAt(ctx context.Context, field graphql.CollectedField, obj *agent.MemoryEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryEvidence_firstRatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.FirstRatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryEvidence_firstRatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryEvidence", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryEvidence_lastRatedAt(ctx context.Context, field graphql.CollectedField, obj *agent.MemoryEvidence) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryEvidence_lastRatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LastRatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryEvidence_lastRatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryEvidence", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
 func (ec *executionContext) _AgentPlan_id(ctx context.Context, field graphql.CollectedField, obj *agent.AgentPlan) (ret graphql.Marshaler) {
@@ -4889,6 +5128,50 @@ func (ec *executionContext) unmarshalInputAgentProposalDecisionInput(ctx context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputApproveAgentMemorySuggestionInput(ctx context.Context, obj any) (gqlmodel.ApproveAgentMemorySuggestionInput, error) {
+	var it gqlmodel.ApproveAgentMemorySuggestionInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"content", "kind", "version"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "content":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Content = data
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := ec.unmarshalOAgentMemoryKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryKind(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "version":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Version = data
+		}
+	}
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -5795,6 +6078,11 @@ func (ec *executionContext) _AgentMemory(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
+		case "evidence":
+			out.Values[i] = ec._AgentMemory_evidence(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "version":
 			out.Values[i] = ec._AgentMemory_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5898,6 +6186,84 @@ func (ec *executionContext) _AgentMemoryEdge(ctx context.Context, sel ast.Select
 			}
 		case "cursor":
 			out.Values[i] = ec._AgentMemoryEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var agentMemoryEvidenceImplementors = []string{"AgentMemoryEvidence"}
+
+func (ec *executionContext) _AgentMemoryEvidence(ctx context.Context, sel ast.SelectionSet, obj *agent.MemoryEvidence) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, agentMemoryEvidenceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AgentMemoryEvidence")
+		case "feedbackIds":
+			out.Values[i] = ec._AgentMemoryEvidence_feedbackIds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "patternKey":
+			out.Values[i] = ec._AgentMemoryEvidence_patternKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ratingCount":
+			out.Values[i] = ec._AgentMemoryEvidence_ratingCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "distinctUsers":
+			out.Values[i] = ec._AgentMemoryEvidence_distinctUsers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "distinctThreads":
+			out.Values[i] = ec._AgentMemoryEvidence_distinctThreads(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reason":
+			out.Values[i] = ec._AgentMemoryEvidence_reason(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "quotes":
+			out.Values[i] = ec._AgentMemoryEvidence_quotes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "firstRatedAt":
+			out.Values[i] = ec._AgentMemoryEvidence_firstRatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lastRatedAt":
+			out.Values[i] = ec._AgentMemoryEvidence_lastRatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7546,6 +7912,11 @@ func (ec *executionContext) marshalNAgentType2githubᚗcomᚋemoss08ᚋtrenova�
 	return res
 }
 
+func (ec *executionContext) unmarshalNApproveAgentMemorySuggestionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐApproveAgentMemorySuggestionInput(ctx context.Context, v any) (gqlmodel.ApproveAgentMemorySuggestionInput, error) {
+	res, err := ec.unmarshalInputApproveAgentMemorySuggestionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOAgentAutonomyTier2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAutonomyTier(ctx context.Context, v any) (*agent.AutonomyTier, error) {
 	if v == nil {
 		return nil, nil
@@ -7591,6 +7962,32 @@ func (ec *executionContext) marshalOAgentMemory2ᚖgithubᚗcomᚋemoss08ᚋtren
 		return graphql.Null
 	}
 	return ec._AgentMemory(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAgentMemoryEvidence2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryEvidence(ctx context.Context, sel ast.SelectionSet, v *agent.MemoryEvidence) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AgentMemoryEvidence(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOAgentMemoryKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryKind(ctx context.Context, v any) (*agent.MemoryKind, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := agent.MemoryKind(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAgentMemoryKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryKind(ctx context.Context, sel ast.SelectionSet, v *agent.MemoryKind) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func (ec *executionContext) unmarshalOAgentMemorySubjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemorySubjectType(ctx context.Context, v any) (agent.MemorySubjectType, error) {

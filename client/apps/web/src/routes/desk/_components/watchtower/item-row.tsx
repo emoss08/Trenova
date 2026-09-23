@@ -7,6 +7,10 @@ import { cn } from "@trenova/shared/lib/utils";
 import { ArrowRightIcon, XIcon } from "lucide-react";
 import { Link } from "react-router";
 import { SEVERITY_TONE } from "./severity";
+import { FeedbackControl } from "@/components/ai-feedback/feedback-control";
+import { isRatableWatchtowerKind } from "@/components/ai-feedback/feedback-targets";
+
+const ROW_FEEDBACK_REVEAL = "opacity-0 group-hover:opacity-100";
 
 /**
  * One thing worth a person's attention.
@@ -68,6 +72,14 @@ export function WatchtowerItemRow({
           <span className="tabular-nums">{formatSecondsAgo(now - item.occurredAt)}</span>
         </div>
       </div>
+
+      {isRatableWatchtowerKind(item.sourceKind) && (
+        <FeedbackControl
+          target={{ targetType: "WatchtowerItem", targetId: item.id }}
+          revealClassName={ROW_FEEDBACK_REVEAL}
+          className="self-center"
+        />
+      )}
 
       <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
         {onAsk && (

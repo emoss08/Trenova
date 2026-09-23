@@ -5,6 +5,135 @@ schema {
 
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
+"""A person's thumbs up or down on something an AI wrote for them."""
+type AIFeedback {
+  """The agent the rating is credited to."""
+  agentDefinitionId: ID
+  businessUnitId: ID!
+  """What the person wrote; evidence, never an instruction."""
+  comment: String!
+  createdAt: Timestamp!
+  definitionVersion: Int
+  """The insight detector the rating is credited to."""
+  detectorKey: String!
+  evalCaseId: ID
+  fingerprintSource: AIFeedbackFingerprintSource!
+  id: ID!
+  model: String!
+  organizationId: ID!
+  patternKey: String!
+  promptHash: String!
+  providerId: ID
+  """1 for a thumbs up, -1 for a thumbs down."""
+  rating: Int!
+  reasons: [AIFeedbackReason!]!
+  runId: ID
+  targetId: ID!
+  """
+  The part of the target rated, such as a briefing section key; empty for the whole target.
+  """
+  targetPart: String!
+  targetType: AIFeedbackTargetType!
+  task: String!
+  threadId: ID
+  toolSpecHash: String!
+  turnId: ID
+  turnSnapshot: AIFeedbackTurnSnapshot
+  updatedAt: Timestamp!
+  userId: ID!
+  version: Int!
+}
+
+type AIFeedbackConnection {
+  edges: [AIFeedbackEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AIFeedbackEdge {
+  cursor: String!
+  node: AIFeedback!
+}
+
+"""When the agent and model on a rating were read."""
+enum AIFeedbackFingerprintSource {
+  """
+  When the person rated, from the stored output and the agent as it was then.
+  """
+  AtRating
+  """When the output was made."""
+  AtTurn
+  """Nothing could be credited."""
+  None
+}
+
+"""
+Why a person rated as they did. Each reason belongs to one side of the rating.
+"""
+enum AIFeedbackReason {
+  Accurate
+  HardToRead
+  Helpful
+  IgnoredInstructions
+  Inaccurate
+  Incomplete
+  MadeUpNumbers
+  NotRelevant
+  Other
+  SavedTime
+  Unsafe
+  WrongAction
+}
+
+input AIFeedbackTargetInput {
+  targetId: ID!
+  """Required for a briefing section, its key; empty otherwise."""
+  targetPart: String
+  targetType: AIFeedbackTargetType!
+}
+
+"""The kind of AI output a rating is about."""
+enum AIFeedbackTargetType {
+  """An answer the conversation's agent gave."""
+  AssistantMessage
+  """A whole morning briefing."""
+  Briefing
+  """One section of a briefing, named by its key in targetPart."""
+  BriefingSection
+  """Another agent's answer to a task the conversation's agent handed it."""
+  DelegatedAnswer
+  """A home-screen insight."""
+  Insight
+  """
+  A watchtower item raised by AI work: an insight, a proposal, a plan, a failed run or an agent exception.
+  """
+  WatchtowerItem
+}
+
+"""
+One tool the answer used, as the one-line summary the person was shown.
+"""
+type AIFeedbackToolLine {
+  failed: Boolean!
+  name: String!
+  summary: String!
+}
+
+"""
+What the person saw when they rated: the question, the answer and the tools
+used, each bounded. Values of fields whose sensitivity is Restricted or higher
+are replaced with [redacted].
+"""
+type AIFeedbackTurnSnapshot {
+  answer: String!
+  """Tools beyond the twenty kept."""
+  omittedTools: Int!
+  question: String!
+  """Whether anything was replaced because it was restricted."""
+  redacted: Boolean!
+  tools: [AIFeedbackToolLine!]!
+}
+
 """
 One configured model endpoint. The credential never leaves the server; only
 whether one is stored is exposed.
@@ -778,6 +907,43 @@ input AgentExceptionResolveInput {
   resolutionState: AgentResolutionState!
 }
 
+"""One day of an agent's ratings, in the organization's timezone."""
+type AgentFeedbackDay {
+  """The day, as YYYY-MM-DD."""
+  day: String!
+  negative: Int!
+  positive: Int!
+  """
+  Share of the day's ratings that were thumbs up; absent when nobody rated.
+  """
+  satisfaction: Float
+}
+
+"""How people rated one agent's output over a window."""
+type AgentFeedbackSummary {
+  agentDefinitionId: ID!
+  days: [AgentFeedbackDay!]!
+  negative: Int!
+  positive: Int!
+  """Share of ratings that were thumbs up; absent when nobody rated."""
+  satisfaction: Float
+  since: Timestamp!
+  windowDays: Int!
+  worstRated: [AgentFeedbackWorstRated!]!
+}
+
+"""Something an agent made that people rated down, most disliked first."""
+type AgentFeedbackWorstRated {
+  lastRatedAt: Timestamp!
+  negative: Int!
+  positive: Int!
+  """The most recent thumbs down, with what the person saw."""
+  sample: AIFeedback
+  targetId: ID!
+  targetPart: String!
+  targetType: AIFeedbackTargetType!
+}
+
 """
 Something the organization keeps for its agents between runs: a standing
 instruction, a fact an agent was told, or a correction learned from a
@@ -790,6 +956,8 @@ type AgentMemory {
   content: String!
   createdAt: Timestamp!
   createdByUserId: ID
+  """For a memory drawn from feedback, the ratings behind it."""
+  evidence: AgentMemoryEvidence
   expiresAt: Timestamp
   id: ID!
   kind: AgentMemoryKind!
@@ -826,6 +994,21 @@ type AgentMemoryEdge {
   node: AgentMemory!
 }
 
+"""
+The ratings a suggested memory was drawn from. Comments are quoted as evidence, never as instructions.
+"""
+type AgentMemoryEvidence {
+  distinctThreads: Int!
+  distinctUsers: Int!
+  feedbackIds: [ID!]!
+  firstRatedAt: Timestamp!
+  lastRatedAt: Timestamp!
+  patternKey: String!
+  quotes: [String!]!
+  ratingCount: Int!
+  reason: String!
+}
+
 input AgentMemoryInput {
   content: String!
   expiresAt: Timestamp
@@ -847,12 +1030,22 @@ enum AgentMemoryKind {
 enum AgentMemorySource {
   Agent
   Decision
+  """Drawn from ratings people gave an agent's output."""
+  Feedback
   User
 }
 
 enum AgentMemoryStatus {
   Active
+  """
+  A suggestion an administrator refused; the same pattern is not suggested again for 30 days.
+  """
+  Dismissed
   Retired
+  """
+  Drawn from feedback and waiting for an administrator; never read by an agent.
+  """
+  Suggested
 }
 
 enum AgentMemorySubjectType {
@@ -1433,6 +1626,14 @@ enum ApprovalScope {
   All
   Expenses
   TimeOff
+}
+
+input ApproveAgentMemorySuggestionInput {
+  """The memory as it should read once approved."""
+  content: String!
+  """Defaults to the suggestion's kind."""
+  kind: AgentMemoryKind
+  version: Int!
 }
 
 input ArchiveWorkerCredentialInput {
@@ -10891,6 +11092,10 @@ type Mutation {
   """Settles open invoices of the same customer with a posted credit memo."""
   applyCreditMemo(input: ApplyCreditMemoInput!): [CreditMemoApplication!]!
   applyUnappliedCustomerPayment(input: ApplyCustomerPaymentInput!): CustomerPayment!
+  """
+  Makes a suggested memory Active, with the text as the administrator edited it.
+  """
+  approveAgentMemorySuggestion(id: ID!, input: ApproveAgentMemorySuggestionInput!): AgentMemory!
   approveCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   approveDetentionOccurrence(occurrenceId: ID!): DetentionOccurrence!
   approveDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
@@ -10978,6 +11183,8 @@ type Mutation {
   certifyOshaSummary(year: Int!): OSHAAnnualSummary!
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
+  """Removes the caller's rating of a target; false when there was none."""
+  clearMyAIFeedback(input: AIFeedbackTargetInput!): Boolean!
   clockIn(input: ClockInput!): TimeClockEntry!
   clockOut(input: ClockInput!): TimeClockEntry!
   closeEscrowAccount(accountId: ID!): EscrowAccount!
@@ -11112,6 +11319,10 @@ type Mutation {
   detachPayEventFromSettlement(input: DetachPayEventInput!): DriverSettlement!
   detentionBacktest(input: DetentionBacktestInput!): DetentionBacktestResult!
   discardFuelPurchaseImport(id: ID!, reason: String, version: Int!): FuelPurchaseImportBatch!
+  """
+  Refuses a suggested memory; its pattern is not suggested again for 30 days.
+  """
+  dismissAgentMemorySuggestion(id: ID!, version: Int!): AgentMemory!
   dismissMyNotifications(ids: [ID!]!): Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
   """Takes an item off the feed without touching the record behind it."""
@@ -11352,7 +11563,7 @@ type Mutation {
   sendInvoiceEdi(force: Boolean, invoiceId: ID!): InvoiceEDISendResult!
   sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
   """
-  Retires or restores a memory; a retired one is kept and no longer read.
+  Retires or restores a memory; a retired one is kept and no longer read. A suggested memory is refused.
   """
   setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
   setCarrierMonitoring(carrierIds: [ID!]!, enabled: Boolean!): Int!
@@ -11361,6 +11572,10 @@ type Mutation {
   Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password.
   """
   setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
+  """
+  Rates something an AI wrote for the caller, replacing their earlier rating of it.
+  """
+  setMyAIFeedback(input: SetMyAIFeedbackInput!): AIFeedback!
   """
   The signed-in driver stating what they would rather work on one weekday.
   """
@@ -11506,6 +11721,11 @@ type Mutation {
   """Withdraws one of the signed-in driver's own open disputes."""
   withdrawSettlementDispute(id: ID!): SettlementDispute!
   writeOffPayAdvance(input: WriteOffPayAdvanceInput!): PayAdvance!
+}
+
+input MyAIFeedbackInput {
+  """At most 200 targets."""
+  targets: [AIFeedbackTargetInput!]!
 }
 
 type MyCarrierIntelligence {
@@ -13149,6 +13369,10 @@ type Query {
   agentEvaluations(input: DataTableConnectionInput!): AgentEvaluationConnection!
   agentException(id: ID!): AgentException
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
+  """
+  How people rated one agent over the last window days (30 by default, at most 365).
+  """
+  agentFeedbackSummary(agentDefinitionId: ID!, window: Int = 30): AgentFeedbackSummary!
   agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!
   agentMemory(id: ID!): AgentMemory
   agentPlan(id: ID!): AgentPlan
@@ -13160,6 +13384,8 @@ type Query {
   agentRuns(input: DataTableConnectionInput!): AgentRunConnection!
   """How one agent has been doing."""
   agentScorecard(input: AgentScorecardInput!): AgentScorecard!
+  """Everyone's ratings, for administrators."""
+  aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
   aiProvider(id: ID!): AIProvider
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   """
@@ -13435,6 +13661,8 @@ type Query {
   manualJournal(id: ID!): ManualJournal
   manualJournals(input: DataTableConnectionInput!): ManualJournalConnection!
   matchRoutingGuide(input: MatchRoutingGuideInput!): RoutingGuide
+  """The caller's own ratings of the targets named."""
+  myAIFeedback(input: MyAIFeedbackInput!): [AIFeedback!]!
   """
   The caller's own transfer that has not finished, so a reopened dialog reattaches to it instead of starting a second one.
   """
@@ -15579,6 +15807,18 @@ input SetAvailabilityPreferenceInput {
   note: String
   preference: AvailabilityPreference!
   workerId: ID!
+}
+
+input SetMyAIFeedbackInput {
+  """At most 1000 characters."""
+  comment: String
+  """1 for a thumbs up, -1 for a thumbs down."""
+  rating: Int!
+  """Reasons on the same side as the rating."""
+  reasons: [AIFeedbackReason!]
+  targetId: ID!
+  targetPart: String
+  targetType: AIFeedbackTargetType!
 }
 
 input SetMyAvailabilityInput {

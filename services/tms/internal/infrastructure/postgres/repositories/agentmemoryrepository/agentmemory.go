@@ -22,8 +22,9 @@ import (
 )
 
 const (
-	defaultActiveLimit = 40
-	maxActiveLimit     = 200
+	defaultActiveLimit        = 40
+	maxActiveLimit            = 200
+	maxSuggestionContextLimit = 500
 )
 
 type Params struct {
@@ -340,7 +341,8 @@ func (r *repository) SetStatus(
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 			return buncolgen.MemoryScopeTenantUpdate(uq, req.TenantInfo).
 				Where(cols.ID.Eq(), req.ID).
-				Where(cols.Status.NotEq(), req.Status)
+				Where(cols.Status.NotEq(), req.Status).
+				Where(cols.Status.NotIn(), bun.List(suggestionStatuses()))
 		}).
 		Set(cols.Status.Set(), req.Status).
 		Set(cols.UpdatedAt.Set(), req.At).
@@ -393,6 +395,111 @@ func (r *repository) MarkUsed(
 	}
 
 	return nil
+}
+
+func (r *repository) ListSuggestionContext(
+	ctx context.Context,
+	req repositories.ListAgentMemorySuggestionContextRequest,
+) ([]*agent.Memory, error) {
+	cols := buncolgen.MemoryColumns
+	limit := req.Limit
+	if limit <= 0 || limit > maxSuggestionContextLimit {
+		limit = maxSuggestionContextLimit
+	}
+	rows := make([]*agent.Memory, 0, min(limit, defaultActiveLimit))
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&rows).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.MemoryScopeTenant(sq, req.TenantInfo).
+				WhereGroup(" AND ", func(scope *bun.SelectQuery) *bun.SelectQuery {
+					return scope.
+						WhereGroup(" OR ", func(active *bun.SelectQuery) *bun.SelectQuery {
+							return activeOnly(active, req.Now).
+								WhereGroup(" AND ", func(owner *bun.SelectQuery) *bun.SelectQuery {
+									return owner.Where(cols.AgentDefinitionID.IsNull()).
+										WhereOr(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+								})
+						}).
+						WhereGroup(" OR ", func(pending *bun.SelectQuery) *bun.SelectQuery {
+							return pending.Where(cols.Status.Eq(), agent.MemoryStatusSuggested).
+								Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+						}).
+						WhereGroup(" OR ", func(dismissed *bun.SelectQuery) *bun.SelectQuery {
+							return dismissed.Where(cols.Status.Eq(), agent.MemoryStatusDismissed).
+								Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
+								Where(cols.RetiredAt.Gte(), req.DismissedSince)
+						})
+				})
+		}).
+		OrderExpr(cols.CreatedAt.OrderDesc()).
+		Limit(limit).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list agent memory suggestion context", zap.Error(err))
+
+		return nil, fmt.Errorf("list agent memory suggestion context: %w", err)
+	}
+
+	return rows, nil
+}
+
+func (r *repository) ResolveSuggestion(
+	ctx context.Context,
+	req repositories.ResolveAgentMemorySuggestionRequest,
+) (*agent.Memory, error) {
+	cols := buncolgen.MemoryColumns
+	query := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*agent.Memory)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.MemoryScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID).
+				Where(cols.Status.Eq(), agent.MemoryStatusSuggested).
+				Where(cols.Version.Eq(), req.Version)
+		}).
+		Set(cols.Status.Set(), req.Status).
+		Set(cols.UpdatedAt.Set(), req.At).
+		Set(cols.Version.Inc(1))
+
+	switch req.Status {
+	case agent.MemoryStatusActive:
+		query = query.
+			Set(cols.Content.Set(), req.Content).
+			Set(cols.Kind.Set(), req.Kind).
+			Set(cols.CreatedByUserID.Set(), nullableID(req.ByUserID)).
+			Set(cols.RetiredAt.Set(), nil).
+			Set(cols.RetiredByUserID.Set(), nil)
+	case agent.MemoryStatusDismissed:
+		query = query.
+			Set(cols.RetiredAt.Set(), req.At).
+			Set(cols.RetiredByUserID.Set(), nullableID(req.ByUserID))
+	default:
+		return nil, fmt.Errorf("resolve agent memory suggestion: %q is not a resolution", req.Status)
+	}
+
+	res, err := query.Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("resolve agent memory suggestion: %w", err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("resolve agent memory suggestion rows: %w", err)
+	}
+	if rows == 0 {
+		return nil, dberror.CreateVersionMismatchError("AgentMemory", req.ID.String())
+	}
+
+	return r.GetByID(
+		ctx,
+		repositories.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
+	)
+}
+
+func suggestionStatuses() []agent.MemoryStatus {
+	return []agent.MemoryStatus{agent.MemoryStatusSuggested, agent.MemoryStatusDismissed}
 }
 
 func activeOnly(sq *bun.SelectQuery, now int64) *bun.SelectQuery {

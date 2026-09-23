@@ -1,4 +1,5 @@
 import { AgentAsk, type AgentAskHandle } from "@/components/assistant/agent-ask";
+import { DeskMark } from "@/components/assistant/voice/desk-thinking";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { useAttentionSummary } from "@/hooks/use-attention";
@@ -9,12 +10,18 @@ import type { AssistantThread } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { partOfDay, resolveUserTimezone, toUserWallClock } from "@trenova/shared/lib/date";
+import {
+  partOfDay,
+  resolveUserTimezone,
+  toUserWallClock,
+  type PartOfDay,
+} from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { BotIcon, PlugZapIcon } from "lucide-react";
+import { useReducedMotion } from "motion/react";
 import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { BriefingPanel } from "./briefing-panel";
@@ -36,8 +43,8 @@ export type DeskHomeProps = {
   onStart: (agentId: string, question?: string) => void;
 };
 
-function greeting(t: TranslateFn, hour: number, firstName: string): string {
-  switch (partOfDay(hour)) {
+function greeting(t: TranslateFn, dayPart: PartOfDay, firstName: string): string {
+  switch (dayPart) {
     case "morning":
       return firstName ? t("Good morning, {0}", firstName) : t("Good morning");
     case "afternoon":
@@ -67,12 +74,20 @@ function entrance(step: number): CSSProperties {
  * morning's briefing wrote one and checked every figure in it. A front page
  * that opens with a sentence nobody can trace is one people stop reading.
  *
- * Everything arrives once, in reading order, a beat apart, and then holds
- * still. Nothing here moves again unless the person does something.
+ * The greeting sits beside a small drawing of a desk in the ink, set for the
+ * part of the day: a sun low in the morning and high in the afternoon, and
+ * in the evening a moon and the desk lamp switching on. It is the same desk
+ * that works while an agent does, here at rest.
+ *
+ * Everything arrives once, in reading order, a beat apart — the desk, then
+ * the greeting and the date, then the headline — and then holds still. The
+ * chair settles in and the lamp catches as the page opens, and nothing here
+ * moves again unless the person does something.
  */
 export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: DeskHomeProps) {
   const t = useT();
   const [now] = useState(nowInSeconds);
+  const reduceMotion = useReducedMotion() ?? false;
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
   const liveThreadIds = useLiveThreadIds();
@@ -110,7 +125,19 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
       }).format(new Date(now * 1000)),
     [now, timezone],
   );
+  // The same day, machine-readable, for the <time> that carries it.
+  const isoDate = useMemo(
+    () =>
+      new Intl.DateTimeFormat("en-CA", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        timeZone: timezone,
+      }).format(new Date(now * 1000)),
+    [now, timezone],
+  );
   const hour = toUserWallClock(now, timezone)?.getHours() ?? 9;
+  const dayPart = partOfDay(hour);
   const firstName = user?.name?.trim().split(/\s+/)[0] ?? "";
 
   const headline =
@@ -136,36 +163,57 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
         )}
       >
         <div ref={heroRef} className="flex min-w-0 scroll-mt-6 flex-col gap-7">
-          <header className="flex flex-col gap-2">
-            <p
-              className="text-muted-foreground animate-rise flex flex-wrap items-center gap-x-2 text-sm"
-              style={entrance(0)}
-            >
-              <span className="text-foreground">{greeting(t, hour, firstName)}</span>
-              <span aria-hidden>·</span>
-              <span>{dateline}</span>
-            </p>
-            {/* The briefing's headline when there is one: it was written from
-                figures gathered before a word of it, and every number in it was
-                checked against them. The computed sentence is what a morning
-                reads like before the page has been written. */}
-            <h1
-              className="animate-rise max-w-2xl text-3xl font-semibold text-balance"
-              style={entrance(1)}
-            >
-              {headline}
-            </h1>
-            <p
-              className="text-muted-foreground animate-rise max-w-xl text-base"
-              style={entrance(2)}
-            >
-              {noAgents
-                ? t("The Desk comes alive once an agent is enabled.")
-                : t("Ask an agent about the work in front of you. What it makes opens beside you.")}
-            </p>
+          <header className="flex flex-col gap-6">
+            <div className="flex items-center gap-4">
+              <span
+                className="text-foreground-muted animate-rise flex shrink-0"
+                style={entrance(0)}
+              >
+                <DeskMark
+                  pose="idle"
+                  size="xl"
+                  timeOfDay={dayPart}
+                  welcome
+                  animate={!reduceMotion}
+                />
+              </span>
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <p
+                  className="text-foreground animate-rise truncate text-lg font-medium"
+                  style={entrance(1)}
+                >
+                  {greeting(t, dayPart, firstName)}
+                </p>
+                <p className="text-foreground-subtle animate-rise text-sm" style={entrance(2)}>
+                  <time dateTime={isoDate}>{dateline}</time>
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              {/* The briefing's headline when there is one: it was written from
+                  figures gathered before a word of it, and every number in it
+                  was checked against them. The computed sentence is what a
+                  morning reads like before the page has been written. */}
+              <h1
+                className="animate-rise max-w-2xl text-3xl font-semibold text-balance"
+                style={entrance(3)}
+              >
+                {headline}
+              </h1>
+              <p
+                className="text-foreground-muted animate-rise max-w-xl text-base text-pretty"
+                style={entrance(4)}
+              >
+                {noAgents
+                  ? t("The Desk comes alive once an agent is enabled.")
+                  : t(
+                      "Ask an agent about the work in front of you. What it makes opens beside you.",
+                    )}
+              </p>
+            </div>
           </header>
 
-          <div className="animate-rise" style={entrance(3)}>
+          <div className="animate-rise" style={entrance(5)}>
             {noAgents ? (
               <NoAgents canManageAgents={canManageAgents} />
             ) : askable.agent ? (
@@ -197,7 +245,7 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
           <aside
             aria-label={t("Waiting on you and recent conversations")}
             className="animate-rise flex min-w-0 flex-col gap-8 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-3 xl:row-start-1 xl:self-start"
-            style={entrance(4)}
+            style={entrance(6)}
           >
             {showDecisions && (
               <DeskDecisionsCallout
@@ -219,13 +267,13 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
         )}
 
         {briefing && (
-          <div className="animate-rise min-w-0" style={entrance(5)}>
+          <div className="animate-rise min-w-0" style={entrance(7)}>
             <BriefingPanel briefing={briefing} />
           </div>
         )}
 
         {!noAgents && (
-          <div className="animate-rise min-w-0" style={entrance(6)}>
+          <div className="animate-rise min-w-0" style={entrance(8)}>
             <DeskAgentDirectory
               recency={askable.recency}
               selectedId={askable.agent?.id ?? null}
