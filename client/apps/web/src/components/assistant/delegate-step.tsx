@@ -38,7 +38,7 @@ import {
 } from "./delegation";
 import { ToolActivity } from "./tool-activity";
 import { ArtifactKindIcon } from "./voice/artifact-chrome";
-import { WorkingDot } from "./voice/working-dot";
+import { DeskThinking } from "./voice/desk-thinking";
 
 const TONE_TEXT: Record<HandOffTone, string> = {
   muted: "text-foreground-muted",
@@ -52,7 +52,7 @@ const TONE_TEXT: Record<HandOffTone, string> = {
  * the task on the same line.
  *
  * While the other agent works, its own steps land beneath the hand-off and a
- * quiet line says what it is doing now; the breathing dot stays with the turn,
+ * quiet line says what it is doing now; the moving desk stays with the turn,
  * at the foot of the reply. When it finishes, the hand-off settles into what
  * came of it — how it ended, what it made, what waits on the person and what
  * it published — and opens onto the whole task, every step it took and its
@@ -155,9 +155,9 @@ export function DelegateStep({
 
 /**
  * The other agent's work while it goes: the steps it has finished, each
- * landing with its check, and one line for what it is doing now. The dot
+ * landing with its check, and one line for what it is doing now. The desk
  * beside that line holds still, because the turn's own working line is where
- * the product breathes.
+ * the desk moves.
  */
 function HandOffProgress({ view }: { view: DelegateView }) {
   const t = useT();
@@ -174,7 +174,7 @@ function HandOffProgress({ view }: { view: DelegateView }) {
         aria-live="polite"
         className="text-foreground-muted flex h-6 min-w-0 items-center gap-2 text-xs"
       >
-        <WorkingDot working still className="mx-0.75" />
+        <DeskThinking working pose="busy" still decorative className="mx-0.5" />
         <span key={label} className="animate-rise min-w-0 truncate">
           {label}
         </span>
