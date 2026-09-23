@@ -257,8 +257,24 @@ func TestRunTellsTheModelWhenAToolCouldNotBeRun(t *testing.T) {
 
 	tool := result.Outcome.Result.Messages[2]
 	assert.True(t, tool.ToolFailed)
-	assert.Contains(t, tool.Content, "could not be run just now")
-	assert.Contains(t, tool.Content, "do not claim it did")
+	// A tool that never reported back may still have made its change before
+	// the wait ended, so the model is told it is unconfirmed, not that it did
+	// not happen.
+	assert.Contains(t, tool.Content, "did not report back")
+	assert.Contains(t, tool.Content, "unconfirmed")
+	assert.NotContains(t, tool.Content, "did not happen")
+}
+
+// A stopped turn can end the wait on a write that already landed. Saying it
+// did not happen would put a false record in the transcript.
+func TestUnsettledToolOutcome_NeverSaysAStoppedWriteDidNotHappen(t *testing.T) {
+	t.Parallel()
+
+	stopped := unsettledToolOutcome("assign_move", temporal.NewCanceledError())
+	assert.True(t, stopped.Failed)
+	assert.Contains(t, stopped.Content, "stopped before it reported back")
+	assert.Contains(t, stopped.Content, "unconfirmed")
+	assert.NotContains(t, stopped.Content, "did not happen")
 }
 
 // A model call that fails for good ends the turn, and what the turn had done

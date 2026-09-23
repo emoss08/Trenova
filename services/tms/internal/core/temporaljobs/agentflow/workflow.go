@@ -77,19 +77,37 @@ func (fx *workflowEffects) Dispatch(
 	err := workflow.ExecuteActivity(ctx, call.Call.Name, &ToolInput{Run: fx.run, Call: call}).
 		Get(ctx, &result)
 	if err != nil {
-		// A tool that could not be run at all, after its retries, is still an
-		// answer the model can work with. Failing the turn over it would throw
-		// away everything the turn had already done.
-		return agentruntime.ToolOutcome{
-			Content: fmt.Sprintf("Tool %q could not be run just now: %s. "+
-				"Tell the person it did not happen; do not claim it did.", call.Call.Name, err),
-			Failed: true,
-		}
+		// A tool that could not be run to an answer, after its retries, is
+		// still something the model can work with. Failing the turn over it
+		// would throw away everything the turn had already done.
+		return unsettledToolOutcome(call.Call.Name, err)
 	}
 
 	fx.outcome.Artifacts = append(fx.outcome.Artifacts, result.Artifacts...)
 
 	return result.Outcome
+}
+
+// unsettledToolOutcome is what the model is told about a tool that never
+// reported back. A stopped turn, a timed-out attempt or a lost worker can each
+// end the wait after the tool made its change and before it said so, so
+// nothing here may tell the person the change did not happen.
+func unsettledToolOutcome(name string, err error) agentruntime.ToolOutcome {
+	if temporal.IsCanceledError(err) {
+		return agentruntime.ToolOutcome{
+			Content: fmt.Sprintf("Tool %q was stopped before it reported back. It may or may "+
+				"not have taken effect. Tell the person plainly that this one is unconfirmed, "+
+				"and that it should be checked before anything that depends on it.", name),
+			Failed: true,
+		}
+	}
+
+	return agentruntime.ToolOutcome{
+		Content: fmt.Sprintf("Tool %q did not report back: %s. It may or may not have taken "+
+			"effect. Tell the person it is unconfirmed; do not claim it happened, and do not "+
+			"claim it did not.", name, err),
+		Failed: true,
+	}
 }
 
 func (fx *workflowEffects) Find(t *agentruntime.Turn, arguments map[string]any) string {
@@ -201,6 +219,10 @@ func (fx *workflowEffects) toolOptions(name string) workflow.ActivityOptions {
 		StartToCloseTimeout: toolTimeout,
 		Priority:            fx.priority(),
 		Summary:             name,
+		// A stopped turn waits for a running tool to finish rather than
+		// walking away from it. The write lands either way; waiting is how
+		// the turn learns what it did instead of guessing.
+		WaitForCancellation: true,
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    time.Second,
 			BackoffCoefficient: 2,
