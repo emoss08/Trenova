@@ -83,15 +83,14 @@ func (s *Service) Start(
 	ctx context.Context,
 	req StartRequest,
 ) (*conversation.AssistantTurn, error) {
-	turn, err := s.turns.Start(ctx, &conversation.AssistantTurn{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		ThreadID:       req.ThreadID,
-		UserID:         req.UserID,
-		Origin:         req.Origin,
-		Input:          req.Input,
-		Status:         conversation.AssistantTurnStatusRunning,
-	})
+	turn, err := s.insert(ctx, req)
+	if errors.Is(err, repositories.ErrTurnAlreadyRunning) &&
+		s.reapStale(ctx, req.TenantInfo, req.ThreadID) > 0 {
+		// The turn holding the conversation died with its process. It is
+		// closed now, so the question that found it in the way is asked once
+		// more rather than refused for a reply that was never coming.
+		turn, err = s.insert(ctx, req)
+	}
 	if err != nil {
 		if errors.Is(err, repositories.ErrTurnAlreadyRunning) {
 			return nil, errortypes.NewBusinessError(
@@ -105,12 +104,74 @@ func (s *Service) Start(
 	return turn, nil
 }
 
+func (s *Service) insert(ctx context.Context, req StartRequest) (*conversation.AssistantTurn, error) {
+	return s.turns.Start(ctx, &conversation.AssistantTurn{
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+		ThreadID:       req.ThreadID,
+		UserID:         req.UserID,
+		Origin:         req.Origin,
+		Input:          req.Input,
+		Status:         conversation.AssistantTurnStatusRunning,
+	})
+}
+
 // Active is the turn a conversation is still producing, or nil.
+//
+// A turn whose process died is closed first, so a reader rejoining the
+// conversation is not handed a reply that will never arrive.
 func (s *Service) Active(
 	ctx context.Context,
 	req repositories.ActiveAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
+	s.reapStale(ctx, req.TenantInfo, req.ThreadID)
+
 	return s.turns.Active(ctx, req)
+}
+
+const (
+	// heartbeatInterval is how often a turn running in an API process records
+	// that it is alive.
+	heartbeatInterval = 15 * time.Second
+	// staleAfter is how long an in-process turn may go without a heartbeat
+	// before it is taken to have died with its process. It spans several
+	// missed heartbeats, so a slow database write is not mistaken for a death.
+	staleAfter = time.Minute
+	// staleTurnError is what a turn closed that way records.
+	staleTurnError = "The server stopped before this reply finished."
+)
+
+// reapStale closes the in-process turns on a conversation that stopped
+// heartbeating, and reports how many it closed. A failure to check is logged
+// and treated as nothing to close: the reader then sees the turn as running,
+// which Stop still ends.
+func (s *Service) reapStale(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	threadID pulid.ID,
+) int {
+	closed, err := s.turns.FailStale(ctx, repositories.FailStaleAssistantTurnsRequest{
+		ThreadID:   threadID,
+		TenantInfo: tenant,
+		Before:     time.Now().Add(-staleAfter).Unix(),
+		Error:      staleTurnError,
+	})
+	if err != nil {
+		s.l.Warn("could not close turns a stopped process left running",
+			zap.String("thread", threadID.String()),
+			zap.Error(err),
+		)
+
+		return 0
+	}
+	if closed > 0 {
+		s.l.Info("closed turns a stopped process left running",
+			zap.String("thread", threadID.String()),
+			zap.Int("turns", closed),
+		)
+	}
+
+	return closed
 }
 
 // Get reads one turn, scoped to whoever asked for it.
@@ -402,15 +463,20 @@ func (s *Service) Stoppable(
 	go func() {
 		ticker := time.NewTicker(stopPollInterval)
 		defer ticker.Stop()
+		beat := time.Now()
 
 		for {
 			select {
 			case <-runCtx.Done():
 				return
-			case <-ticker.C:
+			case now := <-ticker.C:
 				if !s.stillRunning(runCtx, &watched) {
 					cancel()
 					return
+				}
+				if now.Sub(beat) >= heartbeatInterval {
+					beat = now
+					s.heartbeat(runCtx, &watched)
 				}
 			}
 		}
@@ -419,6 +485,19 @@ func (s *Service) Stoppable(
 	return runCtx, func() {
 		release()
 		cancel()
+	}
+}
+
+// heartbeat records that a turn running here is alive. A missed beat is only
+// logged: the turn carries on, and it takes several before one is mistaken for
+// a death.
+func (s *Service) heartbeat(ctx context.Context, turn *conversation.AssistantTurn) {
+	if err := s.turns.Heartbeat(ctx, turn.ID, tenantOf(turn)); err != nil &&
+		!errors.Is(err, context.Canceled) {
+		s.l.Warn("could not record that a turn is alive",
+			zap.String("turn", turn.ID.String()),
+			zap.Error(err),
+		)
 	}
 }
 

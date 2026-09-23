@@ -22,6 +22,10 @@ type stubTurns struct {
 	turn *conversation.AssistantTurn
 	err  error
 	gets int
+	// stale is how many turns FailStale reports closing.
+	stale      int
+	staleCalls []repositories.FailStaleAssistantTurnsRequest
+	heartbeats int
 }
 
 func (s *stubTurns) Start(
@@ -55,6 +59,22 @@ func (s *stubTurns) MarkWorkflow(
 	context.Context, pulid.ID, pagination.TenantInfo, string,
 ) error {
 	return nil
+}
+
+func (s *stubTurns) Heartbeat(context.Context, pulid.ID, pagination.TenantInfo) error {
+	s.heartbeats++
+
+	return nil
+}
+
+func (s *stubTurns) FailStale(
+	_ context.Context, req repositories.FailStaleAssistantTurnsRequest,
+) (int, error) {
+	s.staleCalls = append(s.staleCalls, req)
+	closed := s.stale
+	s.stale = 0
+
+	return closed, nil
 }
 
 // stubReader stands in for the redis stream.
@@ -270,4 +290,67 @@ func TestRelay_AnswersATurnThatWasAlreadyOverWithoutReadingTheStream(t *testing.
 
 	require.Len(t, seen, 1)
 	assert.Contains(t, string(seen[0].Data), string(conversation.AssistantTurnStatusRefused))
+}
+
+// A turn running in an API process that stopped heartbeating died with that
+// process. Nothing will ever write its ending, so the reader is told it did
+// not finish rather than left watching a stream nobody writes.
+func TestRelay_EndsATurnWhoseProcessDied(t *testing.T) {
+	t.Parallel()
+
+	turn := runningTurn()
+	turn.StartedAt = time.Now().Add(-10 * time.Minute).Unix()
+	record := *turn
+	record.HeartbeatAt = time.Now().Add(-5 * time.Minute).Unix()
+	turns := &stubTurns{turn: &record, stale: 1}
+	svc := newRelay(turns, &stubReader{exists: true, idles: 1})
+
+	seen := collect(t, svc, turn)
+
+	require.Len(t, seen, 1)
+	assert.Equal(t, serviceports.AssistantEventError, seen[0].Event)
+	require.Len(t, turns.staleCalls, 1)
+	assert.Equal(t, turn.ThreadID, turns.staleCalls[0].ThreadID)
+}
+
+// A quiet model is not a dead process: a turn that heartbeat recently is still
+// followed.
+func TestRelay_KeepsFollowingATurnThatIsStillHeartbeating(t *testing.T) {
+	t.Parallel()
+
+	turn := runningTurn()
+	turn.StartedAt = time.Now().Unix()
+	record := *turn
+	record.HeartbeatAt = time.Now().Unix()
+	turns := &stubTurns{turn: &record}
+	svc := newRelay(turns, &stubReader{
+		exists: true,
+		idles:  1,
+		frames: []serviceports.TurnStreamFrame{
+			frameOf(serviceports.AssistantEventDone, map[string]any{"turnId": turn.ID.String()}),
+		},
+	})
+
+	seen := collect(t, svc, turn)
+
+	require.Len(t, seen, 1)
+	assert.Equal(t, serviceports.AssistantEventDone, seen[0].Event)
+	assert.Empty(t, turns.staleCalls)
+}
+
+func TestDiedWithProcess(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+
+	assert.True(t, diedWithProcess(&conversation.AssistantTurn{
+		HeartbeatAt: now.Add(-2 * staleAfter).Unix(),
+	}))
+	assert.False(t, diedWithProcess(&conversation.AssistantTurn{
+		HeartbeatAt: now.Unix(),
+	}))
+	assert.False(t, diedWithProcess(&conversation.AssistantTurn{
+		HeartbeatAt: now.Add(-2 * staleAfter).Unix(),
+		WorkflowID:  "assistant-turn:atrn_1",
+	}), "a durable turn's worker owns its ending")
 }

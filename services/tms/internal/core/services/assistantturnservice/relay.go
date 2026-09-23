@@ -157,7 +157,28 @@ func (s *Service) stillRunning(ctx context.Context, turn *conversation.Assistant
 		return false
 	}
 
+	if diedWithProcess(current) && s.reapStale(ctx, tenantOf(turn), turn.ThreadID) > 0 {
+		// Nothing will ever write this turn's ending: the process running it
+		// is gone. It is closed now, and the reader told so, rather than left
+		// waiting on a stream nobody is writing.
+		turn.Status = conversation.AssistantTurnStatusFailed
+		turn.ErrorMessage = staleTurnError
+
+		return false
+	}
+
 	return true
+}
+
+// diedWithProcess reports whether a live turn ran in an API process that has
+// stopped heartbeating for it.
+func diedWithProcess(turn *conversation.AssistantTurn) bool {
+	if turn.WorkflowID != "" {
+		return false
+	}
+
+	return turn.HeartbeatAt == 0 ||
+		time.Since(time.Unix(turn.HeartbeatAt, 0)) > staleAfter
 }
 
 // streamStartGrace is how long a running turn may go without a stream before

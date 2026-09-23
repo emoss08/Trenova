@@ -236,6 +236,16 @@ design — the run carries on — so this is the only place they show up at all.
 - **Stopping an in-process turn on another instance takes up to two
   seconds.** The record is closed at once, so the conversation is free, but the
   model runs until that instance next reads it.
+- **A turn that dies with its process is noticed lazily.** An in-process turn
+  writes `heartbeat_at` every fifteen seconds from its `Stoppable` watch. One
+  that has gone a minute without a beat, and has no workflow behind it, is
+  closed as Failed ("The server stopped before this reply finished.") the next
+  time anybody looks: `Active` when a reader rejoins, `Start` when a new
+  question finds it in the way (which then retries once), and the relay's idle
+  check for a reader already following it. Nothing sweeps on a schedule, so a
+  dead turn nobody looks at again stays Running in the table; it holds no
+  conversation anybody is using. A durable turn is never closed this way: its
+  worker, and Temporal, own its ending.
 - **Redis is on the chat path.** An outage silences in-flight replies. The
   transcript still saves and the relay degrades to reading the turn record, but
   that is a fallback, not equivalence.

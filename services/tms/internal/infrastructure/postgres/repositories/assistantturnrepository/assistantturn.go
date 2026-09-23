@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -86,6 +87,12 @@ func (r *repository) GetByID(
 	return turn, nil
 }
 
+// liveStatuses are the statuses of a turn still producing a reply.
+var liveStatuses = []conversation.AssistantTurnStatus{
+	conversation.AssistantTurnStatusPending,
+	conversation.AssistantTurnStatusRunning,
+}
+
 func (r *repository) Active(
 	ctx context.Context,
 	req repositories.ActiveAssistantTurnRequest,
@@ -98,10 +105,7 @@ func (r *repository) Active(
 		Apply(buncolgen.AssistantTurnApplyTenant(req.TenantInfo)).
 		Where(cols.ThreadID.Eq(), req.ThreadID).
 		Where(cols.UserID.Eq(), req.UserID).
-		Where(cols.Status.In(), []conversation.AssistantTurnStatus{
-			conversation.AssistantTurnStatusPending,
-			conversation.AssistantTurnStatusRunning,
-		}).
+		Where(cols.Status.In(), bun.List(liveStatuses)).
 		Scan(ctx)
 	if err != nil {
 		if dberror.IsNotFoundError(err) {
@@ -170,4 +174,64 @@ func (r *repository) MarkWorkflow(
 	}
 
 	return nil
+}
+
+func (r *repository) Heartbeat(
+	ctx context.Context,
+	id pulid.ID,
+	tenant pagination.TenantInfo,
+) error {
+	cols := buncolgen.AssistantTurnColumns
+
+	q := r.db.DBForContext(ctx).NewUpdate().
+		Model((*conversation.AssistantTurn)(nil)).
+		Set(cols.HeartbeatAt.Set(), timeutils.NowUnix()).
+		Where(cols.ID.Eq(), id).
+		Where(cols.Status.In(), bun.List(liveStatuses))
+
+	if _, err := buncolgen.AssistantTurnScopeTenantUpdate(q, tenant).Exec(ctx); err != nil {
+		return fmt.Errorf("record that an assistant turn is alive: %w", err)
+	}
+
+	return nil
+}
+
+// FailStale closes the turns a dead process left running.
+//
+// Only a turn with no workflow behind it qualifies. A durable turn's worker
+// owns its ending, and Temporal fails it when the worker dies; closing its
+// record here would race a reply that is still being written.
+func (r *repository) FailStale(
+	ctx context.Context,
+	req repositories.FailStaleAssistantTurnsRequest,
+) (int, error) {
+	cols := buncolgen.AssistantTurnColumns
+	now := timeutils.NowUnix()
+
+	q := r.db.DBForContext(ctx).NewUpdate().
+		Model((*conversation.AssistantTurn)(nil)).
+		Set(cols.Status.Set(), conversation.AssistantTurnStatusFailed).
+		Set(cols.ErrorMessage.Set(), req.Error).
+		Set(cols.CompletedAt.Set(), now).
+		Set(cols.UpdatedAt.Set(), now).
+		Where(cols.ThreadID.Eq(), req.ThreadID).
+		Where(cols.Status.In(), bun.List(liveStatuses)).
+		Where(cols.WorkflowID.IsNull()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return uq.
+				Where(cols.HeartbeatAt.IsNull()).
+				WhereOr(cols.HeartbeatAt.Lt(), req.Before)
+		})
+
+	res, err := buncolgen.AssistantTurnScopeTenantUpdate(q, req.TenantInfo).Exec(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("close assistant turns a stopped process left running: %w", err)
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("count the assistant turns closed as stale: %w", err)
+	}
+
+	return int(affected), nil
 }

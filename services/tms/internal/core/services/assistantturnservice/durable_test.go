@@ -23,11 +23,22 @@ type recordingTurns struct {
 	completed []repositories.CompleteAssistantTurnRequest
 	marked    string
 	startErr  error
+	// startErrs are returned by successive starts before startErr applies.
+	startErrs []error
+	starts    int
 }
 
 func (r *recordingTurns) Start(
 	_ context.Context, turn *conversation.AssistantTurn,
 ) (*conversation.AssistantTurn, error) {
+	r.starts++
+	if len(r.startErrs) > 0 {
+		err := r.startErrs[0]
+		r.startErrs = r.startErrs[1:]
+		if err != nil {
+			return nil, err
+		}
+	}
 	if r.startErr != nil {
 		return nil, r.startErr
 	}
@@ -235,4 +246,63 @@ func TestStoppable_LeavesARunningTurnAlone(t *testing.T) {
 		t.Fatal("a running turn was cancelled")
 	case <-time.After(stopPollInterval + 500*time.Millisecond):
 	}
+}
+
+// The turn holding the conversation died with its process. It is closed and
+// the question asked again, instead of refused for a reply never coming.
+func TestStart_ReplacesATurnADeadProcessLeftRunning(t *testing.T) {
+	t.Parallel()
+
+	turns := &recordingTurns{
+		stubTurns: stubTurns{stale: 1},
+		startErrs: []error{repositories.ErrTurnAlreadyRunning},
+	}
+	svc := newDurable(turns)
+	req := startRequest()
+
+	turn, err := svc.Start(t.Context(), req)
+	require.NoError(t, err)
+	require.NotNil(t, turn)
+
+	assert.Equal(t, 2, turns.starts)
+	require.Len(t, turns.staleCalls, 1)
+	assert.Equal(t, req.ThreadID, turns.staleCalls[0].ThreadID)
+	assert.Equal(t, staleTurnError, turns.staleCalls[0].Error)
+	assert.InDelta(t, time.Now().Add(-staleAfter).Unix(), turns.staleCalls[0].Before, 5)
+}
+
+// A turn still alive keeps its conversation: the second question is refused
+// in words, not raced.
+func TestStart_RefusesWhileTheRunningTurnIsAlive(t *testing.T) {
+	t.Parallel()
+
+	turns := &recordingTurns{startErr: repositories.ErrTurnAlreadyRunning}
+	svc := newDurable(turns)
+
+	_, err := svc.Start(t.Context(), startRequest())
+	require.Error(t, err)
+
+	assert.Contains(t, err.Error(), "already working on a reply")
+	assert.Equal(t, 1, turns.starts)
+}
+
+// A reader rejoining a conversation is not handed a reply that died with its
+// process.
+func TestActive_ClosesTurnsADeadProcessLeftRunningFirst(t *testing.T) {
+	t.Parallel()
+
+	turns := &recordingTurns{stubTurns: stubTurns{stale: 1}}
+	svc := newDurable(turns)
+	req := startRequest()
+
+	active, err := svc.Active(t.Context(), repositories.ActiveAssistantTurnRequest{
+		ThreadID:   req.ThreadID,
+		UserID:     req.UserID,
+		TenantInfo: req.TenantInfo,
+	})
+	require.NoError(t, err)
+
+	assert.Nil(t, active)
+	require.Len(t, turns.staleCalls, 1)
+	assert.Equal(t, req.ThreadID, turns.staleCalls[0].ThreadID)
 }

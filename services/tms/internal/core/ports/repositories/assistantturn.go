@@ -38,6 +38,15 @@ type CompleteAssistantTurnRequest struct {
 	RunID      pulid.ID
 }
 
+// FailStaleAssistantTurnsRequest closes the live in-process turns on one
+// conversation that stopped proving they were alive before Before.
+type FailStaleAssistantTurnsRequest struct {
+	ThreadID   pulid.ID
+	TenantInfo pagination.TenantInfo
+	Before     int64
+	Error      string
+}
+
 type AssistantTurnRepository interface {
 	// Start records a turn about to run. A conversation that already has one
 	// returns ErrTurnAlreadyRunning.
@@ -50,4 +59,12 @@ type AssistantTurnRepository interface {
 	// MarkWorkflow records the durable execution carrying the turn, so it can
 	// be cancelled when somebody presses stop.
 	MarkWorkflow(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo, workflowID string) error
+	// Heartbeat records that a live turn running in an API process is still
+	// alive.
+	Heartbeat(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) error
+	// FailStale marks Failed every live turn on a conversation that runs in an
+	// API process and has not heartbeat since the request's cutoff, and
+	// reports how many it closed. A durable turn is never touched: its worker
+	// fails it.
+	FailStale(ctx context.Context, req FailStaleAssistantTurnsRequest) (int, error)
 }
