@@ -148,6 +148,13 @@ reach a turn whose start was never recorded. When no execution carries the turn
 — it was never handed to a worker, or its execution ended without closing the
 record — Stop closes the record as `Stopped`.
 
+Signing out stops every reply the person still has in progress in that tenant
+(`authservice.Logout` → `AssistantTurnStopper`), by the same path as Stop. A
+turn does not record the session that asked for it, so signing out of one
+browser stops the replies started from any other. Both callers cancel through
+`AssistantTurnCanceller` (`assistantjobs.NewTurnCanceller`), the one place
+Temporal's `NotFound` becomes `ErrNoTurnExecution`.
+
 The record always closes. `MarkWorkflow` only touches a live record, so a turn
 that finished before its start was recorded is not put back to Running; a save
 retried after a lost attempt closes the record it did not re-save; and a save
@@ -170,6 +177,23 @@ When the relay forwards the last event it signals `stream-drained`; the workflow
 waits for that, at most 15 s, before it closes. A reader who arrives after the
 workflow closed gets an ending rebuilt from the record, which tells the client
 to read the conversation.
+
+Whether anybody drained the stream is how the turn knows somebody saw it end.
+One that ends **Completed, Refused or Failed with nobody drained** runs
+`NotifyUnseenTurnActivity` after the stream closes: a notification to the
+person who asked (`kind: assistant_reply_ready`, with `threadId`, `turnId`,
+`status` and a `link` to the conversation from the record-link registry), and a
+quick question's hidden thread is kept first so the stale-Ask sweep cannot
+delete what the notification leads to. It is keyed on the turn, so a retry
+never notifies twice. A stopped turn, and one started by
+`POST /threads/:id/messages/` (whose caller waits on the result), never notify.
+
+A turn starting (once its workflow is recorded) and its record closing, on
+every path, are announced as the `assistant_turns` realtime resource,
+`started` or `finished`, carrying `turnId`, `threadId`, `userId`, `status` and
+`origin` and nothing the conversation said: the channel is the tenant's, not
+the person's. A tab reads the person's live turns from
+`GET /assistant/turns/active/`, scoped to them.
 
 Each publish is a signal in the turn's history and each read a poll update, so a
 streamed reply adds a few hundred history events. That is why chat is one
@@ -337,6 +361,7 @@ before the change:
 | `daily-briefing-per-organization` | `writeInOneActivity` | `WriteDueBriefingsActivity` |
 | `agent-loop-final-answer` | a turn that spends its tool budget ends on the canned `exhaustedReply` without asking the model for an answer | nothing; the check itself is the only cost |
 | `assistant-turn-close-unsaved` | a turn whose save fails on every attempt leaves its record Running, and the conversation refuses every later question | nothing; the check itself is the only cost |
+| `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
 

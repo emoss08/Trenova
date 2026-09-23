@@ -2,6 +2,8 @@ package assistantjobs
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -9,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/api/enums/v1"
+	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
 )
@@ -59,4 +62,27 @@ func StartTurnWorkflow(
 		Content:  start.Content,
 		Request:  start.Request,
 	})
+}
+
+// turnCanceller cancels the executions StartTurnWorkflow starts. It is where
+// Temporal's "no such execution" becomes the port's ErrNoTurnExecution, so
+// every caller that stops a turn tells a stopped turn from one it has to
+// close itself the same way.
+type turnCanceller struct {
+	workflows serviceports.WorkflowStarter
+}
+
+// NewTurnCanceller is the canceller for turns carried by AssistantTurnWorkflow.
+func NewTurnCanceller(workflows serviceports.WorkflowStarter) serviceports.AssistantTurnCanceller {
+	return &turnCanceller{workflows: workflows}
+}
+
+func (c *turnCanceller) CancelTurn(ctx context.Context, workflowID string) error {
+	err := c.workflows.CancelWorkflow(ctx, workflowID, "")
+	var gone *serviceerror.NotFound
+	if errors.As(err, &gone) {
+		return fmt.Errorf("%w: %w", serviceports.ErrNoTurnExecution, err)
+	}
+
+	return err
 }

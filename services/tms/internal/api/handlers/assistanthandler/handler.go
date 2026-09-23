@@ -110,6 +110,14 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(resource, permission.OpRead),
 		h.activeTurn,
 	)
+	// Every reply the caller has in progress, across their conversations, so
+	// any tab can show one another tab started. The static segment is matched
+	// ahead of the turn id below, so "active" is never read as a turn.
+	api.GET(
+		"/turns/active/",
+		h.pm.RequirePermission(resource, permission.OpRead),
+		h.activeTurns,
+	)
 	api.GET(
 		"/turns/:turnID/stream/",
 		h.pm.RequirePermission(resource, permission.OpRead),
@@ -513,6 +521,9 @@ type sendMessageRequest struct {
 	// FollowUpProposalID asks for the turn that follows a decision on one of
 	// the thread's proposals, in place of content.
 	FollowUpProposalID pulid.ID `json:"followUpProposalId"`
+	// awaited is set by the route that waits for the saved turn rather than
+	// following its stream. It is never read from the request body.
+	awaited bool
 }
 
 // askRequest is a quick question from anywhere: the words, the page, and the

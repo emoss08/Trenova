@@ -400,6 +400,7 @@ func TestLogout_Success(t *testing.T) {
 	ctx := t.Context()
 	sessionID := pulid.MustNew("ses_")
 
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(&session.Session{ID: sessionID}, nil)
 	deps.sessionRepo.On("Delete", mock.Anything, sessionID).Return(nil)
 
 	err := deps.svc.Logout(ctx, sessionID)
@@ -414,6 +415,7 @@ func TestLogout_Error(t *testing.T) {
 	ctx := t.Context()
 	sessionID := pulid.MustNew("ses_")
 
+	deps.sessionRepo.On("Get", mock.Anything, sessionID).Return(&session.Session{ID: sessionID}, nil)
 	deps.sessionRepo.On("Delete", mock.Anything, sessionID).Return(errors.New("delete failed"))
 
 	err := deps.svc.Logout(ctx, sessionID)

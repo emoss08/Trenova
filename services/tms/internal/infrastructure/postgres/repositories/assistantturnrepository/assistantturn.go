@@ -123,6 +123,53 @@ func (r *repository) Active(
 	return turn, nil
 }
 
+// liveThreadTitle is the label the thread's title is read under beside a live
+// turn.
+const liveThreadTitle = "thread_title"
+
+// threadJoin reads a turn's conversation with it. The thread is joined on its
+// whole key, tenant included, so a turn can only ever be listed beside a
+// conversation of its own tenant.
+func threadJoin() string {
+	turnCols := buncolgen.AssistantTurnColumns
+	threadCols := buncolgen.ThreadColumns
+
+	return "JOIN " + buncolgen.ThreadTable.As(buncolgen.ThreadTable.Alias) +
+		" ON " + threadCols.ID.EqColumn(turnCols.ThreadID) +
+		" AND " + threadCols.OrganizationID.EqColumn(turnCols.OrganizationID) +
+		" AND " + threadCols.BusinessUnitID.EqColumn(turnCols.BusinessUnitID)
+}
+
+func (r *repository) ListLive(
+	ctx context.Context,
+	req repositories.ListLiveAssistantTurnsRequest,
+) ([]*repositories.LiveAssistantTurn, error) {
+	cols := buncolgen.AssistantTurnColumns
+	turns := make([]*repositories.LiveAssistantTurn, 0)
+
+	err := r.db.DBForContext(ctx).NewSelect().
+		Model(&turns).
+		ColumnExpr(buncolgen.AssistantTurnTable.All()).
+		ColumnExpr(buncolgen.ThreadColumns.Title.As(liveThreadTitle)).
+		Join(threadJoin()).
+		Apply(buncolgen.AssistantTurnApplyTenant(req.TenantInfo)).
+		Where(cols.UserID.Eq(), req.UserID).
+		Where(buncolgen.ThreadColumns.UserID.Eq(), req.UserID).
+		Where(cols.Status.In(), bun.List(liveStatuses)).
+		Order(cols.StartedAt.OrderAsc()).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list live assistant turns",
+			zap.String("user", req.UserID.String()),
+			zap.Error(err),
+		)
+
+		return nil, fmt.Errorf("list the replies still in progress: %w", err)
+	}
+
+	return turns, nil
+}
+
 func (r *repository) Complete(
 	ctx context.Context,
 	req repositories.CompleteAssistantTurnRequest,

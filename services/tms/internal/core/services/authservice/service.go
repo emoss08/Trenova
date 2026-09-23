@@ -40,6 +40,7 @@ type Params struct {
 	APIKeyRepository  repositories.APIKeyRepository
 	PortalRepo        repositories.PortalAccessRepository
 	UsageRecorder     services.UsageRecorder
+	TurnStopper       services.AssistantTurnStopper
 	Encryption        *encryptionservice.Service
 	Config            *config.Config
 	Logger            *zap.Logger
@@ -55,6 +56,7 @@ type Service struct {
 	akr        repositories.APIKeyRepository
 	portalRepo repositories.PortalAccessRepository
 	usageBuf   services.UsageRecorder
+	turns      services.AssistantTurnStopper
 	enc        *encryptionservice.Service
 	cfg        *config.Config
 	l          *zap.Logger
@@ -71,6 +73,7 @@ func New(p Params) services.AuthService {
 		akr:        p.APIKeyRepository,
 		portalRepo: p.PortalRepo,
 		usageBuf:   p.UsageRecorder,
+		turns:      p.TurnStopper,
 		enc:        p.Encryption,
 		cfg:        p.Config,
 		l:          p.Logger.Named("service.auth"),
@@ -601,8 +604,59 @@ func (s *Service) ActivateSessionRoles(
 	}, nil
 }
 
+// stopTurnsTimeout bounds stopping a person's replies as they sign out. Each
+// stop is one call to the engine running the reply, and signing out must not
+// wait on a slow one for long.
+const stopTurnsTimeout = 10 * time.Second
+
+// Logout ends the session, then stops every reply its person still has in
+// progress. Once they have signed out nobody is left to read those replies,
+// and each one runs on a worker, and bills, until it is stopped.
 func (s *Service) Logout(ctx context.Context, sessionID pulid.ID) error {
-	return s.sr.Delete(ctx, sessionID)
+	sess, err := s.sr.Get(ctx, sessionID)
+	if err != nil {
+		// A session that cannot be read is still deleted; there is just no
+		// telling whose replies to stop.
+		s.l.Warn("could not read the session being signed out of",
+			zap.String("sessionID", sessionID.String()),
+			zap.Error(err),
+		)
+		sess = nil
+	}
+
+	if err = s.sr.Delete(ctx, sessionID); err != nil {
+		return err
+	}
+
+	s.stopTurns(ctx, sess)
+
+	return nil
+}
+
+// stopTurns stops the replies of the person signing out. It is best effort:
+// signing out succeeds whether or not they could all be stopped.
+func (s *Service) stopTurns(ctx context.Context, sess *session.Session) {
+	if s.turns == nil || sess == nil || sess.UserID.IsNil() {
+		return
+	}
+
+	stopCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), stopTurnsTimeout)
+	defer cancel()
+
+	err := s.turns.StopAllForUser(stopCtx, services.StopUserTurnsRequest{
+		UserID: sess.UserID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  sess.OrganizationID,
+			BuID:   sess.BusinessUnitID,
+			UserID: sess.UserID,
+		},
+	})
+	if err != nil {
+		s.l.Error("could not stop the replies of a person signing out",
+			zap.String("userID", sess.UserID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 func (s *Service) AuthenticateAPIKey(

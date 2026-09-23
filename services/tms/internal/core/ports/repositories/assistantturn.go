@@ -29,6 +29,22 @@ type ActiveAssistantTurnRequest struct {
 	TenantInfo pagination.TenantInfo
 }
 
+// ListLiveAssistantTurnsRequest asks for every reply one person still has in
+// progress, across all of their conversations in a tenant.
+type ListLiveAssistantTurnsRequest struct {
+	UserID     pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
+// LiveAssistantTurn is a turn still producing its reply, with the title of
+// the conversation it is producing it in, so a list of them can be read
+// without a second query per conversation.
+type LiveAssistantTurn struct {
+	conversation.AssistantTurn `bun:",extend"`
+
+	ThreadTitle string `bun:"thread_title,scanonly"`
+}
+
 // CompleteAssistantTurnRequest closes a turn.
 type CompleteAssistantTurnRequest struct {
 	ID         pulid.ID
@@ -49,6 +65,10 @@ type AssistantTurnRepository interface {
 	// Active is the turn a conversation is still producing, nil when it is
 	// not producing one. This is what lets a reopened tab rejoin a reply.
 	Active(ctx context.Context, req ActiveAssistantTurnRequest) (*conversation.AssistantTurn, error)
+	// ListLive is every turn one person still has in progress, oldest first.
+	// It is how a reply started in one tab is found from another, and what
+	// signing out stops.
+	ListLive(ctx context.Context, req ListLiveAssistantTurnsRequest) ([]*LiveAssistantTurn, error)
 	Complete(ctx context.Context, req CompleteAssistantTurnRequest) error
 	// MarkWorkflow records the durable execution carrying the turn, so it can
 	// be cancelled when somebody presses stop.

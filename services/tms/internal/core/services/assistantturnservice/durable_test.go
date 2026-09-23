@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -57,6 +58,22 @@ func (r *recordingTurns) MarkWorkflow(
 
 func newDurable(turns *recordingTurns) *Service {
 	return &Service{l: zap.NewNop(), turns: turns}
+}
+
+// stopWith stops a turn with cancel standing in for the engine running it.
+func stopWith(
+	ctx context.Context,
+	svc *Service,
+	turn *conversation.AssistantTurn,
+	cancel func(workflowID string) error,
+) error {
+	svc.canceller = serviceports.AssistantTurnCancellerFunc(
+		func(_ context.Context, workflowID string) error {
+			return cancel(workflowID)
+		},
+	)
+
+	return svc.Stop(ctx, turn)
 }
 
 func startRequest() StartRequest {
@@ -123,7 +140,7 @@ func TestStop_CancelsTheExecutionCarryingTheTurn(t *testing.T) {
 	}
 
 	cancelled := ""
-	require.NoError(t, svc.Stop(t.Context(), turn, func(id string) error {
+	require.NoError(t, stopWith(t.Context(), svc, turn, func(id string) error {
 		cancelled = id
 
 		return nil
@@ -144,7 +161,7 @@ func TestStop_IsQuietAboutATurnThatHasAlreadyEnded(t *testing.T) {
 	}
 
 	called := false
-	require.NoError(t, svc.Stop(t.Context(), turn, func(string) error {
+	require.NoError(t, stopWith(t.Context(), svc, turn, func(string) error {
 		called = true
 
 		return nil
@@ -165,7 +182,7 @@ func TestStop_ClosesTheRecordOfATurnNothingPickedUp(t *testing.T) {
 		Status: conversation.AssistantTurnStatusRunning,
 	}
 
-	require.NoError(t, svc.Stop(t.Context(), turn, func(string) error {
+	require.NoError(t, stopWith(t.Context(), svc, turn, func(string) error {
 		return ErrNoExecution
 	}))
 
@@ -191,7 +208,7 @@ func TestStop_CancelsATurnWhoseStartWasNotRecorded(t *testing.T) {
 	}
 
 	cancelled := ""
-	require.NoError(t, svc.Stop(t.Context(), turn, func(id string) error {
+	require.NoError(t, stopWith(t.Context(), svc, turn, func(id string) error {
 		cancelled = id
 
 		return nil
@@ -214,7 +231,7 @@ func TestStop_ClosesTheRecordWhenTheExecutionIsGone(t *testing.T) {
 		WorkflowID: "assistant-turn:atrn_1",
 	}
 
-	require.NoError(t, svc.Stop(t.Context(), turn, func(string) error {
+	require.NoError(t, stopWith(t.Context(), svc, turn, func(string) error {
 		return fmt.Errorf("cancel: %w", ErrNoExecution)
 	}))
 
@@ -233,7 +250,7 @@ func TestStop_ReportsACancelThatFailed(t *testing.T) {
 		WorkflowID: "assistant-turn:atrn_1",
 	}
 
-	err := svc.Stop(t.Context(), turn, func(string) error {
+	err := stopWith(t.Context(), svc, turn, func(string) error {
 		return errors.New("temporal is down")
 	})
 

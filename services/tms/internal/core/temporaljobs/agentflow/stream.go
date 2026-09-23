@@ -47,6 +47,10 @@ func HostStream(ctx workflow.Context) (*Stream, error) {
 	return host, nil
 }
 
+// Drained reports whether a reader said it has the run's last event. After
+// Close it answers whether anybody saw the run end.
+func (h *Stream) Drained() bool { return h.drained }
+
 // Events is the topic a run's events are published on.
 func (h *Stream) Events() *workflowstreams.WorkflowTopicHandle { return h.events }
 

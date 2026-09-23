@@ -48,6 +48,13 @@ func (r *turnRecords) Active(
 	return nil, nil
 }
 
+func (r *turnRecords) ListLive(
+	context.Context,
+	repositories.ListLiveAssistantTurnsRequest,
+) ([]*repositories.LiveAssistantTurn, error) {
+	return nil, nil
+}
+
 func (r *turnRecords) Complete(
 	_ context.Context,
 	req repositories.CompleteAssistantTurnRequest,

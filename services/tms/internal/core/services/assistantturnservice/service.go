@@ -20,25 +20,33 @@ import (
 type Params struct {
 	fx.In
 
-	Logger  *zap.Logger
-	Turns   repositories.AssistantTurnRepository
-	Reader  serviceports.TurnStreamReader
-	Metrics *metrics.Registry `optional:"true"`
+	Logger    *zap.Logger
+	Turns     repositories.AssistantTurnRepository
+	Reader    serviceports.TurnStreamReader
+	Canceller serviceports.AssistantTurnCanceller
+	Realtime  serviceports.RealtimeService
+	Metrics   *metrics.Registry `optional:"true"`
 }
 
 type Service struct {
-	l       *zap.Logger
-	turns   repositories.AssistantTurnRepository
-	reader  serviceports.TurnStreamReader
-	metrics *metrics.Assistant
+	l         *zap.Logger
+	turns     repositories.AssistantTurnRepository
+	reader    serviceports.TurnStreamReader
+	canceller serviceports.AssistantTurnCanceller
+	realtime  serviceports.RealtimeService
+	metrics   *metrics.Assistant
 }
+
+var _ serviceports.AssistantTurnStopper = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
-		l:       p.Logger.Named("service.assistantturn"),
-		turns:   p.Turns,
-		reader:  p.Reader,
-		metrics: assistantMetrics(p.Metrics),
+		l:         p.Logger.Named("service.assistantturn"),
+		turns:     p.Turns,
+		reader:    p.Reader,
+		canceller: p.Canceller,
+		realtime:  p.Realtime,
+		metrics:   assistantMetrics(p.Metrics),
 	}
 }
 
@@ -103,12 +111,45 @@ func (s *Service) Active(
 	return s.turns.Active(ctx, req)
 }
 
+// ListLive is every reply one person still has in progress, across all of
+// their conversations, so a reply started in one tab can be found from any
+// other.
+func (s *Service) ListLive(
+	ctx context.Context,
+	req repositories.ListLiveAssistantTurnsRequest,
+) ([]*repositories.LiveAssistantTurn, error) {
+	return s.turns.ListLive(ctx, req)
+}
+
 // Get reads one turn, scoped to whoever asked for it.
 func (s *Service) Get(
 	ctx context.Context,
 	req repositories.GetAssistantTurnRequest,
 ) (*conversation.AssistantTurn, error) {
 	return s.turns.GetByID(ctx, req)
+}
+
+// Close closes the turn's record and tells the person's other tabs the reply
+// is over. It reports a failure to close, for a caller that retries.
+func (s *Service) Close(
+	ctx context.Context,
+	turn *conversation.AssistantTurn,
+	status conversation.AssistantTurnStatus,
+	message string,
+) error {
+	err := s.turns.Complete(ctx, repositories.CompleteAssistantTurnRequest{
+		ID:         turn.ID,
+		TenantInfo: tenantOf(turn),
+		Status:     status,
+		Error:      message,
+	})
+	if err != nil {
+		return err
+	}
+
+	s.announce(ctx, turn, turnActionFinished, status)
+
+	return nil
 }
 
 // Complete closes the turn's record.
@@ -123,13 +164,7 @@ func (s *Service) Complete(
 		message = cause.Error()
 	}
 
-	err := s.turns.Complete(ctx, repositories.CompleteAssistantTurnRequest{
-		ID:         turn.ID,
-		TenantInfo: pagination.TenantInfo{OrgID: turn.OrganizationID, BuID: turn.BusinessUnitID},
-		Status:     status,
-		Error:      message,
-	})
-	if err != nil {
+	if err := s.Close(ctx, turn, status, message); err != nil {
 		// A turn left Running is one the relay will keep waiting on until its
 		// stream expires. Worth a loud log; not worth failing a reply that
 		// already arrived.
@@ -210,6 +245,7 @@ func (s *Service) StartTurn(
 		)
 	}
 	turn.WorkflowID = workflowID
+	s.announce(ctx, turn, turnActionStarted, turn.Status)
 
 	return turn, nil
 }
@@ -217,17 +253,13 @@ func (s *Service) StartTurn(
 // ErrNoExecution is what a cancel reports when no execution carries the
 // turn, which is how Stop tells a turn it must close itself from one it asked
 // to stop.
-var ErrNoExecution = errors.New("no execution carries this turn")
+var ErrNoExecution = serviceports.ErrNoTurnExecution
 
 // Stop ends a turn somebody is no longer waiting for.
 //
 // Closing a reader stops nothing: the turn runs on a worker, and bills for it.
 // So stopping is asked for explicitly, and cancels the turn's workflow.
-func (s *Service) Stop(
-	ctx context.Context,
-	turn *conversation.AssistantTurn,
-	cancel func(workflowID string) error,
-) error {
+func (s *Service) Stop(ctx context.Context, turn *conversation.AssistantTurn) error {
 	if turn.Status.Terminal() {
 		// Already over. Saying so beats reporting a failure for something the
 		// person got what they wanted from.
@@ -236,18 +268,16 @@ func (s *Service) Stop(
 		return nil
 	}
 
-	err := cancel(turn.ExecutionID())
+	err := s.canceller.CancelTurn(ctx, turn.ExecutionID())
 	switch {
 	case err == nil:
 	case errors.Is(err, ErrNoExecution):
 		// Nothing carries the turn: it was never handed to a worker, or its
 		// execution ended without closing the record. Closing it here is what
 		// frees the conversation's one live slot for the next question.
-		if cErr := s.turns.Complete(ctx, repositories.CompleteAssistantTurnRequest{
-			ID:         turn.ID,
-			TenantInfo: tenantOf(turn),
-			Status:     conversation.AssistantTurnStatusStopped,
-		}); cErr != nil {
+		if cErr := s.Close(
+			ctx, turn, conversation.AssistantTurnStatusStopped, "",
+		); cErr != nil {
 			s.metrics.RecordTurnStopped("error")
 
 			return fmt.Errorf("stop this reply: %w", cErr)
@@ -264,4 +294,32 @@ func (s *Service) Stop(
 	s.metrics.RecordTurnStopped("cancelled")
 
 	return nil
+}
+
+// StopAllForUser ends every reply a person has in progress in one tenant.
+//
+// A turn does not record the session that asked for it, so signing out of one
+// browser stops the replies started from every other one too. Each turn is
+// stopped on its own: one that cannot be stopped does not keep the rest
+// running, and every failure is reported together.
+func (s *Service) StopAllForUser(
+	ctx context.Context,
+	req serviceports.StopUserTurnsRequest,
+) error {
+	live, err := s.turns.ListLive(ctx, repositories.ListLiveAssistantTurnsRequest{
+		UserID:     req.UserID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return fmt.Errorf("read the replies still in progress: %w", err)
+	}
+
+	var errs []error
+	for _, turn := range live {
+		if sErr := s.Stop(ctx, &turn.AssistantTurn); sErr != nil {
+			errs = append(errs, fmt.Errorf("turn %s: %w", turn.ID, sErr))
+		}
+	}
+
+	return errors.Join(errs...)
 }

@@ -46,6 +46,12 @@ func (s *stubTurns) Active(
 	return nil, nil
 }
 
+func (s *stubTurns) ListLive(
+	context.Context, repositories.ListLiveAssistantTurnsRequest,
+) ([]*repositories.LiveAssistantTurn, error) {
+	return nil, nil
+}
+
 func (s *stubTurns) Complete(context.Context, repositories.CompleteAssistantTurnRequest) error {
 	return nil
 }

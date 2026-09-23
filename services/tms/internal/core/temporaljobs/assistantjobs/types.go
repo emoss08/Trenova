@@ -84,6 +84,10 @@ type AssistantTurnRequest struct {
 	ProviderChosen        bool               `json:"providerChosen"`
 	FollowUpProposalID    pulid.ID           `json:"followUpProposalId,omitempty"`
 	FollowUpPlanID        pulid.ID           `json:"followUpPlanId,omitempty"`
+	// Awaited says the request that asked is waiting for the turn's result
+	// rather than reading its stream. That caller has the reply as soon as
+	// the turn ends, so nobody is told later that it is ready.
+	Awaited bool `json:"awaited,omitempty"`
 }
 
 // AssistantTurnResult is what the turn came to.
@@ -116,4 +120,12 @@ type FinishTurnInput struct {
 type TurnEnding struct {
 	Result AssistantTurnResult     `json:"result"`
 	Event  temporaltype.StreamItem `json:"event"`
+}
+
+// NotifyUnseenTurnInput is a turn that ended with nobody reading it, for
+// telling the person who asked.
+type NotifyUnseenTurnInput struct {
+	Payload *AssistantTurnPayload `json:"payload"`
+	// Status is how the turn ended.
+	Status conversation.AssistantTurnStatus `json:"status"`
 }

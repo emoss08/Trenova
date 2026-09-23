@@ -14,6 +14,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -60,27 +61,30 @@ const streamFlushTimeout = 10 * time.Second
 type ActivitiesParams struct {
 	fx.In
 
-	Logger     *zap.Logger
-	Assistant  *assistantservice.Service
-	Turns      *assistantturnservice.Service
-	TurnRepo   repositories.AssistantTurnRepository
-	Steps      serviceports.RunStepLedger
-	Trajectory serviceports.AgentRunEventRecorder `optional:"true"`
+	Logger        *zap.Logger
+	Assistant     *assistantservice.Service
+	Turns         *assistantturnservice.Service
+	TurnRepo      repositories.AssistantTurnRepository
+	Steps         serviceports.RunStepLedger
+	Notifications *notificationservice.Service
+	Trajectory    serviceports.AgentRunEventRecorder `optional:"true"`
 }
 
 // Activities are a turn's first and last steps. Everything between them is
 // agentflow's.
 type Activities struct {
-	logger     *zap.Logger
-	assistant  *assistantservice.Service
-	turns      *assistantturnservice.Service
-	turnRepo   repositories.AssistantTurnRepository
-	steps      serviceports.RunStepLedger
-	trajectory serviceports.AgentRunEventRecorder
+	logger        *zap.Logger
+	assistant     *assistantservice.Service
+	turns         *assistantturnservice.Service
+	turnRepo      repositories.AssistantTurnRepository
+	steps         serviceports.RunStepLedger
+	trajectory    serviceports.AgentRunEventRecorder
+	threads       replyThreads
+	notifications replyNotifications
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
-	return &Activities{
+	a := &Activities{
 		logger:     p.Logger.Named("job.assistant-turn"),
 		assistant:  p.Assistant,
 		turns:      p.Turns,
@@ -88,6 +92,16 @@ func NewActivities(p ActivitiesParams) *Activities {
 		steps:      p.Steps,
 		trajectory: p.Trajectory,
 	}
+	// Assigned only when present: a nil pointer held by an interface is not
+	// a nil interface, and the notice would dereference it.
+	if p.Assistant != nil {
+		a.threads = p.Assistant
+	}
+	if p.Notifications != nil {
+		a.notifications = p.Notifications
+	}
+
+	return a
 }
 
 // PrepareTurnActivity checks the question and makes it ready to answer.
@@ -296,12 +310,7 @@ func (a *Activities) CloseTurnActivity(
 		return nil
 	}
 
-	err = a.turnRepo.Complete(ctx, repositories.CompleteAssistantTurnRequest{
-		ID:         turn.ID,
-		TenantInfo: payload.tenantInfo(),
-		Status:     conversation.AssistantTurnStatusFailed,
-		Error:      message,
-	})
+	err = a.turns.Close(ctx, turn, conversation.AssistantTurnStatusFailed, message)
 	if err != nil {
 		return fmt.Errorf("close this turn's record: %w", err)
 	}

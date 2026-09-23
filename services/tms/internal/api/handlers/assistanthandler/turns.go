@@ -1,7 +1,6 @@
 package assistanthandler
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -14,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
-	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/temporal"
 	"go.uber.org/zap"
@@ -47,6 +45,56 @@ func (h *Handler) activeTurn(c *gin.Context) {
 	// missing record: a 404 here would have every client treating the common
 	// case as an error.
 	c.JSON(http.StatusOK, gin.H{"turn": turn})
+}
+
+// liveTurn is one reply the person still has in progress.
+type liveTurn struct {
+	TurnID      pulid.ID                         `json:"turnId"`
+	ThreadID    pulid.ID                         `json:"threadId"`
+	ThreadTitle string                           `json:"threadTitle"`
+	Origin      conversation.AssistantTurnOrigin `json:"origin"`
+	StartedAt   int64                            `json:"startedAt"`
+}
+
+type liveTurnsResponse struct {
+	Items []liveTurn `json:"items"`
+}
+
+func liveTurnsFrom(turns []*repositories.LiveAssistantTurn) liveTurnsResponse {
+	items := make([]liveTurn, 0, len(turns))
+	for _, turn := range turns {
+		items = append(items, liveTurn{
+			TurnID:      turn.ID,
+			ThreadID:    turn.ThreadID,
+			ThreadTitle: turn.ThreadTitle,
+			Origin:      turn.Origin,
+			StartedAt:   turn.StartedAt,
+		})
+	}
+
+	return liveTurnsResponse{Items: items}
+}
+
+// activeTurns lists every reply the caller still has in progress, in any of
+// their conversations, so a tab that did not start a reply can still show it
+// is being written and lead back to it. It is read under the caller's own
+// user id, like every other route here.
+func (h *Handler) activeTurns(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	turns, err := h.turns.ListLive(
+		c.Request.Context(),
+		repositories.ListLiveAssistantTurnsRequest{
+			UserID:     authCtx.UserID,
+			TenantInfo: tenantFromAuthContext(authCtx),
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, liveTurnsFrom(turns))
 }
 
 // streamTurn relays one turn's events to a reader.
@@ -180,6 +228,7 @@ func (h *Handler) sendMessage(c *gin.Context) {
 		return
 	}
 
+	body.awaited = true
 	_, run, err := h.askWorker(c, threadID, &body)
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -317,6 +366,7 @@ func (h *Handler) startWorkflow(
 				PreferredProviderID:   providerID,
 				ProviderChosen:        providerChosen,
 				FollowUpProposalID:    body.FollowUpProposalID,
+				Awaited:               body.awaited,
 			},
 		})
 }
@@ -341,16 +391,7 @@ func (h *Handler) stopTurn(c *gin.Context) {
 		return
 	}
 
-	err = h.turns.Stop(c.Request.Context(), turn, func(workflowID string) error {
-		cErr := h.workflows.CancelWorkflow(c.Request.Context(), workflowID, "")
-		var gone *serviceerror.NotFound
-		if errors.As(cErr, &gone) {
-			return assistantturnservice.ErrNoExecution
-		}
-
-		return cErr
-	})
-	if err != nil {
+	if err = h.turns.Stop(c.Request.Context(), turn); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

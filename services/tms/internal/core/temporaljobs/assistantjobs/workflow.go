@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
@@ -62,9 +63,27 @@ var closeOptions = workflow.ActivityOptions{
 	},
 }
 
+// notifyOptions retry a few times over a minute. Telling someone their reply
+// is ready is worth a retry, not worth holding the turn open for.
+var notifyOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: 30 * time.Second,
+	Summary:             "Tell the person their reply is ready",
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    time.Second,
+		BackoffCoefficient: 2,
+		MaximumInterval:    15 * time.Second,
+		MaximumAttempts:    5,
+	},
+}
+
 // changeCloseUnsavedTurn closes a turn's record when saving the turn failed on
 // every attempt. Executions that began before it replay without the step.
 const changeCloseUnsavedTurn = "assistant-turn-close-unsaved"
+
+// changeNotifyUnseenTurn tells the person who asked when their reply ended
+// with nobody reading it. Executions that began before it replay without the
+// step.
+const changeNotifyUnseenTurn = "assistant-turn-notify-unseen"
 
 // Workflows are the assistant's workflows. They hold the agent runtime
 // because the agent loop runs in workflow code, and the loop is the runtime's.
@@ -114,6 +133,7 @@ func (w *Workflows) AssistantTurnWorkflow(
 
 	stream.Publish(keep, ending.Event)
 	stream.Close(keep)
+	w.notifyUnseen(keep, stream, finish, &ending)
 
 	if finish.Failure != nil && finish.Failure.Stopped {
 		// Recorded as cancelled rather than completed, which is what it was.
@@ -196,6 +216,48 @@ func withPriority(
 	}
 
 	return options
+}
+
+// notifyUnseen tells the person who asked that their reply ended, when nobody
+// was reading when it did: they closed the tab, signed in somewhere else, or
+// asked from the palette and moved on. A reply they stopped themselves is not
+// news to them, and a caller waiting on the result already has it.
+func (w *Workflows) notifyUnseen(
+	ctx workflow.Context,
+	stream *agentflow.Stream,
+	finish *FinishTurnInput,
+	ending *TurnEnding,
+) {
+	payload := finish.Payload
+	if stream.Drained() || payload.Request.Awaited {
+		return
+	}
+	if finish.Failure != nil && finish.Failure.Stopped {
+		return
+	}
+
+	status := conversation.AssistantTurnStatus(ending.Result.Status)
+	if !notifiesUnseen(status) {
+		return
+	}
+	if workflow.GetVersion(ctx, changeNotifyUnseenTurn, workflow.DefaultVersion, 1) != 1 {
+		return
+	}
+
+	var a *Activities
+	err := workflow.ExecuteActivity(
+		workflow.WithActivityOptions(ctx, notifyOptions),
+		a.NotifyUnseenTurnActivity, &NotifyUnseenTurnInput{
+			Payload: payload,
+			Status:  status,
+		},
+	).Get(ctx, nil)
+	if err != nil {
+		workflow.GetLogger(ctx).Error("could not tell the person their reply is ready",
+			"turnId", payload.TurnID.String(),
+			"error", err.Error(),
+		)
+	}
 }
 
 // closeRecord closes the record of a turn that could not be saved, so the
