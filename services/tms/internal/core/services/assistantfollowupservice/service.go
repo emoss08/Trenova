@@ -75,6 +75,10 @@ type turnStarter interface {
 		status conversation.AssistantTurnStatus,
 		cause error,
 	)
+	Stoppable(
+		ctx context.Context,
+		turn *conversation.AssistantTurn,
+	) (context.Context, context.CancelFunc)
 }
 
 func New(p Params) serviceports.DecisionFollowUps {
@@ -217,8 +221,12 @@ func (s *Service) startInProcess(
 	}
 
 	s.inProcess(func() {
-		runCtx, cancel := context.WithTimeout(ctx, inProcessTimeout)
+		timed, cancel := context.WithTimeout(ctx, inProcessTimeout)
 		defer cancel()
+		// No request carries this turn, so nothing aborting one can stop it;
+		// a Stop reaches it through its record instead.
+		runCtx, release := s.turns.Stoppable(timed, turn)
+		defer release()
 
 		observed, closeStream := s.turns.Observe(runCtx, turn, nil)
 		result, runErr := s.assistant.SendMessageStream(runCtx, message, actor, observed)

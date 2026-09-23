@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -55,7 +56,7 @@ func (r *recordingTurns) MarkWorkflow(
 }
 
 func newDurable(turns *recordingTurns) *Service {
-	return &Service{l: zap.NewNop(), turns: turns}
+	return &Service{l: zap.NewNop(), turns: turns, running: newRunningTurns()}
 }
 
 func startRequest() StartRequest {
@@ -144,13 +145,19 @@ func TestStop_IsQuietAboutATurnThatHasAlreadyEnded(t *testing.T) {
 	assert.False(t, called)
 }
 
-// A turn still running inside the request that asked for it has no execution
-// to cancel; its reader aborting is what stops it, exactly as before.
-func TestStop_LeavesAnInProcessTurnToItsReader(t *testing.T) {
+// A turn running in an API process has no execution to cancel, and nobody's
+// request may be carrying it: a decision's follow-up, or one a reader rejoined
+// after a reload. Stopping it closes its record, which frees the conversation
+// and is what every instance watching the turn reads.
+func TestStop_ClosesAnInProcessTurnsRecord(t *testing.T) {
 	t.Parallel()
 
-	svc := newDurable(&recordingTurns{})
-	turn := &conversation.AssistantTurn{Status: conversation.AssistantTurnStatusRunning}
+	turns := &recordingTurns{}
+	svc := newDurable(turns)
+	turn := &conversation.AssistantTurn{
+		ID:     pulid.MustNew("atrn_"),
+		Status: conversation.AssistantTurnStatusRunning,
+	}
 
 	called := false
 	require.NoError(t, svc.Stop(t.Context(), turn, func(string) error {
@@ -159,5 +166,73 @@ func TestStop_LeavesAnInProcessTurnToItsReader(t *testing.T) {
 		return nil
 	}))
 
-	assert.False(t, called)
+	assert.False(t, called, "there is no workflow to cancel")
+	require.Len(t, turns.completed, 1)
+	assert.Equal(t, turn.ID, turns.completed[0].ID)
+	assert.Equal(t, conversation.AssistantTurnStatusStopped, turns.completed[0].Status)
+}
+
+func TestStop_CancelsAnInProcessTurnRunningHere(t *testing.T) {
+	t.Parallel()
+
+	turn := &conversation.AssistantTurn{
+		ID:     pulid.MustNew("atrn_"),
+		Status: conversation.AssistantTurnStatusRunning,
+	}
+	svc := newDurable(&recordingTurns{stubTurns: stubTurns{turn: turn}})
+
+	runCtx, release := svc.Stoppable(t.Context(), turn)
+	defer release()
+
+	require.NoError(t, svc.Stop(t.Context(), turn, nil))
+
+	select {
+	case <-runCtx.Done():
+		assert.ErrorIs(t, runCtx.Err(), context.Canceled)
+	case <-time.After(time.Second):
+		t.Fatal("a stopped turn running in this process kept running")
+	}
+}
+
+// A Stop asked of another instance reaches this one through the record.
+func TestStoppable_CancelsWhenTheRecordSaysTheTurnWasStopped(t *testing.T) {
+	t.Parallel()
+
+	turn := &conversation.AssistantTurn{
+		ID:     pulid.MustNew("atrn_"),
+		Status: conversation.AssistantTurnStatusRunning,
+	}
+	record := *turn
+	record.Status = conversation.AssistantTurnStatusStopped
+	svc := newDurable(&recordingTurns{stubTurns: stubTurns{turn: &record}})
+
+	runCtx, release := svc.Stoppable(t.Context(), turn)
+	defer release()
+
+	select {
+	case <-runCtx.Done():
+	case <-time.After(stopPollInterval + 3*time.Second):
+		t.Fatal("a turn stopped elsewhere kept running")
+	}
+	assert.Equal(t, conversation.AssistantTurnStatusRunning, turn.Status,
+		"the caller's turn is not written to by the watch")
+}
+
+func TestStoppable_LeavesARunningTurnAlone(t *testing.T) {
+	t.Parallel()
+
+	turn := &conversation.AssistantTurn{
+		ID:     pulid.MustNew("atrn_"),
+		Status: conversation.AssistantTurnStatusRunning,
+	}
+	svc := newDurable(&recordingTurns{stubTurns: stubTurns{turn: turn}})
+
+	runCtx, release := svc.Stoppable(t.Context(), turn)
+	defer release()
+
+	select {
+	case <-runCtx.Done():
+		t.Fatal("a running turn was cancelled")
+	case <-time.After(stopPollInterval + 500*time.Millisecond):
+	}
 }

@@ -97,6 +97,17 @@ confirm what they already decided.
 The activity heartbeats on every event, because Temporal only delivers
 cancellation through a heartbeat.
 
+A turn running in an API process — the in-request path, or a decision
+follow-up with durable turns off — has no execution to cancel, and may have no
+request carrying it: a follow-up never had one, and a reader who reloads
+rejoins through the relay rather than the request. So Stop closes the turn's
+record as `Stopped`, and the turn runs on a context from
+`assistantturnservice.Stoppable`, which is cancelled directly when the Stop
+lands on the same instance and otherwise on its next read of the record (every
+two seconds). The in-request path closes its record on a context the reader's
+abort cannot reach, so a closed tab no longer leaves the thread's one live
+slot held.
+
 ### The turn stream
 
 A turn's events go to a Redis stream, one per turn, keyed `<prefix>:<org>:<turn>`.
@@ -110,6 +121,18 @@ carries the Redis entry id as its SSE event id, and a reader returns it as
 reader **applied**, not the last it received: a connection that dies mid-frame
 delivers something the client never folded in, and resuming past it would skip
 it silently.
+
+No stream is not an expired stream. A turn's stream is made by its first event,
+and a reader can attach before that — a follow-up is recorded before the
+decision that caused it returns. The relay follows a running turn whose stream
+has not begun and waits for it; only a turn running for longer than two minutes
+with no stream is reported as having lost its live view. An ending rebuilt from
+the record carries `replay: true` and no result, and the client refetches the
+conversation for what was said.
+
+Before sending, the client asks for the thread's active turn and follows it to
+its end first, so a question asked while a follow-up is still answering waits
+for it on screen instead of failing with "already working on a reply".
 
 Workflow history is deliberately not used for this. Sixty tokens a second is not
 what a workflow history is for, and the issue this came from says so directly.
@@ -210,9 +233,9 @@ design — the run carries on — so this is the only place they show up at all.
   own words on a background run are still thrown away.
 - **Permission denials are not distinct events.** A refusal arrives as a failed
   tool result whose content is prose, so it is recorded as one.
-- **An in-process follow-up cannot be stopped from the client.** It has no
-  execution to cancel and no request whose abort would stop it, so it runs to
-  its end, bounded at five minutes. A durable one is stopped like any turn.
+- **Stopping an in-process turn on another instance takes up to two
+  seconds.** The record is closed at once, so the conversation is free, but the
+  model runs until that instance next reads it.
 - **Redis is on the chat path.** An outage silences in-flight replies. The
   transcript still saves and the relay degrades to reading the turn record, but
   that is a fallback, not equivalence.

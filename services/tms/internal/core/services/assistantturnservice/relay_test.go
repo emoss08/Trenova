@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -94,7 +95,7 @@ func (s *stubReader) Read(
 }
 
 func newRelay(turns *stubTurns, reader *stubReader) *Service {
-	return &Service{l: zap.NewNop(), turns: turns, reader: reader}
+	return &Service{l: zap.NewNop(), turns: turns, reader: reader, running: newRunningTurns()}
 }
 
 func runningTurn() *conversation.AssistantTurn {
@@ -219,10 +220,34 @@ func TestRelay_SendsAReaderToTheConversationWhenTheStreamHasExpired(t *testing.T
 	assert.Contains(t, string(seen[0].Data), turn.ThreadID.String())
 }
 
+// A turn's stream is made by its first event, and a reader can attach before
+// that: a decision's follow-up is recorded before the decision returns. The
+// reader waits for the stream rather than being told it expired.
+func TestRelay_FollowsARunningTurnWhoseStreamHasNotBegun(t *testing.T) {
+	t.Parallel()
+
+	turn := runningTurn()
+	turn.StartedAt = time.Now().Unix()
+	svc := newRelay(&stubTurns{turn: turn}, &stubReader{
+		exists: false,
+		frames: []serviceports.TurnStreamFrame{
+			frameOf(serviceports.AssistantEventDelta, map[string]any{"text": "On it"}),
+			frameOf(serviceports.AssistantEventDone, map[string]any{"turnId": turn.ID.String()}),
+		},
+	})
+
+	seen := collect(t, svc, turn)
+
+	require.Len(t, seen, 2)
+	assert.Equal(t, serviceports.AssistantEventDelta, seen[0].Event)
+	assert.Equal(t, serviceports.AssistantEventDone, seen[1].Event)
+}
+
 func TestRelay_SaysSoWhenALiveTurnHasLostItsStream(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
+	turn.StartedAt = time.Now().Add(-10 * time.Minute).Unix()
 	svc := newRelay(&stubTurns{turn: turn}, &stubReader{exists: false})
 
 	seen := collect(t, svc, turn)

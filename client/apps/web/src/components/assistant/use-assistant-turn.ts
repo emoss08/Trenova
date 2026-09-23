@@ -197,6 +197,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       };
 
       let terminal = false;
+      let ended = false;
       let done: SendMessageResult | null = null;
       setTurn(initial);
 
@@ -204,6 +205,7 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         setTurn((state) => (state ? reduceTurn(state, event) : state));
         if (event.event === "done") {
           terminal = true;
+          ended = true;
           done = event.data;
         } else if (event.event === "refused" || event.event === "error") {
           terminal = true;
@@ -240,7 +242,9 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         return;
       }
 
-      if (done !== null) {
+      // An ending rebuilt from the turn's record carries no result; settling
+      // on it refetches the conversation, which holds what was saved.
+      if (ended) {
         await settle(done);
       } else {
         // A refusal is complete in itself and has been saved. A server error
@@ -262,6 +266,53 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
     [fail, refreshThread, settle, t],
   );
 
+  /**
+   * Follows a reply the server is producing for this conversation: one this
+   * page lost when it was closed or reloaded, or one the application started,
+   * such as the agent reporting what came of a decision.
+   */
+  const followActive = useCallback(
+    async (active: ActiveTurn) => {
+      const followUp = active.origin === "DecisionFollowUp";
+      turnIdRef.current = active.id;
+      await follow(
+        initialTurnState(followUp ? "" : (active.input ?? ""), null, { followUp }),
+        (onEvent, signal) => followExistingTurn(active.id, { signal, onEvent }),
+      );
+    },
+    [follow],
+  );
+
+  /** The reply the server is producing for this conversation, if any. */
+  const activeTurn = useCallback(async (): Promise<ActiveTurn | null> => {
+    try {
+      return await apiService.assistantService.activeTurn(threadId);
+    } catch {
+      return null;
+    }
+  }, [threadId]);
+
+  const following = useCallback(
+    () => abortRef.current !== null && !abortRef.current.signal.aborted,
+    [],
+  );
+
+  /**
+   * Picks up the reply the conversation is producing, when this view is not
+   * already following one. Nothing happens when the conversation is quiet.
+   */
+  const rejoin = useCallback(async () => {
+    if (following()) {
+      return;
+    }
+    const active = await activeTurn();
+    // A question sent while the lookup was out owns the view now.
+    if (active === null || following()) {
+      return;
+    }
+    await followActive(active);
+  }, [activeTurn, followActive, following]);
+
   const send = useCallback(
     async (
       content: string,
@@ -269,6 +320,17 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
       providerId = "",
       extras: TurnContext = {},
     ) => {
+      // A reply the server is producing that this view has not picked up — the
+      // agent answering a decision made elsewhere, most often — is followed to
+      // its end first. Asking over it used to fail with "already working on a
+      // reply" while nothing on screen said anything was.
+      if (!following()) {
+        const running = await activeTurn();
+        if (running !== null && !following()) {
+          await followActive(running);
+        }
+      }
+
       const pageContext = context === undefined ? (getContext?.() ?? null) : context;
       lastContextRef.current = pageContext;
       lastProviderRef.current = providerId;
@@ -301,39 +363,8 @@ export function useAssistantTurn(threadId: string, getContext?: () => AssistantP
         });
       });
     },
-    [follow, getContext, threadId],
+    [activeTurn, follow, followActive, following, getContext, threadId],
   );
-
-  /**
-   * Picks up a reply the conversation is already producing: one this page
-   * lost when it was closed or reloaded, or one the application started,
-   * such as the agent reporting what came of a decision. Nothing happens
-   * when the conversation is quiet or this view is already following a turn.
-   */
-  const rejoin = useCallback(async () => {
-    if (abortRef.current !== null && !abortRef.current.signal.aborted) {
-      return;
-    }
-
-    let active: ActiveTurn | null;
-    try {
-      active = await apiService.assistantService.activeTurn(threadId);
-    } catch {
-      return;
-    }
-    // A question sent while the lookup was out owns the view now.
-    if (active === null || (abortRef.current !== null && !abortRef.current.signal.aborted)) {
-      return;
-    }
-
-    const followUp = active.origin === "DecisionFollowUp";
-    const turnId = active.id;
-    turnIdRef.current = turnId;
-    await follow(
-      initialTurnState(followUp ? "" : (active.input ?? ""), null, { followUp }),
-      (onEvent, signal) => followExistingTurn(turnId, { signal, onEvent }),
-    );
-  }, [follow, threadId]);
 
   const stop = useCallback(() => {
     // A turn on a worker has to be told. Aborting the reader used to stop the
