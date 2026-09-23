@@ -11690,12 +11690,14 @@
     ]
   },
   "Agents": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components",
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Agents cannot be started on this deployment": {
@@ -12045,7 +12047,7 @@
     ]
   },
   "All": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -12056,6 +12058,7 @@
       "routes/carrier-invoice-matching",
       "routes/carrier-monitoring",
       "routes/carrier-settlement-workspace",
+      "routes/desk",
       "routes/dispatch-console",
       "routes/edi",
       "routes/random-testing",
@@ -12083,11 +12086,12 @@
     ]
   },
   "All agents": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -15026,6 +15030,15 @@
       "apps/web/components"
     ]
   },
+  "Another app is using the microphone. Close it and try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Another carrier accepted first; this offer no longer stands.": {
     "sites": 1,
     "scope": [
@@ -17686,7 +17699,7 @@
     ]
   },
   "Ask a different agent": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -17848,7 +17861,7 @@
     ]
   },
   "Ask {0} anything about your operation": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -17881,6 +17894,24 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Asking {0}. Choose another agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Asking {0}. Click to ask a different agent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Turn it on only for a model that reasons; others reject the request.": {
@@ -19291,7 +19322,7 @@
     ]
   },
   "Attach a file": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -30257,7 +30288,7 @@
     ]
   },
   "Choose an agent": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -31809,7 +31840,7 @@
     ]
   },
   "Clear filters": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -31818,6 +31849,7 @@
       "packages/shared/components",
       "routes/carrier-monitoring",
       "routes/carrier-sourcing",
+      "routes/desk",
       "routes/detention-desk",
       "routes/home",
       "routes/insights",
@@ -31873,7 +31905,7 @@
     ]
   },
   "Clear search": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -31882,6 +31914,7 @@
       "routes/admin",
       "routes/carrier-monitoring",
       "routes/carrier-sourcing",
+      "routes/desk",
       "routes/detention-desk",
       "routes/home",
       "routes/org-structure"
@@ -33626,6 +33659,24 @@
     "areas": [
       "apps/web/components",
       "apps/web/config"
+    ]
+  },
+  "Commands": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Commands and starter questions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Comment": {
@@ -41631,13 +41682,14 @@
     ]
   },
   "Custom": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "apps/web/types",
+      "routes/desk",
       "routes/fuel-management"
     ]
   },
@@ -48681,6 +48733,51 @@
       "apps/web/components"
     ]
   },
+  "Dictation could not start. Try again.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Dictation does not support this language.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Dictation is not available in this browser. Try Chrome, Edge or Safari.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Dictation needs a secure (HTTPS) connection.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Dictation stopped unexpectedly.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Did not run": {
     "sites": 1,
     "scope": [
@@ -48688,6 +48785,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Didn't catch that. Try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Diesel": {
@@ -49282,7 +49388,7 @@
     ]
   },
   "Dismiss": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -53012,6 +53118,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Drop to attach": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Drops the case without recording an outcome. The invoice stops reading Disputed.": {
@@ -57471,7 +57586,7 @@
     ]
   },
   "Enter": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -58563,7 +58678,7 @@
     ]
   },
   "Esc": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -68677,6 +68792,15 @@
       "routes/agent-control"
     ]
   },
+  "From templates": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "From the Resend webhook. You can add it later; until then the mailbox refuses deliveries.": {
     "sites": 1,
     "scope": [
@@ -70804,6 +70928,60 @@
       "apps/web/lib",
       "apps/web/types",
       "packages/shared/lib"
+    ]
+  },
+  "Good afternoon": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Good afternoon, {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Good evening": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Good evening, {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Good morning": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Good morning, {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Google Maps Place ID, set automatically when an address is geocoded. Used for precise location matching and map rendering.": {
@@ -81505,7 +81683,7 @@
     ]
   },
   "Keyboard shortcuts": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -84756,12 +84934,22 @@
     ]
   },
   "Listening": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin"
+    ]
+  },
+  "Listening…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Lite profile": {
@@ -85301,6 +85489,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Loading artifacts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Loading assignment…": {
@@ -90746,6 +90943,15 @@
       "apps/web/lib"
     ]
   },
+  "Microphone blocked. Allow it in the address bar.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Microsoft Entra ID": {
     "sites": 4,
     "scope": [
@@ -93602,6 +93808,15 @@
       "service/workerdrugalcoholservice"
     ]
   },
+  "Name a record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Name and code identify the checklist; the trigger decides when it starts on its own.": {
     "sites": 1,
     "scope": [
@@ -94948,12 +95163,13 @@
     ]
   },
   "New conversation": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "New credit memo": {
@@ -95163,6 +95379,15 @@
     ],
     "areas": [
       "service/shipmentservice"
+    ]
+  },
+  "New line": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "New load assigned": {
@@ -96171,7 +96396,7 @@
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "No agents match that search.": {
@@ -96181,6 +96406,25 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "No agents match this filter.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "No agents match “{0}”.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "No agents yet": {
@@ -97100,6 +97344,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "No description yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "No detention in this window": {
@@ -98251,6 +98504,24 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "No microphone found.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "No microphone was found. Connect one and try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "No miles run": {
@@ -99800,14 +100071,13 @@
     ]
   },
   "No task tools": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control",
-      "routes/desk"
+      "routes/agent-control"
     ]
   },
   "No task tools. It can still recall, remember and escalate.": {
@@ -102466,6 +102736,15 @@
       "routes/shipment"
     ]
   },
+  "Nothing was heard. Try again a little closer to the microphone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Nothing was returned.": {
     "sites": 1,
     "scope": [
@@ -103861,6 +104140,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Oldest {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Ollama": {
@@ -112315,6 +112603,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Paste or drop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Paste the full document text here...": {
@@ -125220,7 +125517,7 @@
     ]
   },
   "Recent": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -129982,6 +130279,15 @@
       "domain/email"
     ]
   },
+  "Replying. You can draft your next message.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Report": {
     "sites": 8,
     "scope": [
@@ -133872,6 +134178,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Review decisions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Review draft invoices, confirm billing details, and post completed charges": {
@@ -139240,12 +139555,14 @@
     ]
   },
   "Search agents": {
-    "sites": 2,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components",
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Search and retrieval": {
@@ -142761,7 +143078,7 @@
     ]
   },
   "Send": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -145692,7 +146009,7 @@
     ]
   },
   "Shift": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -147743,7 +148060,7 @@
     ]
   },
   "Show more": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -147933,12 +148250,13 @@
     ]
   },
   "Showing {0} of {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/desk"
     ]
   },
   "Showing {0} of {1} {2}": {
@@ -149236,6 +149554,15 @@
       "apps/web/components"
     ]
   },
+  "Something else took the microphone. Try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Something looks wrong": {
     "sites": 1,
     "scope": [
@@ -150073,6 +150400,24 @@
       "domain/worker"
     ]
   },
+  "Speech recognition does not support your browser's language.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Speech recognition is turned off in this browser.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Speed": {
     "sites": 1,
     "scope": [
@@ -150769,13 +151114,12 @@
     ]
   },
   "Start a conversation with": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/desk"
+      "apps/web/components"
     ]
   },
   "Start a new conversation": {
@@ -151172,7 +151516,7 @@
     ]
   },
   "Starter questions": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -152066,7 +152410,7 @@
     ]
   },
   "Stop": {
-    "sites": 10,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -152286,6 +152630,15 @@
     ],
     "areas": [
       "domain/shipmentstate"
+    ]
+  },
+  "Stop the reply": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Stop type": {
@@ -157241,6 +157594,16 @@
       "apps/web/components"
     ]
   },
+  "The agents could not be loaded.": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/desk"
+    ]
+  },
   "The agreed fuel surcharge amount.": {
     "sites": 1,
     "scope": [
@@ -161230,6 +161593,33 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "The microphone is in use by another app.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The microphone is turned off for this site, so dictation cannot run here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The microphone is turned off for this site.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load.": {
@@ -165418,6 +165808,33 @@
       "routes/customer"
     ]
   },
+  "This browser cannot reach a speech recognition service. Brave, Arc and some other Chromium browsers leave it out; Chrome, Edge and Safari include it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This browser has no speech service. Try Chrome or Edge.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This browser's speech service is turned off. On a Mac, check that Siri and Dictation are on in System Settings.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This card is already cancelled": {
     "sites": 1,
     "scope": [
@@ -167778,6 +168195,15 @@
     ],
     "areas": [
       "service/shipmentservice"
+    ]
+  },
+  "This site's security settings turn the microphone off, so dictation cannot run here. Ask an administrator.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This source document is already attached.": {
@@ -172233,7 +172659,7 @@
     ]
   },
   "Try again": {
-    "sites": 30,
+    "sites": 34,
     "scope": [
       "ts"
     ],
@@ -179379,6 +179805,15 @@
       "apps/web/components"
     ]
   },
+  "Waiting for the microphone…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Waiting for the result…": {
     "sites": 1,
     "scope": [
@@ -179460,6 +179895,15 @@
     "areas": [
       "routes/inbox",
       "service/briefingservice"
+    ]
+  },
+  "Waiting on you and recent conversations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Waiting on your decision": {
@@ -182425,6 +182869,15 @@
       "routes/agent-control"
     ]
   },
+  "Where the agent came from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Where the agent stands against its caps could not be read.": {
     "sites": 1,
     "scope": [
@@ -183477,15 +183930,6 @@
     ],
     "areas": [
       "domain/documenttemplate"
-    ]
-  },
-  "Who you can ask": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Who's out": {
@@ -186226,6 +186670,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Your browser is blocking the microphone for this site. Allow it from the icon in the address bar, then try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Your carrier": {
@@ -189914,6 +190367,15 @@
       "routes/dispatch-console"
     ]
   },
+  "for records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "for tractor {0}": {
     "sites": 2,
     "scope": [
@@ -189943,11 +190405,12 @@
     ]
   },
   "from {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/home"
     ]
   },
@@ -191436,6 +191899,15 @@
       "apps/web/components"
     ]
   },
+  "to choose": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "to close": {
     "sites": 1,
     "scope": [
@@ -191454,7 +191926,7 @@
       "apps/web/components"
     ]
   },
-  "to name a record": {
+  "to move": {
     "sites": 1,
     "scope": [
       "ts"
@@ -191500,6 +191972,15 @@
     ]
   },
   "to send": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "to stop": {
     "sites": 1,
     "scope": [
       "ts"
@@ -193051,14 +193532,13 @@
     ]
   },
   "{0, plural, one {# tool} other {# tools}}": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control",
-      "routes/desk"
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# unit} other {# units}}": {
@@ -193186,6 +193666,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {and one more agent} other {and # more agents}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {permission} other {permissions}}": {
