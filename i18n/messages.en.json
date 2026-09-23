@@ -37206,13 +37206,14 @@
     ]
   },
   "Copied": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/desk",
       "routes/detention-desk",
       "routes/invoice"
     ]
@@ -37254,7 +37255,7 @@
     ]
   },
   "Copy": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -37262,6 +37263,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/carrier",
+      "routes/desk",
       "routes/detention-desk",
       "routes/edi",
       "routes/invoice"
@@ -50493,7 +50495,7 @@
     ]
   },
   "Document": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -51477,7 +51479,7 @@
     ]
   },
   "Download": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -51485,6 +51487,7 @@
       "apps/web/components",
       "apps/web/hooks",
       "routes/carrier",
+      "routes/desk",
       "routes/edi",
       "routes/reports",
       "routes/shipment"
@@ -165767,6 +165770,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "This document is empty.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This document is not referenced by any TypeScript source in": {

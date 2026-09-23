@@ -6,17 +6,18 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { ArtifactKind, ArtifactStatus } from "@/types/assistant";
 import {
   FileTextIcon,
+  GitCompareArrowsIcon,
   IdCardIcon,
+  InboxIcon,
+  LayoutDashboardIcon,
   ListChecksIcon,
   MailIcon,
   NewspaperIcon,
   PinIcon,
   PinOffIcon,
   ReceiptTextIcon,
+  ScrollTextIcon,
   TableIcon,
-  GitCompareArrowsIcon,
-  LayoutDashboardIcon,
-  InboxIcon,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -34,6 +35,7 @@ export const ARTIFACT_KINDS: Record<ArtifactKind, { label: string; icon: LucideI
   briefing: { label: "Briefing", icon: NewspaperIcon },
   inbound_message: { label: "Message", icon: InboxIcon },
   run_diff: { label: "Changes", icon: GitCompareArrowsIcon },
+  document: { label: "Document", icon: ScrollTextIcon },
 };
 
 /** Where an artifact is, as a tone: severity, not category. */

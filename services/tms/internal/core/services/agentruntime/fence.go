@@ -79,10 +79,14 @@ func UnfenceToolResult(content string) (toolName, payload string, ok bool) {
 	}
 	toolName = rest[:nameEnd]
 	body := rest[nameEnd+len(":\n"+untrustedOpenTag+"\n"):]
-	if !strings.HasSuffix(body, "\n"+untrustedCloseTag) {
+	// The payload's own close tags are neutralised, so the first one is the
+	// fence's. Whatever follows it is a note to the model, such as the one
+	// saying the result is already shown to the person, not part of the result.
+	end := strings.Index(body, "\n"+untrustedCloseTag)
+	if end < 0 {
 		return "", "", false
 	}
-	body = strings.TrimSuffix(body, "\n"+untrustedCloseTag)
+	body = body[:end]
 
 	return toolName, stringutils.RestoreCloseTag(body, untrustedCloseTag), true
 }

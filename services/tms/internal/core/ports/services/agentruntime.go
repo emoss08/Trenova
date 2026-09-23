@@ -121,8 +121,26 @@ type ToolObservation struct {
 	Action *PendingAction
 }
 
-// ToolObserver is told about each tool call as it finishes.
-type ToolObserver func(observation ToolObservation)
+// ShownArtifact is what the person now sees for a tool call, so the model can
+// be told it is there rather than repeating it.
+type ShownArtifact struct {
+	ID    pulid.ID
+	Kind  string
+	Title string
+}
+
+// PublishedDocument is a write-up the model asked to keep beside the
+// conversation. ArtifactID, when set, names the document it revises.
+type PublishedDocument struct {
+	Title      string
+	Body       string
+	ArtifactID pulid.ID
+}
+
+// ToolObserver is told about each tool call as it finishes, and answers with
+// the artifact it showed the person for it, if any. An error is a document
+// that could not be kept, which the model is told.
+type ToolObserver func(observation ToolObservation) (*ShownArtifact, error)
 
 type RunResult struct {
 	Reply    string

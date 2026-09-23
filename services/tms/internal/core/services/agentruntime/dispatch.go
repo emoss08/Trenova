@@ -20,6 +20,9 @@ type toolOutcome struct {
 	// data is what a query tool returned, before it was encoded for the
 	// model. The caller may turn it into something a person sees.
 	data any
+	// publishes marks a document the observer has to keep; its result is
+	// written once the observer says what it kept.
+	publishes bool
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {

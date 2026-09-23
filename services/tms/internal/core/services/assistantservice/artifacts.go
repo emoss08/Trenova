@@ -2,6 +2,7 @@ package assistantservice
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/bytedance/sonic"
@@ -129,13 +130,56 @@ func (r *artifactRecorder) observer() services.ToolObserver {
 	return r.observe
 }
 
-func (r *artifactRecorder) observe(observation services.ToolObservation) {
-	artifact := artifactFromObservation(observation)
-	if artifact == nil {
-		return
+func (r *artifactRecorder) observe(
+	observation services.ToolObservation,
+) (*services.ShownArtifact, error) {
+	if document, ok := observation.Data.(services.PublishedDocument); ok {
+		return r.publish(observation.Call.ID, document)
 	}
 
-	r.save(artifact)
+	artifact := artifactFromObservation(observation)
+	if artifact == nil {
+		return nil, nil
+	}
+
+	saved, err := r.save(artifact)
+	if err != nil {
+		return nil, nil
+	}
+
+	return shownArtifact(saved), nil
+}
+
+// publish keeps a document the model wrote. A revision replaces the text of a
+// document this conversation already holds, in place, so the pane keeps one
+// brief rather than a stack of drafts of it.
+func (r *artifactRecorder) publish(
+	callID string,
+	document services.PublishedDocument,
+) (*services.ShownArtifact, error) {
+	artifact := documentArtifact(callID, document)
+
+	if !document.ArtifactID.IsNil() {
+		existing, err := r.repo.GetByID(r.ctx, repositories.GetArtifactRequest{
+			ID:         document.ArtifactID,
+			TenantInfo: r.tenant,
+		})
+		if err != nil || existing.ThreadID != r.thread.ID ||
+			existing.Kind != assistantartifact.KindDocument {
+			return nil, errUnknownDocument
+		}
+		artifact.ID = existing.ID
+		artifact.MessageID = existing.MessageID
+		artifact.SourceToolCallID = existing.SourceToolCallID
+		artifact.Pinned = existing.Pinned
+	}
+
+	saved, err := r.save(artifact)
+	if err != nil {
+		return nil, errDocumentNotKept
+	}
+
+	return shownArtifact(saved), nil
 }
 
 // fromProposals views the turn's recorded proposals as drafts and its plan
@@ -195,7 +239,9 @@ func (r *artifactRecorder) artifacts() []services.AssistantArtifact {
 	return out
 }
 
-func (r *artifactRecorder) save(artifact *assistantartifact.Artifact) {
+func (r *artifactRecorder) save(
+	artifact *assistantartifact.Artifact,
+) (*assistantartifact.Artifact, error) {
 	artifact.ThreadID = r.thread.ID
 	artifact.OrganizationID = r.tenant.OrgID
 	artifact.BusinessUnitID = r.tenant.BuID
@@ -203,26 +249,26 @@ func (r *artifactRecorder) save(artifact *assistantartifact.Artifact) {
 	multiErr := errortypes.NewMultiError()
 	artifact.Validate(multiErr)
 	if multiErr.HasErrors() {
-		r.logger.Warn("artifact skipped: invalid",
+		r.logger.Error("artifact skipped: invalid",
 			zap.String("kind", string(artifact.Kind)),
 			zap.Error(multiErr),
 		)
 
-		return
+		return nil, multiErr
 	}
 
 	saved, err := r.repo.Upsert(r.ctx, artifact)
 	if err != nil {
-		r.logger.Warn("artifact could not be kept",
+		r.logger.Error("artifact could not be kept",
 			zap.String("thread", r.thread.ID.String()),
 			zap.String("kind", string(artifact.Kind)),
 			zap.Error(err),
 		)
 
-		return
+		return nil, err
 	}
 
-	r.recorded = append(r.recorded, saved)
+	r.remember(saved)
 	if r.activity != nil {
 		r.activity.ArtifactChanged(r.ctx, saved, r.actor, services.ActivityUpdated)
 	}
@@ -236,6 +282,52 @@ func (r *artifactRecorder) save(artifact *assistantartifact.Artifact) {
 			SourceToolCallID: saved.SourceToolCallID,
 		},
 	})
+
+	return saved, nil
+}
+
+// remember adds an artifact to what the turn produced, replacing an earlier
+// entry for the same artifact: a document revised twice in one turn is one
+// artifact, not two.
+func (r *artifactRecorder) remember(saved *assistantartifact.Artifact) {
+	for idx, recorded := range r.recorded {
+		if recorded.ID == saved.ID {
+			r.recorded[idx] = saved
+			return
+		}
+	}
+	r.recorded = append(r.recorded, saved)
+}
+
+// shownArtifact is how the model is told what the person now sees.
+func shownArtifact(artifact *assistantartifact.Artifact) *services.ShownArtifact {
+	return &services.ShownArtifact{
+		ID:    artifact.ID,
+		Kind:  string(artifact.Kind),
+		Title: artifact.Title,
+	}
+}
+
+var (
+	errUnknownDocument = errors.New(
+		"there is no document with that artifactId in this conversation; leave artifactId " +
+			"out to publish a new one",
+	)
+	errDocumentNotKept = errors.New("it could not be saved")
+)
+
+// documentArtifact is a write-up the model published, kept as markdown.
+func documentArtifact(callID string, document services.PublishedDocument) *assistantartifact.Artifact {
+	return &assistantartifact.Artifact{
+		Kind:   assistantartifact.KindDocument,
+		Status: assistantartifact.StatusReady,
+		Title:  artifactTitle(document.Title),
+		Payload: map[string]any{
+			"format": "markdown",
+			"body":   document.Body,
+		},
+		SourceToolCallID: callID,
+	}
 }
 
 // artifactFromObservation turns a finished query tool into what the pane

@@ -27,6 +27,9 @@ const (
 	KindInboundMessage Kind = "inbound_message"
 	// KindRunDiff is what moved between two runs of the same report.
 	KindRunDiff Kind = "run_diff"
+	// KindDocument is a write-up the agent published: a brief, a summary, a
+	// handover, kept as markdown beside the conversation.
+	KindDocument Kind = "document"
 )
 
 // AllKinds is the whole set, in the order they were added.
@@ -47,6 +50,7 @@ func AllKinds() []Kind {
 		KindBriefing,
 		KindInboundMessage,
 		KindRunDiff,
+		KindDocument,
 	}
 }
 

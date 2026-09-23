@@ -17,6 +17,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { PanelRightCloseIcon, PinIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
+import { DocumentArtifact } from "./document-artifact";
 import { EmailDraftArtifact } from "./email-draft-artifact";
 import { EntityCardArtifact } from "./entity-card-artifact";
 import { PlanArtifact } from "./plan-artifact";
@@ -124,6 +125,8 @@ function ArtifactBody({ artifact }: { artifact: AssistantArtifact }) {
       return <RateExplanationArtifact artifact={artifact} />;
     case "run_diff":
       return <RunDiffArtifact artifact={artifact} />;
+    case "document":
+      return <DocumentArtifact artifact={artifact} />;
     default:
       return (
         <p className="text-muted-foreground p-4 text-sm">
@@ -303,6 +306,7 @@ export function isRenderableArtifactKind(kind: AssistantArtifact["kind"]): boole
       "table_view",
       "rate_explanation",
       "run_diff",
+      "document",
     ].includes(kind)
   );
 }

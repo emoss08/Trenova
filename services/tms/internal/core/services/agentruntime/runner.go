@@ -93,8 +93,10 @@ func (s *Service) Run(
 		input:      req.Input,
 		history:    req.History,
 		unattended: req.Unattended,
+		publishes:  req.ToolObserver != nil,
 	})
 	runtimeContext.ToolsDisclosed = tools.disclosed
+	runtimeContext.Artifacts = tools.offers(publishArtifactName)
 	// The prompt describes the set the person may use, not the agent's whole
 	// configuration: a tool named there and refused when called reads as
 	// the system refusing rather than the person lacking the right.
@@ -326,6 +328,16 @@ func (s *Service) Run(
 				continue
 			}
 
+			if call.Name == publishArtifactName {
+				outcome := publishOutcome(call.Arguments)
+				if !tools.offers(publishArtifactName) {
+					outcome = failedOutcome("%s", unpublishableRefusal)
+				}
+				result.ToolCallsUsed++
+				s.recordToolResult(result, &messages, call, outcome, emit, req.ToolObserver)
+				continue
+			}
+
 			if !s.holds(definition, call.Name) {
 				outcome := failedOutcome("%s", s.unheldRefusal(tools, call.Name))
 				result.ToolCallsUsed++
@@ -394,14 +406,7 @@ func (s *Service) recordToolResult(
 	if outcome.action != nil {
 		result.Actions = append(result.Actions, *outcome.action)
 	}
-	if observe != nil {
-		observe(serviceports.ToolObservation{
-			Call:   call,
-			Data:   outcome.data,
-			Failed: outcome.failed,
-			Action: outcome.action,
-		})
-	}
+	outcome = s.observe(observe, call, outcome)
 
 	emit(serviceports.StreamEvent{
 		Event: serviceports.AssistantEventToolFinished,
@@ -428,6 +433,43 @@ func (s *Service) recordToolResult(
 		ToolName:   call.Name,
 		IsError:    outcome.failed,
 	})
+}
+
+// observe hands a finished call to the observer and folds what it showed the
+// person back into the result the model reads.
+func (s *Service) observe(
+	observe serviceports.ToolObserver,
+	call serviceports.ToolCall,
+	outcome toolOutcome,
+) toolOutcome {
+	if observe == nil {
+		if outcome.publishes {
+			return failedOutcome("%s", unpublishableRefusal)
+		}
+		return outcome
+	}
+
+	shown, err := observe(serviceports.ToolObservation{
+		Call:   call,
+		Data:   outcome.data,
+		Failed: outcome.failed,
+		Action: outcome.action,
+	})
+
+	switch {
+	case outcome.publishes && err != nil:
+		return failedOutcome("Tool %q could not keep the document: %s. Put the text in your "+
+			"reply instead.", publishArtifactName, err.Error())
+	case outcome.publishes && shown == nil:
+		return failedOutcome("Tool %q could not keep the document. Put the text in your "+
+			"reply instead.", publishArtifactName)
+	case outcome.publishes:
+		outcome.content = publishedContent(shown)
+	case shown != nil && !outcome.failed:
+		outcome.content += shownNote(shown)
+	}
+
+	return outcome
 }
 
 func (s *Service) finish(

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { slugify } from "@trenova/shared/lib/utils";
 import {
-  slugify,
   buildTemplateExport,
   buildBulkExport,
   buildVersionExport,

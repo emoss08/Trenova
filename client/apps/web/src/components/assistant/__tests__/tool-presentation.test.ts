@@ -14,6 +14,12 @@ describe("describeToolCall", () => {
     });
   });
 
+  it("names a published document by its title", () => {
+    expect(
+      describeToolCall("publish_artifact", { title: "SEED-SHP-007 brief", body: "# Brief" }),
+    ).toEqual({ title: "Publish a document", subject: "SEED-SHP-007 brief" });
+  });
+
   it("uses the search text for a search", () => {
     expect(describeToolCall("search_worker", { query: "Ortiz", limit: 10 })).toEqual({
       title: "Search drivers",
@@ -240,6 +246,22 @@ describe("parseToolResult", () => {
     expect(parseToolResult('Tool "get_shipment" failed: shipment not found')).toEqual({
       kind: "error",
       message: "shipment not found",
+    });
+  });
+
+  // The server appends a note after the fence when the result is already on
+  // screen as an artifact. It is addressed to the model and is not part of
+  // the record.
+  it("reads the record and leaves out the note the model was given after it", () => {
+    const content =
+      'Result from search_shipments:\n<untrusted_data>\n{"count":1}\n</untrusted_data>\n\n' +
+      '[Shown to the person as a table titled "Shipments", which they can open beside the ' +
+      "conversation.]";
+
+    expect(parseToolResult(content)).toEqual({
+      kind: "json",
+      value: { count: 1 },
+      truncated: false,
     });
   });
 
