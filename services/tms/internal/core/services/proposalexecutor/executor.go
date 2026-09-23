@@ -336,7 +336,10 @@ func (s *Service) assertWithinBudget(
 		return nil
 	}
 
-	refusal, err := s.budgets.CheckTool(ctx, definition, toolName)
+	refusal, err := s.budgets.CheckTool(ctx, services.CheckToolBudgetRequest{
+		Definition: definition,
+		ToolName:   toolName,
+	})
 	if err != nil {
 		return err
 	}

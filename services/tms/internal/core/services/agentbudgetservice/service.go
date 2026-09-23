@@ -121,9 +121,9 @@ func (s *Service) CheckRun(
 
 func (s *Service) CheckTool(
 	ctx context.Context,
-	definition *agentdefinition.Definition,
-	toolName string,
+	req services.CheckToolBudgetRequest,
 ) (services.BudgetRefusal, error) {
+	definition, toolName := req.Definition, req.ToolName
 	if definition == nil {
 		return services.BudgetRefusal{}, nil
 	}
@@ -143,6 +143,7 @@ func (s *Service) CheckTool(
 	if err != nil {
 		return services.BudgetRefusal{}, err
 	}
+	used += max(req.Unrecorded, 0)
 	if used >= limit {
 		return services.BudgetRefusal{
 			Cap:      services.BudgetCapTool,

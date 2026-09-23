@@ -172,7 +172,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		return s.simulateAction(ctx, actionParams{dispatchParams: p, tool: tool, action: action})
 	}
 
-	if outcome, refused := s.withinBudget(ctx, req, call.Name); refused {
+	if outcome, refused := s.withinBudget(ctx, req, call.Name, proposedSoFar); refused {
 		return outcome
 	}
 
@@ -185,12 +185,17 @@ func (s *Service) withinBudget(
 	ctx context.Context,
 	req *serviceports.RunRequest,
 	toolName string,
+	soFar []serviceports.PendingAction,
 ) (toolOutcome, bool) {
 	if s.budgets == nil {
 		return toolOutcome{}, false
 	}
 
-	refusal, err := s.budgets.CheckTool(ctx, req.Definition, toolName)
+	refusal, err := s.budgets.CheckTool(ctx, serviceports.CheckToolBudgetRequest{
+		Definition: req.Definition,
+		ToolName:   toolName,
+		Unrecorded: executedCount(soFar, toolName),
+	})
 	if err != nil {
 		s.logger.Error("agent tool budget check failed",
 			zap.String("tool", toolName), zap.Error(err))
@@ -206,6 +211,19 @@ func (s *Service) withinBudget(
 
 	return failedOutcome("Tool %q was not run. %s Tell the person, and do not retry it.",
 		toolName, refusal.Message(req.Definition.Name)), true
+}
+
+// executedCount is how many times this turn already ran a tool for real. Those
+// writes are recorded as proposals only when the turn ends.
+func executedCount(actions []serviceports.PendingAction, toolName string) int {
+	n := 0
+	for i := range actions {
+		if actions[i].ToolName == toolName && actions[i].Executed && !actions[i].Simulated {
+			n++
+		}
+	}
+
+	return n
 }
 
 // actionParams groups one write and the tool that would make it.

@@ -216,6 +216,29 @@ func TestPersistProposals_SavesNothingWhenTheTurnProposedNothing(t *testing.T) {
 	assert.Empty(t, proposals.created)
 }
 
+// A turn that failed or was stopped after a write ran used to record nothing:
+// the write happened, but left no audit row, counted against no cap and
+// earned no trust. It is recorded now, on a run marked as failed.
+func TestPersistProposals_RecordsTheWritesOfATurnThatFailed(t *testing.T) {
+	t.Parallel()
+
+	runs := &stubRunRepo{}
+	proposals := &stubProposalRepo{}
+	svc := newProposalService(runs, proposals, &stubConversationRepo{})
+
+	params := proposalTestParams([]serviceports.PendingAction{
+		{ToolName: "hold_shipment", Rationale: "Consignee closed", Tier: agent.TierAutoExecute, Executed: true},
+	}, nil)
+	params.Failed = true
+
+	_, err := svc.persistProposals(t.Context(), params)
+	require.NoError(t, err)
+
+	require.Len(t, runs.created, 1)
+	assert.Equal(t, agent.RunStatusFailed, runs.created[0].Status)
+	assert.Len(t, proposals.created, 1)
+}
+
 func TestPersistProposals_OpensOneChatRunForTheTurn(t *testing.T) {
 	t.Parallel()
 

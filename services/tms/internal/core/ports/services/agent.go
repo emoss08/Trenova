@@ -312,16 +312,22 @@ type AgentBudgetStatus struct {
 	SimulationMode bool            `json:"simulationMode"`
 }
 
+// CheckToolBudgetRequest asks whether one more write by a tool fits its cap.
+type CheckToolBudgetRequest struct {
+	Definition *agentdefinition.Definition
+	ToolName   string
+	// Unrecorded is how many times the tool already ran in the caller's run
+	// or turn without a recorded proposal yet. A turn records its writes when
+	// it ends, so without them a single turn could run past the cap.
+	Unrecorded int
+}
+
 // AgentBudgetService enforces an agent's caps and reports where it stands.
 type AgentBudgetService interface {
 	// CheckRun says whether the agent may start another run or turn now.
 	CheckRun(ctx context.Context, definition *agentdefinition.Definition) (BudgetRefusal, error)
 	// CheckTool says whether the agent may execute the tool once more today.
-	CheckTool(
-		ctx context.Context,
-		definition *agentdefinition.Definition,
-		toolName string,
-	) (BudgetRefusal, error)
+	CheckTool(ctx context.Context, req CheckToolBudgetRequest) (BudgetRefusal, error)
 	Status(ctx context.Context, definition *agentdefinition.Definition) (*AgentBudgetStatus, error)
 }
 

@@ -342,13 +342,12 @@ func (s *Service) FinishTurn(
 		Reply:    turn.Reply,
 		Refused:  !turn.Decision.Allowed,
 	}
-	if req.Failure != nil {
-		result.Artifacts = artifacts.artifacts()
 
-		return result, nil
-	}
-
+	// A turn that failed or was stopped is recorded too. A write it made
+	// before it ended happened, and without its proposal it would leave no
+	// audit row, count against no cap, and earn no trust.
 	proposals, err := s.persistProposals(ctx, persistProposalsParams{
+		Failed:     req.Failure != nil,
 		Definition: plan.Definition,
 		Thread:     thread,
 		Actor:      req.Actor,

@@ -38,10 +38,9 @@ func (f *fakeBudgets) CheckRun(
 
 func (f *fakeBudgets) CheckTool(
 	_ context.Context,
-	_ *agentdefinition.Definition,
-	tool string,
+	req services.CheckToolBudgetRequest,
 ) (services.BudgetRefusal, error) {
-	f.asked = tool
+	f.asked = req.ToolName
 
 	return f.refusal, nil
 }

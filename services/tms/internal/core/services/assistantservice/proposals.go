@@ -50,6 +50,8 @@ type persistProposalsParams struct {
 	Actions []services.PendingAction
 	Model   string
 	Input   string
+	// Failed records the run as having ended before the turn finished.
+	Failed bool
 	// Artifacts, when set, views each outbound message as a draft and the
 	// plan as a checklist beside the conversation.
 	Artifacts *artifactRecorder
@@ -71,6 +73,11 @@ func (s *Service) persistProposals(
 		return nil, nil
 	}
 
+	status := agent.RunStatusCompleted
+	if params.Failed {
+		status = agent.RunStatusFailed
+	}
+
 	recorded, err := s.recorder.Record(ctx, &proposalrecorder.RecordRequest{
 		Actor:      params.Actor,
 		Definition: params.Definition,
@@ -79,7 +86,7 @@ func (s *Service) persistProposals(
 			SubjectType:      agent.SubjectAssistantThread,
 			SubjectID:        params.Thread.ID,
 			Trigger:          agent.RunTriggerChat,
-			Status:           agent.RunStatusCompleted,
+			Status:           status,
 			Model:            params.Model,
 			PromptVersion:    chatPromptVersion,
 			InputContextHash: hashChatContext(params.Definition, params.Input),

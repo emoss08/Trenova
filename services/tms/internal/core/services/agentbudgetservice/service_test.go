@@ -167,14 +167,37 @@ func TestCheckTool_CountsOnlyToolsWithACap(t *testing.T) {
 	d := definition()
 	d.ToolDailyLimits = map[string]int{"assign_move": 5}
 
-	refusal, err := svc.CheckTool(t.Context(), d, "assign_move")
+	refusal, err := svc.CheckTool(t.Context(), services.CheckToolBudgetRequest{Definition: d, ToolName: "assign_move"})
 	require.NoError(t, err)
 	assert.Equal(t, services.BudgetCapTool, refusal.Cap)
 	assert.Equal(t, "assign_move", refusal.Tool)
 
-	refusal, err = svc.CheckTool(t.Context(), d, "cancel_shipment")
+	refusal, err = svc.CheckTool(t.Context(), services.CheckToolBudgetRequest{Definition: d, ToolName: "cancel_shipment"})
 	require.NoError(t, err)
 	assert.False(t, refusal.Refused())
+}
+
+// A turn records its writes when it ends, so a cap counted only from
+// recorded writes let one turn run a capped tool as often as it liked.
+func TestCheckTool_CountsWritesThisTurnHasNotRecordedYet(t *testing.T) {
+	t.Parallel()
+
+	svc := newService(&fakeCost{}, &fakeRuns{}, &fakeTools{used: map[string]int{"assign_move": 3}})
+	d := definition()
+	d.ToolDailyLimits = map[string]int{"assign_move": 5}
+
+	refusal, err := svc.CheckTool(t.Context(), services.CheckToolBudgetRequest{
+		Definition: d, ToolName: "assign_move", Unrecorded: 1,
+	})
+	require.NoError(t, err)
+	assert.False(t, refusal.Refused(), "four of five")
+
+	refusal, err = svc.CheckTool(t.Context(), services.CheckToolBudgetRequest{
+		Definition: d, ToolName: "assign_move", Unrecorded: 2,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, services.BudgetCapTool, refusal.Cap)
+	assert.Equal(t, "5", refusal.Spent)
 }
 
 func TestStatus_ReportsEveryCapAndTheUnpricedCalls(t *testing.T) {
