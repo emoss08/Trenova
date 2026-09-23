@@ -1,0 +1,40 @@
+---
+path: /desk
+aliases: [AI assistant, assistant, agents, chat, ask AI, copilot, AI desk, conversations]
+related:
+  - /desk/decisions
+  - /desk/watchtower
+  - /inbox
+  - /admin/agent-control
+covers:
+  - /desk/t/:threadId
+---
+
+## What it's for
+The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page shows an ask box, **Your day** (a short briefing), a link to changes **Waiting on your decision**, the agents under **Who you can ask** with the tools each can use, and **Where you left off** with your recent conversations. The left side lists your **Conversations**, grouped by agent with pinned ones first, plus links to **Watchtower** and **Decisions**.
+
+Each conversation opens in the middle, and anything an agent produces (a table, a draft, a document) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own; they wait on [Decisions](/desk/decisions) for someone to approve.
+
+## Tasks
+
+### Ask an agent a question
+Keywords: chat with AI, ask the assistant, start a conversation
+1. Open [Desk](/desk).
+2. Type your question in the ask box and send it, or pick an agent under **Who you can ask** to start a conversation with it.
+3. Keep asking follow-ups in the conversation. Open anything the agent produces in the workspace beside it.
+
+### Go back to an earlier conversation
+Keywords: find chat, previous conversation, conversation history
+1. Open [Desk](/desk).
+2. Select a conversation under **Where you left off**, or find it in the left list with **Search conversations**.
+
+### Organize conversations
+Keywords: pin chat, delete conversation, export transcript, rename conversation
+1. Open the conversation from [Desk](/desk).
+2. Use **Pin conversation** (or **Unpin conversation**) to keep it at the top, **Download transcript** to save it, or **Delete conversation** and confirm with **Delete conversation**.
+3. Use **Hide the workspace** or **Show the workspace** to make room for the conversation.
+
+## Notes
+Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI control** on the Desk.
+
+A long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation cannot continue if its agent has been disabled.
