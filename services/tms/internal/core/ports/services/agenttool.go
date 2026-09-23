@@ -45,6 +45,16 @@ type ToolTierLimiter interface {
 	TierLimit(ctx context.Context, params ToolExecuteParams) agent.AutonomyTier
 }
 
+// ToolPrivateWrite is a tool that can tell when a call changes nothing but
+// the calling person's own records: a report saved to their own list, which
+// no colleague sees and which they could have built by hand. Such a call is
+// theirs to make, not the agent's, so it runs without a decision whatever the
+// agent's autonomy ceiling, unless the agent's own settings name a tier for
+// the tool, which an administrator chose on purpose.
+type ToolPrivateWrite interface {
+	PrivateToCaller(ctx context.Context, params ToolExecuteParams) bool
+}
+
 // ToolTierCeiling is a tool that never runs on its own past a tier, whatever
 // trust it earns and whatever an agent is set to. What leaves the
 // organization (mail to a customer, a note a driver reads, a tender a carrier

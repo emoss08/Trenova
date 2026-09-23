@@ -100,15 +100,19 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		owned[serviceports.SelfScopeOwnerParam] = req.Actor.UserID.String()
 		call.Arguments = owned
 	}
+	tierParams := serviceports.ToolExecuteParams{
+		OrganizationID: req.Actor.OrganizationID,
+		BusinessUnitID: req.Actor.BusinessUnitID,
+		Actor:          req.Actor,
+		IdempotencyKey: call.ID,
+		RunID:          req.RunID,
+		Params:         call.Arguments,
+	}
 	if limiter, limits := tool.(serviceports.ToolTierLimiter); limits {
-		tier = tier.AtMost(limiter.TierLimit(ctx, serviceports.ToolExecuteParams{
-			OrganizationID: req.Actor.OrganizationID,
-			BusinessUnitID: req.Actor.BusinessUnitID,
-			Actor:          req.Actor,
-			IdempotencyKey: call.ID,
-			RunID:          req.RunID,
-			Params:         call.Arguments,
-		}))
+		tier = tier.AtMost(limiter.TierLimit(ctx, tierParams))
+	}
+	if privateToCaller(ctx, privateCheck{req: req, tool: tool, name: call.Name, params: tierParams}) {
+		tier = agent.TierAutoExecute.AtMost(serviceports.CeilingOf(tool))
 	}
 	action := &serviceports.PendingAction{
 		ToolName:  call.Name,
@@ -368,6 +372,29 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 		content: ranContent(call.Name, result),
 		action:  action,
 	}
+}
+
+// privateCheck is one call asked whether it only touches its caller's own
+// records.
+type privateCheck struct {
+	req    *serviceports.RunRequest
+	tool   serviceports.AgentTool
+	name   string
+	params serviceports.ToolExecuteParams
+}
+
+// privateToCaller reports a call that changes only the records of the person
+// in the conversation. Only a person present in the conversation qualifies:
+// an unattended run has nobody the call could be private to.
+func privateToCaller(ctx context.Context, c privateCheck) bool {
+	private, ok := c.tool.(serviceports.ToolPrivateWrite)
+	if !ok || c.req.Unattended || c.req.Actor == nil ||
+		c.req.Actor.PrincipalType != serviceports.PrincipalTypeUser ||
+		c.req.Definition.SetsToolTier(c.name) {
+		return false
+	}
+
+	return private.PrivateToCaller(ctx, c.params)
 }
 
 // ranContent tells the model a write ran and, when the tool says what it

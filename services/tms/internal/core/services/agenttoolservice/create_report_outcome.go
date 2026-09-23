@@ -12,6 +12,7 @@ var (
 	_ serviceports.ToolTierLimiter    = (*createReportTool)(nil)
 	_ serviceports.ToolResultReporter = (*createReportTool)(nil)
 	_ serviceports.ToolResultReporter = (*forkReportTool)(nil)
+	_ serviceports.ToolPrivateWrite   = (*createReportTool)(nil)
 )
 
 // TierLimit lets a report saved for the person asking run without a
@@ -42,6 +43,15 @@ func (t *createReportTool) TierLimit(
 	}
 
 	return agent.TierAutoExecute
+}
+
+// PrivateToCaller reports a report saved only to the person's own list, which
+// is theirs to save whatever the agent's ceiling.
+func (t *createReportTool) PrivateToCaller(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) bool {
+	return t.TierLimit(ctx, params) == agent.TierAutoExecute
 }
 
 // ExecuteWithResult saves the report and names it by the id describe_report,

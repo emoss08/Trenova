@@ -196,6 +196,14 @@ func (d *Definition) EffectiveTier(tool string, toolTier agent.AutonomyTier) age
 	return requested
 }
 
+// SetsToolTier reports whether the agent's own settings name a tier for the
+// tool, rather than leaving it to the tool's default.
+func (d *Definition) SetsToolTier(tool string) bool {
+	override, ok := d.ToolTiers[tool]
+
+	return ok && override.IsValid()
+}
+
 // WithinCeiling reports whether an agent may hold a tool at the tier.
 func (d *Definition) WithinCeiling(tier agent.AutonomyTier) bool {
 	return !tier.Above(d.AutonomyCeiling)
