@@ -37,8 +37,9 @@ func StartTurnWorkflow(
 		TaskQueue: temporaltype.TaskQueueAgentChat.String(),
 		// One turn, one execution. A duplicate start is a bug rather than a
 		// second question, and rejecting it is how it stays visible.
-		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
-		StaticSummary:         "Assistant turn",
+		WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
+		WorkflowExecutionErrorWhenAlreadyStarted: true,
+		StaticSummary:                            "Assistant turn",
 		// Somebody is waiting on this one. Fairness by organization keeps one
 		// busy tenant from queueing everybody else's replies behind its own.
 		Priority: temporal.Priority{

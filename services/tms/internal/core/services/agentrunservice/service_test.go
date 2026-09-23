@@ -254,6 +254,9 @@ func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 			started.WorkflowIDConflictPolicy,
 		)
 	}
+	if !started.WorkflowExecutionErrorWhenAlreadyStarted {
+		t.Fatalf("expected a refused start to be reported, not handed back as the open run")
+	}
 	// A run belongs on the background queue, not the one a person's chat turn
 	// waits in: a research run that takes ten minutes must not hold a slot
 	// somebody is watching for.

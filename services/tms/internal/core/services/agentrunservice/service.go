@@ -154,7 +154,10 @@ func (s *Service) StartForDefinition(
 		TaskQueue:                temporaltype.TaskQueueAgentBackground.String(),
 		WorkflowIDReusePolicy:    reusePolicyFor(run, req.Slot),
 		WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_FAIL,
-		StaticSummary:            definition.Name,
+		// Without this the SDK hands back the open run as if it had just
+		// started, and the duplicate would be recorded against it.
+		WorkflowExecutionErrorWhenAlreadyStarted: true,
+		StaticSummary:                            definition.Name,
 		Priority: temporal.Priority{
 			PriorityKey: priorityFor(trigger),
 			FairnessKey: req.TenantInfo.OrgID.String(),

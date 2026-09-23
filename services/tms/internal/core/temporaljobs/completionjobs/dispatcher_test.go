@@ -160,23 +160,32 @@ func TestDispatcher_SharesACallThatIsTheSameQuestion(t *testing.T) {
 func TestDispatcher_CancelsACallNobodyWaitsFor(t *testing.T) {
 	t.Parallel()
 
-	ctx, cancel := context.WithCancel(t.Context())
-	starter := &fakeStarter{get: func(ctx context.Context, _ any) error {
-		cancel()
+	stopWaiting := func(ctx context.Context, cancel context.CancelFunc) *fakeStarter {
+		return &fakeStarter{get: func(context.Context, any) error {
+			cancel()
 
-		return ctx.Err()
-	}}
-	d := dispatcher(starter)
+			return ctx.Err()
+		}}
+	}
 
-	_, err := d.CompleteStructured(ctx, request())
+	exclusiveCtx, cancelExclusive := context.WithCancel(t.Context())
+	defer cancelExclusive()
+	exclusive := stopWaiting(exclusiveCtx, cancelExclusive)
+
+	_, err := dispatcher(exclusive).CompleteStructured(exclusiveCtx, request())
 	require.Error(t, err)
-	require.Len(t, starter.cancelled, 1)
-	assert.Equal(t, starter.options[0].ID, starter.cancelled[0])
+	require.Len(t, exclusive.cancelled, 1)
+	assert.Equal(t, exclusive.options[0].ID, exclusive.cancelled[0])
 
-	ctx, cancel = context.WithCancel(t.Context())
-	_, err = d.Test(ctx, repositories.GetAIProviderByIDRequest{ID: pulid.MustNew("aiprv_")})
+	sharedCtx, cancelShared := context.WithCancel(t.Context())
+	defer cancelShared()
+	shared := stopWaiting(sharedCtx, cancelShared)
+
+	_, err = dispatcher(shared).Test(sharedCtx, repositories.GetAIProviderByIDRequest{
+		ID: pulid.MustNew("aiprv_"),
+	})
 	require.Error(t, err)
-	assert.Len(t, starter.cancelled, 1, "a shared call is left to the others waiting on it")
+	assert.Empty(t, shared.cancelled, "a shared call is left to the others waiting on it")
 }
 
 // What the person is told is what they would have been told had the call run

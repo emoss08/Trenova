@@ -340,13 +340,12 @@ func awaitEveryDecision(
 		}
 
 		var decision DecisionSignal
-		received, err := decisions.ReceiveWithTimeout(ctx, remaining, &decision)
-		if err != nil || !received {
+		if received, _ := decisions.ReceiveWithTimeout(ctx, remaining, &decision); !received {
 			return true
 		}
 
 		var pending int
-		if err = workflow.ExecuteActivity(countCtx, a.PendingProposalsActivity,
+		if err := workflow.ExecuteActivity(countCtx, a.PendingProposalsActivity,
 			&PendingProposalsInput{RunID: payload.RunID, TenantInfo: payload.tenantInfo()},
 		).Get(countCtx, &pending); err != nil {
 			workflow.GetLogger(ctx).Warn("could not count the run's pending proposals",
