@@ -24,20 +24,32 @@ type EncryptionCodec struct {
 	KeyID string
 }
 
+// NewEncryptionDataConverter chains the configured codecs. The SDK encodes with
+// the last codec first, so encryption is listed before compression: the
+// payload is compressed and the compressed bytes are then encrypted.
+// Ciphertext does not compress, so the reverse order spends zlib for nothing.
 func NewEncryptionDataConverter(options DataConverterOptions) converter.DataConverter {
 	codecs := []converter.PayloadCodec{}
 
-	// ! Add compression codec if enabled (must be added after encryption codec since they're applied in reverse)
-	if options.EnableCompression {
-		codecs = append(codecs, converter.NewZlibCodec(converter.ZlibCodecOptions{
-			AlwaysEncode: options.CompressionThreshold <= 0, // Always compress if no threshold
-		}))
-	}
-
-	if options.EnableEncryption && options.EncryptionKeyID != "" {
+	encrypt := options.EnableEncryption && options.EncryptionKeyID != ""
+	if encrypt {
 		codecs = append(codecs, &EncryptionCodec{
 			KeyID: options.EncryptionKeyID,
 		})
+	}
+
+	if options.EnableCompression {
+		codecs = append(codecs, converter.NewZlibCodec(converter.ZlibCodecOptions{
+			AlwaysEncode: options.CompressionThreshold <= 0,
+		}))
+	}
+
+	// Payloads written before the order was corrected are zlib outside and
+	// ciphertext inside, and in-flight histories still hold them. Decoding runs
+	// first to last, so for those the decrypt above passes, zlib unwraps, and
+	// this last layer decrypts what zlib left. It never encodes.
+	if encrypt && options.EnableCompression {
+		codecs = append(codecs, legacyNestingCodec{inner: &EncryptionCodec{KeyID: options.EncryptionKeyID}})
 	}
 
 	if len(codecs) == 0 {
@@ -48,6 +60,18 @@ func NewEncryptionDataConverter(options DataConverterOptions) converter.DataConv
 		converter.GetDefaultDataConverter(),
 		codecs...,
 	)
+}
+
+type legacyNestingCodec struct {
+	inner *EncryptionCodec
+}
+
+func (legacyNestingCodec) Encode(payloads []*commonpb.Payload) ([]*commonpb.Payload, error) {
+	return payloads, nil
+}
+
+func (c legacyNestingCodec) Decode(payloads []*commonpb.Payload) ([]*commonpb.Payload, error) {
+	return c.inner.Decode(payloads)
 }
 
 type DataConverterOptions struct {
