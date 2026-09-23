@@ -1,8 +1,15 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { dictationScope, FakeRecognition, refusedMicrophone } from "./__tests__/dictation-fakes";
 import { Composer } from "./composer";
+import type { DictationScope } from "./use-dictation";
 
 afterEach(cleanup);
+
+beforeEach(() => {
+  FakeRecognition.instances = [];
+});
 
 const suggestions = [
   { label: "Where is a shipment right now?", prompt: "Where is PRO S12345 right now?" },
@@ -174,5 +181,144 @@ describe("Composer mentions", () => {
       attachments: [],
       mentions: [{ type: "customer", id: "cust_1", label: "Acme Foods" }],
     });
+  });
+});
+
+/** A composer that owns its draft, as the thread does, so dictation can be read back from the box. */
+function DictationHarness({ scope }: { scope: DictationScope }) {
+  const [draft, setDraft] = useState("");
+
+  return (
+    <Composer
+      onSend={() => {}}
+      onStop={() => {}}
+      active={false}
+      placeholder="Message Dispatch desk…"
+      draft={draft}
+      onDraftChange={setDraft}
+      dictationScope={scope}
+    />
+  );
+}
+
+/**
+ * "I click on the microphone and nothing happens." Every way a click could
+ * end in silence now ends in something a person can see: words in the box,
+ * a reason under it, or a control that says up front why it cannot be used.
+ */
+describe("Composer dictation", () => {
+  it("keeps the mic in the row where this browser cannot dictate, disabled rather than dead", () => {
+    renderComposer({ dictationScope: dictationScope({ recognition: null }) });
+
+    expect(screen.getByRole("button", { name: "Dictate" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  });
+
+  it("writes what is heard into the box as it is heard, and stops on Esc", () => {
+    render(<DictationHarness scope={dictationScope()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Dictate" }));
+    act(() =>
+      FakeRecognition.latest().emitResults([{ transcript: "where is load", isFinal: false }]),
+    );
+
+    expect(screen.getByRole("textbox")).toHaveValue("where is load");
+    expect(screen.getByRole("button", { name: "Stop dictating" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    fireEvent.keyDown(screen.getByRole("textbox"), { key: "Escape" });
+    expect(FakeRecognition.latest().stop).toHaveBeenCalled();
+  });
+
+  it("says why under the box when the microphone is refused", async () => {
+    render(
+      <DictationHarness
+        scope={dictationScope({ getUserMedia: refusedMicrophone("NotAllowedError").getUserMedia })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Dictate" }));
+
+    expect(
+      await screen.findByText("Microphone blocked. Allow it in the address bar."),
+    ).toBeInTheDocument();
+    expect(FakeRecognition.instances).toHaveLength(0);
+  });
+
+  it("stops writing into the box once the person types", () => {
+    render(<DictationHarness scope={dictationScope()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Dictate" }));
+    act(() => FakeRecognition.latest().emitResults([{ transcript: "hello", isFinal: false }]));
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "hello, typed" } });
+    act(() => FakeRecognition.latest().emitResults([{ transcript: "hello world", isFinal: true }]));
+
+    expect(FakeRecognition.latest().abort).toHaveBeenCalled();
+    expect(screen.getByRole("textbox")).toHaveValue("hello, typed");
+  });
+});
+
+/**
+ * The footer used to list every key at once and wrapped into ragged lines
+ * in the corner panel. It now says one thing, for what is happening.
+ */
+describe("Composer hints", () => {
+  it("teaches the slash and the at sign on an empty, focused box, and nothing about sending", () => {
+    renderComposer({ onSearchMentions: async () => [] });
+
+    fireEvent.focus(screen.getByRole("textbox"));
+
+    expect(screen.getByText("for commands")).toBeInTheDocument();
+    expect(screen.getByText("for records")).toBeInTheDocument();
+    expect(screen.queryByText("to send")).toBeNull();
+  });
+
+  it("says how to send once there is something to send", () => {
+    renderComposer({ draft: "Where is PRO 1234?" });
+
+    fireEvent.focus(screen.getByRole("textbox"));
+
+    expect(screen.getByText("to send")).toBeInTheDocument();
+    expect(screen.queryByText("for commands")).toBeNull();
+  });
+
+  it("says nothing while the box is not in use", () => {
+    renderComposer({ draft: "Where is PRO 1234?" });
+
+    expect(screen.queryByText("to send")).toBeNull();
+    expect(screen.queryByText("for commands")).toBeNull();
+  });
+
+  it("keeps the full list of keys behind the shortcuts button", async () => {
+    renderComposer();
+
+    fireEvent.click(screen.getByRole("button", { name: "Keyboard shortcuts" }));
+
+    expect(await screen.findByText("New line")).toBeInTheDocument();
+  });
+});
+
+describe("Composer while a reply is being written", () => {
+  it("turns Send into Stop and says the next message can wait in the box", () => {
+    const onStop = vi.fn();
+    renderComposer({ active: true, draft: "and then?", onStop });
+
+    expect(screen.getByText("Replying. You can draft your next message.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Send" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Stop the reply" }));
+    expect(onStop).toHaveBeenCalledTimes(1);
+  });
+
+  it("holds Enter while the reply is being written", async () => {
+    const { onSend } = renderComposer({ active: true, draft: "and then?" });
+
+    fireEvent.keyDown(screen.getByRole("textbox"), { key: "Enter" });
+
+    await waitFor(() => expect(onSend).not.toHaveBeenCalled());
   });
 });

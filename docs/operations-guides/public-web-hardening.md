@@ -55,7 +55,7 @@ Expected results:
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `Referrer-Policy: no-referrer`
-- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- `Permissions-Policy: camera=(), microphone=(self), geolocation=()` (the app itself may use the microphone, for dictation)
 - `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'; base-uri 'none'`
 - `Strict-Transport-Security: max-age=31536000; includeSubDomains` in staging
   and production.

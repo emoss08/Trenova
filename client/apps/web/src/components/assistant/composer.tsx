@@ -2,7 +2,6 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { cn, formatFileSize } from "@trenova/shared/lib/utils";
@@ -18,8 +17,7 @@ import {
   CornerDownLeftIcon,
   FileIcon,
   MapPinIcon,
-  MicIcon,
-  MicOffIcon,
+  MapPinOffIcon,
   PaperclipIcon,
   SquareIcon,
   XIcon,
@@ -34,9 +32,13 @@ import {
   slotHint,
   type CommandEntry,
 } from "./composer-commands";
+import { composerHint } from "./composer-hint";
+import { ComposerHints } from "./composer-hints";
+import { DictationControl } from "./dictation-control";
 import { ModelPicker } from "./model-picker";
 import type { Suggestion } from "./suggestions";
-import { useDictation } from "./use-dictation";
+import { useComposerDictation } from "./use-composer-dictation";
+import type { DictationScope } from "./use-dictation";
 
 /** A file on its way to the message, or already there. */
 export type ComposerAttachment = {
@@ -97,6 +99,8 @@ export type ComposerProps = {
   notice?: React.ReactNode;
   /** Measured by the thread so the last message never hides behind the box. */
   ref?: React.Ref<HTMLDivElement>;
+  /** For tests: the page's dictation support, instead of reading it from window. */
+  dictationScope?: DictationScope;
 };
 
 /** How long the send control holds its confirmation after a message leaves. */
@@ -107,6 +111,10 @@ const MENTION_DEBOUNCE_MS = 150;
 
 /** The most files one message may carry; the server refuses more. */
 export const MAX_ATTACHMENTS = 5;
+
+/** The house curves, for motion that is driven from script rather than a class. */
+const EASE_SWIFT = [0.2, 0.8, 0.2, 1] as const;
+const EASE_SETTLE = [0.16, 1, 0.3, 1] as const;
 
 /**
  * The @ token being typed at the caret: the text after an @ that opens a
@@ -146,6 +154,9 @@ export function readyAttachments(
   );
 }
 
+/** A message on its way out of the box, drawn where the words were. */
+type SentGhost = { id: number; text: string; top: number };
+
 /**
  * Where a person types.
  *
@@ -155,10 +166,13 @@ export function readyAttachments(
  * filled in the box, its empty slots shown as a hint, and sent as the full
  * question. An @ opens a search over the organization's records, and the
  * record picked rides with the message as something to look up. A file
- * dropped or attached becomes a document on the thread before the message
- * leaves. The row under the text says who is being asked, which model
- * answers and what they can see, because all three are things a person
- * would otherwise have to assume.
+ * dropped, pasted or attached becomes a document on the thread before the
+ * message leaves. Dictation writes into the draft as it is heard.
+ *
+ * One row of controls sits under the text and stays one row at the corner
+ * panel's width: what goes with the message on the left (a file, a voice,
+ * the page), who answers it on the right (the model, then send). Under the
+ * box, one line says the one thing worth knowing right now.
  */
 export function Composer({
   onSend,
@@ -187,10 +201,11 @@ export function Composer({
   compact = false,
   notice,
   ref,
+  dictationScope,
 }: ComposerProps) {
   const t = useT();
   const reduceMotion = useReducedMotion();
-  const [sent, setSent] = useState(0);
+  const [ghost, setGhost] = useState<SentGhost | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [focused, setFocused] = useState(false);
   const [highlighted, setHighlighted] = useState(0);
@@ -204,9 +219,10 @@ export function Composer({
     results: MentionCandidate[];
   } | null>(null);
   const [mentionHighlighted, setMentionHighlighted] = useState(0);
-  const [interim, setInterim] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const sentCountRef = useRef(0);
   const listId = useId();
   const mentionListId = useId();
 
@@ -264,30 +280,50 @@ export function Composer({
     };
   }, [mentionQuery, onSearchMentions]);
 
-  const dictation = useDictation({
-    onTranscript: (text) => {
-      if (text === "") {
-        return;
-      }
-      const base = draft.trimEnd();
-      onDraftChange(base === "" ? text : base + " " + text);
-    },
-    onInterim: setInterim,
-  });
+  // The highlighted row stays in view as the arrows walk a long list.
+  const activeIndex = mentionsOpen ? mentionHighlighted : commandsOpen ? highlighted : -1;
+  useEffect(() => {
+    if (activeIndex < 0) {
+      return;
+    }
+    listRef.current
+      ?.querySelector<HTMLElement>('[aria-selected="true"]')
+      ?.scrollIntoView?.({ block: "nearest" });
+  }, [activeIndex]);
+
+  const dictation = useComposerDictation({ draft, onDraftChange, scope: dictationScope });
+  const { phase: dictationPhase, release: releaseDictation, stop: stopDictation } = dictation;
 
   const deliver = useCallback(
     (content: string) => {
+      releaseDictation();
       onSend(content, {
         attachments: readyAttachments(attachments),
         mentions: activeMentions(content, mentions),
       });
       onDraftChange("");
       onMentionsChange?.([]);
-      setSent((count) => count + 1);
+      sentCountRef.current += 1;
+      // A list open over the box closes as the message leaves, so the words
+      // lift from the top of the box rather than from below the list.
+      setGhost({
+        id: sentCountRef.current,
+        text: content,
+        top: commandsOpen || mentionsOpen ? 0 : (textareaRef.current?.offsetTop ?? 0),
+      });
       setConfirming(true);
       window.setTimeout(() => setConfirming(false), CONFIRM_MS);
     },
-    [attachments, mentions, onDraftChange, onMentionsChange, onSend],
+    [
+      attachments,
+      commandsOpen,
+      mentions,
+      mentionsOpen,
+      onDraftChange,
+      onMentionsChange,
+      onSend,
+      releaseDictation,
+    ],
   );
 
   const chooseEntry = useCallback(
@@ -429,6 +465,19 @@ export function Composer({
     [commands.length, commandsOpen, mentionResults.length, mentionsOpen, onDraftChange, submit],
   );
 
+  // Esc stops dictation wherever focus is in the box — the text or the mic —
+  // and goes no further, so it does not also close the panel around it.
+  const onKeyDownCapture = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === "Escape" && dictationPhase !== "idle") {
+        event.preventDefault();
+        event.stopPropagation();
+        stopDictation();
+      }
+    },
+    [dictationPhase, stopDictation],
+  );
+
   const takeFiles = useCallback(
     (list: FileList | File[] | null) => {
       if (!onAttachFiles || !list) {
@@ -461,6 +510,18 @@ export function Composer({
   const canAttach =
     onAttachFiles !== undefined && !disabled && attachments.length < MAX_ATTACHMENTS;
 
+  const hintKind = composerHint({
+    disabled,
+    issue: dictation.issue,
+    dictation: dictation.phase,
+    menuOpen: commandsOpen || mentionsOpen,
+    active,
+    focused,
+    draftEmpty: draft.trim() === "",
+  });
+
+  const optionId = (list: string, index: number) => `${list}-option-${index}`;
+
   return (
     // The composer floats on the panel rather than sitting in a bar beneath it,
     // so the thread runs to the bottom and the last lines fade under the box
@@ -476,35 +537,49 @@ export function Composer({
       <div
         className={cn(
           "bg-popover pointer-events-auto",
-          compact ? "px-3 pt-0.5 pb-3" : "px-4 pt-0.5 pb-4",
+          compact ? "px-3 pt-0.5 pb-1.5" : "px-4 pt-0.5 pb-2.5",
         )}
       >
-        <div className={cn("mx-auto flex flex-col gap-1.5", !compact && "max-w-3xl")}>
+        <div className={cn("mx-auto flex flex-col gap-1", !compact && "max-w-3xl")}>
           {notice}
           <div className="relative">
-            {/* The draft lifting out of the box as it is sent: the one moment the
-                composer moves, so sending reads as the message leaving. */}
+            {/* The words lifting out of the box as it is sent: the one moment
+                the composer moves on its own account, so sending reads as the
+                message leaving rather than the text being deleted. */}
             <AnimatePresence>
-              {sent > 0 && !reduceMotion && (
-                <m.span
-                  key={sent}
+              {ghost !== null && !reduceMotion && (
+                <m.p
+                  key={ghost.id}
                   aria-hidden
-                  initial={{ opacity: 0.5, y: 0, scaleY: 1 }}
-                  animate={{ opacity: 0, y: -18, scaleY: 0.9 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
-                  className="bg-sunken pointer-events-none absolute inset-x-0 top-0 h-8 rounded-lg"
-                />
+                  initial={{ opacity: 1, y: 0 }}
+                  animate={{ opacity: 0, y: -28 }}
+                  transition={{ duration: 0.34, ease: EASE_SETTLE }}
+                  onAnimationComplete={() =>
+                    setGhost((current) => (current?.id === ghost.id ? null : current))
+                  }
+                  style={{ top: ghost.top }}
+                  className="text-foreground pointer-events-none absolute inset-x-0 z-10 truncate px-3 py-2.5 text-sm"
+                >
+                  {ghost.text}
+                </m.p>
               )}
             </AnimatePresence>
 
             <div
+              data-slot="composer"
+              data-disabled={disabled || undefined}
+              data-dragging={dragging || undefined}
+              onKeyDownCapture={onKeyDownCapture}
               onDragOver={(event) => {
                 if (!canAttach) return;
                 event.preventDefault();
                 setDragging(true);
               }}
-              onDragLeave={() => setDragging(false)}
+              onDragLeave={(event) => {
+                const next = event.relatedTarget;
+                if (next instanceof Node && event.currentTarget.contains(next)) return;
+                setDragging(false);
+              }}
               onDrop={(event) => {
                 if (!canAttach) return;
                 event.preventDefault();
@@ -512,96 +587,91 @@ export function Composer({
                 takeFiles(event.dataTransfer.files);
               }}
               className={cn(
-                "ui-container-focus-ring bg-field border-input hover:border-border-strong relative flex flex-col overflow-hidden rounded-lg border transition-colors",
-                disabled && "bg-sunken opacity-60",
-                dragging && "border-brand border-dashed",
+                "ui-field ui-container-focus-ring group/composer relative flex flex-col overflow-hidden rounded-lg",
+                "data-disabled:opacity-60",
+                "data-dragging:border-brand data-dragging:border-dashed",
               )}
             >
               <AnimatePresence initial={false}>
                 {commandsOpen && (
-                  <m.ul
+                  <m.div
                     key="commands"
-                    id={listId}
-                    role="listbox"
-                    aria-label={t("Starter questions")}
                     initial={reduceMotion ? false : { opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                    className="border-border overflow-hidden border-b"
+                    transition={{ duration: 0.18, ease: EASE_SETTLE }}
+                    className="border-border-subtle overflow-hidden border-b"
                   >
-                    {commands.map((entry, index) => (
-                      <li
-                        key={entry.kind === "command" ? entry.label : entry.prompt}
-                        role="option"
-                        aria-selected={index === highlighted}
-                        onMouseEnter={() => setHighlighted(index)}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => chooseEntry(entry)}
-                        className={cn(
-                          "flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm",
-                          index === highlighted ? "bg-surface-hover" : "",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "min-w-0 shrink-0 truncate",
-                            entry.kind === "command" && "font-mono text-xs",
-                          )}
-                        >
-                          {entry.kind === "command" ? entry.label : t(entry.label)}
-                        </span>
-                        {entry.kind === "command" && (
-                          <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
-                            {entry.command.slots.map((slot) => `{${t(slot.hint)}}`).join(" ")}
-                            {entry.command.slots.length > 0 ? " · " : ""}
-                            {t(entry.description)}
-                          </span>
-                        )}
-                        {index === highlighted && (
-                          <CornerDownLeftIcon className="text-muted-foreground ml-auto size-3 shrink-0" />
-                        )}
-                      </li>
-                    ))}
-                  </m.ul>
+                    <ul
+                      ref={listRef}
+                      id={listId}
+                      role="listbox"
+                      aria-label={t("Starter questions")}
+                      className="scrollbar-overlay max-h-60 overflow-y-auto py-1"
+                    >
+                      {commands.map((entry, index) => (
+                        <CommandRow
+                          key={entry.kind === "command" ? entry.label : entry.prompt}
+                          id={optionId(listId, index)}
+                          entry={entry}
+                          heading={
+                            index === 0 || commands[index - 1].kind !== entry.kind
+                              ? entry.kind === "command"
+                                ? t("Commands")
+                                : t("Starter questions")
+                              : null
+                          }
+                          selected={index === highlighted}
+                          onHover={() => setHighlighted(index)}
+                          onChoose={() => chooseEntry(entry)}
+                        />
+                      ))}
+                    </ul>
+                  </m.div>
                 )}
                 {mentionsOpen && (
-                  <m.ul
+                  <m.div
                     key="mentions"
-                    id={mentionListId}
-                    role="listbox"
-                    aria-label={t("Records")}
                     initial={reduceMotion ? false : { opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                    className="border-border overflow-hidden border-b"
+                    transition={{ duration: 0.18, ease: EASE_SETTLE }}
+                    className="border-border-subtle overflow-hidden border-b"
                   >
-                    {mentionResults.map((candidate, index) => (
-                      <li
-                        key={`${candidate.type}:${candidate.id}`}
-                        role="option"
-                        aria-selected={index === mentionHighlighted}
-                        onMouseEnter={() => setMentionHighlighted(index)}
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => pickMention(candidate)}
-                        className={cn(
-                          "flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm",
-                          index === mentionHighlighted ? "bg-surface-hover" : "",
-                        )}
-                      >
-                        <AtSignIcon className="text-muted-foreground size-3 shrink-0" />
-                        <span className="min-w-0 truncate">{candidate.label}</span>
-                        <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
-                          {candidate.type.replaceAll("_", " ")}
-                          {candidate.subtitle ? ` · ${candidate.subtitle}` : ""}
-                        </span>
-                        {index === mentionHighlighted && (
-                          <CornerDownLeftIcon className="text-muted-foreground ml-auto size-3 shrink-0" />
-                        )}
-                      </li>
-                    ))}
-                  </m.ul>
+                    <ul
+                      ref={listRef}
+                      id={mentionListId}
+                      role="listbox"
+                      aria-label={t("Records")}
+                      className="scrollbar-overlay max-h-60 overflow-y-auto py-1"
+                    >
+                      {mentionResults.map((candidate, index) => (
+                        <li
+                          key={`${candidate.type}:${candidate.id}`}
+                          id={optionId(mentionListId, index)}
+                          role="option"
+                          aria-selected={index === mentionHighlighted}
+                          onMouseEnter={() => setMentionHighlighted(index)}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => pickMention(candidate)}
+                          className={cn(
+                            "mx-1 flex h-8 cursor-pointer items-center gap-2 rounded-md px-2 text-sm transition-colors",
+                            index === mentionHighlighted && "bg-surface-hover",
+                          )}
+                        >
+                          <AtSignIcon className="text-foreground-subtle size-3.5 shrink-0" />
+                          <span className="min-w-0 truncate">{candidate.label}</span>
+                          <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+                            {candidate.type.replaceAll("_", " ")}
+                            {candidate.subtitle ? ` · ${candidate.subtitle}` : ""}
+                          </span>
+                          {index === mentionHighlighted && (
+                            <CornerDownLeftIcon className="text-foreground-subtle ml-auto size-3 shrink-0" />
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </m.div>
                 )}
               </AnimatePresence>
 
@@ -610,15 +680,17 @@ export function Composer({
                   aria-label={t("Attached files")}
                   className="flex flex-wrap gap-1.5 px-2.5 pt-2.5"
                 >
-                  {attachments.map((attachment) => (
-                    <AttachmentChip
-                      key={attachment.id}
-                      attachment={attachment}
-                      onRemove={
-                        onRemoveAttachment ? () => onRemoveAttachment(attachment.id) : undefined
-                      }
-                    />
-                  ))}
+                  <AnimatePresence initial={false}>
+                    {attachments.map((attachment) => (
+                      <AttachmentChip
+                        key={attachment.id}
+                        attachment={attachment}
+                        onRemove={
+                          onRemoveAttachment ? () => onRemoveAttachment(attachment.id) : undefined
+                        }
+                      />
+                    ))}
+                  </AnimatePresence>
                 </ul>
               )}
 
@@ -626,6 +698,12 @@ export function Composer({
                 ref={textareaRef}
                 value={draft}
                 onChange={(event) => {
+                  // Typing takes the box back from the microphone: what is on
+                  // screen stays, and the recogniser stops writing into it.
+                  releaseDictation();
+                  if (dictation.issue !== null) {
+                    dictation.dismissIssue();
+                  }
                   onDraftChange(event.target.value);
                   setCaret(event.target.selectionStart ?? event.target.value.length);
                 }}
@@ -636,92 +714,39 @@ export function Composer({
                 onBlur={() => setFocused(false)}
                 onKeyDown={onKeyDown}
                 onPaste={onPaste}
-                placeholder={disabled ? (disabledReason ?? placeholder) : placeholder}
+                placeholder={
+                  disabled
+                    ? (disabledReason ?? placeholder)
+                    : dictation.phase === "listening" && draft === ""
+                      ? t("Listening…")
+                      : placeholder
+                }
                 disabled={disabled}
                 minRows={1}
                 maxRows={compact ? 5 : 8}
                 aria-label={t("Message the assistant")}
                 aria-controls={commandsOpen ? listId : mentionsOpen ? mentionListId : undefined}
                 aria-expanded={commandsOpen || mentionsOpen || undefined}
-                // The box around it carries the one focus ring, so the field's
-                // own is switched off by repointing its width, not rebuilt.
-                className="resize-none border-0 bg-transparent px-3 py-2.5 text-sm [--ring-width:0px] md:text-sm"
+                aria-activedescendant={
+                  mentionsOpen
+                    ? optionId(mentionListId, mentionHighlighted)
+                    : commandsOpen
+                      ? optionId(listId, highlighted)
+                      : undefined
+                }
+                // The box around it carries the one focus ring and the one
+                // disabled treatment, so the field's own are switched off.
+                className="resize-none border-0 bg-transparent px-3 pt-2.5 pb-1 text-sm [--ring-width:0px] disabled:bg-transparent disabled:opacity-100 md:text-sm"
               />
 
-              {(hint !== "" || interim !== "") && (
-                <div className="text-muted-foreground px-3 pb-1 text-xs">
-                  {interim !== "" ? (
-                    <span className="italic">{interim}</span>
-                  ) : (
-                    <span className="font-mono">{hint}</span>
-                  )}
-                </div>
+              {hint !== "" && (
+                <p className="text-foreground-subtle animate-rise px-3 pb-1 font-mono text-xs">
+                  {hint}
+                </p>
               )}
 
-              <div className="flex items-end justify-between gap-2 px-2 pb-2">
-                <div className="flex min-w-0 flex-wrap items-center gap-1">
-                  {agent && onPickAgent && (
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <button
-                            type="button"
-                            onClick={onPickAgent}
-                            className="text-muted-foreground hover:text-foreground hover:bg-surface-hover ui-focus-ring inline-flex h-6 max-w-[11rem] items-center gap-1.5 rounded-full px-1 pr-2 text-xs transition-colors"
-                          >
-                            <AgentTile agent={agent} size="xs" />
-                            <span className="truncate">{agent.name}</span>
-                          </button>
-                        }
-                      />
-                      <TooltipContent>{t("Ask a different agent")}</TooltipContent>
-                    </Tooltip>
-                  )}
-
-                  {onPickProvider && (
-                    <ModelPicker
-                      options={providers}
-                      value={providerId}
-                      onChange={onPickProvider}
-                      disabled={disabled || active}
-                    />
-                  )}
-
-                  {pageContext && onToggleContext && (
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <button
-                            type="button"
-                            onClick={onToggleContext}
-                            aria-pressed={contextIncluded}
-                            className={cn(
-                              "ui-focus-ring inline-flex h-6 max-w-[12rem] items-center gap-1 rounded-full border px-2 text-xs transition-colors",
-                              contextIncluded
-                                ? "border-border bg-surface-selected text-foreground"
-                                : "border-border border-dashed text-muted-foreground hover:text-foreground",
-                            )}
-                          >
-                            <MapPinIcon className="size-3 shrink-0" />
-                            <span className="truncate">{pageContext.title || t("This page")}</span>
-                            {contextIncluded && pageContext.view && (
-                              <span className="text-muted-foreground shrink-0">
-                                {pageViewSummary(pageContext, t)}
-                              </span>
-                            )}
-                          </button>
-                        }
-                      />
-                      <TooltipContent>
-                        {contextIncluded
-                          ? t("The assistant can see this page. Click to leave it out.")
-                          : t("Include what you are looking at")}
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </div>
-
-                <div className="flex shrink-0 items-center gap-0.5">
+              <div className="flex items-center gap-1 px-1.5 pb-1.5">
+                <div className="flex min-w-0 flex-1 items-center gap-0.5">
                   {onAttachFiles && (
                     <>
                       <input
@@ -742,7 +767,7 @@ export function Composer({
                             <Button
                               size="icon-sm"
                               variant="ghost"
-                              className="text-muted-foreground hover:text-foreground rounded-full"
+                              className="text-foreground-muted hover:text-foreground rounded-full"
                               disabled={!canAttach}
                               onClick={() => fileInputRef.current?.click()}
                               aria-label={t("Attach a file")}
@@ -760,118 +785,317 @@ export function Composer({
                     </>
                   )}
 
-                  {dictation.supported && (
+                  <DictationControl
+                    availability={dictation.availability}
+                    phase={dictation.phase}
+                    issue={dictation.issue}
+                    stream={dictation.stream}
+                    disabled={disabled}
+                    onToggle={dictation.toggleFromDraft}
+                  />
+
+                  {pageContext && onToggleContext && (
+                    <ContextChip
+                      context={pageContext}
+                      included={contextIncluded}
+                      compact={compact}
+                      onToggle={onToggleContext}
+                    />
+                  )}
+
+                  {agent && onPickAgent && (
                     <Tooltip>
                       <TooltipTrigger
                         render={
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
+                          <button
+                            type="button"
+                            onClick={onPickAgent}
+                            aria-label={t("Ask a different agent")}
                             className={cn(
-                              "rounded-full",
-                              dictation.listening
-                                ? "text-danger-foreground"
-                                : "text-muted-foreground hover:text-foreground",
+                              "ui-focus-ring ui-press text-foreground-muted hover:text-foreground hover:bg-surface-hover inline-flex h-7 min-w-0 shrink items-center gap-1.5 rounded-full px-1 text-xs",
+                              !compact && "max-w-44 pr-2",
                             )}
-                            disabled={disabled}
-                            aria-pressed={dictation.listening}
-                            onClick={dictation.toggle}
-                            aria-label={dictation.listening ? t("Stop dictating") : t("Dictate")}
-                          />
+                          >
+                            <AgentTile agent={agent} size="xs" />
+                            {!compact && <span className="truncate">{agent.name}</span>}
+                          </button>
                         }
-                      >
-                        {dictation.listening ? (
-                          <MicOffIcon className="size-4" />
-                        ) : (
-                          <MicIcon className="size-4" />
-                        )}
-                      </TooltipTrigger>
+                      />
                       <TooltipContent>
-                        {dictation.listening ? t("Stop dictating") : t("Dictate")}
+                        {compact
+                          ? t("Asking {0}. Click to ask a different agent.", agent.name)
+                          : t("Ask a different agent")}
                       </TooltipContent>
                     </Tooltip>
                   )}
+                </div>
 
-                  <Tooltip>
-                    <TooltipTrigger
-                      render={
-                        <Button
-                          size="icon-sm"
-                          variant={active ? "secondary" : "default"}
-                          className={cn("shrink-0 rounded-full", confirming && "animate-confirm")}
-                          onClick={active ? onStop : submit}
-                          disabled={!active && !canSend && !commandsOpen}
-                          aria-label={active ? t("Stop") : t("Send")}
-                        />
-                      }
-                    >
-                      <AnimatePresence mode="popLayout" initial={false}>
-                        {active ? (
-                          <m.span
-                            key="stop"
-                            initial={reduceMotion ? false : { opacity: 0, scale: 0.6 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.6 }}
-                            transition={{ duration: 0.14, ease: [0.2, 0.8, 0.2, 1] }}
-                          >
-                            <SquareIcon className="size-3 fill-current" />
-                          </m.span>
-                        ) : (
-                          <m.span
-                            key="send"
-                            initial={reduceMotion ? false : { opacity: 0, scale: 0.6 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.6 }}
-                            transition={{ duration: 0.14, ease: [0.2, 0.8, 0.2, 1] }}
-                          >
-                            <ArrowUpIcon className="size-4" />
-                          </m.span>
-                        )}
-                      </AnimatePresence>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {active
-                        ? t("Stop")
-                        : uploading
-                          ? t("Waiting for the files to finish uploading")
-                          : t("Send")}
-                    </TooltipContent>
-                  </Tooltip>
+                <div className="flex shrink-0 items-center gap-1">
+                  {onPickProvider && (
+                    <ModelPicker
+                      options={providers}
+                      value={providerId}
+                      onChange={onPickProvider}
+                      disabled={disabled || active}
+                      compact={compact}
+                    />
+                  )}
+
+                  <SendControl
+                    active={active}
+                    armed={canSend || commandsOpen}
+                    confirming={confirming}
+                    uploading={uploading}
+                    onSend={submit}
+                    onStop={onStop}
+                  />
                 </div>
               </div>
+
+              <AnimatePresence>
+                {dragging && (
+                  <m.div
+                    key="drop"
+                    aria-hidden
+                    initial={reduceMotion ? false : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.12, ease: EASE_SWIFT }}
+                    className="bg-field text-foreground-muted pointer-events-none absolute inset-0 flex items-center justify-center gap-2 text-sm"
+                  >
+                    <PaperclipIcon className="size-4" />
+                    {t("Drop to attach")}
+                  </m.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
-          {/* The keyboard hint appears while someone is typing and goes away
-              again. It is the one place the slash and the @ are taught. */}
-          <AnimatePresence initial={false}>
-            {focused && !commandsOpen && !mentionsOpen && (
-              <m.div
-                key="hint"
-                initial={reduceMotion ? false : { opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.14, ease: [0.2, 0.8, 0.2, 1] }}
-                className="text-muted-foreground overflow-hidden px-1 text-xs"
-              >
-                <span className="hidden items-center gap-1 pt-1 sm:flex">
-                  <Kbd>Enter</Kbd> {t("to send")} · <Kbd>Shift</Kbd>+<Kbd>Enter</Kbd>{" "}
-                  {t("for a new line")}
-                  {" · "}
-                  <Kbd>/</Kbd> {t("for commands")}
-                  {onSearchMentions && (
-                    <>
-                      {" · "}
-                      <Kbd>@</Kbd> {t("to name a record")}
-                    </>
-                  )}
-                </span>
-              </m.div>
-            )}
-          </AnimatePresence>
+          <ComposerHints
+            kind={hintKind}
+            issue={dictation.issue}
+            onDismissIssue={dictation.dismissIssue}
+            canMention={onSearchMentions !== undefined}
+            canAttach={onAttachFiles !== undefined}
+            canDictate={dictation.supported}
+          />
         </div>
       </div>
     </div>
+  );
+}
+
+/** One row of the slash list, with the group's name above the first of its kind. */
+function CommandRow({
+  id,
+  entry,
+  heading,
+  selected,
+  onHover,
+  onChoose,
+}: {
+  id: string;
+  entry: CommandEntry;
+  heading: string | null;
+  selected: boolean;
+  onHover: () => void;
+  onChoose: () => void;
+}) {
+  const t = useT();
+
+  return (
+    <>
+      {heading && (
+        <li role="presentation" className="text-foreground-subtle px-3 pt-1.5 pb-1 text-2xs">
+          {heading}
+        </li>
+      )}
+      <li
+        id={id}
+        role="option"
+        aria-selected={selected}
+        onMouseEnter={onHover}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={onChoose}
+        className={cn(
+          "mx-1 flex h-8 cursor-pointer items-center gap-2 rounded-md px-2 text-sm transition-colors",
+          selected && "bg-surface-hover",
+        )}
+      >
+        <span
+          className={cn(
+            "min-w-0 shrink-0 truncate",
+            entry.kind === "command" ? "font-mono text-xs" : "max-w-full",
+          )}
+        >
+          {entry.kind === "command" ? entry.label : t(entry.label)}
+        </span>
+        {entry.kind === "command" && (
+          <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+            {entry.command.slots.map((slot) => `{${t(slot.hint)}}`).join(" ")}
+            {entry.command.slots.length > 0 ? " · " : ""}
+            {t(entry.description)}
+          </span>
+        )}
+        {selected && (
+          <CornerDownLeftIcon className="text-foreground-subtle ml-auto size-3 shrink-0" />
+        )}
+      </li>
+    </>
+  );
+}
+
+/**
+ * The page the person is on, offered with the message. Included, it is a
+ * quiet filled chip that says what it carries; left out, it is an outline
+ * with the pin struck through, so the difference is a shape, not a colour.
+ */
+function ContextChip({
+  context,
+  included,
+  compact,
+  onToggle,
+}: {
+  context: AssistantPageContext;
+  included: boolean;
+  compact: boolean;
+  onToggle: () => void;
+}) {
+  const t = useT();
+  const reduceMotion = useReducedMotion();
+  const summary = included && context.view ? pageViewSummary(context, t) : "";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-pressed={included}
+            className={cn(
+              "ui-focus-ring ui-press inline-flex h-7 min-w-0 shrink items-center gap-1 rounded-full border px-2 text-xs",
+              compact ? "max-w-36" : "max-w-56",
+              included
+                ? "bg-surface-hover text-foreground-muted hover:text-foreground hover:bg-surface-active border-transparent"
+                : "border-border text-foreground-subtle hover:text-foreground-muted border-dashed",
+            )}
+          >
+            <span className="relative flex size-3 shrink-0 items-center justify-center">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <m.span
+                  key={included ? "in" : "out"}
+                  initial={reduceMotion ? false : { opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  transition={{ duration: 0.16, ease: EASE_SWIFT }}
+                  className="flex"
+                >
+                  {included ? (
+                    <MapPinIcon className="size-3" />
+                  ) : (
+                    <MapPinOffIcon className="size-3" />
+                  )}
+                </m.span>
+              </AnimatePresence>
+            </span>
+            <span className="truncate">{context.title || t("This page")}</span>
+            {summary !== "" && (
+              <span className="text-foreground-subtle shrink-0 tabular-nums">{summary}</span>
+            )}
+          </button>
+        }
+      />
+      <TooltipContent>
+        {included
+          ? t("The assistant can see this page. Click to leave it out.")
+          : t("Include what you are looking at")}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+/**
+ * Send, and Stop while a reply is being written. It is one ink circle that
+ * changes what it holds rather than two buttons, so the busy state reads as
+ * the same control doing its other job. Empty, it rests unfilled; the first
+ * character arms it and the arrow settles in with a small spring.
+ */
+function SendControl({
+  active,
+  armed,
+  confirming,
+  uploading,
+  onSend,
+  onStop,
+}: {
+  active: boolean;
+  armed: boolean;
+  confirming: boolean;
+  uploading: boolean;
+  onSend: () => void;
+  onStop: () => void;
+}) {
+  const t = useT();
+  const reduceMotion = useReducedMotion();
+  const ready = active || armed;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            size="icon-sm"
+            variant="default"
+            className={cn(
+              "shrink-0 rounded-full",
+              !ready && "bg-surface-active text-foreground-subtle disabled:opacity-100",
+              confirming && "animate-confirm",
+            )}
+            onClick={active ? onStop : onSend}
+            disabled={!ready}
+            aria-label={active ? t("Stop the reply") : t("Send")}
+          />
+        }
+      >
+        <AnimatePresence mode="popLayout" initial={false}>
+          {active ? (
+            <m.span
+              key="stop"
+              initial={reduceMotion ? false : { opacity: 0, scale: 0.4, rotate: -45 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              exit={{ opacity: 0, scale: 0.4 }}
+              transition={{ duration: 0.18, ease: EASE_SETTLE }}
+              className="flex"
+            >
+              <SquareIcon className="size-3 fill-current" />
+            </m.span>
+          ) : (
+            <m.span
+              key="send"
+              initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0, scale: armed ? 1 : 0.9 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={
+                reduceMotion
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 520, damping: 26, mass: 0.6 }
+              }
+              className="flex"
+            >
+              <ArrowUpIcon className="size-4" />
+            </m.span>
+          )}
+        </AnimatePresence>
+      </TooltipTrigger>
+      <TooltipContent>
+        {active
+          ? t("Stop the reply")
+          : uploading
+            ? t("Waiting for the files to finish uploading")
+            : t("Send")}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -884,13 +1108,19 @@ function AttachmentChip({
   onRemove?: () => void;
 }) {
   const t = useT();
+  const reduceMotion = useReducedMotion();
   const failed = attachment.status === "error";
   const busy = attachment.status === "uploading";
 
   return (
-    <li
+    <m.li
+      layout={!reduceMotion}
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.18, ease: EASE_SETTLE }}
       className={cn(
-        "border-border bg-surface inline-flex h-7 max-w-[16rem] items-center gap-1.5 rounded-full border pr-1 pl-2 text-xs",
+        "border-border bg-card relative inline-flex h-7 max-w-64 items-center gap-1.5 overflow-hidden rounded-full border pr-1 pl-2 text-xs",
         failed && "border-danger-border text-danger-foreground",
       )}
       title={failed ? attachment.error : undefined}
@@ -909,12 +1139,12 @@ function AttachmentChip({
           type="button"
           onClick={onRemove}
           aria-label={t("Remove {0}", attachment.name)}
-          className="text-muted-foreground hover:text-foreground ui-focus-ring inline-flex size-5 shrink-0 items-center justify-center rounded-full"
+          className="text-muted-foreground hover:text-foreground hover:bg-surface-hover ui-focus-ring inline-flex size-5 shrink-0 items-center justify-center rounded-full transition-colors"
         >
           <XIcon className="size-3" />
         </button>
       )}
-    </li>
+    </m.li>
   );
 }
 

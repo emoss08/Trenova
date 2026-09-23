@@ -64,7 +64,7 @@ const baseSecurityHeaders = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Permissions-Policy": "camera=(), microphone=(self), geolocation=()",
 } as const;
 
 const sensitivePathPrefixes = [

@@ -138,7 +138,7 @@ func assertSecurityHeaders(t *testing.T, headers http.Header, env string) {
 	assert.Equal(t, "nosniff", headers.Get("X-Content-Type-Options"))
 	assert.Equal(t, "DENY", headers.Get("X-Frame-Options"))
 	assert.Equal(t, "no-referrer", headers.Get("Referrer-Policy"))
-	assert.Equal(t, permissionsPolicyValue, headers.Get("Permissions-Policy"))
+	assert.Equal(t, "camera=(), microphone=(self), geolocation=()", headers.Get("Permissions-Policy"))
 	assert.Equal(t, expectedAPIContentSecurityPolicy, headers.Get("Content-Security-Policy"))
 
 	if env == config.EnvProduction || env == config.EnvStaging {

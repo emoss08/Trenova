@@ -10,7 +10,7 @@ import (
 const (
 	apiContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
 	hstsHeaderValue          = "max-age=31536000; includeSubDomains"
-	permissionsPolicyValue   = "camera=(), microphone=(), geolocation=()"
+	permissionsPolicyValue   = "camera=(), microphone=(self), geolocation=()"
 )
 
 func NewSecurityHeadersMiddleware(cfg *config.Config) gin.HandlerFunc {

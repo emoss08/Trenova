@@ -322,7 +322,7 @@ function expectSecurityHeaders(headers: Headers): void {
   expect(headers.get("X-Content-Type-Options")).toBe("nosniff");
   expect(headers.get("X-Frame-Options")).toBe("DENY");
   expect(headers.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
-  expect(headers.get("Permissions-Policy")).toBe("camera=(), microphone=(), geolocation=()");
+  expect(headers.get("Permissions-Policy")).toBe("camera=(), microphone=(self), geolocation=()");
   expect(headers.get("Content-Security-Policy")).toContain("default-src 'self'");
   expect(headers.get("Content-Security-Policy")).toContain("https://api.trenova.app");
   expect(headers.get("Content-Security-Policy")).toContain("https://static.cloudflareinsights.com");

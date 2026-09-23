@@ -38,6 +38,7 @@ interface SpeechRecognition extends EventTarget {
   maxAlternatives: number;
   onresult: ((event: SpeechRecognitionEvent) => void) | null;
   onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onstart: (() => void) | null;
   onend: (() => void) | null;
   start(): void;
   stop(): void;
@@ -52,4 +53,18 @@ declare const SpeechRecognition: {
 interface Window {
   SpeechRecognition?: typeof SpeechRecognition;
   webkitSpeechRecognition?: typeof SpeechRecognition;
+}
+
+/**
+ * The document's view of its own Permissions-Policy. Chromium exposes it as
+ * `featurePolicy`; the standard name is `permissionsPolicy`. Neither is in
+ * TypeScript's DOM library, and a browser may have neither.
+ */
+interface DocumentPermissionsPolicy {
+  allowsFeature(feature: string): boolean;
+}
+
+interface Document {
+  permissionsPolicy?: DocumentPermissionsPolicy;
+  featurePolicy?: DocumentPermissionsPolicy;
 }
