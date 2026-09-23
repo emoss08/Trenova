@@ -64,24 +64,22 @@ func (t *approveWorkerPTOTool) ParamSchema() map[string]any {
 	}
 }
 
-// Approved time off can be cancelled, which releases the booked days.
-func (t *approveWorkerPTOTool) Reversible() bool { return true }
-
-func (t *approveWorkerPTOTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorkerPTO
-}
-
-// Approve, not update. The guard refuses an approval to an agent principal, so
-// naming the operation honestly is also what keeps a scheduled agent from
-// deciding a person's leave on its own.
-func (t *approveWorkerPTOTool) PermissionOperation() permission.Operation {
-	return permission.OpApprove
-}
-
-func (t *approveWorkerPTOTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *approveWorkerPTOTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *approveWorkerPTOTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceWorkerPTO,
+		Operation:     permission.OpApprove,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Books approved time off; the worker is told it was approved but reads no " +
+			"text the model wrote.",
+	}
 }
 
 func (t *approveWorkerPTOTool) Execute(
@@ -134,21 +132,20 @@ func (t *rejectWorkerPTOTool) ParamSchema() map[string]any {
 	}
 }
 
-// Rejected is a terminal state. The worker has to file again.
-func (t *rejectWorkerPTOTool) Reversible() bool { return false }
-
-func (t *rejectWorkerPTOTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorkerPTO
-}
-
-func (t *rejectWorkerPTOTool) PermissionOperation() permission.Operation {
-	return permission.OpReject
-}
-
-func (t *rejectWorkerPTOTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *rejectWorkerPTOTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *rejectWorkerPTOTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceWorkerPTO,
+		Operation:     permission.OpReject,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "The worker is sent the rejection reason by push notice and text message.",
+	}
 }
 
 func (t *rejectWorkerPTOTool) Execute(
@@ -206,21 +203,21 @@ func (t *cancelWorkerPTOTool) ParamSchema() map[string]any {
 	}
 }
 
-// Cancelled is terminal; the days come back but the request does not.
-func (t *cancelWorkerPTOTool) Reversible() bool { return false }
-
-func (t *cancelWorkerPTOTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorkerPTO
-}
-
-func (t *cancelWorkerPTOTool) PermissionOperation() permission.Operation {
-	return permission.OpCancel
-}
-
-func (t *cancelWorkerPTOTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *cancelWorkerPTOTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *cancelWorkerPTOTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceWorkerPTO,
+		Operation:     permission.OpCancel,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "The worker is sent the cancellation reason by push notice and text " +
+			"message.",
+	}
 }
 
 func (t *cancelWorkerPTOTool) Execute(

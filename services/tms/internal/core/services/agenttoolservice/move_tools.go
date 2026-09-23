@@ -59,22 +59,21 @@ func (t *recordStopActualTool) ParamSchema() map[string]any {
 	}
 }
 
-// An actual is a claim about the physical world. Re-recording does not undo the
-// first one, and the shipment has already moved on the strength of it.
-func (t *recordStopActualTool) Reversible() bool { return false }
-
-func (t *recordStopActualTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipmentMove
-}
-
-func (t *recordStopActualTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *recordStopActualTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *recordStopActualTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *recordStopActualTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceShipmentMove,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Records arrival and departure times on a stop; no model-written text " +
+			"leaves the organization.",
+	}
 }
 
 func (t *recordStopActualTool) Execute(

@@ -473,6 +473,7 @@ func (s *Service) assertActorMayRun(
 		return nil
 	}
 
+	policy := tool.Policy()
 	result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
 		PrincipalType:  actor.PrincipalType,
 		PrincipalID:    actor.PrincipalID,
@@ -480,8 +481,8 @@ func (s *Service) assertActorMayRun(
 		APIKeyID:       actor.APIKeyID,
 		BusinessUnitID: actor.BusinessUnitID,
 		OrganizationID: actor.OrganizationID,
-		Resource:       tool.PermissionResource().String(),
-		Operation:      tool.PermissionOperation(),
+		Resource:       policy.Resource.String(),
+		Operation:      policy.Operation,
 	})
 	if err != nil {
 		return err
@@ -493,8 +494,8 @@ func (s *Service) assertActorMayRun(
 			errortypes.ErrForbidden,
 			fmt.Sprintf(
 				"You do not have permission to %s %s, which this proposal would do",
-				tool.PermissionOperation(),
-				tool.PermissionResource(),
+				policy.Operation,
+				policy.Resource,
 			),
 		)
 	}

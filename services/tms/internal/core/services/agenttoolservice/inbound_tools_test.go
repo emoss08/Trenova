@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -401,9 +402,9 @@ func TestInboundTools_AreOnlyAsAutonomousAsTheMailbox(t *testing.T) {
 				newMarkInboundMessageTool(desk),
 				replyTool(desk, &fakeMailer{}, &fakeRenderer{}),
 			} {
-				limiter, ok := tool.(serviceports.ToolTierLimiter)
-				require.Truef(t, ok, "%s reports no limit", tool.Name())
-				assert.Equalf(t, tc.want, limiter.TierLimit(t.Context(), params), tool.Name())
+				condition := tool.Policy().Condition
+				require.NotNilf(t, condition, "%s reports no limit", tool.Name())
+				assert.Equalf(t, tc.want, condition.Limit(t.Context(), params), tool.Name())
 			}
 		})
 	}
@@ -413,9 +414,9 @@ func TestInboundTools_AMessageThatCannotBeReadIsAProposal(t *testing.T) {
 	t.Parallel()
 
 	desk := &fakeInboundDesk{}
-	limiter := newMarkInboundMessageTool(desk).(serviceports.ToolTierLimiter)
+	condition := newMarkInboundMessageTool(desk).Policy().Condition
 
-	assert.Equal(t, agent.TierPropose, limiter.TierLimit(t.Context(), deskParams(map[string]any{
+	assert.Equal(t, agent.TierPropose, condition.Limit(t.Context(), deskParams(map[string]any{
 		"messageId": pulid.MustNew("imsg_").String(),
 	})))
 }
@@ -424,11 +425,7 @@ func TestInboundTools_AMessageThatCannotBeReadIsAProposal(t *testing.T) {
 func TestCreateShipment_IsNeverCreatedUnattended(t *testing.T) {
 	t.Parallel()
 
-	var tool serviceports.AgentTool = &createShipmentTool{}
-	limiter, ok := tool.(serviceports.ToolTierLimiter)
-	require.True(t, ok)
-	assert.False(
-		t,
-		limiter.TierLimit(t.Context(), deskParams(nil)).Above(agent.TierActWithApproval),
-	)
+	policy := (&createShipmentTool{}).Policy()
+	assert.False(t, policy.MaxTier.Above(agent.TierActWithApproval))
+	assert.Equal(t, agent.TierActWithApproval, agenttoolpolicy.Promotable(policy))
 }

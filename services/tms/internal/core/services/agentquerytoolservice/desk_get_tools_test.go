@@ -124,7 +124,7 @@ func TestGetWorkerCredential_IsGatedOnTheCredentialResource(t *testing.T) {
 	t.Parallel()
 
 	tool := newGetWorkerCredentialTool(&stubWorkerCredentials{}, &fakePermissions{})
-	assert.Equal(t, permission.ResourceWorkerCredential, tool.PermissionResource())
+	assert.Equal(t, permission.ResourceWorkerCredential, tool.Policy().Resource)
 	assert.Equal(t, "get_worker_credential", tool.Name())
 	assert.Contains(t, tool.Description(), "list_expiring_credentials")
 }
@@ -135,17 +135,17 @@ func TestDeskGetTools_AreGatedOnTheirRecordsResource(t *testing.T) {
 	assert.Equal(
 		t,
 		permission.ResourceDetentionPolicy,
-		newGetDetentionOccurrenceTool(nil).PermissionResource(),
+		newGetDetentionOccurrenceTool(nil).Policy().Resource,
 	)
 	assert.Equal(
 		t,
 		permission.ResourceCarrierIntelligence,
-		newGetCarrierIntelEventTool(nil).PermissionResource(),
+		newGetCarrierIntelEventTool(nil).Policy().Resource,
 	)
-	assert.Equal(t, permission.ResourceAgentRun, newGetAgentRunTool(nil).PermissionResource())
+	assert.Equal(t, permission.ResourceAgentRun, newGetAgentRunTool(nil).Policy().Resource)
 	assert.Equal(
 		t,
 		permission.ResourceServiceFailure,
-		newGetServiceFailureTool(nil).PermissionResource(),
+		newGetServiceFailureTool(nil).Policy().Resource,
 	)
 }

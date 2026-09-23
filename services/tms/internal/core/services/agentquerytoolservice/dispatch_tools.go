@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcandidateservice"
@@ -79,8 +80,10 @@ func (t *rankMoveCandidatesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *rankMoveCandidatesTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipmentMove
+func (t *rankMoveCandidatesTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceShipmentMove,
+	})
 }
 
 type findingView struct {
@@ -279,8 +282,11 @@ func (t *planDispatchTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *planDispatchTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipmentMove
+func (t *planDispatchTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceShipmentMove,
+		effect:   agent.ToolEffectPresent,
+	})
 }
 
 type plannedAssignmentView struct {

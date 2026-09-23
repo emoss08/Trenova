@@ -76,22 +76,27 @@ func (t *addShipmentCommentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *addShipmentCommentTool) Reversible() bool { return true }
-
-func (t *addShipmentCommentTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipmentComment
-}
-
-func (t *addShipmentCommentTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *addShipmentCommentTool) RequiresIdempotencyKey() bool { return false }
-
-// A note in an internal thread changes nothing and can be deleted, so holding
-// it for approval would cost a person's attention for no protection.
-func (t *addShipmentCommentTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierAutoExecute
+func (t *addShipmentCommentTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:        t.Name(),
+		Kind:        agent.ToolKindAction,
+		Resource:    permission.ResourceShipmentComment,
+		Operation:   permission.OpCreate,
+		Scope:       agent.ToolScopeTenant,
+		DefaultTier: agent.TierAutoExecute,
+		MaxTier:     agent.TierAutoExecute,
+		Egress: []agent.EgressClass{
+			agent.EgressInternal,
+			agent.EgressCustomerVisible,
+			agent.EgressDriverVisible,
+		},
+		Classify:      classifyCommentVisibility,
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "An internal note stays inside the organization; a customer or driver " +
+			"note is read outside it, so its visibility argument decides.",
+	}
 }
 
 func (t *addShipmentCommentTool) Execute(
@@ -228,20 +233,22 @@ func (t *placeShipmentHoldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *placeShipmentHoldTool) Reversible() bool { return true }
-
-func (t *placeShipmentHoldTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipmentHold
-}
-
-func (t *placeShipmentHoldTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *placeShipmentHoldTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *placeShipmentHoldTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *placeShipmentHoldTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceShipmentHold,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Places a hold on a shipment inside Trenova; no customer or EDI notice is " +
+			"sent.",
+	}
 }
 
 func (t *placeShipmentHoldTool) Execute(
@@ -313,23 +320,21 @@ func (t *releaseShipmentHoldTool) ParamSchema() map[string]any {
 	}
 }
 
-// Releasing is not reversible in the sense that matters: the original hold
-// keeps its place in the audit trail, and re-holding is a new record with a new
-// timestamp, not an undo.
-func (t *releaseShipmentHoldTool) Reversible() bool { return false }
-
-func (t *releaseShipmentHoldTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipmentHold
-}
-
-func (t *releaseShipmentHoldTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *releaseShipmentHoldTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *releaseShipmentHoldTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *releaseShipmentHoldTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceShipmentHold,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Releases a hold on a shipment inside Trenova; no customer or EDI notice " +
+			"is sent.",
+	}
 }
 
 func (t *releaseShipmentHoldTool) Execute(
@@ -398,25 +403,21 @@ func (t *cancelShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *cancelShipmentTool) Reversible() bool { return false }
-
-func (t *cancelShipmentTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipment
-}
-
-func (t *cancelShipmentTool) PermissionOperation() permission.Operation {
-	return permission.OpCancel
-}
-
-// Both call paths already supply a key — the proposal id on approval, the tool
-// call id on a direct run — but nothing downstream consumes it, so requiring one
-// here would assert a protection that does not exist. What actually stops a
-// double cancellation is the service: it refuses a shipment that is already
-// canceled (shipmentservice/service.go), which is the right layer for it.
-func (t *cancelShipmentTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *cancelShipmentTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *cancelShipmentTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceShipment,
+		Operation:     permission.OpCancel,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Cancelling withdraws live tenders from carriers and sends the model's " +
+			"cancel reason to a linked partner over EDI.",
+	}
 }
 
 func (t *cancelShipmentTool) Execute(

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -30,6 +31,9 @@ type getSpec struct {
 	resource  permission.Resource
 	paramName string
 	idSource  string
+	reads     agent.ExternalRead
+	source    agent.TaintSource
+	rationale string
 	fetch     func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error)
 }
 
@@ -45,7 +49,14 @@ func (t *getTool) Name() string { return t.spec.name }
 
 func (t *getTool) Description() string { return t.spec.summary }
 
-func (t *getTool) PermissionResource() permission.Resource { return t.spec.resource }
+func (t *getTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource:  t.spec.resource,
+		reads:     t.spec.reads,
+		source:    t.spec.source,
+		rationale: t.spec.rationale,
+	})
+}
 
 func (t *getTool) ParamSchema() map[string]any {
 	return map[string]any{

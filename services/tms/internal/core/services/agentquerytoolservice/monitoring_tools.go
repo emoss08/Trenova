@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -191,8 +192,10 @@ func (t *listReasonCodesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listReasonCodesTool) PermissionResource() permission.Resource {
-	return permission.ResourceServiceFailureReasonCode
+func (t *listReasonCodesTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceServiceFailureReasonCode,
+	})
 }
 
 func (t *listReasonCodesTool) Query(
@@ -297,8 +300,10 @@ func (t *listDetentionDeskTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listDetentionDeskTool) PermissionResource() permission.Resource {
-	return permission.ResourceDetentionPolicy
+func (t *listDetentionDeskTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceDetentionPolicy,
+	})
 }
 
 func (t *listDetentionDeskTool) Query(
@@ -413,8 +418,14 @@ func (t *listWeatherAlertsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listWeatherAlertsTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipment
+func (t *listWeatherAlertsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceShipment,
+		reads:    agent.ExternalReadAlways,
+		source:   agent.TaintSourceWeather,
+		rationale: "Reads National Weather Service alert text; nothing changes and nothing is " +
+			"sent.",
+	})
 }
 
 // severityRank orders NWS severities so "Severe and worse" is a comparison.

@@ -98,6 +98,20 @@ func inboundTierLimit(
 	return agent.TierAutoExecute
 }
 
+func inboundCondition(desk inboundMessageDesk) *serviceports.TierCondition {
+	return &serviceports.TierCondition{
+		Description: "A call on an inbound message runs only as far as its mailbox allows: " +
+			"a classified message the mailbox handles without review may run on its own, " +
+			"and anything held, quarantined, settled or unreadable waits for a person.",
+		Limit: func(
+			ctx context.Context,
+			params serviceports.ToolExecuteParams,
+		) agent.AutonomyTier {
+			return inboundTierLimit(ctx, desk, params)
+		},
+	}
+}
+
 func describeInboundMessage(message *inboundmessage.InboundMessage) string {
 	subject := strings.TrimSpace(message.Subject)
 	if subject == "" {
@@ -160,28 +174,23 @@ func (t *linkInboundMessageTool) ParamSchema() map[string]any {
 	}
 }
 
-// Reversible: a link is replaced by the next one, by a person or a desk.
-func (t *linkInboundMessageTool) Reversible() bool { return true }
-
-func (t *linkInboundMessageTool) PermissionResource() permission.Resource {
-	return permission.ResourceInboundMessage
-}
-
-func (t *linkInboundMessageTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *linkInboundMessageTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *linkInboundMessageTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
-}
-
-func (t *linkInboundMessageTool) TierLimit(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) agent.AutonomyTier {
-	return inboundTierLimit(ctx, t.inbox, params)
+func (t *linkInboundMessageTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceInboundMessage,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Condition:     inboundCondition(t.inbox),
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Links an inbound message to a record inside Trenova; the mailbox decides " +
+			"how far it may run.",
+	}
 }
 
 func (t *linkInboundMessageTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -344,29 +353,22 @@ func (t *markInboundMessageTool) ParamSchema() map[string]any {
 	}
 }
 
-// Reversible is false: nothing puts a settled message back on the lane, so a
-// promotion to running unattended cannot rest on an undo.
-func (t *markInboundMessageTool) Reversible() bool { return false }
-
-func (t *markInboundMessageTool) PermissionResource() permission.Resource {
-	return permission.ResourceInboundMessage
-}
-
-func (t *markInboundMessageTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *markInboundMessageTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *markInboundMessageTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
-}
-
-func (t *markInboundMessageTool) TierLimit(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) agent.AutonomyTier {
-	return inboundTierLimit(ctx, t.inbox, params)
+func (t *markInboundMessageTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceInboundMessage,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Condition:     inboundCondition(t.inbox),
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Settles an inbound message inside Trenova; the mailbox decides how far " +
+			"it may run.",
+	}
 }
 
 func (t *markInboundMessageTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -549,30 +551,22 @@ func (t *replyToInboundMessageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *replyToInboundMessageTool) Reversible() bool { return false }
-
-func (t *replyToInboundMessageTool) PermissionResource() permission.Resource {
-	return permission.ResourceCustomerCommunication
-}
-
-func (t *replyToInboundMessageTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *replyToInboundMessageTool) RequiresIdempotencyKey() bool { return true }
-
-// Outbound mail is never sent unattended until the desk has earned it.
-func (t *replyToInboundMessageTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
-}
-
-// Target is the message rather than the reply: if a person settles or relinks
-// it after the proposal was raised, the proposal is stale and must not send.
-func (t *replyToInboundMessageTool) TierLimit(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) agent.AutonomyTier {
-	return inboundTierLimit(ctx, t.inbox, params)
+func (t *replyToInboundMessageTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceCustomerCommunication,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
+		Condition:     inboundCondition(t.inbox),
+		Effect:        agent.ToolEffectChange,
+		Idempotent:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Replies to whoever wrote in with text the model composed.",
+	}
 }
 
 func (t *replyToInboundMessageTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {

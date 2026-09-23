@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruneventservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
-	"github.com/emoss08/trenova/internal/core/services/productguideservice"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/services/productguideservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/runstepledger"
@@ -142,6 +143,7 @@ func Options() fx.Option {
 		agenttoolservice.Module,
 		agentquerytoolservice.Module,
 		agenttoolcatalog.Module,
+		agenttoolpolicy.Module,
 		productguideservice.Module,
 		agentguard.Module,
 		agentruntime.Module,

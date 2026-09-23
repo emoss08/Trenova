@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -77,8 +78,14 @@ func (t *getDocumentSummaryTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getDocumentSummaryTool) PermissionResource() permission.Resource {
-	return permission.ResourceDocument
+func (t *getDocumentSummaryTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceDocument,
+		reads:    agent.ExternalReadAlways,
+		source:   agent.TaintSourceDocument,
+		rationale: "Reads text extracted from a document someone outside sent; nothing changes " +
+			"and nothing is sent.",
+	})
 }
 
 // documentSummary is what the model reads. The text is a window, and the

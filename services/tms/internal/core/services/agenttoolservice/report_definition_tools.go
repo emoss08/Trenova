@@ -290,22 +290,25 @@ func (t *createReportTool) ParamSchema() map[string]any {
 	}
 }
 
-// A saved report can be archived or deleted from the Reports page.
-func (t *createReportTool) Reversible() bool { return true }
-
-func (t *createReportTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
-}
-
-func (t *createReportTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *createReportTool) RequiresIdempotencyKey() bool { return false }
-
-// A private report runs on its own; TierLimit holds a shared one for approval.
-func (t *createReportTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierAutoExecute
+func (t *createReportTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:                t.Name(),
+		Kind:                agent.ToolKindAction,
+		Resource:            permission.ResourceReport,
+		Operation:           permission.OpCreate,
+		Scope:               agent.ToolScopeTenant,
+		DefaultTier:         agent.TierAutoExecute,
+		MaxTier:             agent.TierAutoExecute,
+		Egress:              []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal},
+		Classify:            classifyReportVisibility,
+		PersonalRunsUnasked: true,
+		Effect:              agent.ToolEffectChange,
+		Artifact:            reportRecordEntity,
+		Reversible:          true,
+		ReadsExternal:       agent.ExternalReadNever,
+		Rationale: "A private report is a saved query on the caller's own list; a " +
+			"shared one appears on every colleague's Reports page and waits for approval.",
+	}
 }
 
 func (t *createReportTool) Execute(
@@ -415,21 +418,22 @@ func (t *updateReportTool) ParamSchema() map[string]any {
 	}
 }
 
-// Every revision is kept, so the previous definition can be restored.
-func (t *updateReportTool) Reversible() bool { return true }
-
-func (t *updateReportTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
-}
-
-func (t *updateReportTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *updateReportTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *updateReportTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *updateReportTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceReport,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Changes a saved report colleagues may open; nothing leaves the " +
+			"organization.",
+	}
 }
 
 func (t *updateReportTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -624,21 +628,22 @@ func (t *forkReportTool) ParamSchema() map[string]any {
 	}
 }
 
-// The copy can be deleted; the original is untouched either way.
-func (t *forkReportTool) Reversible() bool { return true }
-
-func (t *forkReportTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
-}
-
-func (t *forkReportTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *forkReportTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *forkReportTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *forkReportTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceReport,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Artifact:      reportRecordEntity,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Saves a copy of a report inside Trenova; nothing leaves the organization.",
+	}
 }
 
 func (t *forkReportTool) Execute(

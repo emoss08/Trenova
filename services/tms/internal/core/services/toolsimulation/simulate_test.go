@@ -14,14 +14,26 @@ import (
 
 type plainTool struct{ name string }
 
-func (t plainTool) Name() string                              { return t.name }
-func (t plainTool) Description() string                       { return "" }
-func (t plainTool) ParamSchema() map[string]any               { return map[string]any{} }
-func (t plainTool) Reversible() bool                          { return true }
-func (t plainTool) PermissionResource() permission.Resource   { return permission.ResourceShipment }
-func (t plainTool) PermissionOperation() permission.Operation { return permission.OpUpdate }
-func (t plainTool) RequiresIdempotencyKey() bool              { return false }
-func (t plainTool) DefaultAutonomyTier() agent.AutonomyTier   { return agent.TierPropose }
+func (t plainTool) Name() string                { return t.name }
+func (t plainTool) Description() string         { return "" }
+func (t plainTool) ParamSchema() map[string]any { return map[string]any{} }
+func (t plainTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.name,
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceShipment,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "A plain stub.",
+	}
+}
+
 func (t plainTool) Execute(context.Context, serviceports.ToolExecuteParams) error {
 	return errors.New("must not run in simulation")
 }

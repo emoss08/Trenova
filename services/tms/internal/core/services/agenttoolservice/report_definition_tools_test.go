@@ -461,7 +461,7 @@ func TestForkReport_RefusesAnUnknownKey(t *testing.T) {
 // Saving a report is a write against the report resource, gated the way the
 // Reports page gates it. Changing or copying one waits for a person to
 // approve; creating one runs on its own only while it stays private, which
-// its TierLimit decides per call.
+// its policy classifies per call.
 func TestReportDefinitionTools_DeclareTheirGates(t *testing.T) {
 	t.Parallel()
 
@@ -476,13 +476,13 @@ func TestReportDefinitionTools_DeclareTheirGates(t *testing.T) {
 		newUpdateReportTool(writer),
 		newForkReportTool(writer),
 	} {
-		assert.Equal(t, permission.ResourceReport, tool.PermissionResource(), tool.Name())
-		assert.Equal(t, tiers[tool.Name()], tool.DefaultAutonomyTier(), tool.Name())
-		assert.True(t, tool.Reversible(), tool.Name())
+		assert.Equal(t, permission.ResourceReport, tool.Policy().Resource, tool.Name())
+		assert.Equal(t, tiers[tool.Name()], tool.Policy().DefaultTier, tool.Name())
+		assert.True(t, tool.Policy().Reversible, tool.Name())
 	}
-	assert.Equal(t, permission.OpCreate, newCreateReportTool(writer).PermissionOperation())
-	assert.Equal(t, permission.OpUpdate, newUpdateReportTool(writer).PermissionOperation())
-	assert.Equal(t, permission.OpCreate, newForkReportTool(writer).PermissionOperation())
+	assert.Equal(t, permission.OpCreate, newCreateReportTool(writer).Policy().Operation)
+	assert.Equal(t, permission.OpUpdate, newUpdateReportTool(writer).Policy().Operation)
+	assert.Equal(t, permission.OpCreate, newForkReportTool(writer).Policy().Operation)
 }
 
 func TestReportDefinitionTools_RejectAMismatchedActor(t *testing.T) {

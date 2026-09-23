@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -152,8 +153,13 @@ func (t *getInboundMessageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getInboundMessageTool) PermissionResource() permission.Resource {
-	return permission.ResourceInboundMessage
+func (t *getInboundMessageTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource:  permission.ResourceInboundMessage,
+		reads:     agent.ExternalReadAlways,
+		source:    agent.TaintSourceInboundMessage,
+		rationale: "Reads mail an outsider wrote; nothing changes and nothing is sent.",
+	})
 }
 
 func (t *getInboundMessageTool) Query(
@@ -255,8 +261,14 @@ func (t *listInboundMessagesTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listInboundMessagesTool) PermissionResource() permission.Resource {
-	return permission.ResourceInboundMessage
+func (t *listInboundMessagesTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceInboundMessage,
+		reads:    agent.ExternalReadAlways,
+		source:   agent.TaintSourceInboundMessage,
+		rationale: "Lists mail outsiders wrote, subjects and senders included; nothing changes " +
+			"and nothing is sent.",
+	})
 }
 
 func inboundStatusFilter(value string) []inboundmessage.Status {

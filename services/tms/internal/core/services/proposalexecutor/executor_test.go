@@ -25,14 +25,27 @@ type recordingTool struct {
 	requiresKey bool
 }
 
-func (t *recordingTool) Name() string                              { return t.name }
-func (t *recordingTool) Description() string                       { return "recording tool" }
-func (t *recordingTool) ParamSchema() map[string]any               { return map[string]any{} }
-func (t *recordingTool) Reversible() bool                          { return true }
-func (t *recordingTool) PermissionResource() permission.Resource   { return t.resource }
-func (t *recordingTool) PermissionOperation() permission.Operation { return t.operation }
-func (t *recordingTool) RequiresIdempotencyKey() bool              { return t.requiresKey }
-func (t *recordingTool) DefaultAutonomyTier() agent.AutonomyTier   { return agent.TierPropose }
+func (t *recordingTool) Name() string                { return t.name }
+func (t *recordingTool) Description() string         { return "recording tool" }
+func (t *recordingTool) ParamSchema() map[string]any { return map[string]any{} }
+
+func (t *recordingTool) Policy() services.ToolPolicy {
+	return services.ToolPolicy{
+		Name:          t.name,
+		Kind:          agent.ToolKindAction,
+		Resource:      t.resource,
+		Operation:     t.operation,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		Idempotent:    t.requiresKey,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "A recording stub.",
+	}
+}
 
 func (t *recordingTool) Execute(_ context.Context, params services.ToolExecuteParams) error {
 	t.calls++

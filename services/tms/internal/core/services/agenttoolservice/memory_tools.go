@@ -77,18 +77,23 @@ func (t *rememberTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *rememberTool) Reversible() bool { return true }
-
-func (t *rememberTool) PermissionResource() permission.Resource {
-	return permission.ResourceAgentMemory
-}
-
-func (t *rememberTool) PermissionOperation() permission.Operation { return permission.OpCreate }
-
-func (t *rememberTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *rememberTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *rememberTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceAgentMemory,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		CarriesTaint:  true,
+		Rationale: "Saves a memory later runs read, so it keeps the taint of the run that " +
+			"wrote it.",
+	}
 }
 
 func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
@@ -166,18 +171,21 @@ func (t *forgetMemoryTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *forgetMemoryTool) Reversible() bool { return true }
-
-func (t *forgetMemoryTool) PermissionResource() permission.Resource {
-	return permission.ResourceAgentMemory
-}
-
-func (t *forgetMemoryTool) PermissionOperation() permission.Operation { return permission.OpUpdate }
-
-func (t *forgetMemoryTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *forgetMemoryTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *forgetMemoryTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceAgentMemory,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Retires an agent memory inside Trenova.",
+	}
 }
 
 func (t *forgetMemoryTool) Execute(

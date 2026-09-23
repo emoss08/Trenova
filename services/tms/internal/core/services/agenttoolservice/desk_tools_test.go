@@ -74,10 +74,10 @@ func TestEscalateDetention_HandsOverWithoutTouchingTheCharge(t *testing.T) {
 	}}
 	tool := newEscalateDetentionTool(stub)
 
-	require.Equal(t, permission.ResourceDetentionPolicy, tool.PermissionResource())
-	require.Equal(t, permission.OpUpdate, tool.PermissionOperation())
-	require.Equal(t, agent.TierPropose, tool.DefaultAutonomyTier())
-	require.True(t, tool.Reversible())
+	require.Equal(t, permission.ResourceDetentionPolicy, tool.Policy().Resource)
+	require.Equal(t, permission.OpUpdate, tool.Policy().Operation)
+	require.Equal(t, agent.TierPropose, tool.Policy().DefaultTier)
+	require.True(t, tool.Policy().Reversible)
 
 	params := deskParams(map[string]any{
 		"occurrenceId": occurrenceID.String(),
@@ -139,8 +139,8 @@ func TestRequestCredentialRenewal_AsksOncePerDriver(t *testing.T) {
 	stub := &stubCredentialActor{}
 	tool := newRequestCredentialRenewalTool(stub)
 
-	require.True(t, tool.RequiresIdempotencyKey())
-	require.Equal(t, permission.ResourceWorkerCredential, tool.PermissionResource())
+	require.True(t, tool.Policy().Idempotent)
+	require.Equal(t, permission.ResourceWorkerCredential, tool.Policy().Resource)
 
 	params := deskParams(map[string]any{
 		"workerId":      workerID.String(),
@@ -200,9 +200,9 @@ func TestPlaceWorkerDispatchHold_IsItsOwnPermission(t *testing.T) {
 	stub := &stubWorkerHolder{held: &worker.Worker{ID: workerID, CanBeAssigned: true}}
 	tool := newPlaceWorkerDispatchHoldTool(stub)
 
-	require.Equal(t, permission.ResourceWorkerDispatchHold, tool.PermissionResource())
-	require.Equal(t, permission.OpCreate, tool.PermissionOperation())
-	require.True(t, tool.Reversible())
+	require.Equal(t, permission.ResourceWorkerDispatchHold, tool.Policy().Resource)
+	require.Equal(t, permission.OpCreate, tool.Policy().Operation)
+	require.True(t, tool.Policy().Reversible)
 	require.False(t, permission.IsAgentAllowed(permission.ResourceWorker, permission.OpUpdate),
 		"editing a worker record stays closed to an agent")
 

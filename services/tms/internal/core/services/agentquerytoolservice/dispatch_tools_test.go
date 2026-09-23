@@ -52,7 +52,7 @@ func TestRankMoveCandidates_ScoresDriversWithFindingsAndFactors(t *testing.T) {
 		},
 	}}
 	tool := newRankMoveCandidatesTool(ranker)
-	assert.Equal(t, permission.ResourceShipmentMove, tool.PermissionResource())
+	assert.Equal(t, permission.ResourceShipmentMove, tool.Policy().Resource)
 
 	moveID := pulid.MustNew("smv_")
 	result, err := tool.Query(t.Context(), testParams(map[string]any{

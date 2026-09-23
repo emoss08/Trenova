@@ -100,10 +100,10 @@ func TestCreateShipment_EntersTheShipmentUnderTheActorTenant(t *testing.T) {
 	writer := &fakeShipmentWriter{}
 	imports := &fakeImportCompleter{}
 	tool := newCreateShipmentTool(writer, imports, nil)
-	assert.Equal(t, permission.ResourceShipment, tool.PermissionResource())
-	assert.Equal(t, permission.OpCreate, tool.PermissionOperation())
-	assert.Equal(t, agent.TierActWithApproval, tool.DefaultAutonomyTier())
-	assert.True(t, tool.RequiresIdempotencyKey())
+	assert.Equal(t, permission.ResourceShipment, tool.Policy().Resource)
+	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
+	assert.Equal(t, agent.TierActWithApproval, tool.Policy().DefaultTier)
+	assert.True(t, tool.Policy().Idempotent)
 
 	customerID, serviceTypeID := pulid.MustNew("cust_"), pulid.MustNew("st_")
 	originID, destID := pulid.MustNew("loc_"), pulid.MustNew("loc_")
@@ -180,7 +180,7 @@ func TestUpdateShipment_PatchesOnlyTheNamedFields(t *testing.T) {
 	}
 	writer := &fakeShipmentWriter{existing: original}
 	tool := newUpdateShipmentTool(writer)
-	assert.Equal(t, permission.OpUpdate, tool.PermissionOperation())
+	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 
 	newCustomer := pulid.MustNew("cust_")
 	params := executeParams(map[string]any{
@@ -259,8 +259,8 @@ func TestTenderToRoutingGuide_StartsAWaterfallForTheMove(t *testing.T) {
 
 	tenders := &fakeTenders{}
 	tool := newTenderToRoutingGuideTool(tenders)
-	assert.Equal(t, permission.ResourceTender, tool.PermissionResource())
-	assert.Equal(t, permission.OpCreate, tool.PermissionOperation())
+	assert.Equal(t, permission.ResourceTender, tool.Policy().Resource)
+	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
 
 	moveID, guideID := pulid.MustNew("smv_"), pulid.MustNew("rg_")
 	params := executeParams(

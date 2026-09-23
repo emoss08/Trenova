@@ -101,7 +101,7 @@ func TestRequestMissingDocs_IsGatedOnCustomerCommunication(t *testing.T) {
 	t.Parallel()
 
 	tool := &requestMissingDocsTool{}
-	assert.Equal(t, permission.ResourceCustomerCommunication, tool.PermissionResource())
-	assert.Equal(t, permission.OpCreate, tool.PermissionOperation())
-	assert.True(t, permission.IsAgentAllowed(tool.PermissionResource(), tool.PermissionOperation()))
+	assert.Equal(t, permission.ResourceCustomerCommunication, tool.Policy().Resource)
+	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
+	assert.True(t, permission.IsAgentAllowed(tool.Policy().Resource, tool.Policy().Operation))
 }

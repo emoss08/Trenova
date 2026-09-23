@@ -288,9 +288,9 @@ func TestCancelShipment_IsIrreversibleAndOnlyProposes(t *testing.T) {
 
 	tool := newCancelShipmentTool(&fakeShipmentService{})
 
-	assert.False(t, tool.Reversible())
-	assert.Equal(t, agent.TierPropose, tool.DefaultAutonomyTier())
-	assert.Equal(t, permission.OpCancel, tool.PermissionOperation())
+	assert.False(t, tool.Policy().Reversible)
+	assert.Equal(t, agent.TierPropose, tool.Policy().DefaultTier)
+	assert.Equal(t, permission.OpCancel, tool.Policy().Operation)
 }
 
 // A tool that surfaces a service failure as success would have the agent report
@@ -335,8 +335,8 @@ func TestShipmentWriteTools_AuthorizeAgainstWhatTheyWrite(t *testing.T) {
 		{newReleaseShipmentHoldTool(nil), permission.ResourceShipmentHold, permission.OpUpdate},
 		{newCancelShipmentTool(nil), permission.ResourceShipment, permission.OpCancel},
 	} {
-		assert.Equal(t, tc.resource, tc.tool.PermissionResource(), tc.tool.Name())
-		assert.Equal(t, tc.operation, tc.tool.PermissionOperation(), tc.tool.Name())
+		assert.Equal(t, tc.resource, tc.tool.Policy().Resource, tc.tool.Name())
+		assert.Equal(t, tc.operation, tc.tool.Policy().Operation, tc.tool.Name())
 	}
 }
 

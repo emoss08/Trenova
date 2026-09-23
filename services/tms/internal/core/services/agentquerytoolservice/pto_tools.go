@@ -126,8 +126,10 @@ func (t *listTimeOffTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listTimeOffTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorkerPTO
+func (t *listTimeOffTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceWorkerPTO,
+	})
 }
 
 func (t *listTimeOffTool) Query(
