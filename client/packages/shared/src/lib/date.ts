@@ -460,6 +460,27 @@ export function partOfDay(hour: number): PartOfDay {
   return "evening";
 }
 
+/** The light outside, which a page drawing the time of day paints rather than names. */
+export type SkyPhase = "dawn" | "day" | "dusk" | "night";
+
+/**
+ * The light an hour on a 24-hour clock falls in. It is not the greeting's
+ * part of the day: "Good morning" at four is still night outside.
+ */
+export function skyPhase(hour: number): SkyPhase {
+  if (hour >= 5 && hour < 11) {
+    return "dawn";
+  }
+  if (hour >= 11 && hour < 17) {
+    return "day";
+  }
+  if (hour >= 17 && hour < 21) {
+    return "dusk";
+  }
+
+  return "night";
+}
+
 export function formatSecondsAgo(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 5) {
     return "just now";

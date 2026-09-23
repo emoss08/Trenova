@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 import type { ComposerHintKind } from "./composer-hint";
 import { dictationIssueText } from "./dictation-control";
 import type { DictationIssue } from "./use-dictation";
-import { DeskThinking } from "./voice/desk-thinking";
+import { WorkingDot } from "./voice/working-dot";
 
 /** The keys in a hint sit a step smaller than a standalone Kbd, so the line reads as text. */
 const HINT_KBD = "h-4 min-w-4 px-1";
@@ -130,7 +130,7 @@ export function ComposerHints({
             </HintLine>
           ) : kind === "replying" ? (
             <HintLine key={kind} kind={kind}>
-              <DeskThinking working pose="write" still decorative />
+              <WorkingDot working />
               <span className="truncate">{t("Replying. You can draft your next message.")}</span>
             </HintLine>
           ) : kind === "discover" ? (

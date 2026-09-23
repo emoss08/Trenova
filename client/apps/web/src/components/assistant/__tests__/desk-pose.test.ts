@@ -26,24 +26,24 @@ const finished = (callId: string, name = "get_shipment"): AssistantStreamEvent =
 
 /**
  * The desk beside the working line draws the same moment the words say:
- * someone sitting down to it while the model decides, a busy desk while a
- * tool runs, the screen while the answer arrives, and the chair tucked in
- * once the turn is over — however it ended.
+ * thinking dots on the screen while the model decides, hands on the keys
+ * while a tool runs, lines written onto the screen while the answer
+ * arrives, and a settle once the turn is over — however it ended.
  */
 describe("thinkingPose", () => {
-  it("sits down to the desk while the question is being checked", () => {
+  it("thinks while the question is being checked", () => {
     expect(pose([])).toBe("arrive");
   });
 
-  it("sits down to the desk once accepted and before anything arrives", () => {
+  it("thinks once accepted and before anything arrives", () => {
     expect(pose([accepted])).toBe("arrive");
   });
 
-  it("sits down to the desk while the model is thinking", () => {
+  it("thinks while the model is reasoning", () => {
     expect(pose([accepted, { event: "reasoning", data: { text: "Look it up." } }])).toBe("arrive");
   });
 
-  it("shakes the desk while a tool is running", () => {
+  it("types while a tool is running", () => {
     expect(pose([accepted, started("c1")])).toBe("busy");
   });
 
@@ -55,7 +55,7 @@ describe("thinkingPose", () => {
     expect(pose([accepted, started("c1"), finished("c1")])).toBe("arrive");
   });
 
-  it("lights the screen while the answer streams", () => {
+  it("writes onto the screen while the answer streams", () => {
     expect(pose([accepted, { event: "delta", data: { text: "S1 is" } }])).toBe("write");
   });
 
@@ -70,7 +70,7 @@ describe("thinkingPose", () => {
     ).toBe("busy");
   });
 
-  it("sits back down while a reply starts over, even with words already on screen", () => {
+  it("goes back to thinking while a reply starts over, even with words on screen", () => {
     expect(
       pose([
         accepted,

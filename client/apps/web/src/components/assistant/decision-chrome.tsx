@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { proposedByOther, type ProposalPresentation } from "./proposal-state";
-import { DeskThinking } from "./voice/desk-thinking";
+import { WorkingDot } from "./voice/working-dot";
 
 /**
  * Whether this view watched the state change. A card that moves from
@@ -77,7 +77,7 @@ export function DecisionStateBadge({ state }: { state: ProposalPresentation }) {
 }
 
 /**
- * The mark of a settled decision. Work still running is the desk at work,
+ * The mark of a settled decision. Work still running is the breathing dot,
  * the one loop the product allows; an outcome that lands while watched
  * settles with the confirm spring.
  */
@@ -97,7 +97,7 @@ export function OutcomeIcon({
     case "done":
       return <CircleCheckIcon key={state} aria-hidden className={cn(glyph, "text-success")} />;
     case "running":
-      return <DeskThinking working pose="busy" decorative className={className} />;
+      return <WorkingDot working />;
     case "simulated":
       return (
         <FlaskConicalIcon key={state} aria-hidden className={cn(glyph, "text-foreground-muted")} />

@@ -1,8 +1,17 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, renderHook, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ComposerHints } from "../composer-hints";
+import { OutcomeIcon } from "../decision-chrome";
+import { LiveReplyLabel } from "../live-reply-label";
 import { StreamingTurn } from "../streaming-turn";
 import { initialTurnState, type TurnState } from "../turn-stream";
-import { DESK_SETTLE_MS, DeskMark, DeskThinking } from "../voice/desk-thinking";
+import type { DeskPose } from "../voice/desk-pose";
+import {
+  DESK_SETTLE_MS,
+  DeskMark,
+  DeskThinking,
+  useThinkingPresence,
+} from "../voice/desk-thinking";
 
 const motion = vi.hoisted(() => ({ reduce: false }));
 
@@ -12,9 +21,10 @@ vi.mock("motion/react", async (importOriginal) => {
 });
 
 const MOVING = '[class*="animate-desk-"]';
+const DESK = '[data-slot="desk-mark"]';
 
-function mark(container: HTMLElement) {
-  return container.querySelector('[data-slot="desk-mark"]');
+function part(container: HTMLElement, name: string) {
+  return container.querySelector(`[data-part="${name}"]`);
 }
 
 beforeEach(() => {
@@ -26,207 +36,220 @@ afterEach(() => {
 });
 
 /**
- * Each pose moves one part of the desk, so the three phases of a turn read
- * apart: the chair for the model, the desk for a tool, the screen for words.
+ * The screen tells the phase apart, frame by frame: dots while the model
+ * thinks, lines scrolling past while a tool runs, lines written onto a
+ * glowing screen while the answer arrives.
  */
 describe("DeskMark poses", () => {
-  it("rolls the chair while waiting on the model", () => {
+  it("sits down and puts thinking dots on the screen while waiting on the model", () => {
     const { container } = render(<DeskMark pose="arrive" />);
 
-    expect(container.querySelector('[data-part="chair"]')).toHaveClass("animate-desk-roll");
-    expect(container.querySelector('[data-part="desk"]')).not.toHaveClass("animate-desk-shake");
-    expect(container.querySelector('[data-part="screen"]')).not.toHaveClass("animate-desk-screen");
+    expect(part(container, "seat")).toHaveClass("animate-desk-sit");
+    expect(part(container, "figure")).toHaveClass("animate-desk-sit-figure");
+    const dots = part(container, "thinking")?.querySelectorAll("circle") ?? [];
+    expect(dots).toHaveLength(3);
+    expect(dots[0]).toHaveClass("animate-desk-think-1");
+    expect(dots[2]).toHaveClass("animate-desk-think-3");
+    expect(part(container, "scrolling")).toBeNull();
+    expect(part(container, "writing")).toBeNull();
+    expect(part(container, "arms")).not.toHaveClass("animate-desk-type");
   });
 
-  it("shakes the desk while a tool runs", () => {
+  it("types and scrolls the screen while a tool runs", () => {
     const { container } = render(<DeskMark pose="busy" />);
 
-    expect(container.querySelector('[data-part="desk"]')).toHaveClass("animate-desk-shake");
-    expect(container.querySelector('[data-part="chair"]')).not.toHaveClass("animate-desk-roll");
+    expect(part(container, "arms")).toHaveClass("animate-desk-type");
+    expect(part(container, "scrolling")).toHaveClass("animate-desk-scroll");
+    expect(part(container, "thinking")).toBeNull();
+    expect(part(container, "glow")).not.toHaveClass("animate-desk-glow");
   });
 
-  it("pulses the screen while the answer streams", () => {
+  it("writes lines onto a glowing screen while the answer streams", () => {
     const { container } = render(<DeskMark pose="write" />);
 
-    expect(container.querySelector('[data-part="screen"]')).toHaveClass("animate-desk-screen");
-    expect(container.querySelector('[data-part="desk"]')).not.toHaveClass("animate-desk-shake");
+    const lines = part(container, "writing")?.querySelectorAll("rect") ?? [];
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toHaveClass("animate-desk-write-1");
+    expect(lines[1]).toHaveClass("animate-desk-write-2");
+    expect(lines[2]).toHaveClass("animate-desk-write-3");
+    expect(part(container, "glow")).toHaveClass("animate-desk-glow");
+    expect(part(container, "arms")).toHaveClass("animate-desk-type");
   });
 
-  it("holds the idle desk still unless the page has just opened", () => {
-    const { container } = render(<DeskMark pose="idle" timeOfDay="morning" />);
+  it("pushes back, clears the screen and fades when the turn is over", () => {
+    const { container } = render(<DeskMark pose="settle" />);
 
-    expect(container.querySelector(MOVING)).toBeNull();
-    expect(container.querySelector('[data-part="sun"]')).not.toBeNull();
-    expect(container.querySelector('[data-part="lamp-light"]')).toBeNull();
+    expect(container.querySelector(DESK)).toHaveClass("animate-desk-fade");
+    expect(part(container, "seat")).toHaveClass("animate-desk-settle");
+    expect(part(container, "seat")).not.toHaveClass("animate-desk-sit");
+    expect(part(container, "thinking")).toBeNull();
+    expect(part(container, "scrolling")).toBeNull();
+    expect(part(container, "writing")).toBeNull();
   });
 
-  it("switches the lamp on once in the evening and draws the moon", () => {
-    const { container } = render(<DeskMark pose="idle" timeOfDay="evening" welcome />);
-
-    expect(container.querySelector('[data-part="lamp-light"]')).toHaveClass("animate-desk-lamp");
-    expect(container.querySelector('[data-part="chair"]')).toHaveClass("animate-desk-arrive");
-    expect(container.querySelector('[data-part="moon"]')).not.toBeNull();
-    expect(container.querySelector('[data-part="sun"]')).toBeNull();
-  });
-
-  it("never exposes the drawing to assistive technology", () => {
+  it("is drawn at the height of a line of text, in the agent's accent", () => {
     const { container } = render(<DeskMark pose="busy" />);
+    const mark = container.querySelector(DESK);
 
-    expect(mark(container)).toHaveAttribute("aria-hidden", "true");
+    expect(mark).toHaveClass("h-4", "w-5", "ui-desk-mark");
+    expect(mark).toHaveAttribute("aria-hidden", "true");
+    expect(part(container, "figure")).toHaveClass("fill-desk-figure");
+    expect(part(container, "screen")).toHaveClass("fill-desk-accent");
+  });
+
+  it("keeps two marks on one page from sharing a clip path", () => {
+    const { container } = render(
+      <>
+        <DeskMark pose="busy" />
+        <DeskMark pose="busy" />
+      </>,
+    );
+    const ids = [...container.querySelectorAll("clipPath")].map((clip) => clip.id);
+
+    expect(new Set(ids).size).toBe(2);
   });
 });
 
 /**
- * Reduced motion keeps the drawing and the state it shows, and drops every
- * loop and one-shot, so the mark is a still picture of the same moment.
+ * Reduced motion keeps each pose as one still frame of the same moment, so
+ * the screen still says what is happening without anything moving.
  */
 describe("DeskThinking with reduced motion", () => {
-  beforeEach(() => {
+  it.each<[DeskPose, string]>([
+    ["arrive", "thinking"],
+    ["busy", "scrolling"],
+    ["write", "writing"],
+  ])("draws %s still, with its screen", (pose, screenPart) => {
     motion.reduce = true;
-  });
+    const { container } = render(<DeskThinking pose={pose} />);
 
-  it.each(["arrive", "busy", "write"] as const)("draws the %s pose still", (pose) => {
-    const { container } = render(<DeskThinking working pose={pose} />);
-
-    expect(mark(container)).toHaveAttribute("data-motion", "still");
-    expect(mark(container)).toHaveAttribute("data-pose", pose);
+    expect(container.querySelector(DESK)).toHaveAttribute("data-motion", "still");
+    expect(container.querySelector(DESK)).toHaveAttribute("data-pose", pose);
     expect(container.querySelector(MOVING)).toBeNull();
+    expect(part(container, screenPart)).not.toBeNull();
   });
 
-  it("draws the chair pulled out, not rolling, for the model's turn", () => {
-    const { container } = render(<DeskThinking working pose="arrive" />);
-    const chair = container.querySelector('[data-part="chair"]');
+  it("draws the writing screen lit rather than dark", () => {
+    motion.reduce = true;
+    const { container } = render(<DeskThinking pose="write" />);
 
-    expect(chair?.getAttribute("style") ?? "").toContain("translate3d");
+    expect(part(container, "glow")).toHaveClass("opacity-(--desk-glow)");
   });
 
-  it("still says that the work is under way", () => {
-    render(<DeskThinking working pose="busy" />);
+  it("still announces the work", () => {
+    motion.reduce = true;
+    render(<DeskThinking pose="busy" />);
 
     expect(screen.getByRole("status", { name: "Working on your answer" })).toBeInTheDocument();
-  });
-
-  it("the greeting's desk skips its entrance", () => {
-    const { container } = render(
-      <DeskMark pose="idle" timeOfDay="evening" welcome animate={false} />,
-    );
-
-    expect(container.querySelector(MOVING)).toBeNull();
-    expect(container.querySelector('[data-part="lamp-light"]')).not.toBeNull();
   });
 });
 
 describe("DeskThinking announcements", () => {
-  it("is one status with a fixed name while working", () => {
-    render(<DeskThinking working pose="write" />);
+  it("is one status with a fixed name while the work runs", () => {
+    render(<DeskThinking pose="write" />);
 
-    const status = screen.getByRole("status", { name: "Working on your answer" });
-    expect(status.textContent).toBe("");
-    expect(status.querySelector('[data-slot="desk-mark"]')).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("status", { name: "Working on your answer" })).toBeInTheDocument();
   });
 
-  it("is hidden when the words beside it already say it", () => {
-    render(<DeskThinking working pose="write" decorative />);
+  it("says nothing while it settles, because the work is already over", () => {
+    const { container } = render(<DeskThinking pose="settle" />);
 
     expect(screen.queryByRole("status")).toBeNull();
-  });
-
-  it("does not move in a list, where many are marked at once", () => {
-    const { container } = render(<DeskThinking working pose="busy" still decorative />);
-
-    expect(mark(container)).toHaveAttribute("data-motion", "still");
-    expect(container.querySelector(MOVING)).toBeNull();
+    expect(container.querySelector('[data-slot="desk-thinking"]')).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
   });
 });
 
 /**
- * The mark is on screen exactly as long as the work: it stops the instant the
- * turn ends, tucks the chair in for one beat, and is gone.
+ * The mark is on screen exactly as long as the work: it takes the closing
+ * pose for one beat when the work stops, and is gone.
  */
-describe("DeskThinking when the work ends", () => {
-  it("settles for a beat and then unmounts", () => {
+describe("useThinkingPresence", () => {
+  it("settles for a beat and then is gone", () => {
     vi.useFakeTimers();
-    const { container, rerender } = render(<DeskThinking working pose="busy" />);
+    const { result, rerender } = renderHook(
+      ({ working }: { working: boolean }) => useThinkingPresence(working, true),
+      { initialProps: { working: true } },
+    );
 
-    rerender(<DeskThinking working={false} pose="busy" />);
-
-    expect(mark(container)).toHaveAttribute("data-pose", "settle");
-    expect(container.querySelector('[data-part="desk"]')).not.toHaveClass("animate-desk-shake");
-    expect(container.querySelector('[data-part="chair"]')).toHaveClass("animate-desk-settle");
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(result.current).toBe("working");
+    rerender({ working: false });
+    expect(result.current).toBe("settling");
 
     act(() => {
       vi.advanceTimersByTime(DESK_SETTLE_MS);
     });
 
-    expect(container).toBeEmptyDOMElement();
+    expect(result.current).toBe("gone");
   });
 
   it("comes back rather than finishing the settle when the work resumes", () => {
     vi.useFakeTimers();
-    const { container, rerender } = render(<DeskThinking working pose="write" />);
+    const { result, rerender } = renderHook(
+      ({ working }: { working: boolean }) => useThinkingPresence(working, true),
+      { initialProps: { working: true } },
+    );
 
-    rerender(<DeskThinking working={false} pose="write" />);
-    rerender(<DeskThinking working pose="write" />);
+    rerender({ working: false });
+    rerender({ working: true });
     act(() => {
       vi.advanceTimersByTime(DESK_SETTLE_MS * 2);
     });
 
-    expect(mark(container)).toHaveAttribute("data-pose", "write");
-    expect(screen.getByRole("status", { name: "Working on your answer" })).toBeInTheDocument();
+    expect(result.current).toBe("working");
   });
 
-  it("unmounts at once under reduced motion", () => {
-    motion.reduce = true;
-    const { container, rerender } = render(<DeskThinking working pose="arrive" />);
+  it("is gone at once when there is no settle to show", () => {
+    const { result, rerender } = renderHook(
+      ({ working }: { working: boolean }) => useThinkingPresence(working, false),
+      { initialProps: { working: true } },
+    );
 
-    rerender(<DeskThinking working={false} pose="arrive" />);
+    rerender({ working: false });
 
-    expect(container).toBeEmptyDOMElement();
+    expect(result.current).toBe("gone");
   });
 
-  it("unmounts at once when it was a still mark", () => {
-    const { container, rerender } = render(<DeskThinking working pose="busy" still />);
+  it("is never there for work that is not happening", () => {
+    const { result } = renderHook(() => useThinkingPresence(false, true));
 
-    rerender(<DeskThinking working={false} pose="busy" still />);
-
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it("is never drawn for work that is not happening", () => {
-    const { container } = render(<DeskThinking working={false} pose="arrive" />);
-
-    expect(container).toBeEmptyDOMElement();
+    expect(result.current).toBe("gone");
   });
 });
 
 /** The turn in progress: the desk leads the working line and leaves with the turn. */
 describe("StreamingTurn working line", () => {
   const noop = () => {};
+  const startedAt = 0;
 
   function renderTurn(turn: TurnState) {
     return render(<StreamingTurn turn={turn} onDismiss={noop} onAnswer={noop} />);
   }
 
-  it("draws the large desk before anything has arrived", () => {
+  it("draws the small desk beside the words before anything has arrived", () => {
     vi.useFakeTimers();
-    const { container } = renderTurn(initialTurnState("Where is S1?"));
+    const { container } = renderTurn(initialTurnState("Where is S1?", null, { startedAt }));
 
     expect(screen.getByRole("status", { name: "Working on your answer" })).toBeInTheDocument();
-    expect(mark(container)).toHaveAttribute("data-pose", "arrive");
-    expect(mark(container)).toHaveClass("h-8");
+    expect(screen.getByText("Checking the question…")).toBeInTheDocument();
+    const marks = container.querySelectorAll(DESK);
+    expect(marks).toHaveLength(1);
+    expect(marks[0]).toHaveAttribute("data-pose", "arrive");
+    expect(marks[0]).toHaveClass("h-4");
   });
 
   it("stops the moment the turn ends and is gone after the settle", () => {
     vi.useFakeTimers();
     const live: TurnState = {
-      ...initialTurnState("Where is S1?"),
+      ...initialTurnState("Where is S1?", null, { startedAt }),
       status: "streaming",
       segments: [{ kind: "text", text: "S1 is in Dallas.", closed: false }],
     };
     const { container, rerender } = renderTurn(live);
 
-    expect(mark(container)).toHaveAttribute("data-pose", "write");
+    expect(container.querySelector(DESK)).toHaveAttribute("data-pose", "write");
     expect(screen.getByText("Writing the answer…")).toBeInTheDocument();
 
     rerender(
@@ -243,12 +266,74 @@ describe("StreamingTurn working line", () => {
 
     expect(screen.queryByRole("status")).toBeNull();
     expect(screen.queryByText("Writing the answer…")).toBeNull();
-    expect(mark(container)).toHaveAttribute("data-pose", "settle");
+    expect(container.querySelector(DESK)).toHaveAttribute("data-pose", "settle");
 
     act(() => {
       vi.advanceTimersByTime(DESK_SETTLE_MS);
     });
 
-    expect(mark(container)).toBeNull();
+    expect(container.querySelector(DESK)).toBeNull();
+  });
+
+  it("is gone the moment the turn ends under reduced motion", () => {
+    motion.reduce = true;
+    const live: TurnState = {
+      ...initialTurnState("Where is S1?", null, { startedAt }),
+      status: "streaming",
+      segments: [{ kind: "text", text: "S1 is", closed: false }],
+    };
+    const { container, rerender } = renderTurn(live);
+
+    expect(container.querySelector(DESK)).toHaveAttribute("data-motion", "still");
+
+    rerender(<StreamingTurn turn={{ ...live, status: "done" }} onDismiss={noop} onAnswer={noop} />);
+
+    expect(container.querySelector(DESK)).toBeNull();
+  });
+});
+
+/**
+ * The desk is drawn on the working line and nowhere else. Every other
+ * surface that says work is still going keeps the small breathing dot.
+ */
+describe("the desk appears only on the working line", () => {
+  it("leaves the composer's replying hint with the dot", () => {
+    const { container } = render(
+      <ComposerHints
+        kind="replying"
+        issue={null}
+        onDismissIssue={() => {}}
+        canMention
+        canAttach
+        canDictate
+      />,
+    );
+
+    expect(screen.getByText("Replying. You can draft your next message.")).toBeInTheDocument();
+    expect(container.querySelector(DESK)).toBeNull();
+    expect(container.querySelector(".animate-breathe")).not.toBeNull();
+  });
+
+  it("leaves a conversation row's live label with a still dot", () => {
+    const { container } = render(<LiveReplyLabel />);
+
+    expect(screen.getByText("Writing a reply")).toBeInTheDocument();
+    expect(container.querySelector(DESK)).toBeNull();
+    expect(container.querySelector(".animate-breathe")).toBeNull();
+    expect(container.querySelector(".rounded-full")).not.toBeNull();
+  });
+
+  it("leaves a running decision with the dot", () => {
+    const { container } = render(<OutcomeIcon state="running" />);
+
+    expect(container.querySelector(DESK)).toBeNull();
+    expect(container.querySelector(".animate-breathe")).not.toBeNull();
+  });
+
+  it("draws nothing under reduced motion that the global rule would have to stop", () => {
+    motion.reduce = true;
+    const { container } = render(<DeskThinking pose="arrive" />);
+
+    expect(container.querySelector(MOVING)).toBeNull();
   });
 });
