@@ -141,7 +141,10 @@ func (e extensionState) entry(
 	return entry, true
 }
 
-func catalogEntry(tool catalogTool, kind serviceports.ToolCatalogKind) serviceports.ToolCatalogEntry {
+func catalogEntry(
+	tool catalogTool,
+	kind serviceports.ToolCatalogKind,
+) serviceports.ToolCatalogEntry {
 	policy := tool.Policy()
 	entry := serviceports.ToolCatalogEntry{
 		Name:        tool.Name(),

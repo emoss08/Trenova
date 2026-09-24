@@ -129,7 +129,10 @@ func ReadsExternalContent(name string) bool {
 func externalTaint(external bool) *agent.RunTaint {
 	taint := &agent.RunTaint{}
 	if external {
-		taint.Add(agent.TaintMark{Source: agent.TaintSourceWeb, ToolName: agentextension.ToolWebSearch})
+		taint.Add(agent.TaintMark{
+			Source:   agent.TaintSourceWeb,
+			ToolName: agentextension.ToolWebSearch,
+		})
 	}
 
 	return taint
