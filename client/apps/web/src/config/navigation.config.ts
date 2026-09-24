@@ -1026,7 +1026,7 @@ export const navigationConfig: NavigationConfig = {
   quickActions: [
     {
       id: "create-shipment",
-      label: "Create shipment",
+      label: "New shipment",
       description: "Add a new shipment",
       path: "/shipment-management/shipments",
       resource: Resource.Shipment,
@@ -1036,7 +1036,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-shipment-type",
-      label: "Create shipment type",
+      label: "New shipment type",
       description: "Add a new shipment type",
       path: "/shipment-management/configuration-files/shipment-types",
       resource: Resource.ShipmentType,
@@ -1046,7 +1046,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-service-type",
-      label: "Create Service type",
+      label: "New service type",
       description: "Add a new service type",
       path: "/shipment-management/configuration-files/service-types",
       resource: Resource.ServiceType,
@@ -1056,7 +1056,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-hazardous-material",
-      label: "Create hazardous material",
+      label: "New hazardous material",
       description: "Add a new hazardous material",
       path: "/shipment-management/configuration-files/hazardous-materials",
       resource: Resource.HazardousMaterial,
@@ -1066,7 +1066,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-commodity",
-      label: "Create commodity",
+      label: "New commodity",
       description: "Add a new commodity",
       path: "/shipment-management/configuration-files/commodities",
       resource: Resource.Commodity,
@@ -1076,7 +1076,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-accessorial-charge",
-      label: "Create accessorial charge",
+      label: "New accessorial charge",
       description: "Add a new accessorial charge",
       path: "/billing/configuration-files/accessorial-charges",
       resource: Resource.AccessorialCharge,
@@ -1086,7 +1086,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-customer",
-      label: "Create customer",
+      label: "New customer",
       description: "Add a new customer",
       path: "/billing/configuration-files/customers",
       resource: Resource.Customer,
@@ -1096,7 +1096,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-document-type",
-      label: "Create document type",
+      label: "New document type",
       description: "Add a new document type",
       path: "/billing/configuration-files/document-types",
       resource: Resource.DocumentType,
@@ -1106,7 +1106,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-formula-template",
-      label: "Create formula template",
+      label: "New formula template",
       description: "Open the Formula Studio and start a new template",
       path: "/billing/configuration-files/formula-templates/new",
       resource: Resource.FormulaTemplate,
@@ -1115,7 +1115,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-rate-agreement",
-      label: "Create rate agreement",
+      label: "New rate agreement",
       description: "Write a customer or carrier contract",
       path: "/billing/rate-agreements",
       resource: Resource.RateAgreement,
@@ -1125,7 +1125,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-rate-zone",
-      label: "Create rate zone",
+      label: "New rate zone",
       description: "Name a market area contracts can be priced against",
       path: "/billing/configuration-files/rate-zones",
       resource: Resource.RateZone,
@@ -1135,7 +1135,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-rate-matrix",
-      label: "Create rate matrix",
+      label: "New rate matrix",
       description: "Enter a published tariff as the grid it was published as",
       path: "/billing/configuration-files/rate-matrices",
       resource: Resource.RateMatrix,
@@ -1145,7 +1145,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-detention-policy",
-      label: "Create detention policy",
+      label: "New detention policy",
       description: "Encode a contract's detention terms",
       path: "/detention/configuration-files/detention-policies",
       resource: Resource.DetentionPolicy,
@@ -1155,7 +1155,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-fuel-surcharge-program",
-      label: "Create fuel surcharge program",
+      label: "New fuel surcharge program",
       description: "Add a new fuel surcharge program",
       path: "/fuel/configuration-files/surcharge",
       resource: Resource.FuelSurchargeProgram,
@@ -1165,7 +1165,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-account-type",
-      label: "Create account type",
+      label: "New account type",
       description: "Add a new account type",
       path: "/accounting/configuration-files/account-types",
       resource: Resource.AccountType,
@@ -1175,7 +1175,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-fiscal-year",
-      label: "Create fiscal year",
+      label: "New fiscal year",
       description: "Add a new fiscal year",
       path: "/accounting/configuration-files/fiscal-years",
       resource: Resource.FiscalYear,
@@ -1185,7 +1185,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-tractor",
-      label: "Create tractor",
+      label: "New tractor",
       description: "Add a new tractor",
       path: "/equipment/tractors",
       resource: Resource.Tractor,
@@ -1218,7 +1218,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-trailer",
-      label: "Create trailer",
+      label: "New trailer",
       description: "Add a new trailer",
       path: "/equipment/trailers",
       resource: Resource.Trailer,
@@ -1229,7 +1229,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-equipment-type",
-      label: "Create equipment type",
+      label: "New equipment type",
       description: "Add a new equipment type",
       path: "/equipment/configuration-files/equipment-types",
       resource: Resource.EquipmentType,
@@ -1239,7 +1239,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-equipment-manufacturer",
-      label: "Create equipment manufacturer",
+      label: "New equipment manufacturer",
       description: "Add a new equipment manufacturer",
       path: "/equipment/configuration-files/equipment-manufacturers",
       resource: Resource.EquipmentManufacturer,
@@ -1249,7 +1249,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-location",
-      label: "Create location",
+      label: "New location",
       description: "Add a new location",
       path: "/dispatch/locations",
       resource: Resource.Location,
@@ -1259,7 +1259,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-worker",
-      label: "Create worker",
+      label: "New worker",
       description: "Add a new worker",
       path: "/hr/workers",
       resource: Resource.Worker,
@@ -1281,7 +1281,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-location-category",
-      label: "Create location category",
+      label: "New location category",
       description: "Add a new location category",
       path: "/dispatch/configuration-files/location-categories",
       resource: Resource.LocationCategory,
@@ -1291,7 +1291,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-fleet-code",
-      label: "Create fleet code",
+      label: "New fleet code",
       description: "Add a new fleet code",
       path: "/dispatch/configuration-files/fleet-codes",
       resource: Resource.FleetCode,
@@ -1302,7 +1302,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-hold-reason",
-      label: "Create hold reason",
+      label: "New hold reason",
       description: "Add a new hold reason",
       path: "/admin/hold-reasons",
       resource: Resource.HoldReason,
@@ -1312,7 +1312,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-jurisdiction-rule",
-      label: "Create jurisdiction rule",
+      label: "New jurisdiction rule",
       description: "Add oversize limits for a state",
       path: "/admin/jurisdiction-rules",
       resource: Resource.JurisdictionRule,
@@ -1322,7 +1322,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-jurisdiction-rule-override",
-      label: "Create carrier override",
+      label: "New carrier override",
       description: "Hold this fleet to a stricter limit than a state requires",
       path: "/admin/jurisdiction-rule-overrides",
       resource: Resource.JurisdictionRuleOverride,
@@ -1332,7 +1332,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-service-failure-reason-code",
-      label: "Create Service failure reason",
+      label: "New service failure reason",
       description: "Add a service failure reason code",
       path: "/admin/service-failure-reason-codes",
       resource: Resource.ServiceFailureReasonCode,
@@ -1342,7 +1342,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-hazmat-segregation-rule",
-      label: "Create Hazmat segregation rule",
+      label: "New hazmat segregation rule",
       description: "Add a new hazmat segregation rule",
       path: "/admin/hazmat-segregation-rules",
       resource: Resource.HazmatSegregationRule,
@@ -1352,7 +1352,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-distance-override",
-      label: "Create distance override",
+      label: "New distance override",
       description: "Add a new distance override",
       path: "/admin/distance-overrides",
       resource: Resource.DistanceOverride,
@@ -1362,7 +1362,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-distance-profile",
-      label: "Create distance profile",
+      label: "New distance profile",
       description: "Add a new distance routing profile",
       path: "/admin/distance-profiles",
       resource: Resource.DistanceProfile,
@@ -1372,7 +1372,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-user",
-      label: "Create user",
+      label: "New user",
       description: "Add a new user",
       path: "/admin/users",
       resource: Resource.User,
@@ -1401,7 +1401,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-home-layout",
-      label: "Create home screen",
+      label: "New home screen",
       description: "Author a home screen and assign it to roles",
       path: "/admin/home-layouts/new",
       resource: Resource.HomeLayoutPreset,
@@ -1410,7 +1410,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-role",
-      label: "Create role",
+      label: "New role",
       description: "Add a new role",
       path: "/admin/roles/new",
       resource: Resource.Role,
@@ -1419,7 +1419,7 @@ export const navigationConfig: NavigationConfig = {
     },
     {
       id: "create-custom-field",
-      label: "Create custom field",
+      label: "New custom field",
       description: "Add a new custom field",
       path: "/admin/custom-fields",
       resource: Resource.CustomFieldDefinition,

@@ -1,6 +1,6 @@
-export const searchableEntityTypes = ["shipment", "customer", "worker", "document"] as const;
+import type { GlobalSearchEntityType } from "@/services/global-search";
 
-export type SearchableEntityType = (typeof searchableEntityTypes)[number];
+export type SearchableEntityType = GlobalSearchEntityType;
 
 export interface SearchEntityOption {
   key: SearchableEntityType;
@@ -102,4 +102,21 @@ export function stripMentionToken(input: string): string {
   }
 
   return input.slice(0, lastAtIndex).trim();
+}
+
+/**
+ * The record type an `@` mention settles on once a space ends it: an exact
+ * alias, or the only type the typed prefix can still mean ("@work" is
+ * workers). An ambiguous or unknown prefix settles on nothing.
+ */
+export function resolveMentionCommit(value: string): SearchableEntityType | null {
+  const exact = resolveEntityAlias(value);
+  if (exact) {
+    return exact;
+  }
+  if (value.trim() === "") {
+    return null;
+  }
+  const candidates = filterMentionOptions(value);
+  return candidates.length === 1 ? (candidates[0]?.key ?? null) : null;
 }

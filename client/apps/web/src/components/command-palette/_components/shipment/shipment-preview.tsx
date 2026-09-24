@@ -1,15 +1,26 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ShipmentStatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import {
+  DescriptionEmpty,
+  DescriptionItem,
+  DescriptionList,
+} from "@trenova/shared/components/ui/description-list";
 import { formatSplitDateTime } from "@trenova/shared/lib/date";
-import { queries } from "@/lib/queries";
 import { getDestinationStop, getOriginStop } from "@/lib/shipment-utils";
-import { formatCurrency } from "@trenova/shared/lib/utils";
+import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import type { MoveStatus, Shipment, ShipmentMove, Stop } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRightIcon } from "lucide-react";
+import { PALETTE_ENTITIES } from "../../palette-entities";
+import type { PaletteAction, PaletteIntent, PaletteRecord } from "../../palette-model";
+import { shipmentPreviewQuery } from "../preview/preview-queries";
+import {
+  PreviewError,
+  PreviewFrame,
+  PreviewSection,
+  PreviewSkeleton,
+} from "../preview/preview-frame";
 import { ShipmentRouteMap } from "./shipment-preview-map";
 
 const moveStatusConfig: Record<
@@ -31,38 +42,26 @@ const stopDotColor: Record<MoveStatus, string> = {
   Canceled: "bg-danger",
 };
 
-export function ShipmentSearchPreview({ shipmentId }: { shipmentId?: string }) {
-  const t = useT();
-
-  const enabled = Boolean(shipmentId);
-
-  const { data, isLoading, isError } = useQuery({
-    ...queries.shipment.get(shipmentId, { expandShipmentDetails: "true" }),
-    enabled,
-    staleTime: 30_000,
-  });
-
-  if (!shipmentId) {
-    return (
-      <div className="text-2xs text-muted-foreground flex h-full w-full items-center justify-center">
-        {t("Hover a shipment to preview details")}
-      </div>
-    );
-  }
+export function ShipmentPreview({
+  record,
+  actions,
+  onRun,
+}: {
+  record: PaletteRecord;
+  actions: readonly PaletteAction[];
+  onRun: (intent: PaletteIntent) => void;
+}) {
+  const { data, isLoading, isError } = useQuery(shipmentPreviewQuery(record.id));
 
   if (isLoading) {
     return <PreviewSkeleton />;
   }
 
   if (isError || !data) {
-    return (
-      <div className="text-2xs text-muted-foreground flex h-full items-center justify-center">
-        {t("Unable to load shipment.")}
-      </div>
-    );
+    return <PreviewError />;
   }
 
-  return <ShipmentPreviewContent shipment={data} />;
+  return <ShipmentPreviewContent shipment={data} actions={actions} onRun={onRun} />;
 }
 
 function formatCityState(stop: Stop | null | undefined): string | null {
@@ -73,8 +72,17 @@ function formatCityState(stop: Stop | null | undefined): string | null {
   return city || stateAbbr || null;
 }
 
-function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
+function ShipmentPreviewContent({
+  shipment,
+  actions,
+  onRun,
+}: {
+  shipment: Shipment;
+  actions: readonly PaletteAction[];
+  onRun: (intent: PaletteIntent) => void;
+}) {
   const t = useT();
+  const entity = PALETTE_ENTITIES.shipment;
 
   const origin = getOriginStop(shipment);
   const destination = getDestinationStop(shipment);
@@ -82,61 +90,60 @@ function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
   const destLabel = formatCityState(destination);
 
   const totalMileage = shipment.moves.reduce((sum, m) => sum + (m.distance ?? 0), 0);
-
-  const details: { label: string; value: string }[] = [];
-  if (shipment.pieces != null) {
-    details.push({ label: t("Pieces"), value: shipment.pieces.toLocaleString() });
-  }
-  if (shipment.weight != null) {
-    details.push({ label: t("Weight"), value: `${shipment.weight.toLocaleString()} lbs` });
-  }
-  if (totalMileage > 0) {
-    details.push({ label: t("Mileage"), value: `${totalMileage.toLocaleString()} mi` });
-  }
-  if (shipment.totalChargeAmount != null && Number(shipment.totalChargeAmount) > 0) {
-    details.push({ label: t("Total"), value: formatCurrency(Number(shipment.totalChargeAmount)) });
-  }
+  const total = Number(shipment.totalChargeAmount);
 
   return (
-    <ScrollArea className="h-full">
-      <div className="flex flex-col gap-3 px-3 py-2 text-sm">
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-base font-semibold">{shipment.proNumber || shipment.id}</span>
-            <ShipmentStatusBadge status={shipment.status} />
+    <PreviewFrame
+      icon={entity.icon}
+      tileClass={entity.tileClass}
+      title={shipment.proNumber || shipment.id}
+      subtitle={[
+        shipment.customer?.name &&
+          `${shipment.customer.name}${shipment.customer.code ? ` (${shipment.customer.code})` : ""}`,
+        shipment.bol && t("BOL {0}", shipment.bol),
+      ]
+        .filter(Boolean)
+        .join(" · ")}
+      badge={<ShipmentStatusBadge status={shipment.status} />}
+      actions={actions}
+      onRun={onRun}
+    >
+      <ShipmentRouteMap
+        moves={shipment.moves}
+        containerClassName="h-36 rounded-surface border-border-subtle"
+      />
+      {(originLabel || destLabel) && (
+        <PreviewSection title={t("Route")}>
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="truncate">{originLabel ?? "—"}</span>
+            <ArrowRightIcon className="text-foreground-subtle size-3.5 shrink-0" />
+            <span className="truncate">{destLabel ?? "—"}</span>
           </div>
-          <p className="text-muted-foreground max-w-full truncate text-xs">
-            {shipment.customer?.name}
-            {shipment.customer?.code && ` (${shipment.customer.code})`}
-            {shipment.bol && ` ${t("· BOL: {0}", shipment.bol)}`}
-          </p>
-        </div>
-        <ShipmentRouteMap moves={shipment.moves} />
-        {(originLabel || destLabel) && (
-          <div className="flex flex-col gap-0.5 border-t pt-2">
-            <span className="text-2xs text-muted-foreground font-medium">{t("Route")}</span>
-            <div className="flex items-center gap-1.5 text-xs font-medium">
-              <span>{originLabel ?? "—"}</span>
-              <ArrowRightIcon className="text-muted-foreground size-3 shrink-0" />
-              <span>{destLabel ?? "—"}</span>
-            </div>
-          </div>
-        )}
-        {details.length > 0 && (
-          <div className="flex flex-col gap-1.5 border-t pt-2">
-            <span className="text-2xs text-muted-foreground font-medium">{t("Details")}</span>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-              {details.map((d) => (
-                <div key={d.label} className="flex flex-col">
-                  <span className="text-2xs text-muted-foreground">{t(d.label)}</span>
-                  <span className="text-xs font-medium">{d.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {shipment.moves.length > 0 && (
-          <div className="flex flex-col gap-2 border-t pt-2">
+        </PreviewSection>
+      )}
+      <PreviewSection title={t("Details")}>
+        <DescriptionList columns={2}>
+          <DescriptionItem label={t("Pieces")} numeric>
+            {shipment.pieces != null ? shipment.pieces.toLocaleString() : <DescriptionEmpty />}
+          </DescriptionItem>
+          <DescriptionItem label={t("Weight")} numeric>
+            {shipment.weight != null ? (
+              t("{0} lbs", shipment.weight.toLocaleString())
+            ) : (
+              <DescriptionEmpty />
+            )}
+          </DescriptionItem>
+          <DescriptionItem label={t("Mileage")} numeric>
+            {totalMileage > 0 ? t("{0} mi", totalMileage.toLocaleString()) : <DescriptionEmpty />}
+          </DescriptionItem>
+          <DescriptionItem label={t("Total")} numeric>
+            {Number.isFinite(total) && total > 0 ? formatCurrency(total) : <DescriptionEmpty />}
+          </DescriptionItem>
+        </DescriptionList>
+      </PreviewSection>
+      {shipment.moves.length > 0 && (
+        <PreviewSection title={t("Moves")}>
+          <div className="flex flex-col gap-2">
             {shipment.moves
               .slice()
               .sort((a, b) => a.sequence - b.sequence)
@@ -144,9 +151,9 @@ function ShipmentPreviewContent({ shipment }: { shipment: Shipment }) {
                 <MoveCard key={move.id} move={move} />
               ))}
           </div>
-        )}
-      </div>
-    </ScrollArea>
+        </PreviewSection>
+      )}
+    </PreviewFrame>
   );
 }
 
@@ -157,12 +164,12 @@ function MoveCard({ move }: { move: ShipmentMove }) {
   const sortedStops = [...move.stops].sort((a, b) => a.sequence - b.sequence);
 
   return (
-    <div className="bg-card rounded-lg border p-2.5">
+    <div className="rounded-surface border-border-subtle bg-card border p-2.5">
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-semibold">{t("Move {0}", move.sequence + 1)}</span>
+          <span className="text-xs font-medium">{t("Move {0}", move.sequence + 1)}</span>
           {move.distance != null && move.distance > 0 && (
-            <span className="text-2xs text-muted-foreground">
+            <span className="text-2xs text-foreground-subtle">
               {t("· {0} mi", move.distance.toLocaleString())}
             </span>
           )}
@@ -185,21 +192,21 @@ function MoveCard({ move }: { move: ShipmentMove }) {
 
           return (
             <div key={stop.id} className="relative flex gap-2.5 pb-4 last:pb-0">
-              {!isLast && <div className="bg-border absolute top-3 -bottom-2 left-[4px] w-px" />}
+              {!isLast && <div className="bg-border absolute top-3 -bottom-2 left-1 w-px" />}
               <div className="relative z-1 flex flex-col items-center">
-                <div className={`mt-0.5 size-2.5 shrink-0 rounded-full ${dotColor}`} />
+                <div className={cn("mt-0.5 size-2.5 shrink-0 rounded-full", dotColor)} />
               </div>
               <div className="flex min-w-0 flex-col gap-0.5">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-medium">{stop.type}</span>
                   {stop.location?.name && (
-                    <span className="text-2xs text-muted-foreground truncate">
+                    <span className="text-2xs text-foreground-subtle truncate">
                       – {stop.location.name}
                     </span>
                   )}
                 </div>
                 {windowStart && (
-                  <span className="text-2xs text-muted-foreground">
+                  <span className="text-2xs text-foreground-subtle">
                     {windowStart.date} · {windowStart.time}
                     {windowEnd &&
                       ` - ${windowEnd.date === windowStart.date ? windowEnd.time : `${windowEnd.date} · ${windowEnd.time}`}`}
@@ -214,14 +221,14 @@ function MoveCard({ move }: { move: ShipmentMove }) {
         <div className="mt-2 grid grid-cols-2 gap-2 border-t pt-2">
           {move.assignment.tractor && (
             <div className="flex flex-col">
-              <span className="text-2xs text-muted-foreground">{t("Tractor")}</span>
-              <span className="text-xs font-medium">{move.assignment.tractor.code}</span>
+              <span className="text-2xs text-foreground-subtle">{t("Tractor")}</span>
+              <span className="text-xs">{move.assignment.tractor.code}</span>
             </div>
           )}
           {move.assignment.primaryWorker && (
             <div className="flex flex-col">
-              <span className="text-2xs text-muted-foreground">{t("Worker")}</span>
-              <span className="truncate text-xs font-medium">
+              <span className="text-2xs text-foreground-subtle">{t("Worker")}</span>
+              <span className="truncate text-xs">
                 {move.assignment.primaryWorker.firstName}{" "}
                 {move.assignment.primaryWorker.lastName?.charAt(0)}.
               </span>
@@ -229,62 +236,6 @@ function MoveCard({ move }: { move: ShipmentMove }) {
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-function PreviewSkeleton() {
-  return (
-    <div className="flex flex-col gap-3 px-3 py-2">
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-5 w-16 rounded-full" />
-        </div>
-        <Skeleton className="h-3.5 w-48" />
-      </div>
-      <Skeleton className="h-32 w-full rounded-md" />
-      <div className="flex flex-col gap-1 border-t pt-2">
-        <Skeleton className="h-3 w-12" />
-        <Skeleton className="h-4 w-40" />
-      </div>
-      <div className="flex flex-col gap-1.5 border-t pt-2">
-        <Skeleton className="h-3 w-12" />
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-          <div className="flex flex-col gap-1">
-            <Skeleton className="h-3 w-10" />
-            <Skeleton className="h-4 w-14" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <Skeleton className="h-3 w-10" />
-            <Skeleton className="h-4 w-14" />
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 border-t pt-2">
-        <div className="bg-card rounded-lg border p-2.5">
-          <div className="mb-2 flex items-center justify-between">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-14 rounded-full" />
-          </div>
-          <div className="flex flex-col gap-3">
-            <div className="flex gap-2.5">
-              <Skeleton className="mt-0.5 size-2.5 shrink-0 rounded-full" />
-              <div className="flex flex-col gap-1">
-                <Skeleton className="h-3.5 w-36" />
-                <Skeleton className="h-3 w-28" />
-              </div>
-            </div>
-            <div className="flex gap-2.5">
-              <Skeleton className="mt-0.5 size-2.5 shrink-0 rounded-full" />
-              <div className="flex flex-col gap-1">
-                <Skeleton className="h-3.5 w-36" />
-                <Skeleton className="h-3 w-28" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

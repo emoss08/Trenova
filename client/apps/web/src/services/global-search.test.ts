@@ -20,6 +20,7 @@ describe("GlobalSearchService", () => {
 
     expect(api.get).toHaveBeenCalledWith(
       "/search/global/?query=sam&limit=4&entityTypes=worker%2Ccustomer",
+      { signal: undefined },
     );
   });
 
@@ -30,6 +31,21 @@ describe("GlobalSearchService", () => {
 
     await service.search("sam", 4);
 
-    expect(api.get).toHaveBeenCalledWith("/search/global/?query=sam&limit=4");
+    expect(api.get).toHaveBeenCalledWith("/search/global/?query=sam&limit=4", {
+      signal: undefined,
+    });
+  });
+
+  it("forwards the abort signal so a superseded search is cancelled", async () => {
+    vi.mocked(api.get).mockResolvedValue({ query: "sam", groups: [] });
+    const controller = new AbortController();
+
+    const service = new GlobalSearchService();
+
+    await service.search("sam", 4, undefined, { signal: controller.signal });
+
+    expect(api.get).toHaveBeenCalledWith("/search/global/?query=sam&limit=4", {
+      signal: controller.signal,
+    });
   });
 });

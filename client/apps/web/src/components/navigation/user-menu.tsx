@@ -1,17 +1,8 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { releaseTurnReaders } from "@/components/assistant/turn-readers";
 import { LanguageSubmenu } from "@/components/navigation/language-submenu";
 import { SidebarLayoutSubmenu } from "@/components/navigation/sidebar-variant-menu";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useTheme } from "@trenova/shared/components/theme-provider";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@trenova/shared/components/ui/dialog";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -26,62 +17,11 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
+import { useSignOut } from "@/hooks/use-sign-out";
+import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { ChevronsUpDown, LogOut, Palette, Settings, User } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
 import { useNavigate } from "react-router";
-
-// The settings dialog carries the timezone/time-format choice tables, the
-// avatar cropper and the react-hook-form field set — none of which belong in
-// the chunk that renders the sidebar on every page.
-const UserSettingsDialog = lazy(() =>
-  import("@/components/navigation/user-settings-dialog").then((module) => ({
-    default: module.UserSettingsDialog,
-  })),
-);
-
-function UserSettingsDialogSkeleton({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const t = useT();
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="md">
-        <DialogHeader>
-          <DialogTitle>{t("Settings")}</DialogTitle>
-          <DialogDescription>{t("Manage your preferences and security.")}</DialogDescription>
-        </DialogHeader>
-        <div className="bg-sidebar flex items-center gap-4 rounded-md border p-4">
-          <Skeleton className="size-14 shrink-0 rounded-md" />
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-            <Skeleton className="h-3.5 w-40 rounded-md" />
-            <Skeleton className="h-3 w-28 rounded-md" />
-            <Skeleton className="h-3 w-48 rounded-md" />
-          </div>
-        </div>
-        <div className="space-y-5">
-          {Array.from({ length: 3 }, (_, section) => (
-            <div key={section} className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Skeleton className="size-8 shrink-0 rounded-lg" />
-                <div className="flex flex-col gap-1.5">
-                  <Skeleton className="h-3.5 w-32 rounded-md" />
-                  <Skeleton className="h-3 w-56 rounded-md" />
-                </div>
-              </div>
-              <Skeleton className="h-9 w-full rounded-md" />
-            </div>
-          ))}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 /**
  * `compact` renders the avatar alone as the trigger, for a rail with no room
@@ -91,34 +31,15 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
   const t = useT();
 
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const signOut = useSignOut();
+  const openDialog = useAppDialogsStore((state) => state.openDialog);
   const { theme, setTheme } = useTheme();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsMounted, setSettingsMounted] = useState(false);
 
   const displayName = user?.name ?? user?.username ?? "User";
 
-  const handleLogout = async () => {
-    // Let go of any reply being read before the session ends. The server
-    // stops the person's replies as it signs them out; a reader still open
-    // would take that for a dropped connection and keep reattaching.
-    releaseTurnReaders();
-    await logout();
-    void navigate("/login");
-  };
-
   return (
     <>
-      {settingsMounted && (
-        <Suspense
-          fallback={
-            <UserSettingsDialogSkeleton open={settingsOpen} onOpenChange={setSettingsOpen} />
-          }
-        >
-          <UserSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-        </Suspense>
-      )}
       <DropdownMenu>
         {compact ? (
           <DropdownMenuTrigger
@@ -197,10 +118,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             <DropdownMenuItem
               title={t("Settings")}
               startContent={<Settings className="size-4" />}
-              onClick={() => {
-                setSettingsMounted(true);
-                setSettingsOpen(true);
-              }}
+              onClick={() => openDialog("settings")}
             />
             <SidebarLayoutSubmenu />
             <LanguageSubmenu />
@@ -239,7 +157,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
             <DropdownMenuItem
               title={t("Log out")}
               startContent={<LogOut className="size-4" />}
-              onClick={() => void handleLogout()}
+              onClick={() => void signOut()}
             />
           </DropdownMenuGroup>
         </DropdownMenuContent>

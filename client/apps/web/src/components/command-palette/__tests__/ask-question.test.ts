@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { askQuestion } from "../route-command-palette";
+import { askQuestion } from "../ask-question";
 
 /**
  * The palette turns into a question when the entry reads as one: a question

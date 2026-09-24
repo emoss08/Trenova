@@ -1,5 +1,5 @@
 {
-  "version": "sha256:eabe1b5e45ea6061236a3f9e9ba20fa716a1382013c28871991f407c7ebed313",
+  "version": "sha256:3d8d9b01437b7c5156f353df4ca527d21bd538472c50bef09eb9d61826fefe57",
   "modules": [
     {
       "id": "home",
@@ -888,7 +888,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create account type",
+        "label": "New account type",
         "query": {
           "panelType": "create"
         }
@@ -989,7 +989,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create fiscal year",
+        "label": "New fiscal year",
         "query": {
           "panelType": "create"
         }
@@ -2557,7 +2557,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create custom field",
+        "label": "New custom field",
         "query": {
           "panelType": "create"
         }
@@ -3034,7 +3034,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create distance override",
+        "label": "New distance override",
         "query": {
           "panelType": "create"
         }
@@ -3122,7 +3122,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create distance profile",
+        "label": "New distance profile",
         "query": {
           "panelType": "create"
         }
@@ -3533,7 +3533,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create Hazmat segregation rule",
+        "label": "New hazmat segregation rule",
         "query": {
           "panelType": "create"
         }
@@ -3602,7 +3602,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create hold reason",
+        "label": "New hold reason",
         "query": {
           "panelType": "create"
         }
@@ -4111,7 +4111,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create carrier override",
+        "label": "New carrier override",
         "query": {
           "panelType": "create"
         }
@@ -4198,7 +4198,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create jurisdiction rule",
+        "label": "New jurisdiction rule",
         "query": {
           "panelType": "create"
         }
@@ -4634,7 +4634,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create Service failure reason",
+        "label": "New service failure reason",
         "query": {
           "panelType": "create"
         }
@@ -5098,7 +5098,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create user",
+        "label": "New user",
         "query": {
           "panelType": "create"
         }
@@ -5252,7 +5252,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create accessorial charge",
+        "label": "New accessorial charge",
         "query": {
           "panelType": "create"
         }
@@ -5408,7 +5408,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create customer",
+        "label": "New customer",
         "query": {
           "panelType": "create"
         }
@@ -5558,7 +5558,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create document type",
+        "label": "New document type",
         "query": {
           "panelType": "create"
         }
@@ -5781,7 +5781,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create rate matrix",
+        "label": "New rate matrix",
         "query": {
           "panelType": "create"
         }
@@ -5874,7 +5874,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create rate zone",
+        "label": "New rate zone",
         "query": {
           "panelType": "create"
         }
@@ -6338,7 +6338,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create rate agreement",
+        "label": "New rate agreement",
         "query": {
           "panelType": "create"
         }
@@ -7172,7 +7172,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create detention policy",
+        "label": "New detention policy",
         "query": {
           "panelType": "create"
         }
@@ -7734,7 +7734,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create fleet code",
+        "label": "New fleet code",
         "query": {
           "panelType": "create"
         }
@@ -7798,7 +7798,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create location category",
+        "label": "New location category",
         "query": {
           "panelType": "create"
         }
@@ -8005,7 +8005,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create location",
+        "label": "New location",
         "query": {
           "panelType": "create"
         }
@@ -8999,7 +8999,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create equipment manufacturer",
+        "label": "New equipment manufacturer",
         "query": {
           "panelType": "create"
         }
@@ -9075,7 +9075,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create equipment type",
+        "label": "New equipment type",
         "query": {
           "panelType": "create"
         }
@@ -9176,7 +9176,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create tractor",
+        "label": "New tractor",
         "query": {
           "panelType": "create"
         }
@@ -9275,7 +9275,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create trailer",
+        "label": "New trailer",
         "query": {
           "panelType": "create"
         }
@@ -13384,7 +13384,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create commodity",
+        "label": "New commodity",
         "query": {
           "panelType": "create"
         }
@@ -13463,7 +13463,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create hazardous material",
+        "label": "New hazardous material",
         "query": {
           "panelType": "create"
         }
@@ -13539,7 +13539,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create Service type",
+        "label": "New service type",
         "query": {
           "panelType": "create"
         }
@@ -13627,7 +13627,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create shipment type",
+        "label": "New shipment type",
         "query": {
           "panelType": "create"
         }
@@ -14056,7 +14056,7 @@
       ],
       "covers": [],
       "createAction": {
-        "label": "Create shipment",
+        "label": "New shipment",
         "query": {
           "panelType": "create"
         }

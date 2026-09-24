@@ -7766,6 +7766,13 @@ export type CarrierTableQueryVariables = Exact<{
 
 export type CarrierTableQuery = { carriers: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'CarrierTableRowFieldsFragment': CarrierTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type CommandPaletteCustomerPreviewQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CommandPaletteCustomerPreviewQuery = { customer: { id: string, status: EntityStatus, code: string, name: string, addressLine1: string | null, city: string | null, postalCode: string, updatedAt: number, state: { abbreviation: string } | null, billingProfile: { paymentTerm: CustomerPaymentTerm, creditStatus: CustomerCreditStatus, creditLimit: string | null, creditBalance: string, invoiceDelivery: CustomerInvoiceDelivery, billingCycle: CustomerBillingCycle } | null } | null };
+
 export type CommodityTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, hazardousMaterialId: string | null, status: EntityStatus, name: string, description: string, minTemperature: number | null, maxTemperature: number | null, weightPerUnit: number | null, linearFeetPerUnit: number | null, maxQuantityPerShipment: number | null, freightClass: FreightClass | null, loadingInstructions: string | null, stackable: boolean, fragile: boolean, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'CommodityTableRowFieldsFragment' };
 
 export type CommodityTableQueryVariables = Exact<{
@@ -20625,6 +20632,7 @@ export const AcceptCarrierInvoiceMatchDocument = {"__meta__":{"kind":"mutation",
 export const AcceptCarrierInvoiceMatchWithVarianceDocument = {"__meta__":{"kind":"mutation","name":"AcceptCarrierInvoiceMatchWithVariance","hash":"sha256:060f67125969b0df8bd23b2d406141579141403904677fcf383e944aae0c9349"}} as unknown as TypedDocumentString<AcceptCarrierInvoiceMatchWithVarianceMutation, AcceptCarrierInvoiceMatchWithVarianceMutationVariables>;
 export const RejectCarrierInvoiceMatchDocument = {"__meta__":{"kind":"mutation","name":"RejectCarrierInvoiceMatch","hash":"sha256:9afe5a46af162af1d29113765c8b1107deee2246b7294f54301c3b2884169ea1"}} as unknown as TypedDocumentString<RejectCarrierInvoiceMatchMutation, RejectCarrierInvoiceMatchMutationVariables>;
 export const CarrierTableDocument = {"__meta__":{"kind":"query","name":"CarrierTable","hash":"sha256:24890c58a1d854d5479367fa1e4b5e19d0421b6863081f334b23aef9c9ab6f78"}} as unknown as TypedDocumentString<CarrierTableQuery, CarrierTableQueryVariables>;
+export const CommandPaletteCustomerPreviewDocument = {"__meta__":{"kind":"query","name":"CommandPaletteCustomerPreview","hash":"sha256:bdefd0fd98381bfc42a929513d00ea1308ca1b99a27624f99d86c9b6089828b2"}} as unknown as TypedDocumentString<CommandPaletteCustomerPreviewQuery, CommandPaletteCustomerPreviewQueryVariables>;
 export const CommodityTableDocument = {"__meta__":{"kind":"query","name":"CommodityTable","hash":"sha256:02239b2db6c74085ddc074c2c20f287e0c6b1e42c2eeb5efdc2a731076b2a042"}} as unknown as TypedDocumentString<CommodityTableQuery, CommodityTableQueryVariables>;
 export const CostingControlPageDocument = {"__meta__":{"kind":"query","name":"CostingControlPage","hash":"sha256:a85cccb870b7669eca888497e484d84fee24b403957e9d3bbf4ff03b337551ea"}} as unknown as TypedDocumentString<CostingControlPageQuery, CostingControlPageQueryVariables>;
 export const ResolvedCostProfilePageDocument = {"__meta__":{"kind":"query","name":"ResolvedCostProfilePage","hash":"sha256:0b2352614b5935706f571748ef919218386d7f44cee104d0a0382467511caf67"}} as unknown as TypedDocumentString<ResolvedCostProfilePageQuery, ResolvedCostProfilePageQueryVariables>;

@@ -1,5 +1,5 @@
 {
-  "operationCount": 836,
+  "operationCount": 837,
   "fragmentCount": 227,
   "operations": [
     {
@@ -4154,6 +4154,26 @@
       ],
       "usages": [],
       "sdl": "mutation CloseWorkerSafetyEvent($input: SafetyEventStatusInput!) {\n  closeWorkerSafetyEvent(input: $input) {\n    ...WorkerSafetyEventFields\n  }\n}\n\nfragment WorkerSafetyEventFields on WorkerSafetyEvent {\n  id\n  businessUnitId\n  organizationId\n  workerId\n  kind\n  severity\n  status\n  occurredAt\n  location\n  description\n  preventable\n  points\n  pointsExpireAt\n  activePoints\n  referenceNumber\n  shipmentId\n  inspectionLevel\n  inspectionResult\n  outOfService\n  fineAmount\n  costAmount\n  documentId\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  recordedById\n  recordedBy {\n    id\n    name\n  }\n  closedById\n  closedBy {\n    id\n    name\n  }\n  closedAt\n  resolution\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CommandPaletteCustomerPreview",
+      "kind": "query",
+      "domain": "command-palette",
+      "sourceFile": "src/operations/command-palette/operations.graphql",
+      "hash": "sha256:bdefd0fd98381bfc42a929513d00ea1308ca1b99a27624f99d86c9b6089828b2",
+      "rootFields": [
+        "customer"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CommandPaletteCustomerPreview($id: ID!) {\n  customer(id: $id) {\n    id\n    status\n    code\n    name\n    addressLine1\n    city\n    postalCode\n    updatedAt\n    state {\n      abbreviation\n    }\n    billingProfile {\n      paymentTerm\n      creditStatus\n      creditLimit\n      creditBalance\n      invoiceDelivery\n      billingCycle\n    }\n  }\n}"
     },
     {
       "name": "CommitFuelPurchaseImport",

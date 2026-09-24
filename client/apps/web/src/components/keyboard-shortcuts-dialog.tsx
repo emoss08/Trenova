@@ -9,17 +9,19 @@ import {
 import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
 import { keybindGroups } from "@/config/keybinds.config";
 import { useHotkey } from "@tanstack/react-hotkeys";
-import { useState } from "react";
+import { useAppDialogOpen, useAppDialogsStore } from "@/stores/app-dialogs-store";
 
 export function KeyboardShortcutsDialog() {
   const t = useT();
 
-  const [open, setOpen] = useState(false);
+  const open = useAppDialogOpen("shortcuts");
+  const setDialogOpen = useAppDialogsStore((state) => state.setDialogOpen);
+  const toggleDialog = useAppDialogsStore((state) => state.toggleDialog);
 
   useHotkey(
     "Mod+/",
     () => {
-      setOpen((prev) => !prev);
+      toggleDialog("shortcuts");
     },
     {
       ignoreInputs: true,
@@ -28,7 +30,7 @@ export function KeyboardShortcutsDialog() {
   );
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(next) => setDialogOpen("shortcuts", next)}>
       <DialogContent size="md">
         <DialogHeader>
           <DialogTitle>{t("Keyboard shortcuts")}</DialogTitle>
