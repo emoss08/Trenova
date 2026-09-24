@@ -625,20 +625,11 @@ func (a *Activities) originalProposals(
 		return nil, fmt.Errorf("list source decisions: %w", err)
 	}
 
-	// Newest first, so the first decision seen for a proposal is its latest.
-	latest := make(map[pulid.ID]*agent.AgentDecision, len(decisions))
-	for _, decision := range decisions {
-		if decision.ProposalID == nil {
-			continue
-		}
-		if _, seen := latest[*decision.ProposalID]; !seen {
-			latest[*decision.ProposalID] = decision
-		}
-	}
-
+	// Newest first, so each proposal's decisions start with its latest.
+	byProposal := agent.DecisionsByProposal(decisions)
 	originals := make([]agent.OriginalProposal, 0, len(proposals))
 	for _, proposal := range proposals {
-		originals = append(originals, agent.NewOriginalProposal(proposal, latest[proposal.ID]))
+		originals = append(originals, agent.NewOriginalProposal(proposal, byProposal[proposal.ID]))
 	}
 
 	return originals, nil

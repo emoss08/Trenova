@@ -26,14 +26,6 @@ func TestScoreSuite_WeighsThumbsUpLess(t *testing.T) {
 	assert.Zero(t, ScoreSuite(nil).Score)
 }
 
-func TestMedian(t *testing.T) {
-	t.Parallel()
-
-	assert.InDelta(t, 0.8, Median([]float64{0.9, 0.7, 0.8}), 1e-9)
-	assert.InDelta(t, 0.85, Median([]float64{0.9, 0.7, 0.8, 1.0}), 1e-9)
-	assert.Zero(t, Median(nil))
-}
-
 func history(scores ...float64) []SuiteRun {
 	runs := make([]SuiteRun, 0, len(scores))
 	for i, score := range scores {

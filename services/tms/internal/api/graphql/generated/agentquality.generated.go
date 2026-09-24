@@ -1108,6 +1108,43 @@ func (ec *executionContext) unmarshalInputAgentEvalCaseCuratedInput(ctx context.
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAgentEvalCaseFromFeedbackInput(ctx context.Context, obj any) (gqlmodel.AgentEvalCaseFromFeedbackInput, error) {
+	var it gqlmodel.AgentEvalCaseFromFeedbackInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"feedbackId", "title"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "feedbackId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("feedbackId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FeedbackID = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAgentEvalCaseFromMessageInput(ctx context.Context, obj any) (gqlmodel.AgentEvalCaseFromMessageInput, error) {
 	var it gqlmodel.AgentEvalCaseFromMessageInput
 	if obj == nil {
@@ -1119,7 +1156,7 @@ func (ec *executionContext) unmarshalInputAgentEvalCaseFromMessageInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"threadId", "messageId", "feedbackId", "title"}
+	fieldsInOrder := [...]string{"threadId", "messageId", "title"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -1140,13 +1177,6 @@ func (ec *executionContext) unmarshalInputAgentEvalCaseFromMessageInput(ctx cont
 				return it, err
 			}
 			it.MessageID = data
-		case "feedbackId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("feedbackId"))
-			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.FeedbackID = data
 		case "title":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -1207,7 +1237,7 @@ func (ec *executionContext) unmarshalInputCreateAgentEvalCaseInput(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"fromMessage", "fromProposal", "curated"}
+	fieldsInOrder := [...]string{"fromMessage", "fromProposal", "fromFeedback", "curated"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -1228,6 +1258,13 @@ func (ec *executionContext) unmarshalInputCreateAgentEvalCaseInput(ctx context.C
 				return it, err
 			}
 			it.FromProposal = data
+		case "fromFeedback":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fromFeedback"))
+			data, err := ec.unmarshalOAgentEvalCaseFromFeedbackInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentEvalCaseFromFeedbackInput(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FromFeedback = data
 		case "curated":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("curated"))
 			data, err := ec.unmarshalOAgentEvalCaseCuratedInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentEvalCaseCuratedInput(ctx, v)
@@ -2032,6 +2069,14 @@ func (ec *executionContext) unmarshalOAgentEvalCaseCuratedInput2ᚖgithubᚗcom�
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputAgentEvalCaseCuratedInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOAgentEvalCaseFromFeedbackInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentEvalCaseFromFeedbackInput(ctx context.Context, v any) (*gqlmodel.AgentEvalCaseFromFeedbackInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAgentEvalCaseFromFeedbackInput(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

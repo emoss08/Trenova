@@ -182,8 +182,13 @@ export type AgentEvalCaseCuratedInput = {
   trigger?: AgentRunTrigger | null | undefined;
 };
 
+/** A reply someone rated as good, captured through their rating. */
+export type AgentEvalCaseFromFeedbackInput = {
+  feedbackId: string | number;
+  title?: string | null | undefined;
+};
+
 export type AgentEvalCaseFromMessageInput = {
-  feedbackId?: string | number | null | undefined;
   messageId: string | number;
   threadId: string | number;
   title?: string | null | undefined;
@@ -1230,9 +1235,10 @@ export type CoverageTier =
   | 'EmployeeSpouse'
   | 'Family';
 
-/** Exactly one of the three. */
+/** Exactly one of the four. */
 export type CreateAgentEvalCaseInput = {
   curated?: AgentEvalCaseCuratedInput | null | undefined;
+  fromFeedback?: AgentEvalCaseFromFeedbackInput | null | undefined;
   fromMessage?: AgentEvalCaseFromMessageInput | null | undefined;
   fromProposal?: AgentEvalCaseFromProposalInput | null | undefined;
 };

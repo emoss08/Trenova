@@ -486,3 +486,30 @@ func TestObserveReplay_ReadsRefusals(t *testing.T) {
 	assert.False(t, answered.refused)
 	assert.Equal(t, []string{`{"rate": 1350}`}, answered.results)
 }
+
+func TestObserveReplay_TracesWhichCallsWouldHaveRunUnasked(t *testing.T) {
+	t.Parallel()
+
+	observed := observeReplay(&serviceports.RunResult{
+		Messages: []conversation.Message{{
+			Role: conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{
+				{ID: "call_1", Name: "read_inbound_email"},
+				{ID: "call_2", Name: "send_customer_email", Arguments: map[string]any{"to": "a"}},
+				{ID: "call_3", Name: "update_rate"},
+			},
+		}},
+		Actions: []serviceports.PendingAction{
+			{ToolName: "send_customer_email", ToolCallID: "call_2", Tier: agent.TierAutoExecute},
+			{ToolName: "update_rate", ToolCallID: "call_3", Tier: agent.TierActWithApproval},
+		},
+	})
+
+	require.Len(t, observed.trace, 3)
+	assert.Equal(t, "read_inbound_email", observed.trace[0].ToolName)
+	assert.False(t, observed.trace[0].AutoRun)
+	assert.True(t, observed.trace[1].AutoRun)
+	assert.Equal(t, map[string]any{"to": "a"}, observed.trace[1].Arguments)
+	assert.False(t, observed.trace[2].AutoRun, "a proposal waits for a person")
+	assert.Len(t, observed.calls, 3)
+}

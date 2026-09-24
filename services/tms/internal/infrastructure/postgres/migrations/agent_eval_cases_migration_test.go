@@ -50,8 +50,8 @@ func TestAgentEvalCasesMigration_KeysTimesAndComments(t *testing.T) {
 	body := readMigration(t, evalCasesUp)
 	columns := createTableColumns(t, body, "agent_eval_cases")
 
-	assert.Contains(t, body,
-		`CONSTRAINT "pk_agent_eval_cases" PRIMARY KEY ("id", "business_unit_id", "organization_id")`)
+	assert.Contains(t, body, `CONSTRAINT "pk_agent_eval_cases" PRIMARY KEY `+
+		`("id", "business_unit_id", "organization_id")`)
 	for _, name := range []string{"created_at", "updated_at", "expires_at", "version"} {
 		assert.Equal(t, "bigint", columns[name], "%s is a BIGINT", name)
 	}

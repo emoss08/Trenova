@@ -877,8 +877,13 @@ type AgentEvalCaseEdge {
   node: AgentEvalCase!
 }
 
+"""A reply someone rated as good, captured through their rating."""
+input AgentEvalCaseFromFeedbackInput {
+  feedbackId: ID!
+  title: String
+}
+
 input AgentEvalCaseFromMessageInput {
-  feedbackId: ID
   messageId: ID!
   threadId: ID!
   title: String
@@ -4180,9 +4185,10 @@ enum CoverageTier {
   Family
 }
 
-"""Exactly one of the three."""
+"""Exactly one of the four."""
 input CreateAgentEvalCaseInput {
   curated: AgentEvalCaseCuratedInput
+  fromFeedback: AgentEvalCaseFromFeedbackInput
   fromMessage: AgentEvalCaseFromMessageInput
   fromProposal: AgentEvalCaseFromProposalInput
 }

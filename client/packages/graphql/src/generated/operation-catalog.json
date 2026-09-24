@@ -1,6 +1,6 @@
 {
-  "operationCount": 807,
-  "fragmentCount": 212,
+  "operationCount": 813,
+  "fragmentCount": 214,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -521,11 +521,62 @@
       "sdl": "query AgentDefinitionCount($input: DataTableConnectionInput!) {\n  agentDefinitions(input: $input) {\n    totalCount\n  }\n}"
     },
     {
+      "name": "AgentEvalCaseDetail",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/eval-cases.graphql",
+      "hash": "sha256:c8f54c60d6575aebc1b527f39b11dbce52859470f602f7a2ee439711ed922799",
+      "rootFields": [
+        "agentEvalCase"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentEvalCaseDetailFields",
+        "AgentEvalCaseTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentEvalCaseDetail($id: ID!) {\n  agentEvalCase(id: $id) {\n    ...AgentEvalCaseDetailFields\n  }\n}\n\nfragment AgentEvalCaseDetailFields on AgentEvalCase {\n  ...AgentEvalCaseTableRowFields\n  sourceRunId\n  sourceTurnId\n  sourceMessageId\n  sourceFeedbackId\n  history\n  pageContext\n  mentions\n  subjectType\n  subjectId\n  toolFixtures\n  rubric\n  redaction\n  contentHash\n  capturedFingerprint\n  createdByUserId\n}\n\nfragment AgentEvalCaseTableRowFields on AgentEvalCase {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  title\n  source\n  status\n  trigger\n  input\n  sourceThreadId\n  sourceProposalId\n  heldTools\n  expected\n  weight\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentEvalCaseTable",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/eval-cases.graphql",
+      "hash": "sha256:5e3392b2af6f7d552485ad9c8c6e6598132e2b9398f3c7d96465bb66570875e1",
+      "rootFields": [
+        "agentEvalCases"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "AgentEvalCaseTableRowFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentEvalCaseTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentEvalCases(input: $input) {\n    edges {\n      node {\n        ...AgentEvalCaseTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentEvalCaseTableRowFields on AgentEvalCase {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  title\n  source\n  status\n  trigger\n  input\n  sourceThreadId\n  sourceProposalId\n  heldTools\n  expected\n  weight\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
       "name": "AgentEvaluationDetail",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/evaluations.graphql",
-      "hash": "sha256:b4c42d1fab671fe95ec03ec6141352f0fe894e1f3c5d6c91bf4e950608bafef1",
+      "hash": "sha256:9b35aba04f49a6d9a69d857a31b57e871bc96dc0f726e58fe429eaad28efef30",
       "rootFields": [
         "agentEvaluation"
       ],
@@ -538,14 +589,14 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "query AgentEvaluationDetail($id: ID!) {\n  agentEvaluation(id: $id) {\n    id\n    agentDefinitionId\n    sourceRunId\n    status\n    trigger\n    subjectType\n    subjectId\n    input\n    definitionVersion\n    promptVersion\n    model\n    providerId\n    reply\n    actions\n    comparison\n    originalProposals\n    toolCallsUsed\n    errorMessage\n    startedAt\n    completedAt\n    createdAt\n  }\n}"
+      "sdl": "query AgentEvaluationDetail($id: ID!) {\n  agentEvaluation(id: $id) {\n    id\n    agentDefinitionId\n    sourceRunId\n    status\n    trigger\n    subjectType\n    subjectId\n    input\n    definitionVersion\n    promptVersion\n    model\n    providerId\n    reply\n    actions\n    comparison\n    evalCaseId\n    checks\n    judge\n    caseScore\n    fingerprint\n    originalProposals\n    toolCallsUsed\n    errorMessage\n    startedAt\n    completedAt\n    createdAt\n  }\n}"
     },
     {
       "name": "AgentEvaluationTable",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/evaluations.graphql",
-      "hash": "sha256:0be9cb6fd865efed333148edbc1d0c6a2c6b805588bfcec4fee1b3eeec463366",
+      "hash": "sha256:bed3f579a978402f809e4abe94938122a40a667b6c67b4bf82251dc62a438752",
       "rootFields": [
         "agentEvaluations"
       ],
@@ -566,7 +617,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentEvaluationTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentEvaluations(input: $input) {\n    edges {\n      node {\n        ...AgentEvaluationTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentEvaluationTableRowFields on AgentEvaluation {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  sourceRunId\n  status\n  trigger\n  subjectType\n  subjectId\n  model\n  reply\n  comparison\n  originalProposals\n  toolCallsUsed\n  errorMessage\n  requestedByUserId\n  startedAt\n  completedAt\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentEvaluationTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentEvaluations(input: $input) {\n    edges {\n      node {\n        ...AgentEvaluationTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentEvaluationTableRowFields on AgentEvaluation {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  sourceRunId\n  evalCaseId\n  status\n  trigger\n  subjectType\n  subjectId\n  model\n  reply\n  comparison\n  caseScore\n  originalProposals\n  toolCallsUsed\n  errorMessage\n  requestedByUserId\n  startedAt\n  completedAt\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentExceptionDetail",
@@ -3869,6 +3920,29 @@
       "fragments": [],
       "usages": [],
       "sdl": "query CostingControlPage {\n  costingControl {\n    id\n    businessUnitId\n    organizationId\n    fuelIndexId\n    fuelIndex {\n      id\n      name\n      code\n      source\n      fuelType\n      isActive\n    }\n    useLiveFuelPrice\n    milesPerGallon\n    includeDeadheadMiles\n    glActualsEnabled\n    glRollingMonths\n    plannedMonthlyMiles\n    targetMarginPercent\n    version\n    createdAt\n    updatedAt\n    categories {\n      id\n      category\n      name\n      costBehavior\n      rateSource\n      benchmarkRatePerMile\n      overrideRatePerMile\n      isActive\n      sortOrder\n      version\n      glAccounts {\n        id\n        glAccountId\n        accountCode\n        accountName\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "CreateAgentEvalCase",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/eval-cases.graphql",
+      "hash": "sha256:75b53ec477e9ad120fe972fdd5d4890e5bb58ba673df78cee3cb879a791a3f1b",
+      "rootFields": [
+        "createAgentEvalCase"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateAgentEvalCaseInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentEvalCaseDetailFields",
+        "AgentEvalCaseTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateAgentEvalCase($input: CreateAgentEvalCaseInput!) {\n  createAgentEvalCase(input: $input) {\n    duplicate\n    evalCase {\n      ...AgentEvalCaseDetailFields\n    }\n  }\n}\n\nfragment AgentEvalCaseDetailFields on AgentEvalCase {\n  ...AgentEvalCaseTableRowFields\n  sourceRunId\n  sourceTurnId\n  sourceMessageId\n  sourceFeedbackId\n  history\n  pageContext\n  mentions\n  subjectType\n  subjectId\n  toolFixtures\n  rubric\n  redaction\n  contentHash\n  capturedFingerprint\n  createdByUserId\n}\n\nfragment AgentEvalCaseTableRowFields on AgentEvalCase {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  title\n  source\n  status\n  trigger\n  input\n  sourceThreadId\n  sourceProposalId\n  heldTools\n  expected\n  weight\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "CreateAgentMemory",
@@ -12321,11 +12395,33 @@
       "sdl": "mutation ReopenWorkerSafetyEvent($input: SafetyEventStatusInput!) {\n  reopenWorkerSafetyEvent(input: $input) {\n    ...WorkerSafetyEventFields\n  }\n}\n\nfragment WorkerSafetyEventFields on WorkerSafetyEvent {\n  id\n  businessUnitId\n  organizationId\n  workerId\n  kind\n  severity\n  status\n  occurredAt\n  location\n  description\n  preventable\n  points\n  pointsExpireAt\n  activePoints\n  referenceNumber\n  shipmentId\n  inspectionLevel\n  inspectionResult\n  outOfService\n  fineAmount\n  costAmount\n  documentId\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  recordedById\n  recordedBy {\n    id\n    name\n  }\n  closedById\n  closedBy {\n    id\n    name\n  }\n  closedAt\n  resolution\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "ReplayAgentEvalCase",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/eval-cases.graphql",
+      "hash": "sha256:0ee6fe864b9105f172ebf270f1851d5f911b193d61d622027312b61ea3af561c",
+      "rootFields": [
+        "replayAgentEvalCase"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentEvaluationTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ReplayAgentEvalCase($id: ID!) {\n  replayAgentEvalCase(id: $id) {\n    ...AgentEvaluationTableRowFields\n  }\n}\n\nfragment AgentEvaluationTableRowFields on AgentEvaluation {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  sourceRunId\n  evalCaseId\n  status\n  trigger\n  subjectType\n  subjectId\n  model\n  reply\n  comparison\n  caseScore\n  originalProposals\n  toolCallsUsed\n  errorMessage\n  requestedByUserId\n  startedAt\n  completedAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "ReplayAgentRun",
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/evaluations.graphql",
-      "hash": "sha256:f0275315246f7b642fb91c2cf0e4b7ada7e6b84fa916aaeb4dda6755895f5037",
+      "hash": "sha256:69d6e6741e010f3ca6599a756f70b31c179667c4fd58eb1f4d5a797afb0e5a27",
       "rootFields": [
         "replayAgentRun"
       ],
@@ -12340,7 +12436,7 @@
         "AgentEvaluationTableRowFields"
       ],
       "usages": [],
-      "sdl": "mutation ReplayAgentRun($runId: ID!) {\n  replayAgentRun(runId: $runId) {\n    ...AgentEvaluationTableRowFields\n  }\n}\n\nfragment AgentEvaluationTableRowFields on AgentEvaluation {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  sourceRunId\n  status\n  trigger\n  subjectType\n  subjectId\n  model\n  reply\n  comparison\n  originalProposals\n  toolCallsUsed\n  errorMessage\n  requestedByUserId\n  startedAt\n  completedAt\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation ReplayAgentRun($runId: ID!) {\n  replayAgentRun(runId: $runId) {\n    ...AgentEvaluationTableRowFields\n  }\n}\n\nfragment AgentEvaluationTableRowFields on AgentEvaluation {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  sourceRunId\n  evalCaseId\n  status\n  trigger\n  subjectType\n  subjectId\n  model\n  reply\n  comparison\n  caseScore\n  originalProposals\n  toolCallsUsed\n  errorMessage\n  requestedByUserId\n  startedAt\n  completedAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "ReportCatalog",
@@ -13688,6 +13784,34 @@
       ],
       "usages": [],
       "sdl": "query ServiceTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  serviceTypes(input: $input) {\n    edges {\n      node {\n        ...ServiceTypeTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ServiceTypeTableRowFields on ServiceType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  color\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "SetAgentEvalCaseStatus",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/eval-cases.graphql",
+      "hash": "sha256:de2f6cc5bb9a322e8add3f6d999387fe940583379fb290a1f0d0c4e02c9ed863",
+      "rootFields": [
+        "setAgentEvalCaseStatus"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "AgentEvalCaseStatus!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentEvalCaseDetailFields",
+        "AgentEvalCaseTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SetAgentEvalCaseStatus($id: ID!, $status: AgentEvalCaseStatus!) {\n  setAgentEvalCaseStatus(id: $id, status: $status) {\n    ...AgentEvalCaseDetailFields\n  }\n}\n\nfragment AgentEvalCaseDetailFields on AgentEvalCase {\n  ...AgentEvalCaseTableRowFields\n  sourceRunId\n  sourceTurnId\n  sourceMessageId\n  sourceFeedbackId\n  history\n  pageContext\n  mentions\n  subjectType\n  subjectId\n  toolFixtures\n  rubric\n  redaction\n  contentHash\n  capturedFingerprint\n  createdByUserId\n}\n\nfragment AgentEvalCaseTableRowFields on AgentEvalCase {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  title\n  source\n  status\n  trigger\n  input\n  sourceThreadId\n  sourceProposalId\n  heldTools\n  expected\n  weight\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "SetAgentMemoryStatus",
@@ -15629,6 +15753,34 @@
       ],
       "usages": [],
       "sdl": "mutation UpdateAgentControl($input: AgentControlInput!) {\n  updateAgentControl(input: $input) {\n    ...AgentControlFields\n  }\n}\n\nfragment AgentControlFields on AgentControl {\n  id\n  organizationId\n  businessUnitId\n  shadowMode\n  earnedAutonomy\n  promotionThreshold\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "UpdateAgentEvalCase",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/eval-cases.graphql",
+      "hash": "sha256:01ed203825730c0ee1bcfbcee73d9d0462fb07752a1da21963352e86b7df3df3",
+      "rootFields": [
+        "updateAgentEvalCase"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "UpdateAgentEvalCaseInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentEvalCaseDetailFields",
+        "AgentEvalCaseTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateAgentEvalCase($id: ID!, $input: UpdateAgentEvalCaseInput!) {\n  updateAgentEvalCase(id: $id, input: $input) {\n    ...AgentEvalCaseDetailFields\n  }\n}\n\nfragment AgentEvalCaseDetailFields on AgentEvalCase {\n  ...AgentEvalCaseTableRowFields\n  sourceRunId\n  sourceTurnId\n  sourceMessageId\n  sourceFeedbackId\n  history\n  pageContext\n  mentions\n  subjectType\n  subjectId\n  toolFixtures\n  rubric\n  redaction\n  contentHash\n  capturedFingerprint\n  createdByUserId\n}\n\nfragment AgentEvalCaseTableRowFields on AgentEvalCase {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  title\n  source\n  status\n  trigger\n  input\n  sourceThreadId\n  sourceProposalId\n  heldTools\n  expected\n  weight\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "UpdateAgentMemory",
@@ -18598,6 +18750,39 @@
       "sdl": "fragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  icon\n  accent\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  monthlyBudgetUsd\n  dailyRunLimit\n  toolDailyLimits\n  simulationMode\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  starters {\n    label\n    prompt\n  }\n  delegateIds\n  delegates {\n    id\n    name\n    icon\n    accent\n    enabled\n    triggerMode\n  }\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentEvalCaseDetailFields",
+      "typeCondition": "AgentEvalCase",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/eval-cases.graphql",
+      "fragments": [
+        "AgentEvalCaseTableRowFields"
+      ],
+      "usedByOperations": [
+        "AgentEvalCaseDetail",
+        "CreateAgentEvalCase",
+        "SetAgentEvalCaseStatus",
+        "UpdateAgentEvalCase"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentEvalCaseDetailFields on AgentEvalCase {\n  ...AgentEvalCaseTableRowFields\n  sourceRunId\n  sourceTurnId\n  sourceMessageId\n  sourceFeedbackId\n  history\n  pageContext\n  mentions\n  subjectType\n  subjectId\n  toolFixtures\n  rubric\n  redaction\n  contentHash\n  capturedFingerprint\n  createdByUserId\n}\n\nfragment AgentEvalCaseTableRowFields on AgentEvalCase {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  title\n  source\n  status\n  trigger\n  input\n  sourceThreadId\n  sourceProposalId\n  heldTools\n  expected\n  weight\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentEvalCaseTableRowFields",
+      "typeCondition": "AgentEvalCase",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/eval-cases.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentEvalCaseDetail",
+        "AgentEvalCaseTable",
+        "CreateAgentEvalCase",
+        "SetAgentEvalCaseStatus",
+        "UpdateAgentEvalCase"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentEvalCaseTableRowFields on AgentEvalCase {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  title\n  source\n  status\n  trigger\n  input\n  sourceThreadId\n  sourceProposalId\n  heldTools\n  expected\n  weight\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "AgentEvaluationTableRowFields",
       "typeCondition": "AgentEvaluation",
       "domain": "agent",
@@ -18605,10 +18790,11 @@
       "fragments": [],
       "usedByOperations": [
         "AgentEvaluationTable",
+        "ReplayAgentEvalCase",
         "ReplayAgentRun"
       ],
       "usages": [],
-      "sdl": "fragment AgentEvaluationTableRowFields on AgentEvaluation {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  sourceRunId\n  status\n  trigger\n  subjectType\n  subjectId\n  model\n  reply\n  comparison\n  originalProposals\n  toolCallsUsed\n  errorMessage\n  requestedByUserId\n  startedAt\n  completedAt\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentEvaluationTableRowFields on AgentEvaluation {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  sourceRunId\n  evalCaseId\n  status\n  trigger\n  subjectType\n  subjectId\n  model\n  reply\n  comparison\n  caseScore\n  originalProposals\n  toolCallsUsed\n  errorMessage\n  requestedByUserId\n  startedAt\n  completedAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentEvidenceRefFields",
@@ -19219,6 +19405,7 @@
         "AccountTypeTable",
         "AgentChoices",
         "AgentDefinitionCards",
+        "AgentEvalCaseTable",
         "AgentEvaluationTable",
         "AgentExceptionTable",
         "AgentMemoryTable",
@@ -21937,6 +22124,16 @@
       ],
       "sdl": "input AgentControlInput {\n  billingAgentEnabled: Boolean @deprecated(reason: \"Enable or disable the billing exception agent definition instead\")\n  decisionTimeoutSeconds: Int @deprecated(reason: \"Set decisionTimeoutSeconds on the agent definition instead\")\n  \"\"\"Absent leaves the organization's earned autonomy switch as it is.\"\"\"\n  earnedAutonomy: Boolean\n  \"\"\"Absent leaves the promotion threshold as it is; 1 to 1000 approvals.\"\"\"\n  promotionThreshold: Int\n  shadowMode: Boolean!\n}"
     },
+    "AgentEvalCaseStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Candidate",
+        "Quarantined",
+        "Retired"
+      ],
+      "sdl": "enum AgentEvalCaseStatus {\n  Active\n  Candidate\n  Quarantined\n  Retired\n}"
+    },
     "AgentExceptionResolveInput": {
       "kind": "input",
       "fields": [
@@ -23342,6 +23539,32 @@
         }
       ],
       "sdl": "input CostingControlInput {\n  fuelIndexId: ID\n  glActualsEnabled: Boolean!\n  glRollingMonths: Int!\n  includeDeadheadMiles: Boolean!\n  milesPerGallon: Decimal!\n  plannedMonthlyMiles: Int\n  targetMarginPercent: Decimal\n  useLiveFuelPrice: Boolean!\n  version: Int!\n}"
+    },
+    "CreateAgentEvalCaseInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "curated",
+          "type": "AgentEvalCaseCuratedInput",
+          "defaultValue": null
+        },
+        {
+          "name": "fromFeedback",
+          "type": "AgentEvalCaseFromFeedbackInput",
+          "defaultValue": null
+        },
+        {
+          "name": "fromMessage",
+          "type": "AgentEvalCaseFromMessageInput",
+          "defaultValue": null
+        },
+        {
+          "name": "fromProposal",
+          "type": "AgentEvalCaseFromProposalInput",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"Exactly one of the four.\"\"\"\ninput CreateAgentEvalCaseInput {\n  curated: AgentEvalCaseCuratedInput\n  fromFeedback: AgentEvalCaseFromFeedbackInput\n  fromMessage: AgentEvalCaseFromMessageInput\n  fromProposal: AgentEvalCaseFromProposalInput\n}"
     },
     "CreateCarrierInvoiceMatchInput": {
       "kind": "input",
@@ -30331,6 +30554,47 @@
       ],
       "sdl": "input UpcomingWorkerPTOInput {\n  after: String\n  endDate: Timestamp\n  first: Int = 20\n  fleetCodeId: ID\n  startDate: Timestamp\n  status: PTOStatus\n  timezone: String\n  type: PTOType\n  workerId: ID\n}"
     },
+    "UpdateAgentEvalCaseInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "expected",
+          "type": "JSON",
+          "defaultValue": null
+        },
+        {
+          "name": "expiresAt",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "heldTools",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "rubric",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateAgentEvalCaseInput {\n  expected: JSON\n  \"\"\"Absent leaves the expiry alone; null clears it.\"\"\"\n  expiresAt: Timestamp @goField(omittable: true)\n  heldTools: [String!]\n  input: String\n  rubric: String\n  title: String\n  version: Int!\n}"
+    },
     "UpdateBenefitPlanInput": {
       "kind": "input",
       "fields": [
@@ -33268,6 +33532,125 @@
       ],
       "sdl": "enum CostRateSource {\n  Benchmark\n  GLActual\n  Override\n}"
     },
+    "AgentEvalCaseCuratedInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "agentDefinitionId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "expected",
+          "type": "JSON!",
+          "defaultValue": null
+        },
+        {
+          "name": "expiresAt",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "heldTools",
+          "type": "[String!]",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "mentions",
+          "type": "[JSON!]",
+          "defaultValue": null
+        },
+        {
+          "name": "pageContext",
+          "type": "JSON",
+          "defaultValue": null
+        },
+        {
+          "name": "rubric",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "subjectId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "subjectType",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "trigger",
+          "type": "AgentRunTrigger",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AgentEvalCaseCuratedInput {\n  agentDefinitionId: ID!\n  expected: JSON!\n  expiresAt: Timestamp\n  \"\"\"Defaults to every tool the agent holds now.\"\"\"\n  heldTools: [String!]\n  input: String!\n  mentions: [JSON!]\n  pageContext: JSON\n  rubric: String\n  subjectId: ID\n  subjectType: String\n  title: String\n  trigger: AgentRunTrigger\n}"
+    },
+    "AgentEvalCaseFromFeedbackInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "feedbackId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"A reply someone rated as good, captured through their rating.\"\"\"\ninput AgentEvalCaseFromFeedbackInput {\n  feedbackId: ID!\n  title: String\n}"
+    },
+    "AgentEvalCaseFromMessageInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "messageId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "threadId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AgentEvalCaseFromMessageInput {\n  messageId: ID!\n  threadId: ID!\n  title: String\n}"
+    },
+    "AgentEvalCaseFromProposalInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "proposalId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AgentEvalCaseFromProposalInput {\n  proposalId: ID!\n  title: String\n}"
+    },
     "IFTAFuelType": {
       "kind": "enum",
       "values": [
@@ -35624,6 +36007,17 @@
         }
       ],
       "sdl": "input CarrierIntelRuleParamInput {\n  key: String!\n  value: String!\n}"
+    },
+    "AgentRunTrigger": {
+      "kind": "enum",
+      "values": [
+        "Chat",
+        "Continuous",
+        "Event",
+        "Manual",
+        "Scheduled"
+      ],
+      "sdl": "enum AgentRunTrigger {\n  Chat\n  Continuous\n  Event\n  Manual\n  Scheduled\n}"
     },
     "PayMileageBandInput": {
       "kind": "input",

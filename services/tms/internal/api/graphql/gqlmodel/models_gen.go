@@ -255,11 +255,16 @@ type AgentEvalCaseEdge struct {
 	Cursor string                 `json:"cursor"`
 }
 
-type AgentEvalCaseFromMessageInput struct {
-	ThreadID   string  `json:"threadId"`
-	MessageID  string  `json:"messageId"`
-	FeedbackID *string `json:"feedbackId,omitempty"`
+// A reply someone rated as good, captured through their rating.
+type AgentEvalCaseFromFeedbackInput struct {
+	FeedbackID string  `json:"feedbackId"`
 	Title      *string `json:"title,omitempty"`
+}
+
+type AgentEvalCaseFromMessageInput struct {
+	ThreadID  string  `json:"threadId"`
+	MessageID string  `json:"messageId"`
+	Title     *string `json:"title,omitempty"`
 }
 
 type AgentEvalCaseFromProposalInput struct {
@@ -1184,10 +1189,11 @@ type CostingControlInput struct {
 	Version              int     `json:"version"`
 }
 
-// Exactly one of the three.
+// Exactly one of the four.
 type CreateAgentEvalCaseInput struct {
 	FromMessage  *AgentEvalCaseFromMessageInput  `json:"fromMessage,omitempty"`
 	FromProposal *AgentEvalCaseFromProposalInput `json:"fromProposal,omitempty"`
+	FromFeedback *AgentEvalCaseFromFeedbackInput `json:"fromFeedback,omitempty"`
 	Curated      *AgentEvalCaseCuratedInput      `json:"curated,omitempty"`
 }
 

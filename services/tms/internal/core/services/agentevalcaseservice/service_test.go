@@ -576,7 +576,10 @@ func TestCreateFromFeedback_RefusesAThumbsDown(t *testing.T) {
 	rating := w.rate(aifeedback.RatingNegative, w.messages[7].ID)
 	_, err := w.service.CreateFromFeedback(
 		t.Context(),
-		&serviceports.CreateEvalCaseFromFeedbackRequest{FeedbackID: rating.ID, TenantInfo: w.tenant},
+		&serviceports.CreateEvalCaseFromFeedbackRequest{
+			FeedbackID: rating.ID,
+			TenantInfo: w.tenant,
+		},
 		nil,
 	)
 
@@ -594,7 +597,10 @@ func TestCreateFromFeedback_RefusesARatingFromAnotherTenant(t *testing.T) {
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	_, err := w.service.CreateFromFeedback(
 		t.Context(),
-		&serviceports.CreateEvalCaseFromFeedbackRequest{FeedbackID: rating.ID, TenantInfo: other},
+		&serviceports.CreateEvalCaseFromFeedbackRequest{
+			FeedbackID: rating.ID,
+			TenantInfo: other,
+		},
 		nil,
 	)
 

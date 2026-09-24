@@ -177,10 +177,10 @@ func modifiedOriginal() OriginalProposal {
 		Status:     ProposalStatusExecuted,
 	}
 
-	return NewOriginalProposal(proposal, &AgentDecision{
+	return NewOriginalProposal(proposal, []*AgentDecision{{
 		Decision:      DecisionModified,
 		Modifications: map[string]any{"rate": float64(1350)},
-	})
+	}})
 }
 
 func TestNewOriginalProposal_MergesTheLatestModification(t *testing.T) {
@@ -208,9 +208,9 @@ func TestNewOriginalProposal_RejectionCorrectsNothing(t *testing.T) {
 		Status:     ProposalStatusRejected,
 	}
 
-	rejected := NewOriginalProposal(proposal, &AgentDecision{
-		Decision:      DecisionRejected,
-		Modifications: map[string]any{"rate": float64(1)},
+	rejected := NewOriginalProposal(proposal, []*AgentDecision{
+		{Decision: DecisionRejected},
+		{Decision: DecisionModified, Modifications: map[string]any{"rate": float64(1)}},
 	})
 	undecided := NewOriginalProposal(proposal, nil)
 
@@ -218,6 +218,47 @@ func TestNewOriginalProposal_RejectionCorrectsNothing(t *testing.T) {
 	assert.Equal(t, proposal.ToolParams, rejected.Expected())
 	assert.Nil(t, undecided.CorrectedParams)
 	assert.Empty(t, undecided.Decision)
+}
+
+func TestNewOriginalProposal_KeepsTheLatestModificationUnderALaterApproval(t *testing.T) {
+	t.Parallel()
+
+	proposal := &AgentProposal{
+		ID:         pulid.MustNew("aprop_"),
+		ToolName:   "update_rate",
+		ToolParams: map[string]any{"shipmentId": "shp_1", "rate": float64(1200)},
+		Status:     ProposalStatusExecuted,
+	}
+
+	original := NewOriginalProposal(proposal, []*AgentDecision{
+		{Decision: DecisionAccepted},
+		{Decision: DecisionModified, Modifications: map[string]any{"rate": float64(1400)}},
+		{Decision: DecisionModified, Modifications: map[string]any{"rate": float64(1300)}},
+	})
+
+	assert.Equal(t, DecisionAccepted, original.Decision)
+	assert.Equal(
+		t,
+		map[string]any{"shipmentId": "shp_1", "rate": float64(1400)},
+		original.CorrectedParams,
+		"the newest modification is what the person settled on",
+	)
+	assert.Equal(t, float64(1200), proposal.ToolParams["rate"], "the proposal is not mutated")
+}
+
+func TestDecisionsByProposal_KeepsEachProposalsOrder(t *testing.T) {
+	t.Parallel()
+
+	first, second := pulid.MustNew("aprop_"), pulid.MustNew("aprop_")
+	newest := &AgentDecision{ProposalID: &first, Decision: DecisionAccepted}
+	older := &AgentDecision{ProposalID: &first, Decision: DecisionModified}
+	other := &AgentDecision{ProposalID: &second, Decision: DecisionRejected}
+
+	grouped := DecisionsByProposal([]*AgentDecision{newest, other, older, {}, nil})
+
+	assert.Equal(t, []*AgentDecision{newest, older}, grouped[first])
+	assert.Equal(t, []*AgentDecision{other}, grouped[second])
+	assert.Len(t, grouped, 2)
 }
 
 func TestCompareReplay_ProposingTheCorrectedVersionAgrees(t *testing.T) {

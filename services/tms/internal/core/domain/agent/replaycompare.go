@@ -36,8 +36,9 @@ const (
 
 // OriginalProposal is what the recorded run proposed and what became of it.
 // CorrectedParams is what a person approved when they edited the proposal
-// first: the proposed parameters with the latest modification laid over them.
-// Nil when nobody changed anything.
+// first: the proposed parameters with the latest Modified decision's changes
+// laid over them. Nil when nobody changed anything or the proposal ended
+// rejected.
 type OriginalProposal struct {
 	ID              pulid.ID
 	ToolName        string
@@ -49,7 +50,7 @@ type OriginalProposal struct {
 
 func NewOriginalProposal(
 	proposal *AgentProposal,
-	latest *AgentDecision,
+	decisions []*AgentDecision,
 ) OriginalProposal {
 	original := OriginalProposal{
 		ID:       proposal.ID,
@@ -57,16 +58,34 @@ func NewOriginalProposal(
 		Params:   proposal.ToolParams,
 		Status:   proposal.Status,
 	}
-	if latest == nil {
+	if len(decisions) == 0 {
 		return original
 	}
 
-	original.Decision = latest.Decision
-	if latest.Decision != DecisionRejected && len(latest.Modifications) > 0 {
-		original.CorrectedParams = maputils.Overlay(proposal.ToolParams, latest.Modifications)
+	original.Decision = decisions[0].Decision
+	if original.Decision == DecisionRejected {
+		return original
+	}
+	for _, decision := range decisions {
+		if decision.Decision == DecisionModified && len(decision.Modifications) > 0 {
+			original.CorrectedParams = maputils.Overlay(proposal.ToolParams, decision.Modifications)
+			break
+		}
 	}
 
 	return original
+}
+
+func DecisionsByProposal(decisions []*AgentDecision) map[pulid.ID][]*AgentDecision {
+	grouped := make(map[pulid.ID][]*AgentDecision, len(decisions))
+	for _, decision := range decisions {
+		if decision == nil || decision.ProposalID == nil {
+			continue
+		}
+		grouped[*decision.ProposalID] = append(grouped[*decision.ProposalID], decision)
+	}
+
+	return grouped
 }
 
 func (o OriginalProposal) Expected() map[string]any {

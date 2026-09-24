@@ -61,11 +61,11 @@ func (s *Service) CreateFromProposal(
 		return nil, err
 	}
 
-	latest, err := s.latestDecision(ctx, tenantInfo, proposal.ID)
+	decided, err := s.proposalDecisions(ctx, tenantInfo, proposal.ID)
 	if err != nil {
 		return nil, err
 	}
-	if latest == nil {
+	if len(decided) == 0 {
 		return nil, errortypes.NewBusinessError(
 			"Only a proposal a person approved or rejected can become an evaluation case",
 		)
@@ -92,8 +92,8 @@ func (s *Service) CreateFromProposal(
 		return nil, err
 	}
 
-	original := agent.NewOriginalProposal(proposal, latest)
-	rejected := latest.Decision == agent.DecisionRejected
+	original := agent.NewOriginalProposal(proposal, decided)
+	rejected := original.Decision == agent.DecisionRejected
 	runID := run.ID
 	proposalID := proposal.ID
 	evalCase := &agentquality.EvalCase{
@@ -337,11 +337,11 @@ func (s *Service) CaptureCandidates(
 	return result, nil
 }
 
-func (s *Service) latestDecision(
+func (s *Service) proposalDecisions(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	proposalID pulid.ID,
-) (*agent.AgentDecision, error) {
+) ([]*agent.AgentDecision, error) {
 	decisions, err := s.decisions.ListByProposals(
 		ctx,
 		repositories.ListAgentDecisionsByProposalsRequest{
@@ -352,13 +352,8 @@ func (s *Service) latestDecision(
 	if err != nil {
 		return nil, err
 	}
-	for _, decision := range decisions {
-		if decision.ProposalID != nil && *decision.ProposalID == proposalID {
-			return decision, nil
-		}
-	}
 
-	return nil, nil
+	return agent.DecisionsByProposal(decisions)[proposalID], nil
 }
 
 func (s *Service) backgroundInput(

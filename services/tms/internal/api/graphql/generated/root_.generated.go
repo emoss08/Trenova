@@ -72324,6 +72324,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAdjustWorkerPTOBalanceInput,
 		ec.unmarshalInputAgentControlInput,
 		ec.unmarshalInputAgentEvalCaseCuratedInput,
+		ec.unmarshalInputAgentEvalCaseFromFeedbackInput,
 		ec.unmarshalInputAgentEvalCaseFromMessageInput,
 		ec.unmarshalInputAgentEvalCaseFromProposalInput,
 		ec.unmarshalInputAgentExceptionResolveInput,
@@ -73845,7 +73846,12 @@ type AgentEvalCaseCapture {
 input AgentEvalCaseFromMessageInput {
   threadId: ID!
   messageId: ID!
-  feedbackId: ID
+  title: String
+}
+
+"A reply someone rated as good, captured through their rating."
+input AgentEvalCaseFromFeedbackInput {
+  feedbackId: ID!
   title: String
 }
 
@@ -73870,10 +73876,11 @@ input AgentEvalCaseCuratedInput {
   expiresAt: Timestamp
 }
 
-"Exactly one of the three."
+"Exactly one of the four."
 input CreateAgentEvalCaseInput {
   fromMessage: AgentEvalCaseFromMessageInput
   fromProposal: AgentEvalCaseFromProposalInput
+  fromFeedback: AgentEvalCaseFromFeedbackInput
   curated: AgentEvalCaseCuratedInput
 }
 
