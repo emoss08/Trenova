@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentplanservice"
 	"github.com/emoss08/trenova/internal/core/services/agentproposalnotifier"
 	"github.com/emoss08/trenova/internal/core/services/agentproposalservice"
+	"github.com/emoss08/trenova/internal/core/services/agentqualityservice"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentrunservice"
 	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
@@ -337,6 +338,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentbudgetservice.New,
 	agentevaluationservice.New,
 	agentevalcaseservice.New,
+	agentqualityservice.New,
+	agentqualityservice.AsService,
 	assignmentservice.New,
 	fx.Annotate(
 		dispatchautoassignservice.New,

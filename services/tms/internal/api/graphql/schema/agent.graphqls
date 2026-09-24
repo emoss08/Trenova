@@ -513,6 +513,10 @@ type AgentEvaluation {
   caseScore: Float
   "The agent version, prompt version, instructions hash and tools the replay ran against."
   fingerprint: JSON
+  "The suite run the replay belongs to; empty for a replay started on its own."
+  suiteRunId: ID
+  "The replay's place in its suite run."
+  suiteOrdinal: Int
   errorMessage: String!
   requestedByUserId: ID
   startedAt: Timestamp

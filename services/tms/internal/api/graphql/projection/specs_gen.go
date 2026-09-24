@@ -30,9 +30,13 @@ var AgentPlanSpec TypeSpec
 
 var AgentProposalSpec TypeSpec
 
+var AgentQualityControlSpec TypeSpec
+
 var AgentRunSpec TypeSpec
 
 var AgentRunEventSpec TypeSpec
+
+var AgentSuiteRunSpec TypeSpec
 
 var AgentToolTrustSpec TypeSpec
 
@@ -1468,6 +1472,14 @@ func init() {
 				FieldMapKey: "fingerprint",
 			},
 			{
+				Name:        "suiteRunId",
+				FieldMapKey: "suiteRunId",
+			},
+			{
+				Name:        "suiteOrdinal",
+				FieldMapKey: "suiteOrdinal",
+			},
+			{
 				Name:        "errorMessage",
 				FieldMapKey: "errorMessage",
 			},
@@ -1886,6 +1898,73 @@ func init() {
 		},
 	}
 
+	AgentQualityControlSpec = TypeSpec{
+		TypeName: "AgentQualityControl",
+		FieldMap: buncolgen.ControlFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "enabled",
+				FieldMapKey: "enabled",
+			},
+			{
+				Name:        "runHourLocal",
+				FieldMapKey: "runHourLocal",
+			},
+			{
+				Name:        "timezone",
+				FieldMapKey: "timezone",
+			},
+			{
+				Name:        "maxCasesPerAgent",
+				FieldMapKey: "maxCasesPerAgent",
+			},
+			{
+				Name:        "nightlyBudgetUsd",
+				FieldMapKey: "nightlyBudgetUsd",
+			},
+			{
+				Name:        "monthlyBudgetUsd",
+				FieldMapKey: "monthlyBudgetUsd",
+			},
+			{
+				Name:        "judgeEnabled",
+				FieldMapKey: "judgeEnabled",
+			},
+			{
+				Name:        "judgeSampleRate",
+				FieldMapKey: "judgeSampleRate",
+			},
+			{
+				Name:        "regressionThreshold",
+				FieldMapKey: "regressionThreshold",
+			},
+			{
+				Name:        "minCases",
+				FieldMapKey: "minCases",
+			},
+			{
+				Name:        "forceRerunDays",
+				FieldMapKey: "forceRerunDays",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	AgentRunSpec = TypeSpec{
 		TypeName: "AgentRun",
 		FieldMap: buncolgen.AgentRunFieldMap,
@@ -2048,6 +2127,145 @@ func init() {
 			{
 				Name:        "occurredAt",
 				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AgentSuiteRunSpec = TypeSpec{
+		TypeName: "AgentSuiteRun",
+		FieldMap: buncolgen.SuiteRunFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "agentDefinitionId",
+				FieldMapKey: "agentDefinitionId",
+			},
+			{
+				Name:    "agentName",
+				Special: "agentName",
+			},
+			{
+				Name:        "trigger",
+				FieldMapKey: "trigger",
+			},
+			{
+				Name:        "fingerprint",
+				FieldMapKey: "fingerprint",
+			},
+			{
+				Name:        "fingerprintHash",
+				FieldMapKey: "fingerprintHash",
+			},
+			{
+				Name:        "fingerprintChanges",
+				FieldMapKey: "fingerprintChanges",
+			},
+			{
+				Name:    "changeSummary",
+				Special: "changeSummary",
+			},
+			{
+				Name:        "suiteRevision",
+				FieldMapKey: "suiteRevision",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "casesTotal",
+				FieldMapKey: "casesTotal",
+			},
+			{
+				Name:        "casesPassed",
+				FieldMapKey: "casesPassed",
+			},
+			{
+				Name:        "casesFailed",
+				FieldMapKey: "casesFailed",
+			},
+			{
+				Name:        "casesSkipped",
+				FieldMapKey: "casesSkipped",
+			},
+			{
+				Name:        "hardFailures",
+				FieldMapKey: "hardFailures",
+			},
+			{
+				Name:        "deterministicScore",
+				FieldMapKey: "deterministicScore",
+			},
+			{
+				Name:        "judgeScore",
+				FieldMapKey: "judgeScore",
+			},
+			{
+				Name:        "qualityScore",
+				FieldMapKey: "qualityScore",
+			},
+			{
+				Name:        "baselineScore",
+				FieldMapKey: "baselineScore",
+			},
+			{
+				Name:        "baselineRunId",
+				FieldMapKey: "baselineRunId",
+			},
+			{
+				Name:        "regression",
+				FieldMapKey: "regression",
+			},
+			{
+				Name:        "costUsd",
+				FieldMapKey: "costUsd",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "finishedAt",
+				FieldMapKey: "finishedAt",
+			},
+			{
+				Name:        "comments",
+				FieldMapKey: "comments",
+			},
+			{
+				Name:        "workflowId",
+				FieldMapKey: "workflowId",
+			},
+			{
+				Name:        "requestedByUserId",
+				FieldMapKey: "requestedByUserId",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
 			},
 			{
 				Name:        "createdAt",

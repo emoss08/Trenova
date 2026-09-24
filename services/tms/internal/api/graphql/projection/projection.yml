@@ -90,6 +90,9 @@ virtuals:
     - definition
   AgentEvalCase:
     - weight
+  AgentSuiteRun:
+    - agentName
+    - changeSummary
   WatchtowerItem:
     - seen
     - kindLabel

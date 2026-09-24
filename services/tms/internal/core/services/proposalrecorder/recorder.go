@@ -126,6 +126,7 @@ type OpenRunRequest struct {
 	PromptVersion    string
 	InputContextHash string
 	Summary          string
+	Fingerprint      *agent.Fingerprint
 }
 
 type EvidenceFunc func(action serviceports.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef
@@ -377,6 +378,7 @@ func (s *Service) openRun(ctx context.Context, req *RecordRequest) (*agent.Agent
 		PromptVersion:    open.PromptVersion,
 		InputContextHash: open.InputContextHash,
 		Summary:          open.Summary,
+		Fingerprint:      open.Fingerprint,
 		StartedAt:        now,
 		CompletedAt:      &now,
 	}

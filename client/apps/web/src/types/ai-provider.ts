@@ -59,6 +59,7 @@ export const aiTaskSchema = z.enum([
   "DailyBriefing",
   "QueryCompose",
   "InboundClassification",
+  "EvaluationJudge",
   "General",
 ]);
 

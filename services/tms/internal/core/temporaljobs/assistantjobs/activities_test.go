@@ -402,3 +402,10 @@ func TestFinishTurn_DoesNotResumeFromAFollowUpThatNeverStarted(t *testing.T) {
 		assert.Emptyf(t, followUps.resumed, name)
 	}
 }
+
+func (r *turnRecords) RecordFingerprint(
+	context.Context,
+	repositories.RecordAssistantTurnFingerprintRequest,
+) error {
+	return nil
+}

@@ -1904,7 +1904,7 @@ func (s *Service) createSystemShipmentComment(
 	if metadata == nil {
 		metadata = map[string]any{}
 	}
-	metadata["source"] = "edi"
+	metadata[shipment.CommentMetadataOrigin] = shipment.CommentOriginEDI
 
 	_, err = s.shipmentCommentRepo.Create(ctx, &shipment.ShipmentComment{
 		ShipmentID:       shipmentID,

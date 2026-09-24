@@ -76,6 +76,7 @@ func bestCase(
 	attended := !definition.IsBackground()
 	policy := in.Policy
 	policy.Condition = nil
+	policy.TaintHold = nil
 
 	classes := in.Policy.Egress
 	if len(classes) == 0 {
@@ -113,6 +114,12 @@ func worstCase(
 		policy.Condition = &serviceports.TierCondition{
 			Description: in.Policy.Condition.Description,
 			Limit:       heldToProposal,
+		}
+	}
+	if in.Policy.TaintHold != nil {
+		policy.TaintHold = &serviceports.TaintHold{
+			Description: in.Policy.TaintHold.Description,
+			Applies:     alwaysHeld,
 		}
 	}
 
@@ -158,6 +165,10 @@ func fixedCall(class agent.EgressClass) classifier {
 
 func heldToProposal(context.Context, serviceports.ToolExecuteParams) agent.AutonomyTier {
 	return agent.TierPropose
+}
+
+func alwaysHeld(serviceports.ToolExecuteParams) bool {
+	return true
 }
 
 func representativeParams(attended bool) serviceports.ToolExecuteParams {

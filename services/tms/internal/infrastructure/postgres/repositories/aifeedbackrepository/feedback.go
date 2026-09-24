@@ -23,7 +23,7 @@ const (
 	defaultNegativeLimit = 5000
 	maxNegativeLimit     = 20000
 	defaultWorstLimit    = 10
-	maxWorstLimit        = 100
+	maxWorstLimit        = 1000
 	defaultPurgeLimit    = 1000
 	maxPurgeLimit        = 10000
 )
@@ -335,7 +335,11 @@ func (r *repository) WorstRated(
 		).
 		OrderExpr(countRating+" DESC", aifeedback.RatingNegative).
 		OrderExpr(buncolgen.Expr("MAX({}) DESC", cols.CreatedAt)).
+		OrderExpr(cols.TargetType.OrderAsc()).
+		OrderExpr(cols.TargetID.OrderAsc()).
+		OrderExpr(cols.TargetPart.OrderAsc()).
 		Limit(limit).
+		Offset(max(req.Offset, 0)).
 		Scan(ctx, &rows)
 	if err != nil {
 		r.l.Error("failed to read worst-rated ai output", zap.Error(err))
@@ -349,9 +353,50 @@ func (r *repository) WorstRated(
 func windowScope(sq *bun.SelectQuery, req repositories.AIFeedbackWindowRequest) *bun.SelectQuery {
 	cols := buncolgen.FeedbackColumns
 
-	return buncolgen.FeedbackScopeTenant(sq, req.TenantInfo).
-		Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
+	sq = buncolgen.FeedbackScopeTenant(sq, req.TenantInfo).
 		Where(cols.CreatedAt.Gte(), req.Since)
+	if req.AgentDefinitionID.IsNotNil() {
+		return sq.Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+	}
+
+	return sq.Where(cols.AgentDefinitionID.IsNotNull())
+}
+
+func (r *repository) TotalsByAgent(
+	ctx context.Context,
+	req repositories.AIFeedbackAgentTotalsRequest,
+) ([]*repositories.AIFeedbackAgentTotals, error) {
+	cols := buncolgen.FeedbackColumns
+	rows := make([]*repositories.AIFeedbackAgentTotals, 0, len(req.AgentDefinitionIDs))
+
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*aifeedback.Feedback)(nil)).
+		ColumnExpr(cols.AgentDefinitionID.As("agent_definition_id")).
+		ColumnExpr(buncolgen.CountFilter("positive", cols.Rating.Eq()), aifeedback.RatingPositive).
+		ColumnExpr(buncolgen.CountFilter("negative", cols.Rating.Eq()), aifeedback.RatingNegative).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.FeedbackScopeTenant(sq, req.TenantInfo).
+				Where(cols.AgentDefinitionID.IsNotNull()).
+				Where(cols.CreatedAt.Gte(), req.Since)
+			if req.Until > 0 {
+				sq = sq.Where(cols.CreatedAt.Lt(), req.Until)
+			}
+			if len(req.AgentDefinitionIDs) > 0 {
+				sq = sq.Where(cols.AgentDefinitionID.In(), bun.List(req.AgentDefinitionIDs))
+			}
+
+			return sq
+		}).
+		GroupExpr(cols.AgentDefinitionID.Qualified()).
+		Scan(ctx, &rows)
+	if err != nil {
+		r.l.Error("failed to count ai feedback by agent", zap.Error(err))
+
+		return nil, fmt.Errorf("ai feedback totals by agent: %w", err)
+	}
+
+	return rows, nil
 }
 
 func timezoneOf(timezone string) string {

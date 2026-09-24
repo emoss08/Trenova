@@ -9,7 +9,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -27,6 +31,7 @@ func toolPolicyViewsToModel(
 func toolPolicyViewToModel(view *services.AgentToolPolicyView) *gqlmodel.AgentToolPolicy {
 	policy := &view.Policy
 	out := &gqlmodel.AgentToolPolicy{
+		ID:                 policy.Name,
 		Name:               policy.Name,
 		Title:              view.Title,
 		Kind:               policy.Kind,
@@ -74,30 +79,65 @@ func toolPolicyViewToModel(view *services.AgentToolPolicyView) *gqlmodel.AgentTo
 
 func toolPolicyConnectionRequest(
 	input *gqlmodel.AgentToolPolicyConnectionInput,
-) *services.ListAgentToolPoliciesRequest {
-	req := &services.ListAgentToolPoliciesRequest{
-		RunsWithoutPerson: input.RunsWithoutPerson,
-	}
-	if input.First != nil {
-		req.First = *input.First
-	}
-	if input.After != nil {
-		req.After = *input.After
-	}
-	if input.Query != nil {
-		req.Query = *input.Query
+) memtable.Request {
+	req := memtable.Request{
+		First: intValue(input.First),
+		After: stringValue(input.After),
+		Query: stringValue(input.Query),
 	}
 	if input.Egress != nil {
-		req.Egress = *input.Egress
+		req.FieldFilters = append(req.FieldFilters, domaintypes.FieldFilter{
+			Field:    "egress",
+			Operator: dbtype.OpEqual,
+			Value:    input.Egress.String(),
+		})
 	}
 	if input.Resource != nil {
-		req.Resource = *input.Resource
+		req.FieldFilters = append(req.FieldFilters, domaintypes.FieldFilter{
+			Field:    "resource",
+			Operator: dbtype.OpEqual,
+			Value:    *input.Resource,
+		})
 	}
 	if input.Kind != nil {
-		req.Kind = *input.Kind
+		req.FieldFilters = append(req.FieldFilters, domaintypes.FieldFilter{
+			Field:    "kind",
+			Operator: dbtype.OpEqual,
+			Value:    input.Kind.String(),
+		})
+	}
+	if input.RunsWithoutPerson != nil {
+		req.FieldFilters = append(req.FieldFilters, domaintypes.FieldFilter{
+			Field:    agentsafetyservice.FieldRunsWithoutPerson,
+			Operator: dbtype.OpEqual,
+			Value:    *input.RunsWithoutPerson,
+		})
 	}
 
 	return req
+}
+
+func agentToolSafetyPageToModel(
+	page *services.AgentToolSafetyPage,
+) *gqlmodel.AgentToolSafetyConnection {
+	out := &gqlmodel.AgentToolSafetyConnection{
+		Edges:      make([]*gqlmodel.AgentToolSafetyEdge, 0, len(page.Edges)),
+		PageInfo:   &gqlmodel.PageInfo{HasNextPage: page.HasNextPage},
+		TotalCount: page.TotalCount,
+	}
+	for idx := range page.Edges {
+		edge := &page.Edges[idx]
+		out.Edges = append(out.Edges, &gqlmodel.AgentToolSafetyEdge{
+			Node:   &edge.Node,
+			Cursor: edge.Cursor,
+		})
+	}
+	if count := len(out.Edges); count > 0 {
+		endCursor := out.Edges[count-1].Cursor
+		out.PageInfo.EndCursor = &endCursor
+	}
+
+	return out
 }
 
 func toolPolicyPageToModel(
@@ -110,8 +150,10 @@ func toolPolicyPageToModel(
 	}
 	for idx := range page.Edges {
 		edge := &page.Edges[idx]
+		node := toolPolicyViewToModel(&edge.View)
+		node.RunsWithoutPerson = edge.RunsWithoutPerson
 		out.Edges = append(out.Edges, &gqlmodel.AgentToolPolicyEdge{
-			Node:   toolPolicyViewToModel(&edge.View),
+			Node:   node,
 			Cursor: edge.Cursor,
 		})
 	}

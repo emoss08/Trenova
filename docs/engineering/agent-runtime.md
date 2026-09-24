@@ -134,8 +134,23 @@ A run that was started by, or has read, content written outside the
 organization is **tainted**. A tainted run never runs a write whose egress class
 leaves the organization (`customer_visible`, `driver_visible`,
 `external_recipient`, `money`) on its own: `agenttoolpolicy.Decide` lowers it to
-`ActWithApproval` and adds `tainted` to what held it. Money is the class that
-notices, because the other three already stop at `ActWithApproval`.
+`ActWithApproval`. Money is the class whose tier moves, because the other three
+already stop at `ActWithApproval`, but every one of them names `tainted` in
+`HeldBy` whenever the rule applies, whatever held the call first, so
+`agent_proposals.held_by` records that taint held it. `HeldBy` keeps the order the
+checks run in (tool tier, agent ceiling, tool max, class, condition, taint) and
+names each reason once.
+
+A write that stays inside the organization can declare one further taint hold
+(`ToolPolicy.TaintHold`: a description and the calls it applies to), which the same
+rule honours: a tainted or nil-taint call it applies to is held at
+`ActWithApproval` and names `tainted`. `remember` is the one tool that declares
+it. An `Instruction` or a `Correction` recorded after outside content waits for a
+person; a `Fact` is recorded and stays tainted. The hold shows in the safety
+table (for an agent that runs `remember` on its own, the "after outside text"
+column reads "Depends on the call" and names taint among what holds it), in
+`ai-tool-safety.md` and in the tool snapshot (`taintHold`). A tainted proposal
+held this way is executed only on a person's decision, like one that leaves.
 
 `agent.RunTaint` is the run's marks, one per place the content came from
 (source, tool, call id, record), deduplicated and bounded to sixteen. A turn
@@ -146,12 +161,14 @@ opens tainted when:
   `document.extracted`, `edi.file_quarantined` or `bank_receipt.exception`
   (`agent.SubjectType.TaintSource`);
 - the person attached a file to the question;
-- a memory read into its prompt was written by a tainted run;
+- a memory read into its prompt was written by a tainted run (a person's approval
+  of the `remember` that wrote it changes how it is rendered, not whether it taints);
 - its conversation is already tainted (`assistant_threads.taint`), which a
   decision follow-up inherits because it is a turn on the same conversation;
 - the agent that handed it a task was (`DelegateCall.Taint`).
 
-Master-data names and internal notes are not sources.
+Master-data names and notes written inside the organization are not sources.
+A shipment comment written outside it is (`record_note`, below).
 
 Web content is held more strictly: once a turn has read the web through an extension, every
 later write is capped at `Propose`, whatever its class
@@ -161,8 +178,29 @@ taint, so both record it.
 
 During the turn, a tool whose policy reads outside content always
 (`ReadsExternal: always`) adds a mark when it succeeds; a `marked` tool
-(`recall_memory`, `get_agent_run`) adds one only for a returned record that
-carries taint (`agent.TaintCarrier`). The marks travel on the tool's outcome and
+(`recall_memory`, `get_agent_run`, `get_shipment`) adds one only for a returned
+record that carries taint (`agent.TaintCarrier`).
+
+`get_shipment` returns the shipment's twenty newest top-level comments (when the
+caller may read shipment comments) and marks each one written outside the
+organization as a `record_note` (`shipment_comment` record). Comment origin is
+not a column of its own, so `ShipmentComment.WrittenOutside` reads it from what
+is recorded:
+
+| Comment | Outside? |
+|---|---|
+| `source` `Integration` | yes: another system wrote it |
+| `source` `AI` | only when `metadata.tainted` is set: `add_shipment_comment` (`CarriesTaint`) stamps it on a note a tainted or nil-taint run wrote on its own; a note a person approved is not stamped |
+| `type` `DriverUpdate` | yes: what Dash writes for a driver, including rows written before Dash stamped its origin, and a note an employee filed under that type |
+| `metadata.source` `dash` or `edi` | yes: Dash now stamps `dash`; EDI 214 status and 210 invoice comments carry `edi` |
+| anything else (`User`, `System` from inside Trenova) | no |
+
+Each returned comment carries `writtenOutside`, and the result carries a note
+that such a comment reports, never instructs. No other query tool returns
+comments or notes an outsider wrote: service-failure notes, detention evidence
+and notices, and payment memos are written by the system or by people inside the
+organization; a bank memo is read through the bank receipt tools, which always
+taint. The marks travel on the tool's outcome and
 in the step ledger, so a replayed step taints the run as the original did. The
 loop folds them into the turn and emits `run_tainted` once for each new mark,
 which reaches the stream and the trajectory. A delegate's taint is folded back
@@ -176,12 +214,27 @@ What is kept:
 | `agent_runs` | `tainted`, `taint`, `tainted_at` |
 | `agent_proposals` | `tainted` (the run had read outside content when the write was decided), `taint`, `egress_class`, `held_by` |
 | `assistant_threads` | `taint`, `tainted_at` |
-| `agent_memories` | `tainted`, `taint_run_id`, for a memory `remember` wrote from a tainted run (`CarriesTaint`) |
+| `agent_memories` | `tainted`, `taint_run_id`, for a memory `remember` wrote from a tainted or nil-taint run (`CarriesTaint`); `source_proposal_id` and `created_by_user_id` when a person approved the `remember` that wrote it |
+| `shipment_comments` | `metadata.tainted`, for a note `add_shipment_comment` wrote on its own after outside content |
 
 The proposal executor refuses a tainted proposal whose class leaves the
-organization unless a person decides it (`ErrTaintedNeedsPerson`), checking the
-class as the write would run and as it was proposed, and records the class it
-ran with. Trust promotion is unaffected: the ceiling is applied in `Decide` on
+organization, or that names `tainted` in `held_by`, unless a person decides it
+(`ErrTaintedNeedsPerson`), checking the class as the write would run and as it
+was proposed, and records the class it ran with. It hands the tool the proposal
+id (`ToolExecuteParams.ProposalID`); a `CarriesTaint` tool reads a nil taint
+outside a proposal as unknown and marks what it writes with the run's record.
+
+### Memory in the prompt
+
+The prompt renders memories in two sections. What the organization recorded, and
+any memory a person approved (`Memory.ApprovedByPerson`: written from a proposal
+a person decided), goes under "What this organization has recorded for its
+agents", where an Instruction is followed as if the person who recorded it were
+asking now. A tainted memory nobody approved (`Memory.DrawnFromOutside`) goes
+under "Recorded by agents after reading outside content", fenced as
+`<memory_from_outside_content>`, each line naming the kind it was recorded as,
+and framed as information drawn from outside text that is never followed. It
+still taints the turn that reads it. Trust promotion is unaffected: the ceiling is applied in `Decide` on
 every call, whatever tier was earned.
 
 ### Taint is data
@@ -197,8 +250,8 @@ taint, so its turn replays with a nil taint, adds no mark and emits nothing, and
 issues the same commands in the same order.
 
 A nil taint is a turn opened before the release. It counts as tainted for every
-class that leaves the organization, which is the safe reading, and only money
-tools notice. A delegate opened for such a turn inherits the nil.
+class that leaves the organization and for a declared taint hold, which is the
+safe reading; money tools and `remember`'s Instruction and Correction notice. A delegate opened for such a turn inherits the nil.
 
 ## Chat turns
 

@@ -3,12 +3,19 @@ import {
   EGRESS_ACCENT,
   EGRESS_ORDER,
   KIND_ORDER,
+  answerChoices,
+  egressChoices,
+  externalReadChoices,
+  heldByChoices,
   heldByLabel,
+  heldByOf,
+  kindChoices,
   kindLabel,
   readsOutsideLabel,
   reachLabel,
+  resourceChoices,
   sortResources,
-  sortToolsByExposure,
+  tierChoices,
 } from "../safety-model";
 import { policy, safety, tool } from "./fixtures";
 
@@ -100,24 +107,55 @@ describe("labels", () => {
   });
 });
 
-describe("sortToolsByExposure", () => {
-  it("leads with what runs without a person", () => {
-    const sorted = sortToolsByExposure([
-      tool("b_propose", { answer: "PROPOSE_ONLY" }),
-      tool("a_simulated", { answer: "SIMULATED" }),
-      tool("z_auto", { answer: "RUNS_ON_ITS_OWN" }),
-      tool("c_conditional", { answer: "CONDITIONAL" }),
-      tool("a_auto", { answer: "RUNS_ON_ITS_OWN" }),
-      tool("d_approval", { answer: "NEEDS_APPROVAL" }),
-    ]);
+describe("heldByOf", () => {
+  // A reason that holds the call both before and after outside text is one
+  // chip, not two; the order is the order the server gave.
+  it("names each reason once, clean first", () => {
+    expect(
+      heldByOf(
+        tool(
+          "email_customer",
+          { heldBy: ["egress_class"] },
+          { heldBy: ["egress_class", "tainted"] },
+        ),
+      ),
+    ).toEqual(["egress_class", "tainted"]);
+    expect(heldByOf(tool("assign_move", { heldBy: [] }))).toEqual([]);
+  });
+});
 
-    expect(sorted.map((entry) => entry.policyName)).toEqual([
-      "a_auto",
-      "z_auto",
-      "c_conditional",
-      "d_approval",
-      "b_propose",
-      "a_simulated",
+describe("filter choices", () => {
+  // The values are the enum names the server's filter reads; the labels are
+  // the words the cells show, so a filter chip reads like the column.
+  it("offers every class, tier, kind, answer and reason by the server's value", () => {
+    expect(egressChoices(t).map((choice) => choice.value)).toEqual([...EGRESS_ORDER]);
+    expect(egressChoices(t)[3]).toEqual({ value: "CustomerVisible", label: "Customer" });
+    expect(tierChoices(t).map((choice) => choice.value)).toEqual([
+      "Propose",
+      "ActWithApproval",
+      "AutoExecute",
+    ]);
+    expect(kindChoices(t).map((choice) => choice.label)).toEqual(["Reads", "Changes", "Runtime"]);
+    expect(answerChoices(t).map((choice) => choice.value)).toEqual([
+      "RUNS_ON_ITS_OWN",
+      "CONDITIONAL",
+      "NEEDS_APPROVAL",
+      "PROPOSE_ONLY",
+      "SIMULATED",
+    ]);
+    expect(heldByChoices(t).every((choice) => choice.label !== choice.value)).toBe(true);
+    expect(externalReadChoices(t)).toEqual([
+      { value: "Never", label: "Never" },
+      { value: "Marked", label: "When marked" },
+      { value: "Always", label: "Always" },
+    ]);
+  });
+
+  it("lists resources by the label a person reads", () => {
+    expect(resourceChoices(["shipment_move", "general", "customer"]).map((c) => c.value)).toEqual([
+      "customer",
+      "general",
+      "shipment_move",
     ]);
   });
 });

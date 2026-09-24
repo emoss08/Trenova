@@ -21,7 +21,20 @@ type ToolExecuteParams struct {
 	RunID  pulid.ID
 	Params map[string]any
 	// Taint is the run's, handed only to a tool whose policy CarriesTaint.
-	Taint *agent.RunTaint
+	Taint      *agent.RunTaint
+	ProposalID pulid.ID
+}
+
+func (p ToolExecuteParams) ApprovedFromProposal() bool {
+	return p.ProposalID.IsNotNil()
+}
+
+func (p ToolExecuteParams) CarriedTaint(at int64) *agent.RunTaint {
+	if p.Taint != nil || p.ApprovedFromProposal() {
+		return p.Taint
+	}
+
+	return agent.RunRecordTaint(p.RunID, at)
 }
 
 // ToolSimulator is a tool that can say what it would change without

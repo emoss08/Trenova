@@ -1,8 +1,8 @@
 import type {
   AgentAutonomyAnswer,
   AgentEgressClass,
-  AgentSafety,
-  AgentToolAutonomy,
+  AgentExternalRead,
+  AgentSafetyHeader,
   AgentToolKind,
   AgentToolPolicy,
 } from "@/lib/graphql/agent-safety";
@@ -72,6 +72,15 @@ export const ANSWER_BADGE: Record<
   SIMULATED: { phase: "closed", appearance: "outline" },
 };
 
+/** Every answer from most done without a person to least. */
+export const ANSWER_ORDER: readonly AgentAutonomyAnswer[] = [
+  "RUNS_ON_ITS_OWN",
+  "CONDITIONAL",
+  "NEEDS_APPROVAL",
+  "PROPOSE_ONLY",
+  "SIMULATED",
+];
+
 export function answerLabel(t: TranslateFn, answer: AgentAutonomyAnswer): string {
   switch (answer) {
     case "RUNS_ON_ITS_OWN":
@@ -87,6 +96,13 @@ export function answerLabel(t: TranslateFn, answer: AgentAutonomyAnswer): string
   }
 }
 
+/** Every tier from the least an agent may do on its own to the most. */
+export const TIER_ORDER: readonly AgentToolPolicy["maxTier"][] = [
+  "Propose",
+  "ActWithApproval",
+  "AutoExecute",
+];
+
 export function tierLabel(t: TranslateFn, tier: AgentToolPolicy["maxTier"]): string {
   switch (tier) {
     case "AutoExecute":
@@ -96,6 +112,27 @@ export function tierLabel(t: TranslateFn, tier: AgentToolPolicy["maxTier"]): str
     case "Propose":
       return t("Propose");
   }
+}
+
+/** Every reason the server names for holding a call back, in the order it checks them. */
+export const HELD_BY_KEYS = [
+  "agent_ceiling",
+  "tool_max",
+  "egress_class",
+  "condition",
+  "tainted",
+  "tool_tier",
+  "personal_exemption",
+  "shadow_mode",
+  "simulation_mode",
+] as const;
+
+/** Every reason a held tool goes no further, before or after outside text, each once. */
+export function heldByOf(tool: {
+  clean: { heldBy: readonly string[] };
+  tainted: { heldBy: readonly string[] };
+}): string[] {
+  return [...new Set([...tool.clean.heldBy, ...tool.tainted.heldBy])];
 }
 
 /** The reasons the server names for holding a call back, in words. */
@@ -124,14 +161,17 @@ export function heldByLabel(t: TranslateFn, key: string): string {
   }
 }
 
-export function needsLabel(t: TranslateFn, policy: AgentToolPolicy): string {
+export function needsLabel(t: TranslateFn, policy: Pick<AgentToolPolicy, "needs">): string {
   if (!policy.needs) {
     return t("Nothing: own records only");
   }
   return t("{0} · {1}", resourceLabel(policy.needs.resource), policy.needs.operation);
 }
 
-export function readsOutsideLabel(t: TranslateFn, policy: AgentToolPolicy): string | null {
+export function readsOutsideLabel(
+  t: TranslateFn,
+  policy: Pick<AgentToolPolicy, "readsExternal" | "source" | "carriesTaint">,
+): string | null {
   const source = policy.source ? sourceLabel(t, policy.source) : "";
   switch (policy.readsExternal) {
     case "Always":
@@ -163,6 +203,22 @@ function sourceLabel(t: TranslateFn, source: NonNullable<AgentToolPolicy["source
       return t("run records");
     case "Web":
       return t("the web");
+    case "RecordNote":
+      return t("record notes");
+  }
+}
+
+/** Every way a tool's result can carry outside text, from none to always. */
+export const EXTERNAL_READ_ORDER: readonly AgentExternalRead[] = ["Never", "Marked", "Always"];
+
+export function externalReadLabel(t: TranslateFn, read: AgentExternalRead): string {
+  switch (read) {
+    case "Never":
+      return t("Never");
+    case "Marked":
+      return t("When marked");
+    case "Always":
+      return t("Always");
   }
 }
 
@@ -185,24 +241,41 @@ export function sortResources(resources: readonly string[]): string[] {
   return [...resources].sort((a, b) => resourceLabel(a).localeCompare(resourceLabel(b)));
 }
 
-/** Tools that act without a person first, so the rows worth reading lead. */
-export function sortToolsByExposure<T extends { clean: AgentToolAutonomy; policyName: string }>(
-  tools: readonly T[],
-): T[] {
-  const rank: Record<AgentAutonomyAnswer, number> = {
-    RUNS_ON_ITS_OWN: 0,
-    CONDITIONAL: 1,
-    NEEDS_APPROVAL: 2,
-    PROPOSE_ONLY: 3,
-    SIMULATED: 4,
-  };
-  return [...tools].sort(
-    (a, b) =>
-      rank[a.clean.answer] - rank[b.clean.answer] || a.policyName.localeCompare(b.policyName),
-  );
+type FilterChoice = { value: string; label: string };
+
+/** The options a table offers for filtering a column, in the column's own order. */
+export function egressChoices(t: TranslateFn): FilterChoice[] {
+  return EGRESS_ORDER.map((egress) => ({ value: egress, label: egressLabel(t, egress) }));
 }
 
-export function reachLabel(t: TranslateFn, safety: AgentSafety): string {
+export function tierChoices(t: TranslateFn): FilterChoice[] {
+  return TIER_ORDER.map((tier) => ({ value: tier, label: tierLabel(t, tier) }));
+}
+
+export function kindChoices(t: TranslateFn): FilterChoice[] {
+  return KIND_ORDER.map((kind) => ({ value: kind, label: kindLabel(t, kind) }));
+}
+
+export function externalReadChoices(t: TranslateFn): FilterChoice[] {
+  return EXTERNAL_READ_ORDER.map((read) => ({ value: read, label: externalReadLabel(t, read) }));
+}
+
+export function answerChoices(t: TranslateFn): FilterChoice[] {
+  return ANSWER_ORDER.map((answer) => ({ value: answer, label: answerLabel(t, answer) }));
+}
+
+export function heldByChoices(t: TranslateFn): FilterChoice[] {
+  return HELD_BY_KEYS.map((key) => ({ value: key, label: heldByLabel(t, key) }));
+}
+
+export function resourceChoices(resources: readonly string[]): FilterChoice[] {
+  return sortResources(resources).map((resource) => ({
+    value: resource,
+    label: resourceLabel(resource),
+  }));
+}
+
+export function reachLabel(t: TranslateFn, safety: AgentSafetyHeader): string {
   if (safety.reach.accessMode === "Everyone") {
     return t("Everyone who can use the assistant");
   }

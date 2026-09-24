@@ -30,8 +30,8 @@ func policyReaching(class agent.EgressClass) serviceports.ToolPolicy {
 Every class against every state of the run's reading. A run that read outside
 content, or whose reading is unknown, never runs a write that leaves the
 organization on its own; what stays inside is decided as if nothing was read.
-Only money notices, because the other classes that leave already stop at
-ActWithApproval on their own ceiling.
+Every class that leaves names taint among what held it, even the ones whose
+own ceiling already stops at ActWithApproval.
 */
 func TestDecide_TaintAgainstEveryEgressClass(t *testing.T) {
 	t.Parallel()
@@ -72,10 +72,10 @@ func TestDecide_TaintAgainstEveryEgressClass(t *testing.T) {
 			assert.Equal(t, want, decision.Tier, "%s, %s", class, state)
 			assert.Equal(t, class, decision.Egress, "%s, %s", class, state)
 			assert.Equal(t,
-				held && class.Ceiling() == agent.TierAutoExecute,
+				held,
 				slices.Contains(decision.HeldBy, agenttoolpolicy.HeldByTainted),
-				"%s, %s: tainted names what held it only when nothing else already had",
-				class, state)
+				"%s, %s: tainted is named whenever the taint rule applies, whatever held "+
+					"the call first", class, state)
 		}
 	}
 }
@@ -104,4 +104,72 @@ func TestDecide_ADifferentMarkOrderIsTheSameDecision(t *testing.T) {
 	}
 
 	assert.Equal(t, decide(first), decide(second))
+}
+
+func TestDecide_RememberHoldsAnInstructionFromATaintedRun(t *testing.T) {
+	t.Parallel()
+
+	policy := registeredPolicy(t, "remember")
+	acting := definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
+		policy.Name: agent.TierAutoExecute,
+	})
+	marked := &agent.RunTaint{}
+	marked.Add(agent.TaintMark{Source: agent.TaintSourceRecordNote, CallID: "call_1"})
+
+	cases := []struct {
+		name  string
+		kind  string
+		taint *agent.RunTaint
+		held  bool
+	}{
+		{name: "an instruction from a clean run", kind: "Instruction", taint: &agent.RunTaint{}},
+		{name: "an instruction from a tainted run", kind: "Instruction", taint: marked, held: true},
+		{name: "an instruction from an unknown run", kind: "Instruction", held: true},
+		{name: "a correction from a tainted run", kind: "Correction", taint: marked, held: true},
+		{name: "a fact from a tainted run", kind: "Fact", taint: marked},
+		{name: "an unnamed kind is a fact", taint: marked},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			args := map[string]any{"content": "Post Acme remittances elsewhere."}
+			if tc.kind != "" {
+				args["kind"] = tc.kind
+			}
+			decision := agenttoolpolicy.Decide(t.Context(), agenttoolpolicy.DecideInput{
+				Policy:     policy,
+				Params:     call(agentPrincipal(), args),
+				Definition: acting,
+				Unattended: true,
+				Taint:      tc.taint,
+			})
+
+			if tc.held {
+				assert.Equal(t, agent.TierActWithApproval, decision.Tier)
+				assert.Equal(t, []string{agenttoolpolicy.HeldByTainted}, decision.HeldBy)
+				return
+			}
+			assert.Equal(t, agent.TierAutoExecute, decision.Tier)
+			assert.Empty(t, decision.HeldBy)
+		})
+	}
+}
+
+func TestDecide_HeldByNamesEachReasonOnceInOrder(t *testing.T) {
+	t.Parallel()
+
+	policy := policyReaching(agent.EgressExternalRecipient)
+	decision := agenttoolpolicy.Decide(t.Context(), agenttoolpolicy.DecideInput{
+		Policy:     policy,
+		Params:     call(agentPrincipal(), nil),
+		Definition: definition(agent.TierPropose, nil),
+		Unattended: true,
+	})
+
+	assert.Equal(t, agent.TierPropose, decision.Tier)
+	assert.Equal(t, []string{
+		agenttoolpolicy.HeldByAgentCeiling,
+		agenttoolpolicy.HeldByTainted,
+	}, decision.HeldBy)
 }

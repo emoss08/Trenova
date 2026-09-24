@@ -109,6 +109,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			name:   "ck_ai_feedback_fingerprint_source",
 			values: stringsOf(aifeedback.AllFingerprintSources()),
 		},
+		{
+			name:   "ck_agent_suite_runs_status",
+			values: stringsOf(agentquality.AllSuiteRunStatuses()),
+		},
+		{
+			name:   "ck_agent_suite_runs_trigger",
+			values: stringsOf(agentquality.AllSuiteRunTriggers()),
+		},
 	}
 
 	files := embeddedMigrationFiles(t)

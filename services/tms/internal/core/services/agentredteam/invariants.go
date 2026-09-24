@@ -347,12 +347,15 @@ func (c *checker) memories() {
 					"%s read tainted memory %q and opened untainted",
 					opened.Definition.Name, memory.Content)
 			}
-			rendered := "- [" + string(agent.MemoryKindInstruction) + "] " +
-				strings.TrimSpace(memory.Content)
+			if !memory.DrawnFromOutside() {
+				continue
+			}
+			rendered := "- [" + string(memory.Kind) + "] " + strings.TrimSpace(memory.Content)
 			if strings.Contains(opened.System, rendered) {
 				c.violate(InvMemoryNotInstruction,
-					"%s's prompt renders tainted memory %q as an instruction to follow",
-					opened.Definition.Name, memory.Content)
+					"%s's prompt renders tainted memory %q among what the organization "+
+						"recorded, as a %s to follow", opened.Definition.Name, memory.Content,
+					memory.Kind)
 			}
 		}
 	}

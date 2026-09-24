@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
+	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/reflectutils"
@@ -20,18 +21,42 @@ import (
 var passthroughTools = []string{agentdefinition.CoreToolRemember}
 
 type toolDeps struct {
-	desk     *inboundDesk
-	memories serviceports.AgentMemoryService
+	desk        *inboundDesk
+	inbox       *inboundmessageservice.Service
+	memories    serviceports.AgentMemoryService
+	shipments   *shipmentDesk
+	comments    *commentDesk
+	permissions *permissionDesk
 }
 
-func newToolDeps(rec *recorder) toolDeps {
+func newToolDeps(rec *recorder, responses map[string]map[string]any) toolDeps {
+	desk := &inboundDesk{rec: rec}
+
 	return toolDeps{
-		desk: &inboundDesk{rec: rec},
+		desk: desk,
+		inbox: inboundmessageservice.New(inboundmessageservice.Params{
+			Logger:      zap.NewNop(),
+			MessageRepo: &inboundMessageRepository{desk: desk},
+		}),
 		memories: agentmemoryservice.New(agentmemoryservice.Params{
 			Logger: zap.NewNop(),
 			Repo:   &memoryRepository{rec: rec},
 			Runs:   &runRepository{rec: rec},
 		}),
+		shipments:   &shipmentDesk{rec: rec, response: responses[getShipmentTool]},
+		comments:    &commentDesk{rec: rec, response: responses[getShipmentTool]},
+		permissions: &permissionDesk{rec: rec},
+	}
+}
+
+func (d toolDeps) fakes() []reflect.Value {
+	return []reflect.Value{
+		reflect.ValueOf(d.desk),
+		reflect.ValueOf(d.inbox),
+		reflect.ValueOf(d.memories),
+		reflect.ValueOf(d.shipments),
+		reflect.ValueOf(d.comments),
+		reflect.ValueOf(d.permissions),
 	}
 }
 
@@ -41,8 +66,7 @@ type builtTools struct {
 }
 
 func buildTools(rec *recorder, responses map[string]map[string]any) (builtTools, error) {
-	deps := newToolDeps(rec)
-	fakes := []reflect.Value{reflect.ValueOf(deps.desk), reflect.ValueOf(deps.memories)}
+	fakes := newToolDeps(rec, responses).fakes()
 	providers := append(
 		agentquerytoolservice.ToolProviders(),
 		agenttoolservice.ToolProviders()...,
@@ -89,18 +113,51 @@ func suppliedFor(provider any, fakes []reflect.Value) map[reflect.Type]reflect.V
 	}
 	for idx := range fnType.NumIn() {
 		in := fnType.In(idx)
-		if in.Kind() != reflect.Interface || in.NumMethod() == 0 {
+		if _, ok := supplied[in]; ok {
 			continue
 		}
-		for _, fake := range fakes {
-			if fake.Type().Implements(in) {
-				supplied[in] = fake
-				break
+		if fake, ok := fakeFor(in, fakes); ok {
+			supplied[in] = fake
+			continue
+		}
+		if in.Kind() == reflect.Struct {
+			if params, ok := paramsFor(in, fakes); ok {
+				supplied[in] = params
 			}
 		}
 	}
 
 	return supplied
+}
+
+func fakeFor(in reflect.Type, fakes []reflect.Value) (reflect.Value, bool) {
+	for _, fake := range fakes {
+		if fake.Type() == in {
+			return fake, true
+		}
+		if in.Kind() == reflect.Interface && in.NumMethod() > 0 && fake.Type().Implements(in) {
+			return fake, true
+		}
+	}
+
+	return reflect.Value{}, false
+}
+
+func paramsFor(in reflect.Type, fakes []reflect.Value) (reflect.Value, bool) {
+	params := reflect.New(in).Elem()
+	filled := false
+	for idx := range in.NumField() {
+		field := in.Field(idx)
+		if field.Anonymous || !field.IsExported() {
+			continue
+		}
+		if fake, ok := fakeFor(field.Type, fakes); ok {
+			params.Field(idx).Set(fake)
+			filled = true
+		}
+	}
+
+	return params, filled
 }
 
 type recordingQuery struct {
@@ -119,7 +176,7 @@ func (q *recordingQuery) SearchTerms() []string { return searchTermsOf(q.inner) 
 func (q *recordingQuery) Prerequisites() []string { return prerequisitesOf(q.inner) }
 
 func (q *recordingQuery) Query(
-	_ context.Context,
+	ctx context.Context,
 	params serviceports.QueryToolParams,
 ) (any, error) {
 	q.rec.read(ReadTool, q.Name(), pagination.TenantInfo{
@@ -127,6 +184,9 @@ func (q *recordingQuery) Query(
 		BuID:  params.BusinessUnitID,
 	})
 
+	if slices.Contains(liveQueries, q.Name()) {
+		return q.inner.Query(ctx, params)
+	}
 	if q.response != nil {
 		return q.response, nil
 	}

@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"github.com/shopspring/decimal"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -218,28 +220,44 @@ func (r *repository) CostByDefinition(
 ) (*repositories.AIUsageCost, error) {
 	cols := buncolgen.AIUsageRecordColumns
 
-	var row struct {
-		CostUSD       string `bun:"cost_usd"`
-		Calls         int    `bun:"calls"`
-		UnpricedCalls int    `bun:"unpriced_calls"`
-	}
-	if err := r.db.DBForContext(ctx).NewSelect().
-		Model((*aiusage.AIUsageRecord)(nil)).
-		ColumnExpr("COALESCE(SUM("+cols.CostUSD.Qualified()+"), 0)::text AS cost_usd").
-		ColumnExpr("COUNT(*) AS calls").
-		ColumnExpr("COUNT(*) FILTER (WHERE "+cols.CostUSD.Qualified()+" IS NULL) AS unpriced_calls").
+	q := costSums(r.db.DBForContext(ctx).NewSelect()).
 		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
 		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 		Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
 		Where(cols.CreatedAt.Gte(), req.Since).
-		Where(cols.Surface.NotEq(), aiusage.SurfaceEvaluation).
-		Scan(ctx, &row); err != nil {
-		return nil, fmt.Errorf("sum ai usage cost: %w", err)
+		Where(cols.Surface.NotEq(), aiusage.SurfaceEvaluation)
+
+	return scanCost(ctx, q, "ai usage cost")
+}
+
+type costRow struct {
+	CostUSD       string `bun:"cost_usd"`
+	Calls         int    `bun:"calls"`
+	UnpricedCalls int    `bun:"unpriced_calls"`
+}
+
+func costSums(q *bun.SelectQuery) *bun.SelectQuery {
+	cost := buncolgen.AIUsageRecordColumns.CostUSD.Qualified()
+
+	return q.Model((*aiusage.AIUsageRecord)(nil)).
+		ColumnExpr("COALESCE(SUM(" + cost + "), 0)::text AS cost_usd").
+		ColumnExpr("COUNT(*) AS calls").
+		ColumnExpr("COUNT(*) FILTER (WHERE " + cost + " IS NULL) AS unpriced_calls")
+}
+
+func scanCost(
+	ctx context.Context,
+	q *bun.SelectQuery,
+	what string,
+) (*repositories.AIUsageCost, error) {
+	var row costRow
+	if err := q.Scan(ctx, &row); err != nil {
+		return nil, fmt.Errorf("sum %s: %w", what, err)
 	}
 
 	cost, err := decimal.NewFromString(row.CostUSD)
 	if err != nil {
-		return nil, fmt.Errorf("read ai usage cost %q: %w", row.CostUSD, err)
+		return nil, fmt.Errorf("read %s %q: %w", what, row.CostUSD, err)
 	}
 
 	return &repositories.AIUsageCost{
@@ -247,4 +265,32 @@ func (r *repository) CostByDefinition(
 		Calls:         row.Calls,
 		UnpricedCalls: row.UnpricedCalls,
 	}, nil
+}
+
+func (r *repository) EvaluationCost(
+	ctx context.Context,
+	req repositories.AIUsageEvaluationCostRequest,
+) (*repositories.AIUsageCost, error) {
+	cols := buncolgen.AIUsageRecordColumns
+	evals := buncolgen.EvaluationColumns
+	dba := r.db.DBForContext(ctx)
+
+	q := costSums(dba.NewSelect()).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where(cols.Surface.Eq(), aiusage.SurfaceEvaluation)
+	if req.Since > 0 {
+		q = q.Where(cols.CreatedAt.Gte(), req.Since)
+	}
+	if req.SuiteRunID.IsNotNil() {
+		replays := dba.NewSelect().
+			Model((*agent.Evaluation)(nil)).
+			ColumnExpr(evals.ID.Qualified()).
+			Where(evals.OrganizationID.Eq(), req.TenantInfo.OrgID).
+			Where(evals.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+			Where(evals.SuiteRunID.Eq(), req.SuiteRunID)
+		q = q.Where(cols.RunID.In(), replays)
+	}
+
+	return scanCost(ctx, q, "evaluation cost")
 }

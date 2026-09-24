@@ -19,6 +19,7 @@ type ToolPolicy struct {
 	Egress              []agent.EgressClass
 	Classify            func(ToolExecuteParams) CallPolicy
 	Condition           *TierCondition
+	TaintHold           *TaintHold
 	PersonalRunsUnasked bool
 	Effect              agent.ToolEffect
 	Artifact            string
@@ -38,6 +39,11 @@ type CallPolicy struct {
 type TierCondition struct {
 	Description string
 	Limit       func(context.Context, ToolExecuteParams) agent.AutonomyTier
+}
+
+type TaintHold struct {
+	Description string
+	Applies     func(ToolExecuteParams) bool
 }
 
 type ToolPolicyDeclarer interface {
@@ -98,6 +104,18 @@ func (p ToolPolicy) HasEgress(class agent.EgressClass) bool {
 
 func (p ToolPolicy) Conditional() bool {
 	return p.Classify != nil || p.Condition != nil || p.PersonalRunsUnasked
+}
+
+func (p ToolPolicy) HeldWhenTainted() bool {
+	return p.TaintHold != nil || slices.ContainsFunc(p.Egress, agent.EgressClass.Leaves)
+}
+
+func (p ToolPolicy) TaintHolds(params ToolExecuteParams, call CallPolicy) bool {
+	if call.Egress.Leaves() {
+		return true
+	}
+
+	return p.TaintHold != nil && (p.TaintHold.Applies == nil || p.TaintHold.Applies(params))
 }
 
 func egressRank(class agent.EgressClass) int {

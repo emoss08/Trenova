@@ -1113,6 +1113,7 @@ var AgentRunColumns = struct {
 	Tainted           Column // "tainted" → qualified: "ar.tainted"
 	Taint             Column // "taint" → qualified: "ar.taint"
 	TaintedAt         Column // "tainted_at" → qualified: "ar.tainted_at"
+	Fingerprint       Column // "fingerprint" → qualified: "ar.fingerprint"
 	Version           Column // "version" → qualified: "ar.version"
 	CreatedAt         Column // "created_at" → qualified: "ar.created_at"
 	UpdatedAt         Column // "updated_at" → qualified: "ar.updated_at"
@@ -1137,6 +1138,7 @@ var AgentRunColumns = struct {
 	Tainted:           NewColumn("tainted", "ar"),
 	Taint:             NewColumn("taint", "ar"),
 	TaintedAt:         NewColumn("tainted_at", "ar"),
+	Fingerprint:       NewColumn("fingerprint", "ar"),
 	Version:           NewColumn("version", "ar"),
 	CreatedAt:         NewColumn("created_at", "ar"),
 	UpdatedAt:         NewColumn("updated_at", "ar"),
@@ -1167,6 +1169,7 @@ var AgentRunFieldMap = map[string]string{
 	"tainted":           "tainted",
 	"taint":             "taint",
 	"taintedAt":         "tainted_at",
+	"fingerprint":       "fingerprint",
 	"version":           "version",
 	"createdAt":         "created_at",
 	"updatedAt":         "updated_at",
@@ -1195,6 +1198,7 @@ var AgentRunInsertableColumns = []string{
 	"tainted",
 	"taint",
 	"tainted_at",
+	"fingerprint",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1283,6 +1287,7 @@ var AgentRunFilter = struct {
 	Tainted           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tainted" → DB: "tainted"
 	Taint             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
 	TaintedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taintedAt" → DB: "tainted_at"
+	Fingerprint       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fingerprint" → DB: "fingerprint"
 	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1346,6 +1351,9 @@ var AgentRunFilter = struct {
 	},
 	TaintedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("taintedAt", op, value)
+	},
+	Fingerprint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fingerprint", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -1870,6 +1878,8 @@ var EvaluationColumns = struct {
 	Judge             Column // "judge" → qualified: "aeval.judge"
 	CaseScore         Column // "case_score" → qualified: "aeval.case_score"
 	Fingerprint       Column // "fingerprint" → qualified: "aeval.fingerprint"
+	SuiteRunID        Column // "suite_run_id" → qualified: "aeval.suite_run_id"
+	SuiteOrdinal      Column // "suite_ordinal" → qualified: "aeval.suite_ordinal"
 	WorkflowID        Column // "workflow_id" → qualified: "aeval.workflow_id"
 	ErrorMessage      Column // "error_message" → qualified: "aeval.error_message"
 	RequestedByUserID Column // "requested_by_user_id" → qualified: "aeval.requested_by_user_id"
@@ -1903,6 +1913,8 @@ var EvaluationColumns = struct {
 	Judge:             NewColumn("judge", "aeval"),
 	CaseScore:         NewColumn("case_score", "aeval"),
 	Fingerprint:       NewColumn("fingerprint", "aeval"),
+	SuiteRunID:        NewColumn("suite_run_id", "aeval"),
+	SuiteOrdinal:      NewColumn("suite_ordinal", "aeval"),
 	WorkflowID:        NewColumn("workflow_id", "aeval"),
 	ErrorMessage:      NewColumn("error_message", "aeval"),
 	RequestedByUserID: NewColumn("requested_by_user_id", "aeval"),
@@ -1942,6 +1954,8 @@ var EvaluationFieldMap = map[string]string{
 	"judge":             "judge",
 	"caseScore":         "case_score",
 	"fingerprint":       "fingerprint",
+	"suiteRunId":        "suite_run_id",
+	"suiteOrdinal":      "suite_ordinal",
 	"workflowId":        "workflow_id",
 	"errorMessage":      "error_message",
 	"requestedByUserId": "requested_by_user_id",
@@ -1979,6 +1993,8 @@ var EvaluationInsertableColumns = []string{
 	"judge",
 	"case_score",
 	"fingerprint",
+	"suite_run_id",
+	"suite_ordinal",
 	"workflow_id",
 	"error_message",
 	"requested_by_user_id",
@@ -2076,6 +2092,8 @@ var EvaluationFilter = struct {
 	Judge             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "judge" → DB: "judge"
 	CaseScore         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "caseScore" → DB: "case_score"
 	Fingerprint       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fingerprint" → DB: "fingerprint"
+	SuiteRunID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "suiteRunId" → DB: "suite_run_id"
+	SuiteOrdinal      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "suiteOrdinal" → DB: "suite_ordinal"
 	WorkflowID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workflowId" → DB: "workflow_id"
 	ErrorMessage      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
 	RequestedByUserID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedByUserId" → DB: "requested_by_user_id"
@@ -2156,6 +2174,12 @@ var EvaluationFilter = struct {
 	},
 	Fingerprint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("fingerprint", op, value)
+	},
+	SuiteRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("suiteRunId", op, value)
+	},
+	SuiteOrdinal: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("suiteOrdinal", op, value)
 	},
 	WorkflowID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("workflowId", op, value)

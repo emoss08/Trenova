@@ -35,7 +35,7 @@ var (
 
 const (
 	liveBaselinePath    = "testdata/live-baseline.json"
-	defaultLiveModel    = "claude-opus-5"
+	defaultLiveModel    = "claude-sonnet-5"
 	defaultLiveKind     = aiprovider.KindAnthropicMessages
 	defaultLiveMaxToken = 4096
 )

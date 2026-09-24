@@ -250,7 +250,16 @@ type RunResult struct {
 	Delegations []DelegatedRun `json:",omitempty"`
 	// Taint is the outside content the turn read. Nil is a turn opened
 	// before taint was kept, which counts as tainted wherever it matters.
-	Taint *agent.RunTaint `json:",omitempty"`
+	Taint       *agent.RunTaint    `json:",omitempty"`
+	Fingerprint *agent.Fingerprint `json:",omitempty"`
+}
+
+func (r *RunResult) ServedFingerprint() *agent.Fingerprint {
+	if r == nil {
+		return nil
+	}
+
+	return r.Fingerprint.Served(r.Model, r.ProviderID)
 }
 
 // DelegatedRun is one task a turn handed to another agent, as it is saved:

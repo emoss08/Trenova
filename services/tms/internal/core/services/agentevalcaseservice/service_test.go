@@ -736,3 +736,17 @@ func TestPurge_AppliesEachOrganizationsRetention(t *testing.T) {
 	assert.True(t, w.cases.purges[1].AllTenants, "explicit expiry applies everywhere")
 	assert.Zero(t, w.cases.purges[1].CreatedBefore)
 }
+
+func (f *fakeCases) ListAgentsWithActiveCases(
+	context.Context,
+	repositories.ListAgentsWithActiveEvalCasesRequest,
+) ([]pulid.ID, error) {
+	return nil, nil
+}
+
+func (f *fakeCases) ListSamplingCases(
+	context.Context,
+	repositories.ListEvalCaseSamplingRequest,
+) ([]agentquality.SamplingCase, error) {
+	return nil, nil
+}

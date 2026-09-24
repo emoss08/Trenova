@@ -24,6 +24,249 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// Control — table "agent_quality_controls", alias "aqc"
+// ---------------------------------------------------------------------------
+
+// ControlTable holds the table name, alias, and primary key columns
+// for the "agent_quality_controls" table. The alias "aqc" is used in all generated
+// SQL fragments (e.g. "aqc.id = ?").
+var ControlTable = TableInfo{
+	Name:       "agent_quality_controls",
+	Alias:      "aqc",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// ControlColumns provides type-safe column references for the "agent_quality_controls" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ControlColumns.ID.String())
+//	// SELECT aqc.id FROM agent_quality_controls AS aqc
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ControlColumns.ID.Eq(), id)           // WHERE aqc.id = ?
+//	q.Order(ControlColumns.CreatedAt.OrderDesc())  // ORDER BY aqc.created_at DESC
+var ControlColumns = struct {
+	ID                  Column // "id" → qualified: "aqc.id"
+	BusinessUnitID      Column // "business_unit_id" → qualified: "aqc.business_unit_id"
+	OrganizationID      Column // "organization_id" → qualified: "aqc.organization_id"
+	Enabled             Column // "enabled" → qualified: "aqc.enabled"
+	RunHourLocal        Column // "run_hour_local" → qualified: "aqc.run_hour_local"
+	Timezone            Column // "timezone" → qualified: "aqc.timezone"
+	MaxCasesPerAgent    Column // "max_cases_per_agent" → qualified: "aqc.max_cases_per_agent"
+	NightlyBudgetUSD    Column // "nightly_budget_usd" → qualified: "aqc.nightly_budget_usd"
+	MonthlyBudgetUSD    Column // "monthly_budget_usd" → qualified: "aqc.monthly_budget_usd"
+	JudgeEnabled        Column // "judge_enabled" → qualified: "aqc.judge_enabled"
+	JudgeSampleRate     Column // "judge_sample_rate" → qualified: "aqc.judge_sample_rate"
+	RegressionThreshold Column // "regression_threshold" → qualified: "aqc.regression_threshold"
+	MinCases            Column // "min_cases" → qualified: "aqc.min_cases"
+	ForceRerunDays      Column // "force_rerun_days" → qualified: "aqc.force_rerun_days"
+	Version             Column // "version" → qualified: "aqc.version"
+	CreatedAt           Column // "created_at" → qualified: "aqc.created_at"
+	UpdatedAt           Column // "updated_at" → qualified: "aqc.updated_at"
+}{
+	ID:                  NewColumn("id", "aqc"),
+	BusinessUnitID:      NewColumn("business_unit_id", "aqc"),
+	OrganizationID:      NewColumn("organization_id", "aqc"),
+	Enabled:             NewColumn("enabled", "aqc"),
+	RunHourLocal:        NewColumn("run_hour_local", "aqc"),
+	Timezone:            NewColumn("timezone", "aqc"),
+	MaxCasesPerAgent:    NewColumn("max_cases_per_agent", "aqc"),
+	NightlyBudgetUSD:    NewColumn("nightly_budget_usd", "aqc"),
+	MonthlyBudgetUSD:    NewColumn("monthly_budget_usd", "aqc"),
+	JudgeEnabled:        NewColumn("judge_enabled", "aqc"),
+	JudgeSampleRate:     NewColumn("judge_sample_rate", "aqc"),
+	RegressionThreshold: NewColumn("regression_threshold", "aqc"),
+	MinCases:            NewColumn("min_cases", "aqc"),
+	ForceRerunDays:      NewColumn("force_rerun_days", "aqc"),
+	Version:             NewColumn("version", "aqc"),
+	CreatedAt:           NewColumn("created_at", "aqc"),
+	UpdatedAt:           NewColumn("updated_at", "aqc"),
+}
+
+// ControlFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Control.GetStaticFieldMap().
+var ControlFieldMap = map[string]string{
+	"id":                  "id",
+	"businessUnitId":      "business_unit_id",
+	"organizationId":      "organization_id",
+	"enabled":             "enabled",
+	"runHourLocal":        "run_hour_local",
+	"timezone":            "timezone",
+	"maxCasesPerAgent":    "max_cases_per_agent",
+	"nightlyBudgetUsd":    "nightly_budget_usd",
+	"monthlyBudgetUsd":    "monthly_budget_usd",
+	"judgeEnabled":        "judge_enabled",
+	"judgeSampleRate":     "judge_sample_rate",
+	"regressionThreshold": "regression_threshold",
+	"minCases":            "min_cases",
+	"forceRerunDays":      "force_rerun_days",
+	"version":             "version",
+	"createdAt":           "created_at",
+	"updatedAt":           "updated_at",
+}
+
+// ControlInsertableColumns lists column names suitable for INSERT statements on the "agent_quality_controls" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ControlInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"enabled",
+	"run_hour_local",
+	"timezone",
+	"max_cases_per_agent",
+	"nightly_budget_usd",
+	"monthly_budget_usd",
+	"judge_enabled",
+	"judge_sample_rate",
+	"regression_threshold",
+	"min_cases",
+	"force_rerun_days",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// ControlRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(ControlRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var ControlRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// ControlScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE aqc.organization_id = ? AND aqc.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ControlScopeTenant(sq, ti).
+//		Where(buncolgen.ControlColumns.ID.Eq(), id)
+func ControlScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ControlColumns.OrganizationID, ControlColumns.BusinessUnitID, ti)
+}
+
+// ControlScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ControlScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ControlColumns.ID.In(), bun.List(ids))
+//	})
+func ControlScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ControlColumns.OrganizationID, ControlColumns.BusinessUnitID, ti)
+}
+
+// ControlScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ControlScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ControlColumns.ID.Eq(), id)
+//	})
+func ControlScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ControlColumns.OrganizationID, ControlColumns.BusinessUnitID, ti)
+}
+
+// ControlApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ControlApplyTenant(tenantInfo))
+func ControlApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ControlColumns.OrganizationID, ControlColumns.BusinessUnitID, ti)
+}
+
+// ControlFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_quality_controls" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ControlFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var ControlFilter = struct {
+	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	Enabled             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
+	RunHourLocal        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runHourLocal" → DB: "run_hour_local"
+	Timezone            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "timezone" → DB: "timezone"
+	MaxCasesPerAgent    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "maxCasesPerAgent" → DB: "max_cases_per_agent"
+	NightlyBudgetUSD    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "nightlyBudgetUsd" → DB: "nightly_budget_usd"
+	MonthlyBudgetUSD    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "monthlyBudgetUsd" → DB: "monthly_budget_usd"
+	JudgeEnabled        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "judgeEnabled" → DB: "judge_enabled"
+	JudgeSampleRate     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "judgeSampleRate" → DB: "judge_sample_rate"
+	RegressionThreshold func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "regressionThreshold" → DB: "regression_threshold"
+	MinCases            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "minCases" → DB: "min_cases"
+	ForceRerunDays      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "forceRerunDays" → DB: "force_rerun_days"
+	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	Enabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enabled", op, value)
+	},
+	RunHourLocal: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("runHourLocal", op, value)
+	},
+	Timezone: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("timezone", op, value)
+	},
+	MaxCasesPerAgent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("maxCasesPerAgent", op, value)
+	},
+	NightlyBudgetUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("nightlyBudgetUsd", op, value)
+	},
+	MonthlyBudgetUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("monthlyBudgetUsd", op, value)
+	},
+	JudgeEnabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("judgeEnabled", op, value)
+	},
+	JudgeSampleRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("judgeSampleRate", op, value)
+	},
+	RegressionThreshold: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("regressionThreshold", op, value)
+	},
+	MinCases: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("minCases", op, value)
+	},
+	ForceRerunDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("forceRerunDays", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // EvalCase — table "agent_eval_cases", alias "aec"
 // ---------------------------------------------------------------------------
 
@@ -374,6 +617,369 @@ var EvalCaseFilter = struct {
 	},
 	CreatedByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdByUserId", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// SuiteRun — table "agent_suite_runs", alias "asr"
+// ---------------------------------------------------------------------------
+
+// SuiteRunTable holds the table name, alias, and primary key columns
+// for the "agent_suite_runs" table. The alias "asr" is used in all generated
+// SQL fragments (e.g. "asr.id = ?").
+var SuiteRunTable = TableInfo{
+	Name:       "agent_suite_runs",
+	Alias:      "asr",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// SuiteRunColumns provides type-safe column references for the "agent_suite_runs" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(SuiteRunColumns.ID.String())
+//	// SELECT asr.id FROM agent_suite_runs AS asr
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(SuiteRunColumns.ID.Eq(), id)           // WHERE asr.id = ?
+//	q.Order(SuiteRunColumns.CreatedAt.OrderDesc())  // ORDER BY asr.created_at DESC
+var SuiteRunColumns = struct {
+	ID                 Column // "id" → qualified: "asr.id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "asr.business_unit_id"
+	OrganizationID     Column // "organization_id" → qualified: "asr.organization_id"
+	AgentDefinitionID  Column // "agent_definition_id" → qualified: "asr.agent_definition_id"
+	Trigger            Column // "trigger" → qualified: "asr.trigger"
+	SweepKey           Column // "sweep_key" → qualified: "asr.sweep_key"
+	Fingerprint        Column // "fingerprint" → qualified: "asr.fingerprint"
+	FingerprintHash    Column // "fingerprint_hash" → qualified: "asr.fingerprint_hash"
+	FingerprintChanges Column // "fingerprint_changes" → qualified: "asr.fingerprint_changes"
+	SuiteRevision      Column // "suite_revision" → qualified: "asr.suite_revision"
+	SampleSeed         Column // "sample_seed" → qualified: "asr.sample_seed"
+	Status             Column // "status" → qualified: "asr.status"
+	CasesTotal         Column // "cases_total" → qualified: "asr.cases_total"
+	CasesPassed        Column // "cases_passed" → qualified: "asr.cases_passed"
+	CasesFailed        Column // "cases_failed" → qualified: "asr.cases_failed"
+	CasesSkipped       Column // "cases_skipped" → qualified: "asr.cases_skipped"
+	HardFailures       Column // "hard_failures" → qualified: "asr.hard_failures"
+	DeterministicScore Column // "deterministic_score" → qualified: "asr.deterministic_score"
+	JudgeScore         Column // "judge_score" → qualified: "asr.judge_score"
+	QualityScore       Column // "quality_score" → qualified: "asr.quality_score"
+	BaselineScore      Column // "baseline_score" → qualified: "asr.baseline_score"
+	BaselineRunID      Column // "baseline_run_id" → qualified: "asr.baseline_run_id"
+	Regression         Column // "regression" → qualified: "asr.regression"
+	CostUSD            Column // "cost_usd" → qualified: "asr.cost_usd"
+	StartedAt          Column // "started_at" → qualified: "asr.started_at"
+	FinishedAt         Column // "finished_at" → qualified: "asr.finished_at"
+	Comments           Column // "comments" → qualified: "asr.comments"
+	WorkflowID         Column // "workflow_id" → qualified: "asr.workflow_id"
+	RequestedByUserID  Column // "requested_by_user_id" → qualified: "asr.requested_by_user_id"
+	Version            Column // "version" → qualified: "asr.version"
+	CreatedAt          Column // "created_at" → qualified: "asr.created_at"
+	UpdatedAt          Column // "updated_at" → qualified: "asr.updated_at"
+}{
+	ID:                 NewColumn("id", "asr"),
+	BusinessUnitID:     NewColumn("business_unit_id", "asr"),
+	OrganizationID:     NewColumn("organization_id", "asr"),
+	AgentDefinitionID:  NewColumn("agent_definition_id", "asr"),
+	Trigger:            NewColumn("trigger", "asr"),
+	SweepKey:           NewColumn("sweep_key", "asr"),
+	Fingerprint:        NewColumn("fingerprint", "asr"),
+	FingerprintHash:    NewColumn("fingerprint_hash", "asr"),
+	FingerprintChanges: NewColumn("fingerprint_changes", "asr"),
+	SuiteRevision:      NewColumn("suite_revision", "asr"),
+	SampleSeed:         NewColumn("sample_seed", "asr"),
+	Status:             NewColumn("status", "asr"),
+	CasesTotal:         NewColumn("cases_total", "asr"),
+	CasesPassed:        NewColumn("cases_passed", "asr"),
+	CasesFailed:        NewColumn("cases_failed", "asr"),
+	CasesSkipped:       NewColumn("cases_skipped", "asr"),
+	HardFailures:       NewColumn("hard_failures", "asr"),
+	DeterministicScore: NewColumn("deterministic_score", "asr"),
+	JudgeScore:         NewColumn("judge_score", "asr"),
+	QualityScore:       NewColumn("quality_score", "asr"),
+	BaselineScore:      NewColumn("baseline_score", "asr"),
+	BaselineRunID:      NewColumn("baseline_run_id", "asr"),
+	Regression:         NewColumn("regression", "asr"),
+	CostUSD:            NewColumn("cost_usd", "asr"),
+	StartedAt:          NewColumn("started_at", "asr"),
+	FinishedAt:         NewColumn("finished_at", "asr"),
+	Comments:           NewColumn("comments", "asr"),
+	WorkflowID:         NewColumn("workflow_id", "asr"),
+	RequestedByUserID:  NewColumn("requested_by_user_id", "asr"),
+	Version:            NewColumn("version", "asr"),
+	CreatedAt:          NewColumn("created_at", "asr"),
+	UpdatedAt:          NewColumn("updated_at", "asr"),
+}
+
+// SuiteRunFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by SuiteRun.GetStaticFieldMap().
+var SuiteRunFieldMap = map[string]string{
+	"id":                 "id",
+	"businessUnitId":     "business_unit_id",
+	"organizationId":     "organization_id",
+	"agentDefinitionId":  "agent_definition_id",
+	"trigger":            "trigger",
+	"sweepKey":           "sweep_key",
+	"fingerprint":        "fingerprint",
+	"fingerprintHash":    "fingerprint_hash",
+	"fingerprintChanges": "fingerprint_changes",
+	"suiteRevision":      "suite_revision",
+	"sampleSeed":         "sample_seed",
+	"status":             "status",
+	"casesTotal":         "cases_total",
+	"casesPassed":        "cases_passed",
+	"casesFailed":        "cases_failed",
+	"casesSkipped":       "cases_skipped",
+	"hardFailures":       "hard_failures",
+	"deterministicScore": "deterministic_score",
+	"judgeScore":         "judge_score",
+	"qualityScore":       "quality_score",
+	"baselineScore":      "baseline_score",
+	"baselineRunId":      "baseline_run_id",
+	"regression":         "regression",
+	"costUsd":            "cost_usd",
+	"startedAt":          "started_at",
+	"finishedAt":         "finished_at",
+	"comments":           "comments",
+	"workflowId":         "workflow_id",
+	"requestedByUserId":  "requested_by_user_id",
+	"version":            "version",
+	"createdAt":          "created_at",
+	"updatedAt":          "updated_at",
+}
+
+// SuiteRunInsertableColumns lists column names suitable for INSERT statements on the "agent_suite_runs" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var SuiteRunInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"agent_definition_id",
+	"trigger",
+	"sweep_key",
+	"fingerprint",
+	"fingerprint_hash",
+	"fingerprint_changes",
+	"suite_revision",
+	"sample_seed",
+	"status",
+	"cases_total",
+	"cases_passed",
+	"cases_failed",
+	"cases_skipped",
+	"hard_failures",
+	"deterministic_score",
+	"judge_score",
+	"quality_score",
+	"baseline_score",
+	"baseline_run_id",
+	"regression",
+	"cost_usd",
+	"started_at",
+	"finished_at",
+	"comments",
+	"workflow_id",
+	"requested_by_user_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// SuiteRunRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(SuiteRunRelations.BusinessUnit)
+//	// Bun eager-loads the BusinessUnit association via a separate query
+var SuiteRunRelations = struct {
+	BusinessUnit string
+	Organization string
+}{
+	BusinessUnit: "BusinessUnit",
+	Organization: "Organization",
+}
+
+// SuiteRunScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE asr.organization_id = ? AND asr.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.SuiteRunScopeTenant(sq, ti).
+//		Where(buncolgen.SuiteRunColumns.ID.Eq(), id)
+func SuiteRunScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, SuiteRunColumns.OrganizationID, SuiteRunColumns.BusinessUnitID, ti)
+}
+
+// SuiteRunScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.SuiteRunScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.SuiteRunColumns.ID.In(), bun.List(ids))
+//	})
+func SuiteRunScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, SuiteRunColumns.OrganizationID, SuiteRunColumns.BusinessUnitID, ti)
+}
+
+// SuiteRunScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.SuiteRunScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.SuiteRunColumns.ID.Eq(), id)
+//	})
+func SuiteRunScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, SuiteRunColumns.OrganizationID, SuiteRunColumns.BusinessUnitID, ti)
+}
+
+// SuiteRunApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.SuiteRunApplyTenant(tenantInfo))
+func SuiteRunApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(SuiteRunColumns.OrganizationID, SuiteRunColumns.BusinessUnitID, ti)
+}
+
+// SuiteRunFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_suite_runs" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	SuiteRunFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var SuiteRunFilter = struct {
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	AgentDefinitionID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	Trigger            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trigger" → DB: "trigger"
+	SweepKey           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sweepKey" → DB: "sweep_key"
+	Fingerprint        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fingerprint" → DB: "fingerprint"
+	FingerprintHash    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fingerprintHash" → DB: "fingerprint_hash"
+	FingerprintChanges func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fingerprintChanges" → DB: "fingerprint_changes"
+	SuiteRevision      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "suiteRevision" → DB: "suite_revision"
+	SampleSeed         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sampleSeed" → DB: "sample_seed"
+	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	CasesTotal         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "casesTotal" → DB: "cases_total"
+	CasesPassed        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "casesPassed" → DB: "cases_passed"
+	CasesFailed        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "casesFailed" → DB: "cases_failed"
+	CasesSkipped       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "casesSkipped" → DB: "cases_skipped"
+	HardFailures       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hardFailures" → DB: "hard_failures"
+	DeterministicScore func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deterministicScore" → DB: "deterministic_score"
+	JudgeScore         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "judgeScore" → DB: "judge_score"
+	QualityScore       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "qualityScore" → DB: "quality_score"
+	BaselineScore      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baselineScore" → DB: "baseline_score"
+	BaselineRunID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "baselineRunId" → DB: "baseline_run_id"
+	Regression         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "regression" → DB: "regression"
+	CostUSD            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	StartedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
+	FinishedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "finishedAt" → DB: "finished_at"
+	Comments           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "comments" → DB: "comments"
+	WorkflowID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workflowId" → DB: "workflow_id"
+	RequestedByUserID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedByUserId" → DB: "requested_by_user_id"
+	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentDefinitionId", op, value)
+	},
+	Trigger: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("trigger", op, value)
+	},
+	SweepKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sweepKey", op, value)
+	},
+	Fingerprint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fingerprint", op, value)
+	},
+	FingerprintHash: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fingerprintHash", op, value)
+	},
+	FingerprintChanges: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fingerprintChanges", op, value)
+	},
+	SuiteRevision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("suiteRevision", op, value)
+	},
+	SampleSeed: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sampleSeed", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	CasesTotal: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("casesTotal", op, value)
+	},
+	CasesPassed: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("casesPassed", op, value)
+	},
+	CasesFailed: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("casesFailed", op, value)
+	},
+	CasesSkipped: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("casesSkipped", op, value)
+	},
+	HardFailures: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("hardFailures", op, value)
+	},
+	DeterministicScore: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("deterministicScore", op, value)
+	},
+	JudgeScore: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("judgeScore", op, value)
+	},
+	QualityScore: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("qualityScore", op, value)
+	},
+	BaselineScore: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("baselineScore", op, value)
+	},
+	BaselineRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("baselineRunId", op, value)
+	},
+	Regression: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("regression", op, value)
+	},
+	CostUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("costUsd", op, value)
+	},
+	StartedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("startedAt", op, value)
+	},
+	FinishedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("finishedAt", op, value)
+	},
+	Comments: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("comments", op, value)
+	},
+	WorkflowID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("workflowId", op, value)
+	},
+	RequestedByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requestedByUserId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

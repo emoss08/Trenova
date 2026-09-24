@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRailItems, type RailPermissions } from "../rail-items";
+import { buildRailItems, resolveRailView, type RailPermissions } from "../rail-items";
 
 const t = (text: string, ...args: (string | number)[]) =>
   text
@@ -19,6 +19,8 @@ const all: RailPermissions = {
   exceptions: true,
   memory: true,
   safety: true,
+  quality: true,
+  ratings: true,
 };
 
 const counts = {
@@ -31,6 +33,7 @@ const counts = {
   memoriesActive: 3,
   extensionsOn: 1,
   extensionsTotal: 1,
+  qualityRegressions: 0,
 };
 
 describe("buildRailItems", () => {
@@ -44,6 +47,7 @@ describe("buildRailItems", () => {
       "extensions",
       "memory",
       "safety",
+      "quality",
       "activity",
     ]);
     expect(items[1].status).toBe("3 of 4 on");
@@ -51,8 +55,9 @@ describe("buildRailItems", () => {
     expect(items[3].status).toBe("1 of 1 on");
     expect(items[4].status).toBe("3 active");
     expect(items[5].status).toBe("");
-    expect(items[6].status).toBe("12 runs today");
-    expect(items[6].children.map((child) => child.view)).toEqual([
+    expect(items[6].status).toBe("");
+    expect(items[7].status).toBe("12 runs today");
+    expect(items[7].children.map((child) => child.view)).toEqual([
       "runs",
       "proposals",
       "plans",
@@ -66,8 +71,8 @@ describe("buildRailItems", () => {
   it("calls for attention when proposals wait on a person", () => {
     const items = buildRailItems({ ...counts, pendingProposals: 2 }, all, t);
 
-    expect(items[6].status).toBe("2 awaiting decision");
-    expect(items[6].attention).toBe(true);
+    expect(items[7].status).toBe("2 awaiting decision");
+    expect(items[7].attention).toBe(true);
   });
 
   it("calls for attention when no provider is on", () => {
@@ -89,6 +94,7 @@ describe("buildRailItems", () => {
         exceptions: false,
         memory: false,
         safety: false,
+        quality: false,
       },
       t,
     );
@@ -107,7 +113,7 @@ describe("buildRailItems", () => {
   it("lists plans only where proposals may be read", () => {
     const items = buildRailItems(counts, { ...all, proposals: false }, t);
 
-    expect(items[6].children.map((child) => child.view)).toEqual([
+    expect(items[7].children.map((child) => child.view)).toEqual([
       "runs",
       "evaluations",
       "exceptions",
@@ -133,7 +139,10 @@ describe("buildRailItems", () => {
       tab: "safety",
       status: "",
       attention: false,
-      children: [],
+      children: [
+        { view: "rules", label: "Tool rules" },
+        { view: "agents", label: "By agent" },
+      ],
     });
   });
 
@@ -149,5 +158,65 @@ describe("buildRailItems", () => {
 
     const hidden = buildRailItems(counts, { ...all, extensions: false }, t);
     expect(hidden.some((item) => item.tab === "extensions")).toBe(false);
+  });
+
+  // A regression is something to look at: the section says how many agents
+  // scored worse after they changed, and draws the warning dot.
+  it("calls for attention when an agent's quality regressed", () => {
+    const quiet = buildRailItems(counts, all, t).find((item) => item.tab === "quality");
+    expect(quiet?.status).toBe("");
+    expect(quiet?.attention).toBe(false);
+
+    const one = buildRailItems({ ...counts, qualityRegressions: 1 }, all, t).find(
+      (item) => item.tab === "quality",
+    );
+    expect(one?.status).toBe("1 agent regressed");
+    expect(one?.attention).toBe(true);
+
+    const two = buildRailItems({ ...counts, qualityRegressions: 2 }, all, t).find(
+      (item) => item.tab === "quality",
+    );
+    expect(two?.status).toBe("2 agents regressed");
+  });
+
+  // Each quality table is its own view, so the section lists them; the
+  // answers people rated down are read under the right to read feedback.
+  it("lists the quality views, worst-rated answers only where feedback may be read", () => {
+    const views = (permissions: RailPermissions) =>
+      buildRailItems(counts, permissions, t)
+        .find((item) => item.tab === "quality")
+        ?.children.map((child) => child.view);
+
+    expect(views(all)).toEqual(["agents", "runs", "ratings", "golden", "settings"]);
+    expect(views({ ...all, ratings: false })).toEqual(["agents", "runs", "golden", "settings"]);
+  });
+
+  it("lists quality only where the golden set may be read", () => {
+    const items = buildRailItems(counts, { ...all, quality: false }, t);
+
+    expect(items.map((item) => item.tab)).not.toContain("quality");
+    expect(items.at(-1)?.tab).toBe("activity");
+  });
+});
+
+describe("resolveRailView", () => {
+  const items = buildRailItems(counts, { ...all, ratings: false }, t);
+  const item = (tab: string) => items.find((entry) => entry.tab === tab);
+
+  it("opens the view asked for when the row offers it", () => {
+    expect(resolveRailView(item("safety"), "agents")).toBe("agents");
+    expect(resolveRailView(item("quality"), "runs")).toBe("runs");
+  });
+
+  // A link can name a view the reader may not open; the row's first view is
+  // shown instead of an empty section.
+  it("falls back to the row's first view", () => {
+    expect(resolveRailView(item("quality"), "ratings")).toBe("agents");
+    expect(resolveRailView(item("safety"), null)).toBe("rules");
+  });
+
+  it("has no view for a row without views", () => {
+    expect(resolveRailView(item("memory"), "runs")).toBeNull();
+    expect(resolveRailView(undefined, "runs")).toBeNull();
   });
 });

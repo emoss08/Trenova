@@ -190,3 +190,18 @@ func DescribeUnixInstantIn(ts, now int64, timezone string) string {
 
 	return date + " " + clock + " " + distance
 }
+
+func MonthStartUnix(ts int64, timezone string) (int64, error) {
+	if ts <= 0 {
+		return 0, fmt.Errorf("timestamp must be greater than zero")
+	}
+
+	loc, err := time.LoadLocation(NormalizeTimezone(timezone))
+	if err != nil {
+		return 0, fmt.Errorf("load timezone %q: %w", timezone, err)
+	}
+
+	t := time.Unix(ts, 0).In(loc)
+
+	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, loc).Unix(), nil
+}

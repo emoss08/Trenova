@@ -346,8 +346,8 @@
         "reversible": true,
         "idempotent": false,
         "readsExternal": "never",
-        "carriesTaint": false,
-        "rationale": "An internal note stays inside the organization; a customer or driver note is read outside it, so its visibility argument decides."
+        "carriesTaint": true,
+        "rationale": "An internal note stays inside the organization; a customer or driver note is read outside it, so its visibility argument decides. A note written on its own after the run read outside text is marked as drawn from it."
       }
     },
     {
@@ -2783,9 +2783,10 @@
         "effect": "lookup",
         "reversible": true,
         "idempotent": true,
-        "readsExternal": "never",
+        "readsExternal": "marked",
+        "source": "record_note",
         "carriesTaint": false,
-        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+        "rationale": "Reads a shipment with its newest comments, some of which a driver, a trading partner or another system outside the organization wrote; nothing changes and nothing is sent."
       }
     },
     {
@@ -7570,7 +7571,8 @@
         ],
         "classifiesEachCall": false,
         "personalRunsUnasked": false,
-        "heldWhenTainted": false,
+        "heldWhenTainted": true,
+        "taintHold": "An Instruction or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text.",
         "effect": "change",
         "reversible": true,
         "idempotent": false,

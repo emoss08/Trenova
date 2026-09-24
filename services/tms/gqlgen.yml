@@ -1955,6 +1955,47 @@ models:
   AgentEvalCase:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentquality.EvalCase
+  AgentSuiteRunStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentquality.SuiteRunStatus
+  AgentSuiteRunTrigger:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentquality.SuiteRunTrigger
+  AgentSuiteRun:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentquality.SuiteRun
+    fields:
+      agentName:
+        resolver: true
+      changeSummary:
+        resolver: true
+  AgentQualityControl:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentquality.Control
+    fields:
+      id:
+        resolver: true
+  AgentQualityPoint:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityPoint
+  AgentQualityOverview:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityOverview
+  AgentWorstRatedAnswer:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentWorstRatedAnswer
+    fields:
+      id:
+        resolver: true
+  AgentQuality:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityDetail
+  AgentQualityAgent:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityAgent
+    fields:
+      id:
+        resolver: true
   AgentAutonomyTier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier
@@ -2141,6 +2182,8 @@ models:
         value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceRunRecord
       Web:
         value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceWeb
+      RecordNote:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceRecordNote
   AgentAutonomyAnswer:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyAnswer
@@ -2168,6 +2211,8 @@ models:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentToolSafety
     fields:
+      id:
+        resolver: true
       policy:
         resolver: true
   AgentSafetySummary:

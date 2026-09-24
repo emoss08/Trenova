@@ -1,14 +1,16 @@
 import {
   AgentSafetyDocument,
-  AgentToolPolicyConnectionDocument,
+  AgentSafetySummaryDocument,
+  AgentToolRuleTableDocument,
+  AgentToolSafetyTableDocument,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  ALL_TOOL_POLICIES,
-  fetchAgentSafety,
-  fetchToolPolicyPage,
-  toolPolicyConnectionInput,
+  agentToolRuleTableGraphQLConfig,
+  createAgentToolSafetyTableGraphQLConfig,
+  fetchAgentSafetyHeaders,
+  fetchAgentSafetySummary,
 } from "../agent-safety";
 
 vi.mock("@trenova/shared/lib/graphql", () => ({
@@ -21,7 +23,7 @@ type Call = {
   document: unknown;
   operationName: string;
   signal?: AbortSignal;
-  variables: Record<string, unknown>;
+  variables?: Record<string, unknown>;
 };
 
 function lastCall(): Call {
@@ -32,142 +34,70 @@ beforeEach(() => {
   requestGraphQLMock.mockReset();
 });
 
-describe("toolPolicyConnectionInput", () => {
-  // An open filter is left out rather than sent as "all" or "": the server
-  // reads an absent filter as every tool, and a page keyed on what is sent
-  // is cached once however the filter was spelled.
-  it("sends only the page size for an open filter on the first page", () => {
-    expect(toolPolicyConnectionInput(ALL_TOOL_POLICIES, { first: 25, after: null })).toEqual({
-      first: 25,
-    });
-    expect(
-      toolPolicyConnectionInput({ ...ALL_TOOL_POLICIES, search: "   " }, { first: 25, after: "" }),
-    ).toEqual({ first: 25 });
+describe("table configs", () => {
+  // The data table reads rows from the connection the config names; a name
+  // that drifts from the operation reads nothing.
+  it("reads the tool rules from the rule connection", () => {
+    expect(agentToolRuleTableGraphQLConfig.document).toBe(AgentToolRuleTableDocument);
+    expect(agentToolRuleTableGraphQLConfig.operationName).toBe("AgentToolRuleTable");
+    expect(agentToolRuleTableGraphQLConfig.connectionKey).toBe("agentToolRuleConnection");
+    expect(agentToolRuleTableGraphQLConfig.extraVariables).toBeUndefined();
   });
 
-  it("sends every filter that narrows, and the cursor to read after", () => {
-    expect(
-      toolPolicyConnectionInput(
-        {
-          search: "  email customer ",
-          egress: "ExternalRecipient",
-          resource: "general",
-          kind: "Action",
-          attendance: "alone",
-        },
-        { first: 50, after: "cursor-25" },
-      ),
-    ).toEqual({
-      first: 50,
-      after: "cursor-25",
-      query: "email customer",
-      egress: "ExternalRecipient",
-      resource: "general",
-      kind: "Action",
-      runsWithoutPerson: true,
-    });
-  });
+  // The agents are an argument of the query, not a filter the table owns, so
+  // clearing the table's filters never widens it to every agent.
+  it("names the compared agents as a variable of their own", () => {
+    const agentIds = ["agdef_1", "agdef_2"];
+    const config = createAgentToolSafetyTableGraphQLConfig(agentIds);
 
-  // Attended is a filter of its own, not the absence of one: false keeps the
-  // tools that never run unattended, which "all" would not.
-  it("keeps attended apart from unfiltered", () => {
-    expect(
-      toolPolicyConnectionInput(
-        { ...ALL_TOOL_POLICIES, attendance: "attended" },
-        { first: 25, after: null },
-      ),
-    ).toEqual({ first: 25, runsWithoutPerson: false });
+    expect(config.document).toBe(AgentToolSafetyTableDocument);
+    expect(config.connectionKey).toBe("agentToolSafetyConnection");
+    expect(config.extraVariables).toEqual({ agentIds: ["agdef_1", "agdef_2"] });
+
+    agentIds.push("agdef_3");
+    expect(config.extraVariables).toEqual({ agentIds: ["agdef_1", "agdef_2"] });
   });
 });
 
-describe("fetchToolPolicyPage", () => {
-  it("asks for the count only when told to and reads the page back", async () => {
-    const signal = new AbortController().signal;
-    requestGraphQLMock.mockResolvedValue({
-      agentToolPolicyConnection: {
-        edges: [
-          { cursor: "c1", node: { name: "assign_move" } },
-          { cursor: "c2", node: { name: "email_customer" } },
-        ],
-        totalCount: 40,
-        pageInfo: { hasNextPage: true, endCursor: "c2" },
-      },
-    });
+describe("fetchAgentSafetySummary", () => {
+  it("reads the figures and forwards the signal", async () => {
+    const summary = {
+      toolCount: 4,
+      runWithoutPerson: 1,
+      leaveOrganization: 1,
+      openWithSensitive: 0,
+      resources: ["general"],
+    };
+    requestGraphQLMock.mockResolvedValue({ agentSafetySummary: summary });
+    const controller = new AbortController();
 
-    const page = await fetchToolPolicyPage(
-      { ...ALL_TOOL_POLICIES, egress: "Money" },
-      { first: 25, after: "c0", includeTotalCount: true },
-      { signal },
-    );
-
-    const call = lastCall();
-    expect(call.document).toBe(AgentToolPolicyConnectionDocument);
-    expect(call.operationName).toBe("AgentToolPolicyConnection");
-    expect(call.signal).toBe(signal);
-    expect(call.variables).toEqual({
-      input: { first: 25, after: "c0", egress: "Money" },
-      includeTotalCount: true,
-    });
-    expect(page).toEqual({
-      items: [{ name: "assign_move" }, { name: "email_customer" }],
-      endCursor: "c2",
-      hasNextPage: true,
-      totalCount: 40,
-    });
-  });
-
-  // A count that was not selected is absent from the response, not zero.
-  it("reads an unselected count as unknown", async () => {
-    requestGraphQLMock.mockResolvedValue({
-      agentToolPolicyConnection: {
-        edges: [],
-        pageInfo: { hasNextPage: false, endCursor: null },
-      },
-    });
-
-    const page = await fetchToolPolicyPage(ALL_TOOL_POLICIES, {
-      first: 25,
-      after: "c9",
-      includeTotalCount: false,
-    });
-
-    expect(lastCall().variables).toEqual({
-      input: { first: 25, after: "c9" },
-      includeTotalCount: false,
-    });
-    expect(page).toEqual({ items: [], endCursor: null, hasNextPage: false, totalCount: null });
+    await expect(fetchAgentSafetySummary({ signal: controller.signal })).resolves.toEqual(summary);
+    expect(lastCall().document).toBe(AgentSafetySummaryDocument);
+    expect(lastCall().signal).toBe(controller.signal);
   });
 });
 
-describe("fetchAgentSafety", () => {
-  // Null agentIds reads every agent on the server; this wrapper never sends it.
-  it("reads nothing for no agents rather than every agent", async () => {
-    await expect(fetchAgentSafety([])).resolves.toEqual([]);
+describe("fetchAgentSafetyHeaders", () => {
+  // An empty list is "no agents", never the null that reads every agent.
+  it("reads nothing for no agents", async () => {
+    await expect(fetchAgentSafetyHeaders([])).resolves.toEqual([]);
     expect(requestGraphQLMock).not.toHaveBeenCalled();
   });
 
-  it("names the agents it reads and keeps each tool's rule", async () => {
-    requestGraphQLMock.mockResolvedValue({
-      agentSafety: [
-        {
-          agentId: "agdef_1",
-          tools: [
-            {
-              policyName: "assign_move",
-              policy: { name: "assign_move", title: "Assign move" },
-              clean: { answer: "RUNS_ON_ITS_OWN" },
-              tainted: { answer: "NEEDS_APPROVAL" },
-            },
-          ],
-        },
-      ],
-    });
+  it("reads only the named agents, without their tools", async () => {
+    const header = {
+      agentId: "agdef_1",
+      organizationShadow: false,
+      agent: { id: "agdef_1", name: "Customer desk", enabled: true },
+      reach: { accessMode: "Everyone", roles: [], warnings: [] },
+    };
+    requestGraphQLMock.mockResolvedValue({ agentSafety: [header] });
 
-    const agents = await fetchAgentSafety(["agdef_1"]);
+    const headers = await fetchAgentSafetyHeaders(["agdef_1"]);
 
     expect(lastCall().document).toBe(AgentSafetyDocument);
     expect(lastCall().variables).toEqual({ agentIds: ["agdef_1"] });
-    expect(agents[0]?.tools[0]?.policy.title).toBe("Assign move");
-    expect(agents[0]?.tools[0]?.tainted.answer).toBe("NEEDS_APPROVAL");
+    expect(headers).toEqual([header]);
+    expect(headers[0]).not.toHaveProperty("tools");
   });
 });
