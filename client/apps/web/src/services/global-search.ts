@@ -20,13 +20,20 @@ export interface GlobalSearchResponse {
   groups: GlobalSearchGroup[];
 }
 
-export type GlobalSearchEntityType = "shipment" | "customer" | "worker" | "document";
+export const globalSearchEntityTypes = ["shipment", "customer", "worker", "document"] as const;
+
+export type GlobalSearchEntityType = (typeof globalSearchEntityTypes)[number];
+
+export function isGlobalSearchEntityType(value: string): value is GlobalSearchEntityType {
+  return (globalSearchEntityTypes as readonly string[]).includes(value);
+}
 
 export class GlobalSearchService {
   async search(
     query: string,
     limit = 5,
     entityTypes?: GlobalSearchEntityType[],
+    options?: { signal?: AbortSignal },
   ): Promise<GlobalSearchResponse> {
     const searchParams = new URLSearchParams();
     searchParams.set("query", query);
@@ -35,6 +42,8 @@ export class GlobalSearchService {
       searchParams.set("entityTypes", entityTypes.join(","));
     }
 
-    return api.get<GlobalSearchResponse>(`/search/global/?${searchParams.toString()}`);
+    return api.get<GlobalSearchResponse>(`/search/global/?${searchParams.toString()}`, {
+      signal: options?.signal,
+    });
   }
 }

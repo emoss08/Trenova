@@ -2,7 +2,10 @@ import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { useFilteredNavigation } from "@/hooks/use-filtered-navigation";
 import { getPageTitle } from "@/lib/route-utils";
 import { useNavigationStore } from "@/stores/navigation-store";
+import { recordAtLocation } from "@/config/record-links";
+import { isGlobalSearchEntityType } from "@/services/global-search";
 import { useRecentPagesStore } from "@/stores/recent-pages-store";
+import { useRecentRecordsStore } from "@/stores/recent-records-store";
 import { useUpdateStore } from "@/stores/update-store";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -14,6 +17,7 @@ import { Header } from "../header";
 import { KeyboardShortcutsDialog } from "../keyboard-shortcuts-dialog";
 import { PageHeader, type PageHeaderProps } from "../page-header";
 import { findModuleForPath } from "./sidebar-model";
+import { UserSettingsHost } from "./user-settings-host";
 import { ClassicSidebar } from "./variants/classic-sidebar";
 import { WorkspaceContextBar, WorkspaceHeader } from "./workspace-header";
 import { WorkspaceSidebar } from "./workspace-sidebar";
@@ -38,6 +42,25 @@ function useRecordRecentPages() {
   useEffect(() => {
     recordVisit(organizationId, { path: pathname, title });
   }, [organizationId, pathname, title, recordVisit]);
+}
+
+/**
+ * Brings a record the palette already remembers back to the front when it is
+ * opened some other way: from a table row, a link in a notification, a
+ * mention in a reply.
+ */
+function useTouchRecentRecords() {
+  const { pathname, search } = useLocation();
+  const touch = useRecentRecordsStore((state) => state.touch);
+  const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
+
+  useEffect(() => {
+    const record = recordAtLocation(pathname, search);
+    if (!record || record.entityId === "" || !isGlobalSearchEntityType(record.entityType)) {
+      return;
+    }
+    touch(organizationId, record.entityType, record.entityId);
+  }, [organizationId, pathname, search, touch]);
 }
 
 function useLayoutEffects() {
@@ -70,6 +93,7 @@ function useLayoutEffects() {
   }, [toggleSidebar]);
 
   useRecordRecentPages();
+  useTouchRecentRecords();
 }
 
 function WorkspaceShell({ children }: SidebarLayoutProps) {
@@ -109,6 +133,7 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
     <>
       <CommandPaletteMount />
       <KeyboardShortcutsDialog />
+      <UserSettingsHost />
       <AssistantWidget />
       <Shell>{children}</Shell>
     </>

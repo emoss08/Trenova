@@ -20,7 +20,7 @@ export const keybindGroups: KeybindGroup[] = [
         id: "command-palette",
         label: "Command palette",
         keys: ["Ctrl", "K"],
-        description: "Open the command palette to search routes and commands",
+        description: "Search records, jump to pages, run commands and ask the assistant",
       },
       {
         id: "toggle-sidebar",
@@ -45,6 +45,42 @@ export const keybindGroups: KeybindGroup[] = [
         label: "Assistant",
         keys: ["Ctrl", "J"],
         description: "Open or close the assistant from any page",
+      },
+    ],
+  },
+  {
+    id: "command-palette",
+    label: "Command palette",
+    keybinds: [
+      {
+        id: "palette-scope",
+        label: "Change scope",
+        keys: ["Tab"],
+        description: "Move between all results, one kind of record, pages and commands",
+      },
+      {
+        id: "palette-actions",
+        label: "Show actions",
+        keys: ["→"],
+        description: "List everything you can do with the selected result",
+      },
+      {
+        id: "palette-new-tab",
+        label: "Open in new tab",
+        keys: ["Ctrl", "Enter"],
+        description: "Open the selected result in a new browser tab",
+      },
+      {
+        id: "palette-copy-link",
+        label: "Copy link",
+        keys: ["Ctrl", "L"],
+        description: "Copy a link to the selected result",
+      },
+      {
+        id: "palette-copy-id",
+        label: "Copy number",
+        keys: ["Alt", "C"],
+        description: "Copy the selected record's PRO number, name or file name",
       },
     ],
   },

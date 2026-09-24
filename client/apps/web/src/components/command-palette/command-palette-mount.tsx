@@ -3,8 +3,8 @@ import { useHotkey } from "@tanstack/react-hotkeys";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { CommandPaletteSkeleton } from "./command-palette-skeleton";
 
-const RouteCommandPalette = lazy(() =>
-  import("./route-command-palette").then((module) => ({ default: module.RouteCommandPalette })),
+const CommandPalette = lazy(() =>
+  import("./command-palette").then((module) => ({ default: module.CommandPalette })),
 );
 
 let preloadPromise: Promise<unknown> | null = null;
@@ -14,7 +14,7 @@ let preloadPromise: Promise<unknown> | null = null;
  * reuse the in-flight import.
  */
 export function preloadCommandPalette(): Promise<unknown> {
-  preloadPromise ??= import("./route-command-palette");
+  preloadPromise ??= import("./command-palette");
   return preloadPromise;
 }
 
@@ -64,7 +64,7 @@ export function CommandPaletteMount() {
 
   return (
     <Suspense fallback={open ? <CommandPaletteSkeleton /> : null}>
-      <RouteCommandPalette />
+      <CommandPalette />
     </Suspense>
   );
 }

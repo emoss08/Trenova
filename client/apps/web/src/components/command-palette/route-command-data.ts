@@ -1,13 +1,5 @@
-import {
-  isNavGroup,
-  type NavGroup,
-  type NavItem,
-  type NavModule,
-  type QuickActionCommand,
-  type QuickActionKind,
-} from "@/config/navigation.types";
+import { isNavGroup, type NavGroup, type NavItem, type NavModule } from "@/config/navigation.types";
 import type { SidebarLink } from "@/components/sidebar-nav";
-import { canAccessQuickAction, type NavAccessContext } from "@/hooks/use-filtered-navigation";
 import { SettingsIcon } from "lucide-react";
 
 type PaletteIconComponent = React.ComponentType<{
@@ -30,16 +22,6 @@ export interface RouteCommandGroup {
   id: string;
   label: string;
   items: RouteCommandItem[];
-}
-
-export interface SuggestedCommandItem {
-  id: string;
-  label: string;
-  description: string;
-  href: string;
-  action?: QuickActionKind;
-  icon: PaletteIconComponent;
-  keywords: string[];
 }
 
 function normalizePath(path: string): string | null {
@@ -189,31 +171,6 @@ export function buildRouteCommandGroups(
       items: dedupedItems,
     };
   });
-}
-
-export function buildSuggestedCreateCommands(
-  definitions: QuickActionCommand[],
-  routeGroups: RouteCommandGroup[],
-  access: NavAccessContext,
-): SuggestedCommandItem[] {
-  const routeIconByPath = new Map<string, PaletteIconComponent>();
-  for (const group of routeGroups) {
-    for (const item of group.items) {
-      routeIconByPath.set(item.href, item.icon);
-    }
-  }
-
-  return definitions
-    .filter((definition) => canAccessQuickAction(definition, access))
-    .map((definition) => ({
-      id: definition.id,
-      label: definition.label,
-      description: definition.description,
-      href: buildCommandHref(definition.path, definition.query),
-      action: definition.action,
-      icon: routeIconByPath.get(buildCommandHref(definition.path)) ?? SettingsIcon,
-      keywords: definition.keywords ?? [],
-    }));
 }
 
 function dedupeCommands(items: RouteCommandItem[]): RouteCommandItem[] {
