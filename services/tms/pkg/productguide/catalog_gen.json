@@ -1,5 +1,5 @@
 {
-  "version": "sha256:df1c529741a72052e411e45a882ad6f83982f69cc97e8c552fbc4761dc0bc0ed",
+  "version": "sha256:d9fb56fc94292eeffc21fb5e9dde9664868151f65fcf3db81baceae812ba0e61",
   "modules": [
     {
       "id": "home",
@@ -1882,6 +1882,28 @@
             "Under **Autonomy**, set the **Ceiling**: **Propose only**, **Act with approval** or **Act automatically**. Turn on **Shadow mode** or **Simulation** to try the agent without it changing anything.",
             "Under **When it runs**, pick **Chat**, **Scheduled**, **Event** or **Continuous** and fill in the schedule or events it asks for.",
             "Optionally set a **Monthly budget**, **Runs per day** and a **Preferred provider**, leave **Enabled** on, and select **Save**."
+          ]
+        },
+        {
+          "title": "Have an agent work each event as it happens",
+          "keywords": [
+            "event agent",
+            "check new shipments",
+            "load entry check",
+            "duplicate shipment check",
+            "service failure agent",
+            "insight analyst",
+            "EDI quarantine agent",
+            "unassigned move agent",
+            "billing hold agent"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Agents** in the rail.",
+            "Select **New agent**.",
+            "In **Start from**, choose the starter for the event: the load entry check reads each new shipment for duplicates, a rate that disagrees with the lane and stops out of order; the service failure desk works every open failure on a shipment and tells the customer when they asked to be told; the insight analyst checks each new insight against its records; the EDI desk says why a quarantined EDI file failed and what would fix it, and changes nothing. The dispatch coverage agent also takes a move that loses its driver, and the billing exception agent a billing item put on hold.",
+            "Check the tools, the **Ceiling** and **Data access** the starter filled in. The insight analyst also starts with a cap on **Runs per day**.",
+            "Under **When it runs**, **Event** is already chosen with the events the starter listens for.",
+            "Turn on **Shadow mode** to watch what it would do first, then select **Save**."
           ]
         },
         {

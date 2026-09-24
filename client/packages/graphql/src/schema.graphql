@@ -2520,10 +2520,15 @@ enum AgentTemplate {
   DetentionDesk
   DispatchAssignment
   DispatchAssistant
+  EDIDesk
+  FormulaAssistant
   GeneralAssistant
   ImportAssistant
+  InsightAnalyst
   IntakeDesk
+  LoadEntryCheck
   LoadMonitor
+  ServiceFailureDesk
   ShipmentIntake
 }
 

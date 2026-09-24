@@ -242,18 +242,19 @@ func (s *Service) Templates() []services.AgentTemplateDescriptor {
 
 	for _, template := range templates {
 		descriptors = append(descriptors, services.AgentTemplateDescriptor{
-			Template:            template,
-			Label:               template.Label(),
-			Description:         template.Description(),
-			StarterInstructions: template.StarterInstructions(),
-			StarterTools:        registeredStarterTools(template, s.tools, s.queryTools),
-			StarterTrigger:      template.StarterTrigger(),
-			StarterEvents:       template.StarterEvents(),
-			StarterCron:         template.StarterCron(),
-			StarterCeiling:      template.StarterCeiling(),
-			StarterDataAccess:   template.StarterDataAccess(),
-			StarterOutput:       starterOutput(template),
-			ContextProviders:    agentdefinition.AllContextProviders(),
+			Template:             template,
+			Label:                template.Label(),
+			Description:          template.Description(),
+			StarterInstructions:  template.StarterInstructions(),
+			StarterTools:         registeredStarterTools(template, s.tools, s.queryTools),
+			StarterTrigger:       template.StarterTrigger(),
+			StarterEvents:        template.StarterEvents(),
+			StarterCron:          template.StarterCron(),
+			StarterCeiling:       template.StarterCeiling(),
+			StarterDataAccess:    template.StarterDataAccess(),
+			StarterOutput:        starterOutput(template),
+			StarterDailyRunLimit: template.StarterDailyRunLimit(),
+			ContextProviders:     agentdefinition.AllContextProviders(),
 		})
 	}
 

@@ -211,7 +211,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		assert.Equal(t, want, registeredPolicy(t, name).Egress, name)
 	}
 	for _, name := range []string{"link_inbound_message", "mark_inbound_message",
-		"reply_to_inbound_message"} {
+		"reply_to_inbound_message", "transition_item_to_in_review"} {
 		assert.NotNil(t, registeredPolicy(t, name).Condition, name)
 	}
 }

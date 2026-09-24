@@ -12,6 +12,7 @@ export type TemplatePatch = Partial<
     | "eventKinds"
     | "autonomyCeiling"
     | "dataAccessCeiling"
+    | "dailyRunLimit"
     | "outputMode"
     | "contextProviders"
   >
@@ -21,7 +22,8 @@ export type TemplatePatch = Partial<
  * What picking a template changes: only fields the person has not touched.
  * The ceiling, data access and output mode are set outright, since a
  * template's whole point is to suggest how much it should do, what it should
- * see and what it should produce.
+ * see and what it should produce. A daily run cap fills only an agent with
+ * none, so a cap the person chose is never loosened.
  */
 export function applyTemplateStarter(
   current: AgentFormValues,
@@ -51,6 +53,9 @@ export function applyTemplateStarter(
   patch.autonomyCeiling = template.starterCeiling;
   patch.dataAccessCeiling = template.starterDataAccess;
   patch.outputMode = template.starterOutput;
+  if (current.dailyRunLimit === 0 && template.starterDailyRunLimit > 0) {
+    patch.dailyRunLimit = template.starterDailyRunLimit;
+  }
   if (current.contextProviders.length === 0 && template.contextProviders.length > 0) {
     patch.contextProviders = [...template.contextProviders];
   }

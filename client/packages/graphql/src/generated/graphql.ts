@@ -614,10 +614,15 @@ export type AgentTemplate =
   | 'DetentionDesk'
   | 'DispatchAssignment'
   | 'DispatchAssistant'
+  | 'EDIDesk'
+  | 'FormulaAssistant'
   | 'GeneralAssistant'
   | 'ImportAssistant'
+  | 'InsightAnalyst'
   | 'IntakeDesk'
+  | 'LoadEntryCheck'
   | 'LoadMonitor'
+  | 'ServiceFailureDesk'
   | 'ShipmentIntake';
 
 export type AgentToolEffect =

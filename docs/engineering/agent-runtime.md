@@ -160,6 +160,12 @@ opens tainted when:
   receipt, which is every run woken by `inbound_message.classified`,
   `document.extracted`, `edi.file_quarantined` or `bank_receipt.exception`
   (`agent.SubjectType.TaintSource`);
+- its subject is a record written outside the organization, which the subject
+  describer says on `RuntimeSubject.OutsideAuthored`: a shipment entered by EDI
+  (`EntryMethod` `EDI`) is the trading partner's text, so a run woken by
+  `shipment.created` or `service_failure.detected` on one opens with an `edi`
+  mark on the `shipment` (`agent.OutsideAuthoredTaint`), and the subject block
+  of the prompt says who wrote it;
 - the person attached a file to the question;
 - a memory read into its prompt was written by a tainted run (a person's approval
   of the `remember` that wrote it changes how it is rendered, not whether it taints);
@@ -657,7 +663,11 @@ Holding writes for a person after a turn reads outside content (`TurnState.Exter
 activity input, decided from the tool's name, and adds no command. See
 [agent-extensions.md](agent-extensions.md).
 
-Taint took no gate either: see [Taint is data](#taint-is-data).
+Taint took no gate either: see [Taint is data](#taint-is-data). Marking an
+EDI-entered shipment as outside-authored took none for the same reason: the
+describer sets a field on the subject in the activity that prepares the run,
+`contextTaint` adds the mark in the activity that opens the turn, and workflow
+code only carries the two results between them.
 
 Hybrid tool ranking took no gate. The turn's query vector rides on `ToolSetState.Query`, and
 the tools a `find_tools` call found ride on `FindToolsResult.Found` into the saved message;

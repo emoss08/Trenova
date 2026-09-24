@@ -15,6 +15,7 @@ const starter: AgentTemplate = {
   starterCeiling: "ActWithApproval",
   starterDataAccess: "Internal",
   starterOutput: "Report",
+  starterDailyRunLimit: 0,
   systemKey: "",
   contextProviders: ["Organization", "Clock", "Tools"],
 };
@@ -65,6 +66,16 @@ describe("applyTemplateStarter", () => {
     );
 
     expect(patch.dataAccessCeiling).toBe("Restricted");
+  });
+
+  it("caps the runs a day an agent with no cap of its own may start", () => {
+    const analyst = { ...starter, template: "InsightAnalyst" as const, starterDailyRunLimit: 20 };
+
+    expect(applyTemplateStarter(agentFormDefaults, analyst).dailyRunLimit).toBe(20);
+    expect(
+      applyTemplateStarter({ ...agentFormDefaults, dailyRunLimit: 5 }, analyst).dailyRunLimit,
+    ).toBeUndefined();
+    expect(applyTemplateStarter(agentFormDefaults, starter).dailyRunLimit).toBeUndefined();
   });
 
   it("only sets the template when cleared", () => {

@@ -58,19 +58,20 @@ type SaveAgentDefinitionRequest struct {
 }
 
 type AgentTemplateDescriptor struct {
-	Template            agentdefinition.Template          `json:"template"`
-	Label               string                            `json:"label"`
-	Description         string                            `json:"description"`
-	StarterInstructions string                            `json:"starterInstructions"`
-	StarterTools        []string                          `json:"starterTools"`
-	StarterTrigger      agentdefinition.TriggerMode       `json:"starterTrigger"`
-	StarterEvents       []agent.EventKind                 `json:"starterEvents"`
-	StarterCron         string                            `json:"starterCron"`
-	StarterCeiling      agent.AutonomyTier                `json:"starterCeiling"`
-	StarterDataAccess   agentdefinition.DataAccessCeiling `json:"starterDataAccess"`
-	StarterOutput       agentdefinition.OutputMode        `json:"starterOutput"`
-	SystemKey           string                            `json:"systemKey"`
-	ContextProviders    []agentdefinition.ContextProvider `json:"contextProviders"`
+	Template             agentdefinition.Template          `json:"template"`
+	Label                string                            `json:"label"`
+	Description          string                            `json:"description"`
+	StarterInstructions  string                            `json:"starterInstructions"`
+	StarterTools         []string                          `json:"starterTools"`
+	StarterTrigger       agentdefinition.TriggerMode       `json:"starterTrigger"`
+	StarterEvents        []agent.EventKind                 `json:"starterEvents"`
+	StarterCron          string                            `json:"starterCron"`
+	StarterCeiling       agent.AutonomyTier                `json:"starterCeiling"`
+	StarterDataAccess    agentdefinition.DataAccessCeiling `json:"starterDataAccess"`
+	StarterOutput        agentdefinition.OutputMode        `json:"starterOutput"`
+	StarterDailyRunLimit int                               `json:"starterDailyRunLimit"`
+	SystemKey            string                            `json:"systemKey"`
+	ContextProviders     []agentdefinition.ContextProvider `json:"contextProviders"`
 }
 
 type ToolCatalogKind string

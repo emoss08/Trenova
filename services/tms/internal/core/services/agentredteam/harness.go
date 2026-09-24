@@ -318,10 +318,11 @@ func contextFor(
 	source := c.Source
 	if source.Subject != nil {
 		rc.Subject = &agentdefinition.RuntimeSubject{
-			Type:  agent.SubjectType(source.Subject.Type),
-			ID:    source.Subject.ID,
-			Label: source.Subject.Label,
-			Notes: source.Subject.Notes,
+			Type:            agent.SubjectType(source.Subject.Type),
+			ID:              source.Subject.ID,
+			Label:           source.Subject.Label,
+			Notes:           source.Subject.Notes,
+			OutsideAuthored: agent.TaintSource(source.Subject.OutsideAuthored),
 		}
 	}
 	if source.Attachment != nil {

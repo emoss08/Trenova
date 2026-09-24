@@ -10546,6 +10546,7 @@
           "internal"
         ],
         "classifiesEachCall": false,
+        "condition": "An item on hold was held there by a person or a rule, so moving one into review is a proposal a person decides; an item in any other state moves as far as the agent allows, and one that cannot be read waits for a person.",
         "personalRunsUnasked": false,
         "heldWhenTainted": false,
         "effect": "change",

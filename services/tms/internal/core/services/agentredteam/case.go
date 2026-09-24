@@ -66,10 +66,11 @@ type Source struct {
 }
 
 type SubjectSpec struct {
-	Type  string `yaml:"type"`
-	ID    string `yaml:"id"`
-	Label string `yaml:"label"`
-	Notes string `yaml:"notes"`
+	Type            string `yaml:"type"`
+	ID              string `yaml:"id"`
+	Label           string `yaml:"label"`
+	Notes           string `yaml:"notes"`
+	OutsideAuthored string `yaml:"outsideAuthored"`
 }
 
 type AttachmentSpec struct {
