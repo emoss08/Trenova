@@ -3216,6 +3216,60 @@ func (r *Registry) registerAccountingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAccountingIntegration.String(),
+		DisplayName: "Accounting Integration",
+		Description: "The connection to the organization's accounting system and how Trenova maps to it",
+		Category:    "Accounting",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View the accounting connection, its health and its mappings",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Change sync settings and mappings",
+			},
+			{
+				Operation:   OpManage,
+				DisplayName: "Manage",
+				Description: "Connect or disconnect the accounting system",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+		FieldSensitivities: map[string]FieldSensitivity{
+			"id":                  SensitivityInternal,
+			"businessUnitId":      SensitivityInternal,
+			"organizationId":      SensitivityInternal,
+			"integrationType":     SensitivityInternal,
+			"status":              SensitivityInternal,
+			"externalCompanyName": SensitivityInternal,
+			"lastSuccessAt":       SensitivityInternal,
+			"lastCheckedAt":       SensitivityInternal,
+			"createdAt":           SensitivityInternal,
+			"updatedAt":           SensitivityInternal,
+		},
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAccountingSync.String(),
+		DisplayName: "Accounting Sync",
+		Description: "What has been sent to the accounting system, what failed and where the two disagree",
+		Category:    "Accounting",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View sync status, records and differences"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Retry, skip and resolve sync records and differences",
+			},
+			{Operation: OpExport, DisplayName: "Export", Description: "Export sync records"},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceBillingControl.String(),
 		DisplayName:        "Billing Control",
 		Description:        "Billing policy and workflow control configuration",

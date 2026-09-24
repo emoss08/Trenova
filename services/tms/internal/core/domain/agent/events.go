@@ -3,23 +3,24 @@ package agent
 type EventKind string
 
 const (
-	EventBillingQueueItemException  = EventKind("billing_queue.item_exception")
-	EventBillingQueueItemOnHold     = EventKind("billing_queue.item_on_hold")
-	EventShipmentMoveUnassigned     = EventKind("shipment_move.unassigned")
-	EventShipmentCreated            = EventKind("shipment.created")
-	EventDocumentExtracted          = EventKind("document.extracted")
-	EventServiceFailureDetected     = EventKind("service_failure.detected")
-	EventShipmentMoveArrived        = EventKind("shipment_move.arrived")
-	EventShipmentMoveDeparted       = EventKind("shipment_move.departed")
-	EventInsightDetected            = EventKind("insight.detected")
-	EventBankReceiptException       = EventKind("bank_receipt.exception")
-	EventDetentionOccurrenceOpened  = EventKind("detention.occurrence_opened")
-	EventDetentionNoticeDue         = EventKind("detention.notice_due")
-	EventWorkerCredentialExpiring   = EventKind("worker_credential.expiring")
-	EventCarrierIntelEventOpened    = EventKind("carrier_intel.event_opened")
-	EventShipmentMoveCoverageAtRisk = EventKind("shipment_move.coverage_at_risk")
-	EventEDIFileQuarantined         = EventKind("edi.file_quarantined")
-	EventInboundMessageClassified   = EventKind("inbound_message.classified")
+	EventBillingQueueItemException    = EventKind("billing_queue.item_exception")
+	EventBillingQueueItemOnHold       = EventKind("billing_queue.item_on_hold")
+	EventShipmentMoveUnassigned       = EventKind("shipment_move.unassigned")
+	EventShipmentCreated              = EventKind("shipment.created")
+	EventDocumentExtracted            = EventKind("document.extracted")
+	EventServiceFailureDetected       = EventKind("service_failure.detected")
+	EventShipmentMoveArrived          = EventKind("shipment_move.arrived")
+	EventShipmentMoveDeparted         = EventKind("shipment_move.departed")
+	EventInsightDetected              = EventKind("insight.detected")
+	EventBankReceiptException         = EventKind("bank_receipt.exception")
+	EventDetentionOccurrenceOpened    = EventKind("detention.occurrence_opened")
+	EventDetentionNoticeDue           = EventKind("detention.notice_due")
+	EventWorkerCredentialExpiring     = EventKind("worker_credential.expiring")
+	EventCarrierIntelEventOpened      = EventKind("carrier_intel.event_opened")
+	EventShipmentMoveCoverageAtRisk   = EventKind("shipment_move.coverage_at_risk")
+	EventEDIFileQuarantined           = EventKind("edi.file_quarantined")
+	EventInboundMessageClassified     = EventKind("inbound_message.classified")
+	EventAccountingConnectionDegraded = EventKind("accounting.connection_degraded")
 )
 
 type EventDescriptor struct {
@@ -131,6 +132,12 @@ var knownEvents = []EventDescriptor{
 		SubjectType: SubjectInboundMessage,
 		Label:       "Message classified",
 		Description: "A message that arrived on a monitored address was read and turned out to need a decision.",
+	},
+	{
+		Kind:        EventAccountingConnectionDegraded,
+		SubjectType: SubjectAccountingConnection,
+		Label:       "Accounting connection needs attention",
+		Description: "The link to the accounting system stopped working normally: calls are failing, the authorization was revoked, or it expires soon.",
 	}}
 
 func KnownEvents() []EventDescriptor {

@@ -24,6 +24,7 @@ const (
 	SourceWorkerCredential       = SourceKind("WorkerCredential")
 	SourceMoveCoverage           = SourceKind("MoveCoverage")
 	SourceAgentQualityRegression = SourceKind("AgentQualityRegression")
+	SourceAccountingSync         = SourceKind("AccountingSync")
 )
 
 // readResources is the permission a reader needs to be shown items of each
@@ -46,6 +47,7 @@ var readResources = map[SourceKind]permission.Resource{
 	SourceWorkerCredential:       permission.ResourceWorker,
 	SourceMoveCoverage:           permission.ResourceShipmentMove,
 	SourceAgentQualityRegression: permission.ResourceAgentEvalSuite,
+	SourceAccountingSync:         permission.ResourceAccountingSync,
 }
 
 func (k SourceKind) IsValid() bool {
@@ -96,6 +98,8 @@ func (k SourceKind) Label() string {
 		return "Coverage at risk"
 	case SourceAgentQualityRegression:
 		return "Agent quality regressed"
+	case SourceAccountingSync:
+		return "Accounting sync"
 	default:
 		return string(k)
 	}
@@ -119,6 +123,7 @@ func AllSourceKinds() []SourceKind {
 		SourceWorkerCredential,
 		SourceMoveCoverage,
 		SourceAgentQualityRegression,
+		SourceAccountingSync,
 	}
 }
 

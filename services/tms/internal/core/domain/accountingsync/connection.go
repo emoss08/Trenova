@@ -235,3 +235,16 @@ func (c *AccountingConnection) Disconnect(userID pulid.ID, now int64) {
 func (c *AccountingConnection) RecordWebhook(now int64) {
 	c.LastWebhookAt = &now
 }
+
+func ProviderName(typ integration.Type) string {
+	switch typ { //nolint:exhaustive // only accounting systems have a display name here
+	case integration.TypeQuickBooksOnline:
+		return "QuickBooks Online"
+	default:
+		return string(typ)
+	}
+}
+
+func SetupPath(typ integration.Type) string {
+	return "/admin/integrations?type=" + string(typ)
+}

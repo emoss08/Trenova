@@ -1,0 +1,308 @@
+//nolint:gocritic // Repository request structs follow the existing value-parameter port contracts.
+package accountingsyncrepository
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/uptrace/bun"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+const connectionEntity = "Accounting connection"
+
+type ConnectionParams struct {
+	fx.In
+
+	DB     *postgres.Connection
+	Logger *zap.Logger
+}
+
+type connectionRepository struct {
+	db *postgres.Connection
+	l  *zap.Logger
+}
+
+func NewConnectionRepository(p ConnectionParams) repositories.AccountingConnectionRepository {
+	return &connectionRepository{
+		db: p.DB,
+		l:  p.Logger.Named("postgres.accounting-connection-repository"),
+	}
+}
+
+func tokenColumns() []string {
+	cols := buncolgen.AccountingConnectionColumns
+	return []string{cols.AccessTokenCiphertext.String(), cols.RefreshTokenCiphertext.String()}
+}
+
+func activeStatuses() []accountingsync.ConnectionStatus {
+	return []accountingsync.ConnectionStatus{
+		accountingsync.ConnectionStatusConnected,
+		accountingsync.ConnectionStatusDegraded,
+		accountingsync.ConnectionStatusFailing,
+	}
+}
+
+func (r *connectionRepository) GetByType(
+	ctx context.Context,
+	req repositories.GetAccountingConnectionRequest,
+) (*accountingsync.AccountingConnection, error) {
+	entity := new(accountingsync.AccountingConnection)
+	cols := buncolgen.AccountingConnectionColumns
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		ExcludeColumn(tokenColumns()...).
+		Where(cols.IntegrationType.Eq(), req.IntegrationType).
+		Apply(buncolgen.AccountingConnectionApplyTenant(req.TenantInfo)).
+		Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, connectionEntity)
+	}
+
+	return entity, nil
+}
+
+func (r *connectionRepository) GetByID(
+	ctx context.Context,
+	req repositories.GetAccountingConnectionByIDRequest,
+) (*accountingsync.AccountingConnection, error) {
+	entity := new(accountingsync.AccountingConnection)
+	cols := buncolgen.AccountingConnectionColumns
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		ExcludeColumn(tokenColumns()...).
+		Where(cols.ID.Eq(), req.ID).
+		Apply(buncolgen.AccountingConnectionApplyTenant(req.TenantInfo)).
+		Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, connectionEntity)
+	}
+
+	return entity, nil
+}
+
+func (r *connectionRepository) ListByTenant(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*accountingsync.AccountingConnection, error) {
+	entities := make([]*accountingsync.AccountingConnection, 0, 1)
+	cols := buncolgen.AccountingConnectionColumns
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		ExcludeColumn(tokenColumns()...).
+		Apply(buncolgen.AccountingConnectionApplyTenant(tenantInfo)).
+		Order(cols.IntegrationType.OrderAsc()).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+func (r *connectionRepository) ListHoldingRealm(
+	ctx context.Context,
+	req repositories.ListAccountingConnectionsByRealmRequest,
+) ([]*accountingsync.AccountingConnection, error) {
+	if len(req.RealmIDs) == 0 {
+		return []*accountingsync.AccountingConnection{}, nil
+	}
+
+	entities := make([]*accountingsync.AccountingConnection, 0, len(req.RealmIDs))
+	cols := buncolgen.AccountingConnectionColumns
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		ExcludeColumn(tokenColumns()...).
+		Where(cols.IntegrationType.Eq(), req.IntegrationType).
+		Where(cols.ExternalRealmID.In(), bun.List(req.RealmIDs)).
+		Where(cols.Status.NotEq(), accountingsync.ConnectionStatusDisconnected).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+func (r *connectionRepository) ListDueForHealthCheck(
+	ctx context.Context,
+	req repositories.ListDueAccountingConnectionsRequest,
+) ([]*accountingsync.AccountingConnection, error) {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+
+	entities := make([]*accountingsync.AccountingConnection, 0, limit)
+	cols := buncolgen.AccountingConnectionColumns
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		ExcludeColumn(tokenColumns()...).
+		Where(cols.Status.In(), bun.List(activeStatuses())).
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where(cols.LastCheckedAt.IsNull()).
+				WhereOr(cols.LastCheckedAt.Lt(), req.CheckedBefore)
+		}).
+		OrderExpr(cols.LastCheckedAt.Expr("{} ASC NULLS FIRST")).
+		Order(cols.ID.OrderAsc()).
+		Limit(limit).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+func (r *connectionRepository) LockByTypeWithTokens(
+	ctx context.Context,
+	req repositories.GetAccountingConnectionRequest,
+) (*accountingsync.AccountingConnection, error) {
+	entity := new(accountingsync.AccountingConnection)
+	cols := buncolgen.AccountingConnectionColumns
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where(cols.IntegrationType.Eq(), req.IntegrationType).
+		Apply(buncolgen.AccountingConnectionApplyTenant(req.TenantInfo)).
+		For("UPDATE").
+		Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, connectionEntity)
+	}
+
+	return entity, nil
+}
+
+func (r *connectionRepository) LockWithTokens(
+	ctx context.Context,
+	req repositories.GetAccountingConnectionByIDRequest,
+) (*accountingsync.AccountingConnection, error) {
+	entity := new(accountingsync.AccountingConnection)
+	cols := buncolgen.AccountingConnectionColumns
+
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where(cols.ID.Eq(), req.ID).
+		Apply(buncolgen.AccountingConnectionApplyTenant(req.TenantInfo)).
+		For("UPDATE").
+		Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, connectionEntity)
+	}
+
+	return entity, nil
+}
+
+func (r *connectionRepository) Create(
+	ctx context.Context,
+	entity *accountingsync.AccountingConnection,
+) (*accountingsync.AccountingConnection, error) {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *connectionRepository) Update(
+	ctx context.Context,
+	entity *accountingsync.AccountingConnection,
+) (*accountingsync.AccountingConnection, error) {
+	cols := buncolgen.AccountingConnectionColumns
+	ov := entity.Version
+	entity.Version++
+
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model(entity).
+		ExcludeColumn(tokenColumns()...).
+		WherePK().
+		Where(cols.Version.Eq(), ov).
+		Exec(ctx)
+	if err != nil {
+		entity.Version = ov
+		return nil, err
+	}
+	if err = dberror.CheckRowsAffected(results, connectionEntity, entity.ID.String()); err != nil {
+		entity.Version = ov
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *connectionRepository) StoreTokens(
+	ctx context.Context,
+	req repositories.StoreAccountingTokensRequest,
+) error {
+	cols := buncolgen.AccountingConnectionColumns
+
+	query := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*accountingsync.AccountingConnection)(nil)).
+		WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		}).
+		Set(cols.AccessTokenExpiresAt.Set(), req.AccessTokenExpiresAt).
+		Set(cols.RefreshTokenExpiresAt.Set(), req.RefreshTokenExpiresAt).
+		Set(cols.LastRefreshedAt.Set(), req.RefreshedAt).
+		Set(cols.UpdatedAt.Set(), req.At)
+
+	query = setOrNull(query, cols.AccessTokenCiphertext, req.AccessTokenCiphertext)
+	query = setOrNull(query, cols.RefreshTokenCiphertext, req.RefreshTokenCiphertext)
+
+	results, err := query.Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return dberror.CheckRowsAffected(results, connectionEntity, req.ID.String())
+}
+
+func (r *connectionRepository) MarkWebhookReceived(
+	ctx context.Context,
+	req repositories.MarkAccountingWebhookRequest,
+) (int64, error) {
+	if len(req.RealmIDs) == 0 {
+		return 0, nil
+	}
+
+	cols := buncolgen.AccountingConnectionColumns
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*accountingsync.AccountingConnection)(nil)).
+		Set(cols.LastWebhookAt.Set(), req.ReceivedAt).
+		Where(cols.IntegrationType.Eq(), req.IntegrationType).
+		Where(cols.ExternalRealmID.In(), bun.List(req.RealmIDs)).
+		Where(cols.Status.NotEq(), accountingsync.ConnectionStatusDisconnected).
+		Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return results.RowsAffected()
+}
+
+func setOrNull(q *bun.UpdateQuery, col buncolgen.Column, value string) *bun.UpdateQuery {
+	if value == "" {
+		return q.Set(col.SetNull())
+	}
+	return q.Set(col.Set(), value)
+}

@@ -20,6 +20,7 @@ enum WatchtowerSourceKind {
   WorkerCredential
   MoveCoverage
   AgentQualityRegression
+  AccountingSync
 }
 
 "How loudly an item asks to be looked at."

@@ -20,6 +20,7 @@ var Module = fx.Module("watchtower-sources",
 		asSource(NewDetentionSource),
 		asSource(NewInboundMessageSource),
 		asSource(NewQualityRegressionSource),
+		asSource(NewAccountingSyncSource),
 	),
 )
 

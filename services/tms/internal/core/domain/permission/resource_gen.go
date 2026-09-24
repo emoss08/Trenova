@@ -179,6 +179,8 @@ const (
 	ResourceBankReceipt              Resource = "bank_receipt"
 	ResourceBankReceiptWorkItem      Resource = "bank_receipt_work_item"
 	ResourceAccountingReport         Resource = "accounting_report"
+	ResourceAccountingIntegration    Resource = "accounting_integration"
+	ResourceAccountingSync           Resource = "accounting_sync"
 
 	// Payroll & Settlements
 	ResourceDriverPayProfile   Resource = "driver_pay_profile"
