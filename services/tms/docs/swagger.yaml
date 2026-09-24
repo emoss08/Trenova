@@ -15258,6 +15258,8 @@ definitions:
         properties:
             connectionId:
                 type: string
+        required:
+            - connectionId
         type: object
     internal_api_handlers_realtimehandler.typingRequest:
         properties:
@@ -15265,6 +15267,8 @@ definitions:
                 type: string
             stop:
                 type: boolean
+        required:
+            - connectionId
         type: object
     internal_api_handlers_recurringshipmenthandler.generateRequest:
         properties:
@@ -29959,6 +29963,7 @@ paths:
                   type: string
             produces:
                 - text/event-stream
+                - application/json
             responses:
                 "200":
                     description: text/event-stream
@@ -33317,7 +33322,7 @@ paths:
                 - application/json
             description: |-
                 Marks the caller's live connection as viewing a shipment's comments and
-                returns everyone else viewing them.
+                returns every connection viewing them, the caller's included.
             operationId: joinShipmentCommentPresence
             parameters:
                 - description: Shipment ID

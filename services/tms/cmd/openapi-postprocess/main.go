@@ -353,6 +353,8 @@ func main() {
 		fail(err)
 	}
 
+	separateStreamResponseMedia(doc3)
+
 	if err = writeJSON(openAPI3JSONPath, doc3); err != nil {
 		fail(err)
 	}
@@ -360,6 +362,60 @@ func main() {
 	if err = writeYAML(openAPI3YAMLPath, doc3); err != nil {
 		fail(err)
 	}
+}
+
+const (
+	eventStreamMediaType = "text/event-stream"
+	jsonMediaType        = "application/json"
+)
+
+// separateStreamResponseMedia gives each response of an event-stream operation
+// the one media type it is actually sent as. Swagger 2.0 declares media types
+// per operation, so the conversion lists every type on every response; a
+// stream answers success with the stream and failure with a JSON problem.
+func separateStreamResponseMedia(doc map[string]any) {
+	paths, _ := doc["paths"].(map[string]any)
+	for _, item := range paths {
+		operations, _ := item.(map[string]any)
+		for _, raw := range operations {
+			operation, _ := raw.(map[string]any)
+			responses, _ := operation["responses"].(map[string]any)
+			if !streamsOnSuccess(responses) {
+				continue
+			}
+			for code, rawResponse := range responses {
+				response, _ := rawResponse.(map[string]any)
+				content, _ := response["content"].(map[string]any)
+				keep := jsonMediaType
+				if isSuccessCode(code) {
+					keep = eventStreamMediaType
+				}
+				media, ok := content[keep]
+				if !ok {
+					continue
+				}
+				response["content"] = map[string]any{keep: media}
+			}
+		}
+	}
+}
+
+func streamsOnSuccess(responses map[string]any) bool {
+	for code, raw := range responses {
+		if !isSuccessCode(code) {
+			continue
+		}
+		response, _ := raw.(map[string]any)
+		content, _ := response["content"].(map[string]any)
+		if _, ok := content[eventStreamMediaType]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func isSuccessCode(code string) bool {
+	return len(code) == 3 && code[0] == '2'
 }
 
 func fail(err error) {

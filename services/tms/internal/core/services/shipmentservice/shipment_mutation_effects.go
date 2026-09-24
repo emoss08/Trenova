@@ -97,24 +97,26 @@ func (s *service) logShipmentAction(
 func (s *service) recordShipmentEvent(
 	ctx context.Context,
 	params *services.RecordShipmentEventParams,
-) {
+) bool {
 	if params == nil {
-		return
+		return false
 	}
 	if err := s.eventService.Record(ctx, params); err != nil {
 		s.l.Warn("failed to record shipment event", zap.Error(err))
+		return false
 	}
+	return true
 }
 
 func (s *service) emitStatusChangeEvent(
 	ctx context.Context,
 	original, updated *shipment.Shipment,
 	actor services.AuditActor,
-) {
+) bool {
 	if original == nil || updated == nil || original.Status == updated.Status {
-		return
+		return false
 	}
-	s.recordShipmentEvent(ctx, shipmenteventservice.BuildStatusChanged(
+	return s.recordShipmentEvent(ctx, shipmenteventservice.BuildStatusChanged(
 		tenantRefForShipment(updated),
 		updated,
 		original.Status,

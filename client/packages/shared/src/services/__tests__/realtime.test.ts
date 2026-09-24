@@ -347,6 +347,7 @@ describe("RealtimeClient", () => {
     expect(apiPost).toHaveBeenLastCalledWith(path, { connectionId: "rtc_2" });
 
     leave();
+    await tick();
     expect(apiDelete).toHaveBeenCalledWith(`${path}?connectionId=rtc_2`);
     expect(seen.at(-1)).toEqual([]);
     client.disconnect();
@@ -370,10 +371,77 @@ describe("RealtimeClient", () => {
     expect(apiPost).toHaveBeenCalledTimes(1);
 
     leaveViewers();
+    await tick();
     expect(apiDelete).not.toHaveBeenCalled();
     leaveTyping();
     leaveTyping();
+    await tick();
     expect(apiDelete).toHaveBeenCalledTimes(1);
+    client.disconnect();
+  });
+
+  it("sends a leave only after the join it follows has reached the server", async () => {
+    const scope = "shipment-comments:shp_1";
+    const path = "/shipments/shp_1/comments/presence/";
+    let finishJoin: (value: unknown) => void = () => undefined;
+    apiPost.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishJoin = resolve;
+        }),
+    );
+
+    const stream = streamReply();
+    const client = new RealtimeClient();
+    client.connect({ identity: "usr_1", joinUsers: false });
+    await tick();
+    stream.send("ready", ready("rtc_1"));
+    await tick();
+
+    const leave = client.joinScope(scope, path);
+    await tick();
+    expect(apiPost).toHaveBeenCalledTimes(1);
+
+    leave();
+    await tick();
+    expect(apiDelete).not.toHaveBeenCalled();
+
+    finishJoin({ scope, members: [] });
+    await tick();
+    expect(apiDelete).toHaveBeenCalledWith(`${path}?connectionId=rtc_1`);
+    client.disconnect();
+  });
+
+  it("sends a quick rejoin only after the leave before it", async () => {
+    const scope = "shipment-comments:shp_1";
+    const path = "/shipments/shp_1/comments/presence/";
+    apiPost.mockResolvedValue({ scope, members: [] });
+    let finishLeave: (value: unknown) => void = () => undefined;
+    apiDelete.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishLeave = resolve;
+        }),
+    );
+
+    const stream = streamReply();
+    const client = new RealtimeClient();
+    client.connect({ identity: "usr_1", joinUsers: false });
+    await tick();
+    stream.send("ready", ready("rtc_1"));
+    await tick();
+
+    const leave = client.joinScope(scope, path);
+    await tick();
+    leave();
+    client.joinScope(scope, path);
+    await tick();
+    expect(apiDelete).toHaveBeenCalledTimes(1);
+    expect(apiPost).toHaveBeenCalledTimes(1);
+
+    finishLeave(undefined);
+    await tick();
+    expect(apiPost).toHaveBeenCalledTimes(2);
     client.disconnect();
   });
 

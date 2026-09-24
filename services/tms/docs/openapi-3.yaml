@@ -15258,6 +15258,8 @@ components:
             properties:
                 connectionId:
                     type: string
+            required:
+                - connectionId
             type: object
         internal_api_handlers_realtimehandler.typingRequest:
             properties:
@@ -15265,6 +15267,8 @@ components:
                     type: string
                 stop:
                     type: boolean
+            required:
+                - connectionId
             type: object
         internal_api_handlers_recurringshipmenthandler.generateRequest:
             properties:
@@ -33057,19 +33061,19 @@ paths:
                     description: text/event-stream
                 "401":
                     content:
-                        text/event-stream:
+                        application/json:
                             schema:
                                 $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
                     description: Unauthorized
                 "403":
                     content:
-                        text/event-stream:
+                        application/json:
                             schema:
                                 $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
                     description: Forbidden
                 "429":
                     content:
-                        text/event-stream:
+                        application/json:
                             schema:
                                 $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
                     description: Too Many Requests
@@ -37141,7 +37145,7 @@ paths:
         post:
             description: |-
                 Marks the caller's live connection as viewing a shipment's comments and
-                returns everyone else viewing them.
+                returns every connection viewing them, the caller's included.
             operationId: joinShipmentCommentPresence
             parameters:
                 - description: Shipment ID

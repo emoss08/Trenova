@@ -3,7 +3,6 @@
 package realtimebroker
 
 import (
-	"context"
 	"slices"
 	"strconv"
 	"testing"
@@ -351,7 +350,7 @@ func TestBroker_SweepAnnouncesDeadMembers(t *testing.T) {
 
 	ghost := pulid.MustNew("rtc_").String()
 	tenant := tenantKey(tn.org, tn.bu)
-	ctx := context.Background()
+	ctx := t.Context()
 	require.NoError(t, client.ZAdd(ctx, presenceExpiryKey(tenant, services.RealtimeScopeUsers), redis.Z{
 		Score:  float64(time.Now().Add(-time.Minute).UnixMilli()),
 		Member: ghost,

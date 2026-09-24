@@ -226,3 +226,30 @@ func TestMarkReadyToInvoice_LeavesAShipmentAlreadyPastCompletedAlone(t *testing.
 	assert.Same(t, entity, updated)
 	f.repo.AssertNotCalled(t, "MarkReadyToInvoice", mock.Anything, mock.Anything)
 }
+
+func TestMarkReadyToInvoice_RecomputesTheOrderWhenTheStatusEventIsNotRecorded(t *testing.T) {
+	t.Parallel()
+
+	f := newMarkReadyFixture(t)
+	entity := f.completed()
+	f.expectSave(entity)
+	f.events.EXPECT().
+		Record(mock.Anything, mock.Anything).
+		Return(errortypes.NewBusinessError("event store unavailable")).
+		Once()
+	f.derivation.EXPECT().
+		RecomputeOrder(mock.Anything, f.tenantInfo, entity.OrderID).
+		Return(nil).
+		Once()
+
+	_, marked, err := f.svc.markReadyToInvoice(t.Context(), &markReadyToInvoiceParams{
+		ShipmentID:        entity.ID,
+		TenantInfo:        f.tenantInfo,
+		Actor:             f.actor,
+		Entity:            entity,
+		RecordStatusEvent: true,
+	})
+
+	require.NoError(t, err)
+	assert.True(t, marked, "the shipment is ready whether or not its timeline caught up")
+}

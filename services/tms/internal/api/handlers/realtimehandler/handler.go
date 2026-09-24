@@ -75,11 +75,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 type presenceRequest struct {
-	ConnectionID string `json:"connectionId"`
+	ConnectionID string `json:"connectionId" validate:"required"`
 }
 
 type typingRequest struct {
-	ConnectionID string `json:"connectionId"`
+	ConnectionID string `json:"connectionId" validate:"required"`
 	Stop         bool   `json:"stop"`
 }
 
@@ -89,6 +89,7 @@ type typingRequest struct {
 // @ID openRealtimeStream
 // @Tags Realtime
 // @Produce text/event-stream
+// @Produce json
 // @Param presence query string false "Set to 'users' to join the tenant's online-user presence"
 // @Param Last-Event-ID header string false "The id of the last event applied"
 // @Success 200 {string} string "text/event-stream"
@@ -169,7 +170,7 @@ func (h *Handler) emitClose(stream *helpers.EventStream, reason string) {
 
 // @Summary Join shipment comment presence
 // @Description Marks the caller's live connection as viewing a shipment's comments and
-// @Description returns everyone else viewing them.
+// @Description returns every connection viewing them, the caller's included.
 // @ID joinShipmentCommentPresence
 // @Tags Realtime
 // @Accept json

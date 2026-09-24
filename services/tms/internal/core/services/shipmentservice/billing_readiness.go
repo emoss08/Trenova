@@ -172,16 +172,6 @@ func (s *service) markReadyToInvoice(
 		return nil, false, err
 	}
 
-	if !p.RecordStatusEvent {
-		if err = s.recomputeOrdersForShipments(
-			ctx,
-			p.TenantInfo,
-			[]*shipment.Shipment{updatedEntity},
-		); err != nil {
-			s.l.Warn("failed to recompute order after marking ready to invoice", zap.Error(err))
-		}
-	}
-
 	if err = s.logShipmentAction(
 		updatedEntity,
 		p.Actor,
@@ -207,8 +197,16 @@ func (s *service) markReadyToInvoice(
 		)
 	}
 
-	if p.RecordStatusEvent {
+	recorded := p.RecordStatusEvent &&
 		s.emitStatusChangeEvent(ctx, &previousEntity, updatedEntity, p.Actor)
+	if !recorded {
+		if err = s.recomputeOrdersForShipments(
+			ctx,
+			p.TenantInfo,
+			[]*shipment.Shipment{updatedEntity},
+		); err != nil {
+			s.l.Warn("failed to recompute order after marking ready to invoice", zap.Error(err))
+		}
 	}
 
 	return updatedEntity, true, nil

@@ -21593,6 +21593,9 @@
                         "type": "string"
                     }
                 },
+                "required": [
+                    "connectionId"
+                ],
                 "type": "object"
             },
             "internal_api_handlers_realtimehandler.typingRequest": {
@@ -21604,6 +21607,9 @@
                         "type": "boolean"
                     }
                 },
+                "required": [
+                    "connectionId"
+                ],
                 "type": "object"
             },
             "internal_api_handlers_recurringshipmenthandler.generateRequest": {
@@ -50905,7 +50911,7 @@
                     },
                     "401": {
                         "content": {
-                            "text/event-stream": {
+                            "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                                 }
@@ -50915,7 +50921,7 @@
                     },
                     "403": {
                         "content": {
-                            "text/event-stream": {
+                            "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                                 }
@@ -50925,7 +50931,7 @@
                     },
                     "429": {
                         "content": {
-                            "text/event-stream": {
+                            "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                                 }
@@ -58080,7 +58086,7 @@
                 ]
             },
             "post": {
-                "description": "Marks the caller's live connection as viewing a shipment's comments and\nreturns everyone else viewing them.",
+                "description": "Marks the caller's live connection as viewing a shipment's comments and\nreturns every connection viewing them, the caller's included.",
                 "operationId": "joinShipmentCommentPresence",
                 "parameters": [
                     {

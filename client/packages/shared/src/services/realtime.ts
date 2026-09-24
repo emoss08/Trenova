@@ -112,6 +112,13 @@ export class RealtimeClient {
   private readonly stateListeners = new Set<Listener<RealtimeConnectionState>>();
   private readonly eventListeners = new Map<string, Set<Listener<unknown>>>();
   private readonly scopes = new Map<string, ScopeState>();
+  /**
+   * The last join or leave sent for each scope. Every request waits for the one
+   * before it, so the server sees them in the order they were made: a leave never
+   * overtakes its own join, and a quick rejoin never lands before the leave. Kept
+   * apart from the scope state, which is dropped the moment nobody holds a join.
+   */
+  private readonly scopeRequests = new Map<string, Promise<void>>();
 
   constructor() {
     if (typeof window !== "undefined") {
@@ -205,7 +212,7 @@ export class RealtimeClient {
     state.joins += 1;
     state.joinPath = joinPath;
     if (state.joins === 1 && this.connectionId) {
-      void this.sendJoin(scope, joinPath, this.connectionId);
+      this.queueJoin(scope, joinPath, this.connectionId);
     }
 
     let released = false;
@@ -222,9 +229,12 @@ export class RealtimeClient {
       this.notifyScope(scope);
       this.pruneScope(scope);
       if (connectionId && path) {
-        void api
-          .delete(`${path}?connectionId=${encodeURIComponent(connectionId)}`)
-          .catch(() => undefined);
+        this.queueScopeRequest(scope, () =>
+          api.delete(`${path}?connectionId=${encodeURIComponent(connectionId)}`).then(
+            () => undefined,
+            () => undefined,
+          ),
+        );
       }
     };
   }
@@ -394,7 +404,7 @@ export class RealtimeClient {
 
     for (const [scope, state] of this.scopes) {
       if (state.joins > 0 && state.joinPath) {
-        void this.sendJoin(scope, state.joinPath, ready.connectionId);
+        this.queueJoin(scope, state.joinPath, ready.connectionId);
       }
     }
   }
@@ -427,7 +437,28 @@ export class RealtimeClient {
     this.notifyScope(event.scope);
   }
 
+  private queueJoin(scope: string, path: string, connectionId: string): void {
+    this.queueScopeRequest(scope, () => this.sendJoin(scope, path, connectionId));
+  }
+
+  private queueScopeRequest(scope: string, request: () => Promise<void>): void {
+    const previous = this.scopeRequests.get(scope) ?? Promise.resolve();
+    const next = previous.then(request);
+    this.scopeRequests.set(scope, next);
+    void next.then(() => {
+      if (this.scopeRequests.get(scope) === next) {
+        this.scopeRequests.delete(scope);
+      }
+    });
+  }
+
   private async sendJoin(scope: string, path: string, connectionId: string): Promise<void> {
+    // A join that waited behind a leave may no longer be wanted, or may belong
+    // to a stream that has since been replaced.
+    const wanted = this.scopes.get(scope);
+    if (!wanted || wanted.joins === 0 || this.connectionId !== connectionId) {
+      return;
+    }
     try {
       const snapshot = await api.post<PresenceSnapshot>(path, { connectionId });
       const state = this.scopes.get(scope);
@@ -542,6 +573,7 @@ export class RealtimeClient {
 
   private resetSession(): void {
     this.lastEventId = null;
+    this.scopeRequests.clear();
     this.attempt = 0;
     for (const scope of this.scopes.values()) {
       scope.members.clear();
