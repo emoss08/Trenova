@@ -1293,6 +1293,7 @@ func (h *integrationHarness) createPostedInvoice(
 		OrganizationID:        h.orgID,
 		BusinessUnitID:        h.buID,
 		ShipmentID:            h.shipmentID,
+		BillToCustomerID:      h.customerID,
 		Number:                fmt.Sprintf("INV-%03d", h.nextNumber),
 		Status:                billingqueue.StatusPosted,
 		BillType:              billingqueue.BillTypeInvoice,

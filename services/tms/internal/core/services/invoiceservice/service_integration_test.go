@@ -182,12 +182,13 @@ func TestPostCreatesInvoiceJournalSourceAndBalances(t *testing.T) {
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-1001",
-		Status:         billingqueue.StatusApproved,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-1001",
+		Status:           billingqueue.StatusApproved,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)
@@ -482,12 +483,13 @@ func TestPostSkipsInvoiceLedgerWhenRevenueRecognitionIsCashReceipt(t *testing.T)
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-1002",
-		Status:         billingqueue.StatusApproved,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-1002",
+		Status:           billingqueue.StatusApproved,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)

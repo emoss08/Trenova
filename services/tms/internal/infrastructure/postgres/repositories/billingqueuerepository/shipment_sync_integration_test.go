@@ -28,6 +28,11 @@ type syncTenant struct {
 	BusinessUnitID pulid.ID `bun:"business_unit_id"`
 }
 
+type syncShipment struct {
+	ID      pulid.ID `bun:"id"`
+	PayerID pulid.ID `bun:"payer_id"`
+}
+
 type syncShipmentRow struct {
 	BillingTransferStatus  *string `bun:"billing_transfer_status"`
 	TransferredToBillingAt *int64  `bun:"transferred_to_billing_at"`
@@ -40,6 +45,7 @@ type syncFixture struct {
 	shipmentRepo repositories.ShipmentRepository
 	tenant       pagination.TenantInfo
 	shipmentID   pulid.ID
+	payerID      pulid.ID
 }
 
 func setupSyncFixture(t *testing.T) *syncFixture {
@@ -62,13 +68,15 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 	require.NoError(t, db.NewSelect().
 		Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
 
-	var shipmentID pulid.ID
+	var shipment syncShipment
 	require.NoError(t, db.NewSelect().
-		Table("shipments").Column("id").
+		Table("shipments").
+		Column("id").
+		ColumnExpr("COALESCE(bill_to_customer_id, customer_id) AS payer_id").
 		Where("organization_id = ?", org.ID).
 		Where("business_unit_id = ?", org.BusinessUnitID).
 		Order("created_at ASC").
-		Limit(1).Scan(ctx, &shipmentID))
+		Limit(1).Scan(ctx, &shipment))
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -79,7 +87,8 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 		repo:         New(Params{DB: conn, Logger: logger}).(*repository),
 		shipmentRepo: shipmentrepository.New(shipmentrepository.Params{DB: conn, Logger: logger}),
 		tenant:       pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
-		shipmentID:   shipmentID,
+		shipmentID:   shipment.ID,
+		payerID:      shipment.PayerID,
 	}
 }
 
@@ -92,12 +101,13 @@ func (f *syncFixture) createItem(
 	t.Helper()
 
 	item, err := f.repo.Create(f.ctx, &billingqueue.BillingQueueItem{
-		OrganizationID: f.tenant.OrgID,
-		BusinessUnitID: f.tenant.BuID,
-		ShipmentID:     f.shipmentID,
-		Status:         status,
-		BillType:       billType,
-		Number:         number,
+		OrganizationID:   f.tenant.OrgID,
+		BusinessUnitID:   f.tenant.BuID,
+		ShipmentID:       f.shipmentID,
+		BillToCustomerID: f.payerID,
+		Status:           status,
+		BillType:         billType,
+		Number:           number,
 	})
 	require.NoError(t, err)
 	return item

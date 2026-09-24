@@ -395,12 +395,13 @@ func createPostedCustomerPayment(
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: env.org.ID,
-		BusinessUnitID: env.org.BusinessUnitID,
-		ShipmentID:     env.shipment.ID,
-		Number:         "INV-" + referenceNumber,
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   env.org.ID,
+		BusinessUnitID:   env.org.BusinessUnitID,
+		ShipmentID:       env.shipment.ID,
+		BillToCustomerID: env.shipment.CustomerID,
+		Number:           "INV-" + referenceNumber,
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = env.db.NewInsert().Model(queue).Exec(env.ctx)
 	require.NoError(t, err)
