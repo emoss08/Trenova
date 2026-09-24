@@ -1,6 +1,6 @@
 {
-  "operationCount": 835,
-  "fragmentCount": 225,
+  "operationCount": 836,
+  "fragmentCount": 227,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -918,7 +918,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/quality.graphql",
-      "hash": "sha256:997883ef2da65f140a836b5c491117d903689ed1e44b81f088b29e70321b5376",
+      "hash": "sha256:af57c33855f7d519df46239aea6d9d02f06cbf71b134a61d2306fa7a96306c23",
       "rootFields": [
         "agentQuality"
       ],
@@ -940,27 +940,32 @@
         "AgentWorstRatedAnswerFields"
       ],
       "usages": [],
-      "sdl": "query AgentQuality($agentDefinitionId: ID!, $window: Int) {\n  agentQuality(agentDefinitionId: $agentDefinitionId, window: $window) {\n    agentDefinitionId\n    agentName\n    enabled\n    windowDays\n    since\n    ratingsVisible\n    satisfaction\n    ratings\n    activeCases\n    satisfactionPoints {\n      day\n      positive\n      negative\n      satisfaction\n    }\n    qualityPoints {\n      ...AgentQualityPointFields\n    }\n    worstRated {\n      ...AgentWorstRatedAnswerFields\n    }\n    lastSuiteRun {\n      ...AgentSuiteRunFields\n    }\n  }\n}\n\nfragment AgentQualityPointFields on AgentQualityPoint {\n  suiteRunId\n  at\n  qualityScore\n  status\n  regression\n}\n\nfragment AgentSuiteRunFields on AgentSuiteRun {\n  id\n  agentDefinitionId\n  agentName\n  trigger\n  fingerprintHash\n  fingerprintChanges {\n    field\n    from\n    to\n  }\n  changeSummary\n  suiteRevision\n  status\n  casesTotal\n  casesPassed\n  casesFailed\n  casesSkipped\n  hardFailures\n  deterministicScore\n  judgeScore\n  qualityScore\n  baselineScore\n  baselineRunId\n  regression\n  costUsd\n  startedAt\n  finishedAt\n  comments\n  requestedByUserId\n}\n\nfragment AgentWorstRatedAnswerFields on AgentWorstRatedAnswer {\n  targetType\n  targetId\n  targetPart\n  positive\n  negative\n  lastRatedAt\n  threadId\n  canOpenThread\n  agentDefinitionId\n  agentName\n  sample {\n    id\n    reasons\n    comment\n    createdAt\n    turnSnapshot {\n      question\n      answer\n      tools {\n        name\n        summary\n        failed\n      }\n      omittedTools\n      redacted\n    }\n  }\n}"
+      "sdl": "query AgentQuality($agentDefinitionId: ID!, $window: Int) {\n  agentQuality(agentDefinitionId: $agentDefinitionId, window: $window) {\n    agentDefinitionId\n    agentName\n    enabled\n    windowDays\n    since\n    ratingsVisible\n    satisfaction\n    ratings\n    activeCases\n    satisfactionPoints {\n      day\n      positive\n      negative\n      satisfaction\n    }\n    qualityPoints {\n      ...AgentQualityPointFields\n    }\n    worstRated {\n      ...AgentWorstRatedAnswerFields\n    }\n    lastSuiteRun {\n      ...AgentSuiteRunFields\n    }\n  }\n}\n\nfragment AgentQualityPointFields on AgentQualityPoint {\n  suiteRunId\n  at\n  qualityScore\n  status\n  regression\n}\n\nfragment AgentSuiteRunFields on AgentSuiteRun {\n  id\n  agentDefinitionId\n  agentName\n  trigger\n  fingerprintHash\n  fingerprintChanges {\n    field\n    from\n    to\n  }\n  changeSummary\n  suiteRevision\n  status\n  casesTotal\n  casesPassed\n  casesFailed\n  casesSkipped\n  hardFailures\n  deterministicScore\n  judgeScore\n  qualityScore\n  baselineScore\n  baselineRunId\n  regression\n  costUsd\n  startedAt\n  finishedAt\n  comments\n  requestedByUserId\n}\n\nfragment AgentWorstRatedAnswerFields on AgentWorstRatedAnswer {\n  id\n  targetType\n  targetId\n  targetPart\n  positive\n  negative\n  lastRatedAt\n  threadId\n  canOpenThread\n  agentDefinitionId\n  agentName\n  sample {\n    id\n    reasons\n    comment\n    createdAt\n    turnSnapshot {\n      question\n      answer\n      tools {\n        name\n        summary\n        failed\n      }\n      omittedTools\n      redacted\n    }\n  }\n}"
     },
     {
-      "name": "AgentQualityAgents",
+      "name": "AgentQualityAgentTable",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/quality.graphql",
-      "hash": "sha256:eff4ac76a1c3ad86f02eddc2807807c7dd848e77921a3d4b43bf72758efae25d",
+      "hash": "sha256:02b7d69ddd49b36da7d8a72d39d36e8860177855abe0149232e6363974291339",
       "rootFields": [
-        "agentQualityAgents"
+        "agentQualityAgentConnection"
       ],
       "variables": [
         {
+          "name": "window",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
           "name": "input",
-          "type": "AgentQualityAgentsInput!",
+          "type": "DataTableConnectionInput!",
           "defaultValue": null
         },
         {
           "name": "includeTotalCount",
           "type": "Boolean",
-          "defaultValue": "false"
+          "defaultValue": "true"
         }
       ],
       "fragments": [
@@ -969,7 +974,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentQualityAgents($input: AgentQualityAgentsInput!, $includeTotalCount: Boolean = false) {\n  agentQualityAgents(input: $input) {\n    edges {\n      cursor\n      node {\n        agentDefinitionId\n        name\n        enabled\n        ratingsVisible\n        satisfaction\n        satisfactionDelta\n        ratings\n        qualityScore\n        openRegression\n        qualityPoints {\n          ...AgentQualityPointFields\n        }\n        lastSuiteRun {\n          ...AgentSuiteRunFields\n        }\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentQualityPointFields on AgentQualityPoint {\n  suiteRunId\n  at\n  qualityScore\n  status\n  regression\n}\n\nfragment AgentSuiteRunFields on AgentSuiteRun {\n  id\n  agentDefinitionId\n  agentName\n  trigger\n  fingerprintHash\n  fingerprintChanges {\n    field\n    from\n    to\n  }\n  changeSummary\n  suiteRevision\n  status\n  casesTotal\n  casesPassed\n  casesFailed\n  casesSkipped\n  hardFailures\n  deterministicScore\n  judgeScore\n  qualityScore\n  baselineScore\n  baselineRunId\n  regression\n  costUsd\n  startedAt\n  finishedAt\n  comments\n  requestedByUserId\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentQualityAgentTable($window: Int, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentQualityAgentConnection(window: $window, input: $input) {\n    edges {\n      node {\n        id\n        agentDefinitionId\n        name\n        enabled\n        ratingsVisible\n        satisfaction\n        satisfactionDelta\n        ratings\n        qualityScore\n        openRegression\n        qualityPoints {\n          ...AgentQualityPointFields\n        }\n        lastSuiteRun {\n          ...AgentSuiteRunFields\n        }\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentQualityPointFields on AgentQualityPoint {\n  suiteRunId\n  at\n  qualityScore\n  status\n  regression\n}\n\nfragment AgentSuiteRunFields on AgentSuiteRun {\n  id\n  agentDefinitionId\n  agentName\n  trigger\n  fingerprintHash\n  fingerprintChanges {\n    field\n    from\n    to\n  }\n  changeSummary\n  suiteRevision\n  status\n  casesTotal\n  casesPassed\n  casesFailed\n  casesSkipped\n  hardFailures\n  deterministicScore\n  judgeScore\n  qualityScore\n  baselineScore\n  baselineRunId\n  regression\n  costUsd\n  startedAt\n  finishedAt\n  comments\n  requestedByUserId\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentQualityControl",
@@ -1082,7 +1087,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/safety.graphql",
-      "hash": "sha256:571671fd99c761a5d4fd69126512daf912bbb93ebc244a2c6d6508fe826c9d1c",
+      "hash": "sha256:f089e6433f198e90913b7d60eb32ede844d86438f8b427651ccf36d087f21d53",
       "rootFields": [
         "agentSafety"
       ],
@@ -1094,12 +1099,10 @@
         }
       ],
       "fragments": [
-        "AgentSafetyFields",
-        "AgentToolAutonomyFields",
-        "AgentToolPolicyFields"
+        "AgentSafetyHeaderFields"
       ],
       "usages": [],
-      "sdl": "query AgentSafety($agentIds: [ID!]) {\n  agentSafety(agentIds: $agentIds) {\n    ...AgentSafetyFields\n  }\n}\n\nfragment AgentSafetyFields on AgentSafety {\n  agentId\n  organizationShadow\n  agent {\n    id\n    name\n    enabled\n    shadowMode\n    simulationMode\n    autonomyCeiling\n    triggerMode\n  }\n  tools {\n    policyName\n    policy {\n      ...AgentToolPolicyFields\n    }\n    clean {\n      ...AgentToolAutonomyFields\n    }\n    tainted {\n      ...AgentToolAutonomyFields\n    }\n  }\n  reach {\n    accessMode\n    roles {\n      id\n      name\n    }\n    warnings {\n      kind\n      tools\n    }\n  }\n}\n\nfragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}\n\nfragment AgentToolPolicyFields on AgentToolPolicy {\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}"
+      "sdl": "query AgentSafety($agentIds: [ID!]) {\n  agentSafety(agentIds: $agentIds) {\n    ...AgentSafetyHeaderFields\n  }\n}\n\nfragment AgentSafetyHeaderFields on AgentSafety {\n  agentId\n  organizationShadow\n  agent {\n    id\n    name\n    enabled\n    shadowMode\n    simulationMode\n    autonomyCeiling\n    triggerMode\n  }\n  reach {\n    accessMode\n    roles {\n      id\n      name\n    }\n    warnings {\n      kind\n      tools\n    }\n  }\n}"
     },
     {
       "name": "AgentSafetySummary",
@@ -1160,51 +1163,62 @@
       "sdl": "query AgentSuiteRun($id: ID!) {\n  agentSuiteRun(id: $id) {\n    ...AgentSuiteRunFields\n  }\n}\n\nfragment AgentSuiteRunFields on AgentSuiteRun {\n  id\n  agentDefinitionId\n  agentName\n  trigger\n  fingerprintHash\n  fingerprintChanges {\n    field\n    from\n    to\n  }\n  changeSummary\n  suiteRevision\n  status\n  casesTotal\n  casesPassed\n  casesFailed\n  casesSkipped\n  hardFailures\n  deterministicScore\n  judgeScore\n  qualityScore\n  baselineScore\n  baselineRunId\n  regression\n  costUsd\n  startedAt\n  finishedAt\n  comments\n  requestedByUserId\n}"
     },
     {
-      "name": "AgentSuiteRunCases",
+      "name": "AgentSuiteRunCaseTable",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/quality.graphql",
-      "hash": "sha256:61e994236f4e3b3a09bfa393ed37a38fb3a3913fa6920aa9237015004b3a1080",
+      "hash": "sha256:558de82baf0d2623e42aa34043b9270e6d86c9655c50555fe58f7cbf244ec8fd",
       "rootFields": [
-        "agentSuiteRunCases"
+        "agentSuiteRunCaseConnection"
       ],
       "variables": [
         {
+          "name": "suiteRunId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
           "name": "input",
-          "type": "AgentSuiteRunCasesInput!",
+          "type": "DataTableConnectionInput!",
           "defaultValue": null
         },
         {
           "name": "includeTotalCount",
           "type": "Boolean",
-          "defaultValue": "false"
+          "defaultValue": "true"
         }
       ],
       "fragments": [
+        "AgentSuiteRunCaseFields",
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentSuiteRunCases($input: AgentSuiteRunCasesInput!, $includeTotalCount: Boolean = false) {\n  agentSuiteRunCases(input: $input) {\n    edges {\n      cursor\n      node {\n        id\n        evalCaseId\n        suiteOrdinal\n        status\n        reply\n        checks\n        judge\n        caseScore\n        errorMessage\n        model\n        completedAt\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentSuiteRunCaseTable($suiteRunId: ID!, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentSuiteRunCaseConnection(suiteRunId: $suiteRunId, input: $input) {\n    edges {\n      node {\n        ...AgentSuiteRunCaseFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentSuiteRunCaseFields on AgentEvaluation {\n  id\n  evalCaseId\n  suiteOrdinal\n  status\n  reply\n  checks\n  judge\n  caseScore\n  errorMessage\n  model\n  completedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
-      "name": "AgentSuiteRuns",
+      "name": "AgentSuiteRunTable",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/quality.graphql",
-      "hash": "sha256:3e6f5474fb47667cdf25cb63a25f052b1ab97e354fcec5de9ca336adafa422b0",
+      "hash": "sha256:4abff346147106f6fc68bc09da15c305aa12ce1319687593527c1aba59b43990",
       "rootFields": [
-        "agentSuiteRuns"
+        "agentSuiteRunConnection"
       ],
       "variables": [
         {
+          "name": "agentDefinitionId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
           "name": "input",
-          "type": "AgentSuiteRunsInput!",
+          "type": "DataTableConnectionInput!",
           "defaultValue": null
         },
         {
           "name": "includeTotalCount",
           "type": "Boolean",
-          "defaultValue": "false"
+          "defaultValue": "true"
         }
       ],
       "fragments": [
@@ -1212,27 +1226,27 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentSuiteRuns($input: AgentSuiteRunsInput!, $includeTotalCount: Boolean = false) {\n  agentSuiteRuns(input: $input) {\n    edges {\n      cursor\n      node {\n        ...AgentSuiteRunFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentSuiteRunFields on AgentSuiteRun {\n  id\n  agentDefinitionId\n  agentName\n  trigger\n  fingerprintHash\n  fingerprintChanges {\n    field\n    from\n    to\n  }\n  changeSummary\n  suiteRevision\n  status\n  casesTotal\n  casesPassed\n  casesFailed\n  casesSkipped\n  hardFailures\n  deterministicScore\n  judgeScore\n  qualityScore\n  baselineScore\n  baselineRunId\n  regression\n  costUsd\n  startedAt\n  finishedAt\n  comments\n  requestedByUserId\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentSuiteRunTable($agentDefinitionId: ID, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentSuiteRunConnection(agentDefinitionId: $agentDefinitionId, input: $input) {\n    edges {\n      node {\n        ...AgentSuiteRunFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentSuiteRunFields on AgentSuiteRun {\n  id\n  agentDefinitionId\n  agentName\n  trigger\n  fingerprintHash\n  fingerprintChanges {\n    field\n    from\n    to\n  }\n  changeSummary\n  suiteRevision\n  status\n  casesTotal\n  casesPassed\n  casesFailed\n  casesSkipped\n  hardFailures\n  deterministicScore\n  judgeScore\n  qualityScore\n  baselineScore\n  baselineRunId\n  regression\n  costUsd\n  startedAt\n  finishedAt\n  comments\n  requestedByUserId\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
-      "name": "AgentToolPolicyConnection",
+      "name": "AgentToolRuleTable",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/safety.graphql",
-      "hash": "sha256:d921a3676bb237d7be340b14b14c0d88a30be7ac35e1a0714f8d00ea29bcd619",
+      "hash": "sha256:408a5464ca8da78c9b4d995f96b6215368d54ed469ba804e9dac583ad637166b",
       "rootFields": [
-        "agentToolPolicyConnection"
+        "agentToolRuleConnection"
       ],
       "variables": [
         {
           "name": "input",
-          "type": "AgentToolPolicyConnectionInput!",
+          "type": "DataTableConnectionInput!",
           "defaultValue": null
         },
         {
           "name": "includeTotalCount",
           "type": "Boolean",
-          "defaultValue": "false"
+          "defaultValue": "true"
         }
       ],
       "fragments": [
@@ -1240,22 +1254,72 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentToolPolicyConnection($input: AgentToolPolicyConnectionInput!, $includeTotalCount: Boolean = false) {\n  agentToolPolicyConnection(input: $input) {\n    edges {\n      cursor\n      node {\n        ...AgentToolPolicyFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentToolPolicyFields on AgentToolPolicy {\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentToolRuleTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentToolRuleConnection(input: $input) {\n    edges {\n      node {\n        ...AgentToolPolicyFields\n        runsWithoutPerson\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentToolPolicyFields on AgentToolPolicy {\n  id\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
-      "name": "AgentWorstRatedAnswers",
+      "name": "AgentToolSafetyTable",
       "kind": "query",
       "domain": "agent",
-      "sourceFile": "src/operations/agent/quality.graphql",
-      "hash": "sha256:a2529a10ce7390a8c264f0bd2112738fab25019d21b30cc5b6c8d38fc6b8f339",
+      "sourceFile": "src/operations/agent/safety.graphql",
+      "hash": "sha256:c321454ad00068bb8fa10e406c16cd524b650c40172887bba015721e6194334e",
       "rootFields": [
-        "agentWorstRatedAnswers"
+        "agentToolSafetyConnection"
       ],
       "variables": [
         {
-          "name": "input",
-          "type": "AgentWorstRatedAnswersInput!",
+          "name": "agentIds",
+          "type": "[ID!]!",
           "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "AgentToolAutonomyFields",
+        "AgentToolPolicyFields",
+        "AgentToolSafetyRowFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentToolSafetyTable($agentIds: [ID!]!, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentToolSafetyConnection(agentIds: $agentIds, input: $input) {\n    edges {\n      node {\n        ...AgentToolSafetyRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}\n\nfragment AgentToolPolicyFields on AgentToolPolicy {\n  id\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}\n\nfragment AgentToolSafetyRowFields on AgentToolSafety {\n  id\n  agentId\n  agentName\n  policyName\n  policy {\n    ...AgentToolPolicyFields\n  }\n  clean {\n    ...AgentToolAutonomyFields\n  }\n  tainted {\n    ...AgentToolAutonomyFields\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AgentWorstRatedAnswerTable",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/quality.graphql",
+      "hash": "sha256:1754184fcf56f7a454908a044f784df3d4ee77f4a441897ddbf6323455fd21f4",
+      "rootFields": [
+        "agentWorstRatedAnswerConnection"
+      ],
+      "variables": [
+        {
+          "name": "agentDefinitionId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "window",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
         }
       ],
       "fragments": [
@@ -1263,7 +1327,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentWorstRatedAnswers($input: AgentWorstRatedAnswersInput!) {\n  agentWorstRatedAnswers(input: $input) {\n    edges {\n      cursor\n      node {\n        ...AgentWorstRatedAnswerFields\n      }\n    }\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentWorstRatedAnswerFields on AgentWorstRatedAnswer {\n  targetType\n  targetId\n  targetPart\n  positive\n  negative\n  lastRatedAt\n  threadId\n  canOpenThread\n  agentDefinitionId\n  agentName\n  sample {\n    id\n    reasons\n    comment\n    createdAt\n    turnSnapshot {\n      question\n      answer\n      tools {\n        name\n        summary\n        failed\n      }\n      omittedTools\n      redacted\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentWorstRatedAnswerTable($agentDefinitionId: ID, $window: Int, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentWorstRatedAnswerConnection(\n    agentDefinitionId: $agentDefinitionId\n    window: $window\n    input: $input\n  ) {\n    edges {\n      node {\n        ...AgentWorstRatedAnswerFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentWorstRatedAnswerFields on AgentWorstRatedAnswer {\n  id\n  targetType\n  targetId\n  targetPart\n  positive\n  negative\n  lastRatedAt\n  threadId\n  canOpenThread\n  agentDefinitionId\n  agentName\n  sample {\n    id\n    reasons\n    comment\n    createdAt\n    turnSnapshot {\n      question\n      answer\n      tools {\n        name\n        summary\n        failed\n      }\n      omittedTools\n      redacted\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AIFeedbackTable",
@@ -19473,7 +19537,7 @@
       "fragments": [],
       "usedByOperations": [
         "AgentQuality",
-        "AgentQualityAgents"
+        "AgentQualityAgentTable"
       ],
       "usages": [],
       "sdl": "fragment AgentQualityPointFields on AgentQualityPoint {\n  suiteRunId\n  at\n  qualityScore\n  status\n  regression\n}"
@@ -19492,19 +19556,16 @@
       "sdl": "fragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
-      "name": "AgentSafetyFields",
+      "name": "AgentSafetyHeaderFields",
       "typeCondition": "AgentSafety",
       "domain": "agent",
       "sourceFile": "src/operations/agent/safety.graphql",
-      "fragments": [
-        "AgentToolAutonomyFields",
-        "AgentToolPolicyFields"
-      ],
+      "fragments": [],
       "usedByOperations": [
         "AgentSafety"
       ],
       "usages": [],
-      "sdl": "fragment AgentSafetyFields on AgentSafety {\n  agentId\n  organizationShadow\n  agent {\n    id\n    name\n    enabled\n    shadowMode\n    simulationMode\n    autonomyCeiling\n    triggerMode\n  }\n  tools {\n    policyName\n    policy {\n      ...AgentToolPolicyFields\n    }\n    clean {\n      ...AgentToolAutonomyFields\n    }\n    tainted {\n      ...AgentToolAutonomyFields\n    }\n  }\n  reach {\n    accessMode\n    roles {\n      id\n      name\n    }\n    warnings {\n      kind\n      tools\n    }\n  }\n}\n\nfragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}\n\nfragment AgentToolPolicyFields on AgentToolPolicy {\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}"
+      "sdl": "fragment AgentSafetyHeaderFields on AgentSafety {\n  agentId\n  organizationShadow\n  agent {\n    id\n    name\n    enabled\n    shadowMode\n    simulationMode\n    autonomyCeiling\n    triggerMode\n  }\n  reach {\n    accessMode\n    roles {\n      id\n      name\n    }\n    warnings {\n      kind\n      tools\n    }\n  }\n}"
     },
     {
       "name": "AgentScorecardFields",
@@ -19519,6 +19580,18 @@
       "sdl": "fragment AgentScorecardFields on AgentScorecard {\n  agentDefinitionId\n  window\n  since\n  runs\n  runsFailed\n  exceptions\n  proposals\n  approved\n  modified\n  rejected\n  pending\n  executed\n  executionFailures\n  autoExecuted\n  approvalRate\n  inputTokens\n  outputTokens\n  costUsd\n  estimatedMinutesSaved\n  byTool {\n    toolName\n    approved\n    modified\n    rejected\n    executed\n    failed\n    pending\n    automatic\n  }\n  toolTrust {\n    toolName\n    streak\n    approvals\n    modifications\n    rejections\n    executionFailures\n    earnedTier\n    lastDecisionAt\n    promotedAt\n    demotedAt\n  }\n}"
     },
     {
+      "name": "AgentSuiteRunCaseFields",
+      "typeCondition": "AgentEvaluation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/quality.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentSuiteRunCaseTable"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentSuiteRunCaseFields on AgentEvaluation {\n  id\n  evalCaseId\n  suiteOrdinal\n  status\n  reply\n  checks\n  judge\n  caseScore\n  errorMessage\n  model\n  completedAt\n}"
+    },
+    {
       "name": "AgentSuiteRunFields",
       "typeCondition": "AgentSuiteRun",
       "domain": "agent",
@@ -19526,9 +19599,9 @@
       "fragments": [],
       "usedByOperations": [
         "AgentQuality",
-        "AgentQualityAgents",
+        "AgentQualityAgentTable",
         "AgentSuiteRun",
-        "AgentSuiteRuns",
+        "AgentSuiteRunTable",
         "RunAgentSuite"
       ],
       "usages": [],
@@ -19541,7 +19614,7 @@
       "sourceFile": "src/operations/agent/safety.graphql",
       "fragments": [],
       "usedByOperations": [
-        "AgentSafety"
+        "AgentToolSafetyTable"
       ],
       "usages": [],
       "sdl": "fragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}"
@@ -19553,11 +19626,26 @@
       "sourceFile": "src/operations/agent/safety.graphql",
       "fragments": [],
       "usedByOperations": [
-        "AgentSafety",
-        "AgentToolPolicyConnection"
+        "AgentToolRuleTable",
+        "AgentToolSafetyTable"
       ],
       "usages": [],
-      "sdl": "fragment AgentToolPolicyFields on AgentToolPolicy {\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}"
+      "sdl": "fragment AgentToolPolicyFields on AgentToolPolicy {\n  id\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}"
+    },
+    {
+      "name": "AgentToolSafetyRowFields",
+      "typeCondition": "AgentToolSafety",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/safety.graphql",
+      "fragments": [
+        "AgentToolAutonomyFields",
+        "AgentToolPolicyFields"
+      ],
+      "usedByOperations": [
+        "AgentToolSafetyTable"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentToolSafetyRowFields on AgentToolSafety {\n  id\n  agentId\n  agentName\n  policyName\n  policy {\n    ...AgentToolPolicyFields\n  }\n  clean {\n    ...AgentToolAutonomyFields\n  }\n  tainted {\n    ...AgentToolAutonomyFields\n  }\n}\n\nfragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}\n\nfragment AgentToolPolicyFields on AgentToolPolicy {\n  id\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}"
     },
     {
       "name": "AgentWorstRatedAnswerFields",
@@ -19567,10 +19655,10 @@
       "fragments": [],
       "usedByOperations": [
         "AgentQuality",
-        "AgentWorstRatedAnswers"
+        "AgentWorstRatedAnswerTable"
       ],
       "usages": [],
-      "sdl": "fragment AgentWorstRatedAnswerFields on AgentWorstRatedAnswer {\n  targetType\n  targetId\n  targetPart\n  positive\n  negative\n  lastRatedAt\n  threadId\n  canOpenThread\n  agentDefinitionId\n  agentName\n  sample {\n    id\n    reasons\n    comment\n    createdAt\n    turnSnapshot {\n      question\n      answer\n      tools {\n        name\n        summary\n        failed\n      }\n      omittedTools\n      redacted\n    }\n  }\n}"
+      "sdl": "fragment AgentWorstRatedAnswerFields on AgentWorstRatedAnswer {\n  id\n  targetType\n  targetId\n  targetPart\n  positive\n  negative\n  lastRatedAt\n  threadId\n  canOpenThread\n  agentDefinitionId\n  agentName\n  sample {\n    id\n    reasons\n    comment\n    createdAt\n    turnSnapshot {\n      question\n      answer\n      tools {\n        name\n        summary\n        failed\n      }\n      omittedTools\n      redacted\n    }\n  }\n}"
     },
     {
       "name": "AIFeedbackTableRowFields",
@@ -20062,12 +20150,13 @@
         "AgentMemoryTable",
         "AgentPlanTable",
         "AgentProposalTable",
-        "AgentQualityAgents",
+        "AgentQualityAgentTable",
         "AgentRunTable",
-        "AgentSuiteRunCases",
-        "AgentSuiteRuns",
-        "AgentToolPolicyConnection",
-        "AgentWorstRatedAnswers",
+        "AgentSuiteRunCaseTable",
+        "AgentSuiteRunTable",
+        "AgentToolRuleTable",
+        "AgentToolSafetyTable",
+        "AgentWorstRatedAnswerTable",
         "AIFeedbackTable",
         "AIProviderCards",
         "ApiKeyTable",
@@ -22941,27 +23030,6 @@
       ],
       "sdl": "input AgentProposalDecisionInput {\n  decision: AgentDecisionType!\n  modifications: JSON\n  reasonCode: String!\n}"
     },
-    "AgentQualityAgentsInput": {
-      "kind": "input",
-      "fields": [
-        {
-          "name": "after",
-          "type": "String",
-          "defaultValue": null
-        },
-        {
-          "name": "first",
-          "type": "Int",
-          "defaultValue": null
-        },
-        {
-          "name": "window",
-          "type": "Int",
-          "defaultValue": null
-        }
-      ],
-      "sdl": "input AgentQualityAgentsInput {\n  after: String\n  first: Int\n  \"\"\"Days of ratings and scores to read, 30 by default, at most 365.\"\"\"\n  window: Int\n}"
-    },
     "AgentScorecardInput": {
       "kind": "input",
       "fields": [
@@ -22978,121 +23046,6 @@
         }
       ],
       "sdl": "input AgentScorecardInput {\n  agentDefinitionId: ID!\n  window: AgentScorecardWindow = Last30Days\n}"
-    },
-    "AgentSuiteRunCasesInput": {
-      "kind": "input",
-      "fields": [
-        {
-          "name": "after",
-          "type": "String",
-          "defaultValue": null
-        },
-        {
-          "name": "first",
-          "type": "Int",
-          "defaultValue": null
-        },
-        {
-          "name": "suiteRunId",
-          "type": "ID!",
-          "defaultValue": null
-        }
-      ],
-      "sdl": "input AgentSuiteRunCasesInput {\n  after: String\n  first: Int\n  suiteRunId: ID!\n}"
-    },
-    "AgentSuiteRunsInput": {
-      "kind": "input",
-      "fields": [
-        {
-          "name": "after",
-          "type": "String",
-          "defaultValue": null
-        },
-        {
-          "name": "agentDefinitionId",
-          "type": "ID",
-          "defaultValue": null
-        },
-        {
-          "name": "first",
-          "type": "Int",
-          "defaultValue": null
-        },
-        {
-          "name": "statuses",
-          "type": "[AgentSuiteRunStatus!]",
-          "defaultValue": null
-        }
-      ],
-      "sdl": "input AgentSuiteRunsInput {\n  after: String\n  agentDefinitionId: ID\n  first: Int\n  statuses: [AgentSuiteRunStatus!]\n}"
-    },
-    "AgentToolPolicyConnectionInput": {
-      "kind": "input",
-      "fields": [
-        {
-          "name": "after",
-          "type": "String",
-          "defaultValue": null
-        },
-        {
-          "name": "egress",
-          "type": "AgentEgressClass",
-          "defaultValue": null
-        },
-        {
-          "name": "first",
-          "type": "Int",
-          "defaultValue": "25",
-          "defaultJson": 25
-        },
-        {
-          "name": "kind",
-          "type": "AgentToolKind",
-          "defaultValue": null
-        },
-        {
-          "name": "query",
-          "type": "String",
-          "defaultValue": null
-        },
-        {
-          "name": "resource",
-          "type": "String",
-          "defaultValue": null
-        },
-        {
-          "name": "runsWithoutPerson",
-          "type": "Boolean",
-          "defaultValue": null
-        }
-      ],
-      "sdl": "\"\"\"\nNarrows the tool rules. A filter left out matches every tool; the rules come\nback ordered by tool name.\n\"\"\"\ninput AgentToolPolicyConnectionInput {\n  after: String\n  \"\"\"Tools some of whose work reaches this class.\"\"\"\n  egress: AgentEgressClass\n  first: Int = 25\n  kind: AgentToolKind\n  \"\"\"Matched against the tool's name and title, ignoring case.\"\"\"\n  query: String\n  \"\"\"\n  The permission resource the tool needs; general for a tool that needs no grant.\n  \"\"\"\n  resource: String\n  \"\"\"\n  True keeps the tools that change something and, on at least one agent, can do\n  so without a person; false keeps every other tool.\n  \"\"\"\n  runsWithoutPerson: Boolean\n}"
-    },
-    "AgentWorstRatedAnswersInput": {
-      "kind": "input",
-      "fields": [
-        {
-          "name": "after",
-          "type": "String",
-          "defaultValue": null
-        },
-        {
-          "name": "agentDefinitionId",
-          "type": "ID",
-          "defaultValue": null
-        },
-        {
-          "name": "first",
-          "type": "Int",
-          "defaultValue": null
-        },
-        {
-          "name": "window",
-          "type": "Int",
-          "defaultValue": null
-        }
-      ],
-      "sdl": "input AgentWorstRatedAnswersInput {\n  after: String\n  agentDefinitionId: ID\n  first: Int\n  window: Int\n}"
     },
     "AIFeedbackTargetInput": {
       "kind": "input",
@@ -34190,39 +34143,6 @@
         "Last90Days"
       ],
       "sdl": "\"\"\"How far back a scorecard looks.\"\"\"\nenum AgentScorecardWindow {\n  Last7Days\n  Last30Days\n  Last90Days\n}"
-    },
-    "AgentSuiteRunStatus": {
-      "kind": "enum",
-      "values": [
-        "BudgetStopped",
-        "Completed",
-        "Failed",
-        "Running",
-        "Skipped"
-      ],
-      "sdl": "enum AgentSuiteRunStatus {\n  \"\"\"\n  The nightly or monthly evaluation budget ran out before every case was asked.\n  \"\"\"\n  BudgetStopped\n  Completed\n  Failed\n  Running\n  \"\"\"Nothing about the agent or its cases changed since its last run.\"\"\"\n  Skipped\n}"
-    },
-    "AgentEgressClass": {
-      "kind": "enum",
-      "values": [
-        "CustomerVisible",
-        "DriverVisible",
-        "ExternalRecipient",
-        "Internal",
-        "Money",
-        "None",
-        "Personal"
-      ],
-      "sdl": "\"\"\"Where a tool's work can be seen or felt.\"\"\"\nenum AgentEgressClass {\n  \"\"\"Changes something a customer can see.\"\"\"\n  CustomerVisible\n  \"\"\"Changes something a driver can see.\"\"\"\n  DriverVisible\n  \"\"\"Sends to someone outside the organization.\"\"\"\n  ExternalRecipient\n  \"\"\"Changes records only people inside the organization see.\"\"\"\n  Internal\n  \"\"\"Moves or commits money.\"\"\"\n  Money\n  \"\"\"Reads only; nothing changes and nothing is sent.\"\"\"\n  None\n  \"\"\"Changes only the caller's own records.\"\"\"\n  Personal\n}"
-    },
-    "AgentToolKind": {
-      "kind": "enum",
-      "values": [
-        "Action",
-        "Query",
-        "Runtime"
-      ],
-      "sdl": "enum AgentToolKind {\n  Action\n  Query\n  Runtime\n}"
     },
     "AIFeedbackTargetType": {
       "kind": "enum",

@@ -1,69 +1,29 @@
 import { NEGATIVE_REASONS, POSITIVE_REASONS } from "@/components/ai-feedback/feedback-reasons";
-import { SectionTable } from "@/components/data-table/section-table";
-import { SectionPanel } from "@/components/section-panel";
+import { DataTable } from "@/components/data-table/data-table";
+import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { recordPath } from "@/config/record-links";
-import type { AgentWorstRatedAnswer } from "@/lib/graphql/agent-quality";
-import { queries } from "@/lib/queries";
+import {
+  AGENT_WORST_RATED_LIST_KEY,
+  createAgentWorstRatedTableGraphQLConfig,
+  type AgentWorstRatedAnswer,
+  type AgentWorstRatedRow,
+} from "@/lib/graphql/agent-quality";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
-import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
-import type { ColumnDef } from "@trenova/shared/types/data-table";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
+import { Resource } from "@trenova/shared/types/permission";
+import { useQueryState } from "nuqs";
 import { useMemo } from "react";
 import { Link } from "react-router";
-import { useQualityPages } from "./use-quality-pages";
-
-const RATED_FORMAT = { month: "short", day: "numeric" } as const;
+import { QUALITY_AGENT_PARAM, qualityAgentParser } from "../../ai-control-tabs";
+import { useAIControlNavigation } from "../../use-ai-control-navigation";
+import { AgentScope } from "./agent-scope";
+import { answerQuestion, getWorstRatedColumns } from "./quality-columns";
 
 const REASON_LABEL = new Map<string, string>(
   [...NEGATIVE_REASONS, ...POSITIVE_REASONS].map((option) => [option.value, option.label]),
 );
-
-const answerRowId = (answer: AgentWorstRatedAnswer) =>
-  `${answer.targetType}:${answer.targetId}:${answer.targetPart}`;
-
-function question(answer: AgentWorstRatedAnswer): string {
-  return answer.sample?.turnSnapshot?.question.trim() ?? "";
-}
-
-function worstRatedColumns(t: TranslateFn): ColumnDef<AgentWorstRatedAnswer>[] {
-  return [
-    {
-      id: "question",
-      header: t("Question"),
-      cell: ({ row }) => (
-        <span className="line-clamp-2">
-          {question(row.original) || t("What was asked was not kept")}
-        </span>
-      ),
-      meta: { cellClassName: "max-w-96" },
-    },
-    {
-      id: "agent",
-      header: t("Agent"),
-      cell: ({ row }) => <span className="truncate">{row.original.agentName || "—"}</span>,
-    },
-    {
-      id: "ratings",
-      header: t("Down / up"),
-      cell: ({ row }) => (
-        <span className="tabular-nums">
-          {row.original.negative} / {row.original.positive}
-        </span>
-      ),
-    },
-    {
-      id: "rated",
-      header: t("Last rated"),
-      cell: ({ row }) => (
-        <span className="text-muted-foreground tabular-nums">
-          {formatUnixInUserTimezone(row.original.lastRatedAt, RATED_FORMAT)}
-        </span>
-      ),
-    },
-  ];
-}
 
 /**
  * What the person saw when they rated an answer down: the question, the
@@ -76,7 +36,7 @@ export function WorstRatedDetails({ answer }: { answer: AgentWorstRatedAnswer })
   const snapshot = answer.sample?.turnSnapshot;
 
   return (
-    <div className="flex flex-col gap-2 px-3 py-2">
+    <div className="flex flex-col gap-2">
       <DescriptionList layout="split">
         <DescriptionItem label={t("Question")}>
           <span className="whitespace-pre-wrap">{snapshot?.question || "—"}</span>
@@ -142,46 +102,58 @@ export function WorstRatedDetails({ answer }: { answer: AgentWorstRatedAnswer })
   );
 }
 
-const renderDetails = (answer: AgentWorstRatedAnswer) => <WorstRatedDetails answer={answer} />;
-
-/**
- * The answers people liked least, a page at a time, most disliked first.
- * Everything shown is what was kept when the person rated, never the live
- * conversation.
- */
-export function WorstRatedPanel({
-  agentDefinitionId = null,
-}: {
-  agentDefinitionId?: string | null;
-}) {
+function WorstRatedPanel({ open, onOpenChange, row }: DataTablePanelProps<AgentWorstRatedRow>) {
   const t = useT();
-  const columns = useMemo(() => worstRatedColumns(t), [t]);
-  const { query, rows, pagination } = useQualityPages(
-    `worst:${agentDefinitionId ?? "all"}`,
-    (page) => queries.agentQuality.worstRated(agentDefinitionId, page),
-  );
 
   return (
-    <SectionPanel
-      title={t("Worst-rated answers")}
-      help={t(
-        "Answers people rated down in the last 30 days, the most disliked first, with what they saw when they rated. Restricted values were replaced before anything was kept.",
-      )}
+    <DataTablePanelContainer
+      open={open}
+      onOpenChange={onOpenChange}
+      title={row ? answerQuestion(row) || t("Answer") : t("Answer")}
+      description={
+        row ? t("{0} down, {1} up · {2}", row.negative, row.positive, row.agentName) : undefined
+      }
+      size="lg"
     >
-      <SectionTable
-        label={t("Worst-rated answers")}
-        columns={columns}
-        rows={rows}
-        getRowId={answerRowId}
-        rowLabel={(answer) => question(answer) || t("Answer")}
-        renderDetails={renderDetails}
-        isLoading={query.isPending}
-        isRefreshing={query.isPlaceholderData}
-        error={query.isError ? t("Worst-rated answers could not be loaded.") : null}
-        onRetry={() => void query.refetch()}
-        empty={t("Nobody has rated an answer down in the last 30 days.")}
-        pagination={pagination}
-      />
-    </SectionPanel>
+      {row ? <WorstRatedDetails answer={row} /> : null}
+    </DataTablePanelContainer>
+  );
+}
+
+/**
+ * The answers people liked least in the last 30 days, most disliked first,
+ * for every agent or the one a link narrowed it to. Everything shown is what
+ * was kept when the person rated, never the live conversation.
+ */
+export default function WorstRatedTable() {
+  const t = useT();
+  const navigate = useAIControlNavigation();
+  const [agentId] = useQueryState(QUALITY_AGENT_PARAM, qualityAgentParser);
+  const columns = useMemo(() => getWorstRatedColumns(t), [t]);
+  const graphql = useMemo(() => createAgentWorstRatedTableGraphQLConfig(agentId), [agentId]);
+
+  const table = (
+    <DataTable<AgentWorstRatedRow>
+      name="Worst-Rated Answer"
+      queryKey={AGENT_WORST_RATED_LIST_KEY}
+      graphql={graphql}
+      resource={Resource.AgentFeedback}
+      columns={columns}
+      TablePanel={WorstRatedPanel}
+      enableCreateAction={false}
+      enableReadOnlyPanel
+      initialColumnVisibility={{ targetType: false }}
+    />
+  );
+
+  if (!agentId) {
+    return table;
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <AgentScope agentId={agentId} onClear={() => navigate({ tab: "quality", view: "ratings" })} />
+      {table}
+    </div>
   );
 }

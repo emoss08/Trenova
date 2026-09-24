@@ -6,6 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -77,6 +79,10 @@ type AgentWorstRatedAnswer struct {
 	AgentName         string                `json:"agentName"`
 }
 
+func (a *AgentWorstRatedAnswer) RowID() string {
+	return a.TargetType.String() + ":" + a.TargetID.String() + ":" + a.TargetPart
+}
+
 type AgentQualityDetail struct {
 	AgentDefinitionID  pulid.ID                 `json:"agentDefinitionId"`
 	AgentName          string                   `json:"agentName"`
@@ -100,6 +106,13 @@ type ListAgentQualityAgentsRequest struct {
 	First             int
 	After             string
 	IncludeTotalCount bool
+}
+
+type ListAgentQualityAgentTableRequest struct {
+	TenantInfo     pagination.TenantInfo
+	WindowDays     int
+	IncludeRatings bool
+	Table          memtable.Request
 }
 
 type AgentQualityAgent struct {
@@ -136,6 +149,14 @@ type ListAgentWorstRatedRequest struct {
 	ViewerID          pulid.ID
 }
 
+type ListAgentWorstRatedTableRequest struct {
+	TenantInfo        pagination.TenantInfo
+	AgentDefinitionID pulid.ID
+	WindowDays        int
+	ViewerID          pulid.ID
+	Table             memtable.Request
+}
+
 type AgentWorstRatedEdge struct {
 	Node   *AgentWorstRatedAnswer `json:"node"`
 	Cursor string                 `json:"cursor"`
@@ -144,6 +165,7 @@ type AgentWorstRatedEdge struct {
 type AgentWorstRatedPage struct {
 	Edges       []*AgentWorstRatedEdge `json:"edges"`
 	HasNextPage bool                   `json:"hasNextPage"`
+	TotalCount  *int                   `json:"totalCount"`
 }
 
 type ListAgentSuiteRunsInput struct {
@@ -203,10 +225,22 @@ type AgentQualityService interface {
 		ctx context.Context,
 		req *ListAgentQualityAgentsRequest,
 	) (*AgentQualityAgentPage, error)
+	ListAgentTable(
+		ctx context.Context,
+		req *ListAgentQualityAgentTableRequest,
+	) (*AgentQualityAgentPage, error)
 	ListWorstRated(
 		ctx context.Context,
 		req *ListAgentWorstRatedRequest,
 	) (*AgentWorstRatedPage, error)
+	ListWorstRatedTable(
+		ctx context.Context,
+		req *ListAgentWorstRatedTableRequest,
+	) (*AgentWorstRatedPage, error)
+	ListSuiteRunConnection(
+		ctx context.Context,
+		req *repositories.ListAgentSuiteRunConnectionRequest,
+	) (*pagination.CursorListResult[*agentquality.SuiteRun], error)
 	ListSuiteRuns(
 		ctx context.Context,
 		req *ListAgentSuiteRunsInput,

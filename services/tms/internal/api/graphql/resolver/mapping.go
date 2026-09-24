@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -225,6 +226,25 @@ func dataTableConnectionFromGraphQL(
 		Filter: filter,
 		Cursor: page.Cursor,
 	}, nil
+}
+
+func memtableRequestFromGraphQL(
+	ctx context.Context,
+	input *gqlmodel.DataTableConnectionInput,
+) memtable.Request {
+	if input == nil {
+		input = &gqlmodel.DataTableConnectionInput{}
+	}
+
+	return memtable.Request{
+		Query:             stringValue(input.Query),
+		FieldFilters:      fieldFiltersFromGraphQL(input.FieldFilters),
+		FilterGroups:      filterGroupsFromGraphQL(input.FilterGroups),
+		Sort:              sortFieldsFromGraphQL(input.Sort),
+		First:             intValue(input.First),
+		After:             stringValue(input.After),
+		IncludeTotalCount: connectionFieldRequested(ctx, connectionTotalCountField),
+	}
 }
 
 func entityCursorPageFromGraphQL(

@@ -12,7 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -269,6 +271,77 @@ func (r *suiteRunRepository) List(
 	page.Items = items
 
 	return page, nil
+}
+
+func (r *suiteRunRepository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAgentSuiteRunConnectionRequest,
+) (*pagination.CursorListResult[*agentquality.SuiteRun], error) {
+	log := r.l.With(zap.String("operation", "ListConnection"))
+	dba := r.db.DBForContext(ctx)
+
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.
+			NewSelect().
+			Model((*agentquality.SuiteRun)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					buncolgen.SuiteRunTable.Alias,
+					req.Filter,
+					(*agentquality.SuiteRun)(nil),
+				)
+
+				return suiteRunScope(sq, req).
+					Apply(buncolgen.SuiteRunApplyTenant(req.Filter.TenantInfo))
+			}).
+			Count(ctx)
+		if err != nil {
+			log.Error("failed to count agent suite runs", zap.Error(err))
+
+			return nil, err
+		}
+		totalCount = &total
+	}
+
+	result, err := dbhelper.CursorList(
+		ctx,
+		dbhelper.CursorListParams[*agentquality.SuiteRun]{
+			Filter:     req.Filter,
+			Cursor:     req.Cursor,
+			TotalCount: totalCount,
+			Query: func(entities *[]*agentquality.SuiteRun) *bun.SelectQuery {
+				return dba.NewSelect().Model(entities)
+			},
+			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+				return querybuilder.ApplyCursorFilters(
+					suiteRunScope(sq, req),
+					buncolgen.SuiteRunTable.Alias,
+					req.Filter,
+					req.Cursor,
+					(*agentquality.SuiteRun)(nil),
+				)
+			},
+		})
+	if err != nil {
+		log.Error("failed to list agent suite runs", zap.Error(err))
+
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func suiteRunScope(
+	sq *bun.SelectQuery,
+	req *repositories.ListAgentSuiteRunConnectionRequest,
+) *bun.SelectQuery {
+	if req.AgentDefinitionID.IsNil() {
+		return sq
+	}
+
+	return sq.Where(buncolgen.SuiteRunColumns.AgentDefinitionID.Eq(), req.AgentDefinitionID)
 }
 
 func (r *suiteRunRepository) History(

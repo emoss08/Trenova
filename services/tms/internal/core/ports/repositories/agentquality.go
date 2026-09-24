@@ -41,6 +41,12 @@ type ListAgentSuiteRunsRequest struct {
 	IncludeTotalCount bool
 }
 
+type ListAgentSuiteRunConnectionRequest struct {
+	Filter            *pagination.QueryOptions `json:"filter"`
+	Cursor            pagination.CursorInfo    `json:"-"`
+	AgentDefinitionID pulid.ID                 `json:"agentDefinitionId"`
+}
+
 type AgentSuiteRunPage struct {
 	Items       []*agentquality.SuiteRun
 	HasNextPage bool
@@ -100,6 +106,10 @@ type AgentSuiteRunRepository interface {
 	) (*agentquality.SuiteRun, error)
 	Last(ctx context.Context, req LastAgentSuiteRunRequest) (*agentquality.SuiteRun, error)
 	List(ctx context.Context, req ListAgentSuiteRunsRequest) (*AgentSuiteRunPage, error)
+	ListConnection(
+		ctx context.Context,
+		req *ListAgentSuiteRunConnectionRequest,
+	) (*pagination.CursorListResult[*agentquality.SuiteRun], error)
 	History(
 		ctx context.Context,
 		req AgentSuiteRunHistoryRequest,

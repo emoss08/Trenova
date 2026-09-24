@@ -5,8 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,7 +57,8 @@ func agentWorstRatedToModel(
 	page *services.AgentWorstRatedPage,
 ) *gqlmodel.AgentWorstRatedAnswerConnection {
 	out := &gqlmodel.AgentWorstRatedAnswerConnection{
-		Edges: make([]*gqlmodel.AgentWorstRatedAnswerEdge, 0, len(page.Edges)),
+		Edges:      make([]*gqlmodel.AgentWorstRatedAnswerEdge, 0, len(page.Edges)),
+		TotalCount: page.TotalCount,
 	}
 	last := ""
 	for _, edge := range page.Edges {
@@ -108,6 +111,63 @@ func agentSuiteRunCasesToModel(
 	out.PageInfo = pageInfoFor(page.HasNextPage, last)
 
 	return out
+}
+
+func agentSuiteRunConnectionToModel(
+	result *pagination.CursorListResult[*agentquality.SuiteRun],
+) (*gqlmodel.AgentSuiteRunConnection, error) {
+	page, err := entityCursorConnection(
+		result,
+		func(node *agentquality.SuiteRun, cursor string) *gqlmodel.AgentSuiteRunEdge {
+			return &gqlmodel.AgentSuiteRunEdge{Node: node, Cursor: cursor}
+		},
+		func(edge *gqlmodel.AgentSuiteRunEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.AgentSuiteRunConnection{
+		Edges:      page.Edges,
+		PageInfo:   page.PageInfo,
+		TotalCount: page.TotalCount,
+	}, nil
+}
+
+func agentSuiteRunCaseConnectionToModel(
+	result *pagination.CursorListResult[*agent.Evaluation],
+) (*gqlmodel.AgentSuiteRunCaseConnection, error) {
+	page, err := entityCursorConnection(
+		result,
+		func(node *agent.Evaluation, cursor string) *gqlmodel.AgentSuiteRunCaseEdge {
+			return &gqlmodel.AgentSuiteRunCaseEdge{Node: node, Cursor: cursor}
+		},
+		func(edge *gqlmodel.AgentSuiteRunCaseEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.AgentSuiteRunCaseConnection{
+		Edges:      page.Edges,
+		PageInfo:   page.PageInfo,
+		TotalCount: page.TotalCount,
+	}, nil
+}
+
+func suiteCaseTableInput(
+	input *gqlmodel.DataTableConnectionInput,
+) *gqlmodel.DataTableConnectionInput {
+	if len(input.Sort) > 0 {
+		return input
+	}
+
+	sorted := *input
+	sorted.Sort = []*gqlmodel.SortFieldInput{
+		{Field: "suiteOrdinal", Direction: string(dbtype.SortDirectionAsc)},
+	}
+
+	return &sorted
 }
 
 func fingerprintChangesToModel(run *agentquality.SuiteRun) []*gqlmodel.AgentFingerprintChange {

@@ -39,6 +39,7 @@ fragment AgentQualityPointFields on AgentQualityPoint {
 }
 
 fragment AgentWorstRatedAnswerFields on AgentWorstRatedAnswer {
+  id
   targetType
   targetId
   targetPart
@@ -85,6 +86,20 @@ fragment AgentQualityControlFields on AgentQualityControl {
   updatedAt
 }
 
+fragment AgentSuiteRunCaseFields on AgentEvaluation {
+  id
+  evalCaseId
+  suiteOrdinal
+  status
+  reply
+  checks
+  judge
+  caseScore
+  errorMessage
+  model
+  completedAt
+}
+
 query AgentQualityOverview($window: Int) {
   agentQualityOverview(window: $window) {
     windowDays
@@ -110,11 +125,15 @@ query AgentQualityOverview($window: Int) {
   }
 }
 
-query AgentQualityAgents($input: AgentQualityAgentsInput!, $includeTotalCount: Boolean = false) {
-  agentQualityAgents(input: $input) {
+query AgentQualityAgentTable(
+  $window: Int
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  agentQualityAgentConnection(window: $window, input: $input) {
     edges {
-      cursor
       node {
+        id
         agentDefinitionId
         name
         enabled
@@ -139,14 +158,23 @@ query AgentQualityAgents($input: AgentQualityAgentsInput!, $includeTotalCount: B
   }
 }
 
-query AgentWorstRatedAnswers($input: AgentWorstRatedAnswersInput!) {
-  agentWorstRatedAnswers(input: $input) {
+query AgentWorstRatedAnswerTable(
+  $agentDefinitionId: ID
+  $window: Int
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  agentWorstRatedAnswerConnection(
+    agentDefinitionId: $agentDefinitionId
+    window: $window
+    input: $input
+  ) {
     edges {
-      cursor
       node {
         ...AgentWorstRatedAnswerFields
       }
     }
+    totalCount @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -182,10 +210,13 @@ query AgentQuality($agentDefinitionId: ID!, $window: Int) {
   }
 }
 
-query AgentSuiteRuns($input: AgentSuiteRunsInput!, $includeTotalCount: Boolean = false) {
-  agentSuiteRuns(input: $input) {
+query AgentSuiteRunTable(
+  $agentDefinitionId: ID
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  agentSuiteRunConnection(agentDefinitionId: $agentDefinitionId, input: $input) {
     edges {
-      cursor
       node {
         ...AgentSuiteRunFields
       }
@@ -203,22 +234,15 @@ query AgentSuiteRun($id: ID!) {
   }
 }
 
-query AgentSuiteRunCases($input: AgentSuiteRunCasesInput!, $includeTotalCount: Boolean = false) {
-  agentSuiteRunCases(input: $input) {
+query AgentSuiteRunCaseTable(
+  $suiteRunId: ID!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  agentSuiteRunCaseConnection(suiteRunId: $suiteRunId, input: $input) {
     edges {
-      cursor
       node {
-        id
-        evalCaseId
-        suiteOrdinal
-        status
-        reply
-        checks
-        judge
-        caseScore
-        errorMessage
-        model
-        completedAt
+        ...AgentSuiteRunCaseFields
       }
     }
     totalCount @include(if: $includeTotalCount)

@@ -5,8 +5,7 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CircleAlertIcon } from "lucide-react";
-import { formatShare, formatUsd } from "./quality-model";
-import { QUALITY_STALE_MS } from "./use-quality-pages";
+import { QUALITY_STALE_MS, formatShare, formatUsd } from "./quality-model";
 
 /**
  * The organization's AI quality in five figures: what people thought of the

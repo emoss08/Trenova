@@ -543,6 +543,8 @@ type AgentSuiteRunsInput struct {
 
 // One tool's safety policy, as declared in code.
 type AgentToolPolicy struct {
+	// The tool's name, which keys its row.
+	ID    string         `json:"id"`
 	Name  string         `json:"name"`
 	Title string         `json:"title"`
 	Kind  agent.ToolKind `json:"kind"`
@@ -576,6 +578,10 @@ type AgentToolPolicy struct {
 	Rationale    string `json:"rationale"`
 	// The policy in a sentence or two, as the agent's page shows it.
 	Explanation string `json:"explanation"`
+	// Whether the tool changes something and, on at least one of the
+	// organization's agents, can do so without a person. Read only by
+	// agentToolRuleConnection; null everywhere else.
+	RunsWithoutPerson *bool `json:"runsWithoutPerson,omitempty"`
 }
 
 type AgentToolPolicyConnection struct {
@@ -613,6 +619,18 @@ type AgentToolRequirement struct {
 	Operation string `json:"operation"`
 }
 
+type AgentToolSafetyConnection struct {
+	Edges    []*AgentToolSafetyEdge `json:"edges"`
+	PageInfo *PageInfo              `json:"pageInfo"`
+	// Every held tool matching the filters. Counted only when selected.
+	TotalCount *int `json:"totalCount,omitempty"`
+}
+
+type AgentToolSafetyEdge struct {
+	Node   *services.AgentToolSafety `json:"node"`
+	Cursor string                    `json:"cursor"`
+}
+
 // What one tool has earned on this agent.
 //
 // The ladder is not windowed: a tier is earned over the agent's whole life and
@@ -636,6 +654,8 @@ type AgentToolTrust struct {
 type AgentWorstRatedAnswerConnection struct {
 	Edges    []*AgentWorstRatedAnswerEdge `json:"edges"`
 	PageInfo *PageInfo                    `json:"pageInfo"`
+	// Every answer matching the filters. Counted only when selected.
+	TotalCount *int `json:"totalCount,omitempty"`
 }
 
 type AgentWorstRatedAnswerEdge struct {

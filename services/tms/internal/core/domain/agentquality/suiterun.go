@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -199,7 +200,21 @@ func (r *SuiteRun) GetOrganizationID() pulid.ID { return r.OrganizationID }
 
 func (r *SuiteRun) GetBusinessUnitID() pulid.ID { return r.BusinessUnitID }
 
+func (r *SuiteRun) GetCreatedAt() int64 { return r.CreatedAt }
+
 func (r *SuiteRun) GetTableName() string { return "agent_suite_runs" }
+
+func (r *SuiteRun) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "asr",
+		UseSearchVector: false,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "comments", Type: domaintypes.FieldTypeText},
+			{Name: "status", Type: domaintypes.FieldTypeEnum},
+			{Name: "trigger", Type: domaintypes.FieldTypeEnum},
+		},
+	}
+}
 
 func (r *SuiteRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()

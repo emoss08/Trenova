@@ -34,6 +34,9 @@ type AgentEvalCaseResolver interface {
 
 	CapturedFingerprint(ctx context.Context, obj *agentquality.EvalCase) (map[string]any, error)
 }
+type AgentQualityAgentResolver interface {
+	ID(ctx context.Context, obj *services.AgentQualityAgent) (string, error)
+}
 type AgentQualityControlResolver interface {
 	ID(ctx context.Context, obj *agentquality.Control) (*string, error)
 
@@ -49,6 +52,9 @@ type AgentSuiteRunResolver interface {
 	ChangeSummary(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
 
 	CostUsd(ctx context.Context, obj *agentquality.SuiteRun) (string, error)
+}
+type AgentWorstRatedAnswerResolver interface {
+	ID(ctx context.Context, obj *services.AgentWorstRatedAnswer) (string, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -1417,6 +1423,29 @@ func (ec *executionContext) _AgentQuality_activeCases(ctx context.Context, field
 }
 func (ec *executionContext) fieldContext_AgentQuality_activeCases(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AgentQuality", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AgentQualityAgent_id(ctx context.Context, field graphql.CollectedField, obj *services.AgentQualityAgent) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentQualityAgent_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AgentQualityAgent().ID(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentQualityAgent_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentQualityAgent", field, true, true, errors.New("field of type ID does not have child fields"))
 }
 
 func (ec *executionContext) _AgentQualityAgent_agentDefinitionId(ctx context.Context, field graphql.CollectedField, obj *services.AgentQualityAgent) (ret graphql.Marshaler) {
@@ -3758,6 +3787,29 @@ func (ec *executionContext) fieldContext_AgentSuiteRunEdge_cursor(_ context.Cont
 	return graphql.NewScalarFieldContext("AgentSuiteRunEdge", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _AgentWorstRatedAnswer_id(ctx context.Context, field graphql.CollectedField, obj *services.AgentWorstRatedAnswer) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentWorstRatedAnswer_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AgentWorstRatedAnswer().ID(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentWorstRatedAnswer_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentWorstRatedAnswer", field, true, true, errors.New("field of type ID does not have child fields"))
+}
+
 func (ec *executionContext) _AgentWorstRatedAnswer_targetType(ctx context.Context, field graphql.CollectedField, obj *services.AgentWorstRatedAnswer) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4082,6 +4134,29 @@ func (ec *executionContext) fieldContext_AgentWorstRatedAnswerConnection_pageInf
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _AgentWorstRatedAnswerConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentWorstRatedAnswerConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentWorstRatedAnswerConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentWorstRatedAnswerConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentWorstRatedAnswerConnection", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _AgentWorstRatedAnswerEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentWorstRatedAnswerEdge) (ret graphql.Marshaler) {
@@ -5550,60 +5625,98 @@ func (ec *executionContext) _AgentQualityAgent(ctx context.Context, sel ast.Sele
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AgentQualityAgent")
+		case "id":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AgentQualityAgent_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "agentDefinitionId":
 			out.Values[i] = ec._AgentQualityAgent_agentDefinitionId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._AgentQualityAgent_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "enabled":
 			out.Values[i] = ec._AgentQualityAgent_enabled(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "ratingsVisible":
 			out.Values[i] = ec._AgentQualityAgent_ratingsVisible(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "satisfaction":
 			out.Values[i] = ec._AgentQualityAgent_satisfaction(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "satisfactionDelta":
 			out.Values[i] = ec._AgentQualityAgent_satisfactionDelta(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "ratings":
 			out.Values[i] = ec._AgentQualityAgent_ratings(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "qualityScore":
 			out.Values[i] = ec._AgentQualityAgent_qualityScore(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "qualityPoints":
 			out.Values[i] = ec._AgentQualityAgent_qualityPoints(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "lastSuiteRun":
 			out.Values[i] = ec._AgentQualityAgent_lastSuiteRun(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "openRegression":
 			out.Values[i] = ec._AgentQualityAgent_openRegression(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -6662,60 +6775,98 @@ func (ec *executionContext) _AgentWorstRatedAnswer(ctx context.Context, sel ast.
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AgentWorstRatedAnswer")
+		case "id":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AgentWorstRatedAnswer_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "targetType":
 			out.Values[i] = ec._AgentWorstRatedAnswer_targetType(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "targetId":
 			out.Values[i] = ec._AgentWorstRatedAnswer_targetId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "targetPart":
 			out.Values[i] = ec._AgentWorstRatedAnswer_targetPart(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "positive":
 			out.Values[i] = ec._AgentWorstRatedAnswer_positive(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "negative":
 			out.Values[i] = ec._AgentWorstRatedAnswer_negative(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "lastRatedAt":
 			out.Values[i] = ec._AgentWorstRatedAnswer_lastRatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "sample":
 			out.Values[i] = ec._AgentWorstRatedAnswer_sample(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "threadId":
 			out.Values[i] = ec._AgentWorstRatedAnswer_threadId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "canOpenThread":
 			out.Values[i] = ec._AgentWorstRatedAnswer_canOpenThread(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "agentDefinitionId":
 			out.Values[i] = ec._AgentWorstRatedAnswer_agentDefinitionId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "agentName":
 			out.Values[i] = ec._AgentWorstRatedAnswer_agentName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -6758,6 +6909,11 @@ func (ec *executionContext) _AgentWorstRatedAnswerConnection(ctx context.Context
 		case "pageInfo":
 			out.Values[i] = ec._AgentWorstRatedAnswerConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._AgentWorstRatedAnswerConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:

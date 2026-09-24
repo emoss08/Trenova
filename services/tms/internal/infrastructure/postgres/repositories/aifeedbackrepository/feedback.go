@@ -23,7 +23,7 @@ const (
 	defaultNegativeLimit = 5000
 	maxNegativeLimit     = 20000
 	defaultWorstLimit    = 10
-	maxWorstLimit        = 101
+	maxWorstLimit        = 1000
 	defaultPurgeLimit    = 1000
 	maxPurgeLimit        = 10000
 )

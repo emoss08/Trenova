@@ -3,8 +3,13 @@ import type {
   AgentSuiteRunStatus,
   UpdateAgentQualityControlInput,
 } from "@/lib/graphql/agent-quality";
+import type { AiFeedbackTargetType } from "@trenova/graphql/generated/graphql";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
 import { z } from "zod";
+
+/** A section's figures move with the nightly sweep; a minute old is still true. */
+export const QUALITY_STALE_MS = 60_000;
 
 /**
  * Where a suite run sits in its lifecycle. A skipped run is closed rather
@@ -31,6 +36,31 @@ export const SUITE_RUN_STATUS: Record<AgentSuiteRunStatus, BadgeAttrProps> = {
   },
   Failed: { phase: "failed", text: "Failed", description: "The run could not finish" },
 };
+
+/** The suite run statuses a table filters by, in lifecycle order. */
+export function suiteRunStatusChoices(t: TranslateFn): { value: string; label: string }[] {
+  return (Object.keys(SUITE_RUN_STATUS) as AgentSuiteRunStatus[]).map((status) => ({
+    value: status,
+    label: t(SUITE_RUN_STATUS[status].text),
+  }));
+}
+
+/** What a rated answer was, in the words of the place a person rated it. */
+export const TARGET_TYPE_LABEL: Record<AiFeedbackTargetType, string> = {
+  AssistantMessage: "Assistant answer",
+  DelegatedAnswer: "Answer from another agent",
+  Briefing: "Briefing",
+  BriefingSection: "Briefing section",
+  Insight: "Insight",
+  WatchtowerItem: "Watchtower item",
+};
+
+export function targetTypeChoices(t: TranslateFn): { value: string; label: string }[] {
+  return (Object.keys(TARGET_TYPE_LABEL) as AiFeedbackTargetType[]).map((type) => ({
+    value: type,
+    label: t(TARGET_TYPE_LABEL[type]),
+  }));
+}
 
 /** A share from 0 to 1 as a whole percentage, or a dash when there is none. */
 export function formatShare(value: number | null | undefined): string {

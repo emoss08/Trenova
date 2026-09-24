@@ -1573,6 +1573,8 @@ type AgentQuality {
 type AgentQualityAgent {
   agentDefinitionId: ID!
   enabled: Boolean!
+  """The agent's id, which keys the row."""
+  id: ID!
   lastSuiteRun: AgentSuiteRun
   name: String!
   openRegression: Boolean!
@@ -2198,6 +2200,8 @@ type AgentToolPolicy {
   hasClassify: Boolean!
   """A condition the call's record must meet decides how far it may go."""
   hasCondition: Boolean!
+  """The tool's name, which keys its row."""
+  id: ID!
   idempotent: Boolean!
   kind: AgentToolKind!
   """Some of its work can leave the organization."""
@@ -2219,6 +2223,12 @@ type AgentToolPolicy {
   rationale: String!
   readsExternal: AgentExternalRead!
   reversible: Boolean!
+  """
+  Whether the tool changes something and, on at least one of the
+  organization's agents, can do so without a person. Read only by
+  agentToolRuleConnection; null everywhere else.
+  """
+  runsWithoutPerson: Boolean
   scope: AgentToolScope!
   """Where outside text in its result comes from; null when it reads none."""
   source: AgentTaintSource
@@ -2272,13 +2282,29 @@ type AgentToolRequirement {
 One tool an agent holds, before and after the run has read outside text.
 """
 type AgentToolSafety {
+  agentId: ID!
+  agentName: String!
   clean: AgentToolAutonomy!
+  """The agent and the tool together, which key the row."""
+  id: ID!
   """
   The rule the tool is held to, from the same catalog the runtime decides from.
   """
   policy: AgentToolPolicy!
   policyName: String!
   tainted: AgentToolAutonomy!
+}
+
+type AgentToolSafetyConnection {
+  edges: [AgentToolSafetyEdge!]!
+  pageInfo: PageInfo!
+  """Every held tool matching the filters. Counted only when selected."""
+  totalCount: Int
+}
+
+type AgentToolSafetyEdge {
+  cursor: String!
+  node: AgentToolSafety!
 }
 
 """Whose records a tool acts on."""
@@ -2339,6 +2365,8 @@ type AgentWorstRatedAnswer {
   Whether the caller can open the conversation, which is only ever its owner.
   """
   canOpenThread: Boolean!
+  """The rated output and its part, which key the row."""
+  id: ID!
   lastRatedAt: Timestamp!
   negative: Int!
   positive: Int!
@@ -2353,6 +2381,8 @@ type AgentWorstRatedAnswer {
 type AgentWorstRatedAnswerConnection {
   edges: [AgentWorstRatedAnswerEdge!]!
   pageInfo: PageInfo!
+  """Every answer matching the filters. Counted only when selected."""
+  totalCount: Int
 }
 
 type AgentWorstRatedAnswerEdge {
@@ -14337,9 +14367,16 @@ type Query {
   """One agent's quality over the last window days."""
   agentQuality(agentDefinitionId: ID!, window: Int = 30): AgentQuality!
   """
+  Every agent with its satisfaction, quality line and last suite run over the
+  last window days, a page at a time. Filters on name, enabled, openRegression
+  and lastRunStatus; sorts on those and on satisfaction, satisfactionDelta,
+  ratings, qualityScore and lastRunAt.
+  """
+  agentQualityAgentConnection(input: DataTableConnectionInput!, window: Int = 30): AgentQualityAgentConnection!
+  """
   Every agent with its satisfaction, quality line and last suite run, a page at a time.
   """
-  agentQualityAgents(input: AgentQualityAgentsInput!): AgentQualityAgentConnection!
+  agentQualityAgents(input: AgentQualityAgentsInput!): AgentQualityAgentConnection! @deprecated(reason: "Use agentQualityAgentConnection, which takes the data table's filters and sort.")
   agentQualityControl: AgentQualityControl!
   """The organization's AI quality over the last window days."""
   agentQualityOverview(window: Int = 30): AgentQualityOverview!
@@ -14358,15 +14395,43 @@ type Query {
   """How one agent has been doing."""
   agentScorecard(input: AgentScorecardInput!): AgentScorecard!
   agentSuiteRun(id: ID!): AgentSuiteRun
+  """
+  A suite run's cases a page at a time, in the order they were asked unless sorted.
+  """
+  agentSuiteRunCaseConnection(input: DataTableConnectionInput!, suiteRunId: ID!): AgentSuiteRunCaseConnection!
   """A suite run's cases in the order they were asked."""
-  agentSuiteRunCases(input: AgentSuiteRunCasesInput!): AgentSuiteRunCaseConnection!
-  agentSuiteRuns(input: AgentSuiteRunsInput!): AgentSuiteRunConnection!
+  agentSuiteRunCases(input: AgentSuiteRunCasesInput!): AgentSuiteRunCaseConnection! @deprecated(reason: "Use agentSuiteRunCaseConnection, which takes the data table's filters and sort.")
+  """
+  Suite runs a page at a time, newest first unless sorted, for one agent or all of them.
+  """
+  agentSuiteRunConnection(agentDefinitionId: ID, input: DataTableConnectionInput!): AgentSuiteRunConnection!
+  agentSuiteRuns(input: AgentSuiteRunsInput!): AgentSuiteRunConnection! @deprecated(reason: "Use agentSuiteRunConnection, which takes the data table's filters and sort.")
   """Every tool's safety policy, by name."""
-  agentToolPolicies: [AgentToolPolicy!]! @deprecated(reason: "Use agentToolPolicyConnection, which pages and filters on the server.")
+  agentToolPolicies: [AgentToolPolicy!]! @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
   """The tool rules a page at a time, searched and filtered on the server."""
-  agentToolPolicyConnection(input: AgentToolPolicyConnectionInput!): AgentToolPolicyConnection!
+  agentToolPolicyConnection(input: AgentToolPolicyConnectionInput!): AgentToolPolicyConnection! @deprecated(reason: "Use agentToolRuleConnection, which takes the data table's filters and sort.")
+  """
+  The tool rules a page at a time. Filters on title, name, egress, maxTier,
+  resource, kind, readsExternal, leavesOrganization and runsWithoutPerson; sorts
+  on the same fields.
+  """
+  agentToolRuleConnection(input: DataTableConnectionInput!): AgentToolPolicyConnection!
+  """
+  Every tool the named agents hold, what each does before and after the run
+  has read outside text, a page at a time. Between one and ten agents. Filters
+  on agentId, agentName, title, policyName, egress, maxTier, kind, resource,
+  clean, tainted and heldBy.
+  """
+  agentToolSafetyConnection(agentIds: [ID!]!, input: DataTableConnectionInput!): AgentToolSafetyConnection!
+  """
+  The thousand answers people liked least over the last window days, most
+  disliked first, a page at a time. Filters on question, agentName,
+  agentDefinitionId, targetType, negative and positive; sorts on those and on
+  lastRatedAt.
+  """
+  agentWorstRatedAnswerConnection(agentDefinitionId: ID, input: DataTableConnectionInput!, window: Int = 30): AgentWorstRatedAnswerConnection!
   """The answers people liked least, a page at a time."""
-  agentWorstRatedAnswers(input: AgentWorstRatedAnswersInput!): AgentWorstRatedAnswerConnection!
+  agentWorstRatedAnswers(input: AgentWorstRatedAnswersInput!): AgentWorstRatedAnswerConnection! @deprecated(reason: "Use agentWorstRatedAnswerConnection, which takes the data table's filters and sort.")
   """Everyone's ratings, for administrators."""
   aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
   aiProvider(id: ID!): AIProvider
