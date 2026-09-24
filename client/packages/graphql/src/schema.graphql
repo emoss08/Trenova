@@ -998,6 +998,18 @@ input AgentControlInput {
   shadowMode: Boolean!
 }
 
+"""How sensitive a field an agent's tools may show."""
+enum AgentDataAccessCeiling {
+  """
+  Internal fields only: amounts, pay and other Restricted fields are withheld and named as withheld.
+  """
+  Internal
+  """
+  Restricted fields too, such as invoice amounts, settlement pay and rates. Never above the person an agent works for.
+  """
+  Restricted
+}
+
 type AgentDecision {
   businessUnitId: ID!
   createdAt: Timestamp!
@@ -1046,6 +1058,11 @@ type AgentDefinition {
   cronTimezone: String!
   """Runs the agent may start in a day; 0 for no cap."""
   dailyRunLimit: Int!
+  """
+  The most sensitive fields the agent's tools read. A run a person is in reads
+  at the lower of this and that person's own access.
+  """
+  dataAccessCeiling: AgentDataAccessCeiling!
   decisionTimeoutSeconds: Int!
   """
   The agents this one may hand a task to when a person is talking to it, in the

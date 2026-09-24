@@ -585,6 +585,29 @@ func (ec *executionContext) fieldContext_AgentDefinition_autonomyCeiling(_ conte
 	return graphql.NewScalarFieldContext("AgentDefinition", field, false, false, errors.New("field of type AgentAutonomyTier does not have child fields"))
 }
 
+func (ec *executionContext) _AgentDefinition_dataAccessCeiling(ctx context.Context, field graphql.CollectedField, obj *agentdefinition.Definition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentDefinition_dataAccessCeiling(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DataAccessCeiling, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v agentdefinition.DataAccessCeiling) graphql.Marshaler {
+			return ec.marshalNAgentDataAccessCeiling2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDataAccessCeiling(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentDefinition_dataAccessCeiling(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentDefinition", field, false, false, errors.New("field of type AgentDataAccessCeiling does not have child fields"))
+}
+
 func (ec *executionContext) _AgentDefinition_enabled(ctx context.Context, field graphql.CollectedField, obj *agentdefinition.Definition) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2447,6 +2470,11 @@ func (ec *executionContext) _AgentDefinition(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "dataAccessCeiling":
+			out.Values[i] = ec._AgentDefinition_dataAccessCeiling(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "enabled":
 			out.Values[i] = ec._AgentDefinition_enabled(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3382,6 +3410,23 @@ func (ec *executionContext) marshalNAgentContextProvider2ᚕgithubᚗcomᚋemoss
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNAgentDataAccessCeiling2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDataAccessCeiling(ctx context.Context, v any) (agentdefinition.DataAccessCeiling, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := agentdefinition.DataAccessCeiling(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAgentDataAccessCeiling2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDataAccessCeiling(ctx context.Context, sel ast.SelectionSet, v agentdefinition.DataAccessCeiling) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinitionᚄ(ctx context.Context, sel ast.SelectionSet, v []*agentdefinition.Definition) graphql.Marshaler {

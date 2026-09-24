@@ -3,7 +3,9 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"slices"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -36,14 +38,49 @@ func (a fieldAccess) withThreads(threads repositories.ThreadOwnerRepository) fie
 }
 
 // ceiling is the most sensitive tier the actor may be shown on a resource.
-// An agent principal, or an authorization that cannot be resolved, reads at
-// the Internal tier: enough for the record, none of the person behind it.
+// An agent principal reads at its definition's data access, Internal when it
+// has none. A person reads at their own role's tier, lowered to the agent's
+// data access when an agent is working for them. An authorization that
+// cannot be resolved reads at Internal.
 func (a fieldAccess) ceiling(
 	ctx context.Context,
 	params *serviceports.QueryToolParams,
 	resource permission.Resource,
 ) permission.FieldSensitivity {
-	if a.permissions == nil || params.Actor == nil || !params.Actor.IsUser() {
+	granted := agentDataAccess(params.DataAccessCeiling)
+	if params.Actor == nil || !params.Actor.IsUser() {
+		if granted == "" {
+			return permission.SensitivityInternal
+		}
+
+		return granted
+	}
+
+	person := a.personCeiling(ctx, params, resource)
+	if granted != "" && person.Level() > granted.Level() {
+		return granted
+	}
+
+	return person
+}
+
+func agentDataAccess(granted permission.FieldSensitivity) permission.FieldSensitivity {
+	switch {
+	case granted == "":
+		return ""
+	case granted.CanAccess(permission.SensitivityRestricted):
+		return permission.SensitivityRestricted
+	default:
+		return permission.SensitivityInternal
+	}
+}
+
+func (a fieldAccess) personCeiling(
+	ctx context.Context,
+	params *serviceports.QueryToolParams,
+	resource permission.Resource,
+) permission.FieldSensitivity {
+	if a.permissions == nil {
 		return permission.SensitivityInternal
 	}
 
@@ -298,3 +335,81 @@ func (r *retrievalAccess) ShowsRecordText(
 ) bool {
 	return r.access.recordTextVisible(resource, r.ceiling(ctx, resource))
 }
+
+type fieldGate struct {
+	access   fieldAccess
+	resource permission.Resource
+	ceiling  permission.FieldSensitivity
+	withheld []string
+}
+
+func (a fieldAccess) gate(
+	ctx context.Context,
+	params *serviceports.QueryToolParams,
+	resource permission.Resource,
+) *fieldGate {
+	return a.gateAt(resource, a.ceiling(ctx, params, resource))
+}
+
+func (a fieldAccess) gateAt(
+	resource permission.Resource,
+	ceiling permission.FieldSensitivity,
+) *fieldGate {
+	if a.registry == nil {
+		a.registry = permission.NewRegistry()
+	}
+
+	return &fieldGate{access: a, resource: resource, ceiling: ceiling}
+}
+
+func (g *fieldGate) shows(field string) bool {
+	return g.access.visible(g.resource, field, g.ceiling)
+}
+
+func (g *fieldGate) show(field, name string) bool {
+	if g.shows(field) {
+		return true
+	}
+	if g.access.registry.GetFieldSensitivity(
+		g.resource.String(),
+		field,
+	) != permission.SensitivityConfidential &&
+		!slices.Contains(g.withheld, name) {
+		g.withheld = append(g.withheld, name)
+	}
+
+	return false
+}
+
+func (g *fieldGate) Withheld() []string {
+	if len(g.withheld) == 0 {
+		return nil
+	}
+
+	return slices.Clone(g.withheld)
+}
+
+type gatedOutcome struct {
+	searchOutcome
+
+	Withheld []string `json:"withheldByAccess,omitempty"`
+
+	tainted []agent.RecordRef
+}
+
+func gatedResult(outcome searchOutcome, gate *fieldGate) gatedOutcome {
+	result := gatedOutcome{searchOutcome: outcome}
+	if gate != nil {
+		result.Withheld = gate.Withheld()
+	}
+
+	return result
+}
+
+func (o gatedOutcome) withTaint(refs []agent.RecordRef) gatedOutcome {
+	o.tainted = refs
+
+	return o
+}
+
+func (o gatedOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }

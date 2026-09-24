@@ -64,6 +64,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(agentdefinition.AllAccessModes()),
 		},
 		{
+			name:   "ck_agent_definitions_data_access_ceiling",
+			values: stringsOf(agentdefinition.AllDataAccessCeilings()),
+		},
+		{
 			name:   "ck_assistant_artifacts_kind",
 			values: stringsOf(assistantartifact.AllKinds()),
 		},

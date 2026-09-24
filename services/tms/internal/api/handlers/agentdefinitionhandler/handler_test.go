@@ -63,3 +63,20 @@ func TestSaveAgentRequest_CarriesTheMemoryBudget(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, req.MemoryTokenBudget, "no budget is the default")
 }
+
+func TestSaveAgentRequest_CarriesTheDataAccess(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+
+	req, err := (&saveAgentRequest{
+		Name:              "Payroll",
+		DataAccessCeiling: agentdefinition.DataAccessRestricted,
+	}).toSaveRequest(pulid.Nil, tenant)
+	require.NoError(t, err)
+	assert.Equal(t, agentdefinition.DataAccessRestricted, req.DataAccessCeiling)
+
+	req, err = (&saveAgentRequest{Name: "Payroll"}).toSaveRequest(pulid.Nil, tenant)
+	require.NoError(t, err)
+	assert.Empty(t, req.DataAccessCeiling, "a body that says nothing keeps what the agent has")
+}

@@ -96,6 +96,7 @@ export function AgentForm({
   const accent = useWatch({ control, name: "accent" });
   const triggerMode = useWatch({ control, name: "triggerMode" });
   const ceiling = useWatch({ control, name: "autonomyCeiling" });
+  const dataAccess = useWatch({ control, name: "dataAccessCeiling" });
   const toolNames = useWatch({ control, name: "toolNames" });
   const toolTiers = useWatch({ control, name: "toolTiers" });
   const shadowMode = useWatch({ control, name: "shadowMode" });
@@ -283,6 +284,41 @@ export function AgentForm({
             setValue("toolTiers", next, { shouldDirty: true, shouldValidate: true })
           }
         />
+        <FormGroup cols={1}>
+          <FormControl cols="full">
+            <SelectField
+              name="dataAccessCeiling"
+              control={control}
+              label={t("Data access")}
+              options={[
+                {
+                  label: t("Internal"),
+                  value: "Internal",
+                  description: t("Records without amounts, pay or other restricted fields"),
+                },
+                {
+                  label: t("Restricted"),
+                  value: "Restricted",
+                  description: t("Also amounts and pay, such as invoice totals and net pay"),
+                },
+              ]}
+              description={t(
+                "Restricted lets its tools show amounts, pay, balances and rates, such as invoice totals and a driver's net pay. Internal leaves them out and names what was left out. In chat it never sees more than the person asking.",
+              )}
+            />
+          </FormControl>
+        </FormGroup>
+        {dataAccess === "Restricted" && triggerMode !== "Chat" && (
+          <Alert variant="warning" size="sm">
+            <ShieldAlertIcon className="size-4" />
+            <AlertTitle>{t("This agent reads amounts and pay on its own")}</AlertTitle>
+            <AlertDescription>
+              {t(
+                "Nobody is watching when it runs, so whatever it reads can appear in its reports and proposals. Only people whose own role reaches restricted fields can give an agent this access.",
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
       </FormSection>
 
       <FormSection

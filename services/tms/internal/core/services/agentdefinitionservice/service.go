@@ -36,32 +36,35 @@ type Params struct {
 	// tools are offered only while they are.
 	Extensions services.AgentExtensionGate `optional:"true"`
 	// Access sets who may use an agent in the transaction that saves it.
-	Access services.AgentAccessService
+	Access      services.AgentAccessService
+	Permissions services.PermissionEngine `optional:"true"`
 }
 
 type Service struct {
-	l          *zap.Logger
-	repo       repositories.AgentDefinitionRepository
-	tools      services.AgentToolRegistry
-	queryTools services.AgentQueryToolRegistry
-	contexts   services.RuntimeContextBuilder
-	audit      services.AuditService
-	schedules  services.AgentDefinitionScheduler
-	extensions services.AgentExtensionGate
-	access     services.AgentAccessService
+	l           *zap.Logger
+	repo        repositories.AgentDefinitionRepository
+	tools       services.AgentToolRegistry
+	queryTools  services.AgentQueryToolRegistry
+	contexts    services.RuntimeContextBuilder
+	audit       services.AuditService
+	schedules   services.AgentDefinitionScheduler
+	extensions  services.AgentExtensionGate
+	access      services.AgentAccessService
+	permissions services.PermissionEngine
 }
 
 func New(p Params) services.AgentDefinitionService {
 	return &Service{
-		l:          p.Logger.Named("service.agentdefinition"),
-		repo:       p.Repo,
-		tools:      p.Tools,
-		queryTools: p.QueryTools,
-		contexts:   p.Contexts,
-		audit:      p.AuditService,
-		schedules:  p.Schedules,
-		extensions: p.Extensions,
-		access:     p.Access,
+		l:           p.Logger.Named("service.agentdefinition"),
+		repo:        p.Repo,
+		tools:       p.Tools,
+		queryTools:  p.QueryTools,
+		contexts:    p.Contexts,
+		audit:       p.AuditService,
+		schedules:   p.Schedules,
+		extensions:  p.Extensions,
+		access:      p.Access,
+		permissions: p.Permissions,
 	}
 }
 
@@ -107,6 +110,9 @@ func (s *Service) Create(
 	if err := s.validate(ctx, definition, nil); err != nil {
 		return nil, err
 	}
+	if err := s.checkDataAccess(ctx, definition, nil, actor); err != nil {
+		return nil, err
+	}
 	if err := s.schedule(definition); err != nil {
 		return nil, err
 	}
@@ -146,6 +152,9 @@ func (s *Service) Update(
 	apply(&updated, req)
 
 	if err = s.validate(ctx, &updated, &previous); err != nil {
+		return nil, err
+	}
+	if err = s.checkDataAccess(ctx, &updated, &previous, actor); err != nil {
 		return nil, err
 	}
 	if scheduleChanged(&previous, &updated) {
@@ -242,6 +251,7 @@ func (s *Service) Templates() []services.AgentTemplateDescriptor {
 			StarterEvents:       template.StarterEvents(),
 			StarterCron:         template.StarterCron(),
 			StarterCeiling:      template.StarterCeiling(),
+			StarterDataAccess:   template.StarterDataAccess(),
 			StarterOutput:       starterOutput(template),
 			ContextProviders:    agentdefinition.AllContextProviders(),
 		})
@@ -393,6 +403,9 @@ func apply(definition *agentdefinition.Definition, req *services.SaveAgentDefini
 	definition.ToolNames = agentdefinition.WithoutCoreTools(trimAll(req.ToolNames))
 	definition.ToolTiers = copyTiers(req.ToolTiers)
 	definition.AutonomyCeiling = req.AutonomyCeiling
+	if req.DataAccessCeiling != "" {
+		definition.DataAccessCeiling = req.DataAccessCeiling
+	}
 	definition.Enabled = req.Enabled
 	definition.ShadowMode = req.ShadowMode
 	definition.DecisionTimeoutSeconds = req.DecisionTimeoutSeconds

@@ -12,6 +12,7 @@ fragment AgentDefinitionCardFields on AgentDefinition {
   toolNames
   toolTiers
   autonomyCeiling
+  dataAccessCeiling
   enabled
   shadowMode
   decisionTimeoutSeconds

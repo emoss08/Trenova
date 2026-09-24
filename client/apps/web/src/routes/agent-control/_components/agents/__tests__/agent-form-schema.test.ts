@@ -298,6 +298,29 @@ describe("delegateIds", () => {
   });
 });
 
+describe("data access", () => {
+  it("starts a new agent at Internal", () => {
+    expect(agentFormDefaults.dataAccessCeiling).toBe("Internal");
+  });
+
+  it("loads the saved setting and sends it back", () => {
+    const row = toAgentPanelRow(agentRow());
+
+    expect(row.dataAccessCeiling).toBe("Restricted");
+    expect(toSaveRequest(row).dataAccessCeiling).toBe("Restricted");
+  });
+
+  it("refuses a setting the server does not know", () => {
+    const parsed = agentFormSchema.safeParse({
+      ...agentFormDefaults,
+      name: "Payroll desk",
+      dataAccessCeiling: "Confidential",
+    });
+
+    expect(parsed.success).toBe(false);
+  });
+});
+
 function agentRow(): AgentDefinitionRow {
   return {
     id: "agdef_widgets",
@@ -313,6 +336,7 @@ function agentRow(): AgentDefinitionRow {
     toolNames: [],
     toolTiers: {},
     autonomyCeiling: "Propose",
+    dataAccessCeiling: "Restricted",
     enabled: true,
     shadowMode: false,
     decisionTimeoutSeconds: 86400,

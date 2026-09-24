@@ -11,6 +11,7 @@ export type TemplatePatch = Partial<
     | "cronExpression"
     | "eventKinds"
     | "autonomyCeiling"
+    | "dataAccessCeiling"
     | "outputMode"
     | "contextProviders"
   >
@@ -18,8 +19,9 @@ export type TemplatePatch = Partial<
 
 /**
  * What picking a template changes: only fields the person has not touched.
- * The ceiling and output mode are set outright, since a template's whole
- * point is to suggest how much it should do and what it should produce.
+ * The ceiling, data access and output mode are set outright, since a
+ * template's whole point is to suggest how much it should do, what it should
+ * see and what it should produce.
  */
 export function applyTemplateStarter(
   current: AgentFormValues,
@@ -47,6 +49,7 @@ export function applyTemplateStarter(
     }
   }
   patch.autonomyCeiling = template.starterCeiling;
+  patch.dataAccessCeiling = template.starterDataAccess;
   patch.outputMode = template.starterOutput;
   if (current.contextProviders.length === 0 && template.contextProviders.length > 0) {
     patch.contextProviders = [...template.contextProviders];

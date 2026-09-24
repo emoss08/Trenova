@@ -2130,6 +2130,9 @@ models:
   AgentAccessMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.AccessMode
+  AgentDataAccessCeiling:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.DataAccessCeiling
   AgentAudienceCoverage:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.AudienceCoverage

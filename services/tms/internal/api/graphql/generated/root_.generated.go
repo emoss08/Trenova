@@ -790,6 +790,7 @@ type ComplexityRoot struct {
 		CronExpression         func(childComplexity int) int
 		CronTimezone           func(childComplexity int) int
 		DailyRunLimit          func(childComplexity int) int
+		DataAccessCeiling      func(childComplexity int) int
 		DecisionTimeoutSeconds func(childComplexity int) int
 		DelegateIDs            func(childComplexity int) int
 		Delegates              func(childComplexity int) int
@@ -15058,6 +15059,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDefinition.DailyRunLimit(childComplexity), true
+	case "AgentDefinition.dataAccessCeiling":
+		if e.ComplexityRoot.AgentDefinition.DataAccessCeiling == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.DataAccessCeiling(childComplexity), true
 	case "AgentDefinition.decisionTimeoutSeconds":
 		if e.ComplexityRoot.AgentDefinition.DecisionTimeoutSeconds == nil {
 			break
@@ -76550,6 +76557,14 @@ enum AgentAccessMode {
   Roles
 }
 
+"How sensitive a field an agent's tools may show."
+enum AgentDataAccessCeiling {
+  "Internal fields only: amounts, pay and other Restricted fields are withheld and named as withheld."
+  Internal
+  "Restricted fields too, such as invoice amounts, settlement pay and rates. Never above the person an agent works for."
+  Restricted
+}
+
 "How much of an agent a role could use."
 enum AgentAudienceCoverage {
   "The role grants everything the agent's tools need."
@@ -76598,6 +76613,11 @@ type AgentDefinition {
   "Per-tool autonomy overrides, keyed by tool name; each capped by autonomyCeiling."
   toolTiers: JSON!
   autonomyCeiling: AgentAutonomyTier!
+  """
+  The most sensitive fields the agent's tools read. A run a person is in reads
+  at the lower of this and that person's own access.
+  """
+  dataAccessCeiling: AgentDataAccessCeiling!
   enabled: Boolean!
   shadowMode: Boolean!
   decisionTimeoutSeconds: Int!
@@ -99612,6 +99632,8 @@ func (ec *executionContext) childFields_AgentDefinition(ctx context.Context, fie
 		return ec.fieldContext_AgentDefinition_toolTiers(ctx, field)
 	case "autonomyCeiling":
 		return ec.fieldContext_AgentDefinition_autonomyCeiling(ctx, field)
+	case "dataAccessCeiling":
+		return ec.fieldContext_AgentDefinition_dataAccessCeiling(ctx, field)
 	case "enabled":
 		return ec.fieldContext_AgentDefinition_enabled(ctx, field)
 	case "shadowMode":

@@ -1093,6 +1093,10 @@ func init() {
 				FieldMapKey: "autonomyCeiling",
 			},
 			{
+				Name:        "dataAccessCeiling",
+				FieldMapKey: "dataAccessCeiling",
+			},
+			{
 				Name:        "enabled",
 				FieldMapKey: "enabled",
 			},
