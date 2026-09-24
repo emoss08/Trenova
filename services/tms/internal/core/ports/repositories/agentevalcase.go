@@ -71,7 +71,24 @@ type PurgeOrphanedEvalCasesRequest struct {
 	Limit int
 }
 
+type ListAgentsWithActiveEvalCasesRequest struct {
+	TenantInfo pagination.TenantInfo
+}
+
+type ListEvalCaseSamplingRequest struct {
+	TenantInfo        pagination.TenantInfo
+	AgentDefinitionID pulid.ID
+}
+
 type AgentEvalCaseRepository interface {
+	ListAgentsWithActiveCases(
+		ctx context.Context,
+		req ListAgentsWithActiveEvalCasesRequest,
+	) ([]pulid.ID, error)
+	ListSamplingCases(
+		ctx context.Context,
+		req ListEvalCaseSamplingRequest,
+	) ([]agentquality.SamplingCase, error)
 	Create(ctx context.Context, entity *agentquality.EvalCase) (*agentquality.EvalCase, error)
 	Update(ctx context.Context, entity *agentquality.EvalCase) (*agentquality.EvalCase, error)
 	GetByID(

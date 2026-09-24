@@ -37,7 +37,8 @@ func SamplingForTask(task aiprovider.Task) Sampling {
 		// the answer is a structure checked against a catalogue afterwards, and
 		// the same question giving two different sets of filters is a defect
 		// nobody can reproduce.
-		aiprovider.TaskQueryCompose:
+		aiprovider.TaskQueryCompose,
+		aiprovider.TaskEvaluationJudge:
 		// A yes-or-no with a category. There is nothing to be imaginative
 		// about, and a reclassification that changes between two identical
 		// questions is a bug a person cannot reproduce.

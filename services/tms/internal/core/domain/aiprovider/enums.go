@@ -137,6 +137,7 @@ const (
 	// the label is re-checked against that set afterwards — a model that invents
 	// a category produces a message for a person, not a new kind of work.
 	TaskInboundClassification = Task("InboundClassification")
+	TaskEvaluationJudge       = Task("EvaluationJudge")
 	TaskGeneral               = Task("General")
 )
 
@@ -152,6 +153,7 @@ func (t Task) IsValid() bool {
 		TaskDailyBriefing,
 		TaskQueryCompose,
 		TaskInboundClassification,
+		TaskEvaluationJudge,
 		TaskGeneral:
 		return true
 	default:
@@ -172,6 +174,7 @@ func AllTasks() []Task {
 		TaskDailyBriefing,
 		TaskQueryCompose,
 		TaskInboundClassification,
+		TaskEvaluationJudge,
 		TaskGeneral,
 	}
 }

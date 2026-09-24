@@ -77,6 +77,7 @@ export type AiTask =
   | 'DailyBriefing'
   | 'DocumentClassification'
   | 'DocumentExtraction'
+  | 'EvaluationJudge'
   | 'FormulaAssistant'
   | 'General'
   | 'InboundClassification'
@@ -396,6 +397,13 @@ export type AgentProposalStatus =
   | 'Skipped'
   | 'Superseded';
 
+export type AgentQualityAgentsInput = {
+  after?: string | null | undefined;
+  first?: number | null | undefined;
+  /** Days of ratings and scores to read, 30 by default, at most 365. */
+  window?: number | null | undefined;
+};
+
 export type AgentReachWarningKind =
   /** The agent is restricted to roles and no role is granted it, so nobody may use it. */
   | 'NoAudience'
@@ -457,6 +465,32 @@ export type AgentSubjectType =
   | 'Shipment'
   | 'ShipmentMove'
   | 'Worker';
+
+export type AgentSuiteRunCasesInput = {
+  after?: string | null | undefined;
+  first?: number | null | undefined;
+  suiteRunId: string | number;
+};
+
+export type AgentSuiteRunStatus =
+  /** The nightly or monthly evaluation budget ran out before every case was asked. */
+  | 'BudgetStopped'
+  | 'Completed'
+  | 'Failed'
+  | 'Running'
+  /** Nothing about the agent or its cases changed since its last run. */
+  | 'Skipped';
+
+export type AgentSuiteRunTrigger =
+  | 'Manual'
+  | 'Scheduled';
+
+export type AgentSuiteRunsInput = {
+  after?: string | null | undefined;
+  agentDefinitionId?: string | number | null | undefined;
+  first?: number | null | undefined;
+  statuses?: Array<AgentSuiteRunStatus> | null | undefined;
+};
 
 /** Where outside text a tool reads comes from. */
 export type AgentTaintSource =
@@ -544,6 +578,13 @@ export type AgentType =
   | 'BillingException'
   | 'DispatchAssignment'
   | 'General';
+
+export type AgentWorstRatedAnswersInput = {
+  after?: string | null | undefined;
+  agentDefinitionId?: string | number | null | undefined;
+  first?: number | null | undefined;
+  window?: number | null | undefined;
+};
 
 export type AmendWorkerEmploymentEventInput = {
   amendmentNote: string;
@@ -5499,6 +5540,23 @@ export type UpdateAgentEvalCaseInput = {
   version: number;
 };
 
+export type UpdateAgentQualityControlInput = {
+  enabled: boolean;
+  forceRerunDays: number;
+  judgeEnabled: boolean;
+  judgeSampleRate: number;
+  maxCasesPerAgent: number;
+  minCases: number;
+  monthlyBudgetUsd: string;
+  nightlyBudgetUsd: string;
+  regressionThreshold: number;
+  runHourLocal: number;
+  /** Empty for the organization's own timezone. */
+  timezone?: string | null | undefined;
+  /** The version read; a save over a newer one is refused. */
+  version: number;
+};
+
 export type UpdateBenefitPlanInput = {
   carrier?: string | null | undefined;
   code: string;
@@ -5949,6 +6007,7 @@ export type WatchtowerSourceKind =
   | 'AgentException'
   | 'AgentPlan'
   | 'AgentProposal'
+  | 'AgentQualityRegression'
   | 'AgentRunFailed'
   | 'BillingException'
   | 'CarrierIntelEvent'
@@ -6813,6 +6872,86 @@ export type DecideAgentProposalMutationVariables = Exact<{
 
 
 export type DecideAgentProposalMutation = { decideAgentProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, version: number, createdAt: number } };
+
+export type AgentSuiteRunFieldsFragment = { id: string, agentDefinitionId: string, agentName: string, trigger: AgentSuiteRunTrigger, fingerprintHash: string, changeSummary: string, suiteRevision: string, status: AgentSuiteRunStatus, casesTotal: number, casesPassed: number, casesFailed: number, casesSkipped: number, hardFailures: number, deterministicScore: number | null, judgeScore: number | null, qualityScore: number | null, baselineScore: number | null, baselineRunId: string | null, regression: boolean, costUsd: string, startedAt: number, finishedAt: number | null, comments: string, requestedByUserId: string | null, fingerprintChanges: Array<{ field: string, from: string, to: string }> } & { ' $fragmentName'?: 'AgentSuiteRunFieldsFragment' };
+
+export type AgentQualityPointFieldsFragment = { suiteRunId: string, at: number, qualityScore: number, status: AgentSuiteRunStatus, regression: boolean } & { ' $fragmentName'?: 'AgentQualityPointFieldsFragment' };
+
+export type AgentWorstRatedAnswerFieldsFragment = { targetType: AiFeedbackTargetType, targetId: string, targetPart: string, positive: number, negative: number, lastRatedAt: number, threadId: string | null, canOpenThread: boolean, agentDefinitionId: string | null, agentName: string, sample: { id: string, reasons: Array<AiFeedbackReason>, comment: string, createdAt: number, turnSnapshot: { question: string, answer: string, omittedTools: number, redacted: boolean, tools: Array<{ name: string, summary: string, failed: boolean }> } | null } | null } & { ' $fragmentName'?: 'AgentWorstRatedAnswerFieldsFragment' };
+
+export type AgentQualityControlFieldsFragment = { id: string | null, enabled: boolean, runHourLocal: number, timezone: string, maxCasesPerAgent: number, nightlyBudgetUsd: string, monthlyBudgetUsd: string, judgeEnabled: boolean, judgeSampleRate: number, regressionThreshold: number, minCases: number, forceRerunDays: number, version: number, updatedAt: number } & { ' $fragmentName'?: 'AgentQualityControlFieldsFragment' };
+
+export type AgentQualityOverviewQueryVariables = Exact<{
+  window?: number | null | undefined;
+}>;
+
+
+export type AgentQualityOverviewQuery = { agentQualityOverview: { windowDays: number, since: number, ratingsVisible: boolean, satisfaction: number | null, ratings: number, qualityScore: number | null, agentsScored: number, suiteRuns: number, regressions: number, openRegressions: number, evalSpendMonthUsd: string, evalUnpricedCalls: number, monthlyBudgetUsd: string, monthStartedAt: number, sweepEnabled: boolean, nextSweepHourLocal: number, nextSweepTimezone: string, agentsWithCases: number, judgeEnabled: boolean, regressionThreshold: number } };
+
+export type AgentQualityAgentsQueryVariables = Exact<{
+  input: AgentQualityAgentsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AgentQualityAgentsQuery = { agentQualityAgents: { totalCount?: number | null, edges: Array<{ cursor: string, node: { agentDefinitionId: string, name: string, enabled: boolean, ratingsVisible: boolean, satisfaction: number | null, satisfactionDelta: number | null, ratings: number, qualityScore: number | null, openRegression: boolean, qualityPoints: Array<{ ' $fragmentRefs'?: { 'AgentQualityPointFieldsFragment': AgentQualityPointFieldsFragment } }>, lastSuiteRun: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentWorstRatedAnswersQueryVariables = Exact<{
+  input: AgentWorstRatedAnswersInput;
+}>;
+
+
+export type AgentWorstRatedAnswersQuery = { agentWorstRatedAnswers: { edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'AgentWorstRatedAnswerFieldsFragment': AgentWorstRatedAnswerFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentQualityQueryVariables = Exact<{
+  agentDefinitionId: string | number;
+  window?: number | null | undefined;
+}>;
+
+
+export type AgentQualityQuery = { agentQuality: { agentDefinitionId: string, agentName: string, enabled: boolean, windowDays: number, since: number, ratingsVisible: boolean, satisfaction: number | null, ratings: number, activeCases: number, satisfactionPoints: Array<{ day: string, positive: number, negative: number, satisfaction: number | null }>, qualityPoints: Array<{ ' $fragmentRefs'?: { 'AgentQualityPointFieldsFragment': AgentQualityPointFieldsFragment } }>, worstRated: Array<{ ' $fragmentRefs'?: { 'AgentWorstRatedAnswerFieldsFragment': AgentWorstRatedAnswerFieldsFragment } }>, lastSuiteRun: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } | null } };
+
+export type AgentSuiteRunsQueryVariables = Exact<{
+  input: AgentSuiteRunsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AgentSuiteRunsQuery = { agentSuiteRuns: { totalCount?: number | null, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentSuiteRunQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentSuiteRunQuery = { agentSuiteRun: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } | null };
+
+export type AgentSuiteRunCasesQueryVariables = Exact<{
+  input: AgentSuiteRunCasesInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AgentSuiteRunCasesQuery = { agentSuiteRunCases: { totalCount?: number | null, edges: Array<{ cursor: string, node: { id: string, evalCaseId: string | null, suiteOrdinal: number | null, status: AgentEvaluationStatus, reply: string, checks: unknown, judge: unknown, caseScore: number | null, errorMessage: string, model: string, completedAt: number | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentQualityControlQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentQualityControlQuery = { agentQualityControl: { ' $fragmentRefs'?: { 'AgentQualityControlFieldsFragment': AgentQualityControlFieldsFragment } } };
+
+export type UpdateAgentQualityControlMutationVariables = Exact<{
+  input: UpdateAgentQualityControlInput;
+}>;
+
+
+export type UpdateAgentQualityControlMutation = { updateAgentQualityControl: { ' $fragmentRefs'?: { 'AgentQualityControlFieldsFragment': AgentQualityControlFieldsFragment } } };
+
+export type RunAgentSuiteMutationVariables = Exact<{
+  agentDefinitionId: string | number;
+}>;
+
+
+export type RunAgentSuiteMutation = { runAgentSuite: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } };
 
 export type AgentRunTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentType: AgentType, agentDefinitionId: string, trigger: AgentRunTrigger, summary: string, subjectType: AgentSubjectType, subjectId: string, status: AgentRunStatus, workflowId: string, modelIdentifier: string, promptVersion: string, startedAt: number | null, completedAt: number | null, errorMessage: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentRunTableRowFieldsFragment' };
 
@@ -13411,6 +13550,97 @@ fragment AgentProposalTableRowFields on AgentProposal {
   createdAt
   updatedAt
 }`, {"fragmentName":"AgentProposalDetailFields"}) as unknown as TypedDocumentString<AgentProposalDetailFieldsFragment, unknown>;
+export const AgentSuiteRunFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentSuiteRunFields on AgentSuiteRun {
+  id
+  agentDefinitionId
+  agentName
+  trigger
+  fingerprintHash
+  fingerprintChanges {
+    field
+    from
+    to
+  }
+  changeSummary
+  suiteRevision
+  status
+  casesTotal
+  casesPassed
+  casesFailed
+  casesSkipped
+  hardFailures
+  deterministicScore
+  judgeScore
+  qualityScore
+  baselineScore
+  baselineRunId
+  regression
+  costUsd
+  startedAt
+  finishedAt
+  comments
+  requestedByUserId
+}
+    `, {"fragmentName":"AgentSuiteRunFields"}) as unknown as TypedDocumentString<AgentSuiteRunFieldsFragment, unknown>;
+export const AgentQualityPointFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentQualityPointFields on AgentQualityPoint {
+  suiteRunId
+  at
+  qualityScore
+  status
+  regression
+}
+    `, {"fragmentName":"AgentQualityPointFields"}) as unknown as TypedDocumentString<AgentQualityPointFieldsFragment, unknown>;
+export const AgentWorstRatedAnswerFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentWorstRatedAnswerFields on AgentWorstRatedAnswer {
+  targetType
+  targetId
+  targetPart
+  positive
+  negative
+  lastRatedAt
+  threadId
+  canOpenThread
+  agentDefinitionId
+  agentName
+  sample {
+    id
+    reasons
+    comment
+    createdAt
+    turnSnapshot {
+      question
+      answer
+      tools {
+        name
+        summary
+        failed
+      }
+      omittedTools
+      redacted
+    }
+  }
+}
+    `, {"fragmentName":"AgentWorstRatedAnswerFields"}) as unknown as TypedDocumentString<AgentWorstRatedAnswerFieldsFragment, unknown>;
+export const AgentQualityControlFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentQualityControlFields on AgentQualityControl {
+  id
+  enabled
+  runHourLocal
+  timezone
+  maxCasesPerAgent
+  nightlyBudgetUsd
+  monthlyBudgetUsd
+  judgeEnabled
+  judgeSampleRate
+  regressionThreshold
+  minCases
+  forceRerunDays
+  version
+  updatedAt
+}
+    `, {"fragmentName":"AgentQualityControlFields"}) as unknown as TypedDocumentString<AgentQualityControlFieldsFragment, unknown>;
 export const AgentRunTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentRunTableRowFields on AgentRun {
   id
@@ -20279,6 +20509,16 @@ export const DecideAgentPlanDocument = {"__meta__":{"kind":"mutation","name":"De
 export const AgentProposalTableDocument = {"__meta__":{"kind":"query","name":"AgentProposalTable","hash":"sha256:d40973ae042db835fb380334d8fa552bdfb5041bcf88854f0a16b24dc2e0b3d5"}} as unknown as TypedDocumentString<AgentProposalTableQuery, AgentProposalTableQueryVariables>;
 export const AgentProposalDetailDocument = {"__meta__":{"kind":"query","name":"AgentProposalDetail","hash":"sha256:368b228c6509f703237086c611f9ce712f4aead026d170e61fa1bb14b20aed5b"}} as unknown as TypedDocumentString<AgentProposalDetailQuery, AgentProposalDetailQueryVariables>;
 export const DecideAgentProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposal","hash":"sha256:ba06fd0f5bb9168980d5d967514bf0bcbd80382200e836955aa5704c4c9f1836"}} as unknown as TypedDocumentString<DecideAgentProposalMutation, DecideAgentProposalMutationVariables>;
+export const AgentQualityOverviewDocument = {"__meta__":{"kind":"query","name":"AgentQualityOverview","hash":"sha256:fd588f4ad3aa62b884aa8b47212820447464b06189aede33f9fff7c0313a741b"}} as unknown as TypedDocumentString<AgentQualityOverviewQuery, AgentQualityOverviewQueryVariables>;
+export const AgentQualityAgentsDocument = {"__meta__":{"kind":"query","name":"AgentQualityAgents","hash":"sha256:eff4ac76a1c3ad86f02eddc2807807c7dd848e77921a3d4b43bf72758efae25d"}} as unknown as TypedDocumentString<AgentQualityAgentsQuery, AgentQualityAgentsQueryVariables>;
+export const AgentWorstRatedAnswersDocument = {"__meta__":{"kind":"query","name":"AgentWorstRatedAnswers","hash":"sha256:a2529a10ce7390a8c264f0bd2112738fab25019d21b30cc5b6c8d38fc6b8f339"}} as unknown as TypedDocumentString<AgentWorstRatedAnswersQuery, AgentWorstRatedAnswersQueryVariables>;
+export const AgentQualityDocument = {"__meta__":{"kind":"query","name":"AgentQuality","hash":"sha256:997883ef2da65f140a836b5c491117d903689ed1e44b81f088b29e70321b5376"}} as unknown as TypedDocumentString<AgentQualityQuery, AgentQualityQueryVariables>;
+export const AgentSuiteRunsDocument = {"__meta__":{"kind":"query","name":"AgentSuiteRuns","hash":"sha256:3e6f5474fb47667cdf25cb63a25f052b1ab97e354fcec5de9ca336adafa422b0"}} as unknown as TypedDocumentString<AgentSuiteRunsQuery, AgentSuiteRunsQueryVariables>;
+export const AgentSuiteRunDocument = {"__meta__":{"kind":"query","name":"AgentSuiteRun","hash":"sha256:66e256a140e857c35cb212ddaa0eb208e01290e0e0b96f694ed6dbacb9d7e7d0"}} as unknown as TypedDocumentString<AgentSuiteRunQuery, AgentSuiteRunQueryVariables>;
+export const AgentSuiteRunCasesDocument = {"__meta__":{"kind":"query","name":"AgentSuiteRunCases","hash":"sha256:61e994236f4e3b3a09bfa393ed37a38fb3a3913fa6920aa9237015004b3a1080"}} as unknown as TypedDocumentString<AgentSuiteRunCasesQuery, AgentSuiteRunCasesQueryVariables>;
+export const AgentQualityControlDocument = {"__meta__":{"kind":"query","name":"AgentQualityControl","hash":"sha256:fe916f7dcbf87425e4a4e37497621cfdf4e1301a34655de9b14198f584a33385"}} as unknown as TypedDocumentString<AgentQualityControlQuery, AgentQualityControlQueryVariables>;
+export const UpdateAgentQualityControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentQualityControl","hash":"sha256:4d6d353625adb69497f2bd7c1f587aad6d9e4e55f6d7d1dc13fcb0c96b69f486"}} as unknown as TypedDocumentString<UpdateAgentQualityControlMutation, UpdateAgentQualityControlMutationVariables>;
+export const RunAgentSuiteDocument = {"__meta__":{"kind":"mutation","name":"RunAgentSuite","hash":"sha256:e677381bfd94f66200362ed2017c07dfb147ff2ea856f941627d481d01637647"}} as unknown as TypedDocumentString<RunAgentSuiteMutation, RunAgentSuiteMutationVariables>;
 export const AgentRunTableDocument = {"__meta__":{"kind":"query","name":"AgentRunTable","hash":"sha256:938af4f2a45104c1bf195b3a992b531ebb470f63a2b1dd65dd1b933827662d5d"}} as unknown as TypedDocumentString<AgentRunTableQuery, AgentRunTableQueryVariables>;
 export const AgentRunDetailDocument = {"__meta__":{"kind":"query","name":"AgentRunDetail","hash":"sha256:780230a3bc44a3aed467ed21d5aabd4142c705410579b4bcd855316f808315c5"}} as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;
 export const AgentToolPolicyConnectionDocument = {"__meta__":{"kind":"query","name":"AgentToolPolicyConnection","hash":"sha256:d921a3676bb237d7be340b14b14c0d88a30be7ac35e1a0714f8d00ea29bcd619"}} as unknown as TypedDocumentString<AgentToolPolicyConnectionQuery, AgentToolPolicyConnectionQueryVariables>;

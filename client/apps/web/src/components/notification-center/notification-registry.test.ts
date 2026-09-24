@@ -254,6 +254,44 @@ describe("notification registry — earned autonomy", () => {
 });
 
 /*
+A suite run that scored an agent worse than its baseline: data carries link
+(the Quality tab with the agent and run open), suiteRunId, agentDefinitionId,
+severity (Critical when a case failed hard, Warning otherwise) and changes.
+*/
+describe("notification registry — quality regressions", () => {
+  const link = "/admin/agent-control?tab=quality&agent=agdef_1&suiteRun=asr_1";
+
+  it("files a regression under AI Control and opens the run it names", () => {
+    const n = notification({
+      eventType: "agent.quality_regression",
+      data: { link, suiteRunId: "asr_1", agentDefinitionId: "agdef_1", severity: "Warning" },
+    });
+
+    expect(getNotificationDescriptor("agent.quality_regression").category).toBe("AI Control");
+    expect(getNotificationLink(n)).toBe(link);
+    expect(resolveNotificationDescriptor(n).tileClass).toBe("bg-warning-subtle");
+  });
+
+  it("takes the danger tone when a case failed hard", () => {
+    const descriptor = resolveNotificationDescriptor(
+      notification({
+        eventType: "agent.quality_regression",
+        data: { link, severity: "Critical" },
+      }),
+    );
+
+    expect(descriptor.tileClass).toBe("bg-danger-subtle");
+    expect(descriptor.iconClass).toBe("text-destructive");
+  });
+
+  it("falls back to the AI Control page when the notice carries no link", () => {
+    expect(getNotificationLink(notification({ eventType: "agent.quality_regression" }))).toBe(
+      "/admin/agent-control",
+    );
+  });
+});
+
+/*
 A finished reply nobody was watching: data carries kind "assistant_reply_ready",
 threadId, turnId, status (Completed | Refused | Failed) and link.
 */

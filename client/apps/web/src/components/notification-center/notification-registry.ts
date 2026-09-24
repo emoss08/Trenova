@@ -191,6 +191,17 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     tileClass: "bg-warning-subtle",
     getLink: aiControlLink,
   },
+  "agent.quality_regression": {
+    category: "AI Control",
+    icon: TrendingDownIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning-subtle",
+    getLink: aiControlLink,
+    refine: (n) =>
+      notificationDataString(n, "severity") === "Critical"
+        ? { iconClass: "text-destructive", tileClass: "bg-danger-subtle" }
+        : null,
+  },
   "dash.pto_requested": {
     category: "Workers",
     icon: CalendarClockIcon,

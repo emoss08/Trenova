@@ -1139,6 +1139,52 @@ func (ec *executionContext) fieldContext_AgentEvaluation_fingerprint(_ context.C
 	return graphql.NewScalarFieldContext("AgentEvaluation", field, true, true, errors.New("field of type JSON does not have child fields"))
 }
 
+func (ec *executionContext) _AgentEvaluation_suiteRunId(ctx context.Context, field graphql.CollectedField, obj *agent.Evaluation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentEvaluation_suiteRunId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SuiteRunID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentEvaluation_suiteRunId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentEvaluation", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AgentEvaluation_suiteOrdinal(ctx context.Context, field graphql.CollectedField, obj *agent.Evaluation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentEvaluation_suiteOrdinal(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SuiteOrdinal, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentEvaluation_suiteOrdinal(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentEvaluation", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _AgentEvaluation_errorMessage(ctx context.Context, field graphql.CollectedField, obj *agent.Evaluation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -6270,6 +6316,16 @@ func (ec *executionContext) _AgentEvaluation(ctx context.Context, sel ast.Select
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "suiteRunId":
+			out.Values[i] = ec._AgentEvaluation_suiteRunId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "suiteOrdinal":
+			out.Values[i] = ec._AgentEvaluation_suiteOrdinal(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "errorMessage":
 			out.Values[i] = ec._AgentEvaluation_errorMessage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

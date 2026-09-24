@@ -285,3 +285,10 @@ func TestRelay_ClosesWhenTheStreamIsGoneButTheRecordSaysItEnded(t *testing.T) {
 	require.Len(t, seen, 1)
 	assert.True(t, seen[0].Terminal())
 }
+
+func (s *stubTurns) RecordFingerprint(
+	context.Context,
+	repositories.RecordAssistantTurnFingerprintRequest,
+) error {
+	return nil
+}

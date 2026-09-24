@@ -46,6 +46,20 @@ type AIFeedbackWindowRequest struct {
 	Since             int64
 	Timezone          string
 	Limit             int
+	Offset            int
+}
+
+type AIFeedbackAgentTotalsRequest struct {
+	TenantInfo         pagination.TenantInfo
+	AgentDefinitionIDs []pulid.ID
+	Since              int64
+	Until              int64
+}
+
+type AIFeedbackAgentTotals struct {
+	AgentDefinitionID pulid.ID `bun:"agent_definition_id"`
+	Positive          int      `bun:"positive"`
+	Negative          int      `bun:"negative"`
 }
 
 type AIFeedbackDay struct {
@@ -96,6 +110,10 @@ type AIFeedbackRepository interface {
 	) (*pagination.CursorListResult[*aifeedback.Feedback], error)
 	DailySatisfaction(ctx context.Context, req AIFeedbackWindowRequest) ([]*AIFeedbackDay, error)
 	WorstRated(ctx context.Context, req AIFeedbackWindowRequest) ([]*AIFeedbackTargetScore, error)
+	TotalsByAgent(
+		ctx context.Context,
+		req AIFeedbackAgentTotalsRequest,
+	) ([]*AIFeedbackAgentTotals, error)
 	ListNegativeSince(
 		ctx context.Context,
 		req ListNegativeAIFeedbackRequest,

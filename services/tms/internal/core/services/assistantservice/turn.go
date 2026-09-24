@@ -363,16 +363,17 @@ func (s *Service) FinishTurn(
 	// before it ended happened, and without its proposal it would leave no
 	// audit row, count against no cap, and earn no trust.
 	own := persistProposalsParams{
-		Failed:     req.Failure != nil,
-		Definition: plan.Definition,
-		Thread:     thread,
-		Actor:      req.Actor,
-		Saved:      saved,
-		Actions:    turn.Actions,
-		Model:      turn.Model,
-		Input:      plan.Input,
-		Artifacts:  artifacts,
-		Taint:      taint,
+		Failed:      req.Failure != nil,
+		Definition:  plan.Definition,
+		Thread:      thread,
+		Actor:       req.Actor,
+		Saved:       saved,
+		Actions:     turn.Actions,
+		Model:       turn.Model,
+		Input:       plan.Input,
+		Artifacts:   artifacts,
+		Taint:       taint,
+		Fingerprint: TurnFingerprint(plan, req.Run),
 	}
 	proposals, err := s.persistProposals(ctx, own)
 	if req.Run != nil && len(req.Run.Delegations) > 0 {
@@ -400,6 +401,17 @@ func turnTaint(plan *TurnPlan, run *services.RunResult) *agent.RunTaint {
 	}
 
 	return plan.Turn.Result.Taint
+}
+
+func TurnFingerprint(plan *TurnPlan, run *services.RunResult) *agent.Fingerprint {
+	if run != nil && run.Fingerprint != nil {
+		return run.ServedFingerprint()
+	}
+	if plan == nil {
+		return nil
+	}
+
+	return plan.Turn.Result.ServedFingerprint()
 }
 
 // keepThreadTaint records on the conversation the outside content its turn

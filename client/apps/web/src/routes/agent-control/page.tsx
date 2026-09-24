@@ -25,6 +25,7 @@ const ProvidersTab = lazy(() => import("./_components/providers/providers-tab"))
 const ExtensionsTab = lazy(() => import("./_components/extensions/extensions-tab"));
 const MemoryTab = lazy(() => import("./_components/memory/memory-tab"));
 const SafetyTab = lazy(() => import("./_components/safety/safety-tab"));
+const QualityTab = lazy(() => import("./_components/quality/quality-tab"));
 const ActivityTab = lazy(() => import("./_components/activity/activity-tab"));
 
 /**
@@ -45,12 +46,19 @@ export function AgentControlPage() {
   const { allowed: canReadExceptions } = usePermission(Resource.AgentException, Operation.Read);
   const { allowed: canReadMemory } = usePermission(Resource.AgentMemory, Operation.Read);
   const { allowed: canReadExtensions } = usePermission(Resource.AgentExtension, Operation.Read);
+  const { allowed: canReadQuality } = usePermission(Resource.AgentEvalSuite, Operation.Read);
 
   const stats = useAIControlStats();
   const extensionsQuery = useQuery({
     ...queries.agentExtension.catalog(),
     enabled: canReadExtensions,
   });
+  const qualityQuery = useQuery({
+    ...queries.agentQuality.overview(),
+    enabled: canReadQuality,
+    staleTime: 60_000,
+  });
+  const qualityRegressions = qualityQuery.data?.openRegressions ?? 0;
   const extensionItems = extensionsQuery.data?.items;
   const extensionsOn = useMemo(
     () => extensionItems?.filter((item) => extensionState(item) === "on").length ?? 0,
@@ -71,6 +79,7 @@ export function AgentControlPage() {
               memoriesActive: stats.counts?.memoriesActive ?? 0,
               extensionsOn,
               extensionsTotal: extensionItems?.length ?? 0,
+              qualityRegressions,
             },
         {
           agents: canReadAgents,
@@ -81,6 +90,7 @@ export function AgentControlPage() {
           exceptions: canReadExceptions,
           memory: canReadMemory,
           safety: canReadAgents,
+          quality: canReadQuality,
         },
         t,
       ),
@@ -91,8 +101,10 @@ export function AgentControlPage() {
       extensionItems?.length,
       extensionsOn,
       canReadMemory,
+      qualityRegressions,
       canReadProposals,
       canReadProviders,
+      canReadQuality,
       canReadRuns,
       stats.counts,
       stats.isLoading,
@@ -131,7 +143,7 @@ export function AgentControlPage() {
       pageHeaderProps={{
         title: t("AI control"),
         description: t(
-          "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, and activity shows what it did.",
+          "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, quality says how well they do it, and activity shows what it did.",
         ),
       }}
     >
@@ -152,6 +164,7 @@ export function AgentControlPage() {
             {activeTab === "extensions" && <ExtensionsTab />}
             {activeTab === "memory" && <MemoryTab />}
             {activeTab === "safety" && <SafetyTab />}
+            {activeTab === "quality" && <QualityTab />}
             {activeTab === "activity" && <ActivityTab view={activeView} />}
           </DataTableLazyComponent>
         </div>

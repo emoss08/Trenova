@@ -31,6 +31,7 @@ enum AITask {
   DailyBriefing
   QueryCompose
   InboundClassification
+  EvaluationJudge
   AssistantChat
   OperationalInsights
   General

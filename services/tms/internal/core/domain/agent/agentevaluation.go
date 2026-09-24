@@ -65,15 +65,6 @@ func (s EvaluationStatus) Terminal() bool {
 	}
 }
 
-type Fingerprint struct {
-	DefinitionVersion int64    `json:"definitionVersion"`
-	PromptVersion     string   `json:"promptVersion,omitempty"`
-	Model             string   `json:"model,omitempty"`
-	ProviderID        pulid.ID `json:"providerId,omitempty"`
-	InstructionsHash  string   `json:"instructionsHash,omitempty"`
-	Tools             []string `json:"tools,omitempty"`
-}
-
 type CheckKind string
 
 const (
@@ -179,6 +170,9 @@ type Evaluation struct {
 	Judge       *JudgeVerdict `json:"judge"       bun:"judge,type:JSONB,nullzero"`
 	CaseScore   *float64      `json:"caseScore"   bun:"case_score,type:DOUBLE PRECISION,nullzero"`
 	Fingerprint *Fingerprint  `json:"fingerprint" bun:"fingerprint,type:JSONB,nullzero"`
+
+	SuiteRunID   *pulid.ID `json:"suiteRunId"   bun:"suite_run_id,type:VARCHAR(100),nullzero"`
+	SuiteOrdinal *int      `json:"suiteOrdinal" bun:"suite_ordinal,type:INTEGER,nullzero"`
 
 	WorkflowID        string    `json:"workflowId"        bun:"workflow_id,type:VARCHAR(255),nullzero"`
 	ErrorMessage      string    `json:"errorMessage"      bun:"error_message,type:TEXT,nullzero"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -54,7 +55,14 @@ type CompleteAssistantTurnRequest struct {
 	RunID      pulid.ID
 }
 
+type RecordAssistantTurnFingerprintRequest struct {
+	ID          pulid.ID
+	TenantInfo  pagination.TenantInfo
+	Fingerprint *agent.Fingerprint
+}
+
 type AssistantTurnRepository interface {
+	RecordFingerprint(ctx context.Context, req RecordAssistantTurnFingerprintRequest) error
 	// Start records a turn about to run. A conversation that already has one
 	// returns ErrTurnAlreadyRunning.
 	Start(

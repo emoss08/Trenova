@@ -3,6 +3,7 @@ package conversation
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -109,6 +110,7 @@ type AssistantTurn struct {
 	ErrorMessage string              `json:"errorMessage" bun:"error_message,type:TEXT,nullzero"`
 	StartedAt    int64               `json:"startedAt"    bun:"started_at,type:BIGINT,nullzero"`
 	CompletedAt  *int64              `json:"completedAt"  bun:"completed_at,type:BIGINT,nullzero"`
+	Fingerprint  *agent.Fingerprint  `json:"fingerprint"  bun:"fingerprint,type:JSONB,nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
