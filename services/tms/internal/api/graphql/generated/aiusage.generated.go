@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -184,6 +185,236 @@ func (ec *executionContext) _AIUsageFailure_at(ctx context.Context, field graphq
 }
 func (ec *executionContext) fieldContext_AIUsageFailure_at(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AIUsageFailure", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFeatureSlice_feature(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFeatureSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFeatureSlice_feature(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Feature, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *aiusage.Feature) graphql.Marshaler {
+			return ec.marshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiusageᚐFeature(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFeatureSlice_feature(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFeatureSlice", field, false, false, errors.New("field of type AIUsageFeature does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFeatureSlice_calls(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFeatureSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFeatureSlice_calls(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Calls, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFeatureSlice_calls(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFeatureSlice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFeatureSlice_failed(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFeatureSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFeatureSlice_failed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Failed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFeatureSlice_failed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFeatureSlice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFeatureSlice_inputTokens(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFeatureSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFeatureSlice_inputTokens(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InputTokens, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFeatureSlice_inputTokens(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFeatureSlice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFeatureSlice_outputTokens(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFeatureSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFeatureSlice_outputTokens(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.OutputTokens, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFeatureSlice_outputTokens(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFeatureSlice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFeatureSlice_reasoningTokens(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFeatureSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFeatureSlice_reasoningTokens(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReasoningTokens, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFeatureSlice_reasoningTokens(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFeatureSlice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFeatureSlice_costUsd(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFeatureSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFeatureSlice_costUsd(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CostUSD, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNDecimal2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFeatureSlice_costUsd(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFeatureSlice", field, false, false, errors.New("field of type Decimal does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFeatureSlice_pricedCalls(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFeatureSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFeatureSlice_pricedCalls(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PricedCalls, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFeatureSlice_pricedCalls(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFeatureSlice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFeatureSlice_latencyP50Ms(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFeatureSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFeatureSlice_latencyP50Ms(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LatencyP50Ms, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFeatureSlice_latencyP50Ms(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFeatureSlice", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AIUsageFeatureSlice_latencyP95Ms(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageFeatureSlice) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageFeatureSlice_latencyP95Ms(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.LatencyP95Ms, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageFeatureSlice_latencyP95Ms(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIUsageFeatureSlice", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _AIUsageProviderSlice_providerId(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageProviderSlice) (ret graphql.Marshaler) {
@@ -724,6 +955,38 @@ func (ec *executionContext) fieldContext_AIUsageSummary_byProvider(_ context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _AIUsageSummary_byFeature(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageSummary) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIUsageSummary_byFeature(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ByFeature, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []services.AIUsageFeatureSlice) graphql.Marshaler {
+			return ec.marshalNAIUsageFeatureSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSliceᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIUsageSummary_byFeature(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AIUsageSummary",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AIUsageFeatureSlice(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AIUsageSummary_recentFailures(ctx context.Context, field graphql.CollectedField, obj *services.AIUsageSummary) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -812,6 +1075,89 @@ func (ec *executionContext) _AIUsageFailure(ctx context.Context, sel ast.Selecti
 			}
 		case "at":
 			out.Values[i] = ec._AIUsageFailure_at(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var aIUsageFeatureSliceImplementors = []string{"AIUsageFeatureSlice"}
+
+func (ec *executionContext) _AIUsageFeatureSlice(ctx context.Context, sel ast.SelectionSet, obj *services.AIUsageFeatureSlice) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aIUsageFeatureSliceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AIUsageFeatureSlice")
+		case "feature":
+			out.Values[i] = ec._AIUsageFeatureSlice_feature(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "calls":
+			out.Values[i] = ec._AIUsageFeatureSlice_calls(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "failed":
+			out.Values[i] = ec._AIUsageFeatureSlice_failed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "inputTokens":
+			out.Values[i] = ec._AIUsageFeatureSlice_inputTokens(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "outputTokens":
+			out.Values[i] = ec._AIUsageFeatureSlice_outputTokens(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "reasoningTokens":
+			out.Values[i] = ec._AIUsageFeatureSlice_reasoningTokens(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "costUsd":
+			out.Values[i] = ec._AIUsageFeatureSlice_costUsd(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pricedCalls":
+			out.Values[i] = ec._AIUsageFeatureSlice_pricedCalls(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "latencyP50Ms":
+			out.Values[i] = ec._AIUsageFeatureSlice_latencyP50Ms(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "latencyP95Ms":
+			out.Values[i] = ec._AIUsageFeatureSlice_latencyP95Ms(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -996,6 +1342,11 @@ func (ec *executionContext) _AIUsageSummary(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "byFeature":
+			out.Values[i] = ec._AIUsageSummary_byFeature(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "recentFailures":
 			out.Values[i] = ec._AIUsageSummary_recentFailures(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1046,6 +1397,26 @@ func (ec *executionContext) marshalNAIUsageFailure2ᚕgithubᚗcomᚋemoss08ᚋt
 	return ret
 }
 
+func (ec *executionContext) marshalNAIUsageFeatureSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice(ctx context.Context, sel ast.SelectionSet, v services.AIUsageFeatureSlice) graphql.Marshaler {
+	return ec._AIUsageFeatureSlice(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAIUsageFeatureSlice2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSliceᚄ(ctx context.Context, sel ast.SelectionSet, v []services.AIUsageFeatureSlice) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAIUsageFeatureSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageFeatureSlice(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNAIUsageProviderSlice2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAIUsageProviderSlice(ctx context.Context, sel ast.SelectionSet, v services.AIUsageProviderSlice) graphql.Marshaler {
 	return ec._AIUsageProviderSlice(ctx, sel, &v)
 }
@@ -1074,6 +1445,25 @@ func (ec *executionContext) marshalNAIUsageSummary2ᚖgithubᚗcomᚋemoss08ᚋt
 		return graphql.Null
 	}
 	return ec._AIUsageSummary(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiusageᚐFeature(ctx context.Context, v any) (*aiusage.Feature, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := aiusage.Feature(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAIUsageFeature2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiusageᚐFeature(ctx context.Context, sel ast.SelectionSet, v *aiusage.Feature) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 // endregion ***************************** type.gotpl *****************************

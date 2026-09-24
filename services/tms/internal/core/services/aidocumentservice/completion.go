@@ -5,12 +5,11 @@ import (
 	"errors"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.uber.org/zap"
 )
 
 // structuredCall is one schema-constrained request, in the terms the router
@@ -18,7 +17,7 @@ import (
 type structuredCall struct {
 	tenant     pagination.TenantInfo
 	documentID pulid.ID
-	operation  ailog.Operation
+	feature    aiusage.Feature
 	task       aiprovider.Task
 	metric     string
 	system     string
@@ -35,7 +34,27 @@ func (c *structuredCall) request() *serviceports.StructuredCompletionRequest {
 		Context:      c.context,
 		OutputSchema: c.schema,
 		SchemaName:   c.schemaName,
+		Attribution:  documentAttribution(c.tenant, c.documentID, c.feature),
 	}
+}
+
+func documentAttribution(
+	tenant pagination.TenantInfo,
+	documentID pulid.ID,
+	feature aiusage.Feature,
+) serviceports.AIUsageAttribution {
+	attribution := serviceports.AIUsageAttribution{
+		UserID:  tenant.UserID,
+		Feature: feature,
+	}
+	if documentID.IsNotNil() {
+		attribution.Subject = aiusage.Subject{
+			Type: aiusage.SubjectTypeDocument,
+			ID:   documentID.String(),
+		}
+	}
+
+	return attribution
 }
 
 func (s *Service) runStructured(
@@ -56,8 +75,6 @@ func (s *Service) runStructured(
 		s.recordAIUsage(call.metric, false, "invalid_output")
 		return nil, err
 	}
-
-	s.logInteraction(ctx, call, result)
 
 	return result, nil
 }
@@ -91,44 +108,6 @@ func failureOutcome(err error) string {
 	default:
 		return "error"
 	}
-}
-
-func (s *Service) logInteraction(
-	ctx context.Context,
-	call *structuredCall,
-	result *serviceports.StructuredCompletionResult,
-) {
-	// The model is recorded as the provider actually reported it. It used to be
-	// the configured OpenAI model name, which was the same string every time and
-	// told a reader nothing once more than one provider can serve a task.
-	entry := &ailog.Log{
-		OrganizationID:   call.tenant.OrgID,
-		BusinessUnitID:   call.tenant.BuID,
-		UserID:           call.tenant.UserID,
-		Prompt:           redactPrompt(call.system, promptText(call.context)),
-		Response:         redactResponse(result.Text),
-		Model:            ailog.Model(result.ModelIdentifier),
-		Operation:        call.operation,
-		Object:           call.documentID.String(),
-		PromptTokens:     result.InputTokens,
-		CompletionTokens: result.OutputTokens,
-		TotalTokens:      result.InputTokens + result.OutputTokens,
-	}
-
-	if _, err := s.aiLogRepo.Create(ctx, entry); err != nil {
-		s.logger.Warn("failed to persist ai log", zap.Error(err))
-	}
-}
-
-// promptText flattens the delimited context for the log. The router does its own
-// fencing on the way out; this is only the record of what was sent.
-func promptText(deliminated serviceports.DelimitedContext) string {
-	var text string
-	for _, section := range deliminated.Sections {
-		text += section.Title + "\n" + section.Content + "\n\n"
-	}
-
-	return text
 }
 
 func (s *Service) recordAIUsage(operation string, success bool, outcome string) {

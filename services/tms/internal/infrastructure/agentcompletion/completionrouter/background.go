@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
@@ -44,6 +46,7 @@ func (s *Service) SubmitBackground(
 		SchemaName:          req.SchemaName,
 		MaxTokens:           req.MaxTokens,
 		PreferredProviderID: req.PreferredProviderID,
+		Attribution:         req.Attribution,
 	}
 
 	usable, err := s.candidatesFor(ctx, run)
@@ -183,6 +186,7 @@ func (s *Service) PollBackground(
 		outcome.State = serviceports.BackgroundPending
 	case modeladapter.BackgroundFailed:
 		outcome.State = serviceports.BackgroundFailed
+		s.recordBackground(ctx, provider, req, result)
 	case modeladapter.BackgroundCompleted:
 		outcome.State = serviceports.BackgroundCompleted
 		outcome.Result = &serviceports.StructuredCompletionResult{
@@ -193,9 +197,63 @@ func (s *Service) PollBackground(
 			ProviderID:      provider.ID,
 			ProviderKind:    provider.Kind,
 		}
+		s.recordBackground(ctx, provider, req, result)
 	}
 
 	return outcome, nil
+}
+
+func (s *Service) recordBackground(
+	ctx context.Context,
+	provider *aiprovider.Provider,
+	req *serviceports.BackgroundPollRequest,
+	result *modeladapter.BackgroundOutcome,
+) {
+	task := req.Task
+	if task == "" {
+		task = aiprovider.TaskGeneral
+	}
+
+	attempt := usageAttempt{
+		provider:    provider,
+		task:        task,
+		surface:     surfaceFor(aiusage.SurfaceBackground, req.Attribution),
+		attribution: req.Attribution,
+		tenant:      req.TenantInfo,
+		latency:     backgroundLatency(req.SubmittedAt, time.Now()),
+	}
+	if result.Response != nil {
+		attempt.outcome = &runOutcome{
+			Model: stringutils.FirstNonEmpty(
+				result.Response.ModelIdentifier,
+				result.ModelIdentifier,
+			),
+			InputTokens:     result.Response.InputTokens,
+			OutputTokens:    result.Response.OutputTokens,
+			ReasoningTokens: result.Response.ReasoningTokens,
+		}
+	}
+	if result.State == modeladapter.BackgroundFailed {
+		attempt.err = backgroundFailure(result)
+	}
+
+	s.record(ctx, attempt)
+}
+
+func backgroundLatency(submittedAt int64, now time.Time) time.Duration {
+	if submittedAt <= 0 {
+		return 0
+	}
+
+	return max(now.Sub(time.Unix(submittedAt, 0)), 0)
+}
+
+func backgroundFailure(result *modeladapter.BackgroundOutcome) error {
+	return fmt.Errorf(
+		"background call ended %s: %s",
+		stringutils.FirstNonEmpty(result.FailureCode, result.RawStatus, "failed"),
+		stringutils.FirstNonEmpty(result.FailureMessage, "no reason given"),
+	)
 }
 
 var errNoBackgroundSupport = errors.New("provider protocol has no background mode")

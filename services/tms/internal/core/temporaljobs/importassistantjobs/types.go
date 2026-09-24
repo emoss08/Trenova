@@ -7,6 +7,7 @@ package importassistantjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
@@ -52,6 +53,21 @@ func (p *TurnPayload) request() *serviceports.ShipmentImportChatRequest {
 	req.TenantInfo = p.TenantInfo
 
 	return &req
+}
+
+func (p *TurnPayload) attribution() serviceports.AIUsageAttribution {
+	attribution := serviceports.AIUsageAttribution{
+		UserID:  p.TenantInfo.UserID,
+		Feature: aiusage.FeatureShipmentImportChat,
+	}
+	if p.Request != nil {
+		attribution.Subject = aiusage.Subject{
+			Type: aiusage.SubjectTypeDocument,
+			ID:   p.Request.DocumentID,
+		}
+	}
+
+	return attribution
 }
 
 // ModelInput is one model call of a turn.

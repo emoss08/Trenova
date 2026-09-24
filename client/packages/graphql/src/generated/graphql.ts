@@ -155,6 +155,17 @@ export type AiTask =
   | 'QueryCompose'
   | 'ScopeClassification';
 
+/** The product feature that made a model call. */
+export type AiUsageFeature =
+  | 'AgentEvaluation'
+  | 'AgentTurn'
+  | 'DocumentIntelligenceExtract'
+  | 'DocumentIntelligenceRoute'
+  | 'FormulaExplain'
+  | 'FormulaGenerate'
+  | 'ShipmentImportChat'
+  | 'TableQuery';
+
 export type AccessorialMethod =
   | 'Flat'
   | 'PerUnit'
@@ -7151,7 +7162,7 @@ export type AiUsageSummaryQueryVariables = Exact<{
 }>;
 
 
-export type AiUsageSummaryQuery = { aiUsageSummary: { since: number, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number, byProvider: Array<{ providerId: string, providerName: string, model: string, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number }>, recentFailures: Array<{ providerId: string, providerName: string, model: string, task: string, errorClass: string, message: string, at: number }> } };
+export type AiUsageSummaryQuery = { aiUsageSummary: { since: number, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number, byProvider: Array<{ providerId: string, providerName: string, model: string, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number }>, byFeature: Array<{ feature: AiUsageFeature | null, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number }>, recentFailures: Array<{ providerId: string, providerName: string, model: string, task: string, errorClass: string, message: string, at: number }> } };
 
 export type ApiKeyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, keyPrefix: string, status: string, expiresAt: number, lastUsedAt: number, permissionScope: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ApiKeyTableRowFieldsFragment' };
 
@@ -20727,7 +20738,7 @@ export const AiFeedbackTableDocument = {"__meta__":{"kind":"query","name":"AIFee
 export const AgentFeedbackSummaryDocument = {"__meta__":{"kind":"query","name":"AgentFeedbackSummary","hash":"sha256:0a99eeca389833697ab85daf88747a577c77f96c073a0fdc51df38e67aad7e1b"}} as unknown as TypedDocumentString<AgentFeedbackSummaryQuery, AgentFeedbackSummaryQueryVariables>;
 export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:59ca8e0065a874a31d83b6439010be456ad24912a224b7718273d2ae50dbfa42"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
 export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:ae91e72c5f112a6aa1f37109bf70a6275196b1229a3459a30b58ee33d63bb356"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
-export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:5e9599fa59c13dde1fbde8f32c7942aa7e5ba4359259c6ab67136f9799ce0059"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
+export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:22b752f36ea7369cb330c482bae62e65443c496110818dff32d26d4405302d17"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
 export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:aeacf34d9ae14863db97c29a2ea928d83c46bba47f49ecd6a05ccdf7d4a33951"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
 export const AttentionSummaryDocument = {"__meta__":{"kind":"query","name":"AttentionSummary","hash":"sha256:f5497f5bda3b38c5a3875db4677a9a034d1bcc1c4866b6c698351fc2198b1322"}} as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;
 export const RecentActivityDocument = {"__meta__":{"kind":"query","name":"RecentActivity","hash":"sha256:3fe2bf53bf715a8f3c32bf9ed4a7f61e822b4d79f54f0564b6b647cf54b13407"}} as unknown as TypedDocumentString<RecentActivityQuery, RecentActivityQueryVariables>;

@@ -17,3 +17,12 @@ func Deref[T any](value *T) (T, bool) {
 
 	return *value, true
 }
+
+func ValueOrZero[T any](value *T) T {
+	if value == nil {
+		var zero T
+		return zero
+	}
+
+	return *value
+}

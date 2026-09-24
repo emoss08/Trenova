@@ -72,11 +72,16 @@ func (s *Service) record(ctx context.Context, attempt usageAttempt) {
 		AgentDefinitionID: attempt.attribution.AgentDefinitionID,
 		ThreadID:          attempt.attribution.ThreadID,
 		RunID:             attempt.attribution.RunID,
+		Feature:           attempt.attribution.Feature,
 		Succeeded:         attempt.err == nil,
 		ErrorClass:        classifyError(attempt.err),
 		ErrorMessage:      failureMessage(attempt.err),
 		Streamed:          attempt.streamed,
 		LatencyMs:         attempt.latency.Milliseconds(),
+	}
+	if subject := attempt.attribution.Subject; subject.Recordable() {
+		row.SubjectType = subject.Type
+		row.SubjectID = subject.ID
 	}
 	if attempt.outcome != nil {
 		row.Model = firstNonEmpty(attempt.outcome.Model, row.Model)

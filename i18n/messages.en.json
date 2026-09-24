@@ -12209,6 +12209,15 @@
       "domain/tenant"
     ]
   },
+  "Agent evaluations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Agent exception": {
     "sites": 1,
     "scope": [
@@ -12485,6 +12494,15 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "Agents and assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Agents can look up current regulations, rules and public information — hours of service, ELD requirements, hazmat placarding, IFTA filing — and cite the page and its date instead of answering from memory. Government sites are ranked first and marked as official.": {
@@ -26568,7 +26586,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 119,
+    "sites": 118,
     "scope": [
       "go"
     ],
@@ -26578,7 +26596,6 @@
       "domain/agentextension",
       "domain/agentquality",
       "domain/aifeedback",
-      "domain/ailog",
       "domain/aiprovider",
       "domain/airetrieval",
       "domain/apikey",
@@ -27218,12 +27235,13 @@
     ]
   },
   "Calls": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Can": {
@@ -36361,15 +36379,6 @@
     ],
     "areas": [
       "domain/worker"
-    ]
-  },
-  "Completion tokens cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
     ]
   },
   "Compliance": {
@@ -53002,12 +53011,14 @@
     ]
   },
   "Document extraction": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "api/handlers"
+      "api/handlers",
+      "apps/web/lib"
     ]
   },
   "Document extraction operations.": {
@@ -53325,6 +53336,15 @@
     ],
     "areas": [
       "service/invoiceservice"
+    ]
+  },
+  "Document sorting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Document templates": {
@@ -67875,6 +67895,15 @@
       "routes/shipment"
     ]
   },
+  "Feature": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Features": {
     "sites": 1,
     "scope": [
@@ -70822,6 +70851,15 @@
       "api/handlers"
     ]
   },
+  "Formula explanations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Formula fallback": {
     "sites": 1,
     "scope": [
@@ -70967,6 +71005,15 @@
     "areas": [
       "apps/web/config",
       "routes/formula-template"
+    ]
+  },
+  "Formula writing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Fortnightly": {
@@ -78228,6 +78275,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Import assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Import bank receipts": {
@@ -93817,7 +93873,7 @@
     ]
   },
   "Median response": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -95570,6 +95626,15 @@
       "routes/agent-control"
     ]
   },
+  "Model calls over the last {0} days, by the feature that made them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Model calls, {0} days": {
     "sites": 1,
     "scope": [
@@ -95589,12 +95654,11 @@
     ]
   },
   "Model cannot be longer than 200 characters": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/ailog",
       "domain/aiprovider"
     ]
   },
@@ -95617,13 +95681,12 @@
     ]
   },
   "Model is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
-      "domain/ailog",
       "domain/aiprovider",
       "routes/agent-control"
     ]
@@ -107933,24 +107996,6 @@
       "apps/web/components"
     ]
   },
-  "Object cannot be longer than 100 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
-    ]
-  },
-  "Object is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
-    ]
-  },
   "Object key is required": {
     "sites": 1,
     "scope": [
@@ -112730,22 +112775,12 @@
       "routes/admin"
     ]
   },
-  "Operation is not one this system records": {
+  "Operation is required": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/ailog"
-    ]
-  },
-  "Operation is required": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog",
       "domain/audit"
     ]
   },
@@ -113964,7 +113999,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 118,
+    "sites": 117,
     "scope": [
       "go"
     ],
@@ -113974,7 +114009,6 @@
       "domain/agentextension",
       "domain/agentquality",
       "domain/aifeedback",
-      "domain/ailog",
       "domain/aiprovider",
       "domain/airetrieval",
       "domain/apikey",
@@ -114497,7 +114531,7 @@
     ]
   },
   "Other": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -116782,12 +116816,13 @@
     ]
   },
   "Partial": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/components",
+      "routes/agent-control",
       "routes/invoice-adjustment-batch"
     ]
   },
@@ -125194,24 +125229,6 @@
       "routes/agent-control"
     ]
   },
-  "Prompt is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
-    ]
-  },
-  "Prompt tokens cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
-    ]
-  },
   "Prompt version is required": {
     "sites": 1,
     "scope": [
@@ -125794,15 +125811,6 @@
       "domain/storedmileage",
       "domain/telematics",
       "domain/tenant"
-    ]
-  },
-  "Provider kind cannot be longer than 50 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
     ]
   },
   "Provider limit": {
@@ -130508,15 +130516,6 @@
     ],
     "areas": [
       "domain/aiprovider"
-    ]
-  },
-  "Reasoning tokens cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
     ]
   },
   "Reasons": {
@@ -150975,15 +150974,6 @@
       "routes/admin"
     ]
   },
-  "Service tier cannot be longer than 100 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
-    ]
-  },
   "Service type": {
     "sites": 7,
     "scope": [
@@ -156848,13 +156838,14 @@
     ]
   },
   "Spend": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Spend against the monthly cap": {
@@ -161281,12 +161272,14 @@
     ]
   },
   "Table questions": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "api/handlers"
+      "api/handlers",
+      "apps/web/lib"
     ]
   },
   "Tag management": {
@@ -177506,12 +177499,13 @@
     ]
   },
   "Tokens": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Tokens in all": {
@@ -178519,15 +178513,6 @@
     ],
     "areas": [
       "template/detention.notice.email"
-    ]
-  },
-  "Total tokens cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
     ]
   },
   "Total weight and charges": {
@@ -183799,6 +183784,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Usage by feature": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Usage could not be loaded": {
     "sites": 1,
     "scope": [
@@ -184497,13 +184491,12 @@
     ]
   },
   "User is required": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/aifeedback",
-      "domain/ailog",
       "domain/conversation",
       "domain/documentaiextraction",
       "domain/homelayout",
@@ -203529,7 +203522,7 @@
     ]
   },
   "{0} failed": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],

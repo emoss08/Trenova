@@ -18,6 +18,38 @@ type AIUsageProviderSlice {
 }
 
 """
+The product feature that made a model call.
+"""
+enum AIUsageFeature {
+  AgentTurn
+  AgentEvaluation
+  TableQuery
+  FormulaGenerate
+  FormulaExplain
+  ShipmentImportChat
+  DocumentIntelligenceRoute
+  DocumentIntelligenceExtract
+}
+
+"""
+One feature's share of a usage window.
+"""
+type AIUsageFeatureSlice {
+  "Null for calls made before features were recorded, or by a caller that names none."
+  feature: AIUsageFeature
+  calls: Int!
+  failed: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  reasoningTokens: Int!
+  "Sum over the calls that carried a price; see pricedCalls."
+  costUsd: Decimal!
+  pricedCalls: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+}
+
+"""
 What the organization's models did over a window: how many calls, how many
 failed, what they consumed, what it cost where the price is known, and how
 long a person waited. Latency percentiles are over successful calls only.
@@ -35,6 +67,8 @@ type AIUsageSummary {
   latencyP50Ms: Int!
   latencyP95Ms: Int!
   byProvider: [AIUsageProviderSlice!]!
+  "Usage by the feature that made the calls, busiest first."
+  byFeature: [AIUsageFeatureSlice!]!
   "The newest failed calls in the window, with the provider's own message."
   recentFailures: [AIUsageFailure!]!
 }

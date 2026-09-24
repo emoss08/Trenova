@@ -203,8 +203,6 @@ func (s *Service) FinishTurn(
 		return nil, err
 	}
 
-	s.logAICall(ctx, req, record)
-
 	return &serviceports.ShipmentImportChatResponse{
 		Message:        record.Message,
 		ConversationID: handle,

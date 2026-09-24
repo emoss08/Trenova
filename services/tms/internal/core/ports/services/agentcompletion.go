@@ -181,9 +181,12 @@ type BackgroundSubmission struct {
 // a handle belongs to the endpoint that issued it; asking a different provider
 // about it would at best 404 and at worst read someone else's call.
 type BackgroundPollRequest struct {
-	TenantInfo pagination.TenantInfo
-	ProviderID pulid.ID
-	Handle     string
+	TenantInfo  pagination.TenantInfo
+	ProviderID  pulid.ID
+	Handle      string
+	Task        aiprovider.Task
+	SubmittedAt int64
+	Attribution AIUsageAttribution
 }
 
 type BackgroundOutcome struct {

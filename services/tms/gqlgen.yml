@@ -3708,6 +3708,12 @@ models:
   AIUsageFailure:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AIUsageFailure
+  AIUsageFeatureSlice:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIUsageFeatureSlice
+  AIUsageFeature:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiusage.Feature
   AROpenItem:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.AROpenItem
