@@ -76616,6 +76616,11 @@ extend type Mutation {
   CustomerUpdateDesk
   CarrierRiskDesk
   IntakeDesk
+  LoadEntryCheck
+  ServiceFailureDesk
+  InsightAnalyst
+  EDIDesk
+  FormulaAssistant
 }
 
 enum AgentTriggerMode {

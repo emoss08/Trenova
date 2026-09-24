@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -53,6 +54,7 @@ type Params struct {
 	Inbound      repositories.InboundMessageRepository      `optional:"true"`
 	Reports      repositories.ReportDefinitionRepository    `optional:"true"`
 	Dashboards   repositories.ReportDashboardRepository     `optional:"true"`
+	Dispatch     repositories.DispatchControlRepository     `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -74,6 +76,7 @@ type Service struct {
 	inbound      repositories.InboundMessageRepository
 	reports      repositories.ReportDefinitionRepository
 	dashboards   repositories.ReportDashboardRepository
+	dispatch     repositories.DispatchControlRepository
 	logger       *zap.Logger
 }
 
@@ -94,6 +97,7 @@ func New(p Params) serviceports.AgentSubjectDescriber {
 		inbound:      p.Inbound,
 		reports:      p.Reports,
 		dashboards:   p.Dashboards,
+		dispatch:     p.Dispatch,
 		logger:       p.Logger.Named("service.agentsubject"),
 	}
 }
@@ -219,10 +223,53 @@ func (s *Service) shipmentMove(
 	}
 	if len(moves) > 0 {
 		subject.Label = "Shipment move for PRO " + moves[0].ProNumber
-		subject.Notes = marshalNotes(moves[0])
+		subject.Notes = marshalNotes(moveNotes{
+			BoardMove: moves[0],
+			Coverage:  s.moveCoverage(ctx, tenant, moves[0]),
+		})
 	}
 
 	return subject, nil
+}
+
+type moveNotes struct {
+	*repositories.BoardMove
+
+	Coverage *moveCoverage `json:"coverage,omitempty"`
+}
+
+type moveCoverage struct {
+	WindowHours    int16 `json:"windowHours"`
+	StartsAt       int64 `json:"startsAt"`
+	StartsInWindow bool  `json:"startsInsideWindow"`
+}
+
+func (s *Service) moveCoverage(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	move *repositories.BoardMove,
+) *moveCoverage {
+	if s.dispatch == nil || move == nil || move.OriginWindowStart <= 0 {
+		return nil
+	}
+
+	control, err := s.dispatch.GetByOrgID(ctx, repositories.GetDispatchControlRequest{
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		s.logger.Warn("shipment move subject: coverage window unavailable", zap.Error(err))
+
+		return nil
+	}
+
+	return &moveCoverage{
+		WindowHours: control.CoverageWindowHours(),
+		StartsAt:    move.OriginWindowStart,
+		StartsInWindow: control.StartsInsideCoverageWindow(
+			move.OriginWindowStart,
+			timeutils.NowUnix(),
+		),
+	}
 }
 
 func marshalNotes(value any) string {
@@ -302,6 +349,9 @@ func (s *Service) shipment(
 	})
 	subject.Label = "Shipment PRO " + entity.ProNumber
 	subject.Notes = marshalNotes(snapshot)
+	if entity.EntryMethod == shipment.EntryMethodEDI {
+		subject.OutsideAuthored = agent.TaintSourceEDI
+	}
 
 	return subject, nil
 }

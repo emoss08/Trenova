@@ -6,7 +6,10 @@ import {
   BellIcon,
   BotIcon,
   ClipboardCheckIcon,
+  ClipboardListIcon,
+  CompassIcon,
   FileInputIcon,
+  FileWarningIcon,
   GaugeIcon,
   HeadsetIcon,
   InboxIcon,
@@ -20,6 +23,8 @@ import {
   PackagePlusIcon,
   LandmarkIcon,
   SearchIcon,
+  SigmaIcon,
+  TimerOffIcon,
 } from "lucide-react";
 import { useMemo } from "react";
 import type { Control } from "react-hook-form";
@@ -42,6 +47,11 @@ export const TEMPLATE_ICONS: Record<AgentTemplateKind, LucideIcon> = {
   CustomerUpdateDesk: BellIcon,
   CarrierRiskDesk: SearchIcon,
   IntakeDesk: InboxIcon,
+  LoadEntryCheck: ClipboardListIcon,
+  ServiceFailureDesk: TimerOffIcon,
+  InsightAnalyst: CompassIcon,
+  EDIDesk: FileWarningIcon,
+  FormulaAssistant: SigmaIcon,
 };
 
 type TemplatePickerProps = {

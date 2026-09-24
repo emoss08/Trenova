@@ -3,6 +3,7 @@ package dispatchcontrol
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -103,6 +104,10 @@ func (dc *DispatchControl) CoverageWindowHours() int16 {
 	}
 
 	return dc.CoverageRiskWindowHours
+}
+
+func (dc *DispatchControl) StartsInsideCoverageWindow(startsAt, now int64) bool {
+	return startsAt <= now+int64(dc.CoverageWindowHours())*int64(time.Hour/time.Second)
 }
 
 func (dc *DispatchControl) ResolvedPlanningMode() PlanningMode {

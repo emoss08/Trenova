@@ -41,9 +41,14 @@ func (d *Definition) DataAccessSensitivity() permission.FieldSensitivity {
 }
 
 func (t Template) StarterDataAccess() DataAccessCeiling {
-	if t == TemplateCashApplication || t.StarterTrigger() == TriggerChat {
+	switch t {
+	case TemplateCashApplication, TemplateLoadEntryCheck, TemplateInsightAnalyst:
 		return DataAccessRestricted
-	}
+	default:
+		if t.StarterTrigger() == TriggerChat {
+			return DataAccessRestricted
+		}
 
-	return DataAccessInternal
+		return DataAccessInternal
+	}
 }

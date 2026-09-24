@@ -13,8 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// secondsPerHour turns the coverage window, which people set in hours, into
-// the epoch seconds every timestamp here is in.
+// secondsPerHour turns the epoch seconds every timestamp here is in into the
+// hours a move is out, which is how people read the coverage window.
 const secondsPerHour = int64(3600)
 
 type ActivitiesParams struct {
@@ -162,11 +162,10 @@ func (a *Activities) raiseCoverageRisk(
 	}
 
 	now := a.now()
-	cutoff := now + int64(control.CoverageWindowHours())*secondsPerHour
 
 	raised := 0
 	for _, move := range dated {
-		if move.StartsAt > cutoff {
+		if !control.StartsInsideCoverageWindow(move.StartsAt, now) {
 			continue
 		}
 		raised++

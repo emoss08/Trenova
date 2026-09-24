@@ -487,6 +487,57 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	assert.Equal(t, agent.RunTriggerManual, runs.last.Trigger)
 }
 
+func TestHandOff_SuggestsTheStarterThatListensForTheEvent(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		event    agent.EventKind
+		source   watchtower.SourceKind
+		template agentdefinition.Template
+	}{
+		{agent.EventShipmentCreated, watchtower.SourceServiceFailure,
+			agentdefinition.TemplateLoadEntryCheck},
+		{agent.EventShipmentMoveUnassigned, watchtower.SourceMoveCoverage,
+			agentdefinition.TemplateDispatchAssignment},
+		{agent.EventServiceFailureDetected, watchtower.SourceServiceFailure,
+			agentdefinition.TemplateServiceFailureDesk},
+		{agent.EventInsightDetected, watchtower.SourceInsight,
+			agentdefinition.TemplateInsightAnalyst},
+		{agent.EventEDIFileQuarantined, watchtower.SourceEDIInboundQuarantined,
+			agentdefinition.TemplateEDIDesk},
+		{agent.EventBillingQueueItemOnHold, watchtower.SourceBillingException,
+			agentdefinition.TemplateBillingException},
+	}
+
+	for _, tc := range cases {
+		t.Run(string(tc.event), func(t *testing.T) {
+			t.Parallel()
+
+			repo := newStubRepo()
+			actor := testActor()
+			tenant := actor.TenantInfo()
+			svc := newService(repo, &agentruntimetest.StubPermissions{})
+			svc.definitions = &stubDefinitions{}
+			svc.events = &stubEvents{}
+
+			in := input(tenant, tc.source, string(tc.event), watchtower.SeverityWarning, 100)
+			in.SubjectType = tc.event.SubjectType()
+			in.SubjectID = pulid.MustNew("sub_")
+			in.EventKind = tc.event
+			item, err := svc.projector.upsert(t.Context(), in)
+			require.NoError(t, err)
+
+			result, err := svc.HandOff(
+				t.Context(),
+				services.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
+				actor,
+			)
+			require.NoError(t, err)
+			assert.Contains(t, result.Templates, tc.template)
+		})
+	}
+}
+
 func TestHandOff_RefusesAnItemTheReaderMayNotSee(t *testing.T) {
 	t.Parallel()
 

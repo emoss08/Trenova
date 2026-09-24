@@ -279,7 +279,12 @@ const (
 	TaintEntityShipmentComment = "shipment_comment"
 	TaintEntityWeatherAlert    = "weather_alert"
 	TaintEntityWatchtowerItem  = "watchtower_item"
+	TaintEntityShipment        = "shipment"
 )
+
+var outsideAuthoredEntities = map[SubjectType]string{
+	SubjectShipment: TaintEntityShipment,
+}
 
 func (s SubjectType) TaintSource() (TaintSource, string, bool) {
 	switch s {
@@ -299,6 +304,24 @@ func (s SubjectType) TaintSource() (TaintSource, string, bool) {
 func SubjectTaint(subjectType SubjectType, subjectID string, at int64) (TaintMark, bool) {
 	source, entity, ok := subjectType.TaintSource()
 	if !ok || subjectID == "" {
+		return TaintMark{}, false
+	}
+
+	return TaintMark{
+		Source: source,
+		Ref:    &RecordRef{EntityType: entity, ID: subjectID},
+		At:     at,
+	}, true
+}
+
+func OutsideAuthoredTaint(
+	source TaintSource,
+	subjectType SubjectType,
+	subjectID string,
+	at int64,
+) (TaintMark, bool) {
+	entity, ok := outsideAuthoredEntities[subjectType]
+	if !ok || !source.IsValid() || subjectID == "" {
 		return TaintMark{}, false
 	}
 

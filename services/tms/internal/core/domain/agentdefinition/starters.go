@@ -334,6 +334,102 @@ var templateStarters = map[Template][]starterQuestion{
 			"search_shipments",
 		),
 	},
+	TemplateLoadEntryCheck: {
+		ask(
+			"Is this shipment a duplicate?",
+			"Look for another shipment with the same BOL or PRO as this one, and tell me "+
+				"whether it is the same load.",
+			"search_shipments",
+		),
+		ask(
+			"Does the rate fit the lane?",
+			"Compare this shipment's rate with a fresh quote for the same customer and stops.",
+			"explain_rate", "quote_shipment",
+		),
+		ask(
+			"Which hold reasons can I use?",
+			"Which hold reasons are set up, and what does each one block?",
+			"list_hold_reasons",
+		),
+	},
+	TemplateServiceFailureDesk: {
+		ask(
+			"Which service failures are open?",
+			"Which service failures are still open, and what caused them?",
+			"list_service_failures",
+		),
+		ask(
+			"Why was this stop late?",
+			"Look into this shipment's late stop and tell me what caused it.",
+			"get_service_failure", "get_shipment_tracking",
+		),
+		ask(
+			"Which reason codes can I use?",
+			"Which service failure reason codes are set up, and when does each one apply?",
+			"list_service_failure_reason_codes",
+		),
+	},
+	TemplateInsightAnalyst: {
+		ask(
+			"What stands out today?",
+			"Which open insights need my attention today?",
+			"list_insights",
+		),
+		ask(
+			"Does this finding hold up?",
+			"Check this insight against the records behind it and tell me whether it holds up.",
+			"get_insight",
+		),
+		ask(
+			"Which reports can I run?",
+			"Which reports can I run, and what does each one show?",
+			"list_reports",
+		),
+	},
+	TemplateEDIDesk: {
+		ask(
+			"Which EDI files are quarantined?",
+			"Which inbound EDI files are in quarantine, and why did each one fail?",
+			"list_edi_inbound_files",
+		),
+		ask(
+			"Why did this EDI file fail?",
+			"Tell me why this EDI file could not be processed and what would fix it.",
+			"get_edi_inbound_file",
+		),
+		ask(
+			"Is a partner ready for EDI?",
+			"Is this trading partner set up to send us EDI, and what is still missing?",
+			"get_edi_partner",
+		),
+		ask(
+			"Which tenders were rejected?",
+			"Which EDI load tenders were rejected or failed, and why?",
+			"list_edi_transfers",
+		),
+	},
+	TemplateFormulaAssistant: {
+		ask(
+			"How was this rate worked out?",
+			"Explain how this shipment's rate was worked out, charge by charge.",
+			"explain_rate",
+		),
+		ask(
+			"Which accessorials can I charge?",
+			"List the accessorial charges we have set up and how each one is calculated.",
+			"list_accessorial_charges",
+		),
+		ask(
+			"What is this week's fuel surcharge?",
+			"What is this week's fuel surcharge for each of our fuel programs?",
+			"get_fuel_surcharge_rates",
+		),
+		ask(
+			"Which rate agreements are active?",
+			"Which rate agreements are active, and who does each one price for?",
+			"list_rate_agreements",
+		),
+	},
 }
 
 var toolFamilies = [][]starterQuestion{

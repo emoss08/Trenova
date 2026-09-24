@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -52,9 +53,39 @@ func (t *transitionToInReviewTool) Policy() serviceports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
+		Condition: &serviceports.TierCondition{
+			Description: "An item on hold was held there by a person or a rule, so moving one " +
+				"into review is a proposal a person decides; an item in any other state moves " +
+				"as far as the agent allows, and one that cannot be read waits for a person.",
+			Limit: t.tierLimit,
+		},
 		Rationale: "Moves the run's billing queue item into review inside Trenova; nothing " +
 			"is sent anywhere.",
 	}
+}
+
+func (t *transitionToInReviewTool) tierLimit(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) agent.AutonomyTier {
+	if params.Actor == nil {
+		return agent.TierPropose
+	}
+
+	itemID, err := requirePulid(params.Params, "billingQueueItemId")
+	if err != nil {
+		return agent.TierPropose
+	}
+
+	item, err := t.billing.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+		TenantInfo: tenantFrom(params),
+		ItemID:     itemID,
+	})
+	if err != nil || item == nil || item.Status == billingqueue.StatusOnHold {
+		return agent.TierPropose
+	}
+
+	return agent.TierAutoExecute
 }
 
 func (t *transitionToInReviewTool) Execute(

@@ -56,6 +56,7 @@ Cases live in `services/tms/internal/core/services/agentredteam/testdata/cases/*
 | A malicious inbound email | `get_inbound_message`, the run's subject, or its headline on the watchtower (`list_watchtower_items`) |
 | Document text | `get_document_summary` |
 | A record note | a driver's Dash comment returned by `get_shipment`, which marks it `record_note` |
+| A partner's shipment | the run's subject, a shipment entered by EDI (`RuntimeSubject.OutsideAuthored`), whose instructions the trading partner wrote |
 | A bank memo | `get_bank_receipt` |
 | An attachment | a file the person attached to the question |
 | Web search results | `web_search`, with the extension on |

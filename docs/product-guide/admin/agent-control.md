@@ -114,6 +114,22 @@ Keywords: new agent, build agent, automation, scheduled agent, agent template, d
 8. Optionally set a **Monthly budget**, **Runs per day** and a **Preferred provider**, leave
    **Enabled** on, and select **Save**.
 
+### Have an agent work each event as it happens
+Keywords: event agent, check new shipments, load entry check, duplicate shipment check, service failure agent, insight analyst, EDI quarantine agent, unassigned move agent, billing hold agent
+1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
+2. Select **New agent**.
+3. In **Start from**, choose the starter for the event: the load entry check reads each new
+   shipment for duplicates, a rate that disagrees with the lane and stops out of order; the
+   service failure desk works every open failure on a shipment and tells the customer when they
+   asked to be told; the insight analyst checks each new insight against its records; the EDI
+   desk says why a quarantined EDI file failed and what would fix it, and changes nothing. The
+   dispatch coverage agent also takes a move that loses its driver, and the billing exception
+   agent a billing item put on hold.
+4. Check the tools, the **Ceiling** and **Data access** the starter filled in. The insight
+   analyst also starts with a cap on **Runs per day**.
+5. Under **When it runs**, **Event** is already chosen with the events the starter listens for.
+6. Turn on **Shadow mode** to watch what it would do first, then select **Save**.
+
 ### Let an agent hand work to another agent
 Keywords: sub-agent, delegate, deploy a sub agent, ask another agent, report builder agent, agent can't reach another agent
 1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.

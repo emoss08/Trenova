@@ -18,6 +18,11 @@ export const agentTemplateKindSchema = z.enum([
   "CustomerUpdateDesk",
   "CarrierRiskDesk",
   "IntakeDesk",
+  "LoadEntryCheck",
+  "ServiceFailureDesk",
+  "InsightAnalyst",
+  "EDIDesk",
+  "FormulaAssistant",
 ]);
 
 export const autonomyTierSchema = z.enum(["Propose", "ActWithApproval", "AutoExecute"]);
@@ -229,6 +234,8 @@ export const agentTemplateSchema = z.object({
   starterCeiling: autonomyTierSchema,
   starterDataAccess: dataAccessCeilingSchema.default("Internal"),
   starterOutput: outputModeSchema,
+  /** Runs a day the starter suggests; 0 is no cap. */
+  starterDailyRunLimit: z.number().int().nonnegative().default(0),
   systemKey: z.string().optional().default(""),
   contextProviders: nullableList(contextProviderSchema),
 });

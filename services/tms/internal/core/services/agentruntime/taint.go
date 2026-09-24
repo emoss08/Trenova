@@ -30,6 +30,10 @@ func contextTaint(rc *agentdefinition.RuntimeContext, now int64) []agent.TaintMa
 	if rc.Subject != nil {
 		if mark, ok := agent.SubjectTaint(rc.Subject.Type, rc.Subject.ID, now); ok {
 			marks = append(marks, mark)
+		} else if mark, ok = agent.OutsideAuthoredTaint(
+			rc.Subject.OutsideAuthored, rc.Subject.Type, rc.Subject.ID, now,
+		); ok {
+			marks = append(marks, mark)
 		}
 	}
 	for idx := range rc.Attachments {

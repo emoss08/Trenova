@@ -85,6 +85,11 @@ var templateIcons = map[Template]string{
 	TemplateCustomerUpdateDesk:  IconBell,
 	TemplateCarrierRiskDesk:     IconSearch,
 	TemplateIntakeDesk:          IconInbox,
+	TemplateLoadEntryCheck:      IconClipboard,
+	TemplateServiceFailureDesk:  IconHeadset,
+	TemplateInsightAnalyst:      IconCompass,
+	TemplateEDIDesk:             IconFile,
+	TemplateFormulaAssistant:    IconSparkle,
 }
 
 func KnownIcons() []string {

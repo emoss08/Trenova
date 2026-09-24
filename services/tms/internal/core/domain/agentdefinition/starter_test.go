@@ -104,6 +104,9 @@ func TestTemplates_OutwardFacingDesksStartAtPropose(t *testing.T) {
 	for _, template := range []agentdefinition.Template{
 		agentdefinition.TemplateCustomerUpdateDesk,
 		agentdefinition.TemplateCarrierRiskDesk,
+		agentdefinition.TemplateLoadEntryCheck,
+		agentdefinition.TemplateInsightAnalyst,
+		agentdefinition.TemplateEDIDesk,
 	} {
 		require.Equal(t, agent.TierPropose, template.StarterCeiling(), template.Label())
 	}
@@ -129,9 +132,26 @@ func TestTemplates_TheNewDesksWaitOnTheirOwnEvents(t *testing.T) {
 		},
 		agentdefinition.TemplateDispatchAssignment: {
 			agent.EventShipmentMoveCoverageAtRisk,
+			agent.EventShipmentMoveUnassigned,
 		},
 		agentdefinition.TemplateIntakeDesk: {
 			agent.EventInboundMessageClassified,
+		},
+		agentdefinition.TemplateBillingException: {
+			agent.EventBillingQueueItemException,
+			agent.EventBillingQueueItemOnHold,
+		},
+		agentdefinition.TemplateLoadEntryCheck: {
+			agent.EventShipmentCreated,
+		},
+		agentdefinition.TemplateServiceFailureDesk: {
+			agent.EventServiceFailureDetected,
+		},
+		agentdefinition.TemplateInsightAnalyst: {
+			agent.EventInsightDetected,
+		},
+		agentdefinition.TemplateEDIDesk: {
+			agent.EventEDIFileQuarantined,
 		},
 	}
 
@@ -171,4 +191,112 @@ func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
 	for _, tool := range []string{"create_shipment", "post_customer_payment", "tender_move_to_carriers"} {
 		require.NotContainsf(t, tools, tool, "the intake desk must not hold %s", tool)
 	}
+}
+
+func TestTemplates_EveryEventIsHeardByAStarter(t *testing.T) {
+	t.Parallel()
+
+	heard := make(map[agent.EventKind][]agentdefinition.Template)
+	for _, template := range agentdefinition.AllTemplates() {
+		for _, kind := range template.StarterEvents() {
+			heard[kind] = append(heard[kind], template)
+		}
+	}
+
+	for _, event := range agent.KnownEvents() {
+		require.NotEmptyf(t, heard[event.Kind],
+			"nothing starts from %q, so a hand-off from the watchtower suggests no agent for it",
+			event.Kind,
+		)
+	}
+}
+
+func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		template agentdefinition.Template
+		needs    []string
+		never    []string
+	}{
+		{
+			template: agentdefinition.TemplateLoadEntryCheck,
+			needs: []string{
+				"get_shipment", "search_shipments", "explain_rate", "quote_shipment",
+				"list_hold_reasons", "add_shipment_comment", "place_shipment_hold",
+			},
+			never: []string{"email_customer", "update_shipment", "cancel_shipment"},
+		},
+		{
+			template: agentdefinition.TemplateServiceFailureDesk,
+			needs: []string{
+				"list_service_failures", "get_service_failure",
+				"list_service_failure_reason_codes", "resolve_service_failure",
+				"get_customer_update_preferences", "email_customer",
+			},
+			never: []string{"post_customer_payment", "notify_driver"},
+		},
+		{
+			template: agentdefinition.TemplateInsightAnalyst,
+			needs:    []string{"get_insight", "list_insights", "preview_report", "dismiss_insight"},
+			never:    []string{"email_customer", "create_report", "update_report"},
+		},
+		{
+			template: agentdefinition.TemplateEDIDesk,
+			needs: []string{
+				"list_edi_inbound_files", "get_edi_inbound_file", "list_edi_transfers",
+				"get_edi_partner",
+			},
+			never: []string{"create_shipment", "email_customer", "reply_to_inbound_message"},
+		},
+	}
+
+	for _, tc := range cases {
+		tools := tc.template.StarterTools()
+		for _, tool := range tc.needs {
+			require.Containsf(t, tools, tool, "%s needs %s", tc.template.Label(), tool)
+		}
+		for _, tool := range tc.never {
+			require.NotContainsf(t, tools, tool, "%s must not hold %s", tc.template.Label(), tool)
+		}
+	}
+}
+
+func TestTemplates_TheInsightAnalystIsCappedAtTwentyRunsADay(t *testing.T) {
+	t.Parallel()
+
+	require.Equal(t, 20, agentdefinition.TemplateInsightAnalyst.StarterDailyRunLimit())
+	for _, template := range agentdefinition.AllTemplates() {
+		if template == agentdefinition.TemplateInsightAnalyst {
+			continue
+		}
+		require.Zerof(t, template.StarterDailyRunLimit(), "%s", template.Label())
+	}
+}
+
+func TestTemplates_DataAccessFollowsWhatEachDeskReads(t *testing.T) {
+	t.Parallel()
+
+	cases := map[agentdefinition.Template]agentdefinition.DataAccessCeiling{
+		agentdefinition.TemplateLoadEntryCheck:     agentdefinition.DataAccessRestricted,
+		agentdefinition.TemplateInsightAnalyst:     agentdefinition.DataAccessRestricted,
+		agentdefinition.TemplateCashApplication:    agentdefinition.DataAccessRestricted,
+		agentdefinition.TemplateServiceFailureDesk: agentdefinition.DataAccessInternal,
+		agentdefinition.TemplateEDIDesk:            agentdefinition.DataAccessInternal,
+		agentdefinition.TemplateBillingException:   agentdefinition.DataAccessInternal,
+		agentdefinition.TemplateFormulaAssistant:   agentdefinition.DataAccessRestricted,
+	}
+	for template, want := range cases {
+		require.Equalf(t, want, template.StarterDataAccess(), "%s", template.Label())
+	}
+}
+
+func TestTemplates_TheFormulaAssistantIsAChatAgentThatOnlyReads(t *testing.T) {
+	t.Parallel()
+
+	assistant := agentdefinition.TemplateFormulaAssistant
+	require.Equal(t, agentdefinition.TriggerChat, assistant.StarterTrigger())
+	require.Empty(t, assistant.StarterEvents())
+	require.Equal(t, agent.TierPropose, assistant.StarterCeiling())
+	require.NotEmpty(t, assistant.StarterTools())
 }
