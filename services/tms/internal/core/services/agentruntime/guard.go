@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"go.uber.org/zap"
 )
@@ -40,6 +41,7 @@ type guardedDispatchParams struct {
 	proposedSoFar  []serviceports.PendingAction
 	// ordinal numbers this exact call within the run; the loop assigns it.
 	ordinal int
+	taint   *agent.RunTaint
 	// afterExternal says the turn has read content from outside the
 	// organization, so no write may run without a person.
 	afterExternal bool
@@ -80,6 +82,7 @@ func (s *Service) guardedDispatch(
 			completionText: p.completionText,
 			proposedSoFar:  p.proposedSoFar,
 			idempotencyKey: p.call.ID,
+			taint:          p.taint,
 			afterExternal:  p.afterExternal,
 		})
 	}
@@ -127,6 +130,7 @@ func (s *Service) guardedDispatch(
 		completionText: p.completionText,
 		proposedSoFar:  p.proposedSoFar,
 		idempotencyKey: key,
+		taint:          p.taint,
 		afterExternal:  p.afterExternal,
 	})
 
@@ -138,6 +142,7 @@ func (s *Service) guardedDispatch(
 		Content: outcome.content,
 		Failed:  outcome.failed,
 		Action:  outcome.action,
+		Taint:   outcome.taint,
 	}
 	if !outcome.failed && showsResults(req) {
 		step.Outcome.Data = stepData(outcome.data)
@@ -175,7 +180,12 @@ func replayedOutcome(recorded serviceports.RunStepOutcome) toolOutcome {
 			"Its answer was not kept, but it was not run again."
 	}
 
-	outcome := toolOutcome{content: content, failed: recorded.Failed, action: recorded.Action}
+	outcome := toolOutcome{
+		content: content,
+		failed:  recorded.Failed,
+		action:  recorded.Action,
+		taint:   recorded.Taint,
+	}
 	// A nil map in an interface is not a nil interface, and an observer
 	// reading one would take the call for a query that returned something.
 	if len(recorded.Data) > 0 {

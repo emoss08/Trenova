@@ -1630,6 +1630,18 @@ func init() {
 				FieldMapKey: "agentDefinitionId",
 			},
 			{
+				Name:        "scope",
+				FieldMapKey: "scope",
+			},
+			{
+				Name:        "tainted",
+				FieldMapKey: "tainted",
+			},
+			{
+				Name:        "taintRunId",
+				FieldMapKey: "taintRunId",
+			},
+			{
 				Name:        "sourceRunId",
 				FieldMapKey: "sourceRunId",
 			},
@@ -1840,6 +1852,22 @@ func init() {
 				Special: "modifications",
 			},
 			{
+				Name:        "tainted",
+				FieldMapKey: "tainted",
+			},
+			{
+				Name:        "taint",
+				FieldMapKey: "taint",
+			},
+			{
+				Name:        "egressClass",
+				FieldMapKey: "egressClass",
+			},
+			{
+				Name:        "heldBy",
+				FieldMapKey: "heldBy",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -1933,6 +1961,18 @@ func init() {
 			{
 				Name:        "errorMessage",
 				FieldMapKey: "errorMessage",
+			},
+			{
+				Name:        "tainted",
+				FieldMapKey: "tainted",
+			},
+			{
+				Name:        "taint",
+				FieldMapKey: "taint",
+			},
+			{
+				Name:        "taintedAt",
+				FieldMapKey: "taintedAt",
 			},
 			{
 				Name:        "version",

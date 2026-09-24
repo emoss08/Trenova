@@ -312,6 +312,11 @@ export type AgentMemoryKind =
   | 'Fact'
   | 'Instruction';
 
+/** Who reads a memory: every agent in the organization, or only the agent it was kept for. */
+export type AgentMemoryScope =
+  | 'Agent'
+  | 'Organization';
+
 export type AgentMemorySource =
   | 'Agent'
   | 'Decision'
@@ -452,7 +457,9 @@ export type AgentTaintSource =
   | 'InboundMessage'
   | 'Memory'
   | 'RunRecord'
-  | 'Weather';
+  | 'Weather'
+  /** A web page or search result an extension returned. */
+  | 'Web';
 
 export type AgentTemplate =
   | 'BillingAssistant'
@@ -550,6 +557,8 @@ export type ApproveAgentMemorySuggestionInput = {
   content: string;
   /** Defaults to the suggestion's kind. */
   kind?: AgentMemoryKind | null | undefined;
+  /** Defaults to Agent: a suggestion drawn from one agent's ratings is kept for that agent. Organization reads it into every agent's prompt. */
+  scope?: AgentMemoryScope | null | undefined;
   version: number;
 };
 
@@ -6729,7 +6738,7 @@ export type DecideAgentPlanMutation = { decideAgentPlan: { ' $fragmentRefs'?: { 
 
 export type AgentEvidenceRefFieldsFragment = { type: string, id: string, note: string } & { ' $fragmentName'?: 'AgentEvidenceRefFieldsFragment' };
 
-export type AgentProposalTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null }> } & { ' $fragmentName'?: 'AgentProposalTableRowFieldsFragment' };
+export type AgentProposalTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, modifications: unknown, tainted: boolean, egressClass: AgentEgressClass | null, heldBy: Array<string>, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null }> } & { ' $fragmentName'?: 'AgentProposalTableRowFieldsFragment' };
 
 export type AgentProposalDetailFieldsFragment = (
   { evidence: Array<{ ' $fragmentRefs'?: { 'AgentEvidenceRefFieldsFragment': AgentEvidenceRefFieldsFragment } }> }
@@ -13291,6 +13300,9 @@ export const AgentProposalTableRowFieldsFragmentDoc = new TypedDocumentString(`
     maxLength
   }
   modifications
+  tainted
+  egressClass
+  heldBy
   version
   createdAt
   updatedAt
@@ -13331,6 +13343,9 @@ fragment AgentProposalTableRowFields on AgentProposal {
     maxLength
   }
   modifications
+  tainted
+  egressClass
+  heldBy
   version
   createdAt
   updatedAt
@@ -20167,8 +20182,8 @@ export const DismissAgentMemorySuggestionDocument = {"__meta__":{"kind":"mutatio
 export const AgentPlanTableDocument = {"__meta__":{"kind":"query","name":"AgentPlanTable","hash":"sha256:5255cd6f89e45711f75b6a9c0bab65c62fd49fb78028a756fa2ad1645c479b3b"}} as unknown as TypedDocumentString<AgentPlanTableQuery, AgentPlanTableQueryVariables>;
 export const AgentPlanDetailDocument = {"__meta__":{"kind":"query","name":"AgentPlanDetail","hash":"sha256:3affbeb0bac2f8967290c76d3dce18119fce77b53b295399e5764897a1a475ef"}} as unknown as TypedDocumentString<AgentPlanDetailQuery, AgentPlanDetailQueryVariables>;
 export const DecideAgentPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentPlan","hash":"sha256:b2f23a83f557ca02504d0a017043627ff687ebcebb5ac117779eb4d5611ff57c"}} as unknown as TypedDocumentString<DecideAgentPlanMutation, DecideAgentPlanMutationVariables>;
-export const AgentProposalTableDocument = {"__meta__":{"kind":"query","name":"AgentProposalTable","hash":"sha256:39a399071899c579bd7f97bcf3212973f13a47c61c5722e50ba358b6bf63061d"}} as unknown as TypedDocumentString<AgentProposalTableQuery, AgentProposalTableQueryVariables>;
-export const AgentProposalDetailDocument = {"__meta__":{"kind":"query","name":"AgentProposalDetail","hash":"sha256:793102a0ddbd91b81753756997af38048a1114d1af51dc52740d1b0e4c2e1823"}} as unknown as TypedDocumentString<AgentProposalDetailQuery, AgentProposalDetailQueryVariables>;
+export const AgentProposalTableDocument = {"__meta__":{"kind":"query","name":"AgentProposalTable","hash":"sha256:d40973ae042db835fb380334d8fa552bdfb5041bcf88854f0a16b24dc2e0b3d5"}} as unknown as TypedDocumentString<AgentProposalTableQuery, AgentProposalTableQueryVariables>;
+export const AgentProposalDetailDocument = {"__meta__":{"kind":"query","name":"AgentProposalDetail","hash":"sha256:368b228c6509f703237086c611f9ce712f4aead026d170e61fa1bb14b20aed5b"}} as unknown as TypedDocumentString<AgentProposalDetailQuery, AgentProposalDetailQueryVariables>;
 export const DecideAgentProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposal","hash":"sha256:ba06fd0f5bb9168980d5d967514bf0bcbd80382200e836955aa5704c4c9f1836"}} as unknown as TypedDocumentString<DecideAgentProposalMutation, DecideAgentProposalMutationVariables>;
 export const AgentRunTableDocument = {"__meta__":{"kind":"query","name":"AgentRunTable","hash":"sha256:938af4f2a45104c1bf195b3a992b531ebb470f63a2b1dd65dd1b933827662d5d"}} as unknown as TypedDocumentString<AgentRunTableQuery, AgentRunTableQueryVariables>;
 export const AgentRunDetailDocument = {"__meta__":{"kind":"query","name":"AgentRunDetail","hash":"sha256:780230a3bc44a3aed467ed21d5aabd4142c705410579b4bcd855316f808315c5"}} as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;

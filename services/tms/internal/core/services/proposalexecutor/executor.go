@@ -158,6 +158,14 @@ var ErrToolMissing = errors.New("proposal names a tool this system does not prov
 // ErrTenantMismatch is a proposal decided by someone outside its tenant.
 var ErrTenantMismatch = errors.New("proposal does not belong to the approver's organization")
 
+// ErrTaintedNeedsPerson is a write that leaves the organization, proposed by
+// a run that had read content written outside it, being run by anything but
+// a person's decision.
+var ErrTaintedNeedsPerson = errors.New(
+	"this change leaves the organization and was proposed after the agent read outside " +
+		"content, so only a person can approve it",
+)
+
 // Execute runs an approved proposal's tool.
 //
 // The approver is the actor, not the agent. Everything the tool does is
@@ -231,6 +239,18 @@ func (s *Service) Execute(
 		RunID:          proposal.RunID,
 		Params:         params,
 	}
+	policy := tool.Policy()
+	if policy.CarriesTaint {
+		execParams.Taint = proposalTaint(proposal)
+	}
+
+	egress := policy.Classified(execParams).Egress
+	if err := assertTaintDecidedByPerson(proposal, egress, actor); err != nil {
+		s.recordFailureAs(ctx, proposal, err, egress)
+
+		return err
+	}
+	proposal.EgressClass = recordedEgress(proposal.EgressClass, egress)
 
 	definition, err := s.definitionFor(ctx, proposal)
 	if err != nil {
@@ -582,6 +602,7 @@ func (s *Service) recordSuccess(ctx context.Context, success executionSuccess) {
 			Status:          agent.ProposalStatusExecuted,
 			ExecutedAt:      &now,
 			ExecutionResult: success.result,
+			EgressClass:     proposal.EgressClass,
 			TenantInfo:      tenantOf(proposal),
 		},
 	); err != nil {
@@ -623,12 +644,22 @@ func (s *Service) recordFailure(
 	proposal *agent.AgentProposal,
 	cause error,
 ) {
+	s.recordFailureAs(ctx, proposal, cause, proposal.EgressClass)
+}
+
+func (s *Service) recordFailureAs(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	cause error,
+	egress agent.EgressClass,
+) {
 	if _, err := s.proposalRepo.RecordExecution(
 		ctx,
 		repositories.RecordAgentProposalExecutionRequest{
 			ID:             proposal.ID,
 			Status:         agent.ProposalStatusExecutionFailed,
 			ExecutionError: cause.Error(),
+			EgressClass:    egress,
 			TenantInfo:     tenantOf(proposal),
 		},
 	); err != nil {
@@ -637,6 +668,63 @@ func (s *Service) recordFailure(
 			zap.Error(err),
 		)
 	}
+}
+
+// assertTaintDecidedByPerson refuses to run a write that leaves the
+// organization, from a run that had read outside content, on anything but a
+// person's decision: an API key, an agent or the system clearing it would be
+// the automatic execution the taint rule exists to stop. The class is checked
+// as the write would run and as it was proposed, so an approver's change
+// cannot talk the check out of a class the proposal already had.
+func assertTaintDecidedByPerson(
+	proposal *agent.AgentProposal,
+	egress agent.EgressClass,
+	actor *services.RequestActor,
+) error {
+	if !proposal.RequiresPerson(egress) && !proposal.RequiresPerson(proposal.EgressClass) {
+		return nil
+	}
+	if actor != nil && actor.PrincipalType == services.PrincipalTypeUser &&
+		actor.UserID.IsNotNil() {
+		return nil
+	}
+
+	return ErrTaintedNeedsPerson
+}
+
+// recordedEgress is the class a proposal keeps once it runs: where it
+// reached as it ran, or where it was proposed to reach when the tool no
+// longer says.
+func recordedEgress(proposed, ran agent.EgressClass) agent.EgressClass {
+	if ran.IsValid() {
+		return ran
+	}
+
+	return proposed
+}
+
+// proposalTaint is the taint a write that keeps it carries into what it
+// makes. A proposal recorded as tainted whose marks were not kept still
+// carries one, naming its run.
+func proposalTaint(proposal *agent.AgentProposal) *agent.RunTaint {
+	if !proposal.Tainted {
+		return nil
+	}
+	if proposal.Taint.Tainted() {
+		return proposal.Taint.Clone()
+	}
+
+	taint := &agent.RunTaint{}
+	taint.Add(agent.TaintMark{
+		Source: agent.TaintSourceRunRecord,
+		Ref: &agent.RecordRef{
+			EntityType: agent.TaintEntityAgentRun,
+			ID:         proposal.RunID.String(),
+		},
+		At: timeutils.NowUnix(),
+	})
+
+	return taint
 }
 
 func tenantOf(proposal *agent.AgentProposal) pagination.TenantInfo {

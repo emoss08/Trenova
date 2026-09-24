@@ -30,24 +30,28 @@ type ListAgentMemoryConnectionRequest struct {
 // Instructions come before corrections before facts, newest first within
 // each, and the limit cuts from the end of that order.
 type ListActiveAgentMemoriesRequest struct {
-	TenantInfo       pagination.TenantInfo
-	Now              int64
-	OrganizationWide bool
-	Subjects         []MemorySubjectRef
-	ToolNames        []string
-	Limit            int
+	TenantInfo pagination.TenantInfo
+	// AgentDefinitionID is the agent the prompt is for. Memories kept for one
+	// agent reach only that agent; without an agent none of them are read.
+	AgentDefinitionID pulid.ID
+	Now               int64
+	OrganizationWide  bool
+	Subjects          []MemorySubjectRef
+	ToolNames         []string
+	Limit             int
 }
 
 // SearchAgentMemoriesRequest is the recall tool's read: text over the
 // content and subject label, narrowed to a subject or a tool when given.
 type SearchAgentMemoriesRequest struct {
-	TenantInfo pagination.TenantInfo
-	Now        int64
-	Query      string
-	Kind       agent.MemoryKind
-	Subject    *MemorySubjectRef
-	ToolName   string
-	Limit      int
+	TenantInfo        pagination.TenantInfo
+	AgentDefinitionID pulid.ID
+	Now               int64
+	Query             string
+	Kind              agent.MemoryKind
+	Subject           *MemorySubjectRef
+	ToolName          string
+	Limit             int
 }
 
 // FindActiveAgentMemoryRequest looks for a memory that already says this,
@@ -87,6 +91,7 @@ type ResolveAgentMemorySuggestionRequest struct {
 	Status     agent.MemoryStatus
 	Kind       agent.MemoryKind
 	Content    string
+	Scope      agent.MemoryScope
 	ByUserID   pulid.ID
 	At         int64
 	Version    int64

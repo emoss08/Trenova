@@ -94,6 +94,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(agent.AllMemoryStatuses()),
 		},
 		{
+			name:   "chk_agent_memories_scope",
+			values: stringsOf(agent.AllMemoryScopes()),
+		},
+		{
+			name:   "chk_agent_proposals_egress_class",
+			values: stringsOf(agent.EgressClasses()),
+		},
+		{
 			name:   "ck_ai_feedback_target_type",
 			values: stringsOf(aifeedback.AllTargetTypes()),
 		},

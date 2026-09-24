@@ -138,8 +138,9 @@ func (b *ContextBuilder) Build(
 	// belongs in the prompt of an agent that can assign, and nowhere else.
 	if definition.HasContextProvider(agentdefinition.ContextMemory) && b.memories != nil {
 		memories, err := b.memories.ForContext(ctx, serviceports.MemoryContextRequest{
-			TenantInfo: tenant,
-			ToolNames:  definition.EffectiveToolNames(),
+			TenantInfo:        tenant,
+			AgentDefinitionID: definition.ID,
+			ToolNames:         definition.EffectiveToolNames(),
 		})
 		if err != nil {
 			b.logger.Warn("agent context: memory lookup failed",

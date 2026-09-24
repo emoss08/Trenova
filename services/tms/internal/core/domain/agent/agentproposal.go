@@ -80,6 +80,11 @@ type AgentProposal struct {
 	TargetID       pulid.ID `json:"targetId"       bun:"target_id,type:VARCHAR(100),nullzero"`
 	TargetVersion  int64    `json:"targetVersion"  bun:"target_version,type:BIGINT,nullzero"`
 
+	Tainted     bool        `json:"tainted"     bun:"tainted,type:BOOLEAN,notnull,default:false"`
+	Taint       *RunTaint   `json:"taint"       bun:"taint,type:JSONB,nullzero"`
+	EgressClass EgressClass `json:"egressClass" bun:"egress_class,type:VARCHAR(30),nullzero"`
+	HeldBy      []string    `json:"heldBy"      bun:"held_by,type:TEXT[],array,nullzero,default:'{}'"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -126,6 +131,14 @@ func (p *AgentProposal) Validate(multiErr *errortypes.MultiError) {
 	))
 
 	validateEvidence("evidence", p.Evidence, multiErr)
+
+	if p.EgressClass != "" && !p.EgressClass.IsValid() {
+		multiErr.Add("egressClass", errortypes.ErrInvalid, "Egress class is invalid")
+	}
+}
+
+func (p *AgentProposal) RequiresPerson(class EgressClass) bool {
+	return p.Tainted && class.Leaves()
 }
 
 func (p *AgentProposal) GetID() pulid.ID {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -29,6 +30,8 @@ type toolOutcome struct {
 	// delegateReport is the bounded account of a delegate_task call, kept on
 	// the call's result message.
 	delegateReport *conversation.DelegateReport
+	// taint is the outside content the call read.
+	taint []agent.TaintMark
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {
@@ -44,6 +47,9 @@ type dispatchParams struct {
 	// idempotencyKey names this operation to the tool. It is the run's step
 	// key where there is a ledger, and the provider's call id otherwise.
 	idempotencyKey string
+	// taint is the outside content the turn had read when it made the call;
+	// nil for a turn opened before taint was kept.
+	taint *agent.RunTaint
 	// afterExternal holds every write to a proposal: the turn has read
 	// content from outside the organization, which may have been written to
 	// steer it.
@@ -123,14 +129,14 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		RunID:          req.RunID,
 		Params:         call.Arguments,
 	}
-	tier := s.decideCall(ctx, agenttoolpolicy.DecideInput{
+	decision := s.decideCall(ctx, agenttoolpolicy.DecideInput{
 		Policy:     policy,
 		Params:     tierParams,
 		Definition: req.Definition,
 		Unattended: req.Unattended,
-		Taint:      externalTaint(p.afterExternal),
-	}).Tier
-	tier, heldForExternal := afterExternalContent(tier, p.afterExternal)
+		Taint:      decisionTaint(p.taint, p.afterExternal),
+	})
+	tier, heldForExternal := afterExternalContent(decision.Tier, p.afterExternal)
 	action := &serviceports.PendingAction{
 		ToolName:  call.Name,
 		Arguments: call.Arguments,
@@ -142,6 +148,12 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}),
 		Tier:       tier,
 		ToolCallID: call.ID,
+		Egress:     decision.Egress,
+		HeldBy:     decision.HeldBy,
+		Tainted:    p.taint.Tainted() || p.afterExternal,
+	}
+	if heldForExternal && !slices.Contains(action.HeldBy, agenttoolpolicy.HeldByTainted) {
+		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByTainted)
 	}
 
 	if tier != agent.TierAutoExecute {
@@ -262,7 +274,7 @@ type actionParams struct {
 // executeParams is what the tool is handed, built once so the simulated and
 // the executed path cannot drift apart in what they pass.
 func (a actionParams) executeParams() serviceports.ToolExecuteParams {
-	return serviceports.ToolExecuteParams{
+	params := serviceports.ToolExecuteParams{
 		OrganizationID: a.req.Actor.OrganizationID,
 		BusinessUnitID: a.req.Actor.BusinessUnitID,
 		Actor:          a.req.Actor,
@@ -270,6 +282,11 @@ func (a actionParams) executeParams() serviceports.ToolExecuteParams {
 		RunID:          a.req.RunID,
 		Params:         a.call.Arguments,
 	}
+	if a.tool.Policy().CarriesTaint {
+		params.Taint = a.taint.Clone()
+	}
+
+	return params
 }
 
 func (s *Service) simulateAction(ctx context.Context, a actionParams) toolOutcome {
@@ -348,11 +365,12 @@ func (s *Service) runQueryTool(
 	call serviceports.ToolCall,
 ) toolOutcome {
 	data, err := tool.Query(ctx, serviceports.QueryToolParams{
-		OrganizationID: req.Actor.OrganizationID,
-		BusinessUnitID: req.Actor.BusinessUnitID,
-		Actor:          req.Actor,
-		Timezone:       req.Context.Timezone,
-		Params:         call.Arguments,
+		OrganizationID:    req.Actor.OrganizationID,
+		BusinessUnitID:    req.Actor.BusinessUnitID,
+		Actor:             req.Actor,
+		Timezone:          req.Context.Timezone,
+		Params:            call.Arguments,
+		AgentDefinitionID: req.Definition.ID,
 	})
 	if err != nil {
 		return failedOutcome("Tool %q failed: %s", call.Name, err.Error())
@@ -367,6 +385,7 @@ func (s *Service) runQueryTool(
 		content: FenceToolResult(call.Name, encoded),
 		data:    data,
 		summary: summarizeResult(call.Name, document),
+		taint:   callTaint(tool.Policy(), call, data, timeutils.NowUnix()),
 	}
 }
 
@@ -391,6 +410,7 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 	return toolOutcome{
 		content: ranContent(call.Name, result),
 		action:  action,
+		taint:   callTaint(a.tool.Policy(), call, nil, timeutils.NowUnix()),
 	}
 }
 

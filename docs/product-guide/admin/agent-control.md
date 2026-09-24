@@ -154,6 +154,13 @@ Keywords: agent memory, standing instruction, fact, correction, retire memory
    back.
 
 ## Notes
+An agent that has read content written outside the organization (an inbound email, an
+extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a
+run wrote) never sends anything to a customer, driver or outside address, or moves money, on
+its own: that change waits for a person's approval whatever tier the tool has, and the
+proposal is marked as having read outside content. A suggested memory drawn from ratings of
+one agent is kept for that agent alone once approved.
+
 Opening the page needs read access to AI control. Each section in the rail appears only for
 people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions,
 agent memory); a section someone cannot open is left out. **Safety** appears for people who may

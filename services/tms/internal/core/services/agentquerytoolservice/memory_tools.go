@@ -119,11 +119,12 @@ func (t *recallMemoryTool) Query(
 	}
 
 	req := serviceports.RecallAgentMemoriesRequest{
-		TenantInfo: tenantOf(params),
-		Query:      optionalString(params.Params, "query"),
-		Kind:       agent.MemoryKind(optionalString(params.Params, "kind")),
-		ToolName:   optionalString(params.Params, "toolName"),
-		Limit:      limit,
+		TenantInfo:        tenantOf(params),
+		AgentDefinitionID: params.AgentDefinitionID,
+		Query:             optionalString(params.Params, "query"),
+		Kind:              agent.MemoryKind(optionalString(params.Params, "kind")),
+		ToolName:          optionalString(params.Params, "toolName"),
+		Limit:             limit,
 	}
 	if req.Kind != "" && !req.Kind.IsValid() {
 		return nil, fmt.Errorf("kind %q is not Instruction, Fact or Correction", req.Kind)
@@ -163,12 +164,14 @@ func (t *recallMemoryTool) Query(
 	}
 
 	rows := make([]memoryRow, 0, len(memories))
+	tainted := make([]agent.RecordRef, 0, len(memories))
 	for _, memory := range memories {
+		tainted = append(tainted, memory.TaintedRecords()...)
 		rows = append(rows, memoryRow{
 			ID:         memory.ID.String(),
 			Kind:       string(memory.Kind),
 			Content:    memory.Content,
-			About:      memory.Scope(),
+			About:      memory.About(),
 			Tool:       memory.ToolName,
 			RecordedBy: recordedBy(memory.Source),
 			RecordedOn: recordedDate(memory.CreatedAt),
@@ -176,8 +179,22 @@ func (t *recallMemoryTool) Query(
 		})
 	}
 
-	return searchResult(criteria, rows, len(rows)), nil
+	return recallOutcome{
+		searchOutcome: searchResult(criteria, rows, len(rows)),
+		tainted:       tainted,
+	}, nil
 }
+
+// recallOutcome is a recall's answer, which names the memories in it that
+// were written by a run that had read outside content. Only the runtime reads
+// that; the model reads the rows.
+type recallOutcome struct {
+	searchOutcome
+
+	tainted []agent.RecordRef
+}
+
+func (o recallOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
 
 func recordedBy(source agent.MemorySource) string {
 	switch source {

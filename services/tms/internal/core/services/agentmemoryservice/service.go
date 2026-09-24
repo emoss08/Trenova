@@ -149,6 +149,15 @@ func (s *Service) Remember(
 			entity.AgentDefinitionID = &definitionID
 		}
 	}
+	// A memory written by a run that had read outside content keeps that,
+	// so a later run that reads it back is tainted by it.
+	if req.Taint.Tainted() {
+		entity.Tainted = true
+		if req.RunID.IsNotNil() {
+			runID := req.RunID
+			entity.TaintRunID = &runID
+		}
+	}
 
 	if err := s.label(ctx, req.TenantInfo, entity); err != nil {
 		return nil, err
@@ -334,6 +343,7 @@ func (s *Service) ApproveSuggestion(
 	candidate.Kind = kind
 	candidate.Content = strings.TrimSpace(req.Content)
 	candidate.Status = agent.MemoryStatusActive
+	candidate.Scope = approvedScope(req.Scope, current)
 
 	me := errortypes.NewMultiError()
 	candidate.Validate(me)
@@ -347,6 +357,7 @@ func (s *Service) ApproveSuggestion(
 		Status:     agent.MemoryStatusActive,
 		Kind:       candidate.Kind,
 		Content:    candidate.Content,
+		Scope:      candidate.Scope,
 		ByUserID:   actor.UserID,
 		At:         timeutils.NowUnix(),
 		Version:    req.Version,
@@ -364,6 +375,20 @@ func (s *Service) ApproveSuggestion(
 	)
 
 	return approved, nil
+}
+
+// approvedScope is who an approved suggestion is read by. A suggestion is
+// drawn from ratings of one agent's work, so by default it is kept for that
+// agent alone; an administrator may widen it to the whole organization.
+func approvedScope(requested agent.MemoryScope, suggestion *agent.Memory) agent.MemoryScope {
+	if requested == agent.MemoryScopeOrganization {
+		return agent.MemoryScopeOrganization
+	}
+	if suggestion.AgentDefinitionID == nil || suggestion.AgentDefinitionID.IsNil() {
+		return agent.MemoryScopeOrganization
+	}
+
+	return agent.MemoryScopeAgent
 }
 
 func (s *Service) DismissSuggestion(
@@ -457,12 +482,13 @@ func (s *Service) Recall(
 	}
 
 	search := repositories.SearchAgentMemoriesRequest{
-		TenantInfo: req.TenantInfo,
-		Now:        timeutils.NowUnix(),
-		Query:      req.Query,
-		Kind:       req.Kind,
-		ToolName:   req.ToolName,
-		Limit:      limit,
+		TenantInfo:        req.TenantInfo,
+		AgentDefinitionID: req.AgentDefinitionID,
+		Now:               timeutils.NowUnix(),
+		Query:             req.Query,
+		Kind:              req.Kind,
+		ToolName:          req.ToolName,
+		Limit:             limit,
 	}
 	if req.SubjectType != "" && req.SubjectID.IsNotNil() {
 		search.Subject = &repositories.MemorySubjectRef{Type: req.SubjectType, ID: req.SubjectID}
@@ -482,12 +508,13 @@ func (s *Service) ForContext(
 
 	now := timeutils.NowUnix()
 	memories, err := s.repo.ListActive(ctx, repositories.ListActiveAgentMemoriesRequest{
-		TenantInfo:       req.TenantInfo,
-		Now:              now,
-		OrganizationWide: true,
-		Subjects:         req.Subjects,
-		ToolNames:        req.ToolNames,
-		Limit:            limit,
+		TenantInfo:        req.TenantInfo,
+		AgentDefinitionID: req.AgentDefinitionID,
+		Now:               now,
+		OrganizationWide:  true,
+		Subjects:          req.Subjects,
+		ToolNames:         req.ToolNames,
+		Limit:             limit,
 	})
 	if err != nil {
 		return nil, err

@@ -21,6 +21,7 @@ These were made by the product owner and the code enforces each one.
 | Who an agent may ask is a **per-agent allowlist** on its definition, set in AI Control. | `agentdefinition.Definition.DelegateIDs`, validated on save by the domain and by `agentdefinitionservice.validateDelegates` |
 | A delegate keeps **its own autonomy**: its tools, tier settings, autonomy ceiling and budget. A private write it may make alone (a personal call of a tool whose policy sets `PersonalRunsUnasked`) runs, unless a person set that tool's tier on the delegate; a tier the trust ledger earned (`agent_tool_trust.earned_tier`) does not count as one (`agentruntime/tierprovenance.go`). A shared or outbound write still waits for approval. | The delegate's turn is opened from its own definition (`assistantservice.OpenDelegate`), not unattended, so `dispatch` decides every call exactly as it would for a conversation with the delegate |
 | **One level only.** Only the agent the person is talking to delegates. A delegate never holds `delegate_task`, and a call to it from a delegate is refused. | `RunRequest.MayDelegate`, `OpenTurn` (the tool is held only when it is true), `Service.delegate` (refuses when `RunRequest.Delegation` is set) |
+| **Taint crosses both ways.** A delegate opens with the taint of the turn that asked, and its own taint is folded back into that turn when it ends, because its reply enters that turn's context. Its proposals carry its turn's taint. | `DelegateCall.Taint` → `RunRequest.Taint` (`assistantservice.OpenDelegate`), `Turn.inheritDelegateTaint`, `DelegatedRun.Taint` → `persistDelegatedProposals` |
 | **Everything runs as the same person.** Every tool call of the delegate is permission-checked against the person, so a delegate can never do more than they could. The person must also be allowed to use the delegate. | The delegate's turn carries the turn's `RequestActor`; its tool set is narrowed by `permittedTools`; `OpenDelegate` requires `assistant:create`, a delegate the person may use (open to everyone, or granted to one of their roles), and a delegate that is enabled, chat-usable and in the same tenant |
 
 ## The allowlist
@@ -318,6 +319,14 @@ model activity, whose inputs replay does not compare). No command is added,
 removed or reordered, and no branch reads the new fields. `record` is set by a
 tool inside its activity, and `RuntimeDelegate`'s resolved icon and accent are
 worked out by the context activity.
+
+Taint took no gate. `DelegateCall.Taint` is an activity input; the delegate's
+taint comes back inside its `RunResult`, which the workflow already held, and is
+merged into the asking turn's `RunResult.Taint` as data, with `run_tainted`
+published to the Workflow Stream (no command). A turn opened before the release
+has a nil taint and hands its delegate a nil, which counts as tainted for every
+class that leaves the organization; see
+[agent-runtime.md](agent-runtime.md#taint-is-data).
 
 A rolling deploy is the one exposure: a turn opened by a new worker and replayed
 by an old one would dispatch `delegate_task` as a tool. Finish rolling the

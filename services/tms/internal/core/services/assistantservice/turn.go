@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
@@ -225,6 +226,7 @@ func (s *Service) prepareTurn(
 		Subject:             s.describeSubject(ctx, thread, actor, req.TenantInfo),
 		Attachments:         runtimeAttachments,
 		Mentions:            mentions,
+		Taint:               thread.Taint,
 	}
 
 	decision, runReq := s.admit(ctx, turnReq)
@@ -346,6 +348,9 @@ func (s *Service) FinishTurn(
 		s.titleIfUnnamed(ctx, thread, plan.Input)
 	}
 
+	taint := turnTaint(plan, req.Run)
+	s.keepThreadTaint(ctx, thread, taint, req.TenantInfo)
+
 	thread.CanContinue = true
 	result := &services.SendMessageResult{
 		Thread:   thread,
@@ -367,6 +372,7 @@ func (s *Service) FinishTurn(
 		Model:      turn.Model,
 		Input:      plan.Input,
 		Artifacts:  artifacts,
+		Taint:      taint,
 	}
 	proposals, err := s.persistProposals(ctx, own)
 	if req.Run != nil && len(req.Run.Delegations) > 0 {
@@ -383,6 +389,43 @@ func (s *Service) FinishTurn(
 	result.Artifacts = artifacts.artifacts()
 
 	return result, nil
+}
+
+// turnTaint is the outside content the turn read: what the runtime handed
+// back, or, for a turn that failed before it handed anything back, what it
+// opened with.
+func turnTaint(plan *TurnPlan, run *services.RunResult) *agent.RunTaint {
+	if run != nil {
+		return run.Taint
+	}
+
+	return plan.Turn.Result.Taint
+}
+
+// keepThreadTaint records on the conversation the outside content its turn
+// read, so the next turn, and a decision's follow-up, open tainted. Keeping it
+// is best effort: the turn's own proposals carry their taint either way.
+func (s *Service) keepThreadTaint(
+	ctx context.Context,
+	thread *conversation.Thread,
+	taint *agent.RunTaint,
+	tenant pagination.TenantInfo,
+) {
+	if !thread.AbsorbTaint(taint, timeutils.NowUnix()) {
+		return
+	}
+
+	if err := s.conversations.MarkThreadTainted(ctx, repositories.MarkThreadTaintedRequest{
+		ThreadID:   thread.ID,
+		TenantInfo: tenant,
+		Taint:      thread.Taint,
+		TaintedAt:  *thread.TaintedAt,
+	}); err != nil {
+		s.logger.Error("could not keep the outside content a conversation read",
+			zap.String("thread", thread.ID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 // ObserveTool keeps what a finished tool call produced for a person to see

@@ -20,6 +20,8 @@ type ToolExecuteParams struct {
 	// it from here rather than trusting a model-supplied id.
 	RunID  pulid.ID
 	Params map[string]any
+	// Taint is the run's, handed only to a tool whose policy CarriesTaint.
+	Taint *agent.RunTaint
 }
 
 // ToolSimulator is a tool that can say what it would change without

@@ -131,6 +131,9 @@ func (s *Service) OpenDelegate(
 			CallID:          req.Call.Call.ID,
 			StepScope:       req.Call.StepScope,
 		},
+		// The delegate reads what the task says, and the task was written
+		// by a turn that may have read outside content.
+		Taint: req.Call.Taint.Clone(),
 	}
 
 	return &DelegateOpening{
@@ -211,6 +214,7 @@ func (s *Service) persistDelegatedProposals(
 			Model:      delegation.Model,
 			Input:      delegation.Input,
 			Artifacts:  params.Artifacts,
+			Taint:      delegation.Taint,
 		})
 		if err != nil {
 			failures = append(failures, fmt.Errorf("record %s's proposals: %w",

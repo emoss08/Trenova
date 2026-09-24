@@ -117,6 +117,9 @@ type StubQueryTool struct {
 	Calls      int
 	LastParams serviceports.QueryToolParams
 	Resource   permission.Resource
+	// Reads and Source declare the tool as one that reads outside content.
+	Reads  agent.ExternalRead
+	Source agent.TaintSource
 }
 
 func (t *StubQueryTool) Name() string { return t.ToolName }
@@ -135,6 +138,11 @@ func (t *StubQueryTool) Policy() serviceports.ToolPolicy {
 		resource = permission.ResourceShipment
 	}
 
+	reads := t.Reads
+	if reads == "" {
+		reads = agent.ExternalReadNever
+	}
+
 	return serviceports.ToolPolicy{
 		Name:          t.ToolName,
 		Kind:          agent.ToolKindQuery,
@@ -147,7 +155,8 @@ func (t *StubQueryTool) Policy() serviceports.ToolPolicy {
 		Effect:        agent.ToolEffectLookup,
 		Reversible:    true,
 		Idempotent:    true,
-		ReadsExternal: agent.ExternalReadNever,
+		ReadsExternal: reads,
+		Source:        t.Source,
 		Rationale:     "A stub read.",
 	}
 }
@@ -194,6 +203,10 @@ type StubActionTool struct {
 	Resource   permission.Resource
 	// Schema stands in for the tool's declared parameters when set.
 	Schema map[string]any
+	// Egress is where the write reaches; internal when unset.
+	Egress agent.EgressClass
+	// CarriesTaint hands the tool the run's taint, as remember is.
+	CarriesTaint bool
 }
 
 func (t *StubActionTool) Name() string        { return t.ToolName }
@@ -214,6 +227,10 @@ func (t *StubActionTool) Policy() serviceports.ToolPolicy {
 	if tier == "" {
 		tier = agent.TierPropose
 	}
+	egress := t.Egress
+	if egress == "" {
+		egress = agent.EgressInternal
+	}
 
 	return serviceports.ToolPolicy{
 		Name:          t.ToolName,
@@ -223,7 +240,8 @@ func (t *StubActionTool) Policy() serviceports.ToolPolicy {
 		Scope:         agent.ToolScopeTenant,
 		DefaultTier:   tier,
 		MaxTier:       agent.TierAutoExecute,
-		Egress:        []agent.EgressClass{agent.EgressInternal},
+		CarriesTaint:  t.CarriesTaint,
+		Egress:        []agent.EgressClass{egress},
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		Idempotent:    true,

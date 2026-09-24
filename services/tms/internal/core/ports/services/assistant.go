@@ -256,6 +256,9 @@ const (
 	AssistantEventDelegateDelta     = "delegate_delta"
 	AssistantEventDelegateReasoning = "delegate_reasoning"
 	AssistantEventDelegateRetrying  = "delegate_retrying"
+	// AssistantEventRunTainted says the turn read content written outside
+	// the organization, once for each new place it came from.
+	AssistantEventRunTainted = "run_tainted"
 )
 
 // DelegateScope tags what another agent did on a task the turn's agent
@@ -299,6 +302,9 @@ func (s DelegateScope) Tag(event StreamEvent) (StreamEvent, bool) {
 		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
 		return StreamEvent{Event: event.Event, Data: data}, true
 	case AssistantToolFinishedEvent:
+		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
+		return StreamEvent{Event: event.Event, Data: data}, true
+	case AssistantRunTaintedEvent:
 		data.AgentID, data.DelegateCallID = s.AgentID, s.DelegateCallID
 		return StreamEvent{Event: event.Event, Data: data}, true
 	case AssistantRefusedEvent:
@@ -382,6 +388,17 @@ type AssistantRetryingEvent struct {
 	WaitSeconds int       `json:"waitSeconds,omitempty"`
 	// AgentID and DelegateCallID are set when it is another agent's reply
 	// starting over, on a task this turn's agent handed it.
+	AgentID        pulid.ID `json:"agentId,omitempty"`
+	DelegateCallID string   `json:"delegateCallId,omitempty"`
+}
+
+// AssistantRunTaintedEvent is one new place outside content reached the turn
+// from. From here on a write that leaves the organization waits for a person.
+type AssistantRunTaintedEvent struct {
+	Mark  agent.TaintMark `json:"mark"`
+	Marks int             `json:"marks"`
+	// AgentID and DelegateCallID are set when it is another agent's turn
+	// that read it, on a task this turn's agent handed it.
 	AgentID        pulid.ID `json:"agentId,omitempty"`
 	DelegateCallID string   `json:"delegateCallId,omitempty"`
 }

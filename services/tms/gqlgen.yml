@@ -1988,6 +1988,18 @@ models:
   AgentRun:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentRun
+  AgentRunTaint:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.RunTaint
+  AgentTaintMark:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.TaintMark
+  AgentTaintRef:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.RecordRef
+  AgentMemoryScope:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MemoryScope
   AIProvider:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.Provider
@@ -2125,6 +2137,8 @@ models:
         value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceMemory
       RunRecord:
         value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceRunRecord
+      Web:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceWeb
   AgentAutonomyAnswer:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyAnswer
@@ -2182,6 +2196,8 @@ models:
       confidence:
         resolver: true
       run:
+        resolver: true
+      egressClass:
         resolver: true
   AgentProposalField:
     model:

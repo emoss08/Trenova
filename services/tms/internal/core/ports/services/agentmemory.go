@@ -21,6 +21,7 @@ type RememberRequest struct {
 	ToolName    string
 	ExpiresAt   *int64
 	RunID       pulid.ID
+	Taint       *agent.RunTaint
 }
 
 // UpdateAgentMemoryRequest rewrites what a memory says or is about. Its
@@ -46,22 +47,24 @@ type SetAgentMemoryStatusRequest struct {
 // RecallAgentMemoriesRequest is the agent's read: what has been recorded
 // about this text, this record or this tool.
 type RecallAgentMemoriesRequest struct {
-	TenantInfo  pagination.TenantInfo
-	Query       string
-	Kind        agent.MemoryKind
-	SubjectType agent.MemorySubjectType
-	SubjectID   pulid.ID
-	ToolName    string
-	Limit       int
+	TenantInfo        pagination.TenantInfo
+	AgentDefinitionID pulid.ID
+	Query             string
+	Kind              agent.MemoryKind
+	SubjectType       agent.MemorySubjectType
+	SubjectID         pulid.ID
+	ToolName          string
+	Limit             int
 }
 
 // MemoryContextRequest is the prompt builder's read: everything a run of
 // this agent should start knowing.
 type MemoryContextRequest struct {
-	TenantInfo pagination.TenantInfo
-	ToolNames  []string
-	Subjects   []repositories.MemorySubjectRef
-	Limit      int
+	TenantInfo        pagination.TenantInfo
+	AgentDefinitionID pulid.ID
+	ToolNames         []string
+	Subjects          []repositories.MemorySubjectRef
+	Limit             int
 }
 
 type ApproveAgentMemorySuggestionRequest struct {
@@ -69,6 +72,7 @@ type ApproveAgentMemorySuggestionRequest struct {
 	TenantInfo pagination.TenantInfo
 	Kind       agent.MemoryKind
 	Content    string
+	Scope      agent.MemoryScope
 	Version    int64
 }
 

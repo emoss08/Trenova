@@ -48,8 +48,9 @@ func TestRecallMemory_NarrowsToASubjectAndReadsBackTheFilters(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	outcome, ok := result.(searchOutcome)
+	recalled, ok := result.(recallOutcome)
 	require.True(t, ok)
+	outcome := recalled.searchOutcome
 	assert.Equal(t, 1, outcome.Count)
 	assert.Contains(t, outcome.SearchedFor, `text matching "POD"`)
 	assert.Contains(t, outcome.SearchedFor, "about customer "+customerID.String())
@@ -70,9 +71,46 @@ func TestRecallMemory_SaysNothingMatchedRatherThanNothingExists(t *testing.T) {
 	result, err := tool.Query(t.Context(), testParams(map[string]any{"query": "detention"}))
 	require.NoError(t, err)
 
-	outcome := result.(searchOutcome)
+	outcome := result.(recallOutcome).searchOutcome
 	assert.Equal(t, 0, outcome.Count)
 	assert.Contains(t, outcome.Note, "No memories matched")
+}
+
+// A recall names the memories a tainted run wrote, so the runtime can taint
+// the run that reads them back. The model reads the same rows either way.
+func TestRecallMemory_NamesTheTaintedMemoriesItReturned(t *testing.T) {
+	t.Parallel()
+
+	dirty := &agent.Memory{
+		ID:      pulid.MustNew("amem_"),
+		Kind:    agent.MemoryKindFact,
+		Source:  agent.MemorySourceAgent,
+		Content: "Ship to dock 9.",
+		Tainted: true,
+	}
+	clean := &agent.Memory{
+		ID:      pulid.MustNew("amem_"),
+		Kind:    agent.MemoryKindInstruction,
+		Source:  agent.MemorySourceUser,
+		Content: "Quote in dollars.",
+	}
+	agentID := pulid.MustNew("agdef_")
+	recall := &fakeRecall{items: []*agent.Memory{dirty, clean}}
+	params := testParams(map[string]any{})
+	params.AgentDefinitionID = agentID
+
+	result, err := newRecallMemoryTool(recall).Query(t.Context(), params)
+	require.NoError(t, err)
+
+	carrier, ok := result.(agent.TaintCarrier)
+	require.True(t, ok)
+	assert.Equal(t, []agent.RecordRef{{
+		EntityType: agent.TaintEntityAgentMemory,
+		ID:         dirty.ID.String(),
+	}}, carrier.TaintedRecords())
+	assert.Equal(t, agentID, recall.captured.AgentDefinitionID,
+		"recall reads what was kept for the agent asking, and the organization's")
+	assert.Equal(t, agent.ExternalReadMarked, newRecallMemoryTool(recall).Policy().ReadsExternal)
 }
 
 func TestRecallMemory_RefusesHalfASubject(t *testing.T) {

@@ -86,6 +86,26 @@ func AllMemorySources() []MemorySource {
 	}
 }
 
+type MemoryScope string
+
+const (
+	MemoryScopeOrganization = MemoryScope("Organization")
+	MemoryScopeAgent        = MemoryScope("Agent")
+)
+
+func (s MemoryScope) IsValid() bool {
+	switch s {
+	case MemoryScopeOrganization, MemoryScopeAgent:
+		return true
+	default:
+		return false
+	}
+}
+
+func AllMemoryScopes() []MemoryScope {
+	return []MemoryScope{MemoryScopeOrganization, MemoryScopeAgent}
+}
+
 func AllMemoryKinds() []MemoryKind {
 	return []MemoryKind{MemoryKindInstruction, MemoryKindFact, MemoryKindCorrection}
 }
@@ -198,13 +218,16 @@ type Memory struct {
 
 	Content string `json:"content" bun:"content,type:TEXT,notnull"`
 
-	AgentDefinitionID *pulid.ID `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
-	SourceRunID       *pulid.ID `json:"sourceRunId"       bun:"source_run_id,type:VARCHAR(100),nullzero"`
-	SourceProposalID  *pulid.ID `json:"sourceProposalId"  bun:"source_proposal_id,type:VARCHAR(100),nullzero"`
-	CreatedByUserID   *pulid.ID `json:"createdByUserId"   bun:"created_by_user_id,type:VARCHAR(100),nullzero"`
-	RetiredByUserID   *pulid.ID `json:"retiredByUserId"   bun:"retired_by_user_id,type:VARCHAR(100),nullzero"`
-	RetiredAt         *int64    `json:"retiredAt"         bun:"retired_at,type:BIGINT,nullzero"`
-	ExpiresAt         *int64    `json:"expiresAt"         bun:"expires_at,type:BIGINT,nullzero"`
+	AgentDefinitionID *pulid.ID   `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
+	Scope             MemoryScope `json:"scope"             bun:"scope,type:VARCHAR(20),notnull,default:'Organization'"`
+	Tainted           bool        `json:"tainted"           bun:"tainted,type:BOOLEAN,notnull,default:false"`
+	TaintRunID        *pulid.ID   `json:"taintRunId"        bun:"taint_run_id,type:VARCHAR(100),nullzero"`
+	SourceRunID       *pulid.ID   `json:"sourceRunId"       bun:"source_run_id,type:VARCHAR(100),nullzero"`
+	SourceProposalID  *pulid.ID   `json:"sourceProposalId"  bun:"source_proposal_id,type:VARCHAR(100),nullzero"`
+	CreatedByUserID   *pulid.ID   `json:"createdByUserId"   bun:"created_by_user_id,type:VARCHAR(100),nullzero"`
+	RetiredByUserID   *pulid.ID   `json:"retiredByUserId"   bun:"retired_by_user_id,type:VARCHAR(100),nullzero"`
+	RetiredAt         *int64      `json:"retiredAt"         bun:"retired_at,type:BIGINT,nullzero"`
+	ExpiresAt         *int64      `json:"expiresAt"         bun:"expires_at,type:BIGINT,nullzero"`
 
 	UseCount   int    `json:"useCount"   bun:"use_count,type:INTEGER,notnull,default:0"`
 	LastUsedAt *int64 `json:"lastUsedAt" bun:"last_used_at,type:BIGINT,nullzero"`
@@ -234,6 +257,11 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&m.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[MemoryStatus]("Status is invalid"),
+		),
+		validation.Field(&m.Scope,
+			validation.When(m.Scope != "",
+				domainvalidation.ValidEnum[MemoryScope]("Scope is invalid"),
+			),
 		),
 		validation.Field(&m.SubjectType,
 			validation.When(m.SubjectType != "",
@@ -271,6 +299,9 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 			"A memory drawn from feedback needs the ratings it was drawn from",
 		)
 	}
+	if m.AgentScoped() && (m.AgentDefinitionID == nil || m.AgentDefinitionID.IsNil()) {
+		multiErr.Add("scope", errortypes.ErrInvalid, "A memory kept for one agent needs that agent")
+	}
 	if m.Status.IsSuggestion() && m.Source != MemorySourceFeedback {
 		multiErr.Add("status", errortypes.ErrInvalid, "Only feedback can suggest a memory")
 	}
@@ -292,8 +323,20 @@ func (m *Memory) OrganizationWide() bool {
 	return m.SubjectType == "" && strings.TrimSpace(m.ToolName) == ""
 }
 
-// Scope is the memory's subject or tool in words, for a prompt line.
-func (m *Memory) Scope() string {
+func (m *Memory) AgentScoped() bool {
+	return m.Scope == MemoryScopeAgent
+}
+
+func (m *Memory) TaintedRecords() []RecordRef {
+	if m == nil || !m.Tainted {
+		return nil
+	}
+
+	return []RecordRef{{EntityType: TaintEntityAgentMemory, ID: m.ID.String()}}
+}
+
+// About is the memory's subject or tool in words, for a prompt line.
+func (m *Memory) About() string {
 	switch {
 	case m.SubjectType != "" && m.SubjectLabel != "":
 		return m.SubjectLabel + " (" + strings.ToLower(string(m.SubjectType)) + ")"
@@ -340,6 +383,9 @@ func (m *Memory) BeforeAppendModel(_ context.Context, query bun.Query) error {
 		}
 		if m.Status == "" {
 			m.Status = MemoryStatusActive
+		}
+		if m.Scope == "" {
+			m.Scope = MemoryScopeOrganization
 		}
 		m.CreatedAt = now
 		m.UpdatedAt = now

@@ -3,6 +3,7 @@ package proposalrecorder
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -138,6 +139,9 @@ type RecordRequest struct {
 	Actions          []serviceports.PendingAction
 	SourceMessageIDs map[string]pulid.ID
 	Evidence         EvidenceFunc
+	// Taint is the outside content the run read. The run keeps it, and each
+	// proposal decided after the run had read some carries it.
+	Taint *agent.RunTaint
 }
 
 type RecordResult struct {
@@ -232,6 +236,7 @@ func (s *Service) write(ctx context.Context, req *RecordRequest) (*RecordResult,
 			proposal.TargetID = action.Target.ID
 			proposal.TargetVersion = action.Target.Version
 		}
+		applyTaint(proposal, action, req.Taint)
 		applyExecution(proposal, action, now)
 		if plan != nil && proposal.Status == agent.ProposalStatusPending {
 			step++
@@ -381,6 +386,7 @@ func (s *Service) openRun(ctx context.Context, req *RecordRequest) (*agent.Agent
 	if run.Trigger == "" {
 		run.Trigger = agent.RunTriggerManual
 	}
+	run.RecordTaint(req.Taint, now)
 
 	multiErr := errortypes.NewMultiError()
 	run.Validate(multiErr)
@@ -389,6 +395,26 @@ func (s *Service) openRun(ctx context.Context, req *RecordRequest) (*agent.Agent
 	}
 
 	return s.runs.Create(ctx, run)
+}
+
+// applyTaint records where the write reaches, what held it, and whether the
+// run had read outside content when it was decided. A proposal decided before
+// the run read any is clean, though the run it belongs to is not.
+func applyTaint(
+	proposal *agent.AgentProposal,
+	action serviceports.PendingAction,
+	taint *agent.RunTaint,
+) {
+	proposal.EgressClass = action.Egress
+	proposal.HeldBy = slices.Clone(action.HeldBy)
+	if proposal.HeldBy == nil {
+		proposal.HeldBy = []string{}
+	}
+	if !action.Tainted {
+		return
+	}
+	proposal.Tainted = true
+	proposal.Taint = taint.Clone()
 }
 
 func applyExecution(proposal *agent.AgentProposal, action serviceports.PendingAction, now int64) {

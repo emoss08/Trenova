@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -106,6 +107,9 @@ type DelegateCall struct {
 	// delegate's calls are kept in the same thread, so it is given none of
 	// them.
 	CallIDs []string `json:"callIds,omitempty"`
+	// Taint is the outside content the delegating turn had read, which the
+	// delegate's turn opens with. Nil is a turn opened before taint was kept.
+	Taint *agent.RunTaint `json:"taint,omitempty"`
 	// AfterExternalContent says the delegating turn has read content from
 	// outside the organization. The delegate starts from where it stands, so
 	// a task written under that content cannot make a write on its own.
@@ -187,6 +191,7 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) 
 		// a different order every time.
 		CallIDs:              slices.Sorted(maps.Keys(t.callIDs)),
 		AfterExternalContent: t.external,
+		Taint:                t.result.Taint.Clone(),
 	})
 	report := delegateReport(delegate, call.ID, run)
 	if run.ExternalContent {
@@ -197,6 +202,9 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) 
 		t.result.Messages = append(t.result.Messages,
 			tagDelegated(run.Result.Messages, delegate.ID, call.ID)...)
 		t.ReserveCallIDs(usedCallIDsOf(run.Result.Messages))
+		// The delegate's reply enters this turn's context, and with it
+		// whatever outside content the delegate read.
+		t.inheritDelegateTaint(fx, run.Result)
 	}
 	if run.Definition != nil && run.Result != nil {
 		t.result.Delegations = append(t.result.Delegations, serviceports.DelegatedRun{
@@ -206,6 +214,7 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) 
 			Model:      run.Result.Model,
 			Input:      task,
 			Failed:     run.Failure != "" || run.Stopped,
+			Taint:      run.Result.Taint.Clone(),
 		})
 	}
 

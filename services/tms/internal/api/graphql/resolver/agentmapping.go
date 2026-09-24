@@ -129,6 +129,15 @@ func agentMemorySubject(
 	return *input.SubjectType, subjectID, nil
 }
 
+func recordedEgressClass(proposal *agent.AgentProposal) *agent.EgressClass {
+	if proposal == nil || !proposal.EgressClass.IsValid() {
+		return nil
+	}
+	class := proposal.EgressClass
+
+	return &class
+}
+
 func optionalInt64(value *int) *int64 {
 	if value == nil {
 		return nil

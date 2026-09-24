@@ -3678,6 +3678,15 @@
       "service/agentmemoryservice"
     ]
   },
+  "A memory kept for one agent needs that agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A message can be marked handled or ignored, nothing else": {
     "sites": 1,
     "scope": [
@@ -57172,6 +57181,15 @@
     ],
     "areas": [
       "domain/rateagreement"
+    ]
+  },
+  "Egress class is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Either \"credential\" or \"training\", for grouping or an icon.": {
@@ -127254,6 +127272,15 @@
       "routes/policies"
     ]
   },
+  "Read outside content": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Read outside text": {
     "sites": 1,
     "scope": [
@@ -196464,6 +196491,15 @@
     "areas": [
       "routes/carrier-monitoring",
       "routes/ifta-jurisdiction-mileage"
+    ]
+  },
+  "the web": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "this agent": {

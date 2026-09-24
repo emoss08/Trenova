@@ -204,6 +204,7 @@ func (r *repository) ListActive(
 		Model(&rows).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now)
+			sq = forAgent(sq, req.AgentDefinitionID)
 
 			return sq.WhereGroup(" AND ", func(scope *bun.SelectQuery) *bun.SelectQuery {
 				if req.OrganizationWide {
@@ -250,7 +251,10 @@ func (r *repository) Search(
 		NewSelect().
 		Model(&rows).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now)
+			sq = forAgent(
+				activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now),
+				req.AgentDefinitionID,
+			)
 			if term := strings.TrimSpace(req.Query); term != "" {
 				pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
 				sq = sq.WhereGroup(" AND ", func(text *bun.SelectQuery) *bun.SelectQuery {
@@ -465,9 +469,14 @@ func (r *repository) ResolveSuggestion(
 
 	switch req.Status {
 	case agent.MemoryStatusActive:
+		scope := req.Scope
+		if !scope.IsValid() {
+			scope = agent.MemoryScopeAgent
+		}
 		query = query.
 			Set(cols.Content.Set(), req.Content).
 			Set(cols.Kind.Set(), req.Kind).
+			Set(cols.Scope.Set(), scope).
 			Set(cols.CreatedByUserID.Set(), nullableID(req.ByUserID)).
 			Set(cols.RetiredAt.Set(), nil).
 			Set(cols.RetiredByUserID.Set(), nil)
@@ -496,6 +505,25 @@ func (r *repository) ResolveSuggestion(
 		ctx,
 		repositories.GetAgentMemoryByIDRequest{ID: req.ID, TenantInfo: req.TenantInfo},
 	)
+}
+
+// forAgent keeps the memories a prompt for one agent may carry: those kept
+// for the whole organization, and those kept for this agent alone. A prompt
+// for no agent in particular carries only the organization's.
+func forAgent(sq *bun.SelectQuery, agentID pulid.ID) *bun.SelectQuery {
+	cols := buncolgen.MemoryColumns
+
+	return sq.WhereGroup(" AND ", func(owner *bun.SelectQuery) *bun.SelectQuery {
+		owner = owner.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization)
+		if agentID.IsNil() {
+			return owner
+		}
+
+		return owner.WhereGroup(" OR ", func(own *bun.SelectQuery) *bun.SelectQuery {
+			return own.Where(cols.Scope.Eq(), agent.MemoryScopeAgent).
+				Where(cols.AgentDefinitionID.Eq(), agentID)
+		})
+	})
 }
 
 func suggestionStatuses() []agent.MemoryStatus {
