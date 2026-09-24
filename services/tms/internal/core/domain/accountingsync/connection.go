@@ -248,3 +248,14 @@ func ProviderName(typ integration.Type) string {
 func SetupPath(typ integration.Type) string {
 	return "/admin/integrations?type=" + string(typ)
 }
+
+func (c *AccountingConnection) AgentErrorSummary() string {
+	switch c.LastErrorCategory {
+	case "":
+		return ""
+	case ErrorCategoryUnknown:
+		return "The provider rejected the last call. Its own message is on the connection page."
+	default:
+		return c.LastErrorMessage
+	}
+}

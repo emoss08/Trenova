@@ -147,6 +147,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"resolve_bank_receipt_work_item": {agent.EgressInternal},
 		"link_inbound_message":           {agent.EgressInternal},
 		"mark_inbound_message":           {agent.EgressInternal},
+		"check_accounting_connection":    {agent.EgressInternal},
 		"add_shipment_comment": {
 			agent.EgressInternal,
 			agent.EgressCustomerVisible,

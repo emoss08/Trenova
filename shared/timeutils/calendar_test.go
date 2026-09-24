@@ -29,3 +29,10 @@ func TestCalendarUTC(t *testing.T) {
 	assert.Equal(t, int64(3), WholeDaysBetween(ts, ts+3*SecondsPerDay+100))
 	assert.Equal(t, int64(-1), WholeDaysBetween(ts, ts-SecondsPerDay))
 }
+
+func TestFormatInstantUTC(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "2026-09-24T17:00:00Z", FormatInstantUTC(1790269200))
+	assert.Equal(t, "1970-01-01T00:00:00Z", FormatInstantUTC(0))
+}

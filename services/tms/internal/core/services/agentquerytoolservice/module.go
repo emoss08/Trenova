@@ -21,6 +21,7 @@ var Module = fx.Module("agent-query-tool-service", fx.Provide(append(grouped(), 
 // builds each one to read what a model is shown.
 func ToolProviders() []any {
 	return []any{
+		provideGetAccountingSyncStatusTool,
 		newGetShipmentTool,
 		newSearchShipmentsTool,
 		provideGetWorkerTool,

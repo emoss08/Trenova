@@ -961,7 +961,7 @@ func (s *Service) accountingConnection(
 		"lastCheckedAt":       found.LastCheckedAt,
 		"consecutiveFailures": found.ConsecutiveFailures,
 		"lastErrorCategory":   found.LastErrorCategory,
-		"lastErrorMessage":    found.LastErrorMessage,
+		"lastError":           found.AgentErrorSummary(),
 		"reconnectBy":         found.RefreshTokenAbsoluteExpiresAt,
 	})
 

@@ -68,6 +68,7 @@ func ToolProviders() []any {
 		newRememberTool,
 		newForgetMemoryTool,
 		provideDismissInsightTool,
+		provideCheckAccountingConnectionTool,
 		provideMatchBankReceiptTool,
 		providePostCustomerPaymentTool,
 		provideResolveBankReceiptWorkItemTool,
