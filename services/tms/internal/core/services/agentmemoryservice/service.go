@@ -35,10 +35,6 @@ import (
 )
 
 const (
-	// DefaultContextLimit is how many memories a prompt carries at most.
-	DefaultContextLimit = 40
-	defaultRecallLimit  = 20
-	maxRecallLimit      = 100
 	// maxValueChars bounds a proposed or corrected value in a correction, so
 	// a long note in one parameter does not become the whole memory.
 	maxValueChars = 80
@@ -70,23 +66,39 @@ type Params struct {
 	Runs         repositories.AgentRunRepository
 	Labeler      SubjectLabeler
 	AuditService services.AuditService
+	// Subjects reads which records a shipment, a document or a message
+	// names. Without it a turn reads the memories of the records it is
+	// directly about and no others.
+	Subjects repositories.AgentMemorySubjectRepository `optional:"true"`
+	// Ranker orders the memories a prompt may carry. Without one they are
+	// ordered by how recently they were recorded and how often they are used.
+	Ranker services.MemoryRanker `optional:"true"`
 }
 
 type Service struct {
-	l       *zap.Logger
-	repo    repositories.AgentMemoryRepository
-	runs    runReader
-	labeler SubjectLabeler
-	audit   actionLogger
+	l        *zap.Logger
+	repo     repositories.AgentMemoryRepository
+	runs     runReader
+	labeler  SubjectLabeler
+	audit    actionLogger
+	subjects SubjectResolver
+	ranker   services.MemoryRanker
 }
 
 func New(p Params) services.AgentMemoryService {
+	ranker := p.Ranker
+	if ranker == nil {
+		ranker = NewRecencyRanker()
+	}
+
 	return &Service{
-		l:       p.Logger.Named("service.agentmemory"),
-		repo:    p.Repo,
-		runs:    p.Runs,
-		labeler: p.Labeler,
-		audit:   p.AuditService,
+		l:        p.Logger.Named("service.agentmemory"),
+		repo:     p.Repo,
+		runs:     p.Runs,
+		labeler:  p.Labeler,
+		audit:    p.AuditService,
+		subjects: NewSubjectResolver(p.Subjects),
+		ranker:   ranker,
 	}
 }
 
@@ -176,12 +188,7 @@ func (s *Service) Remember(
 	// The same sentence about the same record is one memory. Returning the
 	// existing row is what lets an agent say "noted" twice without the
 	// prompt carrying it twice.
-	existing, err := s.repo.FindActive(ctx, repositories.FindActiveAgentMemoryRequest{
-		TenantInfo: req.TenantInfo,
-		Content:    entity.Content,
-		Subject:    subjectRefOf(entity),
-		ToolName:   entity.ToolName,
-	})
+	existing, err := s.repo.FindActive(ctx, sameMemoryRequest(req.TenantInfo, entity))
 	if err != nil {
 		return nil, err
 	}
@@ -476,20 +483,19 @@ func (s *Service) ListConnection(
 func (s *Service) Recall(
 	ctx context.Context,
 	req services.RecallAgentMemoriesRequest,
-) ([]*agent.Memory, error) {
+) ([]services.RecalledMemory, error) {
 	limit := req.Limit
 	if limit <= 0 {
-		limit = defaultRecallLimit
+		limit = agent.DefaultMemoryRecallLimit
 	}
-	if limit > maxRecallLimit {
-		limit = maxRecallLimit
-	}
+	limit = min(limit, agent.MaxMemoryRecallLimit)
 
 	search := repositories.SearchAgentMemoriesRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Now:               timeutils.NowUnix(),
-		Query:             req.Query,
+		Query:             strings.TrimSpace(req.Query),
+		IDs:               req.IDs,
 		Kind:              req.Kind,
 		ToolName:          req.ToolName,
 		Limit:             limit,
@@ -498,48 +504,99 @@ func (s *Service) Recall(
 		search.Subject = &repositories.MemorySubjectRef{Type: req.SubjectType, ID: req.SubjectID}
 	}
 
-	return s.repo.Search(ctx, search)
+	found, err := s.repo.Search(ctx, search)
+	if err != nil {
+		return nil, err
+	}
+
+	var match agent.MemoryMatch
+	if search.Query != "" {
+		match = agent.MemoryMatchWords
+	}
+	recalled := make([]services.RecalledMemory, 0, len(found))
+	for _, memory := range found {
+		recalled = append(recalled, services.RecalledMemory{Memory: memory, Match: match})
+	}
+
+	return recalled, nil
 }
 
 func (s *Service) ForContext(
 	ctx context.Context,
 	req services.MemoryContextRequest,
-) ([]*agent.Memory, error) {
-	limit := req.Limit
-	if limit <= 0 {
-		limit = DefaultContextLimit
+) (*services.MemoryContext, error) {
+	now := timeutils.NowUnix()
+
+	subjects, err := s.subjects.Resolve(ctx, req.TenantInfo, req.Records)
+	if err != nil {
+		s.l.Warn("agent memory: the records a turn is about could not all be read",
+			zap.String("organization", req.TenantInfo.OrgID.String()),
+			zap.Error(err),
+		)
 	}
 
-	now := timeutils.NowUnix()
 	memories, err := s.repo.ListActive(ctx, repositories.ListActiveAgentMemoriesRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Now:               now,
 		OrganizationWide:  true,
-		Subjects:          req.Subjects,
+		Subjects:          subjectRefs(subjects),
 		ToolNames:         req.ToolNames,
-		Limit:             limit,
+		Limit:             agent.MaxMemoryCandidates,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if len(memories) == 0 {
-		return memories, nil
-	}
 
-	ids := make([]pulid.ID, 0, len(memories))
-	for _, memory := range memories {
-		ids = append(ids, memory.ID)
+	ranker := s.ranker
+	if ranker == nil {
+		ranker = NewRecencyRanker()
 	}
-	if err = s.repo.MarkUsed(ctx, repositories.MarkAgentMemoriesUsedRequest{
+	ranked, err := ranker.RankMemories(ctx, services.RankMemoriesRequest{
 		TenantInfo: req.TenantInfo,
-		IDs:        ids,
-		At:         now,
-	}); err != nil {
-		s.l.Warn("agent memory: could not mark memories used", zap.Error(err))
+		Now:        now,
+		Memories:   memories,
+	})
+	if err != nil {
+		s.l.Warn("agent memory: ranking failed; ordering by recency and use",
+			zap.String("organization", req.TenantInfo.OrgID.String()),
+			zap.Error(err),
+		)
+		ranked = RankByRecencyAndUse(memories, now)
 	}
 
-	return memories, nil
+	return &services.MemoryContext{Memories: ranked, Subjects: subjects}, nil
+}
+
+func (s *Service) RecordUse(ctx context.Context, req services.RecordMemoryUseRequest) error {
+	if len(req.IDs) == 0 {
+		return nil
+	}
+
+	return s.repo.MarkUsed(ctx, repositories.MarkAgentMemoriesUsedRequest{
+		TenantInfo: req.TenantInfo,
+		IDs:        req.IDs,
+		At:         timeutils.NowUnix(),
+	})
+}
+
+func (s *Service) Usage(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (*services.AgentMemoryUsage, error) {
+	count, err := s.repo.CountActive(ctx, repositories.CountActiveAgentMemoriesRequest{
+		TenantInfo: tenant,
+		Now:        timeutils.NowUnix(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.AgentMemoryUsage{
+		ActiveCount:   count,
+		ActiveSoftCap: agent.MemoryActiveSoftCap,
+		WarnAt:        agent.MemoryActiveWarnAt,
+	}, nil
 }
 
 // RecordCorrection keeps what a decision taught. A change to the proposed
@@ -579,11 +636,7 @@ func (s *Service) RecordCorrection(
 	}
 
 	tenant := pagination.TenantInfo{OrgID: proposal.OrganizationID, BuID: proposal.BusinessUnitID}
-	existing, err := s.repo.FindActive(ctx, repositories.FindActiveAgentMemoryRequest{
-		TenantInfo: tenant,
-		Content:    content,
-		ToolName:   proposal.ToolName,
-	})
+	existing, err := s.repo.FindActive(ctx, sameMemoryRequest(tenant, entity))
 	if err != nil {
 		return nil, err
 	}
@@ -667,6 +720,31 @@ func (s *Service) logChange(
 		BusinessUnitID: entity.BusinessUnitID,
 	}, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log agent memory audit", zap.Error(err))
+	}
+}
+
+func sameMemoryRequest(
+	tenant pagination.TenantInfo,
+	entity *agent.Memory,
+) repositories.FindActiveAgentMemoryRequest {
+	scope := entity.Scope
+	if scope == "" {
+		scope = agent.MemoryScopeOrganization
+	}
+	agentID := pulid.Nil
+	if entity.AgentDefinitionID != nil {
+		agentID = *entity.AgentDefinitionID
+	}
+
+	return repositories.FindActiveAgentMemoryRequest{
+		TenantInfo:        tenant,
+		Now:               timeutils.NowUnix(),
+		Content:           entity.Content,
+		Subject:           subjectRefOf(entity),
+		ToolName:          entity.ToolName,
+		Scope:             scope,
+		AgentDefinitionID: agentID,
+		Tainted:           entity.Tainted,
 	}
 }
 

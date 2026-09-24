@@ -25,9 +25,9 @@ const announceTimeout = 5 * time.Second
 
 // TurnAnnouncement is what the person's other tabs are told about a reply
 // starting or ending. It carries identifiers and the status and nothing the
-// conversation said: the announcement is published to the whole tenant's
-// channel, and a conversation is its owner's alone. A tab that is the owner's
-// reads the rest from the live-turns endpoint, scoped to them.
+// conversation said: a conversation is its owner's alone, and a tab reads the
+// rest from the live-turns endpoint, scoped to them. The announcement itself
+// is addressed to the owner, so no one else's stream carries it.
 type TurnAnnouncement struct {
 	TurnID   pulid.ID                         `json:"turnId"`
 	ThreadID pulid.ID                         `json:"threadId"`
@@ -57,6 +57,7 @@ func (s *Service) announce(
 		&serviceports.PublishResourceInvalidationRequest{
 			OrganizationID: turn.OrganizationID,
 			BusinessUnitID: turn.BusinessUnitID,
+			AudienceUserID: turn.UserID,
 			Resource:       TurnsResource,
 			Action:         action,
 			RecordID:       turn.ID,

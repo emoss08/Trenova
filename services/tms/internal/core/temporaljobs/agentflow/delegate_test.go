@@ -283,3 +283,23 @@ func TestDeclinedDelegate_AStopIsNotARefusal(t *testing.T) {
 		delegateFailureReason("Shipment Desk", &modelcall.Failure{Status: 503}),
 		"status 503")
 }
+
+func TestRunContext_CarriesTheRecordsTheTurnIsAboutAsData(t *testing.T) {
+	t.Parallel()
+
+	records := []agent.EntityRef{
+		{Type: "customer", ID: pulid.MustNew("cus_").String()},
+		{Type: string(agent.SubjectShipment), ID: pulid.MustNew("shp_").String()},
+	}
+	run := NewRunContext(&serviceports.RunRequest{
+		Definition: &agentdefinition.Definition{ID: pulid.MustNew("agdef_")},
+		Records:    records,
+	}, PriorityInteractive)
+
+	assert.Equal(t, records, run.Records)
+	assert.Equal(t, records, run.request().Records)
+
+	var older RunContext
+	assert.Empty(t, older.Records,
+		"a run context recorded before records were kept hands its delegates none")
+}

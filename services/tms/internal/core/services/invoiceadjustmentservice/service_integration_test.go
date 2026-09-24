@@ -256,12 +256,6 @@ func (noopAuditService) RegisterSensitiveFields(
 
 type noopRealtimeService struct{}
 
-func (noopRealtimeService) CreateToken(
-	*servicesports.CreateRealtimeTokenRequest,
-) (*servicesports.RealtimeToken, error) {
-	return nil, nil
-}
-
 func (noopRealtimeService) PublishResourceInvalidation(
 	context.Context,
 	*servicesports.PublishResourceInvalidationRequest,

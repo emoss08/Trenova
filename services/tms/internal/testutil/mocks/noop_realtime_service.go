@@ -8,12 +8,6 @@ import (
 
 type NoopRealtimeService struct{}
 
-func (s *NoopRealtimeService) CreateToken(
-	_ *servicesport.CreateRealtimeTokenRequest,
-) (*servicesport.RealtimeToken, error) {
-	return &servicesport.RealtimeToken{}, nil
-}
-
 func (s *NoopRealtimeService) PublishResourceInvalidation(
 	_ context.Context,
 	_ *servicesport.PublishResourceInvalidationRequest,

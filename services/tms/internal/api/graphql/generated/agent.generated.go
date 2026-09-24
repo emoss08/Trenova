@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -3053,6 +3054,75 @@ func (ec *executionContext) _AgentMemoryEvidence_lastRatedAt(ctx context.Context
 }
 func (ec *executionContext) fieldContext_AgentMemoryEvidence_lastRatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AgentMemoryEvidence", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryUsage_activeCount(ctx context.Context, field graphql.CollectedField, obj *services.AgentMemoryUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryUsage_activeCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ActiveCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryUsage_activeCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryUsage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryUsage_activeSoftCap(ctx context.Context, field graphql.CollectedField, obj *services.AgentMemoryUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryUsage_activeSoftCap(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ActiveSoftCap, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryUsage_activeSoftCap(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryUsage", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemoryUsage_warnAt(ctx context.Context, field graphql.CollectedField, obj *services.AgentMemoryUsage) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemoryUsage_warnAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WarnAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemoryUsage_warnAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemoryUsage", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
 func (ec *executionContext) _AgentPlan_id(ctx context.Context, field graphql.CollectedField, obj *agent.AgentPlan) (ret graphql.Marshaler) {
@@ -7062,6 +7132,54 @@ func (ec *executionContext) _AgentMemoryEvidence(ctx context.Context, sel ast.Se
 	return out
 }
 
+var agentMemoryUsageImplementors = []string{"AgentMemoryUsage"}
+
+func (ec *executionContext) _AgentMemoryUsage(ctx context.Context, sel ast.SelectionSet, obj *services.AgentMemoryUsage) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, agentMemoryUsageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AgentMemoryUsage")
+		case "activeCount":
+			out.Values[i] = ec._AgentMemoryUsage_activeCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "activeSoftCap":
+			out.Values[i] = ec._AgentMemoryUsage_activeSoftCap(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "warnAt":
+			out.Values[i] = ec._AgentMemoryUsage_warnAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var agentPlanImplementors = []string{"AgentPlan", "PendingDecision"}
 
 func (ec *executionContext) _AgentPlan(ctx context.Context, sel ast.SelectionSet, obj *agent.AgentPlan) graphql.Marshaler {
@@ -8581,6 +8699,16 @@ func (ec *executionContext) marshalNAgentMemoryStatus2githubᚗcomᚋemoss08ᚋt
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNAgentMemoryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentMemoryUsage(ctx context.Context, sel ast.SelectionSet, v *services.AgentMemoryUsage) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AgentMemoryUsage(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐAgentPlan(ctx context.Context, sel ast.SelectionSet, v *agent.AgentPlan) graphql.Marshaler {

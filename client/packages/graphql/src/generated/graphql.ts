@@ -6579,7 +6579,7 @@ export type DecideAgentProposalsMutationVariables = Exact<{
 
 export type DecideAgentProposalsMutation = { decideAgentProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, createdAt: number } | null }> };
 
-export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string, delegateIds: Array<string>, accessMode: AgentAccessMode, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, enabled: boolean, triggerMode: AgentTriggerMode }>, accessRoles: Array<{ id: string, name: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
+export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, memoryTokenBudget: number | null, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string, delegateIds: Array<string>, accessMode: AgentAccessMode, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, enabled: boolean, triggerMode: AgentTriggerMode }>, accessRoles: Array<{ id: string, name: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
 
 export type AgentDefinitionCardsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -6742,6 +6742,11 @@ export type AgentMemoryCountQueryVariables = Exact<{
 
 
 export type AgentMemoryCountQuery = { agentMemories: { totalCount: number | null } };
+
+export type AgentMemoryUsageQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentMemoryUsageQuery = { agentMemoryUsage: { activeCount: number, activeSoftCap: number, warnAt: number } };
 
 export type CreateAgentMemoryMutationVariables = Exact<{
   input: AgentMemoryInput;
@@ -13215,6 +13220,7 @@ export const AgentDefinitionCardFieldsFragmentDoc = new TypedDocumentString(`
   dailyRunLimit
   toolDailyLimits
   simulationMode
+  memoryTokenBudget
   contextProviders
   outputMode
   preferredProviderId
@@ -20492,7 +20498,7 @@ export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"Pend
 export const PendingDecisionSummaryDocument = {"__meta__":{"kind":"query","name":"PendingDecisionSummary","hash":"sha256:4da8f1517d5269e2a6a982d9b22085d0fc060aad3115dfe942ffbbb4318f0aa6"}} as unknown as TypedDocumentString<PendingDecisionSummaryQuery, PendingDecisionSummaryQueryVariables>;
 export const PlanStepsDocument = {"__meta__":{"kind":"query","name":"PlanSteps","hash":"sha256:8e998d8ca99ecb3ec7ccb8444e779245bf0b12661400fe1e4ddee2e86cd22472"}} as unknown as TypedDocumentString<PlanStepsQuery, PlanStepsQueryVariables>;
 export const DecideAgentProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposals","hash":"sha256:59304c594ac96561580ae98bff8ecf6ac041a40f45487c9319485de537cef971"}} as unknown as TypedDocumentString<DecideAgentProposalsMutation, DecideAgentProposalsMutationVariables>;
-export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCards","hash":"sha256:709e06974f01687b278dbfa8331101c8bc9189ff2f78d05727637b06640ee07f"}} as unknown as TypedDocumentString<AgentDefinitionCardsQuery, AgentDefinitionCardsQueryVariables>;
+export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCards","hash":"sha256:8c5469bb3a8fb5d16163ff275cc8713600b60756e0b7b3b63cdf0eda4e65d145"}} as unknown as TypedDocumentString<AgentDefinitionCardsQuery, AgentDefinitionCardsQueryVariables>;
 export const AgentChoicesDocument = {"__meta__":{"kind":"query","name":"AgentChoices","hash":"sha256:6bb1514f9329e2c8e1ed77638129117516e2d14d070b7502591fbc60fbe83130"}} as unknown as TypedDocumentString<AgentChoicesQuery, AgentChoicesQueryVariables>;
 export const AgentDefinitionCountDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCount","hash":"sha256:daacf568820fcf8bddb93d6841d154a39ae37f4f40aab47e3e127efda1270831"}} as unknown as TypedDocumentString<AgentDefinitionCountQuery, AgentDefinitionCountQueryVariables>;
 export const AgentRunCountDocument = {"__meta__":{"kind":"query","name":"AgentRunCount","hash":"sha256:e5f44d80150fa3a53684e90b45779a0d12a9c75150f2ed16c1b816d22edb905e"}} as unknown as TypedDocumentString<AgentRunCountQuery, AgentRunCountQueryVariables>;
@@ -20511,6 +20517,7 @@ export const AgentExceptionDetailDocument = {"__meta__":{"kind":"query","name":"
 export const ResolveAgentExceptionDocument = {"__meta__":{"kind":"mutation","name":"ResolveAgentException","hash":"sha256:7560a022b9583caf64b19551a5703e3d4717a7ee8297e5359121c469f4357010"}} as unknown as TypedDocumentString<ResolveAgentExceptionMutation, ResolveAgentExceptionMutationVariables>;
 export const AgentMemoryTableDocument = {"__meta__":{"kind":"query","name":"AgentMemoryTable","hash":"sha256:d99d28d2422db1a09310ff97b588ad4581e73c2f9ac866e4324be32cbaafea77"}} as unknown as TypedDocumentString<AgentMemoryTableQuery, AgentMemoryTableQueryVariables>;
 export const AgentMemoryCountDocument = {"__meta__":{"kind":"query","name":"AgentMemoryCount","hash":"sha256:f469da4636039efd1d8bd70aee025ce753109b239d117112aac3f252d4ce968c"}} as unknown as TypedDocumentString<AgentMemoryCountQuery, AgentMemoryCountQueryVariables>;
+export const AgentMemoryUsageDocument = {"__meta__":{"kind":"query","name":"AgentMemoryUsage","hash":"sha256:25550e83d389da60200a818552253cbdb5480aed9789f27f8afe8177b921ae3f"}} as unknown as TypedDocumentString<AgentMemoryUsageQuery, AgentMemoryUsageQueryVariables>;
 export const CreateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"CreateAgentMemory","hash":"sha256:f34dfbfff1a02c5a8544b8cad8f849b33eff8eb9c64ad479110bb66a6048e1e8"}} as unknown as TypedDocumentString<CreateAgentMemoryMutation, CreateAgentMemoryMutationVariables>;
 export const UpdateAgentMemoryDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentMemory","hash":"sha256:da2b52afcd2ecc9a53be6df3a173ccd003d8bb748d0bb1b58984aebd7631e01b"}} as unknown as TypedDocumentString<UpdateAgentMemoryMutation, UpdateAgentMemoryMutationVariables>;
 export const SetAgentMemoryStatusDocument = {"__meta__":{"kind":"mutation","name":"SetAgentMemoryStatus","hash":"sha256:524e01ce4ee37f8091fc80d5a48b3538a6e12970b4ccd1e2199d9f6cdd0bde0d"}} as unknown as TypedDocumentString<SetAgentMemoryStatusMutation, SetAgentMemoryStatusMutationVariables>;

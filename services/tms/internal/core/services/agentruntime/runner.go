@@ -39,6 +39,9 @@ type Params struct {
 	Trust   repositories.AgentToolTrustRepository `optional:"true"`
 	// Extensions is optional. Without it no extension's tools are offered.
 	Extensions serviceports.AgentExtensionGate `optional:"true"`
+	// Memories is optional. With it every memory a prompt carries is
+	// counted as used; without it the prompt still carries them.
+	Memories serviceports.AgentMemoryService `optional:"true"`
 }
 
 type Service struct {
@@ -52,6 +55,7 @@ type Service struct {
 	budgets     serviceports.AgentBudgetService
 	trust       repositories.AgentToolTrustRepository
 	extensions  serviceports.AgentExtensionGate
+	memories    serviceports.AgentMemoryService
 }
 
 func New(p Params) *Service {
@@ -66,6 +70,7 @@ func New(p Params) *Service {
 		budgets:     p.Budgets,
 		trust:       p.Trust,
 		extensions:  p.Extensions,
+		memories:    p.Memories,
 	}
 }
 

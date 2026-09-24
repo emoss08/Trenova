@@ -12,8 +12,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const maxRecallRows = 50
-
 // memoryRow is a memory in the words the model needs: what it says, what it
 // is about, and which kind it is so the model knows whether to follow it.
 type memoryRow struct {
@@ -25,6 +23,7 @@ type memoryRow struct {
 	RecordedBy string       `json:"recordedBy"`
 	RecordedOn optionalDate `json:"recordedOn"`
 	ExpiresOn  optionalDate `json:"expiresOn"`
+	Match      string       `json:"match,omitempty"`
 
 	FromOutsideContent bool `json:"fromOutsideContent,omitempty"`
 }
@@ -53,8 +52,14 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"query": map[string]any{
-				"type":        "string",
-				"description": "Words to look for in the memory or the name of what it is about.",
+				"type": "string",
+				"description": "Words to look for in the memory, the name of what it is " +
+					"about, or its tool. Every word need not appear; the closest come first.",
+			},
+			"id": map[string]any{
+				"type": "string",
+				"description": "Optional: one memory's id, to read the whole of a memory " +
+					"your instructions show cut short.",
 			},
 			"kind": map[string]any{
 				"type": "string",
@@ -90,7 +95,11 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 			},
 			"limit": map[string]any{
 				"type":        "integer",
-				"description": fmt.Sprintf("How many to return, at most %d.", maxRecallRows),
+				"description": fmt.Sprintf(
+					"How many to return; %d when left out, at most %d.",
+					agent.DefaultMemoryRecallLimit,
+					agent.MaxMemoryRecallLimit,
+				),
 			},
 		},
 		"additionalProperties": false,
@@ -115,10 +124,11 @@ func (t *recallMemoryTool) Query(
 		return nil, err
 	}
 
-	limit := optionalInt(params.Params, "limit", defaultSearchLimit)
-	if limit <= 0 || limit > maxRecallRows {
-		limit = maxRecallRows
+	limit := optionalInt(params.Params, "limit", agent.DefaultMemoryRecallLimit)
+	if limit <= 0 {
+		limit = agent.DefaultMemoryRecallLimit
 	}
+	limit = min(limit, agent.MaxMemoryRecallLimit)
 
 	req := serviceports.RecallAgentMemoriesRequest{
 		TenantInfo:        tenantOf(params),
@@ -130,6 +140,14 @@ func (t *recallMemoryTool) Query(
 	}
 	if req.Kind != "" && !req.Kind.IsValid() {
 		return nil, fmt.Errorf("kind %q is not Instruction, Fact or Correction", req.Kind)
+	}
+	rawMemoryID := optionalString(params.Params, "id")
+	if rawMemoryID != "" {
+		memoryID, err := pulid.Parse(rawMemoryID)
+		if err != nil {
+			return nil, fmt.Errorf("id %q is not a memory id", rawMemoryID)
+		}
+		req.IDs = []pulid.ID{memoryID}
 	}
 
 	subjectType := agent.MemorySubjectType(optionalString(params.Params, "subjectType"))
@@ -154,6 +172,7 @@ func (t *recallMemoryTool) Query(
 
 	criteria := filtercatalog.NewCriteria("memories").At(clockFor(params))
 	criteria.Text(req.Query)
+	criteria.Field("id", rawMemoryID)
 	criteria.Field("kind", string(req.Kind))
 	if subjectType != "" {
 		criteria.Field("about", strings.ToLower(string(subjectType))+" "+rawID)
@@ -167,7 +186,8 @@ func (t *recallMemoryTool) Query(
 
 	rows := make([]memoryRow, 0, len(memories))
 	tainted := make([]agent.RecordRef, 0, len(memories))
-	for _, memory := range memories {
+	for _, recalled := range memories {
+		memory := recalled.Memory
 		tainted = append(tainted, memory.TaintedRecords()...)
 		rows = append(rows, memoryRow{
 			ID:         memory.ID.String(),
@@ -178,6 +198,7 @@ func (t *recallMemoryTool) Query(
 			RecordedBy: recordedBy(memory.Source),
 			RecordedOn: recordedDate(memory.CreatedAt),
 			ExpiresOn:  expectedDate(pointerSeconds(memory.ExpiresAt), "never"),
+			Match:      string(recalled.Match),
 
 			FromOutsideContent: memory.DrawnFromOutside(),
 		})
@@ -208,6 +229,8 @@ func recordedBy(source agent.MemorySource) string {
 		return "an agent"
 	case agent.MemorySourceDecision:
 		return "a decision on a proposal"
+	case agent.MemorySourceFeedback:
+		return "people's ratings of an agent's work"
 	default:
 		return string(source)
 	}

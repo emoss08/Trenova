@@ -361,3 +361,106 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 	require.NotNil(t, result.Primary)
 	assert.Equal(t, amd, result.Primary.BillToCustomerID)
 }
+
+func transferringService(
+	t *testing.T,
+	shp *shipment.Shipment,
+	tenantInfo pagination.TenantInfo,
+	shipmentRepo *mocks.MockShipmentRepository,
+) *service {
+	t.Helper()
+
+	repo := mocks.NewMockBillingQueueRepository(t)
+	repo.EXPECT().
+		ExistsByShipmentPayerAndType(mock.Anything, tenantInfo, shp.ID, mock.Anything, billingqueue.BillTypeInvoice).
+		Return(false, nil).
+		Twice()
+	repo.EXPECT().
+		Create(mock.Anything, mock.AnythingOfType("*billingqueue.BillingQueueItem")).
+		RunAndReturn(func(_ context.Context, item *billingqueue.BillingQueueItem) (*billingqueue.BillingQueueItem, error) {
+			item.ID = pulid.MustNew("bqi_")
+			return item, nil
+		}).
+		Twice()
+
+	customerRepo := mocks.NewMockCustomerRepository(t)
+	customerRepo.EXPECT().
+		GetByID(mock.Anything, mock.AnythingOfType("repositories.GetCustomerByIDRequest")).
+		RunAndReturn(func(_ context.Context, req repositories.GetCustomerByIDRequest) (*customer.Customer, error) {
+			return &customer.Customer{ID: req.ID, BillingProfile: &customer.CustomerBillingProfile{}}, nil
+		}).
+		Twice()
+
+	return &service{
+		l:            zap.NewNop(),
+		db:           passthroughDB{},
+		repo:         repo,
+		shipmentRepo: shipmentRepo,
+		customerRepo: customerRepo,
+		generator:    &countingGenerator{},
+		auditService: &mocks.NoopAuditService{},
+		realtime:     &mocks.NoopRealtimeService{},
+		validator:    testValidator(),
+	}
+}
+
+func transferActor(tenantInfo pagination.TenantInfo) *services.RequestActor {
+	userID := pulid.MustNew("usr_")
+	return &services.RequestActor{
+		PrincipalType:  services.PrincipalTypeUser,
+		PrincipalID:    userID,
+		UserID:         userID,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+	}
+}
+
+func TestTransferToBillingItemsReusesTheCallersDetailedShipment(t *testing.T) {
+	t.Parallel()
+
+	shp, _, tenantInfo := transferFixture(t)
+	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	svc := transferringService(t, shp, tenantInfo, shipmentRepo)
+
+	result, err := svc.TransferToBillingItems(t.Context(), &services.TransferToBillingRequest{
+		ShipmentID:       shp.ID,
+		BillType:         billingqueue.BillTypeInvoice,
+		TenantInfo:       tenantInfo,
+		DetailedShipment: shp,
+	}, transferActor(tenantInfo))
+
+	require.NoError(t, err)
+	require.Len(t, result.Items, 2, "the split still comes from the shipment handed in")
+	shipmentRepo.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything)
+}
+
+func TestTransferToBillingItemsReloadsAShipmentFromAnotherTenant(t *testing.T) {
+	t.Parallel()
+
+	shp, _, tenantInfo := transferFixture(t)
+	foreign := *shp
+	foreign.BusinessUnitID = pulid.MustNew("bu_")
+
+	shipmentRepo := mocks.NewMockShipmentRepository(t)
+	shipmentRepo.EXPECT().
+		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
+			return req.ID == shp.ID && req.TenantInfo == tenantInfo &&
+				req.ShipmentOptions.ExpandShipmentDetails
+		})).
+		Return(shp, nil).
+		Once()
+	svc := transferringService(t, shp, tenantInfo, shipmentRepo)
+
+	result, err := svc.TransferToBillingItems(t.Context(), &services.TransferToBillingRequest{
+		ShipmentID:       shp.ID,
+		BillType:         billingqueue.BillTypeInvoice,
+		TenantInfo:       tenantInfo,
+		DetailedShipment: &foreign,
+	}, transferActor(tenantInfo))
+
+	require.NoError(t, err)
+	require.Len(t, result.Items, 2)
+	for _, item := range result.Items {
+		assert.Equal(t, tenantInfo.BuID, item.BusinessUnitID)
+	}
+}

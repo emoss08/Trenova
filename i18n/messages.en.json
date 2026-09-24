@@ -1531,31 +1531,12 @@
     ]
   },
   "A budget cannot be negative": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/agentdefinition",
-      "domain/agentquality"
-    ]
-  },
-  "A budget is at most 100,000": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/agentquality"
-    ]
-  },
-  "A budget is in whole cents": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/agentquality"
+      "domain/agentdefinition"
     ]
   },
   "A bulk action may target at most 500 records": {
@@ -3724,6 +3705,24 @@
       "domain/homelayout"
     ]
   },
+  "A model key cannot start or end with spaces": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/airetrieval"
+    ]
+  },
+  "A model key is at most 300 characters": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/airetrieval"
+    ]
+  },
   "A model reads some answers against their rubric. It never overrides a hard check, and what it costs counts toward the budget.": {
     "sites": 1,
     "scope": [
@@ -3912,6 +3911,24 @@
     ],
     "areas": [
       "domain/driverpay"
+    ]
+  },
+  "A pending model needs a model key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/airetrieval"
+    ]
+  },
+  "A pending model needs its dimensions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/airetrieval"
     ]
   },
   "A percent allocation cannot carry an amount": {
@@ -5387,6 +5404,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "A signed-in user is required for live updates": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
     ]
   },
   "A simulation cannot replay more than 100,000 shipments": {
@@ -12486,6 +12512,15 @@
       "routes/agent-control"
     ]
   },
+  "Agents may read {0} active memories; an organization should keep at most {1}. Each prompt carries only what fits its budget, so retire what no longer holds.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Agents on": {
     "sites": 1,
     "scope": [
@@ -14588,6 +14623,24 @@
     ],
     "areas": [
       "domain/agentquality"
+    ]
+  },
+  "An active model needs a model key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/airetrieval"
+    ]
+  },
+  "An active model needs its dimensions": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/airetrieval"
     ]
   },
   "An active override for this finding already exists until {0}": {
@@ -26329,7 +26382,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 118,
+    "sites": 119,
     "scope": [
       "go"
     ],
@@ -26341,6 +26394,7 @@
       "domain/aifeedback",
       "domain/ailog",
       "domain/aiprovider",
+      "domain/airetrieval",
       "domain/apikey",
       "domain/assistantartifact",
       "domain/billingtransfer",
@@ -37605,6 +37659,24 @@
       "routes/edi"
     ]
   },
+  "Connection ID is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
+    ]
+  },
+  "Connection ID is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
+    ]
+  },
   "Connection test failed": {
     "sites": 1,
     "scope": [
@@ -38041,7 +38113,7 @@
       "routes/admin"
     ]
   },
-  "Content must be at most 2000 characters": {
+  "Content must be at most {0} characters": {
     "sites": 1,
     "scope": [
       "go"
@@ -76558,6 +76630,15 @@
       "domain/documenttemplate"
     ]
   },
+  "How much of what the organization recorded each prompt carries. What the conversation is about comes first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "How much the endpoint guarantees, and how far a single reply may go.": {
     "sites": 1,
     "scope": [
@@ -87913,6 +87994,24 @@
       "routes/dispatch-console"
     ]
   },
+  "Live updates are at capacity on this server. Retrying shortly.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Live updates are available to signed-in users only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Live updates paused — reconnecting…": {
     "sites": 1,
     "scope": [
@@ -93440,6 +93539,24 @@
       "routes/agent-control"
     ]
   },
+  "Memory in the prompt": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Memory in the prompt must be between {0} and {1} tokens; leave it empty for the default of {2}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Memory restored": {
     "sites": 1,
     "scope": [
@@ -95895,6 +96012,15 @@
       "domain/worker"
     ]
   },
+  "More memories than agents can use well": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Most billed": {
     "sites": 1,
     "scope": [
@@ -97485,6 +97611,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Nearing the most memories agents can use well": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nebraska (NE)": {
@@ -109629,6 +109764,15 @@
       "routes/escrow-account"
     ]
   },
+  "Only paused indexing has a reason": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/airetrieval"
+    ]
+  },
   "Only pending EDI connections can be accepted": {
     "sites": 1,
     "scope": [
@@ -112768,7 +112912,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 117,
+    "sites": 118,
     "scope": [
       "go"
     ],
@@ -112780,6 +112924,7 @@
       "domain/aifeedback",
       "domain/ailog",
       "domain/aiprovider",
+      "domain/airetrieval",
       "domain/apikey",
       "domain/assistantartifact",
       "domain/billingtransfer",
@@ -122229,6 +122374,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Presence is not available in the portal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
     ]
   },
   "Preset": {
@@ -143172,6 +143326,15 @@
       "packages/shared/types"
     ]
   },
+  "Say why indexing is paused": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/airetrieval"
+    ]
+  },
   "Say why the action is being taken": {
     "sites": 2,
     "scope": [
@@ -143778,22 +143941,42 @@
     ]
   },
   "Scope is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/billingtransferservice"
-    ]
-  },
-  "Scope is required": {
     "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/billingtransferservice",
+      "service/realtimeservice"
+    ]
+  },
+  "Scope is required": {
+    "sites": 5,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "domain/billingtransfer",
-      "domain/worker"
+      "domain/worker",
+      "service/realtimeservice"
+    ]
+  },
+  "Scope is reserved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
+    ]
+  },
+  "Scope is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
     ]
   },
   "Scope this session at {0}. You can switch later without signing out.": {
@@ -150780,6 +150963,15 @@
       "routes/shipment"
     ]
   },
+  "Shipment ID is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Shipment ID is required": {
     "sites": 32,
     "scope": [
@@ -157721,7 +157913,7 @@
     ]
   },
   "Streaming is not supported": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -167554,6 +167746,15 @@
       "domain/documenttemplate"
     ]
   },
+  "The pending model is already the active one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/airetrieval"
+    ]
+  },
   "The per-gallon rates each jurisdiction publishes for a quarter and fuel type, as the IFTA rate matrix lists them. A return cannot be finalized while any of its member lines is missing a rate.": {
     "sites": 1,
     "scope": [
@@ -172681,6 +172882,24 @@
       "routes/auth"
     ]
   },
+  "This live connection belongs to another session": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
+    ]
+  },
+  "This live connection has ended. Reconnect and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This load has been canceled": {
     "sites": 1,
     "scope": [
@@ -175817,6 +176036,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "Too many live connections are open for this account. Close a tab and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Too many mentioned records": {
@@ -196890,15 +197118,6 @@
       "service/exchangerateservice"
     ]
   },
-  "invalid realtime auth context": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/realtimeservice"
-    ]
-  },
   "invalid realtime invalidation payload": {
     "sites": 1,
     "scope": [
@@ -197687,24 +197906,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "realtime service is not configured": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/realtimeservice"
-    ]
-  },
-  "realtime token request is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/realtimeservice"
     ]
   },
   "recent median {0}": {
@@ -200407,6 +200608,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} (default)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} (disabled)": {

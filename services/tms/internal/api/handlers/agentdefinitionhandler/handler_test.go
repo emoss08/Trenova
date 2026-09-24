@@ -46,3 +46,20 @@ func TestSaveAgentRequest_AccessIsBothFieldsOrNeither(t *testing.T) {
 	require.ErrorAs(t, err, &invalid)
 	assert.Equal(t, "accessMode", invalid.Field)
 }
+
+func TestSaveAgentRequest_CarriesTheMemoryBudget(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	budget := 9000
+
+	req, err := (&saveAgentRequest{Name: "Rates", MemoryTokenBudget: &budget}).
+		toSaveRequest(pulid.Nil, tenant)
+	require.NoError(t, err)
+	require.NotNil(t, req.MemoryTokenBudget)
+	assert.Equal(t, 9000, *req.MemoryTokenBudget)
+
+	req, err = (&saveAgentRequest{Name: "Rates"}).toSaveRequest(pulid.Nil, tenant)
+	require.NoError(t, err)
+	assert.Nil(t, req.MemoryTokenBudget, "no budget is the default")
+}

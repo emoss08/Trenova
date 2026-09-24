@@ -3,7 +3,7 @@ import {
   RESOURCE_EVENT_NAME,
 } from "@trenova/shared/hooks/realtime-patching";
 import { notification } from "@trenova/shared/lib/queries/notification";
-import { realtimeService } from "@trenova/shared/services/realtime";
+import { realtimeClient } from "@trenova/shared/services/realtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -37,19 +37,14 @@ export function useDashRealtime() {
   const userId = user?.id;
 
   useEffect(() => {
-    if (!isAuthenticated || !orgId || !buId) {
+    if (!isAuthenticated || !orgId || !buId || !userId) {
       return;
     }
 
-    const realtime = realtimeService;
-    realtime.connect();
-    const channel = realtime.getChannel(realtime.getDataEventsChannelName(orgId, buId));
-
-    const onEvent = (message: { name?: string; data?: unknown }) => {
-      if (message.name !== RESOURCE_EVENT_NAME) {
-        return;
-      }
-      const event = parseInvalidationEvent(message.data);
+    // The server redacts what a driver's stream carries: records change without
+    // their contents, except notifications addressed to this driver.
+    const onEvent = (data: unknown) => {
+      const event = parseInvalidationEvent(data);
       if (!event || event.organizationId !== orgId || event.businessUnitId !== buId) {
         return;
       }
@@ -75,9 +70,18 @@ export function useDashRealtime() {
       }
     };
 
-    channel.subscribe(onEvent);
+    // A gap the server could not replay means a change was missed; every
+    // portal screen is cheap to refetch, so refetch them all.
+    const onReset = () => {
+      void queryClient.invalidateQueries({ refetchType: "all" });
+    };
+
+    const offEvent = realtimeClient.on(RESOURCE_EVENT_NAME, onEvent);
+    const offReset = realtimeClient.on("reset", onReset);
+    realtimeClient.connect({ identity: `${userId}:${orgId}:${buId}`, joinUsers: false });
     return () => {
-      channel.unsubscribe(onEvent);
+      offEvent();
+      offReset();
     };
   }, [isAuthenticated, orgId, buId, userId, queryClient]);
 }

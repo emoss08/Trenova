@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -22,8 +21,7 @@ import (
 )
 
 const (
-	defaultActiveLimit        = 40
-	maxActiveLimit            = 200
+	candidatePrealloc         = 64
 	maxSuggestionContextLimit = 500
 )
 
@@ -197,11 +195,13 @@ func (r *repository) ListActive(
 	}
 
 	cols := buncolgen.MemoryColumns
-	rows := make([]*agent.Memory, 0, boundedLimit(req.Limit))
+	limit := boundedCandidateLimit(req.Limit)
+	rows := make([]*agent.Memory, 0, min(limit, candidatePrealloc))
 
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&rows).
+		ExcludeColumn(cols.SearchVector.String()).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now)
 			sq = forAgent(sq, req.AgentDefinitionID)
@@ -225,9 +225,11 @@ func (r *repository) ListActive(
 				return scope
 			})
 		}).
+		OrderExpr(candidateOrder(), agent.MemoryKindInstruction).
 		OrderExpr(kindOrder()).
 		OrderExpr(cols.CreatedAt.OrderDesc()).
-		Limit(boundedLimit(req.Limit)).
+		OrderExpr(cols.ID.OrderAsc()).
+		Limit(limit).
 		Scan(ctx)
 	if err != nil {
 		r.l.Error("failed to list active agent memories", zap.Error(err))
@@ -238,29 +240,59 @@ func (r *repository) ListActive(
 	return rows, nil
 }
 
-// Search is the recall tool's read: a text over the content and the subject
-// label, and whatever narrowing it was given.
+// Search is the recall tool's read: the memories whose words match the
+// query, best first, and whatever narrowing it was given. A query with no
+// operators also matches every word as a prefix, and when that finds nothing
+// the words are tried one at a time, so a question finds the memories that
+// share most of its words.
 func (r *repository) Search(
 	ctx context.Context,
 	req repositories.SearchAgentMemoriesRequest,
 ) ([]*agent.Memory, error) {
-	cols := buncolgen.MemoryColumns
-	rows := make([]*agent.Memory, 0, boundedLimit(req.Limit))
+	text := newTextQuery(req.Query)
+	if text.empty() {
+		return r.search(ctx, req, nil)
+	}
+	if text.unmatchable() {
+		return []*agent.Memory{}, nil
+	}
 
-	err := r.db.DBForContext(ctx).
+	rows, err := r.search(ctx, req, text.primary())
+	if err != nil || len(rows) > 0 {
+		return rows, err
+	}
+
+	fallback := text.fallback()
+	if fallback == nil {
+		return rows, nil
+	}
+
+	return r.search(ctx, req, fallback)
+}
+
+func (r *repository) search(
+	ctx context.Context,
+	req repositories.SearchAgentMemoriesRequest,
+	match *textMatch,
+) ([]*agent.Memory, error) {
+	cols := buncolgen.MemoryColumns
+	limit := boundedRecallLimit(req.Limit)
+	rows := make([]*agent.Memory, 0, limit)
+
+	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&rows).
+		ExcludeColumn(cols.SearchVector.String()).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = forAgent(
 				activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now),
 				req.AgentDefinitionID,
 			)
-			if term := strings.TrimSpace(req.Query); term != "" {
-				pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
-				sq = sq.WhereGroup(" AND ", func(text *bun.SelectQuery) *bun.SelectQuery {
-					return text.Where(cols.Content.ILike(), pattern).
-						WhereOr(cols.SubjectLabel.ILike(), pattern)
-				})
+			if match != nil {
+				sq = sq.Where(cols.SearchVector.Expr("{} @@ "+match.tsquery), match.args...)
+			}
+			if len(req.IDs) > 0 {
+				sq = sq.Where(cols.ID.In(), bun.List(req.IDs))
 			}
 			if req.Kind != "" {
 				sq = sq.Where(cols.Kind.Eq(), req.Kind)
@@ -274,10 +306,19 @@ func (r *repository) Search(
 			}
 
 			return sq
-		}).
+		})
+	if match != nil {
+		query = query.OrderExpr(
+			cols.SearchVector.Expr("ts_rank_cd({}, "+match.tsquery+") DESC"),
+			match.args...,
+		)
+	}
+
+	err := query.
 		OrderExpr(kindOrder()).
 		OrderExpr(cols.CreatedAt.OrderDesc()).
-		Limit(boundedLimit(req.Limit)).
+		OrderExpr(cols.ID.OrderAsc()).
+		Limit(limit).
 		Scan(ctx)
 	if err != nil {
 		r.l.Error("failed to search agent memories", zap.Error(err))
@@ -303,10 +344,13 @@ func (r *repository) FindActive(
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.MemoryScopeTenant(sq, req.TenantInfo).
-				Where(cols.Status.Eq(), agent.MemoryStatusActive).
-				Where("LOWER(TRIM("+cols.Content.Qualified()+")) = ?",
+			sq = activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now).
+				Where(cols.Content.Expr("LOWER(TRIM({})) = ?"),
 					strings.ToLower(strings.TrimSpace(req.Content)))
+			sq = sameReaders(sq, req.Scope, req.AgentDefinitionID)
+			if !req.Tainted {
+				sq = sq.Where(cols.Tainted.IsFalse())
+			}
 			if req.Subject != nil {
 				sq = sq.Where(cols.SubjectType.Eq(), req.Subject.Type).
 					Where(cols.SubjectID.Eq(), req.Subject.ID)
@@ -321,6 +365,8 @@ func (r *repository) FindActive(
 
 			return sq
 		}).
+		OrderExpr(cols.Tainted.OrderAsc()).
+		OrderExpr(cols.CreatedAt.OrderDesc()).
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
@@ -332,6 +378,26 @@ func (r *repository) FindActive(
 	}
 
 	return entity, nil
+}
+
+func (r *repository) CountActive(
+	ctx context.Context,
+	req repositories.CountActiveAgentMemoriesRequest,
+) (int, error) {
+	count, err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*agent.Memory)(nil)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now)
+		}).
+		Count(ctx)
+	if err != nil {
+		r.l.Error("failed to count active agent memories", zap.Error(err))
+
+		return 0, fmt.Errorf("count active agent memories: %w", err)
+	}
+
+	return count, nil
 }
 
 func (r *repository) SetStatus(
@@ -410,7 +476,7 @@ func (r *repository) ListSuggestionContext(
 	if limit <= 0 || limit > maxSuggestionContextLimit {
 		limit = maxSuggestionContextLimit
 	}
-	rows := make([]*agent.Memory, 0, min(limit, defaultActiveLimit))
+	rows := make([]*agent.Memory, 0, min(limit, candidatePrealloc))
 
 	err := r.db.DBForContext(ctx).
 		NewSelect().
@@ -526,6 +592,20 @@ func forAgent(sq *bun.SelectQuery, agentID pulid.ID) *bun.SelectQuery {
 	})
 }
 
+func sameReaders(
+	sq *bun.SelectQuery,
+	scope agent.MemoryScope,
+	agentID pulid.ID,
+) *bun.SelectQuery {
+	cols := buncolgen.MemoryColumns
+	if scope != agent.MemoryScopeAgent {
+		return sq.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization)
+	}
+
+	return sq.Where(cols.Scope.Eq(), agent.MemoryScopeAgent).
+		Where(cols.AgentDefinitionID.Eq(), agentID)
+}
+
 func suggestionStatuses() []agent.MemoryStatus {
 	return []agent.MemoryStatus{agent.MemoryStatusSuggested, agent.MemoryStatusDismissed}
 }
@@ -546,15 +626,30 @@ func kindOrder() string {
 		" WHEN 'Instruction' THEN 0 WHEN 'Correction' THEN 1 ELSE 2 END ASC"
 }
 
-func boundedLimit(limit int) int {
-	if limit <= 0 {
-		return defaultActiveLimit
-	}
-	if limit > maxActiveLimit {
-		return maxActiveLimit
+func candidateOrder() string {
+	return buncolgen.Expr(
+		"CASE WHEN {0} IS NOT NULL THEN 0 WHEN {1} IS NULL AND {2} = ? THEN 1 "+
+			"WHEN {1} IS NOT NULL THEN 2 ELSE 3 END ASC",
+		buncolgen.MemoryColumns.SubjectType,
+		buncolgen.MemoryColumns.ToolName,
+		buncolgen.MemoryColumns.Kind,
+	)
+}
+
+func boundedCandidateLimit(limit int) int {
+	if limit <= 0 || limit > agent.MaxMemoryCandidates {
+		return agent.MaxMemoryCandidates
 	}
 
 	return limit
+}
+
+func boundedRecallLimit(limit int) int {
+	if limit <= 0 {
+		return agent.DefaultMemoryRecallLimit
+	}
+
+	return min(limit, agent.MaxMemoryRecallLimit)
 }
 
 func nullableID(id pulid.ID) any {

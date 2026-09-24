@@ -193,6 +193,8 @@ export const agentDefinitionSchema = z.object({
   dailyRunLimit: z.number().int().nonnegative().default(0),
   toolDailyLimits: toolLimitsSchema,
   simulationMode: z.boolean().default(false),
+  /** Tokens of recorded memory one prompt may carry; absent for the default. */
+  memoryTokenBudget: z.number().int().nullish(),
   contextProviders: nullableList(contextProviderSchema),
   outputMode: outputModeSchema.default("Conversational"),
   preferredProviderId: optionalIdSchema,
@@ -286,6 +288,13 @@ export const previewPromptResponseSchema = z.object({
 /** The most agents one agent may hand work to, as the server enforces it. */
 export const MAX_DELEGATES = 8;
 
+/**
+ * How much recorded memory one prompt may carry, in approximate tokens, as the
+ * server bounds it (`agentdefinition.MinMemoryTokenBudget` and its siblings).
+ * An agent with no budget set uses the default.
+ */
+export const MEMORY_TOKEN_BUDGET = { min: 1000, max: 16000, default: 6000 } as const;
+
 export const saveAgentDefinitionRequestSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
   description: z.string().optional().default(""),
@@ -320,6 +329,20 @@ export const saveAgentDefinitionRequestSchema = z.object({
   /** Executions per tool per day, keyed by tool name; absent for no cap. */
   toolDailyLimits: z.record(z.string(), z.number().int().min(0).max(10000)).default({}),
   simulationMode: z.boolean().default(false),
+  /** Tokens of recorded memory one prompt may carry; null for the default. */
+  memoryTokenBudget: z
+    .number()
+    .int("Use a whole number of tokens")
+    .min(
+      MEMORY_TOKEN_BUDGET.min,
+      `Memory in the prompt must be at least ${MEMORY_TOKEN_BUDGET.min} tokens`,
+    )
+    .max(
+      MEMORY_TOKEN_BUDGET.max,
+      `Memory in the prompt can be at most ${MEMORY_TOKEN_BUDGET.max} tokens`,
+    )
+    .nullable()
+    .default(null),
   contextProviders: z.array(contextProviderSchema).default([]),
   outputMode: outputModeSchema.default("Conversational"),
   preferredProviderId: optionalIdSchema,

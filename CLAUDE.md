@@ -324,6 +324,16 @@ An agent handing a task to another agent (`delegate_task`, the per-agent
 allowlist, one level only, same person) is described in
 [docs/engineering/agent-delegation.md](docs/engineering/agent-delegation.md).
 
+## Realtime
+
+Live updates are server-sent events from the API, fanned out through sharded Redis
+Streams; there is no third-party realtime vendor. Publish with
+`RealtimeService.PublishResourceInvalidation` (it only queues, so it is safe on hot
+paths) and set `AudienceUserID` for anything addressed to one person. **Read
+[docs/engineering/realtime.md](docs/engineering/realtime.md) before changing
+`realtimeservice`, `infrastructure/realtimebroker`, the stream endpoint, or the
+browser `realtimeClient`**, and before adding a presence or typing scope.
+
 ## Bun ORM
 
 For help with Bun ORM, look in the [docs](docs/bun/).

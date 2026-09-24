@@ -47,6 +47,9 @@ type TurnPlan struct {
 	// PreferredProviderID is the model the conversation asked for.
 	PreferredProviderID pulid.ID                   `json:"preferredProviderId,omitzero"`
 	Proposals           []services.ProposalOutcome `json:"proposals,omitempty"`
+	// Records are the records the question is about, so an agent the turn
+	// hands a task to reads their memories too.
+	Records []agent.EntityRef `json:"records,omitempty"`
 	// Turn is the runtime turn, empty when the guard refused the question.
 	Turn agentruntime.TurnState `json:"turn"`
 }
@@ -89,6 +92,7 @@ func (p *TurnPlan) RunRequest(actor *services.RequestActor) *services.RunRequest
 		PinProvider: !p.PreferredProviderID.IsNil(),
 		ThreadID:    p.ThreadID,
 		Proposals:   p.Proposals,
+		Records:     p.Records,
 	}
 }
 
@@ -247,6 +251,7 @@ func (s *Service) prepareTurn(
 		// activity that runs the publish rather than on this request.
 		runReq.Publishes = s.artifacts != nil
 		plan.Timezone = runReq.Context.Timezone
+		plan.Records = runReq.Records
 		plan.Turn = s.runtime.OpenTurn(ctx, runReq).State()
 	}
 

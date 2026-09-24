@@ -1,106 +1,41 @@
-import { apiService } from "@/services/api";
+import {
+  REALTIME_USERS_SCOPE,
+  realtimeClient,
+  type RealtimePresenceMember,
+} from "@trenova/shared/services/realtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useEffect, useMemo, useState } from "react";
 
-interface PresenceEvent {
-  clientId?: string | null;
-  connectionId?: string | null;
-  action?: string;
-}
-
-const upsertConnection = (
-  previous: Map<string, Set<string>>,
-  userID: string,
-  connectionID: string,
-) => {
-  const next = new Map(previous);
-  const existing = new Set(next.get(userID) ?? []);
-  existing.add(connectionID);
-  next.set(userID, existing);
-  return next;
-};
-
-const removeConnection = (
-  previous: Map<string, Set<string>>,
-  userID: string,
-  connectionID: string,
-) => {
-  const next = new Map(previous);
-  const existing = new Set(next.get(userID) ?? []);
-  existing.delete(connectionID);
-  if (existing.size === 0) {
-    next.delete(userID);
-  } else {
-    next.set(userID, existing);
-  }
-  return next;
-};
-
+/**
+ * Who in the tenant has the app open. Membership is kept by the realtime
+ * stream itself: every open tab is one member, and a user is online while any
+ * of their tabs is.
+ */
 export function useOnlineUsers() {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const [connectionsByUser, setConnectionsByUser] = useState<Map<string, Set<string>>>(new Map());
+  const [members, setMembers] = useState<RealtimePresenceMember[]>([]);
   const hasTenantContext = Boolean(
     isAuthenticated && user?.currentOrganizationId && user.businessUnitId,
   );
 
   useEffect(() => {
-    if (!user?.currentOrganizationId || !user.businessUnitId || !isAuthenticated) {
+    if (!hasTenantContext) {
       return;
     }
 
-    const client = apiService.realtimeService.connect();
-    const state = client.getState();
-    if (state === "closing" || state === "closed") {
-      return;
-    }
-
-    const channel = client.channels.get(
-      apiService.realtimeService.getUsersPresenceChannelName(
-        user.currentOrganizationId,
-        user.businessUnitId,
-      ),
-    );
-
-    const onPresenceEvent = (message: PresenceEvent) => {
-      if (!message.clientId || !message.connectionId) return;
-
-      setConnectionsByUser((previous) => {
-        if (message.action === "leave" || message.action === "absent") {
-          return removeConnection(
-            previous,
-            message.clientId as string,
-            message.connectionId as string,
-          );
-        }
-
-        return upsertConnection(
-          previous,
-          message.clientId as string,
-          message.connectionId as string,
-        );
-      });
-    };
-
-    // Subscribing asks the server for an initial member snapshot (delivered as
-    // enter events) followed by live enter/leave/update transitions.
-    const unsubscribe = channel.presence.subscribe(onPresenceEvent);
-
+    const unsubscribe = realtimeClient.subscribePresence(REALTIME_USERS_SCOPE, setMembers);
     return () => {
-      try {
-        unsubscribe();
-      } catch {
-        // Ignore teardown races when channel/client is already disposed.
-      }
-      // Drop members from the previous tenant/channel so a switch starts clean
-      // before the next subscription's snapshot repopulates.
-      setConnectionsByUser(new Map());
+      unsubscribe();
+      // Drop members from the previous tenant so a switch starts clean before
+      // the next stream's snapshot repopulates.
+      setMembers([]);
     };
-  }, [isAuthenticated, user?.businessUnitId, user?.currentOrganizationId]);
+  }, [hasTenantContext, user?.businessUnitId, user?.currentOrganizationId]);
 
   const onlineUserIDs = useMemo(
-    () => (hasTenantContext ? new Set(connectionsByUser.keys()) : new Set<string>()),
-    [connectionsByUser, hasTenantContext],
+    () => (hasTenantContext ? new Set(members.map((member) => member.userId)) : new Set<string>()),
+    [members, hasTenantContext],
   );
 
   return { onlineUserIDs };

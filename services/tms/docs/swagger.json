@@ -16794,15 +16794,29 @@
             },
             "type": "object"
         },
-        "github_com_emoss08_trenova_internal_core_ports_services.RealtimeToken": {
+        "github_com_emoss08_trenova_internal_core_ports_services.RealtimePresenceMember": {
             "properties": {
-                "clientId": {
+                "connectionId": {
                     "type": "string"
                 },
-                "expiresAt": {
-                    "type": "integer"
+                "name": {
+                    "type": "string"
                 },
-                "token": {
+                "userId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "github_com_emoss08_trenova_internal_core_ports_services.RealtimePresenceSnapshot": {
+            "properties": {
+                "members": {
+                    "items": {
+                        "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RealtimePresenceMember"
+                    },
+                    "type": "array"
+                },
+                "scope": {
                     "type": "string"
                 }
             },
@@ -21571,6 +21585,25 @@
                 "sampleFrom",
                 "sampleTo"
             ],
+            "type": "object"
+        },
+        "internal_api_handlers_realtimehandler.presenceRequest": {
+            "properties": {
+                "connectionId": {
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "internal_api_handlers_realtimehandler.typingRequest": {
+            "properties": {
+                "connectionId": {
+                    "type": "string"
+                },
+                "stop": {
+                    "type": "boolean"
+                }
+            },
             "type": "object"
         },
         "internal_api_handlers_recurringshipmenthandler.generateRequest": {
@@ -44312,18 +44345,32 @@
                 ]
             }
         },
-        "/realtime/token-request/": {
+        "/realtime/stream/": {
             "get": {
-                "description": "Returns a signed realtime access token for the authenticated actor.",
-                "operationId": "getRealtimeToken",
+                "description": "Streams resource invalidations, presence, and typing events for the caller's\ntenant as server-sent events. Send Last-Event-ID to resume after a disconnect.",
+                "operationId": "openRealtimeStream",
+                "parameters": [
+                    {
+                        "description": "Set to 'users' to join the tenant's online-user presence",
+                        "in": "query",
+                        "name": "presence",
+                        "type": "string"
+                    },
+                    {
+                        "description": "The id of the last event applied",
+                        "in": "header",
+                        "name": "Last-Event-ID",
+                        "type": "string"
+                    }
+                ],
                 "produces": [
-                    "application/json"
+                    "text/event-stream"
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "text/event-stream",
                         "schema": {
-                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RealtimeToken"
+                            "type": "string"
                         }
                     },
                     "401": {
@@ -44332,8 +44379,14 @@
                             "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                         }
                     },
-                    "500": {
-                        "description": "Internal Server Error",
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
                         "schema": {
                             "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
                         }
@@ -44344,7 +44397,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Get realtime token",
+                "summary": "Open the live event stream",
                 "tags": [
                     "Realtime"
                 ]
@@ -49815,6 +49868,175 @@
                 "summary": "Get shipment comment count",
                 "tags": [
                     "Shipments"
+                ]
+            }
+        },
+        "/shipments/{shipmentID}/comments/presence/": {
+            "delete": {
+                "operationId": "leaveShipmentCommentPresence",
+                "parameters": [
+                    {
+                        "description": "Shipment ID",
+                        "in": "path",
+                        "name": "shipmentID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Live connection ID",
+                        "in": "query",
+                        "name": "connectionId",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Leave shipment comment presence",
+                "tags": [
+                    "Realtime"
+                ]
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Marks the caller's live connection as viewing a shipment's comments and\nreturns everyone else viewing them.",
+                "operationId": "joinShipmentCommentPresence",
+                "parameters": [
+                    {
+                        "description": "Shipment ID",
+                        "in": "path",
+                        "name": "shipmentID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Live connection",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_realtimehandler.presenceRequest"
+                        }
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_core_ports_services.RealtimePresenceSnapshot"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Join shipment comment presence",
+                "tags": [
+                    "Realtime"
+                ]
+            }
+        },
+        "/shipments/{shipmentID}/comments/typing/": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "description": "Tells the other viewers of a shipment's comments that the caller is typing,\nor has stopped.",
+                "operationId": "signalShipmentCommentTyping",
+                "parameters": [
+                    {
+                        "description": "Shipment ID",
+                        "in": "path",
+                        "name": "shipmentID",
+                        "required": true,
+                        "type": "string"
+                    },
+                    {
+                        "description": "Typing signal",
+                        "in": "body",
+                        "name": "request",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api_handlers_realtimehandler.typingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail"
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Signal typing in shipment comments",
+                "tags": [
+                    "Realtime"
                 ]
             }
         },

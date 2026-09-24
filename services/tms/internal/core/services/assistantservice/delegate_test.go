@@ -345,3 +345,41 @@ func TestNameDelegatedSteps_ServesTheDelegatesMarkInOneQuery(t *testing.T) {
 		"a deleted agent keeps the mark the turn recorded")
 	assert.Equal(t, agentdefinition.AccentRose, messages[4].DelegateReport.Accent)
 }
+
+type capturingContexts struct {
+	asked *serviceports.RuntimeContextRequest
+}
+
+func (c *capturingContexts) Build(
+	_ context.Context,
+	req *serviceports.RuntimeContextRequest,
+) (agentdefinition.RuntimeContext, error) {
+	c.asked = req
+
+	return agentdefinition.RuntimeContext{
+		Trigger:          req.Trigger,
+		DelegatedBy:      req.DelegatedBy,
+		DelegatorRecords: req.DelegatorRecords,
+	}, nil
+}
+
+// The task is about what the person was looking at when they asked, so the
+// agent handed it reads the memories of those records too.
+func TestOpenDelegate_HandsTheDelegateTheRecordsTheTurnIsAbout(t *testing.T) {
+	t.Parallel()
+
+	f := newDelegateFixture()
+	contexts := &capturingContexts{}
+	f.svc.contexts = contexts
+	f.request.Records = []agent.EntityRef{
+		{Type: "customer", ID: pulid.MustNew("cus_").String()},
+		{Type: string(agent.SubjectShipment), ID: pulid.MustNew("shp_").String()},
+	}
+
+	opened, err := f.svc.OpenDelegate(t.Context(), f.request)
+	require.NoError(t, err)
+
+	require.NotNil(t, contexts.asked)
+	assert.Equal(t, f.request.Records, contexts.asked.DelegatorRecords)
+	assert.Equal(t, f.request.Records, opened.Request.Context.MemoryRecords())
+}

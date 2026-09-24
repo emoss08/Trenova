@@ -2,11 +2,12 @@ package realtimeservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	realtime "github.com/Foony-Limited/realtime-go"
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -15,77 +16,39 @@ import (
 	"go.uber.org/zap"
 )
 
-const defaultTokenTTL = time.Hour
-const resourceInvalidationEventName = "resource.invalidation"
+// ErrPublishBackpressure reports an event the bus had no room for. The write
+// that caused it has already happened; only the notice to open screens is lost,
+// and those screens refetch on their next reconnect or focus.
+var ErrPublishBackpressure = errors.New("realtime event dropped: publish queue is full")
 
 type Params struct {
 	fx.In
 
-	Logger *zap.Logger
-	Config *config.Config
-	Client *realtime.Rest
+	Logger    *zap.Logger
+	Config    *config.Config
+	Publisher services.RealtimePublisher
 }
 
 type Service struct {
-	l      *zap.Logger
-	apiKey string
-	client *realtime.Rest
+	l              *zap.Logger
+	publisher      services.RealtimePublisher
+	maxEntityBytes int
 }
 
 func New(p Params) services.RealtimeService {
 	return &Service{
-		l:      p.Logger.Named("service.realtime"),
-		apiKey: p.Config.GetFoonyConfig().APIKey,
-		client: p.Client,
+		l:              p.Logger.Named("service.realtime"),
+		publisher:      p.Publisher,
+		maxEntityBytes: p.Config.GetRealtimeConfig().GetMaxEntityBytes(),
 	}
 }
 
-func (s *Service) CreateToken(
-	req *services.CreateRealtimeTokenRequest,
-) (*services.RealtimeToken, error) {
-	if req == nil {
-		return nil, errortypes.NewBusinessError("realtime token request is required")
-	}
-
-	if req.UserID.IsNil() || req.OrganizationID.IsNil() || req.BusinessUnitID.IsNil() {
-		return nil, errortypes.NewBusinessError("invalid realtime auth context")
-	}
-
-	if s.client == nil {
-		return nil, errortypes.NewBusinessError("realtime service is not configured")
-	}
-
-	clientID := req.UserID.String()
-	token, err := realtime.CreateJWT(s.apiKey, realtime.CreateJWTParams{
-		ClientID:   clientID,
-		TTL:        defaultTokenTTL,
-		Capability: tenantCapability(req.OrganizationID.String(), req.BusinessUnitID.String()),
-	})
-	if err != nil {
-		s.l.Error("failed to mint Foony token", zap.Error(err))
-		return nil, fmt.Errorf("mint realtime token: %w", err)
-	}
-
-	return &services.RealtimeToken{
-		Token:     token,
-		ClientID:  clientID,
-		ExpiresAt: time.Now().Add(defaultTokenTTL).UnixMilli(),
-	}, nil
-}
-
-func tenantCapability(orgID, buID string) realtime.Capability {
-	return realtime.Capability{
-		fmt.Sprintf("tenant:%s:%s:*", orgID, buID):        {"subscribe", "presence", "history"},
-		fmt.Sprintf("tenant:%s:%s:typing:*", orgID, buID): {"subscribe", "publish", "presence"},
-	}
-}
-
-func TypingChannelName(orgID, buID, resource, resourceID string) string {
-	return fmt.Sprintf("tenant:%s:%s:typing:%s:%s", orgID, buID, resource, resourceID)
-}
-
+// PublishResourceInvalidation tells every open screen in the tenant that a
+// record changed. It never waits on the network: the event is queued and
+// written in the background, so a bulk operation touching thousands of records
+// pays nothing for the screens watching it.
 func (s *Service) PublishResourceInvalidation(
-	ctx context.Context,
+	_ context.Context,
 	req *services.PublishResourceInvalidationRequest,
 ) error {
 	if req == nil {
@@ -100,19 +63,88 @@ func (s *Service) PublishResourceInvalidation(
 		return errortypes.NewBusinessError("invalid realtime invalidation payload")
 	}
 
-	if s.client == nil {
-		return errortypes.NewBusinessError("realtime service is not configured")
+	event := buildInvalidationEvent(req)
+
+	payload, err := s.encode(&event)
+	if err != nil {
+		return err
 	}
 
+	portal, err := redactedPayload(&event, req.AudienceUserID)
+	if err != nil {
+		return err
+	}
+
+	if !s.publisher.Enqueue(&services.RealtimeEnvelope{
+		OrganizationID: req.OrganizationID,
+		BusinessUnitID: req.BusinessUnitID,
+		AudienceUserID: req.AudienceUserID,
+		Event:          services.RealtimeEventInvalidation,
+		Payload:        payload,
+		PortalPayload:  portal,
+	}) {
+		return ErrPublishBackpressure
+	}
+
+	return nil
+}
+
+// encode writes the event, leaving the entity off when it is larger than a
+// stream frame should carry. A reader without the entity refetches the record,
+// which is what it would do for any event it cannot patch from.
+func (s *Service) encode(event *services.ResourceInvalidationEvent) ([]byte, error) {
+	payload, err := sonic.Marshal(event)
+	if err != nil {
+		return nil, fmt.Errorf("encode realtime invalidation: %w", err)
+	}
+	if event.Entity == nil || len(payload) <= s.maxEntityBytes {
+		return payload, nil
+	}
+
+	s.l.Debug("realtime entity exceeds frame budget; sending without it",
+		zap.String("resource", event.Resource),
+		zap.Int("bytes", len(payload)),
+	)
+
+	slim := *event
+	slim.Entity = nil
+	payload, err = sonic.Marshal(&slim)
+	if err != nil {
+		return nil, fmt.Errorf("encode realtime invalidation: %w", err)
+	}
+	return payload, nil
+}
+
+// redactedPayload is what a portal user sees of an event not addressed to
+// them: that a record of a kind changed, never its contents. An event
+// addressed to one person is delivered whole to that person and needs no
+// redacted form.
+func redactedPayload(
+	event *services.ResourceInvalidationEvent,
+	audience pulid.ID,
+) ([]byte, error) {
+	if audience.IsNotNil() {
+		return nil, nil
+	}
+
+	redacted := *event
+	redacted.Entity = nil
+	redacted.Fields = nil
+	payload, err := sonic.Marshal(&redacted)
+	if err != nil {
+		return nil, fmt.Errorf("encode redacted realtime invalidation: %w", err)
+	}
+	return payload, nil
+}
+
+func buildInvalidationEvent(
+	req *services.PublishResourceInvalidationRequest,
+) services.ResourceInvalidationEvent {
 	eventType := strings.TrimSpace(req.EventType)
 	if eventType == "" {
-		eventType = fmt.Sprintf("%s.%s", req.Resource, req.Action)
+		eventType = req.Resource + "." + req.Action
 	}
 
-	channelName := tenantDataEventsChannelName(
-		req.OrganizationID.String(),
-		req.BusinessUnitID.String(),
-	)
 	event := services.ResourceInvalidationEvent{
 		EventID:        pulid.MustNew("evt_").String(),
 		OrganizationID: req.OrganizationID.String(),
@@ -126,44 +158,22 @@ func (s *Service) PublishResourceInvalidation(
 		OccurredAt:     time.Now().UTC(),
 	}
 
-	if !req.RecordID.IsNil() {
+	if req.RecordID.IsNotNil() {
 		event.EntityID = req.RecordID.String()
 		event.RecordID = req.RecordID.String()
 	}
-
-	if !req.ActorUserID.IsNil() {
+	if req.ActorUserID.IsNotNil() {
 		event.ActorUserID = req.ActorUserID.String()
 	}
-
 	if req.ActorType != "" {
 		event.ActorType = string(req.ActorType)
 	}
-
-	if !req.ActorID.IsNil() {
+	if req.ActorID.IsNotNil() {
 		event.ActorID = req.ActorID.String()
 	}
-
-	if !req.ActorAPIKeyID.IsNil() {
+	if req.ActorAPIKeyID.IsNotNil() {
 		event.ActorAPIKeyID = req.ActorAPIKeyID.String()
 	}
 
-	if _, err := s.client.Channels.Get(channelName).Publish(
-		ctx,
-		resourceInvalidationEventName,
-		event,
-	); err != nil {
-		s.l.Warn(
-			"failed to publish realtime invalidation event",
-			zap.Error(err),
-			zap.String("channel", channelName),
-			zap.Any("req", req),
-		)
-		return fmt.Errorf("publish realtime invalidation event: %w", err)
-	}
-
-	return nil
-}
-
-func tenantDataEventsChannelName(orgID, buID string) string {
-	return fmt.Sprintf("tenant:%s:%s:data-events", orgID, buID)
+	return event
 }

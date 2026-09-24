@@ -2257,6 +2257,7 @@ var MemoryColumns = struct {
 	UseCount          Column // "use_count" → qualified: "amem.use_count"
 	LastUsedAt        Column // "last_used_at" → qualified: "amem.last_used_at"
 	Evidence          Column // "evidence" → qualified: "amem.evidence"
+	SearchVector      Column // "search_vector" → qualified: "amem.search_vector"
 	Version           Column // "version" → qualified: "amem.version"
 	CreatedAt         Column // "created_at" → qualified: "amem.created_at"
 	UpdatedAt         Column // "updated_at" → qualified: "amem.updated_at"
@@ -2285,6 +2286,7 @@ var MemoryColumns = struct {
 	UseCount:          NewColumn("use_count", "amem"),
 	LastUsedAt:        NewColumn("last_used_at", "amem"),
 	Evidence:          NewColumn("evidence", "amem"),
+	SearchVector:      NewColumn("search_vector", "amem"),
 	Version:           NewColumn("version", "amem"),
 	CreatedAt:         NewColumn("created_at", "amem"),
 	UpdatedAt:         NewColumn("updated_at", "amem"),

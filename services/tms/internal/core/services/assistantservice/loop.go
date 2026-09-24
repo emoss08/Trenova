@@ -84,6 +84,7 @@ func (s *Service) admit(
 		ThreadID:    req.ThreadID,
 		Proposals:   req.Proposals,
 		Taint:       req.Taint.Clone(),
+		Records:     runtimeContext.MemoryRecords(),
 	}
 }
 

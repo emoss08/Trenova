@@ -74,7 +74,6 @@ import { PlatformBillingService } from "./platform-billing";
 import { RateConfirmationService } from "./rate-confirmation";
 import { RoutingGuideService } from "./routing-guide";
 import { TenderService } from "./tender";
-import { RealtimeService, realtimeService } from "@trenova/shared/services/realtime";
 import { SequenceConfigService } from "./sequence-config";
 import { ServiceFailureService } from "./service-failure";
 import { ServiceFailureReasonCodeService } from "./service-failure-reason-code";
@@ -157,7 +156,6 @@ class APIService {
   public distanceControlService: DistanceControlService;
   public distanceProfileService: DistanceProfileService;
   public storedMileageService: StoredMileageService;
-  public realtimeService: RealtimeService;
   public exchangeRateService: ExchangeRateService;
   public integrationService: IntegrationService;
   public analyticService: AnalyticsService;
@@ -253,7 +251,6 @@ class APIService {
     this.distanceControlService = new DistanceControlService();
     this.distanceProfileService = new DistanceProfileService();
     this.storedMileageService = new StoredMileageService();
-    this.realtimeService = realtimeService;
     this.exchangeRateService = new ExchangeRateService();
     this.integrationService = new IntegrationService();
     this.apiKeyService = new APIKeyService();

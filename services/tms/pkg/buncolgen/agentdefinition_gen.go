@@ -76,6 +76,7 @@ var DefinitionColumns = struct {
 	DailyRunLimit          Column // "daily_run_limit" → qualified: "agdef.daily_run_limit"
 	ToolDailyLimits        Column // "tool_daily_limits" → qualified: "agdef.tool_daily_limits"
 	SimulationMode         Column // "simulation_mode" → qualified: "agdef.simulation_mode"
+	MemoryTokenBudget      Column // "memory_token_budget" → qualified: "agdef.memory_token_budget"
 	Icon                   Column // "icon" → qualified: "agdef.icon"
 	Accent                 Column // "accent" → qualified: "agdef.accent"
 	ContextProviders       Column // "context_providers" → qualified: "agdef.context_providers"
@@ -117,6 +118,7 @@ var DefinitionColumns = struct {
 	DailyRunLimit:          NewColumn("daily_run_limit", "agdef"),
 	ToolDailyLimits:        NewColumn("tool_daily_limits", "agdef"),
 	SimulationMode:         NewColumn("simulation_mode", "agdef"),
+	MemoryTokenBudget:      NewColumn("memory_token_budget", "agdef"),
 	Icon:                   NewColumn("icon", "agdef"),
 	Accent:                 NewColumn("accent", "agdef"),
 	ContextProviders:       NewColumn("context_providers", "agdef"),
@@ -164,6 +166,7 @@ var DefinitionFieldMap = map[string]string{
 	"dailyRunLimit":          "daily_run_limit",
 	"toolDailyLimits":        "tool_daily_limits",
 	"simulationMode":         "simulation_mode",
+	"memoryTokenBudget":      "memory_token_budget",
 	"icon":                   "icon",
 	"accent":                 "accent",
 	"contextProviders":       "context_providers",
@@ -209,6 +212,7 @@ var DefinitionInsertableColumns = []string{
 	"daily_run_limit",
 	"tool_daily_limits",
 	"simulation_mode",
+	"memory_token_budget",
 	"icon",
 	"accent",
 	"context_providers",
@@ -314,6 +318,7 @@ var DefinitionFilter = struct {
 	DailyRunLimit          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dailyRunLimit" → DB: "daily_run_limit"
 	ToolDailyLimits        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolDailyLimits" → DB: "tool_daily_limits"
 	SimulationMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "simulationMode" → DB: "simulation_mode"
+	MemoryTokenBudget      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "memoryTokenBudget" → DB: "memory_token_budget"
 	Icon                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "icon" → DB: "icon"
 	Accent                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "accent" → DB: "accent"
 	ContextProviders       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contextProviders" → DB: "context_providers"
@@ -408,6 +413,9 @@ var DefinitionFilter = struct {
 	},
 	SimulationMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("simulationMode", op, value)
+	},
+	MemoryTokenBudget: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("memoryTokenBudget", op, value)
 	},
 	Icon: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("icon", op, value)

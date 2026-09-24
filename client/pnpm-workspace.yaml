@@ -35,7 +35,6 @@ minimumReleaseAgeExclude:
   - '@vitest/utils@4.1.10 || 5.0.0'
   - vitest@4.1.10 || 5.0.0
   - '@cloudflare/vite-plugin@1.44.0 || 1.51.1 || 1.54.4'
-  - '@foony/realtime@0.14.0'
   - deslop-js@0.7.3 || 0.9.6
   - lucide-react@1.24.0 || 1.30.0 || 1.40.0
   - miniflare@4.20260708.1 || 5.20260801.1-alpha || 5.20260903.0-alpha

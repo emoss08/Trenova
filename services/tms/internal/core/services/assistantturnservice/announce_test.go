@@ -25,12 +25,6 @@ type recordingRealtime struct {
 	err       error
 }
 
-func (r *recordingRealtime) CreateToken(
-	*serviceports.CreateRealtimeTokenRequest,
-) (*serviceports.RealtimeToken, error) {
-	return &serviceports.RealtimeToken{}, nil
-}
-
 func (r *recordingRealtime) PublishResourceInvalidation(
 	_ context.Context,
 	req *serviceports.PublishResourceInvalidationRequest,
@@ -93,6 +87,7 @@ func TestStartTurn_AnnouncesTheTurnOnceItsWorkflowIsRecorded(t *testing.T) {
 	assert.Equal(t, req.TenantInfo.OrgID, published.OrganizationID)
 	assert.Equal(t, req.TenantInfo.BuID, published.BusinessUnitID)
 	assert.Equal(t, turn.ID, published.RecordID)
+	assert.Equal(t, req.UserID, published.AudienceUserID)
 
 	entity := announced(t, published)
 	assert.Equal(t, turn.ID, entity.TurnID)
