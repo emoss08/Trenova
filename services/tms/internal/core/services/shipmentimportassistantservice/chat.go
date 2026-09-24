@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -152,11 +153,25 @@ func ToolRecord(
 
 // TurnRecord is what a turn produced across its tool rounds.
 type TurnRecord struct {
-	Message     string                                      `json:"message"`
-	Suggestions []serviceports.ShipmentImportSuggestion     `json:"suggestions,omitempty"`
-	ToolCalls   []serviceports.ShipmentImportToolCallRecord `json:"toolCalls,omitempty"`
-	Actions     []serviceports.ShipmentImportAction         `json:"actions,omitempty"`
-	Model       string                                      `json:"model,omitempty"`
+	Message         string                                      `json:"message"`
+	Suggestions     []serviceports.ShipmentImportSuggestion     `json:"suggestions,omitempty"`
+	ToolCalls       []serviceports.ShipmentImportToolCallRecord `json:"toolCalls,omitempty"`
+	Actions         []serviceports.ShipmentImportAction         `json:"actions,omitempty"`
+	Model           string                                      `json:"model,omitempty"`
+	ProviderID      pulid.ID                                    `json:"providerId,omitempty"`
+	ProviderKind    aiprovider.Kind                             `json:"providerKind,omitempty"`
+	InputTokens     int                                         `json:"inputTokens,omitempty"`
+	OutputTokens    int                                         `json:"outputTokens,omitempty"`
+	ReasoningTokens int                                         `json:"reasoningTokens,omitempty"`
+}
+
+func (r *TurnRecord) RecordModelCall(result *serviceports.ChatCompletionResult) {
+	r.Model = result.ModelIdentifier
+	r.ProviderID = result.ProviderID
+	r.ProviderKind = result.ProviderKind
+	r.InputTokens += result.InputTokens
+	r.OutputTokens += result.OutputTokens
+	r.ReasoningTokens += result.ReasoningTokens
 }
 
 // FinishTurn saves a turn that finished and returns it as the reply.
@@ -188,7 +203,7 @@ func (s *Service) FinishTurn(
 		return nil, err
 	}
 
-	s.logAICall(ctx, req, record.Message)
+	s.logAICall(ctx, req, record)
 
 	return &serviceports.ShipmentImportChatResponse{
 		Message:        record.Message,

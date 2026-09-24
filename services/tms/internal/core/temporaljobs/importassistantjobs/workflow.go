@@ -101,13 +101,16 @@ func (t *turn) converse() (*serviceports.ShipmentImportChatResponse, *modelcall.
 				System:     prepared.System,
 				Messages:   messages,
 				Tools:      prepared.Tools,
+				Attribution: serviceports.AIUsageAttribution{
+					UserID: t.payload.TenantInfo.UserID,
+				},
 			},
 			Stream: t.payload.Stream,
 		}).Get(modelCtx, &result); err != nil {
 			return nil, modelcall.FailureOf(err)
 		}
 
-		t.record.Model = result.ModelIdentifier
+		t.record.RecordModelCall(&result)
 		if strings.TrimSpace(result.Text) != "" {
 			t.record.Message += result.Text
 		}

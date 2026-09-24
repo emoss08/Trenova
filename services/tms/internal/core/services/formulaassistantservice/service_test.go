@@ -3,7 +3,9 @@ package formulaassistantservice
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
@@ -376,4 +378,74 @@ func TestGenerateFormula_PricesProposedScenarios(t *testing.T) {
 
 func (*stubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
 	return "", nil
+}
+
+func TestGenerateFormula_AttributesTheCallToThePerson(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		text: `{
+			"expression": "baseRate * totalDistance",
+			"variables": [],
+			"explanation": "Rate by distance."
+		}`,
+	}
+	svc := newTestService(t, completion)
+	tenant := newTenant()
+
+	_, err := svc.GenerateFormula(t.Context(), &GenerateFormulaRequest{
+		TenantInfo:  tenant,
+		Instruction: "per mile",
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, completion.lastRequest)
+	assert.Equal(
+		t,
+		serviceports.AIUsageAttribution{UserID: tenant.UserID},
+		completion.lastRequest.Attribution,
+	)
+}
+
+func TestExplainFormula_AttributesTheCallToThePerson(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{text: `{"explanation": "Charges by distance."}`}
+	svc := newTestService(t, completion)
+	tenant := newTenant()
+
+	_, err := svc.ExplainFormula(t.Context(), &ExplainFormulaRequest{
+		TenantInfo: tenant,
+		Expression: "baseRate * totalDistance",
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, completion.lastRequest)
+	assert.Equal(
+		t,
+		serviceports.AIUsageAttribution{UserID: tenant.UserID},
+		completion.lastRequest.Attribution,
+	)
+}
+
+func TestLogCallKeepsThePromptPreviewOnACharacterBoundary(t *testing.T) {
+	t.Parallel()
+
+	aiLogRepo := &noopAILogRepo{}
+	svc := &Service{l: zap.NewNop(), aiLogRepo: aiLogRepo}
+	prompt := strings.Repeat("a", logPreviewLength-1) + "€" + "tail"
+
+	svc.logCall(
+		t.Context(),
+		newTenant(),
+		ailog.OperationFormulaGenerate,
+		"shipment",
+		prompt,
+		&serviceports.StructuredCompletionResult{Text: "{}", ModelIdentifier: "m"},
+	)
+
+	require.Len(t, aiLogRepo.created, 1)
+	entry := aiLogRepo.created[0]
+	assert.True(t, utf8.ValidString(entry.Prompt))
+	assert.True(t, strings.HasSuffix(entry.Prompt, strings.Repeat("a", logPreviewLength-1)+"€"))
 }
