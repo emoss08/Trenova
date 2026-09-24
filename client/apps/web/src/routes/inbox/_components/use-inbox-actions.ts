@@ -47,7 +47,7 @@ export function useInboxActions({ onReviewed }: { onReviewed: (id: string) => vo
   // Asking opens a conversation on the message itself, so the agent starts
   // from the mail rather than from "which message?". The agent is the one the
   // person last talked to, on the same rule the rest of the Desk uses.
-  const agentsQuery = useQuery(queries.assistant.agents(true, true));
+  const agentsQuery = useQuery(queries.assistant.myAgents());
   const lastAgentId = useAssistantStore((state) => state.lastAgentId);
   const askAgent =
     agentsQuery.data?.find((agent) => agent.id === lastAgentId) ?? agentsQuery.data?.[0] ?? null;

@@ -6,7 +6,7 @@ import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { conversationPath } from "@/lib/conversation-path";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { agentRecency } from "@/lib/recent-agents";
 import { useAssistantStore } from "@/stores/assistant-store";
@@ -40,7 +40,7 @@ const nowInSeconds = () => Math.floor(Date.now() / 1000);
 
 export type DeskDirectoryProps = {
   threads: AssistantThread[];
-  agents: AgentDefinitionRow[];
+  agents: AgentChoice[];
   activeThreadId: string | null;
   isLoading: boolean;
   isStarting: boolean;
@@ -294,7 +294,7 @@ function DirectoryGroup({
   onNavigate,
 }: {
   group: DeskThreadGroup;
-  agentsById: Map<string, AgentDefinitionRow>;
+  agentsById: Map<string, AgentChoice>;
   activeThreadId: string | null;
   liveThreadIds: ReadonlySet<string>;
   now: number;

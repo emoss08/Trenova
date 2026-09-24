@@ -116,7 +116,7 @@ export function WatchtowerFeed() {
   // the agent starts with the subject rather than with the question "which
   // shipment?". The agent is the one the person last talked to, on the same
   // rule the ask box uses.
-  const agentsQuery = useQuery(queries.assistant.agents(true, true));
+  const agentsQuery = useQuery(queries.assistant.myAgents());
   const lastAgentId = useAssistantStore((state) => state.lastAgentId);
   const askAgent =
     agentsQuery.data?.find((agent) => agent.id === lastAgentId) ?? agentsQuery.data?.[0] ?? null;

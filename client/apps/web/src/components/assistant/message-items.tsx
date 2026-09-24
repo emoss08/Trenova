@@ -448,7 +448,8 @@ export function AssistantEntry({
   artifacts?: AssistantArtifact[];
   /** Where the newest user turn sits, so a settled question stops asking. */
   latestUserSequence: number;
-  onAnswer: (value: string) => void;
+  /** Absent where the conversation can no longer continue. */
+  onAnswer?: (value: string) => void;
   onOpenArtifact?: (id: string) => void;
   threadId: string;
   /** This step is the answer of its reply, and the person may rate it. */

@@ -30,11 +30,9 @@ import {
   type AssistantPageContext,
   type ThreadOrigin,
   type AssistantPlan,
-  type AssistantProposal,
   type AssistantStreamEvent,
   type AssistantThread,
   type PlanDecision,
-  type ProposalDecision,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
 
@@ -381,17 +379,6 @@ export class AssistantService {
    */
   public async decidePlan(planId: AssistantPlan["id"], decision: PlanDecision) {
     await api.post(`/agent-plans/${planId}/resolve/`, { decision, reasonCode: "" });
-  }
-
-  public async decideProposal(
-    proposalId: AssistantProposal["id"],
-    decision: ProposalDecision,
-    modifications?: Record<string, unknown>,
-  ) {
-    await api.post(`/agent-proposals/${proposalId}/resolve/`, {
-      decision,
-      modifications: modifications ?? {},
-    });
   }
 }
 

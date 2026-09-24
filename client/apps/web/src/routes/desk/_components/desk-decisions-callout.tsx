@@ -1,5 +1,5 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
@@ -21,7 +21,7 @@ export type DeskDecisionsCalloutProps = {
   byAgent: readonly DecisionAgentCount[];
   /** When the oldest waiting decision arrived, in Unix seconds. */
   oldestAt: number | null;
-  agentsById: ReadonlyMap<string, AgentDefinitionRow>;
+  agentsById: ReadonlyMap<string, AgentChoice>;
   now: number;
   className?: string;
 };

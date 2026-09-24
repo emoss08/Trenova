@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { EASE_SETTLE, EASE_SWIFT } from "@/lib/motion";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -75,7 +75,7 @@ export type ComposerProps = {
   draft: string;
   onDraftChange: (draft: string) => void;
   /** The agent the message goes to, shown so it is never a guess. */
-  agent?: AgentDefinitionRow | null;
+  agent?: AgentChoice | null;
   onPickAgent?: () => void;
   /** What the person is looking at, offered as context they can drop. */
   pageContext?: AssistantPageContext | null;

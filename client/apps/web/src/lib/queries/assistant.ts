@@ -1,7 +1,9 @@
 import {
   fetchAgentChoicesByIds,
   fetchAgentDefinitions,
+  fetchMyAgents,
   type AgentChoiceQuery,
+  type AgentChoiceSource,
 } from "@/lib/graphql/agent-definition";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
@@ -50,15 +52,24 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.assistantService.listArtifacts(threadId, { signal }),
   }),
+  // The organization's agents with everything an administrator configures;
+  // AI Control only. Chat surfaces read myAgents.
   agents: (enabledOnly: boolean, chatOnly = false) => ({
     queryKey: ["agent-definitions", enabledOnly, chatOnly],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       fetchAgentDefinitions({ enabledOnly, chatOnly }, { signal }),
   }),
+  // The agents the person may ask, up to a hundred, for naming the agent
+  // behind each conversation.
+  myAgents: () => ({
+    queryKey: ["my-agents"],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchMyAgents({ signal }),
+  }),
   // Paged: read by useAgentChoices as an infinite query, one cursor at a time.
-  agentChoices: (query: AgentChoiceQuery) => ({
+  agentChoices: (query: AgentChoiceQuery, source: AgentChoiceSource = "mine") => ({
     queryKey: [
       "agent-choices",
+      source,
       query.search?.trim() ?? "",
       query.origin ?? "all",
       [...(query.excludeIds ?? [])],
