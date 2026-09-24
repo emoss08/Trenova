@@ -447,7 +447,7 @@ var CatalogDefinitions = []CatalogItem{
 	{
 		Type:          integration.TypeQuickBooksOnline,
 		Name:          "QuickBooks Online",
-		Description:   "Keep your books in step with Trenova: invoices, credit memos, payments and carrier bills reach QuickBooks within a minute of posting, every record shows whether it synced and why not, and differences between the two are found for you.",
+		Description:   "Connect your QuickBooks Online company so Trenova can keep your books in step with what it posts. Trenova checks the connection and raises a Watchtower item when it needs attention.",
 		Category:      integration.CategoryAccounting,
 		CategoryLabel: catalogAccountingLabel,
 		LogoURL:       "/integrations/logos/quickbooks-light.svg",

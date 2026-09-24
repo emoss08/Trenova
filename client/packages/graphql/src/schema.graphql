@@ -808,6 +808,98 @@ type AccountTypeEdge {
   node: AccountType!
 }
 
+"""
+Where to send the person to authorize Trenova, and until when that link works.
+"""
+type AccountingAuthorizationStart {
+  authorizeUrl: String!
+  expiresAt: Timestamp!
+}
+
+"""
+A tenant's link to its accounting system.
+
+The authorization itself is never returned. It is stored encrypted, bound to
+this connection, and only the server that refreshes it can read it.
+"""
+type AccountingConnection {
+  connectedAt: Timestamp!
+  consecutiveFailures: Int!
+  disconnectedAt: Timestamp
+  """
+  The last day the accounting system accepts postings for, end of day UTC. Absent when the books are open.
+  """
+  externalBooksClosedThrough: Timestamp
+  """The company's name in the accounting system."""
+  externalCompanyName: String!
+  externalCountry: String!
+  """ISO 4217 code of the company's home currency."""
+  externalHomeCurrency: String!
+  externalLegalName: String!
+  externalMultiCurrencyEnabled: Boolean!
+  id: ID!
+  integrationType: AccountingSystem!
+  lastCheckedAt: Timestamp
+  lastErrorCategory: AccountingErrorCategory
+  """
+  The last failure in plain language. Empty when the last check succeeded.
+  """
+  lastErrorMessage: String!
+  lastFailureAt: Timestamp
+  lastSuccessAt: Timestamp
+  lastWebhookAt: Timestamp
+  """
+  When the authorization's five-year limit runs out and someone must reconnect.
+  """
+  refreshTokenAbsoluteExpiresAt: Timestamp!
+  status: AccountingConnectionStatus!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""How the link to the accounting system is doing right now."""
+enum AccountingConnectionStatus {
+  """Calls succeed."""
+  Connected
+  """The last call failed; Trenova keeps retrying."""
+  Degraded
+  """Someone disconnected it on purpose."""
+  Disconnected
+  """
+  Several calls in a row failed; nothing reaches the books until it recovers.
+  """
+  Failing
+  """The authorization was revoked or expired; someone has to reconnect."""
+  Revoked
+}
+
+"""Why the last call to the accounting system failed."""
+enum AccountingErrorCategory {
+  Configuration
+  RateLimited
+  Revoked
+  Transient
+  Unauthorized
+  Unknown
+}
+
+"""What an organization's link to one accounting system looks like."""
+type AccountingSyncStatus {
+  """
+  Whether this Trenova instance has the accounting system's app credentials configured.
+  """
+  available: Boolean!
+  """Absent until the organization first connects."""
+  connection: AccountingConnection
+  integrationType: AccountingSystem!
+  providerName: String!
+}
+
+"""An accounting system Trenova keeps its books in step with."""
+enum AccountingSystem {
+  QuickBooksOnline
+}
+
 input AcknowledgeMyPolicyInput {
   policyId: ID!
   """
@@ -2209,6 +2301,7 @@ type AgentStarter {
 }
 
 enum AgentSubjectType {
+  AccountingConnection
   AssistantThread
   BankReceipt
   BillingQueueItem
@@ -5045,6 +5138,16 @@ type CommodityConnection {
 type CommodityEdge {
   cursor: String!
   node: Commodity!
+}
+
+"""
+What the accounting system returned to the callback page after the person approved access.
+"""
+input CompleteAccountingAuthorizationInput {
+  code: String!
+  integrationType: AccountingSystem!
+  realmId: String!
+  state: String!
 }
 
 input CompleteClearinghouseQueryInput {
@@ -12321,6 +12424,10 @@ type Mutation {
   cancelWorkerPTO(id: ID!, reason: String): WorkerPTO!
   cancelWorkerTraining(input: CancelWorkerTrainingInput!): WorkerTrainingRecord!
   certifyOshaSummary(year: Int!): OSHAAnnualSummary!
+  """
+  Checks the connection now instead of waiting for the next scheduled check.
+  """
+  checkAccountingConnection(integrationType: AccountingSystem!): AccountingConnection!
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
   """Removes the caller's rating of a target; false when there was none."""
@@ -12337,6 +12444,10 @@ type Mutation {
   is already on file are marked AlreadyImported rather than duplicated.
   """
   commitFuelPurchaseImport(id: ID!, version: Int!): FuelPurchaseImportBatch!
+  """
+  Finishes connecting with what the provider returned. Only the person who started it can finish it.
+  """
+  completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection!
   completeClearinghouseQuery(input: CompleteClearinghouseQueryInput!): WorkerClearinghouseQuery!
   completeWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   completeWorkerTraining(input: CompleteWorkerTrainingInput!): WorkerTrainingRecord!
@@ -12471,6 +12582,8 @@ type Mutation {
   detachPayEventFromSettlement(input: DetachPayEventInput!): DriverSettlement!
   detentionBacktest(input: DetentionBacktestInput!): DetentionBacktestResult!
   discardFuelPurchaseImport(id: ID!, reason: String, version: Int!): FuelPurchaseImportBatch!
+  """Disconnects the accounting system and revokes Trenova's access to it."""
+  disconnectAccountingSystem(integrationType: AccountingSystem!): AccountingConnection!
   """
   Refuses a suggested memory; its pattern is not suggested again for 30 days.
   """
@@ -12759,6 +12872,10 @@ type Mutation {
   mapping until it is committed or discarded.
   """
   stageFuelPurchaseImport(input: StageFuelPurchaseImportInput!): FuelPurchaseImportBatch!
+  """
+  Starts connecting an accounting system. Returns the provider's page to send the person to.
+  """
+  startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
   startBillingTransferRun(input: StartBillingTransferRunInput!): BillingTransferRun!
   """
   Marks one of the signed-in driver's courses in progress and returns the link.
@@ -14590,6 +14707,10 @@ type Query {
   accessorialCharges(input: DataTableConnectionInput!): AccessorialChargeConnection!
   accountType(id: ID!): AccountType
   accountTypes(input: DataTableConnectionInput!): AccountTypeConnection!
+  """
+  The organization's link to an accounting system, and whether this instance can connect to it at all.
+  """
+  accountingSyncStatus(integrationType: AccountingSystem!): AccountingSyncStatus!
   activePerformanceReviewTemplates: [PerformanceReviewTemplate!]!
   activeTrainingCourses: [TrainingCourse!]!
   activeWorkerChecklistTemplates: [WorkerChecklistTemplate!]!
@@ -20822,6 +20943,7 @@ is a projection of it, keyed by kind and id, and resolves when the source
 does.
 """
 enum WatchtowerSourceKind {
+  AccountingSync
   AgentException
   AgentPlan
   AgentProposal

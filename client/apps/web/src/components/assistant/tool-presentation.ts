@@ -130,6 +130,8 @@ const TOOL_TITLES: Record<string, string> = {
   approve_worker_pto: "Approve time off",
   reject_worker_pto: "Decline time off",
   cancel_worker_pto: "Cancel time off",
+  get_accounting_sync_status: "Check accounting connection",
+  check_accounting_connection: "Test accounting connection",
 };
 
 /** Argument keys that name the record a tool was about, most specific first. */

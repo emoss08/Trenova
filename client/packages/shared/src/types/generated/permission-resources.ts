@@ -182,6 +182,8 @@ export const Resource = {
   BankReceipt: "bank_receipt",
   BankReceiptWorkItem: "bank_receipt_work_item",
   AccountingReport: "accounting_report",
+  AccountingIntegration: "accounting_integration",
+  AccountingSync: "accounting_sync",
 
   // Payroll & Settlements
   DriverPayProfile: "driver_pay_profile",

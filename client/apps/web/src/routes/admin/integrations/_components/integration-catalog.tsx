@@ -47,6 +47,7 @@ import {
   WEXFuelIntegrationModal,
 } from "./fuel/fuel-integration-modals";
 import { PCMilerIntegrationModal } from "./pcmiler/pcmiler-integration-modal";
+import { QuickBooksIntegrationModal } from "./accounting/accounting-integration-modal";
 import { PostmarkIntegrationModal } from "./postmark/postmark-integration-modal";
 import { ResendIntegrationModal } from "./resend/resend-integration-modal";
 import { SamsaraIntegrationModal } from "./samsara/samsara-integration-modal";
@@ -273,7 +274,7 @@ export function IntegrationCatalogCard() {
   };
 
   const setModalOpen = (type: IntegrationModalType) => (open: boolean) =>
-    setSearchParams({ type: open ? type : null });
+    setSearchParams(open ? { type } : { type: null, setup: null });
 
   return (
     <>
@@ -446,6 +447,12 @@ export function IntegrationCatalogCard() {
       <FMCSAQCMobileIntegrationModal
         open={searchParams.type === "FMCSAQCMobile"}
         onOpenChange={setModalOpen("FMCSAQCMobile")}
+      />
+      <QuickBooksIntegrationModal
+        open={searchParams.type === "QuickBooksOnline"}
+        onOpenChange={setModalOpen("QuickBooksOnline")}
+        justConnected={searchParams.setup === "connected"}
+        onReviewed={() => void setSearchParams({ setup: null })}
       />
     </>
   );

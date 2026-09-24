@@ -375,6 +375,16 @@ Each milestone is a vertical slice with schema, services, API, UI, tools, events
 
 Brief acceptance criteria map: connect and push within a minute (M3), drift with editor and one-click fix both ways (M5), revoke shows Disconnected within one poll with nothing lost (M1 health plus M3 outbox holding records while `Revoked`), duplicate pushes impossible (M3 test), whole flow drivable from Desk (M3 onward, complete at M5).
 
+### 9.1 As built: M1
+
+M1 shipped the connect-and-health slice with four departures from the table above, each moved to the milestone where it first has something to act on:
+
+- **`pause_accounting_sync` / `resume_accounting_sync` move to M3.** M1 sends nothing to QuickBooks, so a pause would hold nothing. They arrive with the first outbound push, together with `paused_at`, `paused_by_id` and `paused_reason`.
+- **`setup_step` moves to M2.** M1's wizard has two steps, Connect and Review company. Its position comes from the connection's own status and from the `setup=connected` flag the callback page adds on return, so nothing needs storing. M2 adds the Map step, and with it the column and the resume.
+- **`check_accounting_connection` was added.** It is an `AutoExecute`, `EgressInternal` tool that lets an agent re-test the link right away rather than wait for the fifteen-minute check.
+- **The §1.3 open facts are handled, not confirmed.** The webhook verifier accepts both the CloudEvents envelope and the legacy `eventNotifications` shape, under the `intuit-signature` HMAC. PKCE is not used: Trenova is a confidential client, and the state is single-use, hashed and bound to the person. Both need checking against a live Intuit sandbox app, which depends on D6.
+
+
 ---
 
 ## 10. Testing

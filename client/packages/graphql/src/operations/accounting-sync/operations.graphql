@@ -1,0 +1,59 @@
+fragment AccountingConnectionFields on AccountingConnection {
+  id
+  integrationType
+  status
+  externalCompanyName
+  externalLegalName
+  externalCountry
+  externalHomeCurrency
+  externalMultiCurrencyEnabled
+  externalBooksClosedThrough
+  lastCheckedAt
+  lastSuccessAt
+  lastFailureAt
+  consecutiveFailures
+  lastErrorCategory
+  lastErrorMessage
+  lastWebhookAt
+  refreshTokenAbsoluteExpiresAt
+  connectedAt
+  disconnectedAt
+  version
+  updatedAt
+}
+
+query AccountingSyncStatus($integrationType: AccountingSystem!) {
+  accountingSyncStatus(integrationType: $integrationType) {
+    integrationType
+    providerName
+    available
+    connection {
+      ...AccountingConnectionFields
+    }
+  }
+}
+
+mutation StartAccountingAuthorization($integrationType: AccountingSystem!) {
+  startAccountingAuthorization(integrationType: $integrationType) {
+    authorizeUrl
+    expiresAt
+  }
+}
+
+mutation CompleteAccountingAuthorization($input: CompleteAccountingAuthorizationInput!) {
+  completeAccountingAuthorization(input: $input) {
+    ...AccountingConnectionFields
+  }
+}
+
+mutation DisconnectAccountingSystem($integrationType: AccountingSystem!) {
+  disconnectAccountingSystem(integrationType: $integrationType) {
+    ...AccountingConnectionFields
+  }
+}
+
+mutation CheckAccountingConnection($integrationType: AccountingSystem!) {
+  checkAccountingConnection(integrationType: $integrationType) {
+    ...AccountingConnectionFields
+  }
+}

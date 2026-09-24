@@ -168,6 +168,32 @@ export type AccountCategory =
   | 'Liability'
   | 'Revenue';
 
+/** How the link to the accounting system is doing right now. */
+export type AccountingConnectionStatus =
+  /** Calls succeed. */
+  | 'Connected'
+  /** The last call failed; Trenova keeps retrying. */
+  | 'Degraded'
+  /** Someone disconnected it on purpose. */
+  | 'Disconnected'
+  /** Several calls in a row failed; nothing reaches the books until it recovers. */
+  | 'Failing'
+  /** The authorization was revoked or expired; someone has to reconnect. */
+  | 'Revoked';
+
+/** Why the last call to the accounting system failed. */
+export type AccountingErrorCategory =
+  | 'Configuration'
+  | 'RateLimited'
+  | 'Revoked'
+  | 'Transient'
+  | 'Unauthorized'
+  | 'Unknown';
+
+/** An accounting system Trenova keeps its books in step with. */
+export type AccountingSystem =
+  | 'QuickBooksOnline';
+
 export type AcknowledgeMyPolicyInput = {
   policyId: string | number;
   /** Typed full name. Required when the policy asks for a signature, and it has to be the name on the record. */
@@ -513,6 +539,7 @@ export type AgentSeverity =
   | 'Medium';
 
 export type AgentSubjectType =
+  | 'AccountingConnection'
   | 'AssistantThread'
   | 'BankReceipt'
   | 'BillingQueueItem'
@@ -1345,6 +1372,14 @@ export type ClockInput = {
   note?: string | null | undefined;
   payCodeId?: string | number | null | undefined;
   workerId: string | number;
+};
+
+/** What the accounting system returned to the callback page after the person approved access. */
+export type CompleteAccountingAuthorizationInput = {
+  code: string;
+  integrationType: AccountingSystem;
+  realmId: string;
+  state: string;
 };
 
 export type CompleteClearinghouseQueryInput = {
@@ -6028,6 +6063,7 @@ export type WatchtowerSeverity =
  * does.
  */
 export type WatchtowerSourceKind =
+  | 'AccountingSync'
   | 'AgentException'
   | 'AgentPlan'
   | 'AgentProposal'
@@ -6389,6 +6425,43 @@ export type AccountTypeTableQueryVariables = Exact<{
 
 
 export type AccountTypeTableQuery = { accountTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AccountingConnectionFieldsFragment = { id: string, integrationType: AccountingSystem, status: AccountingConnectionStatus, externalCompanyName: string, externalLegalName: string, externalCountry: string, externalHomeCurrency: string, externalMultiCurrencyEnabled: boolean, externalBooksClosedThrough: number | null, lastCheckedAt: number | null, lastSuccessAt: number | null, lastFailureAt: number | null, consecutiveFailures: number, lastErrorCategory: AccountingErrorCategory | null, lastErrorMessage: string, lastWebhookAt: number | null, refreshTokenAbsoluteExpiresAt: number, connectedAt: number, disconnectedAt: number | null, version: number, updatedAt: number } & { ' $fragmentName'?: 'AccountingConnectionFieldsFragment' };
+
+export type AccountingSyncStatusQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type AccountingSyncStatusQuery = { accountingSyncStatus: { integrationType: AccountingSystem, providerName: string, available: boolean, connection: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } | null } };
+
+export type StartAccountingAuthorizationMutationVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type StartAccountingAuthorizationMutation = { startAccountingAuthorization: { authorizeUrl: string, expiresAt: number } };
+
+export type CompleteAccountingAuthorizationMutationVariables = Exact<{
+  input: CompleteAccountingAuthorizationInput;
+}>;
+
+
+export type CompleteAccountingAuthorizationMutation = { completeAccountingAuthorization: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } };
+
+export type DisconnectAccountingSystemMutationVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type DisconnectAccountingSystemMutation = { disconnectAccountingSystem: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } };
+
+export type CheckAccountingConnectionMutationVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type CheckAccountingConnectionMutation = { checkAccountingConnection: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } };
 
 export type LateChargeAssessmentResultFieldsFragment = { asOfDate: number, preview: boolean, mode: LateChargeAssessmentMode, memosCreated: number, memosPosted: number, customersSkipped: number, totalChargeMinor: number, customers: Array<{ customerId: string, customerName: string, currencyCode: string, totalChargeMinor: number, debitMemoId: string | null, debitMemoNumber: string, posted: boolean, skipped: boolean, skipReason: string, lines: Array<{ invoiceId: string, invoiceNumber: string, periodIndex: number, periodStart: number, periodEnd: number, basisOpenBalanceMinor: number, ratePercent: string, chargeMinor: number }> }> } & { ' $fragmentName'?: 'LateChargeAssessmentResultFieldsFragment' };
 
@@ -13050,6 +13123,31 @@ export const AccountTypeTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AccountTypeTableRowFields"}) as unknown as TypedDocumentString<AccountTypeTableRowFieldsFragment, unknown>;
+export const AccountingConnectionFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccountingConnectionFields on AccountingConnection {
+  id
+  integrationType
+  status
+  externalCompanyName
+  externalLegalName
+  externalCountry
+  externalHomeCurrency
+  externalMultiCurrencyEnabled
+  externalBooksClosedThrough
+  lastCheckedAt
+  lastSuccessAt
+  lastFailureAt
+  consecutiveFailures
+  lastErrorCategory
+  lastErrorMessage
+  lastWebhookAt
+  refreshTokenAbsoluteExpiresAt
+  connectedAt
+  disconnectedAt
+  version
+  updatedAt
+}
+    `, {"fragmentName":"AccountingConnectionFields"}) as unknown as TypedDocumentString<AccountingConnectionFieldsFragment, unknown>;
 export const LateChargeAssessmentResultFieldsFragmentDoc = new TypedDocumentString(`
     fragment LateChargeAssessmentResultFields on LateChargeAssessmentResult {
   asOfDate
@@ -20637,6 +20735,11 @@ export const WorkerDataTablePageInfoFieldsFragmentDoc = new TypedDocumentString(
     `, {"fragmentName":"WorkerDataTablePageInfoFields"}) as unknown as TypedDocumentString<WorkerDataTablePageInfoFieldsFragment, unknown>;
 export const AccessorialChargeTableDocument = {"__meta__":{"kind":"query","name":"AccessorialChargeTable","hash":"sha256:428bf0351875289ecd242e7153b17c69f386b3edb5106b4bc369b85341769d91"}} as unknown as TypedDocumentString<AccessorialChargeTableQuery, AccessorialChargeTableQueryVariables>;
 export const AccountTypeTableDocument = {"__meta__":{"kind":"query","name":"AccountTypeTable","hash":"sha256:bd52997a38905cd2b8343527e55ae1488b2e2f87bc1e50192a1909481e075956"}} as unknown as TypedDocumentString<AccountTypeTableQuery, AccountTypeTableQueryVariables>;
+export const AccountingSyncStatusDocument = {"__meta__":{"kind":"query","name":"AccountingSyncStatus","hash":"sha256:16ae3e4e0f45221cfa86cfa3f45945ca826bfe1a692ac60eb2bed6644e18a3c6"}} as unknown as TypedDocumentString<AccountingSyncStatusQuery, AccountingSyncStatusQueryVariables>;
+export const StartAccountingAuthorizationDocument = {"__meta__":{"kind":"mutation","name":"StartAccountingAuthorization","hash":"sha256:373bd1c21d5c39a7e820ca7c9442eed0be3481386e556b544455ad7b6c94815f"}} as unknown as TypedDocumentString<StartAccountingAuthorizationMutation, StartAccountingAuthorizationMutationVariables>;
+export const CompleteAccountingAuthorizationDocument = {"__meta__":{"kind":"mutation","name":"CompleteAccountingAuthorization","hash":"sha256:0f72c9060076527bca175381acc647bb7d87b6781c158b57125859bbb4484708"}} as unknown as TypedDocumentString<CompleteAccountingAuthorizationMutation, CompleteAccountingAuthorizationMutationVariables>;
+export const DisconnectAccountingSystemDocument = {"__meta__":{"kind":"mutation","name":"DisconnectAccountingSystem","hash":"sha256:2b055a0f01c1196b4f0ea31bb959296c9b44ee68629a90ab49348b87d1394f45"}} as unknown as TypedDocumentString<DisconnectAccountingSystemMutation, DisconnectAccountingSystemMutationVariables>;
+export const CheckAccountingConnectionDocument = {"__meta__":{"kind":"mutation","name":"CheckAccountingConnection","hash":"sha256:8ddef940e7cccb5b77bf8ae81b1c7388a8eca497512c2e38e8558d75d3e0d172"}} as unknown as TypedDocumentString<CheckAccountingConnectionMutation, CheckAccountingConnectionMutationVariables>;
 export const LateChargePreviewDocument = {"__meta__":{"kind":"query","name":"LateChargePreview","hash":"sha256:44fccb916e6be6056ca7ed3b6854c5dd9f7421889b8e5ce421b347391a22d5fb"}} as unknown as TypedDocumentString<LateChargePreviewQuery, LateChargePreviewQueryVariables>;
 export const AssessLateChargesDocument = {"__meta__":{"kind":"mutation","name":"AssessLateCharges","hash":"sha256:c63c2c03e469f92f955ba04285415d029b2fb6bf3b9f79432e0afb9a967ab66c"}} as unknown as TypedDocumentString<AssessLateChargesMutation, AssessLateChargesMutationVariables>;
 export const ArAgingSummaryDocument = {"__meta__":{"kind":"query","name":"ArAgingSummary","hash":"sha256:6e0cbca355dfb7e59c403efe34be542aee4f26ff779d480e08e077574626daf9"}} as unknown as TypedDocumentString<ArAgingSummaryQuery, ArAgingSummaryQueryVariables>;
