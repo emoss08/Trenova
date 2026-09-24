@@ -90,7 +90,8 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 		"list_weather_alerts":          agent.ExternalReadAlways,
 		"recall_memory":                agent.ExternalReadMarked,
 		"get_agent_run":                agent.ExternalReadMarked,
-		"get_shipment":                 agent.ExternalReadNever,
+		"get_shipment":                 agent.ExternalReadMarked,
+		"get_customer":                 agent.ExternalReadNever,
 	}
 	for name, want := range cases {
 		policy := registeredPolicy(t, name)
@@ -99,7 +100,10 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 			assert.True(t, policy.Source.IsValid(), name)
 		}
 	}
+	assert.Equal(t, agent.TaintSourceRecordNote, registeredPolicy(t, "get_shipment").Source)
 	assert.True(t, registeredPolicy(t, "remember").CarriesTaint)
+	assert.NotNil(t, registeredPolicy(t, "remember").TaintHold)
+	assert.True(t, registeredPolicy(t, "add_shipment_comment").CarriesTaint)
 }
 
 func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {

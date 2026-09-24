@@ -28,6 +28,14 @@ const (
 
 const CommentAttachmentResourceType = "shipment_comment"
 
+const (
+	CommentMetadataOrigin  = "source"
+	CommentMetadataTainted = "tainted"
+	CommentOriginEDI       = "edi"
+	CommentOriginDash      = "dash"
+	CommentOriginAgent     = "agent"
+)
+
 type ShipmentComment struct {
 	bun.BaseModel             `bun:"table:shipment_comments,alias:sc" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                           json:"-"`
@@ -223,6 +231,49 @@ func (a *ShipmentCommentAcknowledgment) BeforeAppendModel(
 
 func (c *ShipmentComment) IsReply() bool {
 	return c.ParentCommentID != nil && !c.ParentCommentID.IsNil()
+}
+
+func (c *ShipmentComment) WrittenOutside() bool {
+	if c == nil {
+		return false
+	}
+
+	switch c.Source {
+	case CommentSourceIntegration:
+		return true
+	case CommentSourceAI:
+		return c.metadataFlag(CommentMetadataTainted)
+	case CommentSourceUser, CommentSourceSystem:
+	}
+
+	if c.Type == CommentTypeDriverUpdate {
+		return true
+	}
+
+	switch c.Origin() {
+	case CommentOriginEDI, CommentOriginDash:
+		return true
+	default:
+		return false
+	}
+}
+
+func (c *ShipmentComment) Origin() string {
+	if c == nil || c.Metadata == nil {
+		return ""
+	}
+	origin, _ := c.Metadata[CommentMetadataOrigin].(string)
+
+	return origin
+}
+
+func (c *ShipmentComment) metadataFlag(key string) bool {
+	if c.Metadata == nil {
+		return false
+	}
+	flag, _ := c.Metadata[key].(bool)
+
+	return flag
 }
 
 func (c *ShipmentComment) IsPinned() bool {

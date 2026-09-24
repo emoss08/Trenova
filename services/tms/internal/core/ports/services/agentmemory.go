@@ -21,6 +21,7 @@ type RememberRequest struct {
 	ToolName    string
 	ExpiresAt   *int64
 	RunID       pulid.ID
+	ProposalID  pulid.ID
 	Taint       *agent.RunTaint
 }
 

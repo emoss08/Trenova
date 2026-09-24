@@ -5,24 +5,38 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
-	defaultSearchLimit = 10
-	maxSearchLimit     = 25
+	defaultSearchLimit  = 10
+	maxSearchLimit      = 25
+	maxShipmentComments = 20
 )
 
 type getShipmentTool struct {
-	repo repositories.ShipmentRepository
+	repo     repositories.ShipmentRepository
+	comments repositories.ShipmentCommentRepository
+	access   fieldAccess
 }
 
-func newGetShipmentTool(repo repositories.ShipmentRepository) serviceports.AgentQueryTool {
-	return &getShipmentTool{repo: repo}
+func newGetShipmentTool(
+	repo repositories.ShipmentRepository,
+	comments repositories.ShipmentCommentRepository,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
+	return &getShipmentTool{
+		repo:     repo,
+		comments: comments,
+		access:   newFieldAccess(permissions),
+	}
 }
 
 func (t *getShipmentTool) Name() string { return "get_shipment" }
@@ -50,6 +64,11 @@ func (t *getShipmentTool) ParamSchema() map[string]any {
 func (t *getShipmentTool) Policy() serviceports.ToolPolicy {
 	return readPolicy(t.Name(), readSpec{
 		resource: permission.ResourceShipment,
+		reads:    agent.ExternalReadMarked,
+		source:   agent.TaintSourceRecordNote,
+		rationale: "Reads a shipment with its newest comments, some of which a driver, a " +
+			"trading partner or another system outside the organization wrote; nothing " +
+			"changes and nothing is sent.",
 	})
 }
 
@@ -66,18 +85,58 @@ func (t *getShipmentTool) Query(
 		return nil, err
 	}
 
-	return t.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID: shipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  params.OrganizationID,
-			BuID:   params.BusinessUnitID,
-			UserID: params.Actor.UserID,
-		},
+	tenant := pagination.TenantInfo{
+		OrgID:  params.OrganizationID,
+		BuID:   params.BusinessUnitID,
+		UserID: params.Actor.UserID,
+	}
+	entity, err := t.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         shipmentID,
+		TenantInfo: tenant,
 		ShipmentOptions: repositories.ShipmentOptions{
 			ExpandShipmentDetails: true,
 			IncludeCustomer:       true,
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	comments, err := t.recentComments(ctx, params, tenant, entity.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return newShipmentView(entity, comments), nil
+}
+
+func (t *getShipmentTool) recentComments(
+	ctx context.Context,
+	params serviceports.QueryToolParams,
+	tenant pagination.TenantInfo,
+	shipmentID pulid.ID,
+) ([]*shipment.ShipmentComment, error) {
+	if t.comments == nil ||
+		!t.access.mayRead(ctx, params, permission.ResourceShipmentComment) {
+		return nil, nil
+	}
+
+	page, err := t.comments.ListByShipmentID(ctx, &repositories.ListShipmentCommentsRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo: tenant,
+			Pagination: pagination.Info{Limit: maxShipmentComments},
+		},
+		Cursor:     pagination.CursorInfo{Limit: maxShipmentComments},
+		ShipmentID: shipmentID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read the shipment's comments: %w", err)
+	}
+	if page == nil {
+		return nil, nil
+	}
+
+	return page.Items, nil
 }
 
 type searchShipmentsTool struct {

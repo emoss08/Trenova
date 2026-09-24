@@ -175,7 +175,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EVAL_KEY: ${{ secrets.TRENOVA_EVAL_API_KEY }}
-      EVAL_MODEL: ${{ vars.TRENOVA_EVAL_MODEL }}
+      EVAL_MODEL: ${{ vars.TRENOVA_EVAL_MODEL || 'claude-sonnet-5' }}
       EVAL_PROVIDER_KIND: ${{ vars.TRENOVA_EVAL_PROVIDER_KIND }}
       EVAL_BASE_URL: ${{ vars.TRENOVA_EVAL_BASE_URL }}
 
