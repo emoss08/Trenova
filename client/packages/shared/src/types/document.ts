@@ -407,13 +407,6 @@ export interface CreateDocumentUploadSessionParams {
   lineageId?: string;
 }
 
-export const importAssistantActionSchema = z.object({
-  type: z.string(),
-  fieldKey: z.string(),
-  value: z.string(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-});
-
 export const importAssistantSuggestionSchema = z.object({
   label: z.string(),
   prompt: z.string(),
@@ -446,23 +439,6 @@ export const importAssistantChatMessageSchema = z.object({
   createdAt: z.number(),
 });
 
-export const importAssistantChatResponseSchema = z.object({
-  message: z.string(),
-  conversationId: z.string(),
-  actions: z
-    .array(importAssistantActionSchema)
-    .nullish()
-    .transform((v) => v ?? []),
-  suggestions: z
-    .array(importAssistantSuggestionSchema)
-    .nullish()
-    .transform((v) => v ?? []),
-  toolCalls: z
-    .array(importAssistantToolCallRecordSchema)
-    .nullish()
-    .transform((v) => v ?? []),
-});
-
 export const conversationStatusSchema = z.enum(["Active", "Completed", "Superseded"]);
 export type ConversationStatus = z.infer<typeof conversationStatusSchema>;
 
@@ -488,20 +464,9 @@ export const importAssistantChatHistoryResponseSchema = z.object({
     .transform((v) => v ?? []),
 });
 
-export type ImportAssistantAction = z.infer<typeof importAssistantActionSchema>;
 export type ImportAssistantSuggestion = z.infer<typeof importAssistantSuggestionSchema>;
 export type ImportAssistantToolCallRecord = z.infer<typeof importAssistantToolCallRecordSchema>;
 export type ImportAssistantChatMessage = z.infer<typeof importAssistantChatMessageSchema>;
-export type ImportAssistantChatResponse = z.infer<typeof importAssistantChatResponseSchema>;
 export type ImportAssistantChatHistoryResponse = z.infer<
   typeof importAssistantChatHistoryResponseSchema
 >;
-
-export interface ImportAssistantChatParams {
-  message: string;
-  conversationId?: string;
-  reconciliationState: Record<string, unknown>;
-  requiredFields: Record<string, string>;
-  stops?: Array<Record<string, unknown>>;
-  shipmentData?: Record<string, unknown>;
-}

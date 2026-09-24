@@ -29,6 +29,34 @@ function proposal(overrides: Partial<AssistantProposal>): AssistantProposal {
  * sentence does not need goes to `details`, which is still complete.
  */
 describe("presentProposal", () => {
+  it("explains a new location by its name and address, from create_location's schema", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "create_location",
+        arguments: {
+          name: "Acme DC",
+          addressLine1: "1 Main St",
+          addressLine2: "Dock 4",
+          city: "Dallas",
+          state: "TX",
+          postalCode: "75201",
+          locationCategoryId: "lc_01J8ZABCDEFGHJKMNPQRSTVWXY",
+        },
+      }),
+    );
+
+    expect(view.title).toBe("Create a location");
+    expect(view.summary).toBe(
+      "Add “Acme DC” to your locations in Dallas, TX 75201, so a stop can be booked there. Its code is assigned when it is saved.",
+    );
+    expect(view.highlights).toEqual([
+      { label: "Name", value: "Acme DC" },
+      { label: "Address", value: "1 Main St, Dock 4, Dallas, TX 75201" },
+      { label: "Category", value: shortRef("lc_01J8ZABCDEFGHJKMNPQRSTVWXY") },
+    ]);
+    expect(view.reversible).toBe(true);
+  });
+
   it("explains a document request by recipient and documents", () => {
     const view = presentProposal(
       proposal({

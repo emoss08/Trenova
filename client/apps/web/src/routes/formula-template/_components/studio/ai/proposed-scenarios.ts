@@ -1,23 +1,29 @@
-import type {
-  FormulaTestCaseInput,
-  ProposedScenario,
-} from "@trenova/shared/types/formula-template";
+import type { PricedScenario } from "@/types/page-draft";
+import type { FormulaTestCaseInput } from "@trenova/shared/types/formula-template";
 
 /** A cent: the engine priced the scenario, so the saved case should match it exactly. */
 export const PROPOSED_SCENARIO_TOLERANCE = 0.01;
 
-export function acceptableScenarios(scenarios: ProposedScenario[]): ProposedScenario[] {
-  return scenarios.filter(
-    (scenario) => scenario.valid && typeof scenario.expectedAmount === "number",
-  );
+/** The engine's amount as a number, or null when it priced nothing usable. */
+export function scenarioAmount(scenario: PricedScenario): number | null {
+  const raw = scenario.amount.trim();
+  if (!scenario.valid || raw === "") {
+    return null;
+  }
+  const amount = Number(raw);
+  return Number.isFinite(amount) ? amount : null;
 }
 
-export function scenarioToTestCaseInput(scenario: ProposedScenario): FormulaTestCaseInput {
+export function acceptableScenarios(scenarios: readonly PricedScenario[]): PricedScenario[] {
+  return scenarios.filter((scenario) => scenarioAmount(scenario) !== null);
+}
+
+export function scenarioToTestCaseInput(scenario: PricedScenario): FormulaTestCaseInput {
   return {
     name: scenario.name,
     description: scenario.description,
     variables: scenario.variables,
-    expectedAmount: scenario.expectedAmount ?? 0,
+    expectedAmount: scenarioAmount(scenario) ?? 0,
     tolerance: PROPOSED_SCENARIO_TOLERANCE,
   };
 }

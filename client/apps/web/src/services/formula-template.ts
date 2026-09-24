@@ -10,13 +10,11 @@ import {
   type StandardTemplate,
   type ReviewDiffResponse,
   type ReadinessResponse,
-  explainFormulaResponseSchema,
   forkLineageSchema,
   formulaSchemaResponseSchema,
   formulaTemplateSchema,
   formulaTestCaseSchema,
   formulaTemplateVersionSchema,
-  generateFormulaResponseSchema,
   importTemplatesResponseSchema,
   installStandardsResponseSchema,
   listFormulaTemplateResponseSchema,
@@ -29,7 +27,6 @@ import {
   type BulkDuplicateFormulaTemplateRequest,
   type BulkUpdateStatusRequest,
   type CreateVersionRequest,
-  type ExplainFormulaResponse,
   type ForkLineage,
   type ForkRequest,
   type FormulaSchemaResponse,
@@ -39,8 +36,6 @@ import {
   type FormulaTestCaseInput,
   type RunTestCasesResponse,
   type TestCaseCandidate,
-  type GenerateFormulaRequest,
-  type GenerateFormulaResponse,
   type ImportTemplatesResponse,
   type InstallStandardsResponse,
   type ListFormulaTemplateResponse,
@@ -51,6 +46,7 @@ import {
   type VersionDiff,
 } from "@trenova/shared/types/formula-template";
 import type { GenericLimitOffsetResponse } from "@trenova/shared/types/server";
+import { pageThreadSchema, type PageThread } from "@/types/assistant";
 import { z } from "zod";
 
 export type ImportTestCasePayload = {
@@ -173,25 +169,16 @@ export class FormulaTemplateService {
     return safeParse(installStandardsResponseSchema, response, "Standard Templates");
   }
 
-  public async generateFormula(request: GenerateFormulaRequest): Promise<GenerateFormulaResponse> {
-    const response = await api.post<GenerateFormulaResponse>(
-      "/formula-templates/ai/generate",
-      request,
-    );
+  /**
+   * Opens the person's conversation with the formula assistant about a saved
+   * template, or a fresh one while the template is unsaved.
+   */
+  public async openAssistantThread(templateId: string | null): Promise<PageThread> {
+    const response = await api.post<PageThread>("/formula-templates/ai/thread/", {
+      templateId: templateId ?? "",
+    });
 
-    return safeParse(generateFormulaResponseSchema, response, "Formula Generation");
-  }
-
-  public async explainFormula(request: {
-    expression: string;
-    schemaId?: string;
-  }): Promise<ExplainFormulaResponse> {
-    const response = await api.post<ExplainFormulaResponse>(
-      "/formula-templates/ai/explain",
-      request,
-    );
-
-    return safeParse(explainFormulaResponseSchema, response, "Formula Explanation");
+    return safeParse(pageThreadSchema, response, "Formula Assistant Conversation");
   }
 
   public async bulkUpdateStatus(request: BulkUpdateStatusRequest) {

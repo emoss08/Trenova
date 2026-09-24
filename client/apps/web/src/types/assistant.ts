@@ -1,5 +1,6 @@
 import { optionalIdSchema } from "@trenova/shared/types/helpers";
 import { z } from "zod";
+import { pageDraftEditSchema, pageDraftSchema } from "./page-draft";
 
 export const agentTemplateKindSchema = z.enum([
   "DispatchAssistant",
@@ -56,10 +57,19 @@ export const threadStatusSchema = z.enum(["Active", "Archived"]);
 
 /**
  * Where a conversation began. A quick question from the palette (Ask) is
- * not listed until the person keeps it; every other origin is a
+ * not listed until the person keeps it. An import or formula conversation
+ * belongs to its page and is never listed; every other origin is a
  * conversation from the start.
  */
-export const threadOriginSchema = z.enum(["Panel", "Desk", "Ask", "Watchtower", "Briefing"]);
+export const threadOriginSchema = z.enum([
+  "Panel",
+  "Desk",
+  "Ask",
+  "Watchtower",
+  "Briefing",
+  "Import",
+  "Formula",
+]);
 
 /**
  * Why a reader may no longer ask a conversation's agent anything: it was
@@ -88,6 +98,7 @@ export const artifactKindSchema = z.enum([
   "run_diff",
   "document",
   "navigation",
+  "draft_edit",
 ]);
 
 export const artifactStatusSchema = z.enum(["Pending", "Ready", "Failed", "Sent"]);
@@ -429,6 +440,8 @@ export const pageContextSchema = z.object({
   entityId: z.string().optional().default(""),
   title: z.string().optional().default(""),
   view: pageViewSchema.nullish(),
+  /** The unsaved work of the page a page-bound conversation belongs to. */
+  draft: pageDraftSchema.nullish(),
 });
 
 /** A record the person named from the composer; mirrors the server's EntityRef. */
@@ -619,9 +632,41 @@ export const assistantThreadSchema = z.object({
    * does not know reads as absent, so the notice falls back to a plain one.
    */
   cannotContinueReason: cannotContinueReasonSchema.optional().catch(undefined),
+  /**
+   * When the conversation first read text written outside the organization,
+   * such as the document an import is about. From then on every change the
+   * agent proposes waits for a person.
+   */
+  taintedAt: z.number().nullish(),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
+});
+
+/**
+ * The agent a page's conversation is with. System agents like the import and
+ * formula assistants are left out of every chat picker, so the page is told
+ * who it is talking to when it opens the conversation.
+ */
+export const pageAgentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().optional().default(""),
+  template: agentTemplateKindSchema.nullish().catch(null),
+  icon: z.string().optional().default(""),
+  accent: z.string().optional().default(""),
+  systemKey: z.string().optional().default(""),
+  toolNames: z.preprocess((value) => value ?? [], z.array(z.string())),
+  starters: z.preprocess(
+    (value) => value ?? [],
+    z.array(z.object({ label: z.string(), prompt: z.string() })),
+  ),
+});
+
+/** An import or formula page's own conversation, and the agent it is with. */
+export const pageThreadSchema = z.object({
+  thread: assistantThreadSchema,
+  agent: pageAgentSchema,
 });
 
 /**
@@ -662,6 +707,8 @@ export const assistantArtifactEventSchema = z.object({
   sourceToolCallId: z.string().optional().default(""),
   /** Where a navigation artifact moves the app; empty for every other kind. */
   path: z.string().optional().default(""),
+  /** The change a draft_edit artifact hands the page; absent for every other kind. */
+  draft: pageDraftEditSchema.nullish().catch(null),
 });
 
 /**
@@ -1113,6 +1160,8 @@ export type AssistantArtifact = z.infer<typeof assistantArtifactSchema>;
 export type ArtifactKind = z.infer<typeof artifactKindSchema>;
 export type ArtifactStatus = z.infer<typeof artifactStatusSchema>;
 export type AssistantArtifactEvent = z.infer<typeof assistantArtifactEventSchema>;
+export type PageAgent = z.infer<typeof pageAgentSchema>;
+export type PageThread = z.infer<typeof pageThreadSchema>;
 export type AssistantProviderOption = z.infer<typeof assistantProviderOptionSchema>;
 export type AssistantMessage = z.infer<typeof assistantMessageSchema>;
 export type AssistantMessagePage = z.infer<typeof assistantMessagePageSchema>;

@@ -271,6 +271,38 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
+  create_location: (args) => {
+    const name = text(args.name);
+    const street = [text(args.addressLine1), text(args.addressLine2)]
+      .filter((part) => part !== "")
+      .join(", ");
+    const place = [text(args.city), [text(args.state), text(args.postalCode)].join(" ").trim()]
+      .filter((part) => part !== "")
+      .join(", ");
+
+    return {
+      title: "Create a location",
+      summary: `Add ${name ? `“${name}”` : "a new location"} to your locations${
+        place ? ` in ${place}` : ""
+      }, so a stop can be booked there. Its code is assigned when it is saved.`,
+      highlights: facts(
+        fact("Name", name),
+        fact("Address", [street, place].filter((part) => part !== "").join(", ")),
+        fact("Category", shortRef(text(args.locationCategoryId))),
+      ),
+      covered: [
+        "name",
+        "addressLine1",
+        "addressLine2",
+        "city",
+        "state",
+        "postalCode",
+        "locationCategoryId",
+      ],
+      reversible: true,
+    };
+  },
+
   evaluate_service_failures: (args) => ({
     title: "Check for service failures",
     summary: `Run the late-stop check on this shipment${

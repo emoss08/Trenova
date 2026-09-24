@@ -26,6 +26,8 @@ import type {
   FormulaTemplateFormValues,
   VariableDefinition,
 } from "@trenova/shared/types/formula-template";
+import type { PageRequest } from "@/components/assistant/message-thread";
+import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
@@ -34,7 +36,8 @@ import { ApprovalActionDialog, type ApprovalAction } from "../approval-action-di
 import { ForkLineageDialog } from "../fork-lineage-dialog";
 import { ForkTemplateDialog } from "../fork-template-dialog";
 import { VersionHistoryPanel } from "../version/version-history-panel";
-import { AiGeneratePanel } from "./ai/ai-generate-panel";
+import { FormulaAssistantSheet } from "./ai/formula-assistant-sheet";
+import { formulaDraftFromEditor } from "./ai/formula-draft";
 import { BacktestSheet } from "./backtest-sheet";
 import { ImportTemplateDialog } from "./import-template-dialog";
 import { StudioEditorPane } from "./studio-editor-pane";
@@ -92,13 +95,13 @@ function FormulaStudioBody({
   const [lineageDialogOpen, setLineageDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [backtestOpen, setBacktestOpen] = useState(false);
-  const [aiGenerateOpen, setAiGenerateOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [assistantRequest, setAssistantRequest] = useState<PageRequest | null>(null);
   const [rightTab, setRightTab] = useState<"preview" | "scenarios" | "reference">("preview");
   const isNarrow = useMediaQuery("(max-width: 1100px)");
 
   const templateName = useWatch({ control: form.control, name: "name" });
   const schemaId = useWatch({ control: form.control, name: "schemaId" });
-  const templateType = useWatch({ control: form.control, name: "type" });
   const customVariables = useWatch({ control: form.control, name: "variableDefinitions" });
 
   const known = useKnownIdentifiers(schemaId || "shipment", customVariables ?? []);
@@ -163,6 +166,27 @@ function FormulaStudioBody({
     },
     [insertIntoActiveEditor],
   );
+
+  // The assistant reads the editor as it is when a question is sent, saved or
+  // not.
+  const readAssistantDraft = useCallback(() => {
+    const values = form.getValues();
+    return formulaDraftFromEditor({
+      templateId: template?.id ?? null,
+      schemaId: values.schemaId || "shipment",
+      templateType: values.type ?? "FreightCharge",
+      expression: values.expression ?? "",
+      variables: values.variableDefinitions ?? [],
+    });
+  }, [form, template?.id]);
+
+  const handleExplain = useCallback(() => {
+    setAssistantRequest({
+      key: nanoid(),
+      text: t("Explain what this formula charges, term by term."),
+    });
+    setAssistantOpen(true);
+  }, [t]);
 
   const handleAiInsert = useCallback(
     (result: { expression: string; variableDefinitions: VariableDefinition[] }) => {
@@ -264,7 +288,8 @@ function FormulaStudioBody({
                 mode={mode}
                 known={known}
                 editorRef={editorRef}
-                onOpenAiGenerate={() => setAiGenerateOpen(true)}
+                onOpenAssistant={() => setAssistantOpen(true)}
+                onExplain={handleExplain}
               />
             </ResizablePanel>
             <ResizableHandle withHandle />
@@ -282,7 +307,8 @@ function FormulaStudioBody({
                 mode={mode}
                 known={known}
                 editorRef={editorRef}
-                onOpenAiGenerate={() => setAiGenerateOpen(true)}
+                onOpenAssistant={() => setAssistantOpen(true)}
+                onExplain={handleExplain}
               />
             </ResizablePanel>
             <ResizableHandle withHandle />
@@ -360,13 +386,14 @@ function FormulaStudioBody({
           template={template}
         />
 
-        <AiGeneratePanel
-          open={aiGenerateOpen}
-          onOpenChange={setAiGenerateOpen}
-          templateType={templateType ?? "FreightCharge"}
-          schemaId={schemaId || "shipment"}
+        <FormulaAssistantSheet
+          open={assistantOpen}
+          onOpenChange={setAssistantOpen}
           templateId={template?.id ?? null}
+          readDraft={readAssistantDraft}
           onInsert={handleAiInsert}
+          request={assistantRequest}
+          onRequestSent={() => setAssistantRequest(null)}
         />
       </div>
     </PreviewValuesProvider>

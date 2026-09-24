@@ -128,6 +128,27 @@ export function truncateText(str: string, length: number): string {
   return str?.length > length ? `${str.slice(0, length)}...` : str;
 }
 
+/**
+ * The first `max` characters of `text`, counted as code points the way the
+ * server counts runes, so a bound checked there is the bound kept here and an
+ * emoji is never cut in half.
+ */
+export function limitCodePoints(text: string, max: number): string {
+  if (text.length <= max) {
+    return text;
+  }
+  const points = Array.from(text);
+  return points.length <= max ? text : points.slice(0, max).join("");
+}
+
+/** A share between 0 and 1; anything that is not a number reads as 0. */
+export function clampUnit(value: number): number {
+  if (!Number.isFinite(value)) {
+    return value === Number.POSITIVE_INFINITY ? 1 : 0;
+  }
+  return Math.min(1, Math.max(0, value));
+}
+
 export function formatCurrency(num: number, currency: string = "USD"): string {
   return new Intl.NumberFormat(intlLocale(), {
     style: "currency",
