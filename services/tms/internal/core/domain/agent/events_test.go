@@ -50,3 +50,22 @@ func TestRunTrigger_IsValid(t *testing.T) {
 	assert.True(t, agent.TypeGeneral.IsValid())
 	assert.True(t, agent.SubjectOrganization.IsValid())
 }
+
+func TestKnownEvents_MoveUnassignedDescribesOnlyALostAssignment(t *testing.T) {
+	t.Parallel()
+
+	for _, event := range agent.KnownEvents() {
+		if event.Kind != agent.EventShipmentMoveUnassigned {
+			continue
+		}
+
+		assert.Equal(
+			t,
+			"A shipment move lost its assignment and has nobody to run it.",
+			event.Description,
+		)
+		return
+	}
+
+	t.Fatalf("%s is not a known event", agent.EventShipmentMoveUnassigned)
+}
