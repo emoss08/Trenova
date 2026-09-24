@@ -7,9 +7,21 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/hashutils"
 )
 
-var ErrQueryTextRequired = errors.New("a query vector needs text to embed")
+const MaxQueryTextRunes = 2000
+
+var (
+	ErrQueryTextRequired     = errors.New("a query vector needs text to embed")
+	ErrQueryTenantRequired   = errors.New("a query vector needs an organization and business unit")
+	ErrCatalogRequestInvalid = errors.New("a catalog similarity request needs a corpus and items")
+	ErrCatalogQueryNotUsable = errors.New(
+		"a catalog similarity request needs a usable query vector",
+	)
+	ErrCatalogItemKeyTooLong  = errors.New("a catalog item key is longer than the table allows")
+	ErrCatalogItemKeyRepeated = errors.New("a catalog item key appears twice in one corpus")
+)
 
 type QueryVectorRequest struct {
 	TenantInfo  pagination.TenantInfo
@@ -35,7 +47,10 @@ func (q QueryVector) Usable() bool {
 
 type QueryVectorizer interface {
 	Vectorize(ctx context.Context, req QueryVectorRequest) (QueryVector, error)
-	Availability(ctx context.Context, tenant pagination.TenantInfo) (airetrieval.Availability, error)
+	Availability(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (airetrieval.Availability, error)
 }
 
 func TurnQueryText(input string, history []conversation.Message) string {
@@ -71,4 +86,31 @@ func TurnQueryRequest(req *RunRequest) QueryVectorRequest {
 		Text:        TurnQueryText(req.Input, req.History),
 		Attribution: attribution,
 	}
+}
+
+type EmbeddingCatalogItem struct {
+	Key         string
+	ContentHash string
+	Text        string
+}
+
+func NewEmbeddingCatalogItem(key, text string) EmbeddingCatalogItem {
+	return EmbeddingCatalogItem{Key: key, ContentHash: hashutils.SHA256Hex(text), Text: text}
+}
+
+type CatalogSimilarityRequest struct {
+	TenantInfo pagination.TenantInfo
+	Corpus     airetrieval.CatalogCorpus
+	Items      []EmbeddingCatalogItem
+	Query      QueryVector
+}
+
+type CatalogSimilarities struct {
+	Available bool
+	Reason    airetrieval.UnavailableReason
+	ByKey     map[string]float64
+}
+
+type CatalogVectorIndex interface {
+	Similarities(ctx context.Context, req CatalogSimilarityRequest) (CatalogSimilarities, error)
 }
