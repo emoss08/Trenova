@@ -56,17 +56,15 @@ func callTaint(
 	data any,
 	now int64,
 ) []agent.TaintMark {
-	var refs []agent.RecordRef
-	if carrier, ok := data.(agent.TaintCarrier); ok {
-		refs = carrier.TaintedRecords()
-	}
-
+	var refs []agent.SourcedRef
 	switch policy.ReadsExternal {
 	case agent.ExternalReadAlways:
+		refs = carriedRefs(&policy, data)
 		if len(refs) == 0 {
-			return []agent.TaintMark{callMark(policy, call, nil, now)}
+			return []agent.TaintMark{callMark(call, policy.Source, nil, now)}
 		}
 	case agent.ExternalReadMarked:
+		refs = carriedRefs(&policy, data)
 		if len(refs) == 0 {
 			return nil
 		}
@@ -76,20 +74,47 @@ func callTaint(
 
 	marks := make([]agent.TaintMark, 0, len(refs))
 	for idx := range refs {
-		marks = append(marks, callMark(policy, call, &refs[idx], now))
+		marks = append(marks, callMark(call, refs[idx].Source, &refs[idx].Ref, now))
 	}
 
 	return marks
 }
 
+func carriedRefs(policy *serviceports.ToolPolicy, data any) []agent.SourcedRef {
+	if carrier, ok := data.(agent.SourcedTaintCarrier); ok {
+		sourced := carrier.TaintedMarks()
+		refs := make([]agent.SourcedRef, 0, len(sourced))
+		for _, ref := range sourced {
+			if !ref.Source.IsValid() || !policy.MarksFrom(ref.Source) {
+				ref.Source = policy.Source
+			}
+			refs = append(refs, ref)
+		}
+
+		return refs
+	}
+
+	carrier, ok := data.(agent.TaintCarrier)
+	if !ok {
+		return nil
+	}
+	records := carrier.TaintedRecords()
+	refs := make([]agent.SourcedRef, 0, len(records))
+	for _, record := range records {
+		refs = append(refs, agent.SourcedRef{Source: policy.Source, Ref: record})
+	}
+
+	return refs
+}
+
 func callMark(
-	policy serviceports.ToolPolicy,
 	call serviceports.ToolCall,
+	source agent.TaintSource,
 	ref *agent.RecordRef,
 	now int64,
 ) agent.TaintMark {
 	return agent.TaintMark{
-		Source:   policy.Source,
+		Source:   source,
 		ToolName: call.Name,
 		CallID:   call.ID,
 		Ref:      ref,

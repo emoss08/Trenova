@@ -3,7 +3,6 @@ package agentquerytoolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -70,31 +69,6 @@ func newGetCarrierIntelEventTool(
 			}
 
 			return events[0], nil
-		},
-	})
-}
-
-func newGetAgentRunTool(repo repositories.AgentRunRepository) serviceports.AgentQueryTool {
-	return newGetTool(getSpec{
-		name:     "get_agent_run",
-		entity:   "agent run",
-		resource: permission.ResourceAgentRun,
-		summary: "Retrieve one agent run by id: which agent ran, what started it, the " +
-			"record it worked on, its status, its summary and, if it failed, why. The " +
-			"id comes from a proposal, the page the person is looking at, or a record " +
-			"they mentioned.",
-		paramName: "runId",
-		idSource: "from a proposal, the page you are on, or a mentioned record " +
-			"(no tool lists agent runs)",
-		reads:  agent.ExternalReadMarked,
-		source: agent.TaintSourceRunRecord,
-		rationale: "Reads a run's own record, whose summary may repeat outside text the " +
-			"run read.",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
-				ID:         id,
-				TenantInfo: &tenant,
-			})
 		},
 	})
 }

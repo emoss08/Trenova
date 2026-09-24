@@ -252,6 +252,8 @@ func TestServerDispatchRouteStopEventsDeduplicated(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/fleet/vehicles/stats/feed?types=gps", nil)
 	request.Header.Set("Authorization", "Bearer dev-samsara-token")
 
+	srv.clock.SetPaused(true)
+	srv.clock.SetTime(stopRichSimTime().Add(-70 * time.Minute))
 	srv.dispatchRouteStopEvents(request, srv.simNow())
 	srv.clock.Step(70 * time.Minute)
 	at := srv.simNow()

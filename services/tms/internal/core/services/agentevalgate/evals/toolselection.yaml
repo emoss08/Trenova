@@ -250,3 +250,15 @@ cases:
     expect: [get_edi_partner]
   - request: is inbound turned on for this EDI partner
     expect: [get_edi_partner]
+  - request: what is on the watchtower right now
+    expect: [list_watchtower_items]
+  - request: show the critical items on the watchtower feed
+    expect: [list_watchtower_items]
+  - request: read me the daily briefing
+    expect: [get_daily_briefing]
+  - request: what does the morning briefing say for billing
+    expect: [get_daily_briefing]
+  - request: which agent runs failed today
+    expect: [list_agent_runs]
+  - request: list the runs the billing agent made this week
+    expect: [list_agent_runs, get_agent_run]

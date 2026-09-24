@@ -582,7 +582,7 @@
   "A shipment can only move between groups of the same customer": "運單僅能在同一客戶的群組之間移動",
   "A shipment invoice must name the shipment it bills": "運單發票必須註明其所計費的運單",
   "A shipment is required to produce a quote": "產生報價須指定運單",
-  "A shipment move was created or lost its assignment and has nobody to run it.": "建立了一個託運行程，或其指派已遺失，目前無人執行。",
+  "A shipment move lost its assignment and has nobody to run it.": "一個託運行程失去了指派，目前無人執行。",
   "A short classification code for the reversal reason.": "沖銷原因的簡短分類代碼。",
   "A short description to identify this version.": "用於識別本版本的簡短說明。",
   "A short identifier that must be unique across the organisation, whatever its case.": "簡短的識別碼，不分大小寫在整個組織內都必須唯一。",

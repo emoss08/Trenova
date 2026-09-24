@@ -27,6 +27,7 @@ type ToolPolicy struct {
 	Idempotent          bool
 	ReadsExternal       agent.ExternalRead
 	Source              agent.TaintSource
+	Sources             []agent.TaintSource
 	CarriesTaint        bool
 	Rationale           string
 }
@@ -108,6 +109,10 @@ func (p ToolPolicy) Conditional() bool {
 
 func (p ToolPolicy) HeldWhenTainted() bool {
 	return p.TaintHold != nil || slices.ContainsFunc(p.Egress, agent.EgressClass.Leaves)
+}
+
+func (p *ToolPolicy) MarksFrom(source agent.TaintSource) bool {
+	return source == p.Source || slices.Contains(p.Sources, source)
 }
 
 func (p ToolPolicy) TaintHolds(params ToolExecuteParams, call CallPolicy) bool {

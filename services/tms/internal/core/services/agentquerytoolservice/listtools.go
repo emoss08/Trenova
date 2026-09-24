@@ -76,6 +76,10 @@ type listTool struct {
 }
 
 func newListTool(spec listSpec) serviceports.AgentQueryTool {
+	return buildListTool(&spec)
+}
+
+func buildListTool(spec *listSpec) *listTool {
 	seen := make(map[dbtype.Operator]bool, len(spec.fields)*4)
 	operators := make([]string, 0, len(spec.fields)*4)
 	for _, field := range spec.fields {
@@ -89,10 +93,10 @@ func newListTool(spec listSpec) serviceports.AgentQueryTool {
 	}
 
 	return &listTool{
-		spec:        spec,
-		resource:    catalogResource(spec),
+		spec:        *spec,
+		resource:    catalogResource(*spec),
 		operators:   operators,
-		description: buildListDescription(spec),
+		description: buildListDescription(*spec),
 	}
 }
 

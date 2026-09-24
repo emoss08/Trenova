@@ -40,6 +40,7 @@ type PolicySnapshot struct {
 	Idempotent          bool     `json:"idempotent"`
 	ReadsExternal       string   `json:"readsExternal"`
 	Source              string   `json:"source,omitempty"`
+	Sources             []string `json:"sources,omitempty"`
 	CarriesTaint        bool     `json:"carriesTaint"`
 	Rationale           string   `json:"rationale"`
 }
@@ -97,6 +98,13 @@ func snapshotPolicy(policy *serviceports.ToolPolicy) PolicySnapshot {
 	if policy.TaintHold != nil {
 		taintHold = policy.TaintHold.Description
 	}
+	var sources []string
+	if len(policy.Sources) > 0 {
+		sources = make([]string, 0, len(policy.Sources))
+		for _, source := range policy.Sources {
+			sources = append(sources, source.String())
+		}
+	}
 
 	return PolicySnapshot{
 		Kind:                policy.Kind.String(),
@@ -118,6 +126,7 @@ func snapshotPolicy(policy *serviceports.ToolPolicy) PolicySnapshot {
 		Idempotent:          policy.Idempotent,
 		ReadsExternal:       policy.ReadsExternal.String(),
 		Source:              policy.Source.String(),
+		Sources:             sources,
 		CarriesTaint:        policy.CarriesTaint,
 		Rationale:           policy.Rationale,
 	}

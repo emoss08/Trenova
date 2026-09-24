@@ -582,7 +582,7 @@
   "A shipment can only move between groups of the same customer": "Un envío solo puede moverse entre grupos del mismo cliente",
   "A shipment invoice must name the shipment it bills": "Una factura de envío debe indicar el envío que factura",
   "A shipment is required to produce a quote": "Se requiere un envío para generar una cotización",
-  "A shipment move was created or lost its assignment and has nobody to run it.": "Se creó un movimiento de envío o perdió su asignación y no tiene a nadie que lo realice.",
+  "A shipment move lost its assignment and has nobody to run it.": "Un movimiento de envío perdió su asignación y no tiene a nadie que lo realice.",
   "A short classification code for the reversal reason.": "Un código breve de clasificación del motivo de la reversión.",
   "A short description to identify this version.": "Una descripción breve que identifique esta versión.",
   "A short identifier that must be unique across the organisation, whatever its case.": "Un identificador corto que debe ser único en toda la organización, sin distinguir mayúsculas de minúsculas.",

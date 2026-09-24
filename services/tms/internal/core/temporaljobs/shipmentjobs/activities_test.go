@@ -1,8 +1,10 @@
 package shipmentjobs
 
 import (
+	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -59,10 +61,12 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 		Return(nil).
 		Once()
 
+	agentEvents := &recordingAgentEvents{}
 	activities := NewActivities(ActivitiesParams{
 		Repo:         repo,
 		AuditService: audit,
 		Realtime:     realtime,
+		AgentEvents:  agentEvents,
 		Logger:       zap.NewNop(),
 	})
 
@@ -86,6 +90,19 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 	assert.Equal(t, 2, result.DuplicatedCount)
 	assert.Equal(t, []pulid.ID{copyOne, copyTwo}, result.ShipmentIDs)
 	assert.Equal(t, sourceID, result.SourceShipmentID)
+	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
+	assert.Equal(t, []services.AgentEvent{
+		{Kind: agent.EventShipmentCreated, SubjectID: copyOne, TenantInfo: tenant},
+		{Kind: agent.EventShipmentCreated, SubjectID: copyTwo, TenantInfo: tenant},
+	}, agentEvents.events)
+}
+
+type recordingAgentEvents struct {
+	events []services.AgentEvent
+}
+
+func (r *recordingAgentEvents) Publish(_ context.Context, event services.AgentEvent) {
+	r.events = append(r.events, event)
 }
 
 func TestActivitiesAutoDelayShipmentsActivity(t *testing.T) {

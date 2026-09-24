@@ -25,10 +25,17 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+const (
+	maxLocationCodeLength = 10
+	promptPreviewLength   = 512
+	responsePreviewLength = 1024
 )
 
 type Params struct {
@@ -51,6 +58,7 @@ type Params struct {
 	LocationService      *locationservice.Service
 	UsStateRepo          repositories.UsStateRepository
 	LocationCategoryRepo repositories.LocationCategoryRepository
+	Permissions          serviceports.PermissionEngine
 	// Turns answers a message on a worker, which runs the turn through this
 	// service's steps.
 	Turns serviceports.ShipmentImportTurns
@@ -74,6 +82,7 @@ type Service struct {
 	locationService      *locationservice.Service
 	usStateRepo          repositories.UsStateRepository
 	locationCategoryRepo repositories.LocationCategoryRepository
+	permissions          serviceports.PermissionEngine
 	turns                serviceports.ShipmentImportTurns
 }
 
@@ -100,6 +109,7 @@ func New(
 		locationService:      p.LocationService,
 		usStateRepo:          p.UsStateRepo,
 		locationCategoryRepo: p.LocationCategoryRepo,
+		permissions:          p.Permissions,
 		turns:                p.Turns,
 	}
 }
@@ -720,23 +730,6 @@ func toolCallStatusFromResult(result string) string {
 	return toolStatusCompleted
 }
 
-func (s *Service) executeToolCall(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	name, arguments string,
-) (string, []serviceports.ShipmentImportAction) {
-	var args map[string]any
-	if err := json.Unmarshal([]byte(arguments), &args); err != nil {
-		return `{"error":"invalid arguments"}`, nil
-	}
-
-	h, ok := shipmentImportToolCallHandlers[name]
-	if !ok {
-		return `{"error":"unknown tool"}`, nil
-	}
-	return h(s, ctx, tenantInfo, shipmentImportToolCallArgs{m: args})
-}
-
 type shipmentImportToolCallArgs struct {
 	m map[string]any
 }
@@ -1245,34 +1238,20 @@ func (s *Service) addLocation(
 	}
 	locationCategoryID := catResult.Items[0].ID
 
-	// Generate a short code from the name
-	code := name
-	if len(code) > 10 {
-		code = code[:10]
-	}
-
 	entity := &location.Location{
 		OrganizationID:     tenantInfo.OrgID,
 		BusinessUnitID:     tenantInfo.BuID,
 		LocationCategoryID: locationCategoryID,
 		StateID:            state.ID,
 		Status:             domaintypes.StatusActive,
-		Code:               code,
+		Code:               stringutils.TruncateRunes(name, maxLocationCodeLength),
 		Name:               name,
 		AddressLine1:       addr,
 		City:               city,
 		PostalCode:         postalCode,
 	}
 
-	actor := &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
-		PrincipalID:    tenantInfo.UserID,
-		UserID:         tenantInfo.UserID,
-		BusinessUnitID: tenantInfo.BuID,
-		OrganizationID: tenantInfo.OrgID,
-	}
-
-	created, createErr := s.locationService.Create(ctx, entity, actor)
+	created, createErr := s.locationService.Create(ctx, entity, actingUser(tenantInfo))
 	if createErr != nil {
 		s.logger.Error("failed to create location", zap.Error(createErr))
 		return fmt.Sprintf(`{"error":"failed to create location: %s"}`, createErr.Error())
@@ -1345,19 +1324,13 @@ func (s *Service) getShipmentControl(ctx context.Context, tenantInfo pagination.
 func (s *Service) logAICall(
 	ctx context.Context,
 	req *serviceports.ShipmentImportChatRequest,
-	response string,
+	record *TurnRecord,
 ) {
 	promptHash := sha256.Sum256([]byte(req.UserMessage))
-	responseHash := sha256.Sum256([]byte(response))
+	responseHash := sha256.Sum256([]byte(record.Message))
 
-	promptPreview := req.UserMessage
-	if len(promptPreview) > 512 {
-		promptPreview = promptPreview[:512]
-	}
-	responsePreview := response
-	if len(responsePreview) > 1024 {
-		responsePreview = responsePreview[:1024]
-	}
+	promptPreview := stringutils.TruncateRunes(req.UserMessage, promptPreviewLength)
+	responsePreview := stringutils.TruncateRunes(record.Message, responsePreviewLength)
 
 	entry := &ailog.Log{
 		ID:             pulid.MustNew("ail_"),
@@ -1374,10 +1347,16 @@ func (s *Service) logAICall(
 			hex.EncodeToString(responseHash[:]),
 			responsePreview,
 		),
-		Model:     ailog.ModelGPT5Mini,
-		Operation: ailog.OperationShipmentImportChat,
-		Object:    req.DocumentID,
-		Timestamp: timeutils.NowUnix(),
+		Model:            ailog.Model(record.Model),
+		ProviderKind:     string(record.ProviderKind),
+		ProviderID:       record.ProviderID,
+		Operation:        ailog.OperationShipmentImportChat,
+		Object:           req.DocumentID,
+		PromptTokens:     record.InputTokens,
+		CompletionTokens: record.OutputTokens,
+		TotalTokens:      record.InputTokens + record.OutputTokens,
+		ReasoningTokens:  record.ReasoningTokens,
+		Timestamp:        timeutils.NowUnix(),
 	}
 
 	if _, err := s.aiLogRepo.Create(ctx, entry); err != nil {

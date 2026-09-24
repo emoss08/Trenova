@@ -260,6 +260,15 @@ type TaintCarrier interface {
 	TaintedRecords() []RecordRef
 }
 
+type SourcedRef struct {
+	Source TaintSource
+	Ref    RecordRef
+}
+
+type SourcedTaintCarrier interface {
+	TaintedMarks() []SourcedRef
+}
+
 const (
 	TaintEntityInboundMessage  = "inbound_message"
 	TaintEntityDocument        = "document"
@@ -268,6 +277,8 @@ const (
 	TaintEntityAgentMemory     = "agent_memory"
 	TaintEntityAgentRun        = "agent_run"
 	TaintEntityShipmentComment = "shipment_comment"
+	TaintEntityWeatherAlert    = "weather_alert"
+	TaintEntityWatchtowerItem  = "watchtower_item"
 )
 
 func (s SubjectType) TaintSource() (TaintSource, string, bool) {

@@ -142,7 +142,7 @@ func TestDeskGetTools_AreGatedOnTheirRecordsResource(t *testing.T) {
 		permission.ResourceCarrierIntelligence,
 		newGetCarrierIntelEventTool(nil).Policy().Resource,
 	)
-	assert.Equal(t, permission.ResourceAgentRun, newGetAgentRunTool(nil).Policy().Resource)
+	assert.Equal(t, permission.ResourceAgentRun, newGetAgentRunTool(getAgentRunParams{}, nil).Policy().Resource)
 	assert.Equal(
 		t,
 		permission.ResourceServiceFailure,

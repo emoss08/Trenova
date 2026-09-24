@@ -26,6 +26,7 @@ type toolDeps struct {
 	memories    serviceports.AgentMemoryService
 	shipments   *shipmentDesk
 	comments    *commentDesk
+	watchtower  *watchtowerDesk
 	permissions *permissionDesk
 }
 
@@ -45,6 +46,7 @@ func newToolDeps(rec *recorder, responses map[string]map[string]any) toolDeps {
 		}),
 		shipments:   &shipmentDesk{rec: rec, response: responses[getShipmentTool]},
 		comments:    &commentDesk{rec: rec, response: responses[getShipmentTool]},
+		watchtower:  &watchtowerDesk{rec: rec, response: responses[listWatchtowerTool]},
 		permissions: &permissionDesk{rec: rec},
 	}
 }
@@ -56,6 +58,7 @@ func (d toolDeps) fakes() []reflect.Value {
 		reflect.ValueOf(d.memories),
 		reflect.ValueOf(d.shipments),
 		reflect.ValueOf(d.comments),
+		reflect.ValueOf(d.watchtower),
 		reflect.ValueOf(d.permissions),
 	}
 }

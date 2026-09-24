@@ -172,6 +172,31 @@ func tierProblems(policy serviceports.ToolPolicy) []string {
 	return problems
 }
 
+func furtherSourceProblems(policy *serviceports.ToolPolicy) []string {
+	if len(policy.Sources) == 0 {
+		return nil
+	}
+
+	problems := make([]string, 0, 1)
+	if policy.ReadsExternal != agent.ExternalReadMarked &&
+		policy.ReadsExternal != agent.ExternalReadAlways {
+		problems = append(problems, "names further taint sources but reads no outside text")
+	}
+	seen := make(map[agent.TaintSource]struct{}, len(policy.Sources))
+	for _, source := range policy.Sources {
+		if !source.IsValid() {
+			problems = append(problems, fmt.Sprintf("taint source %q is not valid", source))
+			continue
+		}
+		if _, dup := seen[source]; dup || source == policy.Source {
+			problems = append(problems, fmt.Sprintf("taint source %q is named twice", source))
+		}
+		seen[source] = struct{}{}
+	}
+
+	return problems
+}
+
 func externalReadProblems(policy serviceports.ToolPolicy) []string {
 	problems := make([]string, 0)
 	if !policy.ReadsExternal.IsValid() {
@@ -185,6 +210,7 @@ func externalReadProblems(policy serviceports.ToolPolicy) []string {
 	if policy.Source != "" && !policy.Source.IsValid() {
 		problems = append(problems, fmt.Sprintf("taint source %q is not valid", policy.Source))
 	}
+	problems = append(problems, furtherSourceProblems(&policy)...)
 	if policy.CarriesTaint && policy.Kind != agent.ToolKindAction {
 		problems = append(problems, "only a write can carry a run's taint into what it saves")
 	}

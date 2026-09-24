@@ -27,6 +27,7 @@ func ToolProviders() []any {
 		ratingToolProviders(),
 		orderToolProviders(),
 		ediToolProviders(),
+		oversightToolProviders(),
 	}
 
 	size := 0

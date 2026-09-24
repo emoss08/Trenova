@@ -749,7 +749,10 @@
               "accessorial charges",
               "document types",
               "location categories",
-              "hold reasons"
+              "hold reasons",
+              "general ledger accounts",
+              "fiscal periods",
+              "orders"
             ],
             "type": "string"
           }
@@ -2167,12 +2170,20 @@
     },
     {
       "name": "get_agent_run",
-      "description": "Retrieve one agent run by id: which agent ran, what started it, the record it worked on, its status, its summary and, if it failed, why. The id comes from a proposal, the page the person is looking at, or a record they mentioned.",
+      "description": "Retrieve one agent run by id: which agent ran, what started it, the record it worked on, its status, its summary and, if it failed, why. It can add the writes the run proposed and its last 50 steps. Use list_agent_runs first when you do not have an id.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
+          "includeEvents": {
+            "description": "Add the run's last 50 steps: the tools it called, what it refused, when it gave up.",
+            "type": "boolean"
+          },
+          "includeProposals": {
+            "description": "Add the writes the run proposed, at most 20, and how each was decided.",
+            "type": "boolean"
+          },
           "runId": {
-            "description": "The agent run's id, from a proposal, the page you are on, or a mentioned record (no tool lists agent runs).",
+            "description": "The agent run's id, from list_agent_runs, a proposal, the page you are on, or a mentioned record.",
             "type": "string"
           }
         },
@@ -2528,6 +2539,52 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "get_daily_briefing",
+      "description": "Read the daily briefing for a role: the morning's figures on what needs attention, coverage, decisions waiting, compliance, billing and cash. Every figure was computed, never written by a model. Sections the caller may not read are left out.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "date": {
+            "description": "An earlier day as YYYY-MM-DD, in the organization's calendar. Omit it for today.",
+            "type": "string"
+          },
+          "role": {
+            "description": "Whose morning to read. General is everyone's and the default.",
+            "enum": [
+              "Dispatch",
+              "Billing",
+              "Compliance",
+              "Leadership",
+              "General"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "briefing",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads the morning's computed figures, and only the sections the caller may read; it changes nothing, not even whether the briefing was read."
       }
     },
     {
@@ -3800,6 +3857,130 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_agent_runs",
+      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is still running. get_agent_run reads one in full. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (BillingQueueItem|ShipmentMove|AssistantThread|Shipment|Document|Organization|Insight|BankReceipt|DetentionOccurrence|Worker|CarrierIntelEvent|EDIInboundFile|InboundMessage|Report|Dashboard): the kind of record the run worked on; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "trigger",
+                    "subjectType",
+                    "subjectId",
+                    "agentDefinitionId",
+                    "createdAt"
+                  ],
+                  "type": "string"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "mine": {
+            "description": "Only the calling agent's own runs. On by default when an agent runs on its own and no agent is named, off in a conversation.",
+            "type": "boolean"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "createdAt"
+            ],
+            "type": "string"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "agent_run",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "marked",
+        "source": "run_record",
+        "carriesTaint": false,
+        "rationale": "Lists agent runs, whose summaries may repeat outside text a run read; a run on a conversation is listed only to the person who owns it."
       }
     },
     {
@@ -7592,6 +7773,96 @@
       }
     },
     {
+      "name": "list_watchtower_items",
+      "description": "List the watchtower feed of open items that need attention, newest first: failed agent runs, proposals awaiting a decision, exceptions and service failures. It also carries weather, quarantined EDI files, inbound email to review and coverage at risk. Narrow it by kind or severity. It never marks anything seen.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor of a previous result, for the page after it.",
+            "type": "string"
+          },
+          "includeResolved": {
+            "description": "Also list items whose source has since resolved. Off by default: the feed is what is still open.",
+            "type": "boolean"
+          },
+          "kinds": {
+            "description": "Only items of these kinds. Omit for every kind the caller may read.",
+            "items": {
+              "enum": [
+                "Insight",
+                "AgentProposal",
+                "AgentPlan",
+                "AgentRunFailed",
+                "AgentException",
+                "ServiceFailure",
+                "CarrierIntelEvent",
+                "HOSViolation",
+                "WeatherAlert",
+                "EDIInboundQuarantined",
+                "BillingException",
+                "DetentionOccurrence",
+                "InboundMessage",
+                "WorkerCredential",
+                "MoveCoverage",
+                "AgentQualityRegression"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 20 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "severities": {
+            "description": "Only items of these severities.",
+            "items": {
+              "enum": [
+                "Critical",
+                "Warning",
+                "Info"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "unseenOnly": {
+            "description": "Only items the person has not been shown yet, from their own place in the feed. Ignored when an agent runs on its own.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "watchtower",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "marked",
+        "source": "inbound_message",
+        "sources": [
+          "edi",
+          "weather",
+          "run_record"
+        ],
+        "carriesTaint": false,
+        "rationale": "Reads the watchtower feed, whose headlines can quote an inbound email, an EDI file, a weather alert or a run that read outside text; it changes nothing, not even what the person has seen."
+      }
+    },
+    {
       "name": "list_weather_alerts",
       "description": "Active National Weather Service alerts: the event, its severity, the area it covers and when it expires. By default only Severe and Extreme alerts are returned. The alerts are not matched to lanes or trucks; compare the area against a shipment's stops and the tractor's position yourself, and say which alert you matched to which load.",
       "parameters": {
@@ -9587,7 +9858,10 @@
               "accessorial charges",
               "document types",
               "location categories",
-              "hold reasons"
+              "hold reasons",
+              "general ledger accounts",
+              "fiscal periods",
+              "orders"
             ],
             "type": "string"
           },

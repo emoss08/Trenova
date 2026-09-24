@@ -2,6 +2,7 @@ package agentexceptionrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -73,6 +74,33 @@ func (r *repository) List(
 	}
 
 	return &pagination.ListResult[*agent.AgentException]{Items: entities, Total: total}, nil
+}
+
+func (r *repository) ListByIDs(
+	ctx context.Context,
+	req repositories.ListAgentExceptionsByIDsRequest,
+) ([]*agent.AgentException, error) {
+	if len(req.IDs) == 0 {
+		return []*agent.AgentException{}, nil
+	}
+
+	cols := buncolgen.AgentExceptionColumns
+	entities := make([]*agent.AgentException, 0, len(req.IDs))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.AgentExceptionScopeTenant(sq, req.TenantInfo).
+				Where(cols.ID.In(), bun.List(req.IDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list agent exceptions by ids", zap.Error(err))
+
+		return nil, fmt.Errorf("list agent exceptions by ids: %w", err)
+	}
+
+	return entities, nil
 }
 
 func (r *repository) applyTotalCountFilters(
