@@ -1,5 +1,5 @@
 {
-  "version": "sha256:135cd1ffe81288e21702ad7a1610237845eb2324fbb46ccd6e19465f1f532a28",
+  "version": "sha256:eac2955f78396dd3c7d96a83f1d1ad728c5e236a4e1a1e09de0cc0b17aabeee2",
   "modules": [
     {
       "id": "home",
@@ -6919,6 +6919,23 @@
           "steps": [
             "Open [Desk](/desk).",
             "Select a conversation under **Where you left off**, or find it in the left list with **Search conversations**."
+          ]
+        },
+        {
+          "title": "Move, shrink or hide the assistant on any page",
+          "keywords": [
+            "assistant covers the screen",
+            "move chat button",
+            "hide AI button",
+            "assistant too big",
+            "resize assistant",
+            "assistant in the way"
+          ],
+          "steps": [
+            "To move it, drag the assistant button in the corner to any other corner of the screen. The panel opens in the same corner.",
+            "To hide it, hover over the button and select **Hide the assistant button**. A thin tab stays on the edge of the screen; select it, or press ⌘J (Ctrl+J), to open the assistant. The tab turns amber when a decision is waiting.",
+            "To resize the open panel, drag its free corner (the one away from the screen edge), or focus that corner and use the arrow keys. Double-click the corner to go back to the standard size.",
+            "The same choices are under **Position and size** at the top of the open panel: pick a corner, turn **Hide the button when closed** on or off, or select **Reset size**."
           ]
         },
         {

@@ -1,3 +1,10 @@
+import {
+  DEFAULT_ASSISTANT_DOCK,
+  isAssistantDock,
+  isPanelSize,
+  type AssistantDock,
+  type AssistantPanelSize,
+} from "@/lib/assistant-dock";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -30,6 +37,12 @@ interface AssistantState {
   lastAgentId: string | null;
   /** A question asked before its conversation existed. Never persisted. */
   openingQuestion: AssistantOpeningQuestion | null;
+  /** The corner the launcher and the panel sit in. */
+  dock: AssistantDock;
+  /** The launcher tucked into a tab at the edge of the screen. */
+  launcherHidden: boolean;
+  /** The panel's size once someone has resized it; the default until then. */
+  panelSize: AssistantPanelSize | null;
 
   openWidget: () => void;
   closeWidget: () => void;
@@ -41,6 +54,9 @@ interface AssistantState {
   setDraft: (threadId: string, draft: string) => void;
   setLastAgentId: (agentId: string | null) => void;
   setOpeningQuestion: (question: AssistantOpeningQuestion | null) => void;
+  setDock: (dock: AssistantDock) => void;
+  setLauncherHidden: (hidden: boolean) => void;
+  setPanelSize: (size: AssistantPanelSize | null) => void;
 }
 
 const MAX_DISMISSED = 50;
@@ -69,6 +85,26 @@ export function rememberDraft(
   return Object.fromEntries(entries.slice(entries.length - MAX_DRAFTS));
 }
 
+/**
+ * Takes what was saved, but only the parts that still make sense: a corner
+ * this build does not know, or a size that is not two numbers, falls back to
+ * the default rather than placing the panel somewhere it cannot be seen.
+ */
+export function mergePersisted(persisted: unknown, current: AssistantState): AssistantState {
+  if (typeof persisted !== "object" || persisted === null) {
+    return current;
+  }
+  const saved = persisted as Partial<AssistantState>;
+
+  return {
+    ...current,
+    ...saved,
+    dock: isAssistantDock(saved.dock) ? saved.dock : current.dock,
+    launcherHidden: saved.launcherHidden === true,
+    panelSize: isPanelSize(saved.panelSize) ? saved.panelSize : null,
+  };
+}
+
 export const useAssistantStore = create<AssistantState>()(
   persist(
     (set) => ({
@@ -79,6 +115,9 @@ export const useAssistantStore = create<AssistantState>()(
       lastAgentId: null,
       openingQuestion: null,
       drafts: {},
+      dock: DEFAULT_ASSISTANT_DOCK,
+      launcherHidden: false,
+      panelSize: null,
 
       openWidget: () => set({ open: true }),
       closeWidget: () => set({ open: false }),
@@ -98,6 +137,9 @@ export const useAssistantStore = create<AssistantState>()(
         set((state) => ({ drafts: rememberDraft(state.drafts, threadId, draft) })),
       setLastAgentId: (agentId) => set({ lastAgentId: agentId }),
       setOpeningQuestion: (question) => set({ openingQuestion: question }),
+      setDock: (dock) => set({ dock }),
+      setLauncherHidden: (hidden) => set({ launcherHidden: hidden }),
+      setPanelSize: (size) => set({ panelSize: size }),
     }),
     {
       name: "trenova-assistant",
@@ -107,7 +149,11 @@ export const useAssistantStore = create<AssistantState>()(
         dismissedSuggestions: state.dismissedSuggestions,
         drafts: state.drafts,
         lastAgentId: state.lastAgentId,
+        dock: state.dock,
+        launcherHidden: state.launcherHidden,
+        panelSize: state.panelSize,
       }),
+      merge: (persisted, current) => mergePersisted(persisted, current),
     },
   ),
 );

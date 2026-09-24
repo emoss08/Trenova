@@ -19950,7 +19950,7 @@
     ]
   },
   "Assistant": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -25918,6 +25918,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Bottom left": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Bottom right": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Branding": {
@@ -39811,6 +39829,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Corner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Correct a case, its certification or its days": {
@@ -54112,6 +54139,15 @@
       "routes/org-structure"
     ]
   },
+  "Drag to move it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Drag to rearrange, resize from a widget's menu.": {
     "sites": 1,
     "scope": [
@@ -54122,7 +54158,7 @@
     ]
   },
   "Drag to resize, double-click to reset": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -75437,6 +75473,33 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Hide the assistant button": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Hide the button when closed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Hide the button. Open the assistant from the edge tab or with ⌘J.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Hide the earlier thread": {
@@ -122403,6 +122466,15 @@
       "routes/worker"
     ]
   },
+  "Position and size": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Position cannot be negative": {
     "sites": 1,
     "scope": [
@@ -137565,6 +137637,15 @@
       "routes/shipment"
     ]
   },
+  "Reset size": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Reset sort": {
     "sites": 1,
     "scope": [
@@ -137609,6 +137690,15 @@
     ],
     "areas": [
       "template/account.password_reset.email"
+    ]
+  },
+  "Resize the assistant. Use the arrow keys, or double-click to reset.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Resolution": {
@@ -177879,6 +177969,15 @@
       "apps/web/components"
     ]
   },
+  "Top left": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Top overdue customers": {
     "sites": 1,
     "scope": [
@@ -177886,6 +177985,15 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
+    ]
+  },
+  "Top right": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Top-up applied when period gross falls below this floor.": {
@@ -205931,11 +206039,12 @@
     ]
   },
   "{0} waiting": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/carrier-monitoring",
       "routes/fuel-feed-run",
       "routes/home",
