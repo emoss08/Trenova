@@ -15724,6 +15724,15 @@
       "service/orderservice"
     ]
   },
+  "An item on hold was held there by a person or a rule, so moving one into review is a proposal a person decides; an item in any other state moves as far as the agent allows, and one that cannot be read waits for a person.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "An open case can still accrue days away or restricted; close it once the count is final.": {
     "sites": 1,
     "scope": [
@@ -56181,6 +56190,15 @@
       "service/ediservice"
     ]
   },
+  "EDI desk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "EDI document type not found": {
     "sites": 1,
     "scope": [
@@ -70862,12 +70880,13 @@
     ]
   },
   "Formula assistant": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/handlers"
+      "api/handlers",
+      "domain/agentdefinition"
     ]
   },
   "Formula explanations": {
@@ -80019,6 +80038,15 @@
       "service/agentsubjectservice"
     ]
   },
+  "Insight analyst": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Insight found": {
     "sites": 1,
     "scope": [
@@ -88606,6 +88634,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Load entry check": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Load envelope": {
@@ -150648,6 +150685,15 @@
     "areas": [
       "go/other",
       "service/ediservice"
+    ]
+  },
+  "Service failure desk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Service failure detected": {

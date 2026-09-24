@@ -81,6 +81,11 @@ export const TEMPLATE_ICON: Partial<Record<string, AgentIconName>> = {
   CustomerUpdateDesk: "bell",
   CarrierRiskDesk: "search",
   IntakeDesk: "inbox",
+  LoadEntryCheck: "clipboard",
+  ServiceFailureDesk: "headset",
+  InsightAnalyst: "compass",
+  EDIDesk: "file",
+  FormulaAssistant: "sparkle",
 };
 
 export function isAgentIconName(value: string | null | undefined): value is AgentIconName {
