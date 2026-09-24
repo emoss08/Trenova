@@ -46,7 +46,7 @@ type Control struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 
-	Enabled             bool            `json:"enabled"             bun:"enabled,type:BOOLEAN,notnull,default:true"`
+	Enabled             bool            `json:"enabled"             bun:"enabled,type:BOOLEAN,notnull"`
 	RunHourLocal        int             `json:"runHourLocal"        bun:"run_hour_local,type:SMALLINT,notnull,default:2"`
 	Timezone            string          `json:"timezone"            bun:"timezone,type:VARCHAR(100),nullzero"`
 	MaxCasesPerAgent    int             `json:"maxCasesPerAgent"    bun:"max_cases_per_agent,type:INTEGER,notnull,default:50"`
