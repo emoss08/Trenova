@@ -500,6 +500,8 @@ export type AgentTaintSource =
   | 'EDI'
   | 'InboundMessage'
   | 'Memory'
+  /** A comment a driver, a trading partner or another system outside the organization left on a record. */
+  | 'RecordNote'
   | 'RunRecord'
   | 'Weather'
   /** A web page or search result an extension returned. */

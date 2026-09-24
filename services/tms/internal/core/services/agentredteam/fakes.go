@@ -41,6 +41,19 @@ func (d *inboundDesk) GetByID(
 	}, nil
 }
 
+type inboundMessageRepository struct {
+	repositories.InboundMessageRepository
+
+	desk *inboundDesk
+}
+
+func (r *inboundMessageRepository) GetByID(
+	ctx context.Context,
+	req repositories.GetInboundMessageByIDRequest,
+) (*inboundmessage.InboundMessage, error) {
+	return r.desk.GetByID(ctx, req)
+}
+
 func (d *inboundDesk) CheckLink(_ context.Context, req inboundmessageservice.LinkRequest) error {
 	d.rec.read(ReadInboundBox, "CheckLink", req.TenantInfo)
 

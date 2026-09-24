@@ -163,6 +163,8 @@ function sourceLabel(t: TranslateFn, source: NonNullable<AgentToolPolicy["source
       return t("run records");
     case "Web":
       return t("the web");
+    case "RecordNote":
+      return t("record notes");
   }
 }
 

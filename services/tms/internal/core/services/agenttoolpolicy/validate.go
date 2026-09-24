@@ -188,6 +188,15 @@ func externalReadProblems(policy serviceports.ToolPolicy) []string {
 	if policy.CarriesTaint && policy.Kind != agent.ToolKindAction {
 		problems = append(problems, "only a write can carry a run's taint into what it saves")
 	}
+	if hold := policy.TaintHold; hold != nil {
+		if policy.Kind != agent.ToolKindAction {
+			problems = append(problems, "only a write can be held once the run is tainted")
+		}
+		if strings.TrimSpace(hold.Description) == "" || hold.Applies == nil {
+			problems = append(problems,
+				"a taint hold says which calls it holds and how to tell them apart")
+		}
+	}
 
 	return problems
 }

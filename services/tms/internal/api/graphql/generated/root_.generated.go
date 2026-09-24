@@ -76567,6 +76567,8 @@ enum AgentTaintSource {
   RunRecord
   "A web page or search result an extension returned."
   Web
+  "A comment a driver, a trading partner or another system outside the organization left on a record."
+  RecordNote
 }
 
 "What a tool on an agent does when nobody is watching."

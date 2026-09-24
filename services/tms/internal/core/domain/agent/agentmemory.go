@@ -327,6 +327,15 @@ func (m *Memory) AgentScoped() bool {
 	return m.Scope == MemoryScopeAgent
 }
 
+func (m *Memory) ApprovedByPerson() bool {
+	return m != nil && m.SourceProposalID != nil && m.SourceProposalID.IsNotNil() &&
+		m.CreatedByUserID != nil && m.CreatedByUserID.IsNotNil()
+}
+
+func (m *Memory) DrawnFromOutside() bool {
+	return m != nil && m.Tainted && !m.ApprovedByPerson()
+}
+
 func (m *Memory) TaintedRecords() []RecordRef {
 	if m == nil || !m.Tainted {
 		return nil

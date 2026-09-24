@@ -14500,6 +14500,15 @@
       "apps/web/components"
     ]
   },
+  "An Instruction or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "An accepted connection must record when it was accepted": {
     "sites": 1,
     "scope": [
@@ -197354,6 +197363,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "record notes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "replies@example.com": {

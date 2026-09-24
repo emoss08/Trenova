@@ -864,7 +864,7 @@ func wroteByAgentEmail(comment *shipment.ShipmentComment) bool {
 	if comment.Metadata == nil {
 		return false
 	}
-	if source, _ := comment.Metadata["source"].(string); source != "agent" {
+	if comment.Origin() != shipment.CommentOriginAgent {
 		return false
 	}
 	tool, _ := comment.Metadata["tool"].(string)

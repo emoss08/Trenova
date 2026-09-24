@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 130.
+Tools listed: 132.
 
 ## The model
 
@@ -29,10 +29,12 @@ never runs past Ask first. Earned autonomy moves a tool up one tier after a
 streak of clean approvals, and never past those limits.
 
 **Taint.** Some tools return text written outside the organization: an inbound
-message, a document, an EDI transaction, a bank receipt, a weather alert. Once
-a run has read such text, every call that would leave the organization or move
-money waits for approval, whatever its tier, so an instruction hidden in that
-text cannot act on its own.
+message, a document, an EDI transaction, a bank receipt, a weather alert, a
+comment a driver or a trading partner left on a shipment. Once a run has read
+such text, every call that would leave the organization or move money waits
+for approval, whatever its tier, and so does any call a tool's own taint hold
+names, so an instruction hidden in that text cannot act on its own. Every call
+taint held names it among what held it, whatever else held it too.
 
 **Personal exemption.** A call that changes only the caller's own records runs
 without a decision while that person is in the conversation, unless a person
@@ -42,7 +44,7 @@ set the tool's tier on the agent. An unattended run never has it.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 77 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 79 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 6 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 31 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 1 |
@@ -80,7 +82,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get my home layout (`get_my_home_layout`) | Reads only | Automatic | — | — | Reads the caller's own home page; nothing changes and nothing is sent. |
 | Get report run (`get_report_run`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get service failure (`get_service_failure`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Get shipment (`get_shipment`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get shipment (`get_shipment`) | Reads only | Automatic | — | When the record is marked, from record note | Reads a shipment with its newest comments, some of which a driver, a trading partner or another system outside the organization wrote; nothing changes and nothing is sent. |
 | Get shipment draft (`get_shipment_draft`) | Reads only | Automatic | — | Always, from document | Reads a shipment drafted from a document someone outside sent; nothing changes and nothing is sent. |
 | Get shipment tracking (`get_shipment_tracking`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get tractor (`get_tractor`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -133,6 +135,8 @@ Looks something up. Nothing changes and nothing is sent.
 | Search shipments (`search_shipments`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Search worker (`search_worker`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Shop carriers (`shop_carriers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Web read (`web_read`) | Reads only | Automatic | — | Always, from web | Reads a page a web search returned; it changes nothing in Trenova and returns text written outside it. |
+| Web search (`web_search`) | Reads only | Automatic | — | Always, from web | Searches the public web through the organization's extension; it changes nothing in Trenova, sends only the query, and returns text written outside it. |
 
 ## The caller's own records
 
@@ -173,7 +177,7 @@ Changes records only people inside the organization see.
 | Raise exception (`raise_exception`) | Inside the organization | Automatic | — | — | Records an exception against the run itself for a person inside the organization. |
 | Record stop actual (`record_stop_actual`) | Inside the organization | Automatic | — | — | Records arrival and departure times on a stop; no model-written text leaves the organization. |
 | Release shipment hold (`release_shipment_hold`) | Inside the organization | Automatic | — | — | Releases a hold on a shipment inside Trenova; no customer or EDI notice is sent. |
-| Remember (`remember`) | Inside the organization | Automatic | — | Carries outside text into later runs | Saves a memory later runs read, so it keeps the taint of the run that wrote it. |
+| Remember (`remember`) | Inside the organization | Automatic | An Instruction or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text. | Carries outside text into later runs | Saves a memory later runs read, so it keeps the taint of the run that wrote it. |
 | Resolve bank receipt work item (`resolve_bank_receipt_work_item`) | Inside the organization | Automatic | — | — | Closes a reconciliation work item without moving money; the note is read inside the organization. |
 | Resolve carrier intel event (`resolve_carrier_intel_event`) | Inside the organization | Automatic | — | — | Closes a carrier finding inside Trenova. |
 | Save table view (`save_table_view`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. A call on the caller's own records runs unasked while they are present. | — | A private view is the caller's own picker entry; a shared one appears for every colleague, and nothing leaves the organization. |
@@ -188,7 +192,7 @@ Changes something a driver can see.
 
 | Tool | Classes | Max tier | Condition | Reads outside text | Rationale |
 | --- | --- | --- | --- | --- | --- |
-| Add shipment comment (`add_shipment_comment`) | Inside the organization, seen by a customer, seen by a driver | Automatic | Each call is classified by what it reaches. | — | An internal note stays inside the organization; a customer or driver note is read outside it, so its visibility argument decides. |
+| Add shipment comment (`add_shipment_comment`) | Inside the organization, seen by a customer, seen by a driver | Automatic | Each call is classified by what it reaches. | Carries outside text into later runs | An internal note stays inside the organization; a customer or driver note is read outside it, so its visibility argument decides. A note written on its own after the run read outside text is marked as drawn from it. |
 | Cancel worker PTO (`cancel_worker_pto`) | Seen by a driver | Ask first | — | — | The worker is sent the cancellation reason by push notice and text message. |
 | Notify driver (`notify_driver`) | Seen by a driver | Ask first | — | — | Sends a driver a message the model wrote to their phone. |
 | Reject worker PTO (`reject_worker_pto`) | Seen by a driver | Ask first | — | — | The worker is sent the rejection reason by push notice and text message. |

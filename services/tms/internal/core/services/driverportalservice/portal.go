@@ -416,6 +416,9 @@ func (s *Service) CreateMyLoadComment(
 		Visibility:     shipment.CommentVisibilityDriver,
 		Priority:       shipment.CommentPriorityNormal,
 		Source:         shipment.CommentSourceUser,
+		Metadata: map[string]any{
+			shipment.CommentMetadataOrigin: shipment.CommentOriginDash,
+		},
 	}
 	created, err := s.commentService.Create(ctx, entity, actor)
 	if err != nil {

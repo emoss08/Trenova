@@ -16,7 +16,7 @@ const (
 	HeldByToolMax           = "tool_max"
 	HeldByEgressClass       = "egress_class"
 	HeldByCondition         = "condition"
-	HeldByTainted           = "tainted"
+	HeldByTainted           = agent.HeldByTaintKey
 	HeldByToolTier          = "tool_tier"
 	HeldByPersonalExemption = "personal_exemption"
 )
@@ -66,8 +66,9 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 		decision.lower(maxTier(policy), HeldByToolMax)
 	}
 
-	if HeldWhenTainted(call.Egress) && (in.Taint == nil || in.Taint.Tainted()) {
+	if policy.TaintHolds(in.Params, call) && (in.Taint == nil || in.Taint.Tainted()) {
 		decision.lower(agent.TierActWithApproval, HeldByTainted)
+		decision.hold(HeldByTainted)
 	}
 
 	return decision
@@ -85,7 +86,7 @@ func StaticTier(
 }
 
 func ExplainTier(policy serviceports.ToolPolicy) string {
-	parts := make([]string, 0, 5)
+	parts := make([]string, 0, 6)
 	if limit := Promotable(policy); limit != agent.TierAutoExecute {
 		parts = append(parts, fmt.Sprintf(
 			"Runs at the tier the agent sets for it, never past %s.", limit))
@@ -107,6 +108,9 @@ func ExplainTier(policy serviceports.ToolPolicy) string {
 	if slices.ContainsFunc(policy.Egress, HeldWhenTainted) {
 		parts = append(parts, "A call that leaves the organization waits for approval "+
 			"once the run has read text from outside it.")
+	}
+	if policy.TaintHold != nil {
+		parts = append(parts, policy.TaintHold.Description)
 	}
 
 	return strings.Join(parts, " ")

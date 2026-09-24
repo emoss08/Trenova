@@ -638,10 +638,10 @@ func (t *emailCustomerTool) record(
 		Visibility: shipment.CommentVisibilityOperations,
 		Priority:   shipment.CommentPriorityNormal,
 		Metadata: map[string]any{
-			"source":     "agent",
-			"tool":       "email_customer",
-			"recipients": recipients,
-			"subject":    context.AgentSubject,
+			shipment.CommentMetadataOrigin: shipment.CommentOriginAgent,
+			"tool":                         "email_customer",
+			"recipients":                   recipients,
+			"subject":                      context.AgentSubject,
 		},
 	})
 	if err != nil {

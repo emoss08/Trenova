@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -138,7 +139,7 @@ func (p *AgentProposal) Validate(multiErr *errortypes.MultiError) {
 }
 
 func (p *AgentProposal) RequiresPerson(class EgressClass) bool {
-	return p.Tainted && class.Leaves()
+	return p.Tainted && (class.Leaves() || slices.Contains(p.HeldBy, HeldByTaintKey))
 }
 
 func (p *AgentProposal) GetID() pulid.ID {
