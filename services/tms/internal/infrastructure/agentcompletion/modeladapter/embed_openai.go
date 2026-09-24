@@ -79,7 +79,7 @@ func embedOpenAIShape(ctx context.Context, call *EmbedCall, path string) (*Embed
 		ctx,
 		call.Client,
 		call.Provider.ResolvedBaseURL()+path,
-		map[string]string{"Authorization": bearer(call.APIKey)},
+		bearerHeaders(call.APIKey),
 		payload,
 		&envelope,
 	); err != nil {

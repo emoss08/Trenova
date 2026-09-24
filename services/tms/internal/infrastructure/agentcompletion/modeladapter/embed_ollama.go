@@ -32,7 +32,7 @@ func (ollamaAdapter) Embed(ctx context.Context, call *EmbedCall) (*EmbedResponse
 		ctx,
 		call.Client,
 		call.Provider.ResolvedBaseURL()+ollamaEmbedPath,
-		map[string]string{"Authorization": bearer(call.APIKey)},
+		bearerHeaders(call.APIKey),
 		body,
 		&envelope,
 	); err != nil {

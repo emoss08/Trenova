@@ -187,7 +187,7 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 		ctx,
 		call.Client,
 		call.Provider.ResolvedBaseURL()+"/chat/completions",
-		map[string]string{"Authorization": bearer(call.APIKey)},
+		bearerHeaders(call.APIKey),
 		payload,
 		&envelope,
 	)
@@ -282,7 +282,7 @@ func (a openAIChatAdapter) Stream(
 		ctx,
 		call,
 		call.Provider.ResolvedBaseURL()+"/chat/completions",
-		map[string]string{"Authorization": bearer(call.APIKey)},
+		bearerHeaders(call.APIKey),
 		payload,
 	)
 	if err != nil {
@@ -567,6 +567,12 @@ func fromChatToolCalls(calls []chatToolCall) []ToolCall {
 	}
 
 	return out
+}
+
+const headerAuthorization = "Authorization"
+
+func bearerHeaders(apiKey string) map[string]string {
+	return map[string]string{headerAuthorization: bearer(apiKey)}
 }
 
 func bearer(apiKey string) string {

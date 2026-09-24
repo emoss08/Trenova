@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -42,40 +43,40 @@ func (t *rememberTool) Description() string {
 
 func (t *rememberTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"content": map[string]any{
-				"type": "string",
-				"description": fmt.Sprintf("One or two plain sentences, at most %d "+
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: fmt.Sprintf("One or two plain sentences, at most %d "+
 					"characters, written so a reader with no other context understands them.",
 					agent.MaxMemoryContentChars),
 			},
 			"kind": map[string]any{
-				"type": "string",
+				toolschema.KeyType: toolschema.TypeString,
 				"enum": []string{
 					string(agent.MemoryKindInstruction),
 					string(agent.MemoryKindFact),
 				},
-				"description": "Instruction for a rule a person gave; Fact for something learned. Defaults to Fact.",
+				toolschema.KeyDescription: "Instruction for a rule a person gave; Fact for something learned. Defaults to Fact.",
 			},
 			"subjectType": map[string]any{
-				"type":        "string",
-				"enum":        memorySubjectTypeNames(),
-				"description": "The kind of record the memory is about, with subjectId. Omit for organization-wide.",
+				toolschema.KeyType:        toolschema.TypeString,
+				"enum":                    memorySubjectTypeNames(),
+				toolschema.KeyDescription: "The kind of record the memory is about, with subjectId. Omit for organization-wide.",
 			},
 			"subjectId": map[string]any{
-				"type": "string",
-				"description": "The record the memory is about: this run's subject, the page, or " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "The record the memory is about: this run's subject, the page, or " +
 					"an id from list_customers, list_locations, list_workers or list_carriers. " +
 					"Never guessed.",
 			},
 			"expiresOn": map[string]any{
-				"type":        "string",
-				"description": "Optional YYYY-MM-DD after which the memory no longer applies, such as a temporary arrangement.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "Optional YYYY-MM-DD after which the memory no longer applies, such as a temporary arrangement.",
 			},
 		},
-		"required":             []string{"content"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"content"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -179,15 +180,15 @@ func (t *forgetMemoryTool) Description() string {
 
 func (t *forgetMemoryTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"memoryId": map[string]any{
-				"type":        "string",
-				"description": "The memory to retire, by the id recall_memory returned.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "The memory to retire, by the id recall_memory returned.",
 			},
 		},
-		"required":             []string{"memoryId"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"memoryId"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
