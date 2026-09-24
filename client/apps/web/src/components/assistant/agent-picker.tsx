@@ -151,7 +151,14 @@ export type AgentPickerListProps = {
    * organization's where AI Control chooses who an agent may ask.
    */
   source?: AgentChoiceSource;
+  /**
+   * Agents that can never be picked here, by what they are rather than by
+   * id: a system agent, which no role may be granted.
+   */
+  exclude?: (agent: AgentChoice) => boolean;
 };
+
+const EXCLUDE_NONE = () => false;
 
 /**
  * The searchable, paged list of agents a person can ask, without the
@@ -166,6 +173,7 @@ export function AgentPickerList({
   hiddenIds = NO_HIDDEN,
   emptyMessage,
   source = "mine",
+  exclude = EXCLUDE_NONE,
 }: AgentPickerListProps) {
   const t = useT();
   const listId = useId();
@@ -176,8 +184,9 @@ export function AgentPickerList({
   const choices = useAgentChoices({ search, origin: "all", recentIds, source });
 
   const rows = useMemo<PickerRow[]>(() => {
-    const recent = choices.recent.filter((agent) => !hiddenIds.has(agent.id));
-    const items = choices.items.filter((agent) => !hiddenIds.has(agent.id));
+    const shown = (agent: AgentChoice) => !hiddenIds.has(agent.id) && !exclude(agent);
+    const recent = choices.recent.filter(shown);
+    const items = choices.items.filter(shown);
     const next: PickerRow[] = [];
     if (recent.length > 0) {
       next.push({ kind: "heading", key: "h-recent", label: t("Recent") });
@@ -196,7 +205,7 @@ export function AgentPickerList({
     }
 
     return next;
-  }, [choices.hasNextPage, choices.items, choices.recent, hiddenIds, t]);
+  }, [choices.hasNextPage, choices.items, choices.recent, exclude, hiddenIds, t]);
 
   const agentIndexes = useMemo(
     () => rows.flatMap((row, index) => (row.kind === "agent" ? [index] : [])),

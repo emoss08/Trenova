@@ -5,6 +5,7 @@ import {
   type AgentChoiceQuery,
   type AgentChoiceSource,
 } from "@/lib/graphql/agent-definition";
+import { fetchRoleAgents, fetchSuggestedAgentAudience } from "@/lib/graphql/agent-access";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -78,6 +79,17 @@ export const assistant = createQueryKeys("assistant", {
   agentChoicesByIds: (ids: readonly string[]) => ({
     queryKey: ["agent-choices-by-id", [...ids]],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAgentChoicesByIds(ids, { signal }),
+  }),
+  // Each role's coverage of an agent's tools, for choosing who may use it.
+  agentAudience: (agentId: string) => ({
+    queryKey: ["agent-audience", agentId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      fetchSuggestedAgentAudience(agentId, { signal }),
+  }),
+  // The agents a role is granted, for the role editor.
+  roleAgents: (roleId: string) => ({
+    queryKey: ["role-agents", roleId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchRoleAgents(roleId, { signal }),
   }),
   systemAgent: (systemKey: string) => ({
     queryKey: ["agent-definition-system", systemKey],

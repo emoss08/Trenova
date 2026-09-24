@@ -1,6 +1,7 @@
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import { describe, expect, it } from "vitest";
 import {
+  accessOf,
   agentFormDefaults,
   agentFormSchema,
   toAgentPanelRow,
@@ -224,6 +225,39 @@ describe("delegateIds", () => {
     expect(request.delegateIds).toEqual(["agdef_b", "agdef_a"]);
     expect(request).not.toHaveProperty("delegates");
   });
+
+  // Who may use an agent has its own request (setAgentAccess). The agent's
+  // own save never carries it, so a save of the rest cannot change it.
+  it("loads who may use the agent into the form and never saves it with the agent", () => {
+    const row = toAgentPanelRow({
+      ...agentRow(),
+      accessMode: "Roles",
+      accessRoles: [
+        { id: "role_dispatch", name: "Dispatch" },
+        { id: "role_billing", name: "Billing" },
+      ],
+    });
+
+    expect(row.accessMode).toBe("Roles");
+    expect(row.accessRoleIds).toEqual(["role_dispatch", "role_billing"]);
+    expect(row.accessRoles.map((role) => role.name)).toEqual(["Dispatch", "Billing"]);
+    expect(accessOf(row)).toEqual({ mode: "Roles", roleIds: ["role_dispatch", "role_billing"] });
+
+    const request = toSaveRequest(row);
+    expect(request).not.toHaveProperty("accessMode");
+    expect(request).not.toHaveProperty("accessRoleIds");
+    expect(request).not.toHaveProperty("accessRoles");
+  });
+
+  it("reads a repeated role once", () => {
+    expect(
+      accessOf({ accessMode: "Roles", accessRoleIds: ["role_a", "role_b", "role_a"] }),
+    ).toEqual({ mode: "Roles", roleIds: ["role_a", "role_b"] });
+  });
+
+  it("starts a new agent open to everyone, with no roles", () => {
+    expect(accessOf(agentFormDefaults)).toEqual({ mode: "Everyone", roleIds: [] });
+  });
 });
 
 function agentRow(): AgentDefinitionRow {
@@ -263,6 +297,8 @@ function agentRow(): AgentDefinitionRow {
     systemKey: "",
     delegateIds: [],
     delegates: [],
+    accessMode: "Everyone",
+    accessRoles: [],
     starters: [],
     lastRunAt: null,
     nextRunAt: null,

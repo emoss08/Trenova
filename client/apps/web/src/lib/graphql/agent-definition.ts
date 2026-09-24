@@ -77,11 +77,13 @@ export type AgentOrigin = "all" | "template" | "custom";
 
 /**
  * Whose agents a list reads. `mine` is the agents the person may ask, and is
- * what every chat surface reads. `organization` is every enabled chat agent
- * the organization has, whoever may use it; only AI Control reads it, to
- * choose who an agent may hand a task to.
+ * what every chat surface reads. The other two are an administrator's and
+ * read the organization's full list, whoever may use each agent:
+ * `organization` keeps to enabled chat agents, for choosing who an agent may
+ * hand a task to; `grantable` is every agent whatever its trigger and
+ * whether it is enabled, for choosing what a role is granted.
  */
-export type AgentChoiceSource = "mine" | "organization";
+export type AgentChoiceSource = "mine" | "organization" | "grantable";
 
 export type AgentChoiceQuery = {
   /** Matched against the agent's name and description on the server. */
@@ -168,16 +170,22 @@ async function requestMyAgents(
 }
 
 /**
- * The filters that make an agent in the organization's list one a person
- * can ask: enabled, and started by a person rather than by a schedule or an
- * event. `myAgents` applies the same rule on the server, so only the
- * organization's list sends them.
+ * The filters for the organization's list. By default they keep it to
+ * agents a person can ask: enabled, and started by a person rather than by a
+ * schedule or an event, the rule `myAgents` applies on the server. A list of
+ * what a role may be granted leaves that rule out and narrows only by what
+ * was asked.
  */
-export function agentChoiceFilters(query: AgentChoiceQuery = {}): FieldFilterInput[] {
-  const filters: FieldFilterInput[] = [
-    { field: "enabled", operator: "eq", value: true },
-    { field: "triggerMode", operator: "eq", value: "Chat" },
-  ];
+export function agentChoiceFilters(
+  query: AgentChoiceQuery = {},
+  { askableOnly = true }: { askableOnly?: boolean } = {},
+): FieldFilterInput[] {
+  const filters: FieldFilterInput[] = askableOnly
+    ? [
+        { field: "enabled", operator: "eq", value: true },
+        { field: "triggerMode", operator: "eq", value: "Chat" },
+      ]
+    : [];
   if (query.origin === "template") {
     filters.push({ field: "template", operator: "isnotnull", value: null });
   }
@@ -224,7 +232,7 @@ async function requestOrganizationAgents(
 
 /**
  * One page of agents, alphabetical, searched and filtered on the server: the
- * person's own unless AI Control asks for the organization's.
+ * person's own unless an administrator's screen asks for the organization's.
  */
 export function fetchAgentChoices(
   query: AgentChoiceQuery,
@@ -232,20 +240,21 @@ export function fetchAgentChoices(
   options?: RequestOptions & { source?: AgentChoiceSource },
 ): Promise<AgentChoicePage> {
   const includeTotalCount = page.includeTotalCount ?? false;
-  if (options?.source === "organization") {
-    return requestOrganizationAgents(
-      {
-        first: page.first,
-        after: page.after,
-        query: query.search?.trim(),
-        fieldFilters: agentChoiceFilters(query),
-      },
-      includeTotalCount,
-      options,
-    );
+  const source = options?.source ?? "mine";
+  if (source === "mine") {
+    return requestMyAgents(myAgentsInput(query, page), includeTotalCount, options);
   }
 
-  return requestMyAgents(myAgentsInput(query, page), includeTotalCount, options);
+  return requestOrganizationAgents(
+    {
+      first: page.first,
+      after: page.after,
+      query: query.search?.trim(),
+      fieldFilters: agentChoiceFilters(query, { askableOnly: source === "organization" }),
+    },
+    includeTotalCount,
+    options,
+  );
 }
 
 /**

@@ -11773,11 +11773,11 @@ type Mutation {
   """
   sendInvoiceEdi(force: Boolean, invoiceId: ID!): InvoiceEDISendResult!
   sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
-  setAgentEvalCaseStatus(id: ID!, status: AgentEvalCaseStatus!): AgentEvalCase!
   """
   Sets who may use an agent. Needs permission to update agents and roles.
   """
   setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!
+  setAgentEvalCaseStatus(id: ID!, status: AgentEvalCaseStatus!): AgentEvalCase!
   """
   Retires or restores a memory; a retired one is kept and no longer read. A suggested memory is refused.
   """

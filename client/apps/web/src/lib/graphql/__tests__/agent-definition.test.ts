@@ -228,6 +228,33 @@ describe("fetchAgentChoices", () => {
       totalCount: 1,
     });
   });
+
+  // A role can be granted a scheduled agent, whose proposals its members then
+  // decide, or a disabled one ahead of switching it on.
+  it("lists every agent a role could be granted, whatever its trigger or state", async () => {
+    requestGraphQLMock.mockResolvedValue(
+      organizationAgents([agent("agdef_4", "Nightly digest")], {
+        hasNextPage: false,
+        endCursor: null,
+      }),
+    );
+
+    await fetchAgentChoices(
+      { search: "", excludeIds: ["agdef_1"] },
+      { first: 24 },
+      { source: "grantable" },
+    );
+
+    const call = lastCall();
+    expect(call.document).toBe(AgentChoicesDocument);
+    expect(call.variables.input).toEqual({
+      first: 24,
+      after: undefined,
+      query: undefined,
+      fieldFilters: [{ field: "id", operator: "notin", value: ["agdef_1"] }],
+      sort: [{ field: "name", direction: "asc" }],
+    });
+  });
 });
 
 describe("fetchAgentChoicesByIds", () => {

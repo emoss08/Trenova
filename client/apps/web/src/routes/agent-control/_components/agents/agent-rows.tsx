@@ -16,6 +16,8 @@ import {
   PencilIcon,
   PlayIcon,
   Trash2Icon,
+  UserRoundCheckIcon,
+  UsersIcon,
   WrenchIcon,
 } from "lucide-react";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
@@ -164,6 +166,7 @@ export function AgentRow({
               <TooltipContent>{t("Started by Trenova itself; cannot be removed")}</TooltipContent>
             </Tooltip>
           )}
+          <AccessBadge agent={agent} />
         </div>
         <p className="text-muted-foreground truncate text-xs">
           {agent.description || templateLabel || t("Custom agent")}
@@ -277,6 +280,73 @@ export function AgentRow({
         )}
       </div>
     </li>
+  );
+}
+
+/**
+ * Who may use the agent, as a badge: "Everyone", or how many roles it is
+ * granted, with their names behind a hover. An agent limited to roles with
+ * none granted is usable by nobody, and says so in the warning tone.
+ */
+export function AccessBadge({
+  agent,
+}: {
+  agent: Pick<AgentDefinitionRow, "accessMode" | "accessRoles" | "systemKey">;
+}) {
+  const t = useT();
+  if (agent.accessMode === "Everyone" || agent.systemKey !== "") {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Badge variant="neutral" appearance="outline" className="gap-1">
+              <UsersIcon className="size-3" />
+              {t("Everyone")}
+            </Badge>
+          }
+        />
+        <TooltipContent>{t("Everyone who can use the assistant can use it")}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  const roles = agent.accessRoles;
+  if (roles.length === 0) {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Badge variant="warning" className="gap-1">
+              <UserRoundCheckIcon className="size-3" />
+              {t("No roles")}
+            </Badge>
+          }
+        />
+        <TooltipContent>
+          {t("Limited to specific roles, and none is chosen, so nobody can use it")}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Badge variant="neutral" appearance="outline" className="gap-1">
+            <UserRoundCheckIcon className="size-3" />
+            {t("{0, plural, one {# role} other {# roles}}", roles.length)}
+          </Badge>
+        }
+      />
+      <TooltipContent>
+        <ul className="flex flex-col gap-0.5">
+          {roles.map((role) => (
+            <li key={role.id}>{role.name}</li>
+          ))}
+        </ul>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
