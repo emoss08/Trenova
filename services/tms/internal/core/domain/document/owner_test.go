@@ -32,3 +32,12 @@ func TestOwnerResource(t *testing.T) {
 		})
 	}
 }
+
+func TestSearchable(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, (&Document{IsCurrentVersion: true, Status: StatusActive}).Searchable())
+	assert.True(t, (&Document{IsCurrentVersion: true, Status: StatusArchived}).Searchable())
+	assert.False(t, (&Document{IsCurrentVersion: false, Status: StatusActive}).Searchable())
+	assert.False(t, (&Document{IsCurrentVersion: true, Status: StatusRejected}).Searchable())
+}

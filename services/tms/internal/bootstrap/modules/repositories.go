@@ -174,6 +174,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recordversionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recurringshipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/reportrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleagentgrantrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleassignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rolerepository"
@@ -330,6 +331,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 		fx.As(new(repositories.AIIndexEntryRepository)),
 		fx.As(new(repositories.AIRetrievalSettingsRepository)),
 	),
+	retrievalsourcerepository.New,
 	recordversionrepository.New,
 	aiusagerepository.New,
 	insightrepository.New,

@@ -86,7 +86,14 @@ type AIUsageEvaluationCostRequest struct {
 	SuiteRunID pulid.ID
 }
 
+type AIUsageSurfaceCostRequest struct {
+	TenantInfo pagination.TenantInfo
+	Surface    aiusage.Surface
+	Since      int64
+}
+
 type AIUsageRepository interface {
+	SurfaceCost(ctx context.Context, req AIUsageSurfaceCostRequest) (*AIUsageCost, error)
 	EvaluationCost(ctx context.Context, req AIUsageEvaluationCostRequest) (*AIUsageCost, error)
 	Create(ctx context.Context, record *aiusage.AIUsageRecord) error
 	Summary(ctx context.Context, req AIUsageSummaryRequest) (*AIUsageSummary, error)
