@@ -33,6 +33,17 @@ type usageAttempt struct {
 	err     error
 }
 
+func surfaceFor(
+	surface aiusage.Surface,
+	attribution serviceports.AIUsageAttribution,
+) aiusage.Surface {
+	if attribution.Evaluates() {
+		return aiusage.SurfaceEvaluation
+	}
+
+	return surface
+}
+
 // recordTimeout bounds the write. A record that cannot be written in this
 // long is dropped and logged: the answer has already gone to the person, and
 // a bookkeeping row is not worth holding a connection for.

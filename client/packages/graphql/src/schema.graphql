@@ -844,6 +844,125 @@ type AgentDefinitionEdge {
 }
 
 """
+A question an agent was asked, frozen with what it was given and what a good
+answer does. Active cases are replayed against the agent after every change
+and scored.
+"""
+type AgentEvalCase {
+  agentDefinitionId: ID!
+  businessUnitId: ID!
+  capturedFingerprint: JSON
+  contentHash: String!
+  createdAt: Timestamp!
+  createdByUserId: ID
+  """
+  Expected tools with tolerance rules, forbidden tools, proposals, refusal and mention rules.
+  """
+  expected: JSON!
+  expiresAt: Timestamp
+  """
+  The tools the agent held when the case was captured; calling any other fails the case.
+  """
+  heldTools: [String!]!
+  """The conversation before the question, redacted when captured."""
+  history: [JSON!]!
+  id: ID!
+  """The question the agent is asked."""
+  input: String!
+  mentions: [JSON!]!
+  organizationId: ID!
+  pageContext: JSON
+  """Which fields were replaced when the case was captured."""
+  redaction: JSON
+  rubric: String!
+  source: AgentEvalCaseSource!
+  sourceFeedbackId: ID
+  sourceMessageId: ID
+  sourceProposalId: ID
+  sourceRunId: ID
+  sourceThreadId: ID
+  sourceTurnId: ID
+  status: AgentEvalCaseStatus!
+  subjectId: ID
+  subjectType: String!
+  title: String!
+  """Each tool call the original made, with restricted fields redacted."""
+  toolFixtures: [JSON!]!
+  trigger: AgentRunTrigger!
+  updatedAt: Timestamp!
+  version: Int!
+  """
+  How much the case counts toward a suite score: 0.6 for a liked reply, 1 otherwise.
+  """
+  weight: Float!
+}
+
+"""
+A case as it was created, or the case that already asked the same thing.
+"""
+type AgentEvalCaseCapture {
+  duplicate: Boolean!
+  evalCase: AgentEvalCase!
+}
+
+type AgentEvalCaseConnection {
+  edges: [AgentEvalCaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input AgentEvalCaseCuratedInput {
+  agentDefinitionId: ID!
+  expected: JSON!
+  expiresAt: Timestamp
+  """Defaults to every tool the agent holds now."""
+  heldTools: [String!]
+  input: String!
+  mentions: [JSON!]
+  pageContext: JSON
+  rubric: String
+  subjectId: ID
+  subjectType: String
+  title: String
+  trigger: AgentRunTrigger
+}
+
+type AgentEvalCaseEdge {
+  cursor: String!
+  node: AgentEvalCase!
+}
+
+"""A reply someone rated as good, captured through their rating."""
+input AgentEvalCaseFromFeedbackInput {
+  feedbackId: ID!
+  title: String
+}
+
+input AgentEvalCaseFromMessageInput {
+  messageId: ID!
+  threadId: ID!
+  title: String
+}
+
+input AgentEvalCaseFromProposalInput {
+  proposalId: ID!
+  title: String
+}
+
+enum AgentEvalCaseSource {
+  Curated
+  DecidedProposal
+  ThumbsUp
+}
+
+enum AgentEvalCaseStatus {
+  Active
+  Candidate
+  Quarantined
+  Retired
+}
+
+"""
 A recorded run replayed against its agent as it is now, with every write
 simulated, and compared with what the original proposed and how people
 decided on it.
@@ -855,6 +974,10 @@ type AgentEvaluation {
   actions: [JSON!]!
   agentDefinitionId: ID!
   businessUnitId: ID!
+  """The case score from 0 to 1; zero on a hard failure."""
+  caseScore: Float
+  """Each hard and soft check a case replay was scored on."""
+  checks: JSON
   """Each original proposal against the replay, with counts and a score."""
   comparison: JSON
   completedAt: Timestamp
@@ -862,9 +985,19 @@ type AgentEvaluation {
   """The agent's version at the time of the replay."""
   definitionVersion: Int!
   errorMessage: String!
+  """
+  The evaluation case replayed, when the evaluation replays one rather than a run.
+  """
+  evalCaseId: ID
+  """
+  The agent version, prompt version, instructions hash and tools the replay ran against.
+  """
+  fingerprint: JSON
   id: ID!
   """What the replay was asked, as the original was."""
   input: String!
+  """A judge model's score and rationale, when one was asked."""
+  judge: JSON
   model: String!
   organizationId: ID!
   originalProposals: Int!
@@ -872,6 +1005,7 @@ type AgentEvaluation {
   providerId: ID!
   reply: String!
   requestedByUserId: ID
+  """Empty when the evaluation replays an evaluation case."""
   sourceRunId: ID!
   startedAt: Timestamp
   status: AgentEvaluationStatus!
@@ -899,6 +1033,8 @@ enum AgentEvaluationStatus {
   Failed
   Pending
   Running
+  """The replay could not run as the original did; errorMessage says why."""
+  Skipped
 }
 
 type AgentEvidenceRef {
@@ -4104,6 +4240,14 @@ enum CoverageTier {
   EmployeeChildren
   EmployeeSpouse
   Family
+}
+
+"""Exactly one of the four."""
+input CreateAgentEvalCaseInput {
+  curated: AgentEvalCaseCuratedInput
+  fromFeedback: AgentEvalCaseFromFeedbackInput
+  fromMessage: AgentEvalCaseFromMessageInput
+  fromProposal: AgentEvalCaseFromProposalInput
 }
 
 input CreateCarrierInvoiceMatchInput {
@@ -11257,6 +11401,7 @@ type Mutation {
   completeClearinghouseQuery(input: CompleteClearinghouseQueryInput!): WorkerClearinghouseQuery!
   completeWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   completeWorkerTraining(input: CompleteWorkerTrainingInput!): WorkerTrainingRecord!
+  createAgentEvalCase(input: CreateAgentEvalCaseInput!): AgentEvalCaseCapture!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!
   createBenefitPlan(input: BenefitPlanInput!): BenefitPlan!
   createCarrierInvoiceMatch(input: CreateCarrierInvoiceMatchInput!): CarrierInvoiceMatch!
@@ -11546,6 +11691,10 @@ type Mutation {
   reopenWorkerChecklistItem(id: ID!, version: Int): WorkerChecklist!
   reopenWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   """
+  Replays a case against its agent as it is now, writes simulated, and scores it.
+  """
+  replayAgentEvalCase(id: ID!): AgentEvaluation!
+  """
   Replays a recorded run against its agent as it is now; every write is simulated.
   """
   replayAgentRun(runId: ID!): AgentEvaluation!
@@ -11624,6 +11773,7 @@ type Mutation {
   """
   sendInvoiceEdi(force: Boolean, invoiceId: ID!): InvoiceEDISendResult!
   sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
+  setAgentEvalCaseStatus(id: ID!, status: AgentEvalCaseStatus!): AgentEvalCase!
   """
   Sets who may use an agent. Needs permission to update agents and roles.
   """
@@ -11690,6 +11840,7 @@ type Mutation {
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAgentControl(input: AgentControlInput!): AgentControl!
+  updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
   updateBenefitPlan(input: UpdateBenefitPlanInput!): BenefitPlan!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
@@ -13491,6 +13642,8 @@ type Query {
   agentControl: AgentControl!
   agentDefinition(id: ID!): AgentDefinition
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
+  agentEvalCase(id: ID!): AgentEvalCase
+  agentEvalCases(input: DataTableConnectionInput!): AgentEvalCaseConnection!
   agentEvaluation(id: ID!): AgentEvaluation
   agentEvaluations(input: DataTableConnectionInput!): AgentEvaluationConnection!
   agentException(id: ID!): AgentException
@@ -18962,6 +19115,17 @@ input UpcomingWorkerPTOInput {
   timezone: String
   type: PTOType
   workerId: ID
+}
+
+input UpdateAgentEvalCaseInput {
+  expected: JSON
+  """Absent leaves the expiry alone; null clears it."""
+  expiresAt: Timestamp @goField(omittable: true)
+  heldTools: [String!]
+  input: String
+  rubric: String
+  title: String
+  version: Int!
 }
 
 input UpdateBenefitPlanInput {

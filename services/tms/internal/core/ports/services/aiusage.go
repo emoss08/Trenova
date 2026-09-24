@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -15,6 +16,34 @@ type AIUsageAttribution struct {
 	AgentDefinitionID pulid.ID
 	ThreadID          pulid.ID
 	RunID             pulid.ID
+	Purpose           AIUsagePurpose
+}
+
+type AIUsagePurpose string
+
+const (
+	AIUsagePurposeLive       = AIUsagePurpose("")
+	AIUsagePurposeEvaluation = AIUsagePurpose("Evaluation")
+)
+
+func UsagePurposeForRun(runID pulid.ID) AIUsagePurpose {
+	if runID.Prefix() == agent.EvaluationIDPrefix {
+		return AIUsagePurposeEvaluation
+	}
+
+	return AIUsagePurposeLive
+}
+
+func (a AIUsageAttribution) ResolvedPurpose() AIUsagePurpose {
+	if a.Purpose != AIUsagePurposeLive {
+		return a.Purpose
+	}
+
+	return UsagePurposeForRun(a.RunID)
+}
+
+func (a AIUsageAttribution) Evaluates() bool {
+	return a.ResolvedPurpose() == AIUsagePurposeEvaluation
 }
 
 // AIUsageProviderSlice is one provider's share of a window.

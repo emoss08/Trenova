@@ -114,6 +114,7 @@ func (r *repository) Upsert(
 		existing.AuditRetentionPeriod = entity.AuditRetentionPeriod
 		existing.EDIInboundFileRetentionPeriod = entity.EDIInboundFileRetentionPeriod
 		existing.EDIMessageRetentionPeriod = entity.EDIMessageRetentionPeriod
+		existing.AgentEvalCaseRetentionPeriod = entity.AgentEvalCaseRetentionPeriod
 		existing.AIFeedbackRetentionPeriod = entity.AIFeedbackRetentionPeriod
 		return r.Update(ctx, existing)
 	}
@@ -128,6 +129,7 @@ func (r *repository) Upsert(
 		Set("audit_retention_period = EXCLUDED.audit_retention_period").
 		Set("edi_inbound_file_retention_period = EXCLUDED.edi_inbound_file_retention_period").
 		Set("edi_message_retention_period = EXCLUDED.edi_message_retention_period").
+		Set(buncolgen.DataRetentionColumns.AgentEvalCaseRetentionPeriod.SetExcluded()).
 		Set(buncolgen.DataRetentionColumns.AIFeedbackRetentionPeriod.SetExcluded()).
 		Returning("*").
 		Exec(ctx); err != nil {

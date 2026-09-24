@@ -168,3 +168,128 @@ func TestCompareReplay_WithNothingOnEitherSide(t *testing.T) {
 	assert.Empty(t, comparison.Matches)
 	assert.Nil(t, comparison.Score)
 }
+
+func modifiedOriginal() OriginalProposal {
+	proposal := &AgentProposal{
+		ID:         pulid.MustNew("aprop_"),
+		ToolName:   "update_rate",
+		ToolParams: map[string]any{"shipmentId": "shp_1", "rate": float64(1200)},
+		Status:     ProposalStatusExecuted,
+	}
+
+	return NewOriginalProposal(proposal, []*AgentDecision{{
+		Decision:      DecisionModified,
+		Modifications: map[string]any{"rate": float64(1350)},
+	}})
+}
+
+func TestNewOriginalProposal_MergesTheLatestModification(t *testing.T) {
+	t.Parallel()
+
+	original := modifiedOriginal()
+
+	assert.Equal(t, DecisionModified, original.Decision)
+	assert.Equal(t, map[string]any{"shipmentId": "shp_1", "rate": float64(1200)}, original.Params)
+	assert.Equal(
+		t,
+		map[string]any{"shipmentId": "shp_1", "rate": float64(1350)},
+		original.CorrectedParams,
+	)
+	assert.Equal(t, original.CorrectedParams, original.Expected())
+}
+
+func TestNewOriginalProposal_RejectionCorrectsNothing(t *testing.T) {
+	t.Parallel()
+
+	proposal := &AgentProposal{
+		ID:         pulid.MustNew("aprop_"),
+		ToolName:   "update_rate",
+		ToolParams: map[string]any{"rate": float64(1200)},
+		Status:     ProposalStatusRejected,
+	}
+
+	rejected := NewOriginalProposal(proposal, []*AgentDecision{
+		{Decision: DecisionRejected},
+		{Decision: DecisionModified, Modifications: map[string]any{"rate": float64(1)}},
+	})
+	undecided := NewOriginalProposal(proposal, nil)
+
+	assert.Nil(t, rejected.CorrectedParams)
+	assert.Equal(t, proposal.ToolParams, rejected.Expected())
+	assert.Nil(t, undecided.CorrectedParams)
+	assert.Empty(t, undecided.Decision)
+}
+
+func TestNewOriginalProposal_KeepsTheLatestModificationUnderALaterApproval(t *testing.T) {
+	t.Parallel()
+
+	proposal := &AgentProposal{
+		ID:         pulid.MustNew("aprop_"),
+		ToolName:   "update_rate",
+		ToolParams: map[string]any{"shipmentId": "shp_1", "rate": float64(1200)},
+		Status:     ProposalStatusExecuted,
+	}
+
+	original := NewOriginalProposal(proposal, []*AgentDecision{
+		{Decision: DecisionAccepted},
+		{Decision: DecisionModified, Modifications: map[string]any{"rate": float64(1400)}},
+		{Decision: DecisionModified, Modifications: map[string]any{"rate": float64(1300)}},
+	})
+
+	assert.Equal(t, DecisionAccepted, original.Decision)
+	assert.Equal(
+		t,
+		map[string]any{"shipmentId": "shp_1", "rate": float64(1400)},
+		original.CorrectedParams,
+		"the newest modification is what the person settled on",
+	)
+	assert.Equal(t, float64(1200), proposal.ToolParams["rate"], "the proposal is not mutated")
+}
+
+func TestDecisionsByProposal_KeepsEachProposalsOrder(t *testing.T) {
+	t.Parallel()
+
+	first, second := pulid.MustNew("aprop_"), pulid.MustNew("aprop_")
+	newest := &AgentDecision{ProposalID: &first, Decision: DecisionAccepted}
+	older := &AgentDecision{ProposalID: &first, Decision: DecisionModified}
+	other := &AgentDecision{ProposalID: &second, Decision: DecisionRejected}
+
+	grouped := DecisionsByProposal([]*AgentDecision{newest, other, older, {}, nil})
+
+	assert.Equal(t, []*AgentDecision{newest, older}, grouped[first])
+	assert.Equal(t, []*AgentDecision{other}, grouped[second])
+	assert.Len(t, grouped, 2)
+}
+
+func TestCompareReplay_ProposingTheCorrectedVersionAgrees(t *testing.T) {
+	t.Parallel()
+
+	comparison := CompareReplay([]OriginalProposal{modifiedOriginal()}, []ReplayAction{{
+		ToolName:  "update_rate",
+		Arguments: map[string]any{"shipmentId": "shp_1", "rate": 1350},
+	}})
+
+	require.Len(t, comparison.Matches, 1)
+	match := comparison.Matches[0]
+	assert.Equal(t, VerdictAgreed, match.Verdict)
+	assert.Equal(t, float64(1350), match.CorrectedParams["rate"])
+	assert.Equal(t, float64(1200), match.OriginalParams["rate"])
+	assert.Empty(t, match.Changes)
+	assert.Equal(t, 1, comparison.Agreed)
+}
+
+func TestCompareReplay_RepeatingTheFixedParametersIsAChange(t *testing.T) {
+	t.Parallel()
+
+	comparison := CompareReplay([]OriginalProposal{modifiedOriginal()}, []ReplayAction{{
+		ToolName:  "update_rate",
+		Arguments: map[string]any{"shipmentId": "shp_1", "rate": 1200},
+	}})
+
+	require.Len(t, comparison.Matches, 1)
+	match := comparison.Matches[0]
+	assert.Equal(t, VerdictChanged, match.Verdict)
+	require.Len(t, match.Changes, 1)
+	assert.Equal(t, FieldChange{Field: "rate", From: "1350", To: "1200"}, match.Changes[0])
+	assert.Zero(t, comparison.Agreed)
+}

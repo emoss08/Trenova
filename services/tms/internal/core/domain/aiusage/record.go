@@ -19,6 +19,7 @@ const (
 	SurfaceChat       = Surface("Chat")
 	SurfaceStructured = Surface("Structured")
 	SurfaceBackground = Surface("Background")
+	SurfaceEvaluation = Surface("Evaluation")
 )
 
 // AIUsageRecord is one attempt to have a model answer: which provider, how long it

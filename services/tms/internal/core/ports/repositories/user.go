@@ -60,6 +60,12 @@ type BulkUpdateUserStatusRequest struct {
 	Status     domaintypes.Status    `json:"status"`
 }
 
+type GetTenantMemberRequest struct {
+	UserID     pulid.ID
+	TenantInfo pagination.TenantInfo
+	Now        int64
+}
+
 type GetUsersByIDsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	UserIDs    []pulid.ID            `json:"userIds"`
@@ -126,4 +132,5 @@ type UserRepository interface {
 		req GetUsersByIDsRequest,
 	) ([]*tenant.User, error)
 	GetSystemUser(ctx context.Context, columns ...string) (*tenant.User, error)
+	GetTenantMember(ctx context.Context, req GetTenantMemberRequest) (*tenant.User, error)
 }

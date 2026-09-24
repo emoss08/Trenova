@@ -81,6 +81,10 @@ func (r *repository) Update(
 		Set(cols.Comparison.Set(), entity.Comparison).
 		Set(cols.OriginalProposals.Set(), entity.OriginalProposals).
 		Set(cols.ToolCallsUsed.Set(), entity.ToolCallsUsed).
+		Set(cols.Checks.Set(), entity.Checks).
+		Set(cols.Judge.Set(), entity.Judge).
+		Set(cols.CaseScore.Set(), entity.CaseScore).
+		Set(cols.Fingerprint.Set(), entity.Fingerprint).
 		Set(cols.WorkflowID.Set(), entity.WorkflowID).
 		Set(cols.ErrorMessage.Set(), entity.ErrorMessage).
 		Set(cols.StartedAt.Set(), entity.StartedAt).

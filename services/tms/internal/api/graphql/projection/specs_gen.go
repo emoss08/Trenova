@@ -18,6 +18,8 @@ var AgentDecisionSpec TypeSpec
 
 var AgentDefinitionSpec TypeSpec
 
+var AgentEvalCaseSpec TypeSpec
+
 var AgentEvaluationSpec TypeSpec
 
 var AgentExceptionSpec TypeSpec
@@ -1217,6 +1219,150 @@ func init() {
 		},
 	}
 
+	AgentEvalCaseSpec = TypeSpec{
+		TypeName: "AgentEvalCase",
+		FieldMap: buncolgen.EvalCaseFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+			"source",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "agentDefinitionId",
+				FieldMapKey: "agentDefinitionId",
+			},
+			{
+				Name:        "title",
+				FieldMapKey: "title",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "trigger",
+				FieldMapKey: "trigger",
+			},
+			{
+				Name:        "sourceRunId",
+				FieldMapKey: "sourceRunId",
+			},
+			{
+				Name:        "sourceTurnId",
+				FieldMapKey: "sourceTurnId",
+			},
+			{
+				Name:        "sourceThreadId",
+				FieldMapKey: "sourceThreadId",
+			},
+			{
+				Name:        "sourceMessageId",
+				FieldMapKey: "sourceMessageId",
+			},
+			{
+				Name:        "sourceProposalId",
+				FieldMapKey: "sourceProposalId",
+			},
+			{
+				Name:        "sourceFeedbackId",
+				FieldMapKey: "sourceFeedbackId",
+			},
+			{
+				Name:        "input",
+				FieldMapKey: "input",
+			},
+			{
+				Name:        "history",
+				FieldMapKey: "history",
+			},
+			{
+				Name:        "pageContext",
+				FieldMapKey: "pageContext",
+			},
+			{
+				Name:        "mentions",
+				FieldMapKey: "mentions",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "subjectId",
+				FieldMapKey: "subjectId",
+			},
+			{
+				Name:        "heldTools",
+				FieldMapKey: "heldTools",
+			},
+			{
+				Name:        "toolFixtures",
+				FieldMapKey: "toolFixtures",
+			},
+			{
+				Name:        "expected",
+				FieldMapKey: "expected",
+			},
+			{
+				Name:        "rubric",
+				FieldMapKey: "rubric",
+			},
+			{
+				Name:        "redaction",
+				FieldMapKey: "redaction",
+			},
+			{
+				Name:        "contentHash",
+				FieldMapKey: "contentHash",
+			},
+			{
+				Name:        "capturedFingerprint",
+				FieldMapKey: "capturedFingerprint",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "createdByUserId",
+				FieldMapKey: "createdByUserId",
+			},
+			{
+				Name:    "weight",
+				Special: "weight",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	AgentEvaluationSpec = TypeSpec{
 		TypeName: "AgentEvaluation",
 		FieldMap: buncolgen.EvaluationFieldMap,
@@ -1244,6 +1390,10 @@ func init() {
 			{
 				Name:        "sourceRunId",
 				FieldMapKey: "sourceRunId",
+			},
+			{
+				Name:        "evalCaseId",
+				FieldMapKey: "evalCaseId",
 			},
 			{
 				Name:        "status",
@@ -1300,6 +1450,22 @@ func init() {
 			{
 				Name:        "toolCallsUsed",
 				FieldMapKey: "toolCallsUsed",
+			},
+			{
+				Name:        "checks",
+				FieldMapKey: "checks",
+			},
+			{
+				Name:        "judge",
+				FieldMapKey: "judge",
+			},
+			{
+				Name:        "caseScore",
+				FieldMapKey: "caseScore",
+			},
+			{
+				Name:        "fingerprint",
+				FieldMapKey: "fingerprint",
 			},
 			{
 				Name:        "errorMessage",

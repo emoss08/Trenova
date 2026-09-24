@@ -2287,6 +2287,31 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAgentEvalSuite.String(),
+		DisplayName: "Agent Evaluation Suite",
+		Description: "Evaluation cases agents are replayed against and scored on",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View evaluation cases and scores",
+			},
+			{
+				Operation:   OpCreate,
+				DisplayName: "Create",
+				Description: "Capture or write an evaluation case and replay it",
+			},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Edit what a case expects, and activate, quarantine or retire it",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAgentFeedback.String(),
 		DisplayName: "Agent Feedback",
 		Description: "Everyone's ratings of AI output, with what they saw and why they rated it",

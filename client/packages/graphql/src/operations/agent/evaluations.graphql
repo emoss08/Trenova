@@ -4,6 +4,7 @@ fragment AgentEvaluationTableRowFields on AgentEvaluation {
   businessUnitId
   agentDefinitionId
   sourceRunId
+  evalCaseId
   status
   trigger
   subjectType
@@ -11,6 +12,7 @@ fragment AgentEvaluationTableRowFields on AgentEvaluation {
   model
   reply
   comparison
+  caseScore
   originalProposals
   toolCallsUsed
   errorMessage
@@ -53,6 +55,11 @@ query AgentEvaluationDetail($id: ID!) {
     reply
     actions
     comparison
+    evalCaseId
+    checks
+    judge
+    caseScore
+    fingerprint
     originalProposals
     toolCallsUsed
     errorMessage

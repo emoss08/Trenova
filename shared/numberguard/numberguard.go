@@ -200,6 +200,26 @@ func SupportedValues(
 	return supported
 }
 
+func SupportedFromText(texts ...string) []decimal.Decimal {
+	supported := make([]decimal.Decimal, 0, len(texts)*4)
+	seen := make(map[string]struct{}, len(texts)*4)
+	for _, text := range texts {
+		if text == "" {
+			continue
+		}
+		for _, cited := range extractNumbers(text) {
+			key := cited.value.String()
+			if _, dup := seen[key]; dup {
+				continue
+			}
+			seen[key] = struct{}{}
+			supported = append(supported, cited.value)
+		}
+	}
+
+	return supported
+}
+
 // FormatForPrompt renders a value the way the model should cite it, so the
 // prompt and the guard agree on what the number looks like.
 func FormatForPrompt(value decimal.Decimal) string {

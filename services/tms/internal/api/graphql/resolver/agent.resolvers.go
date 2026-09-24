@@ -44,6 +44,30 @@ func (r *agentEvaluationResolver) Comparison(ctx context.Context, obj *agent.Eva
 	return jsonutils.MustToJSON(obj.Comparison), nil
 }
 
+func (r *agentEvaluationResolver) Checks(ctx context.Context, obj *agent.Evaluation) (map[string]any, error) {
+	if obj.Checks == nil {
+		return nil, nil
+	}
+
+	return jsonutils.MustToJSON(obj.Checks), nil
+}
+
+func (r *agentEvaluationResolver) Judge(ctx context.Context, obj *agent.Evaluation) (map[string]any, error) {
+	if obj.Judge == nil {
+		return nil, nil
+	}
+
+	return jsonutils.MustToJSON(obj.Judge), nil
+}
+
+func (r *agentEvaluationResolver) Fingerprint(ctx context.Context, obj *agent.Evaluation) (map[string]any, error) {
+	if obj.Fingerprint == nil {
+		return nil, nil
+	}
+
+	return jsonutils.MustToJSON(obj.Fingerprint), nil
+}
+
 func (r *agentProposalResolver) Confidence(ctx context.Context, obj *agent.AgentProposal) (float64, error) {
 	return obj.Confidence.InexactFloat64(), nil
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/core/services/agentscoring"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
@@ -55,6 +56,11 @@ type ActivitiesParams struct {
 	Notifier      serviceports.AgentProposalNotifier  `optional:"true"`
 	Plans         repositories.AgentPlanRepository    `optional:"true"`
 	Evaluations   repositories.AgentEvaluationRepository
+	EvalCases     repositories.AgentEvalCaseRepository
+	CaseService   serviceports.AgentEvalCaseService `optional:"true"`
+	Users         repositories.UserRepository
+	QueryTools    serviceports.AgentQueryToolRegistry `optional:"true"`
+	ActionTools   serviceports.AgentToolRegistry      `optional:"true"`
 	Decisions     repositories.AgentDecisionRepository
 	Conversations repositories.ConversationRepository `optional:"true"`
 	// Watchtower puts a run that could not finish on the feed, so a
@@ -78,6 +84,10 @@ type Activities struct {
 	notifier      serviceports.AgentProposalNotifier
 	plans         repositories.AgentPlanRepository
 	evaluations   repositories.AgentEvaluationRepository
+	evalCases     repositories.AgentEvalCaseRepository
+	caseService   serviceports.AgentEvalCaseService
+	users         repositories.UserRepository
+	scorer        *agentscoring.Scorer
 	decisions     repositories.AgentDecisionRepository
 	conversations repositories.ConversationRepository
 	subjects      serviceports.AgentSubjectDescriber
@@ -88,6 +98,9 @@ type Activities struct {
 
 func NewActivities(p ActivitiesParams) *Activities {
 	logger := p.Logger.Named("agent-activities")
+	scorer := agentscoring.New(
+		agentscoring.WithToolPolicies(toolPolicies(p.QueryTools, p.ActionTools)),
+	)
 
 	return &Activities{
 		logger:        logger,
@@ -104,6 +117,10 @@ func NewActivities(p ActivitiesParams) *Activities {
 		notifier:      p.Notifier,
 		plans:         p.Plans,
 		evaluations:   p.Evaluations,
+		evalCases:     p.EvalCases,
+		caseService:   p.CaseService,
+		users:         p.Users,
+		scorer:        scorer,
 		decisions:     p.Decisions,
 		conversations: p.Conversations,
 		subjects:      p.Subjects,
@@ -636,38 +653,7 @@ func agentActor(tenant pagination.TenantInfo) *serviceports.RequestActor {
 }
 
 func backgroundInput(payload *AgentRunPayload, subject *agentdefinition.RuntimeSubject) string {
-	var builder strings.Builder
-	switch payload.Trigger {
-	case agent.RunTriggerEvent:
-		builder.WriteString("An event started this run")
-		if payload.EventKind != "" {
-			builder.WriteString(": ")
-			builder.WriteString(string(payload.EventKind))
-		}
-		builder.WriteString(".")
-	case agent.RunTriggerScheduled:
-		builder.WriteString("This is a scheduled run.")
-	case agent.RunTriggerContinuous:
-		builder.WriteString("This is one pass of a continuous run.")
-	default:
-		builder.WriteString("A person started this run.")
-	}
-	if subject != nil {
-		builder.WriteString(" It concerns ")
-		builder.WriteString(subject.Label)
-		builder.WriteString(" (")
-		builder.WriteString(string(subject.Type))
-		builder.WriteString(" ")
-		builder.WriteString(subject.ID)
-		builder.WriteString("), described in the runtime context.")
-	}
-	builder.WriteString(
-		" Follow your instructions: look up what you need, act through your tools " +
-			"where you are allowed to, propose what needs a person, and finish with a short report of " +
-			"what you found and did.",
-	)
-
-	return builder.String()
+	return agentdefinition.BackgroundRunInput(payload.Trigger, payload.EventKind, subject)
 }
 
 func subjectEvidence(

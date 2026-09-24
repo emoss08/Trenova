@@ -21,6 +21,8 @@ var (
 	_ domaintypes.PostgresSearchable     = (*Evaluation)(nil)
 )
 
+const EvaluationIDPrefix = "aeval_"
+
 type EvaluationStatus string
 
 const (
@@ -28,14 +30,26 @@ const (
 	EvaluationStatusRunning   = EvaluationStatus("Running")
 	EvaluationStatusCompleted = EvaluationStatus("Completed")
 	EvaluationStatusFailed    = EvaluationStatus("Failed")
+	EvaluationStatusSkipped   = EvaluationStatus("Skipped")
 )
+
+func AllEvaluationStatuses() []EvaluationStatus {
+	return []EvaluationStatus{
+		EvaluationStatusPending,
+		EvaluationStatusRunning,
+		EvaluationStatusCompleted,
+		EvaluationStatusFailed,
+		EvaluationStatusSkipped,
+	}
+}
 
 func (s EvaluationStatus) IsValid() bool {
 	switch s {
 	case EvaluationStatusPending,
 		EvaluationStatusRunning,
 		EvaluationStatusCompleted,
-		EvaluationStatusFailed:
+		EvaluationStatusFailed,
+		EvaluationStatusSkipped:
 		return true
 	default:
 		return false
@@ -43,7 +57,76 @@ func (s EvaluationStatus) IsValid() bool {
 }
 
 func (s EvaluationStatus) Terminal() bool {
-	return s == EvaluationStatusCompleted || s == EvaluationStatusFailed
+	switch s {
+	case EvaluationStatusCompleted, EvaluationStatusFailed, EvaluationStatusSkipped:
+		return true
+	default:
+		return false
+	}
+}
+
+type Fingerprint struct {
+	DefinitionVersion int64    `json:"definitionVersion"`
+	PromptVersion     string   `json:"promptVersion,omitempty"`
+	Model             string   `json:"model,omitempty"`
+	ProviderID        pulid.ID `json:"providerId,omitempty"`
+	InstructionsHash  string   `json:"instructionsHash,omitempty"`
+	Tools             []string `json:"tools,omitempty"`
+}
+
+type CheckKind string
+
+const (
+	CheckKindHard = CheckKind("hard")
+	CheckKindSoft = CheckKind("soft")
+)
+
+type CaseCheck struct {
+	Name     string    `json:"name"`
+	Kind     CheckKind `json:"kind"`
+	Applies  bool      `json:"applies"`
+	Passed   bool      `json:"passed"`
+	Score    float64   `json:"score"`
+	Weight   float64   `json:"weight"`
+	Detail   string    `json:"detail,omitempty"`
+	Findings []string  `json:"findings,omitempty"`
+}
+
+type ObservedCall struct {
+	ToolName  string         `json:"toolName"`
+	Arguments map[string]any `json:"arguments,omitempty"`
+}
+
+type CaseChecks struct {
+	Checks        []CaseCheck    `json:"checks"`
+	Calls         []ObservedCall `json:"calls,omitempty"`
+	Refused       bool           `json:"refused"`
+	HardFailure   bool           `json:"hardFailure"`
+	Deterministic float64        `json:"deterministic"`
+	Final         float64        `json:"final"`
+	Passed        bool           `json:"passed"`
+}
+
+func (c *CaseChecks) FailedHard() []CaseCheck {
+	if c == nil {
+		return nil
+	}
+
+	failed := make([]CaseCheck, 0, len(c.Checks))
+	for _, check := range c.Checks {
+		if check.Kind == CheckKindHard && check.Applies && !check.Passed {
+			failed = append(failed, check)
+		}
+	}
+
+	return failed
+}
+
+type JudgeVerdict struct {
+	Score     float64 `json:"score"`
+	Rationale string  `json:"rationale,omitempty"`
+	Model     string  `json:"model,omitempty"`
+	JudgedAt  int64   `json:"judgedAt,omitempty"`
 }
 
 // ReplayAction is one write the replay would have made: the tool, what it
@@ -73,11 +156,12 @@ type Evaluation struct {
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 
 	AgentDefinitionID pulid.ID         `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),notnull"`
-	SourceRunID       pulid.ID         `json:"sourceRunId"       bun:"source_run_id,type:VARCHAR(100),notnull"`
+	SourceRunID       pulid.ID         `json:"sourceRunId"       bun:"source_run_id,type:VARCHAR(100),nullzero"`
+	EvalCaseID        *pulid.ID        `json:"evalCaseId"        bun:"eval_case_id,type:VARCHAR(100),nullzero"`
 	Status            EvaluationStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Pending'"`
 	Trigger           RunTrigger       `json:"trigger"           bun:"trigger,type:VARCHAR(20),notnull"`
-	SubjectType       SubjectType      `json:"subjectType"       bun:"subject_type,type:VARCHAR(50),notnull"`
-	SubjectID         pulid.ID         `json:"subjectId"         bun:"subject_id,type:VARCHAR(100),notnull"`
+	SubjectType       SubjectType      `json:"subjectType"       bun:"subject_type,type:VARCHAR(50),nullzero"`
+	SubjectID         pulid.ID         `json:"subjectId"         bun:"subject_id,type:VARCHAR(100),nullzero"`
 
 	Input             string   `json:"input"             bun:"input,type:TEXT,nullzero"`
 	DefinitionVersion int64    `json:"definitionVersion" bun:"definition_version,type:BIGINT,notnull"`
@@ -90,6 +174,11 @@ type Evaluation struct {
 	Comparison        *ReplayComparison `json:"comparison"        bun:"comparison,type:JSONB,nullzero"`
 	OriginalProposals int               `json:"originalProposals" bun:"original_proposals,type:INTEGER,notnull"`
 	ToolCallsUsed     int               `json:"toolCallsUsed"     bun:"tool_calls_used,type:INTEGER,notnull"`
+
+	Checks      *CaseChecks   `json:"checks"      bun:"checks,type:JSONB,nullzero"`
+	Judge       *JudgeVerdict `json:"judge"       bun:"judge,type:JSONB,nullzero"`
+	CaseScore   *float64      `json:"caseScore"   bun:"case_score,type:DOUBLE PRECISION,nullzero"`
+	Fingerprint *Fingerprint  `json:"fingerprint" bun:"fingerprint,type:JSONB,nullzero"`
 
 	WorkflowID        string    `json:"workflowId"        bun:"workflow_id,type:VARCHAR(255),nullzero"`
 	ErrorMessage      string    `json:"errorMessage"      bun:"error_message,type:TEXT,nullzero"`
@@ -110,7 +199,6 @@ func (e *Evaluation) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&e.OrganizationID, validation.Required.Error("Organization is required")),
 		validation.Field(&e.BusinessUnitID, validation.Required.Error("Business unit is required")),
 		validation.Field(&e.AgentDefinitionID, validation.Required.Error("Agent is required")),
-		validation.Field(&e.SourceRunID, validation.Required.Error("A run to replay is required")),
 		validation.Field(&e.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[EvaluationStatus]("Status is invalid"),
@@ -120,11 +208,35 @@ func (e *Evaluation) Validate(multiErr *errortypes.MultiError) {
 			domainvalidation.ValidEnum[RunTrigger]("Trigger is invalid"),
 		),
 		validation.Field(&e.SubjectType,
-			validation.Required.Error("Subject type is required"),
+			validation.When(e.ReplaysRun(), validation.Required.Error("Subject type is required")),
 			domainvalidation.ValidEnum[SubjectType]("Subject type is invalid"),
 		),
-		validation.Field(&e.SubjectID, validation.Required.Error("Subject id is required")),
+		validation.Field(&e.SubjectID,
+			validation.When(e.ReplaysRun(), validation.Required.Error("Subject id is required")),
+		),
 	))
+
+	if e.ReplaysRun() == e.ReplaysCase() {
+		multiErr.Add(
+			"sourceRunId",
+			errortypes.ErrInvalid,
+			"An evaluation replays exactly one recorded run or one evaluation case",
+		)
+	}
+}
+
+func (e *Evaluation) ReplaysRun() bool {
+	return e.SourceRunID.IsNotNil()
+}
+
+func (e *Evaluation) ReplaysCase() bool {
+	return e.EvalCaseID != nil && e.EvalCaseID.IsNotNil()
+}
+
+func (e *Evaluation) Skip(reason string, at int64) {
+	e.Status = EvaluationStatusSkipped
+	e.ErrorMessage = reason
+	e.CompletedAt = &at
 }
 
 func (e *Evaluation) GetID() pulid.ID { return e.ID }
@@ -155,7 +267,7 @@ func (e *Evaluation) BeforeAppendModel(_ context.Context, query bun.Query) error
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("aeval_")
+			e.ID = pulid.MustNew(EvaluationIDPrefix)
 		}
 		if e.Status == "" {
 			e.Status = EvaluationStatusPending

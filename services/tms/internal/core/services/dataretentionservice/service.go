@@ -11,7 +11,9 @@ import (
 	"go.uber.org/zap"
 )
 
-const defaultAuditRetentionDays = 120
+const (
+	defaultAuditRetentionDays = 120
+)
 
 type Params struct {
 	fx.In
@@ -48,10 +50,11 @@ func (s *Service) Get(
 		return nil, err
 	}
 	return &tenant.DataRetention{
-		OrganizationID:            tenantInfo.OrgID,
-		BusinessUnitID:            tenantInfo.BuID,
-		AuditRetentionPeriod:      defaultAuditRetentionDays,
-		AIFeedbackRetentionPeriod: tenant.DefaultAIFeedbackRetentionDays,
+		OrganizationID:               tenantInfo.OrgID,
+		BusinessUnitID:               tenantInfo.BuID,
+		AuditRetentionPeriod:         defaultAuditRetentionDays,
+		AIFeedbackRetentionPeriod:    tenant.DefaultAIFeedbackRetentionDays,
+		AgentEvalCaseRetentionPeriod: tenant.DefaultAgentEvalCaseRetentionDays,
 	}, nil
 }
 
@@ -61,6 +64,7 @@ type UpdateDataRetentionRequest struct {
 	EDIInboundFileRetentionPeriod int                   `json:"ediInboundFileRetentionPeriod"`
 	EDIMessageRetentionPeriod     int                   `json:"ediMessageRetentionPeriod"`
 	AIFeedbackRetentionPeriod     int                   `json:"aiFeedbackRetentionPeriod"`
+	AgentEvalCaseRetentionPeriod  *int                  `json:"agentEvalCaseRetentionPeriod,omitempty"`
 }
 
 func (s *Service) Update(
@@ -74,6 +78,15 @@ func (s *Service) Update(
 		EDIInboundFileRetentionPeriod: req.EDIInboundFileRetentionPeriod,
 		EDIMessageRetentionPeriod:     req.EDIMessageRetentionPeriod,
 		AIFeedbackRetentionPeriod:     req.AIFeedbackRetentionPeriod,
+	}
+	if req.AgentEvalCaseRetentionPeriod != nil {
+		entity.AgentEvalCaseRetentionPeriod = *req.AgentEvalCaseRetentionPeriod
+	} else {
+		current, err := s.Get(ctx, req.TenantInfo)
+		if err != nil {
+			return nil, err
+		}
+		entity.AgentEvalCaseRetentionPeriod = current.AgentEvalCaseRetentionPeriod
 	}
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)

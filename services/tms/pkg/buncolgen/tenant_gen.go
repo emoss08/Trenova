@@ -1718,6 +1718,7 @@ var DataRetentionColumns = struct {
 	EDIInboundFileRetentionPeriod      Column // "edi_inbound_file_retention_period" → qualified: "dr.edi_inbound_file_retention_period"
 	EDIMessageRetentionPeriod          Column // "edi_message_retention_period" → qualified: "dr.edi_message_retention_period"
 	DriverQualificationRetentionPeriod Column // "driver_qualification_retention_period" → qualified: "dr.driver_qualification_retention_period"
+	AgentEvalCaseRetentionPeriod       Column // "agent_eval_case_retention_period" → qualified: "dr.agent_eval_case_retention_period"
 	AIFeedbackRetentionPeriod          Column // "ai_feedback_retention_period" → qualified: "dr.ai_feedback_retention_period"
 	Version                            Column // "version" → qualified: "dr.version"
 	CreatedAt                          Column // "created_at" → qualified: "dr.created_at"
@@ -1730,6 +1731,7 @@ var DataRetentionColumns = struct {
 	EDIInboundFileRetentionPeriod:      NewColumn("edi_inbound_file_retention_period", "dr"),
 	EDIMessageRetentionPeriod:          NewColumn("edi_message_retention_period", "dr"),
 	DriverQualificationRetentionPeriod: NewColumn("driver_qualification_retention_period", "dr"),
+	AgentEvalCaseRetentionPeriod:       NewColumn("agent_eval_case_retention_period", "dr"),
 	AIFeedbackRetentionPeriod:          NewColumn("ai_feedback_retention_period", "dr"),
 	Version:                            NewColumn("version", "dr"),
 	CreatedAt:                          NewColumn("created_at", "dr"),
@@ -1748,6 +1750,7 @@ var DataRetentionFieldMap = map[string]string{
 	"ediInboundFileRetentionPeriod":      "edi_inbound_file_retention_period",
 	"ediMessageRetentionPeriod":          "edi_message_retention_period",
 	"driverQualificationRetentionPeriod": "driver_qualification_retention_period",
+	"agentEvalCaseRetentionPeriod":       "agent_eval_case_retention_period",
 	"aiFeedbackRetentionPeriod":          "ai_feedback_retention_period",
 	"version":                            "version",
 	"createdAt":                          "created_at",
@@ -1764,6 +1767,7 @@ var DataRetentionInsertableColumns = []string{
 	"edi_inbound_file_retention_period",
 	"edi_message_retention_period",
 	"driver_qualification_retention_period",
+	"agent_eval_case_retention_period",
 	"ai_feedback_retention_period",
 	"version",
 	"created_at",
@@ -1840,6 +1844,7 @@ var DataRetentionFilter = struct {
 	EDIInboundFileRetentionPeriod      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediInboundFileRetentionPeriod" → DB: "edi_inbound_file_retention_period"
 	EDIMessageRetentionPeriod          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ediMessageRetentionPeriod" → DB: "edi_message_retention_period"
 	DriverQualificationRetentionPeriod func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverQualificationRetentionPeriod" → DB: "driver_qualification_retention_period"
+	AgentEvalCaseRetentionPeriod       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentEvalCaseRetentionPeriod" → DB: "agent_eval_case_retention_period"
 	AIFeedbackRetentionPeriod          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiFeedbackRetentionPeriod" → DB: "ai_feedback_retention_period"
 	Version                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
@@ -1865,6 +1870,9 @@ var DataRetentionFilter = struct {
 	},
 	DriverQualificationRetentionPeriod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("driverQualificationRetentionPeriod", op, value)
+	},
+	AgentEvalCaseRetentionPeriod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentEvalCaseRetentionPeriod", op, value)
 	},
 	AIFeedbackRetentionPeriod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("aiFeedbackRetentionPeriod", op, value)
