@@ -6,12 +6,12 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentextensionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruneventservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
-	"github.com/emoss08/trenova/internal/core/services/productguideservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/services/productguideservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
 	"github.com/emoss08/trenova/internal/core/services/runstepledger"
@@ -71,6 +72,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/watchtowerjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
+	agentextensioninfra "github.com/emoss08/trenova/internal/infrastructure/agentextension"
 	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
@@ -105,6 +107,8 @@ func Options() fx.Option {
 		)),
 		fuelcard.Module,
 		carrierintelinfra.Module,
+		agentextensioninfra.Module,
+		agentextensionservice.Module,
 		fx.Provide(telematicsinfra.NewFactory),
 		formula.Module,
 		formulatemplateservice.Module,

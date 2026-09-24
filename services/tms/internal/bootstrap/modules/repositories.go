@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentdefinitionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentevaluationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentexceptionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentextensionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentmemoryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentplanrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentproposalrepository"
@@ -432,6 +433,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	documenttyperepository.New,
 	holdreasonrepository.New,
 	integrationrepository.New,
+	agentextensionrepository.New,
+	agentextensionrepository.NewUsageRepository,
 	telematicsrepository.New,
 	emailrepository.New,
 	invoiceadjustmentcontrolrepository.New,

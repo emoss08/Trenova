@@ -2389,6 +2389,37 @@ func (r *Registry) registerBillingResources() {
 	// billing data is sent to, and whether that endpoint may be on the local
 	// network, so it is held at the same sensitivity as credential management.
 	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAgentExtension.String(),
+		DisplayName: "Agent Extension",
+		Description: "Capabilities turned on for agents only, such as web research, and their credentials",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{Operation: OpRead, DisplayName: "Read", Description: "View the extension marketplace"},
+			{
+				Operation:   OpUpdate,
+				DisplayName: "Update",
+				Description: "Turn extensions on or off, change their settings and test them",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceWebResearch.String(),
+		DisplayName: "Web Research",
+		Description: "Agents searching and reading public web pages on a person's behalf, through an enabled extension",
+		Category:    "Platform",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "Let agents search and read the web for this person",
+			},
+		},
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAIProvider.String(),
 		DisplayName: "AI Provider",
 		Description: "Model endpoints, including self-hosted servers, and their task routing",

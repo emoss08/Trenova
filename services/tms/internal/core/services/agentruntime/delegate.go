@@ -106,6 +106,10 @@ type DelegateCall struct {
 	// delegate's calls are kept in the same thread, so it is given none of
 	// them.
 	CallIDs []string `json:"callIds,omitempty"`
+	// AfterExternalContent says the delegating turn has read content from
+	// outside the organization. The delegate starts from where it stands, so
+	// a task written under that content cannot make a write on its own.
+	AfterExternalContent bool `json:"afterExternalContent,omitempty"`
 }
 
 // DelegateRun is what handing a task to another agent came to, as the
@@ -125,6 +129,9 @@ type DelegateRun struct {
 	Stopped bool   `json:"stopped,omitempty"`
 	// Documents are what it kept beside the conversation.
 	Documents []serviceports.DelegateDocument `json:"documents,omitempty"`
+	// ExternalContent says the delegate read content from outside the
+	// organization, which now reaches this turn through its answer.
+	ExternalContent bool `json:"externalContent,omitempty"`
 }
 
 // delegate hands one task to another agent and answers the call with what it
@@ -178,9 +185,13 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) 
 		StepScope: scope,
 		// Sorted, because this is built in workflow code and a map ranges in
 		// a different order every time.
-		CallIDs: slices.Sorted(maps.Keys(t.callIDs)),
+		CallIDs:              slices.Sorted(maps.Keys(t.callIDs)),
+		AfterExternalContent: t.external,
 	})
 	report := delegateReport(delegate, call.ID, run)
+	if run.ExternalContent {
+		t.external = true
+	}
 
 	if run.Result != nil {
 		t.result.Messages = append(t.result.Messages,
@@ -210,6 +221,16 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) 
 // is given a fresh id rather than a clash. A delegate's turn is handed the
 // conversation's ids when it opens, and the conversation takes the delegate's
 // when it ends: both keep their calls in one thread.
+// CarryExternalContent starts a delegate's turn where the turn that handed it
+// the task stands on outside content.
+func (t *Turn) CarryExternalContent(external bool) {
+	t.external = t.external || external
+}
+
+// ReadExternalContent reports whether the turn has read content from outside
+// the organization.
+func (t *Turn) ReadExternalContent() bool { return t.external }
+
 func (t *Turn) ReserveCallIDs(ids []string) {
 	for _, id := range ids {
 		if id != "" {

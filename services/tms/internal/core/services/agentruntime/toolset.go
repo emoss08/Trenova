@@ -454,6 +454,12 @@ func (s *Service) permittedTools(
 	if s.permissions == nil || actor == nil {
 		return permitted
 	}
+	// An extension's tools exist only while the organization has it on and
+	// set up. Offering one it turned off would fail the call; naming one it
+	// never bought would read as a feature it has.
+	if touchesExtensions(names) {
+		names = onlyOffered(names, s.activeExtensions(ctx, actor))
+	}
 
 	verdicts := make(map[string]bool, len(names))
 	for _, name := range names {

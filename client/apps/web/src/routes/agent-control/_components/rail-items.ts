@@ -20,11 +20,14 @@ export type RailCounts = {
   pendingProposals: number;
   runsLast24h: number;
   memoriesActive: number;
+  extensionsOn: number;
+  extensionsTotal: number;
 };
 
 export type RailPermissions = {
   agents: boolean;
   providers: boolean;
+  extensions: boolean;
   runs: boolean;
   proposals: boolean;
   exceptions: boolean;
@@ -64,6 +67,19 @@ export function buildRailItems(
           : t("{0} of {1} on", counts.providersEnabled, counts.providersTotal)
         : "",
       attention: counts !== undefined && counts.providersEnabled === 0,
+      children: [],
+    });
+  }
+
+  if (permissions.extensions) {
+    items.push({
+      tab: "extensions",
+      status: counts
+        ? counts.extensionsOn === 0
+          ? t("None on")
+          : t("{0} of {1} on", counts.extensionsOn, counts.extensionsTotal)
+        : "",
+      attention: false,
       children: [],
     });
   }

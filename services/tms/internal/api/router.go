@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/agentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentdefinitionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentexceptionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/agentextensionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentplanhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentproposalhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentrunhandler"
@@ -193,6 +194,7 @@ type RouterParams struct {
 	TableQueryHandler               *tablequeryhandler.Handler
 	AgentControlHandler             *agentcontrolhandler.Handler
 	AIProviderHandler               *aiproviderhandler.Handler
+	AgentExtensionHandler           *agentextensionhandler.Handler
 	AgentDefinitionHandler          *agentdefinitionhandler.Handler
 	AssistantHandler                *assistanthandler.Handler
 	InsightHandler                  *insighthandler.Handler
@@ -339,6 +341,7 @@ type Router struct {
 	tableQueryHandler               *tablequeryhandler.Handler
 	agentControlHandler             *agentcontrolhandler.Handler
 	aiProviderHandler               *aiproviderhandler.Handler
+	agentExtensionHandler           *agentextensionhandler.Handler
 	agentDefinitionHandler          *agentdefinitionhandler.Handler
 	assistantHandler                *assistanthandler.Handler
 	insightHandler                  *insighthandler.Handler
@@ -476,6 +479,7 @@ func NewRouter(p RouterParams) *Router {
 		tableQueryHandler:               p.TableQueryHandler,
 		agentControlHandler:             p.AgentControlHandler,
 		aiProviderHandler:               p.AIProviderHandler,
+		agentExtensionHandler:           p.AgentExtensionHandler,
 		agentDefinitionHandler:          p.AgentDefinitionHandler,
 		assistantHandler:                p.AssistantHandler,
 		insightHandler:                  p.InsightHandler,
@@ -677,6 +681,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.tableQueryHandler.RegisterRoutes(protected)
 	r.agentControlHandler.RegisterRoutes(protected)
 	r.aiProviderHandler.RegisterRoutes(protected)
+	r.agentExtensionHandler.RegisterRoutes(protected)
 	r.agentDefinitionHandler.RegisterRoutes(protected)
 	r.assistantHandler.RegisterRoutes(protected)
 	r.insightHandler.RegisterRoutes(protected)

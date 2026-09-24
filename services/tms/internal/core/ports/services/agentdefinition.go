@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -87,6 +88,12 @@ type ToolCatalogEntry struct {
 	// Prerequisites are the tools this one takes its arguments from. The
 	// reads among them are held by any agent holding this tool.
 	Prerequisites []string `json:"prerequisites"`
+	// Extension is the extension the tool comes with, when it is not part of
+	// Trenova itself. It is listed only while the organization has it on.
+	Extension agentextension.Type `json:"extension,omitempty"`
+	// GrantedToEveryAgent says the extension gives the tool to every agent,
+	// whether or not it is selected.
+	GrantedToEveryAgent bool `json:"grantedToEveryAgent"`
 }
 
 type PreviewPromptRequest struct {
@@ -135,7 +142,7 @@ type AgentDefinitionService interface {
 		actor *RequestActor,
 	) error
 	Templates() []AgentTemplateDescriptor
-	ToolCatalog() []ToolCatalogEntry
+	ToolCatalog(ctx context.Context, tenantInfo pagination.TenantInfo) ([]ToolCatalogEntry, error)
 	EventKinds() []agent.EventDescriptor
 	PreviewPrompt(ctx context.Context, req *PreviewPromptRequest) (string, error)
 }

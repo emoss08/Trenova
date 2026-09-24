@@ -51,6 +51,8 @@ function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
     reversible: true,
     core: false,
     prerequisites: [],
+    extension: "",
+    grantedToEveryAgent: false,
     ...overrides,
   };
 }

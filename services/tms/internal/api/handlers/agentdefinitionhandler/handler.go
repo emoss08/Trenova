@@ -117,7 +117,15 @@ func (h *Handler) templates(c *gin.Context) {
 }
 
 func (h *Handler) tools(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"tools": h.service.ToolCatalog()})
+	authCtx := authctx.GetAuthContext(c)
+
+	tools, err := h.service.ToolCatalog(c.Request.Context(), tenantFromAuthContext(authCtx))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"tools": tools})
 }
 
 func (h *Handler) eventKinds(c *gin.Context) {

@@ -394,6 +394,11 @@ before the change:
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
 
+Holding writes for a person after a turn reads outside content (`TurnState.ExternalContent`,
+`DispatchCall.AfterExternalContent`) took no gate either: it is optional data on the turn and the
+activity input, decided from the tool's name, and adds no command. See
+[agent-extensions.md](agent-extensions.md).
+
 Agent delegation (`delegate_task`) took no gate: whether a turn holds the tool
 is decided when it opens, in an activity, and kept in `TurnState.Held`, so an
 execution opened before it never takes the new branch. Keeping the hand-off's

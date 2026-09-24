@@ -13,6 +13,7 @@ const t = (text: string, ...args: (string | number)[]) =>
 const all: RailPermissions = {
   agents: true,
   providers: true,
+  extensions: true,
   runs: true,
   proposals: true,
   exceptions: true,
@@ -27,6 +28,8 @@ const counts = {
   pendingProposals: 0,
   runsLast24h: 12,
   memoriesActive: 3,
+  extensionsOn: 1,
+  extensionsTotal: 1,
 };
 
 describe("buildRailItems", () => {
@@ -37,14 +40,16 @@ describe("buildRailItems", () => {
       "overview",
       "agents",
       "providers",
+      "extensions",
       "memory",
       "activity",
     ]);
     expect(items[1].status).toBe("3 of 4 on");
     expect(items[2].status).toBe("1 of 2 on");
-    expect(items[3].status).toBe("3 active");
-    expect(items[4].status).toBe("12 runs today");
-    expect(items[4].children.map((child) => child.view)).toEqual([
+    expect(items[3].status).toBe("1 of 1 on");
+    expect(items[4].status).toBe("3 active");
+    expect(items[5].status).toBe("12 runs today");
+    expect(items[5].children.map((child) => child.view)).toEqual([
       "runs",
       "proposals",
       "plans",
@@ -58,8 +63,8 @@ describe("buildRailItems", () => {
   it("calls for attention when proposals wait on a person", () => {
     const items = buildRailItems({ ...counts, pendingProposals: 2 }, all, t);
 
-    expect(items[4].status).toBe("2 awaiting decision");
-    expect(items[4].attention).toBe(true);
+    expect(items[5].status).toBe("2 awaiting decision");
+    expect(items[5].attention).toBe(true);
   });
 
   it("calls for attention when no provider is on", () => {
@@ -74,7 +79,7 @@ describe("buildRailItems", () => {
   it("leaves out what the reader may not open", () => {
     const items = buildRailItems(
       counts,
-      { ...all, providers: false, exceptions: false, memory: false },
+      { ...all, providers: false, extensions: false, exceptions: false, memory: false },
       t,
     );
 
@@ -92,7 +97,7 @@ describe("buildRailItems", () => {
   it("lists plans only where proposals may be read", () => {
     const items = buildRailItems(counts, { ...all, proposals: false }, t);
 
-    expect(items[4].children.map((child) => child.view)).toEqual([
+    expect(items[5].children.map((child) => child.view)).toEqual([
       "runs",
       "evaluations",
       "exceptions",
@@ -104,13 +109,21 @@ describe("buildRailItems", () => {
   it("says when nothing has been recorded for agents yet", () => {
     const items = buildRailItems({ ...counts, memoriesActive: 0 }, all, t);
 
-    expect(items[3].status).toBe("Nothing recorded");
-    expect(items[3].attention).toBe(false);
+    expect(items[4].status).toBe("Nothing recorded");
+    expect(items[4].attention).toBe(false);
   });
 
   it("shows nothing under a label until the counts arrive", () => {
     const items = buildRailItems(undefined, all, t);
 
     expect(items.every((item) => item.status === "")).toBe(true);
+  });
+
+  it("says when no extension is on, and leaves the section out without access", () => {
+    const none = buildRailItems({ ...counts, extensionsOn: 0 }, all, t);
+    expect(none.find((item) => item.tab === "extensions")?.status).toBe("None on");
+
+    const hidden = buildRailItems(counts, { ...all, extensions: false }, t);
+    expect(hidden.some((item) => item.tab === "extensions")).toBe(false);
   });
 });

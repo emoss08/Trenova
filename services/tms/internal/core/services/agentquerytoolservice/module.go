@@ -95,6 +95,8 @@ func ToolProviders() []any {
 		newListHomeWidgetsTool,
 		newFindInTrenovaTool,
 		newOpenPageTool,
+		newWebSearchTool,
+		newWebReadTool,
 	}
 }
 

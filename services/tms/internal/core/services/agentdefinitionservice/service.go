@@ -32,6 +32,9 @@ type Params struct {
 	// Schedules keeps the schedule behind a scheduled or continuous agent
 	// in line with the agent as it is saved.
 	Schedules services.AgentDefinitionScheduler
+	// Extensions says which extensions the organization has on, so their
+	// tools are offered only while they are.
+	Extensions services.AgentExtensionGate `optional:"true"`
 }
 
 type Service struct {
@@ -42,6 +45,7 @@ type Service struct {
 	contexts   services.RuntimeContextBuilder
 	audit      services.AuditService
 	schedules  services.AgentDefinitionScheduler
+	extensions services.AgentExtensionGate
 }
 
 func New(p Params) services.AgentDefinitionService {
@@ -53,6 +57,7 @@ func New(p Params) services.AgentDefinitionService {
 		contexts:   p.Contexts,
 		audit:      p.AuditService,
 		schedules:  p.Schedules,
+		extensions: p.Extensions,
 	}
 }
 
@@ -214,8 +219,34 @@ func starterOutput(template agentdefinition.Template) agentdefinition.OutputMode
 	return agentdefinition.OutputReport
 }
 
-func (s *Service) ToolCatalog() []services.ToolCatalogEntry {
-	return buildToolCatalog(s.tools, s.queryTools)
+func (s *Service) ToolCatalog(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]services.ToolCatalogEntry, error) {
+	extensions, err := s.activeExtensions(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildToolCatalog(s.tools, s.queryTools, extensions), nil
+}
+
+func (s *Service) activeExtensions(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (extensionState, error) {
+	if s.extensions == nil {
+		return extensionState{}, nil
+	}
+
+	active, err := s.extensions.ActiveExtensions(ctx, tenantInfo)
+	if err != nil {
+		return nil, errortypes.NewBusinessError(
+			"could not read which extensions are turned on",
+		).WithInternal(err)
+	}
+
+	return active, nil
 }
 
 func (s *Service) EventKinds() []agent.EventDescriptor {
@@ -258,7 +289,20 @@ func (s *Service) validate(
 ) error {
 	multiErr := errortypes.NewMultiError()
 	definition.Validate(multiErr)
-	validateToolSelection(definition, s.tools, s.queryTools, multiErr)
+	extensions, err := s.activeExtensions(ctx, pagination.TenantInfo{
+		OrgID: definition.OrganizationID,
+		BuID:  definition.BusinessUnitID,
+	})
+	if err != nil {
+		return err
+	}
+	validateToolSelection(toolSelection{
+		definition: definition,
+		previous:   previous,
+		actions:    s.tools,
+		queries:    s.queryTools,
+		extensions: extensions,
+	}, multiErr)
 	if err := s.validateDelegates(ctx, definition, previous, multiErr); err != nil {
 		return err
 	}

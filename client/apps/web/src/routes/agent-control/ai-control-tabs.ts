@@ -4,6 +4,7 @@ export const aiControlTabValues = [
   "overview",
   "agents",
   "providers",
+  "extensions",
   "memory",
   "activity",
 ] as const;

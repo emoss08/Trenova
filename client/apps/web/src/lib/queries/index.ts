@@ -28,6 +28,7 @@ import { edi } from "./edi";
 import { email } from "./email";
 import { formulaTemplate } from "./formula-template";
 import { googleMaps } from "./google-maps";
+import { agentExtension } from "./agent-extension";
 import { aiProvider } from "./ai-provider";
 import { assistant } from "./assistant";
 import { insight } from "./insight";
@@ -124,6 +125,7 @@ const workspaceQueries = mergeQueryKeys(
   organization,
   integration,
   aiProvider,
+  agentExtension,
   assistant,
   insight,
   carrierIntelSettings,

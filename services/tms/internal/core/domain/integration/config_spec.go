@@ -1,30 +1,20 @@
 package integration
 
-import "strings"
+import "github.com/emoss08/trenova/internal/core/domain/configspec"
 
-type ConfigFieldType string
+type ConfigFieldType = configspec.FieldType
 
 const (
-	ConfigFieldTypeString   ConfigFieldType = "string"
-	ConfigFieldTypeURL      ConfigFieldType = "url"
-	ConfigFieldTypePassword ConfigFieldType = "password"
-	ConfigFieldTypeSelect   ConfigFieldType = "select"
-	ConfigFieldTypeBoolean  ConfigFieldType = "boolean"
-	ConfigFieldTypeNumber   ConfigFieldType = "number"
-	ConfigFieldTypeMulti    ConfigFieldType = "multi-select"
+	ConfigFieldTypeString   = configspec.FieldTypeString
+	ConfigFieldTypeURL      = configspec.FieldTypeURL
+	ConfigFieldTypePassword = configspec.FieldTypePassword
+	ConfigFieldTypeSelect   = configspec.FieldTypeSelect
+	ConfigFieldTypeBoolean  = configspec.FieldTypeBoolean
+	ConfigFieldTypeNumber   = configspec.FieldTypeNumber
+	ConfigFieldTypeMulti    = configspec.FieldTypeMulti
 )
 
-type ConfigFieldSpec struct {
-	Key         string          `json:"key"`
-	Label       string          `json:"label"`
-	Type        ConfigFieldType `json:"type"`
-	Required    bool            `json:"required"`
-	Sensitive   bool            `json:"sensitive"`
-	Placeholder string          `json:"placeholder,omitempty"`
-	HelpText    string          `json:"helpText,omitempty"`
-	Default     string          `json:"default,omitempty"`
-	Options     []string        `json:"options,omitempty"`
-}
+type ConfigFieldSpec = configspec.Field
 
 type IntegrationSpec struct {
 	Fields              []ConfigFieldSpec `json:"fields"`
@@ -240,31 +230,9 @@ var ConfigSpecs = map[Type]IntegrationSpec{
 }
 
 func HasRequiredConfiguration(configuration map[string]any, spec IntegrationSpec) bool {
-	for _, field := range spec.Fields {
-		if !field.Required {
-			continue
-		}
-		if ReadConfigString(configuration, field.Key) == "" {
-			return false
-		}
-	}
-	return true
+	return configspec.HasRequired(configuration, spec.Fields)
 }
 
 func ReadConfigString(configuration map[string]any, key string) string {
-	if len(configuration) == 0 {
-		return ""
-	}
-
-	value, ok := configuration[key]
-	if !ok || value == nil {
-		return ""
-	}
-
-	stringValue, ok := value.(string)
-	if !ok {
-		return ""
-	}
-
-	return strings.TrimSpace(stringValue)
+	return configspec.ReadString(configuration, key)
 }

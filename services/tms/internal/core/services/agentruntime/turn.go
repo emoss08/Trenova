@@ -43,6 +43,9 @@ type Turn struct {
 	// opened, and delegations how many tasks it has handed out.
 	delegates   []agentdefinition.RuntimeDelegate
 	delegations int
+	// external says the turn has read content from outside the
+	// organization. From then on every write it asks for waits for a person.
+	external bool
 }
 
 // TurnEffects is everything a turn does outside itself.
@@ -91,6 +94,9 @@ type DispatchCall struct {
 	// Ordinal numbers this exact call within the run, so the step key of a
 	// legitimately repeated call differs from the first one's.
 	Ordinal int `json:"ordinal"`
+	// AfterExternalContent says the turn has read content from outside the
+	// organization, so a write is proposed rather than run.
+	AfterExternalContent bool `json:"afterExternalContent,omitempty"`
 }
 
 // ToolOutcome is what one tool call came to.
@@ -164,6 +170,9 @@ type TurnState struct {
 	// how many it has handed out.
 	Delegates   []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
 	Delegations int                               `json:"delegations,omitempty"`
+	// ExternalContent says the turn has read content from outside the
+	// organization.
+	ExternalContent bool `json:"externalContent,omitempty"`
 }
 
 // ToolSetState is a turn's tool set as data. Which tools are loaded follows
@@ -187,18 +196,19 @@ func (t *Turn) State() TurnState {
 	callIDs := slices.Sorted(maps.Keys(t.callIDs))
 
 	return TurnState{
-		Budget:      t.budget,
-		System:      t.system,
-		Messages:    t.messages,
-		Tools:       t.tools.state(),
-		Held:        slices.Clone(t.held),
-		Failures:    maps.Clone(t.repeats.failures),
-		Ordinals:    maps.Clone(t.counts.seen),
-		Questions:   questions,
-		CallIDs:     callIDs,
-		Result:      *t.result,
-		Delegates:   slices.Clone(t.delegates),
-		Delegations: t.delegations,
+		Budget:          t.budget,
+		System:          t.system,
+		Messages:        t.messages,
+		Tools:           t.tools.state(),
+		Held:            slices.Clone(t.held),
+		Failures:        maps.Clone(t.repeats.failures),
+		Ordinals:        maps.Clone(t.counts.seen),
+		Questions:       questions,
+		CallIDs:         callIDs,
+		Result:          *t.result,
+		Delegates:       slices.Clone(t.delegates),
+		Delegations:     t.delegations,
+		ExternalContent: t.external,
 	}
 }
 
@@ -258,6 +268,7 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 		result:      &result,
 		delegates:   state.Delegates,
 		delegations: state.Delegations,
+		external:    state.ExternalContent,
 	}
 }
 
@@ -302,13 +313,15 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	if len(runtimeContext.Tools) == 0 {
 		runtimeContext.Tools = s.ToolSummaries(definition)
 	}
+	granted := s.activeExtensions(ctx, req.Actor).grants()
+	runtimeContext.Tools = withSummaries(runtimeContext.Tools, s.summarize(definition, granted))
 
 	// Another agent's steps on a task this one handed it are never replayed:
 	// the model only ever saw its own call and the answer it got back. The
 	// thread's reader leaves them out already; this holds for any caller.
 	history := modelHistory(req.History)
 
-	held := s.heldTools(definition)
+	held := withGrants(s.heldTools(definition), granted)
 	// Moving the person around the app is for the agent they are talking
 	// to. A delegate that navigated would pull them away mid-answer to a
 	// page they never asked for.
@@ -570,6 +583,7 @@ func (s *Service) DispatchStep(
 		completionText: call.CompletionText,
 		proposedSoFar:  call.ProposedSoFar,
 		ordinal:        call.Ordinal,
+		afterExternal:  call.AfterExternalContent,
 	})
 	outcome.summary = summarizeOutcome(call.Call, outcome)
 
