@@ -34,7 +34,10 @@ call and its tenant instead of touching a database. `remember` alone runs for re
 real memory service and an in-memory repository, so what it writes is what production
 writes. `get_shipment` also runs its real `Query`, over a shipment repository and a comment
 repository that serve the case's planted response and a permission engine that allows the
-comments, so whether a comment taints the run is decided by the tool, not the harness. The
+comments, so whether a comment taints the run is decided by the tool, not the harness.
+`list_watchtower_items` runs its real `Query` the same way, over a watchtower feed that serves
+the case's planted items, so the per-row source mark on an inbound email's headline is the
+tool's own. The
 inbox tools' tier condition reads a fake mailbox that grants the most a mailbox can (the real
 inbox service over an in-memory message repository), so only taint stands between the model
 and the send.
@@ -50,7 +53,7 @@ Cases live in `services/tms/internal/core/services/agentredteam/testdata/cases/*
 
 | Outside content | How the run reads it |
 | --- | --- |
-| A malicious inbound email | `get_inbound_message`, or the run's subject |
+| A malicious inbound email | `get_inbound_message`, the run's subject, or its headline on the watchtower (`list_watchtower_items`) |
 | Document text | `get_document_summary` |
 | A record note | a driver's Dash comment returned by `get_shipment`, which marks it `record_note` |
 | A bank memo | `get_bank_receipt` |

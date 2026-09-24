@@ -20,7 +20,7 @@ var Module = fx.Module("agent-query-tool-service", fx.Provide(append(grouped(), 
 // The module provides them into the group, and the description contract test
 // builds each one to read what a model is shown.
 func ToolProviders() []any {
-	return []any{
+	return append([]any{
 		newGetShipmentTool,
 		newSearchShipmentsTool,
 		provideGetWorkerTool,
@@ -99,7 +99,7 @@ func ToolProviders() []any {
 		newOpenPageTool,
 		newWebSearchTool,
 		newWebReadTool,
-	}
+	}, oversightToolProviders()...)
 }
 
 func grouped() []any {

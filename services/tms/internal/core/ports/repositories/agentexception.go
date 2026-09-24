@@ -30,6 +30,11 @@ type UpdateAgentExceptionResolutionRequest struct {
 	TenantInfo      pagination.TenantInfo `json:"-"`
 }
 
+type ListAgentExceptionsByIDsRequest struct {
+	IDs        []pulid.ID
+	TenantInfo pagination.TenantInfo
+}
+
 type AgentExceptionRepository interface {
 	List(
 		ctx context.Context,
@@ -40,6 +45,10 @@ type AgentExceptionRepository interface {
 		req *ListAgentExceptionConnectionRequest,
 	) (*pagination.CursorListResult[*agent.AgentException], error)
 	GetByID(ctx context.Context, req GetAgentExceptionByIDRequest) (*agent.AgentException, error)
+	ListByIDs(
+		ctx context.Context,
+		req ListAgentExceptionsByIDsRequest,
+	) ([]*agent.AgentException, error)
 	Create(ctx context.Context, entity *agent.AgentException) (*agent.AgentException, error)
 	UpdateResolution(
 		ctx context.Context,

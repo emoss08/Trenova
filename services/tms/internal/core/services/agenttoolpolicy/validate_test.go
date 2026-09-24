@@ -287,6 +287,40 @@ func TestValidate_RefusesEachBrokenRule(t *testing.T) {
 			reason: "only a write can carry",
 		},
 		{
+			name: "further sources belong to a tool that reads outside text",
+			specs: func() []Spec {
+				spec := validQuery()
+				spec.Policy.Sources = []agent.TaintSource{agent.TaintSourceWeather}
+				return []Spec{spec}
+			},
+			reason: "names further taint sources but reads no outside text",
+		},
+		{
+			name: "a further source is a real one",
+			specs: func() []Spec {
+				spec := validQuery()
+				spec.Policy.ReadsExternal = agent.ExternalReadMarked
+				spec.Policy.Source = agent.TaintSourceInboundMessage
+				spec.Policy.Sources = []agent.TaintSource{"gossip"}
+				return []Spec{spec}
+			},
+			reason: "taint source \"gossip\" is not valid",
+		},
+		{
+			name: "a further source is not named twice",
+			specs: func() []Spec {
+				spec := validQuery()
+				spec.Policy.ReadsExternal = agent.ExternalReadMarked
+				spec.Policy.Source = agent.TaintSourceInboundMessage
+				spec.Policy.Sources = []agent.TaintSource{
+					agent.TaintSourceWeather,
+					agent.TaintSourceInboundMessage,
+				}
+				return []Spec{spec}
+			},
+			reason: "taint source \"inbound_message\" is named twice",
+		},
+		{
 			name: "a reporter's artifact is a record-link key",
 			specs: func() []Spec {
 				spec := validAction()

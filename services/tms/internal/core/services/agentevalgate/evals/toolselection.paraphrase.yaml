@@ -68,6 +68,12 @@ cases:
     expect: [create_shipment]
   - request: put Juan on the Houston leg with truck 42
     expect: [assign_move]
+  - request: what needs my attention right now
+    expect: [list_watchtower_items]
+  - request: catch me up on this morning's summary
+    expect: [get_daily_briefing]
+  - request: what have the automations been doing lately
+    expect: [list_agent_runs, get_agent_run]
 nothing:
   - xyzzy plugh
   - quantum chromodynamics lattice

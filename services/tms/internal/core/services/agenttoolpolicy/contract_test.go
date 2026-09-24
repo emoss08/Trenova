@@ -93,6 +93,9 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 		"recall_memory":                agent.ExternalReadMarked,
 		"get_agent_run":                agent.ExternalReadMarked,
 		"get_shipment":                 agent.ExternalReadMarked,
+		"list_watchtower_items":        agent.ExternalReadMarked,
+		"list_agent_runs":              agent.ExternalReadMarked,
+		"get_daily_briefing":           agent.ExternalReadNever,
 		"get_customer":                 agent.ExternalReadNever,
 	}
 	for name, want := range cases {
@@ -103,6 +106,14 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 		}
 	}
 	assert.Equal(t, agent.TaintSourceRecordNote, registeredPolicy(t, "get_shipment").Source)
+	assert.Equal(t, agent.TaintSourceRunRecord, registeredPolicy(t, "list_agent_runs").Source)
+	watchtower := registeredPolicy(t, "list_watchtower_items")
+	assert.Equal(t, agent.TaintSourceInboundMessage, watchtower.Source)
+	assert.ElementsMatch(t, []agent.TaintSource{
+		agent.TaintSourceEDI,
+		agent.TaintSourceWeather,
+		agent.TaintSourceRunRecord,
+	}, watchtower.Sources)
 	assert.True(t, registeredPolicy(t, "remember").CarriesTaint)
 	assert.NotNil(t, registeredPolicy(t, "remember").TaintHold)
 	assert.True(t, registeredPolicy(t, "add_shipment_comment").CarriesTaint)

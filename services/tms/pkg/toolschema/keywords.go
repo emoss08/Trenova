@@ -8,8 +8,12 @@ const (
 	KeyDescription          = "description"
 	KeyMinimum              = "minimum"
 	KeyMaximum              = "maximum"
+	KeyItems                = "items"
+	KeyEnum                 = "enum"
 
 	TypeObject  = "object"
 	TypeString  = "string"
 	TypeInteger = "integer"
+	TypeBoolean = "boolean"
+	TypeArray   = "array"
 )

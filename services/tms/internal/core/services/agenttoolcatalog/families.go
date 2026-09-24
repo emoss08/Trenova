@@ -19,6 +19,7 @@ const maxFamilySize = 4
 var families = [...][]string{
 	{"list_reports", "describe_report", "run_report", "get_report_run"},
 	{"list_report_datasets", "describe_report_dataset", "preview_report"},
+	{"list_watchtower_items", "get_daily_briefing", "list_agent_runs", "get_agent_run"},
 }
 
 // indexFamilies maps each family member to the others, in family order.
