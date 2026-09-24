@@ -51,6 +51,8 @@ type Params struct {
 	CarrierIntel repositories.CarrierIntelEventRepository   `optional:"true"`
 	EDIFiles     repositories.EDIInboundFileRepository      `optional:"true"`
 	Inbound      repositories.InboundMessageRepository      `optional:"true"`
+	Reports      repositories.ReportDefinitionRepository    `optional:"true"`
+	Dashboards   repositories.ReportDashboardRepository     `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -70,6 +72,8 @@ type Service struct {
 	carrierIntel repositories.CarrierIntelEventRepository
 	ediFiles     repositories.EDIInboundFileRepository
 	inbound      repositories.InboundMessageRepository
+	reports      repositories.ReportDefinitionRepository
+	dashboards   repositories.ReportDashboardRepository
 	logger       *zap.Logger
 }
 
@@ -88,6 +92,8 @@ func New(p Params) serviceports.AgentSubjectDescriber {
 		carrierIntel: p.CarrierIntel,
 		ediFiles:     p.EDIFiles,
 		inbound:      p.Inbound,
+		reports:      p.Reports,
+		dashboards:   p.Dashboards,
 		logger:       p.Logger.Named("service.agentsubject"),
 	}
 }
@@ -121,6 +127,10 @@ func (s *Service) Describe(
 		return s.ediInboundFile(ctx, tenant, subjectID)
 	case agent.SubjectInboundMessage:
 		return s.inboundMessage(ctx, tenant, subjectID)
+	case agent.SubjectReport:
+		return s.report(ctx, tenant, subjectID)
+	case agent.SubjectDashboard:
+		return s.dashboard(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:
@@ -808,6 +818,84 @@ func (s *Service) inboundMessage(
 		notes["attachments"] = describeAttachments(message.Attachments)
 	}
 	subject.Notes = marshalNotes(notes)
+
+	return subject, nil
+}
+
+func (s *Service) report(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	definitionID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectReport,
+		ID:    definitionID.String(),
+		Label: "Report",
+	}
+	if s.reports == nil {
+		return subject, nil
+	}
+
+	found, err := s.reports.GetByID(ctx, &repositories.GetReportDefinitionRequest{
+		TenantInfo:   tenant,
+		DefinitionID: definitionID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load report: %w", err)
+	}
+
+	subject.Label = "Report: " + found.Name
+	notes := map[string]any{
+		"name":        found.Name,
+		"description": found.Description,
+		"category":    found.Category,
+		"kind":        found.Kind,
+		"status":      found.Status,
+		"visibility":  found.Visibility,
+		"lastRunAt":   found.LastRunAt,
+	}
+	if len(found.Diagnostics) > 0 {
+		notes["diagnostics"] = found.Diagnostics
+	}
+	subject.Notes = marshalNotes(notes)
+
+	return subject, nil
+}
+
+func (s *Service) dashboard(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	dashboardID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectDashboard,
+		ID:    dashboardID.String(),
+		Label: "Dashboard",
+	}
+	if s.dashboards == nil {
+		return subject, nil
+	}
+
+	found, err := s.dashboards.GetByID(ctx, &repositories.GetReportDashboardRequest{
+		TenantInfo:  tenant,
+		DashboardID: dashboardID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load dashboard: %w", err)
+	}
+
+	tiles := 0
+	if found.Layout != nil {
+		tiles = len(found.Layout.Tiles)
+	}
+	subject.Label = "Dashboard: " + found.Name
+	subject.Notes = marshalNotes(map[string]any{
+		"name":        found.Name,
+		"description": found.Description,
+		"category":    found.Category,
+		"visibility":  found.Visibility,
+		"tiles":       tiles,
+	})
 
 	return subject, nil
 }
