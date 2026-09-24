@@ -5307,7 +5307,7 @@
       "service/ratequoteservice"
     ]
   },
-  "A shipment move was created or lost its assignment and has nobody to run it.": {
+  "A shipment move lost its assignment and has nobody to run it.": {
     "sites": 1,
     "scope": [
       "go"

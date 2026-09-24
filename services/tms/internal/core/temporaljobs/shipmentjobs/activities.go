@@ -3,6 +3,7 @@ package shipmentjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -27,6 +28,7 @@ type ActivitiesParams struct {
 	AuditService services.AuditService
 	EventService services.ShipmentEventService
 	Realtime     services.RealtimeService
+	AgentEvents  services.AgentEventPublisher `optional:"true"`
 	Logger       *zap.Logger
 }
 
@@ -35,6 +37,7 @@ type Activities struct {
 	auditService services.AuditService
 	eventService services.ShipmentEventService
 	realtime     services.RealtimeService
+	agentEvents  services.AgentEventPublisher
 	logger       *zap.Logger
 }
 
@@ -44,6 +47,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		auditService: p.AuditService,
 		eventService: p.EventService,
 		realtime:     p.Realtime,
+		agentEvents:  p.AgentEvents,
 		logger:       p.Logger.Named("shipment-activities"),
 	}
 }
@@ -106,6 +110,15 @@ func (a *Activities) BulkDuplicateShipmentsActivity(
 				a.logger.Warn("failed to record duplicated shipment event", zap.Error(eventErr))
 			}
 		}
+
+		services.PublishAgentEvent(ctx, a.agentEvents, services.AgentEvent{
+			Kind:      agent.EventShipmentCreated,
+			SubjectID: entity.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+		})
 	}
 
 	if len(duplicated) > 0 {

@@ -344,9 +344,9 @@ func (c *Connection) WithTx(
 		}
 	}
 
-	ctx = context.WithValue(ctx, txContextKey{}, tx)
+	txCtx, hooks := ports.WithAfterCommitHooks(context.WithValue(ctx, txContextKey{}, tx))
 
-	if err = fn(ctx, tx); err != nil {
+	if err = fn(txCtx, tx); err != nil {
 		return err
 	}
 
@@ -355,6 +355,7 @@ func (c *Connection) WithTx(
 	}
 
 	committed = true
+	hooks.Run(ctx)
 	return nil
 }
 

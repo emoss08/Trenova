@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -163,6 +164,7 @@ func (s *Service) GenerateFormula(
 			req.Instruction,
 		),
 		OutputSchema: generateOutputSchema(),
+		Attribution:  serviceports.AIUsageAttribution{UserID: req.TenantInfo.UserID},
 	})
 	if err != nil {
 		return nil, err
@@ -314,6 +316,7 @@ func (s *Service) ExplainFormula(
 		System:       explainSystemPrompt,
 		Context:      buildExplainContext(description, req.Expression),
 		OutputSchema: explainOutputSchema(),
+		Attribution:  serviceports.AIUsageAttribution{UserID: req.TenantInfo.UserID},
 	})
 	if err != nil {
 		return nil, err
@@ -455,10 +458,7 @@ func (s *Service) logCall(
 	promptHash := sha256.Sum256([]byte(prompt))
 	responseHash := sha256.Sum256([]byte(result.Text))
 
-	promptPreview := prompt
-	if len(promptPreview) > logPreviewLength {
-		promptPreview = promptPreview[:logPreviewLength]
-	}
+	promptPreview := stringutils.TruncateRunes(prompt, logPreviewLength)
 
 	entry := &ailog.Log{
 		ID:             pulid.MustNew("ail_"),

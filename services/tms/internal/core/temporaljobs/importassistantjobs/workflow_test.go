@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	assistant "github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
@@ -123,6 +124,72 @@ func TestImportAssistantTurnWorkflow_RunsTheToolLoopAndSaves(t *testing.T) {
 	require.Len(t, saved.Record.Actions, 1)
 	assert.Equal(t, 2, calls)
 	env.AssertExpectations(t)
+}
+
+func TestImportAssistantTurnWorkflow_AttributesEveryModelCallAndTotalsItsUsage(t *testing.T) {
+	t.Parallel()
+
+	env := turnEnv(t)
+	var a *Activities
+	payload := turnPayload(false)
+	providerID := pulid.MustNew("aip_")
+
+	attributed := make([]serviceports.AIUsageAttribution, 0, 2)
+	env.OnActivity(a.ImportModelCallActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, in *ModelInput) (*serviceports.ChatCompletionResult, error) {
+			attributed = append(attributed, in.Request.Attribution)
+			if len(attributed) == 1 {
+				return &serviceports.ChatCompletionResult{
+					ToolCalls: []serviceports.ToolCall{{
+						ID:        "call_1",
+						Name:      "search_customers",
+						Arguments: map[string]any{"query": "Acme"},
+					}},
+					ModelIdentifier: "first-model",
+					InputTokens:     400,
+					OutputTokens:    20,
+					ReasoningTokens: 5,
+				}, nil
+			}
+
+			return &serviceports.ChatCompletionResult{
+				Text:            "Found Acme Freight.",
+				ModelIdentifier: "second-model",
+				ProviderID:      providerID,
+				ProviderKind:    aiprovider.KindOllama,
+				InputTokens:     500,
+				OutputTokens:    30,
+				ReasoningTokens: 7,
+			}, nil
+		})
+
+	env.OnActivity(a.ImportToolActivity, mock.Anything, mock.Anything).
+		Return(&assistant.ToolOutcome{Output: `{"customers":[]}`, Status: "completed"}, nil).
+		Once()
+
+	var saved *FinishInput
+	env.OnActivity(a.FinishImportTurnActivity, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, in *FinishInput) (*serviceports.ShipmentImportChatResponse, error) {
+			saved = in
+
+			return &serviceports.ShipmentImportChatResponse{}, nil
+		}).
+		Once()
+
+	env.ExecuteWorkflow(ImportAssistantTurnWorkflow, payload)
+
+	require.NoError(t, env.GetWorkflowError())
+	require.Len(t, attributed, 2)
+	for _, attribution := range attributed {
+		assert.Equal(t, payload.TenantInfo.UserID, attribution.UserID)
+	}
+	require.NotNil(t, saved)
+	assert.Equal(t, "second-model", saved.Record.Model)
+	assert.Equal(t, providerID, saved.Record.ProviderID)
+	assert.Equal(t, aiprovider.KindOllama, saved.Record.ProviderKind)
+	assert.Equal(t, 900, saved.Record.InputTokens)
+	assert.Equal(t, 50, saved.Record.OutputTokens)
+	assert.Equal(t, 12, saved.Record.ReasoningTokens)
 }
 
 // suggest_quick_actions carries the reply's chips. The loop reads them itself,
