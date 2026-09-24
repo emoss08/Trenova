@@ -1,5 +1,5 @@
 {
-  "version": "sha256:5033b022268df8726ce6f8b792d10394806b284e7368e38e6c4e95a5cd6c6fe7",
+  "version": "sha256:0fc8e68926a17b75c608cf5f758ccb021045b39bbd7a67af6dd2382a8d7f56c2",
   "modules": [
     {
       "id": "home",
@@ -5687,9 +5687,24 @@
             "Open [Formula templates](/billing/configuration-files/formula-templates).",
             "Select **New formula template**, then **New formula template** in the menu. The Formula Studio opens.",
             "Under **Template details**, enter a **Name**, choose the **Type** (**Freight charge** or **Accessorial charge**) and add a **Description**.",
-            "Write the **Expression**, or pick a template under **Start from a standard** or **Or copy an existing template**. You can also select **Generate with AI**, describe the charge, then **Insert into editor**.",
+            "Write the **Expression**, or pick a template under **Start from a standard** or **Or copy an existing template**. You can also select **Formula assistant**, describe the charge, then select **Insert into editor** on the **Proposed formula**.",
             "Set the **Charge policy** (**Minimum charge**, **Maximum charge**, **Rounding mode**, **Rounding precision**) and check the result in **Live preview**.",
             "Select **Create template**. The template is saved as a draft."
+          ]
+        },
+        {
+          "title": "Get help from the formula assistant",
+          "keywords": [
+            "AI formula",
+            "generate formula",
+            "explain formula",
+            "ask about a formula"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template, or start a new one.",
+            "Select **Formula assistant** beside **Expression** and describe how the template should price a shipment, or ask about the formula in the editor. To have the current expression explained, select **Explain formula** instead.",
+            "The assistant reads the expression and variables in the editor and prices sample loads with the formula engine. When it writes a formula, the **Proposed formula** shows the expression, its variables, how it works and what the engine charged for each sample.",
+            "Select **Insert into editor** to put it in the editor, or **Add** (or **Add all**) to save a priced sample as a scenario on a saved template. Nothing is saved until you save the template."
           ]
         },
         {
@@ -5762,7 +5777,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it.\n\nOnly an active template rates shipments. Rejecting archives the template; use **Request changes** to send it back for more work instead. **Scenarios** can only be added after the template is saved, and a scenario keeps gating approval until it is deleted.",
+      "notes": "Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it.\n\nThe formula assistant needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the panel says which is missing.\n\nOnly an active template rates shipments. Rejecting archives the template; use **Request changes** to send it back for more work instead. **Scenarios** can only be added after the template is saved, and a scenario keeps gating approval until it is deleted.",
       "related": [
         "/billing/rate-agreements",
         "/billing/configuration-files/rate-matrices",
@@ -14172,7 +14187,7 @@
         "Import from rate confirmation"
       ],
       "description": "This page creates a shipment from a customer's rate confirmation document.",
-      "summary": "This page creates a shipment from a customer's rate confirmation document. You upload a PDF or image, Trenova extracts the shipment details (customer, stops, dates, rates and references), and you review each extracted field beside a preview of the document before creating the shipment. An AI assistant panel helps fill in or correct fields and says when the draft is ready. Customer service and dispatch staff use it to enter tendered loads without retyping them.",
+      "summary": "This page creates a shipment from a customer's rate confirmation document. You upload a PDF or image, Trenova extracts the shipment details (customer, stops, dates, rates and references), and you review each extracted field beside a preview of the document before creating the shipment. The import assistant beside the fields reads the document and the draft, accepts or corrects fields, matches stops to your locations, and says when the draft is ready. Its changes land on the page as if you had made them; nothing is saved until you create the shipment. Customer service and dispatch staff use it to enter tendered loads without retyping them.",
       "requires": [
         {
           "resource": "shipment",
@@ -14207,6 +14222,21 @@
           ]
         },
         {
+          "title": "Let the import assistant finish the draft",
+          "keywords": [
+            "AI import",
+            "assistant",
+            "match stops",
+            "missing fields"
+          ],
+          "steps": [
+            "On [Import from rate confirmation](/shipment-management/shipments/import), after extraction, the import assistant opens beside the fields and starts on what is missing.",
+            "Ask it to accept fields, set the customer, service type, shipment type or rating method, or match each stop to a location. Each change appears on the page at once.",
+            "When a stop's facility is not one of your locations, the assistant proposes a new location. Review the card and approve it before it is saved; because the assistant has read a document from outside your organization, every change it proposes to your records waits for your approval.",
+            "If **Create shipment** fails, the assistant is told why and walks you through fixing it."
+          ]
+        },
+        {
           "title": "Recover from a failed extraction",
           "keywords": [
             "extraction failed",
@@ -14219,7 +14249,7 @@
           ]
         }
       ],
-      "notes": "Needs create permission for shipments. If the shipment is created but the document could not be attached, the success screen says so; attach the document from the shipment's **Documents** tab.",
+      "notes": "Needs create permission for shipments. The import assistant also needs permission to start assistant conversations and access to the Shipment import assistant agent; without them the panel says which is missing. Re-extracting a document closes its conversation and starts a new one. If the shipment is created but the document could not be attached, the success screen says so; attach the document from the shipment's **Documents** tab.",
       "related": [
         "/shipment-management/shipments",
         "/shipment-management/orders"

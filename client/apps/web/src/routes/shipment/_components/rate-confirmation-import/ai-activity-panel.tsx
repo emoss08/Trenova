@@ -126,10 +126,12 @@ export default function AIActivityPanel({
       lastCreateError
         ? {
             key: lastCreateError,
-            text: t(
-              "Creating the shipment failed:\n{0}\n\nHelp me fix these one at a time.",
+            text: [
+              t("Creating the shipment failed:"),
               createFailureSummary(lastCreateError),
-            ),
+              "",
+              t("Help me fix these one at a time."),
+            ].join("\n"),
           }
         : null,
     [lastCreateError, t],
