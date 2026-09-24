@@ -1,5 +1,4 @@
 import { AgentAsk, type AgentAskHandle } from "@/components/assistant/agent-ask";
-import { DeskMark } from "@/components/assistant/voice/desk-thinking";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { useAttentionSummary } from "@/hooks/use-attention";
@@ -13,6 +12,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import {
   partOfDay,
   resolveUserTimezone,
+  skyPhase,
   toUserWallClock,
   type PartOfDay,
 } from "@trenova/shared/lib/date";
@@ -21,12 +21,12 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { BotIcon, PlugZapIcon } from "lucide-react";
-import { useReducedMotion } from "motion/react";
 import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router";
 import { BriefingPanel } from "./briefing-panel";
 import { DeskAgentDirectory } from "./desk-agent-directory";
 import { DeskDecisionsCallout } from "./desk-decisions-callout";
+import { DeskGreeting } from "./desk-greeting";
 import { DeskRecentConversations } from "./desk-recent-conversations";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
 
@@ -74,20 +74,16 @@ function entrance(step: number): CSSProperties {
  * morning's briefing wrote one and checked every figure in it. A front page
  * that opens with a sentence nobody can trace is one people stop reading.
  *
- * The greeting sits beside a small drawing of a desk in the ink, set for the
- * part of the day: a sun low in the morning and high in the afternoon, and
- * in the evening a moon and the desk lamp switching on. It is the same desk
- * that works while an agent does, here at rest.
+ * The greeting sits under the day's own light: a soft wash of dawn, daylight,
+ * dusk or night behind the first lines, and a small mark of the same sky
+ * leading the greeting, both read from the person's own timezone.
  *
- * Everything arrives once, in reading order, a beat apart — the desk, then
- * the greeting and the date, then the headline — and then holds still. The
- * chair settles in and the lamp catches as the page opens, and nothing here
- * moves again unless the person does something.
+ * Everything arrives once, in reading order, a beat apart, and then holds
+ * still. Nothing here moves again unless the person does something.
  */
 export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: DeskHomeProps) {
   const t = useT();
   const [now] = useState(nowInSeconds);
-  const reduceMotion = useReducedMotion() ?? false;
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
   const liveThreadIds = useLiveThreadIds();
@@ -138,8 +134,13 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   );
   const hour = toUserWallClock(now, timezone)?.getHours() ?? 9;
   const dayPart = partOfDay(hour);
+  const sky = skyPhase(hour);
   const firstName = user?.name?.trim().split(/\s+/)[0] ?? "";
 
+  // The briefing's headline when there is one: it was written from figures
+  // gathered before a word of it, and every number in it was checked against
+  // them. The computed sentence is what a morning reads like before the page
+  // has been written.
   const headline =
     briefing?.headline ||
     (canDecide && waiting > 0
@@ -154,134 +155,104 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   const showDecisions = canDecide && waiting > 0;
   const showAside = showDecisions || recent.length > 0;
 
+  // The sky's wash reaches past the column on both sides and is clipped only
+  // at the window's edge, never at the column's, so it has no edge to see.
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col px-6 pt-12 pb-16 sm:px-10 lg:pt-16">
-      <div
-        className={cn(
-          "grid grid-cols-1 gap-x-12 gap-y-10",
-          showAside && "xl:grid-cols-[minmax(0,1fr)_19rem]",
-        )}
-      >
-        <div ref={heroRef} className="flex min-w-0 scroll-mt-6 flex-col gap-7">
-          <header className="flex flex-col gap-6">
-            <div className="flex items-center gap-4">
-              <span
-                className="text-foreground-muted animate-rise flex shrink-0"
-                style={entrance(0)}
-              >
-                <DeskMark
-                  pose="idle"
-                  size="xl"
-                  timeOfDay={dayPart}
-                  welcome
-                  animate={!reduceMotion}
-                />
-              </span>
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <p
-                  className="text-foreground animate-rise truncate text-lg font-medium"
-                  style={entrance(1)}
-                >
-                  {greeting(t, dayPart, firstName)}
-                </p>
-                <p className="text-foreground-subtle animate-rise text-sm" style={entrance(2)}>
-                  <time dateTime={isoDate}>{dateline}</time>
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              {/* The briefing's headline when there is one: it was written from
-                  figures gathered before a word of it, and every number in it
-                  was checked against them. The computed sentence is what a
-                  morning reads like before the page has been written. */}
-              <h1
-                className="animate-rise max-w-2xl text-3xl font-semibold text-balance"
-                style={entrance(3)}
-              >
-                {headline}
-              </h1>
-              <p
-                className="text-foreground-muted animate-rise max-w-xl text-base text-pretty"
-                style={entrance(4)}
-              >
-                {noAgents
+    <div className="w-full overflow-x-clip">
+      <div className="mx-auto flex w-full max-w-6xl flex-col px-6 pt-12 pb-16 sm:px-10 lg:pt-16">
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-x-12 gap-y-10",
+            showAside && "xl:grid-cols-[minmax(0,1fr)_19rem]",
+          )}
+        >
+          <div ref={heroRef} className="flex min-w-0 scroll-mt-6 flex-col gap-7">
+            <DeskGreeting
+              sky={sky}
+              greeting={greeting(t, dayPart, firstName)}
+              dateline={dateline}
+              isoDate={isoDate}
+              entrance={entrance}
+              headline={headline}
+              lede={
+                noAgents
                   ? t("The Desk comes alive once an agent is enabled.")
                   : t(
                       "Ask an agent about the work in front of you. What it makes opens beside you.",
-                    )}
-              </p>
-            </div>
-          </header>
+                    )
+              }
+            />
 
-          <div className="animate-rise" style={entrance(5)}>
-            {noAgents ? (
-              <NoAgents canManageAgents={canManageAgents} />
-            ) : askable.agent ? (
-              <AgentAsk
-                ref={askRef}
-                agent={askable.agent}
-                onAgentChange={askable.choose}
-                recentIds={askable.recency.ids}
-                lastUsedAt={askable.recency.lastUsedAt}
-                disabled={isStarting}
-                onAsk={(agentId, question) => onStart(agentId, question)}
-              />
-            ) : askable.choices.isError ? (
-              <AgentsUnavailable onRetry={askable.choices.refetch} />
-            ) : (
-              <div className="flex flex-col gap-3" aria-busy>
-                <Skeleton className="rounded-surface h-26" />
-                <div className="flex gap-1.5">
-                  <Skeleton className="h-7 w-44 rounded-full" />
-                  <Skeleton className="h-7 w-52 rounded-full" />
-                  <Skeleton className="h-7 w-36 rounded-full" />
+            <div className="animate-rise" style={entrance(3)}>
+              {noAgents ? (
+                <NoAgents canManageAgents={canManageAgents} />
+              ) : askable.agent ? (
+                <AgentAsk
+                  ref={askRef}
+                  agent={askable.agent}
+                  onAgentChange={askable.choose}
+                  recentIds={askable.recency.ids}
+                  lastUsedAt={askable.recency.lastUsedAt}
+                  disabled={isStarting}
+                  onAsk={(agentId, question) => onStart(agentId, question)}
+                />
+              ) : askable.choices.isError ? (
+                <AgentsUnavailable onRetry={askable.choices.refetch} />
+              ) : (
+                <div className="flex flex-col gap-3" aria-busy>
+                  <Skeleton className="rounded-surface h-26" />
+                  <div className="flex gap-1.5">
+                    <Skeleton className="h-7 w-44 rounded-full" />
+                    <Skeleton className="h-7 w-52 rounded-full" />
+                    <Skeleton className="h-7 w-36 rounded-full" />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
 
-        {showAside && (
-          <aside
-            aria-label={t("Waiting on you and recent conversations")}
-            className="animate-rise flex min-w-0 flex-col gap-8 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-3 xl:row-start-1 xl:self-start"
-            style={entrance(6)}
-          >
-            {showDecisions && (
-              <DeskDecisionsCallout
-                waiting={waiting}
-                byAgent={summaryQuery.data?.byAgent ?? []}
-                oldestAt={summaryQuery.data?.oldestAt ?? null}
+          {showAside && (
+            <aside
+              aria-label={t("Waiting on you and recent conversations")}
+              className="animate-rise flex min-w-0 flex-col gap-8 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-3 xl:row-start-1 xl:self-start"
+              style={entrance(4)}
+            >
+              {showDecisions && (
+                <DeskDecisionsCallout
+                  waiting={waiting}
+                  byAgent={summaryQuery.data?.byAgent ?? []}
+                  oldestAt={summaryQuery.data?.oldestAt ?? null}
+                  agentsById={agentsById}
+                  now={now}
+                />
+              )}
+              <DeskRecentConversations
+                threads={recent}
                 agentsById={agentsById}
+                liveThreadIds={liveThreadIds}
                 now={now}
+                className="-mx-2"
               />
-            )}
-            <DeskRecentConversations
-              threads={recent}
-              agentsById={agentsById}
-              liveThreadIds={liveThreadIds}
-              now={now}
-              className="-mx-2"
-            />
-          </aside>
-        )}
+            </aside>
+          )}
 
-        {briefing && (
-          <div className="animate-rise min-w-0" style={entrance(7)}>
-            <BriefingPanel briefing={briefing} />
-          </div>
-        )}
+          {briefing && (
+            <div className="animate-rise min-w-0" style={entrance(5)}>
+              <BriefingPanel briefing={briefing} />
+            </div>
+          )}
 
-        {!noAgents && (
-          <div className="animate-rise min-w-0" style={entrance(8)}>
-            <DeskAgentDirectory
-              recency={askable.recency}
-              selectedId={askable.agent?.id ?? null}
-              disabled={isStarting}
-              onChoose={chooseAgent}
-            />
-          </div>
-        )}
+          {!noAgents && (
+            <div className="animate-rise min-w-0" style={entrance(6)}>
+              <DeskAgentDirectory
+                recency={askable.recency}
+                selectedId={askable.agent?.id ?? null}
+                disabled={isStarting}
+                onChoose={chooseAgent}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

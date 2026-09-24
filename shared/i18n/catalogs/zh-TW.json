@@ -37,6 +37,7 @@
   "A calculated rate basis is required before billing can proceed": "開始帳務作業前必須有已計算的計價基準",
   "A calculation needs at least one measure — two target values are a constant": "計算至少需要一個量值 — 兩個目標值只會得到常數",
   "A calculation operand is either a measure or a target value, not both": "計算運算元只能是量值或目標值，不能兩者皆是",
+  "A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person.": "對來信的操作只能在其信箱允許的範圍內執行：信箱無需審核即可處理的已分類郵件可以自行執行，而任何被暫留、隔離、已結案或無法讀取的郵件都須等待人員處理。",
   "A canceled carrier assignment must record its reason": "已取消的承運業者指派必須記錄原因",
   "A canceled tender must record its reason": "已取消的要約必須記錄其原因",
   "A canceled transfer must record when it was canceled": "已取消的移轉必須記錄取消時間",

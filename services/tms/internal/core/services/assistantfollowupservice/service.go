@@ -30,6 +30,9 @@ type Params struct {
 	Conversations repositories.ConversationRepository
 	Turns         *assistantturnservice.Service
 	Workflows     serviceports.WorkflowStarter
+	Proposals     repositories.AgentProposalRepository
+	Plans         repositories.AgentPlanRepository
+	Decisions     repositories.AgentDecisionRepository
 }
 
 type Service struct {
@@ -38,6 +41,7 @@ type Service struct {
 	conversations repositories.ConversationRepository
 	turns         turnStarter
 	workflows     serviceports.WorkflowStarter
+	decided       decidedReader
 }
 
 // turnStarter is the part of the turn service a follow-up needs.
@@ -50,12 +54,27 @@ type turnStarter interface {
 }
 
 func New(p Params) serviceports.DecisionFollowUps {
+	return newService(p)
+}
+
+// NewResumer is the same service, as what a turn that ended asks to start the
+// follow-ups it kept out.
+func NewResumer(p Params) serviceports.DecisionFollowUpResumer {
+	return newService(p)
+}
+
+func newService(p Params) *Service {
 	return &Service{
 		l:             p.Logger.Named("service.assistantfollowup"),
 		runs:          p.Runs,
 		conversations: p.Conversations,
 		turns:         p.Turns,
 		workflows:     p.Workflows,
+		decided: decidedReader{
+			proposals: p.Proposals,
+			plans:     p.Plans,
+			decisions: p.Decisions,
+		},
 	}
 }
 
@@ -151,9 +170,10 @@ func (s *Service) threadFor(
 }
 
 // logStartFailure records a follow-up that never began. The conversation
-// being busy is ordinary — the person asked something while the change ran —
-// and the outcome reaches the agent on that turn anyway, since every turn is
-// told what became of the conversation's proposals.
+// being busy is ordinary — the person asked something while the change ran,
+// or approved a second card while the first was being reported. The turn in
+// the way read the proposal before it was decided, so it cannot report it;
+// when it ends it resumes this follow-up (ResumeFollowUps).
 func (s *Service) logStartFailure(start assistantturnservice.StartRequest, err error) {
 	s.l.Info("decision follow-up not started",
 		zap.String("thread", start.ThreadID.String()),

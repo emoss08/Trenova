@@ -1,7 +1,6 @@
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
-import { cn } from "@trenova/shared/lib/utils";
 import { formatWorkDuration } from "@/lib/ai-usage-format";
 import { EASE_SETTLE } from "@/lib/motion";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
@@ -105,7 +104,7 @@ export function StreamingTurn({
           {asks.map((ask) => (
             <ChoicePrompt key={ask.callId} request={ask} answered={false} onAnswer={onAnswer} />
           ))}
-          <WorkingLine turn={turn} steps={steps} active={active} opening={!hasBody} />
+          <WorkingLine turn={turn} steps={steps} active={active} />
         </AssistantTurn>
       )}
 
@@ -141,50 +140,33 @@ export function StreamingTurn({
  * The words change only when the work does — a step starting, a step
  * finishing, the model turning to write — and each change rises into place
  * while the last one lifts away, so the line moves because something
- * happened and at no other time. The desk beside them is the one loop the
- * product allows, and its pose follows the same moment: someone sitting down
- * to it while the model thinks, a busy shake while a tool runs, the screen
- * pulsing while the answer arrives.
+ * happened and at no other time. The desk beside them is the one scene the
+ * product draws, and its pose follows the same moment: dots on the screen
+ * while the model thinks, hands on the keys while a tool runs, lines written
+ * onto the screen while the answer arrives.
  *
- * Before the first word or step there is nothing above the line to read, so
- * the desk is drawn large and the line is the whole of the reply. When the
- * turn ends the words go at once and the desk settles for a beat, then the
- * line is gone.
+ * When the turn ends the words go at once and the desk settles for a beat,
+ * then the line is gone.
  */
 function WorkingLine({
   turn,
   steps,
   active,
-  opening,
 }: {
   turn: TurnState;
   steps: ToolStep[];
   active: boolean;
-  /** Nothing has arrived yet; the desk is drawn at its larger size. */
-  opening: boolean;
 }) {
   const reduceMotion = useReducedMotion() ?? false;
   const presence = useThinkingPresence(active, !reduceMotion);
-  // A turn that has ended is drawn by the desk's own settle, not by a pose.
-  const pose = thinkingPose(turn, steps);
 
   if (presence === "gone") {
     return null;
   }
 
   return (
-    <div
-      className={cn(
-        "text-foreground-muted flex min-w-0 items-center gap-2 text-xs",
-        opening ? "h-10" : "h-6",
-      )}
-    >
-      <DeskThinking
-        working={active}
-        pose={pose === "settle" ? "arrive" : pose}
-        size={opening ? "lg" : "inline"}
-        className={opening ? "-ml-0.5" : "mx-0.5"}
-      />
+    <div className="text-foreground-muted flex h-6 min-w-0 items-center gap-2 text-xs">
+      <DeskThinking pose={thinkingPose(turn, steps)} className="-ml-px" />
       {active && <WorkingWords turn={turn} steps={steps} reduceMotion={reduceMotion} />}
     </div>
   );
@@ -204,7 +186,6 @@ function WorkingWords({
   const now = useNowSeconds(1000);
   const elapsed = Math.max(0, now - Math.floor(turn.startedAt / 1000));
   const label = workingLabel(turn, steps, t);
-  const taken = steps.filter((step) => step.status !== "running").length;
   const travel = reduceMotion ? 0 : 6;
 
   return (
@@ -224,18 +205,47 @@ function WorkingWords({
         </AnimatePresence>
       </span>
       <span aria-hidden className="text-foreground-subtle shrink-0 font-mono text-2xs tabular-nums">
-        {taken > 0
-          ? `${t("{0, plural, one {# step} other {# steps}}", taken)} · ${formatWorkDuration(elapsed)}`
-          : formatWorkDuration(elapsed)}
+        {workingTally(steps, elapsed, t)}
       </span>
     </>
   );
 }
 
 /**
+ * The quiet count beside the words: the steps taken so far, how many are
+ * running at once when there is more than one, and how long it has been.
+ */
+export function workingTally(steps: readonly ToolStep[], elapsed: number, t: TranslateFn): string {
+  let taken = 0;
+  let running = 0;
+  for (const step of steps) {
+    if (step.status === "running") {
+      running += 1;
+    } else {
+      taken += 1;
+    }
+  }
+  const parts: string[] = [];
+  if (taken > 0) {
+    parts.push(t("{0, plural, one {# step} other {# steps}}", taken));
+  }
+  if (running > 1) {
+    parts.push(t("{0} running", running));
+  }
+  parts.push(formatWorkDuration(elapsed));
+
+  return parts.join(" · ");
+}
+
+/**
  * The words for the moment: the guard checking, a retry waiting, the step
  * under way, the thinking or the writing. A step that has just finished is
  * not the moment any more; the model is deciding what to do with it.
+ *
+ * The plain moments — getting going, thinking, writing — each have a few
+ * ways of being said, and a turn keeps one of them from start to finish, so
+ * two replies do not read as the same machine while one reply never
+ * changes its words for no reason.
  */
 export function workingLabel(turn: TurnState, steps: readonly ToolStep[], t: TranslateFn): string {
   if (turn.status === "guarding") {
@@ -247,18 +257,49 @@ export function workingLabel(turn: TurnState, steps: readonly ToolStep[], t: Tra
   if (steps.some((step) => step.status === "running")) {
     return currentActivity(steps, t)?.phrase ?? t("Working…");
   }
+  const variant = turnVariant(turn);
   const last = turn.segments.at(-1);
   if (last?.kind === "reasoning" && !last.closed) {
-    return t("Thinking…");
+    return variant % 2 === 1 ? t("Thinking it through…") : t("Thinking…");
   }
   if (last?.kind === "text" && !last.closed) {
-    return t("Writing the answer…");
+    return writingLine(variant, t);
   }
   if (last?.kind === "tool") {
     return t("Reading what came back…");
   }
+  if (!last) {
+    return openingLine(variant, t);
+  }
 
   return t("Thinking…");
+}
+
+/** Which of a moment's ways of being said this turn keeps: fixed for the turn, different between turns. */
+function turnVariant(turn: TurnState): number {
+  return Math.abs(Math.floor(turn.startedAt / 1000));
+}
+
+function openingLine(variant: number, t: TranslateFn): string {
+  switch (variant % 3) {
+    case 1:
+      return t("Pulling up a chair…");
+    case 2:
+      return t("Getting started…");
+    default:
+      return t("Thinking…");
+  }
+}
+
+function writingLine(variant: number, t: TranslateFn): string {
+  switch (variant % 3) {
+    case 1:
+      return t("Writing…");
+    case 2:
+      return t("Putting it into words…");
+    default:
+      return t("Writing the answer…");
+  }
 }
 
 type SegmentGroup =

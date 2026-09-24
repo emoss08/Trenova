@@ -37,6 +37,7 @@
   "A calculated rate basis is required before billing can proceed": "Se requiere una base de tarifa calculada antes de poder facturar",
   "A calculation needs at least one measure — two target values are a constant": "Un cálculo necesita al menos una medida: dos valores objetivo son una constante",
   "A calculation operand is either a measure or a target value, not both": "Un operando de cálculo es una medida o un valor objetivo, no ambos",
+  "A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person.": "Una acción sobre un mensaje entrante solo llega hasta donde su buzón lo permite: un mensaje clasificado que el buzón gestiona sin revisión puede ejecutarse por sí solo, y cualquier mensaje retenido, en cuarentena, resuelto o ilegible espera a una persona.",
   "A canceled carrier assignment must record its reason": "Una asignación de transportista cancelada debe registrar su motivo",
   "A canceled tender must record its reason": "Una oferta cancelada debe registrar su motivo",
   "A canceled transfer must record when it was canceled": "Una transferencia cancelada debe registrar cuándo se canceló",

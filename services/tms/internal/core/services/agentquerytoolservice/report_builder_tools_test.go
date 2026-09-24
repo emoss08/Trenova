@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -432,6 +433,140 @@ func TestDescribeReportDataset_NarrowsFieldsByText(t *testing.T) {
 	require.True(t, ok)
 	require.NotEmpty(t, description.Fields)
 	assert.Less(t, len(description.Fields), description.FieldCount)
+}
+
+/*
+list_report_datasets looked for the query as one literal substring, so a
+query of two words found only datasets whose text happened to hold them side
+by side. Every word now has to begin a word of the key, label, plural label or
+description, in any order.
+*/
+func TestListReportDatasets_MatchesEachWordOfTheQuery(t *testing.T) {
+	t.Parallel()
+
+	_, _, tools := reportingTools(t)
+
+	result, err := tools["list_report_datasets"].Query(
+		t.Context(),
+		testParams(map[string]any{"query": "shipments freight"}),
+	)
+	require.NoError(t, err)
+
+	rows, ok := result.(searchOutcome).Items.([]datasetRow)
+	require.True(t, ok)
+	keys := make([]string, 0, len(rows))
+	for _, row := range rows {
+		keys = append(keys, row.Dataset)
+	}
+	assert.Contains(t, keys, "shipment", "the words need not sit together, or in order")
+
+	result, err = tools["list_report_datasets"].Query(
+		t.Context(),
+		testParams(map[string]any{"query": "ipment"}),
+	)
+	require.NoError(t, err)
+	assert.Empty(t, result.(searchOutcome).Items, "a word matches the start of a word")
+}
+
+// A search that matched nothing is an empty list, never null, with a note
+// saying so and how to widen it: a bare null read as "no such data exists".
+func TestListReportDatasets_SaysHowToWidenASearchThatMatchedNothing(t *testing.T) {
+	t.Parallel()
+
+	_, _, tools := reportingTools(t)
+
+	result, err := tools["list_report_datasets"].Query(
+		t.Context(),
+		testParams(map[string]any{"query": "shipment spreadsheets"}),
+	)
+	require.NoError(t, err)
+
+	outcome, ok := result.(searchOutcome)
+	require.True(t, ok)
+	rows, ok := outcome.Items.([]datasetRow)
+	require.True(t, ok, "items is an empty list of rows, not nil")
+	require.NotNil(t, rows)
+	assert.Empty(t, rows)
+	assert.Zero(t, outcome.Count)
+	assert.Contains(t, outcome.Note, "No dataset matched")
+	assert.Contains(t, outcome.Note, "fewer or broader words")
+
+	encoded, err := sonic.Marshal(outcome)
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded), `"items":[]`)
+}
+
+// A camelCase key is read as its words, so a word of it finds the field.
+func TestDescribeReportDataset_ReadsCamelCaseKeysAsWords(t *testing.T) {
+	t.Parallel()
+
+	_, _, tools := reportingTools(t)
+
+	result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+		"dataset": "shipment",
+		"query":   "tender status",
+	}))
+	require.NoError(t, err)
+
+	description, ok := result.(datasetDescription)
+	require.True(t, ok)
+	keys := make([]string, 0, len(description.Fields))
+	for _, field := range description.Fields {
+		keys = append(keys, field.Key)
+	}
+	assert.Contains(t, keys, "tenderStatus")
+	assert.NotContains(t, keys, "status", "every word has to match")
+}
+
+/*
+A field one edge out is where most of what a shipment report wants lives: the
+stop times, the customer, the equipment. A search of shipment's own fields for
+"arrival" found nothing, and the model concluded arrivals could not be
+reported. It now names the related fields the query matches, and the edge each
+is on.
+*/
+func TestDescribeReportDataset_FindsAFieldOnARelatedDataset(t *testing.T) {
+	t.Parallel()
+
+	_, _, tools := reportingTools(t)
+
+	result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+		"dataset": "shipment",
+		"query":   "arrival",
+	}))
+	require.NoError(t, err)
+
+	description, ok := result.(datasetDescription)
+	require.True(t, ok)
+	require.NotNil(t, description.Fields, "no own field matched, and that is an empty list")
+	assert.Empty(t, description.Fields)
+	assert.Contains(t, description.RelatedFields, "destinationStop.actualArrival")
+	assert.Contains(t, description.Note, "No field of shipment itself matches")
+	assert.Contains(t, description.Note, `{"path": [`)
+
+	encoded, err := sonic.Marshal(description)
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded), `"fields":[]`)
+}
+
+func TestDescribeReportDataset_SaysHowToWidenASearchThatMatchedNothing(t *testing.T) {
+	t.Parallel()
+
+	_, _, tools := reportingTools(t)
+
+	result, err := tools["describe_report_dataset"].Query(t.Context(), testParams(map[string]any{
+		"dataset": "shipment",
+		"query":   "zebra crossing",
+	}))
+	require.NoError(t, err)
+
+	description, ok := result.(datasetDescription)
+	require.True(t, ok)
+	require.NotNil(t, description.Fields)
+	assert.Empty(t, description.Fields)
+	assert.Empty(t, description.RelatedFields)
+	assert.Contains(t, description.Note, `matches "zebra crossing"`)
+	assert.Contains(t, description.Note, "fewer or broader words")
 }
 
 func TestDescribeReportDataset_HidesADatasetTheActorCannotRead(t *testing.T) {

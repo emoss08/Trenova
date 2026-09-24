@@ -210,8 +210,8 @@ func TestFollowUp_LeavesDecisionsOutsideAConversationAlone(t *testing.T) {
 	assert.Empty(t, f.workflows.payloads)
 }
 
-// A conversation already producing a reply is not interrupted. The outcome
-// reaches the agent on that turn instead.
+// A conversation already producing a reply is not interrupted. The turn in
+// the way resumes the follow-up when it ends (see resume_test.go).
 func TestFollowUp_DoesNotInterruptAConversationMidReply(t *testing.T) {
 	t.Parallel()
 

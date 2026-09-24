@@ -73087,6 +73087,8 @@ enum AgentSubjectType {
   CarrierIntelEvent
   EDIInboundFile
   InboundMessage
+  Report
+  Dashboard
 }
 
 enum AgentRunTrigger {
