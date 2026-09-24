@@ -49,9 +49,11 @@ var Module = fx.Module("product-guide-service", fx.Provide(New))
 type Params struct {
 	fx.In
 
-	Logger        *zap.Logger
-	Permissions   serviceports.PermissionEngine
-	Organizations repositories.OrganizationRepository
+	Logger         *zap.Logger
+	Permissions    serviceports.PermissionEngine
+	Organizations  repositories.OrganizationRepository
+	Vectorizer     serviceports.QueryVectorizer    `optional:"true"`
+	CatalogVectors serviceports.CatalogVectorIndex `optional:"true"`
 }
 
 type Service struct {
@@ -61,6 +63,10 @@ type Service struct {
 	organizations repositories.OrganizationRepository
 	index         []indexedPage
 	resources     *permission.Registry
+	vectorizer    serviceports.QueryVectorizer
+	vectors       serviceports.CatalogVectorIndex
+	items         []serviceports.EmbeddingCatalogItem
+	floor         float64
 }
 
 type indexedPage struct {
@@ -92,6 +98,10 @@ func newService(p Params, catalog *productguide.Catalog) *Service {
 		organizations: p.Organizations,
 		index:         buildIndex(catalog),
 		resources:     permission.NewRegistry(),
+		vectorizer:    p.Vectorizer,
+		vectors:       p.CatalogVectors,
+		items:         CatalogItems(catalog),
+		floor:         serviceports.DefaultCatalogSimilarityFloor,
 	}
 }
 
@@ -143,13 +153,14 @@ func (s *Service) Search(
 	}
 	limit = min(limit, MaxLimit)
 
-	terms := agentsearch.Terms(req.Query)
-	candidates := s.rank(terms, strings.TrimSpace(req.Page))
+	onlyPage := strings.TrimSpace(req.Page)
+	var similarity map[string]float64
+	if onlyPage == "" {
+		similarity = s.similarities(ctx, req)
+	}
+	candidates := s.ranked(req.Query, onlyPage, similarity, limit)
 	if len(candidates) == 0 {
 		return []serviceports.ProductGuideMatch{}, nil
-	}
-	if len(candidates) > limit {
-		candidates = candidates[:limit]
 	}
 
 	pages := make([]*productguide.Page, 0, len(candidates))
@@ -212,11 +223,7 @@ func (s *Service) rank(terms map[string]struct{}, onlyPage string) []scored {
 		if candidates[a].score != candidates[b].score {
 			return candidates[a].score > candidates[b].score
 		}
-		// A page in the navigation is the one people are meant to use.
-		if candidates[a].entry.page.InNavigation != candidates[b].entry.page.InNavigation {
-			return candidates[a].entry.page.InNavigation
-		}
-		return candidates[a].entry.page.Path < candidates[b].entry.page.Path
+		return catalogOrder(candidates[a].entry, candidates[b].entry)
 	})
 	if len(candidates) == 0 {
 		return candidates

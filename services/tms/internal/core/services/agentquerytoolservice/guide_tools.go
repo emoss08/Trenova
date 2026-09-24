@@ -132,6 +132,10 @@ func (t *findInTrenovaTool) Query(
 		Query:      question,
 		Page:       optionalString(params.Params, "page"),
 		Limit:      guideAnswerLimit,
+		Attribution: serviceports.AIUsageAttribution{
+			UserID:            params.Actor.UserID,
+			AgentDefinitionID: params.AgentDefinitionID,
+		},
 	})
 	if err != nil {
 		return nil, err

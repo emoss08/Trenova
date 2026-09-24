@@ -15,8 +15,9 @@ type ProductGuideSearchRequest struct {
 	// Query is the person's question in their own words.
 	Query string
 	// Page narrows the answer to one page's tasks, by its path.
-	Page  string
-	Limit int
+	Page        string
+	Limit       int
+	Attribution AIUsageAttribution
 }
 
 // ProductGuideMatch is one page that answers a question.

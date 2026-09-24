@@ -10,7 +10,10 @@ import (
 	"github.com/emoss08/trenova/shared/hashutils"
 )
 
-const MaxQueryTextRunes = 2000
+const (
+	MaxQueryTextRunes             = 2000
+	DefaultCatalogSimilarityFloor = 0.5
+)
 
 var (
 	ErrQueryTextRequired     = errors.New("a query vector needs text to embed")
