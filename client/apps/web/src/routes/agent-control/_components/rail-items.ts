@@ -1,5 +1,6 @@
 import type { AIControlTab, RailView } from "../ai-control-tabs";
 import { retrievalRailStatus, type RetrievalRailState } from "./retrieval/retrieval-model";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
 export type { ActivityView, QualityView, RailView, SafetyView } from "../ai-control-tabs";
 
@@ -47,8 +48,6 @@ export type RailPermissions = {
   ratings: boolean;
 };
 
-type Translate = (text: string, ...args: (string | number)[]) => string;
-
 /**
  * The rail's items in order, with what each one can say about itself
  * before it is opened: how many of the things are on, and whether any of
@@ -58,7 +57,7 @@ type Translate = (text: string, ...args: (string | number)[]) => string;
 export function buildRailItems(
   counts: RailCounts | undefined,
   permissions: RailPermissions,
-  t: Translate,
+  t: TranslateFn,
 ): RailItem[] {
   const items: RailItem[] = [{ tab: "overview", status: "", attention: false, children: [] }];
 
