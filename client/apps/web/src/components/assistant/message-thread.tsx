@@ -1,10 +1,9 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { cn } from "@trenova/shared/lib/utils";
+import { AssistantAgentProvider } from "@/components/agent-identity/agent-context";
+import { answerMessageIds } from "@/components/ai-feedback/feedback-targets";
+import { useCalendarNow } from "@/hooks/use-calendar-now";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
-import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type {
   AssistantArtifact,
   AssistantArtifactEvent,
@@ -13,15 +12,19 @@ import type {
   AssistantProposal,
   AssistantThread,
 } from "@/types/assistant";
-import { AgentGutter } from "./voice/agent-gutter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { ArrowRightIcon, InfoIcon, XIcon } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AssistantAgentProvider } from "@/components/agent-identity/agent-context";
-import { useCalendarNow } from "@/hooks/use-calendar-now";
+import { ArtifactOpenerProvider } from "./artifact-opener";
 import { Composer } from "./composer";
+import { DecisionFollowUpProvider } from "./decision-follow-up";
+import { useFollowNavigation } from "./follow-navigation";
 import {
   AgentAvatar,
   AssistantEntry,
@@ -32,31 +35,28 @@ import {
   RefusalNotice,
   UserTurn,
 } from "./message-items";
-import { DecisionFollowUpProvider } from "./decision-follow-up";
-import { PlanCard } from "./plan-card";
-import { groupPlans } from "./plan-state";
-import { ProposalCard } from "./proposal-card";
-import { ReadOnlyThreadNotice } from "./read-only-thread-notice";
-import { decidedSignature, groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
 import {
   modelSwitchNotice,
   type ModelSwitchNotice as ModelSwitchNoticeValue,
 } from "./model-switch";
+import { PlanCard } from "./plan-card";
+import { groupPlans } from "./plan-state";
+import { ProposalCard } from "./proposal-card";
+import { decidedSignature, groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
+import { ReadOnlyThreadNotice } from "./read-only-thread-notice";
 import { StreamingTurn } from "./streaming-turn";
-import { replyWebSources } from "./web-sources";
 import { agentSuggestions, type Suggestion } from "./suggestions";
-import { arrivedSince, highestSequence, withDayMarkers } from "./thread-rows";
 import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
+import { arrivedSince, highestSequence, withDayMarkers } from "./thread-rows";
 import { delegatedOwners, groupThread, turnPlacements } from "./thread-view";
-import { ArtifactOpenerProvider } from "./artifact-opener";
+import { useLiveThreadIds } from "./use-active-turns";
 import { useAssistantTurn } from "./use-assistant-turn";
 import { useComposerContext } from "./use-composer-context";
 import { usePageContext } from "./use-page-context";
 import { useThreadHistory } from "./use-thread-history";
 import { VirtualThread, type VirtualThreadRow } from "./virtual-thread";
-import { useFollowNavigation } from "./follow-navigation";
-import { useLiveThreadIds } from "./use-active-turns";
-import { answerMessageIds } from "@/components/ai-feedback/feedback-targets";
+import { AgentGutter } from "./voice/agent-gutter";
+import { replyWebSources } from "./web-sources";
 
 /**
  * Space between the last message and the composer's fade, beyond the
@@ -591,7 +591,7 @@ export function MessageThread({
             0,
             composerHeight - (expanded ? COMPOSER_FADE : COMPOSER_FADE_COMPACT),
           )}
-          className={expanded ? "px-4" : "px-3"}
+          className={expanded ? "pl-4" : "pl-3"}
           contentClassName={expanded ? "max-w-3xl pt-5" : "pt-4"}
           rowClassName={expanded ? "pb-5" : "pb-4"}
         />

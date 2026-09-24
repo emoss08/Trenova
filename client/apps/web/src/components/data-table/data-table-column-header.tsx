@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import type { RowData } from "@tanstack/react-table";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -9,8 +8,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import type { SortDirection, Column } from "@trenova/shared/types/data-table";
+import type { Column, SortDirection } from "@trenova/shared/types/data-table";
 import {
   ArrowDownIcon,
   ArrowUpDownIcon,
@@ -66,7 +66,7 @@ export function DataTableColumnHeader<TData extends RowData, TValue>({
             <Button
               variant="ghost"
               size="sm"
-              className="data-open:bg-accent text-foreground-subtle hover:text-foreground -ml-2.5 text-xs font-medium"
+              className="data-open:bg-accent text-foreground-subtle hover:text-foreground -ml-2.5 text-xs font-medium uppercase"
             >
               <span>{title}</span>
               {showSortIndex && (

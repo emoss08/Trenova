@@ -1,24 +1,24 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Form } from "@trenova/shared/components/ui/form";
-import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { rememberPristineDefaults } from "@/lib/form-defaults";
 import {
   useEditPanelActionPreference,
   type EditPanelSaveAction,
 } from "@/hooks/use-panel-action-preference";
+import { rememberPristineDefaults } from "@/lib/form-defaults";
+import { useQueryClient } from "@tanstack/react-query";
+import { ComponentLoader } from "@trenova/shared/components/component-loader";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Form } from "@trenova/shared/components/ui/form";
+import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { api } from "@trenova/shared/lib/api";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import type { API_ENDPOINTS } from "@trenova/shared/types/server";
-import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
-import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { DataTablePanelContainer, type PanelSize } from "./data-table/data-table-panel";
 import { FormSaveDock } from "./form-save-dock";
 
@@ -201,7 +201,7 @@ export function FormEditPanel<
       footer={
         useDock ? undefined : (
           <>
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button type="button" variant="secondary" onClick={handleClose}>
               {t("Cancel")}
             </Button>
             <SplitButton

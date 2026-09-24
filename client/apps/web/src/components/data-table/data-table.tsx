@@ -1,5 +1,4 @@
 "use no memo";
-import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableProvider } from "@/contexts/data-table-context";
 import { useDataTableFilterSync } from "@/hooks/data-table/use-data-table-filter-sync";
 import { useDataTableLiveRefresh } from "@/hooks/data-table/use-data-table-live-refresh";
@@ -17,18 +16,9 @@ import {
   toColumnPinningState,
   updateSortField,
 } from "@/lib/data-table";
-import { stableStringify } from "@/lib/stable-stringify";
 import { fetchAllRows } from "@/lib/data-table-export";
 import { queries } from "@/lib/queries";
-import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
-import type {
-  DataTableProps,
-  FilterItem,
-  PanelMode,
-  SortDirection,
-  SortField,
-  Row,
-} from "@trenova/shared/types/data-table";
+import { stableStringify } from "@/lib/stable-stringify";
 import type {
   ActiveTableView,
   TableConfig,
@@ -37,6 +27,7 @@ import type {
   TableFormatRule,
   TableViewSource,
 } from "@/types/table-configuration";
+import type { ComposedTableQuery } from "@/types/table-query";
 import {
   closestCenter,
   DndContext,
@@ -49,11 +40,21 @@ import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { arrayMove, horizontalListSortingStrategy, SortableContext } from "@dnd-kit/sortable";
 import { useQuery } from "@tanstack/react-query";
 import { useTable, type RowSelectionState } from "@tanstack/react-table";
+import { Table, TableHeader, TableRow } from "@trenova/shared/components/ui/table";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { dataTableFeatures } from "@trenova/shared/lib/table-features";
+import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
+import type {
+  DataTableProps,
+  FilterItem,
+  PanelMode,
+  Row,
+  SortDirection,
+  SortField,
+} from "@trenova/shared/types/data-table";
 import { useQueryStates } from "nuqs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Table, TableHeader, TableRow } from "@trenova/shared/components/ui/table";
 import { DataTablePagination } from "./_components/data-table-pagination";
 import { DataTableBody } from "./data-table-body";
 import { DataTableDock } from "./data-table-dock";
@@ -64,7 +65,6 @@ import { DataTablePanelContent, DataTablePanelWrapper } from "./data-table-panel
 import { DataTableRefreshPill } from "./data-table-refresh-pill";
 import { DataTableSelectionBanner } from "./data-table-selection-banner";
 import { createSelectionColumn } from "./data-table-selection-column";
-import type { ComposedTableQuery } from "@/types/table-query";
 import { DataTableToolbar } from "./data-table-toolbar";
 
 const BULK_SELECT_MAX = 1000;
@@ -797,7 +797,7 @@ export function DataTable<TData extends Record<string, any>>({
                   >
                     <TableHeader className="sticky top-0 z-20">
                       {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                        <TableRow key={headerGroup.id} className="hover:bg-transparent uppercase">
                           <SortableContext
                             items={reorderableIds}
                             strategy={horizontalListSortingStrategy}

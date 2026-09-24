@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import {
   CarrierAutocompleteField,
   CustomerAutocompleteField,
@@ -10,6 +9,7 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { useEffect, useRef } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { memoryKindChoices } from "../activity/agent-badges";
@@ -36,7 +36,7 @@ export function MemoryForm() {
 
   return (
     <>
-      <FormSection title={t("What to remember")}>
+      <FormSection title={t("What to remember")} className="pb-4">
         <FormGroup cols={2}>
           <FormControl>
             <SelectField
