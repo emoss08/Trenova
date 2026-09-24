@@ -612,13 +612,27 @@ variables, an explanation and engine-priced scenarios. It requires formula
 template create or update. The model never states an amount the engine did not
 produce.
 
+**In the web app.** Both pages mount `PageAssistant`
+(`components/assistant/page-assistant.tsx`), which opens the page thread and
+draws the ordinary `MessageThread` bound to the page: the draft is read at send
+time and always sent, and each live `draft_edit` is applied through
+`useApplyDraftEdits`, claimed by artifact id for the tab (`lib/claim-once.ts`)
+so a rejoined or replayed turn never reapplies a change over what the person did
+since. History never applies anything. The import page applies edits as clicks
+(`import-draft.ts`); the formula studio shows a proposal card and inserts it
+only when asked. Without `assistant:create` the panel says so without calling
+the server; a refusal from `MayUseAgent` or a disabled agent is shown in the
+server's words; an archived thread (the document was re-extracted) offers a
+fresh one.
+
 **What stayed behind.** Conversations that were still active when this shipped
 were carried into page threads by `20261231006560_carry_import_conversations`:
 one thread per person who spoke in each, their turns in order, legacy tool calls
 replayed paired with their results under fresh ids, and the organization's
 import assistant created when it had none. Finished conversations remain in
 `shipment_import_chat_*`, read-only through `GET
-/documents/:documentID/import-assistant/history/`, for one release. After that
+/documents/:documentID/import-assistant/history/`, for one release; the import
+panel shows a finished one, collapsed and read-only, above the new thread. After that
 release, drop the tables and the history endpoint together:
 
 ```sql
