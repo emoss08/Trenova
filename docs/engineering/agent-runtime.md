@@ -235,7 +235,21 @@ A decision on a proposal or plan a conversation raised is answered in that
 conversation, whoever decided it and wherever. `agentdecisionservice` and
 `agentplanservice` call `DecisionFollowUps` once the change has run or failed;
 `assistantfollowupservice` opens a turn with origin `DecisionFollowUp`, as the
-thread's owner. A conversation already producing a reply is not interrupted.
+thread's owner. A conversation already producing a reply is not interrupted,
+and the reply under way read the proposal before it was decided, so it cannot
+report it. Instead the follow-up waits: when a turn closes its record,
+`FinishTurnActivity` asks `DecisionFollowUpResumer` to start the follow-up for
+the oldest decision in the last day that the thread carries no Decision note
+for. That follow-up resumes the next one when it ends, so decisions made in a
+burst (several cards approved in a row, or a batch from the decisions inbox)
+are each reported, in order. A follow-up turned away before it was planned
+saved no note and does not resume, or it would start itself again.
+
+Every turn also reads what became of the conversation's proposals. A replayed
+tool result that recorded a proposal is swapped for its current state; a
+decided proposal whose call is not in the replay (a delegate's, or one older
+than the history) is told beside the question instead (`outOfViewDecisions`),
+so a delegate_task result saying a card is waiting is not the last word.
 
 ## Agent runs
 

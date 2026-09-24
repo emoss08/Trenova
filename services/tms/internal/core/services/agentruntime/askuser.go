@@ -123,7 +123,7 @@ func askUserSpec() serviceports.ToolSpec {
 							"value": map[string]any{
 								"type": "string",
 								"description": "What you will use if this is picked, " +
-									"exactly as the tool needs it.",
+									"exactly as the tool needs it. Defaults to the label.",
 							},
 							"label": map[string]any{
 								"type":        "string",
@@ -135,7 +135,7 @@ func askUserSpec() serviceports.ToolSpec {
 									"the label does not carry it.",
 							},
 						},
-						"required":             []string{"value", "label"},
+						"required":             []string{"label"},
 						"additionalProperties": false,
 					},
 				},
@@ -238,6 +238,9 @@ func askNote(optionCount int, allowOther bool) string {
 // askOptionsFrom reads the options a model supplied, dropping what cannot be
 // rendered. A malformed option is skipped rather than failing the call: a
 // question with three usable choices out of four is still worth asking.
+//
+// An option with a label and no value answers with its label. A model offered
+// three choices as label and detail, and the person was shown none of them.
 func askOptionsFrom(arguments map[string]any) []askOption {
 	raw, ok := arguments["options"].([]any)
 	if !ok {
@@ -257,18 +260,19 @@ func askOptionsFrom(arguments map[string]any) []askOption {
 		}
 
 		value := strings.TrimSpace(stringArg(fields, "value"))
-		if value == "" {
+		label := strings.TrimSpace(stringArg(fields, "label"))
+		switch {
+		case value == "" && label == "":
 			continue
+		case value == "":
+			value = label
+		case label == "":
+			label = value
 		}
 		if _, duplicate := seen[value]; duplicate {
 			continue
 		}
 		seen[value] = struct{}{}
-
-		label := strings.TrimSpace(stringArg(fields, "label"))
-		if label == "" {
-			label = value
-		}
 
 		options = append(options, askOption{
 			Value: value,

@@ -170,7 +170,7 @@ func TestAssignMove_TenantMismatch_DoesNotCallPort(t *testing.T) {
 // the model names: a run id in the parameters is ignored.
 func TestRaiseException_TiesTheCaseToTheExecutingRun(t *testing.T) {
 	exceptions := &fakeExceptionService{}
-	tool := newRaiseExceptionTool(exceptions)
+	tool := newRaiseExceptionTool(exceptions, &fakeSubjectRepository{exists: true})
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -208,7 +208,7 @@ func TestRaiseException_TiesTheCaseToTheExecutingRun(t *testing.T) {
 
 func TestRaiseException_RefusesWithoutARun(t *testing.T) {
 	exceptions := &fakeExceptionService{}
-	tool := newRaiseExceptionTool(exceptions)
+	tool := newRaiseExceptionTool(exceptions, &fakeSubjectRepository{exists: true})
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 

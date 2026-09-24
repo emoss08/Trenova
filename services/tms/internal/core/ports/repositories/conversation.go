@@ -45,6 +45,9 @@ type ListMessagesRequest struct {
 	// the history replayed to the model leaves out another agent's steps, so
 	// they neither reach the model nor crowd its window.
 	ExcludeKinds []conversation.MessageKind
+	// Kinds, when set, reads only messages of these kinds: the decision notes
+	// a conversation already carries, without the turns around them.
+	Kinds []conversation.MessageKind
 }
 
 // CountMessagesRequest counts a thread's messages, which is how long the

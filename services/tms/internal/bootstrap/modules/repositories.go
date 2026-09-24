@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentrunrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentrunsteprepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentscorecardrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentsubjectrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agenttooltrustrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aifeedbackrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ailogrepository"
@@ -318,6 +319,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	insightrepository.New,
 	insightrepository.NewMetrics,
 	agentexceptionrepository.New,
+	agentsubjectrepository.New,
 	agentdecisionrepository.New,
 	agentcontrolrepository.New,
 	agentdefinitionrepository.New,

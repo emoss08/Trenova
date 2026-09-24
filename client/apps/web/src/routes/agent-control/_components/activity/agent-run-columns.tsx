@@ -10,6 +10,7 @@ import {
   TriggerBadge,
   triggerChoices,
 } from "./agent-badges";
+import { AgentSubjectCell } from "./agent-subject-cell";
 
 export function getRunColumns(t: TranslateFn): ColumnDef<AgentRunRow>[] {
   return [
@@ -62,12 +63,10 @@ export function getRunColumns(t: TranslateFn): ColumnDef<AgentRunRow>[] {
       accessorKey: "subjectType",
       header: t("Subject"),
       cell: ({ row }) => (
-        <span className="flex flex-col leading-tight">
-          <span>{row.original.subjectType}</span>
-          <span className="text-muted-foreground font-mono text-xs">
-            {row.original.subjectId}
-          </span>
-        </span>
+        <AgentSubjectCell
+          subjectType={row.original.subjectType}
+          subjectId={row.original.subjectId}
+        />
       ),
       size: 220,
       meta: {
