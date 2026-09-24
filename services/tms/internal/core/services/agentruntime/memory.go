@@ -13,7 +13,7 @@ import (
 func (s *Service) memoriesForPrompt(
 	ctx context.Context,
 	req *serviceports.RunRequest,
-	rc agentdefinition.RuntimeContext,
+	rc *agentdefinition.RuntimeContext,
 ) []*agent.Memory {
 	if !req.Definition.HasContextProvider(agentdefinition.ContextMemory) {
 		return nil
