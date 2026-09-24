@@ -65,6 +65,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/recurringshipmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/retrievaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/settlementjobs"
@@ -175,6 +176,7 @@ func Options() fx.Option {
 		inboundjobs.Module,
 		briefingjobs.Module,
 		aifeedbackjobs.Module,
+		retrievaljobs.Module,
 		iftajobs.Module,
 		dispatchjobs.Module,
 		weatheralertjobs.Module,
