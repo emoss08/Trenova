@@ -13,9 +13,12 @@ const (
 
 // Label names shared by more than one metric family.
 const (
-	labelResult = "result"
-	labelReason = "reason"
-	labelStatus = "status"
+	labelResult    = "result"
+	labelReason    = "reason"
+	labelStatus    = "status"
+	labelKind      = "kind"
+	labelOperation = "operation"
+	labelOutcome   = "outcome"
 )
 
 var (
