@@ -440,11 +440,11 @@ func (fx *effects) Dispatch(
 	return outcome
 }
 
-func (fx *effects) Find(t *agentruntime.Turn, arguments map[string]any) string {
-	content, loaded := fx.rt.FindFor(fx.ctx, t.Request(), t.ToolsState(), arguments)
-	t.LoadTools(loaded)
+func (fx *effects) Find(t *agentruntime.Turn, arguments map[string]any) agentruntime.FindAnswer {
+	found := fx.rt.FindFor(fx.ctx, t.Request(), t.ToolsState(), arguments)
+	t.LoadTools(found.Loaded)
 
-	return content
+	return agentruntime.FindAnswer{Content: found.Content, Found: found.Found}
 }
 
 func (fx *effects) Emit(event serviceports.StreamEvent) {

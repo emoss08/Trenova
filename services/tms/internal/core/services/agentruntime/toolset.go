@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
@@ -82,6 +83,7 @@ type toolSetRequest struct {
 	held  []string
 	actor *serviceports.RequestActor
 	input string
+	query serviceports.QueryVectorRequest
 	// history is the replayed conversation. The tools the model used or
 	// loaded in its recent turns are loaded again, so a follow-up like "yes,
 	// do it" does not reopen with a toolbox that has forgotten the work.
@@ -112,6 +114,7 @@ type toolSet struct {
 	// delegates are the agents the turn may ask, for naming one that holds
 	// what a search could not load.
 	delegates []agentdefinition.RuntimeDelegate
+	query     serviceports.QueryVector
 }
 
 func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
@@ -157,11 +160,13 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	}
 
 	set.disclosed = true
-	for _, descriptor := range s.catalog.Rank(
-		selected,
-		rankingText(req.input, req.history),
-		preselectedTools,
-	) {
+	set.query = s.vectorize(ctx, req.query)
+	for _, descriptor := range s.catalog.RankHybrid(agenttoolcatalog.Query{
+		Allowed:  selected,
+		Text:     rankingText(req.input, req.history),
+		Limit:    preselectedTools,
+		Semantic: s.toolSemantic(ctx, req.query.TenantInfo, set.query),
+	}) {
 		s.load(set, descriptor.Name)
 	}
 	s.carryOver(set, req.history)
@@ -237,10 +242,11 @@ func (s *Service) load(set *toolSet, name string) bool {
 }
 
 // carryOver reloads what the model worked with in its recent turns: the tools
-// it called, and what its searches found, by running the same search again.
-// The catalog is fixed for the life of the process, so the same need finds
-// the same tools, and nothing about the loaded set has to be stored.
+// it called, and what its searches found. A search's result names what it
+// found, so the same tools come back however the ranking has moved since; a
+// result saved before the names were kept runs the search again by keyword.
 func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
+	found := foundByCall(history)
 	turns := 0
 	for idx := len(history) - 1; idx >= 0 && turns < recentToolTurns; idx-- {
 		message := history[idx]
@@ -252,6 +258,12 @@ func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
 			switch call.Name {
 			case askUserName, publishArtifactName, delegateTaskName:
 			case findToolsName:
+				if names, stored := found[call.ID]; stored {
+					for _, name := range names {
+						s.load(set, name)
+					}
+					continue
+				}
 				need, _ := call.Arguments["need"].(string)
 				if strings.TrimSpace(need) == "" {
 					continue
@@ -269,13 +281,7 @@ func (s *Service) carryOver(set *toolSet, history []conversation.Message) {
 // rankingText is what preselection ranks against: the request, and the one
 // before it. "Yes, do that" names nothing; the message it answers does.
 func rankingText(input string, history []conversation.Message) string {
-	for idx := len(history) - 1; idx >= 0; idx-- {
-		if history[idx].Role == conversation.RoleUser {
-			return input + "\n" + history[idx].Content
-		}
-	}
-
-	return input
+	return serviceports.TurnQueryText(input, history)
 }
 
 // resolveFind answers a find_tools call and reports what it loaded.
@@ -283,21 +289,38 @@ func rankingText(input string, history []conversation.Message) string {
 // The answer names the tools in the same words the model will see them in, so a
 // model that cannot infer from a bare list still has the description in front of
 // it on the next turn.
-func (s *Service) resolveFind(set *toolSet, arguments map[string]any) string {
+func (s *Service) resolveFind(
+	ctx context.Context,
+	set *toolSet,
+	actor *serviceports.RequestActor,
+	arguments map[string]any,
+) FindAnswer {
 	need, _ := arguments["need"].(string)
 	if strings.TrimSpace(need) == "" {
-		return "Say what you need in a few words — the tools are matched against it."
+		return FindAnswer{
+			Content: "Say what you need in a few words — the tools are matched against it.",
+		}
 	}
 	if s.catalog == nil {
-		return "No other tools are available. Use the ones you have."
+		return FindAnswer{Content: "No other tools are available. Use the ones you have."}
 	}
 	// A turn that was sent everything has nothing left to load; the answer
 	// can still say what exists beyond the agent.
 	if !set.disclosed {
-		return s.nothingLoaded(set, need)
+		return FindAnswer{Content: s.nothingLoaded(set, need)}
 	}
 
-	found := s.catalog.Find(set.allowed, need, foundToolsLimit)
+	found := s.catalog.FindHybrid(agenttoolcatalog.Query{
+		Allowed:      set.allowed,
+		Text:         need,
+		Limit:        foundToolsLimit,
+		Semantic:     s.toolSemantic(ctx, actorTenant(actor), set.query),
+		SkipSemantic: set.loaded,
+	})
+	names := make([]string, 0, len(found))
+	for _, descriptor := range found {
+		names = append(names, descriptor.Name)
+	}
 
 	var b strings.Builder
 	added := 0
@@ -310,10 +333,13 @@ func (s *Service) resolveFind(set *toolSet, arguments map[string]any) string {
 	}
 
 	if added == 0 {
-		return s.nothingLoaded(set, need)
+		return FindAnswer{Content: s.nothingLoaded(set, need), Found: names}
 	}
 
-	return fmt.Sprintf("These tools are now callable:\n%s", b.String())
+	return FindAnswer{
+		Content: fmt.Sprintf("These tools are now callable:\n%s", b.String()),
+		Found:   names,
+	}
 }
 
 // unheldRefusal answers a call to a tool the agent does not hold.

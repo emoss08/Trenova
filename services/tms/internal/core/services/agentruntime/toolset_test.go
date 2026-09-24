@@ -201,7 +201,7 @@ func TestResolveFind_MakesTheMissingToolCallable(t *testing.T) {
 	require.NotContains(t, specNames(set.specs), "list_trailers",
 		"the fixture depends on this one not being preselected")
 
-	answer := service.resolveFind(set, map[string]any{
+	answer := findContent(t, service, set, map[string]any{
 		"need": "trailer inspection date",
 	})
 
@@ -231,7 +231,7 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 	)
 	set.disclosed = true
 
-	service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
+	findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
 
 	assert.NotContains(t, specNames(set.specs), "list_expiring_credentials")
 	for _, name := range specNames(set.specs) {
@@ -264,7 +264,7 @@ func TestResolveFind_DoesNotReloadWhatIsAlreadyThere(t *testing.T) {
 	)
 	before := len(set.specs)
 
-	answer := service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
+	answer := findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
 
 	assert.Equal(t, before, len(set.specs))
 	assert.Contains(t, answer, "already loaded")
@@ -284,7 +284,7 @@ func TestResolveFind_AsksForWordsWhenGivenNone(t *testing.T) {
 		},
 	)
 
-	assert.Contains(t, service.resolveFind(set, map[string]any{}), "what you need")
+	assert.Contains(t, findContent(t, service, set, map[string]any{}), "what you need")
 }
 
 // A model that reads a short tool list as the system's limit will tell the
@@ -352,7 +352,7 @@ func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
 	)
 	set.disclosed = true
 
-	answer := service.resolveFind(set, map[string]any{"need": "driver medical card expiry"})
+	answer := findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
 
 	require.Contains(t, names, "list_expiring_credentials")
 	assert.Contains(t, answer, "not enabled for this agent")
@@ -380,7 +380,7 @@ func TestResolveFind_DoesNotClaimTheSystemLacksSomethingItDidNotSearchFor(t *tes
 	)
 	set.disclosed = true
 
-	answer := service.resolveFind(set, map[string]any{"need": "zzzz no such thing zzzz"})
+	answer := findContent(t, service, set, map[string]any{"need": "zzzz no such thing zzzz"})
 
 	assert.Contains(t, answer, "only about the data, not about tools you cannot see")
 	assert.NotContains(t, answer, "not enabled for this agent")
@@ -496,7 +496,7 @@ func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
 	assert.NotContains(t, set.allowed, "search_shipments")
 	assert.Contains(t, set.allowed, "list_workers")
 
-	answer := service.resolveFind(set, map[string]any{"need": "search shipments by pro number"})
+	answer := findContent(t, service, set, map[string]any{"need": "search shipments by pro number"})
 	assert.NotContains(
 		t,
 		answer,

@@ -192,7 +192,7 @@ func TestResolveFind_WithoutACatalogSaysSoRatherThanPanicking(t *testing.T) {
 	service.catalog = nil
 	set := &toolSet{loaded: map[string]struct{}{}, disclosed: true}
 
-	assert.Contains(t, service.resolveFind(set, map[string]any{"need": "tractors"}),
+	assert.Contains(t, findContent(t, service, set, map[string]any{"need": "tractors"}),
 		"No other tools")
 }
 

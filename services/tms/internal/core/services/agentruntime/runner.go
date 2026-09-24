@@ -38,7 +38,9 @@ type Params struct {
 	Budgets serviceports.AgentBudgetService       `optional:"true"`
 	Trust   repositories.AgentToolTrustRepository `optional:"true"`
 	// Extensions is optional. Without it no extension's tools are offered.
-	Extensions serviceports.AgentExtensionGate `optional:"true"`
+	Extensions     serviceports.AgentExtensionGate `optional:"true"`
+	Vectorizer     serviceports.QueryVectorizer    `optional:"true"`
+	CatalogVectors serviceports.CatalogVectorIndex `optional:"true"`
 }
 
 type Service struct {
@@ -52,6 +54,8 @@ type Service struct {
 	budgets     serviceports.AgentBudgetService
 	trust       repositories.AgentToolTrustRepository
 	extensions  serviceports.AgentExtensionGate
+	vectorizer  serviceports.QueryVectorizer
+	vectors     serviceports.CatalogVectorIndex
 }
 
 func New(p Params) *Service {
@@ -66,6 +70,8 @@ func New(p Params) *Service {
 		budgets:     p.Budgets,
 		trust:       p.Trust,
 		extensions:  p.Extensions,
+		vectorizer:  p.Vectorizer,
+		vectors:     p.CatalogVectors,
 	}
 }
 
@@ -257,7 +263,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 						maxFindCalls,
 					)
 				} else {
-					outcome = toolOutcome{content: fx.Find(t, call.Arguments)}
+					answer := fx.Find(t, call.Arguments)
+					outcome = toolOutcome{content: answer.Content, found: answer.Found}
 				}
 				s.recordToolResult(t, fx, call, outcome)
 				continue
@@ -447,6 +454,7 @@ func (s *Service) recordToolResult(
 		ToolFailed:     outcome.failed,
 		ToolEffect:     effect,
 		ToolSummary:    summary,
+		FoundTools:     outcome.found,
 		DelegateReport: outcome.delegateReport,
 		CreatedAt:      fx.Now(),
 	})

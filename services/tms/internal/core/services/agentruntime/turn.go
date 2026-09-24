@@ -61,7 +61,7 @@ type TurnEffects interface {
 	// Dispatch runs one tool call the loop has decided to make.
 	Dispatch(t *Turn, call DispatchCall) ToolOutcome
 	// Find answers find_tools and loads what it found into the turn.
-	Find(t *Turn, arguments map[string]any) string
+	Find(t *Turn, arguments map[string]any) FindAnswer
 	Emit(event serviceports.StreamEvent)
 	// Observe hands a finished call to whatever shows it to the person, and
 	// returns the outcome with what it showed folded into what the model
@@ -119,6 +119,7 @@ type ToolOutcome struct {
 	DelegateReport *conversation.DelegateReport `json:"delegateReport,omitempty"`
 	// Taint is the outside content the call read.
 	Taint []agent.TaintMark `json:"taint,omitempty"`
+	Found []string          `json:"found,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -134,6 +135,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		Summary:        o.summary,
 		DelegateReport: o.delegateReport,
 		Taint:          o.taint,
+		Found:          o.found,
 		Data:           o.data,
 	}
 }
@@ -147,6 +149,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		summary:        o.Summary,
 		delegateReport: o.DelegateReport,
 		taint:          o.Taint,
+		found:          o.Found,
 		data:           o.Data,
 	}
 }
@@ -200,6 +203,7 @@ type ToolSetState struct {
 	// Delegates are the agents the turn may ask, so a search that finds
 	// nothing the turn can call can name one that holds it.
 	Delegates []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
+	Query     *QueryVectorState                 `json:"query,omitempty"`
 }
 
 // State captures the turn as data.
@@ -296,6 +300,7 @@ func (t *toolSet) state() ToolSetState {
 		Unattended: t.unattended,
 		FindCalls:  t.findCalls,
 		Delegates:  slices.Clone(t.delegates),
+		Query:      packQueryVector(t.query),
 	}
 }
 
@@ -307,6 +312,7 @@ func restoreToolSet(state ToolSetState) *toolSet {
 		unattended: state.Unattended,
 		findCalls:  state.FindCalls,
 		delegates:  state.Delegates,
+		query:      state.Query.unpack(),
 	}
 	for _, spec := range state.Specs {
 		set.add(spec)
@@ -359,6 +365,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		held:       held,
 		actor:      req.Actor,
 		input:      req.Input,
+		query:      serviceports.TurnQueryRequest(req),
 		history:    history,
 		unattended: req.Unattended,
 		delegated:  req.Delegation != nil,
@@ -519,8 +526,8 @@ func (fx *localEffects) Dispatch(t *Turn, call DispatchCall) ToolOutcome {
 	return fx.s.DispatchStep(fx.ctx, t.req, call)
 }
 
-func (fx *localEffects) Find(t *Turn, arguments map[string]any) string {
-	return fx.s.resolveFind(t.tools, arguments)
+func (fx *localEffects) Find(t *Turn, arguments map[string]any) FindAnswer {
+	return fx.s.resolveFind(fx.ctx, t.tools, t.req.Actor, arguments)
 }
 
 func (fx *localEffects) Emit(event serviceports.StreamEvent) { fx.emit(event) }
@@ -626,19 +633,19 @@ func (s *Service) FindFor(
 	req *serviceports.RunRequest,
 	state ToolSetState,
 	arguments map[string]any,
-) (string, []string) {
+) FoundTools {
 	set := restoreToolSet(state)
 	set.usable = func(name string) bool {
 		return len(s.permittedTools(ctx, req.Actor, []string{name})) == 1
 	}
 
 	before := len(set.specs)
-	content := s.resolveFind(set, arguments)
+	answer := s.resolveFind(ctx, set, req.Actor, arguments)
 
 	loaded := make([]string, 0, len(set.specs)-before)
 	for _, spec := range set.specs[before:] {
 		loaded = append(loaded, spec.Name)
 	}
 
-	return content, loaded
+	return FoundTools{Content: answer.Content, Loaded: loaded, Found: answer.Found}
 }
