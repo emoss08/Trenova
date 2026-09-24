@@ -1,7 +1,7 @@
 {
   "keyword": {
-    "cases": 56,
-    "recallAt5": 0.91,
-    "top1": 0.53
+    "cases": 151,
+    "recallAt5": 0.95,
+    "top1": 0.69
   }
 }

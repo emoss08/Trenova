@@ -485,6 +485,7 @@ func listCatalogSpecs() []listSpec {
 		specOf(newListGLAccountsTool(nil, nil)),
 		specOf(newListFiscalPeriodsTool(nil, nil)),
 		specOf(newListOrdersTool(nil, nil)),
+		specOf(newListFormulaTemplatesTool(nil)),
 	}
 }
 
