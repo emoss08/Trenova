@@ -474,6 +474,10 @@ to execute it.
   whose run is still open is refused by Temporal, where two requests reading a
   count of open runs could both have passed. The refusal is
   `ErrAgentRunAlreadyOpen`, which the publisher treats as a skip.
+  `PublishAgentEvent` defers through `ports.AfterCommit`: an event raised
+  inside `WithTx` is queued on the outermost transaction and published only
+  once it commits, and dropped if it rolls back, so no run starts for a record
+  that was never saved. Outside a transaction it publishes at once.
 - **Schedules.** Every scheduled or continuous agent has its own Temporal
   Schedule, `agent-definition/<id>`: its cron in its own timezone or its
   interval, ending at its end date, paused while it is disabled, overlap
@@ -518,6 +522,13 @@ call, and a finish that saves the turn. The reply streams through the turn's
 Workflow Stream with the events the client has always read; the request relays it
 frame for frame with the reader chat uses. A document answers one message at a
 time.
+
+Its tools act as the person who sent the message. The route asks only for
+document read, so each tool that reads or writes another record checks that
+person's permission first (`toolGrants`): customer read for `search_customers`
+and `get_customer_requirements`, location read for `search_locations`, location
+create for `add_location`. A refusal is a tool error the model reports; the turn
+goes on. Every model call carries the person as its usage attribution.
 
 ## Batch work
 
