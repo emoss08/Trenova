@@ -19,8 +19,9 @@ Launch one agent per brief. Briefs in the same wave can run in parallel except w
 You are implementing brief {G0X} of the Trenova Gap Program.
 
 Read, in order and in full before writing any code:
-1. docs/roadmap/trenova-gap-program.md, Parts 1-4 and brief {G0X}
-   (or the copy attached to this session)
+1. docs/roadmap/trenova-gap-program.md, the Errata, Parts 1-4 and brief {G0X}
+   (or the copy attached to this session). Where the Errata and a brief
+   disagree, the Errata wins.
 2. CLAUDE.md, AGENTS.md and client/apps/web/CLAUDE.md
 3. docs/engineering/design-system.md
 4. docs/engineering/generated-artifacts.md
@@ -49,6 +50,76 @@ that passes the full gate (Part 3, "Gates") and ships as its own PR.
    - `client/apps/web/src/components/assistant/tool-presentation.ts` (`TOOL_TITLES`)
    - `services/tms/internal/infrastructure/database/reportcatalog/reportcatalog.yml`
 6. **Never edit** generated files by hand except where Part 3 says the repo expects it (`resource_gen.go` is hand-edited; `seed_ids_gen.go`, `models_gen.go`, GraphQL client output and `buncolgen` are regenerated).
+
+---
+
+## Errata (verified against the code on 2026-09-24)
+
+Every claim in this document was re-read against the repository on 2026-09-24. This section records what changed or was wrong. It overrides anything below it. Paths use `S/` for `services/tms/internal/` and `C/` for `client/apps/web/src/`.
+
+### E1. Tools declare a policy, not individual methods
+
+`AgentTool` and `AgentQueryTool` no longer have `PermissionResource`, `PermissionOperation`, `Reversible`, `RequiresIdempotencyKey` or `DefaultAutonomyTier` methods. Each tool has one `Policy() ToolPolicy` (`S/core/ports/services/toolpolicy.go`) whose fields carry all of it: `Kind`, `Resource`, `Operation`, `Scope`, `DefaultTier`, `MaxTier`, `Egress`, `Classify`, `Condition`, `TaintHold`, `Effect`, `Artifact`, `Reversible`, `Idempotent`, `ReadsExternal`, `Source`, `CarriesTaint`, `Rationale`.
+
+- `AgentTool`: `Name`, `Description`, `ParamSchema`, `Policy`, `Execute(ctx, ToolExecuteParams) error`. Optional: `ToolSimulator`, `ToolValidator`, `TargetedTool`, `ToolResultReporter` (`ExecuteWithResult`, for a write whose caller needs the id it made).
+- `AgentQueryTool`: `Name`, `Description`, `ParamSchema`, `Policy`, `Query(ctx, *QueryToolParams) (any, error)` (a pointer). Query tools build their policy with `readPolicy(name, readSpec{resource: ...})` in `agentquerytoolservice/policy.go`.
+- Part 2 rows A3, A5, A6 and A8 therefore mean: set `DefaultTier`/`MaxTier`, `Idempotent`, `Reversible`, `Resource`/`Operation` in the policy. `guardExecute` enforces `Idempotent` by refusing a call with no key.
+- Recipes 3.1 and 3.2 below are rewritten to match.
+
+### E2. Egress classes set ceilings; money is the exception you must handle
+
+Every policy declares `Egress` from `none`, `personal`, `internal`, `customer_visible`, `driver_visible`, `external_recipient`, `money` (`S/core/domain/agent/toolsafety.go`). `EgressClass.Ceiling()` caps `customer_visible`, `driver_visible` and `external_recipient` at `ActWithApproval`, whatever tier the tenant or earned trust sets. So Part 2's "anything sent outside the tenant defaults to Propose" is the default tier; the ceiling is already enforced by the runtime.
+
+`money` has **no** ceiling today: it is `AutoExecute`, and the existing money tools (`match_bank_receipt`, `post_customer_payment`) declare `MaxTier: TierAutoExecute`. `TestAssess_MoneyRunsOnItsOwnUntilTheRunIsTainted` pins that behaviour: money runs on its own until the run reads outside text. Part 2's rule that money movement and payment instructions never reach `AutoExecute` is therefore **not** enforced by the runtime. Until Eric decides whether to change the global ceiling, every tool this program adds that moves money or changes payment instructions sets `MaxTier` to `agent.TierPropose` or `agent.TierActWithApproval` explicitly and has a test proving it. Credentials, security and permission tools do the same.
+
+### E3. Gates a new tool must pass, missing from Part 3
+
+- `agenttoolpolicy/contract_test.go`: every registered tool validates, sits in the egress class it was given (explicit map), query tools change and send nothing, tools that read outside text say where.
+- `agenttoolcatalog`: `TestEveryToolDescribesItselfWellEnoughToBeChosen`, `TestEveryToolFamilyNamesRegisteredTools` (families in `families.go`).
+- `agentevalgate/testdata/catalog.golden.json`: `go test ./internal/core/services/agentevalgate -run TestToolCatalogSnapshot -update`.
+- Prompt snapshots: `go test ./internal/core/domain/agentdefinition -run TestPromptSnapshots -update` when a template's starter tools or instructions change.
+- `docs/engineering/ai-tool-safety.md` is generated: `go generate ./internal/core/services/agenttoolpolicy/safetydoc/...`; CI fails when it drifts.
+- `agentpermission_test.go`, `tenant_scope_test.go`, `target_test.go` (as Part 3 says).
+
+### E4. Paths, names and counts
+
+| Document says | Code says |
+|---|---|
+| 114 compiled tools | 134: 78 query, 52 action, 4 runtime (`find_tools`, `ask_user`, `publish_artifact`, `delegate_task`) |
+| 179 permission resources | 183 |
+| The agent allowlist is a single-literal return the test regex-parses | A `map[Resource]map[Operation]struct{}` read through `IsAgentAllowed`; the coverage test fails on missing and on unclaimed entries |
+| `listSpec` in `listcatalog.go` | Defined in `listtools.go`; `listcatalog.go` holds the spec instances |
+| `draftSpecs` in the tool service | `S/core/services/assistantservice/artifacts.go` |
+| `task i18n-check` in `services/tms` | Root `Taskfile.yml`; run from the repo root |
+| `pnpm lint:design` in the web app | `client/package.json` only; run from `client/` |
+| Watchtower jobs fan out with `RunTenantFanOut` | `watchtowerjobs` loops tenants inside its activity; `RunTenantFanOut` (`S/core/temporaljobs/fanout.go`) is used by `aifeedbackjobs`, `briefingjobs`, `carrierintelligencejobs`, `insightjobs`, `retrievaljobs`. Use it for new per-tenant jobs. |
+| `ARTIFACT_KINDS` in `artifacts-pane.tsx` | Defined in `C/components/assistant/voice/artifact-chrome.tsx`; the pane imports it. `artifactKindSchema` is in `C/types/assistant.ts`. |
+| `AGENTS.md` paths under `client/src` | `client/apps/web/src` |
+| GTC runs in `docker-compose-local.yml` (CLAUDE.md) | Not in the compose file |
+| GTC publishes `reporting:cdc` | Only `services/gtc/config/gtc.example.yaml` (5 tables). Neither live config (`config/gtc.yaml`, `services/gtc/config/gtc.yaml`) publishes it, so the report result cache consumer receives nothing today. |
+
+### E5. Internationalization is already built
+
+Translations are a custom system, not a React package: catalogs in `i18n/` (en, es, zh-TW, zh-CN; `messages.en.json` is generated), the runtime in `@trenova/shared/i18n` (`useT`, `translate`, `format`), and Go extraction in `shared/cmd/i18n-extract`. The English string is the key. Write English inside `t("...")` (or an `errortypes`/ozzo message in Go) and run `task i18n`; `task i18n-check` fails on missing or orphaned entries. Adding a language is one line in `i18n/locales.json` plus `task i18n`, so G19's fr-CA needs no framework work. Part 1.3 should read "English, Spanish, Traditional and Simplified Chinese".
+
+### E6. Per-brief corrections
+
+- **G01.** The 14 event types are `tenant.JournalSourceEventType` (`S/core/domain/tenant/enums.go:145`) and a Postgres enum `journal_source_event_enum`; `journal_sources.source_event_type` itself is `VARCHAR(100)`. `journal_sources.idempotency_key` is unique per organization and business unit. `DefaultAPAccountID` is used by carrier settlement posting. `VendorBillPosted` and `VendorPaymentPosted` have no producer; the accounting-control validator still requires one of them in `AutoPostSourceEvents` when expense recognition is on bill post or cash disbursement. Journal lines already carry `CustomerID`, `VendorID`, `DepartmentID`, `ProjectID`, `LocationID`, `TaxCode`, `TaxAmount`.
+- **G02.** `DocumentPacketRule` accepts Shipment, Trailer, Tractor and Worker but billing does not use it (it drives driver qualification files). Packet readiness must build on `S/core/services/shipmentservice/billing_readiness.go` (`GetBillingReadiness`, per-payer document requirements from the billing profile's document types, rate validation, auto mark-ready). Bank receipt matching links receipts to customer payments only, one receipt per import. The cash-flow forecast (`accountsreceivableservice.GetCashFlowForecast`) covers inflows only.
+- **G03.** The integrations unique constraint is per organization, business unit and **type**, so Samsara and Motive can already coexist. The blockers are `Factory.ProviderFor` returning the first match (`S/infrastructure/telematics/factory.go`) and the single `external_id` column on `tractors`, `trailers` and `workers`. Tractors and trailers already auto-match by VIN then unit code (`telematicsservice/sweep.go`); workers are pushed to Samsara, not matched. Samsara live shares, routes, messages and addresses clients are unused.
+- **G04.** `AIDocumentService` also has `SubmitRateConfirmationBackgroundExtraction`/`PollRateConfirmationBackgroundExtraction`. Email intake exists (`inboundmessage`, `inboundmessageservice`, `POST /webhooks/inbound-mail/:mailboxToken/`, Postmark and Resend). Per-field confidence, evidence excerpt and page number are stored; bounding boxes are not (Tesseract TSV coordinates are discarded in `contentbuilding.go` `parseTesseractTSV`). The `document.extracted` agent event already exists.
+- **G05.** The portal has 61 methods, 32 prefixed `My`; `DashControl` has 19 settings. No portal mutation accepts a client key; `RecordStopActual` accepts `OccurredAt` but the portal does not pass it (`driverportalservice/portal.go`), so a retried arrival fails with "You've already arrived at this stop". Dash already ships `dash.webmanifest`. Signatures today are typed names on policy acknowledgements.
+- **G06.** `tenderservice.MarkExhausted` records a shipment event, notifies dispatch, audits and invalidates; it publishes no agent event and offers no extension hook. The setter-injected ports on the tender service are the pattern to follow. Scoring lives in `dispatchcandidateservice/score.go`; `shared/dispatchplanner` is an assignment solver (greedy/regret plus ALNS).
+- **G07.** `shared/webhooksig` verifies Svix and basic-auth signatures and has `SignSvix`. The OpenAPI spec is generated by swag plus `cmd/openapi-postprocess` (`task docs-generate`) and checked in CI.
+- **G08.** Agent extensions (`docs/engineering/agent-extensions.md`, Exa web search) are the model for tenant-credentialed tools: activation gate, per-tool availability, a taint mark that caps later writes at Propose, daily limits and cost recording. `agentdefinition.Definition.Version` is an optimistic-lock counter, not a revision history.
+- **G09.** `invoicesharehandler` is an authenticated internal share, not public; the public invoice download is `invoicehandler` `/billing/invoices/shared-documents/:token/download/`.
+- **G10.** Tenders use `PreviewByToken`/`RespondByToken`; rate confirmations use `PreviewByToken`/`ConfirmByToken`. The rate confirmation signature is a typed name and title with no IP or user agent. Automatic carrier invoice matching is called only from EDI 210 (`ediinboundservice/tenderedcarrier.go`); emailed invoices are classified but never matched.
+- **G12.** The `mfa_authenticators` table (webauthn, totp) exists with a list endpoint only.
+- **G13.** Safety events belong to a worker (with an optional shipment), not a tractor or trailer. `fmcsa.Basics` data reaches carrier vetting through `Composite`, not the tenant's own fleet.
+- **G14.** `AtMaintenance` is set by hand or by the `fleet_tools` agent tool and blocks dispatch through the generic "not Available" check; nothing sets or clears it automatically. `vehicle_inspections` are listed in GraphQL but drive nothing.
+- **G15.** Dashboard cross-filtering is client-side (`cross-filter.ts`); saved dashboard filters are server-side.
+- **G17.** `tablechangealert` (CDC triggers with conditions that only notify) is the nearest existing trigger layer.
+- **G18.** LTL rating has NMFC density scales, class-from-density and deficit weight; no tariff integration.
 
 ---
 
@@ -86,7 +157,7 @@ The design system is not decoration; it is the reason Trenova reads as a differe
 - **Explainability UI.** Scores, matches, ETAs, confidences and AI extractions have an inline "why" affordance that opens the inputs and the reasoning.
 - **Bulk and undo.** Lists support multi-select with bulk actions. Reversible actions offer undo in the toast.
 - **Accessibility.** WCAG 2.2 AA: labels, focus order, `aria-live` for async results, 44px touch targets on the driver app, reduced-motion respected, contrast enforced by the token linter.
-- **Internationalization.** All user-facing text goes through i18n keys (`task i18n-check`). English and Spanish at minimum; the Canada brief adds fr-CA.
+- **Internationalization.** All user-facing text is written in English inside `t("...")` from `@trenova/shared/i18n/use-t` (Go: `errortypes`/ozzo messages), then `task i18n` extracts it and `task i18n-check` (repo root) gates CI. Trenova ships en, es, zh-TW and zh-CN; the Canada brief adds fr-CA. See `i18n/README.md` and Errata E5.
 - **Performance budgets.** List pages render their first row under 1 s on a cold load against seed data; interactions respond under 100 ms; no N+1 GraphQL resolvers (use the dataloaders); connection queries gate `COUNT` on `IncludeTotalCount`.
 
 ### 1.4 Integrations heal themselves
@@ -123,12 +194,12 @@ A brief is not done until everything below that applies to it exists, is tested,
 |---|---|---|
 | A1 | **Read tools** | Every new entity has `get_<entity>` and `list_<entity>s` (or a `listSpec` in `listcatalog.go`), plus `search_*` where users search. Summaries and health have `insight`-style tools. Field sensitivity is enforced (`fieldaccess.go`). |
 | A2 | **Action tools** | Every user-facing mutation that changes state has an `AgentTool`. One tool per intent (`approve_vendor_bill`, not `update_vendor_bill` with a status flag). |
-| A3 | **Tier defaults** | `DefaultAutonomyTier` follows this table. Tenants may raise a tier through earned trust; the default never starts higher. |
+| A3 | **Tier defaults** | `Policy().DefaultTier` follows this table, and `MaxTier` caps it (Errata E2). Tenants may raise a tier through earned trust; the default never starts higher. |
 | A4 | **Simulate** | Every new action tool implements `ToolSimulator` and returns a `ToolSimulation` with a human summary and `FieldChange`s. The decision queue must render it. |
-| A5 | **Target and idempotency** | Tools that act on one record implement `TargetedTool.Target` so stale proposals are rejected. Tools with external side effects set `RequiresIdempotencyKey`. |
-| A6 | **Reversible** | `Reversible()` is true only when a reverse tool exists and is registered. If true, name the reverse tool in the description. |
+| A5 | **Target and idempotency** | Tools that act on one record implement `TargetedTool.Target` so stale proposals are rejected. Tools with external side effects set `Policy().Idempotent`. |
+| A6 | **Reversible** | `Policy().Reversible` is true only when a reverse tool exists and is registered. If true, name the reverse tool in the description. |
 | A7 | **Validation** | Tools that can fail business rules implement `ToolValidator` using the same validator the service uses. No second copy of rules. |
-| A8 | **Allowlist** | Every tool's `PermissionResource`/`PermissionOperation` pair is in `agentAllowedPermissions` in `core/domain/permission/agent.go` as a single-literal return (the test regex-parses it). |
+| A8 | **Allowlist** | Every tool's `Policy().Resource`/`Policy().Operation` pair is an entry in the `agentAllowedPermissions` map in `core/domain/permission/agent.go` (`IsAgentAllowed`). The coverage tests in `agenttoolservice/agentpermission_test.go` fail both ways: a tool whose pair is missing, and an entry no tool claims. `OpApprove` is never granted to an agent. |
 | A9 | **Events** | Every meaningful state transition publishes an agent event (`services.PublishAgentEvent`). New kinds are added to `knownEvents`. New subject types get the enum, the migration and a resolver in `agentsubjectservice`. |
 | A10 | **Watchtower** | Every condition a person should act on (a failing sync, an expiring document, an overdue item, an at-risk load) is a `WatchtowerSource` with snapshot, upsert and resolve. |
 | A11 | **Agent template** | Each brief ships at least one starter template in `agentdefinition` that uses its tools. Anything that talks to people outside the tenant or moves money starts at `TierPropose` with shadow mode on. |
@@ -157,9 +228,9 @@ Paths below are relative to `services/tms/internal/` (backend, `S/`) and `client
 
 ### 3.1 Read tool (`AgentQueryTool`)
 
-- Port: `S/core/ports/services/agentquerytool.go`: `Name`, `Description`, `ParamSchema() map[string]any`, `PermissionResource`, `Query(ctx, QueryToolParams) (any, error)`.
+- Port: `S/core/ports/services/agentquerytool.go`: `Name`, `Description`, `ParamSchema() map[string]any`, `Policy() ToolPolicy`, `Query(ctx, *QueryToolParams) (any, error)`. The policy comes from `readPolicy(t.Name(), readSpec{resource: permission.ResourceX})` (`agentquerytoolservice/policy.go`).
 - Pattern: `S/core/services/agentquerytoolservice/insight_tools.go`. Start `Query` with `guardQuery(params)` and scope with `tenantOf(params)`.
-- Generic list tools: add a `listSpec` in `listcatalog.go` rather than a hand-written tool.
+- Generic list tools: add a `listSpec` (type in `listtools.go`) instance in `listcatalog.go` rather than a hand-written tool.
 - Register in `agentquerytoolservice/module.go` with `fx.ResultTags(`group:"agent_query_tools"`)`. Renamed tools go in `legacyToolNames` in `registry.go`.
 - Field sensitivity: `fieldaccess.go`, classified in `S/core/domain/permission/registry.go`.
 - Desk mapping: `S/core/services/assistantservice/artifacts.go` (`artifactFromObservation`).
@@ -167,12 +238,13 @@ Paths below are relative to `services/tms/internal/` (backend, `S/`) and `client
 
 ### 3.2 Action tool (`AgentTool`)
 
-- Port: `S/core/ports/services/agenttool.go`: `Name`, `Description`, `ParamSchema`, `Reversible`, `PermissionResource`, `PermissionOperation`, `RequiresIdempotencyKey`, `DefaultAutonomyTier`, `Execute(ctx, ToolExecuteParams) error`. Optional: `ToolSimulator`, `ToolValidator`, `TargetedTool`.
-- Pattern: `placeShipmentHoldTool` in `S/core/services/agenttoolservice/shipment_tools.go`. Start with `guardExecute(t, params)`; scope with `tenantFrom`.
-- Register in `agenttoolservice/module.go` with `group:"agent_tools"`. Tiers are in `S/core/domain/agent/enums.go`.
+- Port: `S/core/ports/services/agenttool.go`: `Name`, `Description`, `ParamSchema`, `Policy() ToolPolicy`, `Execute(ctx, ToolExecuteParams) error`. Optional: `ToolSimulator`, `ToolValidator`, `TargetedTool`, `ToolResultReporter`.
+- The policy is a literal `serviceports.ToolPolicy{Name, Kind: agent.ToolKindAction, Resource, Operation, DefaultTier, MaxTier, Egress, Reversible, Idempotent, Rationale, ...}`. Choose `Egress` honestly (Errata E2); it sets the ceiling.
+- Pattern: `placeShipmentHoldTool` in `S/core/services/agenttoolservice/shipment_tools.go`. Start with `guardExecute(t, params)` (`base.go`); scope with `tenantFrom`.
+- Register in `agenttoolservice/module.go` `ToolProviders()` (grouped as `group:"agent_tools"`). Tiers are in `S/core/domain/agent/enums.go`; egress classes and kinds in `toolsafety.go`.
 - `proposalrecorder` and `proposalexecutor` already handle idempotency, target staleness, budgets and audit; do not reimplement them.
-- Tools that send messages outward also add `draftSpecs` so the draft is reviewable.
-- Tests to extend: `agentpermission_test.go`, `tenant_scope_test.go`, `target_test.go`.
+- Tools that send messages outward also add a `draftSpecs` entry (`S/core/services/assistantservice/artifacts.go`) so the draft is reviewable.
+- Tests and generated files to update: Errata E3.
 
 ### 3.3 Agent event and subject
 
