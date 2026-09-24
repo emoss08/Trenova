@@ -1,0 +1,159 @@
+# Synthetic documents and the searches search_documents should answer with
+# them. The corpus is seeded for one organization, attached to shipments; the
+# leak test seeds the same text for a second organization and on records the
+# caller may not read, and none of that may ever be returned. Metrics are
+# recall@5, MRR and nDCG@10 per retrieval leg; the floors live in
+# documentretrieval.floors.json and are set with -update, never by hand.
+source: Document
+corpus:
+  - key: ratecon-acme-4471
+    fileName: acme-ratecon-4471.pdf
+    kind: RateConfirmation
+    attachedTo: shipment
+    pages:
+      - >-
+        Rate Confirmation. Carrier: Swift Haul LLC. Load 4471 from Dallas, TX to
+        Chicago, IL. Linehaul $2,450.00. Fuel surcharge $310.00. Lumper fee
+        reimbursed with receipt up to $150.
+      - >-
+        Terms: detention is billed at $75 per hour after two hours of free time.
+        Payment net 30 days from receipt of invoice and signed delivery receipt.
+    fields:
+      - "loadNumber: 4471"
+      - "carrier: Swift Haul LLC"
+  - key: bol-88213
+    fileName: bol-88213.pdf
+    kind: BillOfLading
+    attachedTo: shipment
+    pages:
+      - >-
+        Bill of Lading 88213. Shipper: Globex Foods, Plant 2, Omaha NE. Consignee:
+        Fresh Mart DC, Denver CO. 22 pallets frozen chicken, keep at 0 F. Seal
+        number 55120.
+  - key: pod-damaged-pallets
+    fileName: pod-5520.pdf
+    kind: ProofOfDelivery
+    attachedTo: shipment
+    pages:
+      - >-
+        Delivery receipt for shipment 5520. Received 18 of 20 pallets; two pallets
+        crushed and refused by the receiver. Signed by M. Jones, receiving clerk.
+  - key: pod-clean
+    fileName: pod-5521.pdf
+    kind: ProofOfDelivery
+    attachedTo: shipment
+    pages:
+      - >-
+        Delivery receipt for shipment 5521. All 12 pallets received in good
+        condition. Signed Carla Ruiz.
+  - key: contract-globex
+    fileName: globex-transportation-agreement.pdf
+    kind: Contract
+    attachedTo: customer
+    pages:
+      - Transportation Agreement between Globex Foods and Trenova Freight.
+      - >-
+        Section 7. Fuel Surcharge. Carrier may adjust rates weekly by the DOE
+        national average diesel price, one cent per mile for each five cents
+        above $3.00 per gallon.
+      - >-
+        Section 9. Claims. Cargo loss and damage claims must be filed in writing
+        within nine months of delivery.
+  - key: permit-oversize-ohio
+    fileName: oh-oversize-permit.pdf
+    kind: Permit
+    attachedTo: shipment
+    pages:
+      - >-
+        Ohio Department of Transportation special hauling permit. Oversize load
+        14 feet wide. Approved route: I-71 north to I-270 west, daylight travel
+        only, escort vehicle required.
+  - key: invoice-7781
+    fileName: invoice-7781.pdf
+    kind: Invoice
+    attachedTo: shipment
+    pages:
+      - >-
+        Invoice 7781 to Fresh Mart. Linehaul $1,980. Detention 3 hours $225.
+        Total due $2,205 by October 30.
+  - key: freshmart-receiving-guide
+    fileName: freshmart-receiving-guide.pdf
+    kind: Other
+    attachedTo: customer
+    pages:
+      - >-
+        Fresh Mart receiving guidelines. Every delivery requires a scheduled
+        appointment booked 24 hours ahead through the dock portal. Late arrivals
+        are rescheduled to the next open slot.
+  - key: sds-hypochlorite
+    fileName: sds-sodium-hypochlorite.pdf
+    kind: SafetyDataSheet
+    attachedTo: shipment
+    pages:
+      - >-
+        Safety data sheet. Sodium hypochlorite solution, UN1791, class 8
+        corrosive. Keep away from acids. Wear gloves and eye protection.
+  - key: coi-swift-haul
+    fileName: coi-swift-haul.pdf
+    kind: CertificateOfInsurance
+    attachedTo: carrier
+    pages:
+      - >-
+        Certificate of insurance for Swift Haul LLC. Cargo coverage $100,000.
+        Auto liability $1,000,000. Policy expires March 1, 2027.
+  - key: tender-weekend
+    fileName: tender-weekend-pickup.pdf
+    kind: Tender
+    attachedTo: shipment
+    pages:
+      - >-
+        Load tender from Acme Industrial. Pickup Saturday 6 AM in Fort Worth,
+        deliver Monday by noon in Memphis. Team drivers preferred.
+  - key: lumper-receipt-4471
+    fileName: lumper-receipt-4471.pdf
+    kind: Receipt
+    attachedTo: shipment
+    pages:
+      - >-
+        Capstone Logistics unloading service receipt. Load 4471. Amount paid $140
+        cash. Unloaded 24 pallets.
+  - key: reefer-download-5520
+    fileName: reefer-download-5520.pdf
+    kind: Other
+    attachedTo: shipment
+    pages:
+      - >-
+        Reefer temperature download for trailer 5310. Setpoint 34 F. Door opened
+        three times at the receiver. Temperature stayed between 33 and 36 degrees
+        for the whole trip.
+cases:
+  - query: lumper fee on load 4471
+    relevant: [ratecon-acme-4471, lumper-receipt-4471]
+  - query: which document says the consignee needs a delivery appointment
+    relevant: [freshmart-receiving-guide]
+  - query: bill of lading 88213
+    relevant: [bol-88213]
+  - query: fuel surcharge clause in the Globex contract
+    relevant: [contract-globex]
+  - query: proof of delivery with damaged pallets
+    relevant: [pod-damaged-pallets]
+  - query: who signed for shipment 5520
+    relevant: [pod-damaged-pallets]
+  - query: oversize route through Ohio
+    relevant: [permit-oversize-ohio]
+  - query: how much detention was billed on invoice 7781
+    relevant: [invoice-7781]
+  - query: corrosive chemical safety sheet
+    relevant: [sds-hypochlorite]
+  - query: carrier cargo insurance limit
+    relevant: [coi-swift-haul]
+  - query: weekend pickup tender from Acme
+    relevant: [tender-weekend]
+  - query: freight arrived broken and the receiver turned some of it away
+    relevant: [pod-damaged-pallets]
+  - query: how long do we have to file a cargo claim
+    relevant: [contract-globex]
+  - query: was the reefer kept cold at delivery
+    relevant: [reefer-download-5520]
+  - query: what does the carrier charge when the truck waits at the dock
+    relevant: [ratecon-acme-4471, invoice-7781]
