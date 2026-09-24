@@ -22,6 +22,15 @@ type fakeMemoryRepo struct {
 	used    []pulid.ID
 	listed  *repositories.ListActiveAgentMemoriesRequest
 	sought  *repositories.FindActiveAgentMemoryRequest
+
+	activeCount int
+}
+
+func (f *fakeMemoryRepo) CountActive(
+	context.Context,
+	repositories.CountActiveAgentMemoriesRequest,
+) (int, error) {
+	return f.activeCount, nil
 }
 
 func (f *fakeMemoryRepo) Create(_ context.Context, entity *agent.Memory) (*agent.Memory, error) {
@@ -202,7 +211,7 @@ func TestRemember_LooksForTheSameMemoryOnlyWhereItWouldBeRead(t *testing.T) {
 		"an agent's remember is read by every agent, so it matches only organization rows")
 }
 
-func TestForContext_ReadsOrganizationWideAndToolScopedAndCountsUse(t *testing.T) {
+func TestForContext_ReadsCandidatesWithoutCountingThemUsed(t *testing.T) {
 	t.Parallel()
 
 	one := &agent.Memory{ID: pulid.MustNew("amem_")}
@@ -215,11 +224,78 @@ func TestForContext_ReadsOrganizationWideAndToolScopedAndCountsUse(t *testing.T)
 	})
 	require.NoError(t, err)
 
-	assert.Len(t, got, 1)
+	assert.Equal(t, []*agent.Memory{one}, got.Memories)
 	assert.True(t, repo.listed.OrganizationWide)
 	assert.Equal(t, []string{"assign_move"}, repo.listed.ToolNames)
-	assert.Equal(t, DefaultContextLimit, repo.listed.Limit)
-	assert.Equal(t, []pulid.ID{one.ID}, repo.used)
+	assert.Equal(t, agent.MaxMemoryCandidates, repo.listed.Limit)
+	assert.Empty(t, repo.used, "a candidate is counted only once a prompt carries it")
+}
+
+func TestForContext_ReadsTheMemoriesOfTheRecordsTheTurnIsAbout(t *testing.T) {
+	t.Parallel()
+
+	customerID := pulid.MustNew("cus_")
+	shipmentID := pulid.MustNew("shp_")
+	locationID := pulid.MustNew("loc_")
+	repo := &fakeMemoryRepo{}
+	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
+	svc.subjects = NewSubjectResolver(&fakeLinks{links: map[agent.MemoryRecordKind][]repositories.MemoryRecordLink{
+		agent.MemoryRecordShipment: {
+			{From: shipmentID, Kind: agent.MemoryRecordLocation, ID: locationID},
+		},
+	}})
+
+	got, err := svc.ForContext(t.Context(), services.MemoryContextRequest{
+		TenantInfo: tenant(),
+		Records: []agent.EntityRef{
+			{Type: "customer", ID: customerID.String()},
+			{Type: string(agent.SubjectShipment), ID: shipmentID.String()},
+		},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, []agent.MemorySubject{
+		{Type: agent.MemorySubjectCustomer, ID: customerID, Relation: agent.MemoryRelationDirect},
+		{Type: agent.MemorySubjectLocation, ID: locationID, Relation: agent.MemoryRelationRelated},
+	}, got.Subjects)
+	assert.Equal(t, []repositories.MemorySubjectRef{
+		{Type: agent.MemorySubjectCustomer, ID: customerID},
+		{Type: agent.MemorySubjectLocation, ID: locationID},
+	}, repo.listed.Subjects)
+}
+
+func TestRecordUse_CountsWhatAPromptCarried(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeMemoryRepo{}
+	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
+	ids := []pulid.ID{pulid.MustNew("amem_"), pulid.MustNew("amem_")}
+
+	require.NoError(t, svc.RecordUse(t.Context(), services.RecordMemoryUseRequest{
+		TenantInfo: tenant(),
+		IDs:        ids,
+	}))
+	assert.Equal(t, ids, repo.used)
+
+	require.NoError(t, svc.RecordUse(t.Context(), services.RecordMemoryUseRequest{
+		TenantInfo: tenant(),
+	}))
+	assert.Len(t, repo.used, 2, "nothing carried is nothing to count")
+}
+
+func TestUsage_ReportsTheCountAgainstTheSoftCap(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeMemoryRepo{activeCount: 4200}
+	usage, err := newService(repo, &fakeRuns{}, &fakeLabeler{}).Usage(t.Context(), tenant())
+	require.NoError(t, err)
+
+	assert.Equal(t, &services.AgentMemoryUsage{
+		ActiveCount:     4200,
+		ActiveSoftCap:   agent.MemoryActiveSoftCap,
+		WarnAt:          agent.MemoryActiveWarnAt,
+		ContentMaxChars: agent.MaxMemoryContentChars,
+	}, usage)
 }
 
 func proposal(tool string, params map[string]any) *agent.AgentProposal {

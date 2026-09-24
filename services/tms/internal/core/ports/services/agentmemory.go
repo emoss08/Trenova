@@ -68,13 +68,50 @@ type RecalledMemory struct {
 }
 
 // MemoryContextRequest is the prompt builder's read: everything a run of
-// this agent should start knowing.
+// this agent may start knowing. Records are what the turn is about (its
+// subject, the page, the records the person named, and those of the turn
+// that handed it its task), as page entity types or subject types with ids.
 type MemoryContextRequest struct {
 	TenantInfo        pagination.TenantInfo
 	AgentDefinitionID pulid.ID
 	ToolNames         []string
-	Subjects          []repositories.MemorySubjectRef
-	Limit             int
+	Records           []agent.EntityRef
+}
+
+// MemoryContext is what a prompt may carry, best first, and the records whose
+// memories it read. The prompt keeps as many as the agent's budget holds.
+type MemoryContext struct {
+	Memories []*agent.Memory
+	Subjects []agent.MemorySubject
+}
+
+// RecordMemoryUseRequest counts the memories a prompt carried as used.
+type RecordMemoryUseRequest struct {
+	TenantInfo pagination.TenantInfo
+	IDs        []pulid.ID
+}
+
+// RankMemoriesRequest orders the memories a prompt may carry among those of
+// equal standing, most useful first.
+type RankMemoriesRequest struct {
+	TenantInfo pagination.TenantInfo
+	Now        int64
+	Memories   []*agent.Memory
+}
+
+// MemoryRanker orders the memories a prompt may carry. Order decides which
+// Facts and Corrections for tools not loaded this turn fit in the budget.
+type MemoryRanker interface {
+	RankMemories(ctx context.Context, req RankMemoriesRequest) ([]*agent.Memory, error)
+}
+
+// AgentMemoryUsage is how much an organization keeps for its agents against
+// what it should keep.
+type AgentMemoryUsage struct {
+	ActiveCount     int
+	ActiveSoftCap   int
+	WarnAt          int
+	ContentMaxChars int
 }
 
 type ApproveAgentMemorySuggestionRequest struct {
@@ -110,9 +147,12 @@ type AgentMemoryService interface {
 		req *repositories.ListAgentMemoryConnectionRequest,
 	) (*pagination.CursorListResult[*agent.Memory], error)
 	Recall(ctx context.Context, req RecallAgentMemoriesRequest) ([]RecalledMemory, error)
-	// ForContext returns what a prompt should carry and counts each memory
-	// as used.
-	ForContext(ctx context.Context, req MemoryContextRequest) ([]*agent.Memory, error)
+	// ForContext returns the memories a prompt may carry, best first, with
+	// the records they were read for. Nothing is counted as used until a
+	// prompt carries it; RecordUse does that.
+	ForContext(ctx context.Context, req MemoryContextRequest) (*MemoryContext, error)
+	RecordUse(ctx context.Context, req RecordMemoryUseRequest) error
+	Usage(ctx context.Context, tenant pagination.TenantInfo) (*AgentMemoryUsage, error)
 	// RecordCorrection turns a decision that changed or refused a proposal
 	// into a correction, when the decision says enough to learn from.
 	RecordCorrection(

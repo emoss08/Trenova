@@ -35,8 +35,6 @@ import (
 )
 
 const (
-	// DefaultContextLimit is how many memories a prompt carries at most.
-	DefaultContextLimit = 40
 	// maxValueChars bounds a proposed or corrected value in a correction, so
 	// a long note in one parameter does not become the whole memory.
 	maxValueChars = 80
@@ -68,23 +66,39 @@ type Params struct {
 	Runs         repositories.AgentRunRepository
 	Labeler      SubjectLabeler
 	AuditService services.AuditService
+	// Subjects reads which records a shipment, a document or a message
+	// names. Without it a turn reads the memories of the records it is
+	// directly about and no others.
+	Subjects repositories.AgentMemorySubjectRepository `optional:"true"`
+	// Ranker orders the memories a prompt may carry. Without one they are
+	// ordered by how recently they were recorded and how often they are used.
+	Ranker services.MemoryRanker `optional:"true"`
 }
 
 type Service struct {
-	l       *zap.Logger
-	repo    repositories.AgentMemoryRepository
-	runs    runReader
-	labeler SubjectLabeler
-	audit   actionLogger
+	l        *zap.Logger
+	repo     repositories.AgentMemoryRepository
+	runs     runReader
+	labeler  SubjectLabeler
+	audit    actionLogger
+	subjects SubjectResolver
+	ranker   services.MemoryRanker
 }
 
 func New(p Params) services.AgentMemoryService {
+	ranker := p.Ranker
+	if ranker == nil {
+		ranker = NewRecencyRanker()
+	}
+
 	return &Service{
-		l:       p.Logger.Named("service.agentmemory"),
-		repo:    p.Repo,
-		runs:    p.Runs,
-		labeler: p.Labeler,
-		audit:   p.AuditService,
+		l:        p.Logger.Named("service.agentmemory"),
+		repo:     p.Repo,
+		runs:     p.Runs,
+		labeler:  p.Labeler,
+		audit:    p.AuditService,
+		subjects: NewSubjectResolver(p.Subjects),
+		ranker:   ranker,
 	}
 }
 
@@ -510,42 +524,80 @@ func (s *Service) Recall(
 func (s *Service) ForContext(
 	ctx context.Context,
 	req services.MemoryContextRequest,
-) ([]*agent.Memory, error) {
-	limit := req.Limit
-	if limit <= 0 {
-		limit = DefaultContextLimit
+) (*services.MemoryContext, error) {
+	now := timeutils.NowUnix()
+
+	subjects, err := s.subjects.Resolve(ctx, req.TenantInfo, req.Records)
+	if err != nil {
+		s.l.Warn("agent memory: the records a turn is about could not all be read",
+			zap.String("organization", req.TenantInfo.OrgID.String()),
+			zap.Error(err),
+		)
 	}
 
-	now := timeutils.NowUnix()
 	memories, err := s.repo.ListActive(ctx, repositories.ListActiveAgentMemoriesRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Now:               now,
 		OrganizationWide:  true,
-		Subjects:          req.Subjects,
+		Subjects:          subjectRefs(subjects),
 		ToolNames:         req.ToolNames,
-		Limit:             limit,
+		Limit:             agent.MaxMemoryCandidates,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if len(memories) == 0 {
-		return memories, nil
-	}
 
-	ids := make([]pulid.ID, 0, len(memories))
-	for _, memory := range memories {
-		ids = append(ids, memory.ID)
+	ranker := s.ranker
+	if ranker == nil {
+		ranker = NewRecencyRanker()
 	}
-	if err = s.repo.MarkUsed(ctx, repositories.MarkAgentMemoriesUsedRequest{
+	ranked, err := ranker.RankMemories(ctx, services.RankMemoriesRequest{
 		TenantInfo: req.TenantInfo,
-		IDs:        ids,
-		At:         now,
-	}); err != nil {
-		s.l.Warn("agent memory: could not mark memories used", zap.Error(err))
+		Now:        now,
+		Memories:   memories,
+	})
+	if err != nil {
+		s.l.Warn("agent memory: ranking failed; ordering by recency and use",
+			zap.String("organization", req.TenantInfo.OrgID.String()),
+			zap.Error(err),
+		)
+		ranked = RankByRecencyAndUse(memories, now)
 	}
 
-	return memories, nil
+	return &services.MemoryContext{Memories: ranked, Subjects: subjects}, nil
+}
+
+func (s *Service) RecordUse(ctx context.Context, req services.RecordMemoryUseRequest) error {
+	if len(req.IDs) == 0 {
+		return nil
+	}
+
+	return s.repo.MarkUsed(ctx, repositories.MarkAgentMemoriesUsedRequest{
+		TenantInfo: req.TenantInfo,
+		IDs:        req.IDs,
+		At:         timeutils.NowUnix(),
+	})
+}
+
+func (s *Service) Usage(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (*services.AgentMemoryUsage, error) {
+	count, err := s.repo.CountActive(ctx, repositories.CountActiveAgentMemoriesRequest{
+		TenantInfo: tenant,
+		Now:        timeutils.NowUnix(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.AgentMemoryUsage{
+		ActiveCount:     count,
+		ActiveSoftCap:   agent.MemoryActiveSoftCap,
+		WarnAt:          agent.MemoryActiveWarnAt,
+		ContentMaxChars: agent.MaxMemoryContentChars,
+	}, nil
 }
 
 // RecordCorrection keeps what a decision taught. A change to the proposed

@@ -22,6 +22,7 @@ package agentflow
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -127,6 +128,10 @@ type RunContext struct {
 	// Delegation is set on the turn of an agent working on a task the run's
 	// own agent handed it.
 	Delegation *serviceports.Delegation `json:"delegation,omitempty"`
+	// Records are the records the turn is about, so an agent it hands a task
+	// to reads their memories too. A run recorded before they were kept has
+	// none, and its delegates read the memories of no record.
+	Records []agent.EntityRef `json:"records,omitempty"`
 }
 
 // Scope is how the run's events are tagged for its reader: empty for the
@@ -158,6 +163,7 @@ func NewRunContext(req *serviceports.RunRequest, priorityKey int) RunContext {
 		PinProvider:         req.PinProvider,
 		PriorityKey:         priorityKey,
 		Delegation:          req.Delegation,
+		Records:             req.Records,
 	}
 }
 
@@ -178,6 +184,7 @@ func (rc *RunContext) request() *serviceports.RunRequest {
 		PreferredProviderID: rc.PreferredProviderID,
 		PinProvider:         rc.PinProvider,
 		Delegation:          rc.Delegation,
+		Records:             rc.Records,
 	}
 }
 
