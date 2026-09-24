@@ -1,5 +1,6 @@
 import {
   assistantArtifactEventSchema,
+  pageContextSchema,
   pageThreadSchema,
   type AssistantArtifactEvent,
 } from "@/types/assistant";
@@ -186,5 +187,36 @@ describe("pageThreadSchema", () => {
     expect(parsed.thread.taintedAt).toBe(10);
     expect(parsed.agent.toolNames).toEqual([]);
     expect(parsed.agent.starters).toEqual([]);
+  });
+});
+
+describe("pageContextSchema", () => {
+  // A saved message carries the page context it was asked with. A draft this
+  // build cannot read must not make the conversation's history unreadable.
+  it("reads a message whose saved draft it does not understand, without the draft", () => {
+    const parsed = pageContextSchema.parse({
+      path: "/shipment-management/shipments/import",
+      draft: { surface: "somewhere_new", somethingElse: {} },
+    });
+
+    expect(parsed.path).toBe("/shipment-management/shipments/import");
+    expect(parsed.draft).toBeNull();
+  });
+
+  it("keeps a draft it can read", () => {
+    const parsed = pageContextSchema.parse({
+      path: "/billing/configuration-files/formula-templates/new",
+      draft: {
+        surface: "formula",
+        formula: {
+          schemaId: "shipment",
+          templateType: "FreightCharge",
+          expression: "1",
+          variables: [],
+        },
+      },
+    });
+
+    expect(parsed.draft?.formula?.expression).toBe("1");
   });
 });

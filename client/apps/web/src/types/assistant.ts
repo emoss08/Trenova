@@ -441,7 +441,7 @@ export const pageContextSchema = z.object({
   title: z.string().optional().default(""),
   view: pageViewSchema.nullish(),
   /** The unsaved work of the page a page-bound conversation belongs to. */
-  draft: pageDraftSchema.nullish(),
+  draft: pageDraftSchema.nullish().catch(null),
 });
 
 /** A record the person named from the composer; mirrors the server's EntityRef. */
