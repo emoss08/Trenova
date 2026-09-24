@@ -46,7 +46,7 @@ func (p *formulaPageAssistant) OpenPageThread(
 	_ context.Context,
 	req *serviceports.OpenPageThreadRequest,
 	_ *serviceports.RequestActor,
-) (*conversation.Thread, error) {
+) (*serviceports.PageThread, error) {
 	p.opened = append(p.opened, req)
 	thread := &conversation.Thread{ID: pulid.MustNew("athr_"), Origin: req.Origin}
 	if req.SubjectID.IsNotNil() {
@@ -54,7 +54,10 @@ func (p *formulaPageAssistant) OpenPageThread(
 		thread.SubjectID = req.SubjectID
 	}
 
-	return thread, nil
+	return &serviceports.PageThread{
+		Thread: thread,
+		Agent:  serviceports.PageAgent{Name: "Formula assistant", SystemKey: "formula_assistant"},
+	}, nil
 }
 
 func (p *formulaPageAssistant) ClosePageThreads(

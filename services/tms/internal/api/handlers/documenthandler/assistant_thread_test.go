@@ -48,16 +48,26 @@ func (p *pageAssistant) OpenPageThread(
 	_ context.Context,
 	req *serviceports.OpenPageThreadRequest,
 	actor *serviceports.RequestActor,
-) (*conversation.Thread, error) {
+) (*serviceports.PageThread, error) {
 	p.opened = append(p.opened, req)
 	p.actor = actor
 
-	return &conversation.Thread{
-		ID:          pulid.MustNew("athr_"),
-		Origin:      req.Origin,
-		SubjectType: req.SubjectType,
-		SubjectID:   req.SubjectID,
-		CanContinue: true,
+	agentID := pulid.MustNew("agdef_")
+
+	return &serviceports.PageThread{
+		Thread: &conversation.Thread{
+			ID:                pulid.MustNew("athr_"),
+			AgentDefinitionID: agentID,
+			Origin:            req.Origin,
+			SubjectType:       req.SubjectType,
+			SubjectID:         req.SubjectID,
+			CanContinue:       true,
+		},
+		Agent: serviceports.PageAgent{
+			ID:        agentID,
+			Name:      "Shipment import assistant",
+			SystemKey: "import_assistant",
+		},
 	}, nil
 }
 
@@ -133,10 +143,15 @@ func TestOpenImportAssistantThread_OpensTheDocumentsConversation(t *testing.T) {
 	require.NotNil(t, assistant.actor)
 	assert.Equal(t, opened.TenantInfo.UserID, assistant.actor.UserID)
 
-	var body map[string]any
+	var body struct {
+		Thread map[string]any `json:"thread"`
+		Agent  map[string]any `json:"agent"`
+	}
 	require.NoError(t, sonic.Unmarshal(recorder.Body.Bytes(), &body))
-	assert.Equal(t, "Import", body["origin"])
-	assert.Equal(t, documentID.String(), body["subjectId"])
+	assert.Equal(t, "Import", body.Thread["origin"])
+	assert.Equal(t, documentID.String(), body.Thread["subjectId"])
+	assert.Equal(t, "import_assistant", body.Agent["systemKey"])
+	assert.Equal(t, body.Thread["agentDefinitionId"], body.Agent["id"])
 }
 
 func TestOpenImportAssistantThread_NeedsTheDocumentAndTheAssistant(t *testing.T) {

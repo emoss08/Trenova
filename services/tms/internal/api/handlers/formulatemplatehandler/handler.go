@@ -854,7 +854,7 @@ type openAssistantThreadRequest struct {
 // @Accept json
 // @Produce json
 // @Param request body openAssistantThreadRequest true "The template the conversation is about, when it is saved"
-// @Success 200 {object} conversation.Thread
+// @Success 200 {object} services.PageThread
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -915,7 +915,7 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 		BusinessUnitID: authCtx.BusinessUnitID,
 		OrganizationID: authCtx.OrganizationID,
 	}
-	thread, err := h.pageAssistant.OpenPageThread(
+	opened, err := h.pageAssistant.OpenPageThread(
 		c.Request.Context(),
 		&services.OpenPageThreadRequest{
 			TenantInfo:  tenant,
@@ -930,7 +930,7 @@ func (h *Handler) openAssistantThread(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, thread)
+	c.JSON(http.StatusOK, opened)
 }
 
 type testExpressionRequest struct {

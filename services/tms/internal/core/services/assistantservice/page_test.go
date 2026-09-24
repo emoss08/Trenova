@@ -141,12 +141,35 @@ func (f *pageFixture) open(
 ) (*conversation.Thread, error) {
 	t.Helper()
 
-	return f.svc.OpenPageThread(t.Context(), &serviceports.OpenPageThreadRequest{
+	opened, err := f.svc.OpenPageThread(t.Context(), &serviceports.OpenPageThreadRequest{
 		TenantInfo:  f.actor.TenantInfo(),
 		Origin:      origin,
 		SubjectType: subjectType,
 		SubjectID:   subjectID,
 	}, f.actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return opened.Thread, nil
+}
+
+func TestOpenPageThread_NamesTheAgentThePageTalksTo(t *testing.T) {
+	t.Parallel()
+
+	fixture := newPageFixture("formula_template:read")
+	opened, err := fixture.svc.OpenPageThread(t.Context(), &serviceports.OpenPageThreadRequest{
+		TenantInfo: fixture.actor.TenantInfo(),
+		Origin:     conversation.ThreadOriginFormula,
+	}, fixture.actor)
+	require.NoError(t, err)
+
+	assert.Equal(t, opened.Thread.AgentDefinitionID, opened.Agent.ID)
+	assert.Equal(t, agentdefinition.SystemKeyFormulaAssistant, opened.Agent.SystemKey)
+	assert.Equal(t, agentdefinition.TemplateFormulaAssistant, opened.Agent.Template)
+	assert.NotEmpty(t, opened.Agent.Name)
+	assert.NotEmpty(t, opened.Agent.ToolNames)
+	assert.NotEmpty(t, opened.Agent.Starters)
 }
 
 func TestOpenPageThread_OpensOneHiddenTaintedConversationPerDocument(t *testing.T) {

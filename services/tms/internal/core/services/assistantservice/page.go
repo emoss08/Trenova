@@ -3,6 +3,7 @@ package assistantservice
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -42,7 +43,7 @@ func (s *Service) OpenPageThread(
 	ctx context.Context,
 	req *services.OpenPageThreadRequest,
 	actor *services.RequestActor,
-) (*conversation.Thread, error) {
+) (*services.PageThread, error) {
 	surface, ok := pageSurfaces[req.Origin]
 	if !ok {
 		return nil, errortypes.NewValidationError(
@@ -91,7 +92,21 @@ func (s *Service) OpenPageThread(
 	}
 	thread.MarkContinuable()
 
-	return thread, nil
+	return &services.PageThread{Thread: thread, Agent: pageAgentOf(definition)}, nil
+}
+
+func pageAgentOf(definition *agentdefinition.Definition) services.PageAgent {
+	return services.PageAgent{
+		ID:          definition.ID,
+		Name:        definition.Name,
+		Description: definition.Description,
+		Template:    definition.Template,
+		Icon:        definition.Icon,
+		Accent:      definition.Accent,
+		SystemKey:   definition.SystemKey,
+		ToolNames:   slices.Clone(definition.ToolNames),
+		Starters:    definition.Starters(),
+	}
 }
 
 func checkPageSubject(surface pageSurface, req *services.OpenPageThreadRequest) error {

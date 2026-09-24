@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
@@ -519,12 +520,29 @@ type OpenPageThreadRequest struct {
 	SubjectID   pulid.ID
 }
 
+type PageAgent struct {
+	ID          pulid.ID                  `json:"id"`
+	Name        string                    `json:"name"`
+	Description string                    `json:"description"`
+	Template    agentdefinition.Template  `json:"template"`
+	Icon        string                    `json:"icon"`
+	Accent      string                    `json:"accent"`
+	SystemKey   string                    `json:"systemKey"`
+	ToolNames   []string                  `json:"toolNames"`
+	Starters    []agentdefinition.Starter `json:"starters"`
+}
+
+type PageThread struct {
+	Thread *conversation.Thread `json:"thread"`
+	Agent  PageAgent            `json:"agent"`
+}
+
 type PageAssistant interface {
 	OpenPageThread(
 		ctx context.Context,
 		req *OpenPageThreadRequest,
 		actor *RequestActor,
-	) (*conversation.Thread, error)
+	) (*PageThread, error)
 	ClosePageThreads(ctx context.Context, req repositories.ArchiveSubjectThreadsRequest) error
 }
 

@@ -1358,7 +1358,7 @@ func (h *Handler) attachToShipment(c *gin.Context) {
 // @Tags Documents
 // @Produce json
 // @Param documentID path string true "Document ID"
-// @Success 200 {object} conversation.Thread
+// @Success 200 {object} serviceports.PageThread
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -1390,7 +1390,7 @@ func (h *Handler) openImportAssistantThread(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	thread, err := h.pageAssistant.OpenPageThread(
+	opened, err := h.pageAssistant.OpenPageThread(
 		c.Request.Context(),
 		&serviceports.OpenPageThreadRequest{
 			TenantInfo: pagination.TenantInfo{
@@ -1409,7 +1409,7 @@ func (h *Handler) openImportAssistantThread(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, thread)
+	c.JSON(http.StatusOK, opened)
 }
 
 func (h *Handler) getImportAssistantHistory(c *gin.Context) {
