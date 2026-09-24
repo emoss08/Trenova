@@ -13,6 +13,11 @@ vars:
   TEST_DB_CONTAINER: trenova-integration-postgres
   TEST_DB_PORT: "55432"
   TEST_POSTGRES_DSN: "postgres://postgres:postgres@localhost:55432/trenova_test?sslmode=disable"
+  # Plain PostGIS runs every test on the keyword-only fallback path. Build the
+  # pgvector image with `task test-db-image` and export
+  # TRENOVA_TEST_POSTGRES_IMAGE=trenova-postgres:local to run the vector tests.
+  TEST_POSTGRES_IMAGE: '{{.TRENOVA_TEST_POSTGRES_IMAGE | default "postgis/postgis:18-3.6-alpine"}}'
+  TEST_POSTGRES_LOCAL_IMAGE: trenova-postgres:local
   # nomsgpack drops gin's MsgPack binding, which nothing here uses. It is the
   # only thing pulling in ugorji/go/codec, a 20s compile on the critical path.
   #
@@ -119,7 +124,7 @@ tasks:
       - >-
         docker run -d --name {{.TEST_DB_CONTAINER}}
         -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=trenova_test
-        -p {{.TEST_DB_PORT}}:5432 postgis/postgis:16-3.4-alpine
+        -p {{.TEST_DB_PORT}}:5432 {{.TEST_POSTGRES_IMAGE}}
         postgres -c max_connections=300
       - |
         for _ in $(seq 1 60); do
@@ -128,6 +133,13 @@ tasks:
         done
         echo "test postgres did not become ready" >&2
         exit 1
+
+  test-db-image:
+    desc: Build the Postgres image with pgvector for the integration suite
+    cmds:
+      - >-
+        docker build -f {{.ROOT_DIR}}/deploy/Dockerfile.postgres
+        -t {{.TEST_POSTGRES_LOCAL_IMAGE}} {{.ROOT_DIR}}/deploy
 
   test-db-down:
     desc: Stop the shared integration-test Postgres

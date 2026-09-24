@@ -1,10 +1,22 @@
 FROM postgis/postgis:18-3.6-alpine
 
+ARG PG_CRON_VERSION=v1.6.7
+ARG PGVECTOR_VERSION=v0.8.1
+
 RUN apk add --no-cache --virtual .build-deps \
         build-base git && \
-    git clone --branch v1.6.7 --depth 1 https://github.com/citusdata/pg_cron.git /tmp/pg_cron && \
+    git clone --branch ${PG_CRON_VERSION} --depth 1 https://github.com/citusdata/pg_cron.git /tmp/pg_cron && \
     cd /tmp/pg_cron && make with_llvm=no && make with_llvm=no install && \
     cd / && rm -rf /tmp/pg_cron && \
+    apk del .build-deps
+
+# pgvector defaults to -march=native, which ties the image to the CPU that built
+# it; OPTFLAGS="" keeps it portable across CI runners and production hosts.
+RUN apk add --no-cache --virtual .build-deps \
+        build-base git && \
+    git clone --branch ${PGVECTOR_VERSION} --depth 1 https://github.com/pgvector/pgvector.git /tmp/pgvector && \
+    cd /tmp/pgvector && make with_llvm=no OPTFLAGS="" && make with_llvm=no OPTFLAGS="" install && \
+    cd / && rm -rf /tmp/pgvector && \
     apk del .build-deps
 
 RUN apk add --no-cache openssl && \
