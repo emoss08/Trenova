@@ -10,6 +10,15 @@ vars:
   DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/docker-compose-local.yml"
   CLIENT_DIR: "{{.ROOT_DIR}}/client"
   KAFKA_SCRIPTS: "{{.ROOT_DIR}}/scripts/kafka"
+  # Parses the API's own packages, plus the few third-party packages whose types
+  # the spec names (gin.H, decimal.NullDecimal). Parsing every dependency took
+  # CI half an hour; a missing type fails with "cannot find type definition",
+  # and its module goes on this prefix list.
+  SWAG_INIT: >-
+    go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -d ./cmd/cli -g main.go -o ./docs
+    --parseInternal --parseDependencyLevel 3
+    --packagePrefix github.com/emoss08/trenova,github.com/gin-gonic/gin,github.com/shopspring/decimal
+    --outputTypes json,yaml
   TEST_DB_CONTAINER: trenova-integration-postgres
   TEST_DB_PORT: "55432"
   TEST_POSTGRES_DSN: "postgres://postgres:postgres@localhost:55432/trenova_test?sslmode=disable"
@@ -286,14 +295,14 @@ tasks:
   docs-generate:
     desc: Generate Swagger docs for the TMS API
     cmds:
-      - go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency --outputTypes json,yaml
+      - "{{.SWAG_INIT}}"
       - go run ./cmd/openapi-postprocess
 
   docs-generate-check:
     desc: Check the generated OpenAPI spec is up to date
     cmds:
       - |
-        go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency --outputTypes json,yaml
+        {{.SWAG_INIT}}
         go run ./cmd/openapi-postprocess
         if git diff --quiet -- docs; then
           echo "OpenAPI spec is up to date"

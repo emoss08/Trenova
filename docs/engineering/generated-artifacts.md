@@ -23,9 +23,14 @@ go generate ./internal/api/graphql/projection/...                  # internal/ap
 go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
 go generate ./internal/core/services/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
 
-go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency --outputTypes json,yaml
-go run ./cmd/openapi-postprocess                                   # then: git diff --quiet -- docs
+task docs-generate                                                 # swag + cmd/openapi-postprocess; then: git diff --quiet -- docs
 ```
+
+The OpenAPI step parses only the API's own packages and the few third-party packages whose
+types the spec names (`gin.H`, `decimal.NullDecimal`), through `--packagePrefix`. Parsing
+every dependency took CI half an hour. An annotation that names a type from any other module
+fails with `cannot find type definition`: add that module to the prefix in `Taskfile.yml`
+(`SWAG_INIT`) and `.github/workflows/test-tms.yml`, which runs the same command.
 
 A clean `git status` after all six means the job will pass.
 
