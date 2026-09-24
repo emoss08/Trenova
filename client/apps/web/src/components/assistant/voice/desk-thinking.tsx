@@ -1,35 +1,189 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useReducedMotion } from "motion/react";
-import { useEffect, useId, useState, type CSSProperties } from "react";
-import type { DeskPose } from "./desk-pose";
+import { useEffect, useId, useState } from "react";
+import { isClosingPose, type DeskPose } from "./desk-pose";
 
-/** How long the closing pose holds before the mark is gone. */
-export const DESK_SETTLE_MS = 420;
+/** How long the closing beat holds before the mark is gone. */
+export const DESK_SETTLE_MS = 900;
 
-/** The lines the screen scrolls through while a tool runs: two screens' worth, so the loop is seamless. */
-const SCROLL_LINES = [3.4, 2.2, 2.9, 3.4, 2.2, 2.9] as const;
+/** Where the lamp's head turns: its hinge, and the angle it rests at. */
+const HINGE = "translate(16.4 9.6) rotate(-22)";
 
-/** The lines written onto the screen while the answer arrives. */
-const WRITE_LINES = [
-  { width: 3.6, className: "animate-desk-write-1" },
-  { width: 2.6, className: "animate-desk-write-2" },
-  { width: 3.1, className: "animate-desk-write-3" },
+const CONE = "M-3.4 3.4 L3.4 3.4 L10.5 19 L-10.5 19 Z";
+const SHADE = "M-2.1 -1.1 L2.1 -1.1 L3.9 3.3 L-3.9 3.3 Z";
+
+const DASHES = [
+  { x: 18.2, className: "animate-desk-dash-1" },
+  { x: 21.6, className: "animate-desk-dash-2" },
+  { x: 25, className: "animate-desk-dash-3" },
 ] as const;
 
-/** The glow is the screen's own colour, read from the mark like every other part. */
-const GLOW_STOP: CSSProperties = { stopColor: "var(--desk-accent)" };
-
-const THINK_DOTS = [
-  { cx: 7.3, className: "animate-desk-think-1" },
-  { cx: 8.5, className: "animate-desk-think-2" },
-  { cx: 9.7, className: "animate-desk-think-3" },
+const WAVES = [
+  { radius: 3, className: "animate-desk-wave-1" },
+  { radius: 5.2, className: "animate-desk-wave-2" },
+  { radius: 7.4, className: "animate-desk-wave-3" },
 ] as const;
+
+/** An arc of a signal wave, centred where the head points when it looks out. */
+function wavePath(radius: number): string {
+  const spread = (38 * Math.PI) / 180;
+  const dx = radius * Math.cos(spread);
+  const dy = radius * Math.sin(spread);
+
+  return `M${22.5 + dx} ${11.5 - dy} A${radius} ${radius} 0 0 1 ${22.5 + dx} ${11.5 + dy}`;
+}
+
+type LampPart = "mark" | "lamp" | "head" | "beam" | "cone" | "glow" | "pool" | "bulb" | "fault";
+
+/** The things that appear on the desk for some poses and are not drawn otherwise. */
+type LampExtra = "dashes" | "tick" | "card" | "helper" | "waves";
+
+/**
+ * How one part looks in a pose: `always` in both modes, `still` as the one
+ * frame reduced motion draws, `move` while it may animate. A still frame is
+ * the moment each motion is about, so the two modes never disagree.
+ */
+type PartStyle = { always?: string; still?: string; move?: string };
+
+type PoseStyle = { parts: Partial<Record<LampPart, PartStyle>>; extra?: LampExtra };
+
+const BASE: Record<LampPart, string> = {
+  mark: "ui-desk-mark h-4 w-5 shrink-0 overflow-visible",
+  lamp: "",
+  head: "origin-top-left",
+  beam: "",
+  cone: "fill-desk-accent opacity-20 origin-top [transform-box:fill-box]",
+  glow: "",
+  pool: "fill-desk-light opacity-90 origin-center [transform-box:fill-box]",
+  bulb: "fill-desk-light",
+  fault: "fill-desk-failed opacity-0",
+};
+
+const DARK: PartStyle = { still: "opacity-0" };
+
+/** Every pose, part by part. A part a pose does not name is drawn at rest. */
+const POSES: Record<DeskPose, PoseStyle> = {
+  start: {
+    parts: {
+      beam: { move: "animate-desk-light-on" },
+      glow: { move: "animate-desk-light-on" },
+      bulb: { move: "animate-desk-light-on" },
+    },
+  },
+  think: {
+    parts: {
+      cone: { move: "animate-desk-breathe-cone" },
+      pool: { move: "animate-desk-breathe-pool" },
+    },
+  },
+  write: {
+    parts: { cone: { always: "opacity-25" }, glow: { always: "opacity-0" } },
+    extra: "dashes",
+  },
+  retry: {
+    parts: {
+      head: { move: "animate-desk-shake" },
+      beam: { move: "animate-desk-light-retry" },
+      glow: { move: "animate-desk-light-retry" },
+      bulb: { move: "animate-desk-light-retry" },
+    },
+  },
+  lookup: {
+    parts: {
+      head: { move: "animate-desk-scan" },
+      pool: { move: "animate-desk-scan-pool" },
+    },
+  },
+  discover: {
+    parts: {
+      head: { move: "animate-desk-hunt" },
+      cone: { move: "animate-desk-widen" },
+      pool: { move: "animate-desk-hunt-pool" },
+    },
+  },
+  navigate: {
+    parts: {
+      head: { move: "animate-desk-travel" },
+      pool: { move: "animate-desk-travel-pool" },
+    },
+  },
+  change: {
+    parts: {
+      head: { move: "animate-desk-stamp" },
+      pool: { move: "animate-desk-stamp-pool" },
+    },
+    extra: "tick",
+  },
+  present: {
+    parts: {
+      cone: { always: "opacity-25" },
+      pool: { move: "animate-desk-present-pool" },
+    },
+    extra: "card",
+  },
+  ask: {
+    parts: {
+      head: { still: "-rotate-58", move: "animate-desk-turn" },
+      cone: { always: "scale-y-60" },
+      glow: DARK,
+      pool: { move: "animate-desk-away-pool" },
+      bulb: { move: "animate-desk-blink" },
+    },
+  },
+  delegate: {
+    parts: {
+      beam: { still: "opacity-0", move: "animate-desk-handoff-light" },
+      pool: { move: "animate-desk-handoff-pool" },
+    },
+    extra: "helper",
+  },
+  web: {
+    parts: {
+      head: { still: "-rotate-96", move: "animate-desk-lookout" },
+      cone: { always: "scale-y-60" },
+      glow: DARK,
+      pool: { move: "animate-desk-away-pool" },
+    },
+    extra: "waves",
+  },
+  done: {
+    parts: {
+      mark: { move: "animate-desk-fade" },
+      head: { still: "rotate-5", move: "animate-desk-nod" },
+      beam: { still: "opacity-0", move: "animate-desk-light-off" },
+      glow: { still: "opacity-0", move: "animate-desk-light-off" },
+      bulb: { still: "opacity-0", move: "animate-desk-light-off" },
+    },
+  },
+  await: {
+    parts: {
+      mark: { move: "animate-desk-fade" },
+      lamp: { always: "[--desk-accent:var(--desk-await)] [--desk-light:var(--desk-await)]" },
+    },
+  },
+  failed: {
+    parts: {
+      mark: { move: "animate-desk-fade" },
+      head: { still: "rotate-14", move: "animate-desk-droop" },
+      beam: { still: "opacity-0", move: "animate-desk-light-fail" },
+      glow: { still: "opacity-0", move: "animate-desk-light-fail" },
+      bulb: { still: "opacity-0", move: "animate-desk-light-fail" },
+      fault: { still: "opacity-100", move: "animate-desk-fault" },
+    },
+  },
+};
+
+function partClass(pose: DeskPose, part: LampPart, animate: boolean): string {
+  const style = POSES[pose].parts[part];
+
+  return cn(BASE[part], style?.always, animate ? style?.move : style?.still);
+}
 
 export type DeskMarkProps = {
   pose: DeskPose;
   /**
-   * Whether the scene may move. Off, every pose is one still frame of the
+   * Whether the lamp may move. Off, every pose is one still frame of the
    * same moment, which is what reduced motion wants.
    */
   animate?: boolean;
@@ -37,192 +191,247 @@ export type DeskMarkProps = {
 };
 
 /**
- * A small desk scene at the height of a line of text: a desk with a lamp on
- * it, a monitor, and a person in a chair working at it.
+ * A desk lamp at the height of a line of text: an ink lamp on an ink desk,
+ * throwing the agent's light.
  *
- * It is drawn in solid shapes on a 20 by 16 grid, one unit to a pixel at its
- * resting size, so every edge lands on the pixel grid and nothing turns to
- * mush the way a hairline does at 16px. The agent's accent is the person and
- * the screen, and a tint in the chair; the furniture is warm wood and ink,
- * and the lamp is the one warm light. Every colour is a token.
- *
- * The screen tells the story, frame by frame, the way a sprite does: dots
- * while the model thinks, lines scrolling past while a tool runs, lines being
- * written while the answer arrives. The person sits down once as the mark
- * arrives, types while a tool runs, and pushes back from the desk when the
- * turn is over.
+ * It is drawn in solid shapes on a 28 by 22.4 grid, so at its resting size
+ * a unit is under a pixel and nothing is thinner than a stroke that holds
+ * at 16px. The lamp never moves; its head turns about the hinge, its light
+ * changes, and a few small things appear on the desk under it. Which of
+ * them is the pose, one for each moment of a turn and one for each kind of
+ * tool (see `DeskPose`).
  *
  * The drawing never announces anything; the component around it does.
  */
 export function DeskMark({ pose, animate = true, className }: DeskMarkProps) {
-  const settling = pose === "settle";
-  const typing = pose === "busy" || pose === "write";
   const id = useId().replace(/[^\w-]/g, "");
-  const clipId = `desk-screen-${id}`;
-  const glowId = `desk-glow-${id}`;
+  const clipId = `desk-light-${id}`;
+  const extra = POSES[pose].extra;
+  const part = (name: LampPart) => partClass(pose, name, animate);
 
   return (
     <svg
-      viewBox="0 0 20 16"
+      viewBox="2 6 28 22.4"
       aria-hidden
       focusable="false"
       data-slot="desk-mark"
       data-pose={pose}
       data-motion={animate ? "moving" : "still"}
-      className={cn(
-        "ui-desk-mark h-4 w-5 shrink-0 overflow-visible",
-        animate && settling && "animate-desk-fade",
-        className,
-      )}
+      className={cn(part("mark"), className)}
     >
       <defs>
         <clipPath id={clipId}>
-          <rect x="5.9" y="2.9" width="5.2" height="3.7" rx="0.45" />
+          <rect x="2" y="-8" width="28" height="34" />
         </clipPath>
-        <radialGradient id={glowId}>
-          <stop offset="0.35" style={GLOW_STOP} />
-          <stop offset="1" stopOpacity="0" style={GLOW_STOP} />
-        </radialGradient>
       </defs>
 
-      <g data-part="lamp">
-        <path d="M0.9 5.6L4.3 5.6L5.3 9L-0.1 9Z" className="fill-desk-lamp-light" />
-        <rect x="2" y="5" width="0.8" height="3.6" className="fill-desk-frame" />
-        <rect x="1" y="8.2" width="2.8" height="0.9" rx="0.45" className="fill-desk-frame" />
-        <path d="M0.8 5.8C0.8 3.3 4.4 3.3 4.4 5.8Z" className="fill-desk-lamp" />
-      </g>
-
-      <g data-part="desk">
-        <rect x="1.2" y="10" width="3.6" height="5.6" rx="0.4" className="fill-desk-wood-shade" />
-        <rect x="2.2" y="12.2" width="1.6" height="0.7" rx="0.35" className="fill-desk-wood" />
-        <rect x="0.4" y="9" width="13.6" height="1.4" rx="0.5" className="fill-desk-wood" />
-      </g>
-
-      <g data-part="monitor">
-        <ellipse
-          data-part="glow"
-          cx="8.5"
-          cy="4.75"
-          rx="6.5"
-          ry="5.5"
-          fill={`url(#${glowId})`}
-          className={cn(
-            "transition-opacity duration-300",
-            pose === "write" ? "opacity-(--desk-glow)" : "opacity-0",
-            animate && pose === "write" && "animate-desk-glow",
-          )}
-        />
-        <rect x="8" y="7.2" width="1" height="1.6" className="fill-desk-frame" />
-        <rect x="6.6" y="8.3" width="3.8" height="0.7" rx="0.35" className="fill-desk-frame" />
-        <rect x="5" y="2" width="7" height="5.5" rx="1" className="fill-desk-frame" />
+      <g data-part="lamp" className={part("lamp")}>
         <rect
-          data-part="screen"
-          x="5.9"
-          y="2.9"
-          width="5.2"
-          height="3.7"
-          rx="0.45"
-          className={cn(
-            "fill-desk-accent transition-opacity duration-300",
-            settling && "opacity-40",
-          )}
+          data-part="desk"
+          x="3"
+          y="26"
+          width="26"
+          height="2.4"
+          rx="1.2"
+          className="fill-desk-lamp"
         />
-        <rect x="10.9" y="8.4" width="2.4" height="0.6" rx="0.3" className="fill-desk-frame" />
-        <g clipPath={`url(#${clipId})`} className="fill-desk-screen-ink">
-          <ScreenContent pose={pose} animate={animate} />
-        </g>
-      </g>
-
-      <g
-        data-part="seat"
-        className={cn(
-          animate && !settling && "animate-desk-sit",
-          animate && settling && "animate-desk-settle",
-        )}
-      >
-        <g data-part="chair" className="fill-desk-chair">
-          <rect x="17.3" y="4.9" width="1.6" height="6.3" rx="0.8" />
-          <rect x="13.9" y="10.1" width="5" height="1.1" rx="0.55" />
-          <rect x="15.9" y="11.2" width="1" height="2.5" />
-          <rect x="14.2" y="13.5" width="4.4" height="0.8" rx="0.4" />
-          <circle cx="14.8" cy="15.1" r="0.7" />
-          <circle cx="18" cy="15.1" r="0.7" />
-        </g>
-        <g
-          data-part="figure"
-          className={cn("fill-desk-figure", animate && !settling && "animate-desk-sit-figure")}
-        >
-          <circle cx="15.5" cy="4.3" r="1.7" />
-          <rect x="14.3" y="6.4" width="3" height="4.2" rx="1.3" />
-          <rect x="12.3" y="9.6" width="3.6" height="1.3" rx="0.65" />
-          <rect x="12.3" y="10.2" width="1.2" height="4.6" rx="0.6" />
-          <rect x="11.2" y="14.3" width="2.3" height="1" rx="0.5" />
-          <rect
-            data-part="arms"
-            x="11.9"
-            y="7.8"
-            width="3.8"
-            height="1"
-            rx="0.5"
-            className={cn(animate && typing && "animate-desk-type")}
+        <g data-part="glow" className={part("glow")}>
+          <ellipse
+            data-part="pool"
+            cx="22.4"
+            cy="26.3"
+            rx="5.2"
+            ry="0.9"
+            className={part("pool")}
           />
+        </g>
+
+        {extra === "dashes" && <Dashes animate={animate} />}
+        {extra === "card" && <Card animate={animate} />}
+        {extra === "tick" && <Tick animate={animate} />}
+        {extra === "helper" && <Helper animate={animate} clipId={clipId} />}
+
+        <g data-part="stand" className="fill-desk-lamp">
+          <rect x="5.4" y="23.4" width="8" height="2.8" rx="1.4" />
+          <path
+            d="M9.4 23.6 L7.8 14.6 L15.6 9.4"
+            fill="none"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="stroke-desk-lamp"
+          />
+          <circle cx="7.8" cy="14.6" r="1.7" />
+        </g>
+
+        {extra === "waves" && <Waves animate={animate} />}
+
+        <g clipPath={`url(#${clipId})`}>
+          <g transform={HINGE}>
+            <g data-part="head" className={part("head")}>
+              <g data-part="beam" className={part("beam")}>
+                <path data-part="cone" d={CONE} className={part("cone")} />
+              </g>
+              <path
+                d={SHADE}
+                strokeWidth="1"
+                strokeLinejoin="round"
+                className="fill-desk-lamp stroke-desk-lamp"
+              />
+              <circle cx="0" cy="-1.3" r="1.3" className="fill-desk-lamp" />
+              <ellipse cx="0" cy="3.7" rx="2.3" ry="0.95" className="fill-desk-bulb-off" />
+              <ellipse
+                data-part="bulb"
+                cx="0"
+                cy="3.7"
+                rx="2.3"
+                ry="0.95"
+                className={part("bulb")}
+              />
+              {pose === "failed" && (
+                <ellipse
+                  data-part="fault"
+                  cx="0"
+                  cy="3.7"
+                  rx="2.3"
+                  ry="0.95"
+                  className={part("fault")}
+                />
+              )}
+            </g>
+          </g>
         </g>
       </g>
     </svg>
   );
 }
 
-/** What is on the screen: the one part of the scene that changes with every phase. */
-function ScreenContent({ pose, animate }: { pose: DeskPose; animate: boolean }) {
-  switch (pose) {
-    case "arrive":
-      return (
-        <g data-part="thinking">
-          {THINK_DOTS.map((dot) => (
-            <circle
-              key={dot.cx}
-              cx={dot.cx}
-              cy="4.75"
-              r="0.5"
-              className={cn(animate && dot.className)}
-            />
-          ))}
+type ExtraProps = { animate: boolean };
+
+/** The answer arriving: lines lit on the desk one after another. */
+function Dashes({ animate }: ExtraProps) {
+  return (
+    <g data-part="dashes" className="fill-desk-light">
+      {DASHES.map((dash) => (
+        <rect
+          key={dash.x}
+          x={dash.x}
+          y="24.4"
+          width="2.6"
+          height="1.2"
+          rx="0.6"
+          className={animate ? cn("opacity-0", dash.className) : undefined}
+        />
+      ))}
+    </g>
+  );
+}
+
+/** A change made: a tick in the pool of light. */
+function Tick({ animate }: ExtraProps) {
+  return (
+    <path
+      data-part="tick"
+      d="M19.9 22.3 L21.8 24.1 L25.2 20.4"
+      fill="none"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn(
+        "stroke-desk-light origin-center [transform-box:fill-box]",
+        animate && "animate-desk-tick",
+      )}
+    />
+  );
+}
+
+/** Something presented: a card standing in the light. */
+function Card({ animate }: ExtraProps) {
+  return (
+    <g
+      data-part="card"
+      className={cn("origin-bottom [transform-box:fill-box]", animate && "animate-desk-card")}
+    >
+      <rect
+        x="18.4"
+        y="17.2"
+        width="8"
+        height="8.8"
+        rx="1.2"
+        className="fill-desk-accent opacity-20"
+      />
+      <rect x="19.8" y="19.2" width="5.2" height="1" rx="0.5" className="fill-desk-light" />
+      <rect x="19.8" y="21.4" width="3.6" height="1" rx="0.5" className="fill-desk-light" />
+    </g>
+  );
+}
+
+/**
+ * A task handed on: a second lamp, half the size and facing the first,
+ * whose light takes over the same pool.
+ */
+function Helper({ animate, clipId }: ExtraProps & { clipId: string }) {
+  const light = animate ? "animate-desk-helper-light" : undefined;
+
+  return (
+    <g
+      data-part="helper"
+      clipPath={`url(#${clipId})`}
+      className={cn(animate && "animate-desk-helper")}
+    >
+      <g transform="translate(33.2 13) scale(-0.5 0.5)" className="fill-desk-lamp">
+        <rect x="5.4" y="23.4" width="8" height="2.8" rx="1.4" />
+        <path
+          d="M9.4 23.6 L7.8 14.6 L15.6 9.4"
+          fill="none"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="stroke-desk-lamp"
+        />
+        <circle cx="7.8" cy="14.6" r="1.7" />
+        <g transform={HINGE}>
+          <g data-part="helper-beam" className={light}>
+            <path d={CONE} className="fill-desk-accent opacity-20" />
+          </g>
+          <path d={SHADE} strokeWidth="1" strokeLinejoin="round" className="stroke-desk-lamp" />
+          <circle cx="0" cy="-1.3" r="1.3" />
+          <ellipse cx="0" cy="3.7" rx="2.3" ry="0.95" className="fill-desk-bulb-off" />
+          <ellipse
+            data-part="helper-bulb"
+            cx="0"
+            cy="3.7"
+            rx="2.3"
+            ry="0.95"
+            className={cn("fill-desk-light", light)}
+          />
         </g>
-      );
-    case "busy":
-      return (
-        <g data-part="scrolling" className={cn(animate && "animate-desk-scroll")}>
-          {SCROLL_LINES.map((width, index) => (
-            <rect
-              key={`${index}-${width}`}
-              x="6.6"
-              y={3.45 + index}
-              width={width}
-              height="0.5"
-              rx="0.25"
-            />
-          ))}
-        </g>
-      );
-    case "write":
-      return (
-        <g data-part="writing">
-          {WRITE_LINES.map((line, index) => (
-            <rect
-              key={line.className}
-              x="6.6"
-              y={3.45 + index}
-              width={line.width}
-              height="0.5"
-              rx="0.25"
-              className={cn("origin-left [transform-box:fill-box]", animate && line.className)}
-            />
-          ))}
-        </g>
-      );
-    default:
-      return null;
-  }
+      </g>
+    </g>
+  );
+}
+
+/** The web: signal waves leaving the head as it looks out past the desk. */
+function Waves({ animate }: ExtraProps) {
+  return (
+    <g
+      data-part="waves"
+      fill="none"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      className="stroke-desk-light"
+    >
+      {WAVES.map((wave) => (
+        <path
+          key={wave.radius}
+          d={wavePath(wave.radius)}
+          className={
+            animate ? cn("[transform-origin:22.5px_11.5px] opacity-0", wave.className) : undefined
+          }
+        />
+      ))}
+    </g>
+  );
 }
 
 export type ThinkingPresence = "working" | "settling" | "gone";
@@ -260,17 +469,17 @@ export function useThinkingPresence(working: boolean, canSettle: boolean): Think
 }
 
 /**
- * The live indicator on the working line: the desk scene at work, for as
+ * The live indicator on the working line: the desk lamp at work, for as
  * long as the agent is.
  *
  * It lives in one place only, beside the words of the working line under a
  * reply in progress. Everywhere else a small thing still going is the
- * breathing dot; this is the one that gets to be a scene, because it sits
- * beside the words that say what the scene shows.
+ * breathing dot; this is the one that gets to be a drawing, because it sits
+ * beside the words that say what the drawing shows.
  *
  * Announced, it is a status with a fixed name and no content that changes,
  * so a screen reader hears that the work is under way once and is never told
- * about the drawing moving. Settling, it is already over, so it says nothing.
+ * about the drawing moving. Closing, it is already over, so it says nothing.
  */
 export function DeskThinking({ pose, className }: { pose: DeskPose; className?: string }) {
   const t = useT();
@@ -278,7 +487,7 @@ export function DeskThinking({ pose, className }: { pose: DeskPose; className?: 
   const frame = cn("inline-flex shrink-0 items-center justify-center", className);
   const mark = <DeskMark pose={pose} animate={!reduceMotion} />;
 
-  if (pose === "settle") {
+  if (isClosingPose(pose)) {
     return (
       <span aria-hidden data-slot="desk-thinking" className={frame}>
         {mark}
