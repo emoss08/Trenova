@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { ThreadSidebar } from "../thread-sidebar";
 
@@ -25,7 +25,7 @@ const agent = {
   icon: "receipt",
   accent: "amber",
   toolNames: [],
-} as unknown as AgentDefinitionRow;
+} as unknown as AgentChoice;
 
 function renderSidebar(liveThreadIds?: ReadonlySet<string>) {
   return render(

@@ -45,6 +45,11 @@ fragment AgentDefinitionCardFields on AgentDefinition {
     enabled
     triggerMode
   }
+  accessMode
+  accessRoles {
+    id
+    name
+  }
   lastRunAt
   nextRunAt
   pendingProposals

@@ -2,7 +2,7 @@ import { AGENT_ACCENTS, resolveAgentIdentity } from "@/components/agent-identity
 import { conversationPath } from "@/lib/conversation-path";
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { downloadAssistantTranscript } from "@/services/assistant";
@@ -50,8 +50,8 @@ export type DeskContextValue = {
    * the notice that its answer is in.
    */
   activeThread: AssistantThread | null;
-  agents: AgentDefinitionRow[];
-  agentsById: Map<string, AgentDefinitionRow>;
+  agents: AgentChoice[];
+  agentsById: Map<string, AgentChoice>;
   agentsUnavailable: boolean;
   isLoading: boolean;
   isStarting: boolean;
@@ -107,7 +107,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const [liveArtifactIds, setLiveArtifactIds] = useState<string[]>([]);
 
   const threadsQuery = useQuery(queries.assistant.threads());
-  const agentsQuery = useQuery(queries.assistant.agents(true, true));
+  const agentsQuery = useQuery(queries.assistant.myAgents());
   const threads = useMemo(() => threadsQuery.data?.items ?? [], [threadsQuery.data?.items]);
   const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);
   const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);

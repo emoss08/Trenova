@@ -1,8 +1,11 @@
 import {
   fetchAgentChoicesByIds,
   fetchAgentDefinitions,
+  fetchMyAgents,
   type AgentChoiceQuery,
+  type AgentChoiceSource,
 } from "@/lib/graphql/agent-definition";
+import { fetchRoleAgents, fetchSuggestedAgentAudience } from "@/lib/graphql/agent-access";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -50,15 +53,24 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       apiService.assistantService.listArtifacts(threadId, { signal }),
   }),
+  // The organization's agents with everything an administrator configures;
+  // AI Control only. Chat surfaces read myAgents.
   agents: (enabledOnly: boolean, chatOnly = false) => ({
     queryKey: ["agent-definitions", enabledOnly, chatOnly],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       fetchAgentDefinitions({ enabledOnly, chatOnly }, { signal }),
   }),
+  // The agents the person may ask, up to a hundred, for naming the agent
+  // behind each conversation.
+  myAgents: () => ({
+    queryKey: ["my-agents"],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchMyAgents({ signal }),
+  }),
   // Paged: read by useAgentChoices as an infinite query, one cursor at a time.
-  agentChoices: (query: AgentChoiceQuery) => ({
+  agentChoices: (query: AgentChoiceQuery, source: AgentChoiceSource = "mine") => ({
     queryKey: [
       "agent-choices",
+      source,
       query.search?.trim() ?? "",
       query.origin ?? "all",
       [...(query.excludeIds ?? [])],
@@ -67,6 +79,17 @@ export const assistant = createQueryKeys("assistant", {
   agentChoicesByIds: (ids: readonly string[]) => ({
     queryKey: ["agent-choices-by-id", [...ids]],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAgentChoicesByIds(ids, { signal }),
+  }),
+  // Each role's coverage of an agent's tools, for choosing who may use it.
+  agentAudience: (agentId: string) => ({
+    queryKey: ["agent-audience", agentId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      fetchSuggestedAgentAudience(agentId, { signal }),
+  }),
+  // The agents a role is granted, for the role editor.
+  roleAgents: (roleId: string) => ({
+    queryKey: ["role-agents", roleId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchRoleAgents(roleId, { signal }),
   }),
   systemAgent: (systemKey: string) => ({
     queryKey: ["agent-definition-system", systemKey],

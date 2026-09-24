@@ -1,5 +1,5 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
-import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import type { AgentChoice, AgentChoiceSource } from "@/lib/graphql/agent-definition";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
@@ -146,7 +146,19 @@ export type AgentPickerListProps = {
   hiddenIds?: ReadonlySet<string>;
   /** Said when there is nothing to pick before any search narrows the list. */
   emptyMessage?: string;
+  /**
+   * Whose agents are listed: the person's own by default, the
+   * organization's where AI Control chooses who an agent may ask.
+   */
+  source?: AgentChoiceSource;
+  /**
+   * Agents that can never be picked here, by what they are rather than by
+   * id: a system agent, which no role may be granted.
+   */
+  exclude?: (agent: AgentChoice) => boolean;
 };
+
+const EXCLUDE_NONE = () => false;
 
 /**
  * The searchable, paged list of agents a person can ask, without the
@@ -160,6 +172,8 @@ export function AgentPickerList({
   onSelect,
   hiddenIds = NO_HIDDEN,
   emptyMessage,
+  source = "mine",
+  exclude = EXCLUDE_NONE,
 }: AgentPickerListProps) {
   const t = useT();
   const listId = useId();
@@ -167,11 +181,12 @@ export function AgentPickerList({
   const [search, setSearch] = useState("");
   const [active, setActive] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const choices = useAgentChoices({ search, origin: "all", recentIds });
+  const choices = useAgentChoices({ search, origin: "all", recentIds, source });
 
   const rows = useMemo<PickerRow[]>(() => {
-    const recent = choices.recent.filter((agent) => !hiddenIds.has(agent.id));
-    const items = choices.items.filter((agent) => !hiddenIds.has(agent.id));
+    const shown = (agent: AgentChoice) => !hiddenIds.has(agent.id) && !exclude(agent);
+    const recent = choices.recent.filter(shown);
+    const items = choices.items.filter(shown);
     const next: PickerRow[] = [];
     if (recent.length > 0) {
       next.push({ kind: "heading", key: "h-recent", label: t("Recent") });
@@ -190,7 +205,7 @@ export function AgentPickerList({
     }
 
     return next;
-  }, [choices.hasNextPage, choices.items, choices.recent, hiddenIds, t]);
+  }, [choices.hasNextPage, choices.items, choices.recent, exclude, hiddenIds, t]);
 
   const agentIndexes = useMemo(
     () => rows.flatMap((row, index) => (row.kind === "agent" ? [index] : [])),

@@ -5,7 +5,7 @@ import { DeskLayout } from "./_components/desk-layout";
 
 export const prefetch: RoutePrefetch = () => [
   queries.assistant.threads(),
-  queries.assistant.agents(true, true),
+  queries.assistant.myAgents(),
 ];
 
 /** The Desk's frame; the page inside it is the route's outlet. */

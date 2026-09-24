@@ -41,6 +41,8 @@ function agentFixture(overrides: Partial<AgentDefinitionRow> = {}): AgentDefinit
     systemKey: "",
     delegateIds: [],
     delegates: [],
+    accessMode: "Everyone",
+    accessRoles: [],
     lastRunAt: null,
     nextRunAt: null,
     pendingProposals: 0,
@@ -103,5 +105,47 @@ describe("AgentRow", () => {
     renderRow({ systemKey: "billing_exception" });
 
     expect(screen.getByRole("button", { name: /remove agent/i })).toBeDisabled();
+  });
+});
+
+describe("the access badge", () => {
+  it("says Everyone for an agent open to everyone", () => {
+    renderRow();
+
+    expect(screen.getByText("Everyone")).toBeInTheDocument();
+  });
+
+  it("counts the roles an agent is limited to", () => {
+    renderRow({
+      accessMode: "Roles",
+      accessRoles: [
+        { id: "role_a", name: "Dispatch" },
+        { id: "role_b", name: "Billing" },
+      ],
+    });
+
+    expect(screen.getByText("2 roles")).toBeInTheDocument();
+    expect(screen.queryByText("Everyone")).toBeNull();
+  });
+
+  it("says one role in the singular", () => {
+    renderRow({ accessMode: "Roles", accessRoles: [{ id: "role_a", name: "Dispatch" }] });
+
+    expect(screen.getByText("1 role")).toBeInTheDocument();
+  });
+
+  // Restricted with nobody granted is usable by nobody, which is worth a
+  // second look rather than a quiet "0 roles".
+  it("flags an agent limited to roles with none granted", () => {
+    renderRow({ accessMode: "Roles", accessRoles: [] });
+
+    expect(screen.getByText("No roles")).toBeInTheDocument();
+  });
+
+  // The server treats a system agent as open whatever its row says.
+  it("says Everyone for a system agent whatever its row says", () => {
+    renderRow({ systemKey: "billing_exception", accessMode: "Roles", accessRoles: [] });
+
+    expect(screen.getByText("Everyone")).toBeInTheDocument();
   });
 });

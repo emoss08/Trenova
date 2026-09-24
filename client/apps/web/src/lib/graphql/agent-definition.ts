@@ -4,9 +4,13 @@ import {
   AgentDefinitionCardFieldsFragmentDoc,
   AgentDefinitionCardsDocument,
   DataTablePageInfoFieldsFragmentDoc,
-  type AgentChoiceFieldsFragment,
+  MyAgentFieldsFragmentDoc,
+  MyAgentsDocument,
   type AgentDefinitionCardFieldsFragment,
   type FieldFilterInput,
+  type MyAgentFieldsFragment,
+  type MyAgentOrigin,
+  type MyAgentsInput,
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -23,10 +27,10 @@ export type AgentDefinitionFilter = {
 };
 
 /**
- * The organization's agents in one request, up to a hundred. The admin
- * cards and the lookups by id read this; anything that lets a person browse
- * agents reads the paged `fetchAgentChoices` instead, because an
- * organization can hold more agents than one screen should draw.
+ * The organization's agents in one request, up to a hundred, with everything
+ * an administrator configures. Only AI Control reads this: it needs
+ * permission to read agent definitions, which a person who only talks to
+ * agents does not have. Chat surfaces read `fetchMyAgents` instead.
  */
 export async function fetchAgentDefinitions(
   filter: AgentDefinitionFilter = {},
@@ -59,11 +63,27 @@ export async function fetchAgentDefinitions(
   );
 }
 
-export type AgentChoice = AgentChoiceFieldsFragment;
+/**
+ * An agent as the person asking it sees it: who it is and what to ask it.
+ * Chat surfaces read it from `myAgents`, which needs only the assistant and
+ * the agent's own grant; AI Control reads the same shape from the
+ * organization's full list.
+ */
+export type AgentChoice = Omit<MyAgentFieldsFragment, " $fragmentName">;
 export type AgentStarter = AgentChoice["starters"][number];
 
 /** Where an agent came from: one of the platform's templates, or built by hand. */
 export type AgentOrigin = "all" | "template" | "custom";
+
+/**
+ * Whose agents a list reads. `mine` is the agents the person may ask, and is
+ * what every chat surface reads. The other two are an administrator's and
+ * read the organization's full list, whoever may use each agent:
+ * `organization` keeps to enabled chat agents, for choosing who an agent may
+ * hand a task to; `grantable` is every agent whatever its trigger and
+ * whether it is enabled, for choosing what a role is granted.
+ */
+export type AgentChoiceSource = "mine" | "organization" | "grantable";
 
 export type AgentChoiceQuery = {
   /** Matched against the agent's name and description on the server. */
@@ -87,17 +107,85 @@ export type AgentChoicePage = {
   totalCount: number | null;
 };
 
+/** The most agents `myAgents` returns in one page, and the most ids it takes. */
+export const MY_AGENTS_LIMIT = 100;
+
+const MY_AGENT_ORIGINS: Record<AgentOrigin, MyAgentOrigin> = {
+  all: "All",
+  template: "Template",
+  custom: "Custom",
+};
+
 /**
- * The filters that make an agent one a person can ask: enabled, and started
- * by a person rather than by a schedule or an event. Everything the chooser
- * shows goes through this, so a scheduled digest never turns up in a picker
- * that would open a conversation with it.
+ * The `myAgents` input for a query and a page. The server already keeps the
+ * list to enabled chat agents the person may use, so only the narrowing is
+ * sent: a blank search, an empty exclusion list and a missing cursor are
+ * left out rather than sent empty.
  */
-export function agentChoiceFilters(query: AgentChoiceQuery = {}): FieldFilterInput[] {
-  const filters: FieldFilterInput[] = [
-    { field: "enabled", operator: "eq", value: true },
-    { field: "triggerMode", operator: "eq", value: "Chat" },
-  ];
+export function myAgentsInput(
+  query: AgentChoiceQuery & { ids?: readonly string[] },
+  page: { first: number; after?: string | null },
+): MyAgentsInput {
+  const input: MyAgentsInput = {
+    first: page.first,
+    origin: MY_AGENT_ORIGINS[query.origin ?? "all"],
+  };
+  const search = query.search?.trim();
+  if (search) {
+    input.search = search;
+  }
+  if (page.after) {
+    input.after = page.after;
+  }
+  if (query.excludeIds && query.excludeIds.length > 0) {
+    input.excludeIds = [...query.excludeIds];
+  }
+  if (query.ids) {
+    input.ids = [...query.ids];
+  }
+
+  return input;
+}
+
+async function requestMyAgents(
+  input: MyAgentsInput,
+  includeTotalCount: boolean,
+  options?: RequestOptions,
+): Promise<AgentChoicePage> {
+  const data = await requestGraphQL({
+    document: MyAgentsDocument,
+    operationName: "MyAgents",
+    variables: { input, includeTotalCount },
+    signal: options?.signal,
+  });
+  const connection = data.myAgents;
+  const pageInfo = getFragmentData(DataTablePageInfoFieldsFragmentDoc, connection.pageInfo);
+
+  return {
+    items: connection.edges.map((edge) => getFragmentData(MyAgentFieldsFragmentDoc, edge.node)),
+    endCursor: pageInfo.endCursor ?? null,
+    hasNextPage: pageInfo.hasNextPage,
+    totalCount: connection.totalCount ?? null,
+  };
+}
+
+/**
+ * The filters for the organization's list. By default they keep it to
+ * agents a person can ask: enabled, and started by a person rather than by a
+ * schedule or an event, the rule `myAgents` applies on the server. A list of
+ * what a role may be granted leaves that rule out and narrows only by what
+ * was asked.
+ */
+export function agentChoiceFilters(
+  query: AgentChoiceQuery = {},
+  { askableOnly = true }: { askableOnly?: boolean } = {},
+): FieldFilterInput[] {
+  const filters: FieldFilterInput[] = askableOnly
+    ? [
+        { field: "enabled", operator: "eq", value: true },
+        { field: "triggerMode", operator: "eq", value: "Chat" },
+      ]
+    : [];
   if (query.origin === "template") {
     filters.push({ field: "template", operator: "isnotnull", value: null });
   }
@@ -111,7 +199,7 @@ export function agentChoiceFilters(query: AgentChoiceQuery = {}): FieldFilterInp
   return filters;
 }
 
-async function requestAgentChoices(
+async function requestOrganizationAgents(
   input: { first: number; after?: string | null; query?: string; fieldFilters: FieldFilterInput[] },
   includeTotalCount: boolean,
   options?: RequestOptions,
@@ -142,47 +230,68 @@ async function requestAgentChoices(
   };
 }
 
-/** One page of the agents a person can ask, alphabetical, searched and filtered on the server. */
+/**
+ * One page of agents, alphabetical, searched and filtered on the server: the
+ * person's own unless an administrator's screen asks for the organization's.
+ */
 export function fetchAgentChoices(
   query: AgentChoiceQuery,
   page: AgentChoicePageRequest,
-  options?: RequestOptions,
+  options?: RequestOptions & { source?: AgentChoiceSource },
 ): Promise<AgentChoicePage> {
-  return requestAgentChoices(
+  const includeTotalCount = page.includeTotalCount ?? false;
+  const source = options?.source ?? "mine";
+  if (source === "mine") {
+    return requestMyAgents(myAgentsInput(query, page), includeTotalCount, options);
+  }
+
+  return requestOrganizationAgents(
     {
       first: page.first,
       after: page.after,
       query: query.search?.trim(),
-      fieldFilters: agentChoiceFilters(query),
+      fieldFilters: agentChoiceFilters(query, { askableOnly: source === "organization" }),
     },
-    page.includeTotalCount ?? false,
+    includeTotalCount,
     options,
   );
 }
 
 /**
- * The askable agents among the given ids, in the order the ids were given.
- * An id that is gone — the agent was disabled or deleted — is simply absent.
+ * The agents among the given ids the person may ask, in the order the ids
+ * were given. An id that is gone — the agent was disabled or deleted, or the
+ * person lost access to it — is simply absent. `myAgents` takes at most a
+ * hundred ids, so only the first hundred are asked about.
  */
 export async function fetchAgentChoicesByIds(
   ids: readonly string[],
   options?: RequestOptions,
 ): Promise<AgentChoice[]> {
-  if (ids.length === 0) {
+  const wanted = ids.slice(0, MY_AGENTS_LIMIT);
+  if (wanted.length === 0) {
     return [];
   }
-  const page = await requestAgentChoices(
-    {
-      first: ids.length,
-      fieldFilters: [...agentChoiceFilters(), { field: "id", operator: "in", value: [...ids] }],
-    },
+  const page = await requestMyAgents(
+    myAgentsInput({ ids: wanted }, { first: wanted.length }),
     false,
     options,
   );
   const byId = new Map(page.items.map((agent) => [agent.id, agent]));
 
-  return ids.flatMap((id) => {
+  return wanted.flatMap((id) => {
     const agent = byId.get(id);
     return agent ? [agent] : [];
   });
+}
+
+/**
+ * Every agent the person may ask, alphabetical, up to a hundred. The
+ * conversation list and the thread read it to name and draw the agent behind
+ * each conversation; anything a person browses reads the paged
+ * `fetchAgentChoices` instead.
+ */
+export async function fetchMyAgents(options?: RequestOptions): Promise<AgentChoice[]> {
+  const page = await requestMyAgents(myAgentsInput({}, { first: MY_AGENTS_LIMIT }), false, options);
+
+  return page.items;
 }

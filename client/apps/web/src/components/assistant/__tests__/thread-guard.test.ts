@@ -1,8 +1,8 @@
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { describe, expect, it } from "vitest";
 import { composerBlock, shouldSendOpeningQuestion } from "../thread-guard";
 
-const agent = { id: "agdef_1", name: "Report Builder" } as AgentDefinitionRow;
+const agent = { id: "agdef_1", name: "Report Builder" } as AgentChoice;
 
 describe("composerBlock", () => {
   it("opens the composer when the agent is known and the thread has room", () => {
@@ -23,6 +23,29 @@ describe("composerBlock", () => {
     expect(composerBlock({ agent: null, agentsUnavailable: true, threadFull: false })).toBe(
       "agents-unavailable",
     );
+  });
+
+  it("treats a thread served without canContinue as open, the schema's default", () => {
+    expect(composerBlock({ agent, agentsUnavailable: false, threadFull: false })).toBeNull();
+    expect(
+      composerBlock({ agent, agentsUnavailable: false, threadFull: false, canContinue: true }),
+    ).toBeNull();
+  });
+
+  // The server decides whether the reader may still ask the agent, and it is
+  // the one that would refuse the message. Its answer outranks everything the
+  // client knows: an agent still in a list read a minute ago, a list that
+  // failed to load, a thread with room left, or one that is full.
+  it("makes a thread the server says cannot continue read-only, whatever else is true", () => {
+    for (const agentsUnavailable of [false, true]) {
+      for (const threadFull of [false, true]) {
+        for (const known of [agent, null]) {
+          expect(
+            composerBlock({ agent: known, agentsUnavailable, threadFull, canContinue: false }),
+          ).toBe("read-only");
+        }
+      }
+    }
   });
 });
 

@@ -500,7 +500,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/definitions.graphql",
-      "hash": "sha256:f46add7c6a0c45743f6f5e8ccc823b21cb2f351e05f576c1904388363a90ff27",
+      "hash": "sha256:709e06974f01687b278dbfa8331101c8bc9189ff2f78d05727637b06640ee07f",
       "rootFields": [
         "agentDefinitions"
       ],
@@ -521,7 +521,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentDefinitionCards($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentDefinitions(input: $input) {\n    edges {\n      node {\n        ...AgentDefinitionCardFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  icon\n  accent\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  monthlyBudgetUsd\n  dailyRunLimit\n  toolDailyLimits\n  simulationMode\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  starters {\n    label\n    prompt\n  }\n  delegateIds\n  delegates {\n    id\n    name\n    icon\n    accent\n    enabled\n    triggerMode\n  }\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentDefinitionCards($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentDefinitions(input: $input) {\n    edges {\n      node {\n        ...AgentDefinitionCardFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  icon\n  accent\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  monthlyBudgetUsd\n  dailyRunLimit\n  toolDailyLimits\n  simulationMode\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  starters {\n    label\n    prompt\n  }\n  delegateIds\n  delegates {\n    id\n    name\n    icon\n    accent\n    enabled\n    triggerMode\n  }\n  accessMode\n  accessRoles {\n    id\n    name\n  }\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentDefinitionCount",
@@ -18951,7 +18951,7 @@
         "AgentDefinitionCards"
       ],
       "usages": [],
-      "sdl": "fragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  icon\n  accent\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  monthlyBudgetUsd\n  dailyRunLimit\n  toolDailyLimits\n  simulationMode\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  starters {\n    label\n    prompt\n  }\n  delegateIds\n  delegates {\n    id\n    name\n    icon\n    accent\n    enabled\n    triggerMode\n  }\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentDefinitionCardFields on AgentDefinition {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  template\n  icon\n  accent\n  instructions\n  guardrails\n  toolNames\n  toolTiers\n  autonomyCeiling\n  enabled\n  shadowMode\n  decisionTimeoutSeconds\n  triggerMode\n  cronExpression\n  cronTimezone\n  eventKinds\n  intervalSeconds\n  endsAt\n  maxConcurrentRuns\n  runTimeoutSeconds\n  maxToolCalls\n  monthlyBudgetUsd\n  dailyRunLimit\n  toolDailyLimits\n  simulationMode\n  contextProviders\n  outputMode\n  preferredProviderId\n  systemKey\n  starters {\n    label\n    prompt\n  }\n  delegateIds\n  delegates {\n    id\n    name\n    icon\n    accent\n    enabled\n    triggerMode\n  }\n  accessMode\n  accessRoles {\n    id\n    name\n  }\n  lastRunAt\n  nextRunAt\n  pendingProposals\n  openRuns\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentEvalCaseDetailFields",

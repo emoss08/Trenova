@@ -5,6 +5,7 @@ related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
   - /admin/audit-logs
+  - /admin/roles
 ---
 
 ## What it's for
@@ -81,6 +82,19 @@ Keywords: sub-agent, delegate, deploy a sub agent, ask another agent, report bui
 4. Select **Save**. From its next reply the agent can hand those agents a task, and shows their
    work step by step in the conversation.
 
+### Choose who can use an agent
+Keywords: agent access, restrict agent, agent permissions, give role an agent, who can see agent, limit agent to roles, agent missing from picker, sensitive tools
+1. Open [AI control](/admin/agent-control) and select **Agents** in the rail. Each agent's row
+   shows who can use it: **Everyone**, or how many roles it is limited to.
+2. Select the pencil button on the agent, or select **New agent** to set it while creating one.
+3. In **Who can use it**, choose **Everyone who can use the assistant** or **Specific roles**.
+4. For **Specific roles**, pick the roles in **Roles**. On a saved agent, **Suggested roles**
+   lists every role with what it could make of the agent: "Can use all of its tools", the
+   resources it is missing, or "Can't use the assistant". Select **Add** beside one to choose it.
+5. Select **Save**. From then on only people holding one of the chosen roles, or a role that
+   inherits one, see the agent in the Desk and the assistant, and only they see and decide what
+   it proposes.
+
 ### Turn an agent on or off, run it now, or remove it
 Keywords: disable agent, enable agent, start run, delete agent
 1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
@@ -139,6 +153,15 @@ An agent asks only the agents listed under **Can ask**; with none listed it work
 tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot
 hand the task on. The agent asked works as the person in the conversation, with its own tools and
 approvals, so it can never do more than that person could.
+
+Who can use an agent is set under **Who can use it**. An agent open to everyone that holds tools
+reaching restricted or confidential data shows a warning there; each person can still only do
+what their own permissions allow. An agent limited to specific roles with none chosen can be used
+by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again.
+A system agent is always open to everyone and cannot be limited to roles. Someone who loses
+access to an agent keeps their conversations with it, read-only. Setting who can use an agent
+needs update access to both agents and roles. The same grants can be managed from a role's page
+on [Roles](/admin/roles), under **Agents**.
 
 Removing a provider stops any task routed only to it until another provider is assigned.
 Removing an agent keeps its existing conversations but they cannot be continued, and its schedule
