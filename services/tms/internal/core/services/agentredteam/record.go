@@ -18,6 +18,7 @@ const (
 	ReadRunRepo      = "run_repository"
 	ReadShipmentRepo = "shipment_repository"
 	ReadCommentRepo  = "shipment_comment_repository"
+	ReadWatchtower   = "watchtower"
 	ReadPermissions  = "permissions"
 	ReadCompletion   = "completion"
 )

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useMemo, useState } from "react";
+import { AssistantPlacementMenu } from "./assistant-placement-menu";
 import { groupThreadsByRecency } from "./thread-grouping";
 import { ThreadList } from "./thread-sidebar";
 
@@ -265,6 +266,8 @@ export function AssistantHeader({
           </TooltipTrigger>
           <TooltipContent>{t("New conversation")}</TooltipContent>
         </Tooltip>
+
+        {!expanded && <AssistantPlacementMenu />}
 
         <Tooltip>
           <TooltipTrigger

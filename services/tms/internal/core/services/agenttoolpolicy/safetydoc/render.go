@@ -118,6 +118,13 @@ taint held names it among what held it, whatever else held it too.
 without a decision while that person is in the conversation, unless a person
 set the tool's tier on the agent. An unattended run never has it.
 
+**Data access.** A read shows a field only when the reader's data access
+reaches it. An unattended agent reads at its own data access setting, Internal
+unless someone whose role reaches Restricted raises it; a run a person is in
+reads at the lower of that setting and the person's own role. Amounts, pay,
+memos and raw EDI above that tier are left out and named in withheldByAccess,
+and Confidential fields never reach a model at all.
+
 `, command, total)
 }
 
@@ -211,9 +218,9 @@ func externalRead(policy *serviceports.ToolPolicy) string {
 	var read string
 	switch policy.ReadsExternal {
 	case agent.ExternalReadAlways:
-		read = "Always, from " + sourceLabel(policy.Source)
+		read = "Always, from " + sourceLabels(policy)
 	case agent.ExternalReadMarked:
-		read = "When the record is marked, from " + sourceLabel(policy.Source)
+		read = "When the record is marked, from " + sourceLabels(policy)
 	default:
 		read = ""
 	}
@@ -228,6 +235,21 @@ func externalRead(policy *serviceports.ToolPolicy) string {
 	}
 
 	return read
+}
+
+func sourceLabels(policy *serviceports.ToolPolicy) string {
+	if len(policy.Sources) == 0 {
+		return sourceLabel(policy.Source)
+	}
+
+	labels := make([]string, 0, len(policy.Sources)+1)
+	labels = append(labels, sourceLabel(policy.Source))
+	for _, source := range policy.Sources {
+		labels = append(labels, sourceLabel(source))
+	}
+	last := len(labels) - 1
+
+	return strings.Join(labels[:last], ", ") + " or " + labels[last]
 }
 
 func sourceLabel(source agent.TaintSource) string {

@@ -392,6 +392,7 @@ func (r *repository) Update(
 		Set(cols.ToolNames.Set(), dbhelper.TextArray(entity.ToolNames)).
 		Set(cols.ToolTiers.Set(), entity.ToolTiers).
 		Set(cols.AutonomyCeiling.Set(), entity.AutonomyCeiling).
+		Set(cols.DataAccessCeiling.Set(), entity.DataAccessCeiling).
 		Set(cols.Enabled.Set(), entity.Enabled).
 		Set(cols.ShadowMode.Set(), entity.ShadowMode).
 		Set(cols.DecisionTimeoutSeconds.Set(), entity.DecisionTimeoutSeconds).

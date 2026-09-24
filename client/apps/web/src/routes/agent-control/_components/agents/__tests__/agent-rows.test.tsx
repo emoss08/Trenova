@@ -23,6 +23,7 @@ function agentFixture(overrides: Partial<AgentDefinitionRow> = {}): AgentDefinit
     toolNames: ["get_shipment"],
     toolTiers: {},
     autonomyCeiling: "Propose",
+    dataAccessCeiling: "Internal",
     enabled: true,
     shadowMode: false,
     decisionTimeoutSeconds: 86400,

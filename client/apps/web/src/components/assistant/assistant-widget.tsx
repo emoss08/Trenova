@@ -1,14 +1,22 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { usePermission } from "@/hooks/use-permission";
 import { useAttentionSummary } from "@/hooks/use-attention";
+import {
+  DEFAULT_PANEL_SIZE,
+  dockPositionClass,
+  panelSizeStyle,
+  type AssistantPanelSize,
+} from "@/lib/assistant-dock";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useHotkey } from "@tanstack/react-hotkeys";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
+import { AssistantEdgeTab } from "./assistant-edge-tab";
 import { AssistantLauncher } from "./assistant-launcher";
+import { AssistantResizeHandle } from "./assistant-resize-handle";
 import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
 import { AssistantPanel } from "./assistant-panel";
 import { useLiveReplyCount } from "./use-active-turns";
@@ -16,9 +24,11 @@ import { useLiveReplyCount } from "./use-active-turns";
 const OPEN_PARAM = "assistant";
 
 /**
- * The assistant lives in the bottom-right corner of every page, because a
- * question about a shipment comes up while looking at the shipment. It is
- * mounted once in the shell; the store remembers whether it was expanded.
+ * The assistant lives in a corner of every page, because a question about a
+ * shipment comes up while looking at the shipment. It is mounted once in the
+ * shell; the store remembers whether it was expanded, which corner it sits
+ * in, how big the panel is, and whether the launcher is tucked away, because
+ * whatever it covers on one page it covers on every page.
  */
 export function AssistantWidget() {
   const t = useT();
@@ -33,6 +43,17 @@ export function AssistantWidget() {
   const toggleWidget = useAssistantStore((state) => state.toggleWidget);
   const toggleExpanded = useAssistantStore((state) => state.toggleExpanded);
   const setExpanded = useAssistantStore((state) => state.setExpanded);
+  const dock = useAssistantStore((state) => state.dock);
+  const setDock = useAssistantStore((state) => state.setDock);
+  const launcherHidden = useAssistantStore((state) => state.launcherHidden);
+  const setLauncherHidden = useAssistantStore((state) => state.setLauncherHidden);
+  const savedSize = useAssistantStore((state) => state.panelSize);
+  const setPanelSize = useAssistantStore((state) => state.setPanelSize);
+  // While a resize is under way the size lives here, and is saved once when
+  // it ends rather than on every pointer move.
+  const [liveSize, setLiveSize] = useState<AssistantPanelSize | null>(null);
+  const panelSize = liveSize ?? savedSize ?? DEFAULT_PANEL_SIZE;
+  const resizing = liveSize !== null;
 
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedOpen = searchParams.get(OPEN_PARAM) === "open";
@@ -103,17 +124,38 @@ export function AssistantWidget() {
             aria-modal={expanded}
             layout
             layoutId={ASSISTANT_SURFACE_ID}
-            style={{ borderRadius: 16 }}
+            style={
+              expanded
+                ? { borderRadius: 16 }
+                : { borderRadius: 16, ...panelSizeStyle(dock, panelSize) }
+            }
             transition={
-              reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 34 }
+              reduceMotion || resizing
+                ? { duration: 0 }
+                : { type: "spring", stiffness: 380, damping: 34 }
             }
             className={cn(
-              "bg-popover ring-foreground/10 fixed z-50 flex flex-col overflow-hidden ring-1",
+              "group/panel bg-popover ring-foreground/10 fixed z-50 flex flex-col overflow-hidden ring-1",
               expanded
                 ? "inset-x-3 inset-y-3 md:inset-x-[max(2rem,calc((100vw-1180px)/2))] md:inset-y-[max(2rem,calc((100dvh-820px)/2))]"
-                : "right-4 bottom-4 h-[min(600px,calc(100dvh-2rem))] w-[min(400px,calc(100vw-2rem))]",
+                : dockPositionClass(dock, "panel"),
             )}
           >
+            {!expanded && (
+              <AssistantResizeHandle
+                dock={dock}
+                size={panelSize}
+                onResize={setLiveSize}
+                onResizeEnd={(size) => {
+                  setPanelSize(size);
+                  setLiveSize(null);
+                }}
+                onReset={() => {
+                  setPanelSize(null);
+                  setLiveSize(null);
+                }}
+              />
+            )}
             <m.div
               className="flex min-h-0 flex-1 flex-col"
               initial={reduceMotion ? false : { opacity: 0 }}
@@ -128,12 +170,23 @@ export function AssistantWidget() {
             </m.div>
           </m.section>
         </Fragment>
-      ) : (
-        <AssistantLauncher
-          key="launcher"
+      ) : launcherHidden ? (
+        <AssistantEdgeTab
+          key="tab"
+          dock={dock}
           pendingCount={pendingCount}
           writingCount={writingCount}
           onClick={openWidget}
+        />
+      ) : (
+        <AssistantLauncher
+          key="launcher"
+          dock={dock}
+          pendingCount={pendingCount}
+          writingCount={writingCount}
+          onClick={openWidget}
+          onMove={setDock}
+          onHide={() => setLauncherHidden(true)}
         />
       )}
     </AnimatePresence>

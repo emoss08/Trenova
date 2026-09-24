@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/stretchr/testify/require"
@@ -71,6 +72,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_agent_definitions_access_mode",
 			values: stringsOf(agentdefinition.AllAccessModes()),
+		},
+		{
+			name:   "ck_agent_definitions_data_access_ceiling",
+			values: stringsOf(agentdefinition.AllDataAccessCeilings()),
 		},
 		{
 			name:   "ck_assistant_artifacts_kind",
@@ -151,6 +156,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_ai_catalog_embeddings_corpus",
 			values: stringsOf(airetrieval.AllCatalogCorpora()),
+		},
+		{
+			name:   "ck_ai_usage_records_feature",
+			values: stringsOf(aiusage.AllFeatures()),
+		},
+		{
+			name:   "ck_ai_usage_records_subject_type",
+			values: stringsOf(aiusage.AllSubjectTypes()),
 		},
 	}
 

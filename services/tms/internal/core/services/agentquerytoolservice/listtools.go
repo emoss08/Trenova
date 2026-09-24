@@ -63,6 +63,9 @@ type listSpec struct {
 	// time of day and needs the organization's zone to do it. One of the
 	// two is set.
 	fetchIn func(ctx context.Context, opts *pagination.QueryOptions, clk clock) ([]any, error)
+
+	access     fieldAccess
+	fetchGated func(ctx context.Context, opts *pagination.QueryOptions, gate *fieldGate) ([]any, error)
 }
 
 type listTool struct {
@@ -73,6 +76,10 @@ type listTool struct {
 }
 
 func newListTool(spec listSpec) serviceports.AgentQueryTool {
+	return buildListTool(&spec)
+}
+
+func buildListTool(spec *listSpec) *listTool {
 	seen := make(map[dbtype.Operator]bool, len(spec.fields)*4)
 	operators := make([]string, 0, len(spec.fields)*4)
 	for _, field := range spec.fields {
@@ -86,10 +93,10 @@ func newListTool(spec listSpec) serviceports.AgentQueryTool {
 	}
 
 	return &listTool{
-		spec:        spec,
-		resource:    catalogResource(spec),
+		spec:        *spec,
+		resource:    catalogResource(*spec),
 		operators:   operators,
-		description: buildListDescription(spec),
+		description: buildListDescription(*spec),
 	}
 }
 
@@ -240,6 +247,14 @@ func (t *listTool) Query(
 		return nil, err
 	}
 
+	var gate *fieldGate
+	if t.spec.fetchGated != nil {
+		gate = t.spec.access.gate(ctx, params, t.spec.resource)
+		if err := refuseWithheldFields(params.Params, gate); err != nil {
+			return nil, err
+		}
+	}
+
 	criteria := filtercatalog.NewCriteria(t.spec.entityPlural).At(clockFor(params))
 
 	query := optionalString(params.Params, "query")
@@ -270,9 +285,12 @@ func (t *listTool) Query(
 	}
 
 	var rows []any
-	if t.spec.fetchIn != nil {
+	switch {
+	case gate != nil:
+		rows, err = t.spec.fetchGated(ctx, opts, gate)
+	case t.spec.fetchIn != nil:
 		rows, err = t.spec.fetchIn(ctx, opts, criteria.Clock)
-	} else {
+	default:
 		rows, err = t.spec.fetch(ctx, opts)
 	}
 	if err != nil {
@@ -280,8 +298,35 @@ func (t *listTool) Query(
 	}
 
 	rows, more := trim(window, rows)
+	outcome := searchResult(criteria, rows, len(rows)).paged(window, more)
+	if gate != nil {
+		return gatedResult(&outcome, gate), nil
+	}
 
-	return searchResult(criteria, rows, len(rows)).paged(window, more), nil
+	return outcome, nil
+}
+
+func refuseWithheldFields(params map[string]any, gate *fieldGate) error {
+	fields := make([]string, 0, maxListFilters+1)
+	if entries, ok := params["filters"].([]any); ok {
+		for _, entry := range entries {
+			if object, isObject := entry.(map[string]any); isObject {
+				fields = append(fields, optionalString(object, "field"))
+			}
+		}
+	}
+	fields = append(fields, optionalString(params, "sortBy"))
+
+	for _, field := range fields {
+		if field != "" && !gate.shows(field) {
+			return fmt.Errorf(
+				"%s is withheld at this data access, so it cannot be filtered or sorted on",
+				field,
+			)
+		}
+	}
+
+	return nil
 }
 
 func (t *listTool) buildFilters(

@@ -2,14 +2,12 @@ package formulaassistantservice
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"maps"
 	"strings"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/ailog"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -18,47 +16,37 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 const (
 	maxInstructionLength = 4000
 	maxExpressionLength  = 8000
-	logPreviewLength     = 512
 )
 
 type Params struct {
 	fx.In
 
-	Logger          *zap.Logger
 	Completion      serviceports.StructuredCompleter
 	FormulaService  *formula.Service
 	TemplateService *formulatemplateservice.Service
 	RateMatrixRepo  repositories.RateMatrixRepository
-	AILogRepo       repositories.AILogRepository
 }
 
 type Service struct {
-	l               *zap.Logger
 	completion      serviceports.StructuredCompleter
 	formulaService  *formula.Service
 	templateService *formulatemplateservice.Service
 	rateMatrixRepo  repositories.RateMatrixRepository
-	aiLogRepo       repositories.AILogRepository
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
-		l:               p.Logger.Named("service.formulaassistant"),
 		completion:      p.Completion,
 		formulaService:  p.FormulaService,
 		templateService: p.TemplateService,
 		rateMatrixRepo:  p.RateMatrixRepo,
-		aiLogRepo:       p.AILogRepo,
 	}
 }
 
@@ -163,6 +151,11 @@ func (s *Service) GenerateFormula(
 			req.Instruction,
 		),
 		OutputSchema: generateOutputSchema(),
+		Attribution: formulaAttribution(
+			req.TenantInfo,
+			aiusage.FeatureFormulaGenerate,
+			schemaID,
+		),
 	})
 	if err != nil {
 		return nil, err
@@ -192,15 +185,6 @@ func (s *Service) GenerateFormula(
 		Defaults:   testValues,
 		Generated:  payload.Scenarios,
 	})
-
-	s.logCall(
-		ctx,
-		req.TenantInfo,
-		ailog.OperationFormulaGenerate,
-		schemaID,
-		req.Instruction,
-		result,
-	)
 
 	return &GenerateFormulaResponse{
 		Expression:          payload.Expression,
@@ -314,6 +298,11 @@ func (s *Service) ExplainFormula(
 		System:       explainSystemPrompt,
 		Context:      buildExplainContext(description, req.Expression),
 		OutputSchema: explainOutputSchema(),
+		Attribution: formulaAttribution(
+			req.TenantInfo,
+			aiusage.FeatureFormulaExplain,
+			schemaID,
+		),
 	})
 	if err != nil {
 		return nil, err
@@ -323,8 +312,6 @@ func (s *Service) ExplainFormula(
 	if err = sonic.Unmarshal([]byte(result.Text), &payload); err != nil {
 		return nil, fmt.Errorf("%w: %w", serviceports.ErrModelSchemaValidation, err)
 	}
-
-	s.logCall(ctx, req.TenantInfo, ailog.OperationFormulaExplain, schemaID, req.Expression, result)
 
 	return &ExplainFormulaResponse{
 		Explanation:     payload.Explanation,
@@ -445,45 +432,17 @@ func mapGeneratedVariables(
 	return variables, testValues
 }
 
-func (s *Service) logCall(
-	ctx context.Context,
+func formulaAttribution(
 	tenantInfo pagination.TenantInfo,
-	operation ailog.Operation,
-	object, prompt string,
-	result *serviceports.StructuredCompletionResult,
-) {
-	promptHash := sha256.Sum256([]byte(prompt))
-	responseHash := sha256.Sum256([]byte(result.Text))
-
-	promptPreview := prompt
-	if len(promptPreview) > logPreviewLength {
-		promptPreview = promptPreview[:logPreviewLength]
-	}
-
-	entry := &ailog.Log{
-		ID:             pulid.MustNew("ail_"),
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-		UserID:         tenantInfo.UserID,
-		Prompt: fmt.Sprintf(
-			"sha256=%s preview=%s",
-			hex.EncodeToString(promptHash[:]),
-			promptPreview,
-		),
-		Response: "sha256=" + hex.EncodeToString(responseHash[:]),
-		// The model is what the provider reported, not a constant. Several
-		// providers can serve this task now, so a fixed name would make every
-		// row claim a model that may never have run.
-		Model:            ailog.Model(result.ModelIdentifier),
-		Operation:        operation,
-		Object:           object,
-		PromptTokens:     result.InputTokens,
-		CompletionTokens: result.OutputTokens,
-		TotalTokens:      result.InputTokens + result.OutputTokens,
-		Timestamp:        timeutils.NowUnix(),
-	}
-
-	if _, err := s.aiLogRepo.Create(ctx, entry); err != nil {
-		s.l.Error("failed to log AI call", zap.Error(err))
+	feature aiusage.Feature,
+	schemaID string,
+) serviceports.AIUsageAttribution {
+	return serviceports.AIUsageAttribution{
+		UserID:  tenantInfo.UserID,
+		Feature: feature,
+		Subject: aiusage.Subject{
+			Type: aiusage.SubjectTypeFormulaSchema,
+			ID:   schemaID,
+		},
 	}
 }

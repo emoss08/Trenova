@@ -1,5 +1,5 @@
 {
-  "version": "sha256:9f01e7b27e7cf58df1c89513cff9b55c5e5987702e545e75721e078d1891ef45",
+  "version": "sha256:df1c529741a72052e411e45a882ad6f83982f69cc97e8c552fbc4761dc0bc0ed",
   "modules": [
     {
       "id": "home",
@@ -1867,14 +1867,18 @@
             "build agent",
             "automation",
             "scheduled agent",
-            "agent template"
+            "agent template",
+            "data access",
+            "agent sees amounts",
+            "agent pay access",
+            "restricted fields"
           ],
           "steps": [
             "Open [AI control](/admin/agent-control) and select **Agents** in the rail.",
             "Select **New agent**.",
             "Optionally choose a starter in **Start from** to fill in instructions, tools and a trigger you can change freely.",
             "Fill in **Name**, **Description** and **System instructions**. Add hard lines the agent must not cross under **Never**, pressing Enter after each.",
-            "Under **Tools**, select **Choose tools**, pick what the agent may look up and change, then select **Done**.",
+            "Under **Tools**, select **Choose tools**, pick what the agent may look up and change, then select **Done**. Set **Data access** to **Restricted** only for an agent that needs amounts and pay, such as invoice totals, balances, rates or a driver's net pay; at **Internal** its tools leave them out and say so. In chat it never sees more than the person asking, and only someone whose own role reaches restricted fields can give an agent **Restricted**.",
             "Under **Autonomy**, set the **Ceiling**: **Propose only**, **Act with approval** or **Act automatically**. Turn on **Shadow mode** or **Simulation** to try the agent without it changing anything.",
             "Under **When it runs**, pick **Chat**, **Scheduled**, **Event** or **Continuous** and fill in the schedule or events it asks for.",
             "Optionally set a **Monthly budget**, **Runs per day** and a **Preferred provider**, leave **Enabled** on, and select **Save**."
@@ -6955,6 +6959,23 @@
           "steps": [
             "Open [Desk](/desk).",
             "Select a conversation under **Where you left off**, or find it in the left list with **Search conversations**."
+          ]
+        },
+        {
+          "title": "Move, shrink or hide the assistant on any page",
+          "keywords": [
+            "assistant covers the screen",
+            "move chat button",
+            "hide AI button",
+            "assistant too big",
+            "resize assistant",
+            "assistant in the way"
+          ],
+          "steps": [
+            "To move it, drag the assistant button. While you drag, the four corners it can go to are outlined and the one it will land in is highlighted and named; let go anywhere in that quarter of the screen. The panel opens in the same corner.",
+            "To hide it, hover over the button and select **Hide the assistant button**. A thin tab stays on the edge of the screen; select it, or press ⌘J (Ctrl+J), to open the assistant. The tab turns amber when a decision is waiting.",
+            "To resize the open panel, drag its free corner (the one away from the screen edge), or focus that corner and use the arrow keys. Double-click the corner to go back to the standard size.",
+            "The same choices are under **Position and size** at the top of the open panel: pick a corner, turn **Hide the button when closed** on or off, or select **Reset size**."
           ]
         },
         {

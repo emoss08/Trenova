@@ -36,6 +36,17 @@ type optionalDate struct {
 // as something a reader can mistake for "fine".
 const defaultAbsent = "none on file"
 
+const (
+	absentNotSubmitted = "not submitted"
+	absentNotApproved  = "not approved"
+	absentNotPosted    = "not posted"
+	absentNotPaid      = "not paid"
+	absentNotVoided    = "not voided"
+	absentNotResolved  = "not resolved"
+	absentNotProcessed = "not processed"
+	absentOpenEnded    = "open-ended"
+)
+
 // recordedDate is for a value somebody was supposed to enter. Its absence is a
 // gap in the record, not a state of the world.
 func recordedDate(seconds int64) optionalDate {

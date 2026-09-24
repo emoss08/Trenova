@@ -5307,7 +5307,7 @@
       "service/ratequoteservice"
     ]
   },
-  "A shipment move was created or lost its assignment and has nobody to run it.": {
+  "A shipment move lost its assignment and has nobody to run it.": {
     "sites": 1,
     "scope": [
       "go"
@@ -12247,6 +12247,15 @@
       "domain/tenant"
     ]
   },
+  "Agent evaluations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Agent exception": {
     "sites": 1,
     "scope": [
@@ -12414,11 +12423,12 @@
     ]
   },
   "Agent run not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/agentquerytoolservice",
       "service/agentredteam"
     ]
   },
@@ -12523,6 +12533,15 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "Agents and assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Agents can look up current regulations, rules and public information — hours of service, ELD requirements, hazmat placarding, IFTA filing — and cite the page and its date instead of answering from memory. Government sites are ranked first and marked as official.": {
@@ -14064,6 +14083,15 @@
     ],
     "areas": [
       "service/timesheetservice"
+    ]
+  },
+  "Also amounts and pay, such as invoice totals and net pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Also enroll carriers with a tender that is still open.": {
@@ -19988,7 +20016,7 @@
     ]
   },
   "Assistant": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -25976,6 +26004,24 @@
       "apps/web/lib"
     ]
   },
+  "Bottom left": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Bottom right": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Branding": {
     "sites": 1,
     "scope": [
@@ -26606,7 +26652,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 119,
+    "sites": 118,
     "scope": [
       "go"
     ],
@@ -26616,7 +26662,6 @@
       "domain/agentextension",
       "domain/agentquality",
       "domain/aifeedback",
-      "domain/ailog",
       "domain/aiprovider",
       "domain/airetrieval",
       "domain/apikey",
@@ -27256,12 +27301,13 @@
     ]
   },
   "Calls": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Can": {
@@ -36439,15 +36485,6 @@
       "domain/worker"
     ]
   },
-  "Completion tokens cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
-    ]
-  },
   "Compliance": {
     "sites": 9,
     "scope": [
@@ -40022,6 +40059,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Corner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Correct a case, its certification or its days": {
@@ -45429,6 +45475,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Data access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Data as of": {
@@ -53232,12 +53287,14 @@
     ]
   },
   "Document extraction": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "api/handlers"
+      "api/handlers",
+      "apps/web/lib"
     ]
   },
   "Document extraction operations.": {
@@ -53555,6 +53612,15 @@
     ],
     "areas": [
       "service/invoiceservice"
+    ]
+  },
+  "Document sorting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Document templates": {
@@ -54370,6 +54436,15 @@
       "routes/org-structure"
     ]
   },
+  "Drag to move it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Drag to rearrange, resize from a widget's menu.": {
     "sites": 1,
     "scope": [
@@ -54380,7 +54455,7 @@
     ]
   },
   "Drag to resize, double-click to reset": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -68106,6 +68181,15 @@
       "routes/shipment"
     ]
   },
+  "Feature": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Features": {
     "sites": 1,
     "scope": [
@@ -71062,6 +71146,15 @@
       "api/handlers"
     ]
   },
+  "Formula explanations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Formula fallback": {
     "sites": 1,
     "scope": [
@@ -71207,6 +71300,15 @@
     "areas": [
       "apps/web/config",
       "routes/formula-template"
+    ]
+  },
+  "Formula writing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Fortnightly": {
@@ -75715,6 +75817,33 @@
       "routes/shipment"
     ]
   },
+  "Hide the assistant button": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Hide the button when closed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Hide the button. Open the assistant from the edge tab or with ⌘J.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Hide the earlier thread": {
     "sites": 1,
     "scope": [
@@ -78452,6 +78581,15 @@
       "routes/formula-template"
     ]
   },
+  "Import assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Import bank receipts": {
     "sites": 2,
     "scope": [
@@ -80911,7 +81049,7 @@
     ]
   },
   "Internal": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -94094,7 +94232,7 @@
     ]
   },
   "Median response": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -95847,6 +95985,15 @@
       "routes/agent-control"
     ]
   },
+  "Model calls over the last {0} days, by the feature that made them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Model calls, {0} days": {
     "sites": 1,
     "scope": [
@@ -95866,12 +96013,11 @@
     ]
   },
   "Model cannot be longer than 200 characters": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/ailog",
       "domain/aiprovider"
     ]
   },
@@ -95894,13 +96040,12 @@
     ]
   },
   "Model is required": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
-      "domain/ailog",
       "domain/aiprovider",
       "routes/agent-control"
     ]
@@ -105076,6 +105221,15 @@
       "routes/time-attendance"
     ]
   },
+  "Nobody is watching when it runs, so whatever it reads can appear in its reports and proposals. Only people whose own role reaches restricted fields can give an agent this access.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nobody it applies to is on the roster yet.": {
     "sites": 1,
     "scope": [
@@ -108244,24 +108398,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Object cannot be longer than 100 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
-    ]
-  },
-  "Object is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
     ]
   },
   "Object key is required": {
@@ -113053,22 +113189,12 @@
       "routes/admin"
     ]
   },
-  "Operation is not one this system records": {
+  "Operation is required": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/ailog"
-    ]
-  },
-  "Operation is required": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog",
       "domain/audit"
     ]
   },
@@ -114287,7 +114413,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 118,
+    "sites": 117,
     "scope": [
       "go"
     ],
@@ -114297,7 +114423,6 @@
       "domain/agentextension",
       "domain/agentquality",
       "domain/aifeedback",
-      "domain/ailog",
       "domain/aiprovider",
       "domain/airetrieval",
       "domain/apikey",
@@ -114820,7 +114945,7 @@
     ]
   },
   "Other": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -117105,12 +117230,13 @@
     ]
   },
   "Partial": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/components",
+      "routes/agent-control",
       "routes/invoice-adjustment-batch"
     ]
   },
@@ -122789,6 +122915,15 @@
       "routes/worker"
     ]
   },
+  "Position and size": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Position cannot be negative": {
     "sites": 1,
     "scope": [
@@ -125508,24 +125643,6 @@
       "routes/agent-control"
     ]
   },
-  "Prompt is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
-    ]
-  },
-  "Prompt tokens cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
-    ]
-  },
   "Prompt version is required": {
     "sites": 1,
     "scope": [
@@ -126108,15 +126225,6 @@
       "domain/storedmileage",
       "domain/telematics",
       "domain/tenant"
-    ]
-  },
-  "Provider kind cannot be longer than 50 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
     ]
   },
   "Provider limit": {
@@ -130824,15 +130932,6 @@
       "domain/aiprovider"
     ]
   },
-  "Reasoning tokens cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
-    ]
-  },
   "Reasons": {
     "sites": 1,
     "scope": [
@@ -132992,6 +133091,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Records without amounts, pay or other restricted fields": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Records you touched most recently": {
@@ -137987,6 +138095,15 @@
       "routes/shipment"
     ]
   },
+  "Reset size": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Reset sort": {
     "sites": 1,
     "scope": [
@@ -138031,6 +138148,15 @@
     ],
     "areas": [
       "template/account.password_reset.email"
+    ]
+  },
+  "Resize the assistant. Use the arrow keys, or double-click to reset.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Resolution": {
@@ -138899,14 +139025,24 @@
     ]
   },
   "Restricted": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/components",
+      "routes/agent-control",
       "routes/osha"
+    ]
+  },
+  "Restricted lets its tools show amounts, pay, balances and rates, such as invoice totals and a driver's net pay. Internal leaves them out and names what was left out. In chat it never sees more than the person asking.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Restricted or transferred": {
@@ -151335,15 +151471,6 @@
       "routes/admin"
     ]
   },
-  "Service tier cannot be longer than 100 characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
-    ]
-  },
   "Service type": {
     "sites": 7,
     "scope": [
@@ -157209,13 +157336,14 @@
     ]
   },
   "Spend": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Spend against the monthly cap": {
@@ -161643,12 +161771,14 @@
     ]
   },
   "Table questions": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "api/handlers"
+      "api/handlers",
+      "apps/web/lib"
     ]
   },
   "Tag management": {
@@ -173441,6 +173571,15 @@
       "apps/web/components"
     ]
   },
+  "This agent reads amounts and pay on its own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This agent was removed.": {
     "sites": 1,
     "scope": [
@@ -178012,12 +178151,13 @@
     ]
   },
   "Tokens": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Tokens in all": {
@@ -178475,6 +178615,15 @@
       "apps/web/components"
     ]
   },
+  "Top left": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Top overdue customers": {
     "sites": 1,
     "scope": [
@@ -178482,6 +178631,15 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
+    ]
+  },
+  "Top right": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Top-up applied when period gross falls below this floor.": {
@@ -179007,15 +179165,6 @@
     ],
     "areas": [
       "template/detention.notice.email"
-    ]
-  },
-  "Total tokens cannot be negative": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "domain/ailog"
     ]
   },
   "Total weight and charges": {
@@ -184305,6 +184454,15 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Usage by feature": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Usage could not be loaded": {
     "sites": 1,
     "scope": [
@@ -185003,13 +185161,12 @@
     ]
   },
   "User is required": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/aifeedback",
-      "domain/ailog",
       "domain/conversation",
       "domain/documentaiextraction",
       "domain/homelayout",
@@ -194962,6 +195119,15 @@
       "routes/billing-queue"
     ]
   },
+  "You can give an agent only the data access your own role has": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdefinitionservice"
+    ]
+  },
   "You can view these settings but not change them.": {
     "sites": 1,
     "scope": [
@@ -204143,7 +204309,7 @@
     ]
   },
   "{0} failed": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -206752,11 +206918,12 @@
     ]
   },
   "{0} waiting": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/carrier-monitoring",
       "routes/fuel-feed-run",
       "routes/home",

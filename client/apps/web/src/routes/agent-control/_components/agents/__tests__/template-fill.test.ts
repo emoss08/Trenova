@@ -13,6 +13,7 @@ const starter: AgentTemplate = {
   starterEvents: [],
   starterCron: "*/30 * * * *",
   starterCeiling: "ActWithApproval",
+  starterDataAccess: "Internal",
   starterOutput: "Report",
   systemKey: "",
   contextProviders: ["Organization", "Clock", "Tools"],
@@ -33,6 +34,7 @@ describe("applyTemplateStarter", () => {
       triggerMode: "Scheduled",
       cronExpression: "*/30 * * * *",
       autonomyCeiling: "ActWithApproval",
+      dataAccessCeiling: "Internal",
       outputMode: "Report",
       contextProviders: ["Organization", "Clock", "Tools"],
     });
@@ -54,6 +56,15 @@ describe("applyTemplateStarter", () => {
 
     expect(patch.triggerMode).toBeUndefined();
     expect(patch.cronExpression).toBeUndefined();
+  });
+
+  it("sets the data access a template needs, whatever the form held", () => {
+    const patch = applyTemplateStarter(
+      { ...agentFormDefaults, dataAccessCeiling: "Internal" },
+      { ...starter, template: "CashApplication", starterDataAccess: "Restricted" },
+    );
+
+    expect(patch.dataAccessCeiling).toBe("Restricted");
   });
 
   it("only sets the template when cleared", () => {

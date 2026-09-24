@@ -47,7 +47,7 @@ var knownEvents = []EventDescriptor{
 		Kind:        EventShipmentMoveUnassigned,
 		SubjectType: SubjectShipmentMove,
 		Label:       "Move needs a driver",
-		Description: "A shipment move was created or lost its assignment and has nobody to run it.",
+		Description: "A shipment move lost its assignment and has nobody to run it.",
 	},
 	{
 		Kind:        EventShipmentCreated,

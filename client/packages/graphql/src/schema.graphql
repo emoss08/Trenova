@@ -481,6 +481,36 @@ type AIUsageFailure {
   task: String!
 }
 
+"""The product feature that made a model call."""
+enum AIUsageFeature {
+  AgentEvaluation
+  AgentTurn
+  DocumentIntelligenceExtract
+  DocumentIntelligenceRoute
+  FormulaExplain
+  FormulaGenerate
+  ShipmentImportChat
+  TableQuery
+}
+
+"""One feature's share of a usage window."""
+type AIUsageFeatureSlice {
+  calls: Int!
+  """Sum over the calls that carried a price; see pricedCalls."""
+  costUsd: Decimal!
+  failed: Int!
+  """
+  Null for calls made before features were recorded, or by a caller that names none.
+  """
+  feature: AIUsageFeature
+  inputTokens: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+  outputTokens: Int!
+  pricedCalls: Int!
+  reasoningTokens: Int!
+}
+
 """One provider and model's share of a usage window."""
 type AIUsageProviderSlice {
   calls: Int!
@@ -504,6 +534,8 @@ failed, what they consumed, what it cost where the price is known, and how
 long a person waited. Latency percentiles are over successful calls only.
 """
 type AIUsageSummary {
+  """Usage by the feature that made the calls, busiest first."""
+  byFeature: [AIUsageFeatureSlice!]!
   byProvider: [AIUsageProviderSlice!]!
   calls: Int!
   costUsd: Decimal!
@@ -1090,6 +1122,18 @@ input AgentControlInput {
   shadowMode: Boolean!
 }
 
+"""How sensitive a field an agent's tools may show."""
+enum AgentDataAccessCeiling {
+  """
+  Internal fields only: amounts, pay and other Restricted fields are withheld and named as withheld.
+  """
+  Internal
+  """
+  Restricted fields too, such as invoice amounts, settlement pay and rates. Never above the person an agent works for.
+  """
+  Restricted
+}
+
 type AgentDecision {
   businessUnitId: ID!
   createdAt: Timestamp!
@@ -1138,6 +1182,11 @@ type AgentDefinition {
   cronTimezone: String!
   """Runs the agent may start in a day; 0 for no cap."""
   dailyRunLimit: Int!
+  """
+  The most sensitive fields the agent's tools read. A run a person is in reads
+  at the lower of this and that person's own access.
+  """
+  dataAccessCeiling: AgentDataAccessCeiling!
   decisionTimeoutSeconds: Int!
   """
   The agents this one may hand a task to when a person is talking to it, in the

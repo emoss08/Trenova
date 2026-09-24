@@ -3,8 +3,6 @@ package shipmentimportassistantservice
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json" //nolint:depguard // external API payloads
 	"fmt"
 	"strconv"
@@ -12,7 +10,6 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -25,11 +22,14 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const maxLocationCodeLength = 10
 
 type Params struct {
 	fx.In
@@ -38,7 +38,6 @@ type Params struct {
 	Config               *config.Config
 	DB                   *postgres.Connection
 	Completion           serviceports.CompletionService
-	AILogRepo            repositories.AILogRepository
 	ChatRepo             repositories.ShipmentImportChatRepository
 	ChatCacheRepo        repositories.ShipmentImportChatCacheRepository
 	CustomerRepo         repositories.CustomerRepository
@@ -51,6 +50,7 @@ type Params struct {
 	LocationService      *locationservice.Service
 	UsStateRepo          repositories.UsStateRepository
 	LocationCategoryRepo repositories.LocationCategoryRepository
+	Permissions          serviceports.PermissionEngine
 	// Turns answers a message on a worker, which runs the turn through this
 	// service's steps.
 	Turns serviceports.ShipmentImportTurns
@@ -61,7 +61,6 @@ type Service struct {
 	cfg                  *config.AIConfig
 	db                   *postgres.Connection
 	completion           serviceports.CompletionService
-	aiLogRepo            repositories.AILogRepository
 	chatRepo             repositories.ShipmentImportChatRepository
 	chatCacheRepo        repositories.ShipmentImportChatCacheRepository
 	customerRepo         repositories.CustomerRepository
@@ -74,6 +73,7 @@ type Service struct {
 	locationService      *locationservice.Service
 	usStateRepo          repositories.UsStateRepository
 	locationCategoryRepo repositories.LocationCategoryRepository
+	permissions          serviceports.PermissionEngine
 	turns                serviceports.ShipmentImportTurns
 }
 
@@ -87,7 +87,6 @@ func New(
 		cfg:                  p.Config.GetAIConfig(),
 		db:                   p.DB,
 		completion:           p.Completion,
-		aiLogRepo:            p.AILogRepo,
 		chatRepo:             p.ChatRepo,
 		chatCacheRepo:        p.ChatCacheRepo,
 		customerRepo:         p.CustomerRepo,
@@ -100,6 +99,7 @@ func New(
 		locationService:      p.LocationService,
 		usStateRepo:          p.UsStateRepo,
 		locationCategoryRepo: p.LocationCategoryRepo,
+		permissions:          p.Permissions,
 		turns:                p.Turns,
 	}
 }
@@ -720,23 +720,6 @@ func toolCallStatusFromResult(result string) string {
 	return toolStatusCompleted
 }
 
-func (s *Service) executeToolCall(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	name, arguments string,
-) (string, []serviceports.ShipmentImportAction) {
-	var args map[string]any
-	if err := json.Unmarshal([]byte(arguments), &args); err != nil {
-		return `{"error":"invalid arguments"}`, nil
-	}
-
-	h, ok := shipmentImportToolCallHandlers[name]
-	if !ok {
-		return `{"error":"unknown tool"}`, nil
-	}
-	return h(s, ctx, tenantInfo, shipmentImportToolCallArgs{m: args})
-}
-
 type shipmentImportToolCallArgs struct {
 	m map[string]any
 }
@@ -1245,34 +1228,20 @@ func (s *Service) addLocation(
 	}
 	locationCategoryID := catResult.Items[0].ID
 
-	// Generate a short code from the name
-	code := name
-	if len(code) > 10 {
-		code = code[:10]
-	}
-
 	entity := &location.Location{
 		OrganizationID:     tenantInfo.OrgID,
 		BusinessUnitID:     tenantInfo.BuID,
 		LocationCategoryID: locationCategoryID,
 		StateID:            state.ID,
 		Status:             domaintypes.StatusActive,
-		Code:               code,
+		Code:               stringutils.TruncateRunes(name, maxLocationCodeLength),
 		Name:               name,
 		AddressLine1:       addr,
 		City:               city,
 		PostalCode:         postalCode,
 	}
 
-	actor := &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
-		PrincipalID:    tenantInfo.UserID,
-		UserID:         tenantInfo.UserID,
-		BusinessUnitID: tenantInfo.BuID,
-		OrganizationID: tenantInfo.OrgID,
-	}
-
-	created, createErr := s.locationService.Create(ctx, entity, actor)
+	created, createErr := s.locationService.Create(ctx, entity, actingUser(tenantInfo))
 	if createErr != nil {
 		s.logger.Error("failed to create location", zap.Error(createErr))
 		return fmt.Sprintf(`{"error":"failed to create location: %s"}`, createErr.Error())
@@ -1340,49 +1309,6 @@ func (s *Service) getShipmentControl(ctx context.Context, tenantInfo pagination.
 		"trackDetentionTime":     control.TrackDetentionTime,
 	})
 	return string(data)
-}
-
-func (s *Service) logAICall(
-	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
-	response string,
-) {
-	promptHash := sha256.Sum256([]byte(req.UserMessage))
-	responseHash := sha256.Sum256([]byte(response))
-
-	promptPreview := req.UserMessage
-	if len(promptPreview) > 512 {
-		promptPreview = promptPreview[:512]
-	}
-	responsePreview := response
-	if len(responsePreview) > 1024 {
-		responsePreview = responsePreview[:1024]
-	}
-
-	entry := &ailog.Log{
-		ID:             pulid.MustNew("ail_"),
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		UserID:         req.TenantInfo.UserID,
-		Prompt: fmt.Sprintf(
-			"sha256=%s preview=%s",
-			hex.EncodeToString(promptHash[:]),
-			promptPreview,
-		),
-		Response: fmt.Sprintf(
-			"sha256=%s preview=%s",
-			hex.EncodeToString(responseHash[:]),
-			responsePreview,
-		),
-		Model:     ailog.ModelGPT5Mini,
-		Operation: ailog.OperationShipmentImportChat,
-		Object:    req.DocumentID,
-		Timestamp: timeutils.NowUnix(),
-	}
-
-	if _, err := s.aiLogRepo.Create(ctx, entry); err != nil {
-		s.logger.Error("failed to log AI call", zap.Error(err))
-	}
 }
 
 func (s *Service) GetHistory(

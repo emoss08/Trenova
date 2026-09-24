@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { CustomizeSidebarDialog } from "@/components/navigation/customize-sidebar-dialog";
 import { AttentionCountBadge } from "@/components/navigation/sidebar-chrome";
 import {
@@ -16,6 +15,7 @@ import { useRecentPages } from "@/stores/recent-pages-store";
 import { useQuery } from "@tanstack/react-query";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
@@ -118,7 +118,7 @@ function SideRow({
       onClick={onNavigate}
       aria-current={current ? "page" : undefined}
       className={cn(
-        "hover:bg-muted focus-visible:bg-muted flex h-6 items-center gap-2 rounded-md px-1.5 text-sm transition-colors outline-none",
+        "hover:bg-sidebar-accent focus-visible:bg-muted flex h-6 items-center gap-2 rounded-md px-1.5 text-sm transition-colors outline-none",
         current && "bg-nav-active text-nav-active-foreground font-semibold",
       )}
     >
@@ -270,7 +270,7 @@ export function ModulesMenu({
               onClick={close}
               className={cn(
                 "text-foreground flex items-center gap-1.5 rounded-sm transition-colors outline-none",
-"ui-focus-ring hover:text-nav-active-foreground",
+                "ui-focus-ring hover:text-nav-active-foreground",
               )}
             >
               <SettingsIcon className="size-3" strokeWidth={1.75} />
@@ -281,7 +281,7 @@ export function ModulesMenu({
             trigger={
               <button
                 type="button"
- className="ui-focus-ring text-foreground hover:text-nav-active-foreground flex items-center gap-1.5 rounded-sm transition-colors outline-none"
+                className="ui-focus-ring text-foreground hover:text-nav-active-foreground flex items-center gap-1.5 rounded-sm transition-colors outline-none"
               >
                 <SlidersHorizontalIcon className="size-3" strokeWidth={1.75} />
                 {t("Customize navigation")}

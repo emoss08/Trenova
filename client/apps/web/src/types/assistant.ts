@@ -22,6 +22,14 @@ export const agentTemplateKindSchema = z.enum([
 
 export const autonomyTierSchema = z.enum(["Propose", "ActWithApproval", "AutoExecute"]);
 
+/**
+ * The most sensitive fields an agent's tools may read. Internal withholds
+ * amounts, pay and other Restricted fields; Restricted shows them. A run a
+ * person is in never reads past that person's own access.
+ */
+export const dataAccessCeilingSchema = z.enum(["Internal", "Restricted"]);
+export type DataAccessCeiling = z.infer<typeof dataAccessCeilingSchema>;
+
 export const triggerModeSchema = z.enum(["Chat", "Scheduled", "Event", "Continuous"]);
 
 export const outputModeSchema = z.enum(["Conversational", "Report"]);
@@ -177,6 +185,7 @@ export const agentDefinitionSchema = z.object({
   toolNames: nullableList(z.string()),
   toolTiers: toolTiersSchema,
   autonomyCeiling: autonomyTierSchema,
+  dataAccessCeiling: dataAccessCeilingSchema.default("Internal"),
   enabled: z.boolean().default(false),
   shadowMode: z.boolean().default(false),
   decisionTimeoutSeconds: z.number().default(86400),
@@ -218,6 +227,7 @@ export const agentTemplateSchema = z.object({
   starterEvents: nullableList(z.string()),
   starterCron: z.string().optional().default(""),
   starterCeiling: autonomyTierSchema,
+  starterDataAccess: dataAccessCeilingSchema.default("Internal"),
   starterOutput: outputModeSchema,
   systemKey: z.string().optional().default(""),
   contextProviders: nullableList(contextProviderSchema),
@@ -310,6 +320,7 @@ export const saveAgentDefinitionRequestSchema = z.object({
   toolNames: z.array(z.string()).default([]),
   toolTiers: z.record(z.string(), autonomyTierSchema).default({}),
   autonomyCeiling: autonomyTierSchema,
+  dataAccessCeiling: dataAccessCeilingSchema.default("Internal"),
   enabled: z.boolean().default(true),
   shadowMode: z.boolean().default(false),
   decisionTimeoutSeconds: z.number().min(60).default(86400),

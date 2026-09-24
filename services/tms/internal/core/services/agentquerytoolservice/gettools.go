@@ -181,31 +181,12 @@ func newGetTrailerTool(repo repositories.TrailerRepository) serviceports.AgentQu
 	})
 }
 
-func newGetInvoiceTool(repo repositories.InvoiceRepository) serviceports.AgentQueryTool {
-	return newGetTool(getSpec{
-		name:     "get_invoice",
-		entity:   "invoice",
-		resource: permission.ResourceInvoice,
-		summary: "Retrieve one invoice by id, with its line items and totals. Use " +
-			"list_invoices first when you have a number or are looking for what is unpaid.",
-		paramName: "invoiceId",
-		idSource:  "from list_invoices",
-		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
-			return repo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
-				ID:         id,
-				TenantInfo: tenant,
-			})
-		},
-	})
-}
-
 func getCatalogSpecs() []getSpec {
 	return []getSpec{
 		specOfGet(newGetCustomerTool(nil)),
 		specOfGet(newGetCarrierTool(nil)),
 		specOfGet(newGetTractorTool(nil)),
 		specOfGet(newGetTrailerTool(nil)),
-		specOfGet(newGetInvoiceTool(nil)),
 		specOfGet(newGetDetentionOccurrenceTool(nil)),
 		specOfGet(newGetServiceFailureTool(nil)),
 	}
@@ -213,4 +194,18 @@ func getCatalogSpecs() []getSpec {
 
 func specOfGet(tool serviceports.AgentQueryTool) getSpec {
 	return tool.(*getTool).spec //nolint:errcheck,forcetypeassert // constructed above
+}
+
+func idSchema(param, description string) map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			param: map[string]any{
+				"type":        "string",
+				"description": description,
+			},
+		},
+		"required":             []string{param},
+		"additionalProperties": false,
+	}
 }

@@ -17,3 +17,15 @@ func TestEqualPtr(t *testing.T) {
 	assert.False(t, EqualPtr(&one, nil))
 	assert.False(t, EqualPtr(nil, &one))
 }
+
+func TestValueOrZero(t *testing.T) {
+	t.Parallel()
+
+	seven := int64(7)
+	name := "dock"
+
+	assert.Equal(t, int64(7), ValueOrZero(&seven))
+	assert.Equal(t, int64(0), ValueOrZero[int64](nil))
+	assert.Equal(t, "dock", ValueOrZero(&name))
+	assert.Empty(t, ValueOrZero[string](nil))
+}

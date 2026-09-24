@@ -37,6 +37,14 @@ enum AgentAccessMode {
   Roles
 }
 
+"How sensitive a field an agent's tools may show."
+enum AgentDataAccessCeiling {
+  "Internal fields only: amounts, pay and other Restricted fields are withheld and named as withheld."
+  Internal
+  "Restricted fields too, such as invoice amounts, settlement pay and rates. Never above the person an agent works for."
+  Restricted
+}
+
 "How much of an agent a role could use."
 enum AgentAudienceCoverage {
   "The role grants everything the agent's tools need."
@@ -85,6 +93,11 @@ type AgentDefinition {
   "Per-tool autonomy overrides, keyed by tool name; each capped by autonomyCeiling."
   toolTiers: JSON!
   autonomyCeiling: AgentAutonomyTier!
+  """
+  The most sensitive fields the agent's tools read. A run a person is in reads
+  at the lower of this and that person's own access.
+  """
+  dataAccessCeiling: AgentDataAccessCeiling!
   enabled: Boolean!
   shadowMode: Boolean!
   decisionTimeoutSeconds: Int!

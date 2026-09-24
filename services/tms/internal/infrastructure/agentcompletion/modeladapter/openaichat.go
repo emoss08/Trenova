@@ -89,7 +89,7 @@ func (r *chatRequest) applySampling(call *Call) {
 }
 
 // chatStreamOptions asks for a final usage chunk. Without it a streamed reply
-// carries no token counts, and usage is what the AI log is for.
+// carries no token counts, and the usage record would count it as free.
 type chatStreamOptions struct {
 	IncludeUsage bool `json:"include_usage"`
 }

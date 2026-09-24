@@ -178,8 +178,14 @@ taint, so both record it.
 
 During the turn, a tool whose policy reads outside content always
 (`ReadsExternal: always`) adds a mark when it succeeds; a `marked` tool
-(`recall_memory`, `get_agent_run`, `get_shipment`) adds one only for a returned
-record that carries taint (`agent.TaintCarrier`).
+(`recall_memory`, `get_agent_run`, `list_agent_runs`, `list_watchtower_items`,
+`get_shipment`) adds one only for a returned record that carries taint
+(`agent.TaintCarrier`). A result whose rows come from different places names
+each row's source itself (`agent.SourcedTaintCarrier`, preferred when both are
+present), and its policy lists every further source it may name
+(`ToolPolicy.Sources`, checked at boot and printed in the safety table). A row
+that names a source the policy does not declare is still marked, under the
+policy's own source, so a mark is never dropped and the table never lies.
 
 `get_shipment` returns the shipment's twenty newest top-level comments (when the
 caller may read shipment comments) and marks each one written outside the
@@ -206,6 +212,37 @@ loop folds them into the turn and emits `run_tainted` once for each new mark,
 which reaches the stream and the trajectory. A delegate's taint is folded back
 into the turn that asked when it ends, because its reply enters that turn's
 context.
+
+### Oversight tools
+
+Four read tools let an agent look over the organization's own agents, and each
+is written so that reading about work never launders the outside text that
+work read.
+
+- `list_watchtower_items` reads the feed through `WatchtowerService.List`, so a
+  reader sees only the kinds whose source resource they may read. It marks each
+  row on its own source: an inbound message row as `inbound_message`, a
+  quarantined EDI file as `edi`, a weather alert as `weather`, and an agent row
+  (a failed run, a proposal, a plan, an exception) as `run_record` only when the
+  run behind it is tainted, found by batched reads of the proposals, plans,
+  exceptions and runs. A row whose run cannot be found is marked, not trusted.
+  It never marks anything seen; `unseenOnly` follows a person's own cursor and
+  is ignored for an agent principal, which has none.
+- `get_daily_briefing` reads the computed page (`ReadsExternal: never`) and drops
+  every section whose source resource the reader may not read, and every
+  watchtower line of a kind they may not read. When anything is dropped, the
+  headline goes too and the remaining sections read in their computed wording,
+  because the model's prose may cite a figure from what was dropped.
+- `list_agent_runs` filters on status, trigger, subject, agent and date; `mine`
+  keeps to the calling agent and is on by default when an agent principal runs
+  unattended. A run on an assistant conversation is listed only to the person
+  who owns that conversation (`ThreadOwnerRepository`, one batched read), and
+  never to an agent principal or an API key, whose query leaves them out.
+  Each tainted row is a `run_record` mark.
+- `get_agent_run` applies the same ownership rule, answering "not found" rather
+  than "forbidden", and can add the run's proposals (at most 20, when the reader
+  may read proposals) and its last 50 recorded events, each reduced to its kind,
+  tool and a short text: never a tool's whole result or its arguments.
 
 What is kept:
 
@@ -311,7 +348,10 @@ through activity inputs (`DispatchCall.Taint`, `DelegateCall.Taint`, the finish
 activity's `RunResult`). Whether a write is proposed is decided in the dispatch
 activity. Workflow code merges marks into `RunResult.Taint` and publishes
 `run_tainted` to the Workflow Stream, which records no command; it never chooses
-a command from taint. A recorded history from before this release carries no
+a command from taint. A mark's source comes from the tool's result inside the
+dispatch activity (`callTaint`), whether the policy names it or the result names
+it per row, so a tool that marks rows from several sources changes what the
+activity returns and nothing about the commands workflow code issues. A recorded history from before this release carries no
 taint, so its turn replays with a nil taint, adds no mark and emits nothing, and
 issues the same commands in the same order.
 
@@ -474,6 +514,10 @@ to execute it.
   whose run is still open is refused by Temporal, where two requests reading a
   count of open runs could both have passed. The refusal is
   `ErrAgentRunAlreadyOpen`, which the publisher treats as a skip.
+  `PublishAgentEvent` defers through `ports.AfterCommit`: an event raised
+  inside `WithTx` is queued on the outermost transaction and published only
+  once it commits, and dropped if it rolls back, so no run starts for a record
+  that was never saved. Outside a transaction it publishes at once.
 - **Schedules.** Every scheduled or continuous agent has its own Temporal
   Schedule, `agent-definition/<id>`: its cron in its own timezone or its
   interval, ending at its end date, paused while it is disabled, overlap
@@ -518,6 +562,15 @@ call, and a finish that saves the turn. The reply streams through the turn's
 Workflow Stream with the events the client has always read; the request relays it
 frame for frame with the reader chat uses. A document answers one message at a
 time.
+
+Its tools act as the person who sent the message. The route asks only for
+document read, so each tool that reads or writes another record checks that
+person's permission first (`toolGrants`): customer read for `search_customers`
+and `get_customer_requirements`, location read for `search_locations`, location
+create for `add_location`. A refusal is a tool error the model reports; the turn
+goes on. Every model call carries the person, the `ShipmentImportChat` feature and the
+document as its usage attribution, so its cost lands on the `ai_usage_records` row that
+the AI Control overview breaks down by feature.
 
 ## Batch work
 

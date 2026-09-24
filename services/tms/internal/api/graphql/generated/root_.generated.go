@@ -434,6 +434,19 @@ type ComplexityRoot struct {
 		Task         func(childComplexity int) int
 	}
 
+	AIUsageFeatureSlice struct {
+		Calls           func(childComplexity int) int
+		CostUSD         func(childComplexity int) int
+		Failed          func(childComplexity int) int
+		Feature         func(childComplexity int) int
+		InputTokens     func(childComplexity int) int
+		LatencyP50Ms    func(childComplexity int) int
+		LatencyP95Ms    func(childComplexity int) int
+		OutputTokens    func(childComplexity int) int
+		PricedCalls     func(childComplexity int) int
+		ReasoningTokens func(childComplexity int) int
+	}
+
 	AIUsageProviderSlice struct {
 		Calls           func(childComplexity int) int
 		CostUSD         func(childComplexity int) int
@@ -450,6 +463,7 @@ type ComplexityRoot struct {
 	}
 
 	AIUsageSummary struct {
+		ByFeature       func(childComplexity int) int
 		ByProvider      func(childComplexity int) int
 		Calls           func(childComplexity int) int
 		CostUSD         func(childComplexity int) int
@@ -828,6 +842,7 @@ type ComplexityRoot struct {
 		CronExpression         func(childComplexity int) int
 		CronTimezone           func(childComplexity int) int
 		DailyRunLimit          func(childComplexity int) int
+		DataAccessCeiling      func(childComplexity int) int
 		DecisionTimeoutSeconds func(childComplexity int) int
 		DelegateIDs            func(childComplexity int) int
 		Delegates              func(childComplexity int) int
@@ -13520,6 +13535,67 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AIUsageFailure.Task(childComplexity), true
 
+	case "AIUsageFeatureSlice.calls":
+		if e.ComplexityRoot.AIUsageFeatureSlice.Calls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFeatureSlice.Calls(childComplexity), true
+	case "AIUsageFeatureSlice.costUsd":
+		if e.ComplexityRoot.AIUsageFeatureSlice.CostUSD == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFeatureSlice.CostUSD(childComplexity), true
+	case "AIUsageFeatureSlice.failed":
+		if e.ComplexityRoot.AIUsageFeatureSlice.Failed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFeatureSlice.Failed(childComplexity), true
+	case "AIUsageFeatureSlice.feature":
+		if e.ComplexityRoot.AIUsageFeatureSlice.Feature == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFeatureSlice.Feature(childComplexity), true
+	case "AIUsageFeatureSlice.inputTokens":
+		if e.ComplexityRoot.AIUsageFeatureSlice.InputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFeatureSlice.InputTokens(childComplexity), true
+	case "AIUsageFeatureSlice.latencyP50Ms":
+		if e.ComplexityRoot.AIUsageFeatureSlice.LatencyP50Ms == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFeatureSlice.LatencyP50Ms(childComplexity), true
+	case "AIUsageFeatureSlice.latencyP95Ms":
+		if e.ComplexityRoot.AIUsageFeatureSlice.LatencyP95Ms == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFeatureSlice.LatencyP95Ms(childComplexity), true
+	case "AIUsageFeatureSlice.outputTokens":
+		if e.ComplexityRoot.AIUsageFeatureSlice.OutputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFeatureSlice.OutputTokens(childComplexity), true
+	case "AIUsageFeatureSlice.pricedCalls":
+		if e.ComplexityRoot.AIUsageFeatureSlice.PricedCalls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFeatureSlice.PricedCalls(childComplexity), true
+	case "AIUsageFeatureSlice.reasoningTokens":
+		if e.ComplexityRoot.AIUsageFeatureSlice.ReasoningTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageFeatureSlice.ReasoningTokens(childComplexity), true
+
 	case "AIUsageProviderSlice.calls":
 		if e.ComplexityRoot.AIUsageProviderSlice.Calls == nil {
 			break
@@ -13593,6 +13669,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AIUsageProviderSlice.ReasoningTokens(childComplexity), true
 
+	case "AIUsageSummary.byFeature":
+		if e.ComplexityRoot.AIUsageSummary.ByFeature == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIUsageSummary.ByFeature(childComplexity), true
 	case "AIUsageSummary.byProvider":
 		if e.ComplexityRoot.AIUsageSummary.ByProvider == nil {
 			break
@@ -15266,6 +15348,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDefinition.DailyRunLimit(childComplexity), true
+	case "AgentDefinition.dataAccessCeiling":
+		if e.ComplexityRoot.AgentDefinition.DataAccessCeiling == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.DataAccessCeiling(childComplexity), true
 	case "AgentDefinition.decisionTimeoutSeconds":
 		if e.ComplexityRoot.AgentDefinition.DecisionTimeoutSeconds == nil {
 			break
@@ -76919,6 +77007,14 @@ enum AgentAccessMode {
   Roles
 }
 
+"How sensitive a field an agent's tools may show."
+enum AgentDataAccessCeiling {
+  "Internal fields only: amounts, pay and other Restricted fields are withheld and named as withheld."
+  Internal
+  "Restricted fields too, such as invoice amounts, settlement pay and rates. Never above the person an agent works for."
+  Restricted
+}
+
 "How much of an agent a role could use."
 enum AgentAudienceCoverage {
   "The role grants everything the agent's tools need."
@@ -76967,6 +77063,11 @@ type AgentDefinition {
   "Per-tool autonomy overrides, keyed by tool name; each capped by autonomyCeiling."
   toolTiers: JSON!
   autonomyCeiling: AgentAutonomyTier!
+  """
+  The most sensitive fields the agent's tools read. A run a person is in reads
+  at the lower of this and that person's own access.
+  """
+  dataAccessCeiling: AgentDataAccessCeiling!
   enabled: Boolean!
   shadowMode: Boolean!
   decisionTimeoutSeconds: Int!
@@ -78662,6 +78763,38 @@ type AIUsageProviderSlice {
 }
 
 """
+The product feature that made a model call.
+"""
+enum AIUsageFeature {
+  AgentTurn
+  AgentEvaluation
+  TableQuery
+  FormulaGenerate
+  FormulaExplain
+  ShipmentImportChat
+  DocumentIntelligenceRoute
+  DocumentIntelligenceExtract
+}
+
+"""
+One feature's share of a usage window.
+"""
+type AIUsageFeatureSlice {
+  "Null for calls made before features were recorded, or by a caller that names none."
+  feature: AIUsageFeature
+  calls: Int!
+  failed: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  reasoningTokens: Int!
+  "Sum over the calls that carried a price; see pricedCalls."
+  costUsd: Decimal!
+  pricedCalls: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+}
+
+"""
 What the organization's models did over a window: how many calls, how many
 failed, what they consumed, what it cost where the price is known, and how
 long a person waited. Latency percentiles are over successful calls only.
@@ -78679,6 +78812,8 @@ type AIUsageSummary {
   latencyP50Ms: Int!
   latencyP95Ms: Int!
   byProvider: [AIUsageProviderSlice!]!
+  "Usage by the feature that made the calls, busiest first."
+  byFeature: [AIUsageFeatureSlice!]!
   "The newest failed calls in the window, with the provider's own message."
   recentFailures: [AIUsageFailure!]!
 }
@@ -99264,6 +99399,32 @@ func (ec *executionContext) childFields_AIUsageFailure(ctx context.Context, fiel
 	return nil, fmt.Errorf("no field named %q was found under type AIUsageFailure", field.Name)
 }
 
+func (ec *executionContext) childFields_AIUsageFeatureSlice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "feature":
+		return ec.fieldContext_AIUsageFeatureSlice_feature(ctx, field)
+	case "calls":
+		return ec.fieldContext_AIUsageFeatureSlice_calls(ctx, field)
+	case "failed":
+		return ec.fieldContext_AIUsageFeatureSlice_failed(ctx, field)
+	case "inputTokens":
+		return ec.fieldContext_AIUsageFeatureSlice_inputTokens(ctx, field)
+	case "outputTokens":
+		return ec.fieldContext_AIUsageFeatureSlice_outputTokens(ctx, field)
+	case "reasoningTokens":
+		return ec.fieldContext_AIUsageFeatureSlice_reasoningTokens(ctx, field)
+	case "costUsd":
+		return ec.fieldContext_AIUsageFeatureSlice_costUsd(ctx, field)
+	case "pricedCalls":
+		return ec.fieldContext_AIUsageFeatureSlice_pricedCalls(ctx, field)
+	case "latencyP50Ms":
+		return ec.fieldContext_AIUsageFeatureSlice_latencyP50Ms(ctx, field)
+	case "latencyP95Ms":
+		return ec.fieldContext_AIUsageFeatureSlice_latencyP95Ms(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIUsageFeatureSlice", field.Name)
+}
+
 func (ec *executionContext) childFields_AIUsageProviderSlice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "providerId":
@@ -99318,6 +99479,8 @@ func (ec *executionContext) childFields_AIUsageSummary(ctx context.Context, fiel
 		return ec.fieldContext_AIUsageSummary_latencyP95Ms(ctx, field)
 	case "byProvider":
 		return ec.fieldContext_AIUsageSummary_byProvider(ctx, field)
+	case "byFeature":
+		return ec.fieldContext_AIUsageSummary_byFeature(ctx, field)
 	case "recentFailures":
 		return ec.fieldContext_AIUsageSummary_recentFailures(ctx, field)
 	}
@@ -100054,6 +100217,8 @@ func (ec *executionContext) childFields_AgentDefinition(ctx context.Context, fie
 		return ec.fieldContext_AgentDefinition_toolTiers(ctx, field)
 	case "autonomyCeiling":
 		return ec.fieldContext_AgentDefinition_autonomyCeiling(ctx, field)
+	case "dataAccessCeiling":
+		return ec.fieldContext_AgentDefinition_dataAccessCeiling(ctx, field)
 	case "enabled":
 		return ec.fieldContext_AgentDefinition_enabled(ctx, field)
 	case "shadowMode":

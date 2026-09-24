@@ -6,16 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
@@ -73,37 +71,11 @@ func (s *stubCompletion) PollBackground(
 	return s.outcome, nil
 }
 
-// loggedEntries collects what the service wrote to the AI log. The mock matches
-// the first registered expectation, so a per-test one registered afterwards
-// would never run; capturing here keeps one expectation and lets any test read
-// what was written.
-type loggedEntries struct {
-	entries []*ailog.Log
-}
-
-func (l *loggedEntries) last() *ailog.Log {
-	if len(l.entries) == 0 {
-		return nil
-	}
-
-	return l.entries[len(l.entries)-1]
-}
-
-func newTestService(t *testing.T, completion *stubCompletion) (*Service, *loggedEntries) {
+func newTestService(t *testing.T, completion *stubCompletion) *Service {
 	t.Helper()
 
 	registry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
-
-	logged := &loggedEntries{}
-	logRepo := mocks.NewMockAILogRepository(t)
-	logRepo.EXPECT().
-		Create(mock.Anything, mock.MatchedBy(func(entry *ailog.Log) bool {
-			logged.entries = append(logged.entries, entry)
-			return true
-		})).
-		Return(&ailog.Log{}, nil).
-		Maybe()
 
 	cfg := &config.Config{AI: config.AIConfig{DocumentExtraction: true}}
 
@@ -112,8 +84,19 @@ func newTestService(t *testing.T, completion *stubCompletion) (*Service, *logged
 		cfg:        cfg.GetAIConfig(),
 		metrics:    registry,
 		completion: completion,
-		aiLogRepo:  logRepo,
-	}, logged
+	}
+}
+
+func documentAttributionFor(
+	tenantInfo pagination.TenantInfo,
+	documentID pulid.ID,
+	feature aiusage.Feature,
+) serviceports.AIUsageAttribution {
+	return serviceports.AIUsageAttribution{
+		UserID:  tenantInfo.UserID,
+		Feature: feature,
+		Subject: aiusage.Subject{Type: aiusage.SubjectTypeDocument, ID: documentID.String()},
+	}
 }
 
 func tenant() pagination.TenantInfo {
@@ -171,7 +154,7 @@ func TestRouteDocument_ShapesTheResult(t *testing.T) {
 			ModelIdentifier: "llama3.3:70b",
 		},
 	}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	result, err := service.RouteDocument(t.Context(), routeRequest())
 	require.NoError(t, err)
@@ -195,7 +178,7 @@ func TestRouteDocument_SendsDocumentTextAsUntrusted(t *testing.T) {
 	completion := &stubCompletion{
 		structured: &serviceports.StructuredCompletionResult{Text: `{"documentKind": "Other"}`},
 	}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	_, err := service.RouteDocument(t.Context(), routeRequest())
 	require.NoError(t, err)
@@ -214,7 +197,7 @@ func TestRouteDocument_RoutesToTheClassificationTask(t *testing.T) {
 	completion := &stubCompletion{
 		structured: &serviceports.StructuredCompletionResult{Text: `{"documentKind": "Other"}`},
 	}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	_, err := service.RouteDocument(t.Context(), routeRequest())
 	require.NoError(t, err)
@@ -228,7 +211,7 @@ func TestExtractRateConfirmation_ConvertsAndClamps(t *testing.T) {
 	completion := &stubCompletion{
 		structured: &serviceports.StructuredCompletionResult{Text: extractPayload},
 	}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	result, err := service.ExtractRateConfirmation(t.Context(), extractRequest())
 	require.NoError(t, err)
@@ -247,48 +230,118 @@ func TestExtractRateConfirmation_SurfacesASchemaFailure(t *testing.T) {
 	completion := &stubCompletion{
 		structured: &serviceports.StructuredCompletionResult{Text: "not json at all"},
 	}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	_, err := service.ExtractRateConfirmation(t.Context(), extractRequest())
 	require.ErrorIs(t, err, serviceports.ErrModelSchemaValidation)
 }
 
-/*
-The AI log used to record the configured OpenAI model name, which was the same
-string on every row. With several providers able to serve a task, the only
-useful answer to "what produced this" is what the provider reported.
-*/
-func TestExtractRateConfirmation_LogsTheModelTheProviderReported(t *testing.T) {
+func TestRouteDocument_AttributesTheCallToThePersonAndDocument(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
 		structured: &serviceports.StructuredCompletionResult{
-			Text:            extractPayload,
-			ModelIdentifier: "qwen2.5:32b",
-			InputTokens:     900,
-			OutputTokens:    120,
+			Text: `{"shouldExtract":true,"documentKind":"RateConfirmation","confidence":0.9}`,
 		},
 	}
-	service, logged := newTestService(t, completion)
+	service := newTestService(t, completion)
+	request := routeRequest()
 
-	// A long page, so the preview's bound is actually exercised: the log keeps a
-	// hash and the opening of the prompt, never the whole document.
+	_, err := service.RouteDocument(t.Context(), request)
+	require.NoError(t, err)
+
+	require.NotNil(t, completion.sawRequest)
+	assert.Equal(t,
+		documentAttributionFor(
+			request.TenantInfo,
+			request.DocumentID,
+			aiusage.FeatureDocumentIntelligenceRoute,
+		),
+		completion.sawRequest.Attribution,
+	)
+}
+
+func TestExtractRateConfirmation_AttributesTheCallToThePersonAndDocument(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		structured: &serviceports.StructuredCompletionResult{Text: extractPayload},
+	}
+	service := newTestService(t, completion)
 	request := extractRequest()
-	request.Pages = []serviceports.AIDocumentPage{{
-		PageNumber: 1,
-		Text:       strings.Repeat("rate confirmation line. ", 80) + "TAIL-MARKER",
-	}}
 
 	_, err := service.ExtractRateConfirmation(t.Context(), request)
 	require.NoError(t, err)
 
-	entry := logged.last()
-	require.NotNil(t, entry)
-	assert.Equal(t, ailog.Model("qwen2.5:32b"), entry.Model)
-	assert.Equal(t, 1020, entry.TotalTokens)
-	assert.Contains(t, entry.Prompt, "user_sha256=")
-	assert.NotContains(t, entry.Prompt, "TAIL-MARKER",
-		"the log keeps a bounded preview, not the whole document")
+	require.NotNil(t, completion.sawRequest)
+	assert.Equal(t,
+		documentAttributionFor(
+			request.TenantInfo,
+			request.DocumentID,
+			aiusage.FeatureDocumentIntelligenceExtract,
+		),
+		completion.sawRequest.Attribution,
+	)
+}
+
+func TestSubmitBackgroundExtraction_AttributesTheCallToThePersonAndDocument(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		submission: &serviceports.BackgroundSubmission{
+			Handle:     "resp_123",
+			ProviderID: pulid.MustNew("aipr_"),
+		},
+	}
+	service := newTestService(t, completion)
+	request := extractRequest()
+
+	_, err := service.SubmitRateConfirmationBackgroundExtraction(t.Context(), request)
+	require.NoError(t, err)
+
+	require.NotNil(t, completion.sawRequest)
+	assert.Equal(t,
+		documentAttributionFor(
+			request.TenantInfo,
+			request.DocumentID,
+			aiusage.FeatureDocumentIntelligenceExtract,
+		),
+		completion.sawRequest.Attribution,
+	)
+}
+
+func TestPollBackgroundExtraction_AttributesTheOutcomeToThePersonAndDocument(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		outcome: &serviceports.BackgroundOutcome{
+			State:  serviceports.BackgroundCompleted,
+			Result: &serviceports.StructuredCompletionResult{Text: extractPayload},
+		},
+	}
+	service := newTestService(t, completion)
+	request := &serviceports.AIBackgroundExtractPollRequest{
+		TenantInfo:  tenant(),
+		DocumentID:  pulid.MustNew("doc_"),
+		ResponseID:  "resp_123",
+		ProviderID:  pulid.MustNew("aipr_"),
+		SubmittedAt: 1_700_000_000,
+	}
+
+	_, err := service.PollRateConfirmationBackgroundExtraction(t.Context(), request)
+	require.NoError(t, err)
+
+	require.NotNil(t, completion.sawPoll)
+	assert.Equal(t, aiprovider.TaskDocumentExtraction, completion.sawPoll.Task)
+	assert.Equal(t, request.SubmittedAt, completion.sawPoll.SubmittedAt)
+	assert.Equal(t,
+		documentAttributionFor(
+			request.TenantInfo,
+			request.DocumentID,
+			aiusage.FeatureDocumentIntelligenceExtract,
+		),
+		completion.sawPoll.Attribution,
+	)
 }
 
 func TestSubmitBackgroundExtraction_CarriesTheProviderWithTheHandle(t *testing.T) {
@@ -303,7 +356,7 @@ func TestSubmitBackgroundExtraction_CarriesTheProviderWithTheHandle(t *testing.T
 			RawStatus:       "queued",
 		},
 	}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	submission, err := service.SubmitRateConfirmationBackgroundExtraction(
 		t.Context(), extractRequest(),
@@ -333,7 +386,7 @@ func TestSubmitBackgroundExtraction_ReturnsAnInlineResultWhenNothingCanDefer(t *
 			},
 		},
 	}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	submission, err := service.SubmitRateConfirmationBackgroundExtraction(
 		t.Context(), extractRequest(),
@@ -351,7 +404,7 @@ func TestSubmitBackgroundExtraction_FailsWhenThereIsNeitherHandleNorResult(t *te
 	t.Parallel()
 
 	completion := &stubCompletion{submission: &serviceports.BackgroundSubmission{}}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	_, err := service.SubmitRateConfirmationBackgroundExtraction(t.Context(), extractRequest())
 	require.Error(t, err)
@@ -367,7 +420,7 @@ func TestPollBackgroundExtraction_RefusesWithoutAProvider(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	_, err := service.PollRateConfirmationBackgroundExtraction(
 		t.Context(),
@@ -387,7 +440,7 @@ func TestPollBackgroundExtraction_AsksTheProviderThatIssuedTheHandle(t *testing.
 	completion := &stubCompletion{
 		outcome: &serviceports.BackgroundOutcome{State: serviceports.BackgroundPending},
 	}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	result, err := service.PollRateConfirmationBackgroundExtraction(
 		t.Context(),
@@ -415,7 +468,7 @@ func TestPollBackgroundExtraction_ReturnsTheExtraction(t *testing.T) {
 			Result:          &serviceports.StructuredCompletionResult{Text: extractPayload},
 		},
 	}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	result, err := service.PollRateConfirmationBackgroundExtraction(
 		t.Context(),
@@ -443,7 +496,7 @@ func TestPollBackgroundExtraction_ReportsAFailureWithItsReason(t *testing.T) {
 			FailureMessage: "the reply was cut short",
 		},
 	}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	result, err := service.PollRateConfirmationBackgroundExtraction(
 		t.Context(),
@@ -471,7 +524,7 @@ func TestPollBackgroundExtraction_TreatsAnEmptyCompletionAsFailure(t *testing.T)
 			Result: &serviceports.StructuredCompletionResult{Text: "   "},
 		},
 	}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 
 	result, err := service.PollRateConfirmationBackgroundExtraction(
 		t.Context(),
@@ -491,7 +544,7 @@ func TestService_RefusesEveryCallWhenAIIsDisabled(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{}
-	service, _ := newTestService(t, completion)
+	service := newTestService(t, completion)
 	service.cfg = (&config.Config{}).GetAIConfig()
 
 	_, routeErr := service.RouteDocument(t.Context(), routeRequest())

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -17,6 +18,8 @@ type AIUsageAttribution struct {
 	ThreadID          pulid.ID
 	RunID             pulid.ID
 	Purpose           AIUsagePurpose
+	Feature           aiusage.Feature
+	Subject           aiusage.Subject
 }
 
 type AIUsagePurpose string
@@ -62,6 +65,19 @@ type AIUsageProviderSlice struct {
 	LatencyP95Ms    int64    `json:"latencyP95Ms"`
 }
 
+type AIUsageFeatureSlice struct {
+	Feature         *aiusage.Feature `json:"feature"`
+	Calls           int              `json:"calls"`
+	Failed          int              `json:"failed"`
+	InputTokens     int64            `json:"inputTokens"`
+	OutputTokens    int64            `json:"outputTokens"`
+	ReasoningTokens int64            `json:"reasoningTokens"`
+	CostUSD         string           `json:"costUsd"`
+	PricedCalls     int              `json:"pricedCalls"`
+	LatencyP50Ms    int64            `json:"latencyP50Ms"`
+	LatencyP95Ms    int64            `json:"latencyP95Ms"`
+}
+
 // AIUsageSummary is what the organization's models did over a window: how
 // many calls, how many failed, what they consumed, what it cost where the
 // price is known, and how long a person waited.
@@ -77,6 +93,7 @@ type AIUsageSummary struct {
 	LatencyP50Ms    int64                  `json:"latencyP50Ms"`
 	LatencyP95Ms    int64                  `json:"latencyP95Ms"`
 	ByProvider      []AIUsageProviderSlice `json:"byProvider"`
+	ByFeature       []AIUsageFeatureSlice  `json:"byFeature"`
 	// RecentFailures are the newest failed calls in the window, so the
 	// reason a provider keeps failing is on the screen that counts the
 	// failures rather than only in the server log.
@@ -112,6 +129,7 @@ func SummaryFromRepository(since int64, summary *repositories.AIUsageSummary) *A
 		LatencyP50Ms:    summary.Totals.LatencyP50,
 		LatencyP95Ms:    summary.Totals.LatencyP95,
 		ByProvider:      make([]AIUsageProviderSlice, 0, len(summary.ByProvider)),
+		ByFeature:       make([]AIUsageFeatureSlice, 0, len(summary.ByFeature)),
 		RecentFailures:  make([]AIUsageFailure, 0, len(summary.RecentFailures)),
 	}
 	for _, failure := range summary.RecentFailures {
@@ -140,6 +158,26 @@ func SummaryFromRepository(since int64, summary *repositories.AIUsageSummary) *A
 			LatencyP50Ms:    slice.LatencyP50,
 			LatencyP95Ms:    slice.LatencyP95,
 		})
+	}
+
+	for i := range summary.ByFeature {
+		slice := &summary.ByFeature[i]
+		featureSlice := AIUsageFeatureSlice{
+			Calls:           slice.Calls,
+			Failed:          slice.Failed,
+			InputTokens:     slice.InputTokens,
+			OutputTokens:    slice.OutputTokens,
+			ReasoningTokens: slice.ReasoningTokens,
+			CostUSD:         slice.CostUSD,
+			PricedCalls:     slice.PricedCalls,
+			LatencyP50Ms:    slice.LatencyP50,
+			LatencyP95Ms:    slice.LatencyP95,
+		}
+		if slice.Feature != "" {
+			feature := slice.Feature
+			featureSlice.Feature = &feature
+		}
+		out.ByFeature = append(out.ByFeature, featureSlice)
 	}
 
 	return out

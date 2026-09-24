@@ -83,9 +83,10 @@ services:
                 condition: service_healthy
 
     minio:
-        # Kept in step with shared/testutil/minio.go, so local object storage is
-        # the release the tests ran against.
-        image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+        # SILO, the maintained fork of MinIO: upstream images are no longer served
+        # to anonymous pulls. Kept in step with shared/testutil/minio.go, so local
+        # object storage is the release the tests ran against.
+        image: docker.io/pgsty/silo:RELEASE.2026-09-16T00-00-00Z@sha256:635197cb9f36d01bee221d34d1c7d7960f6a95c48b0b6c01d99cd13bdae51a46
         command: server /data --console-address ":9001"
         container_name: minio
         environment:

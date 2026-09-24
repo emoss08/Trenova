@@ -208,6 +208,7 @@ type saveAgentRequest struct {
 	ToolNames              []string                          `json:"toolNames"`
 	ToolTiers              map[string]agent.AutonomyTier     `json:"toolTiers"`
 	AutonomyCeiling        agent.AutonomyTier                `json:"autonomyCeiling"`
+	DataAccessCeiling      agentdefinition.DataAccessCeiling `json:"dataAccessCeiling"`
 	Enabled                bool                              `json:"enabled"`
 	ShadowMode             bool                              `json:"shadowMode"`
 	DecisionTimeoutSeconds int                               `json:"decisionTimeoutSeconds"`
@@ -284,6 +285,7 @@ func (r *saveAgentRequest) toServiceRequest(
 		ToolNames:              r.ToolNames,
 		ToolTiers:              r.ToolTiers,
 		AutonomyCeiling:        r.AutonomyCeiling,
+		DataAccessCeiling:      r.DataAccessCeiling,
 		Enabled:                r.Enabled,
 		ShadowMode:             r.ShadowMode,
 		DecisionTimeoutSeconds: r.DecisionTimeoutSeconds,

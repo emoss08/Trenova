@@ -155,6 +155,17 @@ export type AiTask =
   | 'QueryCompose'
   | 'ScopeClassification';
 
+/** The product feature that made a model call. */
+export type AiUsageFeature =
+  | 'AgentEvaluation'
+  | 'AgentTurn'
+  | 'DocumentIntelligenceExtract'
+  | 'DocumentIntelligenceRoute'
+  | 'FormulaExplain'
+  | 'FormulaGenerate'
+  | 'ShipmentImportChat'
+  | 'TableQuery';
+
 export type AccessorialMethod =
   | 'Flat'
   | 'PerUnit'
@@ -296,6 +307,13 @@ export type AgentControlInput = {
   promotionThreshold?: number | null | undefined;
   shadowMode: boolean;
 };
+
+/** How sensitive a field an agent's tools may show. */
+export type AgentDataAccessCeiling =
+  /** Internal fields only: amounts, pay and other Restricted fields are withheld and named as withheld. */
+  | 'Internal'
+  /** Restricted fields too, such as invoice amounts, settlement pay and rates. Never above the person an agent works for. */
+  | 'Restricted';
 
 export type AgentDecisionType =
   | 'Accepted'
@@ -6710,7 +6728,7 @@ export type DecideAgentProposalsMutationVariables = Exact<{
 
 export type DecideAgentProposalsMutation = { decideAgentProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, createdAt: number } | null }> };
 
-export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, memoryTokenBudget: number | null, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string, delegateIds: Array<string>, accessMode: AgentAccessMode, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, enabled: boolean, triggerMode: AgentTriggerMode }>, accessRoles: Array<{ id: string, name: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
+export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, dataAccessCeiling: AgentDataAccessCeiling, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, memoryTokenBudget: number | null, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string, delegateIds: Array<string>, accessMode: AgentAccessMode, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, enabled: boolean, triggerMode: AgentTriggerMode }>, accessRoles: Array<{ id: string, name: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
 
 export type AgentDefinitionCardsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -7224,7 +7242,7 @@ export type AiUsageSummaryQueryVariables = Exact<{
 }>;
 
 
-export type AiUsageSummaryQuery = { aiUsageSummary: { since: number, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number, byProvider: Array<{ providerId: string, providerName: string, model: string, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number }>, recentFailures: Array<{ providerId: string, providerName: string, model: string, task: string, errorClass: string, message: string, at: number }> } };
+export type AiUsageSummaryQuery = { aiUsageSummary: { since: number, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number, byProvider: Array<{ providerId: string, providerName: string, model: string, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number }>, byFeature: Array<{ feature: AiUsageFeature | null, calls: number, failed: number, inputTokens: number, outputTokens: number, reasoningTokens: number, costUsd: string, pricedCalls: number, latencyP50Ms: number, latencyP95Ms: number }>, recentFailures: Array<{ providerId: string, providerName: string, model: string, task: string, errorClass: string, message: string, at: number }> } };
 
 export type ApiKeyTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, name: string, description: string, keyPrefix: string, status: string, expiresAt: number, lastUsedAt: number, permissionScope: string, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ApiKeyTableRowFieldsFragment' };
 
@@ -13406,6 +13424,7 @@ export const AgentDefinitionCardFieldsFragmentDoc = new TypedDocumentString(`
   toolNames
   toolTiers
   autonomyCeiling
+  dataAccessCeiling
   enabled
   shadowMode
   decisionTimeoutSeconds
@@ -20771,7 +20790,7 @@ export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"Pend
 export const PendingDecisionSummaryDocument = {"__meta__":{"kind":"query","name":"PendingDecisionSummary","hash":"sha256:4da8f1517d5269e2a6a982d9b22085d0fc060aad3115dfe942ffbbb4318f0aa6"}} as unknown as TypedDocumentString<PendingDecisionSummaryQuery, PendingDecisionSummaryQueryVariables>;
 export const PlanStepsDocument = {"__meta__":{"kind":"query","name":"PlanSteps","hash":"sha256:8e998d8ca99ecb3ec7ccb8444e779245bf0b12661400fe1e4ddee2e86cd22472"}} as unknown as TypedDocumentString<PlanStepsQuery, PlanStepsQueryVariables>;
 export const DecideAgentProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposals","hash":"sha256:59304c594ac96561580ae98bff8ecf6ac041a40f45487c9319485de537cef971"}} as unknown as TypedDocumentString<DecideAgentProposalsMutation, DecideAgentProposalsMutationVariables>;
-export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCards","hash":"sha256:8c5469bb3a8fb5d16163ff275cc8713600b60756e0b7b3b63cdf0eda4e65d145"}} as unknown as TypedDocumentString<AgentDefinitionCardsQuery, AgentDefinitionCardsQueryVariables>;
+export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCards","hash":"sha256:ff67572be665e12db87c087023a2b6d8a8fc15ac2af2add16594e6ef22feca59"}} as unknown as TypedDocumentString<AgentDefinitionCardsQuery, AgentDefinitionCardsQueryVariables>;
 export const AgentChoicesDocument = {"__meta__":{"kind":"query","name":"AgentChoices","hash":"sha256:6bb1514f9329e2c8e1ed77638129117516e2d14d070b7502591fbc60fbe83130"}} as unknown as TypedDocumentString<AgentChoicesQuery, AgentChoicesQueryVariables>;
 export const AgentDefinitionCountDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCount","hash":"sha256:daacf568820fcf8bddb93d6841d154a39ae37f4f40aab47e3e127efda1270831"}} as unknown as TypedDocumentString<AgentDefinitionCountQuery, AgentDefinitionCountQueryVariables>;
 export const AgentRunCountDocument = {"__meta__":{"kind":"query","name":"AgentRunCount","hash":"sha256:e5f44d80150fa3a53684e90b45779a0d12a9c75150f2ed16c1b816d22edb905e"}} as unknown as TypedDocumentString<AgentRunCountQuery, AgentRunCountQueryVariables>;
@@ -20830,7 +20849,7 @@ export const AiFeedbackTableDocument = {"__meta__":{"kind":"query","name":"AIFee
 export const AgentFeedbackSummaryDocument = {"__meta__":{"kind":"query","name":"AgentFeedbackSummary","hash":"sha256:0a99eeca389833697ab85daf88747a577c77f96c073a0fdc51df38e67aad7e1b"}} as unknown as TypedDocumentString<AgentFeedbackSummaryQuery, AgentFeedbackSummaryQueryVariables>;
 export const AiProviderCardsDocument = {"__meta__":{"kind":"query","name":"AIProviderCards","hash":"sha256:59ca8e0065a874a31d83b6439010be456ad24912a224b7718273d2ae50dbfa42"}} as unknown as TypedDocumentString<AiProviderCardsQuery, AiProviderCardsQueryVariables>;
 export const AiProviderDetailDocument = {"__meta__":{"kind":"query","name":"AIProviderDetail","hash":"sha256:ae91e72c5f112a6aa1f37109bf70a6275196b1229a3459a30b58ee33d63bb356"}} as unknown as TypedDocumentString<AiProviderDetailQuery, AiProviderDetailQueryVariables>;
-export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:5e9599fa59c13dde1fbde8f32c7942aa7e5ba4359259c6ab67136f9799ce0059"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
+export const AiUsageSummaryDocument = {"__meta__":{"kind":"query","name":"AIUsageSummary","hash":"sha256:22b752f36ea7369cb330c482bae62e65443c496110818dff32d26d4405302d17"}} as unknown as TypedDocumentString<AiUsageSummaryQuery, AiUsageSummaryQueryVariables>;
 export const ApiKeyTableDocument = {"__meta__":{"kind":"query","name":"ApiKeyTable","hash":"sha256:aeacf34d9ae14863db97c29a2ea928d83c46bba47f49ecd6a05ccdf7d4a33951"}} as unknown as TypedDocumentString<ApiKeyTableQuery, ApiKeyTableQueryVariables>;
 export const AttentionSummaryDocument = {"__meta__":{"kind":"query","name":"AttentionSummary","hash":"sha256:f5497f5bda3b38c5a3875db4677a9a034d1bcc1c4866b6c698351fc2198b1322"}} as unknown as TypedDocumentString<AttentionSummaryQuery, AttentionSummaryQueryVariables>;
 export const RecentActivityDocument = {"__meta__":{"kind":"query","name":"RecentActivity","hash":"sha256:3fe2bf53bf715a8f3c32bf9ed4a7f61e822b4d79f54f0564b6b647cf54b13407"}} as unknown as TypedDocumentString<RecentActivityQuery, RecentActivityQueryVariables>;
