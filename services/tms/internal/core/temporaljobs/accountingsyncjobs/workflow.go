@@ -35,7 +35,8 @@ func CheckAccountingConnectionsWorkflow(ctx workflow.Context) (*HealthSweepResul
 
 	var a *Activities
 	result := new(HealthSweepResult)
-	if err := workflow.ExecuteActivity(ctx, a.CheckAccountingConnectionsActivity).Get(ctx, result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.CheckAccountingConnectionsActivity).
+		Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("Accounting connection check failed", "error", err)
 		return nil, err
 	}

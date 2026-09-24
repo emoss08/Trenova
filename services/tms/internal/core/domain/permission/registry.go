@@ -3296,7 +3296,11 @@ func (r *Registry) registerAccountingResources() {
 		Description: "What has been sent to the accounting system, what failed and where the two disagree",
 		Category:    "Accounting",
 		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "Read", Description: "View sync status, records and differences"},
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View sync status, records and differences",
+			},
 			{
 				Operation:   OpUpdate,
 				DisplayName: "Update",

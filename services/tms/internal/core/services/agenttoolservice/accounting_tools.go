@@ -11,6 +11,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -32,7 +33,9 @@ type checkAccountingConnectionTool struct {
 	accounting accountingConnectionChecker
 }
 
-func newCheckAccountingConnectionTool(accounting accountingConnectionChecker) serviceports.AgentTool {
+func newCheckAccountingConnectionTool(
+	accounting accountingConnectionChecker,
+) serviceports.AgentTool {
 	return &checkAccountingConnectionTool{accounting: accounting}
 }
 
@@ -54,18 +57,12 @@ func (t *checkAccountingConnectionTool) Description() string {
 }
 
 func (t *checkAccountingConnectionTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"system": map[string]any{
-				"type":        "string",
-				"enum":        []string{string(integration.TypeQuickBooksOnline)},
-				"description": "The accounting system. Example: \"QuickBooksOnline\".",
-			},
-		},
-		"required":             []string{"system"},
-		"additionalProperties": false,
-	}
+	return jsonschemautils.Object(map[string]any{
+		"system": jsonschemautils.Enum(
+			"The accounting system. Example: \"QuickBooksOnline\".",
+			string(integration.TypeQuickBooksOnline),
+		),
+	}, "system")
 }
 
 func (t *checkAccountingConnectionTool) Policy() serviceports.ToolPolicy {
@@ -88,17 +85,17 @@ func (t *checkAccountingConnectionTool) Policy() serviceports.ToolPolicy {
 
 func (t *checkAccountingConnectionTool) Validate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	_, err := t.connection(ctx, params)
+	_, err := t.connection(ctx, &params)
 	return err
 }
 
 func (t *checkAccountingConnectionTool) Execute(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
-	conn, err := t.connection(ctx, params)
+	conn, err := t.connection(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -109,9 +106,9 @@ func (t *checkAccountingConnectionTool) Execute(
 
 func (t *checkAccountingConnectionTool) Simulate(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) (*agent.ToolSimulation, error) {
-	conn, err := t.connection(ctx, params)
+	conn, err := t.connection(ctx, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -133,9 +130,9 @@ func (t *checkAccountingConnectionTool) Simulate(
 
 func (t *checkAccountingConnectionTool) connection(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*accountingsync.AccountingConnection, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
@@ -148,7 +145,7 @@ func (t *checkAccountingConnectionTool) connection(
 		return nil, fmt.Errorf("system must be %q", integration.TypeQuickBooksOnline)
 	}
 
-	status, err := t.accounting.Status(ctx, tenantFrom(params), typ)
+	status, err := t.accounting.Status(ctx, tenantFrom(*params), typ)
 	if err != nil {
 		return nil, err
 	}

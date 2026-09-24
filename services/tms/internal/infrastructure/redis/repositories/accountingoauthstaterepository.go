@@ -41,7 +41,13 @@ func (r *accountingOAuthStateRepository) Save(
 	state *corerepositories.AccountingOAuthState,
 	ttl time.Duration,
 ) error {
-	return redishelpers.SetStringJSON(ctx, r.client, accountingOAuthStatePrefix+state.State, state, ttl)
+	return redishelpers.SetStringJSON(
+		ctx,
+		r.client,
+		accountingOAuthStatePrefix+state.State,
+		state,
+		ttl,
+	)
 }
 
 func (r *accountingOAuthStateRepository) Take(
@@ -51,7 +57,9 @@ func (r *accountingOAuthStateRepository) Take(
 	entity := new(corerepositories.AccountingOAuthState)
 	err := redishelpers.TakeStringJSON(ctx, r.client, accountingOAuthStatePrefix+state, entity)
 	if errors.Is(err, redis.Nil) {
-		return nil, errortypes.NewNotFoundError("The connection request has expired or was already used")
+		return nil, errortypes.NewNotFoundError(
+			"The connection request has expired or was already used",
+		)
 	}
 	if err != nil {
 		return nil, err

@@ -74,6 +74,7 @@ type Service struct {
 
 var _ services.AccountingConnectionService = (*Service)(nil)
 
+//nolint:gocritic // dependency injection
 func New(p Params) *Service {
 	return &Service{
 		l:            p.Logger.Named("service.accounting-connection"),
@@ -186,7 +187,11 @@ func validateCompletion(req *services.CompleteAccountingAuthorizationRequest) er
 		multiErr.Add("code", errortypes.ErrRequired, "The authorization code is missing")
 	}
 	if !realmIDPattern.MatchString(req.RealmID) {
-		multiErr.Add("realmId", errortypes.ErrInvalid, "The company id returned by the provider is not valid")
+		multiErr.Add(
+			"realmId",
+			errortypes.ErrInvalid,
+			"The company id returned by the provider is not valid",
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -207,24 +212,8 @@ func (s *Service) CompleteAuthorization(
 	}
 	provider := accountingsync.ProviderName(req.IntegrationType)
 
-	state, err := s.states.Take(ctx, tokenutils.Hash(req.State))
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, errortypes.NewValidationError(
-				"state",
-				errortypes.ErrInvalid,
-				"This connection request expired or was already used. Start the connection again.",
-			)
-		}
+	if err = s.takeState(ctx, req); err != nil {
 		return nil, err
-	}
-	if state.UserID != req.UserID ||
-		state.OrganizationID != req.TenantInfo.OrgID ||
-		state.BusinessUnitID != req.TenantInfo.BuID ||
-		state.IntegrationType != req.IntegrationType {
-		return nil, errortypes.NewAuthorizationError(
-			"This connection was started by someone else. Start the connection again from your own account.",
-		)
 	}
 
 	grant, err := connector.ExchangeCode(ctx, req.Code)
@@ -245,13 +234,84 @@ func (s *Service) CompleteAuthorization(
 	}
 
 	now := timeutils.NowUnix()
+	conn, previous, err := s.saveConnection(ctx, &connectionSave{
+		req:      req,
+		grant:    grant,
+		facts:    facts,
+		provider: provider,
+		now:      now,
+	})
+	if err != nil {
+		if dberror.IsUniqueConstraintViolation(err) {
+			s.revokeQuietly(ctx, connector, grant.RefreshToken)
+			return nil, errRealmTaken(provider)
+		}
+		return nil, err
+	}
+
+	s.syncIntegrationFlag(ctx, conn)
+	s.logAudit(
+		conn,
+		req.UserID,
+		previous,
+		"Connected "+provider+" company "+conn.ExternalCompanyName,
+	)
+	s.afterHealthChange(ctx, accountingsync.ConnectionStatusDisconnected, conn, now)
+	s.publishInvalidation(ctx, conn, req.UserID)
+
+	return conn, nil
+}
+
+func (s *Service) takeState(
+	ctx context.Context,
+	req *services.CompleteAccountingAuthorizationRequest,
+) error {
+	state, err := s.states.Take(ctx, tokenutils.Hash(req.State))
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return errortypes.NewValidationError(
+				"state",
+				errortypes.ErrInvalid,
+				"This connection request expired or was already used. Start the connection again.",
+			)
+		}
+		return err
+	}
+	if state.UserID != req.UserID ||
+		state.OrganizationID != req.TenantInfo.OrgID ||
+		state.BusinessUnitID != req.TenantInfo.BuID ||
+		state.IntegrationType != req.IntegrationType {
+		return errortypes.NewAuthorizationError(
+			"This connection was started by someone else. Start the connection again from your own account.",
+		)
+	}
+
+	return nil
+}
+
+type connectionSave struct {
+	req      *services.CompleteAccountingAuthorizationRequest
+	grant    *services.AccountingTokenGrant
+	facts    *accountingsync.CompanyFacts
+	provider string
+	now      int64
+}
+
+func (s *Service) saveConnection(
+	ctx context.Context,
+	in *connectionSave,
+) (*accountingsync.AccountingConnection, map[string]any, error) {
+	req, grant, facts, provider, now := in.req, in.grant, in.facts, in.provider, in.now
 	var conn *accountingsync.AccountingConnection
 	var previous map[string]any
-	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		existing, lockErr := s.connections.LockByTypeWithTokens(txCtx, repositories.GetAccountingConnectionRequest{
-			TenantInfo:      req.TenantInfo,
-			IntegrationType: req.IntegrationType,
-		})
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		existing, lockErr := s.connections.LockByTypeWithTokens(
+			txCtx,
+			repositories.GetAccountingConnectionRequest{
+				TenantInfo:      req.TenantInfo,
+				IntegrationType: req.IntegrationType,
+			},
+		)
 		if lockErr != nil && !errortypes.IsNotFoundError(lockErr) {
 			return lockErr
 		}
@@ -293,20 +353,7 @@ func (s *Service) CompleteAuthorization(
 		conn = existing
 		return nil
 	})
-	if err != nil {
-		if dberror.IsUniqueConstraintViolation(err) {
-			s.revokeQuietly(ctx, connector, grant.RefreshToken)
-			return nil, errRealmTaken(provider)
-		}
-		return nil, err
-	}
-
-	s.syncIntegrationFlag(ctx, conn)
-	s.logAudit(conn, req.UserID, previous, "Connected "+provider+" company "+conn.ExternalCompanyName)
-	s.afterHealthChange(ctx, accountingsync.ConnectionStatusDisconnected, conn, now)
-	s.publishInvalidation(ctx, conn, req.UserID)
-
-	return conn, nil
+	return conn, previous, err
 }
 
 func errRealmTaken(provider string) error {
@@ -322,15 +369,19 @@ func (s *Service) ensureRealmIsFree(
 	connector services.AccountingConnector,
 	grant *services.AccountingTokenGrant,
 ) error {
-	holders, err := s.connections.ListHoldingRealm(ctx, repositories.ListAccountingConnectionsByRealmRequest{
-		IntegrationType: req.IntegrationType,
-		RealmIDs:        []string{req.RealmID},
-	})
+	holders, err := s.connections.ListHoldingRealm(
+		ctx,
+		repositories.ListAccountingConnectionsByRealmRequest{
+			IntegrationType: req.IntegrationType,
+			RealmIDs:        []string{req.RealmID},
+		},
+	)
 	if err != nil {
 		return err
 	}
 	for _, holder := range holders {
-		if holder.OrganizationID != req.TenantInfo.OrgID || holder.BusinessUnitID != req.TenantInfo.BuID {
+		if holder.OrganizationID != req.TenantInfo.OrgID ||
+			holder.BusinessUnitID != req.TenantInfo.BuID {
 			s.revokeQuietly(ctx, connector, grant.RefreshToken)
 			return errRealmTaken(accountingsync.ProviderName(req.IntegrationType))
 		}
@@ -350,7 +401,7 @@ func (s *Service) connect(
 		return err
 	}
 	conn.Connect(userID, sealed, now)
-	conn.ApplyCompanyFacts(*facts)
+	conn.ApplyCompanyFacts(facts)
 
 	multiErr := errortypes.NewMultiError()
 	conn.Validate(multiErr)
@@ -375,10 +426,13 @@ func (s *Service) Disconnect(
 	var refreshCiphertext string
 	changed := false
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		existing, lockErr := s.connections.LockByTypeWithTokens(txCtx, repositories.GetAccountingConnectionRequest{
-			TenantInfo:      req.TenantInfo,
-			IntegrationType: req.IntegrationType,
-		})
+		existing, lockErr := s.connections.LockByTypeWithTokens(
+			txCtx,
+			repositories.GetAccountingConnectionRequest{
+				TenantInfo:      req.TenantInfo,
+				IntegrationType: req.IntegrationType,
+			},
+		)
 		if lockErr != nil {
 			return lockErr
 		}
@@ -404,7 +458,11 @@ func (s *Service) Disconnect(
 	}
 
 	if refreshCiphertext != "" {
-		if refreshToken, decryptErr := s.open(conn, refreshTokenField, refreshCiphertext); decryptErr == nil {
+		if refreshToken, decryptErr := s.open(
+			conn,
+			refreshTokenField,
+			refreshCiphertext,
+		); decryptErr == nil {
 			s.revokeQuietly(ctx, connector, refreshToken)
 		} else {
 			s.l.Warn("could not read refresh token to revoke it", zap.Error(decryptErr))
@@ -412,8 +470,14 @@ func (s *Service) Disconnect(
 	}
 
 	s.syncIntegrationFlag(ctx, conn)
-	s.logAudit(conn, req.UserID, previous,
-		"Disconnected "+accountingsync.ProviderName(conn.IntegrationType)+" company "+conn.ExternalCompanyName)
+	s.logAudit(
+		conn,
+		req.UserID,
+		previous,
+		"Disconnected "+accountingsync.ProviderName(
+			conn.IntegrationType,
+		)+" company "+conn.ExternalCompanyName,
+	)
 	s.resolveWatchtower(ctx, conn)
 	s.publishInvalidation(ctx, conn, req.UserID)
 
@@ -437,10 +501,13 @@ func (s *Service) freshAccessToken(
 ) (*tokenOutcome, error) {
 	outcome := &tokenOutcome{}
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		conn, lockErr := s.connections.LockWithTokens(txCtx, repositories.GetAccountingConnectionByIDRequest{
-			TenantInfo: tenantInfo,
-			ID:         connectionID,
-		})
+		conn, lockErr := s.connections.LockWithTokens(
+			txCtx,
+			repositories.GetAccountingConnectionByIDRequest{
+				TenantInfo: tenantInfo,
+				ID:         connectionID,
+			},
+		)
 		if lockErr != nil {
 			return lockErr
 		}
@@ -541,17 +608,24 @@ func (s *Service) CheckHealth(
 	}
 	if !outcome.conn.IsActive() || outcome.failure != nil {
 		s.afterHealthChange(ctx, outcome.before, outcome.conn, now)
-		return outcome.conn, nil
+		return outcome.conn, nil //nolint:nilerr // a failed check is recorded as the connection's health, not returned
 	}
 
-	facts, factsErr := connector.CompanyFacts(ctx, outcome.conn.ExternalRealmID, outcome.accessToken)
+	facts, factsErr := connector.CompanyFacts(
+		ctx,
+		outcome.conn.ExternalRealmID,
+		outcome.accessToken,
+	)
 
 	var conn *accountingsync.AccountingConnection
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		locked, lockErr := s.connections.LockWithTokens(txCtx, repositories.GetAccountingConnectionByIDRequest{
-			TenantInfo: tenantInfo,
-			ID:         connectionID,
-		})
+		locked, lockErr := s.connections.LockWithTokens(
+			txCtx,
+			repositories.GetAccountingConnectionByIDRequest{
+				TenantInfo: tenantInfo,
+				ID:         connectionID,
+			},
+		)
 		if lockErr != nil {
 			return lockErr
 		}
@@ -562,7 +636,7 @@ func (s *Service) CheckHealth(
 		if factsErr != nil {
 			return s.recordFailure(txCtx, locked, connector.ClassifyError(factsErr), factsErr, now)
 		}
-		locked.ApplyCompanyFacts(*facts)
+		locked.ApplyCompanyFacts(facts)
 		locked.RecordSuccess(now)
 		_, updateErr := s.connections.Update(txCtx, locked)
 		return updateErr
@@ -575,12 +649,18 @@ func (s *Service) CheckHealth(
 	return conn, nil
 }
 
-func (s *Service) CheckDue(ctx context.Context, limit int) (*services.AccountingHealthSweep, error) {
+func (s *Service) CheckDue(
+	ctx context.Context,
+	limit int,
+) (*services.AccountingHealthSweep, error) {
 	now := timeutils.NowUnix()
-	due, err := s.connections.ListDueForHealthCheck(ctx, repositories.ListDueAccountingConnectionsRequest{
-		CheckedBefore: now - HealthCheckInterval + 60,
-		Limit:         limit,
-	})
+	due, err := s.connections.ListDueForHealthCheck(
+		ctx,
+		repositories.ListDueAccountingConnectionsRequest{
+			CheckedBefore: now - HealthCheckInterval + 60,
+			Limit:         limit,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -612,19 +692,27 @@ func (s *Service) ReceiveWebhook(
 		return err
 	}
 	if err = connector.VerifyWebhook(req.Signature, req.Body); err != nil {
-		return errortypes.NewAuthenticationError("The webhook signature did not verify").WithInternal(err)
+		return errortypes.NewAuthenticationError("The webhook signature did not verify").
+			WithInternal(err)
 	}
 
 	realms, err := connector.WebhookRealmIDs(req.Body)
 	if err != nil {
-		return errortypes.NewValidationError("body", errortypes.ErrInvalid, "The webhook body could not be read")
+		return errortypes.NewValidationError(
+			"body",
+			errortypes.ErrInvalid,
+			"The webhook body could not be read",
+		)
 	}
 
-	updated, err := s.connections.MarkWebhookReceived(ctx, repositories.MarkAccountingWebhookRequest{
-		IntegrationType: req.IntegrationType,
-		RealmIDs:        realms,
-		ReceivedAt:      timeutils.NowUnix(),
-	})
+	updated, err := s.connections.MarkWebhookReceived(
+		ctx,
+		repositories.MarkAccountingWebhookRequest{
+			IntegrationType: req.IntegrationType,
+			RealmIDs:        realms,
+			ReceivedAt:      timeutils.NowUnix(),
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -682,7 +770,10 @@ func (s *Service) afterHealthChange(
 	}
 }
 
-func (s *Service) resolveWatchtower(ctx context.Context, conn *accountingsync.AccountingConnection) {
+func (s *Service) resolveWatchtower(
+	ctx context.Context,
+	conn *accountingsync.AccountingConnection,
+) {
 	if s.watchtower == nil {
 		return
 	}
@@ -718,7 +809,10 @@ func severityRank(status accountingsync.ConnectionStatus) int {
 	}
 }
 
-func (s *Service) syncIntegrationFlag(ctx context.Context, conn *accountingsync.AccountingConnection) {
+func (s *Service) syncIntegrationFlag(
+	ctx context.Context,
+	conn *accountingsync.AccountingConnection,
+) {
 	tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 	enabled := conn.IsActive()
 
@@ -812,7 +906,10 @@ func (s *Service) revokeQuietly(
 	}
 }
 
-func (s *Service) aad(conn *accountingsync.AccountingConnection, field string) encryptionservice.AAD {
+func (s *Service) aad(
+	conn *accountingsync.AccountingConnection,
+	field string,
+) encryptionservice.AAD {
 	return encryptionservice.AAD{
 		Purpose:        encryptionservice.PurposeAccountingConnectionToken,
 		OrganizationID: conn.OrganizationID,
@@ -826,11 +923,17 @@ func (s *Service) seal(
 	grant *services.AccountingTokenGrant,
 	now int64,
 ) (accountingsync.TokenGrant, error) {
-	access, err := s.encryption.EncryptStringWithAAD(grant.AccessToken, s.aad(conn, accessTokenField))
+	access, err := s.encryption.EncryptStringWithAAD(
+		grant.AccessToken,
+		s.aad(conn, accessTokenField),
+	)
 	if err != nil {
 		return accountingsync.TokenGrant{}, err
 	}
-	refresh, err := s.encryption.EncryptStringWithAAD(grant.RefreshToken, s.aad(conn, refreshTokenField))
+	refresh, err := s.encryption.EncryptStringWithAAD(
+		grant.RefreshToken,
+		s.aad(conn, refreshTokenField),
+	)
 	if err != nil {
 		return accountingsync.TokenGrant{}, err
 	}
@@ -860,7 +963,10 @@ func tokensOf(
 	now int64,
 ) repositories.StoreAccountingTokensRequest {
 	return repositories.StoreAccountingTokensRequest{
-		TenantInfo:             pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: conn.OrganizationID,
+			BuID:  conn.BusinessUnitID,
+		},
 		ID:                     conn.ID,
 		AccessTokenCiphertext:  conn.AccessTokenCiphertext,
 		AccessTokenExpiresAt:   conn.AccessTokenExpiresAt,

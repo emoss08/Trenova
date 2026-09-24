@@ -26,38 +26,38 @@ var _ bun.BeforeAppendModelHook = (*AccountingConnection)(nil)
 type AccountingConnection struct {
 	bun.BaseModel `bun:"table:accounting_connections,alias:acctc" json:"-"`
 
-	ID                            pulid.ID         `json:"id"                             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID                pulid.ID         `json:"businessUnitId"                 bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID                pulid.ID         `json:"organizationId"                 bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	IntegrationType               integration.Type `json:"integrationType"                bun:"integration_type,type:VARCHAR(50),notnull"`
-	Status                        ConnectionStatus `json:"status"                         bun:"status,type:VARCHAR(20),notnull"`
-	ExternalRealmID               string           `json:"externalRealmId"                bun:"external_realm_id,type:VARCHAR(100),notnull"`
-	ExternalCompanyName           string           `json:"externalCompanyName"            bun:"external_company_name,type:VARCHAR(255),nullzero"`
-	ExternalLegalName             string           `json:"externalLegalName"              bun:"external_legal_name,type:VARCHAR(255),nullzero"`
-	ExternalCountry               string           `json:"externalCountry"                bun:"external_country,type:VARCHAR(10),nullzero"`
-	ExternalHomeCurrency          string           `json:"externalHomeCurrency"           bun:"external_home_currency,type:VARCHAR(3),nullzero"`
-	ExternalMultiCurrencyEnabled  bool             `json:"externalMultiCurrencyEnabled"   bun:"external_multi_currency_enabled,type:BOOLEAN,notnull"`
-	ExternalBooksClosedThrough    *int64           `json:"externalBooksClosedThrough"     bun:"external_books_closed_through,type:BIGINT,nullzero"`
-	AccessTokenCiphertext         string           `json:"-"                              bun:"access_token_ciphertext,type:TEXT,nullzero"`
-	AccessTokenExpiresAt          int64            `json:"accessTokenExpiresAt"           bun:"access_token_expires_at,type:BIGINT,notnull"`
-	RefreshTokenCiphertext        string           `json:"-"                              bun:"refresh_token_ciphertext,type:TEXT,nullzero"`
-	RefreshTokenExpiresAt         int64            `json:"refreshTokenExpiresAt"          bun:"refresh_token_expires_at,type:BIGINT,notnull"`
-	RefreshTokenAbsoluteExpiresAt int64            `json:"refreshTokenAbsoluteExpiresAt"  bun:"refresh_token_absolute_expires_at,type:BIGINT,notnull"`
-	LastRefreshedAt               *int64           `json:"lastRefreshedAt"                bun:"last_refreshed_at,type:BIGINT,nullzero"`
-	LastCheckedAt                 *int64           `json:"lastCheckedAt"                  bun:"last_checked_at,type:BIGINT,nullzero"`
-	LastSuccessAt                 *int64           `json:"lastSuccessAt"                  bun:"last_success_at,type:BIGINT,nullzero"`
-	LastFailureAt                 *int64           `json:"lastFailureAt"                  bun:"last_failure_at,type:BIGINT,nullzero"`
-	ConsecutiveFailures           int              `json:"consecutiveFailures"            bun:"consecutive_failures,type:INTEGER,notnull"`
-	LastErrorCategory             ErrorCategory    `json:"lastErrorCategory"              bun:"last_error_category,type:VARCHAR(30),nullzero"`
-	LastErrorMessage              string           `json:"lastErrorMessage"               bun:"last_error_message,type:TEXT,nullzero"`
-	LastWebhookAt                 *int64           `json:"lastWebhookAt"                  bun:"last_webhook_at,type:BIGINT,nullzero"`
-	ConnectedByID                 pulid.ID         `json:"connectedById"                  bun:"connected_by_id,type:VARCHAR(100),nullzero"`
-	ConnectedAt                   int64            `json:"connectedAt"                    bun:"connected_at,type:BIGINT,notnull"`
-	DisconnectedByID              pulid.ID         `json:"disconnectedById"               bun:"disconnected_by_id,type:VARCHAR(100),nullzero"`
-	DisconnectedAt                *int64           `json:"disconnectedAt"                 bun:"disconnected_at,type:BIGINT,nullzero"`
-	Version                       int64            `json:"version"                        bun:"version,type:BIGINT"`
-	CreatedAt                     int64            `json:"createdAt"                      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                     int64            `json:"updatedAt"                      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                            pulid.ID         `json:"id"                            bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID                pulid.ID         `json:"businessUnitId"                bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID                pulid.ID         `json:"organizationId"                bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	IntegrationType               integration.Type `json:"integrationType"               bun:"integration_type,type:VARCHAR(50),notnull"`
+	Status                        ConnectionStatus `json:"status"                        bun:"status,type:VARCHAR(20),notnull"`
+	ExternalRealmID               string           `json:"externalRealmId"               bun:"external_realm_id,type:VARCHAR(100),notnull"`
+	ExternalCompanyName           string           `json:"externalCompanyName"           bun:"external_company_name,type:VARCHAR(255),nullzero"`
+	ExternalLegalName             string           `json:"externalLegalName"             bun:"external_legal_name,type:VARCHAR(255),nullzero"`
+	ExternalCountry               string           `json:"externalCountry"               bun:"external_country,type:VARCHAR(10),nullzero"`
+	ExternalHomeCurrency          string           `json:"externalHomeCurrency"          bun:"external_home_currency,type:VARCHAR(3),nullzero"`
+	ExternalMultiCurrencyEnabled  bool             `json:"externalMultiCurrencyEnabled"  bun:"external_multi_currency_enabled,type:BOOLEAN,notnull"`
+	ExternalBooksClosedThrough    *int64           `json:"externalBooksClosedThrough"    bun:"external_books_closed_through,type:BIGINT,nullzero"`
+	AccessTokenCiphertext         string           `json:"-"                             bun:"access_token_ciphertext,type:TEXT,nullzero"`
+	AccessTokenExpiresAt          int64            `json:"accessTokenExpiresAt"          bun:"access_token_expires_at,type:BIGINT,notnull"`
+	RefreshTokenCiphertext        string           `json:"-"                             bun:"refresh_token_ciphertext,type:TEXT,nullzero"`
+	RefreshTokenExpiresAt         int64            `json:"refreshTokenExpiresAt"         bun:"refresh_token_expires_at,type:BIGINT,notnull"`
+	RefreshTokenAbsoluteExpiresAt int64            `json:"refreshTokenAbsoluteExpiresAt" bun:"refresh_token_absolute_expires_at,type:BIGINT,notnull"`
+	LastRefreshedAt               *int64           `json:"lastRefreshedAt"               bun:"last_refreshed_at,type:BIGINT,nullzero"`
+	LastCheckedAt                 *int64           `json:"lastCheckedAt"                 bun:"last_checked_at,type:BIGINT,nullzero"`
+	LastSuccessAt                 *int64           `json:"lastSuccessAt"                 bun:"last_success_at,type:BIGINT,nullzero"`
+	LastFailureAt                 *int64           `json:"lastFailureAt"                 bun:"last_failure_at,type:BIGINT,nullzero"`
+	ConsecutiveFailures           int              `json:"consecutiveFailures"           bun:"consecutive_failures,type:INTEGER,notnull"`
+	LastErrorCategory             ErrorCategory    `json:"lastErrorCategory"             bun:"last_error_category,type:VARCHAR(30),nullzero"`
+	LastErrorMessage              string           `json:"lastErrorMessage"              bun:"last_error_message,type:TEXT,nullzero"`
+	LastWebhookAt                 *int64           `json:"lastWebhookAt"                 bun:"last_webhook_at,type:BIGINT,nullzero"`
+	ConnectedByID                 pulid.ID         `json:"connectedById"                 bun:"connected_by_id,type:VARCHAR(100),nullzero"`
+	ConnectedAt                   int64            `json:"connectedAt"                   bun:"connected_at,type:BIGINT,notnull"`
+	DisconnectedByID              pulid.ID         `json:"disconnectedById"              bun:"disconnected_by_id,type:VARCHAR(100),nullzero"`
+	DisconnectedAt                *int64           `json:"disconnectedAt"                bun:"disconnected_at,type:BIGINT,nullzero"`
+	Version                       int64            `json:"version"                       bun:"version,type:BIGINT"`
+	CreatedAt                     int64            `json:"createdAt"                     bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                     int64            `json:"updatedAt"                     bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Organization   *tenant.Organization `json:"organization,omitempty"   bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty"   bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -87,7 +87,10 @@ func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Integration type is required"),
 			validation.By(func(any) error {
 				if !SupportsAccountingSync(c.IntegrationType) {
-					return validation.NewError("invalid", "Integration type is not an accounting system")
+					return validation.NewError(
+						"invalid",
+						"Integration type is not an accounting system",
+					)
 				}
 				return nil
 			}),
@@ -173,7 +176,7 @@ func (c *AccountingConnection) ApplyGrant(grant TokenGrant, now int64) {
 	c.LastRefreshedAt = &now
 }
 
-func (c *AccountingConnection) ApplyCompanyFacts(facts CompanyFacts) {
+func (c *AccountingConnection) ApplyCompanyFacts(facts *CompanyFacts) {
 	c.ExternalCompanyName = facts.CompanyName
 	c.ExternalLegalName = facts.LegalName
 	c.ExternalCountry = facts.Country
@@ -250,12 +253,12 @@ func SetupPath(typ integration.Type) string {
 }
 
 func (c *AccountingConnection) AgentErrorSummary() string {
-	switch c.LastErrorCategory {
-	case "":
+	if c.LastErrorCategory == "" {
 		return ""
-	case ErrorCategoryUnknown:
-		return "The provider rejected the last call. Its own message is on the connection page."
-	default:
-		return c.LastErrorMessage
 	}
+	if c.LastErrorCategory == ErrorCategoryUnknown {
+		return "The provider rejected the last call. Its own message is on the connection page."
+	}
+
+	return c.LastErrorMessage
 }

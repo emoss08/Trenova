@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonschemautils"
 )
 
 type accountingStatusReader interface {
@@ -65,18 +66,12 @@ func (t *getAccountingSyncStatusTool) Description() string {
 }
 
 func (t *getAccountingSyncStatusTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"system": map[string]any{
-				"type":        "string",
-				"enum":        []string{string(integration.TypeQuickBooksOnline)},
-				"description": "The accounting system. Example: \"QuickBooksOnline\".",
-			},
-		},
-		"required":             []string{"system"},
-		"additionalProperties": false,
-	}
+	return jsonschemautils.Object(map[string]any{
+		"system": jsonschemautils.Enum(
+			"The accounting system. Example: \"QuickBooksOnline\".",
+			string(integration.TypeQuickBooksOnline),
+		),
+	}, "system")
 }
 
 func (t *getAccountingSyncStatusTool) Policy() serviceports.ToolPolicy {
@@ -104,7 +99,9 @@ func (t *getAccountingSyncStatusTool) Query(
 	return accountingSyncStatusRowFrom(status), nil
 }
 
-func accountingSyncStatusRowFrom(status *serviceports.AccountingSyncStatus) accountingSyncStatusRow {
+func accountingSyncStatusRowFrom(
+	status *serviceports.AccountingSyncStatus,
+) accountingSyncStatusRow {
 	row := accountingSyncStatusRow{
 		System:              string(status.IntegrationType),
 		Provider:            status.ProviderName,

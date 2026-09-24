@@ -43,7 +43,7 @@ func newConnection(
 		RefreshTokenCiphertext: "cipher-refresh",
 		RefreshTokenExpiresAt:  now + 8_640_000,
 	}, now)
-	conn.ApplyCompanyFacts(accountingsync.CompanyFacts{CompanyName: "Acme", HomeCurrency: "USD"})
+	conn.ApplyCompanyFacts(&accountingsync.CompanyFacts{CompanyName: "Acme", HomeCurrency: "USD"})
 	return conn
 }
 
