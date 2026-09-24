@@ -211,9 +211,9 @@ func externalRead(policy *serviceports.ToolPolicy) string {
 	var read string
 	switch policy.ReadsExternal {
 	case agent.ExternalReadAlways:
-		read = "Always, from " + sourceLabel(policy.Source)
+		read = "Always, from " + sourceLabels(policy)
 	case agent.ExternalReadMarked:
-		read = "When the record is marked, from " + sourceLabel(policy.Source)
+		read = "When the record is marked, from " + sourceLabels(policy)
 	default:
 		read = ""
 	}
@@ -228,6 +228,21 @@ func externalRead(policy *serviceports.ToolPolicy) string {
 	}
 
 	return read
+}
+
+func sourceLabels(policy *serviceports.ToolPolicy) string {
+	if len(policy.Sources) == 0 {
+		return sourceLabel(policy.Source)
+	}
+
+	labels := make([]string, 0, len(policy.Sources)+1)
+	labels = append(labels, sourceLabel(policy.Source))
+	for _, source := range policy.Sources {
+		labels = append(labels, sourceLabel(source))
+	}
+	last := len(labels) - 1
+
+	return strings.Join(labels[:last], ", ") + " or " + labels[last]
 }
 
 func sourceLabel(source agent.TaintSource) string {

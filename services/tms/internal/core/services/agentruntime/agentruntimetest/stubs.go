@@ -118,8 +118,9 @@ type StubQueryTool struct {
 	LastParams serviceports.QueryToolParams
 	Resource   permission.Resource
 	// Reads and Source declare the tool as one that reads outside content.
-	Reads  agent.ExternalRead
-	Source agent.TaintSource
+	Reads   agent.ExternalRead
+	Source  agent.TaintSource
+	Sources []agent.TaintSource
 }
 
 func (t *StubQueryTool) Name() string { return t.ToolName }
@@ -157,6 +158,7 @@ func (t *StubQueryTool) Policy() serviceports.ToolPolicy {
 		Idempotent:    true,
 		ReadsExternal: reads,
 		Source:        t.Source,
+		Sources:       t.Sources,
 		Rationale:     "A stub read.",
 	}
 }
