@@ -84,7 +84,7 @@ cases:
     expect: [list_gl_accounts]
   - request: which months are still open for posting
     expect: [list_fiscal_periods]
-  - request: why won't the month close
+  - request: what is stopping us from finishing month end
     expect: [get_fiscal_close_blockers]
   - request: whose paychecks are ready to go out
     expect: [list_driver_settlements]
@@ -110,7 +110,7 @@ cases:
     expect: [get_rate_matrix]
   - request: what are we adding for diesel right now
     expect: [get_fuel_surcharge_rates]
-  - request: which customer purchase orders are still open
+  - request: which customer POs are still in progress
     expect: [list_orders]
   - request: what legs and charges sit under that PO
     expect: [get_order]

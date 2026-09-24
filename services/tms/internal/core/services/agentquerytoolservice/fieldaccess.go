@@ -397,8 +397,8 @@ type gatedOutcome struct {
 	tainted []agent.RecordRef
 }
 
-func gatedResult(outcome searchOutcome, gate *fieldGate) gatedOutcome {
-	result := gatedOutcome{searchOutcome: outcome}
+func gatedResult(outcome *searchOutcome, gate *fieldGate) *gatedOutcome {
+	result := &gatedOutcome{searchOutcome: *outcome}
 	if gate != nil {
 		result.Withheld = gate.Withheld()
 	}
@@ -406,10 +406,10 @@ func gatedResult(outcome searchOutcome, gate *fieldGate) gatedOutcome {
 	return result
 }
 
-func (o gatedOutcome) withTaint(refs []agent.RecordRef) gatedOutcome {
+func (o *gatedOutcome) withTaint(refs []agent.RecordRef) *gatedOutcome {
 	o.tainted = refs
 
 	return o
 }
 
-func (o gatedOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
+func (o *gatedOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }

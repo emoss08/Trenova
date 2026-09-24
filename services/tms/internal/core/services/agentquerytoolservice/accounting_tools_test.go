@@ -151,7 +151,7 @@ func TestListAROpenItems_FiltersAndPages(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, customer, fake.openCustomer, "the customer narrows the query itself")
-	outcome := result.(gatedOutcome)
+	outcome := result.(*gatedOutcome)
 	rows := outcome.Items.([]arOpenItemRow)
 	require.Len(t, rows, 1)
 	assert.Equal(t, "C", rows[0].InvoiceNumber, "most overdue first")
@@ -161,7 +161,7 @@ func TestListAROpenItems_FiltersAndPages(t *testing.T) {
 	result, err = tool.Query(t.Context(),
 		agentParams(map[string]any{"disputedOnly": true}, permission.SensitivityRestricted))
 	require.NoError(t, err)
-	rows = result.(gatedOutcome).Items.([]arOpenItemRow)
+	rows = result.(*gatedOutcome).Items.([]arOpenItemRow)
 	require.Len(t, rows, 1)
 	assert.Equal(t, "12.34", rows[0].Open)
 }
@@ -214,7 +214,7 @@ func TestListCollectionsWorklist_NarrowsToASeverity(t *testing.T) {
 	}, ""))
 	require.NoError(t, err)
 
-	outcome := result.(gatedOutcome)
+	outcome := result.(*gatedOutcome)
 	rows := outcome.Items.([]worklistRow)
 	require.Len(t, rows, 1)
 	assert.Equal(t, "Critical", rows[0].Severity)

@@ -152,7 +152,7 @@ func ediInboundFileRowFrom(file *edi.EDIInboundFile) ediInboundFileRow {
 		ControlNumber:    file.InterchangeControlNumber,
 		SenderID:         file.ISASenderID,
 		ReceivedAt:       recordedDate(file.ReceivedAt),
-		ProcessedAt:      expectedDate(derefInt64(file.ProcessedAt), "not processed"),
+		ProcessedAt:      expectedDate(derefInt64(file.ProcessedAt), absentNotProcessed),
 		RawPurged:        file.RawPurgedAt != nil,
 	}
 	if file.Partner != nil {
@@ -181,9 +181,9 @@ func (t *listEDIInboundFilesTool) Description() string {
 
 func (t *listEDIInboundFilesTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		"query":  stringParam("Words to look for in the file name."),
-		"status": enumParam("Only files in this status.", inboundFileStatuses),
-		"partnerId": stringParam("Only this partner's files, by id from get_edi_partner " +
+		paramQuery:  stringParam("Words to look for in the file name."),
+		paramStatus: enumParam("Only files in this status.", inboundFileStatuses),
+		paramPartnerID: stringParam("Only this partner's files, by id from get_edi_partner " +
 			"or a row of this tool."),
 	}, defaultListLimit, maxListLimit))
 }
@@ -206,11 +206,11 @@ func (t *listEDIInboundFilesTool) Query(
 		return nil, err
 	}
 
-	status, err := validEnum(params.Params, "status", inboundFileStatuses)
+	status, err := validEnum(params.Params, paramStatus, inboundFileStatuses)
 	if err != nil {
 		return nil, err
 	}
-	partnerID, err := optionalID(params.Params, "partnerId")
+	partnerID, err := optionalID(params.Params, paramPartnerID)
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +220,7 @@ func (t *listEDIInboundFilesTool) Query(
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
-			Query:      optionalString(params.Params, "query"),
+			Query:      optionalString(params.Params, paramQuery),
 		},
 		Status:    edi.InboundFileStatus(status),
 		PartnerID: partnerID,
@@ -229,7 +229,7 @@ func (t *listEDIInboundFilesTool) Query(
 	criteria := filtercatalog.NewCriteria("inbound EDI files").At(clockFor(params))
 	criteria.Text(req.Filter.Query)
 	if status != "" {
-		criteria.Field("status", status)
+		criteria.Field(paramStatus, status)
 	}
 	if partnerID.IsNotNil() {
 		criteria.Field("partner", partnerID.String())
@@ -251,8 +251,9 @@ func (t *listEDIInboundFilesTool) Query(
 		refs = append(refs, inboundFileRef(file.ID))
 	}
 
-	return gatedResult(searchResult(criteria, rows, len(rows)).paged(window, more), nil).
-		withTaint(refs), nil
+	found := searchResult(criteria, rows, len(rows)).paged(window, more)
+
+	return gatedResult(&found, nil).withTaint(refs), nil
 }
 
 type getEDIInboundFileTool struct {
@@ -278,11 +279,11 @@ func (t *getEDIInboundFileTool) Description() string {
 
 func (t *getEDIInboundFileTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		"inboundFileId": stringParam("The inbound file's id, from list_edi_inbound_files " +
+		paramInboundFileID: stringParam("The inbound file's id, from list_edi_inbound_files " +
 			"or this run's subject."),
 		"includeRaw": boolParam("Also return the raw X12, capped at 16 KB. Leave it off " +
 			"unless the parsed transactions do not explain the failure."),
-	}, "inboundFileId")
+	}, paramInboundFileID)
 }
 
 func (t *getEDIInboundFileTool) Policy() serviceports.ToolPolicy {
@@ -328,7 +329,7 @@ type ediInboundFileView struct {
 	outside []agent.RecordRef
 }
 
-func (v ediInboundFileView) TaintedRecords() []agent.RecordRef { return v.outside }
+func (v *ediInboundFileView) TaintedRecords() []agent.RecordRef { return v.outside }
 
 func (t *getEDIInboundFileTool) Query(
 	ctx context.Context,
@@ -338,7 +339,7 @@ func (t *getEDIInboundFileTool) Query(
 		return nil, err
 	}
 
-	id, err := requirePulid(params.Params, "inboundFileId")
+	id, err := requirePulid(params.Params, paramInboundFileID)
 	if err != nil {
 		return nil, err
 	}
@@ -358,17 +359,26 @@ func (t *getEDIInboundFileTool) Query(
 		ReceiverID:        file.ISAReceiverID,
 		MessageCount:      len(file.Messages),
 		MessagesOmitted:   max(len(file.Messages)-maxInboundMessages, 0),
-		Messages:          make([]ediMessageRow, 0, min(len(file.Messages), maxInboundMessages)),
+		Messages:          inboundMessages(file.Messages),
 		outside:           []agent.RecordRef{inboundFileRef(file.ID)},
 	}
 	if file.CommunicationProfile != nil {
 		view.ProfileName = file.CommunicationProfile.Name
 	}
-	for _, message := range file.Messages {
-		if message == nil || len(view.Messages) == maxInboundMessages {
+	if includeRaw {
+		applyRawX12(&view, file, t.access.gate(ctx, params, permission.ResourceEDI))
+	}
+
+	return &view, nil
+}
+
+func inboundMessages(messages []*edi.EDIMessage) []ediMessageRow {
+	rows := make([]ediMessageRow, 0, min(len(messages), maxInboundMessages))
+	for _, message := range messages {
+		if message == nil || len(rows) == maxInboundMessages {
 			continue
 		}
-		view.Messages = append(view.Messages, ediMessageRow{
+		rows = append(rows, ediMessageRow{
 			ID:              message.ID.String(),
 			TransactionSet:  string(message.TransactionSet),
 			Direction:       string(message.Direction),
@@ -386,27 +396,26 @@ func (t *getEDIInboundFileTool) Query(
 		})
 	}
 
-	if includeRaw {
-		gate := t.access.gate(ctx, params, permission.ResourceEDI)
-		switch {
-		case !gate.show(rawContentField, "rawX12"):
-			view.Withheld = gate.Withheld()
-		case file.RawPurgedAt != nil || file.RawContent == "":
-			view.Note = "The raw file was purged under the retention policy; only the " +
-				"parsed transactions remain."
-		default:
-			view.Raw = stringutils.TruncateBytes(file.RawContent, maxRawX12Bytes)
-			view.RawTruncated = len(view.Raw) < len(file.RawContent)
-			if view.RawTruncated {
-				view.Note = fmt.Sprintf(
-					"The raw file is %d bytes; only the first %d are shown.",
-					len(file.RawContent), len(view.Raw),
-				)
-			}
+	return rows
+}
+
+func applyRawX12(view *ediInboundFileView, file *edi.EDIInboundFile, gate *fieldGate) {
+	switch {
+	case !gate.show(rawContentField, "rawX12"):
+		view.Withheld = gate.Withheld()
+	case file.RawPurgedAt != nil || file.RawContent == "":
+		view.Note = "The raw file was purged under the retention policy; only the " +
+			"parsed transactions remain."
+	default:
+		view.Raw = stringutils.TruncateBytes(file.RawContent, maxRawX12Bytes)
+		view.RawTruncated = len(view.Raw) < len(file.RawContent)
+		if view.RawTruncated {
+			view.Note = fmt.Sprintf(
+				"The raw file is %d bytes; only the first %d are shown.",
+				len(file.RawContent), len(view.Raw),
+			)
 		}
 	}
-
-	return view, nil
 }
 
 type listEDITransfersTool struct {
@@ -428,12 +437,12 @@ func (t *listEDITransfersTool) Description() string {
 
 func (t *listEDITransfersTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		"direction": enumParam("Inbound for tenders partners sent in, Outbound for ones "+
+		paramDirection: enumParam("Inbound for tenders partners sent in, Outbound for ones "+
 			"this organization sent. Defaults to Inbound.", transferDirections),
-		"status": enumParam("Only transfers in this status.", transferStatuses),
-		"limit": intParam(fmt.Sprintf("How many rows to return: %d unless you ask, at most %d.",
+		paramStatus: enumParam("Only transfers in this status.", transferStatuses),
+		paramLimit: intParam(fmt.Sprintf("How many rows to return: %d unless you ask, at most %d.",
 			defaultListLimit, maxListLimit)),
-		"after": stringParam("The nextCursor from a previous call, for the next page."),
+		paramAfter: stringParam("The nextCursor from a previous call, for the next page."),
 	})
 }
 
@@ -465,7 +474,7 @@ type ediTransferRow struct {
 }
 
 type ediTransferOutcome struct {
-	gatedOutcome
+	*gatedOutcome
 
 	NextCursor string `json:"nextCursor,omitempty"`
 }
@@ -482,7 +491,7 @@ func ediTransferRowFrom(transfer *edi.EDITransfer) ediTransferRow {
 		RejectionReason:  transfer.RejectionReason,
 		FailureReason:    transfer.FailureReason,
 		SubmittedAt:      recordedDate(transfer.SubmittedAt),
-		ProcessedAt:      expectedDate(derefInt64(transfer.ProcessedAt), "not processed"),
+		ProcessedAt:      expectedDate(derefInt64(transfer.ProcessedAt), absentNotProcessed),
 	}
 	for _, move := range transfer.TenderPayload.Moves {
 		row.StopCount += len(move.Stops)
@@ -505,24 +514,24 @@ func (t *listEDITransfersTool) Query(
 		return nil, err
 	}
 
-	direction, err := validEnum(params.Params, "direction", transferDirections)
+	direction, err := validEnum(params.Params, paramDirection, transferDirections)
 	if err != nil {
 		return nil, err
 	}
 	if direction == "" {
 		direction = transferInbound
 	}
-	status, err := validEnum(params.Params, "status", transferStatuses)
+	status, err := validEnum(params.Params, paramStatus, transferStatuses)
 	if err != nil {
 		return nil, err
 	}
-	limit := optionalInt(params.Params, "limit", defaultListLimit)
+	limit := optionalInt(params.Params, paramLimit, defaultListLimit)
 	if limit <= 0 {
 		limit = defaultListLimit
 	}
 	limit = min(limit, maxListLimit)
 
-	cursor, err := pagination.NewCursorInfo(limit, optionalString(params.Params, "after"))
+	cursor, err := pagination.NewCursorInfo(limit, optionalString(params.Params, paramAfter))
 	if err != nil {
 		return nil, fmt.Errorf("parameter \"after\" is not a cursor this tool returned: %w", err)
 	}
@@ -533,12 +542,12 @@ func (t *listEDITransfersTool) Query(
 		Cursor: cursor,
 	}
 	criteria := filtercatalog.NewCriteria("EDI load tender transfers").At(clockFor(params))
-	criteria.Field("direction", direction)
+	criteria.Field(paramDirection, direction)
 	if status != "" {
 		req.Filter.FieldFilters = []domaintypes.FieldFilter{
 			buncolgen.EDITransferFilter.Status(dbtype.OpEqual, status),
 		}
-		criteria.Field("status", status)
+		criteria.Field(paramStatus, status)
 	}
 
 	var result *pagination.CursorListResult[*edi.EDITransfer]
@@ -566,9 +575,8 @@ func (t *listEDITransfersTool) Query(
 		last = transfer
 	}
 
-	outcome := ediTransferOutcome{
-		gatedOutcome: gatedResult(searchResult(criteria, rows, len(rows)), nil).withTaint(refs),
-	}
+	found := searchResult(criteria, rows, len(rows))
+	outcome := ediTransferOutcome{gatedOutcome: gatedResult(&found, nil).withTaint(refs)}
 	outcome.HasMore = result.HasNextPage
 	if result.HasNextPage && last != nil {
 		next, encodeErr := pagination.EncodeCursorFromEntity(last)
@@ -602,7 +610,7 @@ func (t *getEDIPartnerTool) Description() string {
 }
 
 func (t *getEDIPartnerTool) ParamSchema() map[string]any {
-	return idSchema("partnerId", "The trading partner's id, from a partnerId in "+
+	return idSchema(paramPartnerID, "The trading partner's id, from a partnerId in "+
 		"list_edi_inbound_files or the page you are on.")
 }
 
@@ -647,7 +655,7 @@ func (t *getEDIPartnerTool) Query(
 		return nil, err
 	}
 
-	id, err := requirePulid(params.Params, "partnerId")
+	id, err := requirePulid(params.Params, paramPartnerID)
 	if err != nil {
 		return nil, err
 	}

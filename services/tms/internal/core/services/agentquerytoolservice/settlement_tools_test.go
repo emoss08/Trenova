@@ -103,7 +103,7 @@ func TestListDriverSettlements_WithholdsPayBelowRestricted(t *testing.T) {
 	assert.Equal(t, worker, fake.listed.WorkerID)
 	assert.Equal(t, driversettlement.StatusPendingApproval, fake.listed.Status)
 	require.NotNil(t, fake.listed.HasExceptions)
-	outcome := result.(gatedOutcome)
+	outcome := result.(*gatedOutcome)
 	row := outcome.Items.([]driverSettlementRow)[0]
 	assert.Empty(t, row.NetPay)
 	assert.Contains(t, outcome.Withheld, "netPay")
@@ -161,14 +161,14 @@ func TestGetSettlementDispute_MarksTheDriversWordsOnlyWhenTheyAreShown(t *testin
 
 	withheld, err := tool.Query(t.Context(), agentParams(params, ""))
 	require.NoError(t, err)
-	internal := withheld.(settlementDisputeView)
+	internal := withheld.(*settlementDisputeView)
 	assert.Empty(t, internal.Description)
 	assert.Contains(t, internal.Withheld, "description")
 	assert.Empty(t, internal.TaintedRecords(), "nothing the driver wrote was read")
 
 	shown, err := tool.Query(t.Context(), agentParams(params, permission.SensitivityRestricted))
 	require.NoError(t, err)
-	restricted := shown.(settlementDisputeView)
+	restricted := shown.(*settlementDisputeView)
 	assert.Equal(t, dispute.Description, restricted.Description)
 	assert.Equal(t, []agent.RecordRef{{
 		EntityType: settlementDisputeEntity,
@@ -241,7 +241,7 @@ func TestListCarrierInvoiceMatches_MarksOnlyInvoicesACarrierSentOverEDI(t *testi
 	result, err := tool.Query(t.Context(), agentParams(map[string]any{}, ""))
 	require.NoError(t, err)
 
-	outcome := result.(gatedOutcome)
+	outcome := result.(*gatedOutcome)
 	rows := outcome.Items.([]invoiceMatchRow)
 	require.Len(t, rows, 2)
 	assert.Equal(t, "EDI", rows[0].Source)

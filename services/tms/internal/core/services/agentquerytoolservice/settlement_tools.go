@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
@@ -223,7 +224,7 @@ func driverSettlementRowFrom(
 	if gate.show("netPayMinor", "netPay") {
 		row.NetPay = minorText(entity.NetPayMinor)
 	}
-	if gate.show("totalMiles", "totalMiles") {
+	if gate.show(fieldTotalMiles, fieldTotalMiles) {
 		row.TotalMiles = entity.TotalMiles.StringFixed(1)
 	}
 
@@ -253,10 +254,10 @@ func (t *listDriverSettlementsTool) Description() string {
 
 func (t *listDriverSettlementsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		"query": stringParam("Words to look for in the settlement number or pay profile."),
-		"workerId": stringParam("Only this driver's settlements, by id from list_workers " +
+		paramQuery: stringParam("Words to look for in the settlement number or pay profile."),
+		paramWorkerID: stringParam("Only this driver's settlements, by id from list_workers " +
 			"or search_worker."),
-		"status":        enumParam("Only settlements in this status.", settlementStatuses),
+		paramStatus:     enumParam("Only settlements in this status.", settlementStatuses),
 		"hasExceptions": boolParam("true for only those with exceptions, false for none."),
 	}, defaultListLimit, maxListLimit))
 }
@@ -273,11 +274,11 @@ func (t *listDriverSettlementsTool) Query(
 		return nil, err
 	}
 
-	workerID, err := optionalID(params.Params, "workerId")
+	workerID, err := optionalID(params.Params, paramWorkerID)
 	if err != nil {
 		return nil, err
 	}
-	status, err := validEnum(params.Params, "status", settlementStatuses)
+	status, err := validEnum(params.Params, paramStatus, settlementStatuses)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +288,7 @@ func (t *listDriverSettlementsTool) Query(
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
-			Query:      optionalString(params.Params, "query"),
+			Query:      optionalString(params.Params, paramQuery),
 		},
 		WorkerID:      workerID,
 		Status:        driversettlement.Status(status),
@@ -300,10 +301,10 @@ func (t *listDriverSettlementsTool) Query(
 		criteria.Field("driver", workerID.String())
 	}
 	if status != "" {
-		criteria.Field("status", status)
+		criteria.Field(paramStatus, status)
 	}
 	if req.HasExceptions != nil {
-		criteria.Field("has exceptions", fmt.Sprintf("%t", *req.HasExceptions))
+		criteria.Field("has exceptions", strconv.FormatBool(*req.HasExceptions))
 	}
 
 	result, err := t.settlements.List(ctx, req)
@@ -320,7 +321,9 @@ func (t *listDriverSettlementsTool) Query(
 	}
 	rows, more := trim(window, rows)
 
-	return gatedResult(searchResult(criteria, rows, len(rows)).paged(window, more), gate), nil
+	found := searchResult(criteria, rows, len(rows)).paged(window, more)
+
+	return gatedResult(&found, gate), nil
 }
 
 type getDriverSettlementTool struct {
@@ -345,7 +348,7 @@ func (t *getDriverSettlementTool) Description() string {
 }
 
 func (t *getDriverSettlementTool) ParamSchema() map[string]any {
-	return idSchema("settlementId", "The driver settlement's id, from list_driver_settlements "+
+	return idSchema(paramSettlementID, "The driver settlement's id, from list_driver_settlements "+
 		"or the page you are on.")
 }
 
@@ -406,7 +409,7 @@ func (t *getDriverSettlementTool) Query(
 		return nil, err
 	}
 
-	id, err := requirePulid(params.Params, "settlementId")
+	id, err := requirePulid(params.Params, paramSettlementID)
 	if err != nil {
 		return nil, err
 	}
@@ -433,17 +436,27 @@ func (t *getDriverSettlementTool) Query(
 	}
 
 	gate := t.access.gate(ctx, params, permission.ResourceDriverSettlement)
+	view := driverSettlementViewFrom(entity, gate)
+	view.OpenDisputes = openDisputesOn(disputes, entity.ID)
+	view.Withheld = gate.Withheld()
+
+	return view, nil
+}
+
+func driverSettlementViewFrom(
+	entity *driversettlement.Settlement,
+	gate *fieldGate,
+) driverSettlementView {
 	view := driverSettlementView{
 		driverSettlementRow: driverSettlementRowFrom(entity, gate),
-		SubmittedAt:         expectedDate(derefInt64(entity.SubmittedAt), "not submitted"),
-		ApprovedAt:          expectedDate(derefInt64(entity.ApprovedAt), "not approved"),
-		PostedAt:            expectedDate(derefInt64(entity.PostedAt), "not posted"),
-		PaidAt:              expectedDate(derefInt64(entity.PaidAt), "not paid"),
+		SubmittedAt:         expectedDate(derefInt64(entity.SubmittedAt), absentNotSubmitted),
+		ApprovedAt:          expectedDate(derefInt64(entity.ApprovedAt), absentNotApproved),
+		PostedAt:            expectedDate(derefInt64(entity.PostedAt), absentNotPosted),
+		PaidAt:              expectedDate(derefInt64(entity.PaidAt), absentNotPaid),
 		PaymentMethod:       entity.PaymentMethod,
-		VoidedAt:            expectedDate(derefInt64(entity.VoidedAt), "not voided"),
+		VoidedAt:            expectedDate(derefInt64(entity.VoidedAt), absentNotVoided),
 		Exceptions:          make([]settlementExceptionRow, 0, len(entity.Exceptions)),
 		LineCount:           len(entity.Lines),
-		OpenDisputes:        make([]settlementDisputeSummary, 0, len(disputes)),
 	}
 	if gate.show("carryForwardInMinor", "carryForwardIn") {
 		view.CarryForwardIn = minorText(entity.CarryForwardInMinor)
@@ -464,16 +477,24 @@ func (t *getDriverSettlementTool) Query(
 			Message:  exception.Message,
 		})
 	}
+	view.Lines, view.LinesTruncated = driverSettlementLines(entity.Lines, gate)
 
-	lines := entity.Lines
-	if len(lines) > maxSettlementLines {
-		view.LinesTruncated = true
+	return view
+}
+
+func driverSettlementLines(
+	lines []*driversettlement.SettlementLine,
+	gate *fieldGate,
+) ([]settlementLineRow, bool) {
+	truncated := len(lines) > maxSettlementLines
+	if truncated {
 		lines = lines[:maxSettlementLines]
 	}
+
 	showQuantity := gate.show("quantity", "lines.quantity")
 	showRate := gate.show("rate", "lines.rate")
-	showAmount := gate.show("amountMinor", "lines.amount")
-	view.Lines = make([]settlementLineRow, 0, len(lines))
+	showAmount := gate.show(fieldAmountMinor, withheldLineAmount)
+	rows := make([]settlementLineRow, 0, len(lines))
 	for _, line := range lines {
 		if line == nil {
 			continue
@@ -494,23 +515,30 @@ func (t *getDriverSettlementTool) Query(
 		if showAmount {
 			row.Amount = minorText(line.AmountMinor)
 		}
-		view.Lines = append(view.Lines, row)
+		rows = append(rows, row)
 	}
 
+	return rows, truncated
+}
+
+func openDisputesOn(
+	disputes []*driversettlement.Dispute,
+	settlementID pulid.ID,
+) []settlementDisputeSummary {
+	out := make([]settlementDisputeSummary, 0, len(disputes))
 	for _, dispute := range disputes {
-		if dispute == nil || dispute.SettlementID != entity.ID {
+		if dispute == nil || dispute.SettlementID != settlementID {
 			continue
 		}
-		view.OpenDisputes = append(view.OpenDisputes, settlementDisputeSummary{
+		out = append(out, settlementDisputeSummary{
 			ID:       dispute.ID.String(),
 			Status:   string(dispute.Status),
 			Category: string(dispute.Category),
 			OpenedAt: recordedDate(dispute.CreatedAt),
 		})
 	}
-	view.Withheld = gate.Withheld()
 
-	return view, nil
+	return out
 }
 
 type listDriverPayEventsTool struct {
@@ -536,11 +564,11 @@ func (t *listDriverPayEventsTool) Description() string {
 
 func (t *listDriverPayEventsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		"workerId": stringParam("Only this driver's pay, by id from list_workers or " +
+		paramWorkerID: stringParam("Only this driver's pay, by id from list_workers or " +
 			"search_worker."),
 		"shipmentId": stringParam("Only pay for this shipment, by id from search_shipments " +
 			"or get_shipment."),
-		"status": enumParam("Only pay events in this status.", payEventStatuses),
+		paramStatus: enumParam("Only pay events in this status.", payEventStatuses),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -572,7 +600,7 @@ func (t *listDriverPayEventsTool) Query(
 		return nil, err
 	}
 
-	workerID, err := optionalID(params.Params, "workerId")
+	workerID, err := optionalID(params.Params, paramWorkerID)
 	if err != nil {
 		return nil, err
 	}
@@ -580,7 +608,7 @@ func (t *listDriverPayEventsTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	status, err := validEnum(params.Params, "status", payEventStatuses)
+	status, err := validEnum(params.Params, paramStatus, payEventStatuses)
 	if err != nil {
 		return nil, err
 	}
@@ -594,7 +622,7 @@ func (t *listDriverPayEventsTool) Query(
 		criteria.Field("shipment", shipmentID.String())
 	}
 	if status != "" {
-		criteria.Field("status", status)
+		criteria.Field(paramStatus, status)
 	}
 
 	result, err := t.settlements.ListPayEvents(ctx, &repositories.ListPayEventsRequest{
@@ -612,7 +640,7 @@ func (t *listDriverPayEventsTool) Query(
 
 	gate := t.access.gate(ctx, params, permission.ResourceDriverSettlement)
 	showGross := gate.show("grossAmountMinor", "grossAmount")
-	showMiles := gate.show("totalMiles", "totalMiles")
+	showMiles := gate.show(fieldTotalMiles, fieldTotalMiles)
 	rows := make([]payEventRow, 0, len(result.Items))
 	for _, event := range result.Items {
 		if event == nil {
@@ -643,7 +671,9 @@ func (t *listDriverPayEventsTool) Query(
 	}
 	rows, more := trim(window, rows)
 
-	return gatedResult(searchResult(criteria, rows, len(rows)).paged(window, more), gate), nil
+	found := searchResult(criteria, rows, len(rows)).paged(window, more)
+
+	return gatedResult(&found, gate), nil
 }
 
 type getWorkerEarningsSummaryTool struct {
@@ -670,7 +700,7 @@ func (t *getWorkerEarningsSummaryTool) Description() string {
 }
 
 func (t *getWorkerEarningsSummaryTool) ParamSchema() map[string]any {
-	return idSchema("workerId", "The driver's id, from list_workers, search_worker or the "+
+	return idSchema(paramWorkerID, "The driver's id, from list_workers, search_worker or the "+
 		"page you are on.")
 }
 
@@ -695,7 +725,7 @@ func (t *getWorkerEarningsSummaryTool) Query(
 		return nil, err
 	}
 
-	workerID, err := requirePulid(params.Params, "workerId")
+	workerID, err := requirePulid(params.Params, paramWorkerID)
 	if err != nil {
 		return nil, err
 	}
@@ -713,10 +743,10 @@ func (t *getWorkerEarningsSummaryTool) Query(
 	if gate.show("grossAmountMinor", "accruedGross") {
 		view.AccruedGross = minorText(summary.AccruedGrossMinor)
 	}
-	if gate.show("amountMinor", "outstandingAdvances") {
+	if gate.show(fieldAmountMinor, "outstandingAdvances") {
 		view.OutstandingAdvances = minorText(summary.OutstandingAdvances)
 	}
-	if gate.show("amountMinor", "escrowBalance") {
+	if gate.show(fieldAmountMinor, "escrowBalance") {
 		view.EscrowBalance = minorText(summary.EscrowBalanceMinor)
 	}
 	view.Withheld = gate.Withheld()
@@ -780,7 +810,7 @@ type settlementDisputeView struct {
 	outside []agent.RecordRef
 }
 
-func (v settlementDisputeView) TaintedRecords() []agent.RecordRef { return v.outside }
+func (v *settlementDisputeView) TaintedRecords() []agent.RecordRef { return v.outside }
 
 func (t *getSettlementDisputeTool) Query(
 	ctx context.Context,
@@ -815,7 +845,7 @@ func (t *getSettlementDisputeTool) Query(
 		Category:         string(dispute.Category),
 		OpenedAt:         recordedDate(dispute.CreatedAt),
 		ResolutionLineID: pointerIDString(dispute.ResolutionLineID),
-		ResolvedAt:       expectedDate(derefInt64(dispute.ResolvedAt), "not resolved"),
+		ResolvedAt:       expectedDate(derefInt64(dispute.ResolvedAt), absentNotResolved),
 	}
 	if dispute.Settlement != nil {
 		view.SettlementNumber = dispute.Settlement.SettlementNumber
@@ -835,7 +865,7 @@ func (t *getSettlementDisputeTool) Query(
 	}
 	view.Withheld = gate.Withheld()
 
-	return view, nil
+	return &view, nil
 }
 
 type carrierSettlementRow struct {
@@ -911,10 +941,10 @@ func (t *listCarrierSettlementsTool) Description() string {
 
 func (t *listCarrierSettlementsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		"query": stringParam("Words to look for in the settlement number."),
-		"carrierId": stringParam("Only this carrier's settlements, by id from " +
+		paramQuery: stringParam("Words to look for in the settlement number."),
+		paramCarrierID: stringParam("Only this carrier's settlements, by id from " +
 			"list_carriers."),
-		"status": enumParam("Only settlements in this status.", carrierSettlementStatuses),
+		paramStatus: enumParam("Only settlements in this status.", carrierSettlementStatuses),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -930,11 +960,11 @@ func (t *listCarrierSettlementsTool) Query(
 		return nil, err
 	}
 
-	carrierID, err := optionalID(params.Params, "carrierId")
+	carrierID, err := optionalID(params.Params, paramCarrierID)
 	if err != nil {
 		return nil, err
 	}
-	status, err := validEnum(params.Params, "status", carrierSettlementStatuses)
+	status, err := validEnum(params.Params, paramStatus, carrierSettlementStatuses)
 	if err != nil {
 		return nil, err
 	}
@@ -944,7 +974,7 @@ func (t *listCarrierSettlementsTool) Query(
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
-			Query:      optionalString(params.Params, "query"),
+			Query:      optionalString(params.Params, paramQuery),
 		},
 		CarrierID: carrierID,
 		Status:    carriersettlement.Status(status),
@@ -953,10 +983,10 @@ func (t *listCarrierSettlementsTool) Query(
 	criteria := filtercatalog.NewCriteria("carrier settlements").At(clockFor(params))
 	criteria.Text(req.Filter.Query)
 	if carrierID.IsNotNil() {
-		criteria.Field("carrier", carrierID.String())
+		criteria.Field(labelCarrier, carrierID.String())
 	}
 	if status != "" {
-		criteria.Field("status", status)
+		criteria.Field(paramStatus, status)
 	}
 
 	result, err := t.settlements.List(ctx, req)
@@ -973,7 +1003,9 @@ func (t *listCarrierSettlementsTool) Query(
 	}
 	rows, more := trim(window, rows)
 
-	return gatedResult(searchResult(criteria, rows, len(rows)).paged(window, more), gate), nil
+	found := searchResult(criteria, rows, len(rows)).paged(window, more)
+
+	return gatedResult(&found, gate), nil
 }
 
 type getCarrierSettlementTool struct {
@@ -998,7 +1030,7 @@ func (t *getCarrierSettlementTool) Description() string {
 }
 
 func (t *getCarrierSettlementTool) ParamSchema() map[string]any {
-	return idSchema("settlementId", "The carrier settlement's id, from "+
+	return idSchema(paramSettlementID, "The carrier settlement's id, from "+
 		"list_carrier_settlements or the page you are on.")
 }
 
@@ -1040,7 +1072,7 @@ func (t *getCarrierSettlementTool) Query(
 		return nil, err
 	}
 
-	id, err := requirePulid(params.Params, "settlementId")
+	id, err := requirePulid(params.Params, paramSettlementID)
 	if err != nil {
 		return nil, err
 	}
@@ -1058,11 +1090,11 @@ func (t *getCarrierSettlementTool) Query(
 	view := carrierSettlementView{
 		carrierSettlementRow: carrierSettlementRowFrom(entity, gate),
 		Notes:                entity.Notes,
-		SubmittedAt:          expectedDate(derefInt64(entity.SubmittedAt), "not submitted"),
-		ApprovedAt:           expectedDate(derefInt64(entity.ApprovedAt), "not approved"),
-		PostedAt:             expectedDate(derefInt64(entity.PostedAt), "not posted"),
-		PaidAt:               expectedDate(derefInt64(entity.PaidAt), "not paid"),
-		VoidedAt:             expectedDate(derefInt64(entity.VoidedAt), "not voided"),
+		SubmittedAt:          expectedDate(derefInt64(entity.SubmittedAt), absentNotSubmitted),
+		ApprovedAt:           expectedDate(derefInt64(entity.ApprovedAt), absentNotApproved),
+		PostedAt:             expectedDate(derefInt64(entity.PostedAt), absentNotPosted),
+		PaidAt:               expectedDate(derefInt64(entity.PaidAt), absentNotPaid),
+		VoidedAt:             expectedDate(derefInt64(entity.VoidedAt), absentNotVoided),
 		VoidReason:           entity.VoidReason,
 		LineCount:            len(entity.Lines),
 	}
@@ -1075,7 +1107,7 @@ func (t *getCarrierSettlementTool) Query(
 		view.LinesTruncated = true
 		lines = lines[:maxSettlementLines]
 	}
-	showAmount := gate.show("amountMinor", "lines.amount")
+	showAmount := gate.show(fieldAmountMinor, withheldLineAmount)
 	view.Lines = make([]carrierSettlementLineRow, 0, len(lines))
 	for _, line := range lines {
 		if line == nil {
@@ -1124,8 +1156,8 @@ func (t *listCarrierInvoiceMatchesTool) Description() string {
 
 func (t *listCarrierInvoiceMatchesTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		"carrierId": stringParam("Only this carrier's invoices, by id from list_carriers."),
-		"status":    enumParam("Only matches in this status.", invoiceMatchStatuses),
+		paramCarrierID: stringParam("Only this carrier's invoices, by id from list_carriers."),
+		paramStatus:    enumParam("Only matches in this status.", invoiceMatchStatuses),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -1176,11 +1208,11 @@ func (t *listCarrierInvoiceMatchesTool) Query(
 		return nil, err
 	}
 
-	carrierID, err := optionalID(params.Params, "carrierId")
+	carrierID, err := optionalID(params.Params, paramCarrierID)
 	if err != nil {
 		return nil, err
 	}
-	status, err := validEnum(params.Params, "status", invoiceMatchStatuses)
+	status, err := validEnum(params.Params, paramStatus, invoiceMatchStatuses)
 	if err != nil {
 		return nil, err
 	}
@@ -1188,10 +1220,10 @@ func (t *listCarrierInvoiceMatchesTool) Query(
 
 	criteria := filtercatalog.NewCriteria("carrier invoice matches").At(clockFor(params))
 	if carrierID.IsNotNil() {
-		criteria.Field("carrier", carrierID.String())
+		criteria.Field(labelCarrier, carrierID.String())
 	}
 	if status != "" {
-		criteria.Field("status", status)
+		criteria.Field(paramStatus, status)
 	}
 
 	result, err := t.settlements.ListInvoiceMatches(ctx,
@@ -1208,7 +1240,7 @@ func (t *listCarrierInvoiceMatchesTool) Query(
 	}
 
 	gate := t.access.gate(ctx, params, permission.ResourceCarrierSettlement)
-	showAmounts := gate.show("amountMinor", "amounts")
+	showAmounts := gate.show(fieldAmountMinor, withheldAmounts)
 	matches, more := trim(window, result.Items)
 	rows := make([]invoiceMatchRow, 0, len(matches))
 	tainted := make([]agent.RecordRef, 0, len(matches))
@@ -1226,7 +1258,7 @@ func (t *listCarrierInvoiceMatchesTool) Query(
 			SettlementID:   pointerIDString(match.CarrierSettlementID),
 			Currency:       match.CurrencyCode,
 			ResolutionNote: match.ResolutionNote,
-			ResolvedAt:     expectedDate(derefInt64(match.ResolvedAt), "not resolved"),
+			ResolvedAt:     expectedDate(derefInt64(match.ResolvedAt), absentNotResolved),
 			CreatedAt:      recordedDate(match.CreatedAt),
 		}
 		if match.Carrier != nil {
@@ -1246,7 +1278,8 @@ func (t *listCarrierInvoiceMatchesTool) Query(
 		}
 	}
 
-	outcome := gatedResult(searchResult(criteria, rows, len(rows)).paged(window, more), gate)
+	found := searchResult(criteria, rows, len(rows)).paged(window, more)
+	outcome := gatedResult(&found, gate)
 
 	return outcome.withTaint(tainted), nil
 }

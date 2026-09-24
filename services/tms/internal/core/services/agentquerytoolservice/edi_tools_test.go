@@ -72,12 +72,12 @@ func TestGetEDIInboundFile_ReturnsRawX12OnlyWhenAskedAndAtRestricted(t *testing.
 	plain, err := tool.Query(t.Context(),
 		agentParams(map[string]any{"inboundFileId": id}, permission.SensitivityRestricted))
 	require.NoError(t, err)
-	assert.Empty(t, plain.(ediInboundFileView).Raw, "raw X12 is opt-in")
+	assert.Empty(t, plain.(*ediInboundFileView).Raw, "raw X12 is opt-in")
 
 	internal, err := tool.Query(t.Context(),
 		agentParams(map[string]any{"inboundFileId": id, "includeRaw": true}, ""))
 	require.NoError(t, err)
-	withheld := internal.(ediInboundFileView)
+	withheld := internal.(*ediInboundFileView)
 	assert.Empty(t, withheld.Raw)
 	assert.Equal(t, []string{"rawX12"}, withheld.Withheld)
 
@@ -86,7 +86,7 @@ func TestGetEDIInboundFile_ReturnsRawX12OnlyWhenAskedAndAtRestricted(t *testing.
 		permission.SensitivityRestricted,
 	))
 	require.NoError(t, err)
-	view := restricted.(ediInboundFileView)
+	view := restricted.(*ediInboundFileView)
 	assert.LessOrEqual(t, len(view.Raw), maxRawX12Bytes)
 	assert.True(t, utf8.ValidString(view.Raw), "the cap never splits a character")
 	assert.True(t, view.RawTruncated)
@@ -129,7 +129,7 @@ func TestListEDIInboundFiles_MarksEveryFileItReturns(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, edi.InboundFileStatusQuarantined, fake.listed.Status)
-	outcome := result.(gatedOutcome)
+	outcome := result.(*gatedOutcome)
 	assert.True(t, outcome.HasMore)
 	assert.Equal(t, []agent.RecordRef{inboundFileRef(first.ID)}, outcome.TaintedRecords(),
 		"only the file on the page is marked")

@@ -77,7 +77,7 @@ func TestListInvoices_WithholdsTheTotalBelowRestricted(t *testing.T) {
 	result, err := tool.Query(t.Context(), agentParams(map[string]any{}, ""))
 	require.NoError(t, err)
 
-	outcome, ok := result.(gatedOutcome)
+	outcome, ok := result.(*gatedOutcome)
 	require.True(t, ok)
 	rows, ok := outcome.Items.([]any)
 	require.True(t, ok)
@@ -99,7 +99,7 @@ func TestListInvoices_ShowsTheTotalAtRestricted(t *testing.T) {
 		agentParams(map[string]any{}, permission.SensitivityRestricted))
 	require.NoError(t, err)
 
-	outcome := result.(gatedOutcome)
+	outcome := result.(*gatedOutcome)
 	row := outcome.Items.([]any)[0].(invoiceRow)
 	assert.Equal(t, "1250.00", row.TotalAmount)
 	assert.Empty(t, outcome.Withheld)

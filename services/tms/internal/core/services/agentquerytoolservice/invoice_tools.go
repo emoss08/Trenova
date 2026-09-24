@@ -160,24 +160,31 @@ func invoiceDetailFrom(entity *invoice.Invoice, gate *fieldGate) invoiceDetail {
 		InvoiceDate:      recordedDate(entity.InvoiceDate),
 		DueDate:          pointerDate(entity.DueDate),
 		ServiceDate:      pointerDate(entity.ServiceDate),
-		PostedAt:         expectedDate(derefInt64(entity.PostedAt), "not posted"),
+		PostedAt:         expectedDate(derefInt64(entity.PostedAt), absentNotPosted),
 		SentAt:           expectedDate(derefInt64(entity.SentAt), "not sent"),
-		VoidedAt:         expectedDate(derefInt64(entity.VoidedAt), "not voided"),
+		VoidedAt:         expectedDate(derefInt64(entity.VoidedAt), absentNotVoided),
 		Adjustment:       entity.IsAdjustmentArtifact,
 		Supersedes:       pulidString(entity.SupersedesInvoiceID),
 		SupersededBy:     pulidString(entity.SupersededByInvoiceID),
 		PDFDocumentID:    pulidString(entity.PDFDocumentID),
 		LineCount:        len(entity.Lines),
-		Lines:            make([]invoiceLineDetail, 0, min(len(entity.Lines), maxInvoiceLines)),
 	}
+	applyInvoiceAmounts(&detail, entity, gate)
+	applyInvoiceText(&detail, entity, gate)
+	detail.Lines, detail.LinesTruncated = invoiceLines(entity.Lines, gate)
+	detail.Withheld = gate.Withheld()
 
+	return detail
+}
+
+func applyInvoiceAmounts(detail *invoiceDetail, entity *invoice.Invoice, gate *fieldGate) {
 	if gate.show("subtotalAmount", "subtotalAmount") {
 		detail.Subtotal = entity.SubtotalAmount.StringFixed(2)
 	}
 	if gate.show("otherAmount", "otherAmount") {
 		detail.Other = entity.OtherAmount.StringFixed(2)
 	}
-	if gate.show("totalAmount", "totalAmount") {
+	if gate.show(fieldTotalAmount, fieldTotalAmount) {
 		detail.Total = entity.TotalAmount.StringFixed(2)
 		detail.BalanceDue = money.DecimalFromMinor(
 			entity.TotalAmountMinor - entity.AppliedAmountMinor,
@@ -186,33 +193,40 @@ func invoiceDetailFrom(entity *invoice.Invoice, gate *fieldGate) invoiceDetail {
 	if gate.show("appliedAmount", "appliedAmount") {
 		detail.Applied = entity.AppliedAmount.StringFixed(2)
 	}
-	if entity.Memo != "" && gate.show("memo", "memo") {
-		detail.Memo = entity.Memo
+}
+
+func applyInvoiceText(detail *invoiceDetail, entity *invoice.Invoice, gate *fieldGate) {
+	fields := []struct {
+		field string
+		value string
+		into  *string
+	}{
+		{"memo", entity.Memo, &detail.Memo},
+		{"remittanceInstructions", entity.RemittanceInstructions, &detail.Remittance},
+		{"voidReason", entity.VoidReason, &detail.VoidReason},
+		{"lastSendError", entity.LastSendError, &detail.LastSendError},
+		{"lastEdiError", entity.LastEDIError, &detail.LastEDIError},
 	}
-	if entity.RemittanceInstructions != "" &&
-		gate.show("remittanceInstructions", "remittanceInstructions") {
-		detail.Remittance = entity.RemittanceInstructions
+	for _, entry := range fields {
+		if entry.value != "" && gate.show(entry.field, entry.field) {
+			*entry.into = entry.value
+		}
 	}
-	if entity.VoidReason != "" && gate.show("voidReason", "voidReason") {
-		detail.VoidReason = entity.VoidReason
-	}
-	if entity.LastSendError != "" && gate.show("lastSendError", "lastSendError") {
-		detail.LastSendError = entity.LastSendError
-	}
-	if entity.LastEDIError != "" && gate.show("lastEdiError", "lastEdiError") {
-		detail.LastEDIError = entity.LastEDIError
+}
+
+func invoiceLines(lines []*invoice.InvoiceLine, gate *fieldGate) ([]invoiceLineDetail, bool) {
+	truncated := len(lines) > maxInvoiceLines
+	if truncated {
+		lines = lines[:maxInvoiceLines]
 	}
 
 	showQuantity := gate.show("quantity", "lines.quantity")
 	showPrice := gate.show("unitPrice", "lines.unitPrice")
-	showAmount := gate.show("amount", "lines.amount")
-	for _, line := range entity.Lines {
+	showAmount := gate.show(fieldAmount, withheldLineAmount)
+	rows := make([]invoiceLineDetail, 0, len(lines))
+	for _, line := range lines {
 		if line == nil {
 			continue
-		}
-		if len(detail.Lines) == maxInvoiceLines {
-			detail.LinesTruncated = true
-			break
 		}
 		row := invoiceLineDetail{
 			LineNumber:  line.LineNumber,
@@ -230,9 +244,8 @@ func invoiceDetailFrom(entity *invoice.Invoice, gate *fieldGate) invoiceDetail {
 		if showAmount {
 			row.Amount = line.Amount.StringFixed(2)
 		}
-		detail.Lines = append(detail.Lines, row)
+		rows = append(rows, row)
 	}
-	detail.Withheld = gate.Withheld()
 
-	return detail
+	return rows, truncated
 }

@@ -3,8 +3,10 @@ package agentquerytoolservice
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/fiscalclose"
@@ -29,8 +31,6 @@ const (
 	maxStatementRows      = 50
 	maxJournalLines       = 100
 	maxCloseBlockers      = 50
-
-	arAmountField = "amountMinor"
 
 	bucketCurrent = "current"
 	bucket1To30   = "1-30"
@@ -184,8 +184,8 @@ func (t *getARAgingTool) Description() string {
 
 func (t *getARAgingTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		"asOf": dateParam("The day to age as of. Defaults to today."),
-		"customerId": stringParam("Only this customer, by id from list_customers or a " +
+		paramAsOf: dateParam("The day to age as of. Defaults to today."),
+		paramCustomerID: stringParam("Only this customer, by id from list_customers or a " +
 			"row of this tool."),
 		"overdueOnly": boolParam("Only customers with a balance past due."),
 	}, defaultAccountingRows, maxAccountingRows))
@@ -211,7 +211,7 @@ type arAgingRow struct {
 }
 
 type arAgingOutcome struct {
-	gatedOutcome
+	*gatedOutcome
 
 	AsOf   optionalDate `json:"asOf"`
 	Totals *arBuckets   `json:"totals,omitempty"`
@@ -226,14 +226,11 @@ func (t *getARAgingTool) Query(
 	}
 
 	clk := clockFor(params)
-	asOf, err := readDay(params.Params, "asOf", clk)
+	asOf, err := readAsOf(params.Params, clk)
 	if err != nil {
 		return nil, err
 	}
-	if asOf > 0 {
-		asOf = endOfDay(clk, asOf)
-	}
-	customerID, err := optionalID(params.Params, "customerId")
+	customerID, err := optionalID(params.Params, paramCustomerID)
 	if err != nil {
 		return nil, err
 	}
@@ -242,7 +239,7 @@ func (t *getARAgingTool) Query(
 
 	criteria := filtercatalog.NewCriteria("customers with open receivables").At(clk)
 	if customerID.IsNotNil() {
-		criteria.Field("customer", customerID.String())
+		criteria.Field(labelCustomer, customerID.String())
 	}
 	if overdueOnly {
 		criteria.Field("limited to", "past due balances")
@@ -254,18 +251,53 @@ func (t *getARAgingTool) Query(
 	}
 
 	gate := t.access.gate(ctx, params, permission.ResourceAccountsReceivable)
-	showAmounts := gate.show(arAmountField, "amounts")
+	showAmounts := gate.show(fieldAmountMinor, withheldAmounts)
+	rows := agingRows(summary.Rows, agingFilter{
+		customerID:  customerID,
+		overdueOnly: overdueOnly,
+		showAmounts: showAmounts,
+	})
 
-	rows := make([]arAgingRow, 0, len(summary.Rows))
-	for _, entry := range summary.Rows {
+	matched := len(rows)
+	page, more := slicePage(window, rows)
+	found := searchResult(criteria, page, matched).paged(window, more)
+	outcome := arAgingOutcome{
+		gatedOutcome: gatedResult(&found, gate),
+		AsOf:         recordedDate(summary.AsOfDate),
+	}
+	if showAmounts && customerID.IsNil() {
+		outcome.Totals = arBucketsFrom(summary.Totals)
+	}
+
+	return outcome, nil
+}
+
+func readAsOf(params map[string]any, clk clock) (int64, error) {
+	asOf, err := readDay(params, paramAsOf, clk)
+	if err != nil || asOf == 0 {
+		return asOf, err
+	}
+
+	return endOfDay(clk, asOf), nil
+}
+
+type agingFilter struct {
+	customerID  pulid.ID
+	overdueOnly bool
+	showAmounts bool
+}
+
+func agingRows(entries []*repositories.ARCustomerAgingRow, filter agingFilter) []arAgingRow {
+	rows := make([]arAgingRow, 0, len(entries))
+	for _, entry := range entries {
 		if entry == nil || entry.Buckets.TotalOpenMinor == 0 {
 			continue
 		}
-		if customerID.IsNotNil() && entry.CustomerID != customerID {
+		if filter.customerID.IsNotNil() && entry.CustomerID != filter.customerID {
 			continue
 		}
 		bucket, rank := oldestBucket(entry.Buckets)
-		if overdueOnly && rank == 0 {
+		if filter.overdueOnly && rank == 0 {
 			continue
 		}
 		row := arAgingRow{
@@ -275,7 +307,7 @@ func (t *getARAgingTool) Query(
 			rank:         rank,
 			open:         entry.Buckets.TotalOpenMinor,
 		}
-		if showAmounts {
+		if filter.showAmounts {
 			buckets := arBucketsFrom(entry.Buckets)
 			row.Current = buckets.Current
 			row.Days1To30 = buckets.Days1To30
@@ -291,7 +323,7 @@ func (t *getARAgingTool) Query(
 		if byRank := cmp.Compare(b.rank, a.rank); byRank != 0 {
 			return byRank
 		}
-		if showAmounts {
+		if filter.showAmounts {
 			if byOpen := cmp.Compare(b.open, a.open); byOpen != 0 {
 				return byOpen
 			}
@@ -300,17 +332,7 @@ func (t *getARAgingTool) Query(
 		return strings.Compare(strings.ToLower(a.Customer), strings.ToLower(b.Customer))
 	})
 
-	matched := len(rows)
-	page, more := slicePage(window, rows)
-	outcome := arAgingOutcome{
-		gatedOutcome: gatedResult(searchResult(criteria, page, matched).paged(window, more), gate),
-		AsOf:         recordedDate(summary.AsOfDate),
-	}
-	if showAmounts && customerID.IsNil() {
-		outcome.Totals = arBucketsFrom(summary.Totals)
-	}
-
-	return outcome, nil
+	return rows
 }
 
 type listAROpenItemsTool struct {
@@ -336,11 +358,11 @@ func (t *listAROpenItemsTool) Description() string {
 
 func (t *listAROpenItemsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		"customerId": stringParam("Only this customer's invoices, by id from list_customers " +
+		paramCustomerID: stringParam("Only this customer's invoices, by id from list_customers " +
 			"or get_ar_aging."),
 		"minDaysPastDue": intParam("Only invoices at least this many days past due."),
 		"disputedOnly":   boolParam("Only invoices the customer disputes."),
-		"asOf":           dateParam("The day to age as of. Defaults to today."),
+		paramAsOf:        dateParam("The day to age as of. Defaults to today."),
 	}, defaultAccountingRows, maxAccountingRows))
 }
 
@@ -401,14 +423,11 @@ func (t *listAROpenItemsTool) Query(
 	}
 
 	clk := clockFor(params)
-	asOf, err := readDay(params.Params, "asOf", clk)
+	asOf, err := readAsOf(params.Params, clk)
 	if err != nil {
 		return nil, err
 	}
-	if asOf > 0 {
-		asOf = endOfDay(clk, asOf)
-	}
-	customerID, err := optionalID(params.Params, "customerId")
+	customerID, err := optionalID(params.Params, paramCustomerID)
 	if err != nil {
 		return nil, err
 	}
@@ -418,10 +437,10 @@ func (t *listAROpenItemsTool) Query(
 
 	criteria := filtercatalog.NewCriteria("open receivables").At(clk)
 	if customerID.IsNotNil() {
-		criteria.Field("customer", customerID.String())
+		criteria.Field(labelCustomer, customerID.String())
 	}
 	if minDays > 0 {
-		criteria.Field("at least days past due", fmt.Sprintf("%d", minDays))
+		criteria.Field("at least days past due", strconv.Itoa(minDays))
 	}
 	if disputedOnly {
 		criteria.Field("limited to", "disputed invoices")
@@ -433,7 +452,7 @@ func (t *listAROpenItemsTool) Query(
 	}
 
 	gate := t.access.gate(ctx, params, permission.ResourceAccountsReceivable)
-	showAmounts := gate.show(arAmountField, "amounts")
+	showAmounts := gate.show(fieldAmountMinor, withheldAmounts)
 
 	kept := make([]*repositories.AROpenItem, 0, len(items))
 	for _, item := range items {
@@ -459,7 +478,9 @@ func (t *listAROpenItemsTool) Query(
 		rows = append(rows, arOpenItemRowFrom(item, showAmounts))
 	}
 
-	return gatedResult(searchResult(criteria, rows, len(kept)).paged(window, more), gate), nil
+	found := searchResult(criteria, rows, len(kept)).paged(window, more)
+
+	return gatedResult(&found, gate), nil
 }
 
 type getCustomerStatementTool struct {
@@ -485,12 +506,12 @@ func (t *getCustomerStatementTool) Description() string {
 
 func (t *getCustomerStatementTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		"customerId": stringParam("The customer's id, from list_customers, get_ar_aging or " +
-			"the page you are on."),
-		"startDate": dateParam("The first day of the statement period. Omit for the " +
+		paramCustomerID: stringParam("The customer's id, from list_customers, get_ar_aging or " +
+			onThePage),
+		paramStartDate: dateParam("The first day of the statement period. Omit for the " +
 			"customer's whole history."),
-		"asOf": dateParam("The statement date. Defaults to today."),
-	}, "customerId")
+		paramAsOf: dateParam("The statement date. Defaults to today."),
+	}, paramCustomerID)
 }
 
 func (t *getCustomerStatementTool) Policy() serviceports.ToolPolicy {
@@ -534,24 +555,21 @@ func (t *getCustomerStatementTool) Query(
 		return nil, err
 	}
 
-	customerID, err := requirePulid(params.Params, "customerId")
+	customerID, err := requirePulid(params.Params, paramCustomerID)
 	if err != nil {
 		return nil, err
 	}
 	clk := clockFor(params)
-	start, err := readDay(params.Params, "startDate", clk)
+	start, err := readDay(params.Params, paramStartDate, clk)
 	if err != nil {
 		return nil, err
 	}
-	asOf, err := readDay(params.Params, "asOf", clk)
+	asOf, err := readAsOf(params.Params, clk)
 	if err != nil {
 		return nil, err
-	}
-	if asOf > 0 {
-		asOf = endOfDay(clk, asOf)
 	}
 	if start > 0 && asOf > 0 && start > asOf {
-		return nil, fmt.Errorf("startDate must be on or before asOf")
+		return nil, errors.New("startDate must be on or before asOf")
 	}
 
 	statement, err := t.receivables.GetCustomerStatement(
@@ -562,7 +580,7 @@ func (t *getCustomerStatementTool) Query(
 	}
 
 	gate := t.access.gate(ctx, params, permission.ResourceAccountsReceivable)
-	showAmounts := gate.show(arAmountField, "amounts")
+	showAmounts := gate.show(fieldAmountMinor, withheldAmounts)
 
 	bucket, _ := oldestBucket(statement.Aging)
 	view := customerStatementView{
@@ -581,13 +599,26 @@ func (t *getCustomerStatementTool) Query(
 		view.EndingBalance = minorText(statement.EndingBalanceMinor)
 		view.Aging = arBucketsFrom(statement.Aging)
 	}
+	view.Transactions, view.TransactionsOmitted = statementTransactions(
+		statement.Transactions, showAmounts,
+	)
+	view.OpenItems, view.OpenItemsOmitted = statementOpenItems(statement.OpenItems, showAmounts)
+	view.Withheld = gate.Withheld()
 
-	transactions := statement.Transactions
+	return view, nil
+}
+
+func statementTransactions(
+	transactions []*serviceports.ARStatementTransaction,
+	showAmounts bool,
+) ([]statementTransactionRow, int) {
+	omitted := 0
 	if len(transactions) > maxStatementRows {
-		view.TransactionsOmitted = len(transactions) - maxStatementRows
-		transactions = transactions[len(transactions)-maxStatementRows:]
+		omitted = len(transactions) - maxStatementRows
+		transactions = transactions[omitted:]
 	}
-	view.Transactions = make([]statementTransactionRow, 0, len(transactions))
+
+	rows := make([]statementTransactionRow, 0, len(transactions))
 	for _, txn := range transactions {
 		if txn == nil {
 			continue
@@ -606,23 +637,30 @@ func (t *getCustomerStatementTool) Query(
 			}
 			row.RunningBalance = minorText(txn.RunningBalanceMinor)
 		}
-		view.Transactions = append(view.Transactions, row)
+		rows = append(rows, row)
 	}
 
-	openItems := statement.OpenItems
-	if len(openItems) > maxStatementRows {
-		view.OpenItemsOmitted = len(openItems) - maxStatementRows
-		openItems = openItems[:maxStatementRows]
+	return rows, omitted
+}
+
+func statementOpenItems(
+	items []*repositories.AROpenItem,
+	showAmounts bool,
+) ([]arOpenItemRow, int) {
+	omitted := 0
+	if len(items) > maxStatementRows {
+		omitted = len(items) - maxStatementRows
+		items = items[:maxStatementRows]
 	}
-	view.OpenItems = make([]arOpenItemRow, 0, len(openItems))
-	for _, item := range openItems {
+
+	rows := make([]arOpenItemRow, 0, len(items))
+	for _, item := range items {
 		if item != nil {
-			view.OpenItems = append(view.OpenItems, arOpenItemRowFrom(item, showAmounts))
+			rows = append(rows, arOpenItemRowFrom(item, showAmounts))
 		}
 	}
-	view.Withheld = gate.Withheld()
 
-	return view, nil
+	return rows, omitted
 }
 
 type listCollectionsWorklistTool struct {
@@ -651,10 +689,10 @@ func (t *listCollectionsWorklistTool) Description() string {
 
 func (t *listCollectionsWorklistTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		"asOf": dateParam("The day to rank as of. Defaults to today."),
-		"severity": enumParam("Only rows of this severity.",
+		paramAsOf: dateParam("The day to rank as of. Defaults to today."),
+		paramSeverity: enumParam("Only rows of this severity.",
 			[]string{"Critical", "Warning", "Watch"}),
-		"limit": intParam(fmt.Sprintf("How many rows to return: %d unless you ask, at most %d.",
+		paramLimit: intParam(fmt.Sprintf("How many rows to return: %d unless you ask, at most %d.",
 			defaultAccountingRows, maxAccountingRows)),
 	})
 }
@@ -688,23 +726,20 @@ func (t *listCollectionsWorklistTool) Query(
 	}
 
 	clk := clockFor(params)
-	asOf, err := readDay(params.Params, "asOf", clk)
+	asOf, err := readAsOf(params.Params, clk)
 	if err != nil {
 		return nil, err
 	}
-	if asOf > 0 {
-		asOf = endOfDay(clk, asOf)
-	}
-	limit := optionalInt(params.Params, "limit", defaultAccountingRows)
+	limit := optionalInt(params.Params, paramLimit, defaultAccountingRows)
 	if limit <= 0 {
 		limit = defaultAccountingRows
 	}
 	limit = min(limit, maxAccountingRows)
-	severity := optionalString(params.Params, "severity")
+	severity := optionalString(params.Params, paramSeverity)
 
 	criteria := filtercatalog.NewCriteria("collections worklist items").At(clk)
 	if severity != "" {
-		criteria.Field("severity", severity)
+		criteria.Field(paramSeverity, severity)
 	}
 
 	fetch := limit
@@ -722,7 +757,7 @@ func (t *listCollectionsWorklistTool) Query(
 	}
 
 	gate := t.access.gate(ctx, params, permission.ResourceAccountsReceivable)
-	showAmounts := gate.show(arAmountField, "amounts")
+	showAmounts := gate.show(fieldAmountMinor, withheldAmounts)
 
 	rows := make([]worklistRow, 0, min(len(items), limit))
 	matched := 0
@@ -756,7 +791,9 @@ func (t *listCollectionsWorklistTool) Query(
 		rows = append(rows, row)
 	}
 
-	return gatedResult(searchResult(criteria, rows, matched), gate), nil
+	found := searchResult(criteria, rows, matched)
+
+	return gatedResult(&found, gate), nil
 }
 
 type journalEntryReader interface {
@@ -800,15 +837,15 @@ func (t *listJournalEntriesTool) Description() string {
 
 func (t *listJournalEntriesTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		"query": stringParam("Words to look for in the entry number, description or " +
+		paramQuery: stringParam("Words to look for in the entry number, description or " +
 			"source reference."),
-		"status": enumParam("Only entries in this status.", journalStatuses),
+		paramStatus: enumParam("Only entries in this status.", journalStatuses),
 		"referenceType": stringParam("Only entries from this source, such as Invoice, " +
 			"CustomerPayment or DriverSettlement."),
-		"fiscalPeriodId": stringParam("Only entries in this fiscal period, by id from " +
+		paramFiscalPeriodID: stringParam("Only entries in this fiscal period, by id from " +
 			"list_fiscal_periods."),
-		"fromDate": dateParam("The earliest accounting date."),
-		"toDate":   dateParam("The latest accounting date."),
+		paramFromDate: dateParam("The earliest accounting date."),
+		paramToDate:   dateParam("The latest accounting date."),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -865,11 +902,11 @@ func (t *listJournalEntriesTool) Query(
 	}
 
 	clk := clockFor(params)
-	from, err := readDay(params.Params, "fromDate", clk)
+	from, err := readDay(params.Params, paramFromDate, clk)
 	if err != nil {
 		return nil, err
 	}
-	to, err := readDay(params.Params, "toDate", clk)
+	to, err := readDay(params.Params, paramToDate, clk)
 	if err != nil {
 		return nil, err
 	}
@@ -877,13 +914,13 @@ func (t *listJournalEntriesTool) Query(
 		to = endOfDay(clk, to)
 	}
 	if from > 0 && to > 0 && from > to {
-		return nil, fmt.Errorf("fromDate must be on or before toDate")
+		return nil, errors.New("fromDate must be on or before toDate")
 	}
-	periodID, err := optionalID(params.Params, "fiscalPeriodId")
+	periodID, err := optionalID(params.Params, paramFiscalPeriodID)
 	if err != nil {
 		return nil, err
 	}
-	status := optionalString(params.Params, "status")
+	status := optionalString(params.Params, paramStatus)
 	if status != "" && !slices.Contains(journalStatuses, status) {
 		return nil, fmt.Errorf("status %q is not one of %s", status,
 			strings.Join(journalStatuses, ", "))
@@ -894,7 +931,7 @@ func (t *listJournalEntriesTool) Query(
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
-			Query:      optionalString(params.Params, "query"),
+			Query:      optionalString(params.Params, paramQuery),
 		},
 		FiscalPeriodID:      periodID,
 		ReferenceType:       optionalString(params.Params, "referenceType"),
@@ -906,7 +943,7 @@ func (t *listJournalEntriesTool) Query(
 	criteria := filtercatalog.NewCriteria("journal entries").At(clk)
 	criteria.Text(req.Filter.Query)
 	if status != "" {
-		criteria.Field("status", status)
+		criteria.Field(paramStatus, status)
 	}
 	if req.ReferenceType != "" {
 		criteria.Field("source", req.ReferenceType)
@@ -915,10 +952,10 @@ func (t *listJournalEntriesTool) Query(
 		criteria.Field("fiscal period", periodID.String())
 	}
 	if from > 0 {
-		criteria.Field("accounted on or after", optionalString(params.Params, "fromDate"))
+		criteria.Field("accounted on or after", optionalString(params.Params, paramFromDate))
 	}
 	if to > 0 {
-		criteria.Field("accounted on or before", optionalString(params.Params, "toDate"))
+		criteria.Field("accounted on or before", optionalString(params.Params, paramToDate))
 	}
 
 	result, err := t.entries.List(ctx, req)
@@ -935,7 +972,9 @@ func (t *listJournalEntriesTool) Query(
 	}
 	rows, more := trim(window, rows)
 
-	return gatedResult(searchResult(criteria, rows, len(rows)).paged(window, more), gate), nil
+	found := searchResult(criteria, rows, len(rows)).paged(window, more)
+
+	return gatedResult(&found, gate), nil
 }
 
 type getJournalEntryTool struct {
@@ -966,7 +1005,7 @@ func (t *getJournalEntryTool) Description() string {
 
 func (t *getJournalEntryTool) ParamSchema() map[string]any {
 	return idSchema("journalEntryId", "The journal entry's id, from list_journal_entries or "+
-		"the page you are on.")
+		onThePage)
 }
 
 func (t *getJournalEntryTool) Policy() serviceports.ToolPolicy {
@@ -1043,8 +1082,8 @@ func (t *getJournalEntryTool) Query(
 		journalEntryRow: journalEntryRowFrom(entry, gate),
 		FiscalPeriodID:  entry.FiscalPeriodID.String(),
 		ReferenceID:     entry.ReferenceID,
-		PostedAt:        expectedDate(derefInt64(entry.PostedAt), "not posted"),
-		ApprovedAt:      expectedDate(derefInt64(entry.ApprovedAt), "not approved"),
+		PostedAt:        expectedDate(derefInt64(entry.PostedAt), absentNotPosted),
+		ApprovedAt:      expectedDate(derefInt64(entry.ApprovedAt), absentNotApproved),
 		RejectedAt:      expectedDate(derefInt64(entry.RejectedAt), "not rejected"),
 		ReversalOfID:    pulidString(entry.ReversalOfID),
 		ReversedByID:    pulidString(entry.ReversedByID),
@@ -1164,7 +1203,7 @@ func newListGLAccountsTool(
 		resource: permission.ResourceGeneralLedgerAccount,
 		config:   querybuilder.GetFieldConfiguration((*glaccount.GLAccount)(nil)),
 		fields: []listField{
-			{Name: "status", Kind: filterEnum, Values: statusValues},
+			{Name: paramStatus, Kind: filterEnum, Values: statusValues},
 			{Name: "accountCode", Kind: filterText, Sortable: true},
 			{Name: "name", Kind: filterText, Sortable: true},
 			{Name: "isSystem", Kind: filterBool},
@@ -1247,7 +1286,7 @@ func newListFiscalPeriodsTool(
 		config:   querybuilder.GetFieldConfiguration((*fiscalperiod.FiscalPeriod)(nil)),
 		fields: []listField{
 			{
-				Name: "status",
+				Name: paramStatus,
 				Kind: filterEnum,
 				Values: []string{
 					string(fiscalperiod.StatusInactive),
@@ -1270,7 +1309,7 @@ func newListFiscalPeriodsTool(
 			},
 			{Name: "name", Kind: filterText, Sortable: true},
 			{Name: "periodNumber", Kind: filterNumber, Sortable: true},
-			{Name: "startDate", Kind: filterDate, Sortable: true},
+			{Name: paramStartDate, Kind: filterDate, Sortable: true},
 			{Name: "endDate", Kind: filterDate, Sortable: true},
 			{Name: "isAdjusting", Kind: filterBool},
 		},
@@ -1339,8 +1378,8 @@ func (t *getFiscalCloseBlockersTool) Description() string {
 }
 
 func (t *getFiscalCloseBlockersTool) ParamSchema() map[string]any {
-	return idSchema("fiscalPeriodId", "The fiscal period's id, from list_fiscal_periods or "+
-		"the page you are on.")
+	return idSchema(paramFiscalPeriodID, "The fiscal period's id, from list_fiscal_periods or "+
+		onThePage)
 }
 
 func (t *getFiscalCloseBlockersTool) Policy() serviceports.ToolPolicy {
@@ -1372,7 +1411,7 @@ func (t *getFiscalCloseBlockersTool) Query(
 		return nil, err
 	}
 
-	id, err := requirePulid(params.Params, "fiscalPeriodId")
+	id, err := requirePulid(params.Params, paramFiscalPeriodID)
 	if err != nil {
 		return nil, err
 	}

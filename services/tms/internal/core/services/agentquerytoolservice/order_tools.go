@@ -89,7 +89,7 @@ func orderRowFrom(entity *order.Order, gate *fieldGate) orderRow {
 	if gate.show("baseAmount", "baseAmount") {
 		row.BaseAmount = nullDecimalMoney(entity.BaseAmount)
 	}
-	if gate.show("totalAmount", "totalAmount") {
+	if gate.show(fieldTotalAmount, fieldTotalAmount) {
 		row.TotalAmount = nullDecimalMoney(entity.TotalAmount)
 	}
 
@@ -110,7 +110,7 @@ func newListOrdersTool(
 		config:   querybuilder.GetFieldConfiguration((*order.Order)(nil)),
 		fields: []listField{
 			{
-				Name:   "status",
+				Name:   paramStatus,
 				Kind:   filterEnum,
 				Values: orderStatuses,
 				Note:   "Billed means invoiced; Closed means nothing more will be added",
@@ -118,7 +118,7 @@ func newListOrdersTool(
 			{Name: "orderNumber", Kind: filterText, Sortable: true},
 			{Name: "poNumber", Kind: filterText},
 			{Name: "bol", Kind: filterText},
-			{Name: "totalAmount", Kind: filterNumber, Sortable: true},
+			{Name: fieldTotalAmount, Kind: filterNumber, Sortable: true},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
 		access: newFieldAccess(permissions),
@@ -241,7 +241,7 @@ func (t *getOrderTool) Query(
 		})
 	}
 
-	showAmount := gate.show("amount", "charges.amount")
+	showAmount := gate.show(fieldAmount, "charges.amount")
 	for _, charge := range entity.Charges {
 		if charge == nil || len(view.Charges) == maxOrderCharges {
 			continue

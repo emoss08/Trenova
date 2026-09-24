@@ -177,7 +177,7 @@ func rateAgreementRowFrom(entity *rateagreement.RateAgreement, gate *fieldGate) 
 		Priority:      entity.Priority,
 		ContractRef:   entity.ContractRef,
 		EffectiveFrom: recordedDate(entity.EffectiveFrom),
-		EffectiveTo:   expectedDate(derefInt64(entity.EffectiveTo), "open-ended"),
+		EffectiveTo:   expectedDate(derefInt64(entity.EffectiveTo), absentOpenEnded),
 		AutoRenew:     entity.AutoRenew,
 		Currency:      entity.Currency,
 	}
@@ -220,13 +220,13 @@ func (t *listRateAgreementsTool) Description() string {
 
 func (t *listRateAgreementsTool) ParamSchema() map[string]any {
 	return objectSchema(withPaging(map[string]any{
-		"query": stringParam("Words to look for in the agreement's code or name."),
+		paramQuery: stringParam("Words to look for in the agreement's code or name."),
 		"partyType": enumParam("Customer agreements price what a customer is billed; "+
 			"Carrier agreements price what a carrier is paid.", rateAgreementParties),
-		"customerId": stringParam("Only this customer's agreements, by id from " +
+		paramCustomerID: stringParam("Only this customer's agreements, by id from " +
 			"list_customers."),
-		"carrierId": stringParam("Only this carrier's agreements, by id from list_carriers."),
-		"status":    enumParam("Only agreements in this status.", rateAgreementStatuses),
+		paramCarrierID: stringParam("Only this carrier's agreements, by id from list_carriers."),
+		paramStatus:    enumParam("Only agreements in this status.", rateAgreementStatuses),
 	}, defaultListLimit, maxListLimit))
 }
 
@@ -246,15 +246,15 @@ func (t *listRateAgreementsTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	status, err := validEnum(params.Params, "status", rateAgreementStatuses)
+	status, err := validEnum(params.Params, paramStatus, rateAgreementStatuses)
 	if err != nil {
 		return nil, err
 	}
-	customerID, err := optionalID(params.Params, "customerId")
+	customerID, err := optionalID(params.Params, paramCustomerID)
 	if err != nil {
 		return nil, err
 	}
-	carrierID, err := optionalID(params.Params, "carrierId")
+	carrierID, err := optionalID(params.Params, paramCarrierID)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +264,7 @@ func (t *listRateAgreementsTool) Query(
 		Filter: &pagination.QueryOptions{
 			TenantInfo: tenantOf(params),
 			Pagination: pagination.Info{Limit: window.fetch(), Offset: window.offset},
-			Query:      optionalString(params.Params, "query"),
+			Query:      optionalString(params.Params, paramQuery),
 		},
 		PartyType: rateagreement.PartyType(party),
 		Status:    rateagreement.Status(status),
@@ -276,15 +276,15 @@ func (t *listRateAgreementsTool) Query(
 		criteria.Field("party type", party)
 	}
 	if status != "" {
-		criteria.Field("status", status)
+		criteria.Field(paramStatus, status)
 	}
 	if customerID.IsNotNil() {
 		req.CustomerID = &customerID
-		criteria.Field("customer", customerID.String())
+		criteria.Field(labelCustomer, customerID.String())
 	}
 	if carrierID.IsNotNil() {
 		req.CarrierID = &carrierID
-		criteria.Field("carrier", carrierID.String())
+		criteria.Field(labelCarrier, carrierID.String())
 	}
 
 	result, err := t.agreements.List(ctx, req)
@@ -301,7 +301,9 @@ func (t *listRateAgreementsTool) Query(
 	}
 	rows, more := trim(window, rows)
 
-	return gatedResult(searchResult(criteria, rows, len(rows)).paged(window, more), gate), nil
+	found := searchResult(criteria, rows, len(rows)).paged(window, more)
+
+	return gatedResult(&found, gate), nil
 }
 
 type getRateAgreementTool struct {
@@ -451,8 +453,8 @@ func (t *getRateAgreementTool) Query(
 		BillToCustomerID:  pointerIDString(entity.BillToCustomerID),
 		RenewalNoticeDays: entity.RenewalNoticeDays,
 		RoundingMode:      string(entity.RoundingMode),
-		SubmittedAt:       expectedDate(derefInt64(entity.SubmittedAt), "not submitted"),
-		ApprovedAt:        expectedDate(derefInt64(entity.ApprovedAt), "not approved"),
+		SubmittedAt:       expectedDate(derefInt64(entity.SubmittedAt), absentNotSubmitted),
+		ApprovedAt:        expectedDate(derefInt64(entity.ApprovedAt), absentNotApproved),
 		RuleCount:         len(entity.Rules),
 		AccessorialCount:  len(entity.Accessorials),
 	}
@@ -515,7 +517,7 @@ func (t *getRateAgreementTool) rules(
 			Direction:     string(rule.Direction),
 			Priority:      rule.Priority,
 			EffectiveFrom: recordedDate(rule.EffectiveFrom),
-			EffectiveTo:   expectedDate(derefInt64(rule.EffectiveTo), "open-ended"),
+			EffectiveTo:   expectedDate(derefInt64(rule.EffectiveTo), absentOpenEnded),
 			HazmatOnly:    rule.HazmatOnly,
 			TempOnly:      rule.TempControlOnly,
 			FormulaID:     pointerIDString(rule.FormulaTemplateID),
@@ -565,7 +567,7 @@ func (t *getRateAgreementTool) accessorials(
 	accessorials []*rateagreement.RateAgreementAccessorial,
 	gate *fieldGate,
 ) []rateAccessorialRow {
-	showAmount := gate.show("amount", "accessorials.amount")
+	showAmount := gate.show(fieldAmount, "accessorials.amount")
 	showMax := gate.show("maxAmount", "accessorials.maxAmount")
 	showCondition := gate.show("applyCondition", "accessorials.applyCondition")
 
@@ -585,7 +587,7 @@ func (t *getRateAgreementTool) accessorials(
 			AutoApply:           accessorial.AutoApply,
 			FreeUnits:           accessorial.FreeUnits,
 			EffectiveFrom:       pointerDate(accessorial.EffectiveFrom),
-			EffectiveTo:         expectedDate(derefInt64(accessorial.EffectiveTo), "open-ended"),
+			EffectiveTo:         expectedDate(derefInt64(accessorial.EffectiveTo), absentOpenEnded),
 		}
 		if showAmount {
 			row.Amount = accessorial.Amount.String()
@@ -625,11 +627,11 @@ func (t *getRateMatrixTool) Description() string {
 
 func (t *getRateMatrixTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		"rateMatrixId": stringParam("The rate matrix's id, from a rule's rateMatrixId in " +
+		paramRateMatrixID: stringParam("The rate matrix's id, from a rule's rateMatrixId in " +
 			"get_rate_agreement or the page you are on."),
 		"cellOffset": intParam("How many cells to skip. When a result says cellsHasMore, " +
 			"call again with its nextCellOffset."),
-	}, "rateMatrixId")
+	}, paramRateMatrixID)
 }
 
 func (t *getRateMatrixTool) Policy() serviceports.ToolPolicy {
@@ -679,7 +681,7 @@ func (t *getRateMatrixTool) Query(
 		return nil, err
 	}
 
-	id, err := requirePulid(params.Params, "rateMatrixId")
+	id, err := requirePulid(params.Params, paramRateMatrixID)
 	if err != nil {
 		return nil, err
 	}
@@ -852,7 +854,7 @@ func (t *getFuelSurchargeRatesTool) Description() string {
 
 func (t *getFuelSurchargeRatesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		"query": stringParam("Words to look for in the program's code or name. Omit for " +
+		paramQuery: stringParam("Words to look for in the program's code or name. Omit for " +
 			"every active program."),
 	})
 }
@@ -916,7 +918,7 @@ func (t *getFuelSurchargeRatesTool) Query(
 		return nil, err
 	}
 
-	query := strings.ToLower(optionalString(params.Params, "query"))
+	query := strings.ToLower(optionalString(params.Params, paramQuery))
 	criteria := filtercatalog.NewCriteria("active fuel surcharge programs").At(clockFor(params))
 	criteria.Text(query)
 

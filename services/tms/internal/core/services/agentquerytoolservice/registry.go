@@ -336,3 +336,33 @@ func pointerIDString(id *pulid.ID) string {
 
 	return pulidString(*id)
 }
+
+const (
+	paramStatus         = "status"
+	paramCustomerID     = "customerId"
+	paramCarrierID      = "carrierId"
+	paramWorkerID       = "workerId"
+	paramAsOf           = "asOf"
+	paramFromDate       = "fromDate"
+	paramToDate         = "toDate"
+	paramStartDate      = "startDate"
+	paramFiscalPeriodID = "fiscalPeriodId"
+	paramSettlementID   = "settlementId"
+	paramPartnerID      = "partnerId"
+	paramInboundFileID  = "inboundFileId"
+	paramRateMatrixID   = "rateMatrixId"
+	paramDirection      = "direction"
+	paramSeverity       = "severity"
+
+	labelCustomer = "customer"
+	labelCarrier  = "carrier"
+
+	fieldTotalAmount   = "totalAmount"
+	fieldTotalMiles    = "totalMiles"
+	fieldAmount        = "amount"
+	fieldAmountMinor   = "amountMinor"
+	withheldAmounts    = "amounts"
+	withheldLineAmount = "lines.amount"
+
+	onThePage = "the page you are on."
+)

@@ -300,7 +300,7 @@ func (t *listTool) Query(
 	rows, more := trim(window, rows)
 	outcome := searchResult(criteria, rows, len(rows)).paged(window, more)
 	if gate != nil {
-		return gatedResult(outcome, gate), nil
+		return gatedResult(&outcome, gate), nil
 	}
 
 	return outcome, nil
