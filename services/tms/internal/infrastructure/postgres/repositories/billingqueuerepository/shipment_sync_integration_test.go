@@ -4,6 +4,10 @@ package billingqueuerepository
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -82,13 +86,28 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 	logger := zap.NewNop()
 
 	return &syncFixture{
-		ctx:          ctx,
-		db:           db,
-		repo:         New(Params{DB: conn, Logger: logger}).(*repository),
-		shipmentRepo: shipmentrepository.New(shipmentrepository.Params{DB: conn, Logger: logger}),
-		tenant:       pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
-		shipmentID:   shipment.ID,
-		payerID:      shipment.PayerID,
+		ctx:  ctx,
+		db:   db,
+		repo: New(Params{DB: conn, Logger: logger}).(*repository),
+		shipmentRepo: shipmentrepository.New(shipmentrepository.Params{
+			DB:     conn,
+			Logger: logger,
+			MoveRepository: shipmentmoverepository.New(
+				shipmentmoverepository.Params{DB: conn, Logger: logger},
+			),
+			AdditionalChargeRepository: shipmentadditionalchargerepository.New(
+				shipmentadditionalchargerepository.Params{DB: conn, Logger: logger},
+			),
+			ChargeAllocationRepository: chargeallocationrepository.New(
+				chargeallocationrepository.Params{DB: conn, Logger: logger},
+			),
+			CommodityRepository: shipmentcommodityrepository.New(
+				shipmentcommodityrepository.Params{DB: conn, Logger: logger},
+			),
+		}),
+		tenant:     pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+		shipmentID: shipment.ID,
+		payerID:    shipment.PayerID,
 	}
 }
 
