@@ -3,6 +3,7 @@ import type {
   AgentEgressClass,
   AgentSafety,
   AgentToolAutonomy,
+  AgentToolKind,
   AgentToolPolicy,
 } from "@/lib/graphql/agent-safety";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -163,83 +164,23 @@ function sourceLabel(t: TranslateFn, source: NonNullable<AgentToolPolicy["source
   }
 }
 
-export type PolicyFilter = {
-  egress: AgentEgressClass | "all";
-  resource: string | "all";
-};
+/** Every kind in the order a person meets them: reads, then changes, then the runtime's own. */
+export const KIND_ORDER: readonly AgentToolKind[] = ["Query", "Action", "Runtime"];
 
-export const ALL_POLICIES: PolicyFilter = { egress: "all", resource: "all" };
-
-/** A tool that needs no grant is filed under "general", as the agent form files it. */
-export function policyResource(policy: AgentToolPolicy): string {
-  return policy.needs?.resource ?? "general";
-}
-
-export function filterPolicies(
-  policies: readonly AgentToolPolicy[],
-  filter: PolicyFilter,
-): AgentToolPolicy[] {
-  return policies.filter(
-    (policy) =>
-      (filter.egress === "all" || policy.egress.includes(filter.egress)) &&
-      (filter.resource === "all" || policyResource(policy) === filter.resource),
-  );
-}
-
-export function resourceOptions(policies: readonly AgentToolPolicy[]): string[] {
-  return [...new Set(policies.map(policyResource))].sort((a, b) =>
-    resourceLabel(a).localeCompare(resourceLabel(b)),
-  );
-}
-
-export function answerWithoutAPerson(autonomy: AgentToolAutonomy): boolean {
-  return autonomy.answer === "RUNS_ON_ITS_OWN" || autonomy.answer === "CONDITIONAL";
-}
-
-export type SafetyFigures = {
-  /** Tools that change something and, on at least one agent, can do so without a person. */
-  runWithoutPerson: number;
-  /** Tools some of whose work leaves the organization. */
-  leaveOrganization: number;
-  /** Agents open to everyone that hold a tool reaching sensitive data or leaving. */
-  openWithSensitive: number;
-};
-
-export function safetyFigures(
-  policies: readonly AgentToolPolicy[],
-  agents: readonly AgentSafety[],
-): SafetyFigures {
-  const changes = new Set(
-    policies.filter((policy) => policy.effect === "Change").map((policy) => policy.name),
-  );
-  const unattended = new Set<string>();
-  for (const safety of agents) {
-    for (const tool of safety.tools) {
-      if (changes.has(tool.policyName) && answerWithoutAPerson(tool.clean)) {
-        unattended.add(tool.policyName);
-      }
-    }
+export function kindLabel(t: TranslateFn, kind: AgentToolKind): string {
+  switch (kind) {
+    case "Query":
+      return t("Reads");
+    case "Action":
+      return t("Changes");
+    case "Runtime":
+      return t("Runtime");
   }
-
-  return {
-    runWithoutPerson: unattended.size,
-    leaveOrganization: policies.filter((policy) => policy.leavesOrganization).length,
-    openWithSensitive: agents.filter((safety) =>
-      safety.reach.warnings.some((warning) => warning.kind === "OpenWithSensitiveTools"),
-    ).length,
-  };
 }
 
-/** The agents shown in the matrix: the ones picked, or the first agent until someone picks. */
-export function selectedAgents(
-  agents: readonly AgentSafety[],
-  picked: readonly string[],
-): AgentSafety[] {
-  if (picked.length === 0) {
-    return agents.slice(0, 1);
-  }
-  const wanted = new Set(picked);
-  return agents.filter((safety) => wanted.has(safety.agentId));
+/** The resources the server names, alphabetical by what a person reads, not by key. */
+export function sortResources(resources: readonly string[]): string[] {
+  return [...resources].sort((a, b) => resourceLabel(a).localeCompare(resourceLabel(b)));
 }
 
 /** Tools that act without a person first, so the rows worth reading lead. */

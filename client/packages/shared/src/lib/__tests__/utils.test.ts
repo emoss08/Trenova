@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   chunk,
+  pageSlice,
   getNameInitials,
   downloadJsonFile,
   downloadTextFile,
@@ -374,5 +375,24 @@ describe("chunk", () => {
     expect(() => chunk([1], 0)).toThrow(RangeError);
     expect(() => chunk([1], -1)).toThrow(RangeError);
     expect(() => chunk([1], 1.5)).toThrow(RangeError);
+  });
+});
+
+describe("pageSlice", () => {
+  const items = [1, 2, 3, 4, 5, 6, 7];
+
+  it("returns the items on a zero-based page, the last one short", () => {
+    expect(pageSlice(items, 0, 3)).toEqual([1, 2, 3]);
+    expect(pageSlice(items, 2, 3)).toEqual([7]);
+  });
+
+  it("returns an empty page past the end and treats a negative page as the first", () => {
+    expect(pageSlice(items, 5, 3)).toEqual([]);
+    expect(pageSlice(items, -1, 3)).toEqual([1, 2, 3]);
+  });
+
+  it("rejects a page size that could hold nothing", () => {
+    expect(() => pageSlice(items, 0, 0)).toThrow(RangeError);
+    expect(() => pageSlice(items, 0, 2.5)).toThrow(RangeError);
   });
 });

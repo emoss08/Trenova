@@ -2,13 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   EGRESS_ACCENT,
   EGRESS_ORDER,
-  filterPolicies,
+  KIND_ORDER,
   heldByLabel,
+  kindLabel,
   readsOutsideLabel,
   reachLabel,
-  resourceOptions,
-  safetyFigures,
-  selectedAgents,
+  sortResources,
   sortToolsByExposure,
 } from "../safety-model";
 import { policy, safety, tool } from "./fixtures";
@@ -16,143 +15,30 @@ import { policy, safety, tool } from "./fixtures";
 const t = (text: string | null | undefined, ...args: unknown[]) =>
   (text ?? "").replace(/\{(\d+)\}/g, (_m, i) => String(args[Number(i)]));
 
-describe("safetyFigures", () => {
-  const policies = [
-    policy({ name: "assign_move" }),
-    policy({
-      name: "email_customer",
-      egress: ["ExternalRecipient"],
-      leavesOrganization: true,
-      promotableTier: "ActWithApproval",
-    }),
-    policy({ name: "get_shipment", kind: "Query", effect: "Lookup", egress: ["None"] }),
-    policy({
-      name: "create_report",
-      egress: ["Personal", "Internal"],
-      hasClassify: true,
-      personalExemption: true,
-    }),
-  ];
-
-  // A read is not something anyone worries an agent did on its own, so only
-  // tools that change something count, and each tool counts once however many
-  // agents run it.
-  it("counts changing tools that run without a person on any agent, once each", () => {
-    const figures = safetyFigures(policies, [
-      safety("a1", "Dispatch", {
-        tools: [
-          tool("assign_move", { answer: "RUNS_ON_ITS_OWN" }),
-          tool("get_shipment", { answer: "RUNS_ON_ITS_OWN" }),
-          tool("email_customer", { answer: "NEEDS_APPROVAL", tier: "ActWithApproval" }),
-        ],
-      }),
-      safety("a2", "Reports", {
-        tools: [
-          tool("assign_move", { answer: "RUNS_ON_ITS_OWN" }),
-          tool("create_report", { answer: "CONDITIONAL" }),
-        ],
-      }),
+describe("sortResources", () => {
+  // The server names resources by key; a person reads them by label, and a
+  // tool that needs no grant is filed under general.
+  it("orders resources by the label a person reads", () => {
+    expect(sortResources(["shipment_move", "general", "customer"])).toEqual([
+      "customer",
+      "general",
+      "shipment_move",
     ]);
-
-    expect(figures.runWithoutPerson).toBe(2);
-    expect(figures.leaveOrganization).toBe(1);
-    expect(figures.openWithSensitive).toBe(0);
+    expect(sortResources([])).toEqual([]);
   });
 
-  // The clean answer is the one that says what an agent may do; a run that
-  // read outside text only ever does less.
-  it("reads the clean answer, not the tainted one", () => {
-    const figures = safetyFigures(policies, [
-      safety("a1", "Desk", {
-        tools: [
-          tool(
-            "assign_move",
-            { answer: "PROPOSE_ONLY", tier: "Propose" },
-            { answer: "RUNS_ON_ITS_OWN" },
-          ),
-        ],
-      }),
-    ]);
-
-    expect(figures.runWithoutPerson).toBe(0);
-  });
-
-  it("does not count a simulated write as one made without a person", () => {
-    const figures = safetyFigures(policies, [
-      safety("a1", "Rehearsal", {
-        tools: [tool("assign_move", { answer: "SIMULATED", heldBy: ["simulation_mode"] })],
-      }),
-    ]);
-
-    expect(figures.runWithoutPerson).toBe(0);
-  });
-
-  it("counts open agents holding sensitive tools", () => {
-    const figures = safetyFigures(policies, [
-      safety("a1", "Open", {
-        reach: {
-          accessMode: "Everyone",
-          roles: [],
-          warnings: [{ kind: "OpenWithSensitiveTools", tools: ["email_customer"] }],
-        },
-      }),
-      safety("a2", "Nobody", {
-        reach: {
-          accessMode: "Roles",
-          roles: [],
-          warnings: [{ kind: "NoAudience", tools: [] }],
-        },
-      }),
-      safety("a3", "Quiet"),
-    ]);
-
-    expect(figures.openWithSensitive).toBe(1);
-  });
-
-  it("is all zeros with no agents and no tools", () => {
-    expect(safetyFigures([], [])).toEqual({
-      runWithoutPerson: 0,
-      leaveOrganization: 0,
-      openWithSensitive: 0,
-    });
-  });
-});
-
-describe("filterPolicies", () => {
-  const policies = [
-    policy({ name: "assign_move" }),
-    policy({
-      name: "add_shipment_comment",
-      egress: ["Internal", "CustomerVisible", "DriverVisible"],
-      needs: { resource: "shipment", operation: "update" },
-    }),
-    policy({ name: "add_home_widget", egress: ["Personal"], needs: null }),
-  ];
-
-  // A tool whose calls reach several audiences is found under each of them.
-  it("finds a tool under every class it can reach", () => {
-    expect(
-      filterPolicies(policies, { egress: "CustomerVisible", resource: "all" }).map((p) => p.name),
-    ).toEqual(["add_shipment_comment"]);
-    expect(
-      filterPolicies(policies, { egress: "Internal", resource: "all" }).map((p) => p.name),
-    ).toEqual(["assign_move", "add_shipment_comment"]);
-  });
-
-  it("files a tool that needs no grant under general", () => {
-    expect(
-      filterPolicies(policies, { egress: "all", resource: "general" }).map((p) => p.name),
-    ).toEqual(["add_home_widget"]);
-    expect(resourceOptions(policies)).toEqual(["general", "shipment", "shipment_move"]);
-  });
-
-  it("combines both filters", () => {
-    expect(filterPolicies(policies, { egress: "Personal", resource: "shipment" })).toEqual([]);
-    expect(filterPolicies(policies, { egress: "all", resource: "all" })).toHaveLength(3);
+  it("does not reorder the list it was given", () => {
+    const resources = ["shipment", "customer"];
+    sortResources(resources);
+    expect(resources).toEqual(["shipment", "customer"]);
   });
 });
 
 describe("labels", () => {
+  it("names every kind of tool", () => {
+    expect(KIND_ORDER.map((kind) => kindLabel(t, kind))).toEqual(["Reads", "Changes", "Runtime"]);
+  });
+
   it("gives every class its own accent", () => {
     const accents = EGRESS_ORDER.map((egress) => EGRESS_ACCENT[egress]);
     expect(new Set(accents).size).toBe(EGRESS_ORDER.length);
@@ -211,22 +97,6 @@ describe("labels", () => {
         safety("a3", "Nobody", { reach: { accessMode: "Roles", roles: [], warnings: [] } }),
       ),
     ).toBe("Restricted to roles");
-  });
-});
-
-describe("selectedAgents", () => {
-  const agents = [safety("a1", "Alpha"), safety("a2", "Beta"), safety("a3", "Gamma")];
-
-  it("shows the first agent until someone picks", () => {
-    expect(selectedAgents(agents, []).map((a) => a.agentId)).toEqual(["a1"]);
-    expect(selectedAgents([], [])).toEqual([]);
-  });
-
-  it("keeps the agents' own order and drops ids no longer listed", () => {
-    expect(selectedAgents(agents, ["a3", "a1", "gone"]).map((a) => a.agentId)).toEqual([
-      "a1",
-      "a3",
-    ]);
   });
 });
 
