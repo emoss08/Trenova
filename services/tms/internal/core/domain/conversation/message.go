@@ -65,6 +65,7 @@ type Message struct {
 	ToolFailed  bool             `json:"toolFailed" bun:"tool_failed,type:BOOLEAN,notnull,default:false"`
 	ToolEffect  agent.ToolEffect `json:"effect,omitempty" bun:"-"`
 	ToolSummary string           `json:"summary,omitempty" bun:"tool_summary,type:TEXT,nullzero"`
+	FoundTools  []string         `json:"foundTools,omitempty" bun:"found_tools,type:JSONB,nullzero"`
 
 	// ScopeStage, ScopeCategory and ScopeReason record the guard's verdict on a
 	// user turn, or on an assistant turn the output guard refused.
