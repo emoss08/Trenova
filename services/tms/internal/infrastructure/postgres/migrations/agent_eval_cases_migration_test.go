@@ -81,6 +81,29 @@ func TestAgentEvalCasesMigration_KeysTimesAndComments(t *testing.T) {
 		`CREATE UNIQUE INDEX IF NOT EXISTS "uq_agent_eval_cases_content"`)
 }
 
+func TestAgentEvalCasesMigration_RatingsAndCasesPointAtEachOther(t *testing.T) {
+	t.Parallel()
+
+	up := readMigration(t, evalCasesUp)
+	down := readMigration(t, evalCasesDown)
+
+	assert.Contains(t, up,
+		`FOREIGN KEY ("source_feedback_id", "business_unit_id", "organization_id") `+
+			`REFERENCES "ai_feedback"("id", "business_unit_id", "organization_id") `+
+			`ON UPDATE NO ACTION ON DELETE SET NULL ("source_feedback_id")`,
+		"a purged rating clears the case's link rather than deleting the case")
+	assert.Contains(t, up,
+		`ADD CONSTRAINT "fk_ai_feedback_eval_case" FOREIGN KEY `+
+			`("eval_case_id", "business_unit_id", "organization_id") `+
+			`REFERENCES "agent_eval_cases"("id", "business_unit_id", "organization_id") `+
+			`ON UPDATE NO ACTION ON DELETE SET NULL ("eval_case_id")`,
+		"a purged case clears the rating's link rather than deleting the rating")
+	assert.Less(t,
+		strings.Index(down, `DROP CONSTRAINT IF EXISTS "fk_ai_feedback_eval_case"`),
+		strings.Index(down, `DROP TABLE IF EXISTS "agent_eval_cases"`),
+		"the rating's link is dropped before the table it points at")
+}
+
 func TestAgentEvaluationsMigration_ExactlyOneSource(t *testing.T) {
 	t.Parallel()
 

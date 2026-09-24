@@ -397,6 +397,7 @@ func (t *Turn) completionRequest() *serviceports.ChatCompletionRequest {
 			AgentDefinitionID: definition.ID,
 			ThreadID:          req.ThreadID,
 			RunID:             req.RunID,
+			Purpose:           req.AttributedPurpose(),
 		},
 	}
 }

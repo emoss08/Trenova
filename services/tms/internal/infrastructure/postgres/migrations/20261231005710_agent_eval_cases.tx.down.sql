@@ -47,4 +47,11 @@ ALTER TABLE "agent_evaluations"
     ALTER COLUMN "source_run_id" SET NOT NULL;
 
 --bun:split
+ALTER TABLE "ai_feedback"
+    DROP CONSTRAINT IF EXISTS "fk_ai_feedback_eval_case";
+
+--bun:split
+UPDATE "ai_feedback" SET "eval_case_id" = NULL WHERE "eval_case_id" IS NOT NULL;
+
+--bun:split
 DROP TABLE IF EXISTS "agent_eval_cases";

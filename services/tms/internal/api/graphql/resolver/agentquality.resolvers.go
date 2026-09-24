@@ -79,7 +79,7 @@ func (r *mutationResolver) CreateAgentEvalCase(ctx context.Context, input gqlmod
 		return nil, errortypes.NewValidationError(
 			"input",
 			errortypes.ErrInvalid,
-			"Create a case from exactly one of a message, a proposal or a curated question",
+			"Create a case from exactly one of a message, a proposal, a rating or a curated question",
 		)
 	case input.FromMessage != nil:
 		request, reqErr := evalCaseFromMessage(input.FromMessage)
@@ -96,6 +96,16 @@ func (r *mutationResolver) CreateAgentEvalCase(ctx context.Context, input gqlmod
 		captured, err = r.agentEvalCaseService.CreateFromProposal(ctx, &services.CreateEvalCaseFromProposalRequest{
 			ProposalID: proposalID,
 			Title:      derefString(input.FromProposal.Title),
+			TenantInfo: tenant,
+		}, actor)
+	case input.FromFeedback != nil:
+		feedbackID, parseErr := pulid.MustParse(input.FromFeedback.FeedbackID)
+		if parseErr != nil {
+			return nil, parseErr
+		}
+		captured, err = r.agentEvalCaseService.CreateFromFeedback(ctx, &services.CreateEvalCaseFromFeedbackRequest{
+			FeedbackID: feedbackID,
+			Title:      derefString(input.FromFeedback.Title),
 			TenantInfo: tenant,
 		}, actor)
 	default:

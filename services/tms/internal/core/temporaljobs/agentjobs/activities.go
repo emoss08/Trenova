@@ -59,6 +59,8 @@ type ActivitiesParams struct {
 	EvalCases     repositories.AgentEvalCaseRepository
 	CaseService   serviceports.AgentEvalCaseService `optional:"true"`
 	Users         repositories.UserRepository
+	QueryTools    serviceports.AgentQueryToolRegistry `optional:"true"`
+	ActionTools   serviceports.AgentToolRegistry      `optional:"true"`
 	Decisions     repositories.AgentDecisionRepository
 	Conversations repositories.ConversationRepository `optional:"true"`
 	// Watchtower puts a run that could not finish on the feed, so a
@@ -96,6 +98,9 @@ type Activities struct {
 
 func NewActivities(p ActivitiesParams) *Activities {
 	logger := p.Logger.Named("agent-activities")
+	scorer := agentscoring.New(
+		agentscoring.WithToolPolicies(toolPolicies(p.QueryTools, p.ActionTools)),
+	)
 
 	return &Activities{
 		logger:        logger,
@@ -115,7 +120,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		evalCases:     p.EvalCases,
 		caseService:   p.CaseService,
 		users:         p.Users,
-		scorer:        agentscoring.New(),
+		scorer:        scorer,
 		decisions:     p.Decisions,
 		conversations: p.Conversations,
 		subjects:      p.Subjects,

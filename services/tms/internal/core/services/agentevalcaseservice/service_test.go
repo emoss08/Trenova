@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
+	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -197,6 +198,40 @@ func (f fakeRetention) List(context.Context) (
 	return &pagination.ListResult[*tenant.DataRetention]{Items: f.items}, nil
 }
 
+type fakeFeedback struct {
+	rows  map[pulid.ID]*aifeedback.Feedback
+	links []repositories.LinkAIFeedbackEvalCaseRequest
+}
+
+func (f *fakeFeedback) ListByIDs(
+	_ context.Context,
+	req repositories.ListAIFeedbackByIDsRequest,
+) ([]*aifeedback.Feedback, error) {
+	out := make([]*aifeedback.Feedback, 0, len(req.IDs))
+	for _, id := range req.IDs {
+		row, ok := f.rows[id]
+		if ok && row.OrganizationID == req.TenantInfo.OrgID &&
+			row.BusinessUnitID == req.TenantInfo.BuID {
+			out = append(out, row)
+		}
+	}
+
+	return out, nil
+}
+
+func (f *fakeFeedback) LinkEvalCase(
+	_ context.Context,
+	req repositories.LinkAIFeedbackEvalCaseRequest,
+) error {
+	f.links = append(f.links, req)
+	if row, ok := f.rows[req.FeedbackID]; ok {
+		caseID := req.EvalCaseID
+		row.EvalCaseID = &caseID
+	}
+
+	return nil
+}
+
 type world struct {
 	tenant     pagination.TenantInfo
 	definition *agentdefinition.Definition
@@ -205,6 +240,7 @@ type world struct {
 	proposal   *agent.AgentProposal
 	messages   []conversation.Message
 	cases      *fakeCases
+	feedback   *fakeFeedback
 	service    *Service
 }
 
@@ -329,6 +365,7 @@ func newWorld(t *testing.T, decision *agent.AgentDecision) *world {
 	}
 
 	cases := newFakeCases()
+	feedback := &fakeFeedback{rows: map[pulid.ID]*aifeedback.Feedback{}}
 	service := &Service{
 		l:             zap.NewNop(),
 		cases:         cases,
@@ -337,6 +374,7 @@ func newWorld(t *testing.T, decision *agent.AgentDecision) *world {
 		runs:          fakeRuns{run: run},
 		definitions:   fakeDefinitions{definition: definition},
 		conversations: fakeConversations{thread: thread, messages: messages},
+		feedback:      feedback,
 		retention:     fakeRetention{},
 		redactor:      testRedactor(t),
 		now:           func() int64 { return 1_700_000_000 },
@@ -350,8 +388,28 @@ func newWorld(t *testing.T, decision *agent.AgentDecision) *world {
 		proposal:   proposal,
 		messages:   messages,
 		cases:      cases,
+		feedback:   feedback,
 		service:    service,
 	}
+}
+
+func (w *world) rate(rating aifeedback.Rating, target pulid.ID) *aifeedback.Feedback {
+	threadID := w.thread.ID
+	turnID := pulid.MustNew("atrn_")
+	row := &aifeedback.Feedback{
+		ID:             pulid.MustNew("aifb_"),
+		OrganizationID: w.tenant.OrgID,
+		BusinessUnitID: w.tenant.BuID,
+		UserID:         w.thread.UserID,
+		TargetType:     aifeedback.TargetAssistantMessage,
+		TargetID:       target,
+		ThreadID:       &threadID,
+		TurnID:         &turnID,
+		Rating:         rating,
+	}
+	w.feedback.rows[row.ID] = row
+
+	return row
 }
 
 func (w *world) fromProposal(t *testing.T) *serviceports.EvalCaseCapture {
@@ -461,7 +519,6 @@ func TestCreateFromMessage_DedupesByContentHash(t *testing.T) {
 	request := &serviceports.CreateEvalCaseFromMessageRequest{
 		ThreadID:   w.thread.ID,
 		MessageID:  liked,
-		FeedbackID: pulid.MustNew("afb_"),
 		TenantInfo: w.tenant,
 	}
 
@@ -478,9 +535,72 @@ func TestCreateFromMessage_DedupesByContentHash(t *testing.T) {
 	evalCase := first.Case
 	assert.Equal(t, agentquality.CaseSourceThumbsUp, evalCase.Source)
 	assert.Equal(t, liked, *evalCase.SourceMessageID)
-	assert.Equal(t, request.FeedbackID, *evalCase.SourceFeedbackID)
+	assert.Nil(t, evalCase.SourceFeedbackID)
 	require.Len(t, evalCase.Expected.Tools, 1)
 	assert.Equal(t, "get_customer", evalCase.Expected.Tools[0].Name)
+}
+
+func TestCreateFromFeedback_CapturesTheLikedReplyAndLinksTheRating(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, nil)
+	liked := w.messages[7].ID
+	rating := w.rate(aifeedback.RatingPositive, liked)
+	request := &serviceports.CreateEvalCaseFromFeedbackRequest{
+		FeedbackID: rating.ID,
+		TenantInfo: w.tenant,
+	}
+
+	first, err := w.service.CreateFromFeedback(t.Context(), request, nil)
+	require.NoError(t, err)
+	evalCase := first.Case
+	assert.Equal(t, agentquality.CaseSourceThumbsUp, evalCase.Source)
+	assert.Equal(t, liked, *evalCase.SourceMessageID)
+	assert.Equal(t, rating.ID, *evalCase.SourceFeedbackID)
+	assert.Equal(t, *rating.TurnID, *evalCase.SourceTurnID)
+	require.Len(t, w.feedback.links, 1)
+	assert.Equal(t, evalCase.ID, w.feedback.links[0].EvalCaseID)
+
+	second, err := w.service.CreateFromFeedback(t.Context(), request, nil)
+	require.NoError(t, err)
+	assert.True(t, second.Duplicate)
+	assert.Equal(t, evalCase.ID, second.Case.ID)
+	assert.Len(t, w.feedback.links, 1, "a rating already linked is not linked again")
+	assert.Equal(t, 1, w.cases.creates)
+}
+
+func TestCreateFromFeedback_RefusesAThumbsDown(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, nil)
+	rating := w.rate(aifeedback.RatingNegative, w.messages[7].ID)
+	_, err := w.service.CreateFromFeedback(
+		t.Context(),
+		&serviceports.CreateEvalCaseFromFeedbackRequest{FeedbackID: rating.ID, TenantInfo: w.tenant},
+		nil,
+	)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsBusinessError(err))
+	assert.Zero(t, w.cases.creates)
+	assert.Empty(t, w.feedback.links)
+}
+
+func TestCreateFromFeedback_RefusesARatingFromAnotherTenant(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, nil)
+	rating := w.rate(aifeedback.RatingPositive, w.messages[7].ID)
+	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	_, err := w.service.CreateFromFeedback(
+		t.Context(),
+		&serviceports.CreateEvalCaseFromFeedbackRequest{FeedbackID: rating.ID, TenantInfo: other},
+		nil,
+	)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsNotFoundError(err))
+	assert.Zero(t, w.cases.creates)
 }
 
 func TestCreateFromMessage_RefusesAQuestion(t *testing.T) {

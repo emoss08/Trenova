@@ -865,6 +865,42 @@ func TestRun_KeepsLatencyAndCostOnTheTurn(t *testing.T) {
 	assert.False(t, completion.LastReq.Attribution.ThreadID.IsNil())
 }
 
+func TestRun_AttributesAReplayToEvaluationNotTheLiveAgent(t *testing.T) {
+	t.Parallel()
+
+	for name, req := range map[string]*serviceports.RunRequest{
+		"by purpose": {UsagePurpose: serviceports.AIUsagePurposeEvaluation},
+		"by run id":  {RunID: pulid.MustNew(agent.EvaluationIDPrefix)},
+	} {
+		completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+			{Text: "Replayed.", ModelIdentifier: "test-model"},
+		}}
+		rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+		req.Definition = testDefinition()
+		req.Actor = testActor()
+		req.Input = "Where?"
+
+		_, err := rt.Run(t.Context(), req)
+		require.NoError(t, err, name)
+		assert.Equal(t, serviceports.AIUsagePurposeEvaluation,
+			completion.LastReq.Attribution.Purpose, name)
+		assert.True(t, completion.LastReq.Attribution.Evaluates(), name)
+	}
+
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		{Text: "Live.", ModelIdentifier: "test-model"},
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	_, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition(),
+		Actor:      testActor(),
+		Input:      "Where?",
+		RunID:      pulid.MustNew("ar_"),
+	})
+	require.NoError(t, err)
+	assert.False(t, completion.LastReq.Attribution.Evaluates())
+}
+
 // The router's retry notice reaches the reader as a stream event, so the
 // half reply they watched is discarded on screen before the whole one
 // arrives, and the person's own model choice is pinned on the request.

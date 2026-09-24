@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
+	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -89,6 +90,14 @@ type conversationReader interface {
 	) ([]conversation.Message, error)
 }
 
+type feedbackStore interface {
+	ListByIDs(
+		ctx context.Context,
+		req repositories.ListAIFeedbackByIDsRequest,
+	) ([]*aifeedback.Feedback, error)
+	LinkEvalCase(ctx context.Context, req repositories.LinkAIFeedbackEvalCaseRequest) error
+}
+
 type retentionReader interface {
 	List(ctx context.Context) (*pagination.ListResult[*tenant.DataRetention], error)
 }
@@ -103,6 +112,7 @@ type Params struct {
 	Runs          repositories.AgentRunRepository
 	Definitions   repositories.AgentDefinitionRepository
 	Conversations repositories.ConversationRepository
+	Feedback      repositories.AIFeedbackRepository
 	Retention     repositories.DataRetentionRepository
 	Registry      *permission.Registry
 	QueryTools    services.AgentQueryToolRegistry
@@ -119,6 +129,7 @@ type Service struct {
 	runs          runReader
 	definitions   definitionReader
 	conversations conversationReader
+	feedback      feedbackStore
 	retention     retentionReader
 	redactor      *Redactor
 	subjects      services.AgentSubjectDescriber
@@ -135,6 +146,7 @@ func New(p Params) services.AgentEvalCaseService {
 		runs:          p.Runs,
 		definitions:   p.Definitions,
 		conversations: p.Conversations,
+		feedback:      p.Feedback,
 		retention:     p.Retention,
 		redactor:      NewRedactor(p.Registry, p.QueryTools, p.ActionTools),
 		subjects:      p.Subjects,

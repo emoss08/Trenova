@@ -19,6 +19,11 @@ type CreateEvalCaseFromProposalRequest struct {
 type CreateEvalCaseFromMessageRequest struct {
 	ThreadID   pulid.ID
 	MessageID  pulid.ID
+	Title      string
+	TenantInfo pagination.TenantInfo
+}
+
+type CreateEvalCaseFromFeedbackRequest struct {
 	FeedbackID pulid.ID
 	Title      string
 	TenantInfo pagination.TenantInfo
@@ -96,6 +101,11 @@ type AgentEvalCaseService interface {
 	CreateFromMessage(
 		ctx context.Context,
 		req *CreateEvalCaseFromMessageRequest,
+		actor *RequestActor,
+	) (*EvalCaseCapture, error)
+	CreateFromFeedback(
+		ctx context.Context,
+		req *CreateEvalCaseFromFeedbackRequest,
 		actor *RequestActor,
 	) (*EvalCaseCapture, error)
 	CreateCurated(

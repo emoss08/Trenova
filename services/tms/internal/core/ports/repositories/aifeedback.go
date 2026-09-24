@@ -70,6 +70,12 @@ type ListNegativeAIFeedbackRequest struct {
 	Limit      int
 }
 
+type LinkAIFeedbackEvalCaseRequest struct {
+	TenantInfo pagination.TenantInfo
+	FeedbackID pulid.ID
+	EvalCaseID pulid.ID
+}
+
 type PurgeAIFeedbackRequest struct {
 	TenantInfo pagination.TenantInfo
 	Before     int64
@@ -95,6 +101,7 @@ type AIFeedbackRepository interface {
 		req ListNegativeAIFeedbackRequest,
 	) ([]*aifeedback.Feedback, error)
 	PurgeBefore(ctx context.Context, req PurgeAIFeedbackRequest) (int64, error)
+	LinkEvalCase(ctx context.Context, req LinkAIFeedbackEvalCaseRequest) error
 }
 
 type GetAIFeedbackMessageRequest struct {

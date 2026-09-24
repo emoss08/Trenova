@@ -62,6 +62,7 @@ func evalCaseSources(input gqlmodel.CreateAgentEvalCaseInput) int {
 	for _, set := range []bool{
 		input.FromMessage != nil,
 		input.FromProposal != nil,
+		input.FromFeedback != nil,
 		input.Curated != nil,
 	} {
 		if set {
@@ -84,18 +85,11 @@ func evalCaseFromMessage(
 		return nil, err
 	}
 
-	request := &services.CreateEvalCaseFromMessageRequest{
+	return &services.CreateEvalCaseFromMessageRequest{
 		ThreadID:  threadID,
 		MessageID: messageID,
 		Title:     derefString(input.Title),
-	}
-	if input.FeedbackID != nil && *input.FeedbackID != "" {
-		if request.FeedbackID, err = pulid.MustParse(*input.FeedbackID); err != nil {
-			return nil, err
-		}
-	}
-
-	return request, nil
+	}, nil
 }
 
 func evalCaseCurated(

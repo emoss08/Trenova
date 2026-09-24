@@ -424,6 +424,7 @@ func (a *Activities) scoreReplay(
 		Actions:      actions,
 		Refused:      observed.refused,
 		Judge:        evaluation.Judge,
+		Trace:        observed.trace,
 		ObservedText: observed.results,
 	})
 	score := checks.Final
@@ -435,11 +436,20 @@ func (a *Activities) scoreReplay(
 
 type observedReplay struct {
 	calls   []agent.ObservedCall
+	trace   []agentscoring.TracedCall
 	results []string
 	refused bool
 }
 
 func observeReplay(outcome *serviceports.RunResult) observedReplay {
+	autoRun := make(map[string]struct{}, len(outcome.Actions))
+	for i := range outcome.Actions {
+		action := &outcome.Actions[i]
+		if action.Tier == agent.TierAutoExecute && action.ToolCallID != "" {
+			autoRun[action.ToolCallID] = struct{}{}
+		}
+	}
+
 	observed := observedReplay{refused: outcome.OutputRefused}
 	for i := range outcome.Messages {
 		message := &outcome.Messages[i]
@@ -455,6 +465,12 @@ func observeReplay(outcome *serviceports.RunResult) observedReplay {
 				observed.calls = append(observed.calls, agent.ObservedCall{
 					ToolName:  call.Name,
 					Arguments: call.Arguments,
+				})
+				_, ran := autoRun[call.ID]
+				observed.trace = append(observed.trace, agentscoring.TracedCall{
+					ToolName:  call.Name,
+					Arguments: call.Arguments,
+					AutoRun:   ran,
 				})
 			}
 		case conversation.RoleTool:
@@ -727,4 +743,28 @@ func (a *Activities) chatReplayInput(
 		history: messages[:turn],
 		context: runtimeContext,
 	}, nil
+}
+
+func toolPolicies(
+	queryTools serviceports.AgentQueryToolRegistry,
+	actionTools serviceports.AgentToolRegistry,
+) agentscoring.PolicyLookup {
+	if queryTools == nil && actionTools == nil {
+		return nil
+	}
+
+	return func(name string) (serviceports.ToolPolicy, bool) {
+		if queryTools != nil {
+			if tool, ok := queryTools.Get(name); ok {
+				return tool.Policy(), true
+			}
+		}
+		if actionTools != nil {
+			if tool, ok := actionTools.Get(name); ok {
+				return tool.Policy(), true
+			}
+		}
+
+		return serviceports.ToolPolicy{}, false
+	}
 }

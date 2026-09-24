@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
+	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -145,9 +146,97 @@ func (s *Service) CreateFromMessage(
 	req *services.CreateEvalCaseFromMessageRequest,
 	actor *services.RequestActor,
 ) (*services.EvalCaseCapture, error) {
-	tenantInfo := req.TenantInfo
+	return s.captureMessage(ctx, &messageCapture{
+		threadID:  req.ThreadID,
+		messageID: req.MessageID,
+		title:     req.Title,
+		tenant:    req.TenantInfo,
+	}, actor)
+}
+
+func (s *Service) CreateFromFeedback(
+	ctx context.Context,
+	req *services.CreateEvalCaseFromFeedbackRequest,
+	actor *services.RequestActor,
+) (*services.EvalCaseCapture, error) {
+	feedback, err := s.likedReply(ctx, req.TenantInfo, req.FeedbackID)
+	if err != nil {
+		return nil, err
+	}
+
+	captured, err := s.captureMessage(ctx, &messageCapture{
+		threadID:  *feedback.ThreadID,
+		messageID: feedback.TargetID,
+		title:     req.Title,
+		tenant:    req.TenantInfo,
+		feedback:  feedback,
+	}, actor)
+	if err != nil {
+		return nil, err
+	}
+	if feedback.EvalCaseID != nil && *feedback.EvalCaseID == captured.Case.ID {
+		return captured, nil
+	}
+
+	if err = s.feedback.LinkEvalCase(ctx, repositories.LinkAIFeedbackEvalCaseRequest{
+		TenantInfo: req.TenantInfo,
+		FeedbackID: feedback.ID,
+		EvalCaseID: captured.Case.ID,
+	}); err != nil {
+		return nil, err
+	}
+
+	return captured, nil
+}
+
+func (s *Service) likedReply(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	feedbackID pulid.ID,
+) (*aifeedback.Feedback, error) {
+	rows, err := s.feedback.ListByIDs(ctx, repositories.ListAIFeedbackByIDsRequest{
+		TenantInfo: tenantInfo,
+		IDs:        []pulid.ID{feedbackID},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, errortypes.NewNotFoundError("The rating is no longer on record")
+	}
+
+	feedback := rows[0]
+	if feedback.Rating != aifeedback.RatingPositive {
+		return nil, errortypes.NewBusinessError(
+			"Only a reply someone rated as good can become an evaluation case",
+		)
+	}
+	if feedback.TargetType != aifeedback.TargetAssistantMessage ||
+		feedback.ThreadID == nil || feedback.ThreadID.IsNil() {
+		return nil, errortypes.NewBusinessError(
+			"Only a rated reply in a conversation can become an evaluation case",
+		)
+	}
+
+	return feedback, nil
+}
+
+type messageCapture struct {
+	threadID  pulid.ID
+	messageID pulid.ID
+	title     string
+	tenant    pagination.TenantInfo
+	feedback  *aifeedback.Feedback
+}
+
+func (s *Service) captureMessage(
+	ctx context.Context,
+	req *messageCapture,
+	actor *services.RequestActor,
+) (*services.EvalCaseCapture, error) {
+	tenantInfo := req.tenant
 	thread, err := s.conversations.GetThreadOwned(ctx, repositories.GetThreadOwnedRequest{
-		ID:         req.ThreadID,
+		ID:         req.threadID,
 		TenantInfo: tenantInfo,
 	})
 	if err != nil {
@@ -164,12 +253,12 @@ func (s *Service) CreateFromMessage(
 
 	frozen, redacted, err := s.freezeChat(ctx, tenantInfo, turnAnchor{
 		threadID:  thread.ID,
-		messageID: req.MessageID,
+		messageID: req.messageID,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if frozen.messageID != req.MessageID {
+	if frozen.messageID != req.messageID {
 		return nil, errortypes.NewValidationError(
 			"messageId",
 			errortypes.ErrInvalid,
@@ -186,7 +275,7 @@ func (s *Service) CreateFromMessage(
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
 		AgentDefinitionID: definition.ID,
-		Title:             strings.TrimSpace(req.Title),
+		Title:             strings.TrimSpace(req.title),
 		Source:            agentquality.CaseSourceThumbsUp,
 		Status:            agentquality.CaseStatusCandidate,
 		Trigger:           agent.RunTriggerChat,
@@ -197,9 +286,11 @@ func (s *Service) CreateFromMessage(
 		},
 		CapturedFingerprint: agentquality.FingerprintOf(definition, promptVersion),
 	}
-	if req.FeedbackID.IsNotNil() {
-		feedbackID := req.FeedbackID
+	if req.feedback != nil {
+		feedbackID := req.feedback.ID
 		evalCase.SourceFeedbackID = &feedbackID
+		evalCase.SourceTurnID = req.feedback.TurnID
+		evalCase.SourceRunID = req.feedback.RunID
 	}
 	applyFrozen(evalCase, frozen, redacted, s.now())
 	if evalCase.Title == "" {

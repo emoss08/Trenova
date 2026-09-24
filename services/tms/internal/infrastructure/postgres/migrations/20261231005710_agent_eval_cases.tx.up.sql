@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS "agent_eval_cases" (
     CONSTRAINT "ck_agent_eval_cases_status" CHECK ("status" IN ('Candidate', 'Active', 'Quarantined', 'Retired')),
     CONSTRAINT "ck_agent_eval_cases_subject" CHECK (("subject_type" IS NULL) = ("subject_id" IS NULL)),
     CONSTRAINT "fk_agent_eval_cases_definition" FOREIGN KEY ("agent_definition_id", "business_unit_id", "organization_id") REFERENCES "agent_definitions"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_agent_eval_cases_feedback" FOREIGN KEY ("source_feedback_id", "business_unit_id", "organization_id") REFERENCES "ai_feedback"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE SET NULL ("source_feedback_id"),
     CONSTRAINT "fk_agent_eval_cases_created_by" FOREIGN KEY ("created_by_user_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE SET NULL,
     CONSTRAINT "fk_agent_eval_cases_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_agent_eval_cases_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE
@@ -89,7 +90,7 @@ COMMENT ON COLUMN "agent_eval_cases"."source_message_id" IS 'The message the cas
 
 COMMENT ON COLUMN "agent_eval_cases"."source_proposal_id" IS 'The decided proposal the case was captured from; at most one case per proposal';
 
-COMMENT ON COLUMN "agent_eval_cases"."source_feedback_id" IS 'The feedback that marked the reply as good, when the case came from one';
+COMMENT ON COLUMN "agent_eval_cases"."source_feedback_id" IS 'The ai_feedback rating that marked the reply as good, when the case came from one; cleared when the rating is purged';
 
 COMMENT ON COLUMN "agent_eval_cases"."input" IS 'The question the agent is asked, as the person asked it';
 
@@ -120,6 +121,14 @@ COMMENT ON COLUMN "agent_eval_cases"."captured_fingerprint" IS 'The agent versio
 COMMENT ON COLUMN "agent_eval_cases"."expires_at" IS 'When the case is purged regardless of the retention period';
 
 COMMENT ON COLUMN "agent_eval_cases"."created_by_user_id" IS 'The administrator who wrote or captured the case; empty for automatic capture';
+
+--bun:split
+ALTER TABLE "ai_feedback"
+    DROP CONSTRAINT IF EXISTS "fk_ai_feedback_eval_case";
+
+--bun:split
+ALTER TABLE "ai_feedback"
+    ADD CONSTRAINT "fk_ai_feedback_eval_case" FOREIGN KEY ("eval_case_id", "business_unit_id", "organization_id") REFERENCES "agent_eval_cases"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE SET NULL ("eval_case_id");
 
 --bun:split
 ALTER TABLE "agent_evaluations"

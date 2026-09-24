@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
@@ -455,4 +456,30 @@ func (r *repository) PurgeBefore(
 	}
 
 	return rows, nil
+}
+
+func (r *repository) LinkEvalCase(
+	ctx context.Context,
+	req repositories.LinkAIFeedbackEvalCaseRequest,
+) error {
+	cols := buncolgen.FeedbackColumns
+
+	res, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*aifeedback.Feedback)(nil)).
+		Set(cols.EvalCaseID.Set(), req.EvalCaseID).
+		Set(cols.Version.Inc(1)).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.FeedbackScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.FeedbackID)
+		}).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to link ai feedback to an evaluation case", zap.Error(err))
+
+		return fmt.Errorf("link ai feedback to evaluation case: %w", err)
+	}
+
+	return dberror.CheckRowsAffected(res, "AIFeedback", req.FeedbackID.String())
 }
