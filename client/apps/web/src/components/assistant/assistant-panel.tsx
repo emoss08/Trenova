@@ -53,7 +53,7 @@ export function AssistantPanel({ expanded, onToggleExpanded, onClose }: Assistan
   const [deleting, setDeleting] = useState<AssistantThread | null>(null);
 
   const threadsQuery = useQuery(queries.assistant.threads());
-  const agentsQuery = useQuery(queries.assistant.agents(true, true));
+  const agentsQuery = useQuery(queries.assistant.myAgents());
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
 
   const threads = useMemo(() => threadsQuery.data?.items ?? [], [threadsQuery.data?.items]);

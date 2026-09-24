@@ -3,6 +3,7 @@ import {
   type AgentChoice,
   type AgentChoicePage,
   type AgentChoiceQuery,
+  type AgentChoiceSource,
   type AgentOrigin,
 } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
@@ -27,6 +28,12 @@ export type UseAgentChoicesOptions = {
   recentIds: readonly string[];
   pageSize?: number;
   enabled?: boolean;
+  /**
+   * Whose agents: the person's own, which every chat surface lists, or the
+   * organization's, which only AI Control lists. Recent agents lead only the
+   * person's own list.
+   */
+  source?: AgentChoiceSource;
 };
 
 export type AgentChoices = {
@@ -64,13 +71,15 @@ export function useAgentChoices({
   recentIds,
   pageSize = AGENT_PAGE_SIZE,
   enabled = true,
+  source = "mine",
 }: UseAgentChoicesOptions): AgentChoices {
   const settledSearch = useDebounce(search.trim(), SEARCH_DEBOUNCE_MS);
-  const browsing = settledSearch === "" && origin === "all";
+  const leadsWithRecent = source === "mine" && recentIds.length > 0;
+  const browsing = settledSearch === "" && origin === "all" && leadsWithRecent;
 
   const recentQuery = useQuery({
     ...queries.assistant.agentChoicesByIds(recentIds),
-    enabled: enabled && recentIds.length > 0,
+    enabled: enabled && leadsWithRecent,
     staleTime: 60_000,
   });
   const recent = useMemo(
@@ -94,12 +103,12 @@ export function useAgentChoices({
     ReturnType<typeof queries.assistant.agentChoices>["queryKey"],
     string | undefined
   >({
-    queryKey: queries.assistant.agentChoices(query).queryKey,
+    queryKey: queries.assistant.agentChoices(query, source).queryKey,
     queryFn: ({ pageParam, signal }) =>
       fetchAgentChoices(
         query,
         { first: pageSize, after: pageParam, includeTotalCount: pageParam === undefined },
-        { signal },
+        { signal, source },
       ),
     initialPageParam: undefined,
     getNextPageParam: (lastPage) =>

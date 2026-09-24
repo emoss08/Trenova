@@ -3,7 +3,7 @@ import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { useAskableAgent } from "@/components/assistant/use-askable-agent";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
-import type { AgentChoice, AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { queries } from "@/lib/queries";
 import type { AssistantThread } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -36,7 +36,7 @@ const RECENT_LIMIT = 5;
 const ENTRANCE_STEP_MS = 45;
 
 export type DeskHomeProps = {
-  agents: AgentDefinitionRow[];
+  agents: AgentChoice[];
   threads: AssistantThread[];
   isLoading: boolean;
   isStarting: boolean;

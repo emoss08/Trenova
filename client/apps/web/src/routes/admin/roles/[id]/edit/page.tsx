@@ -27,6 +27,7 @@ import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { RolePageLayout } from "../../_components/role-builder-layout";
+import { RoleAgentsSection } from "../../_components/role-agents-section";
 import { RolePermissionMatrix } from "../../_components/role-permission-matrix";
 
 export function RoleEditPage() {
@@ -205,6 +206,8 @@ export function RoleEditPage() {
               />
             </CardContent>
           </Card>
+
+          {role.id && <RoleAgentsSection roleId={role.id} />}
         </RolePageLayout>
       </Form>
     </FormProvider>

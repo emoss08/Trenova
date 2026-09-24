@@ -142,6 +142,7 @@ export function DelegatesField({
                   recentIds={NO_RECENT}
                   hiddenIds={hidden}
                   onSelect={add}
+                  source="organization"
                   emptyMessage={t("No other agents people talk to are left to add.")}
                 />
               )}

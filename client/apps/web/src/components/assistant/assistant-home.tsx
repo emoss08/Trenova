@@ -1,5 +1,5 @@
 import { useAssistantStore } from "@/stores/assistant-store";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
@@ -14,7 +14,7 @@ import { LiveReplyLabel } from "./live-reply-label";
 import { useAskableAgent } from "./use-askable-agent";
 
 type AssistantHomeProps = {
-  agents: AgentDefinitionRow[];
+  agents: AgentChoice[];
   threads: AssistantThread[];
   /** Conversations with a reply still being written. */
   liveThreadIds?: ReadonlySet<string>;

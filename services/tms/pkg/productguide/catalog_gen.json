@@ -1,5 +1,5 @@
 {
-  "version": "sha256:e8b02e32472b0d8c39cbadafc1874e2b0f6fe52b26e2f6a6ab79793ffb21affc",
+  "version": "sha256:5a86b98699d538b06f72af18395d999e31297cd59da951faa7025ebd35ead776",
   "modules": [
     {
       "id": "home",
@@ -1833,6 +1833,26 @@
           ]
         },
         {
+          "title": "Choose who can use an agent",
+          "keywords": [
+            "agent access",
+            "restrict agent",
+            "agent permissions",
+            "give role an agent",
+            "who can see agent",
+            "limit agent to roles",
+            "agent missing from picker",
+            "sensitive tools"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Agents** in the rail. Each agent's row shows who can use it: **Everyone**, or how many roles it is limited to.",
+            "Select the pencil button on the agent, or select **New agent** to set it while creating one.",
+            "In **Who can use it**, choose **Everyone who can use the assistant** or **Specific roles**.",
+            "For **Specific roles**, pick the roles in **Roles**. On a saved agent, **Suggested roles** lists every role with what it could make of the agent: \"Can use all of its tools\", the resources it is missing, or \"Can't use the assistant\". Select **Add** beside one to choose it.",
+            "Select **Save**. From then on only people holding one of the chosen roles, or a role that inherits one, see the agent in the Desk and the assistant, and only they see and decide what it proposes."
+          ]
+        },
+        {
           "title": "Turn an agent on or off, run it now, or remove it",
           "keywords": [
             "disable agent",
@@ -1895,11 +1915,12 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
+      "notes": "Opening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data shows a warning there; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
       "related": [
         "/admin/document-intelligence",
         "/admin/inbound-mailboxes",
-        "/admin/audit-logs"
+        "/admin/audit-logs",
+        "/admin/roles"
       ],
       "covers": [],
       "createAction": null,
@@ -4331,6 +4352,22 @@
           ]
         },
         {
+          "title": "Give a role access to an agent",
+          "keywords": [
+            "role agents",
+            "grant agent",
+            "AI agent access",
+            "which agents a role can use",
+            "remove agent from role"
+          ],
+          "steps": [
+            "Open [Roles](/admin/roles) and select the role's row. The edit page opens.",
+            "Go to **Agents**. It lists the agents this role is granted.",
+            "Select **Add an agent** and pick the agent. It is saved at once, without **Save changes**.",
+            "To take one away, select the remove button at the end of its row; that is saved at once too."
+          ]
+        },
+        {
           "title": "Find a role",
           "keywords": [
             "search roles"
@@ -4341,11 +4378,12 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to roles; **New role** needs create access. System roles show the banner \"This is a system role. Some properties may be restricted.\" and their name, sensitivity and description cannot be changed. Changes to a role apply to everyone who holds it. A role's job function (**Core responsibility**) is also what [Home screens](/admin/home-layouts) can assign by.",
+      "notes": "Viewing the page needs read access to roles; **New role** needs create access. System roles show the banner \"This is a system role. Some properties may be restricted.\" and their name, sensitivity and description cannot be changed. Changes to a role apply to everyone who holds it. A role's job function (**Core responsibility**) is also what [Home screens](/admin/home-layouts) can assign by.\n\nA role's agents matter for agents limited to specific roles in [AI control](/admin/agent-control): people holding the role, or a role that inherits it, can use those agents and decide what they propose. Agents open to everyone who can use the assistant are included for every role automatically and need not be added; one that is granted anyway shows **Open to everyone**, and the grant applies once it is limited to specific roles. System agents cannot be granted to a role. Changing a role's agents needs update access to roles.",
       "related": [
         "/admin/users",
         "/admin/home-layouts",
-        "/admin/audit-logs"
+        "/admin/audit-logs",
+        "/admin/agent-control"
       ],
       "covers": [
         "/admin/roles/new",

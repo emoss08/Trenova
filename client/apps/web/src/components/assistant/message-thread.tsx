@@ -4,7 +4,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
 import { queries } from "@/lib/queries";
 import { useAssistantStore } from "@/stores/assistant-store";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type {
   AssistantArtifact,
   AssistantArtifactEvent,
@@ -36,6 +36,7 @@ import { DecisionFollowUpProvider } from "./decision-follow-up";
 import { PlanCard } from "./plan-card";
 import { groupPlans } from "./plan-state";
 import { ProposalCard } from "./proposal-card";
+import { ReadOnlyThreadNotice } from "./read-only-thread-notice";
 import { decidedSignature, groupProposalsByMessage, pollIntervalFor } from "./proposal-state";
 import {
   modelSwitchNotice,
@@ -92,7 +93,7 @@ export function MessageThread({
   agentAccent = false,
 }: {
   thread: AssistantThread;
-  agent: AgentDefinitionRow | null;
+  agent: AgentChoice | null;
   /** The list of chat agents could not be read, so a missing agent is unknown, not disabled. */
   agentsUnavailable?: boolean;
   expanded: boolean;
@@ -239,6 +240,12 @@ export function MessageThread({
     [messages],
   );
 
+  // The server says whether the reader may still ask this conversation's
+  // agent anything. When not, the conversation stays readable and nothing
+  // on it offers to send: no composer, no retry, no suggested questions and
+  // no answering a question the agent asked.
+  const readOnly = !thread.canContinue;
+
   const getPageContext = usePageContext();
   const [contextIncluded, setContextIncluded] = useState(true);
   const pageContext = getPageContext();
@@ -317,6 +324,7 @@ export function MessageThread({
   const pendingQuestion = openingQuestion?.trim() ?? "";
   useEffect(() => {
     if (
+      readOnly ||
       !shouldSendOpeningQuestion({
         question: pendingQuestion,
         alreadySent: openingSent.current,
@@ -335,16 +343,18 @@ export function MessageThread({
     onOpeningQuestionSent,
     pendingQuestion,
     providerId,
+    readOnly,
     send,
   ]);
 
   // An answer to the assistant's question is an ordinary message. Sending it
   // that way is what keeps a clicked answer and a typed one the same thing:
   // nothing new is stored, and the thread reads identically either way.
-  const answer = useCallback(
+  const sendAnswer = useCallback(
     (value: string) => void send(value, undefined, providerId),
     [send, providerId],
   );
+  const answer = readOnly ? undefined : sendAnswer;
 
   // The composer floats over the bottom of the thread, so the last message has
   // to be padded clear of it and the jump-to-latest button lifted above it. The
@@ -364,23 +374,31 @@ export function MessageThread({
     observer.observe(element);
 
     return () => observer.disconnect();
-  }, []);
+    // The read-only notice and the composer are different elements; the one
+    // on screen is the one measured.
+  }, [readOnly]);
 
   const threadFull = history.length.state === "full";
-  const block = composerBlock({ agent, agentsUnavailable, threadFull });
+  const block = composerBlock({
+    agent,
+    agentsUnavailable,
+    threadFull,
+    canContinue: thread.canContinue,
+  });
   const isEmpty = !history.isLoading && entries.length === 0 && turn === null;
   // The starter questions are listed on an empty thread and behind a slash
   // in the composer at any time; a dismissed one stays dismissed in both.
   // They are the agent's own, from the server, so a Report Builder is never
-  // offered "Where is a shipment?".
+  // offered "Where is a shipment?". A conversation that can no longer
+  // continue offers none.
   const suggestions = useMemo(
     () =>
-      agent
+      agent && !readOnly
         ? agentSuggestions(agent, contextIncluded ? pageContext : null).filter(
             (item) => !dismissed.includes(item.prompt),
           )
         : [],
-    [agent, contextIncluded, dismissed, pageContext],
+    [agent, contextIncluded, dismissed, pageContext, readOnly],
   );
 
   // The files and records a message carries live beside the draft: uploaded
@@ -412,7 +430,7 @@ export function MessageThread({
                 attachments={entry.message.attachments}
                 mentions={entry.message.mentions}
                 onResend={
-                  entry.message.sequence === latestUserSequence
+                  !readOnly && entry.message.sequence === latestUserSequence
                     ? () => void send(entry.message.content, undefined, providerId)
                     : undefined
                 }
@@ -463,7 +481,12 @@ export function MessageThread({
         key: "turn-in-progress",
         render: () => (
           <div className="animate-rise">
-            <StreamingTurn turn={turn} onRetry={retry} onDismiss={dismiss} onAnswer={answer} />
+            <StreamingTurn
+              turn={turn}
+              onRetry={readOnly ? undefined : retry}
+              onDismiss={dismiss}
+              onAnswer={answer}
+            />
           </div>
         ),
       });
@@ -486,6 +509,7 @@ export function MessageThread({
     plansByMessage,
     proposalsByMessage,
     providerId,
+    readOnly,
     retry,
     send,
     thread.id,
@@ -568,65 +592,69 @@ export function MessageThread({
         />
       )}
 
-      <Composer
-        ref={composerRef}
-        onSend={(content, payload) => {
-          composerContext.clear();
-          void send(content, undefined, providerId, payload);
-        }}
-        onStop={stop}
-        active={isActive}
-        disabled={block !== null}
-        disabledReason={
-          block === "full"
-            ? t("This conversation is full. Start a new one to continue.")
-            : block === "agents-unavailable"
-              ? t(
-                  "The agents could not be loaded, so nothing can be sent yet. Refresh to try again.",
-                )
-              : t("This agent has been disabled, so the conversation cannot continue.")
-        }
-        notice={
-          history.length.state !== "open" ? (
-            <ThreadLengthNotice
-              state={history.length.state}
-              total={history.total}
-              limit={history.limit}
-              onStartNew={onStartNew}
-            />
-          ) : switchNotice ? (
-            <ModelSwitchNotice notice={switchNotice} />
-          ) : null
-        }
-        placeholder={
-          agent
-            ? t("Message {0}…", agent.name)
-            : t("Ask about a shipment, a driver, or how to do something…")
-        }
-        agent={agent}
-        onPickAgent={onPickAgent}
-        pageContext={pageContext}
-        contextIncluded={contextIncluded}
-        onToggleContext={() => setContextIncluded((value) => !value)}
-        providers={providers}
-        providerId={providerId}
-        onPickProvider={setProviderId}
-        suggestions={suggestions}
-        attachments={composerContext.attachments}
-        onAttachFiles={composerContext.attachFiles}
-        onRemoveAttachment={composerContext.removeAttachment}
-        mentions={composerContext.mentions}
-        onMentionsChange={composerContext.setMentions}
-        onSearchMentions={composerContext.searchMentions}
-        draft={draft}
-        onDraftChange={onDraftChange}
-        compact={!expanded}
-      />
+      {block === "read-only" ? (
+        <ReadOnlyThreadNotice ref={composerRef} compact={!expanded} />
+      ) : (
+        <Composer
+          ref={composerRef}
+          onSend={(content, payload) => {
+            composerContext.clear();
+            void send(content, undefined, providerId, payload);
+          }}
+          onStop={stop}
+          active={isActive}
+          disabled={block !== null}
+          disabledReason={
+            block === "full"
+              ? t("This conversation is full. Start a new one to continue.")
+              : block === "agents-unavailable"
+                ? t(
+                    "The agents could not be loaded, so nothing can be sent yet. Refresh to try again.",
+                  )
+                : t("This agent has been disabled, so the conversation cannot continue.")
+          }
+          notice={
+            history.length.state !== "open" ? (
+              <ThreadLengthNotice
+                state={history.length.state}
+                total={history.total}
+                limit={history.limit}
+                onStartNew={onStartNew}
+              />
+            ) : switchNotice ? (
+              <ModelSwitchNotice notice={switchNotice} />
+            ) : null
+          }
+          placeholder={
+            agent
+              ? t("Message {0}…", agent.name)
+              : t("Ask about a shipment, a driver, or how to do something…")
+          }
+          agent={agent}
+          onPickAgent={onPickAgent}
+          pageContext={pageContext}
+          contextIncluded={contextIncluded}
+          onToggleContext={() => setContextIncluded((value) => !value)}
+          providers={providers}
+          providerId={providerId}
+          onPickProvider={setProviderId}
+          suggestions={suggestions}
+          attachments={composerContext.attachments}
+          onAttachFiles={composerContext.attachFiles}
+          onRemoveAttachment={composerContext.removeAttachment}
+          mentions={composerContext.mentions}
+          onMentionsChange={composerContext.setMentions}
+          onSearchMentions={composerContext.searchMentions}
+          draft={draft}
+          onDraftChange={onDraftChange}
+          compact={!expanded}
+        />
+      )}
     </div>
   );
 
   return (
-    <AssistantAgentProvider agent={agent} delegates={agent?.delegates}>
+    <AssistantAgentProvider agent={agent}>
       <ArtifactOpenerProvider onOpen={onOpenArtifact}>
         <DecisionFollowUpProvider value={followUpDecision}>
           {agentAccent ? (
@@ -655,7 +683,7 @@ function EmptyThread({
   onPick,
   onDismiss,
 }: {
-  agent: AgentDefinitionRow | null;
+  agent: AgentChoice | null;
   suggestions: readonly Suggestion[];
   pageContext: AssistantPageContext | null;
   onPick: (prompt: string) => void;

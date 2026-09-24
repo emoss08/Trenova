@@ -5,6 +5,7 @@ related:
   - /admin/users
   - /admin/home-layouts
   - /admin/audit-logs
+  - /admin/agent-control
 covers:
   - /admin/roles/new
   - /admin/roles/:id/edit
@@ -51,6 +52,13 @@ Keywords: change role, update permissions, rename role
 2. Change the **Name**, **Max sensitivity**, **Description** or the permissions.
 3. Select **Save changes**. **Cancel** returns to the list without saving.
 
+### Give a role access to an agent
+Keywords: role agents, grant agent, AI agent access, which agents a role can use, remove agent from role
+1. Open [Roles](/admin/roles) and select the role's row. The edit page opens.
+2. Go to **Agents**. It lists the agents this role is granted.
+3. Select **Add an agent** and pick the agent. It is saved at once, without **Save changes**.
+4. To take one away, select the remove button at the end of its row; that is saved at once too.
+
 ### Find a role
 Keywords: search roles
 1. Open [Roles](/admin/roles).
@@ -61,3 +69,10 @@ Viewing the page needs read access to roles; **New role** needs create access. S
 the banner "This is a system role. Some properties may be restricted." and their name, sensitivity
 and description cannot be changed. Changes to a role apply to everyone who holds it. A role's job
 function (**Core responsibility**) is also what [Home screens](/admin/home-layouts) can assign by.
+
+A role's agents matter for agents limited to specific roles in
+[AI control](/admin/agent-control): people holding the role, or a role that inherits it, can use
+those agents and decide what they propose. Agents open to everyone who can use the assistant are
+included for every role automatically and need not be added; one that is granted anyway shows
+**Open to everyone**, and the grant applies once it is limited to specific roles. System agents
+cannot be granted to a role. Changing a role's agents needs update access to roles.

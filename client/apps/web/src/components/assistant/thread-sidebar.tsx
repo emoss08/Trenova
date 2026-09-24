@@ -1,4 +1,4 @@
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -19,7 +19,7 @@ const NO_LIVE_THREADS: ReadonlySet<string> = new Set();
 
 export type ThreadSidebarProps = {
   threads: AssistantThread[];
-  agentsById: Map<string, AgentDefinitionRow>;
+  agentsById: Map<string, AgentChoice>;
   activeThreadId: string | null;
   /** Conversations with a reply still being written. */
   liveThreadIds?: ReadonlySet<string>;
@@ -124,7 +124,7 @@ export function ThreadSidebar({
 /** Threads whose title or agent contains the query, case ignored. */
 export function filterThreads(
   threads: readonly AssistantThread[],
-  agentsById: Map<string, AgentDefinitionRow>,
+  agentsById: Map<string, AgentChoice>,
   query: string,
 ): AssistantThread[] {
   const needle = query.trim().toLowerCase();
@@ -140,7 +140,7 @@ export function filterThreads(
 
 export type ThreadListProps = {
   groups: ThreadGroup[];
-  agentsById: Map<string, AgentDefinitionRow>;
+  agentsById: Map<string, AgentChoice>;
   activeThreadId: string | null;
   /** Conversations with a reply still being written. */
   liveThreadIds?: ReadonlySet<string>;

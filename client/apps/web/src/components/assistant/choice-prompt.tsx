@@ -32,14 +32,19 @@ export function ChoicePrompt({
   request: ThreadAskRequest;
   /** True once a later message has arrived: the question has had its answer. */
   answered: boolean;
-  onAnswer: (value: string) => void;
+  /**
+   * Sends an answer. Absent where the conversation can no longer continue,
+   * and the question then stays on screen as a record without asking again.
+   */
+  onAnswer?: (value: string) => void;
 }) {
   const t = useT();
   const [own, setOwn] = useState("");
+  const closed = answered || onAnswer === undefined;
 
   const submitOwn = () => {
     const value = own.trim();
-    if (value === "") {
+    if (value === "" || !onAnswer) {
       return;
     }
     setOwn("");
@@ -52,7 +57,7 @@ export function ChoicePrompt({
         "border-border bg-card flex flex-col gap-2.5 rounded-lg border px-3 py-2.5 transition-opacity duration-300",
         // Answered, it stays on screen as the record of what was asked, but it
         // stops inviting a second answer to a question already settled.
-        answered && "opacity-60",
+        closed && "opacity-60",
       )}
     >
       <p className="text-sm">{request.question}</p>
@@ -65,8 +70,8 @@ export function ChoicePrompt({
               type="button"
               size="sm"
               variant="outline"
-              disabled={answered}
-              onClick={() => onAnswer(option.value)}
+              disabled={closed}
+              onClick={() => onAnswer?.(option.value)}
               title={option.detail === "" ? undefined : option.detail}
             >
               {option.label}
@@ -75,7 +80,7 @@ export function ChoicePrompt({
         </div>
       )}
 
-      {request.allowOther && !answered && (
+      {request.allowOther && !closed && (
         <div className="flex items-center gap-1.5">
           <Input
             value={own}

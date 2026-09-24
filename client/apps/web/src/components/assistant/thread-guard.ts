@@ -1,25 +1,42 @@
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 
-/** Why the composer is closed, or null when it is open. */
-export type ComposerBlock = "full" | "agent-missing" | "agents-unavailable";
+/**
+ * Why the composer is closed, or null when it is open. `read-only` is the
+ * one that replaces the composer rather than disabling it: the server says
+ * the reader may no longer ask this conversation's agent anything, so the
+ * conversation is a record to read, not a box waiting to be typed in.
+ */
+export type ComposerBlock = "read-only" | "full" | "agent-missing" | "agents-unavailable";
 
 /**
  * Decides whether a person can type, and if not, why.
  *
- * The agent behind a thread is looked up in the list of enabled chat
- * agents. When that list could not be fetched at all, the agent is not
- * disabled, it is unknown, and telling someone their agent was switched off
- * sends them to AI Control to fix a thing that is not broken there.
+ * The server's word comes first: a conversation it serves with
+ * `canContinue` false is read-only whatever the list of agents says, because
+ * that list is read at another moment and the server is the one that would
+ * refuse the message.
+ *
+ * Otherwise the agent behind a thread is looked up in the list of chat
+ * agents the person may ask. When that list could not be fetched at all,
+ * the agent is not missing, it is unknown, and telling someone their agent
+ * was switched off sends them to AI Control to fix a thing that is not
+ * broken there.
  */
 export function composerBlock({
   agent,
   agentsUnavailable,
   threadFull,
+  canContinue = true,
 }: {
-  agent: AgentDefinitionRow | null;
+  agent: AgentChoice | null;
   agentsUnavailable: boolean;
   threadFull: boolean;
+  /** The thread's own `canContinue`, as the server served it. */
+  canContinue?: boolean;
 }): ComposerBlock | null {
+  if (!canContinue) {
+    return "read-only";
+  }
   if (threadFull) {
     return "full";
   }

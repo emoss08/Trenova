@@ -1,7 +1,7 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { LiveReplyLabel } from "@/components/assistant/live-reply-label";
 import { conversationPath } from "@/lib/conversation-path";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
@@ -11,7 +11,7 @@ import { Link } from "react-router";
 
 export type DeskRecentConversationsProps = {
   threads: readonly AssistantThread[];
-  agentsById: ReadonlyMap<string, AgentDefinitionRow>;
+  agentsById: ReadonlyMap<string, AgentChoice>;
   liveThreadIds: ReadonlySet<string>;
   now: number;
   className?: string;

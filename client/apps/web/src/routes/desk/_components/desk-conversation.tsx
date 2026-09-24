@@ -1,6 +1,6 @@
 import { MessageThread } from "@/components/assistant/message-thread";
 import { queries } from "@/lib/queries";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { useOpeningQuestion } from "@/components/assistant/use-opening-question";
 import { useAssistantStore } from "@/stores/assistant-store";
@@ -10,7 +10,7 @@ import { useDesk } from "./desk-layout";
 
 export type DeskConversationProps = {
   thread: AssistantThread;
-  agent: AgentDefinitionRow | null;
+  agent: AgentChoice | null;
   agentsUnavailable: boolean;
   onStartNew?: () => void;
 };

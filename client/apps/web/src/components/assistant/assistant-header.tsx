@@ -1,5 +1,5 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
-import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -25,8 +25,8 @@ import { groupThreadsByRecency } from "./thread-grouping";
 import { ThreadList } from "./thread-sidebar";
 
 type AssistantHeaderProps = {
-  agents: AgentDefinitionRow[];
-  activeAgent: AgentDefinitionRow | null;
+  agents: AgentChoice[];
+  activeAgent: AgentChoice | null;
   activeThread: AssistantThread | null;
   threads: AssistantThread[];
   /** Conversations with a reply still being written. */

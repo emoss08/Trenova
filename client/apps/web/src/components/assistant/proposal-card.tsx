@@ -2,8 +2,8 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { decideMyProposal } from "@/lib/graphql/agent-decisions";
 import { invalidateProposalViews, markProposalDecided } from "@/lib/proposal-cache";
-import { apiService } from "@/services/api";
 import type { AssistantProposal, ProposalDecision } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -48,9 +48,12 @@ export function ProposalCard({
   const view = presentProposal(proposal);
 
   const followUp = useDecisionFollowUp();
+  // Decided as the person whose conversation raised it, which needs only the
+  // assistant: someone who may ask an agent may answer what it asks them,
+  // without the approver's permission the decisions queue needs.
   const decideMutation = useApiMutation({
     mutationFn: (decision: ProposalDecision) =>
-      apiService.assistantService.decideProposal(proposal.id, decision),
+      decideMyProposal(proposal.id, { decision, reasonCode: "" }),
     onSuccess: async (_result, decision) => {
       markProposalDecided(queryClient, proposal.id, decision);
       await invalidateProposalViews(queryClient, threadId);
@@ -84,7 +87,11 @@ export function ProposalCard({
       fields,
       arguments: proposal.arguments,
       onConfirm: async (modifications) => {
-        await apiService.assistantService.decideProposal(proposal.id, "Modified", modifications);
+        await decideMyProposal(proposal.id, {
+          decision: "Modified",
+          modifications,
+          reasonCode: "",
+        });
         markProposalDecided(queryClient, proposal.id, "Modified");
         await invalidateProposalViews(queryClient, threadId);
         followUp?.(proposal.id);

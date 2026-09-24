@@ -39,8 +39,11 @@ export function StreamingTurn({
   onDismiss,
   onAnswer,
 }: {
-  /** Answering a question the live turn asked, before the turn is saved. */
-  onAnswer: (value: string) => void;
+  /**
+   * Answering a question the live turn asked, before the turn is saved.
+   * Absent where the conversation can no longer continue.
+   */
+  onAnswer?: (value: string) => void;
   turn: TurnState;
   onRetry?: () => void;
   onDismiss: () => void;

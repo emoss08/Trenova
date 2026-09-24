@@ -6,19 +6,18 @@ import type { AssistantProposal } from "@/types/assistant";
 import { DecisionFollowUpProvider } from "../decision-follow-up";
 import { ProposalCard } from "../proposal-card";
 
-const decideProposal = vi.fn(async () => undefined);
+const decideMyProposal = vi.fn(async () => undefined);
+const decideAgentProposal = vi.fn(async () => undefined);
 
-vi.mock("@/services/api", () => ({
-  apiService: {
-    assistantService: {
-      decideProposal: (...args: unknown[]) => decideProposal(...(args as [])),
-    },
-  },
+vi.mock("@/lib/graphql/agent-decisions", () => ({
+  decideMyProposal: (...args: unknown[]) => decideMyProposal(...(args as [])),
+  decideAgentProposal: (...args: unknown[]) => decideAgentProposal(...(args as [])),
 }));
 
 afterEach(() => {
   cleanup();
-  decideProposal.mockClear();
+  decideMyProposal.mockClear();
+  decideAgentProposal.mockClear();
 });
 
 function proposal(): AssistantProposal {
@@ -62,7 +61,31 @@ describe("a decision in the thread", () => {
     await userEvent.click(screen.getByRole("button", { name: /approve/i }));
 
     await waitFor(() => expect(followUp).toHaveBeenCalledWith("aprop_1"));
-    expect(decideProposal).toHaveBeenCalledWith("aprop_1", "Accepted");
+    expect(decideMyProposal).toHaveBeenCalledWith("aprop_1", {
+      decision: "Accepted",
+      reasonCode: "",
+    });
+  });
+
+  // The person who asked may not hold the approver's permission, so the card
+  // answers through the self-scoped mutation and never the queue's.
+  it("decides as the conversation's owner, never through the approver's mutation", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <ProposalCard proposal={proposal()} threadId="athr_1" />
+      </QueryClientProvider>,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: /reject/i }));
+
+    await waitFor(() =>
+      expect(decideMyProposal).toHaveBeenCalledWith("aprop_1", {
+        decision: "Rejected",
+        reasonCode: "",
+      }),
+    );
+    expect(decideAgentProposal).not.toHaveBeenCalled();
   });
 
   it("does nothing outside a conversation that can answer", async () => {
@@ -75,6 +98,6 @@ describe("a decision in the thread", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /approve/i }));
 
-    await waitFor(() => expect(decideProposal).toHaveBeenCalled());
+    await waitFor(() => expect(decideMyProposal).toHaveBeenCalled());
   });
 });

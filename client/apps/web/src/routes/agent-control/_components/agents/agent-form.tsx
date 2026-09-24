@@ -30,6 +30,7 @@ import {
 import { useCallback, useMemo } from "react";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import { providerBrandDomain } from "../providers/provider-brand";
+import { AgentAccessSection } from "./agent-access-section";
 import { toSaveRequest, type AgentFormValues } from "./agent-form-schema";
 import { canDelegate, type DelegateSummary } from "./delegates";
 import { DelegatesField } from "./delegates-field";
@@ -308,6 +309,8 @@ export function AgentForm({
           </>
         )}
       </FormSection>
+
+      <AgentAccessSection mode={mode} agentId={agentId} isSystem={isSystem} />
 
       <FormSection
         title={t("Autonomy")}

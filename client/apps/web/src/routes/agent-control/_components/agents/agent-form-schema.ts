@@ -1,3 +1,4 @@
+import type { AgentAccess } from "@/lib/graphql/agent-access";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
 import {
   MAX_DELEGATES,
@@ -10,6 +11,9 @@ import { z } from "zod";
 import { canDelegate, savedDelegates, type DelegateSummary } from "./delegates";
 
 const TIER_RANK: Record<AutonomyTier, number> = { Propose: 0, ActWithApproval: 1, AutoExecute: 2 };
+
+/** The most roles one request may grant an agent, as the server allows. */
+export const MAX_ACCESS_ROLES = 100;
 
 export function tierWithin(tier: AutonomyTier, ceiling: AutonomyTier): boolean {
   return TIER_RANK[tier] <= TIER_RANK[ceiling];
@@ -31,6 +35,16 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
     delegateIds: z
       .array(z.string())
       .max(MAX_DELEGATES, `An agent can ask at most ${MAX_DELEGATES} other agents`)
+      .default([]),
+    /**
+     * Who may use it. Saved with its own request rather than with the agent,
+     * so `toSaveRequest` leaves both out.
+     */
+    accessMode: z.enum(["Everyone", "Roles"]).default("Everyone"),
+    /** The roles granted it, kept whatever the mode. */
+    accessRoleIds: z
+      .array(z.string())
+      .max(MAX_ACCESS_ROLES, `An agent can be granted to at most ${MAX_ACCESS_ROLES} roles at once`)
       .default([]),
   })
   .superRefine((values, ctx) => {
@@ -121,8 +135,17 @@ export const agentFormDefaults: AgentFormValues = {
   outputMode: "Conversational",
   preferredProviderId: "",
   delegateIds: [],
+  accessMode: "Everyone",
+  accessRoleIds: [],
   version: 0,
 };
+
+/** Who may use the agent, as the form holds it. */
+export function accessOf(
+  values: Pick<AgentFormValues, "accessMode" | "accessRoleIds">,
+): AgentAccess {
+  return { mode: values.accessMode, roleIds: [...new Set(values.accessRoleIds)] };
+}
 
 /**
  * What goes over the wire: trigger fields that belong to other modes are
@@ -130,10 +153,17 @@ export const agentFormDefaults: AgentFormValues = {
  * tools that were unselected go with them.
  */
 export function toSaveRequest(
-  values: AgentFormValues & { delegates?: unknown },
+  values: AgentFormValues & { delegates?: unknown; accessRoles?: unknown },
 ): SaveAgentDefinitionRequest {
   // The allowlist's names and marks are for drawing it; only the ids are saved.
-  const { delegates: _drawn, ...form } = values;
+  // Who may use the agent has its own request, so none of it rides here.
+  const {
+    delegates: _drawn,
+    accessRoles: _granted,
+    accessMode: _mode,
+    accessRoleIds: _roleIds,
+    ...form
+  } = values;
   const selected = new Set(form.toolNames);
   const toolTiers = Object.fromEntries(
     Object.entries(form.toolTiers).filter(([tool]) => selected.has(tool)),
@@ -172,6 +202,8 @@ export type AgentPanelRow = AgentFormValues & {
   systemKey: string;
   /** The allowlist as saved, with each agent's name and mark, for drawing it. */
   delegates: DelegateSummary[];
+  /** The roles granted it as saved, by name, for drawing them. */
+  accessRoles: { id: string; name: string }[];
 };
 
 function limitsOf(value: unknown): Record<string, number> {
@@ -196,9 +228,14 @@ function tiersOf(value: unknown): Record<string, AutonomyTier> {
 export function toAgentPanelRow(agent: AgentDefinitionRow): AgentPanelRow {
   const delegates = savedDelegates(agent);
 
+  const accessRoles = agent.accessRoles.map((role) => ({ id: role.id, name: role.name }));
+
   return {
     delegates,
     delegateIds: delegates.map((delegate) => delegate.id),
+    accessMode: agent.accessMode,
+    accessRoleIds: accessRoles.map((role) => role.id),
+    accessRoles,
     id: agent.id,
     updatedAt: agent.updatedAt,
     systemKey: agent.systemKey,
