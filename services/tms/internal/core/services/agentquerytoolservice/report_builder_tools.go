@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/stringutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -254,8 +255,9 @@ func (t *listReportDatasetsTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": withPaging(map[string]any{
 			"query": map[string]any{
-				"type":        "string",
-				"description": "Text matched against the dataset key, label and description.",
+				"type": "string",
+				"description": "Words matched against the dataset key, label and description; " +
+					"each word must begin a word there.",
 			},
 			"category": map[string]any{
 				"type":        "string",
@@ -266,8 +268,10 @@ func (t *listReportDatasetsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listReportDatasetsTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
+func (t *listReportDatasetsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceReport,
+	})
 }
 
 func (t *listReportDatasetsTool) Query(
@@ -278,13 +282,14 @@ func (t *listReportDatasetsTool) Query(
 		return nil, err
 	}
 
-	query := strings.ToLower(optionalString(params.Params, "query"))
+	query := strings.TrimSpace(optionalString(params.Params, "query"))
 	category := optionalString(params.Params, "category")
 
 	criteria := filtercatalog.NewCriteria("datasets").At(clockFor(params))
 	criteria.Text(query)
 	criteria.Field("category", category)
 
+	words := stringutils.SearchWords(query)
 	catalog := &reportcatalog.Default
 	rows := make([]datasetRow, 0, len(catalog.Entities))
 	for i := range catalog.Entities {
@@ -292,7 +297,7 @@ func (t *listReportDatasetsTool) Query(
 		if category != "" && !strings.EqualFold(entity.Category, category) {
 			continue
 		}
-		if query != "" && !matchesDataset(entity, query) {
+		if !matchesDataset(entity, words) {
 			continue
 		}
 
@@ -315,15 +320,36 @@ func (t *listReportDatasetsTool) Query(
 
 	window := readPage(params.Params, defaultDatasetPage, maxDatasetPage)
 	shown, more := slicePage(window, rows)
+	if shown == nil {
+		shown = []datasetRow{}
+	}
 
-	return searchResult(criteria, shown, len(shown)).paged(window, more), nil
+	outcome := searchResult(criteria, shown, len(shown)).paged(window, more)
+	if len(rows) == 0 && query != "" {
+		outcome.Note = fmt.Sprintf(
+			"No dataset matched %s. Every word of query has to begin a word of a dataset's "+
+				"key, label or description, so use fewer or broader words (\"shipment\" "+
+				"rather than \"shipment delivery\"), drop category, or call this with no query "+
+				"to list every dataset before concluding the data is not reportable.",
+			strings.Join(criteria.Terms(), " and "),
+		)
+	}
+
+	return outcome, nil
 }
 
-func matchesDataset(entity *reportcatalog.Entity, needle string) bool {
-	return strings.Contains(strings.ToLower(entity.Key), needle) ||
-		strings.Contains(strings.ToLower(entity.Label), needle) ||
-		strings.Contains(strings.ToLower(entity.PluralLabel), needle) ||
-		strings.Contains(strings.ToLower(entity.Description), needle)
+// matchesDataset reports whether every word of the query begins a word of the
+// dataset's key, label, plural label or description. It used to look for the
+// query as one literal substring, so "shipment delivery" found nothing although
+// the shipment dataset is described in both words.
+func matchesDataset(entity *reportcatalog.Entity, words []string) bool {
+	return stringutils.MatchesWordPrefixes(
+		words,
+		stringutils.SearchableKey(entity.Key),
+		entity.Label,
+		entity.PluralLabel,
+		entity.Description,
+	)
 }
 
 func edgeRows(entity *reportcatalog.Entity, withTargetFields bool) []datasetEdgeRow {
@@ -386,7 +412,10 @@ type datasetDescription struct {
 	Shown      int              `json:"shownFieldCount"`
 	NextOffset *int             `json:"nextOffset,omitempty"`
 	Edges      []datasetEdgeRow `json:"edges,omitempty"`
-	Note       string           `json:"note"`
+	// RelatedFields are the fields of related datasets a query matched, as
+	// edge.field, so a search names a field one edge out as well as its own.
+	RelatedFields []string `json:"relatedFields,omitempty"`
+	Note          string   `json:"note"`
 }
 
 type describeReportDatasetTool struct {
@@ -417,8 +446,9 @@ func (t *describeReportDatasetTool) ParamSchema() map[string]any {
 				"description": "The dataset key from list_report_datasets, such as shipment.",
 			},
 			"query": map[string]any{
-				"type":        "string",
-				"description": "Optional text matched against field keys, labels and descriptions.",
+				"type": "string",
+				"description": "Optional words matched against field keys, labels and " +
+					"descriptions, here and on the datasets the edges reach.",
 			},
 		}, defaultFieldPage, maxFieldPage),
 		"required":             []string{"dataset"},
@@ -426,8 +456,10 @@ func (t *describeReportDatasetTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *describeReportDatasetTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
+func (t *describeReportDatasetTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceReport,
+	})
 }
 
 func (t *describeReportDatasetTool) Query(
@@ -463,14 +495,15 @@ func (t *describeReportDatasetTool) Query(
 		)
 	}
 
-	query := strings.ToLower(optionalString(params.Params, "query"))
+	query := strings.TrimSpace(optionalString(params.Params, "query"))
+	words := stringutils.SearchWords(query)
 	fields := make([]datasetFieldRow, 0, len(entity.Fields))
 	for i := range entity.Fields {
 		field := &entity.Fields[i]
 		if !describedField(field) {
 			continue
 		}
-		if query != "" && !matchesField(field, query) {
+		if !matchesField(field, words) {
 			continue
 		}
 
@@ -491,6 +524,9 @@ func (t *describeReportDatasetTool) Query(
 	matched := len(fields)
 	window := readPage(params.Params, defaultFieldPage, maxFieldPage)
 	fields, more := slicePage(window, fields)
+	if fields == nil {
+		fields = []datasetFieldRow{}
+	}
 
 	note := "Refer to a field of this dataset as {\"field\": \"<key>\"} and to a field " +
 		"of a related dataset as {\"path\": [\"<edge>\"], \"field\": \"<key>\"}, " +
@@ -523,8 +559,74 @@ func (t *describeReportDatasetTool) Query(
 			len(fields), matched, next,
 		)
 	}
+	if len(words) > 0 {
+		description.RelatedFields = relatedFieldMatches(entity, words)
+		description.Note += queryNote(entity.Key, query, matched, description.RelatedFields)
+	}
 
 	return description, nil
+}
+
+// maxRelatedFieldMatches bounds the related fields one query names. A query
+// broad enough to pass it matches too much to be a search.
+const maxRelatedFieldMatches = 20
+
+// relatedFieldMatches are the fields of the datasets this one's edges reach
+// that a query matches, each as edge.field: "arrival" on shipment finds
+// destinationStop.actualArrival, which a search of shipment's own fields
+// never would.
+func relatedFieldMatches(entity *reportcatalog.Entity, words []string) []string {
+	matches := make([]string, 0, 4)
+	for i := range entity.Edges {
+		edge := &entity.Edges[i]
+		if !edge.Traversable {
+			continue
+		}
+		target, ok := reportcatalog.Default.Entity(edge.Target)
+		if !ok {
+			continue
+		}
+		for j := range target.Fields {
+			field := &target.Fields[j]
+			if !describedField(field) || !matchesField(field, words) {
+				continue
+			}
+			matches = append(matches, edge.Name+"."+field.Key)
+			if len(matches) == maxRelatedFieldMatches {
+				return matches
+			}
+		}
+	}
+
+	return matches
+}
+
+// queryNote says what a query found when it was narrowed: nothing at all, and
+// how to widen; or only fields of related datasets, and how to reach them.
+func queryNote(dataset, query string, matched int, related []string) string {
+	switch {
+	case matched > 0 && len(related) > 0:
+		return " relatedFields are fields of related datasets the query also matches, " +
+			"written edge.field."
+	case matched > 0:
+		return ""
+	case len(related) > 0:
+		edge, field, _ := strings.Cut(related[0], ".")
+		return fmt.Sprintf(
+			" No field of %s itself matches %q, but fields of related datasets do: "+
+				"relatedFields lists them as edge.field, so %s is the field %s on the edge "+
+				"%s. Refer to it as {\"path\": [%q], \"field\": %q}.",
+			dataset, query, related[0], field, edge, edge, field,
+		)
+	default:
+		return fmt.Sprintf(
+			" No field of %s, or of the datasets its edges reach, matches %q. Every word "+
+				"of query has to begin a word of a field's key, label or description, so "+
+				"use fewer or broader words, or call this with no query to page through "+
+				"every field, before concluding the dataset cannot report it.",
+			dataset, query,
+		)
+	}
 }
 
 // labelIfNotKey keeps a field's label only when it says something its key
@@ -551,10 +653,16 @@ func shortEnum(field *reportcatalog.Field) []string {
 	return values
 }
 
-func matchesField(field *reportcatalog.Field, needle string) bool {
-	return strings.Contains(strings.ToLower(field.Key), needle) ||
-		strings.Contains(strings.ToLower(field.Label), needle) ||
-		strings.Contains(strings.ToLower(field.Description), needle)
+// matchesField reports whether every word of the query begins a word of the
+// field's key, label or description, with a camelCase key read as its words:
+// scheduledWindowEnd is found by "window" and by "scheduled end".
+func matchesField(field *reportcatalog.Field, words []string) bool {
+	return stringutils.MatchesWordPrefixes(
+		words,
+		stringutils.SearchableKey(field.Key),
+		field.Label,
+		field.Description,
+	)
 }
 
 func enumValueKeys(field *reportcatalog.Field) []string {
@@ -656,8 +764,10 @@ func (t *describeReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *describeReportTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
+func (t *describeReportTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceReport,
+	})
 }
 
 func (t *describeReportTool) Query(
@@ -863,8 +973,10 @@ func (t *previewReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *previewReportTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
+func (t *previewReportTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceReport,
+	})
 }
 
 func (t *previewReportTool) Query(

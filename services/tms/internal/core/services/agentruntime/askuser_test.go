@@ -107,7 +107,8 @@ func TestResolveAsk_BoundsAndCleansTheOptions(t *testing.T) {
 	options := []any{
 		map[string]any{"value": "keep", "label": "Keep"},
 		map[string]any{"value": "keep", "label": "Duplicate"},
-		map[string]any{"value": "  ", "label": "No value at all"},
+		map[string]any{"value": "  ", "label": "  "},
+		map[string]any{"detail": "Neither a value nor a label"},
 		"not an option at all",
 		map[string]any{"value": "bare"},
 		map[string]any{"value": "long", "label": strings.Repeat("x", 200)},
@@ -145,4 +146,55 @@ func TestResolveAsk_DoesNotRewriteAnOptionValueAsADate(t *testing.T) {
 	}))
 
 	assert.Equal(t, "1791591001", request.Options[0].Value)
+}
+
+// A model offered three choices as label and detail with no value, and the
+// person was shown an empty list and a text box. The label is what they read
+// and what they would type, so it is what a pick answers with.
+func TestResolveAsk_AnOptionWithoutAValueAnswersWithItsLabel(t *testing.T) {
+	t.Parallel()
+
+	request := decodeAsk(t, resolveAsk(map[string]any{
+		"question": "Which lane should the report cover?",
+		"options": []any{
+			map[string]any{"label": "Chicago to Dallas", "detail": "the busiest lane"},
+			map[string]any{"label": "Atlanta to Miami"},
+			map[string]any{"label": " Chicago to Dallas ", "detail": "said twice"},
+			map[string]any{"value": "sea-pdx", "label": "Seattle to Portland"},
+		},
+	}))
+
+	require.Len(t, request.Options, 3)
+	assert.Equal(
+		t,
+		askOption{
+			Value:  "Chicago to Dallas",
+			Label:  "Chicago to Dallas",
+			Detail: "the busiest lane",
+		},
+		request.Options[0],
+	)
+	assert.Equal(t, "Atlanta to Miami", request.Options[1].Value)
+	assert.Equal(
+		t,
+		askOption{Value: "sea-pdx", Label: "Seattle to Portland"},
+		request.Options[2],
+	)
+	assert.Contains(t, request.Note, "with 3 options")
+}
+
+// The schema is what a strict provider validates against, so it must not
+// demand the value the runtime fills in itself.
+func TestAskUserSpec_RequiresOnlyTheLabel(t *testing.T) {
+	t.Parallel()
+
+	spec := askUserSpec()
+	properties, ok := spec.Parameters["properties"].(map[string]any)
+	require.True(t, ok)
+	options, ok := properties["options"].(map[string]any)
+	require.True(t, ok)
+	items, ok := options["items"].(map[string]any)
+	require.True(t, ok)
+
+	assert.Equal(t, []string{"label"}, items["required"])
 }

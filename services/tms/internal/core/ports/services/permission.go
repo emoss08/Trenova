@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -165,4 +167,63 @@ type PermissionEngine interface {
 		ctx context.Context,
 		req *SimulatePermissionsRequest,
 	) (*EffectivePermissions, error)
+	// AgentsUsable is what the actor may use of the organization's agents:
+	// whether they hold the assistant at the operation, and the agents their
+	// roles, inherited ones included, grant.
+	AgentsUsable(
+		ctx context.Context,
+		actor *RequestActor,
+		operation permission.Operation,
+	) (*UsableAgents, error)
+	// MayUseAgent reports whether the actor may start or continue a
+	// conversation with the agent.
+	MayUseAgent(
+		ctx context.Context,
+		actor *RequestActor,
+		definition *agentdefinition.Definition,
+	) (bool, error)
+	// RoleCoverage says, for each role, how much of what an agent's tools
+	// need the role grants through itself and the roles it inherits.
+	RoleCoverage(ctx context.Context, req *RoleCoverageRequest) ([]RoleCoverage, error)
+}
+
+// UsableAgents is what a person may use of the organization's agents.
+type UsableAgents struct {
+	Assistant  bool
+	GrantedIDs []pulid.ID
+}
+
+// Allows reports whether the person may use the agent.
+func (u *UsableAgents) Allows(definition *agentdefinition.Definition) bool {
+	return u != nil && u.Assistant && definition != nil &&
+		definition.UsableWith(u.GrantedIDs)
+}
+
+// Audience narrows a read to the agents the person may use.
+func (u *UsableAgents) Audience() *repositories.AgentAudience {
+	if u == nil {
+		return &repositories.AgentAudience{}
+	}
+
+	return &repositories.AgentAudience{GrantedAgentIDs: u.GrantedIDs}
+}
+
+// RequiredGrant is a resource and operation a tool needs of the person
+// using it.
+type RequiredGrant struct {
+	Tool      string
+	Resource  permission.Resource
+	Operation permission.Operation
+}
+
+type RoleCoverageRequest struct {
+	OrganizationID pulid.ID
+	RoleIDs        []pulid.ID
+	Required       []RequiredGrant
+}
+
+type RoleCoverage struct {
+	RoleID           pulid.ID
+	Coverage         agentdefinition.AudienceCoverage
+	MissingResources []permission.Resource
 }

@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -175,8 +176,11 @@ func TestWebToolsAreGatedOnWebResearch(t *testing.T) {
 	t.Parallel()
 
 	for _, tool := range []serviceports.AgentQueryTool{newWebSearchTool(nil), newWebReadTool(nil)} {
-		assert.Equal(t, permission.ResourceWebResearch, tool.PermissionResource(), tool.Name())
-		assert.True(t, permission.IsAgentAllowed(tool.PermissionResource(), permission.OpRead), tool.Name())
+		policy := tool.Policy()
+		assert.Equal(t, permission.ResourceWebResearch, policy.Resource, tool.Name())
+		assert.Equal(t, agent.ExternalReadAlways, policy.ReadsExternal, tool.Name())
+		assert.Equal(t, agent.TaintSourceWeb, policy.Source, tool.Name())
+		assert.True(t, permission.IsAgentAllowed(policy.Resource, permission.OpRead), tool.Name())
 	}
 }
 

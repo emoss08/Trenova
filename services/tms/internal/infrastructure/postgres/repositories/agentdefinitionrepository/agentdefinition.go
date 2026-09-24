@@ -61,13 +61,14 @@ func (r *repository) List(
 				req.Filter,
 				(*agentdefinition.Definition)(nil),
 			)
-			sq = sq.Apply(buncolgen.DefinitionApplyTenant(req.Filter.TenantInfo))
-			if req.EnabledOnly {
-				sq = sq.Where(cols.Enabled.IsTrue())
-			}
-			if req.ChatOnly {
-				sq = sq.Where(cols.TriggerMode.Eq(), agentdefinition.TriggerChat)
-			}
+			sq = applyUsability(
+				sq.Apply(buncolgen.DefinitionApplyTenant(req.Filter.TenantInfo)),
+				usability{
+					enabledOnly: req.EnabledOnly,
+					chatOnly:    req.ChatOnly,
+					audience:    req.Audience,
+				},
+			)
 
 			return sq.
 				Limit(req.Filter.Pagination.SafeLimit()).
@@ -101,7 +102,10 @@ func (r *repository) ListConnection(
 					(*agentdefinition.Definition)(nil),
 				)
 
-				return sq.Apply(buncolgen.DefinitionApplyTenant(req.Filter.TenantInfo))
+				return applyUsability(
+					sq.Apply(buncolgen.DefinitionApplyTenant(req.Filter.TenantInfo)),
+					connectionUsability(req),
+				)
 			}).
 			Count(ctx)
 		if err != nil {
@@ -127,7 +131,7 @@ func (r *repository) ListConnection(
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return querybuilder.ApplyCursorFilters(
-					sq,
+					applyUsability(sq, connectionUsability(req)),
 					buncolgen.DefinitionTable.Alias,
 					req.Filter,
 					req.Cursor,
@@ -141,6 +145,43 @@ func (r *repository) ListConnection(
 	}
 
 	return result, nil
+}
+
+type usability struct {
+	enabledOnly bool
+	chatOnly    bool
+	audience    *repositories.AgentAudience
+}
+
+func connectionUsability(req *repositories.ListAgentDefinitionConnectionRequest) usability {
+	return usability{
+		enabledOnly: req.EnabledOnly,
+		chatOnly:    req.ChatOnly,
+		audience:    req.Audience,
+	}
+}
+
+func applyUsability(sq *bun.SelectQuery, u usability) *bun.SelectQuery {
+	cols := buncolgen.DefinitionColumns
+	if u.enabledOnly {
+		sq = sq.Where(cols.Enabled.IsTrue())
+	}
+	if u.chatOnly {
+		sq = sq.Where(cols.TriggerMode.Eq(), agentdefinition.TriggerChat)
+	}
+	if u.audience == nil {
+		return sq
+	}
+
+	return sq.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+		q = q.Where(cols.AccessMode.Eq(), agentdefinition.AccessEveryone).
+			WhereOr(cols.SystemKey.IsNotNull())
+		if len(u.audience.GrantedAgentIDs) > 0 {
+			q = q.WhereOr(cols.ID.In(), bun.List(u.audience.GrantedAgentIDs))
+		}
+
+		return q
+	})
 }
 
 func (r *repository) ListByIDs(
@@ -456,6 +497,32 @@ func (r *repository) SetToolTier(
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("set agent definition tool tier: %w", err)
+	}
+
+	return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())
+}
+
+// SetAccessMode changes who may use an agent without rewriting the rest of
+// it. Update never writes the column, so a save of the agent's form cannot
+// undo a change made here.
+func (r *repository) SetAccessMode(
+	ctx context.Context,
+	req repositories.SetAgentDefinitionAccessModeRequest,
+) error {
+	cols := buncolgen.DefinitionColumns
+
+	res, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*agentdefinition.Definition)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.DefinitionScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		}).
+		Set(cols.AccessMode.Set(), req.Mode).
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("set agent definition access mode: %w", err)
 	}
 
 	return dberror.CheckRowsAffected(res, "AgentDefinition", req.ID.String())

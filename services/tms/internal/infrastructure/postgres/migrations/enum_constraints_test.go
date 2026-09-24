@@ -6,8 +6,10 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
+	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/stretchr/testify/require"
@@ -55,12 +57,36 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(agentextension.AllAvailabilities()),
 		},
 		{
+			name:   "ck_agent_definitions_access_mode",
+			values: stringsOf(agentdefinition.AllAccessModes()),
+		},
+		{
 			name:   "ck_assistant_artifacts_kind",
 			values: stringsOf(assistantartifact.AllKinds()),
 		},
 		{
 			name:   "ck_assistant_messages_kind",
 			values: stringsOf(conversation.AllMessageKinds()),
+		},
+		{
+			name:   "chk_agent_memories_kind",
+			values: stringsOf(agent.AllMemoryKinds()),
+		},
+		{
+			name:   "chk_agent_memories_source",
+			values: stringsOf(agent.AllMemorySources()),
+		},
+		{
+			name:   "chk_agent_memories_status",
+			values: stringsOf(agent.AllMemoryStatuses()),
+		},
+		{
+			name:   "ck_ai_feedback_target_type",
+			values: stringsOf(aifeedback.AllTargetTypes()),
+		},
+		{
+			name:   "ck_ai_feedback_fingerprint_source",
+			values: stringsOf(aifeedback.AllFingerprintSources()),
 		},
 	}
 

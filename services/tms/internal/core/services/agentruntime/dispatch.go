@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/toolsimulation"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -75,7 +76,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 
 	if tool, ok := s.queryTools.Get(call.Name); ok {
 		if !selfScoped {
-			if outcome, denied := s.authorize(ctx, req.Actor, call.Name, tool.PermissionResource(), permission.OpRead); denied {
+			if outcome, denied := s.authorize(
+				ctx, req.Actor, call.Name, tool.Policy().Resource, permission.OpRead,
+			); denied {
 				return outcome
 			}
 		}
@@ -90,14 +93,15 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		return failedOutcome("Tool %q does not exist.", call.Name)
 	}
 
+	policy := tool.Policy()
 	if !selfScoped {
-		if outcome, denied := s.authorize(ctx, req.Actor, call.Name, tool.PermissionResource(), tool.PermissionOperation()); denied {
+		if outcome, denied := s.authorize(
+			ctx, req.Actor, call.Name, policy.Resource, policy.Operation,
+		); denied {
 			return outcome
 		}
 	}
 
-	tier := req.Definition.EffectiveTier(call.Name, tool.DefaultAutonomyTier()).
-		AtMost(serviceports.CeilingOf(tool))
 	call.Arguments = declaredArguments(
 		tool.ParamSchema(),
 		aliasedArguments(tool.ParamSchema(), call.Arguments),
@@ -119,12 +123,13 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		RunID:          req.RunID,
 		Params:         call.Arguments,
 	}
-	if limiter, limits := tool.(serviceports.ToolTierLimiter); limits {
-		tier = tier.AtMost(limiter.TierLimit(ctx, tierParams))
-	}
-	if privateToCaller(ctx, privateCheck{req: req, tool: tool, name: call.Name, params: tierParams}) {
-		tier = agent.TierAutoExecute.AtMost(serviceports.CeilingOf(tool))
-	}
+	tier := s.decideCall(ctx, agenttoolpolicy.DecideInput{
+		Policy:     policy,
+		Params:     tierParams,
+		Definition: req.Definition,
+		Unattended: req.Unattended,
+		Taint:      externalTaint(p.afterExternal),
+	}).Tier
 	tier, heldForExternal := afterExternalContent(tier, p.afterExternal)
 	action := &serviceports.PendingAction{
 		ToolName:  call.Name,
@@ -387,29 +392,6 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 		content: ranContent(call.Name, result),
 		action:  action,
 	}
-}
-
-// privateCheck is one call asked whether it only touches its caller's own
-// records.
-type privateCheck struct {
-	req    *serviceports.RunRequest
-	tool   serviceports.AgentTool
-	name   string
-	params serviceports.ToolExecuteParams
-}
-
-// privateToCaller reports a call that changes only the records of the person
-// in the conversation. Only a person present in the conversation qualifies:
-// an unattended run has nobody the call could be private to.
-func privateToCaller(ctx context.Context, c privateCheck) bool {
-	private, ok := c.tool.(serviceports.ToolPrivateWrite)
-	if !ok || c.req.Unattended || c.req.Actor == nil ||
-		c.req.Actor.PrincipalType != serviceports.PrincipalTypeUser ||
-		c.req.Definition.SetsToolTier(c.name) {
-		return false
-	}
-
-	return private.PrivateToCaller(ctx, c.params)
 }
 
 // ranContent tells the model a write ran and, when the tool says what it

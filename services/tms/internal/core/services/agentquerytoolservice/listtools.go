@@ -44,7 +44,7 @@ type listField = filtercatalog.Field
 // narrow it by, and the repository call that serves it.
 //
 // One tool is generated per entry rather than a single list_records(entity, …)
-// tool, because AgentQueryTool.PermissionResource returns exactly one resource
+// tool, because a tool's Policy names exactly one permission resource
 // and the agent builder groups the picker by it. A single tool would have to
 // resolve its resource at call time, and an organization could not grant an
 // agent "list workers" without also granting "list customers".
@@ -175,7 +175,11 @@ func (t *listTool) Name() string { return t.spec.name }
 
 func (t *listTool) Description() string { return t.description }
 
-func (t *listTool) PermissionResource() permission.Resource { return t.spec.resource }
+func (t *listTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: t.spec.resource,
+	})
+}
 
 func (t *listTool) ParamSchema() map[string]any {
 	return map[string]any{

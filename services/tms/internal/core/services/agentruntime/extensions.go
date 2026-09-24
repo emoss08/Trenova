@@ -126,6 +126,15 @@ func ReadsExternalContent(name string) bool {
 	return ok && spec.ReturnsExternalContent
 }
 
+func externalTaint(external bool) *agent.RunTaint {
+	taint := &agent.RunTaint{}
+	if external {
+		taint.Add(agent.TaintMark{Source: agent.TaintSourceWeb, ToolName: agentextension.ToolWebSearch})
+	}
+
+	return taint
+}
+
 func afterExternalContent(tier agent.AutonomyTier, external bool) (agent.AutonomyTier, bool) {
 	if !external || !tier.Above(agent.TierPropose) {
 		return tier, false

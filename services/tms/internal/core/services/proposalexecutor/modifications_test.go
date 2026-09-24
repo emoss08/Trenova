@@ -35,13 +35,21 @@ func (t *schemaTool) ParamSchema() map[string]any {
 		"additionalProperties": false,
 	}
 }
-func (t *schemaTool) Reversible() bool { return false }
-func (t *schemaTool) PermissionResource() permission.Resource {
-	return permission.ResourceDriverMessage
+func (t *schemaTool) Policy() services.ToolPolicy {
+	return services.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceDriverMessage,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "A schema stub.",
+	}
 }
-func (t *schemaTool) PermissionOperation() permission.Operation { return permission.OpCreate }
-func (t *schemaTool) RequiresIdempotencyKey() bool              { return false }
-func (t *schemaTool) DefaultAutonomyTier() agent.AutonomyTier   { return agent.TierActWithApproval }
 func (t *schemaTool) Execute(_ context.Context, params services.ToolExecuteParams) error {
 	t.ran = params.Params
 

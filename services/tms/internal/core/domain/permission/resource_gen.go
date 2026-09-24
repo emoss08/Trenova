@@ -130,6 +130,7 @@ const (
 	ResourceWebResearch     Resource = "web_research"
 	ResourceAgentDefinition Resource = "agent_definition"
 	ResourceAgentMemory     Resource = "agent_memory"
+	ResourceAgentFeedback   Resource = "agent_feedback"
 	ResourceAssistant       Resource = "assistant"
 	ResourceInsight         Resource = "insight"
 	ResourceWatchtower      Resource = "watchtower"

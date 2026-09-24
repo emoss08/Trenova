@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -102,6 +103,24 @@ func (f *fakePermissionEngine) GetEffectivePermissions(
 func (f *fakePermissionEngine) SimulatePermissions(
 	context.Context, *services.SimulatePermissionsRequest,
 ) (*services.EffectivePermissions, error) {
+	panic("not used by compiler")
+}
+
+func (f *fakePermissionEngine) AgentsUsable(
+	context.Context, *services.RequestActor, permission.Operation,
+) (*services.UsableAgents, error) {
+	panic("not used by compiler")
+}
+
+func (f *fakePermissionEngine) MayUseAgent(
+	context.Context, *services.RequestActor, *agentdefinition.Definition,
+) (bool, error) {
+	panic("not used by compiler")
+}
+
+func (f *fakePermissionEngine) RoleCoverage(
+	context.Context, *services.RoleCoverageRequest,
+) ([]services.RoleCoverage, error) {
 	panic("not used by compiler")
 }
 

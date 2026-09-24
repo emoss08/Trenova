@@ -154,8 +154,10 @@ func (t *listInsightsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listInsightsTool) PermissionResource() permission.Resource {
-	return permission.ResourceInsight
+func (t *listInsightsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceInsight,
+	})
 }
 
 func (t *listInsightsTool) Query(
@@ -287,8 +289,10 @@ func (t *getInsightTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getInsightTool) PermissionResource() permission.Resource {
-	return permission.ResourceInsight
+func (t *getInsightTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceInsight,
+	})
 }
 
 func (t *getInsightTool) Query(

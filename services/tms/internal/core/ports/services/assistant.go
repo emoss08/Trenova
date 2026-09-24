@@ -586,8 +586,24 @@ type DecisionFollowUpRequest struct {
 // DecisionFollowUps has the agent report what came of a decision, in the
 // conversation that raised it, wherever the decision was made: the card in
 // the thread, the Desk's decisions, AI Control or a plan. It never fails the
-// decision; a follow-up that cannot start is logged, and the outcome still
-// reaches the agent on the conversation's next turn.
+// decision. A follow-up that cannot start because the conversation is busy
+// is not lost: the turn in the way resumes it when it ends.
 type DecisionFollowUps interface {
 	FollowUp(ctx context.Context, req DecisionFollowUpRequest)
+}
+
+// ResumeFollowUpsRequest names a conversation whose turn just ended.
+type ResumeFollowUpsRequest struct {
+	TenantInfo pagination.TenantInfo
+	ThreadID   pulid.ID
+}
+
+// DecisionFollowUpResumer starts the follow-up a busy conversation could not
+// take when its decision was made. A conversation answers one turn at a time,
+// so a decision made while it was answering, the second of two cards approved
+// in quick succession most often, used to be reported nowhere: no Decision
+// entry, and a reply already under way that still read the proposal as
+// waiting. It never fails the turn that ended.
+type DecisionFollowUpResumer interface {
+	ResumeFollowUps(ctx context.Context, req ResumeFollowUpsRequest)
 }

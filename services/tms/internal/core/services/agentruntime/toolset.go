@@ -520,10 +520,12 @@ func (s *Service) toolNamed(name string) any {
 // toolGate is the permission a tool is used under.
 func (s *Service) toolGate(name string) (permission.Resource, permission.Operation, bool) {
 	if tool, ok := s.queryTools.Get(name); ok {
-		return tool.PermissionResource(), permission.OpRead, true
+		return tool.Policy().Resource, permission.OpRead, true
 	}
 	if tool, ok := s.actionTools.Get(name); ok {
-		return tool.PermissionResource(), tool.PermissionOperation(), true
+		policy := tool.Policy()
+
+		return policy.Resource, policy.Operation, true
 	}
 
 	return "", "", false

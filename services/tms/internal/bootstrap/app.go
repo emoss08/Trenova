@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruneventservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
@@ -31,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/aifeedbackjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
@@ -146,6 +148,7 @@ func Options() fx.Option {
 		agenttoolservice.Module,
 		agentquerytoolservice.Module,
 		agenttoolcatalog.Module,
+		agenttoolpolicy.Module,
 		productguideservice.Module,
 		agentguard.Module,
 		agentruntime.Module,
@@ -167,6 +170,7 @@ func Options() fx.Option {
 		watchtowerjobs.Module,
 		inboundjobs.Module,
 		briefingjobs.Module,
+		aifeedbackjobs.Module,
 		iftajobs.Module,
 		dispatchjobs.Module,
 		weatheralertjobs.Module,

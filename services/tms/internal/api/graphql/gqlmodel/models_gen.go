@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
@@ -109,6 +110,24 @@ type ShipmentEvent interface {
 	GetShipment() *ShipmentEventShipmentReference
 }
 
+type AIFeedbackConnection struct {
+	Edges      []*AIFeedbackEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type AIFeedbackEdge struct {
+	Node   *aifeedback.Feedback `json:"node"`
+	Cursor string               `json:"cursor"`
+}
+
+type AIFeedbackTargetInput struct {
+	TargetType aifeedback.TargetType `json:"targetType"`
+	TargetID   string                `json:"targetId"`
+	// Required for a briefing section, its key; empty otherwise.
+	TargetPart *string `json:"targetPart,omitempty"`
+}
+
 type AIProviderConnection struct {
 	Edges      []*AIProviderEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
@@ -179,6 +198,26 @@ type AdjustWorkerPTOBalanceInput struct {
 	AmountDays  string         `json:"amountDays"`
 	EffectiveAt *int           `json:"effectiveAt,omitempty"`
 	Note        string         `json:"note"`
+}
+
+// How much of an agent one role could use, and whether it is granted the agent.
+type AgentAudienceRole struct {
+	Role     *permission.Role                 `json:"role"`
+	Coverage agentdefinition.AudienceCoverage `json:"coverage"`
+	// Resources the agent's tools need that the role does not grant; empty unless coverage is Partial.
+	MissingResources []string `json:"missingResources"`
+	Granted          bool     `json:"granted"`
+}
+
+// Who an agent could be given to.
+type AgentAudienceSuggestion struct {
+	AgentID    string                     `json:"agentId"`
+	AccessMode agentdefinition.AccessMode `json:"accessMode"`
+	// Every role in the organization, by name.
+	Roles []*AgentAudienceRole `json:"roles"`
+	// While the agent is open to everyone, the tools it holds that reach
+	// restricted or confidential data. Empty while it is restricted to roles.
+	SensitiveTools []string `json:"sensitiveTools"`
 }
 
 type AgentControlInput struct {
@@ -416,6 +455,14 @@ type ApplyCustomerPaymentInput struct {
 	PaymentID      string                             `json:"paymentId"`
 	AccountingDate int                                `json:"accountingDate"`
 	Applications   []*CustomerPaymentApplicationInput `json:"applications"`
+}
+
+type ApproveAgentMemorySuggestionInput struct {
+	// The memory as it should read once approved.
+	Content string `json:"content"`
+	// Defaults to the suggestion's kind.
+	Kind    *agent.MemoryKind `json:"kind,omitempty"`
+	Version int               `json:"version"`
 }
 
 type ArchiveWorkerCredentialInput struct {
@@ -3776,6 +3823,34 @@ type MemoLineInput struct {
 type Mutation struct {
 }
 
+type MyAIFeedbackInput struct {
+	// At most 200 targets.
+	Targets []*AIFeedbackTargetInput `json:"targets"`
+}
+
+type MyAgentConnection struct {
+	Edges      []*MyAgentEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount *int           `json:"totalCount,omitempty"`
+}
+
+type MyAgentEdge struct {
+	Node   *agentdefinition.Definition `json:"node"`
+	Cursor string                      `json:"cursor"`
+}
+
+type MyAgentsInput struct {
+	First *int    `json:"first,omitempty"`
+	After *string `json:"after,omitempty"`
+	// Matched against the agent's name and description.
+	Search *string        `json:"search,omitempty"`
+	Origin *MyAgentOrigin `json:"origin,omitempty"`
+	// Agents already shown, so a page never repeats them. At most 100.
+	ExcludeIds []string `json:"excludeIds,omitempty"`
+	// Only these agents. At most 100.
+	Ids []string `json:"ids,omitempty"`
+}
+
 type MyCarrierIntelligence struct {
 	Configured bool                               `json:"configured"`
 	DOTNumber  *string                            `json:"dotNumber,omitempty"`
@@ -5379,11 +5454,30 @@ type ServiceTypeEdge struct {
 	Cursor string                   `json:"cursor"`
 }
 
+type SetAgentAccessInput struct {
+	AccessMode agentdefinition.AccessMode `json:"accessMode"`
+	// The roles granted the agent, replacing those granted now. Kept whatever the
+	// mode, so an agent opened to everyone and restricted again keeps its audience.
+	RoleIds []string `json:"roleIds"`
+}
+
 type SetAvailabilityPreferenceInput struct {
 	WorkerID   string                        `json:"workerId"`
 	DayOfWeek  int                           `json:"dayOfWeek"`
 	Preference worker.AvailabilityPreference `json:"preference"`
 	Note       *string                       `json:"note,omitempty"`
+}
+
+type SetMyAIFeedbackInput struct {
+	TargetType aifeedback.TargetType `json:"targetType"`
+	TargetID   string                `json:"targetId"`
+	TargetPart *string               `json:"targetPart,omitempty"`
+	// 1 for a thumbs up, -1 for a thumbs down.
+	Rating int `json:"rating"`
+	// Reasons on the same side as the rating.
+	Reasons []aifeedback.Reason `json:"reasons,omitempty"`
+	// At most 1000 characters.
+	Comment *string `json:"comment,omitempty"`
 }
 
 type SetMyAvailabilityInput struct {
@@ -9282,6 +9376,66 @@ func (e *MoveStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e MoveStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Where an agent came from.
+type MyAgentOrigin string
+
+const (
+	MyAgentOriginAll MyAgentOrigin = "All"
+	// Made from one of the platform's templates.
+	MyAgentOriginTemplate MyAgentOrigin = "Template"
+	// Built by hand.
+	MyAgentOriginCustom MyAgentOrigin = "Custom"
+)
+
+var AllMyAgentOrigin = []MyAgentOrigin{
+	MyAgentOriginAll,
+	MyAgentOriginTemplate,
+	MyAgentOriginCustom,
+}
+
+func (e MyAgentOrigin) IsValid() bool {
+	switch e {
+	case MyAgentOriginAll, MyAgentOriginTemplate, MyAgentOriginCustom:
+		return true
+	}
+	return false
+}
+
+func (e MyAgentOrigin) String() string {
+	return string(e)
+}
+
+func (e *MyAgentOrigin) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = MyAgentOrigin(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid MyAgentOrigin", str)
+	}
+	return nil
+}
+
+func (e MyAgentOrigin) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *MyAgentOrigin) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e MyAgentOrigin) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

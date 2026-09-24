@@ -53,12 +53,11 @@ and it. A report shared with the whole organization still waits for a person,
 and so does a call no person is driving, because "private" is private to
 someone.
 */
-func TestCreateReport_TierLimitRunsPrivateReportsAndHoldsSharedOnes(t *testing.T) {
+func TestCreateReport_ClassifiesPrivateReportsAsPersonalAndHoldsSharedOnes(t *testing.T) {
 	t.Parallel()
 
-	tool := newCreateReportTool(&fakeReportWriter{})
-	limiter, ok := tool.(serviceports.ToolTierLimiter)
-	require.True(t, ok)
+	policy := newCreateReportTool(&fakeReportWriter{}).Policy()
+	require.True(t, policy.PersonalRunsUnasked)
 
 	base := func() map[string]any {
 		return map[string]any{"name": "Lane revenue", "definition": definitionArgument()}
@@ -131,7 +130,10 @@ func TestCreateReport_TierLimitRunsPrivateReportsAndHoldsSharedOnes(t *testing.T
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, tc.want, limiter.TierLimit(t.Context(), tc.params))
+			call := policy.Classified(tc.params)
+			assert.Equal(t, tc.want, callLimit(call))
+			assert.Equal(t, tc.want == agent.TierAutoExecute,
+				call.Egress == agent.EgressPersonal)
 		})
 	}
 }

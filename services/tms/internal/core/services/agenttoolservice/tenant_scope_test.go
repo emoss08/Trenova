@@ -20,13 +20,21 @@ type approveOnlyTool struct{}
 func (approveOnlyTool) Name() string                { return "approve_only" }
 func (approveOnlyTool) Description() string         { return "" }
 func (approveOnlyTool) ParamSchema() map[string]any { return map[string]any{} }
-func (approveOnlyTool) Reversible() bool            { return false }
-func (approveOnlyTool) PermissionResource() permission.Resource {
-	return permission.ResourceBillingQueue
+func (approveOnlyTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          "approve_only",
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceBillingQueue,
+		Operation:     permission.OpApprove,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "An approval stub.",
+	}
 }
-func (approveOnlyTool) PermissionOperation() permission.Operation { return permission.OpApprove }
-func (approveOnlyTool) RequiresIdempotencyKey() bool              { return false }
-func (approveOnlyTool) DefaultAutonomyTier() agent.AutonomyTier   { return agent.TierPropose }
 func (approveOnlyTool) Execute(_ context.Context, _ serviceports.ToolExecuteParams) error {
 	return nil
 }
@@ -135,9 +143,9 @@ func TestAssignMove_UsesTheActorTenantAndPassesEveryId(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.Equal(t, permission.ResourceShipmentMove, tool.PermissionResource())
-	require.Equal(t, permission.OpUpdate, tool.PermissionOperation())
-	require.True(t, tool.Reversible())
+	require.Equal(t, permission.ResourceShipmentMove, tool.Policy().Resource)
+	require.Equal(t, permission.OpUpdate, tool.Policy().Operation)
+	require.True(t, tool.Policy().Reversible)
 }
 
 func TestAssignMove_TenantMismatch_DoesNotCallPort(t *testing.T) {
@@ -162,7 +170,7 @@ func TestAssignMove_TenantMismatch_DoesNotCallPort(t *testing.T) {
 // the model names: a run id in the parameters is ignored.
 func TestRaiseException_TiesTheCaseToTheExecutingRun(t *testing.T) {
 	exceptions := &fakeExceptionService{}
-	tool := newRaiseExceptionTool(exceptions)
+	tool := newRaiseExceptionTool(exceptions, &fakeSubjectRepository{exists: true})
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -195,12 +203,12 @@ func TestRaiseException_TiesTheCaseToTheExecutingRun(t *testing.T) {
 	require.Equal(t, agent.CategoryMissingDocumentation, flagged.Category)
 	require.Equal(t, agent.SeverityHigh, flagged.Severity)
 	require.Equal(t, 1, flagged.BlastRadius)
-	require.Equal(t, agent.TierAutoExecute, tool.DefaultAutonomyTier())
+	require.Equal(t, agent.TierAutoExecute, tool.Policy().DefaultTier)
 }
 
 func TestRaiseException_RefusesWithoutARun(t *testing.T) {
 	exceptions := &fakeExceptionService{}
-	tool := newRaiseExceptionTool(exceptions)
+	tool := newRaiseExceptionTool(exceptions, &fakeSubjectRepository{exists: true})
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 

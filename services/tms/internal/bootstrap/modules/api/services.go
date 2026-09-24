@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/agentaccessservice"
 	"github.com/emoss08/trenova/internal/core/services/agentactivityservice"
 	"github.com/emoss08/trenova/internal/core/services/agentbudgetservice"
 	"github.com/emoss08/trenova/internal/core/services/agentcontrolservice"
@@ -32,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentsubjectservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttrustservice"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
+	"github.com/emoss08/trenova/internal/core/services/aifeedbackservice"
 	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
 	"github.com/emoss08/trenova/internal/core/services/aiusageservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
@@ -287,6 +289,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	accessorialchargeservice.New,
 	agentcontrolservice.New,
 	agentdefinitionservice.New,
+	agentaccessservice.New,
 	aiproviderservice.NewProber,
 	aiproviderservice.New,
 	func(s *aiproviderservice.Service) services.AIProviderService { return s },
@@ -325,6 +328,9 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentplanservice.New,
 	agentmemoryservice.NewLabeler,
 	agentmemoryservice.New,
+	aifeedbackservice.New,
+	aifeedbackservice.AsService,
+	aifeedbackservice.AsMaintenance,
 	agentbudgetservice.New,
 	agentevaluationservice.New,
 	assignmentservice.New,

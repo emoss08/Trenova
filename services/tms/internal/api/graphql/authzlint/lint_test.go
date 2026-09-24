@@ -45,6 +45,14 @@ var authOnlyAllowlist = map[string]string{
 	"queryResolver.TelematicsStatus": "org-wide integration health indicator shown in the " +
 		"application shell; carries no resource data",
 
+	"queryResolver.MyAIFeedback": "returns only the caller's own ratings of AI output; " +
+		"no one else's rating is ever read",
+	"mutationResolver.SetMyAIFeedback": "rates AI output for the caller only; the service " +
+		"refuses a target the caller could not read (their own thread or briefing, " +
+		"insight:read, watchtower:read plus the item source's read)",
+	"mutationResolver.ClearMyAIFeedback": "removes only the caller's own rating; the delete " +
+		"is scoped to the caller's user id",
+
 	"mutationResolver.CreateSettlementDispute":   "a driver disputing their own settlement",
 	"mutationResolver.WithdrawSettlementDispute": "a driver withdrawing their own dispute",
 }
@@ -139,5 +147,36 @@ func TestSelfScopedNameRule(t *testing.T) {
 	}
 	for _, name := range []string{"Myths", "Shipments", "DummyData", "ApproveWorkerPto"} {
 		assert.False(t, selfScopedName.MatchString(name), name)
+	}
+}
+
+// Who may use which agent is decided by these operations. The self-scoped
+// ones are named My<Thing>, which would let them pass on authentication
+// alone, so each is held to a permission check of its own.
+func TestAgentAccessResolversAreAuthorized(t *testing.T) {
+	t.Parallel()
+
+	roots, err := Analyze(resolverDir)
+	require.NoError(t, err)
+
+	verdicts := make(map[string]Verdict, len(roots))
+	for _, root := range roots {
+		verdicts[root.Key()] = root.Verdict
+	}
+
+	for _, key := range []string{
+		"queryResolver.MyAgents",
+		"queryResolver.SuggestedAgentAudience",
+		"mutationResolver.SetAgentAccess",
+		"mutationResolver.SetRoleAgentAccess",
+		"mutationResolver.DecideMyProposal",
+		"queryResolver.PendingDecisions",
+		"queryResolver.PendingDecisionSummary",
+	} {
+		verdict, ok := verdicts[key]
+		require.True(t, ok, "%s is not a root resolver", key)
+		assert.Equal(t, VerdictPermission, verdict, "%s must reach a permission check", key)
+		_, listed := authOnlyAllowlist[key]
+		assert.False(t, listed, "%s must not be allowlisted as auth-only", key)
 	}
 }

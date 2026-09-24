@@ -18,6 +18,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -28,16 +29,24 @@ type Params struct {
 	Logger        *zap.Logger
 	Runs          repositories.AgentRunRepository
 	Conversations repositories.ConversationRepository
+	Definitions   repositories.AgentDefinitionRepository
+	Permissions   serviceports.PermissionEngine
 	Turns         *assistantturnservice.Service
 	Workflows     serviceports.WorkflowStarter
+	Proposals     repositories.AgentProposalRepository
+	Plans         repositories.AgentPlanRepository
+	Decisions     repositories.AgentDecisionRepository
 }
 
 type Service struct {
 	l             *zap.Logger
 	runs          repositories.AgentRunRepository
 	conversations repositories.ConversationRepository
+	definitions   repositories.AgentDefinitionRepository
+	permissions   serviceports.PermissionEngine
 	turns         turnStarter
 	workflows     serviceports.WorkflowStarter
+	decided       decidedReader
 }
 
 // turnStarter is the part of the turn service a follow-up needs.
@@ -50,12 +59,29 @@ type turnStarter interface {
 }
 
 func New(p Params) serviceports.DecisionFollowUps {
+	return newService(p)
+}
+
+// NewResumer is the same service, as what a turn that ended asks to start the
+// follow-ups it kept out.
+func NewResumer(p Params) serviceports.DecisionFollowUpResumer {
+	return newService(p)
+}
+
+func newService(p Params) *Service {
 	return &Service{
 		l:             p.Logger.Named("service.assistantfollowup"),
 		runs:          p.Runs,
 		conversations: p.Conversations,
+		definitions:   p.Definitions,
+		permissions:   p.Permissions,
 		turns:         p.Turns,
 		workflows:     p.Workflows,
+		decided: decidedReader{
+			proposals: p.Proposals,
+			plans:     p.Plans,
+			decisions: p.Decisions,
+		},
 	}
 }
 
@@ -96,6 +122,9 @@ func (s *Service) FollowUp(ctx context.Context, req serviceports.DecisionFollowU
 		UserID:         thread.UserID,
 		OrganizationID: thread.OrganizationID,
 		BusinessUnitID: thread.BusinessUnitID,
+	}
+	if !s.ownerMayUseAgent(ctx, thread, &actor, req.TenantInfo) {
+		return
 	}
 	start := assistantturnservice.StartRequest{
 		ThreadID:   thread.ID,
@@ -150,10 +179,57 @@ func (s *Service) threadFor(
 	})
 }
 
+// ownerMayUseAgent reports whether the conversation's owner may still use its
+// agent. One who lost access keeps the conversation to read, and the decision
+// stands, but the agent is not asked to report it: the turn would be refused.
+func (s *Service) ownerMayUseAgent(
+	ctx context.Context,
+	thread *conversation.Thread,
+	owner *serviceports.RequestActor,
+	tenant pagination.TenantInfo,
+) bool {
+	if s.definitions == nil || s.permissions == nil {
+		s.l.Warn("decision follow-up skipped: agent access cannot be checked",
+			zap.String("thread", thread.ID.String()),
+		)
+		return false
+	}
+
+	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+		ID:         thread.AgentDefinitionID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		s.l.Info("decision follow-up skipped: the conversation's agent could not be read",
+			zap.String("thread", thread.ID.String()),
+			zap.Error(err),
+		)
+		return false
+	}
+
+	allowed, err := s.permissions.MayUseAgent(ctx, owner, definition)
+	if err != nil {
+		s.l.Warn("decision follow-up skipped: agent access could not be checked",
+			zap.String("thread", thread.ID.String()),
+			zap.Error(err),
+		)
+		return false
+	}
+	if !allowed {
+		s.l.Info("decision follow-up skipped: the owner may no longer use the agent",
+			zap.String("thread", thread.ID.String()),
+			zap.String("agent", definition.ID.String()),
+		)
+	}
+
+	return allowed
+}
+
 // logStartFailure records a follow-up that never began. The conversation
-// being busy is ordinary — the person asked something while the change ran —
-// and the outcome reaches the agent on that turn anyway, since every turn is
-// told what became of the conversation's proposals.
+// being busy is ordinary — the person asked something while the change ran,
+// or approved a second card while the first was being reported. The turn in
+// the way read the proposal before it was decided, so it cannot report it;
+// when it ends it resumes this follow-up (ResumeFollowUps).
 func (s *Service) logStartFailure(start assistantturnservice.StartRequest, err error) {
 	s.l.Info("decision follow-up not started",
 		zap.String("thread", start.ThreadID.String()),

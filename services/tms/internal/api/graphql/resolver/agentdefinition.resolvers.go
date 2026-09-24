@@ -8,21 +8,18 @@ package resolver
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func (r *agentDefinitionResolver) Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error) {
-	if obj.Template == "" {
-		return nil, nil
-	}
-	template := obj.Template
-
-	return &template, nil
+	return definitionTemplate(obj), nil
 }
 
 func (r *agentDefinitionResolver) ToolTiers(ctx context.Context, obj *agentdefinition.Definition) (map[string]any, error) {
@@ -65,6 +62,10 @@ func (r *agentDefinitionResolver) Delegates(ctx context.Context, obj *agentdefin
 	return agentDefinitionDelegates(ctx, obj)
 }
 
+func (r *agentDefinitionResolver) AccessRoles(ctx context.Context, obj *agentdefinition.Definition) ([]*permission.Role, error) {
+	return r.agentDefinitionAccessRoles(ctx, obj)
+}
+
 func (r *agentDefinitionResolver) PendingProposals(ctx context.Context, obj *agentdefinition.Definition) (int, error) {
 	stats, err := agentDefinitionStats(ctx, obj)
 	if err != nil {
@@ -81,6 +82,68 @@ func (r *agentDefinitionResolver) OpenRuns(ctx context.Context, obj *agentdefini
 	}
 
 	return stats.OpenRuns, nil
+}
+
+func (r *mutationResolver) SetAgentAccess(ctx context.Context, agentID string, input gqlmodel.SetAgentAccessInput) (*agentdefinition.Definition, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentDefinition, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = r.requirePermission(ctx, permission.ResourceRole, permission.OpUpdate); err != nil {
+		return nil, err
+	}
+
+	definitionID, err := pulid.MustParse(agentID)
+	if err != nil {
+		return nil, err
+	}
+	roleIDs, err := parseIDs(input.RoleIds)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := r.agentAccessService.SetAgentAccess(ctx, &services.SetAgentAccessRequest{
+		TenantInfo: tenantInfo(authCtx),
+		AgentID:    definitionID,
+		Mode:       input.AccessMode,
+		RoleIDs:    roleIDs,
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return access.Agent, nil
+}
+
+func (r *mutationResolver) SetRoleAgentAccess(ctx context.Context, roleID string, agentIds []string) (*permission.Role, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceRole, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(roleID)
+	if err != nil {
+		return nil, err
+	}
+	agentIDs, err := parseIDs(agentIds)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.agentAccessService.SetRoleAgents(ctx, &services.SetRoleAgentsRequest{
+		TenantInfo: tenantInfo(authCtx),
+		RoleID:     id,
+		AgentIDs:   agentIDs,
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return result.Role, nil
+}
+
+func (r *myAgentResolver) Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error) {
+	return definitionTemplate(obj), nil
 }
 
 func (r *queryResolver) AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error) {
@@ -126,8 +189,93 @@ func (r *queryResolver) AgentDefinition(ctx context.Context, id string) (*agentd
 	})
 }
 
+func (r *queryResolver) MyAgents(ctx context.Context, input gqlmodel.MyAgentsInput) (*gqlmodel.MyAgentConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAssistant, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	filters, none, err := myAgentFilters(&input)
+	if err != nil {
+		return nil, err
+	}
+	if none {
+		return emptyMyAgentConnection(ctx), nil
+	}
+
+	usable, err := r.permissionEngine.AgentsUsable(
+		ctx,
+		actorutil.FromAuthContext(authCtx),
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if !usable.Assistant {
+		return emptyMyAgentConnection(ctx), nil
+	}
+
+	tableInput, err := dataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
+		First:        input.First,
+		After:        input.After,
+		Query:        input.Search,
+		FieldFilters: filters,
+		Sort:         []*gqlmodel.SortFieldInput{{Field: "name", Direction: "asc"}},
+	}, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.agentDefinitionService.ListConnection(
+		ctx,
+		&repositories.ListAgentDefinitionConnectionRequest{
+			Filter:      tableInput.Filter,
+			Cursor:      tableInput.Cursor,
+			Columns:     myAgentColumns(ctx, "edges.node"),
+			EnabledOnly: true,
+			ChatOnly:    true,
+			Audience:    usable.Audience(),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return myAgentConnectionToModel(result)
+}
+
+func (r *queryResolver) SuggestedAgentAudience(ctx context.Context, agentID string) (*gqlmodel.AgentAudienceSuggestion, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = r.requirePermission(ctx, permission.ResourceRole, permission.OpRead); err != nil {
+		return nil, err
+	}
+
+	definitionID, err := pulid.MustParse(agentID)
+	if err != nil {
+		return nil, err
+	}
+
+	suggestion, err := r.agentAccessService.SuggestAudience(ctx, &services.SuggestAgentAudienceRequest{
+		TenantInfo: tenantInfo(authCtx),
+		AgentID:    definitionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return audienceSuggestionToModel(suggestion), nil
+}
+
 func (r *Resolver) AgentDefinition() generated.AgentDefinitionResolver {
 	return &agentDefinitionResolver{r}
 }
 
-type agentDefinitionResolver struct{ *Resolver }
+func (r *Resolver) MyAgent() generated.MyAgentResolver { return &myAgentResolver{r} }
+
+type (
+	agentDefinitionResolver struct{ *Resolver }
+	myAgentResolver         struct{ *Resolver }
+)

@@ -65,24 +65,21 @@ func (t *attachDocumentTool) ParamSchema() map[string]any {
 	}
 }
 
-// Reversible is false. Attaching moves the document's lineage onto the
-// shipment, and there is no tool that moves it back — calling this reversible
-// would let it be promoted to running unattended on the strength of an undo
-// that does not exist.
-func (t *attachDocumentTool) Reversible() bool { return false }
-
-func (t *attachDocumentTool) PermissionResource() permission.Resource {
-	return permission.ResourceDocument
-}
-
-func (t *attachDocumentTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *attachDocumentTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *attachDocumentTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *attachDocumentTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceDocument,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Files a document already in Trenova against a shipment; nobody outside " +
+			"is told.",
+	}
 }
 
 // Target names the record this changes, so the proposal is pinned to the

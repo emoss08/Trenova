@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -77,11 +78,15 @@ func (t *findInTrenovaTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *findInTrenovaTool) PermissionResource() permission.Resource {
-	return permission.ResourceAssistant
+func (t *findInTrenovaTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceAssistant,
+		scope:    agent.ToolScopeSelf,
+		effect:   agent.ToolEffectDiscover,
+		rationale: "Searches the product guide for the caller; nothing changes and nothing is " +
+			"sent.",
+	})
 }
-
-func (t *findInTrenovaTool) SelfScoped() bool { return true }
 
 func (t *findInTrenovaTool) SearchTerms() []string {
 	return []string{"how do i", "where is", "help", "guide", "page", "menu", "navigate", "find"}
@@ -232,11 +237,14 @@ func (t *openPageTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *openPageTool) PermissionResource() permission.Resource {
-	return permission.ResourceAssistant
+func (t *openPageTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource:  permission.ResourceAssistant,
+		scope:     agent.ToolScopeSelf,
+		effect:    agent.ToolEffectNavigate,
+		rationale: "Opens a page in the caller's own browser; nothing changes and nothing is sent.",
+	})
 }
-
-func (t *openPageTool) SelfScoped() bool { return true }
 
 func (t *openPageTool) SearchTerms() []string {
 	return []string{"take me", "go to", "open", "navigate", "show me the page", "bring up"}

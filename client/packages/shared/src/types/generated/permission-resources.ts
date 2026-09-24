@@ -133,6 +133,7 @@ export const Resource = {
   WebResearch: "web_research",
   AgentDefinition: "agent_definition",
   AgentMemory: "agent_memory",
+  AgentFeedback: "agent_feedback",
   Assistant: "assistant",
   Insight: "insight",
   Watchtower: "watchtower",

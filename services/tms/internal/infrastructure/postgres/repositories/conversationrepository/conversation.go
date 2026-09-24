@@ -258,6 +258,10 @@ func (r *repository) ListMessages(
 		query = query.Where(cols.Kind.NotIn(), bun.List(req.ExcludeKinds))
 	}
 
+	if len(req.Kinds) > 0 {
+		query = query.Where(cols.Kind.In(), bun.List(req.Kinds))
+	}
+
 	if req.Limit > 0 {
 		// Taking the newest N and reversing keeps the most recent context rather
 		// than the oldest, which is what a long conversation needs.

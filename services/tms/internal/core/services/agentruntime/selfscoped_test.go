@@ -18,7 +18,13 @@ type selfScopedAction struct {
 	*agentruntimetest.StubActionTool
 }
 
-func (selfScopedAction) SelfScoped() bool { return true }
+func (a selfScopedAction) Policy() serviceports.ToolPolicy {
+	policy := a.StubActionTool.Policy()
+	policy.Scope = agent.ToolScopeSelf
+	policy.Egress = []agent.EgressClass{agent.EgressPersonal}
+
+	return policy
+}
 
 func selfScopedRuntime(
 	completion *scriptedCompletion,

@@ -445,39 +445,35 @@ func delegateNote(report serviceports.AssistantDelegateFinishedEvent) string {
 	}
 }
 
-// MayUseAssistant reports whether the actor may talk to agents at all, which
-// is what using an agent as a delegate asks of them too.
-func MayUseAssistant(
+// UsableAgentsFor is what the person may use of the organization's agents in
+// a conversation: whether they may talk to agents at all, and which agents
+// restricted to roles their roles grant. Nobody but a person talks to an
+// agent, and a check that cannot be made offers nothing.
+func UsableAgentsFor(
 	ctx context.Context,
 	permissions serviceports.PermissionEngine,
 	actor *serviceports.RequestActor,
 	logger *zap.Logger,
-) bool {
+) *serviceports.UsableAgents {
 	if permissions == nil || actor == nil ||
 		actor.PrincipalType != serviceports.PrincipalTypeUser {
-		return false
+		return &serviceports.UsableAgents{}
 	}
 
-	result, err := permissions.Check(ctx, &serviceports.PermissionCheckRequest{
-		PrincipalType:  actor.PrincipalType,
-		PrincipalID:    actor.PrincipalID,
-		UserID:         actor.UserID,
-		APIKeyID:       actor.APIKeyID,
-		BusinessUnitID: actor.BusinessUnitID,
-		OrganizationID: actor.OrganizationID,
-		Resource:       permission.ResourceAssistant.String(),
-		Operation:      permission.OpCreate,
-	})
+	usable, err := permissions.AgentsUsable(ctx, actor, permission.OpCreate)
 	if err != nil {
 		if logger != nil {
-			logger.Warn("could not check whether the person may use other agents; "+
+			logger.Warn("could not check which agents the person may use; "+
 				"withholding them", zap.Error(err))
 		}
 
-		return false
+		return &serviceports.UsableAgents{}
+	}
+	if usable == nil {
+		return &serviceports.UsableAgents{}
 	}
 
-	return result != nil && result.Allowed
+	return usable
 }
 
 // PermittedTools keeps the named tools the actor may use, the same check the

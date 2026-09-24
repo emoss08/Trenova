@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -68,8 +69,14 @@ func (t *getShipmentDraftTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getShipmentDraftTool) PermissionResource() permission.Resource {
-	return permission.ResourceDocument
+func (t *getShipmentDraftTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceDocument,
+		reads:    agent.ExternalReadAlways,
+		source:   agent.TaintSourceDocument,
+		rationale: "Reads a shipment drafted from a document someone outside sent; nothing " +
+			"changes and nothing is sent.",
+	})
 }
 
 // draftData is the typed view of what document intelligence stores. The
@@ -320,8 +327,10 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *quoteShipmentTool) PermissionResource() permission.Resource {
-	return permission.ResourceRateQuote
+func (t *quoteShipmentTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceRateQuote,
+	})
 }
 
 type quoteStopParam struct {
@@ -608,8 +617,10 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *shopCarriersTool) PermissionResource() permission.Resource {
-	return permission.ResourceRateQuote
+func (t *shopCarriersTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceRateQuote,
+	})
 }
 
 type shopOptionView struct {

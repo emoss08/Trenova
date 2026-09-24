@@ -58,6 +58,11 @@ the ceiling or the private-write rule would allow, and the model is told why.
 - A delegate starts from the delegating turn's flag (`DelegateCall.AfterExternalContent`) and
   hands its own back (`DelegateRun.ExternalContent`).
 - It adds only optional data and no command, so it took no `GetVersion` gate.
+- The web tools declare `ReadsExternal: always` with the `web` taint source in their
+  `ToolPolicy`. While a turn carries the flag, dispatch hands `agenttoolpolicy.Decide` a run
+  taint with a `web` mark, so the decision records `tainted` for anything that leaves the
+  organization, and then caps what is left at `Propose`. The cap is deliberately limited to web
+  content: tools that read inbound mail or documents keep the policy's own, narrower rule.
 
 ## What leaves Trenova
 

@@ -64,6 +64,8 @@ func (t *createDashboardTool) Description() string {
 		"Use it when a person describes a screen of reports they want, such as \"this " +
 		"week's revenue, on-time percentage and the unbilled backlog\". Find each tile's " +
 		"report with list_reports first; never invent an id. Tiles are laid out for you. " +
+		"For a dashboard about a measure, lead with its headline figures as kpi tiles when " +
+		"the report has a column for them, then the detail table. " +
 		"Not for the person's home page — get_my_home_layout and add_home_widget are for that."
 }
 
@@ -164,20 +166,22 @@ func tileSchema() map[string]any {
 	}
 }
 
-func (t *createDashboardTool) Reversible() bool { return true }
-
-func (t *createDashboardTool) PermissionResource() permission.Resource {
-	return permission.ResourceDashboard
-}
-
-func (t *createDashboardTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *createDashboardTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *createDashboardTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *createDashboardTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceDashboard,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Saves a report dashboard colleagues can open; nothing leaves the " +
+			"organization.",
+	}
 }
 
 func (t *createDashboardTool) Validate(
@@ -332,20 +336,21 @@ func (t *addDashboardTileTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *addDashboardTileTool) Reversible() bool { return true }
-
-func (t *addDashboardTileTool) PermissionResource() permission.Resource {
-	return permission.ResourceDashboard
-}
-
-func (t *addDashboardTileTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *addDashboardTileTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *addDashboardTileTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *addDashboardTileTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceDashboard,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Adds a tile to a saved dashboard inside Trenova.",
+	}
 }
 
 func (t *addDashboardTileTool) Validate(

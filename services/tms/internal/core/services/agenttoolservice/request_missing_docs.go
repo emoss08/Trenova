@@ -88,20 +88,21 @@ func (t *requestMissingDocsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *requestMissingDocsTool) Reversible() bool { return false }
-
-func (t *requestMissingDocsTool) PermissionResource() permission.Resource {
-	return permission.ResourceCustomerCommunication
-}
-
-func (t *requestMissingDocsTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *requestMissingDocsTool) RequiresIdempotencyKey() bool { return true }
-
-func (t *requestMissingDocsTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *requestMissingDocsTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceCustomerCommunication,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
+		Effect:        agent.ToolEffectChange,
+		Idempotent:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Emails an outside party a request for paperwork in words the model wrote.",
+	}
 }
 
 func (t *requestMissingDocsTool) Execute(

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -62,8 +63,10 @@ func (t *listReportRunsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listReportRunsTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
+func (t *listReportRunsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceReport,
+	})
 }
 
 func (t *listReportRunsTool) Query(
@@ -238,8 +241,11 @@ func (t *compareReportRunsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *compareReportRunsTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
+func (t *compareReportRunsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceReport,
+		effect:   agent.ToolEffectPresent,
+	})
 }
 
 func (t *compareReportRunsTool) Query(

@@ -7,9 +7,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -33,7 +35,8 @@ type Params struct {
 	Versions serviceports.RecordVersionReader `optional:"true"`
 	// Budgets is optional. With it an automatic write past its tool's daily
 	// cap is refused before it runs.
-	Budgets serviceports.AgentBudgetService `optional:"true"`
+	Budgets serviceports.AgentBudgetService       `optional:"true"`
+	Trust   repositories.AgentToolTrustRepository `optional:"true"`
 	// Extensions is optional. Without it no extension's tools are offered.
 	Extensions serviceports.AgentExtensionGate `optional:"true"`
 }
@@ -47,6 +50,7 @@ type Service struct {
 	catalog     *agenttoolcatalog.Catalog
 	versions    serviceports.RecordVersionReader
 	budgets     serviceports.AgentBudgetService
+	trust       repositories.AgentToolTrustRepository
 	extensions  serviceports.AgentExtensionGate
 }
 
@@ -60,6 +64,7 @@ func New(p Params) *Service {
 		catalog:     p.Catalog,
 		versions:    p.Versions,
 		budgets:     p.Budgets,
+		trust:       p.Trust,
 		extensions:  p.Extensions,
 	}
 }
@@ -622,8 +627,7 @@ func (s *Service) summarize(
 		summaries = append(summaries, agentdefinition.ToolSummary{
 			Name:        tool.Name(),
 			Description: tool.Description(),
-			Tier: definition.EffectiveTier(name, tool.DefaultAutonomyTier()).
-				AtMost(serviceports.CeilingOf(tool)),
+			Tier:        agenttoolpolicy.StaticTier(definition, tool.Policy()),
 		})
 	}
 

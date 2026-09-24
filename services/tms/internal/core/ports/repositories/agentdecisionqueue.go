@@ -44,6 +44,9 @@ type ListPendingDecisionsRequest struct {
 	// ExcludeShadowDefinitions hides what agents in shadow mode proposed,
 	// which nobody can approve.
 	ExcludeShadowDefinitions bool
+	// Audience keeps only what agents the person may use raised; nil keeps
+	// everything.
+	Audience *AgentAudience
 	// Now is the clock the expiry check reads.
 	Now int64
 }
@@ -76,6 +79,7 @@ type PendingDecisionSummary struct {
 type PendingDecisionSummaryRequest struct {
 	TenantInfo               pagination.TenantInfo
 	ExcludeShadowDefinitions bool
+	Audience                 *AgentAudience
 	Now                      int64
 }
 

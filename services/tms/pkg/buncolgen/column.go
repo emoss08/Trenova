@@ -305,7 +305,9 @@ func (c Column) SetExcluded() string { return c.Name + " = EXCLUDED." + c.Name }
 //	// SET status = CASE WHEN status = ? THEN ? ELSE status END
 //
 // The expression may include "{}" placeholders, which are replaced with the bare
-// column name to avoid repeating it in common self-referential updates.
+// column name to avoid repeating it in common self-referential updates. Every
+// "{}" is replaced, including one inside a SQL literal, so write an empty array
+// as ARRAY[]::text[] rather than '{}'::text[].
 func (c Column) SetExpr(expr string) string {
 	return c.Name + " = " + strings.ReplaceAll(expr, "{}", c.Name)
 }

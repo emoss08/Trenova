@@ -151,17 +151,17 @@ func TestPTOTools_DeclareTheirAuthorizationAndReversibility(t *testing.T) {
 	t.Parallel()
 
 	approve := newApproveWorkerPTOTool(&fakePTODecider{})
-	assert.Equal(t, permission.ResourceWorkerPTO, approve.PermissionResource())
-	assert.Equal(t, permission.OpApprove, approve.PermissionOperation())
-	assert.True(t, approve.Reversible())
+	assert.Equal(t, permission.ResourceWorkerPTO, approve.Policy().Resource)
+	assert.Equal(t, permission.OpApprove, approve.Policy().Operation)
+	assert.True(t, approve.Policy().Reversible)
 
 	reject := newRejectWorkerPTOTool(&fakePTODecider{})
-	assert.Equal(t, permission.OpReject, reject.PermissionOperation())
-	assert.False(t, reject.Reversible())
+	assert.Equal(t, permission.OpReject, reject.Policy().Operation)
+	assert.False(t, reject.Policy().Reversible)
 
 	cancel := newCancelWorkerPTOTool(&fakePTODecider{})
-	assert.Equal(t, permission.OpCancel, cancel.PermissionOperation())
-	assert.False(t, cancel.Reversible())
+	assert.Equal(t, permission.OpCancel, cancel.Policy().Operation)
+	assert.False(t, cancel.Policy().Reversible)
 }
 
 // None of the three may run without a person seeing it first.
@@ -173,7 +173,7 @@ func TestPTOTools_NeverAutoExecute(t *testing.T) {
 		newRejectWorkerPTOTool(&fakePTODecider{}),
 		newCancelWorkerPTOTool(&fakePTODecider{}),
 	} {
-		assert.NotEqual(t, agent.TierAutoExecute, tool.DefaultAutonomyTier(), tool.Name())
+		assert.NotEqual(t, agent.TierAutoExecute, tool.Policy().DefaultTier, tool.Name())
 	}
 }
 

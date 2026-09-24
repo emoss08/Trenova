@@ -16,6 +16,11 @@ var (
 	_ validationframework.TenantedEntity = (*DataRetention)(nil)
 )
 
+const (
+	DefaultAIFeedbackRetentionDays    = 730
+	DefaultAIFeedbackRetentionMinDays = 30
+)
+
 type DataRetention struct {
 	bun.BaseModel `bun:"table:data_retention,alias:dr" json:"-"`
 
@@ -31,6 +36,7 @@ type DataRetention struct {
 	// falls back to that, so an unset value can never make every terminated
 	// file look purgeable. Files are only ever flagged; nothing deletes one.
 	DriverQualificationRetentionPeriod int   `json:"driverQualificationRetentionPeriod" bun:"driver_qualification_retention_period,type:INTEGER,notnull,default:1095"`
+	AIFeedbackRetentionPeriod          int   `json:"aiFeedbackRetentionPeriod"          bun:"ai_feedback_retention_period,type:INTEGER,notnull,default:730"`
 	Version                            int64 `json:"version"                            bun:"version,type:BIGINT"`
 	CreatedAt                          int64 `json:"createdAt"                          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                          int64 `json:"updatedAt"                          bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -56,7 +62,27 @@ func (dr *DataRetention) Validate(multiErr *errortypes.MultiError) {
 			validation.Min(0).
 				Error("Driver qualification retention period cannot be negative"),
 		),
+		validation.Field(&dr.AIFeedbackRetentionPeriod,
+			validation.Min(0).Error("AI feedback retention period cannot be negative"),
+		),
 	))
+
+	if dr.AIFeedbackRetentionPeriod > 0 &&
+		dr.AIFeedbackRetentionPeriod < DefaultAIFeedbackRetentionMinDays {
+		multiErr.Add(
+			"aiFeedbackRetentionPeriod",
+			errortypes.ErrInvalid,
+			"AI feedback retention period must be at least 30 days",
+		)
+	}
+}
+
+func (dr *DataRetention) AIFeedbackRetentionDays() int {
+	if dr == nil || dr.AIFeedbackRetentionPeriod <= 0 {
+		return DefaultAIFeedbackRetentionDays
+	}
+
+	return dr.AIFeedbackRetentionPeriod
 }
 
 func (dr *DataRetention) GetID() pulid.ID {

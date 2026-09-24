@@ -3,9 +3,10 @@ package agentruntime
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
-	"testing"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -967,13 +968,18 @@ type limitedActionTool struct {
 	asked serviceports.ToolExecuteParams
 }
 
-func (t *limitedActionTool) TierLimit(
-	_ context.Context,
-	params serviceports.ToolExecuteParams,
-) agent.AutonomyTier {
-	t.asked = params
+func (t *limitedActionTool) Policy() serviceports.ToolPolicy {
+	policy := t.StubActionTool.Policy()
+	policy.Condition = &serviceports.TierCondition{
+		Description: "The stub's own record decides.",
+		Limit: func(_ context.Context, params serviceports.ToolExecuteParams) agent.AutonomyTier {
+			t.asked = params
 
-	return t.limit
+			return t.limit
+		},
+	}
+
+	return policy
 }
 
 /*
@@ -1042,7 +1048,13 @@ type cappedActionTool struct {
 	ceiling agent.AutonomyTier
 }
 
-func (t *cappedActionTool) TierCeiling() agent.AutonomyTier { return t.ceiling }
+func (t *cappedActionTool) Policy() serviceports.ToolPolicy {
+	policy := t.StubActionTool.Policy()
+	policy.MaxTier = t.ceiling
+	policy.Egress = []agent.EgressClass{agent.EgressExternalRecipient}
+
+	return policy
+}
 
 /*
 What leaves the organization is a person's decision, however much trust the

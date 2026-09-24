@@ -155,7 +155,28 @@ type fakeTool struct {
 	tier agent.AutonomyTier
 }
 
-func (f fakeTool) DefaultAutonomyTier() agent.AutonomyTier { return f.tier }
+func (f fakeTool) Policy() services.ToolPolicy {
+	return trustPolicy(f.tier, agent.TierAutoExecute, agent.EgressInternal)
+}
+
+func trustPolicy(
+	tier, maxTier agent.AutonomyTier,
+	egress agent.EgressClass,
+) services.ToolPolicy {
+	return services.ToolPolicy{
+		Name:          "assign_move",
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceShipmentMove,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   tier,
+		MaxTier:       maxTier,
+		Egress:        []agent.EgressClass{egress},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "A trust stub.",
+	}
+}
 
 type fakeRegistry struct {
 	services.AgentToolRegistry
@@ -454,8 +475,13 @@ type cappedTool struct {
 	services.AgentTool
 }
 
-func (cappedTool) DefaultAutonomyTier() agent.AutonomyTier { return agent.TierActWithApproval }
-func (cappedTool) TierCeiling() agent.AutonomyTier         { return agent.TierActWithApproval }
+func (cappedTool) Policy() services.ToolPolicy {
+	return trustPolicy(
+		agent.TierActWithApproval,
+		agent.TierActWithApproval,
+		agent.EgressExternalRecipient,
+	)
+}
 
 func (cappedRegistry) Get(string) (services.AgentTool, bool) { return cappedTool{}, true }
 
@@ -535,4 +561,90 @@ func TestRecordDecision_ARejectionInBetweenStopsThePromotion(t *testing.T) {
 	assert.Empty(t, h.definitions.tiers, "the streak the promotion was decided from is gone")
 	assert.Empty(t, h.trust.marks)
 	assert.Empty(t, h.notifier.created)
+}
+
+type policyTool struct {
+	services.AgentTool
+
+	policy services.ToolPolicy
+}
+
+func (p policyTool) Policy() services.ToolPolicy { return p.policy }
+
+type policyRegistry struct {
+	services.AgentToolRegistry
+
+	tool policyTool
+}
+
+func (r policyRegistry) Get(string) (services.AgentTool, bool) { return r.tool, true }
+
+/*
+Promotion stops where the tool's policy says a call may run alone, and not one
+tier past it. create_shipment used to hold a load at approval only through a
+tier limit the ledger never read, so a clean streak promoted it to a tier the
+runtime then refused to use.
+*/
+func TestRecordDecision_PromotesNoFurtherThanThePolicyAllows(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		policy   services.ToolPolicy
+		promoted bool
+	}{
+		{
+			name: "internal work with no cap is promoted",
+			policy: trustPolicy(
+				agent.TierActWithApproval, agent.TierAutoExecute, agent.EgressInternal,
+			),
+			promoted: true,
+		},
+		{
+			name: "a tool held to approval by its own max tier stays there",
+			policy: trustPolicy(
+				agent.TierActWithApproval, agent.TierActWithApproval, agent.EgressInternal,
+			),
+		},
+		{
+			name: "a class that leaves caps a max tier set above it",
+			policy: trustPolicy(
+				agent.TierActWithApproval, agent.TierAutoExecute, agent.EgressDriverVisible,
+			),
+		},
+		{
+			name: "money is promoted like internal work",
+			policy: trustPolicy(
+				agent.TierActWithApproval, agent.TierAutoExecute, agent.EgressMoney,
+			),
+			promoted: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			h := newHarness(t, harnessOptions{
+				earned:    true,
+				threshold: 1,
+				toolTiers: map[string]agent.AutonomyTier{
+					"assign_move": agent.TierActWithApproval,
+				},
+			})
+			h.svc.tools = policyRegistry{tool: policyTool{policy: tc.policy}}
+
+			require.NoError(t, h.svc.RecordDecision(t.Context(), h.proposal, accepted(nil)))
+
+			if !tc.promoted {
+				assert.Empty(t, h.definitions.tiers)
+				assert.Empty(t, h.trust.marks)
+				return
+			}
+			require.Len(t, h.definitions.tiers, 1)
+			assert.Equal(t, agent.TierAutoExecute, h.definitions.tiers[0].Tier)
+			require.Len(t, h.trust.marks, 1)
+			assert.Equal(t, agent.TierAutoExecute, h.trust.marks[0].EarnedTier)
+		})
+	}
 }

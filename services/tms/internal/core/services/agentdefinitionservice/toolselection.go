@@ -8,8 +8,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -71,14 +71,12 @@ func validateToolSelection(selection toolSelection, multiErr *errortypes.MultiEr
 		if !ok {
 			continue
 		}
-		if ceiling := serviceports.CeilingOf(tool); tier.Above(ceiling) {
+		policy := tool.Policy()
+		if limit := agenttoolpolicy.Promotable(policy); tier.Above(limit) {
 			multiErr.Add(
 				fmt.Sprintf("toolTiers.%s", name),
 				errortypes.ErrInvalid,
-				fmt.Sprintf(
-					"%q sends work outside the organization, so a person approves it: it can be set to %s at most",
-					name, ceiling,
-				),
+				fmt.Sprintf("%q can be set to %s at most: %s", name, limit, policy.Rationale),
 			)
 		}
 	}
@@ -98,48 +96,15 @@ func buildToolCatalog(
 	entries := make([]serviceports.ToolCatalogEntry, 0, len(queryTools)+len(actionTools))
 
 	for _, tool := range queryTools {
-		typ, offered := extensions.offers(tool.Name())
-		if !offered {
-			continue
+		if entry, offered := extensions.entry(tool, serviceports.ToolCatalogKindQuery); offered {
+			entries = append(entries, entry)
 		}
-		entries = append(entries, serviceports.ToolCatalogEntry{
-			Name:          tool.Name(),
-			Description:   tool.Description(),
-			Parameters:    tool.ParamSchema(),
-			Kind:          serviceports.ToolCatalogKindQuery,
-			Resource:      tool.PermissionResource(),
-			Operation:     permission.OpRead,
-			Reversible:    true,
-			Core:          agentdefinition.IsCoreTool(tool.Name()),
-			Effect:        serviceports.EffectOf(tool),
-			Prerequisites: prerequisitesOf(tool),
-			Extension:     typ,
-			GrantedToEveryAgent: typ != "" &&
-				extensions[typ] == agentextension.AvailabilityAllAgents,
-		})
 	}
 
 	for _, tool := range actionTools {
-		typ, offered := extensions.offers(tool.Name())
-		if !offered {
-			continue
+		if entry, offered := extensions.entry(tool, serviceports.ToolCatalogKindAction); offered {
+			entries = append(entries, entry)
 		}
-		entries = append(entries, serviceports.ToolCatalogEntry{
-			Name:                tool.Name(),
-			Description:         tool.Description(),
-			Parameters:          tool.ParamSchema(),
-			Kind:                serviceports.ToolCatalogKindAction,
-			Resource:            tool.PermissionResource(),
-			Operation:           tool.PermissionOperation(),
-			DefaultAutonomyTier: tool.DefaultAutonomyTier(),
-			Reversible:          tool.Reversible(),
-			Core:                agentdefinition.IsCoreTool(tool.Name()),
-			Effect:              serviceports.EffectOf(tool),
-			Prerequisites:       prerequisitesOf(tool),
-			Extension:           typ,
-			GrantedToEveryAgent: typ != "" &&
-				extensions[typ] == agentextension.AvailabilityAllAgents,
-		})
 	}
 
 	sort.SliceStable(entries, func(i, j int) bool {
@@ -151,6 +116,50 @@ func buildToolCatalog(
 	})
 
 	return entries
+}
+
+type catalogTool interface {
+	Name() string
+	Description() string
+	ParamSchema() map[string]any
+	Policy() serviceports.ToolPolicy
+}
+
+func (e extensionState) entry(
+	tool catalogTool,
+	kind serviceports.ToolCatalogKind,
+) (serviceports.ToolCatalogEntry, bool) {
+	typ, offered := e.offers(tool.Name())
+	if !offered {
+		return serviceports.ToolCatalogEntry{}, false
+	}
+
+	entry := catalogEntry(tool, kind)
+	entry.Extension = typ
+	entry.GrantedToEveryAgent = typ != "" && e[typ] == agentextension.AvailabilityAllAgents
+
+	return entry, true
+}
+
+func catalogEntry(tool catalogTool, kind serviceports.ToolCatalogKind) serviceports.ToolCatalogEntry {
+	policy := tool.Policy()
+	entry := serviceports.ToolCatalogEntry{
+		Name:        tool.Name(),
+		Description: tool.Description(),
+		Parameters:  tool.ParamSchema(),
+		Kind:        kind,
+		Resource:    policy.Resource,
+		Operation:   policy.Operation,
+		Reversible:  policy.Reversible,
+		Core:        agentdefinition.IsCoreTool(tool.Name()),
+		Effect:      serviceports.EffectOf(tool),
+	}
+	entry.Prerequisites = prerequisitesOf(tool)
+	if kind == serviceports.ToolCatalogKindAction {
+		entry.DefaultAutonomyTier = policy.DefaultTier
+	}
+
+	return entry
 }
 
 func prerequisitesOf(tool any) []string {

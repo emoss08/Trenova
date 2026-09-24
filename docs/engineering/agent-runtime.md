@@ -107,7 +107,7 @@ its last attempt (`modelcall.Transient`, `modelcall.FinalAttempt`).
 ## What makes a retry safe
 
 A tool call is an activity, and an activity can run more than once. The tools do
-not dedupe: `RequiresIdempotencyKey` is checked for presence and, bar the two
+not dedupe: a policy's `Idempotent` flag is checked for presence and, bar the two
 that forward it to an email provider, never looked up.
 
 `agent_run_steps` is what makes it safe. Every operation is **claimed before it
@@ -178,9 +178,9 @@ does, so a reader can never attach ahead of it.
 Every tool call a reader sees says what it does. `tool_started`, `tool_finished`
 and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
 `discover`, `present`, `ask` or `delegate`), read from the tool's metadata
-(`serviceports.EffectOf`: a declared `Effect()`, else a write is a change and a
-read a lookup; `find_tools`, `ask_user`, `publish_artifact` and `delegate_task`
-are named by the runtime). `tool_finished` also carries `summary`, a one-line label worked out
+(`serviceports.EffectOf`, which reads `Effect` from the tool's `Policy()`;
+`find_tools`, `ask_user`, `publish_artifact` and `delegate_task` declare theirs in
+`agentruntime/runtimepolicies.go`). `tool_finished` also carries `summary`, a one-line label worked out
 where the tool ran from what it returned, or from a write's name or title. The
 thread's saved messages carry the same fields: `summary` is stored on the
 result, and `effect` is read from the registry when the messages are served, so
@@ -235,7 +235,21 @@ A decision on a proposal or plan a conversation raised is answered in that
 conversation, whoever decided it and wherever. `agentdecisionservice` and
 `agentplanservice` call `DecisionFollowUps` once the change has run or failed;
 `assistantfollowupservice` opens a turn with origin `DecisionFollowUp`, as the
-thread's owner. A conversation already producing a reply is not interrupted.
+thread's owner. A conversation already producing a reply is not interrupted,
+and the reply under way read the proposal before it was decided, so it cannot
+report it. Instead the follow-up waits: when a turn closes its record,
+`FinishTurnActivity` asks `DecisionFollowUpResumer` to start the follow-up for
+the oldest decision in the last day that the thread carries no Decision note
+for. That follow-up resumes the next one when it ends, so decisions made in a
+burst (several cards approved in a row, or a batch from the decisions inbox)
+are each reported, in order. A follow-up turned away before it was planned
+saved no note and does not resume, or it would start itself again.
+
+Every turn also reads what became of the conversation's proposals. A replayed
+tool result that recorded a proposal is swapped for its current state; a
+decided proposal whose call is not in the replay (a delegate's, or one older
+than the history) is told beside the question instead (`outOfViewDecisions`),
+so a delegate_task result saying a card is waiting is not the last word.
 
 ## Agent runs
 

@@ -383,7 +383,7 @@ func TestListPending_IsEmptyUnderOrganizationShadow(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, page.Items)
 
-	summary, err := svc.Summary(t.Context(), pagination.TenantInfo{})
+	summary, err := svc.Summary(t.Context(), pagination.TenantInfo{}, nil)
 	require.NoError(t, err)
 	assert.Zero(t, summary.Total)
 }

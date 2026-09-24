@@ -112,18 +112,20 @@ func (t *matchBankReceiptTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *matchBankReceiptTool) Reversible() bool { return false }
-
-func (t *matchBankReceiptTool) PermissionResource() permission.Resource {
-	return permission.ResourceBankReceipt
-}
-
-func (t *matchBankReceiptTool) PermissionOperation() permission.Operation { return permission.OpUpdate }
-
-func (t *matchBankReceiptTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *matchBankReceiptTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *matchBankReceiptTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceBankReceipt,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressMoney},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Matches a bank receipt to a posted payment, closing its reconciliation.",
+	}
 }
 
 func (t *matchBankReceiptTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -335,20 +337,21 @@ func (t *postCustomerPaymentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *postCustomerPaymentTool) Reversible() bool { return true }
-
-func (t *postCustomerPaymentTool) PermissionResource() permission.Resource {
-	return permission.ResourceCustomerPayment
-}
-
-func (t *postCustomerPaymentTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *postCustomerPaymentTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *postCustomerPaymentTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *postCustomerPaymentTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceCustomerPayment,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressMoney},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Records a customer payment and applies it to invoices.",
+	}
 }
 
 func (t *postCustomerPaymentTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -705,20 +708,21 @@ func (t *resolveBankReceiptWorkItemTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *resolveBankReceiptWorkItemTool) Reversible() bool { return false }
-
-func (t *resolveBankReceiptWorkItemTool) PermissionResource() permission.Resource {
-	return permission.ResourceBankReceiptWorkItem
-}
-
-func (t *resolveBankReceiptWorkItemTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *resolveBankReceiptWorkItemTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *resolveBankReceiptWorkItemTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *resolveBankReceiptWorkItemTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceBankReceiptWorkItem,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Closes a reconciliation work item without moving money; the note is read " +
+			"inside the organization.",
+	}
 }
 
 func (t *resolveBankReceiptWorkItemTool) Target(

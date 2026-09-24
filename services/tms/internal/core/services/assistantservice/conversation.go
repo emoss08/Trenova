@@ -55,6 +55,9 @@ func (s *Service) StartThread(
 	if err = assertChatAgent(definition); err != nil {
 		return nil, err
 	}
+	if err = s.assertMayUseAgent(ctx, actor, definition); err != nil {
+		return nil, err
+	}
 	if req.SubjectID.IsNotNil() {
 		if err = s.assertSubjectReadable(ctx, actor, req.SubjectType); err != nil {
 			return nil, err
@@ -84,7 +87,13 @@ func (s *Service) StartThread(
 		return nil, multiErr
 	}
 
-	return s.conversations.CreateThread(ctx, thread)
+	created, err := s.conversations.CreateThread(ctx, thread)
+	if err != nil {
+		return nil, err
+	}
+	created.CanContinue = true
+
+	return created, nil
 }
 
 // assertWithinBudget refuses a turn once the agent's monthly budget is
@@ -113,14 +122,34 @@ func (s *Service) ListThreads(
 	ctx context.Context,
 	req repositories.ListThreadsRequest,
 ) (*pagination.ListResult[*conversation.Thread], error) {
-	return s.conversations.ListThreads(ctx, req)
+	result, err := s.conversations.ListThreads(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.markContinuable(
+		ctx,
+		threadReader(req.UserID, req.TenantInfo),
+		result.Items...,
+	); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (s *Service) GetThread(
 	ctx context.Context,
 	req repositories.GetThreadRequest,
 ) (*conversation.Thread, error) {
-	return s.conversations.GetThread(ctx, req)
+	thread, err := s.conversations.GetThread(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.markContinuable(ctx, threadReader(req.UserID, req.TenantInfo), thread); err != nil {
+		return nil, err
+	}
+
+	return thread, nil
 }
 
 func (s *Service) ListMessages(
@@ -242,7 +271,15 @@ func (s *Service) UpdateThread(
 		return nil, multiErr
 	}
 
-	return s.conversations.UpdateThread(ctx, thread)
+	updated, err := s.conversations.UpdateThread(ctx, thread)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.markContinuable(ctx, actor, updated); err != nil {
+		return nil, err
+	}
+
+	return updated, nil
 }
 
 func (s *Service) DeleteThread(

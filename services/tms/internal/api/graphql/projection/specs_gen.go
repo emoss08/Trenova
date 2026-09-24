@@ -4,6 +4,8 @@ package projection
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+var AIFeedbackSpec TypeSpec
+
 var AIProviderSpec TypeSpec
 
 var AccessorialChargeSpec TypeSpec
@@ -282,6 +284,8 @@ var LocationCategorySpec TypeSpec
 
 var ManualJournalSpec TypeSpec
 
+var MyAgentSpec TypeSpec
+
 var NotificationSpec TypeSpec
 
 var OSHAAnnualSummarySpec TypeSpec
@@ -528,6 +532,129 @@ var WorkerTrainingRecordSpec TypeSpec
 // package-level initialisers. Assigning inside init lets the zero-valued vars
 // exist first and be filled in afterwards.
 func init() {
+	AIFeedbackSpec = TypeSpec{
+		TypeName: "AIFeedback",
+		FieldMap: buncolgen.FeedbackFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "targetType",
+				FieldMapKey: "targetType",
+			},
+			{
+				Name:        "targetId",
+				FieldMapKey: "targetId",
+			},
+			{
+				Name:        "targetPart",
+				FieldMapKey: "targetPart",
+			},
+			{
+				Name:        "threadId",
+				FieldMapKey: "threadId",
+			},
+			{
+				Name:        "turnId",
+				FieldMapKey: "turnId",
+			},
+			{
+				Name:        "runId",
+				FieldMapKey: "runId",
+			},
+			{
+				Name:        "agentDefinitionId",
+				FieldMapKey: "agentDefinitionId",
+			},
+			{
+				Name:        "definitionVersion",
+				FieldMapKey: "definitionVersion",
+			},
+			{
+				Name:        "detectorKey",
+				FieldMapKey: "detectorKey",
+			},
+			{
+				Name:        "task",
+				FieldMapKey: "task",
+			},
+			{
+				Name:        "model",
+				FieldMapKey: "model",
+			},
+			{
+				Name:        "providerId",
+				FieldMapKey: "providerId",
+			},
+			{
+				Name:        "promptHash",
+				FieldMapKey: "promptHash",
+			},
+			{
+				Name:        "toolSpecHash",
+				FieldMapKey: "toolSpecHash",
+			},
+			{
+				Name:        "fingerprintSource",
+				FieldMapKey: "fingerprintSource",
+			},
+			{
+				Name:        "rating",
+				FieldMapKey: "rating",
+			},
+			{
+				Name:        "reasons",
+				FieldMapKey: "reasons",
+			},
+			{
+				Name:        "comment",
+				FieldMapKey: "comment",
+			},
+			{
+				Name:        "turnSnapshot",
+				FieldMapKey: "turnSnapshot",
+			},
+			{
+				Name:        "patternKey",
+				FieldMapKey: "patternKey",
+			},
+			{
+				Name:        "evalCaseId",
+				FieldMapKey: "evalCaseId",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	AIProviderSpec = TypeSpec{
 		TypeName: "AIProvider",
 		FieldMap: buncolgen.ProviderFieldMap,
@@ -1048,6 +1175,14 @@ func init() {
 				FieldMapKey: "delegateIds",
 			},
 			{
+				Name:        "accessMode",
+				FieldMapKey: "accessMode",
+			},
+			{
+				Name:    "accessRoles",
+				Special: "accessRoles",
+			},
+			{
 				Name:    "starters",
 				Special: "starters",
 			},
@@ -1359,6 +1494,10 @@ func init() {
 			{
 				Name:        "lastUsedAt",
 				FieldMapKey: "lastUsedAt",
+			},
+			{
+				Name:        "evidence",
+				FieldMapKey: "evidence",
 			},
 			{
 				Name:        "version",
@@ -13374,6 +13513,53 @@ func init() {
 		},
 	}
 
+	MyAgentSpec = TypeSpec{
+		TypeName: "MyAgent",
+		FieldMap: buncolgen.DefinitionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "template",
+				FieldMapKey: "template",
+			},
+			{
+				Name:        "icon",
+				FieldMapKey: "icon",
+			},
+			{
+				Name:        "accent",
+				FieldMapKey: "accent",
+			},
+			{
+				Name:        "toolNames",
+				FieldMapKey: "toolNames",
+			},
+			{
+				Name:        "systemKey",
+				FieldMapKey: "systemKey",
+			},
+			{
+				Name:    "starters",
+				Special: "starters",
+			},
+		},
+	}
+
 	NotificationSpec = TypeSpec{
 		TypeName: "Notification",
 		FieldMap: buncolgen.NotificationFieldMap,
@@ -16015,6 +16201,10 @@ func init() {
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+			{
+				Name:    "agents",
+				Special: "agents",
 			},
 		},
 	}

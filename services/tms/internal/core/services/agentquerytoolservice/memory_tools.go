@@ -95,8 +95,14 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *recallMemoryTool) PermissionResource() permission.Resource {
-	return permission.ResourceAgentMemory
+func (t *recallMemoryTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceAgentMemory,
+		reads:    agent.ExternalReadMarked,
+		source:   agent.TaintSourceMemory,
+		rationale: "Reads memories earlier runs saved, which carry the taint of the run that " +
+			"wrote them.",
+	})
 }
 
 func (t *recallMemoryTool) Query(

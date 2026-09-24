@@ -19,9 +19,9 @@ These were made by the product owner and the code enforces each one.
 | Decision | Where it is enforced |
 |---|---|
 | Who an agent may ask is a **per-agent allowlist** on its definition, set in AI Control. | `agentdefinition.Definition.DelegateIDs`, validated on save by the domain and by `agentdefinitionservice.validateDelegates` |
-| A delegate keeps **its own autonomy**: its tools, tier settings, autonomy ceiling and budget. A private write it may make alone (`ToolPrivateWrite`) runs; a shared or outbound write still waits for approval. | The delegate's turn is opened from its own definition (`assistantservice.OpenDelegate`), not unattended, so `dispatch` decides every call exactly as it would for a conversation with the delegate |
+| A delegate keeps **its own autonomy**: its tools, tier settings, autonomy ceiling and budget. A private write it may make alone (a personal call of a tool whose policy sets `PersonalRunsUnasked`) runs, unless a person set that tool's tier on the delegate; a tier the trust ledger earned (`agent_tool_trust.earned_tier`) does not count as one (`agentruntime/tierprovenance.go`). A shared or outbound write still waits for approval. | The delegate's turn is opened from its own definition (`assistantservice.OpenDelegate`), not unattended, so `dispatch` decides every call exactly as it would for a conversation with the delegate |
 | **One level only.** Only the agent the person is talking to delegates. A delegate never holds `delegate_task`, and a call to it from a delegate is refused. | `RunRequest.MayDelegate`, `OpenTurn` (the tool is held only when it is true), `Service.delegate` (refuses when `RunRequest.Delegation` is set) |
-| **Everything runs as the same person.** Every tool call of the delegate is permission-checked against the person, so a delegate can never do more than they could. The person must also be allowed to use the delegate. | The delegate's turn carries the turn's `RequestActor`; its tool set is narrowed by `permittedTools`; `OpenDelegate` requires `assistant:create` and a delegate that is enabled, chat-usable and in the same tenant |
+| **Everything runs as the same person.** Every tool call of the delegate is permission-checked against the person, so a delegate can never do more than they could. The person must also be allowed to use the delegate. | The delegate's turn carries the turn's `RequestActor`; its tool set is narrowed by `permittedTools`; `OpenDelegate` requires `assistant:create`, a delegate the person may use (open to everyone, or granted to one of their roles), and a delegate that is enabled, chat-usable and in the same tenant |
 
 ## The allowlist
 
@@ -58,8 +58,10 @@ one query for all their delegates.
 
 `agentruntime.ContextBuilder` resolves the delegates for a conversation turn
 (`RuntimeContext.Delegates`): the allowlist, in order, keeping only agents in
-the tenant that are enabled and chat-usable, and none at all unless the person
-holds `assistant:create`. Each delegate is described by its name, id, the first
+the tenant that are enabled and chat-usable and that the person may use (open to
+everyone, or restricted to roles and granted to one of theirs, through
+`PermissionEngine.AgentsUsable`), and none at all unless the person holds
+`assistant:create`. Each delegate is described by its name, id, the first
 sentence of its description, and the tools it holds **that the person may
 use**, so a delegate is never advertised by what the person could not have it
 do.
@@ -99,7 +101,8 @@ survived the checks above.
    `assistantjobs.delegateOpener`) to open the delegate's turn. Every check is
    made again against the records as they are now: the primary still lists the
    delegate, the delegate exists in the tenant, is enabled and chat-usable, the
-   person holds `assistant:create`, and the delegate's own budget
+   person holds `assistant:create` and may use the delegate itself, and the
+   delegate's own budget
    (`AgentBudgetService.CheckRun`) is not spent. A refusal is
    `DelegateDeclined`, non-retryable, and its reason is what the primary reads.
 2. The turn is opened **as the delegate** (`runtime.OpenTurn`): its tools

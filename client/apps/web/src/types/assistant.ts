@@ -548,6 +548,12 @@ export const assistantThreadSchema = z.object({
   /** The record the conversation was opened from, when it was. */
   subjectType: z.string().optional().default(""),
   subjectId: optionalIdSchema,
+  /**
+   * Whether the reader may still ask this conversation's agent anything. False
+   * once they lose access to the agent or it is disabled; the conversation
+   * stays readable.
+   */
+  canContinue: z.boolean().default(true),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
