@@ -651,6 +651,7 @@ export function AgentForm({
               min={MEMORY_TOKEN_BUDGET.min}
               max={MEMORY_TOKEN_BUDGET.max}
               step={500}
+              decimalScale={0}
               placeholder={t("{0} (default)", formatNumber(MEMORY_TOKEN_BUDGET.default))}
               description={t(
                 "How much of what the organization recorded each prompt carries. What the conversation is about comes first.",

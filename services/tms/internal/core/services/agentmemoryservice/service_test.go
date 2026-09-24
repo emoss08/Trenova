@@ -239,11 +239,12 @@ func TestForContext_ReadsTheMemoriesOfTheRecordsTheTurnIsAbout(t *testing.T) {
 	locationID := pulid.MustNew("loc_")
 	repo := &fakeMemoryRepo{}
 	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
-	svc.subjects = NewSubjectResolver(&fakeLinks{links: map[agent.MemoryRecordKind][]repositories.MemoryRecordLink{
+	links := map[agent.MemoryRecordKind][]repositories.MemoryRecordLink{
 		agent.MemoryRecordShipment: {
 			{From: shipmentID, Kind: agent.MemoryRecordLocation, ID: locationID},
 		},
-	}})
+	}
+	svc.subjects = NewSubjectResolver(&fakeLinks{links: links})
 
 	got, err := svc.ForContext(t.Context(), services.MemoryContextRequest{
 		TenantInfo: tenant(),
