@@ -54,6 +54,7 @@ import { useThreadHistory } from "./use-thread-history";
 import { VirtualThread, type VirtualThreadRow } from "./virtual-thread";
 import { useFollowNavigation } from "./follow-navigation";
 import { useLiveThreadIds } from "./use-active-turns";
+import { answerMessageIds } from "@/components/ai-feedback/feedback-targets";
 
 /**
  * Space between the last message and the composer's fade, beyond the
@@ -220,6 +221,7 @@ export function MessageThread({
   const entries = useMemo(() => groupThread(messages), [messages]);
   // A reply of several steps is headed once and timed from its question.
   const placements = useMemo(() => turnPlacements(entries), [entries]);
+  const answerIds = useMemo(() => answerMessageIds(entries), [entries]);
 
   // A question the assistant asked is settled by whatever the person said next,
   // whether they clicked one of its options or typed something else entirely.
@@ -432,6 +434,7 @@ export function MessageThread({
                 latestUserSequence={latestUserSequence}
                 onAnswer={answer}
                 onOpenArtifact={onOpenArtifact}
+                ratable={answerIds.has(entry.message.id)}
               />
             )}
           </div>
@@ -469,6 +472,7 @@ export function MessageThread({
     return list;
   }, [
     answer,
+    answerIds,
     arrivals,
     artifactsByMessage,
     dismiss,

@@ -28,7 +28,7 @@ const dashGuestLoader: LoaderFunction = async () => {
 
 const routes: RouteObject[] = [
   {
-    errorElement: <RouteErrorBoundary />,
+    errorElement: <RouteErrorBoundary homePath="/dash" />,
     HydrateFallback: LoadingSkeleton,
     children: [
       {

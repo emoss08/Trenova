@@ -30,12 +30,13 @@ describe("agentFormSchema", () => {
     expect(issuesOf(values({}))).toEqual({});
   });
 
-  // The server refuses a daily limit on a tool the agent does not hold; the
-  // form says so, and drops a zero or a leftover limit before sending.
+  // The server refuses a daily limit on a tool the agent does not hold. A
+  // tool taken off the agent leaves its limit behind with no box to clear it
+  // from, so the form does not refuse it; the save drops it, with any zero.
   it("keeps daily tool limits to the agent's own tools and drops empty ones", () => {
     expect(
       issuesOf(values({ toolNames: ["assign_move"], toolDailyLimits: { cancel_shipment: 3 } })),
-    ).toHaveProperty("toolDailyLimits");
+    ).toEqual({});
 
     const sent = toSaveRequest({
       ...agentFormDefaults,
@@ -89,7 +90,7 @@ describe("agentFormSchema", () => {
     expect(issuesOf(values({ triggerMode: "Continuous", intervalSeconds: 60 }))).toEqual({});
   });
 
-  it("refuses a tool tier above the ceiling or for a tool the agent lacks", () => {
+  it("refuses a tool tier above the ceiling, but not one left by a removed tool", () => {
     expect(
       issuesOf(
         values({
@@ -100,8 +101,14 @@ describe("agentFormSchema", () => {
       ),
     ).toHaveProperty("toolTiers");
     expect(
-      issuesOf(values({ toolNames: ["get_shipment"], toolTiers: { assign_move: "Propose" } })),
-    ).toHaveProperty("toolTiers");
+      issuesOf(
+        values({
+          autonomyCeiling: "Propose",
+          toolNames: ["get_shipment"],
+          toolTiers: { assign_move: "AutoExecute" },
+        }),
+      ),
+    ).toEqual({});
   });
 });
 

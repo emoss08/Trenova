@@ -405,7 +405,7 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 	require.NotNil(t, board.req)
 	assert.False(t, board.req.IncludeCovered)
 	assert.EqualValues(t, 12*3600, board.req.WindowEnd-board.req.WindowStart)
-	assert.Equal(t, permission.ResourceShipmentMove, tool.PermissionResource())
+	assert.Equal(t, permission.ResourceShipmentMove, tool.Policy().Resource)
 }
 
 type fakeFailures struct {
@@ -469,7 +469,7 @@ func TestListServiceFailures_FiltersOnStatusAndRendersTheRow(t *testing.T) {
 		err,
 		"a status outside the set is refused, not passed through to match nothing",
 	)
-	assert.Equal(t, permission.ResourceServiceFailure, tool.PermissionResource())
+	assert.Equal(t, permission.ResourceServiceFailure, tool.Policy().Resource)
 }
 
 type fakeReasonCodes struct {
@@ -573,7 +573,7 @@ func TestListDetentionDesk_RendersTheOpenOccurrencesByUrgency(t *testing.T) {
 	assert.True(t, rows[0].NoticeWindowOpen)
 	assert.True(t, rows[0].RequiresApproval)
 	assert.NotEmpty(t, rows[0].ArrivedAt)
-	assert.Equal(t, permission.ResourceDetentionPolicy, tool.PermissionResource())
+	assert.Equal(t, permission.ResourceDetentionPolicy, tool.Policy().Resource)
 }
 
 type fakeWeather struct {

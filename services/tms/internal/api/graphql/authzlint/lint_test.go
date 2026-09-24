@@ -45,6 +45,14 @@ var authOnlyAllowlist = map[string]string{
 	"queryResolver.TelematicsStatus": "org-wide integration health indicator shown in the " +
 		"application shell; carries no resource data",
 
+	"queryResolver.MyAIFeedback": "returns only the caller's own ratings of AI output; " +
+		"no one else's rating is ever read",
+	"mutationResolver.SetMyAIFeedback": "rates AI output for the caller only; the service " +
+		"refuses a target the caller could not read (their own thread or briefing, " +
+		"insight:read, watchtower:read plus the item source's read)",
+	"mutationResolver.ClearMyAIFeedback": "removes only the caller's own rating; the delete " +
+		"is scoped to the caller's user id",
+
 	"mutationResolver.CreateSettlementDispute":   "a driver disputing their own settlement",
 	"mutationResolver.WithdrawSettlementDispute": "a driver withdrawing their own dispute",
 }

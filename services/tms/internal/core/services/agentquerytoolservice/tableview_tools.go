@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -93,13 +94,11 @@ func (t *composeTableViewTool) entities() []string {
 	return names
 }
 
-// PermissionResource is the catalog's own resource rather than any one table's.
-//
-// The tool spans every catalogued entity, so there is no single table to name
-// here; the read that matters is checked per call by the compose service,
-// against whichever table was asked for.
-func (t *composeTableViewTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
+func (t *composeTableViewTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceReport,
+		effect:   agent.ToolEffectPresent,
+	})
 }
 
 type tableViewResult struct {
@@ -267,8 +266,10 @@ func (t *listDashboardsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listDashboardsTool) PermissionResource() permission.Resource {
-	return permission.ResourceDashboard
+func (t *listDashboardsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceDashboard,
+	})
 }
 
 const (

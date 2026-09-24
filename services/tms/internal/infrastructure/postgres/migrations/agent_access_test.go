@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	agentAccessUp   = "20261231004800_agent_access.tx.up.sql"
-	agentAccessDown = "20261231004800_agent_access.tx.down.sql"
+	agentAccessUp   = "20261231005500_agent_access.tx.up.sql"
+	agentAccessDown = "20261231005500_agent_access.tx.down.sql"
 )
 
 func readMigration(t *testing.T, name string) string {

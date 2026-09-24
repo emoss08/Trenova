@@ -37,44 +37,6 @@ type ToolValidator interface {
 	Validate(ctx context.Context, params ToolExecuteParams) error
 }
 
-// ToolTierLimiter is a tool whose own record can hold a call below the tier
-// the agent has earned. An inbox message is only as autonomous as the mailbox
-// it arrived on, and a load is never created unattended, whatever an agent's
-// record says. The runtime asks before deciding whether a call runs or waits.
-type ToolTierLimiter interface {
-	TierLimit(ctx context.Context, params ToolExecuteParams) agent.AutonomyTier
-}
-
-// ToolPrivateWrite is a tool that can tell when a call changes nothing but
-// the calling person's own records: a report saved to their own list, which
-// no colleague sees and which they could have built by hand. Such a call is
-// theirs to make, not the agent's, so it runs without a decision whatever the
-// agent's autonomy ceiling, unless the agent's own settings name a tier for
-// the tool, which an administrator chose on purpose.
-type ToolPrivateWrite interface {
-	PrivateToCaller(ctx context.Context, params ToolExecuteParams) bool
-}
-
-// ToolTierCeiling is a tool that never runs on its own past a tier, whatever
-// trust it earns and whatever an agent is set to. What leaves the
-// organization (mail to a customer, a note a driver reads, a tender a carrier
-// receives) stays a person's decision: the run that wrote it may have been
-// started by content an outsider wrote, and a model can be talked into
-// anything it is allowed to send.
-type ToolTierCeiling interface {
-	TierCeiling() agent.AutonomyTier
-}
-
-// CeilingOf is the most a tool may run at without a person: its declared
-// ceiling, or automatic execution when it declares none.
-func CeilingOf(tool any) agent.AutonomyTier {
-	if capped, ok := tool.(ToolTierCeiling); ok && capped.TierCeiling().IsValid() {
-		return capped.TierCeiling()
-	}
-
-	return agent.TierAutoExecute
-}
-
 // ToolResultReporter is a write whose caller needs to know what it made. A
 // saved report's id is what the next call takes; told only that the write
 // ran, a model reaches for the one id it holds, the proposal's, and passes
@@ -108,35 +70,11 @@ func ExecuteTool(
 	return result.Bounded(), nil
 }
 
-type ToolEffectDeclarer interface {
-	Effect() agent.ToolEffect
-}
-
-func EffectOf(tool any) agent.ToolEffect {
-	if declarer, ok := tool.(ToolEffectDeclarer); ok {
-		if effect := declarer.Effect(); effect.IsValid() {
-			return effect
-		}
-	}
-	if _, writes := tool.(AgentTool); writes {
-		return agent.ToolEffectChange
-	}
-	if _, reads := tool.(AgentQueryTool); reads {
-		return agent.ToolEffectLookup
-	}
-
-	return ""
-}
-
 type AgentTool interface {
 	Name() string
 	Description() string
 	ParamSchema() map[string]any
-	Reversible() bool
-	PermissionResource() permission.Resource
-	PermissionOperation() permission.Operation
-	RequiresIdempotencyKey() bool
-	DefaultAutonomyTier() agent.AutonomyTier
+	Policy() ToolPolicy
 	Execute(ctx context.Context, params ToolExecuteParams) error
 }
 
@@ -168,28 +106,12 @@ type PrerequisiteTool interface {
 	Prerequisites() []string
 }
 
-// SelfScopedTool acts only on the records of the person driving the turn —
-// their own home screen — the way the application lets any signed-in person
-// arrange their own. It needs no role grant, is never offered to an agent
-// principal or a run nobody is watching, and runs only for the person it was
-// proposed for.
-type SelfScopedTool interface {
-	SelfScoped() bool
-}
-
 // SelfScopeOwnerParam is where the runtime records whose records a
 // self-scoped call is about. The runtime writes it from the turn's actor and
 // overwrites anything the model sent; the tool refuses to run for anyone else,
 // so a proposal approved from someone else's queue cannot land on their own
 // home screen instead.
 const SelfScopeOwnerParam = "_owner"
-
-// IsSelfScoped reports whether a tool acts only on its caller's own records.
-func IsSelfScoped(tool any) bool {
-	scoped, ok := tool.(SelfScopedTool)
-
-	return ok && scoped.SelfScoped()
-}
 
 // DescribeTool builds a tool's descriptor, reading the optional interfaces
 // both registries share.

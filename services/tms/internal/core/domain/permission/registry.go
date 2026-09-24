@@ -2286,6 +2286,21 @@ func (r *Registry) registerBillingResources() {
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAgentFeedback.String(),
+		DisplayName: "Agent Feedback",
+		Description: "Everyone's ratings of AI output, with what they saw and why they rated it",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View everyone's ratings of AI output and each agent's satisfaction",
+			},
+		},
+		DefaultSensitivity: SensitivityRestricted,
+	})
+
 	// unattended, so it sits at the same sensitivity as provider configuration.
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAgentDefinition.String(),

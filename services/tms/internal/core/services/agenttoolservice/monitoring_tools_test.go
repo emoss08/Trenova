@@ -432,10 +432,10 @@ func TestEmailCustomer_IsAProposalThatNeedsAnIdempotencyKey(t *testing.T) {
 	t.Parallel()
 
 	tool, mailer, _, _, _ := customerEmailFixture()
-	assert.Equal(t, agent.TierPropose, tool.DefaultAutonomyTier())
-	assert.True(t, tool.RequiresIdempotencyKey())
-	assert.Equal(t, permission.ResourceCustomerCommunication, tool.PermissionResource())
-	assert.Equal(t, permission.OpCreate, tool.PermissionOperation())
+	assert.Equal(t, agent.TierPropose, tool.Policy().DefaultTier)
+	assert.True(t, tool.Policy().Idempotent)
+	assert.Equal(t, permission.ResourceCustomerCommunication, tool.Policy().Resource)
+	assert.Equal(t, permission.OpCreate, tool.Policy().Operation)
 
 	err := tool.Execute(t.Context(), executeParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
@@ -550,7 +550,7 @@ func TestWaiveDetention_RequiresACodedReasonAndANote(t *testing.T) {
 	}))
 	require.Error(t, err)
 	assert.Nil(t, det.waived)
-	assert.Equal(t, agent.TierPropose, tool.DefaultAutonomyTier())
+	assert.Equal(t, agent.TierPropose, tool.Policy().DefaultTier)
 }
 
 func TestMonitoringActionTools_RejectAMismatchedActor(t *testing.T) {
@@ -594,13 +594,13 @@ func TestOutboundTools_AreGatedOnTheCommunicationTheySend(t *testing.T) {
 		{newSendDetentionNoticeTool(&fakeDetention{}), permission.ResourceCustomerCommunication},
 	}
 	for _, entry := range tools {
-		assert.Equal(t, entry.resource, entry.tool.PermissionResource(), entry.tool.Name())
-		assert.Equal(t, permission.OpCreate, entry.tool.PermissionOperation(), entry.tool.Name())
+		assert.Equal(t, entry.resource, entry.tool.Policy().Resource, entry.tool.Name())
+		assert.Equal(t, permission.OpCreate, entry.tool.Policy().Operation, entry.tool.Name())
 		assert.True(
 			t,
 			permission.IsAgentAllowed(
-				entry.tool.PermissionResource(),
-				entry.tool.PermissionOperation(),
+				entry.tool.Policy().Resource,
+				entry.tool.Policy().Operation,
 			),
 			"%s must be reachable by an agent principal",
 			entry.tool.Name(),

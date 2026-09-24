@@ -102,6 +102,9 @@ type Briefing struct {
 	// Narrated says whether the model's wording was accepted. False means
 	// the page is the deterministic one, which is a complete briefing.
 	Narrated bool `json:"narrated"      bun:"narrated,type:BOOLEAN,notnull,default:false"`
+
+	ModelIdentifier string   `json:"modelIdentifier" bun:"model_identifier,type:VARCHAR(255),nullzero"`
+	ProviderID      pulid.ID `json:"providerId"      bun:"provider_id,type:VARCHAR(100),nullzero"`
 	// FailureReason says why the facts could not be gathered, for a failed
 	// briefing.
 	FailureReason string `json:"failureReason" bun:"failure_reason,type:TEXT,nullzero"`

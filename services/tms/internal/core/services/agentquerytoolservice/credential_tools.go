@@ -98,8 +98,10 @@ func (t *listExpiringCredentialsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listExpiringCredentialsTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorkerCredential
+func (t *listExpiringCredentialsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceWorkerCredential,
+	})
 }
 
 func (t *listExpiringCredentialsTool) Query(

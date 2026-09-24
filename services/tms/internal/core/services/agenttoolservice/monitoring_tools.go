@@ -85,21 +85,22 @@ func (t *evaluateServiceFailuresTool) ParamSchema() map[string]any {
 	}
 }
 
-// A detected failure can be voided.
-func (t *evaluateServiceFailuresTool) Reversible() bool { return true }
-
-func (t *evaluateServiceFailuresTool) PermissionResource() permission.Resource {
-	return permission.ResourceServiceFailure
-}
-
-func (t *evaluateServiceFailuresTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *evaluateServiceFailuresTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *evaluateServiceFailuresTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *evaluateServiceFailuresTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceServiceFailure,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Opens service failures from stop actuals inside Trenova; an open failure " +
+			"sends nothing.",
+	}
 }
 
 func (t *evaluateServiceFailuresTool) Target(
@@ -171,21 +172,21 @@ func (t *resolveServiceFailureTool) ParamSchema() map[string]any {
 	}
 }
 
-// Resolved is terminal in the lifecycle.
-func (t *resolveServiceFailureTool) Reversible() bool { return false }
-
-func (t *resolveServiceFailureTool) PermissionResource() permission.Resource {
-	return permission.ResourceServiceFailure
-}
-
-func (t *resolveServiceFailureTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *resolveServiceFailureTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *resolveServiceFailureTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *resolveServiceFailureTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceServiceFailure,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Resolving a failure generates an EDI 214 to the customer's trading " +
+			"partner carrying the reason chosen.",
+	}
 }
 
 func (t *resolveServiceFailureTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -314,21 +315,20 @@ func (t *notifyDriverTool) ParamSchema() map[string]any {
 	}
 }
 
-// A sent message cannot be unsent.
-func (t *notifyDriverTool) Reversible() bool { return false }
-
-func (t *notifyDriverTool) PermissionResource() permission.Resource {
-	return permission.ResourceDriverMessage
-}
-
-func (t *notifyDriverTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *notifyDriverTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *notifyDriverTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *notifyDriverTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceDriverMessage,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Sends a driver a message the model wrote to their phone.",
+	}
 }
 
 func (t *notifyDriverTool) Execute(
@@ -471,21 +471,21 @@ func (t *emailCustomerTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *emailCustomerTool) Reversible() bool { return false }
-
-func (t *emailCustomerTool) PermissionResource() permission.Resource {
-	return permission.ResourceCustomerCommunication
-}
-
-func (t *emailCustomerTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *emailCustomerTool) RequiresIdempotencyKey() bool { return true }
-
-// Outbound mail to a customer is never sent unattended.
-func (t *emailCustomerTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *emailCustomerTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceCustomerCommunication,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
+		Effect:        agent.ToolEffectChange,
+		Idempotent:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Emails the customer's contacts a message the model wrote.",
+	}
 }
 
 func (t *emailCustomerTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -697,20 +697,20 @@ func (t *sendDetentionNoticeTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *sendDetentionNoticeTool) Reversible() bool { return false }
-
-func (t *sendDetentionNoticeTool) PermissionResource() permission.Resource {
-	return permission.ResourceCustomerCommunication
-}
-
-func (t *sendDetentionNoticeTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *sendDetentionNoticeTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *sendDetentionNoticeTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *sendDetentionNoticeTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceCustomerCommunication,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Sends the customer a detention notice that starts a charge.",
+	}
 }
 
 func (t *sendDetentionNoticeTool) Execute(
@@ -778,20 +778,20 @@ func (t *waiveDetentionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *waiveDetentionTool) Reversible() bool { return false }
-
-func (t *waiveDetentionTool) PermissionResource() permission.Resource {
-	return permission.ResourceDetentionPolicy
-}
-
-func (t *waiveDetentionTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *waiveDetentionTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *waiveDetentionTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *waiveDetentionTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceDetentionPolicy,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressMoney},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Gives up detention revenue the organization would otherwise bill.",
+	}
 }
 
 func (t *waiveDetentionTool) Execute(

@@ -60,5 +60,5 @@ func TestListEmailProfiles_ListsActiveSendingProfiles(t *testing.T) {
 	assert.Equal(t, "Operations", rows[0].Name)
 	assert.Equal(t, "dispatch@acme.example", rows[0].SenderEmail)
 	assert.Equal(t, "ops", profiles.request.SelectQueryRequest.Query)
-	assert.Equal(t, permission.ResourceEmailProfile, tool.PermissionResource())
+	assert.Equal(t, permission.ResourceEmailProfile, tool.Policy().Resource)
 }

@@ -13,12 +13,14 @@ const sharedAlias = path.resolve(dirname, "../../packages/shared/src");
 export default defineConfig({
   resolve: {
     alias: { "@": srcAlias, "@trenova/shared": sharedAlias },
+    dedupe: ["react-router"],
   },
   test: {
     projects: [
       {
         resolve: {
           alias: { "@": srcAlias, "@trenova/shared": sharedAlias },
+          dedupe: ["react-router"],
         },
         test: {
           name: "unit",

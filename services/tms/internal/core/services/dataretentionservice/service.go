@@ -48,9 +48,10 @@ func (s *Service) Get(
 		return nil, err
 	}
 	return &tenant.DataRetention{
-		OrganizationID:       tenantInfo.OrgID,
-		BusinessUnitID:       tenantInfo.BuID,
-		AuditRetentionPeriod: defaultAuditRetentionDays,
+		OrganizationID:            tenantInfo.OrgID,
+		BusinessUnitID:            tenantInfo.BuID,
+		AuditRetentionPeriod:      defaultAuditRetentionDays,
+		AIFeedbackRetentionPeriod: tenant.DefaultAIFeedbackRetentionDays,
 	}, nil
 }
 
@@ -59,6 +60,7 @@ type UpdateDataRetentionRequest struct {
 	AuditRetentionPeriod          int                   `json:"auditRetentionPeriod"`
 	EDIInboundFileRetentionPeriod int                   `json:"ediInboundFileRetentionPeriod"`
 	EDIMessageRetentionPeriod     int                   `json:"ediMessageRetentionPeriod"`
+	AIFeedbackRetentionPeriod     int                   `json:"aiFeedbackRetentionPeriod"`
 }
 
 func (s *Service) Update(
@@ -71,6 +73,7 @@ func (s *Service) Update(
 		AuditRetentionPeriod:          req.AuditRetentionPeriod,
 		EDIInboundFileRetentionPeriod: req.EDIInboundFileRetentionPeriod,
 		EDIMessageRetentionPeriod:     req.EDIMessageRetentionPeriod,
+		AIFeedbackRetentionPeriod:     req.AIFeedbackRetentionPeriod,
 	}
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
@@ -107,6 +108,24 @@ type ShipmentEvent interface {
 	GetCorrelationID() *string
 	GetActor() *tenant.User
 	GetShipment() *ShipmentEventShipmentReference
+}
+
+type AIFeedbackConnection struct {
+	Edges      []*AIFeedbackEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount *int              `json:"totalCount,omitempty"`
+}
+
+type AIFeedbackEdge struct {
+	Node   *aifeedback.Feedback `json:"node"`
+	Cursor string               `json:"cursor"`
+}
+
+type AIFeedbackTargetInput struct {
+	TargetType aifeedback.TargetType `json:"targetType"`
+	TargetID   string                `json:"targetId"`
+	// Required for a briefing section, its key; empty otherwise.
+	TargetPart *string `json:"targetPart,omitempty"`
 }
 
 type AIProviderConnection struct {
@@ -436,6 +455,14 @@ type ApplyCustomerPaymentInput struct {
 	PaymentID      string                             `json:"paymentId"`
 	AccountingDate int                                `json:"accountingDate"`
 	Applications   []*CustomerPaymentApplicationInput `json:"applications"`
+}
+
+type ApproveAgentMemorySuggestionInput struct {
+	// The memory as it should read once approved.
+	Content string `json:"content"`
+	// Defaults to the suggestion's kind.
+	Kind    *agent.MemoryKind `json:"kind,omitempty"`
+	Version int               `json:"version"`
 }
 
 type ArchiveWorkerCredentialInput struct {
@@ -3796,6 +3823,11 @@ type MemoLineInput struct {
 type Mutation struct {
 }
 
+type MyAIFeedbackInput struct {
+	// At most 200 targets.
+	Targets []*AIFeedbackTargetInput `json:"targets"`
+}
+
 type MyAgentConnection struct {
 	Edges      []*MyAgentEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -5434,6 +5466,18 @@ type SetAvailabilityPreferenceInput struct {
 	DayOfWeek  int                           `json:"dayOfWeek"`
 	Preference worker.AvailabilityPreference `json:"preference"`
 	Note       *string                       `json:"note,omitempty"`
+}
+
+type SetMyAIFeedbackInput struct {
+	TargetType aifeedback.TargetType `json:"targetType"`
+	TargetID   string                `json:"targetId"`
+	TargetPart *string               `json:"targetPart,omitempty"`
+	// 1 for a thumbs up, -1 for a thumbs down.
+	Rating int `json:"rating"`
+	// Reasons on the same side as the rating.
+	Reasons []aifeedback.Reason `json:"reasons,omitempty"`
+	// At most 1000 characters.
+	Comment *string `json:"comment,omitempty"`
 }
 
 type SetMyAvailabilityInput struct {

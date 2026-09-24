@@ -275,7 +275,13 @@ type cappedStubTool struct {
 	*agentruntimetest.StubActionTool
 }
 
-func (cappedStubTool) TierCeiling() agent.AutonomyTier { return agent.TierActWithApproval }
+func (t cappedStubTool) Policy() serviceports.ToolPolicy {
+	policy := t.StubActionTool.Policy()
+	policy.MaxTier = agent.TierActWithApproval
+	policy.Egress = []agent.EgressClass{agent.EgressExternalRecipient}
+
+	return policy
+}
 
 // A person approves anything that leaves the organization, so an agent cannot
 // be set to send it on its own.
@@ -307,4 +313,69 @@ func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
 		}
 		assert.Equal(t, refused, fields["toolTiers.email_customer"], tier)
 	}
+}
+
+type policyStubTool struct {
+	*agentruntimetest.StubActionTool
+
+	policy serviceports.ToolPolicy
+}
+
+func (t policyStubTool) Policy() serviceports.ToolPolicy { return t.policy }
+
+func tierMessages(
+	t *testing.T,
+	tool policyStubTool,
+	tier agent.AutonomyTier,
+) map[string]string {
+	t.Helper()
+
+	actions := &agentruntimetest.StubActionRegistry{Tools: []serviceports.AgentTool{tool}}
+	d := definition("", tool.ToolName)
+	d.ToolTiers = map[string]agent.AutonomyTier{tool.ToolName: tier}
+	multiErr := errortypes.NewMultiError()
+	validateToolSelection(d, actions, &agentruntimetest.StubQueryRegistry{}, multiErr)
+
+	messages := make(map[string]string, len(multiErr.Errors))
+	for _, e := range multiErr.Errors {
+		messages[e.Field] = e.Message
+	}
+
+	return messages
+}
+
+/*
+The refusal says why the tool stops where it does, in the tool's own words. It
+used to say every capped tool "sends work outside the organization", which was
+false for create_shipment, held to approval because a new load commits a
+customer's freight.
+*/
+func TestValidateToolSelection_ExplainsTheCapWithTheToolsRationale(t *testing.T) {
+	t.Parallel()
+
+	booking := policyStubTool{StubActionTool: &agentruntimetest.StubActionTool{
+		ToolName: "create_shipment",
+	}}
+	booking.policy = booking.StubActionTool.Policy()
+	booking.policy.MaxTier = agent.TierActWithApproval
+	booking.policy.Rationale = "A new load commits a customer's freight."
+
+	mail := policyStubTool{StubActionTool: &agentruntimetest.StubActionTool{
+		ToolName: "email_customer",
+	}}
+	mail.policy = mail.StubActionTool.Policy()
+	mail.policy.Egress = []agent.EgressClass{agent.EgressExternalRecipient}
+	mail.policy.Rationale = "Emails the customer's contacts a message the model wrote."
+
+	booked := tierMessages(t, booking, agent.TierAutoExecute)["toolTiers.create_shipment"]
+	assert.Contains(t, booked, "A new load commits a customer's freight.")
+	assert.Contains(t, booked, string(agent.TierActWithApproval))
+	assert.NotContains(t, booked, "outside the organization")
+
+	mailed := tierMessages(t, mail, agent.TierAutoExecute)["toolTiers.email_customer"]
+	assert.Contains(t, mailed, "Emails the customer's contacts a message the model wrote.")
+	assert.Contains(t, mailed, string(agent.TierActWithApproval))
+
+	assert.Empty(t, tierMessages(t, booking, agent.TierActWithApproval))
+	assert.Empty(t, tierMessages(t, mail, agent.TierActWithApproval))
 }

@@ -17,7 +17,17 @@ type selfScopedTool struct {
 	*recordingTool
 }
 
-func (selfScopedTool) SelfScoped() bool { return true }
+func (t selfScopedTool) Policy() services.ToolPolicy {
+	return selfScopedPolicy(t.recordingTool.Policy())
+}
+
+func selfScopedPolicy(policy services.ToolPolicy) services.ToolPolicy {
+	policy.Scope = agent.ToolScopeSelf
+	policy.Egress = []agent.EgressClass{agent.EgressPersonal}
+	policy.MaxTier = agent.TierAutoExecute
+
+	return policy
+}
 
 /*
 A change to the person's own home page is approved without a role grant, as
@@ -58,7 +68,9 @@ type ownedSchemaTool struct {
 	validated map[string]any
 }
 
-func (*ownedSchemaTool) SelfScoped() bool { return true }
+func (t *ownedSchemaTool) Policy() services.ToolPolicy {
+	return selfScopedPolicy(t.schemaTool.Policy())
+}
 
 func (t *ownedSchemaTool) Validate(_ context.Context, params services.ToolExecuteParams) error {
 	t.validated = params.Params

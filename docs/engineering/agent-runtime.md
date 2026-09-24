@@ -107,7 +107,7 @@ its last attempt (`modelcall.Transient`, `modelcall.FinalAttempt`).
 ## What makes a retry safe
 
 A tool call is an activity, and an activity can run more than once. The tools do
-not dedupe: `RequiresIdempotencyKey` is checked for presence and, bar the two
+not dedupe: a policy's `Idempotent` flag is checked for presence and, bar the two
 that forward it to an email provider, never looked up.
 
 `agent_run_steps` is what makes it safe. Every operation is **claimed before it
@@ -178,9 +178,9 @@ does, so a reader can never attach ahead of it.
 Every tool call a reader sees says what it does. `tool_started`, `tool_finished`
 and the tool calls on `message` carry `effect` (`lookup`, `change`, `navigate`,
 `discover`, `present`, `ask` or `delegate`), read from the tool's metadata
-(`serviceports.EffectOf`: a declared `Effect()`, else a write is a change and a
-read a lookup; `find_tools`, `ask_user`, `publish_artifact` and `delegate_task`
-are named by the runtime). `tool_finished` also carries `summary`, a one-line label worked out
+(`serviceports.EffectOf`, which reads `Effect` from the tool's `Policy()`;
+`find_tools`, `ask_user`, `publish_artifact` and `delegate_task` declare theirs in
+`agentruntime/runtimepolicies.go`). `tool_finished` also carries `summary`, a one-line label worked out
 where the tool ran from what it returned, or from a write's name or title. The
 thread's saved messages carry the same fields: `summary` is stored on the
 result, and `effect` is read from the registry when the messages are served, so

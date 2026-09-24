@@ -627,17 +627,39 @@ means one thing:
 land         a step of an agent's work arrives   (from the left: the agent's side)
 materialise  produced work appears in the workspace (in from the conversation)
 draw         a line extends
-breathe      work is running
+work         an agent is at its desk
 ```
 
-`breathe` is the only loop in the product and it earns the exception the way a
+`work` is the only loop in the product and it earns the exception the way a
 heartbeat monitor does: it runs because the thing it describes is still going,
-and it stops when that stops. It is one shape, `WorkingDot` in
-`components/assistant/voice/working-dot.tsx`, used everywhere "still going" is
-said — the Desk's header, a tool step — because a spinner here and a pulse
-there is two vocabularies for one fact. Everything else still answers an
-action, and `prefers-reduced-motion` keeps the state change and drops the
-travel.
+and it stops when that stops. It is one shape, `DeskThinking` in
+`components/assistant/voice/desk-thinking.tsx` — a small desk drawn in the ink,
+a monitor on it and a chair that rolls in and out from under it — used
+everywhere "still going" is said: the working line, a tool step, a report
+running, a conversation's row. A spinner here and a pulse there is two
+vocabularies for one fact.
+
+The desk has one pose per phase of a turn, chosen by `thinkingPose` from the
+same state the working line's words are read from, so the drawing and the
+sentence never disagree:
+
+| Pose | When | What moves |
+|---|---|---|
+| `arrive` | the question is being checked, the model is thinking, a reply is starting over | the chair rolls out, dips as someone sits, and rolls back in (`animate-desk-roll`) |
+| `busy` | a tool is running | the desk gives a small shake, then holds still for most of the beat (`animate-desk-shake`) |
+| `write` | the answer is arriving | the monitor pulses softly (`animate-desk-screen`) |
+| `settle` | the turn is over, however it ended | the chair tucks in on the confirm spring (`animate-desk-settle`), then the mark is gone |
+
+Lines are `currentColor`. The screen is the one tinted detail: the agent's accent
+at `--desk-screen-rest`, lifted to `--desk-screen-lit`, and the ink where no agent
+is set. It is announced as one `role="status"` named "Working on your answer",
+whose content never changes, so a screen reader hears the work start and is
+never told about the drawing moving; where the words beside it already say it
+(a row's "Writing a reply", a tool step) it is `decorative`. A list takes
+`still`, which keeps the drawing and drops the motion, because a column of
+moving desks is movement nobody can escape. Under `prefers-reduced-motion` every
+pose is a still drawing of the same moment and the settle is skipped. Everything
+else still answers an action.
 
 **Artifacts are the product of a turn.** A report answer is a table, an email is a
 draft, a plan is a checklist, a record is a card. They render in the pane beside the
@@ -687,9 +709,11 @@ second "Details" click.
 
 While a reply is being written, one **working line** at its foot says what is happening
 now — "Looking up Peak Distributing…", "Writing the answer…" — with the step count and the
-elapsed time, beside the only breathing dot on screen. The words change when the work does
-and each change rises into place; a step joins the list above when it lands, as a check on
-the confirm spring. Nothing else moves: no shimmer on "Thinking", no spinner on a card.
+elapsed time, beside the only moving desk on screen. Before the first word or step arrives
+the desk is drawn at its larger size and the line is the whole of the reply. The words change
+when the work does and each change rises into place; a step joins the list above when it
+lands, as a check on the confirm spring. Nothing else moves: no shimmer on "Thinking", no
+spinner on a card.
 
 **Decisions and their outcomes are one card that changes.** A proposal or a plan waiting on
 someone is the artifact chrome in miniature — the kind's mark in a sunken well, the title
@@ -773,6 +797,18 @@ the server a page at a time, recent agents first — never a chip per agent, whi
 is a wall once an organization has sixty. The questions under the box are the
 agent's own `starters`, from the server, and they trade places when the agent
 changes.
+
+The front page opens with a greeting beside the same desk at rest (`DeskMark`,
+`pose="idle"`), set for the part of the day in the person's timezone: a sun low
+in the morning and high in the afternoon, and in the evening a moon and the desk
+lamp throwing a small warm cone (`--desk-lamp-light`). The greeting is a label
+(500), the date under it is body in `--foreground-subtle`, and the headline under
+both is the page's one heading (600). The page arrives once, in reading order, a
+beat apart on `animate-rise` — the desk, the greeting, the date, the headline, the
+line under it, the ask box, then the rest — while the chair settles in
+(`animate-desk-arrive`) and the evening lamp catches with one flicker
+(`animate-desk-lamp`). Then it holds still. There is no accent on it: the agent's
+colour belongs to a conversation, and the front page has not started one.
 
 ## Checking your work
 

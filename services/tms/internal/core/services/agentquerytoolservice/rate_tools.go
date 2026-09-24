@@ -79,8 +79,10 @@ func (t *explainRateTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *explainRateTool) PermissionResource() permission.Resource {
-	return permission.ResourceRateMatrix
+func (t *explainRateTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceRateMatrix,
+	})
 }
 
 type rateExplanation struct {

@@ -37,8 +37,10 @@ import {
   type WriteLine,
 } from "./delegation";
 import { ToolActivity } from "./tool-activity";
+import { FeedbackControl } from "@/components/ai-feedback/feedback-control";
+import { delegatedAnswerId } from "@/components/ai-feedback/feedback-targets";
 import { ArtifactKindIcon } from "./voice/artifact-chrome";
-import { WorkingDot } from "./voice/working-dot";
+import { DeskThinking } from "./voice/desk-thinking";
 
 const TONE_TEXT: Record<HandOffTone, string> = {
   muted: "text-foreground-muted",
@@ -52,7 +54,7 @@ const TONE_TEXT: Record<HandOffTone, string> = {
  * the task on the same line.
  *
  * While the other agent works, its own steps land beneath the hand-off and a
- * quiet line says what it is doing now; the breathing dot stays with the turn,
+ * quiet line says what it is doing now; the moving desk stays with the turn,
  * at the foot of the reply. When it finishes, the hand-off settles into what
  * came of it — how it ended, what it made, what waits on the person and what
  * it published — and opens onto the whole task, every step it took and its
@@ -92,6 +94,8 @@ export function DelegateStep({
 
   const expandable = handOffHasDetail(view);
   const settled = !running;
+  const answerId =
+    settled && step.delegate?.kind === "saved" ? delegatedAnswerId(step.delegate.messages) : null;
 
   return (
     <li className={cn("min-w-0", live && "animate-land")}>
@@ -145,7 +149,7 @@ export function DelegateStep({
 
         {expandable && (
           <CollapsibleContent className="h-(--collapsible-panel-height) overflow-hidden transition-[height] duration-200 ease-settle data-ending-style:h-0 data-starting-style:h-0">
-            <HandOffDetails view={view} running={running} />
+            <HandOffDetails view={view} running={running} answerId={answerId} />
           </CollapsibleContent>
         )}
       </Collapsible>
@@ -155,9 +159,9 @@ export function DelegateStep({
 
 /**
  * The other agent's work while it goes: the steps it has finished, each
- * landing with its check, and one line for what it is doing now. The dot
+ * landing with its check, and one line for what it is doing now. The desk
  * beside that line holds still, because the turn's own working line is where
- * the product breathes.
+ * the desk moves.
  */
 function HandOffProgress({ view }: { view: DelegateView }) {
   const t = useT();
@@ -174,7 +178,7 @@ function HandOffProgress({ view }: { view: DelegateView }) {
         aria-live="polite"
         className="text-foreground-muted flex h-6 min-w-0 items-center gap-2 text-xs"
       >
-        <WorkingDot working still className="mx-0.75" />
+        <DeskThinking working pose="busy" still decorative className="mx-0.5" />
         <span key={label} className="animate-rise min-w-0 truncate">
           {label}
         </span>
@@ -351,7 +355,16 @@ function PublishedRow({ document }: { document: DelegateDocument }) {
  * it, every step it took, and its answer. Its steps open onto their own
  * details the same way the turn's do.
  */
-function HandOffDetails({ view, running }: { view: DelegateView; running: boolean }) {
+function HandOffDetails({
+  view,
+  running,
+  answerId,
+}: {
+  view: DelegateView;
+  running: boolean;
+  /** The saved message holding the other agent's answer, which the person may rate. */
+  answerId: string | null;
+}) {
   const t = useT();
 
   return (
@@ -372,7 +385,15 @@ function HandOffDetails({ view, running }: { view: DelegateView; running: boolea
       )}
       {view.reply.trim() !== "" && (
         <section className="flex min-w-0 flex-col gap-1">
-          <h4 className="text-foreground-subtle font-medium">{t("Its answer")}</h4>
+          <div className="flex min-w-0 items-center gap-2">
+            <h4 className="text-foreground-subtle font-medium">{t("Its answer")}</h4>
+            {answerId !== null && (
+              <FeedbackControl
+                target={{ targetType: "DelegatedAnswer", targetId: answerId }}
+                className="ml-auto"
+              />
+            )}
+          </div>
           <AiMarkdown
             content={view.reply}
             className="text-foreground-muted text-xs leading-relaxed"

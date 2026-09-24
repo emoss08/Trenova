@@ -211,7 +211,7 @@ func TestListTimeOff_AuthorizesAgainstWorkerPTO(t *testing.T) {
 
 	assert.Equal(t,
 		permission.ResourceWorkerPTO,
-		newListTimeOffTool(&fakePTOLister{}).PermissionResource(),
+		newListTimeOffTool(&fakePTOLister{}).Policy().Resource,
 	)
 }
 

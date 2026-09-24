@@ -611,7 +611,7 @@ func TestReportTools_AuthorizeAgainstTheReportResource(t *testing.T) {
 	_, _, tools := reportingTools(t)
 
 	for name, tool := range tools {
-		assert.Equal(t, permission.ResourceReport, tool.PermissionResource(),
+		assert.Equal(t, permission.ResourceReport, tool.Policy().Resource,
 			"%s belongs to the report resource", name)
 	}
 }

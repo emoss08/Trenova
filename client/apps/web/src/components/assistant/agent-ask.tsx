@@ -1,5 +1,6 @@
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { useAutoResizeTextarea } from "@trenova/shared/hooks/use-auto-resize-textarea";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -87,6 +88,7 @@ export function AgentAsk({
 
   const hero = variant === "hero";
   const placeholder = t("Ask {0} anything about your operation", agent.name);
+  const ready = question.trim() !== "" && !disabled;
 
   return (
     <div className={cn("flex flex-col", hero ? "gap-3" : "gap-2.5", className)}>
@@ -132,16 +134,35 @@ export function AgentAsk({
             lastUsedAt={lastUsedAt}
             disabled={disabled}
             side={hero ? "bottom" : "top"}
+            className={
+              hero ? "bg-card hover:bg-surface-hover ring-foreground/10 ring-1" : undefined
+            }
           />
           <span className="flex-1" />
+          {/* The key that sends, said only once there is something to send:
+              the hint answers the typing rather than sitting in an empty box. */}
+          {hero && ready && (
+            <span
+              aria-hidden
+              className="text-foreground-subtle animate-rise hidden items-center gap-1 text-xs sm:inline-flex"
+            >
+              <Kbd className="h-4 min-w-4 px-1">Enter</Kbd>
+              {t("to send")}
+            </span>
+          )}
           <Button
             type="submit"
             size="icon-sm"
-            disabled={disabled || question.trim() === ""}
+            disabled={!ready}
             aria-label={t("Ask")}
             className="shrink-0 rounded-full"
           >
-            <ArrowUpIcon className="size-4" />
+            {/* Re-keyed as the question becomes sendable, so the arrow lands
+                with the confirm spring at the moment the box can be sent. */}
+            <ArrowUpIcon
+              key={ready ? "ready" : "empty"}
+              className={cn("size-4", ready && "animate-confirm")}
+            />
           </Button>
         </div>
       </form>

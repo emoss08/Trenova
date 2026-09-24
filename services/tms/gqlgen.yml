@@ -1907,6 +1907,39 @@ models:
   AgentMemory:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.Memory
+  AgentMemoryEvidence:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MemoryEvidence
+  AIFeedback:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aifeedback.Feedback
+    fields:
+      rating:
+        resolver: true
+  AIFeedbackTargetType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aifeedback.TargetType
+  AIFeedbackReason:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aifeedback.Reason
+  AIFeedbackFingerprintSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aifeedback.FingerprintSource
+  AIFeedbackTurnSnapshot:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aifeedback.TurnSnapshot
+  AIFeedbackToolLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aifeedback.ToolLine
+  AgentFeedbackSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentFeedbackSummary
+  AgentFeedbackDay:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentFeedbackDay
+  AgentFeedbackWorstRated:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentFeedbackWorstRated
   AgentEvaluationStatus:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.EvaluationStatus

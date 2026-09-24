@@ -129,12 +129,27 @@ func (t *StubQueryTool) Description() string {
 }
 
 func (t *StubQueryTool) ParamSchema() map[string]any { return map[string]any{"type": "object"} }
-func (t *StubQueryTool) PermissionResource() permission.Resource {
-	if t.Resource == "" {
-		return permission.ResourceShipment
+func (t *StubQueryTool) Policy() serviceports.ToolPolicy {
+	resource := t.Resource
+	if resource == "" {
+		resource = permission.ResourceShipment
 	}
 
-	return t.Resource
+	return serviceports.ToolPolicy{
+		Name:          t.ToolName,
+		Kind:          agent.ToolKindQuery,
+		Resource:      resource,
+		Operation:     permission.OpRead,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierAutoExecute,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressNone},
+		Effect:        agent.ToolEffectLookup,
+		Reversible:    true,
+		Idempotent:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "A stub read.",
+	}
 }
 
 func (t *StubQueryTool) Query(
@@ -190,22 +205,31 @@ func (t *StubActionTool) ParamSchema() map[string]any {
 
 	return map[string]any{"type": "object"}
 }
-func (t *StubActionTool) Reversible() bool { return true }
-func (t *StubActionTool) PermissionResource() permission.Resource {
-	if t.Resource == "" {
-		return permission.ResourceShipmentMove
+func (t *StubActionTool) Policy() serviceports.ToolPolicy {
+	resource := t.Resource
+	if resource == "" {
+		resource = permission.ResourceShipmentMove
+	}
+	tier := t.Tier
+	if tier == "" {
+		tier = agent.TierPropose
 	}
 
-	return t.Resource
-}
-func (t *StubActionTool) PermissionOperation() permission.Operation { return permission.OpUpdate }
-func (t *StubActionTool) RequiresIdempotencyKey() bool              { return true }
-func (t *StubActionTool) DefaultAutonomyTier() agent.AutonomyTier {
-	if t.Tier == "" {
-		return agent.TierPropose
+	return serviceports.ToolPolicy{
+		Name:          t.ToolName,
+		Kind:          agent.ToolKindAction,
+		Resource:      resource,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   tier,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		Idempotent:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "A stub write.",
 	}
-
-	return t.Tier
 }
 
 func (t *StubActionTool) Execute(
@@ -235,7 +259,7 @@ func (r *StubActionRegistry) All() []serviceports.AgentTool { return r.Tools }
 func (r *StubActionRegistry) Descriptors() []serviceports.AgentToolDescriptor {
 	out := make([]serviceports.AgentToolDescriptor, 0, len(r.Tools))
 	for _, tool := range r.Tools {
-		out = append(out, serviceports.DescribeTool(tool, tool.DefaultAutonomyTier(), false))
+		out = append(out, serviceports.DescribeTool(tool, tool.Policy().DefaultTier, false))
 	}
 
 	return out

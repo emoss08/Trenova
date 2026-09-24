@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -385,7 +386,7 @@ func (r *repository) Update(
 		}).
 		Set(cols.Name.Set(), entity.Name).
 		Set(cols.Description.Set(), entity.Description).
-		Set(cols.Template.Set(), entity.Template).
+		Set(cols.Template.Set(), stringutils.NilIfEmpty(entity.Template)).
 		Set(cols.Instructions.Set(), entity.Instructions).
 		Set(cols.Guardrails.Set(), dbhelper.TextArray(entity.Guardrails)).
 		Set(cols.ToolNames.Set(), dbhelper.TextArray(entity.ToolNames)).
@@ -403,8 +404,8 @@ func (r *repository) Update(
 		Set(cols.MaxConcurrentRuns.Set(), entity.MaxConcurrentRuns).
 		Set(cols.RunTimeoutSeconds.Set(), entity.RunTimeoutSeconds).
 		Set(cols.MaxToolCalls.Set(), entity.MaxToolCalls).
-		Set(cols.Icon.Set(), entity.Icon).
-		Set(cols.Accent.Set(), entity.Accent).
+		Set(cols.Icon.Set(), stringutils.NilIfEmpty(entity.Icon)).
+		Set(cols.Accent.Set(), stringutils.NilIfEmpty(entity.Accent)).
 		Set(cols.ContextProviders.Set(), dbhelper.TextArray(entity.ContextProviders)).
 		Set(cols.OutputMode.Set(), entity.OutputMode).
 		Set(cols.PreferredProviderID.Set(), entity.PreferredProviderID).
@@ -574,7 +575,7 @@ func (r *repository) removeDelegate(
 				Where("?::text = ANY("+cols.DelegateIDs.Qualified()+")", req.ID.String())
 		}).
 		Set(
-			cols.DelegateIDs.SetExpr("NULLIF(array_remove({}, ?::text), '{}'::text[])"),
+			cols.DelegateIDs.SetExpr("NULLIF(array_remove({}, ?::text), ARRAY[]::text[])"),
 			req.ID.String(),
 		).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).

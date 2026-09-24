@@ -1,14 +1,17 @@
 package agenttoolservice
 
 import (
-	"os"
-	"path/filepath"
-	"regexp"
+	"reflect"
 	"sort"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
+	"github.com/emoss08/trenova/internal/testutil/providertest"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,22 +32,6 @@ need not be. That is what keeps update_shipment closed to an agent while
 create_shipment, which the intake desk runs on, is open.
 */
 
-var (
-	methodName     = regexp.MustCompile(`func \(t \*(\w+)\) Name\(\) string \{\s*return "(\w+)"`)
-	methodResource = regexp.MustCompile(
-		`func \(t \*(\w+)\) PermissionResource\(\) permission\.Resource \{\s*return permission\.(\w+)`,
-	)
-	methodOperation = regexp.MustCompile(
-		`func \(t \*(\w+)\) PermissionOperation\(\) permission\.Operation \{\s*return permission\.(\w+)`,
-	)
-	methodSelfScoped = regexp.MustCompile(
-		`func \(t \*(\w+)\) SelfScoped\(\) bool \{\s*return true`,
-	)
-	// The generated list and get tools carry their name and resource in a
-	// spec literal rather than methods: one type serves every entity.
-	specField = regexp.MustCompile(`(name|resource):\s+(?:permission\.)?"?(\w+)"?,`)
-)
-
 type toolPermission struct {
 	resource  permission.Resource
 	operation permission.Operation
@@ -53,115 +40,28 @@ type toolPermission struct {
 	selfScoped bool
 }
 
-// toolPermissions maps each tool's wire name to what it needs, read out of
-// the two tool packages' sources.
+// toolPermissions maps each tool's wire name to what it needs, read from the
+// policy every registered tool declares.
 func toolPermissions(t *testing.T) map[string]toolPermission {
 	t.Helper()
 
-	resources := resourceValues(t)
-	operations := operationValues(t)
+	supplied := map[reflect.Type]reflect.Value{
+		reflect.TypeFor[*filtercatalog.Catalog](): reflect.ValueOf(
+			agentquerytoolservice.FilterCatalog(),
+		),
+	}
 
-	byType := map[string]string{}
-	typeResource := map[string]string{}
-	typeOperation := map[string]string{}
-	selfScoped := map[string]bool{}
 	out := map[string]toolPermission{}
+	for _, provider := range append(agentquerytoolservice.ToolProviders(), ToolProviders()...) {
+		declarer, ok := providertest.Build(t, provider, supplied).(serviceports.ToolPolicyDeclarer)
+		require.Truef(t, ok, "%T builds a tool with no policy", provider)
 
-	for _, dir := range []string{".", "../agentquerytoolservice"} {
-		entries, err := os.ReadDir(dir)
-		require.NoError(t, err)
-
-		for _, entry := range entries {
-			if entry.IsDir() || filepath.Ext(entry.Name()) != ".go" {
-				continue
-			}
-			raw, readErr := os.ReadFile(filepath.Join(dir, entry.Name()))
-			require.NoError(t, readErr)
-			source := string(raw)
-
-			for _, match := range methodName.FindAllStringSubmatch(source, -1) {
-				byType[match[1]] = match[2]
-			}
-			for _, match := range methodResource.FindAllStringSubmatch(source, -1) {
-				typeResource[match[1]] = match[2]
-			}
-			for _, match := range methodOperation.FindAllStringSubmatch(source, -1) {
-				typeOperation[match[1]] = match[2]
-			}
-			for _, match := range methodSelfScoped.FindAllStringSubmatch(source, -1) {
-				selfScoped[match[1]] = true
-			}
-
-			// A spec's name comes before its resource, so the pending name
-			// is the one the next resource belongs to.
-			pending := ""
-			for _, match := range specField.FindAllStringSubmatch(source, -1) {
-				if match[1] == "name" {
-					pending = match[2]
-					continue
-				}
-				if pending == "" {
-					continue
-				}
-				// A spec tool only ever reads.
-				out[pending] = toolPermission{
-					resource:  resources[match[2]],
-					operation: permission.OpRead,
-				}
-				pending = ""
-			}
+		policy := declarer.Policy()
+		out[policy.Name] = toolPermission{
+			resource:   policy.Resource,
+			operation:  policy.Operation,
+			selfScoped: policy.Scope == agent.ToolScopeSelf,
 		}
-	}
-
-	for toolType, name := range byType {
-		resource, ok := resources[typeResource[toolType]]
-		if !ok {
-			continue
-		}
-		operation, ok := operations[typeOperation[toolType]]
-		if !ok {
-			// A query tool declares no operation: reading is the only
-			// thing it does, which is why the interface does not ask.
-			operation = permission.OpRead
-		}
-		out[name] = toolPermission{
-			resource:   resource,
-			operation:  operation,
-			selfScoped: selfScoped[toolType],
-		}
-	}
-
-	require.NotEmpty(t, out)
-
-	return out
-}
-
-func resourceValues(t *testing.T) map[string]permission.Resource {
-	t.Helper()
-
-	source, err := os.ReadFile("../../domain/permission/resource_gen.go")
-	require.NoError(t, err)
-
-	pattern := regexp.MustCompile(`(Resource\w+)\s+Resource = "([^"]+)"`)
-	out := map[string]permission.Resource{}
-	for _, match := range pattern.FindAllStringSubmatch(string(source), -1) {
-		out[match[1]] = permission.Resource(match[2])
-	}
-	require.NotEmpty(t, out)
-
-	return out
-}
-
-func operationValues(t *testing.T) map[string]permission.Operation {
-	t.Helper()
-
-	source, err := os.ReadFile("../../domain/permission/operations.go")
-	require.NoError(t, err)
-
-	pattern := regexp.MustCompile(`(Op\w+)\s+Operation = "([^"]+)"`)
-	out := map[string]permission.Operation{}
-	for _, match := range pattern.FindAllStringSubmatch(string(source), -1) {
-		out[match[1]] = permission.Operation(match[2])
 	}
 	require.NotEmpty(t, out)
 

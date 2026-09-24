@@ -39,20 +39,22 @@ func (t *transitionToInReviewTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *transitionToInReviewTool) Reversible() bool { return true }
-
-func (t *transitionToInReviewTool) PermissionResource() permission.Resource {
-	return permission.ResourceBillingQueue
-}
-
-func (t *transitionToInReviewTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *transitionToInReviewTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *transitionToInReviewTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *transitionToInReviewTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceBillingQueue,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeRun,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Moves the run's billing queue item into review inside Trenova; nothing " +
+			"is sent anywhere.",
+	}
 }
 
 func (t *transitionToInReviewTool) Execute(

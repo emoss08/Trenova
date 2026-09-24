@@ -12,5 +12,6 @@ var Module = fx.Module("agentruntime",
 	fx.Provide(
 		fx.Annotate(New, fx.As(fx.Self()), fx.As(new(serviceports.AgentRuntime))),
 		NewContextBuilder,
+		RuntimePolicies,
 	),
 )

@@ -3,6 +3,7 @@ package agentquerytoolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -85,6 +86,10 @@ func newGetAgentRunTool(repo repositories.AgentRunRepository) serviceports.Agent
 		paramName: "runId",
 		idSource: "from a proposal, the page you are on, or a mentioned record " +
 			"(no tool lists agent runs)",
+		reads:  agent.ExternalReadMarked,
+		source: agent.TaintSourceRunRecord,
+		rationale: "Reads a run's own record, whose summary may repeat outside text the " +
+			"run read.",
 		fetch: func(ctx context.Context, id pulid.ID, tenant pagination.TenantInfo) (any, error) {
 			return repo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
 				ID:         id,
@@ -155,8 +160,10 @@ func (t *getWorkerCredentialTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getWorkerCredentialTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorkerCredential
+func (t *getWorkerCredentialTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceWorkerCredential,
+	})
 }
 
 func (t *getWorkerCredentialTool) Query(

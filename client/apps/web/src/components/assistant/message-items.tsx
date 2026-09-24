@@ -21,6 +21,8 @@ import type {
   AssistantProposal,
 } from "@/types/assistant";
 import { ArtifactKindIcon, ARTIFACT_KINDS } from "./voice/artifact-chrome";
+import { FeedbackControl } from "@/components/ai-feedback/feedback-control";
+import { TURN_FEEDBACK_REVEAL } from "@/components/ai-feedback/feedback-targets";
 import {
   CheckCheckIcon,
   CheckIcon,
@@ -216,6 +218,7 @@ export function AssistantTurn({
   at,
   meta,
   actions,
+  feedback,
   continued = false,
   workedSeconds = null,
   working = false,
@@ -224,6 +227,8 @@ export function AssistantTurn({
   at?: number;
   meta?: ReactNode;
   actions?: ReactNode;
+  /** The rating control; it manages its own fade so a chosen thumb stays in view. */
+  feedback?: ReactNode;
   /** A later step of a reply already headed above: no header of its own. */
   continued?: boolean;
   /** How long the reply took, from the question to its last step. */
@@ -238,9 +243,10 @@ export function AssistantTurn({
   if (continued) {
     return (
       <article className="group/turn relative -mt-2 flex min-w-0 flex-col gap-2.5">
-        {actions && (
-          <span className="absolute top-0 right-0 z-1 flex">
-            <TurnActions>{actions}</TurnActions>
+        {(actions || feedback) && (
+          <span className="absolute top-0 right-0 z-1 flex items-center gap-0.5">
+            {actions && <TurnActions>{actions}</TurnActions>}
+            {feedback}
           </span>
         )}
         {children}
@@ -275,7 +281,12 @@ export function AssistantTurn({
           </>
         )}
         {meta}
-        {actions && <TurnActions>{actions}</TurnActions>}
+        {(actions || feedback) && (
+          <span className="ml-auto flex shrink-0 items-center gap-0.5">
+            {actions && <TurnActions>{actions}</TurnActions>}
+            {feedback}
+          </span>
+        )}
       </header>
       {children}
     </article>
@@ -425,6 +436,7 @@ export function AssistantEntry({
   latestUserSequence,
   onAnswer,
   onOpenArtifact,
+  ratable = false,
 }: {
   entry: Extract<ThreadEntry, { kind: "assistant" }>;
   /** Where this step sits in its reply; the first step carries the header. */
@@ -439,6 +451,8 @@ export function AssistantEntry({
   onAnswer: (value: string) => void;
   onOpenArtifact?: (id: string) => void;
   threadId: string;
+  /** This step is the answer of its reply, and the person may rate it. */
+  ratable?: boolean;
 }) {
   const t = useT();
   const { message, tools } = entry;
@@ -464,6 +478,14 @@ export function AssistantEntry({
           >
             <CopyIcon className="size-3" />
           </IconAction>
+        ) : null
+      }
+      feedback={
+        ratable ? (
+          <FeedbackControl
+            target={{ targetType: "AssistantMessage", targetId: message.id }}
+            revealClassName={TURN_FEEDBACK_REVEAL}
+          />
         ) : null
       }
     >
