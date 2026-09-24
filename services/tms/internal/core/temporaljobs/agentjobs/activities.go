@@ -430,6 +430,7 @@ func (a *Activities) settleRun(ctx context.Context, p settleRunParams) (*FinishR
 		Actions:    p.Outcome.Actions,
 		Subject:    p.Subject,
 		TenantInfo: tenant,
+		Taint:      p.Outcome.Taint,
 	})
 	if err != nil {
 		return nil, err
@@ -439,6 +440,7 @@ func (a *Activities) settleRun(ctx context.Context, p settleRunParams) (*FinishR
 
 	run.ModelIdentifier = p.Outcome.Model
 	run.Summary = stringutils.Ellipsize(strings.TrimSpace(p.Outcome.Reply), maxSummaryChars)
+	run.RecordTaint(p.Outcome.Taint, timeutils.NowUnix())
 	if pending > 0 && !p.Failed {
 		run.Status = agent.RunStatusAwaitingDecision
 	}
@@ -797,6 +799,7 @@ type recordProposalsParams struct {
 	Actions    []serviceports.PendingAction
 	Subject    *agentdefinition.RuntimeSubject
 	TenantInfo pagination.TenantInfo
+	Taint      *agent.RunTaint
 }
 
 // recordProposals files the run's proposed writes, once.
@@ -831,6 +834,7 @@ func (a *Activities) recordProposals(
 		Run:        p.Run,
 		Actions:    p.Actions,
 		Evidence:   subjectEvidence(p.Subject, p.Run.ID),
+		Taint:      p.Taint,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("record proposals: %w", err)

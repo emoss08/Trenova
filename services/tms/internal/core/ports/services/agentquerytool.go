@@ -17,6 +17,9 @@ type QueryToolParams struct {
 	// days" and a bare YYYY-MM-DD mean in a call. Empty is UTC.
 	Timezone string
 	Params   map[string]any
+	// AgentDefinitionID is the agent the call is made for, which decides
+	// what it may recall of what was kept for one agent alone.
+	AgentDefinitionID pulid.ID
 }
 
 // AgentQueryTool reads data and returns it.

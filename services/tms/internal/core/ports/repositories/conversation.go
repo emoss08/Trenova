@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -75,6 +76,15 @@ type DeleteStaleThreadsRequest struct {
 	Limit  int
 }
 
+// MarkThreadTaintedRequest keeps the outside content a conversation has
+// read, so every later turn in it opens tainted.
+type MarkThreadTaintedRequest struct {
+	ThreadID   pulid.ID
+	TenantInfo pagination.TenantInfo
+	Taint      *agent.RunTaint
+	TaintedAt  int64
+}
+
 type ConversationRepository interface {
 	CreateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	GetThread(ctx context.Context, req GetThreadRequest) (*conversation.Thread, error)
@@ -97,4 +107,7 @@ type ConversationRepository interface {
 	// AppendTurn allocates sequence numbers and writes the messages atomically,
 	// returning them with their assigned identifiers.
 	AppendTurn(ctx context.Context, req AppendTurnRequest) ([]conversation.Message, error)
+	// MarkThreadTainted writes the thread's taint and, the first time, when it
+	// became tainted. It leaves the thread's version alone.
+	MarkThreadTainted(ctx context.Context, req MarkThreadTaintedRequest) error
 }

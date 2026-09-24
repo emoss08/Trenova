@@ -196,6 +196,32 @@ func (r *repository) UpdateThread(
 	return thread, nil
 }
 
+func (r *repository) MarkThreadTainted(
+	ctx context.Context,
+	req repositories.MarkThreadTaintedRequest,
+) error {
+	if !req.Taint.Tainted() {
+		return nil
+	}
+
+	cols := buncolgen.ThreadColumns
+	res, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*conversation.Thread)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.ThreadScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ThreadID)
+		}).
+		Set(cols.Taint.Set(), req.Taint).
+		Set(cols.TaintedAt.SetExpr("COALESCE({}, ?)"), req.TaintedAt).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("mark thread tainted: %w", err)
+	}
+
+	return dberror.CheckRowsAffected(res, "Thread", req.ThreadID.String())
+}
+
 func (r *repository) DeleteThread(
 	ctx context.Context,
 	req repositories.GetThreadRequest,

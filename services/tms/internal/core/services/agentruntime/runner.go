@@ -97,6 +97,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 	result := t.result
 	tools := t.tools
 
+	t.announceOpened(fx)
+
 	retries := 0
 	asked := false
 	for result.ToolCallsUsed < budget {
@@ -329,12 +331,14 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 				ProposedSoFar:        result.Actions,
 				Ordinal:              t.counts.next(call),
 				AfterExternalContent: t.external,
+				Taint:                result.Taint,
 			}).internal()
 			if outcome.failed {
 				t.repeats.record(call, outcome.content)
 			} else if ReadsExternalContent(call.Name) {
 				t.external = true
 			}
+			t.absorbTaint(fx, outcome.taint)
 			result.ToolCallsUsed++
 			s.recordToolResult(t, fx, call, outcome)
 		}

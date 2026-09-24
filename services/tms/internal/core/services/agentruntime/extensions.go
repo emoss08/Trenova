@@ -126,13 +126,19 @@ func ReadsExternalContent(name string) bool {
 	return ok && spec.ReturnsExternalContent
 }
 
-func externalTaint(external bool) *agent.RunTaint {
-	taint := &agent.RunTaint{}
-	if external {
-		taint.Add(agent.TaintMark{Source: agent.TaintSourceWeb, ToolName: agentextension.ToolWebSearch})
+// decisionTaint is the taint a call is decided with: what the turn had read,
+// and, when it has read the web, a web mark even where a turn from before
+// taint was kept could not say so. A nil taint stays nil, which Decide already
+// reads as tainted.
+func decisionTaint(taint *agent.RunTaint, external bool) *agent.RunTaint {
+	if !external || taint == nil {
+		return taint
 	}
 
-	return taint
+	decided := taint.Clone()
+	decided.Add(agent.TaintMark{Source: agent.TaintSourceWeb, ToolName: agentextension.ToolWebSearch})
+
+	return decided
 }
 
 func afterExternalContent(tier agent.AutonomyTier, external bool) (agent.AutonomyTier, bool) {

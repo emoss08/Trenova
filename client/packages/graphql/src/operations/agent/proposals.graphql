@@ -27,6 +27,9 @@ fragment AgentProposalTableRowFields on AgentProposal {
     maxLength
   }
   modifications
+  tainted
+  egressClass
+  heldBy
   version
   createdAt
   updatedAt

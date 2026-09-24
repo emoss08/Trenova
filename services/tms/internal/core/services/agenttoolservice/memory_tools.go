@@ -132,6 +132,7 @@ func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExec
 		SubjectID:   subjectID,
 		ExpiresAt:   expiresAt,
 		RunID:       params.RunID,
+		Taint:       params.Taint,
 	}, params.Actor)
 
 	return err

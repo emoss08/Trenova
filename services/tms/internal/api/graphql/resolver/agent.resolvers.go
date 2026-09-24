@@ -124,6 +124,10 @@ func (r *agentProposalResolver) Modifications(ctx context.Context, obj *agent.Ag
 	return nil, nil
 }
 
+func (r *agentProposalResolver) EgressClass(ctx context.Context, obj *agent.AgentProposal) (*agent.EgressClass, error) {
+	return recordedEgressClass(obj), nil
+}
+
 func (r *mutationResolver) DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentProposal, permission.OpUpdate)
 	if err != nil {
@@ -293,11 +297,17 @@ func (r *mutationResolver) ApproveAgentMemorySuggestion(ctx context.Context, id 
 		kind = *input.Kind
 	}
 
+	scope := agent.MemoryScopeAgent
+	if input.Scope != nil {
+		scope = *input.Scope
+	}
+
 	return r.agentMemoryService.ApproveSuggestion(ctx, &services.ApproveAgentMemorySuggestionRequest{
 		ID:         memoryID,
 		TenantInfo: tenantInfo(authCtx),
 		Kind:       kind,
 		Content:    input.Content,
+		Scope:      scope,
 		Version:    int64(input.Version),
 	}, actorutil.FromAuthContext(authCtx))
 }

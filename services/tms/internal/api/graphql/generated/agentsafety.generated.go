@@ -1902,6 +1902,48 @@ func (ec *executionContext) marshalNAgentSafety2ᚖgithubᚗcomᚋemoss08ᚋtren
 	return ec._AgentSafety(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource(ctx context.Context, v any) (agent.TaintSource, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource(ctx context.Context, sel ast.SelectionSet, v agent.TaintSource) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource = map[string]agent.TaintSource{
+		"InboundMessage": agent.TaintSourceInboundMessage,
+		"Document":       agent.TaintSourceDocument,
+		"EDI":            agent.TaintSourceEDI,
+		"BankReceipt":    agent.TaintSourceBankReceipt,
+		"Weather":        agent.TaintSourceWeather,
+		"Attachment":     agent.TaintSourceAttachment,
+		"Memory":         agent.TaintSourceMemory,
+		"RunRecord":      agent.TaintSourceRunRecord,
+		"Web":            agent.TaintSourceWeb,
+	}
+	marshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource = map[agent.TaintSource]string{
+		agent.TaintSourceInboundMessage: "InboundMessage",
+		agent.TaintSourceDocument:       "Document",
+		agent.TaintSourceEDI:            "EDI",
+		agent.TaintSourceBankReceipt:    "BankReceipt",
+		agent.TaintSourceWeather:        "Weather",
+		agent.TaintSourceAttachment:     "Attachment",
+		agent.TaintSourceMemory:         "Memory",
+		agent.TaintSourceRunRecord:      "RunRecord",
+		agent.TaintSourceWeb:            "Web",
+	}
+)
+
 func (ec *executionContext) marshalNAgentToolAutonomy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐToolAutonomy(ctx context.Context, sel ast.SelectionSet, v services.ToolAutonomy) graphql.Marshaler {
 	return ec._AgentToolAutonomy(ctx, sel, &v)
 }
@@ -2056,6 +2098,46 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalOAgentEgressClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐEgressClass(ctx context.Context, v any) (*agent.EgressClass, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOAgentEgressClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐEgressClass[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAgentEgressClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐEgressClass(ctx context.Context, sel ast.SelectionSet, v *agent.EgressClass) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOAgentEgressClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐEgressClass[*v])
+	return res
+}
+
+var (
+	unmarshalOAgentEgressClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐEgressClass = map[string]agent.EgressClass{
+		"None":              agent.EgressNone,
+		"Personal":          agent.EgressPersonal,
+		"Internal":          agent.EgressInternal,
+		"CustomerVisible":   agent.EgressCustomerVisible,
+		"DriverVisible":     agent.EgressDriverVisible,
+		"ExternalRecipient": agent.EgressExternalRecipient,
+		"Money":             agent.EgressMoney,
+	}
+	marshalOAgentEgressClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐEgressClass = map[agent.EgressClass]string{
+		agent.EgressNone:              "None",
+		agent.EgressPersonal:          "Personal",
+		agent.EgressInternal:          "Internal",
+		agent.EgressCustomerVisible:   "CustomerVisible",
+		agent.EgressDriverVisible:     "DriverVisible",
+		agent.EgressExternalRecipient: "ExternalRecipient",
+		agent.EgressMoney:             "Money",
+	}
+)
+
 func (ec *executionContext) unmarshalOAgentTaintSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource(ctx context.Context, v any) (*agent.TaintSource, error) {
 	if v == nil {
 		return nil, nil
@@ -2085,6 +2167,7 @@ var (
 		"Attachment":     agent.TaintSourceAttachment,
 		"Memory":         agent.TaintSourceMemory,
 		"RunRecord":      agent.TaintSourceRunRecord,
+		"Web":            agent.TaintSourceWeb,
 	}
 	marshalOAgentTaintSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource = map[agent.TaintSource]string{
 		agent.TaintSourceInboundMessage: "InboundMessage",
@@ -2095,6 +2178,7 @@ var (
 		agent.TaintSourceAttachment:     "Attachment",
 		agent.TaintSourceMemory:         "Memory",
 		agent.TaintSourceRunRecord:      "RunRecord",
+		agent.TaintSourceWeb:            "Web",
 	}
 )
 

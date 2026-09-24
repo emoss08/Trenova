@@ -4,7 +4,12 @@ import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import type { AgentProposalRow } from "@/lib/graphql/agent-activity-tables";
 import { Progress } from "@trenova/shared/components/ui/progress";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
-import { ProposalStatusBadge, proposalStatusChoices, TierBadge } from "./agent-badges";
+import {
+  OutsideContentBadge,
+  ProposalStatusBadge,
+  proposalStatusChoices,
+  TierBadge,
+} from "./agent-badges";
 
 export function getProposalColumns(t: TranslateFn): ColumnDef<AgentProposalRow>[] {
   return [
@@ -12,9 +17,12 @@ export function getProposalColumns(t: TranslateFn): ColumnDef<AgentProposalRow>[
       accessorKey: "toolName",
       header: t("Proposed change"),
       cell: ({ row }) => (
-        <span className="font-mono text-xs font-medium">{row.original.toolName}</span>
+        <span className="flex items-center gap-2">
+          <span className="font-mono text-xs font-medium">{row.original.toolName}</span>
+          {row.original.tainted ? <OutsideContentBadge t={t} /> : null}
+        </span>
       ),
-      size: 200,
+      size: 240,
       meta: {
         label: t("Proposed change"),
         apiField: "toolName",

@@ -45,6 +45,9 @@ type AgentRun struct {
 	StartedAt         int64       `json:"startedAt"         bun:"started_at,type:BIGINT,nullzero"`
 	CompletedAt       *int64      `json:"completedAt"       bun:"completed_at,type:BIGINT,nullzero"`
 	ErrorMessage      string      `json:"errorMessage"      bun:"error_message,type:TEXT,nullzero"`
+	Tainted           bool        `json:"tainted"           bun:"tainted,type:BOOLEAN,notnull,default:false"`
+	Taint             *RunTaint   `json:"taint"             bun:"taint,type:JSONB,nullzero"`
+	TaintedAt         *int64      `json:"taintedAt"         bun:"tainted_at,type:BIGINT,nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -101,6 +104,35 @@ func (r *AgentRun) GetBusinessUnitID() pulid.ID {
 
 func (r *AgentRun) GetTableName() string {
 	return "agent_runs"
+}
+
+func (r *AgentRun) RecordTaint(taint *RunTaint, now int64) bool {
+	if !taint.Tainted() {
+		return false
+	}
+
+	merged := r.Taint.Clone()
+	if merged == nil {
+		merged = &RunTaint{}
+	}
+	before := len(merged.Marks)
+	merged.Merge(taint)
+	changed := !r.Tainted || len(merged.Marks) != before
+	r.Tainted = true
+	r.Taint = merged
+	if r.TaintedAt == nil {
+		r.TaintedAt = &now
+	}
+
+	return changed
+}
+
+func (r *AgentRun) TaintedRecords() []RecordRef {
+	if r == nil || !r.Tainted {
+		return nil
+	}
+
+	return []RecordRef{{EntityType: TaintEntityAgentRun, ID: r.ID.String()}}
 }
 
 func (r *AgentRun) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {

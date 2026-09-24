@@ -29,6 +29,17 @@ type stubConversations struct {
 	lastList repositories.ListMessagesRequest
 	// count is the thread's length as CountMessages reports it.
 	count int
+	// tainted is every time the thread's taint was written.
+	tainted []repositories.MarkThreadTaintedRequest
+}
+
+func (s *stubConversations) MarkThreadTainted(
+	_ context.Context,
+	req repositories.MarkThreadTaintedRequest,
+) error {
+	s.tainted = append(s.tainted, req)
+
+	return nil
 }
 
 func (s *stubConversations) CountMessages(

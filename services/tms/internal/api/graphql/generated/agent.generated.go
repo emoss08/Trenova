@@ -42,6 +42,8 @@ type AgentProposalResolver interface {
 	ParameterFields(ctx context.Context, obj *agent.AgentProposal) ([]*toolschema.Field, error)
 	Modifications(ctx context.Context, obj *agent.AgentProposal) (map[string]any, error)
 
+	EgressClass(ctx context.Context, obj *agent.AgentProposal) (*agent.EgressClass, error)
+
 	Run(ctx context.Context, obj *agent.AgentProposal) (*agent.AgentRun, error)
 }
 type AgentRunResolver interface {
@@ -2304,6 +2306,75 @@ func (ec *executionContext) fieldContext_AgentMemory_agentDefinitionId(_ context
 	return graphql.NewScalarFieldContext("AgentMemory", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
+func (ec *executionContext) _AgentMemory_scope(ctx context.Context, field graphql.CollectedField, obj *agent.Memory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemory_scope(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Scope, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v agent.MemoryScope) graphql.Marshaler {
+			return ec.marshalNAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryScope(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemory_scope(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemory", field, false, false, errors.New("field of type AgentMemoryScope does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemory_tainted(ctx context.Context, field graphql.CollectedField, obj *agent.Memory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemory_tainted(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Tainted, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemory_tainted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemory", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AgentMemory_taintRunId(ctx context.Context, field graphql.CollectedField, obj *agent.Memory) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentMemory_taintRunId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TaintRunID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentMemory_taintRunId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentMemory", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
 func (ec *executionContext) _AgentMemory_sourceRunId(ctx context.Context, field graphql.CollectedField, obj *agent.Memory) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -3912,6 +3983,107 @@ func (ec *executionContext) fieldContext_AgentProposal_modifications(_ context.C
 	return graphql.NewScalarFieldContext("AgentProposal", field, true, true, errors.New("field of type JSON does not have child fields"))
 }
 
+func (ec *executionContext) _AgentProposal_tainted(ctx context.Context, field graphql.CollectedField, obj *agent.AgentProposal) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentProposal_tainted(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Tainted, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentProposal_tainted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentProposal", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AgentProposal_taint(ctx context.Context, field graphql.CollectedField, obj *agent.AgentProposal) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentProposal_taint(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Taint, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *agent.RunTaint) graphql.Marshaler {
+			return ec.marshalOAgentRunTaint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRunTaint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentProposal_taint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentProposal",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentRunTaint(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AgentProposal_egressClass(ctx context.Context, field graphql.CollectedField, obj *agent.AgentProposal) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentProposal_egressClass(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AgentProposal().EgressClass(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *agent.EgressClass) graphql.Marshaler {
+			return ec.marshalOAgentEgressClass2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐEgressClass(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentProposal_egressClass(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentProposal", field, true, true, errors.New("field of type AgentEgressClass does not have child fields"))
+}
+
+func (ec *executionContext) _AgentProposal_heldBy(ctx context.Context, field graphql.CollectedField, obj *agent.AgentProposal) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentProposal_heldBy(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.HeldBy, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentProposal_heldBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentProposal", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _AgentProposal_version(ctx context.Context, field graphql.CollectedField, obj *agent.AgentProposal) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4753,6 +4925,84 @@ func (ec *executionContext) fieldContext_AgentRun_errorMessage(_ context.Context
 	return graphql.NewScalarFieldContext("AgentRun", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _AgentRun_tainted(ctx context.Context, field graphql.CollectedField, obj *agent.AgentRun) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentRun_tainted(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Tainted, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentRun_tainted(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentRun", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AgentRun_taint(ctx context.Context, field graphql.CollectedField, obj *agent.AgentRun) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentRun_taint(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Taint, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *agent.RunTaint) graphql.Marshaler {
+			return ec.marshalOAgentRunTaint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRunTaint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentRun_taint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentRun",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentRunTaint(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AgentRun_taintedAt(ctx context.Context, field graphql.CollectedField, obj *agent.AgentRun) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentRun_taintedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TaintedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentRun_taintedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentRun", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
 func (ec *executionContext) _AgentRun_version(ctx context.Context, field graphql.CollectedField, obj *agent.AgentRun) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4994,6 +5244,208 @@ func (ec *executionContext) _AgentRunEdge_cursor(ctx context.Context, field grap
 }
 func (ec *executionContext) fieldContext_AgentRunEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AgentRunEdge", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentRunTaint_marks(ctx context.Context, field graphql.CollectedField, obj *agent.RunTaint) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentRunTaint_marks(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Marks, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []agent.TaintMark) graphql.Marshaler {
+			return ec.marshalNAgentTaintMark2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintMarkᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentRunTaint_marks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentRunTaint",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentTaintMark(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AgentTaintMark_source(ctx context.Context, field graphql.CollectedField, obj *agent.TaintMark) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentTaintMark_source(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Source, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v agent.TaintSource) graphql.Marshaler {
+			return ec.marshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentTaintMark_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentTaintMark", field, false, false, errors.New("field of type AgentTaintSource does not have child fields"))
+}
+
+func (ec *executionContext) _AgentTaintMark_toolName(ctx context.Context, field graphql.CollectedField, obj *agent.TaintMark) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentTaintMark_toolName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ToolName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentTaintMark_toolName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentTaintMark", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentTaintMark_callId(ctx context.Context, field graphql.CollectedField, obj *agent.TaintMark) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentTaintMark_callId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CallID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentTaintMark_callId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentTaintMark", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentTaintMark_ref(ctx context.Context, field graphql.CollectedField, obj *agent.TaintMark) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentTaintMark_ref(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Ref, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *agent.RecordRef) graphql.Marshaler {
+			return ec.marshalOAgentTaintRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRecordRef(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentTaintMark_ref(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentTaintMark",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentTaintRef(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AgentTaintMark_at(ctx context.Context, field graphql.CollectedField, obj *agent.TaintMark) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentTaintMark_at(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.At, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentTaintMark_at(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentTaintMark", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AgentTaintRef_entityType(ctx context.Context, field graphql.CollectedField, obj *agent.RecordRef) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentTaintRef_entityType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EntityType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentTaintRef_entityType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentTaintRef", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentTaintRef_id(ctx context.Context, field graphql.CollectedField, obj *agent.RecordRef) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentTaintRef_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentTaintRef_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentTaintRef", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 // endregion **************************** field.gotpl *****************************
@@ -5259,7 +5711,7 @@ func (ec *executionContext) unmarshalInputApproveAgentMemorySuggestionInput(ctx 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"content", "kind", "version"}
+	fieldsInOrder := [...]string{"content", "kind", "scope", "version"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5280,6 +5732,13 @@ func (ec *executionContext) unmarshalInputApproveAgentMemorySuggestionInput(ctx 
 				return it, err
 			}
 			it.Kind = data
+		case "scope":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("scope"))
+			data, err := ec.unmarshalOAgentMemoryScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryScope(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Scope = data
 		case "version":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("version"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
@@ -6282,6 +6741,21 @@ func (ec *executionContext) _AgentMemory(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
+		case "scope":
+			out.Values[i] = ec._AgentMemory_scope(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tainted":
+			out.Values[i] = ec._AgentMemory_tainted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "taintRunId":
+			out.Values[i] = ec._AgentMemory_taintRunId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "sourceRunId":
 			out.Values[i] = ec._AgentMemory_sourceRunId(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
@@ -7008,6 +7482,59 @@ func (ec *executionContext) _AgentProposal(ctx context.Context, sel ast.Selectio
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "tainted":
+			out.Values[i] = ec._AgentProposal_tainted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "taint":
+			out.Values[i] = ec._AgentProposal_taint(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "egressClass":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AgentProposal_egressClass(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "heldBy":
+			out.Values[i] = ec._AgentProposal_heldBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "version":
 			out.Values[i] = ec._AgentProposal_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -7348,6 +7875,21 @@ func (ec *executionContext) _AgentRun(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "tainted":
+			out.Values[i] = ec._AgentRun_tainted(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "taint":
+			out.Values[i] = ec._AgentRun_taint(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "taintedAt":
+			out.Values[i] = ec._AgentRun_taintedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "version":
 			out.Values[i] = ec._AgentRun_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -7489,6 +8031,145 @@ func (ec *executionContext) _AgentRunEdge(ctx context.Context, sel ast.Selection
 			}
 		case "cursor":
 			out.Values[i] = ec._AgentRunEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var agentRunTaintImplementors = []string{"AgentRunTaint"}
+
+func (ec *executionContext) _AgentRunTaint(ctx context.Context, sel ast.SelectionSet, obj *agent.RunTaint) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, agentRunTaintImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AgentRunTaint")
+		case "marks":
+			out.Values[i] = ec._AgentRunTaint_marks(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var agentTaintMarkImplementors = []string{"AgentTaintMark"}
+
+func (ec *executionContext) _AgentTaintMark(ctx context.Context, sel ast.SelectionSet, obj *agent.TaintMark) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, agentTaintMarkImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AgentTaintMark")
+		case "source":
+			out.Values[i] = ec._AgentTaintMark_source(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "toolName":
+			out.Values[i] = ec._AgentTaintMark_toolName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "callId":
+			out.Values[i] = ec._AgentTaintMark_callId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ref":
+			out.Values[i] = ec._AgentTaintMark_ref(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "at":
+			out.Values[i] = ec._AgentTaintMark_at(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var agentTaintRefImplementors = []string{"AgentTaintRef"}
+
+func (ec *executionContext) _AgentTaintRef(ctx context.Context, sel ast.SelectionSet, obj *agent.RecordRef) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, agentTaintRefImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AgentTaintRef")
+		case "entityType":
+			out.Values[i] = ec._AgentTaintRef_entityType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "id":
+			out.Values[i] = ec._AgentTaintRef_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7785,6 +8466,23 @@ func (ec *executionContext) unmarshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋt
 }
 
 func (ec *executionContext) marshalNAgentMemoryKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryKind(ctx context.Context, sel ast.SelectionSet, v agent.MemoryKind) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryScope(ctx context.Context, v any) (agent.MemoryScope, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := agent.MemoryScope(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAgentMemoryScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryScope(ctx context.Context, sel ast.SelectionSet, v agent.MemoryScope) graphql.Marshaler {
 	_ = sel
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -8139,6 +8837,26 @@ func (ec *executionContext) marshalNAgentSubjectType2githubᚗcomᚋemoss08ᚋtr
 	return res
 }
 
+func (ec *executionContext) marshalNAgentTaintMark2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintMark(ctx context.Context, sel ast.SelectionSet, v agent.TaintMark) graphql.Marshaler {
+	return ec._AgentTaintMark(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAgentTaintMark2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintMarkᚄ(ctx context.Context, sel ast.SelectionSet, v []agent.TaintMark) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAgentTaintMark2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintMark(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNAgentType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐType(ctx context.Context, v any) (agent.Type, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := agent.Type(tmp)
@@ -8234,6 +8952,25 @@ func (ec *executionContext) marshalOAgentMemoryKind2ᚖgithubᚗcomᚋemoss08ᚋ
 	return res
 }
 
+func (ec *executionContext) unmarshalOAgentMemoryScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryScope(ctx context.Context, v any) (*agent.MemoryScope, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := agent.MemoryScope(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAgentMemoryScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemoryScope(ctx context.Context, sel ast.SelectionSet, v *agent.MemoryScope) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
 func (ec *executionContext) unmarshalOAgentMemorySubjectType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐMemorySubjectType(ctx context.Context, v any) (agent.MemorySubjectType, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := agent.MemorySubjectType(tmp)
@@ -8287,6 +9024,13 @@ func (ec *executionContext) marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenova
 	return ec._AgentRun(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOAgentRunTaint2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRunTaint(ctx context.Context, sel ast.SelectionSet, v *agent.RunTaint) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AgentRunTaint(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOAgentRunTrigger2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRunTrigger(ctx context.Context, v any) (*agent.RunTrigger, error) {
 	if v == nil {
 		return nil, nil
@@ -8323,6 +9067,13 @@ func (ec *executionContext) marshalOAgentSubjectType2ᚖgithubᚗcomᚋemoss08�
 	_ = ctx
 	res := graphql.MarshalString(string(*v))
 	return res
+}
+
+func (ec *executionContext) marshalOAgentTaintRef2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRecordRef(ctx context.Context, sel ast.SelectionSet, v *agent.RecordRef) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AgentTaintRef(ctx, sel, v)
 }
 
 // endregion ***************************** type.gotpl *****************************

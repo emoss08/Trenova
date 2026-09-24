@@ -760,6 +760,10 @@ var AgentProposalColumns = struct {
 	TargetResource  Column // "target_resource" → qualified: "ap.target_resource"
 	TargetID        Column // "target_id" → qualified: "ap.target_id"
 	TargetVersion   Column // "target_version" → qualified: "ap.target_version"
+	Tainted         Column // "tainted" → qualified: "ap.tainted"
+	Taint           Column // "taint" → qualified: "ap.taint"
+	EgressClass     Column // "egress_class" → qualified: "ap.egress_class"
+	HeldBy          Column // "held_by" → qualified: "ap.held_by"
 	Version         Column // "version" → qualified: "ap.version"
 	CreatedAt       Column // "created_at" → qualified: "ap.created_at"
 	UpdatedAt       Column // "updated_at" → qualified: "ap.updated_at"
@@ -788,6 +792,10 @@ var AgentProposalColumns = struct {
 	TargetResource:  NewColumn("target_resource", "ap"),
 	TargetID:        NewColumn("target_id", "ap"),
 	TargetVersion:   NewColumn("target_version", "ap"),
+	Tainted:         NewColumn("tainted", "ap"),
+	Taint:           NewColumn("taint", "ap"),
+	EgressClass:     NewColumn("egress_class", "ap"),
+	HeldBy:          NewColumn("held_by", "ap"),
 	Version:         NewColumn("version", "ap"),
 	CreatedAt:       NewColumn("created_at", "ap"),
 	UpdatedAt:       NewColumn("updated_at", "ap"),
@@ -822,6 +830,10 @@ var AgentProposalFieldMap = map[string]string{
 	"targetResource":  "target_resource",
 	"targetId":        "target_id",
 	"targetVersion":   "target_version",
+	"tainted":         "tainted",
+	"taint":           "taint",
+	"egressClass":     "egress_class",
+	"heldBy":          "held_by",
 	"version":         "version",
 	"createdAt":       "created_at",
 	"updatedAt":       "updated_at",
@@ -854,6 +866,10 @@ var AgentProposalInsertableColumns = []string{
 	"target_resource",
 	"target_id",
 	"target_version",
+	"tainted",
+	"taint",
+	"egress_class",
+	"held_by",
 	"version",
 	"created_at",
 	"updated_at",
@@ -948,6 +964,10 @@ var AgentProposalFilter = struct {
 	TargetResource  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetResource" → DB: "target_resource"
 	TargetID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetId" → DB: "target_id"
 	TargetVersion   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetVersion" → DB: "target_version"
+	Tainted         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tainted" → DB: "tainted"
+	Taint           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
+	EgressClass     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "egressClass" → DB: "egress_class"
+	HeldBy          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "heldBy" → DB: "held_by"
 	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1024,6 +1044,18 @@ var AgentProposalFilter = struct {
 	TargetVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("targetVersion", op, value)
 	},
+	Tainted: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tainted", op, value)
+	},
+	Taint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("taint", op, value)
+	},
+	EgressClass: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("egressClass", op, value)
+	},
+	HeldBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("heldBy", op, value)
+	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
 	},
@@ -1078,6 +1110,9 @@ var AgentRunColumns = struct {
 	StartedAt         Column // "started_at" → qualified: "ar.started_at"
 	CompletedAt       Column // "completed_at" → qualified: "ar.completed_at"
 	ErrorMessage      Column // "error_message" → qualified: "ar.error_message"
+	Tainted           Column // "tainted" → qualified: "ar.tainted"
+	Taint             Column // "taint" → qualified: "ar.taint"
+	TaintedAt         Column // "tainted_at" → qualified: "ar.tainted_at"
 	Version           Column // "version" → qualified: "ar.version"
 	CreatedAt         Column // "created_at" → qualified: "ar.created_at"
 	UpdatedAt         Column // "updated_at" → qualified: "ar.updated_at"
@@ -1099,6 +1134,9 @@ var AgentRunColumns = struct {
 	StartedAt:         NewColumn("started_at", "ar"),
 	CompletedAt:       NewColumn("completed_at", "ar"),
 	ErrorMessage:      NewColumn("error_message", "ar"),
+	Tainted:           NewColumn("tainted", "ar"),
+	Taint:             NewColumn("taint", "ar"),
+	TaintedAt:         NewColumn("tainted_at", "ar"),
 	Version:           NewColumn("version", "ar"),
 	CreatedAt:         NewColumn("created_at", "ar"),
 	UpdatedAt:         NewColumn("updated_at", "ar"),
@@ -1126,6 +1164,9 @@ var AgentRunFieldMap = map[string]string{
 	"startedAt":         "started_at",
 	"completedAt":       "completed_at",
 	"errorMessage":      "error_message",
+	"tainted":           "tainted",
+	"taint":             "taint",
+	"taintedAt":         "tainted_at",
 	"version":           "version",
 	"createdAt":         "created_at",
 	"updatedAt":         "updated_at",
@@ -1151,6 +1192,9 @@ var AgentRunInsertableColumns = []string{
 	"started_at",
 	"completed_at",
 	"error_message",
+	"tainted",
+	"taint",
+	"tainted_at",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1236,6 +1280,9 @@ var AgentRunFilter = struct {
 	StartedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
 	CompletedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "completedAt" → DB: "completed_at"
 	ErrorMessage      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
+	Tainted           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tainted" → DB: "tainted"
+	Taint             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
+	TaintedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taintedAt" → DB: "tainted_at"
 	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1290,6 +1337,15 @@ var AgentRunFilter = struct {
 	},
 	ErrorMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("errorMessage", op, value)
+	},
+	Tainted: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tainted", op, value)
+	},
+	Taint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("taint", op, value)
+	},
+	TaintedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("taintedAt", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -2165,6 +2221,9 @@ var MemoryColumns = struct {
 	ToolName          Column // "tool_name" → qualified: "amem.tool_name"
 	Content           Column // "content" → qualified: "amem.content"
 	AgentDefinitionID Column // "agent_definition_id" → qualified: "amem.agent_definition_id"
+	Scope             Column // "scope" → qualified: "amem.scope"
+	Tainted           Column // "tainted" → qualified: "amem.tainted"
+	TaintRunID        Column // "taint_run_id" → qualified: "amem.taint_run_id"
 	SourceRunID       Column // "source_run_id" → qualified: "amem.source_run_id"
 	SourceProposalID  Column // "source_proposal_id" → qualified: "amem.source_proposal_id"
 	CreatedByUserID   Column // "created_by_user_id" → qualified: "amem.created_by_user_id"
@@ -2190,6 +2249,9 @@ var MemoryColumns = struct {
 	ToolName:          NewColumn("tool_name", "amem"),
 	Content:           NewColumn("content", "amem"),
 	AgentDefinitionID: NewColumn("agent_definition_id", "amem"),
+	Scope:             NewColumn("scope", "amem"),
+	Tainted:           NewColumn("tainted", "amem"),
+	TaintRunID:        NewColumn("taint_run_id", "amem"),
 	SourceRunID:       NewColumn("source_run_id", "amem"),
 	SourceProposalID:  NewColumn("source_proposal_id", "amem"),
 	CreatedByUserID:   NewColumn("created_by_user_id", "amem"),
@@ -2221,6 +2283,9 @@ var MemoryFieldMap = map[string]string{
 	"toolName":          "tool_name",
 	"content":           "content",
 	"agentDefinitionId": "agent_definition_id",
+	"scope":             "scope",
+	"tainted":           "tainted",
+	"taintRunId":        "taint_run_id",
 	"sourceRunId":       "source_run_id",
 	"sourceProposalId":  "source_proposal_id",
 	"createdByUserId":   "created_by_user_id",
@@ -2250,6 +2315,9 @@ var MemoryInsertableColumns = []string{
 	"tool_name",
 	"content",
 	"agent_definition_id",
+	"scope",
+	"tainted",
+	"taint_run_id",
 	"source_run_id",
 	"source_proposal_id",
 	"created_by_user_id",
@@ -2339,6 +2407,9 @@ var MemoryFilter = struct {
 	ToolName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
 	Content           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "content" → DB: "content"
 	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	Scope             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "scope" → DB: "scope"
+	Tainted           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tainted" → DB: "tainted"
+	TaintRunID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taintRunId" → DB: "taint_run_id"
 	SourceRunID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceRunId" → DB: "source_run_id"
 	SourceProposalID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceProposalId" → DB: "source_proposal_id"
 	CreatedByUserID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdByUserId" → DB: "created_by_user_id"
@@ -2387,6 +2458,15 @@ var MemoryFilter = struct {
 	},
 	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("agentDefinitionId", op, value)
+	},
+	Scope: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("scope", op, value)
+	},
+	Tainted: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("tainted", op, value)
+	},
+	TaintRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("taintRunId", op, value)
 	},
 	SourceRunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("sourceRunId", op, value)

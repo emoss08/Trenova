@@ -1198,6 +1198,10 @@ type AgentMemory {
   organizationId: ID!
   retiredAt: Timestamp
   retiredByUserId: ID
+  """
+  Organization reaches every agent; Agent reaches only agentDefinitionId.
+  """
+  scope: AgentMemoryScope!
   source: AgentMemorySource!
   sourceProposalId: ID
   sourceRunId: ID
@@ -1206,6 +1210,12 @@ type AgentMemory {
   """The subject's name at the time it was recorded."""
   subjectLabel: String!
   subjectType: AgentMemorySubjectType
+  """The run whose outside content the memory carries."""
+  taintRunId: ID
+  """
+  Written by a run that had read content from outside the organization; an agent that reads it back is tainted by it.
+  """
+  tainted: Boolean!
   """
   Set when the memory is about one tool, such as a correction to how it was proposed.
   """
@@ -1258,6 +1268,14 @@ enum AgentMemoryKind {
   Correction
   Fact
   Instruction
+}
+
+"""
+Who reads a memory: every agent in the organization, or only the agent it was kept for.
+"""
+enum AgentMemoryScope {
+  Agent
+  Organization
 }
 
 enum AgentMemorySource {
@@ -1350,7 +1368,15 @@ type AgentProposal {
   businessUnitId: ID!
   confidence: Float!
   createdAt: Timestamp!
+  """
+  Where the write reaches, as it was proposed and then as it ran. Null for a proposal recorded before it was kept.
+  """
+  egressClass: AgentEgressClass
   evidence: [AgentEvidenceRef!]!
+  """
+  What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier or personal_exemption.
+  """
+  heldBy: [String!]!
   id: ID!
   """
   The values the approver changed before approving, keyed by parameter. Absent when approved as proposed.
@@ -1378,6 +1404,12 @@ type AgentProposal {
   """What the write would have changed: a summary and field changes."""
   simulation: JSON
   status: AgentProposalStatus!
+  """What outside content the run had read."""
+  taint: AgentRunTaint
+  """
+  The run had read content written outside the organization when this was proposed; a write that leaves the organization then runs only on a person's approval.
+  """
+  tainted: Boolean!
   toolName: String!
   """
   Tool parameters are tool-specific and validated per tool, so they remain intentionally open-ended.
@@ -1524,6 +1556,14 @@ type AgentRun {
   subjectId: ID!
   subjectType: AgentSubjectType!
   summary: String!
+  """What outside content the run read, and where from."""
+  taint: AgentRunTaint
+  """
+  The run read content written outside the organization, so no write of it that leaves the organization ran without a person's approval.
+  """
+  tainted: Boolean!
+  """When the run first read outside content."""
+  taintedAt: Timestamp
   trigger: AgentRunTrigger!
   updatedAt: Timestamp!
   version: Int!
@@ -1605,6 +1645,13 @@ enum AgentRunStatus {
   GatheringContext
   Pending
   ShadowCompleted
+}
+
+"""
+The outside content a run read, one mark per place it came from, at most sixteen.
+"""
+type AgentRunTaint {
+  marks: [AgentTaintMark!]!
 }
 
 enum AgentRunTrigger {
@@ -1723,6 +1770,26 @@ enum AgentSubjectType {
   Worker
 }
 
+"""
+One place outside content reached a run from: its source, the tool call that read it, and the record when known.
+"""
+type AgentTaintMark {
+  at: Timestamp!
+  callId: String!
+  ref: AgentTaintRef
+  source: AgentTaintSource!
+  """
+  Empty when the run opened with it: its subject, an attachment, a memory, or its conversation.
+  """
+  toolName: String!
+}
+
+"""A record outside content was read from."""
+type AgentTaintRef {
+  entityType: String!
+  id: String!
+}
+
 """Where outside text a tool reads comes from."""
 enum AgentTaintSource {
   Attachment
@@ -1733,6 +1800,8 @@ enum AgentTaintSource {
   Memory
   RunRecord
   Weather
+  """A web page or search result an extension returned."""
+  Web
 }
 
 enum AgentTemplate {
@@ -2027,6 +2096,10 @@ input ApproveAgentMemorySuggestionInput {
   content: String!
   """Defaults to the suggestion's kind."""
   kind: AgentMemoryKind
+  """
+  Defaults to Agent: a suggestion drawn from one agent's ratings is kept for that agent. Organization reads it into every agent's prompt.
+  """
+  scope: AgentMemoryScope
   version: Int!
 }
 

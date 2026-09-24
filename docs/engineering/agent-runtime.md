@@ -128,6 +128,78 @@ Outcomes over 64 KiB are dropped rather than truncated, because half a fenced
 JSON document handed back to a model is worse than none. The import assistant's
 tools that create a shipment or a location are never retried at all.
 
+## Taint: runs that have read outside content
+
+A run that was started by, or has read, content written outside the
+organization is **tainted**. A tainted run never runs a write whose egress class
+leaves the organization (`customer_visible`, `driver_visible`,
+`external_recipient`, `money`) on its own: `agenttoolpolicy.Decide` lowers it to
+`ActWithApproval` and adds `tainted` to what held it. Money is the class that
+notices, because the other three already stop at `ActWithApproval`.
+
+`agent.RunTaint` is the run's marks, one per place the content came from
+(source, tool, call id, record), deduplicated and bounded to sixteen. A turn
+opens tainted when:
+
+- its subject is an inbound message, a document, an EDI inbound file or a bank
+  receipt, which is every run woken by `inbound_message.classified`,
+  `document.extracted`, `edi.file_quarantined` or `bank_receipt.exception`
+  (`agent.SubjectType.TaintSource`);
+- the person attached a file to the question;
+- a memory read into its prompt was written by a tainted run;
+- its conversation is already tainted (`assistant_threads.taint`), which a
+  decision follow-up inherits because it is a turn on the same conversation;
+- the agent that handed it a task was (`DelegateCall.Taint`).
+
+Master-data names and internal notes are not sources.
+
+Web content is held more strictly: once a turn has read the web through an extension, every
+later write is capped at `Propose`, whatever its class
+([agent-extensions.md](agent-extensions.md)). That rule rides its own flag
+(`TurnState.ExternalContent`) beside the taint, and the web read also adds a `web` mark to the
+taint, so both record it.
+
+During the turn, a tool whose policy reads outside content always
+(`ReadsExternal: always`) adds a mark when it succeeds; a `marked` tool
+(`recall_memory`, `get_agent_run`) adds one only for a returned record that
+carries taint (`agent.TaintCarrier`). The marks travel on the tool's outcome and
+in the step ledger, so a replayed step taints the run as the original did. The
+loop folds them into the turn and emits `run_tainted` once for each new mark,
+which reaches the stream and the trajectory. A delegate's taint is folded back
+into the turn that asked when it ends, because its reply enters that turn's
+context.
+
+What is kept:
+
+| Where | Columns |
+|---|---|
+| `agent_runs` | `tainted`, `taint`, `tainted_at` |
+| `agent_proposals` | `tainted` (the run had read outside content when the write was decided), `taint`, `egress_class`, `held_by` |
+| `assistant_threads` | `taint`, `tainted_at` |
+| `agent_memories` | `tainted`, `taint_run_id`, for a memory `remember` wrote from a tainted run (`CarriesTaint`) |
+
+The proposal executor refuses a tainted proposal whose class leaves the
+organization unless a person decides it (`ErrTaintedNeedsPerson`), checking the
+class as the write would run and as it was proposed, and records the class it
+ran with. Trust promotion is unaffected: the ceiling is applied in `Decide` on
+every call, whatever tier was earned.
+
+### Taint is data
+
+No `GetVersion` gate. Taint enters workflow code only from activity results
+(`OpenTurn`'s state, the delegate's opening, each tool's outcome) and leaves only
+through activity inputs (`DispatchCall.Taint`, `DelegateCall.Taint`, the finish
+activity's `RunResult`). Whether a write is proposed is decided in the dispatch
+activity. Workflow code merges marks into `RunResult.Taint` and publishes
+`run_tainted` to the Workflow Stream, which records no command; it never chooses
+a command from taint. A recorded history from before this release carries no
+taint, so its turn replays with a nil taint, adds no mark and emits nothing, and
+issues the same commands in the same order.
+
+A nil taint is a turn opened before the release. It counts as tainted for every
+class that leaves the organization, which is the safe reading, and only money
+tools notice. A delegate opened for such a turn inherits the nil.
+
 ## Chat turns
 
 Every assistant question is answered by `AssistantTurnWorkflow`, ID
@@ -412,6 +484,8 @@ Holding writes for a person after a turn reads outside content (`TurnState.Exter
 `DispatchCall.AfterExternalContent`) took no gate either: it is optional data on the turn and the
 activity input, decided from the tool's name, and adds no command. See
 [agent-extensions.md](agent-extensions.md).
+
+Taint took no gate either: see [Taint is data](#taint-is-data).
 
 Agent delegation (`delegate_task`) took no gate: whether a turn holds the tool
 is decided when it opens, in an activity, and kept in `TurnState.Held`, so an

@@ -63,6 +63,9 @@ type Thread struct {
 	// readable.
 	CanContinue bool `json:"canContinue" bun:"-"`
 
+	Taint     *agent.RunTaint `json:"taint,omitempty"     bun:"taint,type:JSONB,nullzero"`
+	TaintedAt *int64          `json:"taintedAt,omitempty" bun:"tainted_at,type:BIGINT,nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -145,6 +148,30 @@ func (t *Thread) Validate(multiErr *errortypes.MultiError) {
 	if t.SubjectType != "" && t.SubjectID.IsNil() {
 		multiErr.Add("subjectId", errortypes.ErrRequired, "A subject type needs an id")
 	}
+}
+
+func (t *Thread) Tainted() bool {
+	return t.Taint.Tainted()
+}
+
+func (t *Thread) AbsorbTaint(taint *agent.RunTaint, now int64) bool {
+	if !taint.Tainted() {
+		return false
+	}
+
+	merged := t.Taint.Clone()
+	if merged == nil {
+		merged = &agent.RunTaint{}
+	}
+	if len(merged.Absorb(taint.Marks)) == 0 {
+		return false
+	}
+	t.Taint = merged
+	if t.TaintedAt == nil {
+		t.TaintedAt = &now
+	}
+
+	return true
 }
 
 // HasSubject reports whether the conversation is about one record.

@@ -503,7 +503,7 @@ func buildMemorySection(memories []*agent.Memory) string {
 		builder.WriteString("\n- [")
 		builder.WriteString(string(memory.Kind))
 		builder.WriteString("] ")
-		if scope := memory.Scope(); scope != "" {
+		if scope := memory.About(); scope != "" {
 			builder.WriteString(stringutils.NeutralizeCloseTag(scope, memoryCloseTag))
 			builder.WriteString(": ")
 		}

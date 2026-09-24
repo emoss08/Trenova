@@ -563,8 +563,10 @@ type ApproveAgentMemorySuggestionInput struct {
 	// The memory as it should read once approved.
 	Content string `json:"content"`
 	// Defaults to the suggestion's kind.
-	Kind    *agent.MemoryKind `json:"kind,omitempty"`
-	Version int               `json:"version"`
+	Kind *agent.MemoryKind `json:"kind,omitempty"`
+	// Defaults to Agent: a suggestion drawn from one agent's ratings is kept for that agent. Organization reads it into every agent's prompt.
+	Scope   *agent.MemoryScope `json:"scope,omitempty"`
+	Version int                `json:"version"`
 }
 
 type ArchiveWorkerCredentialInput struct {

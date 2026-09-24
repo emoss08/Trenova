@@ -903,6 +903,7 @@ type ComplexityRoot struct {
 		OrganizationID    func(childComplexity int) int
 		RetiredAt         func(childComplexity int) int
 		RetiredByUserID   func(childComplexity int) int
+		Scope             func(childComplexity int) int
 		Source            func(childComplexity int) int
 		SourceProposalID  func(childComplexity int) int
 		SourceRunID       func(childComplexity int) int
@@ -910,6 +911,8 @@ type ComplexityRoot struct {
 		SubjectID         func(childComplexity int) int
 		SubjectLabel      func(childComplexity int) int
 		SubjectType       func(childComplexity int) int
+		TaintRunID        func(childComplexity int) int
+		Tainted           func(childComplexity int) int
 		ToolName          func(childComplexity int) int
 		UpdatedAt         func(childComplexity int) int
 		UseCount          func(childComplexity int) int
@@ -976,7 +979,9 @@ type ComplexityRoot struct {
 		BusinessUnitID  func(childComplexity int) int
 		Confidence      func(childComplexity int) int
 		CreatedAt       func(childComplexity int) int
+		EgressClass     func(childComplexity int) int
 		Evidence        func(childComplexity int) int
+		HeldBy          func(childComplexity int) int
 		ID              func(childComplexity int) int
 		Modifications   func(childComplexity int) int
 		OrganizationID  func(childComplexity int) int
@@ -989,6 +994,8 @@ type ComplexityRoot struct {
 		SimulatedAt     func(childComplexity int) int
 		Simulation      func(childComplexity int) int
 		Status          func(childComplexity int) int
+		Taint           func(childComplexity int) int
+		Tainted         func(childComplexity int) int
 		ToolName        func(childComplexity int) int
 		ToolParams      func(childComplexity int) int
 		UpdatedAt       func(childComplexity int) int
@@ -1054,6 +1061,9 @@ type ComplexityRoot struct {
 		SubjectID         func(childComplexity int) int
 		SubjectType       func(childComplexity int) int
 		Summary           func(childComplexity int) int
+		Taint             func(childComplexity int) int
+		Tainted           func(childComplexity int) int
+		TaintedAt         func(childComplexity int) int
 		Trigger           func(childComplexity int) int
 		UpdatedAt         func(childComplexity int) int
 		Version           func(childComplexity int) int
@@ -1099,6 +1109,10 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	AgentRunTaint struct {
+		Marks func(childComplexity int) int
+	}
+
 	AgentSafety struct {
 		Agent              func(childComplexity int) int
 		AgentID            func(childComplexity int) int
@@ -1142,6 +1156,19 @@ type ComplexityRoot struct {
 	AgentStarter struct {
 		Label  func(childComplexity int) int
 		Prompt func(childComplexity int) int
+	}
+
+	AgentTaintMark struct {
+		At       func(childComplexity int) int
+		CallID   func(childComplexity int) int
+		Ref      func(childComplexity int) int
+		Source   func(childComplexity int) int
+		ToolName func(childComplexity int) int
+	}
+
+	AgentTaintRef struct {
+		EntityType func(childComplexity int) int
+		ID         func(childComplexity int) int
 	}
 
 	AgentToolAutonomy struct {
@@ -15265,6 +15292,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentMemory.RetiredByUserID(childComplexity), true
+	case "AgentMemory.scope":
+		if e.ComplexityRoot.AgentMemory.Scope == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.Scope(childComplexity), true
 	case "AgentMemory.source":
 		if e.ComplexityRoot.AgentMemory.Source == nil {
 			break
@@ -15307,6 +15340,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentMemory.SubjectType(childComplexity), true
+	case "AgentMemory.taintRunId":
+		if e.ComplexityRoot.AgentMemory.TaintRunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.TaintRunID(childComplexity), true
+	case "AgentMemory.tainted":
+		if e.ComplexityRoot.AgentMemory.Tainted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.Tainted(childComplexity), true
 	case "AgentMemory.toolName":
 		if e.ComplexityRoot.AgentMemory.ToolName == nil {
 			break
@@ -15584,12 +15629,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposal.CreatedAt(childComplexity), true
+	case "AgentProposal.egressClass":
+		if e.ComplexityRoot.AgentProposal.EgressClass == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.EgressClass(childComplexity), true
 	case "AgentProposal.evidence":
 		if e.ComplexityRoot.AgentProposal.Evidence == nil {
 			break
 		}
 
 		return e.ComplexityRoot.AgentProposal.Evidence(childComplexity), true
+	case "AgentProposal.heldBy":
+		if e.ComplexityRoot.AgentProposal.HeldBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.HeldBy(childComplexity), true
 	case "AgentProposal.id":
 		if e.ComplexityRoot.AgentProposal.ID == nil {
 			break
@@ -15662,6 +15719,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposal.Status(childComplexity), true
+	case "AgentProposal.taint":
+		if e.ComplexityRoot.AgentProposal.Taint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.Taint(childComplexity), true
+	case "AgentProposal.tainted":
+		if e.ComplexityRoot.AgentProposal.Tainted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.Tainted(childComplexity), true
 	case "AgentProposal.toolName":
 		if e.ComplexityRoot.AgentProposal.ToolName == nil {
 			break
@@ -15933,6 +16002,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentRun.Summary(childComplexity), true
+	case "AgentRun.taint":
+		if e.ComplexityRoot.AgentRun.Taint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRun.Taint(childComplexity), true
+	case "AgentRun.tainted":
+		if e.ComplexityRoot.AgentRun.Tainted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRun.Tainted(childComplexity), true
+	case "AgentRun.taintedAt":
+		if e.ComplexityRoot.AgentRun.TaintedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRun.TaintedAt(childComplexity), true
 	case "AgentRun.trigger":
 		if e.ComplexityRoot.AgentRun.Trigger == nil {
 			break
@@ -16106,6 +16193,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentRunEventEdge.Node(childComplexity), true
+
+	case "AgentRunTaint.marks":
+		if e.ComplexityRoot.AgentRunTaint.Marks == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRunTaint.Marks(childComplexity), true
 
 	case "AgentSafety.agent":
 		if e.ComplexityRoot.AgentSafety.Agent == nil {
@@ -16308,6 +16402,50 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentStarter.Prompt(childComplexity), true
+
+	case "AgentTaintMark.at":
+		if e.ComplexityRoot.AgentTaintMark.At == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentTaintMark.At(childComplexity), true
+	case "AgentTaintMark.callId":
+		if e.ComplexityRoot.AgentTaintMark.CallID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentTaintMark.CallID(childComplexity), true
+	case "AgentTaintMark.ref":
+		if e.ComplexityRoot.AgentTaintMark.Ref == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentTaintMark.Ref(childComplexity), true
+	case "AgentTaintMark.source":
+		if e.ComplexityRoot.AgentTaintMark.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentTaintMark.Source(childComplexity), true
+	case "AgentTaintMark.toolName":
+		if e.ComplexityRoot.AgentTaintMark.ToolName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentTaintMark.ToolName(childComplexity), true
+
+	case "AgentTaintRef.entityType":
+		if e.ComplexityRoot.AgentTaintRef.EntityType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentTaintRef.EntityType(childComplexity), true
+	case "AgentTaintRef.id":
+		if e.ComplexityRoot.AgentTaintRef.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentTaintRef.ID(childComplexity), true
 
 	case "AgentToolAutonomy.answer":
 		if e.ComplexityRoot.AgentToolAutonomy.Answer == nil {
@@ -73791,6 +73929,27 @@ type AgentEvidenceRef {
   note: String!
 }
 
+"A record outside content was read from."
+type AgentTaintRef {
+  entityType: String!
+  id: String!
+}
+
+"One place outside content reached a run from: its source, the tool call that read it, and the record when known."
+type AgentTaintMark {
+  source: AgentTaintSource!
+  "Empty when the run opened with it: its subject, an attachment, a memory, or its conversation."
+  toolName: String!
+  callId: String!
+  ref: AgentTaintRef
+  at: Timestamp!
+}
+
+"The outside content a run read, one mark per place it came from, at most sixteen."
+type AgentRunTaint {
+  marks: [AgentTaintMark!]!
+}
+
 type AgentRun {
   id: ID!
   organizationId: ID!
@@ -73810,6 +73969,12 @@ type AgentRun {
   startedAt: Timestamp
   completedAt: Timestamp
   errorMessage: String!
+  "The run read content written outside the organization, so no write of it that leaves the organization ran without a person's approval."
+  tainted: Boolean!
+  "What outside content the run read, and where from."
+  taint: AgentRunTaint
+  "When the run first read outside content."
+  taintedAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -73840,6 +74005,14 @@ type AgentProposal {
   parameterFields: [AgentProposalField!]!
   "The values the approver changed before approving, keyed by parameter. Absent when approved as proposed."
   modifications: JSON
+  "The run had read content written outside the organization when this was proposed; a write that leaves the organization then runs only on a person's approval."
+  tainted: Boolean!
+  "What outside content the run had read."
+  taint: AgentRunTaint
+  "Where the write reaches, as it was proposed and then as it ran. Null for a proposal recorded before it was kept."
+  egressClass: AgentEgressClass
+  "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier or personal_exemption."
+  heldBy: [String!]!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -74015,6 +74188,12 @@ type AgentMemoryEvidence {
   lastRatedAt: Timestamp!
 }
 
+"Who reads a memory: every agent in the organization, or only the agent it was kept for."
+enum AgentMemoryScope {
+  Organization
+  Agent
+}
+
 enum AgentMemorySubjectType {
   Customer
   Location
@@ -74043,6 +74222,12 @@ type AgentMemory {
   toolName: String!
   content: String!
   agentDefinitionId: ID
+  "Organization reaches every agent; Agent reaches only agentDefinitionId."
+  scope: AgentMemoryScope!
+  "Written by a run that had read content from outside the organization; an agent that reads it back is tainted by it."
+  tainted: Boolean!
+  "The run whose outside content the memory carries."
+  taintRunId: ID
   sourceRunId: ID
   sourceProposalId: ID
   createdByUserId: ID
@@ -74075,6 +74260,8 @@ input ApproveAgentMemorySuggestionInput {
   content: String!
   "Defaults to the suggestion's kind."
   kind: AgentMemoryKind
+  "Defaults to Agent: a suggestion drawn from one agent's ratings is kept for that agent. Organization reads it into every agent's prompt."
+  scope: AgentMemoryScope
   version: Int!
 }
 
@@ -74773,6 +74960,8 @@ enum AgentTaintSource {
   Attachment
   Memory
   RunRecord
+  "A web page or search result an extension returned."
+  Web
 }
 
 "What a tool on an agent does when nobody is watching."
@@ -96867,6 +97056,12 @@ func (ec *executionContext) childFields_AgentMemory(ctx context.Context, field g
 		return ec.fieldContext_AgentMemory_content(ctx, field)
 	case "agentDefinitionId":
 		return ec.fieldContext_AgentMemory_agentDefinitionId(ctx, field)
+	case "scope":
+		return ec.fieldContext_AgentMemory_scope(ctx, field)
+	case "tainted":
+		return ec.fieldContext_AgentMemory_tainted(ctx, field)
+	case "taintRunId":
+		return ec.fieldContext_AgentMemory_taintRunId(ctx, field)
 	case "sourceRunId":
 		return ec.fieldContext_AgentMemory_sourceRunId(ctx, field)
 	case "sourceProposalId":
@@ -97041,6 +97236,14 @@ func (ec *executionContext) childFields_AgentProposal(ctx context.Context, field
 		return ec.fieldContext_AgentProposal_parameterFields(ctx, field)
 	case "modifications":
 		return ec.fieldContext_AgentProposal_modifications(ctx, field)
+	case "tainted":
+		return ec.fieldContext_AgentProposal_tainted(ctx, field)
+	case "taint":
+		return ec.fieldContext_AgentProposal_taint(ctx, field)
+	case "egressClass":
+		return ec.fieldContext_AgentProposal_egressClass(ctx, field)
+	case "heldBy":
+		return ec.fieldContext_AgentProposal_heldBy(ctx, field)
 	case "version":
 		return ec.fieldContext_AgentProposal_version(ctx, field)
 	case "createdAt":
@@ -97171,6 +97374,12 @@ func (ec *executionContext) childFields_AgentRun(ctx context.Context, field grap
 		return ec.fieldContext_AgentRun_completedAt(ctx, field)
 	case "errorMessage":
 		return ec.fieldContext_AgentRun_errorMessage(ctx, field)
+	case "tainted":
+		return ec.fieldContext_AgentRun_tainted(ctx, field)
+	case "taint":
+		return ec.fieldContext_AgentRun_taint(ctx, field)
+	case "taintedAt":
+		return ec.fieldContext_AgentRun_taintedAt(ctx, field)
 	case "version":
 		return ec.fieldContext_AgentRun_version(ctx, field)
 	case "createdAt":
@@ -97261,6 +97470,14 @@ func (ec *executionContext) childFields_AgentRunEventEdge(ctx context.Context, f
 	return nil, fmt.Errorf("no field named %q was found under type AgentRunEventEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentRunTaint(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "marks":
+		return ec.fieldContext_AgentRunTaint_marks(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentRunTaint", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentSafety(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "agentId":
@@ -97349,6 +97566,32 @@ func (ec *executionContext) childFields_AgentStarter(ctx context.Context, field 
 		return ec.fieldContext_AgentStarter_prompt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentStarter", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentTaintMark(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "source":
+		return ec.fieldContext_AgentTaintMark_source(ctx, field)
+	case "toolName":
+		return ec.fieldContext_AgentTaintMark_toolName(ctx, field)
+	case "callId":
+		return ec.fieldContext_AgentTaintMark_callId(ctx, field)
+	case "ref":
+		return ec.fieldContext_AgentTaintMark_ref(ctx, field)
+	case "at":
+		return ec.fieldContext_AgentTaintMark_at(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentTaintMark", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentTaintRef(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "entityType":
+		return ec.fieldContext_AgentTaintRef_entityType(ctx, field)
+	case "id":
+		return ec.fieldContext_AgentTaintRef_id(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentTaintRef", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentToolAutonomy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

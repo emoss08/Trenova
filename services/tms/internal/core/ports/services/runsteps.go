@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -74,6 +75,9 @@ type RunStepOutcome struct {
 	// build its artifacts from, and without this the pane lost what the
 	// original call had shown.
 	Data map[string]any `json:"data,omitempty"`
+	// Taint is the outside content the call read, so a replayed step taints
+	// the run the way the original did.
+	Taint []agent.TaintMark `json:"taint,omitempty"`
 }
 
 // StepState is what a claim found.

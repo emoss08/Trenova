@@ -456,7 +456,7 @@ func TestDecide_AgentCeiling(t *testing.T) {
 /*
 A run that read outside text, or whose reading is unknown, cannot send or move
 money on its own. Internal and personal work is untouched. The dispatch path
-passes an empty taint until the runtime tracks it, so nothing changes today.
+passes the taint the turn had when it made the call.
 */
 func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 	t.Parallel()

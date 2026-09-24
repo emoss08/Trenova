@@ -45,7 +45,10 @@ type RecordAgentProposalExecutionRequest struct {
 	// ExecutionResult is what the run made, when the tool reported it. It
 	// is written with the status, so a failure clears an earlier result.
 	ExecutionResult *agent.ToolExecutionResult `json:"executionResult"`
-	TenantInfo      pagination.TenantInfo      `json:"-"`
+	// EgressClass is where the write reached as it ran, with any change the
+	// approver made. Empty leaves the proposal's as it was.
+	EgressClass agent.EgressClass     `json:"egressClass"`
+	TenantInfo  pagination.TenantInfo `json:"-"`
 }
 
 // RecordAgentProposalSimulationRequest stores what a write would have

@@ -59,10 +59,13 @@ the ceiling or the private-write rule would allow, and the model is told why.
   hands its own back (`DelegateRun.ExternalContent`).
 - It adds only optional data and no command, so it took no `GetVersion` gate.
 - The web tools declare `ReadsExternal: always` with the `web` taint source in their
-  `ToolPolicy`. While a turn carries the flag, dispatch hands `agenttoolpolicy.Decide` a run
-  taint with a `web` mark, so the decision records `tainted` for anything that leaves the
+  `ToolPolicy`, so a successful call also adds a `web` mark to the run's taint (see
+  [agent-runtime.md](agent-runtime.md#taint-runs-that-have-read-outside-content)). While a turn
+  carries the flag, dispatch hands `agenttoolpolicy.Decide` the turn's taint with a `web` mark
+  added (`decisionTaint`), so the decision records `tainted` for anything that leaves the
   organization, and then caps what is left at `Propose`. The cap is deliberately limited to web
-  content: tools that read inbound mail or documents keep the policy's own, narrower rule.
+  content: tools that read inbound mail or documents keep the policy's own, narrower rule, which
+  holds only what leaves the organization.
 
 ## What leaves Trenova
 

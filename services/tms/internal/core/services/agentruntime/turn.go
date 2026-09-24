@@ -5,6 +5,7 @@ import (
 	"maps"
 	"slices"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -43,6 +44,9 @@ type Turn struct {
 	// opened, and delegations how many tasks it has handed out.
 	delegates   []agentdefinition.RuntimeDelegate
 	delegations int
+	// opened are the marks the turn's own subject, attachments and memories
+	// added when it opened, announced once the loop starts.
+	opened []agent.TaintMark
 	// external says the turn has read content from outside the
 	// organization. From then on every write it asks for waits for a person.
 	external bool
@@ -94,6 +98,9 @@ type DispatchCall struct {
 	// Ordinal numbers this exact call within the run, so the step key of a
 	// legitimately repeated call differs from the first one's.
 	Ordinal int `json:"ordinal"`
+	// Taint is the outside content the turn had read when it made the call.
+	// Nil is a turn opened before taint was kept.
+	Taint *agent.RunTaint `json:"taint,omitempty"`
 	// AfterExternalContent says the turn has read content from outside the
 	// organization, so a write is proposed rather than run.
 	AfterExternalContent bool `json:"afterExternalContent,omitempty"`
@@ -110,6 +117,8 @@ type ToolOutcome struct {
 	Summary   string `json:"summary,omitempty"`
 	// DelegateReport is the bounded account of a delegate_task call.
 	DelegateReport *conversation.DelegateReport `json:"delegateReport,omitempty"`
+	// Taint is the outside content the call read.
+	Taint []agent.TaintMark `json:"taint,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -124,6 +133,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		Publishes:      o.publishes,
 		Summary:        o.summary,
 		DelegateReport: o.delegateReport,
+		Taint:          o.taint,
 		Data:           o.data,
 	}
 }
@@ -136,6 +146,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		publishes:      o.Publishes,
 		summary:        o.Summary,
 		delegateReport: o.DelegateReport,
+		taint:          o.Taint,
 		data:           o.Data,
 	}
 }
@@ -170,6 +181,9 @@ type TurnState struct {
 	// how many it has handed out.
 	Delegates   []agentdefinition.RuntimeDelegate `json:"delegates,omitempty"`
 	Delegations int                               `json:"delegations,omitempty"`
+	// TaintOpened are the marks the turn's opening added, still to be
+	// announced. The turn's whole taint is Result.Taint.
+	TaintOpened []agent.TaintMark `json:"taintOpened,omitempty"`
 	// ExternalContent says the turn has read content from outside the
 	// organization.
 	ExternalContent bool `json:"externalContent,omitempty"`
@@ -209,6 +223,7 @@ func (t *Turn) State() TurnState {
 		Delegates:       slices.Clone(t.delegates),
 		Delegations:     t.delegations,
 		ExternalContent: t.external,
+		TaintOpened:     slices.Clone(t.opened),
 	}
 }
 
@@ -268,6 +283,7 @@ func (s *Service) RestoreTurn(req *serviceports.RunRequest, state TurnState) *Tu
 		result:      &result,
 		delegates:   state.Delegates,
 		delegations: state.Delegations,
+		opened:      state.TaintOpened,
 		external:    state.ExternalContent,
 	}
 }
@@ -373,6 +389,8 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		Role:    serviceports.RoleUser,
 		Content: input,
 	})
+	now := timeutils.NowUnix()
+	taint, opened := openTaint(req, now)
 
 	return &Turn{
 		s:         s,
@@ -390,10 +408,12 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 			Messages: []conversation.Message{{
 				Role:      conversation.RoleUser,
 				Content:   req.Input,
-				CreatedAt: timeutils.NowUnix(),
+				CreatedAt: now,
 			}},
+			Taint: taint,
 		},
 		delegates: delegates,
+		opened:    opened,
 	}
 }
 
@@ -588,6 +608,7 @@ func (s *Service) DispatchStep(
 		completionText: call.CompletionText,
 		proposedSoFar:  call.ProposedSoFar,
 		ordinal:        call.Ordinal,
+		taint:          call.Taint,
 		afterExternal:  call.AfterExternalContent,
 	})
 	outcome.summary = summarizeOutcome(call.Call, outcome)

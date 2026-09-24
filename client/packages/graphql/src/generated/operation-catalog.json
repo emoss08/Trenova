@@ -844,7 +844,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/proposals.graphql",
-      "hash": "sha256:793102a0ddbd91b81753756997af38048a1114d1af51dc52740d1b0e4c2e1823",
+      "hash": "sha256:368b228c6509f703237086c611f9ce712f4aead026d170e61fa1bb14b20aed5b",
       "rootFields": [
         "agentProposal"
       ],
@@ -861,14 +861,14 @@
         "AgentProposalTableRowFields"
       ],
       "usages": [],
-      "sdl": "query AgentProposalDetail($id: ID!) {\n  agentProposal(id: $id) {\n    ...AgentProposalDetailFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AgentProposalDetail($id: ID!) {\n  agentProposal(id: $id) {\n    ...AgentProposalDetailFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentProposalTable",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/proposals.graphql",
-      "hash": "sha256:39a399071899c579bd7f97bcf3212973f13a47c61c5722e50ba358b6bf63061d",
+      "hash": "sha256:d40973ae042db835fb380334d8fa552bdfb5041bcf88854f0a16b24dc2e0b3d5",
       "rootFields": [
         "agentProposals"
       ],
@@ -889,7 +889,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentProposalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...AgentProposalTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentProposalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...AgentProposalTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentRunCount",
@@ -19124,7 +19124,7 @@
         "AgentProposalDetail"
       ],
       "usages": [],
-      "sdl": "fragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentProposalTableRowFields",
@@ -19137,7 +19137,7 @@
         "AgentProposalTable"
       ],
       "usages": [],
-      "sdl": "fragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentRunTableRowFields",
@@ -22701,12 +22701,17 @@
           "defaultValue": null
         },
         {
+          "name": "scope",
+          "type": "AgentMemoryScope",
+          "defaultValue": null
+        },
+        {
           "name": "version",
           "type": "Int!",
           "defaultValue": null
         }
       ],
-      "sdl": "input ApproveAgentMemorySuggestionInput {\n  \"\"\"The memory as it should read once approved.\"\"\"\n  content: String!\n  \"\"\"Defaults to the suggestion's kind.\"\"\"\n  kind: AgentMemoryKind\n  version: Int!\n}"
+      "sdl": "input ApproveAgentMemorySuggestionInput {\n  \"\"\"The memory as it should read once approved.\"\"\"\n  content: String!\n  \"\"\"Defaults to the suggestion's kind.\"\"\"\n  kind: AgentMemoryKind\n  \"\"\"\n  Defaults to Agent: a suggestion drawn from one agent's ratings is kept for that agent. Organization reads it into every agent's prompt.\n  \"\"\"\n  scope: AgentMemoryScope\n  version: Int!\n}"
     },
     "ArchiveWorkerCredentialInput": {
       "kind": "input",
@@ -33643,6 +33648,14 @@
         }
       ],
       "sdl": "input CustomerPaymentApplicationInput {\n  appliedAmountMinor: Int!\n  invoiceId: ID!\n  shortPayAmountMinor: Int\n}"
+    },
+    "AgentMemoryScope": {
+      "kind": "enum",
+      "values": [
+        "Agent",
+        "Organization"
+      ],
+      "sdl": "\"\"\"\nWho reads a memory: every agent in the organization, or only the agent it was kept for.\n\"\"\"\nenum AgentMemoryScope {\n  Agent\n  Organization\n}"
     },
     "PayRateOverrideInput": {
       "kind": "input",

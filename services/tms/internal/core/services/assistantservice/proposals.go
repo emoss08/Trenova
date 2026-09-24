@@ -55,6 +55,8 @@ type persistProposalsParams struct {
 	// Artifacts, when set, views each outbound message as a draft and the
 	// plan as a checklist beside the conversation.
 	Artifacts *artifactRecorder
+	// Taint is the outside content the turn that proposed read.
+	Taint *agent.RunTaint
 }
 
 // persistProposals records the turn's proposed writes so they can be approved.
@@ -92,6 +94,7 @@ func (s *Service) persistProposals(
 			InputContextHash: hashChatContext(params.Definition, params.Input),
 		},
 		Actions:          params.Actions,
+		Taint:            params.Taint,
 		SourceMessageIDs: sourceMessageIndex(params.Saved),
 		Evidence: func(_ services.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef {
 			return chatEvidence(params.Thread, sourceMessageID)

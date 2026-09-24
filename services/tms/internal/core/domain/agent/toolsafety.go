@@ -204,3 +204,94 @@ func (t *RunTaint) Merge(other *RunTaint) {
 		t.Add(mark)
 	}
 }
+
+func (t *RunTaint) Clone() *RunTaint {
+	if t == nil {
+		return nil
+	}
+
+	return &RunTaint{Marks: slices.Clone(t.Marks)}
+}
+
+func (t *RunTaint) Absorb(marks []TaintMark) []TaintMark {
+	if t == nil || len(marks) == 0 {
+		return nil
+	}
+
+	added := make([]TaintMark, 0, len(marks))
+	for _, mark := range marks {
+		if t.Add(mark) {
+			added = append(added, mark)
+		}
+	}
+
+	return added
+}
+
+func (t *RunTaint) Unknown() bool {
+	return t == nil
+}
+
+func (t *RunTaint) Sources() []TaintSource {
+	if t == nil {
+		return nil
+	}
+
+	sources := make([]TaintSource, 0, len(t.Marks))
+	for _, mark := range t.Marks {
+		if !slices.Contains(sources, mark.Source) {
+			sources = append(sources, mark.Source)
+		}
+	}
+
+	return sources
+}
+
+type TaintCarrier interface {
+	TaintedRecords() []RecordRef
+}
+
+const (
+	TaintEntityInboundMessage = "inbound_message"
+	TaintEntityDocument       = "document"
+	TaintEntityEDIInboundFile = "edi_inbound_file"
+	TaintEntityBankReceipt    = "bank_receipt"
+	TaintEntityAgentMemory    = "agent_memory"
+	TaintEntityAgentRun       = "agent_run"
+)
+
+func (s SubjectType) TaintSource() (TaintSource, string, bool) {
+	switch s {
+	case SubjectInboundMessage:
+		return TaintSourceInboundMessage, TaintEntityInboundMessage, true
+	case SubjectDocument:
+		return TaintSourceDocument, TaintEntityDocument, true
+	case SubjectEDIInboundFile:
+		return TaintSourceEDI, TaintEntityEDIInboundFile, true
+	case SubjectBankReceipt:
+		return TaintSourceBankReceipt, TaintEntityBankReceipt, true
+	default:
+		return "", "", false
+	}
+}
+
+func SubjectTaint(subjectType SubjectType, subjectID string, at int64) (TaintMark, bool) {
+	source, entity, ok := subjectType.TaintSource()
+	if !ok || subjectID == "" {
+		return TaintMark{}, false
+	}
+
+	return TaintMark{
+		Source: source,
+		Ref:    &RecordRef{EntityType: entity, ID: subjectID},
+		At:     at,
+	}, true
+}
+
+func AttachmentTaint(documentID string, at int64) TaintMark {
+	return TaintMark{
+		Source: TaintSourceAttachment,
+		Ref:    &RecordRef{EntityType: TaintEntityDocument, ID: documentID},
+		At:     at,
+	}
+}

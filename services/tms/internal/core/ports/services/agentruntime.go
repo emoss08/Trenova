@@ -34,6 +34,13 @@ type PendingAction struct {
 	// target, or its version could not be read; either way the proposal is
 	// still made, just without the staleness check.
 	Target *ProposalTarget `json:"target,omitempty"`
+	// Egress is where the call's effect reaches, as the policy classified
+	// it, and HeldBy what kept it below AutoExecute.
+	Egress agent.EgressClass `json:"egress,omitempty"`
+	HeldBy []string          `json:"heldBy,omitempty"`
+	// Tainted says the turn had read outside content when the call was
+	// decided.
+	Tainted bool `json:"tainted,omitempty"`
 }
 
 // ProposalTarget is a record and its version at the moment a change to it was
@@ -100,6 +107,10 @@ type RunRequest struct {
 	// Such a turn runs as the same person with its own agent's tools, tiers
 	// and budget, and never hands the task on.
 	Delegation *Delegation
+	// Taint is the outside content the turn already carries when it opens:
+	// its thread's, the agent's that handed it a task. The turn adds what its
+	// own subject, attachments and memories bring.
+	Taint *agent.RunTaint
 
 	UsagePurpose AIUsagePurpose
 }
@@ -237,6 +248,9 @@ type RunResult struct {
 	// each one's writes came to. Their steps are among Messages, tagged; their
 	// writes are recorded as their own agent's, not this one's.
 	Delegations []DelegatedRun `json:",omitempty"`
+	// Taint is the outside content the turn read. Nil is a turn opened
+	// before taint was kept, which counts as tainted wherever it matters.
+	Taint *agent.RunTaint `json:",omitempty"`
 }
 
 // DelegatedRun is one task a turn handed to another agent, as it is saved:
@@ -251,6 +265,9 @@ type DelegatedRun struct {
 	Input      string                      `json:"input"`
 	// Failed says the delegate's turn ended before it finished.
 	Failed bool `json:"failed,omitempty"`
+	// Taint is the outside content the delegate's turn read, which its
+	// proposals carry.
+	Taint *agent.RunTaint `json:"taint,omitempty"`
 }
 
 type AgentRuntime interface {

@@ -116,6 +116,27 @@ type AgentEvidenceRef {
   note: String!
 }
 
+"A record outside content was read from."
+type AgentTaintRef {
+  entityType: String!
+  id: String!
+}
+
+"One place outside content reached a run from: its source, the tool call that read it, and the record when known."
+type AgentTaintMark {
+  source: AgentTaintSource!
+  "Empty when the run opened with it: its subject, an attachment, a memory, or its conversation."
+  toolName: String!
+  callId: String!
+  ref: AgentTaintRef
+  at: Timestamp!
+}
+
+"The outside content a run read, one mark per place it came from, at most sixteen."
+type AgentRunTaint {
+  marks: [AgentTaintMark!]!
+}
+
 type AgentRun {
   id: ID!
   organizationId: ID!
@@ -135,6 +156,12 @@ type AgentRun {
   startedAt: Timestamp
   completedAt: Timestamp
   errorMessage: String!
+  "The run read content written outside the organization, so no write of it that leaves the organization ran without a person's approval."
+  tainted: Boolean!
+  "What outside content the run read, and where from."
+  taint: AgentRunTaint
+  "When the run first read outside content."
+  taintedAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -165,6 +192,14 @@ type AgentProposal {
   parameterFields: [AgentProposalField!]!
   "The values the approver changed before approving, keyed by parameter. Absent when approved as proposed."
   modifications: JSON
+  "The run had read content written outside the organization when this was proposed; a write that leaves the organization then runs only on a person's approval."
+  tainted: Boolean!
+  "What outside content the run had read."
+  taint: AgentRunTaint
+  "Where the write reaches, as it was proposed and then as it ran. Null for a proposal recorded before it was kept."
+  egressClass: AgentEgressClass
+  "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier or personal_exemption."
+  heldBy: [String!]!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -340,6 +375,12 @@ type AgentMemoryEvidence {
   lastRatedAt: Timestamp!
 }
 
+"Who reads a memory: every agent in the organization, or only the agent it was kept for."
+enum AgentMemoryScope {
+  Organization
+  Agent
+}
+
 enum AgentMemorySubjectType {
   Customer
   Location
@@ -368,6 +409,12 @@ type AgentMemory {
   toolName: String!
   content: String!
   agentDefinitionId: ID
+  "Organization reaches every agent; Agent reaches only agentDefinitionId."
+  scope: AgentMemoryScope!
+  "Written by a run that had read content from outside the organization; an agent that reads it back is tainted by it."
+  tainted: Boolean!
+  "The run whose outside content the memory carries."
+  taintRunId: ID
   sourceRunId: ID
   sourceProposalId: ID
   createdByUserId: ID
@@ -400,6 +447,8 @@ input ApproveAgentMemorySuggestionInput {
   content: String!
   "Defaults to the suggestion's kind."
   kind: AgentMemoryKind
+  "Defaults to Agent: a suggestion drawn from one agent's ratings is kept for that agent. Organization reads it into every agent's prompt."
+  scope: AgentMemoryScope
   version: Int!
 }
 

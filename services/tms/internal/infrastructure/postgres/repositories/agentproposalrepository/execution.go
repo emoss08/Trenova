@@ -31,7 +31,7 @@ func (r *repository) RecordExecution(
 	entity := new(agent.AgentProposal)
 	cols := buncolgen.AgentProposalColumns
 
-	results, err := r.db.DB().
+	query := r.db.DB().
 		NewUpdate().
 		Model(entity).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
@@ -42,9 +42,12 @@ func (r *repository) RecordExecution(
 		Set(cols.ExecutedAt.Set(), req.ExecutedAt).
 		Set(cols.ExecutionError.Set(), req.ExecutionError).
 		Set(cols.ExecutionResult.Set(), req.ExecutionResult.Bounded()).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Returning("*").
-		Exec(ctx)
+		Set(cols.UpdatedAt.Set(), timeutils.NowUnix())
+	if req.EgressClass.IsValid() {
+		query = query.Set(cols.EgressClass.Set(), req.EgressClass)
+	}
+
+	results, err := query.Returning("*").Exec(ctx)
 	if err != nil {
 		log.Error("failed to record proposal execution", zap.Error(err))
 		return nil, err

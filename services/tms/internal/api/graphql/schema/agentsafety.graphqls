@@ -60,6 +60,8 @@ enum AgentTaintSource {
   Attachment
   Memory
   RunRecord
+  "A web page or search result an extension returned."
+  Web
 }
 
 "What a tool on an agent does when nobody is watching."

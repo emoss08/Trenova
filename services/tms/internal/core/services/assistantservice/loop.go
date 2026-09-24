@@ -37,6 +37,9 @@ type TurnRequest struct {
 	// message: files, and records named from the composer.
 	Attachments []agentdefinition.RuntimeAttachment
 	Mentions    []agentdefinition.RuntimeMention
+	// Taint is the outside content the conversation has already read, which
+	// every later turn in it opens with.
+	Taint *agent.RunTaint
 }
 
 type TurnResult struct {
@@ -80,6 +83,7 @@ func (s *Service) admit(
 		PinProvider: !req.PreferredProviderID.IsNil(),
 		ThreadID:    req.ThreadID,
 		Proposals:   req.Proposals,
+		Taint:       req.Taint.Clone(),
 	}
 }
 
