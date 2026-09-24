@@ -7,7 +7,6 @@ package resolver
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
@@ -18,11 +17,11 @@ import (
 )
 
 func (r *aIProviderResolver) InputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
-	panic(fmt.Errorf("not implemented: InputCostPerMillion - inputCostPerMillion"))
+	return decimalPtrToStringPtr(obj.InputCostPerMillion), nil
 }
 
 func (r *aIProviderResolver) OutputCostPerMillion(ctx context.Context, obj *aiprovider.Provider) (*string, error) {
-	panic(fmt.Errorf("not implemented: OutputCostPerMillion - outputCostPerMillion"))
+	return decimalPtrToStringPtr(obj.OutputCostPerMillion), nil
 }
 
 func (r *queryResolver) AiProviders(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AIProviderConnection, error) {

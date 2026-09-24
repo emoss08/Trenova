@@ -5,6 +5,18 @@ schema {
 
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
+"""
+How an embedding endpoint is told whether a text is a stored document or a
+search query. None sends both the same way; VoyageInputType sends Voyage's
+input_type field; NomicPrefix adds the search_document and search_query
+prefixes nomic-embed-text expects.
+"""
+enum AIEmbeddingInputStyle {
+  NomicPrefix
+  None
+  VoyageInputType
+}
+
 """A person's thumbs up or down on something an AI wrote for them."""
 type AIFeedback {
   """The agent the rating is credited to."""
@@ -144,6 +156,12 @@ type AIProvider {
   businessUnitId: ID!
   createdAt: Timestamp!
   description: String!
+  """
+  Vector size an embedding provider returns: 768, 1024 or 1536. Null for a provider that serves no embeddings.
+  """
+  embeddingDimensions: Int
+  """How documents and search queries are told apart on the wire."""
+  embeddingInputStyle: AIEmbeddingInputStyle!
   enabled: Boolean!
   """
   Vendor request fields this endpoint takes that the protocol does not
@@ -226,6 +244,7 @@ enum AITask {
   DailyBriefing
   DocumentClassification
   DocumentExtraction
+  Embedding
   EvaluationJudge
   FormulaAssistant
   General
