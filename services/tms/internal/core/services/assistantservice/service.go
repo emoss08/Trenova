@@ -44,13 +44,20 @@ type Params struct {
 	Permissions serviceports.PermissionEngine
 	// Runs says which agent raised each of a conversation's proposals: its
 	// own, or one it handed a task to.
-	Runs repositories.AgentRunRepository `optional:"true"`
+	Runs         repositories.AgentRunRepository     `optional:"true"`
+	SystemAgents serviceports.SystemAgentProvisioner `optional:"true"`
+	PageThreads  repositories.PageThreadRepository   `optional:"true"`
 }
 
 // Module provides the assistant once, as itself for the worker that runs its
 // turns and as the AssistantService port for everything else.
 var Module = fx.Module("assistant",
-	fx.Provide(fx.Annotate(New, fx.As(fx.Self()), fx.As(new(serviceports.AssistantService)))),
+	fx.Provide(fx.Annotate(
+		New,
+		fx.As(fx.Self()),
+		fx.As(new(serviceports.AssistantService)),
+		fx.As(new(serviceports.PageAssistant)),
+	)),
 )
 
 type Service struct {
@@ -75,6 +82,8 @@ type Service struct {
 	contents      serviceports.DocumentContentService
 	permissions   serviceports.PermissionEngine
 	runs          repositories.AgentRunRepository
+	systemAgents  serviceports.SystemAgentProvisioner
+	pageThreads   repositories.PageThreadRepository
 }
 
 func New(p Params) *Service {
@@ -100,5 +109,7 @@ func New(p Params) *Service {
 		contents:      p.Contents,
 		permissions:   p.Permissions,
 		runs:          p.Runs,
+		systemAgents:  p.SystemAgents,
+		pageThreads:   p.PageThreads,
 	}
 }

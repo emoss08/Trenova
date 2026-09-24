@@ -132,6 +132,7 @@ type AgentDefinitionRepository interface {
 		ctx context.Context,
 		entity *agentdefinition.Definition,
 	) (*agentdefinition.Definition, error)
+	CreateSystem(ctx context.Context, entity *agentdefinition.Definition) (bool, error)
 	Update(
 		ctx context.Context,
 		entity *agentdefinition.Definition,

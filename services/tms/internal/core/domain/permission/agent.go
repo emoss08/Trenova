@@ -133,7 +133,8 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead: {},
 	},
 	ResourceLocation: {
-		OpRead: {},
+		OpRead:   {},
+		OpCreate: {},
 	},
 	ResourceBillingQueue: {
 		OpRead:   {},
@@ -250,6 +251,9 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead: {},
 	},
 	ResourceEDI: {
+		OpRead: {},
+	},
+	ResourceFormulaTemplate: {
 		OpRead: {},
 	},
 }

@@ -28,6 +28,8 @@ func ToolProviders() []any {
 		orderToolProviders(),
 		ediToolProviders(),
 		oversightToolProviders(),
+		importDraftToolProviders(),
+		formulaToolProviders(),
 	}
 
 	size := 0

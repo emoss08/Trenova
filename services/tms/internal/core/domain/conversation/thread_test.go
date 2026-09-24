@@ -70,3 +70,29 @@ func TestThreadOrigin_Listed(t *testing.T) {
 	}
 	assert.False(t, ThreadOrigin("Nope").IsValid())
 }
+
+func TestThreadOrigin_PageBoundConversationsAreNeitherListedNorKept(t *testing.T) {
+	t.Parallel()
+
+	for _, origin := range []ThreadOrigin{ThreadOriginImport, ThreadOriginFormula} {
+		assert.True(t, origin.IsValid(), string(origin))
+		assert.True(t, origin.PageBound(), string(origin))
+		assert.False(t, origin.Listed(), string(origin))
+		assert.False(t, origin.Keepable(), string(origin))
+	}
+	assert.True(t, ThreadOriginAsk.Keepable())
+	assert.False(t, ThreadOriginAsk.PageBound())
+	for _, origin := range []ThreadOrigin{
+		ThreadOriginPanel, ThreadOriginDesk, ThreadOriginWatchtower, ThreadOriginBriefing,
+	} {
+		assert.False(t, origin.Keepable(), string(origin))
+		assert.False(t, origin.PageBound(), string(origin))
+	}
+	assert.ElementsMatch(t,
+		[]ThreadOrigin{ThreadOriginAsk, ThreadOriginImport, ThreadOriginFormula},
+		UnlistedOrigins(),
+	)
+	for _, origin := range AllThreadOrigins() {
+		assert.True(t, origin.IsValid(), string(origin))
+	}
+}

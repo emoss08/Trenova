@@ -128,6 +128,28 @@ cases:
     expect: [get_daily_briefing]
   - request: what have the automations been doing lately
     expect: [list_agent_runs, get_agent_run]
+  - request: the rate the paperwork shows is right, keep it
+    expect: [accept_field]
+  - request: take every reading the scan is sure about
+    expect: [accept_all_confident]
+  - request: change the weight on this import to 42000 pounds
+    expect: [set_field_value]
+  - request: make Acme the customer on this import
+    expect: [set_required_field]
+  - request: tie the pickup to our Reno warehouse record
+    expect: [set_stop_location]
+  - request: the delivery happens Tuesday at eight in the morning
+    expect: [set_stop_schedule]
+  - request: add the consignee's warehouse as a new facility
+    expect: [create_location]
+  - request: which rating methods do we have
+    expect: [list_formula_templates]
+  - request: what shipment values can a rate expression reference
+    expect: [describe_formula_schema]
+  - request: what would this pricing rule charge a 500 mile load
+    expect: [test_formula_expression]
+  - request: write me a per mile rate with a floor of 350
+    expect: [propose_formula]
 nothing:
   - xyzzy plugh
   - quantum chromodynamics lattice

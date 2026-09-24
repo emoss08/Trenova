@@ -12,6 +12,7 @@ import type {
   AssistantProposal,
   AssistantThread,
 } from "@/types/assistant";
+import type { PageDraft, PageDraftEdit, PageDraftSurface } from "@/types/page-draft";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -25,6 +26,7 @@ import { ArtifactOpenerProvider } from "./artifact-opener";
 import { Composer } from "./composer";
 import { DecisionFollowUpProvider } from "./decision-follow-up";
 import { useFollowNavigation } from "./follow-navigation";
+import { useApplyDraftEdits } from "./page-draft-edits";
 import {
   AgentAvatar,
   AssistantEntry,
@@ -77,6 +79,20 @@ const COMPOSER_FADE_COMPACT = 24;
 /** A stable empty list, so a thread with no live turn does not re-run the follower each render. */
 const NO_ARTIFACTS: readonly AssistantArtifactEvent[] = [];
 
+/**
+ * A conversation that belongs to a page: the import or formula assistant.
+ * The page's unsaved work rides on every turn, and the changes the assistant
+ * hands back are applied to the page rather than saved.
+ */
+export type PageBinding = {
+  surface: PageDraftSurface;
+  readDraft: () => PageDraft | null;
+  onDraftEdit: (edit: PageDraftEdit) => void;
+};
+
+/** A question the page asks on the person's behalf, sent once per key. */
+export type PageRequest = { key: string; text: string };
+
 export function MessageThread({
   thread,
   agent,
@@ -92,6 +108,9 @@ export function MessageThread({
   openingQuestion,
   onOpeningQuestionSent,
   agentAccent = false,
+  page,
+  pageRequest,
+  onPageRequestSent,
 }: {
   thread: AssistantThread;
   agent: AgentChoice | null;
@@ -118,6 +137,14 @@ export function MessageThread({
   onOpeningQuestionSent?: () => void;
   /** Washes the thread in the agent's accent, so it reads as that agent's work. */
   agentAccent?: boolean;
+  /** Binds the conversation to the page it belongs to; see PageBinding. */
+  page?: PageBinding;
+  /**
+   * Something the page asks for the person, such as explaining the formula on
+   * screen, sent once the conversation is free to take it.
+   */
+  pageRequest?: PageRequest | null;
+  onPageRequestSent?: (key: string) => void;
 }) {
   const t = useT();
   const dismissed = useAssistantStore((state) => state.dismissedSuggestions);
@@ -252,11 +279,17 @@ export function MessageThread({
   const [contextIncluded, setContextIncluded] = useState(true);
   const pageContext = getPageContext();
   // A person who drops the page chip means it: the turn is sent without it
-  // rather than with a note saying they would rather it were not there.
-  const getTurnContext = useCallback(
-    () => (contextIncluded ? getPageContext() : null),
-    [contextIncluded, getPageContext],
-  );
+  // rather than with a note saying they would rather it were not there. A
+  // conversation that belongs to a page always carries the page and its
+  // draft: the page is what it is about.
+  const readDraft = page?.readDraft;
+  const getTurnContext = useCallback(() => {
+    if (readDraft !== undefined) {
+      const context = getPageContext();
+      return context === null ? null : { ...context, draft: readDraft() };
+    }
+    return contextIncluded ? getPageContext() : null;
+  }, [contextIncluded, getPageContext, readDraft]);
   const { turn, isActive, send, rejoin, stop, dismiss, retry } = useAssistantTurn(
     thread.id,
     getTurnContext,
@@ -282,6 +315,9 @@ export function MessageThread({
 
   // "Take me there": a page the assistant opened is followed as it arrives.
   useFollowNavigation(turn?.artifacts ?? NO_ARTIFACTS, onNavigate);
+
+  // A change the assistant hands its page is applied as it arrives, once.
+  useApplyDraftEdits(turn?.artifacts ?? NO_ARTIFACTS, page?.surface, page?.onDraftEdit);
 
   // Each turn's artifacts, by the message that produced them or, before the
   // message id was tied on, by the tool call that did. What another agent
@@ -388,6 +424,34 @@ export function MessageThread({
     canContinue: thread.canContinue,
   });
   const isEmpty = !history.isLoading && entries.length === 0 && turn === null;
+
+  // What the page asks for the person waits for the conversation to be free:
+  // history loaded, no reply being written, and a composer that could send it.
+  const sentPageRequests = useRef(new Set<string>());
+  useEffect(() => {
+    if (
+      !pageRequest ||
+      readOnly ||
+      block !== null ||
+      history.isLoading ||
+      isActive ||
+      sentPageRequests.current.has(pageRequest.key)
+    ) {
+      return;
+    }
+    sentPageRequests.current.add(pageRequest.key);
+    onPageRequestSent?.(pageRequest.key);
+    void send(pageRequest.text, undefined, providerId);
+  }, [
+    block,
+    history.isLoading,
+    isActive,
+    onPageRequestSent,
+    pageRequest,
+    providerId,
+    readOnly,
+    send,
+  ]);
   // The starter questions are listed on an empty thread and behind a slash
   // in the composer at any time; a dismissed one stays dismissed in both.
   // They are the agent's own, from the server, so a Report Builder is never
@@ -643,7 +707,9 @@ export function MessageThread({
           onPickAgent={onPickAgent}
           pageContext={pageContext}
           contextIncluded={contextIncluded}
-          onToggleContext={() => setContextIncluded((value) => !value)}
+          onToggleContext={
+            page === undefined ? () => setContextIncluded((value) => !value) : undefined
+          }
           providers={providers}
           providerId={providerId}
           onPickProvider={setProviderId}

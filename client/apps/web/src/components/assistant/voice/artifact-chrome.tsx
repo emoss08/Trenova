@@ -17,6 +17,7 @@ import {
   ListChecksIcon,
   MailIcon,
   NewspaperIcon,
+  PencilLineIcon,
   PinIcon,
   PinOffIcon,
   ReceiptTextIcon,
@@ -50,6 +51,7 @@ export const ARTIFACT_KINDS: Record<
   run_diff: { label: "Changes", icon: GitCompareArrowsIcon, source: "Report builder" },
   document: { label: "Document", icon: ScrollTextIcon },
   navigation: { label: "Page", icon: CompassIcon },
+  draft_edit: { label: "Draft change", icon: PencilLineIcon },
 };
 
 /** Where an artifact is, as a tone: severity, not category. */

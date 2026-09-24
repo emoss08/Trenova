@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -51,9 +53,7 @@ type Params struct {
 	UsStateRepo          repositories.UsStateRepository
 	LocationCategoryRepo repositories.LocationCategoryRepository
 	Permissions          serviceports.PermissionEngine
-	// Turns answers a message on a worker, which runs the turn through this
-	// service's steps.
-	Turns serviceports.ShipmentImportTurns
+	PageThreads          repositories.PageThreadRepository `optional:"true"`
 }
 
 type Service struct {
@@ -74,7 +74,7 @@ type Service struct {
 	usStateRepo          repositories.UsStateRepository
 	locationCategoryRepo repositories.LocationCategoryRepository
 	permissions          serviceports.PermissionEngine
-	turns                serviceports.ShipmentImportTurns
+	pageThreads          repositories.PageThreadRepository
 }
 
 var _ serviceports.ShipmentImportAssistantService = (*Service)(nil)
@@ -100,7 +100,7 @@ func New(
 		usStateRepo:          p.UsStateRepo,
 		locationCategoryRepo: p.LocationCategoryRepo,
 		permissions:          p.Permissions,
-		turns:                p.Turns,
+		pageThreads:          p.PageThreads,
 	}
 }
 
@@ -1347,7 +1347,7 @@ func (s *Service) ArchiveHistory(
 	documentID string,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	return s.updateConversationStatus(
+	return s.closeConversations(
 		ctx,
 		documentID,
 		tenantInfo,
@@ -1361,13 +1361,52 @@ func (s *Service) CompleteHistory(
 	documentID string,
 	tenantInfo pagination.TenantInfo,
 ) error {
-	return s.updateConversationStatus(
+	return s.closeConversations(
 		ctx,
 		documentID,
 		tenantInfo,
 		shipmentimportchat.ConversationStatusCompleted,
 		shipmentimportchat.ConversationStatusReasonShipmentCreated,
 	)
+}
+
+func (s *Service) closeConversations(
+	ctx context.Context,
+	documentID string,
+	tenantInfo pagination.TenantInfo,
+	status shipmentimportchat.ConversationStatus,
+	reason shipmentimportchat.ConversationStatusReason,
+) error {
+	if err := s.updateConversationStatus(ctx, documentID, tenantInfo, status, reason); err != nil {
+		return err
+	}
+	if s.pageThreads == nil {
+		return nil
+	}
+
+	id, err := pulid.Parse(documentID)
+	if err != nil {
+		return errortypes.NewValidationError("documentId", errortypes.ErrInvalid, "Invalid document ID")
+	}
+
+	closed, err := s.pageThreads.ArchiveSubjectThreads(ctx, repositories.ArchiveSubjectThreadsRequest{
+		TenantInfo:  tenantInfo,
+		Origin:      conversation.ThreadOriginImport,
+		SubjectType: agent.SubjectDocument,
+		SubjectID:   id,
+	})
+	if err != nil {
+		return fmt.Errorf("close the import assistant's conversations about the document: %w", err)
+	}
+	if closed > 0 {
+		s.logger.Info("closed the import assistant's conversations about a document",
+			zap.String("documentId", documentID),
+			zap.String("status", string(status)),
+			zap.Int("closed", closed),
+		)
+	}
+
+	return nil
 }
 
 var _ serviceports.ShipmentImportAssistantService = (*Service)(nil)

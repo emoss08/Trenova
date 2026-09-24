@@ -16,6 +16,8 @@ import type {
 } from "@trenova/graphql/generated/graphql";
 import type { ComponentProps } from "react";
 
+export { OutsideContentBadge } from "@/components/assistant/outside-content-badge";
+
 type Variant = NonNullable<ComponentProps<typeof Badge>["variant"]>;
 
 const RUN_STATUS: Record<AgentRunStatus, { label: string; variant: Variant }> = {
@@ -168,14 +170,6 @@ export const MemoryStatusBadge = ({ value, t }: { value: AgentMemoryStatus; t: T
 export function memorySourceLabel(value: AgentMemorySource, t: TranslateFn): string {
   return t(MEMORY_SOURCE[value] ?? value);
 }
-const OUTSIDE_CONTENT: { label: string; variant: Variant } = {
-  label: "Read outside content",
-  variant: "warning",
-};
-
-export const OutsideContentBadge = ({ t }: { t: TranslateFn }) => (
-  <Labelled entry={OUTSIDE_CONTENT} t={t} />
-);
 export const TierBadge = ({ value, t }: { value: AgentAutonomyTier; t: TranslateFn }) => (
   <Labelled entry={TIER[value]} t={t} />
 );

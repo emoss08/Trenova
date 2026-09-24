@@ -25,9 +25,16 @@ Keywords: new formula, new rating method, write formula
 1. Open [Formula templates](/billing/configuration-files/formula-templates).
 2. Select **New formula template**, then **New formula template** in the menu. The Formula Studio opens.
 3. Under **Template details**, enter a **Name**, choose the **Type** (**Freight charge** or **Accessorial charge**) and add a **Description**.
-4. Write the **Expression**, or pick a template under **Start from a standard** or **Or copy an existing template**. You can also select **Generate with AI**, describe the charge, then **Insert into editor**.
+4. Write the **Expression**, or pick a template under **Start from a standard** or **Or copy an existing template**. You can also select **Formula assistant**, describe the charge, then select **Insert into editor** on the **Proposed formula**.
 5. Set the **Charge policy** (**Minimum charge**, **Maximum charge**, **Rounding mode**, **Rounding precision**) and check the result in **Live preview**.
 6. Select **Create template**. The template is saved as a draft.
+
+### Get help from the formula assistant
+Keywords: AI formula, generate formula, explain formula, ask about a formula
+1. Open [Formula templates](/billing/configuration-files/formula-templates) and select a template, or start a new one.
+2. Select **Formula assistant** beside **Expression** and describe how the template should price a shipment, or ask about the formula in the editor. To have the current expression explained, select **Explain formula** instead.
+3. The assistant reads the expression and variables in the editor and prices sample loads with the formula engine. When it writes a formula, the **Proposed formula** shows the expression, its variables, how it works and what the engine charged for each sample.
+4. Select **Insert into editor** to put it in the editor, or **Add** (or **Add all**) to save a priced sample as a scenario on a saved template. Nothing is saved until you save the template.
 
 ### Test a template with scenarios
 Keywords: test formula, expected charge, backtest, pin scenario
@@ -62,5 +69,7 @@ Keywords: duplicate formula, fork, export JSON, import templates, standard templ
 
 ## Notes
 Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it.
+
+The formula assistant needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the panel says which is missing.
 
 Only an active template rates shipments. Rejecting archives the template; use **Request changes** to send it back for more work instead. **Scenarios** can only be added after the template is saved, and a scenario keeps gating approval until it is deleted.

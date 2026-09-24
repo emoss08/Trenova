@@ -1,6 +1,7 @@
 package agenttoolservice
 
 import (
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
+	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
@@ -63,6 +65,7 @@ func ToolProviders() []any {
 		provideWaiveDetentionTool,
 		provideCreateShipmentTool,
 		provideUpdateShipmentTool,
+		provideCreateLocationTool,
 		provideTenderToRoutingGuideTool,
 		provideTenderToCarriersTool,
 		newRememberTool,
@@ -174,6 +177,14 @@ func provideCreateShipmentTool(p intakeToolParams) services.AgentTool {
 	}
 
 	return newCreateShipmentTool(p.Shipments, imports, p.Logger)
+}
+
+func provideCreateLocationTool(
+	locations *locationservice.Service,
+	states repositories.UsStateRepository,
+	categories repositories.LocationCategoryRepository,
+) services.AgentTool {
+	return newCreateLocationTool(locations, states, categories)
 }
 
 func provideUpdateShipmentTool(shipments services.ShipmentService) services.AgentTool {

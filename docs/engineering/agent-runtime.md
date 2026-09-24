@@ -19,8 +19,8 @@ Temporal returns succeeds.
 | Feature | Workflow | Queue |
 |---|---|---|
 | Assistant chat, Ask, decision follow-ups | `AssistantTurnWorkflow`, one per turn | `agent-chat-queue` |
-| Import assistant | `ImportAssistantTurnWorkflow`, one per document at a time | `agent-chat-queue` |
-| Table compose, formula generate and explain | `StructuredCompletionWorkflow` | `agent-chat-queue` |
+| Import and formula assistants | `AssistantTurnWorkflow`, one per turn, on the page's own thread | `agent-chat-queue` |
+| Table compose | `StructuredCompletionWorkflow` | `agent-chat-queue` |
 | Briefing regenerate | `WriteBriefingWorkflow` | `agent-chat-queue` |
 | AI provider test | `TestAIProviderWorkflow` | `agent-chat-queue` |
 | Event-driven and scheduled agent runs | `AgentRunWorkflow` | `agent-background-queue` |
@@ -125,8 +125,9 @@ runs** and settled after:
 That last case is the honest limit: resume is **at-most-once, not lossless**.
 
 Outcomes over 64 KiB are dropped rather than truncated, because half a fenced
-JSON document handed back to a model is worse than none. The import assistant's
-tools that create a shipment or a location are never retried at all.
+JSON document handed back to a model is worse than none. The import assistant
+creates nothing itself: `create_location` is an approval-gated action like any
+other, so it runs once, after a person approves it, under the ledger.
 
 ## Taint: runs that have read outside content
 
@@ -551,8 +552,9 @@ the workflow's budget is the request's own deadline less the margin the handler
 needs to answer, so a call never outlives the request waiting on it. A person who
 stops waiting cancels a call that was theirs alone.
 
-- `StructuredCompletionWorkflow` asks one structured question (table compose,
-  formula generate and explain), retried the `modelcall` way.
+- `StructuredCompletionWorkflow` asks one structured question (table compose),
+  retried the `modelcall` way. Formula generate and explain no longer call it;
+  they are turns of the formula assistant.
 - `TestAIProviderWorkflow` probes once and never retries: the administrator is
   asking whether the connection works now.
 - `WriteBriefingWorkflow` rewrites a day's page.
@@ -560,23 +562,95 @@ stops waiting cancels a call that was theirs alone.
 Two people testing the same provider, or rewriting the same page, share one
 execution. The caller gets the call's own error back.
 
-## The import assistant
+## Page assistants: import and formula
 
-`ImportAssistantTurnWorkflow` answers one message about one document, the loop in
-workflow code: a prepare activity, one activity per model call, one per tool
-call, and a finish that saves the turn. The reply streams through the turn's
-Workflow Stream with the events the client has always read; the request relays it
-frame for frame with the reader chat uses. A document answers one message at a
-time.
+The shipment import assistant and the formula assistant are ordinary agents on
+the shared runtime. Each is a **system agent** (`import_assistant`,
+`formula_assistant`) that `AgentDefinitionService.EnsureSystem` creates the
+first time anyone in the organization opens the page, from its template, with
+memory on and access for everyone. Creation is an insert that does nothing on
+conflict, so two people opening the page at once end up with one agent; a
+name already taken moves to "(built-in)", then "(built-in 2)", and so on.
+Neither agent is offered in chat pickers, as a delegate, or on schedules.
 
-Its tools act as the person who sent the message. The route asks only for
-document read, so each tool that reads or writes another record checks that
-person's permission first (`toolGrants`): customer read for `search_customers`
-and `get_customer_requirements`, location read for `search_locations`, location
-create for `add_location`. A refusal is a tool error the model reports; the turn
-goes on. Every model call carries the person, the `ShipmentImportChat` feature and the
-document as its usage attribution, so its cost lands on the `ai_usage_records` row that
-the AI Control overview breaks down by feature.
+**One conversation per page.** A page thread has origin `Import` or `Formula`
+and its subject: the document being imported, or the formula template being
+written (`FormulaTemplate`). `POST /documents/:documentID/import-assistant/thread/`
+and `POST /formula-templates/ai/thread/` open it, requiring document or formula
+template read, `assistant:create`, and use of the agent (`MayUseAgent`). A
+partial unique index keeps one live thread per person and subject; a template
+not yet saved has a thread of its own, removed by the stale-thread sweep once it
+has been idle as long as an Ask question. The Desk lists neither origin, the
+live-turn list skips them, and a turn that ends unseen does not notify, because
+the answer is on the page the person is looking at. A document thread opens
+tainted by the document, so every write it proposes waits for a person.
+
+**The draft rides on the page context.** Turns go through the ordinary
+`/assistant/threads/:id/turns/` route with `pageContext.draft`, a bounded copy
+of what the page holds (`pagedraft.Draft`): the fields read from the document
+with their confidence and status, the four required records and the stops, or
+the formula's expression and variables. The prompt renders it in a
+`<page_draft>` fence as data. `prepareTurn` refuses a draft on any thread that
+is not a live page thread of the matching surface, and re-checks that the
+subject is still readable.
+
+**Draft tools present; they do not save.** `accept_field`,
+`accept_all_confident`, `set_field_value`, `set_required_field`,
+`set_stop_location`, `set_stop_schedule` and `propose_formula` are query tools
+with self scope and effect `present`. Each returns a `pagedraft.Edit`; the
+turn saves it as a `draft_edit` artifact and the artifact event carries it, and
+the page applies it once, the way a navigation artifact is followed. Nothing
+reaches the database until the person creates the shipment or saves the
+formula. `set_required_field` and `set_stop_location` read the record they name
+under the person's own permission and hand the page its label.
+`create_location` is an internal-egress action at `ActWithApproval`, requiring
+location create. The formula tools price with the formula engine:
+`describe_formula_schema` lists the variables, functions and rate tables,
+`test_formula_expression` prices sample loads or a saved shipment the person
+may read, and `propose_formula` hands the editor an expression with its
+variables, an explanation and engine-priced scenarios. It requires formula
+template create or update. The model never states an amount the engine did not
+produce.
+
+**In the web app.** Both pages mount `PageAssistant`
+(`components/assistant/page-assistant.tsx`), which opens the page thread and
+draws the ordinary `MessageThread` bound to the page: the draft is read at send
+time and always sent, and each live `draft_edit` is applied through
+`useApplyDraftEdits`, claimed by artifact id for the tab (`lib/claim-once.ts`)
+so a rejoined or replayed turn never reapplies a change over what the person did
+since. History never applies anything. The import page applies edits as clicks
+(`import-draft.ts`); the formula studio shows a proposal card and inserts it
+only when asked. Without `assistant:create` the panel says so without calling
+the server; a refusal from `MayUseAgent` or a disabled agent is shown in the
+server's words; an archived thread (the document was re-extracted) offers a
+fresh one.
+
+**What stayed behind.** Conversations that were still active when this shipped
+were carried into page threads by `20261231006560_carry_import_conversations`:
+one thread per person who spoke in each, their turns in order, legacy tool calls
+replayed paired with their results under fresh ids, and the organization's
+import assistant created when it had none. Finished conversations remain in
+`shipment_import_chat_*`, read-only through `GET
+/documents/:documentID/import-assistant/history/`, for one release; the import
+panel shows a finished one, collapsed and read-only, above the new thread. After that
+release, drop the tables and the history endpoint together:
+
+```sql
+DROP TABLE IF EXISTS "shipment_import_chat_turns";
+DROP TABLE IF EXISTS "shipment_import_chat_conversations";
+```
+
+That statement is kept here rather than in `postgres/migrations`, because the
+migrator embeds every `*.sql` file in that directory and would run it at once.
+Ship it as `20261231006570_drop_shipment_import_chat` when the release has
+gone out, with the SQLite mirror, and delete `shipmentimportchat`, its
+repository and cache, and the history route in the same change.
+
+**Rolling it out.** Roll the workers on `agent-chat-queue` before the API. A
+new API sends turns with a draft and page tools an old worker does not know;
+an old API may still start `ImportAssistantTurnWorkflow`, which the new workers
+keep registered. A legacy turn that finishes after the carry-over has run lands
+only in the legacy tables, readable through the history endpoint.
 
 ## Batch work
 
@@ -657,6 +731,7 @@ before the change:
 | `assistant-turn-notify-unseen` | a turn that ends with nobody reading its stream ends without telling the person who asked | nothing; the check itself is the only cost, and it is asked only of a turn nobody drained |
 | `agent-loop-fresh-synthesized-call-ids` | a call whose id the adapter synthesized keeps it unless the replayed conversation already holds it | nothing; the check itself is the only cost, and it is asked only of a completion that carries a synthesized id |
 | `document-ai-extraction-timer-poll` | `extractWithTaskToken` | `SubmitAndAwaitDocumentAIExtractionActivity`, `PollPendingDocumentAIExtractionsWorkflow` and its schedule, task tokens on `document_ai_extractions` |
+| none: the workflow is retired whole | `ImportAssistantTurnWorkflow` on `agent-chat-queue`, which no route starts any more | the workflow, its activities and registry in `importassistantjobs`, `workflow_test.go`, and the turn machinery in `shipmentimportassistantservice` (the tool loop, `toolGrants`, `persistConversationTurn`); delete them once no `ImportAssistantTurnWorkflow` execution is open |
 
 Holding writes for a person after a turn reads outside content (`TurnState.ExternalContent`,
 `DispatchCall.AfterExternalContent`) took no gate either: it is optional data on the turn and the

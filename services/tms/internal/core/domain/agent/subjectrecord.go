@@ -28,6 +28,7 @@ var subjectRecords = map[SubjectType]subjectRecord{
 	SubjectInboundMessage:      {"imsg_", "inbound message", "an"},
 	SubjectReport:              {"rd_", "report", "a"},
 	SubjectDashboard:           {"rdb_", "dashboard", "a"},
+	SubjectFormulaTemplate:     {"ft_", "formula template", "a"},
 }
 
 var subjectsByPrefix = func() map[string]SubjectType {

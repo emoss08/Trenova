@@ -539,6 +539,7 @@ export type AgentSubjectType =
   | 'DetentionOccurrence'
   | 'Document'
   | 'EDIInboundFile'
+  | 'FormulaTemplate'
   | 'InboundMessage'
   | 'Insight'
   | 'Organization'

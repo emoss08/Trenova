@@ -1,5 +1,4 @@
-import { readEventStream } from "@trenova/shared/lib/sse";
-import { api, withCsrfHeader } from "@trenova/shared/lib/api";
+import { api } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { safeParse } from "@trenova/shared/lib/parse";
 import {
@@ -7,10 +6,7 @@ import {
   type BulkUploadDocumentParams,
   type BulkUploadDocumentResponse,
   type Document,
-  type ImportAssistantChatParams,
-  type ImportAssistantChatResponse,
   type ImportAssistantChatHistoryResponse,
-  importAssistantChatResponseSchema,
   importAssistantChatHistoryResponseSchema,
   type DocumentContent,
   type DocumentPacketSummary,
@@ -28,6 +24,7 @@ import {
   documentUploadSessionSchema,
   documentUploadSessionStateSchema,
 } from "@trenova/shared/types/document";
+import { pageThreadSchema, type PageThread } from "@/types/assistant";
 import { z } from "zod";
 
 export type DocumentContentAction = "download" | "view" | "preview";
@@ -225,105 +222,23 @@ export class DocumentService {
     return response;
   }
 
-  public async chatWithImportAssistantStream(
-    documentId: string,
-    params: ImportAssistantChatParams,
-    handlers: {
-      onTextDelta?: (delta: string) => void;
-      onNewMessage?: () => void;
-      onToolCallStart?: (name: string, callId: string) => void;
-      onToolCallDone?: (
-        name: string,
-        callId: string,
-        status: string,
-        result: string,
-        actions: ImportAssistantChatResponse["actions"],
-      ) => void;
-      onSuggestions?: (suggestions: ImportAssistantChatResponse["suggestions"]) => void;
-      onDone?: (conversationId: string, actions: ImportAssistantChatResponse["actions"]) => void;
-      onError?: (message: string) => void;
-    },
-  ): Promise<void> {
-    const response = await fetch(
-      `${API_BASE_URL}/documents/${documentId}/import-assistant/chat-stream/`,
-      {
-        method: "POST",
-        headers: await withCsrfHeader(
-          "POST",
-          { "Content-Type": "application/json" },
-          `/documents/${documentId}/import-assistant/chat-stream/`,
-        ),
-        body: JSON.stringify(params),
-        credentials: "include",
-      },
+  /**
+   * Opens, or returns, the person's conversation with the import assistant
+   * about this document. Its turns go through the assistant's own routes.
+   */
+  public async openImportAssistantThread(documentId: string): Promise<PageThread> {
+    const response = await api.post<PageThread>(
+      `/documents/${encodeURIComponent(documentId)}/import-assistant/thread/`,
+      {},
     );
-
-    if (!response.ok || !response.body) {
-      handlers.onError?.("Failed to connect to AI assistant");
-      return;
-    }
-
-    await readEventStream(response.body, (message) => {
-      let data: {
-        delta?: string;
-        name?: string;
-        callId?: string;
-        status?: string;
-        result?: string;
-        actions?: ImportAssistantChatResponse["actions"];
-        suggestions?: ImportAssistantChatResponse["suggestions"];
-        conversationId?: string;
-        message?: string;
-      };
-      try {
-        data = message.data === "null" || message.data === "" ? {} : JSON.parse(message.data);
-      } catch {
-        // A malformed frame is skipped rather than ending the stream.
-        return;
-      }
-      switch (message.event) {
-        case "text_delta":
-          handlers.onTextDelta?.(data.delta ?? "");
-          break;
-        case "new_message":
-          handlers.onNewMessage?.();
-          break;
-        case "tool_call_start":
-          handlers.onToolCallStart?.(data.name ?? "", data.callId ?? "");
-          break;
-        case "tool_call_done":
-          handlers.onToolCallDone?.(
-            data.name ?? "",
-            data.callId ?? "",
-            data.status ?? "",
-            data.result ?? "",
-            data.actions ?? [],
-          );
-          break;
-        case "suggestions":
-          handlers.onSuggestions?.(data.suggestions ?? []);
-          break;
-        case "done":
-          handlers.onDone?.(data.conversationId ?? "", data.actions ?? []);
-          break;
-        case "error":
-          handlers.onError?.(data.message ?? "");
-          break;
-      }
-    });
+    return safeParse(pageThreadSchema, response, "Import Assistant Conversation");
   }
 
-  public async chatWithImportAssistant(
-    documentId: string,
-    params: ImportAssistantChatParams,
-  ): Promise<ImportAssistantChatResponse> {
-    const response = await api.post<ImportAssistantChatResponse>(
-      `/documents/${documentId}/import-assistant/chat/`,
-      params,
-    );
-    return safeParse(importAssistantChatResponseSchema, response, "Import Assistant Chat");
-  }
-
+  /**
+   * A conversation from before the import assistant moved onto the shared
+   * runtime, kept readable for one release. Active ones were carried over;
+   * this shows the finished ones.
+   */
   public async getImportAssistantHistory(
     documentId: string,
   ): Promise<ImportAssistantChatHistoryResponse> {

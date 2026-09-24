@@ -261,7 +261,7 @@ func (s *Service) UpdateThread(
 	if req.Pinned != nil {
 		thread.Pinned = *req.Pinned
 	}
-	if req.Keep && !thread.Origin.Listed() {
+	if req.Keep && thread.Origin.Keepable() {
 		thread.Origin = conversation.ThreadOriginDesk
 	}
 

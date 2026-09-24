@@ -3110,6 +3110,24 @@
       "packages/shared/types"
     ]
   },
+  "A formula draft carries no shipment import": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
+    ]
+  },
+  "A formula draft is required for this surface": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
+    ]
+  },
   "A formula template named \"{0}\" already exists": {
     "sites": 1,
     "scope": [
@@ -5071,6 +5089,15 @@
       "go/other"
     ]
   },
+  "A scenario needs a name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/formulaassistantservice"
+    ]
+  },
   "A scenario pins the charge this formula must produce for a known set of inputs. It re-runs on demand and must pass before the template can be approved.": {
     "sites": 1,
     "scope": [
@@ -5287,6 +5314,24 @@
     ],
     "areas": [
       "service/invoicerunservice"
+    ]
+  },
+  "A shipment import draft carries no formula": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
+    ]
+  },
+  "A shipment import draft is required for this surface": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
     ]
   },
   "A shipment invoice must name the shipment it bills": {
@@ -6171,6 +6216,15 @@
       "domain/notification"
     ]
   },
+  "A value must be a number, text or true/false": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/formulaassistantservice"
+    ]
+  },
   "A version is required": {
     "sites": 1,
     "scope": [
@@ -6667,15 +6721,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "AI assistant": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "AI candidate": {
@@ -7587,15 +7632,6 @@
     ],
     "areas": [
       "packages/shared/components"
-    ]
-  },
-  "Accepted: {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "Accepting contributions and accruing interest per 49 CFR 376.12(k).": {
@@ -15625,15 +15661,6 @@
       "routes/agent-control"
     ]
   },
-  "An instruction is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/formulaassistantservice"
-    ]
-  },
   "An insurer has filed a cancellation that takes effect soon.": {
     "sites": 1,
     "scope": [
@@ -19987,13 +20014,14 @@
     ]
   },
   "Assistant": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "apps/web/config"
+      "apps/web/config",
+      "routes/shipment"
     ]
   },
   "Assistant chat": {
@@ -20597,6 +20625,15 @@
     ],
     "areas": [
       "domain/sidebarpreference"
+    ]
+  },
+  "At most {0} scenarios are priced at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/formulaassistantservice"
     ]
   },
   "At most {0} texts can be embedded in one request": {
@@ -22322,33 +22359,6 @@
     "areas": [
       "apps/web/lib",
       "packages/shared/lib"
-    ]
-  },
-  "Available Functions": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/formulaassistantservice"
-    ]
-  },
-  "Available Rate Tables": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/formulaassistantservice"
-    ]
-  },
-  "Available Variables": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/formulaassistantservice"
     ]
   },
   "Available drivers holding no work — click to filter the capacity rail to them.": {
@@ -27392,7 +27402,7 @@
     ]
   },
   "Cancel": {
-    "sites": 253,
+    "sites": 252,
     "scope": [
       "ts"
     ],
@@ -36958,14 +36968,15 @@
     ]
   },
   "Confidence must be between 0 and 1": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/documentcontent",
       "domain/documentshipmentdraft",
-      "domain/inboundmessage"
+      "domain/inboundmessage",
+      "domain/pagedraft"
     ]
   },
   "Confidence must be between {0} and 1": {
@@ -37385,13 +37396,12 @@
     ]
   },
   "Confirm": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/shipment"
+      "routes/admin"
     ]
   },
   "Confirm a rule against the issuing state, or mark it disputed": {
@@ -40224,6 +40234,15 @@
       "routes/fuel-management"
     ]
   },
+  "Could not add “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Could not assign training": {
     "sites": 1,
     "scope": [
@@ -40412,15 +40431,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Could not explain this formula. Try again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Could not export the selected templates. Please try again.": {
@@ -41627,6 +41637,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Create a location": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Create a new journal entry reversal request.": {
     "sites": 1,
     "scope": [
@@ -42546,6 +42565,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "Creating the shipment failed:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Creating...": {
@@ -43967,13 +43995,12 @@
     ]
   },
   "Custom variables": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/formula-template"
+      "apps/web/components"
     ]
   },
   "Customer": {
@@ -47696,6 +47723,15 @@
       "service/customerpaymentservice"
     ]
   },
+  "Default value must be a number, text or true/false": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
+    ]
+  },
   "Default version cannot be longer than 20 characters": {
     "sites": 2,
     "scope": [
@@ -49597,7 +49633,7 @@
       "routes/reports"
     ]
   },
-  "Describe how this template should price a shipment. The generated formula lands in the editor for you to review and test — nothing is saved automatically.": {
+  "Describe how this template should price a shipment, or ask about the formula in the editor. A formula it proposes lands in the editor only when you insert it, and nothing is saved until you save the template.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -51550,15 +51586,6 @@
       "domain/permission"
     ]
   },
-  "Dismiss explanation": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Dismiss for 30 days": {
     "sites": 1,
     "scope": [
@@ -51566,6 +51593,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "Dismiss proposal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Dismiss refresh notification": {
@@ -54021,6 +54057,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Draft change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Draft changes are explicit. Segment, element, and script edits are not sent until Save Draft is clicked.": {
@@ -57103,6 +57148,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Earlier conversation, ended by a re-extraction": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Earlier conversation, finished": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Earlier in this conversation, for reference only": {
@@ -63822,7 +63885,7 @@
       "service/formulatemplateservice"
     ]
   },
-  "Expected amounts were computed by the engine from the generated formula. Scenarios you add will run against the template as you edit it.": {
+  "Expected amounts were computed by the engine from the proposed formula. Scenarios you add will run against the template as you edit it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -64547,15 +64610,6 @@
       "domain/tenant"
     ]
   },
-  "Explain again": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Explain formula": {
     "sites": 1,
     "scope": [
@@ -64599,6 +64653,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Explain what this formula charges, term by term.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
     ]
   },
   "Explain who this package is for and any negotiated terms so future admins know when to apply it.": {
@@ -64682,15 +64745,6 @@
       "routes/insights"
     ]
   },
-  "Explaining this formula...": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Explanation": {
     "sites": 1,
     "scope": [
@@ -64698,6 +64752,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "Explanation cannot exceed {0} characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/formulaassistantservice"
     ]
   },
   "Explicitly toggle integration state for this business unit.": {
@@ -65309,15 +65372,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "Expression To Explain": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/formulaassistantservice"
     ]
   },
   "Expression and rate tables": {
@@ -68196,6 +68250,15 @@
       "routes/admin"
     ]
   },
+  "Field key is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
+    ]
+  },
   "Field key is present in the extraction result.": {
     "sites": 1,
     "scope": [
@@ -68203,6 +68266,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Field key is repeated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
     ]
   },
   "Field mappings": {
@@ -68221,6 +68293,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Field status is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
     ]
   },
   "Field type": {
@@ -70880,13 +70961,15 @@
     ]
   },
   "Formula assistant": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
       "api/handlers",
-      "domain/agentdefinition"
+      "domain/agentdefinition",
+      "routes/formula-template"
     ]
   },
   "Formula explanations": {
@@ -70905,15 +70988,6 @@
     ],
     "areas": [
       "apps/web/lib"
-    ]
-  },
-  "Formula generation failed. Try again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Formula inserted into the editor": {
@@ -70935,13 +71009,15 @@
     ]
   },
   "Formula template": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/billing-queue",
-      "routes/formula-template"
+      "routes/formula-template",
+      "service/agentsubjectservice"
     ]
   },
   "Formula template created": {
@@ -72962,13 +73038,12 @@
     ]
   },
   "Generate": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/formula-template",
       "routes/fuel-management"
     ]
   },
@@ -73051,15 +73126,6 @@
     ],
     "areas": [
       "routes/settlement-workspace"
-    ]
-  },
-  "Generate formula": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Generate from series": {
@@ -73181,15 +73247,6 @@
       "go/other"
     ]
   },
-  "Generate with AI": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Generated": {
     "sites": 8,
     "scope": [
@@ -73274,15 +73331,6 @@
       "go/other"
     ]
   },
-  "Generated expression": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "Generated from billing queue": {
     "sites": 1,
     "scope": [
@@ -73365,12 +73413,11 @@
     ]
   },
   "Generating...": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/formula-template",
       "routes/ifta-return",
       "routes/shipment"
     ]
@@ -75384,6 +75431,33 @@
       "template/tender.offer.email"
     ]
   },
+  "Help me complete this shipment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Help me complete this shipment. The document names the shipper \"{0}\".": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Help me fix these one at a time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Help text for this field": {
     "sites": 1,
     "scope": [
@@ -76720,15 +76794,6 @@
       "routes/fuel-purchase"
     ]
   },
-  "How it works": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
-    ]
-  },
   "How long a permit takes to obtain and how long it lasts": {
     "sites": 1,
     "scope": [
@@ -77980,6 +78045,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "Identifier is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
     ]
   },
   "Identifies the carrier when the safety history request is sent.": {
@@ -80318,15 +80392,6 @@
       "routes/agent-control"
     ]
   },
-  "Instruction cannot exceed {0} characters": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/formulaassistantservice"
-    ]
-  },
   "Instructions": {
     "sites": 2,
     "scope": [
@@ -81319,6 +81384,15 @@
       "api/handlers"
     ]
   },
+  "Invalid formula template ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Invalid fuel index": {
     "sites": 6,
     "scope": [
@@ -81661,7 +81735,7 @@
     ]
   },
   "Invalid request body": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -97532,6 +97606,15 @@
       "routes/reports"
     ]
   },
+  "Name a location category from list_location_categories": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Name a market area contracts can be priced against": {
     "sites": 1,
     "scope": [
@@ -101358,15 +101441,6 @@
       "routes/customer-statement"
     ]
   },
-  "No customers found": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "No daily logs in the last week.": {
     "sites": 1,
     "scope": [
@@ -102466,15 +102540,6 @@
       "routes/shipment"
     ]
   },
-  "No locations found": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "No locations found.": {
     "sites": 1,
     "scope": [
@@ -103507,15 +103572,6 @@
       "apps/web/lib"
     ]
   },
-  "No rating methods found": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "No ratings": {
     "sites": 1,
     "scope": [
@@ -104038,15 +104094,6 @@
       "routes/shipment"
     ]
   },
-  "No service types found": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "No settlement could be generated for this driver": {
     "sites": 1,
     "scope": [
@@ -104146,15 +104193,6 @@
     ],
     "areas": [
       "routes/billing-queue"
-    ]
-  },
-  "No shipment types found": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "No shipment with that id exists": {
@@ -107228,6 +107266,15 @@
       "apps/web/components"
     ]
   },
+  "Nothing was changed. Ask it again if you still want the change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Nothing was changed. Write a rate agreement for it and try again.": {
     "sites": 1,
     "scope": [
@@ -110224,6 +110271,15 @@
     ],
     "areas": [
       "service/workertrainingservice"
+    ]
+  },
+  "Only an import or formula conversation carries a page's draft": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "Only an inactive worker can be rehired": {
@@ -125489,6 +125545,15 @@
       "routes/agent-control"
     ]
   },
+  "Proposed formula": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "Proposed scenarios": {
     "sites": 1,
     "scope": [
@@ -129628,7 +129693,7 @@
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "apps/web/components"
     ]
   },
   "Read outside text": {
@@ -129981,15 +130046,6 @@
     ]
   },
   "Ready to create": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
-  "Ready to create shipment": {
     "sites": 1,
     "scope": [
       "ts"
@@ -133203,15 +133259,6 @@
     ],
     "areas": [
       "domain/documenttemplate"
-    ]
-  },
-  "Reference shipment values like distance, weight, stops, or hazmat.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Reference the clause this policy encodes, so a dispute can cite it.": {
@@ -144255,7 +144302,16 @@
       "routes/shipment"
     ]
   },
-  "Save the template first, then generate again to add these as scenarios.": {
+  "Save the template before adding scenarios": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Save the template first, then add these as scenarios.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -144518,6 +144574,15 @@
     "areas": [
       "domain/worker",
       "packages/shared/types"
+    ]
+  },
+  "Say in plain words what the formula charges": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/formulaassistantservice"
     ]
   },
   "Say what kind of record this is about": {
@@ -144836,6 +144901,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Scenario text is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/formulaassistantservice"
     ]
   },
   "Scenarios": {
@@ -145210,6 +145284,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Schema is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
     ]
   },
   "Schema is required": {
@@ -151401,15 +151484,6 @@
       "template/driverportal.invitation.email"
     ]
   },
-  "Set {0} = {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "Sets the log year the case is numbered in.": {
     "sites": 1,
     "scope": [
@@ -152877,7 +152951,7 @@
     ]
   },
   "Shipment created from rate confirmation": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -157617,7 +157691,7 @@
     ]
   },
   "Start a new conversation": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -157786,15 +157860,6 @@
     ],
     "areas": [
       "routes/fuel-management"
-    ]
-  },
-  "Start over": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Start review": {
@@ -159148,6 +159213,15 @@
       "routes/shipment"
     ]
   },
+  "Stop role is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
+    ]
+  },
   "Stop roles that must appear in the extraction result (e.g. pickup, delivery).": {
     "sites": 1,
     "scope": [
@@ -159538,15 +159612,6 @@
   },
   "Streaming is not supported": {
     "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "api/handlers"
-    ]
-  },
-  "Streaming not supported": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -162372,15 +162437,6 @@
       "routes/admin"
     ]
   },
-  "Template Type": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/formulaassistantservice"
-    ]
-  },
   "Template approved and activated": {
     "sites": 1,
     "scope": [
@@ -162555,6 +162611,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Template type is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
     ]
   },
   "Template validation complete": {
@@ -163739,6 +163804,15 @@
       "domain/worker"
     ]
   },
+  "That is not one of this organization's location categories; use list_location_categories": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "That is not something you can change from the app": {
     "sites": 1,
     "scope": [
@@ -163993,15 +164067,6 @@
     ]
   },
   "The AI provider that started this call no longer exists": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "The AI request timed out. Please try again.": {
     "sites": 1,
     "scope": [
       "go"
@@ -164641,6 +164706,15 @@
       "routes/agent-control"
     ]
   },
+  "The assistant cannot be used here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The assistant could not finish": {
     "sites": 1,
     "scope": [
@@ -164659,13 +164733,22 @@
       "apps/web/components"
     ]
   },
-  "The assistant is still answering the last message about this document.": {
+  "The assistant is not available to you": {
     "sites": 1,
     "scope": [
-      "go"
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "apps/web/components"
+    ]
+  },
+  "The assistant made a change that no longer fits this page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "The assistant proposed a change that could not be saved for approval": {
@@ -167642,13 +167725,13 @@
       "domain/documenttemplate"
     ]
   },
-  "The formula changed since this explanation was written.": {
+  "The formula assistant is not available on this server": {
     "sites": 1,
     "scope": [
-      "ts"
+      "go"
     ],
     "areas": [
-      "routes/formula-template"
+      "api/handlers"
     ]
   },
   "The formula fields no longer apply. Nothing is saved until you save the program — switching the method back undoes this.": {
@@ -167910,6 +167993,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The import assistant is not available on this server": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "The import could not be discarded": {
@@ -172533,6 +172625,15 @@
       "routes/customer"
     ]
   },
+  "The {0} assistant is not available on this server": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "The {0} protocol has no embedding endpoint": {
     "sites": 1,
     "scope": [
@@ -172838,15 +172939,6 @@
     ],
     "areas": [
       "domain/worker"
-    ]
-  },
-  "Thinking": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
     ]
   },
   "Thinking it through": {
@@ -173480,6 +173572,24 @@
       "apps/web/components"
     ]
   },
+  "This conversation has read text from outside your organization, so every change it proposes waits for your approval.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This conversation is about a {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "This conversation is already working on a reply. Wait for it to finish, or stop it first.": {
     "sites": 1,
     "scope": [
@@ -173498,15 +173608,6 @@
       "apps/web/components"
     ]
   },
-  "This conversation is no longer active.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "This conversation is not here": {
     "sites": 1,
     "scope": [
@@ -173516,13 +173617,49 @@
       "routes/desk"
     ]
   },
-  "This conversation was superseded by a re-extraction.": {
+  "This conversation is read-only. Ask the assistant below to continue.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This conversation needs the {0} it is about": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
+  "This conversation takes the page's {0} draft": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
+  "This conversation was closed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This conversation was closed when its {0} changed. Reopen the page to start a new one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "This conversation's artifacts could not be loaded.": {
@@ -174228,15 +174365,6 @@
       "service/rateimportservice"
     ]
   },
-  "This import has been completed.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "This import has no column mapping, so its rows cannot be read again": {
     "sites": 1,
     "scope": [
@@ -174446,6 +174574,15 @@
       "routes/agent-control"
     ]
   },
+  "This is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "This is taking too long": {
     "sites": 1,
     "scope": [
@@ -174471,6 +174608,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "This is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "This item is already settled. Reopen it first": {
@@ -174898,6 +175044,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "This page has no assistant conversation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "This page has no link to open.": {
@@ -177738,6 +177893,15 @@
       "routes/shipment"
     ]
   },
+  "Too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
+    ]
+  },
   "Too many attempts": {
     "sites": 3,
     "scope": [
@@ -177764,6 +177928,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "Too many extracted fields": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
     ]
   },
   "Too many figures": {
@@ -177865,6 +178038,33 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "Too many stops": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
+    ]
+  },
+  "Too many variable values": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/formulaassistantservice"
+    ]
+  },
+  "Too many variables": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
     ]
   },
   "Tool": {
@@ -180442,7 +180642,7 @@
     ]
   },
   "Try again": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "ts"
     ],
@@ -180490,15 +180690,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Try one of these": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "Tue": {
@@ -182175,6 +182366,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "Unknown draft surface": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
     ]
   },
   "Unknown driver type": {
@@ -184238,6 +184438,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Use the two-letter state abbreviation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Use these bands{0}": {
     "sites": 1,
     "scope": [
@@ -184547,15 +184756,6 @@
       "service/invoiceservice"
     ]
   },
-  "User Request": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/formulaassistantservice"
-    ]
-  },
   "User account management": {
     "sites": 1,
     "scope": [
@@ -184786,6 +184986,15 @@
       "routes/edi"
     ]
   },
+  "Using the assistant needs permission to start assistant conversations. An administrator can add it to one of your roles.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Utah (UT)": {
     "sites": 1,
     "scope": [
@@ -184917,7 +185126,16 @@
       "routes/admin"
     ]
   },
-  "Validated against sample data{0}": {
+  "Validated against sample data": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
+  "Validated against sample data — result {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -185242,6 +185460,34 @@
     ],
     "areas": [
       "routes/cost-control"
+    ]
+  },
+  "Variable is repeated": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
+    ]
+  },
+  "Variable name is invalid": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft",
+      "service/formulaassistantservice"
+    ]
+  },
+  "Variable type is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/pagedraft"
     ]
   },
   "Variables": {
@@ -189556,6 +189802,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "What it was about changed since, so it cannot continue. Start a new one to go on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What it was asked": {
@@ -194389,13 +194644,14 @@
     ]
   },
   "You": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "apps/web/components"
+      "apps/web/components",
+      "routes/shipment"
     ]
   },
   "You already have a change waiting on your carrier — withdraw it to ask for something else": {
@@ -194879,6 +195135,15 @@
       "apps/web/components",
       "routes/admin",
       "routes/home"
+    ]
+  },
+  "You no longer have access to the {0} this conversation is about.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "You no longer have access to this agent. An administrator can give one of your roles access to it.": {
@@ -197064,15 +197329,6 @@
     ],
     "areas": [
       "routes/pay-code"
-    ]
-  },
-  "e.g. Charge $2.85 per mile, add a 20% fuel surcharge, and never bill under $350": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "e.g. Chase, Wells Fargo": {
@@ -203333,6 +203589,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "{0} could not be set up because other agents already use its name. Rename the agent called {0} in AI Control and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdefinitionservice"
+    ]
+  },
   "{0} could not process the request": {
     "sites": 1,
     "scope": [
@@ -204395,6 +204660,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} is turned off. An administrator can turn it on in AI Control.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
     ]
   },
   "{0} is {1} and holds the opening balances carried out of {2}. Reopen {3} first.": {
@@ -205766,6 +206040,15 @@
       "routes/formula-template"
     ]
   },
+  "{0} scenarios added": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/formula-template"
+    ]
+  },
   "{0} segments": {
     "sites": 1,
     "scope": [
@@ -206016,13 +206299,12 @@
     ]
   },
   "{0} total": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/edi",
-      "routes/shipment"
+      "routes/edi"
     ]
   },
   "{0} total {1}": {
@@ -208224,15 +208506,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "— result {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/formula-template"
     ]
   },
   "— this would end employment.": {
