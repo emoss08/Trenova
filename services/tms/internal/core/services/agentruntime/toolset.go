@@ -160,7 +160,7 @@ func (s *Service) newToolSet(ctx context.Context, req toolSetRequest) *toolSet {
 	}
 
 	set.disclosed = true
-	set.query = s.vectorize(ctx, req.query)
+	set.query = s.vectorize(ctx, &req.query)
 	for _, descriptor := range s.catalog.RankHybrid(agenttoolcatalog.Query{
 		Allowed:  selected,
 		Text:     rankingText(req.input, req.history),

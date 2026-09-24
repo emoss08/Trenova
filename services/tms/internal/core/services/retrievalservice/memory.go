@@ -111,7 +111,7 @@ func (s *Searcher) memoryQuery(
 		return serviceports.QueryVector{}, reason
 	}
 
-	query, err := s.vectorizer.Vectorize(ctx, serviceports.QueryVectorRequest{
+	query, err := s.vectorizer.Vectorize(ctx, &serviceports.QueryVectorRequest{
 		TenantInfo:  req.TenantInfo,
 		Text:        req.Text,
 		Attribution: req.Attribution,

@@ -119,7 +119,7 @@ func (s *Service) similarities(
 		return nil
 	}
 
-	query, err := s.vectorizer.Vectorize(ctx, serviceports.QueryVectorRequest{
+	query, err := s.vectorizer.Vectorize(ctx, &serviceports.QueryVectorRequest{
 		TenantInfo:  req.TenantInfo,
 		Text:        req.Query,
 		Attribution: req.Attribution,
@@ -133,7 +133,7 @@ func (s *Service) similarities(
 		return nil
 	}
 
-	found, err := s.vectors.Similarities(ctx, serviceports.CatalogSimilarityRequest{
+	found, err := s.vectors.Similarities(ctx, &serviceports.CatalogSimilarityRequest{
 		TenantInfo: req.TenantInfo,
 		Corpus:     airetrieval.CatalogCorpusProductGuide,
 		Items:      s.items,

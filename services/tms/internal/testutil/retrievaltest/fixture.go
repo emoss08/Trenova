@@ -79,7 +79,7 @@ var _ serviceports.QueryVectorizer = FixtureVectorizer{}
 
 func (v FixtureVectorizer) Vectorize(
 	_ context.Context,
-	req serviceports.QueryVectorRequest,
+	req *serviceports.QueryVectorRequest,
 ) (serviceports.QueryVector, error) {
 	vector, ok := v.Fixture.Query(req.Text)
 	if !ok {

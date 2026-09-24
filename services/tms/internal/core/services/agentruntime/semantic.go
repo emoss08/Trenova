@@ -64,14 +64,16 @@ func (s *Service) TurnQueryVector(
 	ctx context.Context,
 	req *serviceports.RunRequest,
 ) serviceports.QueryVector {
-	return s.vectorize(ctx, serviceports.TurnQueryRequest(req))
+	query := serviceports.TurnQueryRequest(req)
+
+	return s.vectorize(ctx, &query)
 }
 
 func (s *Service) vectorize(
 	ctx context.Context,
-	req serviceports.QueryVectorRequest,
+	req *serviceports.QueryVectorRequest,
 ) serviceports.QueryVector {
-	if s.vectorizer == nil || strings.TrimSpace(req.Text) == "" ||
+	if s.vectorizer == nil || req == nil || strings.TrimSpace(req.Text) == "" ||
 		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
 		return serviceports.QueryVector{}
 	}
@@ -99,7 +101,7 @@ func (s *Service) toolSemantic(
 		return nil
 	}
 
-	similarities, err := s.vectors.Similarities(ctx, serviceports.CatalogSimilarityRequest{
+	similarities, err := s.vectors.Similarities(ctx, &serviceports.CatalogSimilarityRequest{
 		TenantInfo: tenant,
 		Corpus:     airetrieval.CatalogCorpusTools,
 		Items:      s.catalog.Items(),

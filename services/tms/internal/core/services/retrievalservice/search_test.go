@@ -28,7 +28,7 @@ type fakeVectorizer struct {
 
 func (f *fakeVectorizer) Vectorize(
 	_ context.Context,
-	req serviceports.QueryVectorRequest,
+	req *serviceports.QueryVectorRequest,
 ) (serviceports.QueryVector, error) {
 	f.texts = append(f.texts, req.Text)
 

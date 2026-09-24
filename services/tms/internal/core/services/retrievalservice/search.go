@@ -181,7 +181,7 @@ func (s *Searcher) vectorLeg(
 		return nil, serviceports.RetrievalSemantics{Reason: airetrieval.UnavailableReasonDisabled}
 	}
 
-	vector, err := s.vectorizer.Vectorize(ctx, serviceports.QueryVectorRequest{
+	vector, err := s.vectorizer.Vectorize(ctx, &serviceports.QueryVectorRequest{
 		TenantInfo:  req.TenantInfo,
 		Text:        plan.query,
 		Attribution: req.Attribution,

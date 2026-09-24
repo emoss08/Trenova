@@ -47,7 +47,7 @@ func (c *Catalog) Items() []serviceports.EmbeddingCatalogItem {
 	return out
 }
 
-func DescriptorText(descriptor serviceports.AgentToolDescriptor) string {
+func DescriptorText(descriptor *serviceports.AgentToolDescriptor) string {
 	var b strings.Builder
 	b.Grow(len(descriptor.Name) + len(descriptor.Description) + 64)
 	b.WriteString(strings.ReplaceAll(descriptor.Name, "_", " "))

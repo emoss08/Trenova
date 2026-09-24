@@ -68,7 +68,7 @@ func New(descriptors []serviceports.AgentToolDescriptor) *Catalog {
 		})
 		catalog.items = append(
 			catalog.items,
-			serviceports.NewEmbeddingCatalogItem(descriptor.Name, DescriptorText(descriptor)),
+			serviceports.NewEmbeddingCatalogItem(descriptor.Name, DescriptorText(&descriptor)),
 		)
 	}
 

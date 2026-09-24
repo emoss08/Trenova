@@ -49,7 +49,7 @@ func (q QueryVector) Usable() bool {
 }
 
 type QueryVectorizer interface {
-	Vectorize(ctx context.Context, req QueryVectorRequest) (QueryVector, error)
+	Vectorize(ctx context.Context, req *QueryVectorRequest) (QueryVector, error)
 	Availability(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
@@ -115,5 +115,5 @@ type CatalogSimilarities struct {
 }
 
 type CatalogVectorIndex interface {
-	Similarities(ctx context.Context, req CatalogSimilarityRequest) (CatalogSimilarities, error)
+	Similarities(ctx context.Context, req *CatalogSimilarityRequest) (CatalogSimilarities, error)
 }
