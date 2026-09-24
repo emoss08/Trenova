@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -279,4 +280,167 @@ func TestRedactedReportsStoredCredentialWithoutExposingIt(t *testing.T) {
 
 	provider.APIKey = "   "
 	assert.False(t, provider.Redacted().HasAPIKey)
+}
+
+func embeddingProviderFixture(dimensions int) *aiprovider.Provider {
+	return &aiprovider.Provider{
+		OrganizationID:      pulid.MustNew("org_"),
+		BusinessUnitID:      pulid.MustNew("bu_"),
+		Name:                "Voyage",
+		Kind:                aiprovider.KindOpenAIChat,
+		BaseURL:             "https://api.voyageai.com/v1",
+		Model:               "voyage-3.5",
+		APIKey:              "pa-test",
+		MaxTokens:           8192,
+		Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+		EmbeddingDimensions: &dimensions,
+		EmbeddingInputStyle: aiprovider.EmbeddingInputStyleVoyageInputType,
+		Enabled:             true,
+	}
+}
+
+func TestValidate_AcceptsAnEmbeddingProvider(t *testing.T) {
+	t.Parallel()
+
+	multiErr := errortypes.NewMultiError()
+	embeddingProviderFixture(1024).Validate(multiErr)
+	require.False(t, multiErr.HasErrors(), "expected no errors, got %v", multiErr.Errors)
+}
+
+func TestValidate_EmbeddingDimensions(t *testing.T) {
+	t.Parallel()
+
+	for _, dims := range aiprovider.AllowedEmbeddingDimensions() {
+		assert.Falsef(t, fieldErrors(t, embeddingProviderFixture(dims))["embeddingDimensions"],
+			"%d is a supported dimension", dims)
+	}
+
+	for _, dims := range []int{0, 384, 3072, -1} {
+		assert.Truef(t, fieldErrors(t, embeddingProviderFixture(dims))["embeddingDimensions"],
+			"%d is not a supported dimension", dims)
+	}
+}
+
+func TestValidate_EmbeddingTaskRequiresDimensions(t *testing.T) {
+	t.Parallel()
+
+	p := embeddingProviderFixture(1024)
+	p.EmbeddingDimensions = nil
+
+	assert.True(t, fieldErrors(t, p)["embeddingDimensions"])
+}
+
+func TestValidate_AnthropicCannotServeEmbedding(t *testing.T) {
+	t.Parallel()
+
+	p := validProvider()
+	dims := 1024
+	p.Tasks = []aiprovider.Task{aiprovider.TaskEmbedding}
+	p.EmbeddingDimensions = &dims
+
+	assert.True(t, fieldErrors(t, p)["tasks[0]"])
+}
+
+func TestValidate_EmbeddingCannotShareAProviderWithTextTasks(t *testing.T) {
+	t.Parallel()
+
+	p := embeddingProviderFixture(1024)
+	p.Tasks = []aiprovider.Task{aiprovider.TaskGeneral, aiprovider.TaskEmbedding}
+
+	assert.True(t, fieldErrors(t, p)["tasks[1]"])
+}
+
+func TestValidate_RejectsAnUnknownInputStyle(t *testing.T) {
+	t.Parallel()
+
+	p := embeddingProviderFixture(1024)
+	p.EmbeddingInputStyle = "Telepathy"
+
+	assert.True(t, fieldErrors(t, p)["embeddingInputStyle"])
+}
+
+func TestValidate_DefaultsTheInputStyle(t *testing.T) {
+	t.Parallel()
+
+	p := validProvider()
+	multiErr := errortypes.NewMultiError()
+	p.Validate(multiErr)
+
+	require.False(t, multiErr.HasErrors(), "expected no errors, got %v", multiErr.Errors)
+	assert.Equal(t, aiprovider.EmbeddingInputStyleNone, p.EmbeddingInputStyle)
+}
+
+func TestKindSupportsEmbedding(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, aiprovider.KindAnthropicMessages.SupportsEmbedding())
+	assert.True(t, aiprovider.KindOpenAIResponses.SupportsEmbedding())
+	assert.True(t, aiprovider.KindOpenAIChat.SupportsEmbedding())
+	assert.True(t, aiprovider.KindOllama.SupportsEmbedding())
+}
+
+func TestCanServeTask_Embedding(t *testing.T) {
+	t.Parallel()
+
+	ok, _ := embeddingProviderFixture(1024).CanServeTask(aiprovider.TaskEmbedding)
+	assert.True(t, ok)
+
+	missing := embeddingProviderFixture(1024)
+	missing.EmbeddingDimensions = nil
+	ok, reason := missing.CanServeTask(aiprovider.TaskEmbedding)
+	assert.False(t, ok)
+	assert.NotEmpty(t, reason)
+
+	anthropic := validProvider()
+	dims := 1024
+	anthropic.Tasks = []aiprovider.Task{aiprovider.TaskEmbedding}
+	anthropic.EmbeddingDimensions = &dims
+	ok, _ = anthropic.CanServeTask(aiprovider.TaskEmbedding)
+	assert.False(t, ok)
+}
+
+func TestEmbeddingModelKey(t *testing.T) {
+	t.Parallel()
+
+	voyage := embeddingProviderFixture(1024)
+	assert.Equal(t, "api.voyageai.com/voyage-3.5@1024", voyage.EmbeddingModelKey())
+
+	sameModelElsewhere := embeddingProviderFixture(1024)
+	sameModelElsewhere.BaseURL = "https://proxy.example.com/v1"
+	assert.NotEqual(t, voyage.EmbeddingModelKey(), sameModelElsewhere.EmbeddingModelKey())
+
+	smaller := embeddingProviderFixture(768)
+	assert.NotEqual(t, voyage.EmbeddingModelKey(), smaller.EmbeddingModelKey())
+
+	defaultHost := &aiprovider.Provider{Kind: aiprovider.KindOllama, Model: "nomic-embed-text"}
+	dims := 768
+	defaultHost.EmbeddingDimensions = &dims
+	assert.Equal(t, "localhost:11434/nomic-embed-text@768", defaultHost.EmbeddingModelKey())
+
+	assert.Empty(t, validProvider().EmbeddingModelKey(), "a text provider has no model key")
+}
+
+func TestCostForTask_PricesEmbeddingOnInputAlone(t *testing.T) {
+	t.Parallel()
+
+	p := embeddingProviderFixture(1024)
+	input := decimal.RequireFromString("0.06")
+	p.InputCostPerMillion = &input
+
+	cost := p.CostForTask(aiprovider.TaskEmbedding, 500_000, 0)
+	require.NotNil(t, cost)
+	assert.True(t, cost.Equal(decimal.RequireFromString("0.03")), cost.String())
+
+	assert.Nil(t, p.CostForTask(aiprovider.TaskGeneral, 500_000, 10),
+		"a text task without an output price has an unknown cost")
+
+	p.InputCostPerMillion = nil
+	assert.Nil(t, p.CostForTask(aiprovider.TaskEmbedding, 500_000, 0))
+}
+
+func TestEmbeddingNeverWritesToTheLedger(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, aiprovider.TaskEmbedding.WritesToLedger())
+	assert.False(t, aiprovider.TaskEmbedding.Generates())
 }

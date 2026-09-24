@@ -20,6 +20,8 @@ const (
 	SurfaceStructured = Surface("Structured")
 	SurfaceBackground = Surface("Background")
 	SurfaceEvaluation = Surface("Evaluation")
+	SurfaceIndexing   = Surface("Indexing")
+	SurfaceRetrieval  = Surface("Retrieval")
 )
 
 // AIUsageRecord is one attempt to have a model answer: which provider, how long it

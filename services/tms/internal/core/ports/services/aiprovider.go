@@ -33,6 +33,8 @@ type SaveAIProviderRequest struct {
 	MaxTokens            int
 	Tasks                []aiprovider.Task
 	Priority             int
+	EmbeddingDimensions  *int
+	EmbeddingInputStyle  aiprovider.EmbeddingInputStyle
 	Trusted              bool
 	Enabled              bool
 	Version              int64

@@ -67,6 +67,8 @@ var ProviderColumns = struct {
 	OutputCostPerMillion Column // "output_cost_per_million" → qualified: "aiprv.output_cost_per_million"
 	Tasks                Column // "tasks" → qualified: "aiprv.tasks"
 	Priority             Column // "priority" → qualified: "aiprv.priority"
+	EmbeddingDimensions  Column // "embedding_dimensions" → qualified: "aiprv.embedding_dimensions"
+	EmbeddingInputStyle  Column // "embedding_input_style" → qualified: "aiprv.embedding_input_style"
 	Trusted              Column // "trusted" → qualified: "aiprv.trusted"
 	Enabled              Column // "enabled" → qualified: "aiprv.enabled"
 	LastTest             Column // "last_test" → qualified: "aiprv.last_test"
@@ -92,6 +94,8 @@ var ProviderColumns = struct {
 	OutputCostPerMillion: NewColumn("output_cost_per_million", "aiprv"),
 	Tasks:                NewColumn("tasks", "aiprv"),
 	Priority:             NewColumn("priority", "aiprv"),
+	EmbeddingDimensions:  NewColumn("embedding_dimensions", "aiprv"),
+	EmbeddingInputStyle:  NewColumn("embedding_input_style", "aiprv"),
 	Trusted:              NewColumn("trusted", "aiprv"),
 	Enabled:              NewColumn("enabled", "aiprv"),
 	LastTest:             NewColumn("last_test", "aiprv"),
@@ -122,6 +126,8 @@ var ProviderFieldMap = map[string]string{
 	"outputCostPerMillion": "output_cost_per_million",
 	"tasks":                "tasks",
 	"priority":             "priority",
+	"embeddingDimensions":  "embedding_dimensions",
+	"embeddingInputStyle":  "embedding_input_style",
 	"trusted":              "trusted",
 	"enabled":              "enabled",
 	"lastTest":             "last_test",
@@ -151,6 +157,8 @@ var ProviderInsertableColumns = []string{
 	"output_cost_per_million",
 	"tasks",
 	"priority",
+	"embedding_dimensions",
+	"embedding_input_style",
 	"trusted",
 	"enabled",
 	"last_test",
@@ -239,6 +247,8 @@ var ProviderFilter = struct {
 	OutputCostPerMillion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputCostPerMillion" → DB: "output_cost_per_million"
 	Tasks                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tasks" → DB: "tasks"
 	Priority             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "priority" → DB: "priority"
+	EmbeddingDimensions  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "embeddingDimensions" → DB: "embedding_dimensions"
+	EmbeddingInputStyle  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "embeddingInputStyle" → DB: "embedding_input_style"
 	Trusted              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "trusted" → DB: "trusted"
 	Enabled              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
 	LastTest             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastTest" → DB: "last_test"
@@ -296,6 +306,12 @@ var ProviderFilter = struct {
 	},
 	Priority: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("priority", op, value)
+	},
+	EmbeddingDimensions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("embeddingDimensions", op, value)
+	},
+	EmbeddingInputStyle: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("embeddingInputStyle", op, value)
 	},
 	Trusted: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("trusted", op, value)

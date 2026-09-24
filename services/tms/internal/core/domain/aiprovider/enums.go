@@ -1,5 +1,7 @@
 package aiprovider
 
+import "slices"
+
 // Kind identifies the wire protocol a provider speaks, not the vendor behind it.
 // Modelling the protocol is what makes the long tail reachable: every runtime that
 // exposes an OpenAI-compatible /chat/completions endpoint — vLLM, SGLang, LM
@@ -52,6 +54,54 @@ func (k Kind) DefaultBaseURL() string {
 // treats the key as optional rather than forcing operators to invent one.
 func (k Kind) RequiresAPIKey() bool {
 	return k == KindAnthropicMessages || k == KindOpenAIResponses
+}
+
+func (k Kind) SupportsEmbedding() bool {
+	switch k {
+	case KindOpenAIResponses, KindOpenAIChat, KindOllama:
+		return true
+	case KindAnthropicMessages:
+		return false
+	default:
+		return false
+	}
+}
+
+type EmbeddingInputStyle string
+
+const (
+	EmbeddingInputStyleNone            = EmbeddingInputStyle("None")
+	EmbeddingInputStyleVoyageInputType = EmbeddingInputStyle("VoyageInputType")
+	EmbeddingInputStyleNomicPrefix     = EmbeddingInputStyle("NomicPrefix")
+)
+
+func (s EmbeddingInputStyle) IsValid() bool {
+	switch s {
+	case EmbeddingInputStyleNone,
+		EmbeddingInputStyleVoyageInputType,
+		EmbeddingInputStyleNomicPrefix:
+		return true
+	default:
+		return false
+	}
+}
+
+func AllEmbeddingInputStyles() []EmbeddingInputStyle {
+	return []EmbeddingInputStyle{
+		EmbeddingInputStyleNone,
+		EmbeddingInputStyleVoyageInputType,
+		EmbeddingInputStyleNomicPrefix,
+	}
+}
+
+var allowedEmbeddingDimensions = [...]int{768, 1024, 1536}
+
+func AllowedEmbeddingDimensions() []int {
+	return slices.Clone(allowedEmbeddingDimensions[:])
+}
+
+func IsAllowedEmbeddingDimension(dimensions int) bool {
+	return slices.Contains(allowedEmbeddingDimensions[:], dimensions)
 }
 
 // StructuredOutputMode describes how far a provider can be trusted to honour a
@@ -138,6 +188,7 @@ const (
 	// a category produces a message for a person, not a new kind of work.
 	TaskInboundClassification = Task("InboundClassification")
 	TaskEvaluationJudge       = Task("EvaluationJudge")
+	TaskEmbedding             = Task("Embedding")
 	TaskGeneral               = Task("General")
 )
 
@@ -154,6 +205,7 @@ func (t Task) IsValid() bool {
 		TaskQueryCompose,
 		TaskInboundClassification,
 		TaskEvaluationJudge,
+		TaskEmbedding,
 		TaskGeneral:
 		return true
 	default:
@@ -175,6 +227,7 @@ func AllTasks() []Task {
 		TaskQueryCompose,
 		TaskInboundClassification,
 		TaskEvaluationJudge,
+		TaskEmbedding,
 		TaskGeneral,
 	}
 }
@@ -184,6 +237,10 @@ func AllTasks() []Task {
 // misconfigured 7B model cannot quietly propose ledger corrections.
 func (t Task) WritesToLedger() bool {
 	return t == TaskBillingDiagnosis
+}
+
+func (t Task) Generates() bool {
+	return t != TaskEmbedding
 }
 
 // ReasoningEffort is how hard a model is asked to think before it answers, and

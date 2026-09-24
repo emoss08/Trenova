@@ -68,6 +68,10 @@ type Service struct {
 }
 
 func New(p Params) serviceports.CompletionService {
+	return newService(p)
+}
+
+func newService(p Params) *Service {
 	return &Service{
 		logger:        p.Logger.Named("service.completion-router"),
 		ai:            p.Config.GetAIConfig(),
@@ -154,31 +158,9 @@ func (s *Service) candidatesFor(
 	ctx context.Context,
 	req *runRequest,
 ) ([]*aiprovider.Provider, error) {
-	candidates, err := s.repo.ListForTask(ctx, repositories.ListAIProvidersForTaskRequest{
-		Task:       req.Task,
-		TenantInfo: req.TenantInfo,
-	})
+	usable, err := s.usableFor(ctx, req.Task, req.TenantInfo)
 	if err != nil {
 		return nil, err
-	}
-
-	usable := make([]*aiprovider.Provider, 0, len(candidates))
-	for _, provider := range candidates {
-		if ok, reason := provider.CanServeTask(req.Task); ok {
-			usable = append(usable, provider)
-		} else {
-			s.logger.Debug("skipping provider for task",
-				zap.String("provider", provider.Name),
-				zap.String("task", string(req.Task)),
-				zap.String("reason", reason),
-			)
-		}
-	}
-
-	if len(usable) == 0 {
-		return nil, errortypes.NewBusinessError(
-			"No AI provider is configured for {0}", string(req.Task),
-		).WithInternal(serviceports.ErrNoProviderConfigured)
 	}
 
 	ready, err := s.awake(usable)
@@ -187,6 +169,41 @@ func (s *Service) candidatesFor(
 	}
 
 	return preferFirst(ready, req.PreferredProviderID), nil
+}
+
+func (s *Service) usableFor(
+	ctx context.Context,
+	task aiprovider.Task,
+	tenant pagination.TenantInfo,
+) ([]*aiprovider.Provider, error) {
+	candidates, err := s.repo.ListForTask(ctx, repositories.ListAIProvidersForTaskRequest{
+		Task:       task,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	usable := make([]*aiprovider.Provider, 0, len(candidates))
+	for _, provider := range candidates {
+		if ok, reason := provider.CanServeTask(task); ok {
+			usable = append(usable, provider)
+		} else {
+			s.logger.Debug("skipping provider for task",
+				zap.String("provider", provider.Name),
+				zap.String("task", string(task)),
+				zap.String("reason", reason),
+			)
+		}
+	}
+
+	if len(usable) == 0 {
+		return nil, errortypes.NewBusinessError(
+			"No AI provider is configured for {0}", string(task),
+		).WithInternal(serviceports.ErrNoProviderConfigured)
+	}
+
+	return usable, nil
 }
 
 // awake drops the providers resting after repeated failures. When every one

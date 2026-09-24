@@ -21,6 +21,12 @@ func TestSamplingForTask_AlwaysNamesBothKnobs(t *testing.T) {
 
 	for _, task := range aiprovider.AllTasks() {
 		sampling := SamplingForTask(task)
+		if !task.Generates() {
+			assert.Nil(t, sampling.Temperature, "%s samples no tokens", task)
+			assert.Nil(t, sampling.TopP, "%s samples no tokens", task)
+
+			continue
+		}
 		require.NotNil(t, sampling.Temperature, task)
 		require.NotNil(t, sampling.TopP, task)
 		assert.Less(t, *sampling.TopP, 1.0, "%s: the tail is never the right token", task)

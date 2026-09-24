@@ -12,6 +12,7 @@ type KindDescriptor struct {
 	RequiresBaseURL            bool                            `json:"requiresBaseUrl"`
 	DefaultStructuredOutput    aiprovider.StructuredOutputMode `json:"defaultStructuredOutputMode"`
 	SupportsStructuredEnforced bool                            `json:"supportsStructuredEnforced"`
+	SupportsEmbedding          bool                            `json:"supportsEmbedding"`
 }
 
 func kindDescriptors() []KindDescriptor {
@@ -24,6 +25,7 @@ func kindDescriptors() []KindDescriptor {
 			RequiresAPIKey:             true,
 			DefaultStructuredOutput:    aiprovider.KindAnthropicMessages.DefaultStructuredOutputMode(),
 			SupportsStructuredEnforced: true,
+			SupportsEmbedding:          aiprovider.KindAnthropicMessages.SupportsEmbedding(),
 		},
 		{
 			Kind:                       aiprovider.KindOpenAIResponses,
@@ -33,6 +35,7 @@ func kindDescriptors() []KindDescriptor {
 			RequiresAPIKey:             true,
 			DefaultStructuredOutput:    aiprovider.KindOpenAIResponses.DefaultStructuredOutputMode(),
 			SupportsStructuredEnforced: true,
+			SupportsEmbedding:          aiprovider.KindOpenAIResponses.SupportsEmbedding(),
 		},
 		{
 			Kind:  aiprovider.KindOpenAIChat,
@@ -43,6 +46,7 @@ func kindDescriptors() []KindDescriptor {
 			RequiresBaseURL:            true,
 			DefaultStructuredOutput:    aiprovider.KindOpenAIChat.DefaultStructuredOutputMode(),
 			SupportsStructuredEnforced: true,
+			SupportsEmbedding:          aiprovider.KindOpenAIChat.SupportsEmbedding(),
 		},
 		{
 			Kind:  aiprovider.KindOllama,
@@ -53,6 +57,7 @@ func kindDescriptors() []KindDescriptor {
 			RequiresAPIKey:             false,
 			DefaultStructuredOutput:    aiprovider.KindOllama.DefaultStructuredOutputMode(),
 			SupportsStructuredEnforced: true,
+			SupportsEmbedding:          aiprovider.KindOllama.SupportsEmbedding(),
 		},
 	}
 }
@@ -72,7 +77,10 @@ type Preset struct {
 	Notes                string                          `json:"notes,omitempty"`
 	// Domain is the vendor's web domain, which is how the UI resolves a brand
 	// logo without shipping one per vendor.
-	Domain string `json:"domain,omitempty"`
+	Domain              string                         `json:"domain,omitempty"`
+	Tasks               []aiprovider.Task              `json:"tasks,omitempty"`
+	EmbeddingDimensions int                            `json:"embeddingDimensions,omitempty"`
+	EmbeddingInputStyle aiprovider.EmbeddingInputStyle `json:"embeddingInputStyle,omitempty"`
 }
 
 // Presets covers the deployments organizations actually reach for. The
@@ -100,6 +108,50 @@ func Presets() []Preset {
 			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
 			RequiresAPIKey:       true,
 			ExampleModel:         "gpt-5-mini",
+		},
+		{
+			Key:                  "openai-embeddings",
+			Domain:               "openai.com",
+			Label:                "OpenAI embeddings",
+			Kind:                 aiprovider.KindOpenAIResponses,
+			BaseURL:              "https://api.openai.com",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			RequiresAPIKey:       true,
+			ExampleModel:         "text-embedding-3-small",
+			Notes:                "Semantic retrieval through OpenAI's embeddings endpoint.",
+			Tasks:                []aiprovider.Task{aiprovider.TaskEmbedding},
+			EmbeddingDimensions:  1536,
+			EmbeddingInputStyle:  aiprovider.EmbeddingInputStyleNone,
+		},
+		{
+			Key:                  "voyage",
+			Domain:               "voyageai.com",
+			Label:                "Voyage AI embeddings",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "https://api.voyageai.com/v1",
+			StructuredOutputMode: aiprovider.StructuredOutputPrompted,
+			RequiresAPIKey:       true,
+			ExampleModel:         "voyage-3.5",
+			Notes: "Retrieval-tuned embeddings. Documents and queries are sent with " +
+				"Voyage's input_type so each is embedded for its side of a search.",
+			Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+			EmbeddingDimensions: 1024,
+			EmbeddingInputStyle: aiprovider.EmbeddingInputStyleVoyageInputType,
+		},
+		{
+			Key:                  "gemini-embeddings",
+			Domain:               "ai.google.dev",
+			Label:                "Gemini embeddings",
+			Kind:                 aiprovider.KindOpenAIChat,
+			BaseURL:              "https://generativelanguage.googleapis.com/v1beta/openai",
+			StructuredOutputMode: aiprovider.StructuredOutputPrompted,
+			RequiresAPIKey:       true,
+			ExampleModel:         "gemini-embedding-001",
+			Notes: "Gemini's OpenAI-compatible endpoint. The model's native size is " +
+				"reduced to the dimension chosen here.",
+			Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+			EmbeddingDimensions: 1536,
+			EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNone,
 		},
 		{
 			Key:                  "openrouter",
@@ -175,6 +227,22 @@ func Presets() []Preset {
 			SelfHosted:           true,
 			ExampleModel:         "qwen3:8b",
 			Notes:                "Runs open-weight models on your own hardware; no data leaves your network.",
+		},
+		{
+			Key:                  "ollama-embeddings",
+			Domain:               "ollama.com",
+			Label:                "Ollama embeddings (self-hosted)",
+			Kind:                 aiprovider.KindOllama,
+			BaseURL:              "http://localhost:11434",
+			StructuredOutputMode: aiprovider.StructuredOutputJSONSchema,
+			AllowPrivateNetwork:  true,
+			SelfHosted:           true,
+			ExampleModel:         "nomic-embed-text",
+			Notes: "Semantic retrieval on your own hardware. nomic-embed-text returns 768 " +
+				"dimensions and expects search_document and search_query prefixes.",
+			Tasks:               []aiprovider.Task{aiprovider.TaskEmbedding},
+			EmbeddingDimensions: 768,
+			EmbeddingInputStyle: aiprovider.EmbeddingInputStyleNomicPrefix,
 		},
 		{
 			Key:                  "vllm",
@@ -320,10 +388,47 @@ func taskDescriptors() []TaskDescriptor {
 				"closely is worth more here than a cheap one.",
 		},
 		{
+			Task:  aiprovider.TaskEmbedding,
+			Label: "Embedding",
+			Description: "Turn memories, documents and mail into vectors so agents can " +
+				"find them by meaning rather than by exact words.",
+			VolumeGuidance: "High volume and cheap: every indexed record is embedded once " +
+				"and every search embeds its question. Needs an embedding model, not a " +
+				"chat model, and a fixed dimension; changing the model re-indexes everything.",
+		},
+		{
 			Task:           aiprovider.TaskGeneral,
 			Label:          "General",
 			Description:    "Anything not routed to a more specific task.",
 			VolumeGuidance: "Fallback pool.",
+		},
+	}
+}
+
+type EmbeddingInputStyleDescriptor struct {
+	Style       aiprovider.EmbeddingInputStyle `json:"style"`
+	Label       string                         `json:"label"`
+	Description string                         `json:"description"`
+}
+
+func embeddingInputStyleDescriptors() []EmbeddingInputStyleDescriptor {
+	return []EmbeddingInputStyleDescriptor{
+		{
+			Style:       aiprovider.EmbeddingInputStyleNone,
+			Label:       "Same for documents and queries",
+			Description: "Documents and search queries are sent as they are.",
+		},
+		{
+			Style: aiprovider.EmbeddingInputStyleVoyageInputType,
+			Label: "Voyage input type",
+			Description: "Sends input_type document or query, and the dimension as " +
+				"output_dimension, the way Voyage's API expects.",
+		},
+		{
+			Style: aiprovider.EmbeddingInputStyleNomicPrefix,
+			Label: "Nomic prefixes",
+			Description: "Prefixes each text with search_document: or search_query:, " +
+				"which nomic-embed-text needs to embed each side of a search correctly.",
 		},
 	}
 }

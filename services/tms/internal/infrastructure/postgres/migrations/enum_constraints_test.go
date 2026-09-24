@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
+	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/stretchr/testify/require"
@@ -116,6 +117,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_agent_suite_runs_trigger",
 			values: stringsOf(agentquality.AllSuiteRunTriggers()),
+		},
+		{
+			name:   "ck_ai_providers_embedding_input_style",
+			values: stringsOf(aiprovider.AllEmbeddingInputStyles()),
 		},
 	}
 

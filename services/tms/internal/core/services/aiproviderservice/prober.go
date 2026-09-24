@@ -53,6 +53,8 @@ func NewProber(p ProberParams) *Prober {
 	}
 }
 
+const embeddingProbeText = "Refrigerated load from Dallas to Chicago, delivery appointment Tuesday"
+
 const (
 	probeSystemPrompt = "You are a configuration test. Follow the output format exactly."
 	probeUserPrompt   = "Reply with the word \"ready\" as the status, and the number 7 as the check."
@@ -88,6 +90,10 @@ func (p *Prober) Probe(
 	provider *aiprovider.Provider,
 	apiKey string,
 ) *services.TestAIProviderResult {
+	if provider.ServesOnlyEmbedding() {
+		return p.probeEmbedding(ctx, provider, apiKey)
+	}
+
 	adapter, err := p.adapters.Get(provider.Kind)
 	if err != nil {
 		return &services.TestAIProviderResult{
@@ -306,4 +312,65 @@ func (p *Prober) clientFor(provider *aiprovider.Provider) *http.Client {
 	p.clients[allowPrivate] = client
 
 	return client
+}
+
+func (p *Prober) probeEmbedding(
+	ctx context.Context,
+	provider *aiprovider.Provider,
+	apiKey string,
+) *services.TestAIProviderResult {
+	embedder, err := p.adapters.Embedder(provider.Kind)
+	if err != nil {
+		return &services.TestAIProviderResult{
+			Success: false,
+			Message: "This provider's protocol has no embedding endpoint",
+			Detail:  err.Error(),
+		}
+	}
+
+	call := &modeladapter.EmbedCall{
+		Provider: provider,
+		APIKey:   apiKey,
+		Client:   p.clientFor(provider),
+		Purpose:  services.EmbeddingPurposeQuery,
+		Inputs:   []string{embeddingProbeText},
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, p.cfg.GetProbeTimeout())
+	defer cancel()
+
+	started := time.Now()
+	resp, err := embedder.Embed(ctx, call)
+	latency := time.Since(started).Milliseconds()
+
+	switch {
+	case err == nil:
+		return &services.TestAIProviderResult{
+			Success:         true,
+			SchemaHonoured:  true,
+			ModelIdentifier: resp.ModelIdentifier,
+			LatencyMS:       latency,
+			Message: fmt.Sprintf(
+				"Connected to %s; it returned %d-dimension embeddings",
+				resp.ModelIdentifier,
+				provider.ResolvedEmbeddingDimensions(),
+			),
+		}
+	case errors.Is(err, services.ErrEmbeddingDimensionMismatch):
+		return &services.TestAIProviderResult{
+			Success:   false,
+			Message:   "Connected, but the model returned a different dimension than configured",
+			LatencyMS: latency,
+			Detail:    err.Error(),
+		}
+	case errors.Is(err, services.ErrEmbeddingResponseInvalid):
+		return &services.TestAIProviderResult{
+			Success:   false,
+			Message:   "Connected, but the reply was not a usable embedding",
+			LatencyMS: latency,
+			Detail:    err.Error(),
+		}
+	default:
+		return p.unreachable(err, latency)
+	}
 }
