@@ -13772,6 +13772,15 @@
       "routes/admin"
     ]
   },
+  "Also found": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Alternative labels the parser will also recognize": {
     "sites": 1,
     "scope": [
@@ -39918,6 +39927,15 @@
     ]
   },
   "Couldn't put that together": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Couldn't reach the web": {
     "sites": 1,
     "scope": [
       "ts"
@@ -101252,6 +101270,15 @@
       "routes/admin"
     ]
   },
+  "No publish date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "No punches in the last two weeks.": {
     "sites": 1,
     "scope": [
@@ -106172,6 +106199,15 @@
       "routes/worker"
     ]
   },
+  "Official source": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Offline": {
     "sites": 1,
     "scope": [
@@ -110244,6 +110280,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Opens in a new tab": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Opens the courses you choose for {0} selected {1}. Anyone who already has a course open keeps the assignment they have.": {
@@ -123756,7 +123801,7 @@
     ]
   },
   "Published {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -126960,6 +127005,15 @@
       "routes/admin"
     ]
   },
+  "Read {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Read {0}.": {
     "sites": 1,
     "scope": [
@@ -127097,6 +127151,15 @@
   },
   "Reading what came back…": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Reading {0}…": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -135974,6 +136037,15 @@
       "routes/desk"
     ]
   },
+  "Retrieved from the web on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Retry": {
     "sites": 19,
     "scope": [
@@ -143244,6 +143316,15 @@
       "apps/web/components"
     ]
   },
+  "Searched the web": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Searching for": {
     "sites": 1,
     "scope": [
@@ -143254,6 +143335,15 @@
     ]
   },
   "Searching records…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Searching the web…": {
     "sites": 1,
     "scope": [
       "ts"
@@ -191651,6 +191741,15 @@
       "apps/web/components"
     ]
   },
+  "a page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "a rate agreement": {
     "sites": 1,
     "scope": [
@@ -197622,6 +197721,15 @@
       "routes/worker"
     ]
   },
+  "{0, plural, one {# source} other {# sources}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# step} other {# steps}}": {
     "sites": 3,
     "scope": [
@@ -197863,6 +197971,33 @@
     ]
   },
   "{0, plural, one {Ran # lookup} other {Ran # lookups}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Read # page} other {Read # pages}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Searched the web # time} other {Searched the web # times}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {Searched the web and read # page} other {Searched the web and read # pages}}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -198882,7 +199017,7 @@
     ]
   },
   "{0} failed": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -200440,6 +200575,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "{0} on {1}, opens in a new tab": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} onboarding step(s) remaining before this partner is production-ready.": {

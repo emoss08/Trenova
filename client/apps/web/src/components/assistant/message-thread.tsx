@@ -43,6 +43,7 @@ import {
   type ModelSwitchNotice as ModelSwitchNoticeValue,
 } from "./model-switch";
 import { StreamingTurn } from "./streaming-turn";
+import { replyWebSources } from "./web-sources";
 import { agentSuggestions, type Suggestion } from "./suggestions";
 import { arrivedSince, highestSequence, withDayMarkers } from "./thread-rows";
 import { composerBlock, shouldSendOpeningQuestion } from "./thread-guard";
@@ -223,6 +224,7 @@ export function MessageThread({
   // A reply of several steps is headed once and timed from its question.
   const placements = useMemo(() => turnPlacements(entries), [entries]);
   const answerIds = useMemo(() => answerMessageIds(entries), [entries]);
+  const sourcesByMessage = useMemo(() => replyWebSources(entries), [entries]);
 
   // A question the assistant asked is settled by whatever the person said next,
   // whether they clicked one of its options or typed something else entirely.
@@ -453,6 +455,8 @@ export function MessageThread({
                 onAnswer={answer}
                 onOpenArtifact={onOpenArtifact}
                 ratable={answerIds.has(entry.message.id)}
+                sources={sourcesByMessage.get(entry.message.id)?.sources}
+                listsSources={sourcesByMessage.get(entry.message.id)?.answer}
               />
             )}
           </div>
@@ -506,6 +510,7 @@ export function MessageThread({
     now,
     onOpenArtifact,
     placements,
+    sourcesByMessage,
     plansByMessage,
     proposalsByMessage,
     providerId,

@@ -13,6 +13,14 @@ import {
 
 export { humanizeKey, recordLabel };
 
+export const WEB_SEARCH_TOOL = "web_search";
+export const WEB_READ_TOOL = "web_read";
+
+/** A tool that brings back pages from the public web through an extension. */
+export function isWebTool(name: string): boolean {
+  return name === WEB_SEARCH_TOOL || name === WEB_READ_TOOL;
+}
+
 /**
  * How a known tool reads to a person. Anything not listed falls back to its
  * humanized name, so a new tool is never shown as an identifier, just less
@@ -117,6 +125,8 @@ const TOOL_TITLES: Record<string, string> = {
   tender_move_to_carriers: "Tender to carriers",
   update_tractor_status: "Change tractor status",
   update_trailer_status: "Change trailer status",
+  web_search: "Search the web",
+  web_read: "Read a web page",
   approve_worker_pto: "Approve time off",
   reject_worker_pto: "Decline time off",
   cancel_worker_pto: "Cancel time off",

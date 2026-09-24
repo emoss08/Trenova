@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   partOfDay,
   daysUntil,
+  formatISODateMedium,
   formatUnixDate,
   formatUnixDateMedium,
   formatUnixDateTime,
@@ -574,5 +575,19 @@ describe("partOfDay", () => {
     expect(partOfDay(17)).toBe("afternoon");
     expect(partOfDay(18)).toBe("evening");
     expect(partOfDay(23)).toBe("evening");
+  });
+});
+
+describe("formatISODateMedium", () => {
+  it("formats a calendar day as that day, whatever the timezone", () => {
+    expect(formatISODateMedium("2023-10-02")).toBe(
+      new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(2023, 9, 2)),
+    );
+  });
+
+  it("falls back on a value that is not a calendar day", () => {
+    expect(formatISODateMedium("")).toBe("");
+    expect(formatISODateMedium("2023-02-30", "No date")).toBe("No date");
+    expect(formatISODateMedium("2023-10-02T00:00:00Z", "No date")).toBe("No date");
   });
 });

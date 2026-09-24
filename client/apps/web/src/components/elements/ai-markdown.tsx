@@ -1,7 +1,7 @@
 import { isAppPath } from "@/lib/app-path";
 import { ShikiCodeBlock } from "@trenova/shared/components/ui/shiki-code-block";
 import { cn } from "@trenova/shared/lib/utils";
-import { Children, memo, type ComponentProps, type ReactNode } from "react";
+import { Children, createContext, memo, use, type ComponentProps, type ReactNode } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import { Link, useInRouterContext } from "react-router";
 import remarkGfm from "remark-gfm";
@@ -58,14 +58,29 @@ const LINK_CLASS = "text-foreground underline underline-offset-2";
  * person in their session; anything else opens in a new tab. An unsafe
  * scheme never gets here: react-markdown empties it first.
  */
+/**
+ * Draws a link the surrounding surface knows more about than its address,
+ * such as a web page the agent searched, or returns null to leave it a plain
+ * link. The renderer only ever sees links to the web, never an app path.
+ */
+export type MarkdownLinkRenderer = (href: string, children: ReactNode) => ReactNode | null;
+
+export const MarkdownLinkContext = createContext<MarkdownLinkRenderer | null>(null);
+
 function MarkdownLink({ href, children }: ComponentProps<"a">) {
   const inRouter = useInRouterContext();
+  const renderLink = use(MarkdownLinkContext);
   if (inRouter && isAppPath(href)) {
     return (
       <Link to={href} className={LINK_CLASS}>
         {children}
       </Link>
     );
+  }
+
+  const known = renderLink && href ? renderLink(href, children) : null;
+  if (known) {
+    return known;
   }
 
   return (

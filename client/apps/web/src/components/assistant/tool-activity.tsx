@@ -21,6 +21,7 @@ import {
   FileTextIcon,
   ForwardIcon,
   GitCompareArrowsIcon,
+  GlobeIcon,
   MessageCircleQuestionIcon,
   PenLineIcon,
   PresentationIcon,
@@ -47,10 +48,14 @@ import {
   type ParsedToolResult,
   type ReadableEntry,
   type ReadableValue,
+  WEB_READ_TOOL,
+  WEB_SEARCH_TOOL,
 } from "./tool-presentation";
 import { DelegateStep } from "./delegate-step";
 import { DisplayValue } from "./display-value";
 import { WorkingDot } from "./voice/working-dot";
+import { WebSourceList } from "./web-citations";
+import { sourcesOfStep } from "./web-sources";
 
 export type { ToolActivityStatus, ToolStep } from "./activity";
 
@@ -71,6 +76,8 @@ const NAMED_ICONS: Readonly<Record<string, LucideIcon>> = {
   publish_artifact: ScrollTextIcon,
   compose_table_view: TableIcon,
   compare_report_runs: GitCompareArrowsIcon,
+  [WEB_SEARCH_TOOL]: GlobeIcon,
+  [WEB_READ_TOOL]: GlobeIcon,
 };
 
 function iconFor(group: ActivityGroup): LucideIcon {
@@ -326,6 +333,7 @@ function StepDetails({ step }: { step: ToolStep }) {
     () => (step.status === "running" || step.content === "" ? null : parseToolResult(step.content)),
     [step.status, step.content],
   );
+  const pages = useMemo(() => sourcesOfStep(step), [step]);
 
   return (
     <div className="flex min-w-0 flex-col gap-2.5 text-xs">
@@ -340,7 +348,11 @@ function StepDetails({ step }: { step: ToolStep }) {
         <h4 className="text-foreground-subtle font-medium">
           {step.status === "proposed" ? t("Outcome") : t("Got back")}
         </h4>
-        <ResultBody status={step.status} result={result} />
+        {pages.length > 0 ? (
+          <WebSourceList sources={pages} />
+        ) : (
+          <ResultBody status={step.status} result={result} />
+        )}
       </section>
 
       <div className="flex flex-col gap-1.5">

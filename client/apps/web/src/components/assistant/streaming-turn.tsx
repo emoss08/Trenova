@@ -22,6 +22,8 @@ import { ReportRunCard } from "./report-run-card";
 import { reportRunsFromSteps } from "./report-runs";
 import { ToolActivity } from "./tool-activity";
 import { isTurnActive, type TurnState } from "./turn-stream";
+import { SourcesFooter } from "./web-citations";
+import { webSourcesOf } from "./web-sources";
 import { thinkingPose } from "./voice/desk-pose";
 import { DeskThinking, useThinkingPresence } from "./voice/desk-thinking";
 
@@ -54,6 +56,11 @@ export function StreamingTurn({
   const asks = askRequestsFromSteps(steps);
   const reportRuns = reportRunsFromSteps(steps);
   const active = isTurnActive(turn);
+  const answer = useMemo(
+    () => turn.segments.map((segment) => (segment.kind === "text" ? segment.text : "")).join("\n"),
+    [turn.segments],
+  );
+  const sources = useMemo(() => webSourcesOf(steps, answer), [steps, answer]);
 
   const hasBody = turn.segments.length > 0;
   const showFrame = hasBody || active;
@@ -95,12 +102,14 @@ export function StreamingTurn({
                   <AssistantProse
                     content={group.text}
                     streaming={!group.closed && turn.status === "streaming"}
+                    sources={sources}
                   />
                 </div>
               );
             }
             return <ToolActivity key={`tools-${group.steps[0].id}`} steps={group.steps} live />;
           })}
+          {!active && answer !== "" && <SourcesFooter sources={sources} />}
           {reportRuns.map((run) => (
             <ReportRunCard key={run.runId} run={run} />
           ))}

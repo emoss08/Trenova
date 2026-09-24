@@ -46,6 +46,8 @@ import { ReportRunCard } from "./report-run-card";
 import { reportRunsFrom } from "./report-runs";
 import { decisionHeadline, type ThreadEntry, type TurnPlacement } from "./thread-view";
 import { ToolActivity } from "./tool-activity";
+import { CitationProvider, SourcesFooter } from "./web-citations";
+import type { WebSource } from "./web-sources";
 
 const TIME_FORMAT = { hour: "numeric", minute: "2-digit" } as const;
 
@@ -301,13 +303,18 @@ export function AssistantTurn({
 export function AssistantProse({
   content,
   streaming = false,
+  sources = NO_SOURCES,
 }: {
   content: string;
   streaming?: boolean;
+  /** The web pages the reply drew on; links to them are drawn as citations. */
+  sources?: readonly WebSource[];
 }) {
   return (
     <div className="min-w-0 text-sm leading-relaxed">
-      <AiMarkdown content={content} />
+      <CitationProvider sources={sources}>
+        <AiMarkdown content={content} />
+      </CitationProvider>
       {streaming && (
         <span
           aria-hidden
@@ -317,6 +324,8 @@ export function AssistantProse({
     </div>
   );
 }
+
+const NO_SOURCES: readonly WebSource[] = [];
 
 async function copyText(text: string) {
   await navigator.clipboard.writeText(text);
@@ -437,8 +446,14 @@ export function AssistantEntry({
   onAnswer,
   onOpenArtifact,
   ratable = false,
+  sources = NO_SOURCES,
+  listsSources = false,
 }: {
   entry: Extract<ThreadEntry, { kind: "assistant" }>;
+  /** The web pages this reply found up to this step, cited or not. */
+  sources?: readonly WebSource[];
+  /** This step is the reply's answer, and lists the sources under it. */
+  listsSources?: boolean;
   /** Where this step sits in its reply; the first step carries the header. */
   placement?: TurnPlacement;
   proposals: AssistantProposal[];
@@ -495,7 +510,8 @@ export function AssistantEntry({
       {artifacts.length > 0 && onOpenArtifact && (
         <ArtifactChips artifacts={artifacts} onOpen={onOpenArtifact} />
       )}
-      {message.content !== "" && <AssistantProse content={message.content} />}
+      {message.content !== "" && <AssistantProse content={message.content} sources={sources} />}
+      {listsSources && <SourcesFooter sources={sources} />}
       {reportRuns.map((run) => (
         <ReportRunCard key={run.runId} run={run} />
       ))}

@@ -86,7 +86,8 @@ func TestWebSearchReturnsSourcesTheModelCanCite(t *testing.T) {
 	assert.Equal(t, webSourceOfficial, answer.Results[0].Source)
 	assert.Equal(t, webSourceWeb, answer.Results[1].Source)
 	assert.Equal(t, "abcdEFGH12345678", answer.Results[0].Ref)
-	assert.Contains(t, answer.Note, "[title](url)")
+	assert.Contains(t, answer.Note, "[fmcsa.dot.gov](url)")
+	assert.Contains(t, answer.Note, "do not add titles, dates or a list of sources")
 	assert.Contains(t, answer.Note, "untrusted")
 }
 
@@ -159,6 +160,7 @@ func TestWebReadPassesTheRefAndSaysWhetherThePageContinues(t *testing.T) {
 	assert.Equal(t, webSourceOfficial, answer.Source)
 	assert.Equal(t, 2, answer.Part)
 	assert.Contains(t, answer.Note, "part set to the next number")
+	assert.Contains(t, answer.Note, "[fmcsa.dot.gov](url)")
 }
 
 func TestWebReadNeedsAURLAndARef(t *testing.T) {

@@ -325,6 +325,20 @@ export function fromISODateString(value: string): Date | null {
   return date;
 }
 
+/**
+ * A `YYYY-MM-DD` calendar date in the reader's language, medium length
+ * ("Oct 2, 2023"). A calendar date has no instant, so no timezone moves it;
+ * an invalid one comes back as the fallback.
+ */
+export function formatISODateMedium(value: string, fallback = ""): string {
+  const date = fromISODateString(value);
+  if (!date) {
+    return fallback;
+  }
+
+  return new Intl.DateTimeFormat(intlLocale(), { dateStyle: "medium" }).format(date);
+}
+
 export function isValidDateOnlyFormat(dateString: string): boolean {
   if (!dateString || typeof dateString !== "string") {
     return false;

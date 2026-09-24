@@ -378,3 +378,75 @@ describe("stepsFromExchanges", () => {
     expect(only.durationSeconds).toBeNull();
   });
 });
+
+/**
+ * Going to the web is said as such — what was searched for and which sites
+ * were read — so a reader can tell an answer came from outside Trenova
+ * before reading it.
+ */
+describe("web activity", () => {
+  const read = (url: string, status: ToolStep["status"] = "done") =>
+    step({ name: "web_read", effect: "lookup", arguments: { url, ref: "r" }, status });
+  const search = (query: string, status: ToolStep["status"] = "done") =>
+    step({ name: "web_search", effect: "lookup", arguments: { query }, status });
+
+  it("says a search is under way and what it is for", () => {
+    expect(line([search("ELD mandate", "running")])).toMatchObject({
+      phrase: "Searching the web…",
+      detail: "ELD mandate",
+      state: "running",
+    });
+  });
+
+  it("names the site being read", () => {
+    expect(
+      line([search("ELD mandate"), read("https://www.fmcsa.dot.gov/x", "running")]),
+    ).toMatchObject({
+      phrase: "Reading fmcsa.dot.gov…",
+      state: "running",
+    });
+  });
+
+  it("says what was searched and read once it is done", () => {
+    expect(line([search("ELD mandate")])).toMatchObject({
+      phrase: "Searched the web",
+      detail: "ELD mandate",
+      state: "done",
+    });
+    expect(line([search("ELD mandate"), search("ELD exemptions")])).toMatchObject({
+      phrase: "Searched the web 2 times",
+      detail: "ELD mandate, ELD exemptions",
+    });
+    expect(line([search("ELD mandate"), read("https://ecfr.gov/a")])).toMatchObject({
+      phrase: "Searched the web and read 1 page",
+      detail: "ELD mandate",
+    });
+    expect(line([read("https://ecfr.gov/a")])).toMatchObject({ phrase: "Read ecfr.gov" });
+  });
+
+  it("says the web could not be reached, with why", () => {
+    expect(
+      line([
+        step({
+          name: "web_search",
+          effect: "lookup",
+          status: "failed",
+          content: 'Tool "web_search" failed: the monthly search budget is spent',
+        }),
+      ]),
+    ).toMatchObject({
+      phrase: "Couldn't reach the web",
+      detail: "the monthly search budget is spent",
+      state: "failed",
+    });
+  });
+
+  it("keeps a web search apart from the lookups in Trenova beside it", () => {
+    const groups = groupActivity([
+      step({ name: "list_customers", effect: "lookup" }),
+      search("ELD mandate"),
+    ]);
+
+    expect(groups).toHaveLength(2);
+  });
+});

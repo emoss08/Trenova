@@ -1,7 +1,7 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { AssistantMessage, DelegateReport, ToolEffect } from "@/types/assistant";
 import type { ToolExchange } from "./thread-view";
-import { describeToolCall, parseToolResult } from "./tool-presentation";
+import { describeToolCall, isWebTool, parseToolResult, WEB_READ_TOOL } from "./tool-presentation";
 import {
   DELEGATE_TOOL,
   emptyDelegateProgress,
@@ -208,6 +208,11 @@ export type ActivityGroup = {
 
 function foldsWith(previous: ToolStep, next: ToolStep): boolean {
   if (previous.effect !== next.effect) {
+    return false;
+  }
+  // Going to the web is its own piece of work: a search beside a shipment
+  // lookup is not "two lookups", and the reader should see which it was.
+  if (isWebTool(previous.name) !== isWebTool(next.name)) {
     return false;
   }
   if (next.effect === "lookup") {
@@ -652,6 +657,9 @@ function delegateLine(step: ToolStep, t: TranslateFn): ActivityLine {
 /** One line for a group: what happened, by what kind of thing happened. */
 export function describeActivity(group: ActivityGroup, t: TranslateFn): ActivityLine {
   const step = group.steps[0];
+  if (group.steps.every((entry) => isWebTool(entry.name))) {
+    return webLine(group, t);
+  }
   switch (group.effect) {
     case "lookup":
       return lookupLine(group, t);
@@ -668,6 +676,96 @@ export function describeActivity(group: ActivityGroup, t: TranslateFn): Activity
     default:
       return changeLine(step, t);
   }
+}
+
+function webSite(step: ToolStep): string {
+  const url = typeof step.arguments?.url === "string" ? step.arguments.url : "";
+  try {
+    return new URL(url).hostname.replace(/^www\./u, "");
+  } catch {
+    return "";
+  }
+}
+
+function webQuery(step: ToolStep): string {
+  return typeof step.arguments?.query === "string" ? step.arguments.query.trim() : "";
+}
+
+/**
+ * Going to the web, in the words a person would use: what was searched for
+ * and which sites were read, so an answer built from the web says so before
+ * the reader gets to it.
+ */
+function webLine(group: ActivityGroup, t: TranslateFn): ActivityLine {
+  const running = group.steps.filter((step) => step.status === "running");
+  const failed = group.steps.filter((step) => step.status === "failed");
+  const settled = group.steps.filter(
+    (step) => step.status !== "running" && step.status !== "failed",
+  );
+  const failure =
+    failed.length > 0 && settled.length + running.length > 0 ? t("{0} failed", failed.length) : "";
+
+  if (running.length > 0) {
+    const current = running.at(-1)!;
+    return current.name === WEB_READ_TOOL
+      ? {
+          phrase: t("Reading {0}…", webSite(current) || t("a page")),
+          detail: "",
+          failure,
+          state: "running",
+        }
+      : { phrase: t("Searching the web…"), detail: webQuery(current), failure, state: "running" };
+  }
+
+  if (settled.length === 0) {
+    return {
+      phrase: t("Couldn't reach the web"),
+      detail: failureMessage(failed[0]),
+      failure: "",
+      state: "failed",
+    };
+  }
+
+  const searches = settled.filter((step) => step.name !== WEB_READ_TOOL);
+  const reads = settled.filter((step) => step.name === WEB_READ_TOOL);
+  const sites = joinNames([...new Set(reads.map(webSite).filter((site) => site !== ""))]);
+
+  if (searches.length === 0) {
+    return reads.length === 1 && sites !== ""
+      ? { phrase: t("Read {0}", sites), detail: "", failure, state: "done" }
+      : {
+          phrase: t("{0, plural, one {Read # page} other {Read # pages}}", reads.length),
+          detail: sites,
+          failure,
+          state: "done",
+        };
+  }
+
+  const queries = joinNames(searches.map(webQuery).filter((query) => query !== ""));
+  if (reads.length === 0) {
+    return {
+      phrase:
+        searches.length === 1
+          ? t("Searched the web")
+          : t(
+              "{0, plural, one {Searched the web # time} other {Searched the web # times}}",
+              searches.length,
+            ),
+      detail: queries,
+      failure,
+      state: "done",
+    };
+  }
+
+  return {
+    phrase: t(
+      "{0, plural, one {Searched the web and read # page} other {Searched the web and read # pages}}",
+      reads.length,
+    ),
+    detail: queries,
+    failure,
+    state: "done",
+  };
 }
 
 /**

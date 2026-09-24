@@ -72,6 +72,24 @@ result carries a `ref`, an HMAC of the tenant and the URL keyed from the organiz
 and a read with any other URL or ref is refused. The model cannot construct an address to send
 data to.
 
+## Sources in the reply
+
+The client reads the pages a reply drew on from the saved `web_search` and `web_read` results,
+not from the model's prose (`components/assistant/web-sources.ts`). The model is told to cite by
+linking a page with its site as the link text and to add no titles, dates or source list of its
+own (`webCitationGuidance`), because the client supplies them:
+
+- A link in the answer whose address matches a result is drawn as a citation chip naming the
+  site, with the title, publish date, whether it is official and the passage in a hover card.
+  `AiMarkdown` asks `MarkdownLinkContext` how to draw a web link, so the renderer stays unaware
+  of the assistant. A link to an address no search returned stays a plain link: it is not a
+  source.
+- The reply's answer carries a closed "N sources" line listing cited pages first, then what
+  the search also found. A reply saved as several steps searches in one step and answers in a
+  later one, so the pages are gathered across the reply (`replyWebSources`).
+- The activity line says "Searched the web" with the query and "Read {site}" for a page, and a
+  web call never folds into the lookups in Trenova beside it.
+
 ## Metering
 
 Every request reserves one unit of the organization's daily limit before it is sent
