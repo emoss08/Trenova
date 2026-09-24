@@ -494,6 +494,35 @@ type AgentToolPolicy struct {
 	Explanation string `json:"explanation"`
 }
 
+type AgentToolPolicyConnection struct {
+	Edges    []*AgentToolPolicyEdge `json:"edges"`
+	PageInfo *PageInfo              `json:"pageInfo"`
+	// Every tool matching the filters. Counted only when selected.
+	TotalCount *int `json:"totalCount,omitempty"`
+}
+
+// Narrows the tool rules. A filter left out matches every tool; the rules come
+// back ordered by tool name.
+type AgentToolPolicyConnectionInput struct {
+	First *int    `json:"first,omitempty"`
+	After *string `json:"after,omitempty"`
+	// Matched against the tool's name and title, ignoring case.
+	Query *string `json:"query,omitempty"`
+	// Tools some of whose work reaches this class.
+	Egress *agent.EgressClass `json:"egress,omitempty"`
+	// The permission resource the tool needs; general for a tool that needs no grant.
+	Resource *string         `json:"resource,omitempty"`
+	Kind     *agent.ToolKind `json:"kind,omitempty"`
+	// True keeps the tools that change something and, on at least one agent, can do
+	// so without a person; false keeps every other tool.
+	RunsWithoutPerson *bool `json:"runsWithoutPerson,omitempty"`
+}
+
+type AgentToolPolicyEdge struct {
+	Node   *AgentToolPolicy `json:"node"`
+	Cursor string           `json:"cursor"`
+}
+
 // The permission a person needs of their own to use a tool through an agent.
 type AgentToolRequirement struct {
 	Resource  string `json:"resource"`

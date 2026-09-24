@@ -165,6 +165,8 @@ func TestAgentSafetyResolversAreAuthorized(t *testing.T) {
 
 	for _, key := range []string{
 		"queryResolver.AgentToolPolicies",
+		"queryResolver.AgentToolPolicyConnection",
+		"queryResolver.AgentSafetySummary",
 		"queryResolver.AgentSafety",
 	} {
 		verdict, ok := verdicts[key]

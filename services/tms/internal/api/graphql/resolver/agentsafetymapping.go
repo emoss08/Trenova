@@ -72,6 +72,72 @@ func toolPolicyViewToModel(view *services.AgentToolPolicyView) *gqlmodel.AgentTo
 	return out
 }
 
+func toolPolicyConnectionRequest(
+	input *gqlmodel.AgentToolPolicyConnectionInput,
+) *services.ListAgentToolPoliciesRequest {
+	req := &services.ListAgentToolPoliciesRequest{
+		RunsWithoutPerson: input.RunsWithoutPerson,
+	}
+	if input.First != nil {
+		req.First = *input.First
+	}
+	if input.After != nil {
+		req.After = *input.After
+	}
+	if input.Query != nil {
+		req.Query = *input.Query
+	}
+	if input.Egress != nil {
+		req.Egress = *input.Egress
+	}
+	if input.Resource != nil {
+		req.Resource = *input.Resource
+	}
+	if input.Kind != nil {
+		req.Kind = *input.Kind
+	}
+
+	return req
+}
+
+func toolPolicyPageToModel(
+	page *services.AgentToolPolicyPage,
+) *gqlmodel.AgentToolPolicyConnection {
+	out := &gqlmodel.AgentToolPolicyConnection{
+		Edges:      make([]*gqlmodel.AgentToolPolicyEdge, 0, len(page.Edges)),
+		PageInfo:   &gqlmodel.PageInfo{HasNextPage: page.HasNextPage},
+		TotalCount: page.TotalCount,
+	}
+	for idx := range page.Edges {
+		edge := &page.Edges[idx]
+		out.Edges = append(out.Edges, &gqlmodel.AgentToolPolicyEdge{
+			Node:   toolPolicyViewToModel(&edge.View),
+			Cursor: edge.Cursor,
+		})
+	}
+	if count := len(out.Edges); count > 0 {
+		endCursor := out.Edges[count-1].Cursor
+		out.PageInfo.EndCursor = &endCursor
+	}
+
+	return out
+}
+
+func (r *Resolver) agentToolSafetyPolicy(
+	obj *services.AgentToolSafety,
+) (*gqlmodel.AgentToolPolicy, error) {
+	if obj == nil {
+		return nil, errortypes.NewNotFoundError("Tool not found")
+	}
+
+	view, ok := r.agentSafetyService.ToolPolicy(obj.PolicyName)
+	if !ok {
+		return nil, errortypes.NewNotFoundError("Tool policy not found")
+	}
+
+	return toolPolicyViewToModel(&view), nil
+}
+
 func tierOr(tier, fallback agent.AutonomyTier) agent.AutonomyTier {
 	if tier.IsValid() {
 		return tier

@@ -45,6 +45,7 @@ type ResolverRoot interface {
 	AgentRun() AgentRunResolver
 	AgentRunEvent() AgentRunEventResolver
 	AgentSafety() AgentSafetyResolver
+	AgentToolSafety() AgentToolSafetyResolver
 	ApiKey() ApiKeyResolver
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
@@ -1107,6 +1108,14 @@ type ComplexityRoot struct {
 		Tools              func(childComplexity int) int
 	}
 
+	AgentSafetySummary struct {
+		LeaveOrganization func(childComplexity int) int
+		OpenWithSensitive func(childComplexity int) int
+		Resources         func(childComplexity int) int
+		RunWithoutPerson  func(childComplexity int) int
+		ToolCount         func(childComplexity int) int
+	}
+
 	AgentScorecard struct {
 		AgentDefinitionID     func(childComplexity int) int
 		ApprovalRate          func(childComplexity int) int
@@ -1189,6 +1198,17 @@ type ComplexityRoot struct {
 		Title                func(childComplexity int) int
 	}
 
+	AgentToolPolicyConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AgentToolPolicyEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	AgentToolRequirement struct {
 		Operation func(childComplexity int) int
 		Resource  func(childComplexity int) int
@@ -1196,6 +1216,7 @@ type ComplexityRoot struct {
 
 	AgentToolSafety struct {
 		Clean      func(childComplexity int) int
+		Policy     func(childComplexity int) int
 		PolicyName func(childComplexity int) int
 		Tainted    func(childComplexity int) int
 	}
@@ -7893,8 +7914,10 @@ type ComplexityRoot struct {
 		AgentRunEvents                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentRuns                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentSafety                         func(childComplexity int, agentIds []string) int
+		AgentSafetySummary                  func(childComplexity int) int
 		AgentScorecard                      func(childComplexity int, input gqlmodel.AgentScorecardInput) int
 		AgentToolPolicies                   func(childComplexity int) int
+		AgentToolPolicyConnection           func(childComplexity int, input gqlmodel.AgentToolPolicyConnectionInput) int
 		AiFeedback                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AiProvider                          func(childComplexity int, id string) int
 		AiProviders                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
@@ -16138,6 +16161,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentSafety.Tools(childComplexity), true
 
+	case "AgentSafetySummary.leaveOrganization":
+		if e.ComplexityRoot.AgentSafetySummary.LeaveOrganization == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSafetySummary.LeaveOrganization(childComplexity), true
+	case "AgentSafetySummary.openWithSensitive":
+		if e.ComplexityRoot.AgentSafetySummary.OpenWithSensitive == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSafetySummary.OpenWithSensitive(childComplexity), true
+	case "AgentSafetySummary.resources":
+		if e.ComplexityRoot.AgentSafetySummary.Resources == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSafetySummary.Resources(childComplexity), true
+	case "AgentSafetySummary.runWithoutPerson":
+		if e.ComplexityRoot.AgentSafetySummary.RunWithoutPerson == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSafetySummary.RunWithoutPerson(childComplexity), true
+	case "AgentSafetySummary.toolCount":
+		if e.ComplexityRoot.AgentSafetySummary.ToolCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSafetySummary.ToolCount(childComplexity), true
+
 	case "AgentScorecard.agentDefinitionId":
 		if e.ComplexityRoot.AgentScorecard.AgentDefinitionID == nil {
 			break
@@ -16528,6 +16582,38 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentToolPolicy.Title(childComplexity), true
 
+	case "AgentToolPolicyConnection.edges":
+		if e.ComplexityRoot.AgentToolPolicyConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicyConnection.Edges(childComplexity), true
+	case "AgentToolPolicyConnection.pageInfo":
+		if e.ComplexityRoot.AgentToolPolicyConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicyConnection.PageInfo(childComplexity), true
+	case "AgentToolPolicyConnection.totalCount":
+		if e.ComplexityRoot.AgentToolPolicyConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicyConnection.TotalCount(childComplexity), true
+
+	case "AgentToolPolicyEdge.cursor":
+		if e.ComplexityRoot.AgentToolPolicyEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicyEdge.Cursor(childComplexity), true
+	case "AgentToolPolicyEdge.node":
+		if e.ComplexityRoot.AgentToolPolicyEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicyEdge.Node(childComplexity), true
+
 	case "AgentToolRequirement.operation":
 		if e.ComplexityRoot.AgentToolRequirement.Operation == nil {
 			break
@@ -16547,6 +16633,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentToolSafety.Clean(childComplexity), true
+	case "AgentToolSafety.policy":
+		if e.ComplexityRoot.AgentToolSafety.Policy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafety.Policy(childComplexity), true
 	case "AgentToolSafety.policyName":
 		if e.ComplexityRoot.AgentToolSafety.PolicyName == nil {
 			break
@@ -50531,6 +50623,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentSafety(childComplexity, args["agentIds"].([]string)), true
+	case "Query.agentSafetySummary":
+		if e.ComplexityRoot.Query.AgentSafetySummary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.AgentSafetySummary(childComplexity), true
 	case "Query.agentScorecard":
 		if e.ComplexityRoot.Query.AgentScorecard == nil {
 			break
@@ -50548,6 +50646,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentToolPolicies(childComplexity), true
+	case "Query.agentToolPolicyConnection":
+		if e.ComplexityRoot.Query.AgentToolPolicyConnection == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentToolPolicyConnection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentToolPolicyConnection(childComplexity, args["input"].(gqlmodel.AgentToolPolicyConnectionInput)), true
 	case "Query.aiFeedback":
 		if e.ComplexityRoot.Query.AiFeedback == nil {
 			break
@@ -72937,6 +73046,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAgentPlanDecisionInput,
 		ec.unmarshalInputAgentProposalDecisionInput,
 		ec.unmarshalInputAgentScorecardInput,
+		ec.unmarshalInputAgentToolPolicyConnectionInput,
 		ec.unmarshalInputAmendWorkerEmploymentEventInput,
 		ec.unmarshalInputApplyCarrierIntelSuggestionsInput,
 		ec.unmarshalInputApplyCreditMemoInput,
@@ -74851,6 +74961,8 @@ type AgentToolAutonomy {
 "One tool an agent holds, before and after the run has read outside text."
 type AgentToolSafety {
   policyName: String!
+  "The rule the tool is held to, from the same catalog the runtime decides from."
+  policy: AgentToolPolicy!
   clean: AgentToolAutonomy!
   tainted: AgentToolAutonomy!
 }
@@ -74886,9 +74998,61 @@ type AgentSafety {
   reach: AgentReach!
 }
 
+"""
+Narrows the tool rules. A filter left out matches every tool; the rules come
+back ordered by tool name.
+"""
+input AgentToolPolicyConnectionInput {
+  first: Int = 25
+  after: String
+  "Matched against the tool's name and title, ignoring case."
+  query: String
+  "Tools some of whose work reaches this class."
+  egress: AgentEgressClass
+  "The permission resource the tool needs; general for a tool that needs no grant."
+  resource: String
+  kind: AgentToolKind
+  """
+  True keeps the tools that change something and, on at least one agent, can do
+  so without a person; false keeps every other tool.
+  """
+  runsWithoutPerson: Boolean
+}
+
+type AgentToolPolicyEdge {
+  node: AgentToolPolicy!
+  cursor: String!
+}
+
+type AgentToolPolicyConnection {
+  edges: [AgentToolPolicyEdge!]!
+  pageInfo: PageInfo!
+  "Every tool matching the filters. Counted only when selected."
+  totalCount: Int
+}
+
+"The figures that head the safety section, counted over every tool and agent."
+type AgentSafetySummary {
+  "Every tool an agent can be given."
+  toolCount: Int!
+  "Tools that change something and, on at least one agent, can do so without a person."
+  runWithoutPerson: Int!
+  "Tools some of whose work leaves the organization."
+  leaveOrganization: Int!
+  "Agents open to everyone that hold a tool reaching restricted data or leaving the organization."
+  openWithSensitive: Int!
+  "The resources the tools need, for filtering; general for a tool that needs no grant."
+  resources: [String!]!
+}
+
 extend type Query {
   "Every tool's safety policy, by name."
   agentToolPolicies: [AgentToolPolicy!]!
+    @deprecated(reason: "Use agentToolPolicyConnection, which pages and filters on the server.")
+  "The tool rules a page at a time, searched and filtered on the server."
+  agentToolPolicyConnection(input: AgentToolPolicyConnectionInput!): AgentToolPolicyConnection!
+  "The safety figures, counted on the server so no client reads every rule to count them."
+  agentSafetySummary: AgentSafetySummary!
   """
   What each agent can do without a person, by name. Null agentIds reads every
   agent in the organization; at most 100 may be named.
@@ -97277,6 +97441,22 @@ func (ec *executionContext) childFields_AgentSafety(ctx context.Context, field g
 	return nil, fmt.Errorf("no field named %q was found under type AgentSafety", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentSafetySummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "toolCount":
+		return ec.fieldContext_AgentSafetySummary_toolCount(ctx, field)
+	case "runWithoutPerson":
+		return ec.fieldContext_AgentSafetySummary_runWithoutPerson(ctx, field)
+	case "leaveOrganization":
+		return ec.fieldContext_AgentSafetySummary_leaveOrganization(ctx, field)
+	case "openWithSensitive":
+		return ec.fieldContext_AgentSafetySummary_openWithSensitive(ctx, field)
+	case "resources":
+		return ec.fieldContext_AgentSafetySummary_resources(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentSafetySummary", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentScorecard(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "agentDefinitionId":
@@ -97441,6 +97621,28 @@ func (ec *executionContext) childFields_AgentToolPolicy(ctx context.Context, fie
 	return nil, fmt.Errorf("no field named %q was found under type AgentToolPolicy", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentToolPolicyConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AgentToolPolicyConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AgentToolPolicyConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AgentToolPolicyConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentToolPolicyConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentToolPolicyEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AgentToolPolicyEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AgentToolPolicyEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentToolPolicyEdge", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentToolRequirement(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "resource":
@@ -97455,6 +97657,8 @@ func (ec *executionContext) childFields_AgentToolSafety(ctx context.Context, fie
 	switch field.Name {
 	case "policyName":
 		return ec.fieldContext_AgentToolSafety_policyName(ctx, field)
+	case "policy":
+		return ec.fieldContext_AgentToolSafety_policy(ctx, field)
 	case "clean":
 		return ec.fieldContext_AgentToolSafety_clean(ctx, field)
 	case "tainted":

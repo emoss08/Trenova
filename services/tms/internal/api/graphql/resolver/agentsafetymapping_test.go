@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -92,4 +93,64 @@ func TestToolPolicyViewToModel(t *testing.T) {
 	assert.Equal(t, agent.ExternalReadNever, selfScoped.ReadsExternal)
 	assert.Equal(t, agent.TierPropose, selfScoped.DefaultTier)
 	assert.Equal(t, agent.TierAutoExecute, selfScoped.MaxTier)
+}
+
+func TestToolPolicyConnectionRequestLeavesAbsentFiltersOpen(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, &services.ListAgentToolPoliciesRequest{},
+		toolPolicyConnectionRequest(&gqlmodel.AgentToolPolicyConnectionInput{}))
+
+	first := 25
+	after := "cursor"
+	query := "email"
+	egress := agent.EgressExternalRecipient
+	resource := "customer"
+	kind := agent.ToolKindAction
+	alone := false
+	req := toolPolicyConnectionRequest(&gqlmodel.AgentToolPolicyConnectionInput{
+		First:             &first,
+		After:             &after,
+		Query:             &query,
+		Egress:            &egress,
+		Resource:          &resource,
+		Kind:              &kind,
+		RunsWithoutPerson: &alone,
+	})
+	assert.Equal(t, 25, req.First)
+	assert.Equal(t, "cursor", req.After)
+	assert.Equal(t, "email", req.Query)
+	assert.Equal(t, agent.EgressExternalRecipient, req.Egress)
+	assert.Equal(t, "customer", req.Resource)
+	assert.Equal(t, agent.ToolKindAction, req.Kind)
+	require.NotNil(t, req.RunsWithoutPerson)
+	assert.False(t, *req.RunsWithoutPerson)
+}
+
+func TestToolPolicyPageToModelEndsOnTheLastEdge(t *testing.T) {
+	t.Parallel()
+
+	total := 40
+	edge := func(name, cursor string) services.AgentToolPolicyEdge {
+		return services.AgentToolPolicyEdge{
+			View:   services.AgentToolPolicyView{Policy: services.ToolPolicy{Name: name}},
+			Cursor: cursor,
+		}
+	}
+	out := toolPolicyPageToModel(&services.AgentToolPolicyPage{
+		Edges:       []services.AgentToolPolicyEdge{edge("a", "c1"), edge("b", "c2")},
+		HasNextPage: true,
+		TotalCount:  &total,
+	})
+	require.Len(t, out.Edges, 2)
+	assert.Equal(t, "b", out.Edges[1].Node.Name)
+	assert.True(t, out.PageInfo.HasNextPage)
+	require.NotNil(t, out.PageInfo.EndCursor)
+	assert.Equal(t, "c2", *out.PageInfo.EndCursor)
+	assert.Same(t, &total, out.TotalCount)
+
+	empty := toolPolicyPageToModel(&services.AgentToolPolicyPage{})
+	assert.Empty(t, empty.Edges)
+	assert.Nil(t, empty.PageInfo.EndCursor)
+	assert.Nil(t, empty.TotalCount)
 }

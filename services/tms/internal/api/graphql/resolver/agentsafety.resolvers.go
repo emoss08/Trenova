@@ -34,12 +34,43 @@ func (r *agentSafetyResolver) Reach(ctx context.Context, obj *services.AgentSafe
 	return r.agentSafetyReach(ctx, obj)
 }
 
+func (r *agentToolSafetyResolver) Policy(ctx context.Context, obj *services.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error) {
+	return r.agentToolSafetyPolicy(obj)
+}
+
 func (r *queryResolver) AgentToolPolicies(ctx context.Context) ([]*gqlmodel.AgentToolPolicy, error) {
 	if _, err := r.requirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead); err != nil {
 		return nil, err
 	}
 
 	return toolPolicyViewsToModel(r.agentSafetyService.ToolPolicies()), nil
+}
+
+func (r *queryResolver) AgentToolPolicyConnection(ctx context.Context, input gqlmodel.AgentToolPolicyConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	req := toolPolicyConnectionRequest(&input)
+	req.TenantInfo = tenantInfo(authCtx)
+	req.IncludeTotalCount = connectionFieldRequested(ctx, connectionTotalCountField)
+
+	page, err := r.agentSafetyService.ListToolPolicies(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return toolPolicyPageToModel(page), nil
+}
+
+func (r *queryResolver) AgentSafetySummary(ctx context.Context) (*services.AgentSafetySummary, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentSafetyService.Summary(ctx, tenantInfo(authCtx))
 }
 
 func (r *queryResolver) AgentSafety(ctx context.Context, agentIds []string) ([]*services.AgentSafetySubject, error) {
@@ -61,4 +92,11 @@ func (r *queryResolver) AgentSafety(ctx context.Context, agentIds []string) ([]*
 
 func (r *Resolver) AgentSafety() generated.AgentSafetyResolver { return &agentSafetyResolver{r} }
 
-type agentSafetyResolver struct{ *Resolver }
+func (r *Resolver) AgentToolSafety() generated.AgentToolSafetyResolver {
+	return &agentToolSafetyResolver{r}
+}
+
+type (
+	agentSafetyResolver     struct{ *Resolver }
+	agentToolSafetyResolver struct{ *Resolver }
+)
