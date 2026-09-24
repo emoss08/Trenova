@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, AI safety, tool rules, agent autonomy, AI quality, agent evaluation, golden set, eval cases, agent regression]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, AI safety, tool rules, agent autonomy, AI quality, agent evaluation, golden set, eval cases, agent regression]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -41,6 +41,21 @@ Keywords: add LLM, model endpoint, OpenAI, API key, gateway, self-hosted model
 6. Leave **Enabled** on and select **Save**.
 7. Back on the provider's card, select **Test** to check the endpoint answers and honours JSON
    schemas.
+
+### Set up an embedding provider
+Keywords: embeddings, embedding model, semantic search, search by meaning, vector search, Voyage, Gemini embeddings, OpenAI embeddings, nomic-embed-text, retrieval
+1. Open [AI control](/admin/agent-control) and select **Providers** in the rail.
+2. Select **New provider** and, under **Start from a preset**, pick one of the embedding presets:
+   Voyage AI, Gemini, OpenAI, or Ollama for a model on your own hardware. The preset fills in the
+   endpoint, the model, and the embedding task.
+3. Under **Routing**, **Handles these tasks** shows **Embedding** ticked. An embedding model serves
+   nothing else, so leave the other tasks for a separate provider. Anthropic has no embedding
+   endpoint, so the task cannot be ticked on an Anthropic provider.
+4. Under **Embedding**, check **Dimensions** matches the vector size the model returns and set
+   **Input style** to how the endpoint tells a stored document from a search query.
+5. Enter the API key, optionally the **Input price, USD per million tokens**, and select **Save**.
+6. Select **Test** on the provider's card. The test asks for one embedding and fails when the
+   model returns a different size than **Dimensions**.
 
 ### Let agents search the web
 Keywords: web search, internet, Exa, look up regulations, ELD rules, hours of service, current information, extension marketplace
@@ -197,6 +212,13 @@ Keywords: agent memory, standing instruction, fact, correction, retire memory
    back.
 
 ## Notes
+An embedding provider turns memories, documents and mail into vectors so agents can find them by
+what they mean rather than by the exact words; until one is set up, agents search by keywords
+only. Social security, card and bank account numbers are masked before a document is sent.
+Changing the embedding model or its size re-indexes everything that was embedded. Providers with
+the same model and size back each other up; a provider with a different model is never used in
+their place.
+
 An agent that has read content written outside the organization (an inbound email, an
 extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a
 run wrote) never sends anything to a customer, driver or outside address, or moves money, on

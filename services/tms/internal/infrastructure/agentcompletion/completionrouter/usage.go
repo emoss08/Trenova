@@ -6,13 +6,13 @@ import (
 	"net"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/llmtokens"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
@@ -83,7 +83,7 @@ func (s *Service) record(ctx context.Context, attempt usageAttempt) {
 		row.InputTokens = attempt.outcome.InputTokens
 		row.OutputTokens = attempt.outcome.OutputTokens
 		row.ReasoningTokens = attempt.outcome.ReasoningTokens
-		row.CostUSD = attempt.provider.CostFor(row.InputTokens, row.OutputTokens)
+		row.CostUSD = attempt.provider.CostForTask(attempt.task, row.InputTokens, row.OutputTokens)
 	}
 
 	detached, cancel := context.WithTimeout(context.WithoutCancel(ctx), recordTimeout)
@@ -148,12 +148,6 @@ func failureMessage(err error) string {
 	return stringutils.TruncateRunes(strings.TrimSpace(err.Error()), maxFailureMessageChars)
 }
 
-// runesPerToken is the usual ratio of characters to tokens for English prose
-// and JSON across the tokenizers the providers use. It is only ever used to
-// count output the provider never reported, so being roughly right beats
-// recording the attempt as free.
-const runesPerToken = 4
-
 // streamedOutcome is what an attempt that failed or was stopped after the
 // provider began writing consumed. The provider's own count arrives with the
 // end of the stream, so a stream that never got there reported nothing; the
@@ -165,23 +159,13 @@ func streamedOutcome(provider *aiprovider.Provider, streamed chatStream, cause e
 		return nil
 	}
 
-	reasoning := approxTokens(streamed.reasoningRunes)
+	reasoning := llmtokens.FromRunes(streamed.reasoningRunes)
 
 	return &runOutcome{
 		Model:           modeladapter.ServedModel(cause, provider.Model),
-		OutputTokens:    approxTokens(utf8.RuneCountInString(streamed.text)) + reasoning,
+		OutputTokens:    llmtokens.Estimate(streamed.text) + reasoning,
 		ReasoningTokens: reasoning,
 	}
-}
-
-// approxTokens is the token count for runes of streamed output, rounded up so
-// a short fragment still counts as the token it cost.
-func approxTokens(runes int) int {
-	if runes <= 0 {
-		return 0
-	}
-
-	return (runes + runesPerToken - 1) / runesPerToken
 }
 
 func firstNonEmpty(values ...string) string {

@@ -145,7 +145,8 @@ func (c *Call) streamIdleTimeout() time.Duration {
 
 // Registry resolves an adapter for a provider's protocol.
 type Registry struct {
-	byKind map[aiprovider.Kind]Adapter
+	byKind    map[aiprovider.Kind]Adapter
+	embedders map[aiprovider.Kind]Embedder
 }
 
 // NewRegistry builds the registry over every protocol this system speaks.
@@ -158,11 +159,15 @@ func NewRegistry() *Registry {
 	}
 
 	byKind := make(map[aiprovider.Kind]Adapter, len(adapters))
+	embedders := make(map[aiprovider.Kind]Embedder, len(adapters))
 	for _, adapter := range adapters {
 		byKind[adapter.Kind()] = adapter
+		if embedder, ok := adapter.(Embedder); ok && adapter.Kind().SupportsEmbedding() {
+			embedders[adapter.Kind()] = embedder
+		}
 	}
 
-	return &Registry{byKind: byKind}
+	return &Registry{byKind: byKind, embedders: embedders}
 }
 
 // Get returns the adapter for kind.

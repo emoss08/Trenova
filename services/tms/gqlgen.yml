@@ -2059,6 +2059,9 @@ models:
   AITask:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.Task
+  AIEmbeddingInputStyle:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiprovider.EmbeddingInputStyle
   AgentStarter:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.Starter

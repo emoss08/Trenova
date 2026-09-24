@@ -4,7 +4,10 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -102,5 +105,40 @@ func TestEveryDeterministicTaskPinsItsTemperature(t *testing.T) {
 		assert.Containsf(t, named, name,
 			"%s has no case in SamplingForTask, so it takes the 0.3 default; "+
 				"a structured answer that changes between identical inputs is a bug", name)
+	}
+}
+
+func TestEveryTaskIsNamedInSampling(t *testing.T) {
+	t.Parallel()
+
+	named := tasksNamedIn(t, samplingFile)
+	for _, task := range aiprovider.AllTasks() {
+		name := goNameOf(task)
+		assert.Containsf(t, named, name,
+			"%s is not named in SamplingForTask; give it a case, or an explicit "+
+				"exemption when the task samples no tokens", name)
+	}
+}
+
+func TestEveryTaskIsInTheGraphQLEnum(t *testing.T) {
+	t.Parallel()
+
+	source, err := os.ReadFile(filepath.Clean(schemaFile))
+	require.NoErrorf(t, err, "could not read %s", schemaFile)
+
+	block := regexp.MustCompile(`(?s)enum AITask \{(.*?)\}`).FindSubmatch(source)
+	require.NotNil(t, block, "enum AITask not found in %s", schemaFile)
+
+	declared := make(map[string]struct{})
+	for _, line := range strings.Split(string(block[1]), "\n") {
+		if value := strings.TrimSpace(line); value != "" {
+			declared[value] = struct{}{}
+		}
+	}
+
+	for _, task := range aiprovider.AllTasks() {
+		assert.Containsf(t, declared, string(task),
+			"%s is missing from the AITask GraphQL enum, so a provider serving it "+
+				"cannot be read over GraphQL", task)
 	}
 }

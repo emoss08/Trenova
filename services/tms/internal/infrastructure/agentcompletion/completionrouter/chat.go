@@ -10,7 +10,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -55,30 +54,9 @@ func (s *Service) runChat(
 		return nil, errortypes.NewBusinessError(aiDisabledMessage)
 	}
 
-	candidates, err := s.repo.ListForTask(ctx, repositories.ListAIProvidersForTaskRequest{
-		Task:       aiprovider.TaskAssistantChat,
-		TenantInfo: req.TenantInfo,
-	})
+	usable, err := s.usableFor(ctx, aiprovider.TaskAssistantChat, req.TenantInfo)
 	if err != nil {
 		return nil, err
-	}
-
-	usable := make([]*aiprovider.Provider, 0, len(candidates))
-	for _, provider := range candidates {
-		if ok, reason := provider.CanServeTask(aiprovider.TaskAssistantChat); ok {
-			usable = append(usable, provider)
-		} else {
-			s.logger.Debug("skipping provider for chat",
-				zap.String("provider", provider.Name),
-				zap.String("reason", reason),
-			)
-		}
-	}
-
-	if len(usable) == 0 {
-		return nil, errortypes.NewBusinessError(
-			"No AI provider is configured for {0}", string(aiprovider.TaskAssistantChat),
-		).WithInternal(serviceports.ErrNoProviderConfigured)
 	}
 
 	usable = preferFirst(usable, req.PreferredProviderID)
@@ -394,25 +372,40 @@ func (s *Service) executeWithRetryNoticed(
 	call *modeladapter.Call,
 	busy busyNotice,
 ) (*modeladapter.Response, error) {
+	var resp *modeladapter.Response
+	err := s.retrying(ctx, func() error {
+		var callErr error
+		resp, callErr = adapter.Complete(ctx, call)
+
+		return callErr
+	}, busy)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (s *Service) retrying(ctx context.Context, attemptOnce func() error, busy busyNotice) error {
 	var waited time.Duration
 	for attempt := 0; ; attempt++ {
-		resp, err := adapter.Complete(ctx, call)
+		err := attemptOnce()
 		if err == nil {
-			return resp, nil
+			return nil
 		}
 		if ctx.Err() != nil {
-			return nil, err
+			return err
 		}
 
 		wait, again := s.retryWait(err, attempt, waited)
 		if !again {
-			return nil, err
+			return err
 		}
 		if busy != nil && unavailability(err) {
 			busy(attempt+1, wait, err)
 		}
 		if waitErr := s.wait(ctx, wait); waitErr != nil {
-			return nil, waitErr
+			return waitErr
 		}
 		waited += wait
 	}

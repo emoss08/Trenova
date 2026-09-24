@@ -28,6 +28,10 @@ type Sampling struct {
 // The nucleus cutoff is the same everywhere, because the tail it removes
 // is never the right token in either kind of work.
 func SamplingForTask(task aiprovider.Task) Sampling {
+	if task == aiprovider.TaskEmbedding {
+		return Sampling{}
+	}
+
 	temperature := 0.3
 	switch task {
 	case aiprovider.TaskScopeClassification,

@@ -317,6 +317,11 @@ func (s *Service) apply(
 		provider.ReasoningEffort = aiprovider.ReasoningOff
 	}
 	provider.ExtraBody = req.ExtraBody
+	provider.EmbeddingDimensions = req.EmbeddingDimensions
+	provider.EmbeddingInputStyle = req.EmbeddingInputStyle
+	if provider.EmbeddingInputStyle == "" {
+		provider.EmbeddingInputStyle = aiprovider.EmbeddingInputStyleNone
+	}
 	provider.InputCostPerMillion = req.InputCostPerMillion
 	provider.OutputCostPerMillion = req.OutputCostPerMillion
 

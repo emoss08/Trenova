@@ -742,6 +742,14 @@ func init() {
 				FieldMapKey: "priority",
 			},
 			{
+				Name:        "embeddingDimensions",
+				FieldMapKey: "embeddingDimensions",
+			},
+			{
+				Name:        "embeddingInputStyle",
+				FieldMapKey: "embeddingInputStyle",
+			},
+			{
 				Name:        "trusted",
 				FieldMapKey: "trusted",
 			},

@@ -22,6 +22,18 @@ enum AIReasoningEffort {
   High
 }
 
+"""
+How an embedding endpoint is told whether a text is a stored document or a
+search query. None sends both the same way; VoyageInputType sends Voyage's
+input_type field; NomicPrefix adds the search_document and search_query
+prefixes nomic-embed-text expects.
+"""
+enum AIEmbeddingInputStyle {
+  None
+  VoyageInputType
+  NomicPrefix
+}
+
 enum AITask {
   DocumentClassification
   DocumentExtraction
@@ -32,6 +44,7 @@ enum AITask {
   QueryCompose
   InboundClassification
   EvaluationJudge
+  Embedding
   AssistantChat
   OperationalInsights
   General
@@ -78,6 +91,10 @@ type AIProvider {
   maxTokens: Int!
   tasks: [AITask!]!
   priority: Int!
+  "Vector size an embedding provider returns: 768, 1024 or 1536. Null for a provider that serves no embeddings."
+  embeddingDimensions: Int
+  "How documents and search queries are told apart on the wire."
+  embeddingInputStyle: AIEmbeddingInputStyle!
   trusted: Boolean!
   enabled: Boolean!
   lastTest: AIProviderTestOutcome

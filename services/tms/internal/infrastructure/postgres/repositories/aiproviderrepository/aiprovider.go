@@ -268,11 +268,14 @@ func (r *repository) Update(
 		Set(cols.AllowPrivateNetwork.Set(), entity.AllowPrivateNetwork).
 		Set(cols.StructuredOutputMode.Set(), entity.StructuredOutputMode).
 		Set(cols.ReasoningEffort.Set(), entity.ReasoningEffort).
+		Set(cols.ExtraBody.Set(), entity.ExtraBody).
 		Set(cols.InputCostPerMillion.Set(), entity.InputCostPerMillion).
 		Set(cols.OutputCostPerMillion.Set(), entity.OutputCostPerMillion).
 		Set(cols.MaxTokens.Set(), entity.MaxTokens).
 		Set(cols.Tasks.Set(), dbhelper.TextArray(entity.Tasks)).
 		Set(cols.Priority.Set(), entity.Priority).
+		Set(cols.EmbeddingDimensions.Set(), entity.EmbeddingDimensions).
+		Set(cols.EmbeddingInputStyle.Set(), entity.EmbeddingInputStyle).
 		Set(cols.Trusted.Set(), entity.Trusted).
 		Set(cols.Enabled.Set(), entity.Enabled).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).

@@ -281,6 +281,8 @@ type ComplexityRoot struct {
 		BusinessUnitID       func(childComplexity int) int
 		CreatedAt            func(childComplexity int) int
 		Description          func(childComplexity int) int
+		EmbeddingDimensions  func(childComplexity int) int
+		EmbeddingInputStyle  func(childComplexity int) int
 		Enabled              func(childComplexity int) int
 		ExtraBody            func(childComplexity int) int
 		HasAPIKey            func(childComplexity int) int
@@ -12697,6 +12699,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AIProvider.Description(childComplexity), true
+	case "AIProvider.embeddingDimensions":
+		if e.ComplexityRoot.AIProvider.EmbeddingDimensions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.EmbeddingDimensions(childComplexity), true
+	case "AIProvider.embeddingInputStyle":
+		if e.ComplexityRoot.AIProvider.EmbeddingInputStyle == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIProvider.EmbeddingInputStyle(childComplexity), true
 	case "AIProvider.enabled":
 		if e.ComplexityRoot.AIProvider.Enabled == nil {
 			break
@@ -77321,6 +77335,18 @@ enum AIReasoningEffort {
   High
 }
 
+"""
+How an embedding endpoint is told whether a text is a stored document or a
+search query. None sends both the same way; VoyageInputType sends Voyage's
+input_type field; NomicPrefix adds the search_document and search_query
+prefixes nomic-embed-text expects.
+"""
+enum AIEmbeddingInputStyle {
+  None
+  VoyageInputType
+  NomicPrefix
+}
+
 enum AITask {
   DocumentClassification
   DocumentExtraction
@@ -77331,6 +77357,7 @@ enum AITask {
   QueryCompose
   InboundClassification
   EvaluationJudge
+  Embedding
   AssistantChat
   OperationalInsights
   General
@@ -77377,6 +77404,10 @@ type AIProvider {
   maxTokens: Int!
   tasks: [AITask!]!
   priority: Int!
+  "Vector size an embedding provider returns: 768, 1024 or 1536. Null for a provider that serves no embeddings."
+  embeddingDimensions: Int
+  "How documents and search queries are told apart on the wire."
+  embeddingInputStyle: AIEmbeddingInputStyle!
   trusted: Boolean!
   enabled: Boolean!
   lastTest: AIProviderTestOutcome
@@ -97748,6 +97779,10 @@ func (ec *executionContext) childFields_AIProvider(ctx context.Context, field gr
 		return ec.fieldContext_AIProvider_tasks(ctx, field)
 	case "priority":
 		return ec.fieldContext_AIProvider_priority(ctx, field)
+	case "embeddingDimensions":
+		return ec.fieldContext_AIProvider_embeddingDimensions(ctx, field)
+	case "embeddingInputStyle":
+		return ec.fieldContext_AIProvider_embeddingInputStyle(ctx, field)
 	case "trusted":
 		return ec.fieldContext_AIProvider_trusted(ctx, field)
 	case "enabled":

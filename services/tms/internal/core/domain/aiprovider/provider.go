@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/bytedance/sonic"
@@ -101,6 +104,9 @@ type Provider struct {
 	// second table.
 	Tasks    []Task `json:"tasks"    bun:"tasks,type:TEXT[],array,nullzero"`
 	Priority int    `json:"priority" bun:"priority,type:INTEGER,notnull"`
+
+	EmbeddingDimensions *int                `json:"embeddingDimensions" bun:"embedding_dimensions,type:INTEGER,nullzero"`
+	EmbeddingInputStyle EmbeddingInputStyle `json:"embeddingInputStyle" bun:"embedding_input_style,type:VARCHAR(50),notnull,default:'None'"`
 
 	// Trusted marks a provider an administrator vouches for. A task that can drive
 	// a financial mutation will not route to an untrusted provider.
@@ -226,6 +232,25 @@ func (p *Provider) CostFor(inputTokens, outputTokens int) *decimal.Decimal {
 	return &cost
 }
 
+func (p *Provider) InputCostFor(inputTokens int) *decimal.Decimal {
+	if p.InputCostPerMillion == nil {
+		return nil
+	}
+
+	cost := p.InputCostPerMillion.Mul(decimal.NewFromInt(int64(inputTokens))).
+		Div(decimal.NewFromInt(1_000_000))
+
+	return &cost
+}
+
+func (p *Provider) CostForTask(t Task, inputTokens, outputTokens int) *decimal.Decimal {
+	if !t.Generates() {
+		return p.InputCostFor(inputTokens)
+	}
+
+	return p.CostFor(inputTokens, outputTokens)
+}
+
 // ResolvedMaxTokens clamps the configured ceiling into the supported range.
 func (p *Provider) ResolvedMaxTokens() int {
 	if p.MaxTokens <= 0 {
@@ -262,9 +287,61 @@ func (p *Provider) CanServeTask(t Task) (bool, string) {
 		return false, "provider is not assigned to this task"
 	case t.WritesToLedger() && !p.Trusted:
 		return false, "provider is not marked trusted, and this task can change financial records"
+	case t == TaskEmbedding && !p.Kind.SupportsEmbedding():
+		return false, "provider protocol has no embedding endpoint"
+	case t == TaskEmbedding && !IsAllowedEmbeddingDimension(p.ResolvedEmbeddingDimensions()):
+		return false, "provider has no supported embedding dimension configured"
 	default:
 		return true, ""
 	}
+}
+
+func (p *Provider) ServesOnlyEmbedding() bool {
+	return len(p.Tasks) == 1 && p.Tasks[0] == TaskEmbedding
+}
+
+func (p *Provider) ResolvedEmbeddingDimensions() int {
+	if p.EmbeddingDimensions == nil {
+		return 0
+	}
+
+	return *p.EmbeddingDimensions
+}
+
+func (p *Provider) ResolvedEmbeddingInputStyle() EmbeddingInputStyle {
+	if p.EmbeddingInputStyle == "" {
+		return EmbeddingInputStyleNone
+	}
+
+	return p.EmbeddingInputStyle
+}
+
+func (p *Provider) EmbeddingHost() string {
+	parsed, err := url.Parse(p.ResolvedBaseURL())
+	if err != nil || parsed.Host == "" {
+		return strings.ToLower(p.ResolvedBaseURL())
+	}
+
+	return strings.ToLower(parsed.Host)
+}
+
+func (p *Provider) EmbeddingModelKey() string {
+	dimensions := p.ResolvedEmbeddingDimensions()
+	if dimensions <= 0 {
+		return ""
+	}
+
+	var b strings.Builder
+	host := p.EmbeddingHost()
+	model := strings.TrimSpace(p.Model)
+	b.Grow(len(host) + len(model) + 6)
+	b.WriteString(host)
+	b.WriteByte('/')
+	b.WriteString(model)
+	b.WriteByte('@')
+	b.WriteString(strconv.Itoa(dimensions))
+
+	return b.String()
 }
 
 func (p *Provider) Validate(multiErr *errortypes.MultiError) {
@@ -315,8 +392,57 @@ func (p *Provider) Validate(multiErr *errortypes.MultiError) {
 	))
 
 	p.validateTasks(multiErr)
+	p.validateEmbedding(multiErr)
 	p.validateEndpoint(multiErr)
 	p.validateExtraBody(multiErr)
+}
+
+func (p *Provider) validateEmbedding(multiErr *errortypes.MultiError) {
+	if !p.EmbeddingInputStyle.IsValid() {
+		multiErr.Add(
+			"embeddingInputStyle",
+			errortypes.ErrInvalid,
+			"Embedding input style is invalid",
+		)
+	}
+
+	if p.EmbeddingDimensions != nil && !IsAllowedEmbeddingDimension(*p.EmbeddingDimensions) {
+		multiErr.Add(
+			"embeddingDimensions",
+			errortypes.ErrInvalid,
+			"Embedding dimensions must be 768, 1024 or 1536",
+		)
+	}
+
+	embeddingAt := slices.Index(p.Tasks, TaskEmbedding)
+	if embeddingAt < 0 {
+		return
+	}
+
+	field := fmt.Sprintf("tasks[%d]", embeddingAt)
+	if p.Kind.IsValid() && !p.Kind.SupportsEmbedding() {
+		multiErr.Add(
+			field,
+			errortypes.ErrInvalid,
+			"This protocol has no embedding endpoint, so it cannot serve the Embedding task",
+		)
+	}
+
+	if len(p.Tasks) > 1 {
+		multiErr.Add(
+			field,
+			errortypes.ErrInvalid,
+			"An embedding model cannot also serve tasks that write text; add a separate provider for those",
+		)
+	}
+
+	if p.EmbeddingDimensions == nil {
+		multiErr.Add(
+			"embeddingDimensions",
+			errortypes.ErrRequired,
+			"Embedding dimensions are required for a provider that serves the Embedding task",
+		)
+	}
 }
 
 // reservedBodyKeys are the request fields this system owns. A provider that
@@ -398,6 +524,9 @@ func (p *Provider) applyDefaults() {
 	}
 	if p.StructuredOutputMode == "" {
 		p.StructuredOutputMode = StructuredOutputPrompted
+	}
+	if p.EmbeddingInputStyle == "" {
+		p.EmbeddingInputStyle = EmbeddingInputStyleNone
 	}
 }
 

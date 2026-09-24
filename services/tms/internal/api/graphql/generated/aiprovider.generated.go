@@ -445,6 +445,52 @@ func (ec *executionContext) fieldContext_AIProvider_priority(_ context.Context, 
 	return graphql.NewScalarFieldContext("AIProvider", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _AIProvider_embeddingDimensions(ctx context.Context, field graphql.CollectedField, obj *aiprovider.Provider) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIProvider_embeddingDimensions(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EmbeddingDimensions, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AIProvider_embeddingDimensions(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIProvider", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AIProvider_embeddingInputStyle(ctx context.Context, field graphql.CollectedField, obj *aiprovider.Provider) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AIProvider_embeddingInputStyle(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EmbeddingInputStyle, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v aiprovider.EmbeddingInputStyle) graphql.Marshaler {
+			return ec.marshalNAIEmbeddingInputStyle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐEmbeddingInputStyle(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AIProvider_embeddingInputStyle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AIProvider", field, false, false, errors.New("field of type AIEmbeddingInputStyle does not have child fields"))
+}
+
 func (ec *executionContext) _AIProvider_trusted(ctx context.Context, field graphql.CollectedField, obj *aiprovider.Provider) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1075,6 +1121,16 @@ func (ec *executionContext) _AIProvider(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "embeddingDimensions":
+			out.Values[i] = ec._AIProvider_embeddingDimensions(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "embeddingInputStyle":
+			out.Values[i] = ec._AIProvider_embeddingInputStyle(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "trusted":
 			out.Values[i] = ec._AIProvider_trusted(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1288,6 +1344,23 @@ func (ec *executionContext) _AIProviderTestOutcome(ctx context.Context, sel ast.
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAIEmbeddingInputStyle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐEmbeddingInputStyle(ctx context.Context, v any) (aiprovider.EmbeddingInputStyle, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := aiprovider.EmbeddingInputStyle(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAIEmbeddingInputStyle2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐEmbeddingInputStyle(ctx context.Context, sel ast.SelectionSet, v aiprovider.EmbeddingInputStyle) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
 
 func (ec *executionContext) marshalNAIProvider2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaiproviderᚐProvider(ctx context.Context, sel ast.SelectionSet, v *aiprovider.Provider) graphql.Marshaler {
 	if v == nil {

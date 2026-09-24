@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 // TransportError is a non-2xx reply from a provider. Retryability is decided here
@@ -78,7 +79,9 @@ func IsRetryable(err error) bool {
 		return te.Retryable
 	}
 
-	return true
+	var business *errortypes.BusinessError
+
+	return !errors.As(err, &business)
 }
 
 // postJSON sends body to url and decodes the reply into out. Headers are applied

@@ -17,6 +17,8 @@ fragment AIProviderCardFields on AIProvider {
   maxTokens
   tasks
   priority
+  embeddingDimensions
+  embeddingInputStyle
   trusted
   enabled
   lastTest {

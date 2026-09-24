@@ -12,12 +12,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { KeyRoundIcon, ShieldAlertIcon } from "lucide-react";
+import { KeyRoundIcon, ShieldAlertIcon, WaypointsIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import type { ProviderFormValues } from "./build-save-payload";
 import { kindMark } from "./kind-marks";
 import { PresetPicker } from "./preset-picker";
+import { kindSupportsEmbedding } from "./provider-form-schema";
 
 type AIProviderFormProps = {
   mode: "create" | "edit";
@@ -34,6 +35,7 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
   const kind = useWatch({ control, name: "kind" });
   const tasks = useWatch({ control, name: "tasks" });
   const allowPrivateNetwork = useWatch({ control, name: "allowPrivateNetwork" });
+  const embeds = (tasks ?? []).includes("Embedding");
 
   const kindDescriptor = useMemo(
     () => catalog?.kinds.find((descriptor) => descriptor.kind === kind),
@@ -43,6 +45,28 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
   const selectedPreset = useMemo(
     () => catalog?.presets.find((entry) => entry.key === preset),
     [catalog?.presets, preset],
+  );
+
+  // An embedding preset brings the task, the vector size and the input style
+  // with it; picking a text preset afterwards takes them away again, since an
+  // embedding model serves nothing else.
+  const applyEmbeddingPreset = useCallback(
+    (picked: AIProviderPreset) => {
+      if (picked.tasks.length > 0) {
+        setValue("tasks", [...picked.tasks], { shouldDirty: true });
+      } else if ((getValues("tasks") ?? []).includes("Embedding")) {
+        setValue("tasks", null, { shouldDirty: true });
+      }
+      setValue(
+        "embeddingDimensionsChoice",
+        picked.embeddingDimensions > 0 ? String(picked.embeddingDimensions) : "",
+        { shouldDirty: true },
+      );
+      setValue("embeddingInputStyle", picked.embeddingInputStyle ?? "None", {
+        shouldDirty: true,
+      });
+    },
+    [getValues, setValue],
   );
 
   const applyPreset = useCallback(
@@ -63,18 +87,49 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
       if (getValues("name").trim() === "") {
         setValue("name", picked.label.replace(/\s*\(self-hosted\)$/i, ""), { shouldDirty: true });
       }
+      applyEmbeddingPreset(picked);
     },
-    [getValues, setValue],
+    [applyEmbeddingPreset, getValues, setValue],
   );
+
+  const embeddingSupported = kindDescriptor?.supportsEmbedding ?? kindSupportsEmbedding(kind);
 
   const taskOptions = useMemo(
     () =>
-      (catalog?.tasks ?? []).map((descriptor) => ({
-        label: descriptor.label,
-        value: descriptor.task,
-        description: descriptor.volumeGuidance,
+      (catalog?.tasks ?? []).map((descriptor) => {
+        const unsupported = descriptor.task === "Embedding" && !embeddingSupported;
+
+        return {
+          label: descriptor.label,
+          value: descriptor.task,
+          disabled: unsupported,
+          description: unsupported
+            ? t(
+                "This protocol has no embedding endpoint. Use an OpenAI, OpenAI-compatible or Ollama provider for embeddings.",
+              )
+            : descriptor.volumeGuidance,
+        };
+      }),
+    [catalog?.tasks, embeddingSupported, t],
+  );
+
+  const dimensionOptions = useMemo(
+    () =>
+      (catalog?.embeddingDimensions ?? []).map((dimensions) => ({
+        label: t("{0, plural, one {# dimension} other {# dimensions}}", dimensions),
+        value: String(dimensions),
       })),
-    [catalog?.tasks],
+    [catalog?.embeddingDimensions, t],
+  );
+
+  const inputStyleOptions = useMemo(
+    () =>
+      (catalog?.embeddingInputStyles ?? []).map((descriptor) => ({
+        label: descriptor.label,
+        value: descriptor.style,
+        description: descriptor.description,
+      })),
+    [catalog?.embeddingInputStyles],
   );
 
   const selectedLedgerTask = useMemo(
@@ -246,74 +301,119 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
         )}
       </FormSection>
 
+      {embeds && (
+        <FormSection
+          title={t("Embedding")}
+          description={t(
+            "Vectors from this model are what agents search by meaning. Changing the model or its size re-indexes everything it has embedded.",
+          )}
+        >
+          <FormGroup cols={2}>
+            <FormControl>
+              <SelectField
+                name="embeddingDimensionsChoice"
+                control={control}
+                label={t("Dimensions")}
+                placeholder={t("Choose a size")}
+                options={dimensionOptions}
+                description={t(
+                  "The vector size the model returns. A reply of any other size is refused.",
+                )}
+              />
+            </FormControl>
+            <FormControl>
+              <SelectField
+                name="embeddingInputStyle"
+                control={control}
+                label={t("Input style")}
+                options={inputStyleOptions}
+                description={t("How the endpoint is told a stored document from a search query.")}
+              />
+            </FormControl>
+          </FormGroup>
+          <Alert variant="info" size="sm">
+            <WaypointsIcon />
+            <AlertDescription>
+              {t(
+                "Documents are sent with social security, card and bank account numbers masked. Only one embedding model is searched at a time; providers with the same model and size back each other up.",
+              )}
+            </AlertDescription>
+          </Alert>
+        </FormSection>
+      )}
+
       <FormSection
         title={t("Output and limits")}
         description={t("How much the endpoint guarantees, and how far a single reply may go.")}
       >
         <FormGroup cols={2}>
-          <FormControl>
-            <SelectField
-              name="structuredOutputMode"
-              control={control}
-              label={t("Structured output")}
-              // Colour here is the guarantee, strongest first: a server that
-              // enforces the schema cannot return the wrong shape, one that only
-              // promises JSON can, and one merely asked in the prompt often does.
-              options={[
-                {
-                  label: t("Enforced by the server (JSON schema)"),
-                  value: "JSONSchema",
-                  color: toneVar("success"),
-                },
-                {
-                  label: t("Valid JSON only (no schema)"),
-                  value: "JSONMode",
-                  color: toneVar("warning"),
-                },
-                {
-                  label: t("Requested in the prompt"),
-                  value: "Prompted",
-                  color: toneVar("muted"),
-                },
-              ]}
-              description={t(
-                "Some OpenAI-compatible servers accept a schema and ignore it — test the connection to find out before relying on it.",
-              )}
-            />
-          </FormControl>
+          {!embeds && (
+            <>
+              <FormControl>
+                <SelectField
+                  name="structuredOutputMode"
+                  control={control}
+                  label={t("Structured output")}
+                  // Colour here is the guarantee, strongest first: a server that
+                  // enforces the schema cannot return the wrong shape, one that only
+                  // promises JSON can, and one merely asked in the prompt often does.
+                  options={[
+                    {
+                      label: t("Enforced by the server (JSON schema)"),
+                      value: "JSONSchema",
+                      color: toneVar("success"),
+                    },
+                    {
+                      label: t("Valid JSON only (no schema)"),
+                      value: "JSONMode",
+                      color: toneVar("warning"),
+                    },
+                    {
+                      label: t("Requested in the prompt"),
+                      value: "Prompted",
+                      color: toneVar("muted"),
+                    },
+                  ]}
+                  description={t(
+                    "Some OpenAI-compatible servers accept a schema and ignore it — test the connection to find out before relying on it.",
+                  )}
+                />
+              </FormControl>
 
-          <FormControl>
-            <NumberField
-              name="maxTokens"
-              control={control}
-              label={t("Max tokens")}
-              description={t("Ceiling for a single reply.")}
-            />
-          </FormControl>
+              <FormControl>
+                <NumberField
+                  name="maxTokens"
+                  control={control}
+                  label={t("Max tokens")}
+                  description={t("Ceiling for a single reply.")}
+                />
+              </FormControl>
 
-          <FormControl cols="full">
-            <SelectField
-              name="reasoningEffort"
-              control={control}
-              label={t("Reasoning")}
-              // Off is the safe default: the reasoning parameter is refused by
-              // models without it. The levels are a categorical scale of
-              // effort, not severities, so they take one accent.
-              options={[
-                {
-                  label: t("Off — answer directly"),
-                  value: "Off",
-                  color: toneVar("muted"),
-                },
-                { label: t("Low"), value: "Low", color: accentVar("teal") },
-                { label: t("Medium"), value: "Medium", color: accentVar("teal") },
-                { label: t("High"), value: "High", color: accentVar("teal") },
-              ]}
-              description={t(
-                "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Turn it on only for a model that reasons; others reject the request.",
-              )}
-            />
-          </FormControl>
+              <FormControl cols="full">
+                <SelectField
+                  name="reasoningEffort"
+                  control={control}
+                  label={t("Reasoning")}
+                  // Off is the safe default: the reasoning parameter is refused by
+                  // models without it. The levels are a categorical scale of
+                  // effort, not severities, so they take one accent.
+                  options={[
+                    {
+                      label: t("Off — answer directly"),
+                      value: "Off",
+                      color: toneVar("muted"),
+                    },
+                    { label: t("Low"), value: "Low", color: accentVar("teal") },
+                    { label: t("Medium"), value: "Medium", color: accentVar("teal") },
+                    { label: t("High"), value: "High", color: accentVar("teal") },
+                  ]}
+                  description={t(
+                    "Asks a model that can think to do so before it answers, and shows the thinking in the panel. Turn it on only for a model that reasons; others reject the request.",
+                  )}
+                />
+              </FormControl>
+            </>
+          )}
 
           <FormControl cols="full">
             <TextareaField
@@ -335,18 +435,26 @@ export function AIProviderForm({ mode }: AIProviderFormProps) {
               name="inputCostPerMillion"
               control={control}
               label={t("Input price, USD per million tokens")}
-              description={t("From the provider's price list. Leave empty if unknown.")}
+              description={
+                embeds
+                  ? t("Embeddings are priced on input alone. Leave empty if unknown.")
+                  : t("From the provider's price list. Leave empty if unknown.")
+              }
             />
           </FormControl>
 
-          <FormControl>
-            <NumberField
-              name="outputCostPerMillion"
-              control={control}
-              label={t("Output price, USD per million tokens")}
-              description={t("With both prices set, every call and every turn shows what it cost.")}
-            />
-          </FormControl>
+          {!embeds && (
+            <FormControl>
+              <NumberField
+                name="outputCostPerMillion"
+                control={control}
+                label={t("Output price, USD per million tokens")}
+                description={t(
+                  "With both prices set, every call and every turn shows what it cost.",
+                )}
+              />
+            </FormControl>
+          )}
 
           <FormControl cols="full">
             <SwitchField

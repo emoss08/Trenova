@@ -5891,6 +5891,15 @@
       "service/agenttoolservice"
     ]
   },
+  "A text to embed cannot be blank": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A tier cannot start after an open-ended tier": {
     "sites": 1,
     "scope": [
@@ -15115,6 +15124,17 @@
       "domain/tender"
     ]
   },
+  "An embedding model cannot also serve tasks that write text; add a separate provider for those": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "domain/aiprovider",
+      "routes/agent-control"
+    ]
+  },
   "An employer picks one of the four methods in 29 CFR 825.200(b) and must apply it to every employee alike. Changing it is a change of policy, not a correction — employees are entitled to sixty days' notice, and until then whichever method gives the greater benefit applies.": {
     "sites": 1,
     "scope": [
@@ -20214,6 +20234,15 @@
       "service/formulatemplateservice"
     ]
   },
+  "At least one text is required to embed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "At least six in the first twelve months (49 CFR 382.311).": {
     "sites": 1,
     "scope": [
@@ -20358,6 +20387,15 @@
     ],
     "areas": [
       "domain/sidebarpreference"
+    ]
+  },
+  "At most {0} texts can be embedded in one request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "At period close a batch rolls accrued events into draft settlements with deductions, advances, escrow, and guarantees — and with auto-attach on, new pay flows into open drafts as it's earned.": {
@@ -31814,6 +31852,15 @@
       "apps/web/components"
     ]
   },
+  "Choose a size": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Choose a status": {
     "sites": 1,
     "scope": [
@@ -37519,6 +37566,24 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Connected, but the model returned a different dimension than configured": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
+    ]
+  },
+  "Connected, but the reply was not a usable embedding": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
     ]
   },
   "Connecticut (CT)": {
@@ -50741,6 +50806,15 @@
       "domain/ratematrix"
     ]
   },
+  "Dimensions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Dimensions cannot have an aggregation": {
     "sites": 1,
     "scope": [
@@ -50748,6 +50822,24 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "Dimensions do not match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Dimensions match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Dimensions vs tightest limit": {
@@ -53278,6 +53370,15 @@
       "routes/invoice"
     ]
   },
+  "Documents and search queries are sent as they are.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Documents are added while the item is in review. Anything attached to the shipment from its own record shows up here too.": {
     "sites": 1,
     "scope": [
@@ -53285,6 +53386,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Documents are sent with social security, card and bank account numbers masked. Only one embedding model is searched at a time; providers with the same model and size back each other up.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Documents attached to the shipment while it was in the billing queue travel with the invoice and show up here.": {
@@ -58169,6 +58279,103 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Embedding": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "api/handlers",
+      "routes/agent-control"
+    ]
+  },
+  "Embedding dimensions are required for a provider that serves the Embedding task": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "domain/aiprovider",
+      "routes/agent-control"
+    ]
+  },
+  "Embedding dimensions must be 768, 1024 or 1536": {
+    "sites": 3,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/types",
+      "domain/aiprovider",
+      "routes/agent-control"
+    ]
+  },
+  "Embedding input style is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiprovider"
+    ]
+  },
+  "Embedding provider {0} returned an unusable response": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Embedding provider {0} returned {1} dimensions, but it is configured for {2}. Set the dimension the model actually returns, or choose a model that supports {2}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Embedding provider {0} returned {1} vectors for {2} texts": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Embedding purpose must be Document or Query": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Embedding usage must be recorded as Indexing or Retrieval": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Embeddings are priced on input alone. Leave empty if unknown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Emerald": {
@@ -72248,6 +72455,15 @@
       "routes/agent-control"
     ]
   },
+  "Gemini embeddings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Gender": {
     "sites": 1,
     "scope": [
@@ -76558,6 +76774,15 @@
       "routes/holiday"
     ]
   },
+  "How the endpoint is told a stored document from a search query.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "How the final amount is rounded": {
     "sites": 1,
     "scope": [
@@ -79180,6 +79405,15 @@
     ]
   },
   "Input price, USD per million tokens": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Input style": {
     "sites": 1,
     "scope": [
       "ts"
@@ -98809,7 +99043,7 @@
     ]
   },
   "No AI provider is configured for {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -100452,6 +100686,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "No enabled embedding provider serves {0}. Re-enable it, or re-index with the model now configured": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "No end": {
@@ -103613,6 +103856,15 @@
     ],
     "areas": [
       "routes/my-team"
+    ]
+  },
+  "Nomic prefixes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Non-DOT": {
@@ -107233,6 +107485,15 @@
     ]
   },
   "Ollama (self-hosted)": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Ollama embeddings (self-hosted)": {
     "sites": 1,
     "scope": [
       "go"
@@ -110919,6 +111180,15 @@
     ]
   },
   "OpenAI Responses": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "OpenAI embeddings": {
     "sites": 1,
     "scope": [
       "go"
@@ -121887,6 +122157,15 @@
     "areas": [
       "domain/iam",
       "service/sequenceconfigservice"
+    ]
+  },
+  "Prefixes each text with search_document: or search_query:, which nomic-embed-text needs to embed each side of a search correctly.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Premium applied when the shipment carries hazardous materials.": {
@@ -141746,6 +142025,15 @@
       "routes/scheduling"
     ]
   },
+  "Same for documents and queries": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Same name": {
     "sites": 1,
     "scope": [
@@ -148069,6 +148357,15 @@
     "areas": [
       "apps/dash/_components",
       "routes/shipment"
+    ]
+  },
+  "Sends input_type document or query, and the dimension as output_dimension, the way Voyage's API expects.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "Sends notifications when a reconciliation discrepancy is recorded.": {
@@ -170009,6 +170306,15 @@
       "domain/documenttemplate"
     ]
   },
+  "The vector size the model returns. A reply of any other size is refused.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The version signed is required": {
     "sites": 1,
     "scope": [
@@ -170307,6 +170613,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "The {0} protocol has no embedding endpoint": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The {0} rate for {1} in {2} ( {3} per gallon) will be removed.": {
@@ -172838,6 +173153,26 @@
       "service/agentevalcaseservice"
     ]
   },
+  "This protocol has no embedding endpoint, so it cannot serve the Embedding task": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "domain/aiprovider",
+      "routes/agent-control"
+    ]
+  },
+  "This protocol has no embedding endpoint. Use an OpenAI, OpenAI-compatible or Ollama provider for embeddings.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This provider may reach your internal network": {
     "sites": 1,
     "scope": [
@@ -172845,6 +173180,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "This provider's protocol has no embedding endpoint": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiproviderservice"
     ]
   },
   "This provider's protocol is not supported": {
@@ -178210,6 +178554,15 @@
       "domain/shipmentimportchat"
     ]
   },
+  "Turn memories, documents and mail into vectors so agents can find them by meaning rather than by exact words.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Turn off for a company-policy test that is not made under 49 CFR 382.": {
     "sites": 1,
     "scope": [
@@ -182900,6 +183253,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Vectors from this model are what agents search by meaning. Changing the model or its size re-indexes everything it has embedded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Vehicle": {
     "sites": 4,
     "scope": [
@@ -185234,6 +185596,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Voyage AI embeddings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Voyage input type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
     ]
   },
   "W-2 employee paid through driver pay expense.": {
@@ -198942,6 +199322,15 @@
     ],
     "areas": [
       "routes/late-charges"
+    ]
+  },
+  "{0, plural, one {# dimension} other {# dimensions}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0, plural, one {# doc} other {# docs}}": {
