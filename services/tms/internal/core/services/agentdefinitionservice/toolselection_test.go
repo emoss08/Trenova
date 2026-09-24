@@ -62,7 +62,7 @@ func validate(t *testing.T, d *agentdefinition.Definition) map[string]bool {
 
 	actions, queries := testRegistries()
 	multiErr := errortypes.NewMultiError()
-	validateToolSelection(d, actions, queries, multiErr)
+	validateToolSelection(toolSelection{definition: d, actions: actions, queries: queries}, multiErr)
 
 	fields := make(map[string]bool)
 	for _, e := range multiErr.Errors {
@@ -119,7 +119,7 @@ func TestBuildToolCatalog_ListsEveryRegisteredToolWithItsKind(t *testing.T) {
 	t.Parallel()
 
 	actions, queries := testRegistries()
-	catalog := buildToolCatalog(actions, queries)
+	catalog := buildToolCatalog(actions, queries, nil)
 
 	require.Len(t, catalog, 4)
 	byName := make(map[string]serviceports.ToolCatalogEntry, len(catalog))
@@ -138,7 +138,7 @@ func TestBuildToolCatalog_SaysWhatEachToolDoes(t *testing.T) {
 	t.Parallel()
 
 	actions, queries := testRegistries()
-	catalog := buildToolCatalog(actions, queries)
+	catalog := buildToolCatalog(actions, queries, nil)
 
 	byName := make(map[string]serviceports.ToolCatalogEntry, len(catalog))
 	for _, entry := range catalog {
@@ -263,7 +263,7 @@ func TestBuildToolCatalog_MarksTheCoreTools(t *testing.T) {
 	)
 
 	byName := make(map[string]serviceports.ToolCatalogEntry)
-	for _, entry := range buildToolCatalog(actions, queries) {
+	for _, entry := range buildToolCatalog(actions, queries, nil) {
 		byName[entry.Name] = entry
 	}
 
@@ -305,7 +305,7 @@ func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
 		d := definition("", "email_customer")
 		d.ToolTiers = map[string]agent.AutonomyTier{"email_customer": tier}
 		multiErr := errortypes.NewMultiError()
-		validateToolSelection(d, actions, queries, multiErr)
+		validateToolSelection(toolSelection{definition: d, actions: actions, queries: queries}, multiErr)
 
 		fields := make(map[string]bool)
 		for _, e := range multiErr.Errors {
@@ -334,7 +334,11 @@ func tierMessages(
 	d := definition("", tool.ToolName)
 	d.ToolTiers = map[string]agent.AutonomyTier{tool.ToolName: tier}
 	multiErr := errortypes.NewMultiError()
-	validateToolSelection(d, actions, &agentruntimetest.StubQueryRegistry{}, multiErr)
+	validateToolSelection(toolSelection{
+		definition: d,
+		actions:    actions,
+		queries:    &agentruntimetest.StubQueryRegistry{},
+	}, multiErr)
 
 	messages := make(map[string]string, len(multiErr.Errors))
 	for _, e := range multiErr.Errors {

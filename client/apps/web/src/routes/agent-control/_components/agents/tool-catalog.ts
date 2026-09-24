@@ -39,7 +39,8 @@ export type ToolGroup = {
 /**
  * The catalog split into the tools every agent holds and the ones an
  * administrator chooses. The server strips core tools from a saved selection,
- * so offering one as a choice would be a checkbox that does nothing.
+ * and an extension turned on for every agent gives its tools to all of them,
+ * so offering either as a choice would be a checkbox that does nothing.
  */
 export function splitCoreTools(tools: readonly ToolCatalogEntry[]): {
   core: ToolCatalogEntry[];
@@ -48,9 +49,13 @@ export function splitCoreTools(tools: readonly ToolCatalogEntry[]): {
   const core: ToolCatalogEntry[] = [];
   const selectable: ToolCatalogEntry[] = [];
   for (const tool of tools) {
-    (tool.core ? core : selectable).push(tool);
+    (heldByEveryAgent(tool) ? core : selectable).push(tool);
   }
   return { core, selectable };
+}
+
+function heldByEveryAgent(tool: ToolCatalogEntry): boolean {
+  return tool.core || tool.grantedToEveryAgent;
 }
 
 export type ImpliedRead = {
@@ -195,7 +200,7 @@ export function summarizeSelection(
       summary.unknown.push(name);
       continue;
     }
-    if (tool.core) {
+    if (heldByEveryAgent(tool)) {
       continue;
     }
     if (tool.kind === "query") {

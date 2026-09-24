@@ -245,15 +245,17 @@ func (fx *workflowEffects) Delegate(
 	}
 	turn := fx.runtime.RestoreTurn(opened.Run.request(), opened.Turn)
 	turn.ReserveCallIDs(call.CallIDs)
+	turn.CarryExternalContent(call.AfterExternalContent)
 	result, err := fx.runtime.Drive(turn, sub)
 
 	fx.outcome.Artifacts = append(fx.outcome.Artifacts, sub.outcome.Artifacts...)
 	fx.outcome.Events = append(fx.outcome.Events, sub.outcome.Events...)
 
 	run := agentruntime.DelegateRun{
-		Definition: opened.Run.Definition,
-		Result:     result,
-		Documents:  publishedDocuments(sub.outcome.Artifacts),
+		Definition:      opened.Run.Definition,
+		Result:          result,
+		Documents:       publishedDocuments(sub.outcome.Artifacts),
+		ExternalContent: turn.ReadExternalContent(),
 	}
 	if err != nil {
 		failure := modelcall.FailureOf(err)

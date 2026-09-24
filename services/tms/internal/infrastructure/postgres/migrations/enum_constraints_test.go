@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
@@ -47,6 +48,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_agent_definitions_template",
 			values: stringsOf(agentdefinition.AllTemplates()),
+		},
+		{
+			name:   "ck_agent_extensions_type",
+			values: stringsOf(agentextension.AllTypes()),
+		},
+		{
+			name:   "ck_agent_extensions_availability",
+			values: stringsOf(agentextension.AllAvailabilities()),
 		},
 		{
 			name:   "ck_agent_definitions_access_mode",

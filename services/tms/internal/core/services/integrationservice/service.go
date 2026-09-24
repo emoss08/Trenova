@@ -5,14 +5,15 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"sort"
-	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/configspec"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
+	"github.com/emoss08/trenova/internal/core/services/secretconfig"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -40,6 +41,7 @@ type Service struct {
 	l                      *zap.Logger
 	repo                   repositories.IntegrationRepository
 	encryption             *encryptionservice.Service
+	secrets                secretconfig.Codec
 	auditService           services.AuditService
 	registry               *permission.Registry
 	fuelCardConnectors     map[integration.Type]services.FuelCardProvider
@@ -69,6 +71,7 @@ func New(p Params) *Service {
 		l:                      p.Logger.Named("service.integration"),
 		repo:                   p.Repo,
 		encryption:             p.Encryption,
+		secrets:                secretconfig.NewCodec(p.Encryption, p.Logger),
 		auditService:           p.AuditService,
 		registry:               p.Registry,
 		fuelCardConnectors:     connectors,
@@ -195,7 +198,7 @@ func (s *Service) GetConfig(
 			return &services.ConfigResponse{
 				Type:    typ,
 				Enabled: false,
-				Fields:  buildFieldValues(nil, spec),
+				Fields:  configspec.Values(nil, spec.Fields),
 				Spec:    spec.Fields,
 			}, nil
 		}
@@ -208,29 +211,10 @@ func (s *Service) GetConfig(
 	return &services.ConfigResponse{
 		Type:      typ,
 		Enabled:   record.Enabled,
-		Fields:    buildFieldValues(record.Configuration, spec),
+		Fields:    configspec.Values(record.Configuration, spec.Fields),
 		Spec:      spec.Fields,
 		UpdatedAt: record.UpdatedAt,
 	}, nil
-}
-
-func buildFieldValues(
-	configuration map[string]any,
-	spec integration.IntegrationSpec,
-) []services.ConfigFieldValue {
-	fields := make([]services.ConfigFieldValue, 0, len(spec.Fields))
-	for _, f := range spec.Fields {
-		val := integration.ReadConfigString(configuration, f.Key)
-		fv := services.ConfigFieldValue{
-			Key:      f.Key,
-			HasValue: val != "",
-		}
-		if !f.Sensitive {
-			fv.Value = val
-		}
-		fields = append(fields, fv)
-	}
-	return fields
 }
 
 func (s *Service) UpdateConfig(
@@ -253,7 +237,11 @@ func (s *Service) UpdateConfig(
 	}
 
 	scope := newSecretScope(tenantInfo, typ, spec)
-	finalConfig, err := s.buildFinalConfig(spec, req.Configuration, existing, scope)
+	var existingConfig map[string]any
+	if existing != nil {
+		existingConfig = existing.Configuration
+	}
+	finalConfig, err := s.secrets.Merge(spec.Fields, req.Configuration, existingConfig, scope)
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +316,7 @@ func (s *Service) UpdateConfig(
 	return &services.ConfigResponse{
 		Type:      typ,
 		Enabled:   updated.Enabled,
-		Fields:    buildFieldValues(updated.Configuration, spec),
+		Fields:    configspec.Values(updated.Configuration, spec.Fields),
 		Spec:      spec.Fields,
 		UpdatedAt: updated.UpdatedAt,
 	}, nil
@@ -458,7 +446,7 @@ func (s *Service) GetClientRuntimeConfig(
 				Enabled:               false,
 				Configured:            false,
 				Ready:                 false,
-				MissingRequiredFields: requiredFieldKeys(spec, nil),
+				MissingRequiredFields: configspec.MissingRequired(nil, spec.Fields),
 				Config:                map[string]string{},
 			}, nil
 		}
@@ -468,14 +456,14 @@ func (s *Service) GetClientRuntimeConfig(
 		).WithInternal(err)
 	}
 
-	missingRequiredFields := requiredFieldKeys(spec, record.Configuration)
+	missingRequiredFields := configspec.MissingRequired(record.Configuration, spec.Fields)
 	configured := len(missingRequiredFields) == 0
 	ready := record.Enabled && configured
 	clientCfg := make(map[string]string, len(allowedFields))
 	if ready {
-		fieldsByKey := configFieldsByKey(spec)
+		fieldsByKey := configspec.ByKey(spec.Fields)
 		for key := range allowedFields {
-			value, err := s.readRuntimeConfigField(
+			value, err := s.secrets.ReadField(
 				record.Configuration,
 				fieldsByKey[key],
 				newSecretScope(tenantInfo, typ, spec),
@@ -532,7 +520,7 @@ func (s *Service) getRuntimeConfig(
 	cfg := make(map[string]string, len(spec.Fields))
 	scope := newSecretScope(tenantInfo, typ, spec)
 	for _, field := range spec.Fields {
-		val, readErr := s.readRuntimeConfigField(record.Configuration, &field, scope)
+		val, readErr := s.secrets.ReadField(record.Configuration, &field, scope)
 		if readErr != nil {
 			return nil, errortypes.NewBusinessError(
 				"failed to decrypt {0} configuration", string(typ),
@@ -541,7 +529,7 @@ func (s *Service) getRuntimeConfig(
 		cfg[field.Key] = val
 	}
 
-	missingRequiredFields := requiredFieldKeysFromRuntimeConfig(spec, cfg)
+	missingRequiredFields := configspec.MissingRequiredValues(cfg, spec.Fields)
 	for _, field := range spec.Fields {
 		if field.Required && cfg[field.Key] == "" {
 			return nil, errortypes.NewBusinessError(
@@ -557,130 +545,6 @@ func (s *Service) getRuntimeConfig(
 		MissingRequiredFields: missingRequiredFields,
 		Config:                cfg,
 	}, nil
-}
-
-func (s *Service) readRuntimeConfigField(
-	configuration map[string]any,
-	field *integration.ConfigFieldSpec,
-	scope secretScope,
-) (string, error) {
-	if field == nil {
-		return "", nil
-	}
-
-	val := strings.TrimSpace(integration.ReadConfigString(configuration, field.Key))
-	if val == "" {
-		return "", nil
-	}
-
-	if field.Sensitive {
-		return s.decryptSecret(val, field.Key, scope)
-	}
-
-	return val, nil
-}
-
-func configFieldsByKey(spec integration.IntegrationSpec) map[string]*integration.ConfigFieldSpec {
-	fields := make(map[string]*integration.ConfigFieldSpec, len(spec.Fields))
-	for idx := range spec.Fields {
-		field := &spec.Fields[idx]
-		fields[field.Key] = field
-	}
-
-	return fields
-}
-
-func requiredFieldKeys(
-	spec integration.IntegrationSpec,
-	configuration map[string]any,
-) []string {
-	missing := make([]string, 0, len(spec.Fields))
-	for _, field := range spec.Fields {
-		if !field.Required {
-			continue
-		}
-		if integration.ReadConfigString(configuration, field.Key) == "" {
-			missing = append(missing, field.Key)
-		}
-	}
-
-	return missing
-}
-
-func requiredFieldKeysFromRuntimeConfig(
-	spec integration.IntegrationSpec,
-	configuration map[string]string,
-) []string {
-	missing := make([]string, 0, len(spec.Fields))
-	for _, field := range spec.Fields {
-		if !field.Required {
-			continue
-		}
-		if strings.TrimSpace(configuration[field.Key]) == "" {
-			missing = append(missing, field.Key)
-		}
-	}
-
-	return missing
-}
-
-func (s *Service) buildFinalConfig(
-	spec integration.IntegrationSpec,
-	incoming map[string]string,
-	existing *integration.Integration,
-	scope secretScope,
-) (map[string]any, error) {
-	finalConfig := make(map[string]any, len(spec.Fields))
-
-	for idx := range spec.Fields {
-		field := &spec.Fields[idx]
-		val := strings.TrimSpace(incoming[field.Key])
-
-		if field.Sensitive {
-			stored, storeErr := s.resolveSensitiveField(field, val, existing, scope)
-			if storeErr != nil {
-				return nil, storeErr
-			}
-			finalConfig[field.Key] = stored
-		} else {
-			finalConfig[field.Key] = resolveNonSensitiveField(field, val)
-		}
-	}
-
-	return finalConfig, nil
-}
-
-func (s *Service) resolveSensitiveField(
-	field *integration.ConfigFieldSpec,
-	incoming string,
-	existing *integration.Integration,
-	scope secretScope,
-) (string, error) {
-	if incoming == "" {
-		if existing != nil {
-			stored := integration.ReadConfigString(existing.Configuration, field.Key)
-			return s.rebindLegacySecret(stored, field.Key, scope), nil
-		}
-		return "", nil
-	}
-
-	encrypted, err := s.encryptSecret(incoming, field.Key, scope)
-	if err != nil {
-		return "", errortypes.NewBusinessError(
-			"failed to encrypt configuration value",
-		).WithInternal(err)
-	}
-	return encrypted, nil
-}
-
-func resolveNonSensitiveField(
-	field *integration.ConfigFieldSpec,
-	incoming string,
-) string {
-	if incoming == "" && field.Default != "" {
-		return field.Default
-	}
-	return incoming
 }
 
 func validateRequiredFields(

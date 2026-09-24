@@ -7,18 +7,50 @@ import (
 	"sort"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-func validateToolSelection(
-	definition *agentdefinition.Definition,
-	actions serviceports.AgentToolRegistry,
-	queries serviceports.AgentQueryToolRegistry,
-	multiErr *errortypes.MultiError,
-) {
+type extensionState map[agentextension.Type]agentextension.Availability
+
+func (e extensionState) offers(name string) (agentextension.Type, bool) {
+	typ, isExtension := agentextension.ExtensionForTool(name)
+	if !isExtension {
+		return "", true
+	}
+	_, active := e[typ]
+
+	return typ, active
+}
+
+type toolSelection struct {
+	definition *agentdefinition.Definition
+	previous   *agentdefinition.Definition
+	actions    serviceports.AgentToolRegistry
+	queries    serviceports.AgentQueryToolRegistry
+	extensions extensionState
+}
+
+func validateToolSelection(selection toolSelection, multiErr *errortypes.MultiError) {
+	definition := selection.definition
+	actions := selection.actions
+	queries := selection.queries
 	for idx, name := range definition.ToolNames {
+		if typ, offered := selection.extensions.offers(name); !offered &&
+			!selection.previouslyHeld(name) {
+			multiErr.Add(
+				fmt.Sprintf("toolNames[%d]", idx),
+				errortypes.ErrInvalid,
+				fmt.Sprintf(
+					"%q comes with the %s extension, which is not turned on for this "+
+						"organization. Turn it on under AI Control, Extensions first",
+					name, typ,
+				),
+			)
+			continue
+		}
 		if _, ok := queries.Get(name); ok {
 			continue
 		}
@@ -50,20 +82,29 @@ func validateToolSelection(
 	}
 }
 
+func (s toolSelection) previouslyHeld(name string) bool {
+	return s.previous != nil && slices.Contains(s.previous.ToolNames, name)
+}
+
 func buildToolCatalog(
 	actions serviceports.AgentToolRegistry,
 	queries serviceports.AgentQueryToolRegistry,
+	extensions extensionState,
 ) []serviceports.ToolCatalogEntry {
 	queryTools := queries.All()
 	actionTools := actions.All()
 	entries := make([]serviceports.ToolCatalogEntry, 0, len(queryTools)+len(actionTools))
 
 	for _, tool := range queryTools {
-		entries = append(entries, catalogEntry(tool, serviceports.ToolCatalogKindQuery))
+		if entry, offered := extensions.entry(tool, serviceports.ToolCatalogKindQuery); offered {
+			entries = append(entries, entry)
+		}
 	}
 
 	for _, tool := range actionTools {
-		entries = append(entries, catalogEntry(tool, serviceports.ToolCatalogKindAction))
+		if entry, offered := extensions.entry(tool, serviceports.ToolCatalogKindAction); offered {
+			entries = append(entries, entry)
+		}
 	}
 
 	sort.SliceStable(entries, func(i, j int) bool {
@@ -77,15 +118,30 @@ func buildToolCatalog(
 	return entries
 }
 
-func catalogEntry(
-	tool interface {
-		Name() string
-		Description() string
-		ParamSchema() map[string]any
-		Policy() serviceports.ToolPolicy
-	},
+type catalogTool interface {
+	Name() string
+	Description() string
+	ParamSchema() map[string]any
+	Policy() serviceports.ToolPolicy
+}
+
+func (e extensionState) entry(
+	tool catalogTool,
 	kind serviceports.ToolCatalogKind,
-) serviceports.ToolCatalogEntry {
+) (serviceports.ToolCatalogEntry, bool) {
+	typ, offered := e.offers(tool.Name())
+	if !offered {
+		return serviceports.ToolCatalogEntry{}, false
+	}
+
+	entry := catalogEntry(tool, kind)
+	entry.Extension = typ
+	entry.GrantedToEveryAgent = typ != "" && e[typ] == agentextension.AvailabilityAllAgents
+
+	return entry, true
+}
+
+func catalogEntry(tool catalogTool, kind serviceports.ToolCatalogKind) serviceports.ToolCatalogEntry {
 	policy := tool.Policy()
 	entry := serviceports.ToolCatalogEntry{
 		Name:        tool.Name(),

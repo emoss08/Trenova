@@ -316,6 +316,10 @@ turn stream, per-agent schedules, the one-shot and batch workflows, and the
 **Read [docs/engineering/agent-runtime.md](docs/engineering/agent-runtime.md)
 before changing anything under `internal/core/services/agentruntime/`,
 `assistantservice/`, or `internal/core/temporaljobs/{agentflow,modelcall,agentjobs,assistantjobs,completionjobs,importassistantjobs}/`.**
+Extensions (web search and anything like it) add agent-only tools that an organization turns
+on with its own vendor account; how they are gated, metered, and why a turn that read outside
+content proposes every later write, is in
+[docs/engineering/agent-extensions.md](docs/engineering/agent-extensions.md).
 An agent handing a task to another agent (`delegate_task`, the per-agent
 allowlist, one level only, same person) is described in
 [docs/engineering/agent-delegation.md](docs/engineering/agent-delegation.md).

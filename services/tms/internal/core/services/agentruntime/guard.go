@@ -40,6 +40,9 @@ type guardedDispatchParams struct {
 	proposedSoFar  []serviceports.PendingAction
 	// ordinal numbers this exact call within the run; the loop assigns it.
 	ordinal int
+	// afterExternal says the turn has read content from outside the
+	// organization, so no write may run without a person.
+	afterExternal bool
 }
 
 // guardedDispatch runs one tool call at most once across every attempt of a
@@ -77,6 +80,7 @@ func (s *Service) guardedDispatch(
 			completionText: p.completionText,
 			proposedSoFar:  p.proposedSoFar,
 			idempotencyKey: p.call.ID,
+			afterExternal:  p.afterExternal,
 		})
 	}
 
@@ -123,6 +127,7 @@ func (s *Service) guardedDispatch(
 		completionText: p.completionText,
 		proposedSoFar:  p.proposedSoFar,
 		idempotencyKey: key,
+		afterExternal:  p.afterExternal,
 	})
 
 	step.Status = serviceports.RunStepCompleted

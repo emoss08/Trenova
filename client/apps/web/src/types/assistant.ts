@@ -246,6 +246,10 @@ export const toolCatalogEntrySchema = z.object({
   /** Tools this one takes its arguments from; the reads among them come with it. */
   prerequisites: z.array(z.string()).default([]),
   effect: optionalToolEffect,
+  /** The extension the tool comes with, empty for Trenova's own tools. */
+  extension: z.string().optional().default(""),
+  /** The extension gives the tool to every agent, so it is never chosen. */
+  grantedToEveryAgent: z.boolean().default(false),
 });
 
 export const toolCatalogSchema = z.object({

@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, automation agents, agent proposals, agent memory, sub-agents, agent delegation]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -9,11 +9,13 @@ related:
 
 ## What it's for
 AI control is the one place for everything AI in the organization. A rail down the left side
-holds five sections: **Overview**, **Agents**, **Providers**, **Memory** and **Activity**.
-Providers say where AI work goes (the model endpoints Trenova calls and which AI tasks each one
-handles), agents say what AI may do (their instructions, tools, autonomy and trigger), memory
-holds the standing instructions and facts agents read, and activity shows what agents did: their
-runs, the changes they proposed, multi-step plans, replays and exceptions.
+holds six sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory** and
+**Activity**. Providers say where AI work goes (the model endpoints Trenova calls and which AI
+tasks each one handles), agents say what AI may do (their instructions, tools, autonomy and
+trigger), extensions add abilities that work only for agents, such as searching the web, using
+the organization's own account with the vendor, memory holds the standing instructions and facts
+agents read, and activity shows what agents did: their runs, the changes they proposed,
+multi-step plans, replays and exceptions.
 
 **Overview** shows whether AI can work at all (a banner warns when no provider is connected or a
 task has no provider), a strip of figures for providers and agents that are on, proposals
@@ -37,6 +39,20 @@ Keywords: add LLM, model endpoint, OpenAI, API key, gateway, self-hosted model
 6. Leave **Enabled** on and select **Save**.
 7. Back on the provider's card, select **Test** to check the endpoint answers and honours JSON
    schemas.
+
+### Let agents search the web
+Keywords: web search, internet, Exa, look up regulations, ELD rules, hours of service, current information, extension marketplace
+1. Open [AI control](/admin/agent-control) and select **Extensions** in the rail.
+2. On the web search card, select **Set up**.
+3. Paste the organization's Exa API key and select **Save changes**. The key is stored encrypted
+   and never shown again; leave the field blank later to keep it.
+4. Select **Test connection** to check the key works.
+5. Turn the extension on, and under **Available to** choose **Every agent** to give all agents,
+   the assistant included, the web search tools, or **Agents you choose** to add them only to
+   the agents you pick under **Choose tools** on the **Agents** section. Then select **Save
+   changes**.
+6. Optionally change the search depth, the results per search, the daily request limit and the
+   sites agents never receive results from.
 
 ### Create an agent
 Keywords: new agent, build agent, automation, scheduled agent, agent template
@@ -107,7 +123,17 @@ Opening the page needs read access to AI control. Each section in the rail appea
 people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions,
 agent memory); a section someone cannot open is left out. The organization-wide switches need
 update access to AI control, deciding proposals needs update access to agent proposals, and
-**Test** on a provider needs manage access to AI providers.
+**Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read
+access to agent extensions, and turning one on, changing its settings or testing it needs update
+access. An agent searches the web for someone only when their role has the web research
+permission.
+
+Search queries and the addresses of pages agents read are sent to the extension's vendor. Queries
+that contain Trenova record IDs, email addresses or phone numbers are refused before they leave
+Trenova. Once an agent has read web content, every change it asks for in the rest of that reply
+waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests
+against the daily limit, which resets at midnight UTC, and the card shows today's requests and
+this month's cost.
 
 An agent asks only the agents listed under **Can ask**; with none listed it works with its own
 tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot

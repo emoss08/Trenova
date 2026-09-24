@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/configspec"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -567,11 +568,7 @@ type UpdateConfigRequest struct {
 	Configuration map[string]string     `json:"configuration"`
 }
 
-type ConfigFieldValue struct {
-	Key      string `json:"key"`
-	Value    string `json:"value,omitempty"`
-	HasValue bool   `json:"hasValue"`
-}
+type ConfigFieldValue = configspec.FieldValue
 
 type ConfigResponse struct {
 	Type      integration.Type              `json:"type"`
