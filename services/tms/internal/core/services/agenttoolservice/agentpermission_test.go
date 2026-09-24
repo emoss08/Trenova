@@ -145,12 +145,6 @@ func TestTheAllowListGrantsNothingNoToolClaims(t *testing.T) {
 		permission.ResourceAgentMemory: {
 			permission.OpUpdate: "remember overwrites what it wrote before",
 		},
-		permission.ResourceWatchtower: {
-			permission.OpRead: "the feed is read to build a turn's context",
-		},
-		permission.ResourceBriefing: {
-			permission.OpRead: "the briefing is read to build a turn's context",
-		},
 		permission.ResourceBillingQueue: {
 			permission.OpRead: "agentsubjectservice loads the item a run is about",
 		},
