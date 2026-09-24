@@ -91,7 +91,7 @@ func (s *Service) StartThread(
 	if err != nil {
 		return nil, err
 	}
-	created.CanContinue = true
+	created.MarkContinuable()
 
 	return created, nil
 }

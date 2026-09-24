@@ -3,8 +3,8 @@ import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/dat
 import { cn } from "@trenova/shared/lib/utils";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { decideMyPlan } from "@/lib/graphql/agent-decisions";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
-import { apiService } from "@/services/api";
 import type { AssistantPlan, AssistantProposal, PlanDecision } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -51,10 +51,15 @@ export function PlanCard({
   const queryClient = useQueryClient();
   const state = classifyPlan(plan);
 
+  // Decided as the person whose conversation raised it, which needs only the
+  // assistant, the way a single proposal in the thread is. Approving still
+  // runs each step as them, so a step they may not make fails on its own.
   const decideMutation = useApiMutation({
-    mutationFn: (decision: PlanDecision) =>
-      apiService.assistantService.decidePlan(plan.id, decision),
+    mutationFn: (decision: PlanDecision) => decideMyPlan(plan.id, { decision, reasonCode: "" }),
     onSuccess: () => invalidateProposalViews(queryClient, threadId),
+    // A refusal usually means the plan was decided elsewhere; catching up
+    // beats a card stuck on a question nobody can answer any more.
+    onError: () => void invalidateProposalViews(queryClient, threadId),
     resourceName: "Plan",
   });
 

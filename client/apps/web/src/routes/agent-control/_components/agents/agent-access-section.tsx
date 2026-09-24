@@ -2,19 +2,21 @@ import { describeToolCall } from "@/components/assistant/tool-presentation";
 import { RoleAutocompleteField } from "@/components/autocomplete-fields";
 import { FieldWrapper } from "@/components/fields/field-components";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
-import type {
-  AgentAccessMode,
-  AgentAudienceRole,
-  AgentAudienceSuggestion,
+import {
+  agentAccessPreviewRequest,
+  type AgentAccessMode,
+  type AgentAccessPreview,
+  type AgentAudienceRole,
 } from "@/lib/graphql/agent-access";
 import { queries } from "@/lib/queries";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { CheckIcon, PlusIcon, ShieldAlertIcon, UsersIcon, UserRoundCheckIcon } from "lucide-react";
@@ -22,6 +24,12 @@ import { useMemo } from "react";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import type { AgentFormValues } from "./agent-form-schema";
 import { resourceLabel } from "./tool-catalog";
+
+/**
+ * How long the form rests before who it suits is worked out again. Ticking
+ * through the tool list asks once, for where it ends up.
+ */
+export const ACCESS_PREVIEW_DEBOUNCE_MS = 300;
 
 const COVERAGE_ORDER: Record<AgentAudienceRole["coverage"], number> = {
   Full: 0,
@@ -45,7 +53,12 @@ export function rankAudience(roles: readonly AgentAudienceRole[]): AgentAudience
 /**
  * Who may use the agent, among the people who may use the assistant: everyone,
  * or the roles chosen here. A system agent is always everyone's, because
- * Trenova runs it for people. Saved with its own request when the agent is.
+ * Trenova runs it for people. Saved with the agent, in the same request.
+ *
+ * What each role could make of it, and the warning an agent open to everyone
+ * earns for its sensitive tools, are worked out from the form as it stands,
+ * not from the agent as saved: switching a restricted agent back to everyone
+ * warns at once, before anything is saved.
  */
 export function AgentAccessSection({
   mode,
@@ -61,14 +74,33 @@ export function AgentAccessSection({
   const { control, setValue } = useFormContext<AgentFormValues>();
   const { field: modeField } = useController({ control, name: "accessMode" });
   const roleIds = useWatch({ control, name: "accessRoleIds" });
+  const toolNames = useWatch({ control, name: "toolNames" });
   const restricted = modeField.value === "Roles";
-  const saved = mode === "edit" && agentId !== "";
+  const savedAgentId = mode === "edit" ? agentId : "";
+
+  const previewRequest = useMemo(
+    () =>
+      agentAccessPreviewRequest({
+        agentId: savedAgentId,
+        toolNames: toolNames ?? [],
+        accessMode: modeField.value,
+      }),
+    [savedAgentId, toolNames, modeField.value],
+  );
+  const debouncedRequest = useDebounce(previewRequest, ACCESS_PREVIEW_DEBOUNCE_MS);
 
   const audienceQuery = useQuery({
-    ...queries.assistant.agentAudience(agentId),
-    enabled: saved,
+    ...queries.assistant.agentAccessPreview(debouncedRequest),
+    enabled: !isSystem,
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
   });
+  // A preview still being worked out for a mode the form has left says
+  // nothing about the mode it is in now.
+  const preview =
+    audienceQuery.data && audienceQuery.data.accessMode === modeField.value
+      ? audienceQuery.data
+      : null;
 
   const addRole = (id: string) => {
     if (roleIds.includes(id)) {
@@ -151,13 +183,10 @@ export function AgentAccessSection({
             </p>
           )}
 
-          {!restricted && saved && audienceQuery.data && (
-            <SensitiveToolsWarning suggestion={audienceQuery.data} />
-          )}
+          {!restricted && preview && <SensitiveToolsWarning preview={preview} />}
 
           {restricted && (
             <SuggestedRoles
-              saved={saved}
               isLoading={audienceQuery.isLoading}
               isError={audienceQuery.isError}
               roles={audienceQuery.data?.roles ?? null}
@@ -176,12 +205,12 @@ export function AgentAccessSection({
  * restricted or confidential data: anyone who can use the assistant can ask
  * for them, within their own permissions.
  */
-function SensitiveToolsWarning({ suggestion }: { suggestion: AgentAudienceSuggestion }) {
+function SensitiveToolsWarning({ preview }: { preview: AgentAccessPreview }) {
   const t = useT();
-  if (suggestion.sensitiveTools.length === 0) {
+  if (preview.sensitiveTools.length === 0) {
     return null;
   }
-  const tools = suggestion.sensitiveTools.map((name) => describeToolCall(name, null).title);
+  const tools = preview.sensitiveTools.map((name) => describeToolCall(name, null).title);
 
   return (
     <Alert variant="warning" size="sm">
@@ -198,20 +227,18 @@ function SensitiveToolsWarning({ suggestion }: { suggestion: AgentAudienceSugges
 }
 
 /**
- * What each role could make of the agent, from the tools it holds as saved:
- * all of it, some of it and what is missing, or nothing because the role
- * cannot use the assistant. Suggestions are the system's, so they carry its
- * mark; choosing one adds the role to the list above.
+ * What each role could make of the agent, from the tools the form holds: all
+ * of it, some of it and what is missing, or nothing because the role cannot
+ * use the assistant. Suggestions are the system's, so they carry its mark;
+ * choosing one adds the role to the list above.
  */
 function SuggestedRoles({
-  saved,
   isLoading,
   isError,
   roles,
   chosen,
   onAdd,
 }: {
-  saved: boolean;
   isLoading: boolean;
   isError: boolean;
   roles: readonly AgentAudienceRole[] | null;
@@ -228,14 +255,10 @@ function SuggestedRoles({
       icon={<AssistMark />}
       count={ranked.length}
       help={t(
-        "Worked out from the tools the agent holds as saved, against what each role may do. A role missing something can still use the agent; the tools it lacks permission for are refused.",
+        "Worked out from the tools chosen on this form, against what each role may do. A role missing something can still use the agent; the tools it lacks permission for are refused.",
       )}
     >
-      {!saved ? (
-        <SectionPanelQuiet>
-          {t("Suggestions appear once the agent is saved, from the tools it holds.")}
-        </SectionPanelQuiet>
-      ) : isLoading ? (
+      {isLoading ? (
         <div className="flex flex-col gap-2 px-3 py-3">
           <Skeleton className="h-4 w-2/3" />
           <Skeleton className="h-4 w-1/2" />

@@ -69,7 +69,23 @@ export async function fetchAgentDefinitions(
  * the agent's own grant; AI Control reads the same shape from the
  * organization's full list.
  */
-export type AgentChoice = Omit<MyAgentFieldsFragment, " $fragmentName">;
+type MyAgentFields = Omit<MyAgentFieldsFragment, " $fragmentName">;
+
+/**
+ * Another agent as a hand-off draws it: who it is and its mark, never what it
+ * is set up to do.
+ */
+export type AgentDelegateMark = MyAgentFields["delegates"][number];
+
+export type AgentChoice = Omit<MyAgentFields, "delegates"> & {
+  /**
+   * The agents this one may hand a task to that the person may use, in the
+   * order configured, so an old hand-off in its conversation still draws the
+   * delegate's mark. Read only from `myAgents`; the organization's lists,
+   * which are an administrator's, leave it out.
+   */
+  delegates?: readonly AgentDelegateMark[];
+};
 export type AgentStarter = AgentChoice["starters"][number];
 
 /** Where an agent came from: one of the platform's templates, or built by hand. */

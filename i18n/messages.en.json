@@ -7553,8 +7553,17 @@
       "routes/admin"
     ]
   },
-  "Access must be Everyone or Roles": {
+  "Access is required when roles are given": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Access must be Everyone or Roles": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -12118,6 +12127,15 @@
       "domain/conversation",
       "domain/permission",
       "service/aifeedbackservice"
+    ]
+  },
+  "Agent loader is not configured": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Agent not found": {
@@ -20107,6 +20125,15 @@
     ]
   },
   "At most 100 can be granted at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentaccessservice"
+    ]
+  },
+  "At most 200 tools can be previewed at once": {
     "sites": 1,
     "scope": [
       "go"
@@ -30502,6 +30529,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Changing who can use an agent needs permission to update roles as well as agents. Save it without changing who can use it, or ask someone who can update roles.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentaccessservice"
     ]
   },
   "Channel": {
@@ -68859,15 +68895,6 @@
       "packages/shared/components"
     ]
   },
-  "Fix what is shown and save again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Fixed amount for each shipment regardless of miles.": {
     "sites": 1,
     "scope": [
@@ -105215,6 +105242,15 @@
       "routes/shipment"
     ]
   },
+  "Nothing was given to save": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentaccessservice"
+    ]
+  },
   "Nothing was heard. Try again a little closer to the microphone.": {
     "sites": 1,
     "scope": [
@@ -138376,6 +138412,15 @@
       "routes/admin"
     ]
   },
+  "Roles are required when access is given; send an empty list for none": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Roles: {0}": {
     "sites": 1,
     "scope": [
@@ -157346,15 +157391,6 @@
       "service/carrierintelservice"
     ]
   },
-  "Suggestions appear once the agent is saved, from the tools it holds.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Suggestions could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -160765,6 +160801,15 @@
       "service/assistantservice"
     ]
   },
+  "That plan was not raised in one of your conversations": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
+    ]
+  },
   "That policy does not apply to you": {
     "sites": 1,
     "scope": [
@@ -161306,31 +161351,13 @@
       "routes/agent-control"
     ]
   },
-  "The agent was created and who can use it was saved, but it could not be enabled. Open it to enable it.": {
+  "The agent that raised this plan no longer exists, so the plan cannot be decided": {
     "sites": 1,
     "scope": [
-      "ts"
+      "go"
     ],
     "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "The agent was created but left disabled, because who can use it could not be saved. Open it to try again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "The agent was created, but who can use it could not be saved. Open it to try again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
+      "service/agentplanservice"
     ]
   },
   "The agent whose changes are waiting.": {
@@ -169782,6 +169809,15 @@
       "routes/agent-control"
     ]
   },
+  "This agent is turned off. An administrator can turn it back on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "This agent no longer exists.": {
     "sites": 1,
     "scope": [
@@ -169789,6 +169825,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "This agent now runs on its own and no longer takes conversations. An administrator can change how it runs.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This agent was removed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This allocation is already carried on a posted invoice and cannot change": {
@@ -170140,6 +170194,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "This conversation can no longer continue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This conversation has reached its limit of {0} messages. Start a new conversation to continue": {
@@ -188259,17 +188322,17 @@
       "routes/worker"
     ]
   },
-  "Who can use it": {
-    "sites": 3,
+  "Who can use an agent cannot be set here: agent access is not available": {
+    "sites": 1,
     "scope": [
-      "ts"
+      "go"
     ],
     "areas": [
-      "routes/agent-control"
+      "service/agentdefinitionservice"
     ]
   },
-  "Who can use this agent was saved, but the rest of it was not.": {
-    "sites": 1,
+  "Who can use it": {
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -189369,7 +189432,7 @@
       "apps/web/components"
     ]
   },
-  "Worked out from the tools the agent holds as saved, against what each role may do. A role missing something can still use the agent; the tools it lacks permission for are refused.": {
+  "Worked out from the tools chosen on this form, against what each role may do. A role missing something can still use the agent; the tools it lacks permission for are refused.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -190970,6 +191033,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "You do not have access to {0}, so you cannot decide its plan. An administrator can give one of your roles access to it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
     ]
   },
   "You do not have access to {0}. An administrator can give one of your roles access to it.": {

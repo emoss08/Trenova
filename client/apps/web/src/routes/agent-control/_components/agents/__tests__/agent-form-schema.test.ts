@@ -226,9 +226,10 @@ describe("delegateIds", () => {
     expect(request).not.toHaveProperty("delegates");
   });
 
-  // Who may use an agent has its own request (setAgentAccess). The agent's
-  // own save never carries it, so a save of the rest cannot change it.
-  it("loads who may use the agent into the form and never saves it with the agent", () => {
+  // Who may use an agent rides with the save only when the caller hands it
+  // over. A save that is not given it (a toggle, a prompt preview, an edit
+  // that left access alone) never carries it, so it cannot change it.
+  it("loads who may use the agent into the form and saves it only when handed it", () => {
     const row = toAgentPanelRow({
       ...agentRow(),
       accessMode: "Roles",
@@ -247,6 +248,14 @@ describe("delegateIds", () => {
     expect(request).not.toHaveProperty("accessMode");
     expect(request).not.toHaveProperty("accessRoleIds");
     expect(request).not.toHaveProperty("accessRoles");
+
+    const withAccess = toSaveRequest(row, {
+      mode: "Everyone",
+      roleIds: ["role_dispatch", "role_dispatch"],
+    });
+    expect(withAccess.accessMode).toBe("Everyone");
+    expect(withAccess.accessRoleIds).toEqual(["role_dispatch"]);
+    expect(withAccess).not.toHaveProperty("accessRoles");
   });
 
   it("reads a repeated role once", () => {

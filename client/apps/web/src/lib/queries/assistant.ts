@@ -5,7 +5,12 @@ import {
   type AgentChoiceQuery,
   type AgentChoiceSource,
 } from "@/lib/graphql/agent-definition";
-import { fetchRoleAgents, fetchSuggestedAgentAudience } from "@/lib/graphql/agent-access";
+import {
+  fetchAgentAccessPreview,
+  fetchRoleAgents,
+  fetchSuggestedAgentAudience,
+  type AgentAccessPreviewRequest,
+} from "@/lib/graphql/agent-access";
 import { apiService } from "@/services/api";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -85,6 +90,12 @@ export const assistant = createQueryKeys("assistant", {
     queryKey: ["agent-audience", agentId],
     queryFn: ({ signal }: { signal?: AbortSignal }) =>
       fetchSuggestedAgentAudience(agentId, { signal }),
+  }),
+  // The same, worked out from the agent as the form holds it rather than as
+  // saved. The request is normalized, so it is its own key.
+  agentAccessPreview: (request: AgentAccessPreviewRequest) => ({
+    queryKey: ["agent-access-preview", request],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAgentAccessPreview(request, { signal }),
   }),
   // The agents a role is granted, for the role editor.
   roleAgents: (roleId: string) => ({

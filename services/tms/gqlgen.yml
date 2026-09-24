@@ -2045,6 +2045,8 @@ models:
     fields:
       template:
         resolver: true
+      delegates:
+        resolver: true
   AgentAccessMode:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.AccessMode

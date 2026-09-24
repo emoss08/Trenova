@@ -97,9 +97,54 @@ func agentDefinitionDelegates(
 		return nil, errortypes.NewDatabaseError("Agent definition loader is not configured")
 	}
 
+	return loadDelegates(ctx, loadersForRequest.AgentDefinitionByID, obj, nil)
+}
+
+// myAgentDelegates reads the agents a definition may hand work to that the
+// person asking may use themselves, through the request's usable-agent
+// loader, so a page of agents costs one query and one read of what the
+// person may use for all their delegates. A delegate the agent could not be
+// handed a task by now is left out as well.
+func myAgentDelegates(
+	ctx context.Context,
+	obj *agentdefinition.Definition,
+) ([]*agentdefinition.Definition, error) {
+	if len(obj.DelegateIDs) == 0 {
+		return []*agentdefinition.Definition{}, nil
+	}
+
+	loadersForRequest, ok := loaders.FromContext(ctx)
+	if !ok || loadersForRequest == nil {
+		return nil, errortypes.NewDatabaseError("Agent loader is not configured")
+	}
+
+	return loadDelegates(
+		ctx,
+		loadersForRequest.UsableAgentByID,
+		obj,
+		func(delegate *agentdefinition.Definition) bool {
+			return obj.DelegateRefusal(delegate) == ""
+		},
+	)
+}
+
+type definitionLoader interface {
+	LoadThunk(ctx context.Context, key string) func() (*agentdefinition.Definition, error)
+}
+
+// loadDelegates reads obj's delegates through loader in the order they are
+// configured, queueing every id before waiting on any so they are read in
+// one batch. An id the loader does not find is left out, and so is one keep
+// refuses when keep is set.
+func loadDelegates(
+	ctx context.Context,
+	loader definitionLoader,
+	obj *agentdefinition.Definition,
+	keep func(*agentdefinition.Definition) bool,
+) ([]*agentdefinition.Definition, error) {
 	thunks := make([]func() (*agentdefinition.Definition, error), 0, len(obj.DelegateIDs))
 	for _, id := range obj.DelegateIDs {
-		thunks = append(thunks, loadersForRequest.AgentDefinitionByID.LoadThunk(ctx, id.String()))
+		thunks = append(thunks, loader.LoadThunk(ctx, id.String()))
 	}
 
 	delegates := make([]*agentdefinition.Definition, 0, len(thunks))
@@ -112,9 +157,10 @@ func agentDefinitionDelegates(
 
 			return nil, err
 		}
-		if delegate != nil {
-			delegates = append(delegates, delegate)
+		if delegate == nil || (keep != nil && !keep(delegate)) {
+			continue
 		}
+		delegates = append(delegates, delegate)
 	}
 
 	return delegates, nil

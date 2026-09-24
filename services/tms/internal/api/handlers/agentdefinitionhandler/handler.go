@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -231,7 +232,41 @@ type saveAgentRequest struct {
 	// DelegateIDs is absent to keep the agents this one may hand work to,
 	// and a list, empty or not, to replace them.
 	DelegateIDs *[]pulid.ID `json:"delegateIds"`
-	Version     int64       `json:"version"`
+	// AccessMode and AccessRoleIDs say who may use the agent, set in the
+	// same transaction as the save. Both absent keeps who may use it; both
+	// present replaces it. Changing it needs permission to update roles.
+	AccessMode    *agentdefinition.AccessMode `json:"accessMode"`
+	AccessRoleIDs *[]pulid.ID                 `json:"accessRoleIds"`
+	Version       int64                       `json:"version"`
+}
+
+// access is who the body says may use the agent; given is false when it
+// says nothing. One of the two fields without the other is refused rather
+// than guessed at.
+func (r *saveAgentRequest) access() (
+	access serviceports.AgentAccessWrite,
+	given bool,
+	err error,
+) {
+	switch {
+	case r.AccessMode == nil && r.AccessRoleIDs == nil:
+		return access, false, nil
+	case r.AccessMode == nil:
+		return access, false, errortypes.NewValidationError(
+			"accessMode", errortypes.ErrRequired,
+			"Access is required when roles are given",
+		)
+	case r.AccessRoleIDs == nil:
+		return access, false, errortypes.NewValidationError(
+			"accessRoleIds", errortypes.ErrRequired,
+			"Roles are required when access is given; send an empty list for none",
+		)
+	}
+
+	return serviceports.AgentAccessWrite{
+		Mode:    *r.AccessMode,
+		RoleIDs: *r.AccessRoleIDs,
+	}, true, nil
 }
 
 func (r *saveAgentRequest) toServiceRequest(
@@ -275,6 +310,25 @@ func (r *saveAgentRequest) toServiceRequest(
 	}
 }
 
+// toSaveRequest is the save the body asks for, with who may use the agent
+// when it says.
+func (r *saveAgentRequest) toSaveRequest(
+	id pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) (*serviceports.SaveAgentDefinitionRequest, error) {
+	access, given, err := r.access()
+	if err != nil {
+		return nil, err
+	}
+
+	req := r.toServiceRequest(id, tenantInfo)
+	if given {
+		req.Access = &access
+	}
+
+	return req, nil
+}
+
 func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
@@ -284,12 +338,14 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
+	req, err := body.toSaveRequest(pulid.Nil, tenantFromAuthContext(authCtx))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
 	actor := requestActorFromAuthContext(authCtx)
-	created, err := h.service.Create(
-		c.Request.Context(),
-		body.toServiceRequest(pulid.Nil, tenantFromAuthContext(authCtx)),
-		&actor,
-	)
+	created, err := h.service.Create(c.Request.Context(), req, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -313,12 +369,14 @@ func (h *Handler) update(c *gin.Context) {
 		return
 	}
 
+	req, err := body.toSaveRequest(agentID, tenantFromAuthContext(authCtx))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
 	actor := requestActorFromAuthContext(authCtx)
-	updated, err := h.service.Update(
-		c.Request.Context(),
-		body.toServiceRequest(agentID, tenantFromAuthContext(authCtx)),
-		&actor,
-	)
+	updated, err := h.service.Update(c.Request.Context(), req, &actor)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

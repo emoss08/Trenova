@@ -28,7 +28,7 @@ const request: ThreadAskRequest = {
  */
 describe("a conversation that can no longer continue", () => {
   it("says so where the composer was, and who can change it", () => {
-    render(<ReadOnlyThreadNotice />);
+    render(<ReadOnlyThreadNotice reason="NoAccess" />);
 
     const notice = screen.getByRole("status");
     expect(notice).toHaveTextContent(
@@ -36,6 +36,33 @@ describe("a conversation that can no longer continue", () => {
     );
     expect(screen.queryByRole("textbox")).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  // A disabled agent used to read as lost access, which sent people to ask
+  // for a role they already had. Each reason the server gives has its own
+  // words; a thread served without one says only that it cannot continue.
+  it.each([
+    ["AgentDisabled", "This agent is turned off. An administrator can turn it back on."],
+    [
+      "NoAccess",
+      "You no longer have access to this agent. An administrator can give one of your roles access to it.",
+    ],
+    ["AgentDeleted", "This agent was removed."],
+    [
+      "AgentNotConversational",
+      "This agent now runs on its own and no longer takes conversations. An administrator can change how it runs.",
+    ],
+    [undefined, "This conversation can no longer continue."],
+  ] as const)("says why for %s", (reason, text) => {
+    render(<ReadOnlyThreadNotice reason={reason} />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(text);
+  });
+
+  it("never tells a person whose agent is off that they lost access", () => {
+    render(<ReadOnlyThreadNotice reason="AgentDisabled" />);
+
+    expect(screen.getByRole("status")).not.toHaveTextContent(/no longer have access/iu);
   });
 
   it("forwards the ref, so the thread pads its last message clear of the notice", () => {

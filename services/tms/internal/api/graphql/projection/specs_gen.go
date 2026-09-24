@@ -13763,6 +13763,10 @@ func init() {
 				Name:    "starters",
 				Special: "starters",
 			},
+			{
+				Name:        "delegates",
+				FieldMapKey: "delegateIds",
+			},
 		},
 	}
 

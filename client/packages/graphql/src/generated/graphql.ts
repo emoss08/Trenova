@@ -143,6 +143,16 @@ export type AgentAccessMode =
   /** Only the roles granted it, and the roles that inherit them. Nobody when no role is. */
   | 'Roles';
 
+/** An agent as a form holds it, before it is saved, for working out who it suits. */
+export type AgentAccessPreviewInput = {
+  /** Who the form says may use it. A system agent is always Everyone. */
+  accessMode: AgentAccessMode;
+  /** The agent being edited, so each role says whether it is granted now. Absent for a new one. */
+  agentId?: string | number | null | undefined;
+  /** The tools the form has chosen. Core tools every agent holds need not be listed. At most 200. */
+  toolNames: Array<string>;
+};
+
 /** How much of an agent a role could use. */
 export type AgentAudienceCoverage =
   /** The role grants everything the agent's tools need. */
@@ -6413,7 +6423,7 @@ export type AgentScorecardQueryVariables = Exact<{
 
 export type AgentScorecardQuery = { agentScorecard: { ' $fragmentRefs'?: { 'AgentScorecardFieldsFragment': AgentScorecardFieldsFragment } } };
 
-export type MyAgentFieldsFragment = { id: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, toolNames: Array<string>, systemKey: string, starters: Array<{ label: string, prompt: string }> } & { ' $fragmentName'?: 'MyAgentFieldsFragment' };
+export type MyAgentFieldsFragment = { id: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, toolNames: Array<string>, systemKey: string, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }> } & { ' $fragmentName'?: 'MyAgentFieldsFragment' };
 
 export type MyAgentsQueryVariables = Exact<{
   input: MyAgentsInput;
@@ -6422,6 +6432,14 @@ export type MyAgentsQueryVariables = Exact<{
 
 
 export type MyAgentsQuery = { myAgents: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'MyAgentFieldsFragment': MyAgentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DecideMyPlanMutationVariables = Exact<{
+  id: string | number;
+  input: AgentPlanDecisionInput;
+}>;
+
+
+export type DecideMyPlanMutation = { decideMyPlan: { id: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, version: number, updatedAt: number } };
 
 export type DecideMyProposalMutationVariables = Exact<{
   id: string | number;
@@ -6466,6 +6484,13 @@ export type SetRoleAgentAccessMutationVariables = Exact<{
 
 
 export type SetRoleAgentAccessMutation = { setRoleAgentAccess: { ' $fragmentRefs'?: { 'RoleAgentAccessFieldsFragment': RoleAgentAccessFieldsFragment } } };
+
+export type AgentAccessPreviewQueryVariables = Exact<{
+  input: AgentAccessPreviewInput;
+}>;
+
+
+export type AgentAccessPreviewQuery = { agentAccessPreview: { accessMode: AgentAccessMode, sensitiveTools: Array<string>, roles: Array<{ coverage: AgentAudienceCoverage, missingResources: Array<string>, granted: boolean, role: { ' $fragmentRefs'?: { 'AgentAccessRoleFieldsFragment': AgentAccessRoleFieldsFragment } } }> } };
 
 export type SuggestedAgentAudienceQueryVariables = Exact<{
   agentId: string | number;
@@ -12879,6 +12904,13 @@ export const MyAgentFieldsFragmentDoc = new TypedDocumentString(`
   starters {
     label
     prompt
+  }
+  delegates {
+    id
+    name
+    icon
+    accent
+    template
   }
 }
     `, {"fragmentName":"MyAgentFields"}) as unknown as TypedDocumentString<MyAgentFieldsFragment, unknown>;
@@ -20202,12 +20234,14 @@ export const ArCollectionsWorklistDocument = {"__meta__":{"kind":"query","name":
 export const ArPaymentStatsDocument = {"__meta__":{"kind":"query","name":"ArPaymentStats","hash":"sha256:a4fe33f6233932aadde3e5ec2e4dc656c78b2e73188bab35638f674c3045bbeb"}} as unknown as TypedDocumentString<ArPaymentStatsQuery, ArPaymentStatsQueryVariables>;
 export const ArCustomerProfileDocument = {"__meta__":{"kind":"query","name":"ArCustomerProfile","hash":"sha256:b82086fc8a84f2dcc1c322b26634a1465bf4d240b6a5ff5f9bfd36300fbe7b37"}} as unknown as TypedDocumentString<ArCustomerProfileQuery, ArCustomerProfileQueryVariables>;
 export const AgentScorecardDocument = {"__meta__":{"kind":"query","name":"AgentScorecard","hash":"sha256:4ad32e77a6c5d07bddbf798b32093cb772102fd0a3a232f14c6c0e1136dc699f"}} as unknown as TypedDocumentString<AgentScorecardQuery, AgentScorecardQueryVariables>;
-export const MyAgentsDocument = {"__meta__":{"kind":"query","name":"MyAgents","hash":"sha256:396c2dbadc8d811918486b2a3cd4778f814c78f547e5af124b2e301be5bbed89"}} as unknown as TypedDocumentString<MyAgentsQuery, MyAgentsQueryVariables>;
+export const MyAgentsDocument = {"__meta__":{"kind":"query","name":"MyAgents","hash":"sha256:fbba5deefba9da56ab81d72cd1815eed78a2855232af5826e2ec73f3f787cbc5"}} as unknown as TypedDocumentString<MyAgentsQuery, MyAgentsQueryVariables>;
+export const DecideMyPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideMyPlan","hash":"sha256:9a89b2fadb3bbade1f0c771624ca6cc51a6f9331c122e4c14d462c629db2e868"}} as unknown as TypedDocumentString<DecideMyPlanMutation, DecideMyPlanMutationVariables>;
 export const DecideMyProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposal","hash":"sha256:64dea8adddc7bea71fcfb7abc268678df95b4aa90847396b783656abc92f0180"}} as unknown as TypedDocumentString<DecideMyProposalMutation, DecideMyProposalMutationVariables>;
 export const AgentAccessDocument = {"__meta__":{"kind":"query","name":"AgentAccess","hash":"sha256:a96fd576cc93fef1d6389a872a52d1d681ed4ce882cba36bb6ef2199d6fda41f"}} as unknown as TypedDocumentString<AgentAccessQuery, AgentAccessQueryVariables>;
 export const SetAgentAccessDocument = {"__meta__":{"kind":"mutation","name":"SetAgentAccess","hash":"sha256:e6df898351f5a8c4e7ba13ec77ffd0d5b05464e9abe0fff637b90a0d2e6e61ce"}} as unknown as TypedDocumentString<SetAgentAccessMutation, SetAgentAccessMutationVariables>;
 export const RoleAgentAccessDocument = {"__meta__":{"kind":"query","name":"RoleAgentAccess","hash":"sha256:4320bfe8fce105b07adf7782d513aaff38f3b1aa012079c2d259df9de7eaebcc"}} as unknown as TypedDocumentString<RoleAgentAccessQuery, RoleAgentAccessQueryVariables>;
 export const SetRoleAgentAccessDocument = {"__meta__":{"kind":"mutation","name":"SetRoleAgentAccess","hash":"sha256:dd0999e8751bca239fb25ebad5054c71404e98c83deea9439010bd3b5d3b410b"}} as unknown as TypedDocumentString<SetRoleAgentAccessMutation, SetRoleAgentAccessMutationVariables>;
+export const AgentAccessPreviewDocument = {"__meta__":{"kind":"query","name":"AgentAccessPreview","hash":"sha256:fff0b7d3ee09999aa9a00d4313e756288a2f222e014f1234beb35d3c0619da65"}} as unknown as TypedDocumentString<AgentAccessPreviewQuery, AgentAccessPreviewQueryVariables>;
 export const SuggestedAgentAudienceDocument = {"__meta__":{"kind":"query","name":"SuggestedAgentAudience","hash":"sha256:79bdbda787008c4d10159a18a778009b985209e55670b365e0bc0675e361a021"}} as unknown as TypedDocumentString<SuggestedAgentAudienceQuery, SuggestedAgentAudienceQueryVariables>;
 export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:a44ebbd4e0c314668190068941ad623cefb3b405b0fb345a4dfe58072465cf70"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
 export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:5f38f15ae16abb622bccc80b578ce30e1743ab4b89440782ac1b96232f48a2c3"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;

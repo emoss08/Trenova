@@ -62,6 +62,10 @@ type Thread struct {
 	// never stored: a conversation with an agent they lost access to stays
 	// readable.
 	CanContinue bool `json:"canContinue" bun:"-"`
+	// CannotContinueReason says why CanContinue is false, so the reader is
+	// told whether the agent was turned off, removed, or taken from them.
+	// Empty while the conversation can continue. Never stored.
+	CannotContinueReason ContinueRefusal `json:"cannotContinueReason,omitempty" bun:"-"`
 
 	Taint     *agent.RunTaint `json:"taint,omitempty"     bun:"taint,type:JSONB,nullzero"`
 	TaintedAt *int64          `json:"taintedAt,omitempty" bun:"tainted_at,type:BIGINT,nullzero"`

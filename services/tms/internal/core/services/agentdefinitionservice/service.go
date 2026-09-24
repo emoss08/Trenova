@@ -35,6 +35,8 @@ type Params struct {
 	// Extensions says which extensions the organization has on, so their
 	// tools are offered only while they are.
 	Extensions services.AgentExtensionGate `optional:"true"`
+	// Access sets who may use an agent in the transaction that saves it.
+	Access services.AgentAccessService
 }
 
 type Service struct {
@@ -46,6 +48,7 @@ type Service struct {
 	audit      services.AuditService
 	schedules  services.AgentDefinitionScheduler
 	extensions services.AgentExtensionGate
+	access     services.AgentAccessService
 }
 
 func New(p Params) services.AgentDefinitionService {
@@ -58,6 +61,7 @@ func New(p Params) services.AgentDefinitionService {
 		audit:      p.AuditService,
 		schedules:  p.Schedules,
 		extensions: p.Extensions,
+		access:     p.Access,
 	}
 }
 
@@ -107,7 +111,12 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	created, err := s.repo.Create(ctx, definition)
+	created, err := s.save(ctx, req, actor, func(saveCtx context.Context) (
+		*agentdefinition.Definition,
+		error,
+	) {
+		return s.repo.Create(saveCtx, definition)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +154,12 @@ func (s *Service) Update(
 		}
 	}
 
-	saved, err := s.repo.Update(ctx, &updated)
+	saved, err := s.save(ctx, req, actor, func(saveCtx context.Context) (
+		*agentdefinition.Definition,
+		error,
+	) {
+		return s.repo.Update(saveCtx, &updated)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +171,31 @@ func (s *Service) Update(
 	s.logAudit(saved, &previous, permission.OpUpdate, actor, "Agent updated")
 
 	return saved, nil
+}
+
+// save writes the agent and, when the request says who may use it, sets
+// that in the same transaction through the access service, which holds the
+// rule for who may change it.
+func (s *Service) save(
+	ctx context.Context,
+	req *services.SaveAgentDefinitionRequest,
+	actor *services.RequestActor,
+	write func(ctx context.Context) (*agentdefinition.Definition, error),
+) (*agentdefinition.Definition, error) {
+	if req.Access == nil {
+		return write(ctx)
+	}
+	if s.access == nil {
+		return nil, errortypes.NewBusinessError(
+			"Who can use an agent cannot be set here: agent access is not available",
+		)
+	}
+
+	return s.access.SaveWithAccess(ctx, &services.SaveAgentWithAccessRequest{
+		TenantInfo: req.TenantInfo,
+		Access:     *req.Access,
+		Save:       write,
+	}, actor)
 }
 
 func (s *Service) Delete(

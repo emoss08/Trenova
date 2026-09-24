@@ -631,6 +631,42 @@ enum AgentAccessMode {
   Roles
 }
 
+"""
+Who an agent as a form holds it could be given to, worked out without saving it.
+"""
+type AgentAccessPreview {
+  """
+  The access the preview was worked out for; Everyone for a system agent.
+  """
+  accessMode: AgentAccessMode!
+  """
+  Every role in the organization, by name. Granted only for an agent already saved.
+  """
+  roles: [AgentAudienceRole!]!
+  """
+  While the preview is open to everyone, the chosen tools that reach restricted
+  or confidential data or whose work leaves the organization. Empty while it is
+  restricted to roles.
+  """
+  sensitiveTools: [String!]!
+}
+
+"""
+An agent as a form holds it, before it is saved, for working out who it suits.
+"""
+input AgentAccessPreviewInput {
+  """Who the form says may use it. A system agent is always Everyone."""
+  accessMode: AgentAccessMode!
+  """
+  The agent being edited, so each role says whether it is granted now. Absent for a new one.
+  """
+  agentId: ID
+  """
+  The tools the form has chosen. Core tools every agent holds need not be listed. At most 200.
+  """
+  toolNames: [String!]!
+}
+
 """How much of an agent a role could use."""
 enum AgentAudienceCoverage {
   """The role grants everything the agent's tools need."""
@@ -11817,6 +11853,12 @@ type Mutation {
   decideAgentProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
   decideLeaveCase(input: DecideLeaveCaseInput!): WorkerLeaveCase!
   """
+  Decides a plan raised in one of the caller's own conversations, by an agent
+  they may still use. Each step's write still runs only if the caller may
+  make it, and the first that fails stops the rest.
+  """
+  decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  """
   Decides a proposal raised in one of the caller's own conversations. The
   approved write still runs only if the caller may make it.
   """
@@ -12292,6 +12334,12 @@ type MyAgent {
   Chosen accent name; empty falls back to an accent derived from the agent id.
   """
   accent: String!
+  """
+  The agents this one may hand a task to that the caller may use themselves:
+  enabled, talked to, and open to them. In the order configured. Only who
+  each is and how it is drawn; never what it is set up to do.
+  """
+  delegates: [MyAgent!]!
   description: String!
   """
   Chosen icon name; empty falls back to the icon the starter template implies.
@@ -13974,6 +14022,12 @@ type Query {
   system catalog for an organisation that has none.
   """
   activeWorkerCredentialTypes: [WorkerCredentialType!]!
+  """
+  Each role's coverage of the tools a form has chosen, and the sensitive ones
+  among them while it is open to everyone. Reads the form, not the saved agent,
+  and changes nothing.
+  """
+  agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
   agentControl: AgentControl!
   agentDefinition(id: ID!): AgentDefinition
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!

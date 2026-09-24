@@ -201,6 +201,28 @@ type AdjustWorkerPTOBalanceInput struct {
 	Note        string         `json:"note"`
 }
 
+// Who an agent as a form holds it could be given to, worked out without saving it.
+type AgentAccessPreview struct {
+	// The access the preview was worked out for; Everyone for a system agent.
+	AccessMode agentdefinition.AccessMode `json:"accessMode"`
+	// Every role in the organization, by name. Granted only for an agent already saved.
+	Roles []*AgentAudienceRole `json:"roles"`
+	// While the preview is open to everyone, the chosen tools that reach restricted
+	// or confidential data or whose work leaves the organization. Empty while it is
+	// restricted to roles.
+	SensitiveTools []string `json:"sensitiveTools"`
+}
+
+// An agent as a form holds it, before it is saved, for working out who it suits.
+type AgentAccessPreviewInput struct {
+	// The agent being edited, so each role says whether it is granted now. Absent for a new one.
+	AgentID *string `json:"agentId,omitempty"`
+	// The tools the form has chosen. Core tools every agent holds need not be listed. At most 200.
+	ToolNames []string `json:"toolNames"`
+	// Who the form says may use it. A system agent is always Everyone.
+	AccessMode agentdefinition.AccessMode `json:"accessMode"`
+}
+
 // How much of an agent one role could use, and whether it is granted the agent.
 type AgentAudienceRole struct {
 	Role     *permission.Role                 `json:"role"`

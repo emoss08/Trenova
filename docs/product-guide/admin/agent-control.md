@@ -89,12 +89,14 @@ Keywords: agent access, restrict agent, agent permissions, give role an agent, w
    shows who can use it: **Everyone**, or how many roles it is limited to.
 2. Select the pencil button on the agent, or select **New agent** to set it while creating one.
 3. In **Who can use it**, choose **Everyone who can use the assistant** or **Specific roles**.
-4. For **Specific roles**, pick the roles in **Roles**. On a saved agent, **Suggested roles**
-   lists every role with what it could make of the agent: "Can use all of its tools", the
-   resources it is missing, or "Can't use the assistant". Select **Add** beside one to choose it.
-5. Select **Save**. From then on only people holding one of the chosen roles, or a role that
-   inherits one, see the agent in the Desk and the assistant, and only they see and decide what
-   it proposes.
+4. For **Specific roles**, pick the roles in **Roles**. **Suggested roles** lists every role with
+   what it could make of the agent with the tools chosen on the form, saved or not: "Can use all
+   of its tools", the resources it is missing, or "Can't use the assistant". Select **Add** beside
+   one to choose it.
+5. Select **Save**. The agent and who can use it are saved together, so a new agent limited to
+   roles is limited from the moment it exists. From then on only people holding one of the chosen
+   roles, or a role that inherits one, see the agent in the Desk and the assistant, and only they
+   see and decide what it proposes.
 
 ### Turn an agent on or off, run it now, or remove it
 Keywords: disable agent, enable agent, start run, delete agent
@@ -190,12 +192,14 @@ hand the task on. The agent asked works as the person in the conversation, with 
 approvals, so it can never do more than that person could.
 
 Who can use an agent is set under **Who can use it**. An agent open to everyone that holds tools
-reaching restricted or confidential data shows a warning there; each person can still only do
-what their own permissions allow. An agent limited to specific roles with none chosen can be used
+reaching restricted or confidential data, or whose work leaves the organization, shows a warning
+there as soon as the form says so, before it is saved; each person can still only do what their
+own permissions allow. An agent limited to specific roles with none chosen can be used
 by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again.
 A system agent is always open to everyone and cannot be limited to roles. Someone who loses
 access to an agent keeps their conversations with it, read-only. Setting who can use an agent
-needs update access to both agents and roles. The same grants can be managed from a role's page
+needs update access to both agents and roles; someone without update access to roles can still
+save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page
 on [Roles](/admin/roles), under **Agents**.
 
 Removing a provider stops any task routed only to it until another provider is assigned.

@@ -40,6 +40,8 @@ type AgentDefinitionResolver interface {
 }
 type MyAgentResolver interface {
 	Template(ctx context.Context, obj *agentdefinition.Definition) (*agentdefinition.Template, error)
+
+	Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error)
 }
 
 // endregion ************************** generated!.gotpl **************************
@@ -49,6 +51,84 @@ type MyAgentResolver interface {
 // endregion ***************************** args.gotpl *****************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AgentAccessPreview_accessMode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentAccessPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentAccessPreview_accessMode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AccessMode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v agentdefinition.AccessMode) graphql.Marshaler {
+			return ec.marshalNAgentAccessMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐAccessMode(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentAccessPreview_accessMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentAccessPreview", field, false, false, errors.New("field of type AgentAccessMode does not have child fields"))
+}
+
+func (ec *executionContext) _AgentAccessPreview_roles(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentAccessPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentAccessPreview_roles(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Roles, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.AgentAudienceRole) graphql.Marshaler {
+			return ec.marshalNAgentAudienceRole2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentAudienceRoleᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentAccessPreview_roles(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentAccessPreview",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentAudienceRole(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AgentAccessPreview_sensitiveTools(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentAccessPreview) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentAccessPreview_sensitiveTools(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SensitiveTools, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentAccessPreview_sensitiveTools(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentAccessPreview", field, false, false, errors.New("field of type String does not have child fields"))
+}
 
 func (ec *executionContext) _AgentAudienceRole_role(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentAudienceRole) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -1718,6 +1798,38 @@ func (ec *executionContext) fieldContext_MyAgent_starters(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _MyAgent_delegates(ctx context.Context, field graphql.CollectedField, obj *agentdefinition.Definition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_MyAgent_delegates(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.MyAgent().Delegates(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*agentdefinition.Definition) graphql.Marshaler {
+			return ec.marshalNMyAgent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinitionᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_MyAgent_delegates(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MyAgent",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_MyAgent(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MyAgentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.MyAgentConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1864,6 +1976,50 @@ func (ec *executionContext) fieldContext_MyAgentEdge_cursor(_ context.Context, f
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAgentAccessPreviewInput(ctx context.Context, obj any) (gqlmodel.AgentAccessPreviewInput, error) {
+	var it gqlmodel.AgentAccessPreviewInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"agentId", "toolNames", "accessMode"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "agentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("agentId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AgentID = data
+		case "toolNames":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("toolNames"))
+			data, err := ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ToolNames = data
+		case "accessMode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessMode"))
+			data, err := ec.unmarshalNAgentAccessMode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐAccessMode(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AccessMode = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputMyAgentsInput(ctx context.Context, obj any) (gqlmodel.MyAgentsInput, error) {
 	var it gqlmodel.MyAgentsInput
 	if obj == nil {
@@ -1980,6 +2136,54 @@ func (ec *executionContext) unmarshalInputSetAgentAccessInput(ctx context.Contex
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var agentAccessPreviewImplementors = []string{"AgentAccessPreview"}
+
+func (ec *executionContext) _AgentAccessPreview(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.AgentAccessPreview) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, agentAccessPreviewImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AgentAccessPreview")
+		case "accessMode":
+			out.Values[i] = ec._AgentAccessPreview_accessMode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "roles":
+			out.Values[i] = ec._AgentAccessPreview_roles(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sensitiveTools":
+			out.Values[i] = ec._AgentAccessPreview_sensitiveTools(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
 
 var agentAudienceRoleImplementors = []string{"AgentAudienceRole"}
 
@@ -2866,6 +3070,44 @@ func (ec *executionContext) _MyAgent(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "delegates":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MyAgent_delegates(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2997,6 +3239,21 @@ func (ec *executionContext) marshalNAgentAccessMode2githubᚗcomᚋemoss08ᚋtre
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNAgentAccessPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentAccessPreview(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.AgentAccessPreview) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AgentAccessPreview(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAgentAccessPreviewInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentAccessPreviewInput(ctx context.Context, v any) (gqlmodel.AgentAccessPreviewInput, error) {
+	res, err := ec.unmarshalInputAgentAccessPreviewInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNAgentAudienceCoverage2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐAudienceCoverage(ctx context.Context, v any) (agentdefinition.AudienceCoverage, error) {
@@ -3213,6 +3470,22 @@ func (ec *executionContext) marshalNAgentTriggerMode2githubᚗcomᚋemoss08ᚋtr
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNMyAgent2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinitionᚄ(ctx context.Context, sel ast.SelectionSet, v []*agentdefinition.Definition) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNMyAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinition(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNMyAgent2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentdefinitionᚐDefinition(ctx context.Context, sel ast.SelectionSet, v *agentdefinition.Definition) graphql.Marshaler {

@@ -74,18 +74,16 @@ func (s *Service) usableAgents(
 // threadReader is the person a conversation is read for. Conversations are
 // read under the reader's own user id, so the reader is its owner.
 func threadReader(userID pulid.ID, tenant pagination.TenantInfo) *services.RequestActor {
-	return &services.RequestActor{
-		PrincipalType:  services.PrincipalTypeUser,
-		PrincipalID:    userID,
-		UserID:         userID,
-		OrganizationID: tenant.OrgID,
-		BusinessUnitID: tenant.BuID,
-	}
+	tenant.UserID = userID
+
+	return services.UserActor(tenant)
 }
 
 // markContinuable says on each conversation whether its reader may still ask
-// its agent anything: the agent exists, is enabled, is talked to, and is one
-// the reader may use. The agents are read once for the whole page.
+// its agent anything and, when not, why: the agent was removed, the reader
+// may not use it, it was turned off, or it no longer takes conversations. A
+// reader who may not use the assistant at all may not use any agent. The
+// agents are read once for the whole page.
 func (s *Service) markContinuable(
 	ctx context.Context,
 	reader *services.RequestActor,
@@ -94,11 +92,7 @@ func (s *Service) markContinuable(
 	if len(threads) == 0 {
 		return nil
 	}
-	for _, thread := range threads {
-		if thread != nil {
-			thread.CanContinue = false
-		}
-	}
+	markAll(threads, conversation.ContinueNoAccess)
 	if s.definitions == nil {
 		return nil
 	}
@@ -123,34 +117,65 @@ func (s *Service) markContinuable(
 		seen[thread.AgentDefinitionID] = struct{}{}
 		ids = append(ids, thread.AgentDefinitionID)
 	}
-	if len(ids) == 0 {
-		return nil
-	}
 
-	definitions, err := s.definitions.ListByIDs(ctx, repositories.ListAgentDefinitionsByIDsRequest{
-		IDs:        ids,
-		TenantInfo: reader.TenantInfo(),
-	})
-	if err != nil {
-		return fmt.Errorf("read the agents of the conversations: %w", err)
-	}
-
-	byID := make(map[pulid.ID]*agentdefinition.Definition, len(definitions))
-	for _, definition := range definitions {
-		byID[definition.ID] = definition
+	byID := make(map[pulid.ID]*agentdefinition.Definition, len(ids))
+	if len(ids) > 0 {
+		definitions, listErr := s.definitions.ListByIDs(
+			ctx,
+			repositories.ListAgentDefinitionsByIDsRequest{
+				IDs:        ids,
+				TenantInfo: reader.TenantInfo(),
+			},
+		)
+		if listErr != nil {
+			return fmt.Errorf("read the agents of the conversations: %w", listErr)
+		}
+		for _, definition := range definitions {
+			byID[definition.ID] = definition
+		}
 	}
 
 	for _, thread := range threads {
 		if thread == nil {
 			continue
 		}
-		definition, ok := byID[thread.AgentDefinitionID]
-		thread.CanContinue = ok && continuable(definition) && usable.Allows(definition)
+		refusal := continueRefusal(byID[thread.AgentDefinitionID], usable)
+		if refusal == "" {
+			thread.MarkContinuable()
+			continue
+		}
+		thread.MarkNotContinuable(refusal)
 	}
 
 	return nil
 }
 
-func continuable(definition *agentdefinition.Definition) bool {
-	return definition.Enabled && assertChatAgent(definition) == nil
+func markAll(threads []*conversation.Thread, reason conversation.ContinueRefusal) {
+	for _, thread := range threads {
+		if thread != nil {
+			thread.MarkNotContinuable(reason)
+		}
+	}
+}
+
+// continueRefusal says why a reader who may use the assistant may not ask
+// the agent, or "" when they may. An agent they may not use is refused as
+// such before anything else is said about it, so a reader is never told an
+// agent they could not use anyway was merely turned off.
+func continueRefusal(
+	definition *agentdefinition.Definition,
+	usable *services.UsableAgents,
+) conversation.ContinueRefusal {
+	switch {
+	case definition == nil:
+		return conversation.ContinueAgentDeleted
+	case !usable.Allows(definition):
+		return conversation.ContinueNoAccess
+	case !definition.Enabled:
+		return conversation.ContinueAgentDisabled
+	case assertChatAgent(definition) != nil:
+		return conversation.ContinueAgentNotConversational
+	default:
+		return ""
+	}
 }

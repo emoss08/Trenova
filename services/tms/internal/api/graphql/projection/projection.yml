@@ -1,6 +1,8 @@
 aliases:
   AgentDefinition:
     delegates: delegateIds
+  MyAgent:
+    delegates: delegateIds
   FuelPurchase:
     totalAmount: totalAmountMinor
   IFTAReturn:

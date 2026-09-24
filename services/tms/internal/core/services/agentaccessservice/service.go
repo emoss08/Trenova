@@ -92,65 +92,30 @@ func (s *Service) SetAgentAccess(
 		return nil, err
 	}
 
-	roleIDs, err := validateIDs(idList{
-		field:     "roleIds",
-		ids:       req.RoleIDs,
-		empty:     "Role cannot be empty",
-		duplicate: "Role is listed more than once",
+	roleIDs, err := validateAccessWrite(services.AgentAccessWrite{
+		Mode:    req.Mode,
+		RoleIDs: req.RoleIDs,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if !req.Mode.IsValid() {
-		return nil, errortypes.NewValidationError(
-			"accessMode", errortypes.ErrInvalid, "Access must be Everyone or Roles",
-		)
-	}
 
-	var (
-		definition   *agentdefinition.Definition
-		roles        []*permission.Role
-		previousMode agentdefinition.AccessMode
-		change       repositories.GrantChange
-	)
+	var written *accessWrite
 	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		var txErr error
-		definition, txErr = s.definitions.GetByID(txCtx, repositories.GetAgentDefinitionByIDRequest{
+		definition, txErr := s.definitions.GetByID(txCtx, repositories.GetAgentDefinitionByIDRequest{
 			ID:         req.AgentID,
 			TenantInfo: req.TenantInfo,
 		})
 		if txErr != nil {
 			return txErr
 		}
-		if txErr = validateAgentAccess(definition, req.Mode, roleIDs); txErr != nil {
-			return txErr
-		}
 
-		roles, txErr = s.tenantRoles(txCtx, req.TenantInfo, roleIDs)
-		if txErr != nil {
-			return txErr
-		}
-
-		previousMode = definition.EffectiveAccessMode()
-		if definition.AccessMode != req.Mode {
-			txErr = s.definitions.SetAccessMode(
-				txCtx,
-				repositories.SetAgentDefinitionAccessModeRequest{
-					ID:         definition.ID,
-					TenantInfo: req.TenantInfo,
-					Mode:       req.Mode,
-				},
-			)
-			if txErr != nil {
-				return txErr
-			}
-		}
-
-		change, txErr = s.grants.ReplaceForAgent(txCtx, repositories.ReplaceAgentGrantsRequest{
-			TenantInfo: req.TenantInfo,
-			AgentID:    definition.ID,
-			RoleIDs:    roleIDs,
-			GrantedBy:  actor.UserIDOrNil(),
+		written, txErr = s.applyAccess(txCtx, accessChange{
+			tenant:     req.TenantInfo,
+			definition: definition,
+			mode:       req.Mode,
+			roleIDs:    roleIDs,
+			actor:      actor,
 		})
 
 		return txErr
@@ -159,27 +124,193 @@ func (s *Service) SetAgentAccess(
 		return nil, err
 	}
 
-	definition.AccessMode = req.Mode
-	s.invalidate(ctx, change.Added, change.Removed)
-	if previousMode != req.Mode || change.Changed() {
+	s.settleAccess(ctx, req.TenantInfo, written, actor)
+
+	return &services.AgentAccess{Agent: written.definition, Roles: written.roles}, nil
+}
+
+// SaveWithAccess saves an agent and who may use it in one transaction, so an
+// agent meant for some roles is never, even for a moment, open to everyone,
+// and a refusal of either leaves neither. The save is the caller's and is
+// authorized by the caller; changing who may use the agent is authorized
+// here, and needs permission to update roles. Access that already reads as
+// asked needs nothing more, so a person who may not update roles can still
+// save an agent whose access they did not touch.
+func (s *Service) SaveWithAccess(
+	ctx context.Context,
+	req *services.SaveAgentWithAccessRequest,
+	actor *services.RequestActor,
+) (*agentdefinition.Definition, error) {
+	if req.Save == nil {
+		return nil, errortypes.NewBusinessError("Nothing was given to save")
+	}
+	if err := s.authorize(ctx, actor, req.TenantInfo); err != nil {
+		return nil, err
+	}
+
+	roleIDs, err := validateAccessWrite(req.Access)
+	if err != nil {
+		return nil, err
+	}
+
+	mayGrant, err := s.allowed(ctx, actor, permission.ResourceRole)
+	if err != nil {
+		return nil, err
+	}
+
+	var written *accessWrite
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		saved, txErr := req.Save(txCtx)
+		if txErr != nil {
+			return txErr
+		}
+
+		written, txErr = s.applyAccess(txCtx, accessChange{
+			tenant:     req.TenantInfo,
+			definition: saved,
+			mode:       req.Access.Mode,
+			roleIDs:    roleIDs,
+			actor:      actor,
+		})
+		if txErr != nil {
+			return txErr
+		}
+		if written.changed() && !mayGrant {
+			return errAccessNeedsRoles()
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	s.settleAccess(ctx, req.TenantInfo, written, actor)
+
+	return written.definition, nil
+}
+
+func errAccessNeedsRoles() error {
+	return errortypes.NewAuthorizationError(
+		"Changing who can use an agent needs permission to update roles as well as agents. " +
+			"Save it without changing who can use it, or ask someone who can update roles.",
+	)
+}
+
+// accessChange is who may use an agent, as one write asks it.
+type accessChange struct {
+	tenant     pagination.TenantInfo
+	definition *agentdefinition.Definition
+	mode       agentdefinition.AccessMode
+	roleIDs    []pulid.ID
+	actor      *services.RequestActor
+}
+
+// accessWrite is what setting who may use an agent changed.
+type accessWrite struct {
+	definition   *agentdefinition.Definition
+	roles        []*permission.Role
+	roleIDs      []pulid.ID
+	previousMode agentdefinition.AccessMode
+	change       repositories.GrantChange
+}
+
+func (w *accessWrite) changed() bool {
+	return w.previousMode != w.definition.EffectiveAccessMode() || w.change.Changed()
+}
+
+// applyAccess sets the agent's access mode and replaces the roles granted it,
+// inside the caller's transaction. The definition comes back with the mode
+// it now has.
+func (s *Service) applyAccess(ctx context.Context, req accessChange) (*accessWrite, error) {
+	definition := req.definition
+	if err := validateAgentAccess(definition, req.mode, req.roleIDs); err != nil {
+		return nil, err
+	}
+
+	roles, err := s.tenantRoles(ctx, req.tenant, req.roleIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	previousMode := definition.EffectiveAccessMode()
+	if definition.AccessMode != req.mode {
+		if err = s.definitions.SetAccessMode(ctx, repositories.SetAgentDefinitionAccessModeRequest{
+			ID:         definition.ID,
+			TenantInfo: req.tenant,
+			Mode:       req.mode,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	change, err := s.grants.ReplaceForAgent(ctx, repositories.ReplaceAgentGrantsRequest{
+		TenantInfo: req.tenant,
+		AgentID:    definition.ID,
+		RoleIDs:    req.roleIDs,
+		GrantedBy:  req.actor.UserIDOrNil(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	definition.AccessMode = req.mode
+
+	return &accessWrite{
+		definition:   definition,
+		roles:        roles,
+		roleIDs:      req.roleIDs,
+		previousMode: previousMode,
+		change:       change,
+	}, nil
+}
+
+// settleAccess does what follows a committed access write: the permission
+// caches of the roles whose grants moved are dropped, and the change is
+// audited on the agent and on each role.
+func (s *Service) settleAccess(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	written *accessWrite,
+	actor *services.RequestActor,
+) {
+	s.invalidate(ctx, written.change.Added, written.change.Removed)
+	if written.changed() {
 		s.logAgentAudit(agentAuditEntry{
-			definition:   definition,
-			previousMode: previousMode,
-			previousIDs:  change.Previous,
-			currentIDs:   roleIDs,
+			definition:   written.definition,
+			previousMode: written.previousMode,
+			previousIDs:  written.change.Previous,
+			currentIDs:   written.roleIDs,
 			idsKey:       "roleIds",
 			actor:        actor,
 		})
 	}
 	s.logRoleGrantAudits(roleGrantAudit{
-		tenant:  req.TenantInfo,
-		agent:   definition,
-		added:   change.Added,
-		removed: change.Removed,
+		tenant:  tenant,
+		agent:   written.definition,
+		added:   written.change.Added,
+		removed: written.change.Removed,
 		actor:   actor,
 	})
+}
 
-	return &services.AgentAccess{Agent: definition, Roles: roles}, nil
+func validateAccessWrite(access services.AgentAccessWrite) ([]pulid.ID, error) {
+	roleIDs, err := validateIDs(idList{
+		field:     "roleIds",
+		ids:       access.RoleIDs,
+		empty:     "Role cannot be empty",
+		duplicate: "Role is listed more than once",
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !access.Mode.IsValid() {
+		return nil, errortypes.NewValidationError(
+			"accessMode", errortypes.ErrInvalid, "Access must be Everyone or Roles",
+		)
+	}
+
+	return roleIDs, nil
 }
 
 func (s *Service) SetRoleAgents(
@@ -262,14 +393,11 @@ func (s *Service) authorize(
 	}
 
 	for _, resource := range resources {
-		result, err := s.permissions.Check(
-			ctx,
-			actor.PermissionCheck(resource, permission.OpUpdate),
-		)
+		allowed, err := s.allowed(ctx, actor, resource)
 		if err != nil {
-			return fmt.Errorf("check %s permission: %w", resource, err)
+			return err
 		}
-		if result == nil || !result.Allowed {
+		if !allowed {
 			return errortypes.NewAuthorizationError(
 				"You don't have permission to perform this action: {0} {1}",
 				resource, permission.OpUpdate,
@@ -278,6 +406,20 @@ func (s *Service) authorize(
 	}
 
 	return nil
+}
+
+// allowed reports whether the actor may update the resource.
+func (s *Service) allowed(
+	ctx context.Context,
+	actor *services.RequestActor,
+	resource permission.Resource,
+) (bool, error) {
+	result, err := s.permissions.Check(ctx, actor.PermissionCheck(resource, permission.OpUpdate))
+	if err != nil {
+		return false, fmt.Errorf("check %s permission: %w", resource, err)
+	}
+
+	return result != nil && result.Allowed, nil
 }
 
 type idList struct {

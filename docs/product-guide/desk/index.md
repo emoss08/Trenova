@@ -43,4 +43,6 @@ Keywords: pin chat, delete conversation, export transcript, rename conversation
 ## Notes
 Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI control** on the Desk.
 
-A long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation cannot continue if its agent has been disabled.
+When an agent in your own conversation asks to make several changes as one plan, answer it right there with **Approve all** or **Reject all**; you need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.
+
+A long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.

@@ -598,7 +598,11 @@ export function MessageThread({
       )}
 
       {block === "read-only" ? (
-        <ReadOnlyThreadNotice ref={composerRef} compact={!expanded} />
+        <ReadOnlyThreadNotice
+          ref={composerRef}
+          reason={thread.cannotContinueReason}
+          compact={!expanded}
+        />
       ) : (
         <Composer
           ref={composerRef}
@@ -659,7 +663,7 @@ export function MessageThread({
   );
 
   return (
-    <AssistantAgentProvider agent={agent}>
+    <AssistantAgentProvider agent={agent} delegates={agent?.delegates}>
       <ArtifactOpenerProvider onOpen={onOpenArtifact}>
         <DecisionFollowUpProvider value={followUpDecision}>
           {agentAccent ? (

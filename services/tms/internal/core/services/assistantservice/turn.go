@@ -351,7 +351,7 @@ func (s *Service) FinishTurn(
 	taint := turnTaint(plan, req.Run)
 	s.keepThreadTaint(ctx, thread, taint, req.TenantInfo)
 
-	thread.CanContinue = true
+	thread.MarkContinuable()
 	result := &services.SendMessageResult{
 		Thread:   thread,
 		Messages: saved,

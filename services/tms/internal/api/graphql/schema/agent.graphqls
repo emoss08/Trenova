@@ -597,6 +597,12 @@ extend type Mutation {
   approved write still runs only if the caller may make it.
   """
   decideMyProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
+  """
+  Decides a plan raised in one of the caller's own conversations, by an agent
+  they may still use. Each step's write still runs only if the caller may
+  make it, and the first that fails stops the rest.
+  """
+  decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
   "Replays a recorded run against its agent as it is now; every write is simulated."
   replayAgentRun(runId: ID!): AgentEvaluation!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!
