@@ -173,6 +173,9 @@ func (s *Service) prepareTurn(
 	if err = assertChatAgent(definition); err != nil {
 		return nil, nil, err
 	}
+	if err = s.assertMayUseAgent(ctx, actor, definition); err != nil {
+		return nil, nil, err
+	}
 
 	if err = s.assertWithinBudget(ctx, definition); err != nil {
 		return nil, nil, err
@@ -343,6 +346,7 @@ func (s *Service) FinishTurn(
 		s.titleIfUnnamed(ctx, thread, plan.Input)
 	}
 
+	thread.CanContinue = true
 	result := &services.SendMessageResult{
 		Thread:   thread,
 		Messages: saved,

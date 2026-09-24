@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const permissionCachePrefix = "perms:v2"
+const permissionCachePrefix = "perms:v3"
 
 type PermissionCacheRepositoryParams struct {
 	fx.In

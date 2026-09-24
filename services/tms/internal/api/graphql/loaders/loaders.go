@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/order"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/costingservice"
@@ -63,6 +64,8 @@ type FactoryParams struct {
 	AgentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	AgentRunByID                              *AgentRunByIDLoaderFactory
 	AgentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
+	AccessRolesByAgentID                      *AccessRolesByAgentIDLoaderFactory
+	AgentsByRoleID                            *AgentsByRoleIDLoaderFactory
 	DocumentTemplateKindByTemplateID          *DocumentTemplateKindByTemplateIDLoaderFactory
 	IFTAJurisdictionByID                      *IFTAJurisdictionByIDLoaderFactory
 	IFTAReturnByID                            *IFTAReturnByIDLoaderFactory
@@ -113,6 +116,8 @@ type Factory struct {
 	agentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	agentRunByID                              *AgentRunByIDLoaderFactory
 	agentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
+	accessRolesByAgentID                      *AccessRolesByAgentIDLoaderFactory
+	agentsByRoleID                            *AgentsByRoleIDLoaderFactory
 	documentTemplateKindByTemplateID          *DocumentTemplateKindByTemplateIDLoaderFactory
 	iFTAJurisdictionByID                      *IFTAJurisdictionByIDLoaderFactory
 	iFTAReturnByID                            *IFTAReturnByIDLoaderFactory
@@ -163,6 +168,8 @@ type Loaders struct {
 	AgentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
 	AgentRunByID                              *dataloadgen.Loader[string, *agent.AgentRun]
 	AgentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
+	AccessRolesByAgentID                      *dataloadgen.Loader[string, []*permission.Role]
+	AgentsByRoleID                            *dataloadgen.Loader[string, []*agentdefinition.Definition]
 	DocumentTemplateKindByTemplateID          *dataloadgen.Loader[string, documenttemplate.Kind]
 	IFTAJurisdictionByID                      *dataloadgen.Loader[string, *ifta.Jurisdiction]
 	IFTAReturnByID                            *dataloadgen.Loader[string, *ifta.Return]
@@ -214,6 +221,8 @@ func NewFactory(p FactoryParams) *Factory {
 		agentDecisionsByProposalID:                p.AgentDecisionsByProposalID,
 		agentRunByID:                              p.AgentRunByID,
 		agentDefinitionByID:                       p.AgentDefinitionByID,
+		accessRolesByAgentID:                      p.AccessRolesByAgentID,
+		agentsByRoleID:                            p.AgentsByRoleID,
 		documentTemplateKindByTemplateID:          p.DocumentTemplateKindByTemplateID,
 		iFTAJurisdictionByID:                      p.IFTAJurisdictionByID,
 		iFTAReturnByID:                            p.IFTAReturnByID,
@@ -296,8 +305,10 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		AgentDecisionsByProposalID: f.agentDecisionsByProposalID.NewForTenant(
 			tenantInfo,
 		),
-		AgentRunByID:        f.agentRunByID.NewForTenant(tenantInfo),
-		AgentDefinitionByID: f.agentDefinitionByID.NewForTenant(tenantInfo),
+		AgentRunByID:         f.agentRunByID.NewForTenant(tenantInfo),
+		AgentDefinitionByID:  f.agentDefinitionByID.NewForTenant(tenantInfo),
+		AccessRolesByAgentID: f.accessRolesByAgentID.NewForTenant(tenantInfo),
+		AgentsByRoleID:       f.agentsByRoleID.NewForTenant(tenantInfo),
 		DocumentTemplateKindByTemplateID: f.documentTemplateKindByTemplateID.NewForTenant(
 			tenantInfo,
 		),

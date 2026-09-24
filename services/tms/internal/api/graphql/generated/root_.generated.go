@@ -130,6 +130,7 @@ type ResolverRoot interface {
 	LeaveEntitlement() LeaveEntitlementResolver
 	LocationCategory() LocationCategoryResolver
 	Mutation() MutationResolver
+	MyAgent() MyAgentResolver
 	MyPTOBalance() MyPTOBalanceResolver
 	OSHAAnnualSummary() OSHAAnnualSummaryResolver
 	Order() OrderResolver
@@ -622,6 +623,20 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	AgentAudienceRole struct {
+		Coverage         func(childComplexity int) int
+		Granted          func(childComplexity int) int
+		MissingResources func(childComplexity int) int
+		Role             func(childComplexity int) int
+	}
+
+	AgentAudienceSuggestion struct {
+		AccessMode     func(childComplexity int) int
+		AgentID        func(childComplexity int) int
+		Roles          func(childComplexity int) int
+		SensitiveTools func(childComplexity int) int
+	}
+
 	AgentControl struct {
 		BillingAgentEnabled    func(childComplexity int) int
 		BusinessUnitID         func(childComplexity int) int
@@ -653,6 +668,8 @@ type ComplexityRoot struct {
 
 	AgentDefinition struct {
 		Accent                 func(childComplexity int) int
+		AccessMode             func(childComplexity int) int
+		AccessRoles            func(childComplexity int) int
 		AutonomyCeiling        func(childComplexity int) int
 		BusinessUnitID         func(childComplexity int) int
 		ContextProviders       func(childComplexity int) int
@@ -6539,6 +6556,7 @@ type ComplexityRoot struct {
 		DecideAgentProposal                   func(childComplexity int, id string, input gqlmodel.AgentProposalDecisionInput) int
 		DecideAgentProposals                  func(childComplexity int, ids []string, input gqlmodel.DecideAgentProposalsInput) int
 		DecideLeaveCase                       func(childComplexity int, input gqlmodel.DecideLeaveCaseInput) int
+		DecideMyProposal                      func(childComplexity int, id string, input gqlmodel.AgentProposalDecisionInput) int
 		DecideProfileChange                   func(childComplexity int, input gqlmodel.DecideProfileChangeInput) int
 		DelegateApproval                      func(childComplexity int, input gqlmodel.DelegateApprovalInput) int
 		DeleteDetentionPolicy                 func(childComplexity int, id string) int
@@ -6713,6 +6731,7 @@ type ComplexityRoot struct {
 		SendDetentionNotice                   func(childComplexity int, occurrenceID string) int
 		SendInvoiceEDI                        func(childComplexity int, invoiceID string, force *bool) int
 		SendTestMessageTemplate               func(childComplexity int, input gqlmodel.SendTestMessageTemplateInput) int
+		SetAgentAccess                        func(childComplexity int, agentID string, input gqlmodel.SetAgentAccessInput) int
 		SetAgentMemoryStatus                  func(childComplexity int, id string, status agent.MemoryStatus) int
 		SetCarrierMonitoring                  func(childComplexity int, carrierIds []string, enabled bool) int
 		SetDefaultTableConfiguration          func(childComplexity int, id string) int
@@ -6721,6 +6740,7 @@ type ComplexityRoot struct {
 		SetMyAvailability                     func(childComplexity int, input gqlmodel.SetMyAvailabilityInput) int
 		SetOrderChargeAllocations             func(childComplexity int, input gqlmodel.SetOrderChargeAllocationsInput) int
 		SetOrgDefaultTableConfiguration       func(childComplexity int, id string, enabled bool) int
+		SetRoleAgentAccess                    func(childComplexity int, roleID string, agentIds []string) int
 		SetWorkerAvailabilityPreference       func(childComplexity int, input gqlmodel.SetAvailabilityPreferenceInput) int
 		SkipWorkerChecklistItem               func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		StageFuelPurchaseImport               func(childComplexity int, input gqlmodel.StageFuelPurchaseImportInput) int
@@ -6825,6 +6845,29 @@ type ComplexityRoot struct {
 		WithdrawMyProfileChange               func(childComplexity int, id string) int
 		WithdrawSettlementDispute             func(childComplexity int, id string) int
 		WriteOffPayAdvance                    func(childComplexity int, input gqlmodel.WriteOffPayAdvanceInput) int
+	}
+
+	MyAgent struct {
+		Accent      func(childComplexity int) int
+		Description func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Icon        func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Starters    func(childComplexity int) int
+		SystemKey   func(childComplexity int) int
+		Template    func(childComplexity int) int
+		ToolNames   func(childComplexity int) int
+	}
+
+	MyAgentConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	MyAgentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	MyCarrierIntelligence struct {
@@ -7940,6 +7983,7 @@ type ComplexityRoot struct {
 		MyAIFeedback                        func(childComplexity int, input gqlmodel.MyAIFeedbackInput) int
 		MyActiveBillingTransferRun          func(childComplexity int) int
 		MyAdvances                          func(childComplexity int) int
+		MyAgents                            func(childComplexity int, input gqlmodel.MyAgentsInput) int
 		MyAvailability                      func(childComplexity int) int
 		MyCarrierIntelligence               func(childComplexity int, refresh *bool) int
 		MyComplianceProfile                 func(childComplexity int) int
@@ -8084,6 +8128,7 @@ type ComplexityRoot struct {
 		StoredMileage                       func(childComplexity int, id string) int
 		StoredMileages                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		SuggestCarrierForEDIInvoice         func(childComplexity int, invoiceID string) int
+		SuggestedAgentAudience              func(childComplexity int, agentID string) int
 		TableConfiguration                  func(childComplexity int, id string) int
 		TableConfigurations                 func(childComplexity int, input gqlmodel.DataTableConnectionInput, resource *string, visibility *tableconfiguration.Visibility) int
 		TcaSubscription                     func(childComplexity int, id string) int
@@ -8711,6 +8756,7 @@ type ComplexityRoot struct {
 	}
 
 	Role struct {
+		Agents             func(childComplexity int) int
 		BusinessUnitID     func(childComplexity int) int
 		CoreResponsibility func(childComplexity int) int
 		CreatedAt          func(childComplexity int) int
@@ -13788,6 +13834,56 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AccountTypeEdge.Node(childComplexity), true
 
+	case "AgentAudienceRole.coverage":
+		if e.ComplexityRoot.AgentAudienceRole.Coverage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentAudienceRole.Coverage(childComplexity), true
+	case "AgentAudienceRole.granted":
+		if e.ComplexityRoot.AgentAudienceRole.Granted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentAudienceRole.Granted(childComplexity), true
+	case "AgentAudienceRole.missingResources":
+		if e.ComplexityRoot.AgentAudienceRole.MissingResources == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentAudienceRole.MissingResources(childComplexity), true
+	case "AgentAudienceRole.role":
+		if e.ComplexityRoot.AgentAudienceRole.Role == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentAudienceRole.Role(childComplexity), true
+
+	case "AgentAudienceSuggestion.accessMode":
+		if e.ComplexityRoot.AgentAudienceSuggestion.AccessMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentAudienceSuggestion.AccessMode(childComplexity), true
+	case "AgentAudienceSuggestion.agentId":
+		if e.ComplexityRoot.AgentAudienceSuggestion.AgentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentAudienceSuggestion.AgentID(childComplexity), true
+	case "AgentAudienceSuggestion.roles":
+		if e.ComplexityRoot.AgentAudienceSuggestion.Roles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentAudienceSuggestion.Roles(childComplexity), true
+	case "AgentAudienceSuggestion.sensitiveTools":
+		if e.ComplexityRoot.AgentAudienceSuggestion.SensitiveTools == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentAudienceSuggestion.SensitiveTools(childComplexity), true
+
 	case "AgentControl.billingAgentEnabled":
 		if e.ComplexityRoot.AgentControl.BillingAgentEnabled == nil {
 			break
@@ -13934,6 +14030,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDefinition.Accent(childComplexity), true
+	case "AgentDefinition.accessMode":
+		if e.ComplexityRoot.AgentDefinition.AccessMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.AccessMode(childComplexity), true
+	case "AgentDefinition.accessRoles":
+		if e.ComplexityRoot.AgentDefinition.AccessRoles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.AccessRoles(childComplexity), true
 	case "AgentDefinition.autonomyCeiling":
 		if e.ComplexityRoot.AgentDefinition.AutonomyCeiling == nil {
 			break
@@ -42264,6 +42372,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DecideLeaveCase(childComplexity, args["input"].(gqlmodel.DecideLeaveCaseInput)), true
+	case "Mutation.decideMyProposal":
+		if e.ComplexityRoot.Mutation.DecideMyProposal == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_decideMyProposal_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DecideMyProposal(childComplexity, args["id"].(string), args["input"].(gqlmodel.AgentProposalDecisionInput)), true
 	case "Mutation.decideProfileChange":
 		if e.ComplexityRoot.Mutation.DecideProfileChange == nil {
 			break
@@ -44158,6 +44277,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SendTestMessageTemplate(childComplexity, args["input"].(gqlmodel.SendTestMessageTemplateInput)), true
+	case "Mutation.setAgentAccess":
+		if e.ComplexityRoot.Mutation.SetAgentAccess == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setAgentAccess_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetAgentAccess(childComplexity, args["agentId"].(string), args["input"].(gqlmodel.SetAgentAccessInput)), true
 	case "Mutation.setAgentMemoryStatus":
 		if e.ComplexityRoot.Mutation.SetAgentMemoryStatus == nil {
 			break
@@ -44246,6 +44376,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetOrgDefaultTableConfiguration(childComplexity, args["id"].(string), args["enabled"].(bool)), true
+	case "Mutation.setRoleAgentAccess":
+		if e.ComplexityRoot.Mutation.SetRoleAgentAccess == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setRoleAgentAccess_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetRoleAgentAccess(childComplexity, args["roleId"].(string), args["agentIds"].([]string)), true
 	case "Mutation.setWorkerAvailabilityPreference":
 		if e.ComplexityRoot.Mutation.SetWorkerAvailabilityPreference == nil {
 			break
@@ -45390,6 +45531,93 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.WriteOffPayAdvance(childComplexity, args["input"].(gqlmodel.WriteOffPayAdvanceInput)), true
+
+	case "MyAgent.accent":
+		if e.ComplexityRoot.MyAgent.Accent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgent.Accent(childComplexity), true
+	case "MyAgent.description":
+		if e.ComplexityRoot.MyAgent.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgent.Description(childComplexity), true
+	case "MyAgent.id":
+		if e.ComplexityRoot.MyAgent.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgent.ID(childComplexity), true
+	case "MyAgent.icon":
+		if e.ComplexityRoot.MyAgent.Icon == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgent.Icon(childComplexity), true
+	case "MyAgent.name":
+		if e.ComplexityRoot.MyAgent.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgent.Name(childComplexity), true
+	case "MyAgent.starters":
+		if e.ComplexityRoot.MyAgent.Starters == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgent.Starters(childComplexity), true
+	case "MyAgent.systemKey":
+		if e.ComplexityRoot.MyAgent.SystemKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgent.SystemKey(childComplexity), true
+	case "MyAgent.template":
+		if e.ComplexityRoot.MyAgent.Template == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgent.Template(childComplexity), true
+	case "MyAgent.toolNames":
+		if e.ComplexityRoot.MyAgent.ToolNames == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgent.ToolNames(childComplexity), true
+
+	case "MyAgentConnection.edges":
+		if e.ComplexityRoot.MyAgentConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgentConnection.Edges(childComplexity), true
+	case "MyAgentConnection.pageInfo":
+		if e.ComplexityRoot.MyAgentConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgentConnection.PageInfo(childComplexity), true
+	case "MyAgentConnection.totalCount":
+		if e.ComplexityRoot.MyAgentConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgentConnection.TotalCount(childComplexity), true
+
+	case "MyAgentEdge.cursor":
+		if e.ComplexityRoot.MyAgentEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgentEdge.Cursor(childComplexity), true
+	case "MyAgentEdge.node":
+		if e.ComplexityRoot.MyAgentEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgentEdge.Node(childComplexity), true
 
 	case "MyCarrierIntelligence.configured":
 		if e.ComplexityRoot.MyCarrierIntelligence.Configured == nil {
@@ -51832,6 +52060,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MyAdvances(childComplexity), true
+	case "Query.myAgents":
+		if e.ComplexityRoot.Query.MyAgents == nil {
+			break
+		}
+
+		args, err := ec.field_Query_myAgents_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.MyAgents(childComplexity, args["input"].(gqlmodel.MyAgentsInput)), true
 	case "Query.myAvailability":
 		if e.ComplexityRoot.Query.MyAvailability == nil {
 			break
@@ -53236,6 +53475,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.SuggestCarrierForEDIInvoice(childComplexity, args["invoiceId"].(string)), true
+	case "Query.suggestedAgentAudience":
+		if e.ComplexityRoot.Query.SuggestedAgentAudience == nil {
+			break
+		}
+
+		args, err := ec.field_Query_suggestedAgentAudience_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.SuggestedAgentAudience(childComplexity, args["agentId"].(string)), true
 	case "Query.tableConfiguration":
 		if e.ComplexityRoot.Query.TableConfiguration == nil {
 			break
@@ -56578,6 +56828,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.ReviewRating.Weight(childComplexity), true
 
+	case "Role.agents":
+		if e.ComplexityRoot.Role.Agents == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Role.Agents(childComplexity), true
 	case "Role.businessUnitId":
 		if e.ComplexityRoot.Role.BusinessUnitID == nil {
 			break
@@ -72072,6 +72328,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputMatchRoutingGuideInput,
 		ec.unmarshalInputMemoLineInput,
 		ec.unmarshalInputMyAIFeedbackInput,
+		ec.unmarshalInputMyAgentsInput,
 		ec.unmarshalInputNotificationFilterInput,
 		ec.unmarshalInputOpenEscrowAccountInput,
 		ec.unmarshalInputOpenInvoiceDisputeInput,
@@ -72160,6 +72417,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSaveTelematicsFormMappingInput,
 		ec.unmarshalInputSelectOptionsInput,
 		ec.unmarshalInputSendTestMessageTemplateInput,
+		ec.unmarshalInputSetAgentAccessInput,
 		ec.unmarshalInputSetAvailabilityPreferenceInput,
 		ec.unmarshalInputSetMyAIFeedbackInput,
 		ec.unmarshalInputSetMyAvailabilityInput,
@@ -73187,6 +73445,11 @@ extend type Query {
 extend type Mutation {
   decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
   decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  """
+  Decides a proposal raised in one of the caller's own conversations. The
+  approved write still runs only if the caller may make it.
+  """
+  decideMyProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
   "Replays a recorded run against its agent as it is now; every write is simulated."
   replayAgentRun(runId: ID!): AgentEvaluation!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!
@@ -73230,6 +73493,24 @@ enum AgentTriggerMode {
 enum AgentOutputMode {
   Conversational
   Report
+}
+
+"Who may use an agent, among the people who may use the assistant."
+enum AgentAccessMode {
+  "Everyone who may use the assistant."
+  Everyone
+  "Only the roles granted it, and the roles that inherit them. Nobody when no role is."
+  Roles
+}
+
+"How much of an agent a role could use."
+enum AgentAudienceCoverage {
+  "The role grants everything the agent's tools need."
+  Full
+  "The role may use the assistant but lacks some of what the agent's tools need."
+  Partial
+  "The role may not use the assistant."
+  None
 }
 
 enum AgentContextProvider {
@@ -73310,6 +73591,13 @@ type AgentDefinition {
   listed, and refused when asked.
   """
   delegates: [AgentDefinition!]!
+  "Who may use the agent. A system agent is always Everyone."
+  accessMode: AgentAccessMode!
+  """
+  The roles granted the agent, whatever its access mode. They decide who may use
+  it only while accessMode is Roles. Empty for a reader who may not read roles.
+  """
+  accessRoles: [Role!]!
   """
   Up to four opening questions: the template's own when the agent was made from
   one, otherwise drawn from the tools it holds. Only questions the agent can
@@ -73338,9 +73626,105 @@ type AgentDefinitionConnection {
   totalCount: Int
 }
 
+"""
+An agent as the person asking it sees it: who it is and what to ask it. Its
+instructions, tools' settings and budget are an administrator's, and are not
+here.
+"""
+type MyAgent {
+  id: ID!
+  name: String!
+  description: String!
+  "The starter this agent was created from, if any."
+  template: AgentTemplate
+  "Chosen icon name; empty falls back to the icon the starter template implies."
+  icon: String!
+  "Chosen accent name; empty falls back to an accent derived from the agent id."
+  accent: String!
+  toolNames: [String!]!
+  "Set on the agents the platform itself creates and fires."
+  systemKey: String!
+  "Up to four opening questions the agent can answer with its tools."
+  starters: [AgentStarter!]!
+}
+
+type MyAgentEdge {
+  node: MyAgent!
+  cursor: String!
+}
+
+type MyAgentConnection {
+  edges: [MyAgentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"Where an agent came from."
+enum MyAgentOrigin {
+  All
+  "Made from one of the platform's templates."
+  Template
+  "Built by hand."
+  Custom
+}
+
+input MyAgentsInput {
+  first: Int = 20
+  after: String
+  "Matched against the agent's name and description."
+  search: String
+  origin: MyAgentOrigin = All
+  "Agents already shown, so a page never repeats them. At most 100."
+  excludeIds: [ID!]
+  "Only these agents. At most 100."
+  ids: [ID!]
+}
+
+input SetAgentAccessInput {
+  accessMode: AgentAccessMode!
+  """
+  The roles granted the agent, replacing those granted now. Kept whatever the
+  mode, so an agent opened to everyone and restricted again keeps its audience.
+  """
+  roleIds: [ID!]!
+}
+
+"How much of an agent one role could use, and whether it is granted the agent."
+type AgentAudienceRole {
+  role: Role!
+  coverage: AgentAudienceCoverage!
+  "Resources the agent's tools need that the role does not grant; empty unless coverage is Partial."
+  missingResources: [String!]!
+  granted: Boolean!
+}
+
+"Who an agent could be given to."
+type AgentAudienceSuggestion {
+  agentId: ID!
+  accessMode: AgentAccessMode!
+  "Every role in the organization, by name."
+  roles: [AgentAudienceRole!]!
+  """
+  While the agent is open to everyone, the tools it holds that reach
+  restricted or confidential data. Empty while it is restricted to roles.
+  """
+  sensitiveTools: [String!]!
+}
+
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentDefinition(id: ID!): AgentDefinition
+  "The chat agents the caller may use, enabled and by name."
+  myAgents(input: MyAgentsInput!): MyAgentConnection!
+  "Each role's coverage of an agent's tools, for choosing who may use it."
+  suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion!
+}
+
+extend type Mutation {
+  "Sets who may use an agent. Needs permission to update agents and roles."
+  setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!
+  "Replaces the agents a role is granted."
+  setRoleAgentAccess(roleId: ID!, agentIds: [ID!]!): Role!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentrunevent.graphqls", Input: `"""
@@ -86979,6 +87363,11 @@ extend type Mutation {
   createdBy: ID!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+  """
+  The agents restricted to roles that this role is granted. Empty for a reader
+  who may not read agents.
+  """
+  agents: [AgentDefinition!]!
 }
 
 type RoleEdge {
@@ -94825,6 +95214,34 @@ func (ec *executionContext) childFields_AccountTypeEdge(ctx context.Context, fie
 	return nil, fmt.Errorf("no field named %q was found under type AccountTypeEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentAudienceRole(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "role":
+		return ec.fieldContext_AgentAudienceRole_role(ctx, field)
+	case "coverage":
+		return ec.fieldContext_AgentAudienceRole_coverage(ctx, field)
+	case "missingResources":
+		return ec.fieldContext_AgentAudienceRole_missingResources(ctx, field)
+	case "granted":
+		return ec.fieldContext_AgentAudienceRole_granted(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentAudienceRole", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentAudienceSuggestion(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "agentId":
+		return ec.fieldContext_AgentAudienceSuggestion_agentId(ctx, field)
+	case "accessMode":
+		return ec.fieldContext_AgentAudienceSuggestion_accessMode(ctx, field)
+	case "roles":
+		return ec.fieldContext_AgentAudienceSuggestion_roles(ctx, field)
+	case "sensitiveTools":
+		return ec.fieldContext_AgentAudienceSuggestion_sensitiveTools(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentAudienceSuggestion", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentControl(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -94955,6 +95372,10 @@ func (ec *executionContext) childFields_AgentDefinition(ctx context.Context, fie
 		return ec.fieldContext_AgentDefinition_delegateIds(ctx, field)
 	case "delegates":
 		return ec.fieldContext_AgentDefinition_delegates(ctx, field)
+	case "accessMode":
+		return ec.fieldContext_AgentDefinition_accessMode(ctx, field)
+	case "accessRoles":
+		return ec.fieldContext_AgentDefinition_accessRoles(ctx, field)
 	case "starters":
 		return ec.fieldContext_AgentDefinition_starters(ctx, field)
 	case "lastRunAt":
@@ -106373,6 +106794,52 @@ func (ec *executionContext) childFields_ManualJournalEdge(ctx context.Context, f
 	return nil, fmt.Errorf("no field named %q was found under type ManualJournalEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_MyAgent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_MyAgent_id(ctx, field)
+	case "name":
+		return ec.fieldContext_MyAgent_name(ctx, field)
+	case "description":
+		return ec.fieldContext_MyAgent_description(ctx, field)
+	case "template":
+		return ec.fieldContext_MyAgent_template(ctx, field)
+	case "icon":
+		return ec.fieldContext_MyAgent_icon(ctx, field)
+	case "accent":
+		return ec.fieldContext_MyAgent_accent(ctx, field)
+	case "toolNames":
+		return ec.fieldContext_MyAgent_toolNames(ctx, field)
+	case "systemKey":
+		return ec.fieldContext_MyAgent_systemKey(ctx, field)
+	case "starters":
+		return ec.fieldContext_MyAgent_starters(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type MyAgent", field.Name)
+}
+
+func (ec *executionContext) childFields_MyAgentConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_MyAgentConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_MyAgentConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_MyAgentConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type MyAgentConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_MyAgentEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_MyAgentEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_MyAgentEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type MyAgentEdge", field.Name)
+}
+
 func (ec *executionContext) childFields_MyCarrierIntelligence(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "configured":
@@ -109195,6 +109662,8 @@ func (ec *executionContext) childFields_Role(ctx context.Context, field graphql.
 		return ec.fieldContext_Role_createdAt(ctx, field)
 	case "updatedAt":
 		return ec.fieldContext_Role_updatedAt(ctx, field)
+	case "agents":
+		return ec.fieldContext_Role_agents(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type Role", field.Name)
 }

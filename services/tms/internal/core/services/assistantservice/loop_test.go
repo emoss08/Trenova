@@ -29,7 +29,8 @@ func newService(
 	action *stubActionRegistry,
 ) *Service {
 	return &Service{
-		logger: zap.NewNop(),
+		logger:      zap.NewNop(),
+		permissions: &agentruntimetest.StubPermissions{},
 		guard: agentguard.New(agentguard.Params{
 			Logger:     zap.NewNop(),
 			Completion: completion,

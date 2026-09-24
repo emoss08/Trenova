@@ -18,6 +18,7 @@ function thread(id: string, lastMessageAt: number): AssistantThread {
     pinned: false,
     subjectType: "",
     subjectId: "",
+    canContinue: true,
     title: id,
     status: "Active",
     lastMessageAt,

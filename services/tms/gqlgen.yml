@@ -2016,6 +2016,20 @@ models:
         resolver: true
       delegates:
         resolver: true
+      accessRoles:
+        resolver: true
+  MyAgent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.Definition
+    fields:
+      template:
+        resolver: true
+  AgentAccessMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.AccessMode
+  AgentAudienceCoverage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.AudienceCoverage
   AgentTemplate:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.Template
@@ -2188,6 +2202,8 @@ models:
       coreResponsibility:
         resolver: true
       maxSensitivity:
+        resolver: true
+      agents:
         resolver: true
   ApiKey:
     model:

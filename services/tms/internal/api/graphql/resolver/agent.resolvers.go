@@ -139,6 +139,26 @@ func (r *mutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 	}, actorutil.FromAuthContext(authCtx))
 }
 
+func (r *mutationResolver) DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAssistant, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	proposalID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentDecisionService.DecideOwn(ctx, &services.DecideAgentProposalRequest{
+		ProposalID:    proposalID,
+		Decision:      input.Decision,
+		Modifications: input.Modifications,
+		ReasonCode:    input.ReasonCode,
+		TenantInfo:    tenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
 func (r *mutationResolver) ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentRun, permission.OpCreate)
 	if err != nil {

@@ -5450,6 +5450,15 @@
       "routes/agent-control"
     ]
   },
+  "A system agent is open to everyone who can use the assistant and is granted to no role": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentaccessservice"
+    ]
+  },
   "A tag must be between 1 and 100 characters": {
     "sites": 3,
     "scope": [
@@ -7255,6 +7264,15 @@
       "routes/admin"
     ]
   },
+  "Access must be Everyone or Roles": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentaccessservice"
+    ]
+  },
   "Access policies": {
     "sites": 1,
     "scope": [
@@ -7307,6 +7325,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Access to an agent can only be changed within your own organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentaccessservice"
     ]
   },
   "Accessorial": {
@@ -11625,6 +11652,15 @@
       "routes/agent-control"
     ]
   },
+  "Agent access loader is not configured": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Agent cannot be empty": {
     "sites": 1,
     "scope": [
@@ -11698,13 +11734,14 @@
     ]
   },
   "Agent is required": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/agent",
       "domain/conversation",
+      "domain/permission",
       "service/aifeedbackservice"
     ]
   },
@@ -19470,6 +19507,24 @@
       "domain/agentdefinition"
     ]
   },
+  "At most 100 agents can be named at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "At most 100 can be granted at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentaccessservice"
+    ]
+  },
   "At most the open balance of {0}": {
     "sites": 1,
     "scope": [
@@ -25345,7 +25400,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 113,
+    "sites": 114,
     "scope": [
       "go"
     ],
@@ -101580,6 +101635,15 @@
       "routes/worker"
     ]
   },
+  "None of the assistants is open to you for quick questions. An administrator can give one of your roles access to one.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "None of the selected carriers have a DOT number to monitor": {
     "sites": 1,
     "scope": [
@@ -106113,6 +106177,15 @@
       "service/agentmemoryservice"
     ]
   },
+  "Only a person can change who may use an agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentaccessservice"
+    ]
+  },
   "Only a person can dismiss a suggested memory": {
     "sites": 1,
     "scope": [
@@ -110168,7 +110241,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 112,
+    "sites": 113,
     "scope": [
       "go"
     ],
@@ -136213,7 +136286,7 @@
     ]
   },
   "Role is required": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -136231,6 +136304,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Role not found within your organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentaccessservice"
     ]
   },
   "Role unassigned": {
@@ -158531,6 +158613,15 @@
       "service/assistantservice"
     ]
   },
+  "That proposal was not raised in one of your conversations": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdecisionservice"
+    ]
+  },
   "That reporting line loops back on itself": {
     "sites": 1,
     "scope": [
@@ -167215,11 +167306,12 @@
     ]
   },
   "This agent does not exist in this organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/agentaccessservice",
       "service/agentdefinitionservice"
     ]
   },
@@ -169563,6 +169655,15 @@
     ],
     "areas": [
       "service/performancereviewservice"
+    ]
+  },
+  "This role does not exist in this organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentaccessservice"
     ]
   },
   "This rule is configured more than once on the profile": {
@@ -188029,6 +188130,15 @@
       "service/reporting"
     ]
   },
+  "You do not have access to {0}. An administrator can give one of your roles access to it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/assistantservice"
+    ]
+  },
   "You do not have permission to read insights.": {
     "sites": 1,
     "scope": [
@@ -188129,12 +188239,14 @@
     ]
   },
   "You don't have permission to perform this action: {0} {1}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/graphql"
+      "api/graphql",
+      "service/agentaccessservice",
+      "service/assistantservice"
     ]
   },
   "You don't have permission to read shipments": {
@@ -196945,6 +197057,15 @@
     ],
     "areas": [
       "service/documenttemplateservice"
+    ]
+  },
+  "{0} is a system agent and is open to everyone who can use the assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentaccessservice"
     ]
   },
   "{0} is a system agent. Disable it instead of deleting it.": {

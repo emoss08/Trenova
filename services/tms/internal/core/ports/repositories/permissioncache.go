@@ -17,6 +17,7 @@ type CachedResourcePermission struct {
 type CachedPermissions struct {
 	MaxSensitivity string                               `json:"maxSensitivity"`
 	Resources      map[string]*CachedResourcePermission `json:"resources"`
+	AgentIDs       []string                             `json:"agentIds"`
 	Checksum       string                               `json:"checksum"`
 	ExpiresAt      int64                                `json:"expiresAt"`
 }

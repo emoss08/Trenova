@@ -333,6 +333,156 @@ var RoleFilter = struct {
 }
 
 // ---------------------------------------------------------------------------
+// RoleAgentGrant — table "role_agent_grants", alias "rag"
+// ---------------------------------------------------------------------------
+
+// RoleAgentGrantTable holds the table name, alias, and primary key columns
+// for the "role_agent_grants" table. The alias "rag" is used in all generated
+// SQL fragments (e.g. "rag.id = ?").
+var RoleAgentGrantTable = TableInfo{
+	Name:       "role_agent_grants",
+	Alias:      "rag",
+	PrimaryKey: []string{"id"},
+}
+
+// RoleAgentGrantColumns provides type-safe column references for the "role_agent_grants" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(RoleAgentGrantColumns.ID.String())
+//	// SELECT rag.id FROM role_agent_grants AS rag
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(RoleAgentGrantColumns.ID.Eq(), id)           // WHERE rag.id = ?
+//	q.Order(RoleAgentGrantColumns.CreatedAt.OrderDesc())  // ORDER BY rag.created_at DESC
+var RoleAgentGrantColumns = struct {
+	ID                Column // "id" → qualified: "rag.id"
+	OrganizationID    Column // "organization_id" → qualified: "rag.organization_id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "rag.business_unit_id"
+	RoleID            Column // "role_id" → qualified: "rag.role_id"
+	AgentDefinitionID Column // "agent_definition_id" → qualified: "rag.agent_definition_id"
+	GrantedBy         Column // "granted_by" → qualified: "rag.granted_by"
+	GrantedAt         Column // "granted_at" → qualified: "rag.granted_at"
+}{
+	ID:                NewColumn("id", "rag"),
+	OrganizationID:    NewColumn("organization_id", "rag"),
+	BusinessUnitID:    NewColumn("business_unit_id", "rag"),
+	RoleID:            NewColumn("role_id", "rag"),
+	AgentDefinitionID: NewColumn("agent_definition_id", "rag"),
+	GrantedBy:         NewColumn("granted_by", "rag"),
+	GrantedAt:         NewColumn("granted_at", "rag"),
+}
+
+// RoleAgentGrantFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by RoleAgentGrant.GetStaticFieldMap().
+var RoleAgentGrantFieldMap = map[string]string{
+	"id":                "id",
+	"organizationId":    "organization_id",
+	"businessUnitId":    "business_unit_id",
+	"roleId":            "role_id",
+	"agentDefinitionId": "agent_definition_id",
+	"grantedBy":         "granted_by",
+	"grantedAt":         "granted_at",
+}
+
+// RoleAgentGrantInsertableColumns lists column names suitable for INSERT statements on the "role_agent_grants" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var RoleAgentGrantInsertableColumns = []string{
+	"id",
+	"organization_id",
+	"business_unit_id",
+	"role_id",
+	"agent_definition_id",
+	"granted_by",
+	"granted_at",
+}
+
+// RoleAgentGrantScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE rag.organization_id = ? AND rag.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.RoleAgentGrantScopeTenant(sq, ti).
+//		Where(buncolgen.RoleAgentGrantColumns.ID.Eq(), id)
+func RoleAgentGrantScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, RoleAgentGrantColumns.OrganizationID, RoleAgentGrantColumns.BusinessUnitID, ti)
+}
+
+// RoleAgentGrantScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.RoleAgentGrantScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.RoleAgentGrantColumns.ID.In(), bun.List(ids))
+//	})
+func RoleAgentGrantScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, RoleAgentGrantColumns.OrganizationID, RoleAgentGrantColumns.BusinessUnitID, ti)
+}
+
+// RoleAgentGrantScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.RoleAgentGrantScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.RoleAgentGrantColumns.ID.Eq(), id)
+//	})
+func RoleAgentGrantScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, RoleAgentGrantColumns.OrganizationID, RoleAgentGrantColumns.BusinessUnitID, ti)
+}
+
+// RoleAgentGrantApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.RoleAgentGrantApplyTenant(tenantInfo))
+func RoleAgentGrantApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(RoleAgentGrantColumns.OrganizationID, RoleAgentGrantColumns.BusinessUnitID, ti)
+}
+
+// RoleAgentGrantFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "role_agent_grants" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	RoleAgentGrantFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var RoleAgentGrantFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	RoleID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "roleId" → DB: "role_id"
+	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	GrantedBy         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "grantedBy" → DB: "granted_by"
+	GrantedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "grantedAt" → DB: "granted_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	RoleID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("roleId", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentDefinitionId", op, value)
+	},
+	GrantedBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("grantedBy", op, value)
+	},
+	GrantedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("grantedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // RoleConstraint — table "role_constraints", alias "rc"
 // ---------------------------------------------------------------------------
 

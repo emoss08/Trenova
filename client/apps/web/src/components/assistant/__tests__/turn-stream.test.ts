@@ -155,6 +155,7 @@ describe("reduceTurn", () => {
             pinned: false,
             subjectType: "",
             subjectId: "",
+            canContinue: true,
             title: "t",
             status: "Active",
             lastMessageAt: 0,

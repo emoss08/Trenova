@@ -1,6 +1,6 @@
 {
-  "operationCount": 807,
-  "fragmentCount": 212,
+  "operationCount": 814,
+  "fragmentCount": 216,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -427,6 +427,29 @@
       ],
       "usages": [],
       "sdl": "mutation AdjustWorkerPtoBalance($input: AdjustWorkerPTOBalanceInput!) {\n  adjustWorkerPtoBalance(input: $input) {\n    ...WorkerPtoLedgerEntryFields\n  }\n}\n\nfragment WorkerPtoLedgerEntryFields on WorkerPTOLedgerEntry {\n  id\n  workerId\n  ptoType\n  entryType\n  amountDays\n  balanceAfterDays\n  sequence\n  effectiveAt\n  periodKey\n  sourcePtoId\n  assignmentId\n  ptoPolicyId\n  actorType\n  createdById\n  note\n  createdAt\n}"
+    },
+    {
+      "name": "AgentAccess",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:a96fd576cc93fef1d6389a872a52d1d681ed4ce882cba36bb6ef2199d6fda41f",
+      "rootFields": [
+        "agentDefinition"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentAccessFields",
+        "AgentAccessRoleFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentAccess($id: ID!) {\n  agentDefinition(id: $id) {\n    ...AgentAccessFields\n  }\n}\n\nfragment AgentAccessFields on AgentDefinition {\n  id\n  name\n  systemKey\n  accessMode\n  accessRoles {\n    ...AgentAccessRoleFields\n  }\n}\n\nfragment AgentAccessRoleFields on Role {\n  id\n  name\n  description\n  isSystem\n}"
     },
     {
       "name": "AgentChoices",
@@ -5147,6 +5170,31 @@
       "sdl": "mutation DecideLeaveCase($input: DecideLeaveCaseInput!) {\n  decideLeaveCase(input: $input) {\n    id\n    status\n    fmlaDesignated\n    version\n  }\n}"
     },
     {
+      "name": "DecideMyProposal",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:64dea8adddc7bea71fcfb7abc268678df95b4aa90847396b783656abc92f0180",
+      "rootFields": [
+        "decideMyProposal"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "AgentProposalDecisionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideMyProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    version\n    createdAt\n  }\n}"
+    },
+    {
       "name": "DecideProfileChange",
       "kind": "mutation",
       "domain": "self-service",
@@ -9712,6 +9760,34 @@
       "sdl": "query MyAdvances {\n  myAdvances {\n    id\n    status\n    source\n    reference\n    amountMinor\n    recoveredMinor\n    outstandingMinor\n    currencyCode\n    issuedDate\n  }\n}"
     },
     {
+      "name": "MyAgents",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:396c2dbadc8d811918486b2a3cd4778f814c78f547e5af124b2e301be5bbed89",
+      "rootFields": [
+        "myAgents"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "MyAgentsInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "false"
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields",
+        "MyAgentFields"
+      ],
+      "usages": [],
+      "sdl": "query MyAgents($input: MyAgentsInput!, $includeTotalCount: Boolean = false) {\n  myAgents(input: $input) {\n    edges {\n      node {\n        ...MyAgentFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment MyAgentFields on MyAgent {\n  id\n  name\n  description\n  template\n  icon\n  accent\n  toolNames\n  systemKey\n  starters {\n    label\n    prompt\n  }\n}"
+    },
+    {
       "name": "MyAIFeedback",
       "kind": "query",
       "domain": "ai-feedback",
@@ -13274,6 +13350,28 @@
       "sdl": "mutation RevokeWorkerPortalAccess($workerId: ID!) {\n  revokeWorkerPortalAccess(workerId: $workerId)\n}"
     },
     {
+      "name": "RoleAgentAccess",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:4320bfe8fce105b07adf7782d513aaff38f3b1aa012079c2d259df9de7eaebcc",
+      "rootFields": [
+        "role"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "RoleAgentAccessFields"
+      ],
+      "usages": [],
+      "sdl": "query RoleAgentAccess($id: ID!) {\n  role(id: $id) {\n    ...RoleAgentAccessFields\n  }\n}\n\nfragment RoleAgentAccessFields on Role {\n  id\n  name\n  agents {\n    id\n    name\n    icon\n    accent\n    template\n    accessMode\n    enabled\n    triggerMode\n    systemKey\n  }\n}"
+    },
+    {
       "name": "RoleTable",
       "kind": "query",
       "domain": "role",
@@ -13690,6 +13788,34 @@
       "sdl": "query ServiceTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  serviceTypes(input: $input) {\n    edges {\n      node {\n        ...ServiceTypeTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ServiceTypeTableRowFields on ServiceType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  color\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "SetAgentAccess",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:e6df898351f5a8c4e7ba13ec77ffd0d5b05464e9abe0fff637b90a0d2e6e61ce",
+      "rootFields": [
+        "setAgentAccess"
+      ],
+      "variables": [
+        {
+          "name": "agentId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "SetAgentAccessInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentAccessFields",
+        "AgentAccessRoleFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SetAgentAccess($agentId: ID!, $input: SetAgentAccessInput!) {\n  setAgentAccess(agentId: $agentId, input: $input) {\n    ...AgentAccessFields\n  }\n}\n\nfragment AgentAccessFields on AgentDefinition {\n  id\n  name\n  systemKey\n  accessMode\n  accessRoles {\n    ...AgentAccessRoleFields\n  }\n}\n\nfragment AgentAccessRoleFields on Role {\n  id\n  name\n  description\n  isSystem\n}"
+    },
+    {
       "name": "SetAgentMemoryStatus",
       "kind": "mutation",
       "domain": "agent",
@@ -13880,6 +14006,33 @@
       ],
       "usages": [],
       "sdl": "mutation SetOrgDefaultTableConfiguration($id: ID!, $enabled: Boolean!) {\n  setOrgDefaultTableConfiguration(id: $id, enabled: $enabled) {\n    ...TableConfigurationFields\n  }\n}\n\nfragment TableConfigurationFields on TableConfiguration {\n  id\n  organizationId\n  businessUnitId\n  userId\n  name\n  description\n  resource\n  tableConfig\n  visibility\n  isDefault\n  isOrgDefault\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n    profilePicUrl\n  }\n}"
+    },
+    {
+      "name": "SetRoleAgentAccess",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:dd0999e8751bca239fb25ebad5054c71404e98c83deea9439010bd3b5d3b410b",
+      "rootFields": [
+        "setRoleAgentAccess"
+      ],
+      "variables": [
+        {
+          "name": "roleId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "agentIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "RoleAgentAccessFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SetRoleAgentAccess($roleId: ID!, $agentIds: [ID!]!) {\n  setRoleAgentAccess(roleId: $roleId, agentIds: $agentIds) {\n    ...RoleAgentAccessFields\n  }\n}\n\nfragment RoleAgentAccessFields on Role {\n  id\n  name\n  agents {\n    id\n    name\n    icon\n    accent\n    template\n    accessMode\n    enabled\n    triggerMode\n    systemKey\n  }\n}"
     },
     {
       "name": "SettlementBatchDetail",
@@ -14843,6 +14996,28 @@
       "fragments": [],
       "usages": [],
       "sdl": "query SuggestCarrierForEdiInvoice($invoiceId: ID!) {\n  suggestCarrierForEdiInvoice(invoiceId: $invoiceId) {\n    id\n    code\n    name\n    scac\n    dotNumber\n  }\n}"
+    },
+    {
+      "name": "SuggestedAgentAudience",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:79bdbda787008c4d10159a18a778009b985209e55670b365e0bc0675e361a021",
+      "rootFields": [
+        "suggestedAgentAudience"
+      ],
+      "variables": [
+        {
+          "name": "agentId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentAccessRoleFields"
+      ],
+      "usages": [],
+      "sdl": "query SuggestedAgentAudience($agentId: ID!) {\n  suggestedAgentAudience(agentId: $agentId) {\n    agentId\n    accessMode\n    sensitiveTools\n    roles {\n      role {\n        ...AgentAccessRoleFields\n      }\n      coverage\n      missingResources\n      granted\n    }\n  }\n}\n\nfragment AgentAccessRoleFields on Role {\n  id\n  name\n  description\n  isSystem\n}"
     },
     {
       "name": "SwitchCarrierIntelProvider",
@@ -18561,6 +18736,35 @@
       "sdl": "fragment AccountTypeTableRowFields on AccountType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  name\n  description\n  category\n  color\n  isSystem\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentAccessFields",
+      "typeCondition": "AgentDefinition",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "fragments": [
+        "AgentAccessRoleFields"
+      ],
+      "usedByOperations": [
+        "AgentAccess",
+        "SetAgentAccess"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentAccessFields on AgentDefinition {\n  id\n  name\n  systemKey\n  accessMode\n  accessRoles {\n    ...AgentAccessRoleFields\n  }\n}\n\nfragment AgentAccessRoleFields on Role {\n  id\n  name\n  description\n  isSystem\n}"
+    },
+    {
+      "name": "AgentAccessRoleFields",
+      "typeCondition": "Role",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentAccess",
+        "SetAgentAccess",
+        "SuggestedAgentAudience"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentAccessRoleFields on Role {\n  id\n  name\n  description\n  isSystem\n}"
+    },
+    {
       "name": "AgentChoiceFields",
       "typeCondition": "AgentDefinition",
       "domain": "agent",
@@ -19265,6 +19469,7 @@
         "LocationCategoryTable",
         "LocationTable",
         "ManualJournalTable",
+        "MyAgents",
         "MyNotificationList",
         "NotificationList",
         "OrderTable",
@@ -20302,6 +20507,18 @@
       "sdl": "fragment ManualJournalTableRowFields on ManualJournal {\n  id\n  businessUnitId\n  organizationId\n  requestNumber\n  status\n  description\n  reason\n  accountingDate\n  requestedFiscalYearId\n  requestedFiscalPeriodId\n  currencyCode\n  totalDebit\n  totalCredit\n  approvedAt\n  approvedById\n  rejectedAt\n  rejectedById\n  rejectionReason\n  cancelledAt\n  cancelledById\n  cancelReason\n  postedBatchId\n  createdById\n  updatedById\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "MyAgentFields",
+      "typeCondition": "MyAgent",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "MyAgents"
+      ],
+      "usages": [],
+      "sdl": "fragment MyAgentFields on MyAgent {\n  id\n  name\n  description\n  template\n  icon\n  accent\n  toolNames\n  systemKey\n  starters {\n    label\n    prompt\n  }\n}"
+    },
+    {
       "name": "MyAIFeedbackFields",
       "typeCondition": "AIFeedback",
       "domain": "ai-feedback",
@@ -20685,6 +20902,19 @@
       ],
       "usages": [],
       "sdl": "fragment ReportViewFields on ReportView {\n  id\n  definitionId\n  ownerId\n  name\n  description\n  params\n  shared\n  pinned\n  format\n  lastRunAt\n  runCount\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "RoleAgentAccessFields",
+      "typeCondition": "Role",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "RoleAgentAccess",
+        "SetRoleAgentAccess"
+      ],
+      "usages": [],
+      "sdl": "fragment RoleAgentAccessFields on Role {\n  id\n  name\n  agents {\n    id\n    name\n    icon\n    accent\n    template\n    accessMode\n    enabled\n    triggerMode\n    systemKey\n  }\n}"
     },
     {
       "name": "RoleTableRowFields",
@@ -26661,6 +26891,44 @@
       ],
       "sdl": "input MatchRoutingGuideInput {\n  destinationCity: String\n  destinationLocationId: ID\n  destinationState: String\n  originCity: String\n  originLocationId: ID\n  originState: String\n}"
     },
+    "MyAgentsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "excludeIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "20",
+          "defaultJson": 20
+        },
+        {
+          "name": "ids",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "origin",
+          "type": "MyAgentOrigin",
+          "defaultValue": "All",
+          "defaultJson": "All"
+        },
+        {
+          "name": "search",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input MyAgentsInput {\n  after: String\n  \"\"\"Agents already shown, so a page never repeats them. At most 100.\"\"\"\n  excludeIds: [ID!]\n  first: Int = 20\n  \"\"\"Only these agents. At most 100.\"\"\"\n  ids: [ID!]\n  origin: MyAgentOrigin = All\n  \"\"\"Matched against the agent's name and description.\"\"\"\n  search: String\n}"
+    },
     "MyAIFeedbackInput": {
       "kind": "input",
       "fields": [
@@ -28957,6 +29225,22 @@
         }
       ],
       "sdl": "input SelectOptionsInput {\n  filters: JSON\n  first: Int = 20\n  ids: [ID!]\n  offset: Int = 0\n  query: String\n  resource: SelectOptionResource!\n}"
+    },
+    "SetAgentAccessInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "accessMode",
+          "type": "AgentAccessMode!",
+          "defaultValue": null
+        },
+        {
+          "name": "roleIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SetAgentAccessInput {\n  accessMode: AgentAccessMode!\n  \"\"\"\n  The roles granted the agent, replacing those granted now. Kept whatever the\n  mode, so an agent opened to everyone and restricted again keeps its audience.\n  \"\"\"\n  roleIds: [ID!]!\n}"
     },
     "SetAvailabilityPreferenceInput": {
       "kind": "input",
@@ -34017,6 +34301,15 @@
       ],
       "sdl": "\"\"\"\nThe part of the business a position sits in. Headcount is read by department\nat least as often as by terminal, which is why it is an enum rather than free\ntext somebody spells three ways.\n\"\"\"\nenum JobDepartment {\n  Administration\n  Billing\n  Executive\n  HumanResources\n  Maintenance\n  Operations\n  Other\n  Safety\n  Sales\n}"
     },
+    "MyAgentOrigin": {
+      "kind": "enum",
+      "values": [
+        "All",
+        "Custom",
+        "Template"
+      ],
+      "sdl": "\"\"\"Where an agent came from.\"\"\"\nenum MyAgentOrigin {\n  All\n  \"\"\"Built by hand.\"\"\"\n  Custom\n  \"\"\"Made from one of the platform's templates.\"\"\"\n  Template\n}"
+    },
     "NotificationState": {
       "kind": "enum",
       "values": [
@@ -34814,6 +35107,14 @@
         "WORKER_POLICY"
       ],
       "sdl": "enum SelectOptionResource {\n  ACCESSORIAL_CHARGE\n  ACCOUNT_TYPE\n  BENEFIT_PLAN\n  CARRIER\n  COMMODITY\n  CUSTOMER\n  DETENTION_POLICY\n  DISTANCE_PROFILE\n  DOCUMENT_TYPE\n  EDI_COMMUNICATION_PROFILE\n  EDI_CONNECTION\n  EDI_DOCUMENT_TYPE\n  EDI_MAPPING_PROFILE\n  EDI_PARTNER\n  EDI_PARTNER_DOCUMENT_PROFILE\n  EDI_TEMPLATE\n  EDI_TRANSACTION_SET\n  EDI_TRANSFER\n  EMAIL_PROFILE\n  EQUIPMENT_MANUFACTURER\n  EQUIPMENT_TYPE\n  FISCAL_PERIOD\n  FISCAL_YEAR\n  FLEET_CODE\n  FORMULA_TEMPLATE\n  FUEL_CARD\n  FUEL_INDEX\n  FUEL_SURCHARGE_PROGRAM\n  GL_ACCOUNT\n  HAZARDOUS_MATERIAL\n  IFTA_FUEL_TYPE\n  IFTA_JURISDICTION\n  JOB_POSITION\n  LOCATION\n  LOCATION_CATEGORY\n  ORDER\n  ORGANIZATION\n  PAY_CODE\n  PAY_PROFILE\n  PERFORMANCE_REVIEW_TEMPLATE\n  PTO_POLICY\n  RATE_AGREEMENT\n  RATE_MATRIX\n  RATE_ZONE\n  ROLE\n  SERVICE_FAILURE_REASON_CODE\n  SERVICE_TYPE\n  SHIFT_TEMPLATE\n  SHIPMENT\n  SHIPMENT_TYPE\n  TRACTOR\n  TRAILER\n  TRAINING_COURSE\n  USER\n  US_STATE\n  WORKER\n  WORKER_CREDENTIAL_TYPE\n  WORKER_POLICY\n}"
+    },
+    "AgentAccessMode": {
+      "kind": "enum",
+      "values": [
+        "Everyone",
+        "Roles"
+      ],
+      "sdl": "\"\"\"Who may use an agent, among the people who may use the assistant.\"\"\"\nenum AgentAccessMode {\n  \"\"\"Everyone who may use the assistant.\"\"\"\n  Everyone\n  \"\"\"\n  Only the roles granted it, and the roles that inherit them. Nobody when no role is.\n  \"\"\"\n  Roles\n}"
     },
     "AvailabilityPreference": {
       "kind": "enum",

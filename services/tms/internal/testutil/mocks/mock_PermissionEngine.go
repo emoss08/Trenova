@@ -7,6 +7,8 @@ package mocks
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
@@ -530,6 +532,220 @@ func (_c *MockPermissionEngine_SimulatePermissions_Call) Return(effectivePermiss
 }
 
 func (_c *MockPermissionEngine_SimulatePermissions_Call) RunAndReturn(run func(ctx context.Context, req *services.SimulatePermissionsRequest) (*services.EffectivePermissions, error)) *MockPermissionEngine_SimulatePermissions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AgentsUsable provides a mock function for the type MockPermissionEngine
+func (_mock *MockPermissionEngine) AgentsUsable(ctx context.Context, actor *services.RequestActor, operation permission.Operation) (*services.UsableAgents, error) {
+	ret := _mock.Called(ctx, actor, operation)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AgentsUsable")
+	}
+
+	var r0 *services.UsableAgents
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RequestActor, permission.Operation) (*services.UsableAgents, error)); ok {
+		return returnFunc(ctx, actor, operation)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RequestActor, permission.Operation) *services.UsableAgents); ok {
+		r0 = returnFunc(ctx, actor, operation)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.UsableAgents)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.RequestActor, permission.Operation) error); ok {
+		r1 = returnFunc(ctx, actor, operation)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockPermissionEngine_AgentsUsable_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AgentsUsable'
+type MockPermissionEngine_AgentsUsable_Call struct {
+	*mock.Call
+}
+
+// AgentsUsable is a helper method to define mock.On call
+//   - ctx context.Context
+//   - actor *services.RequestActor
+//   - operation permission.Operation
+func (_e *MockPermissionEngine_Expecter) AgentsUsable(ctx any, actor any, operation any) *MockPermissionEngine_AgentsUsable_Call {
+	return &MockPermissionEngine_AgentsUsable_Call{Call: _e.mock.On("AgentsUsable", ctx, actor, operation)}
+}
+
+func (_c *MockPermissionEngine_AgentsUsable_Call) Run(run func(ctx context.Context, actor *services.RequestActor, operation permission.Operation)) *MockPermissionEngine_AgentsUsable_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.RequestActor
+		if args[1] != nil {
+			arg1 = args[1].(*services.RequestActor)
+		}
+		var arg2 permission.Operation
+		if args[2] != nil {
+			arg2 = args[2].(permission.Operation)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockPermissionEngine_AgentsUsable_Call) Return(usableAgents *services.UsableAgents, err error) *MockPermissionEngine_AgentsUsable_Call {
+	_c.Call.Return(usableAgents, err)
+	return _c
+}
+
+func (_c *MockPermissionEngine_AgentsUsable_Call) RunAndReturn(run func(ctx context.Context, actor *services.RequestActor, operation permission.Operation) (*services.UsableAgents, error)) *MockPermissionEngine_AgentsUsable_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MayUseAgent provides a mock function for the type MockPermissionEngine
+func (_mock *MockPermissionEngine) MayUseAgent(ctx context.Context, actor *services.RequestActor, definition *agentdefinition.Definition) (bool, error) {
+	ret := _mock.Called(ctx, actor, definition)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MayUseAgent")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RequestActor, *agentdefinition.Definition) (bool, error)); ok {
+		return returnFunc(ctx, actor, definition)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RequestActor, *agentdefinition.Definition) bool); ok {
+		r0 = returnFunc(ctx, actor, definition)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.RequestActor, *agentdefinition.Definition) error); ok {
+		r1 = returnFunc(ctx, actor, definition)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockPermissionEngine_MayUseAgent_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MayUseAgent'
+type MockPermissionEngine_MayUseAgent_Call struct {
+	*mock.Call
+}
+
+// MayUseAgent is a helper method to define mock.On call
+//   - ctx context.Context
+//   - actor *services.RequestActor
+//   - definition *agentdefinition.Definition
+func (_e *MockPermissionEngine_Expecter) MayUseAgent(ctx any, actor any, definition any) *MockPermissionEngine_MayUseAgent_Call {
+	return &MockPermissionEngine_MayUseAgent_Call{Call: _e.mock.On("MayUseAgent", ctx, actor, definition)}
+}
+
+func (_c *MockPermissionEngine_MayUseAgent_Call) Run(run func(ctx context.Context, actor *services.RequestActor, definition *agentdefinition.Definition)) *MockPermissionEngine_MayUseAgent_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.RequestActor
+		if args[1] != nil {
+			arg1 = args[1].(*services.RequestActor)
+		}
+		var arg2 *agentdefinition.Definition
+		if args[2] != nil {
+			arg2 = args[2].(*agentdefinition.Definition)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockPermissionEngine_MayUseAgent_Call) Return(b bool, err error) *MockPermissionEngine_MayUseAgent_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *MockPermissionEngine_MayUseAgent_Call) RunAndReturn(run func(ctx context.Context, actor *services.RequestActor, definition *agentdefinition.Definition) (bool, error)) *MockPermissionEngine_MayUseAgent_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleCoverage provides a mock function for the type MockPermissionEngine
+func (_mock *MockPermissionEngine) RoleCoverage(ctx context.Context, req *services.RoleCoverageRequest) ([]services.RoleCoverage, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleCoverage")
+	}
+
+	var r0 []services.RoleCoverage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RoleCoverageRequest) ([]services.RoleCoverage, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.RoleCoverageRequest) []services.RoleCoverage); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]services.RoleCoverage)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.RoleCoverageRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockPermissionEngine_RoleCoverage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleCoverage'
+type MockPermissionEngine_RoleCoverage_Call struct {
+	*mock.Call
+}
+
+// RoleCoverage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.RoleCoverageRequest
+func (_e *MockPermissionEngine_Expecter) RoleCoverage(ctx any, req any) *MockPermissionEngine_RoleCoverage_Call {
+	return &MockPermissionEngine_RoleCoverage_Call{Call: _e.mock.On("RoleCoverage", ctx, req)}
+}
+
+func (_c *MockPermissionEngine_RoleCoverage_Call) Run(run func(ctx context.Context, req *services.RoleCoverageRequest)) *MockPermissionEngine_RoleCoverage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.RoleCoverageRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.RoleCoverageRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockPermissionEngine_RoleCoverage_Call) Return(roleCoverages []services.RoleCoverage, err error) *MockPermissionEngine_RoleCoverage_Call {
+	_c.Call.Return(roleCoverages, err)
+	return _c
+}
+
+func (_c *MockPermissionEngine_RoleCoverage_Call) RunAndReturn(run func(ctx context.Context, req *services.RoleCoverageRequest) ([]services.RoleCoverage, error)) *MockPermissionEngine_RoleCoverage_Call {
 	_c.Call.Return(run)
 	return _c
 }

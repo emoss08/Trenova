@@ -220,6 +220,7 @@ type Params struct {
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
 	AgentDecisionQueueService    services.AgentDecisionQueueService
+	AgentAccessService           services.AgentAccessService
 	WatchtowerService            services.WatchtowerService
 	InboundMessageService        *inboundmessageservice.Service
 	AgentScorecardService        services.AgentScorecardService
@@ -376,6 +377,7 @@ type Resolver struct {
 	agentExceptionService        services.AgentExceptionService
 	agentDecisionService         services.AgentDecisionService
 	agentDecisionQueueService    services.AgentDecisionQueueService
+	agentAccessService           services.AgentAccessService
 	watchtowerService            services.WatchtowerService
 	inboundMessageService        *inboundmessageservice.Service
 	agentScorecardService        services.AgentScorecardService
@@ -533,6 +535,7 @@ func New(p Params) *Resolver {
 		agentExceptionService:        p.AgentExceptionService,
 		agentDecisionService:         p.AgentDecisionService,
 		agentDecisionQueueService:    p.AgentDecisionQueueService,
+		agentAccessService:           p.AgentAccessService,
 		watchtowerService:            p.WatchtowerService,
 		inboundMessageService:        p.InboundMessageService,
 		agentScorecardService:        p.AgentScorecardService,

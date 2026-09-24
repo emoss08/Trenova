@@ -18,6 +18,13 @@ func (e *Role) GetStaticFieldMap() map[string]string {
 	return buncolgen.RoleFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoleAgentGrant].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.RoleAgentGrantFieldMap] instead of parsing struct tags via reflection.
+func (e *RoleAgentGrant) GetStaticFieldMap() map[string]string {
+	return buncolgen.RoleAgentGrantFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [RoleConstraint].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.RoleConstraintFieldMap] instead of parsing struct tags via reflection.

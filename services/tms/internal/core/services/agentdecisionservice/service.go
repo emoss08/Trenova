@@ -30,14 +30,17 @@ type Params struct {
 	DecisionRepo repositories.AgentDecisionRepository
 	ProposalRepo repositories.AgentProposalRepository
 	RunRepo      repositories.AgentRunRepository
-	Shadow       *agentshadow.Resolver
-	Permissions  services.PermissionEngine
-	Workflows    services.WorkflowStarter
-	Executor     *proposalexecutor.Service
-	AuditService services.AuditService
-	Trust        services.AgentTrustService
-	Memories     services.AgentMemoryService     `optional:"true"`
-	Activity     services.AgentActivityPublisher `optional:"true"`
+	// Conversations says whose conversation raised a proposal, for a person
+	// deciding their own.
+	Conversations repositories.ConversationRepository `optional:"true"`
+	Shadow        *agentshadow.Resolver
+	Permissions   services.PermissionEngine
+	Workflows     services.WorkflowStarter
+	Executor      *proposalexecutor.Service
+	AuditService  services.AuditService
+	Trust         services.AgentTrustService
+	Memories      services.AgentMemoryService     `optional:"true"`
+	Activity      services.AgentActivityPublisher `optional:"true"`
 	// Watchtower takes a decided proposal off the feed.
 	Watchtower services.WatchtowerProjector `optional:"true"`
 	// FollowUps has the conversation that raised a proposal report what came
@@ -50,6 +53,7 @@ type Service struct {
 	decisionRepo repositories.AgentDecisionRepository
 	proposalRepo repositories.AgentProposalRepository
 	runRepo      repositories.AgentRunRepository
+	threads      repositories.ConversationRepository
 	shadow       *agentshadow.Resolver
 	permissions  services.PermissionEngine
 	workflows    services.WorkflowStarter
@@ -68,6 +72,7 @@ func New(p Params) services.AgentDecisionService {
 		decisionRepo: p.DecisionRepo,
 		proposalRepo: p.ProposalRepo,
 		runRepo:      p.RunRepo,
+		threads:      p.Conversations,
 		shadow:       p.Shadow,
 		permissions:  p.Permissions,
 		workflows:    p.Workflows,
@@ -92,6 +97,71 @@ func (s *Service) Decide(
 	}
 
 	return outcome.Decision, nil
+}
+
+func (s *Service) DecideOwn(
+	ctx context.Context,
+	req *services.DecideAgentProposalRequest,
+	actor *services.RequestActor,
+) (*agent.AgentDecision, error) {
+	if err := s.assertOwnProposal(ctx, req, actor); err != nil {
+		return nil, err
+	}
+
+	return s.Decide(ctx, req, actor)
+}
+
+// assertOwnProposal refuses a proposal not raised in one of the actor's own
+// conversations. Someone else's is not found rather than forbidden, the way
+// someone else's conversation is.
+func (s *Service) assertOwnProposal(
+	ctx context.Context,
+	req *services.DecideAgentProposalRequest,
+	actor *services.RequestActor,
+) error {
+	notYours := errortypes.NewNotFoundError(
+		"That proposal was not raised in one of your conversations",
+	)
+	if s.threads == nil || actor == nil || actor.UserID.IsNil() {
+		return notYours
+	}
+
+	proposal, err := s.proposalRepo.GetByID(ctx, repositories.GetAgentProposalByIDRequest{
+		ID:         req.ProposalID,
+		TenantInfo: &req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+
+	run, err := s.runRepo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+		ID:         proposal.RunID,
+		TenantInfo: &req.TenantInfo,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return notYours
+		}
+
+		return err
+	}
+	if run.SubjectType != agent.SubjectAssistantThread || run.SubjectID.IsNil() {
+		return notYours
+	}
+
+	if _, err = s.threads.GetThread(ctx, repositories.GetThreadRequest{
+		ID:         run.SubjectID,
+		UserID:     actor.UserID,
+		TenantInfo: req.TenantInfo,
+	}); err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return notYours
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) DecideWithOutcome(

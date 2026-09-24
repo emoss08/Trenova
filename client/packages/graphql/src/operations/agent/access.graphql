@@ -1,0 +1,113 @@
+fragment MyAgentFields on MyAgent {
+  id
+  name
+  description
+  template
+  icon
+  accent
+  toolNames
+  systemKey
+  starters {
+    label
+    prompt
+  }
+}
+
+query MyAgents($input: MyAgentsInput!, $includeTotalCount: Boolean = false) {
+  myAgents(input: $input) {
+    edges {
+      node {
+        ...MyAgentFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {
+  decideMyProposal(id: $id, input: $input) {
+    id
+    proposalId
+    decision
+    reasonCode
+    decidedByUserId
+    version
+    createdAt
+  }
+}
+
+fragment AgentAccessRoleFields on Role {
+  id
+  name
+  description
+  isSystem
+}
+
+fragment AgentAccessFields on AgentDefinition {
+  id
+  name
+  systemKey
+  accessMode
+  accessRoles {
+    ...AgentAccessRoleFields
+  }
+}
+
+query AgentAccess($id: ID!) {
+  agentDefinition(id: $id) {
+    ...AgentAccessFields
+  }
+}
+
+mutation SetAgentAccess($agentId: ID!, $input: SetAgentAccessInput!) {
+  setAgentAccess(agentId: $agentId, input: $input) {
+    ...AgentAccessFields
+  }
+}
+
+fragment RoleAgentAccessFields on Role {
+  id
+  name
+  agents {
+    id
+    name
+    icon
+    accent
+    template
+    accessMode
+    enabled
+    triggerMode
+    systemKey
+  }
+}
+
+query RoleAgentAccess($id: ID!) {
+  role(id: $id) {
+    ...RoleAgentAccessFields
+  }
+}
+
+mutation SetRoleAgentAccess($roleId: ID!, $agentIds: [ID!]!) {
+  setRoleAgentAccess(roleId: $roleId, agentIds: $agentIds) {
+    ...RoleAgentAccessFields
+  }
+}
+
+query SuggestedAgentAudience($agentId: ID!) {
+  suggestedAgentAudience(agentId: $agentId) {
+    agentId
+    accessMode
+    sensitiveTools
+    roles {
+      role {
+        ...AgentAccessRoleFields
+      }
+      coverage
+      missingResources
+      granted
+    }
+  }
+}
