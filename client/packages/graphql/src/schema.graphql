@@ -2266,6 +2266,7 @@ enum AgentSubjectType {
   DetentionOccurrence
   Document
   EDIInboundFile
+  FormulaTemplate
   InboundMessage
   Insight
   Organization
