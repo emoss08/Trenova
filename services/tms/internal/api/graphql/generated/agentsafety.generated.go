@@ -2904,6 +2904,7 @@ var (
 		"Memory":         agent.TaintSourceMemory,
 		"RunRecord":      agent.TaintSourceRunRecord,
 		"Web":            agent.TaintSourceWeb,
+		"RecordNote":     agent.TaintSourceRecordNote,
 	}
 	marshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource = map[agent.TaintSource]string{
 		agent.TaintSourceInboundMessage: "InboundMessage",
@@ -2915,6 +2916,7 @@ var (
 		agent.TaintSourceMemory:         "Memory",
 		agent.TaintSourceRunRecord:      "RunRecord",
 		agent.TaintSourceWeb:            "Web",
+		agent.TaintSourceRecordNote:     "RecordNote",
 	}
 )
 
@@ -3219,6 +3221,7 @@ var (
 		"Memory":         agent.TaintSourceMemory,
 		"RunRecord":      agent.TaintSourceRunRecord,
 		"Web":            agent.TaintSourceWeb,
+		"RecordNote":     agent.TaintSourceRecordNote,
 	}
 	marshalOAgentTaintSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource = map[agent.TaintSource]string{
 		agent.TaintSourceInboundMessage: "InboundMessage",
@@ -3230,6 +3233,7 @@ var (
 		agent.TaintSourceMemory:         "Memory",
 		agent.TaintSourceRunRecord:      "RunRecord",
 		agent.TaintSourceWeb:            "Web",
+		agent.TaintSourceRecordNote:     "RecordNote",
 	}
 )
 

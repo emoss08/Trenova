@@ -1,10 +1,8 @@
 package agentevalgate
 
 import (
-	"slices"
 	"sort"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 )
@@ -35,6 +33,7 @@ type PolicySnapshot struct {
 	Condition           string   `json:"condition,omitempty"`
 	PersonalRunsUnasked bool     `json:"personalRunsUnasked"`
 	HeldWhenTainted     bool     `json:"heldWhenTainted"`
+	TaintHold           string   `json:"taintHold,omitempty"`
 	Effect              string   `json:"effect"`
 	Artifact            string   `json:"artifact,omitempty"`
 	Reversible          bool     `json:"reversible"`
@@ -94,6 +93,10 @@ func snapshotPolicy(policy *serviceports.ToolPolicy) PolicySnapshot {
 	if policy.Condition != nil {
 		condition = policy.Condition.Description
 	}
+	taintHold := ""
+	if policy.TaintHold != nil {
+		taintHold = policy.TaintHold.Description
+	}
 
 	return PolicySnapshot{
 		Kind:                policy.Kind.String(),
@@ -107,7 +110,8 @@ func snapshotPolicy(policy *serviceports.ToolPolicy) PolicySnapshot {
 		ClassifiesEachCall:  policy.Classify != nil,
 		Condition:           condition,
 		PersonalRunsUnasked: policy.PersonalRunsUnasked,
-		HeldWhenTainted:     slices.ContainsFunc(policy.Egress, agent.EgressClass.Leaves),
+		HeldWhenTainted:     policy.HeldWhenTainted(),
+		TaintHold:           taintHold,
 		Effect:              string(policy.EffectiveEffect()),
 		Artifact:            policy.Artifact,
 		Reversible:          policy.Reversible,

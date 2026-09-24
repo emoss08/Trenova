@@ -17,9 +17,8 @@ import (
 var update = flag.Bool("update", false, "refresh the request hashes of the checked-in cassettes")
 
 const (
-	casesDir       = "testdata/cases"
-	minCases       = 12
-	heldByTaintGap = "held-by-omits-taint"
+	casesDir = "testdata/cases"
+	minCases = 12
 )
 
 var requiredSources = []string{
@@ -140,15 +139,9 @@ func TestDecideNamesTaintForEveryWriteThatLeaves(t *testing.T) {
 	}
 
 	require.Positive(t, leaving, "no registered write leaves the organization")
-	if len(unnamed) > 0 {
-		t.Skipf("KNOWN GAP %s: every one of the %d writes that leave the organization is "+
-			"held below AutoExecute after outside content, but Decide adds %q to HeldBy only "+
-			"when nothing else already held the call. For these %d the egress ceiling or "+
-			"the tool's max tier holds first, so agent_proposals.held_by does not record "+
-			"that taint held them (the tainted column does):\n  - %s",
-			heldByTaintGap, leaving, agenttoolpolicy.HeldByTainted, len(unnamed),
-			strings.Join(unnamed, "\n  - "))
-	}
+	require.Emptyf(t, unnamed, "every write that leaves the organization names %q among "+
+		"what held it after outside content, whatever else held it first:\n  - %s",
+		agenttoolpolicy.HeldByTainted, strings.Join(unnamed, "\n  - "))
 }
 
 func TestDefinitionForHoldsEveryToolAutomatically(t *testing.T) {

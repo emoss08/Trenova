@@ -12,11 +12,14 @@ import (
 )
 
 const (
-	ReadTool       = "tool"
-	ReadInboundBox = "inbound_desk"
-	ReadMemoryRepo = "memory_repository"
-	ReadRunRepo    = "run_repository"
-	ReadCompletion = "completion"
+	ReadTool         = "tool"
+	ReadInboundBox   = "inbound_desk"
+	ReadMemoryRepo   = "memory_repository"
+	ReadRunRepo      = "run_repository"
+	ReadShipmentRepo = "shipment_repository"
+	ReadCommentRepo  = "shipment_comment_repository"
+	ReadPermissions  = "permissions"
+	ReadCompletion   = "completion"
 )
 
 type ReadRecord struct {

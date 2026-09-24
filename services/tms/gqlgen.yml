@@ -2182,6 +2182,8 @@ models:
         value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceRunRecord
       Web:
         value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceWeb
+      RecordNote:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceRecordNote
   AgentAutonomyAnswer:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyAnswer

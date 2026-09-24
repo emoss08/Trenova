@@ -151,6 +151,10 @@ func (s *Service) Remember(
 	}
 	// A memory written by a run that had read outside content keeps that,
 	// so a later run that reads it back is tainted by it.
+	if req.ProposalID.IsNotNil() {
+		proposalID := req.ProposalID
+		entity.SourceProposalID = &proposalID
+	}
 	if req.Taint.Tainted() {
 		entity.Tainted = true
 		if req.RunID.IsNotNil() {

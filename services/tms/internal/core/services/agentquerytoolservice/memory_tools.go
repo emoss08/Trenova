@@ -25,6 +25,8 @@ type memoryRow struct {
 	RecordedBy string       `json:"recordedBy"`
 	RecordedOn optionalDate `json:"recordedOn"`
 	ExpiresOn  optionalDate `json:"expiresOn"`
+
+	FromOutsideContent bool `json:"fromOutsideContent,omitempty"`
 }
 
 type recallMemoryTool struct {
@@ -176,6 +178,8 @@ func (t *recallMemoryTool) Query(
 			RecordedBy: recordedBy(memory.Source),
 			RecordedOn: recordedDate(memory.CreatedAt),
 			ExpiresOn:  expectedDate(pointerSeconds(memory.ExpiresAt), "never"),
+
+			FromOutsideContent: memory.DrawnFromOutside(),
 		})
 	}
 

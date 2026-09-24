@@ -1,5 +1,5 @@
 {
-  "model": "claude-opus-5",
+  "model": "claude-sonnet-5",
   "passRate": 0,
   "tolerance": 0.1,
   "cases": 0,

@@ -1,6 +1,10 @@
 package agent
 
-import "slices"
+import (
+	"slices"
+
+	"github.com/emoss08/trenova/shared/pulid"
+)
 
 type EgressClass string
 
@@ -130,6 +134,7 @@ const (
 	TaintSourceMemory         = TaintSource("memory")
 	TaintSourceRunRecord      = TaintSource("run_record")
 	TaintSourceWeb            = TaintSource("web")
+	TaintSourceRecordNote     = TaintSource("record_note")
 )
 
 func (s TaintSource) IsValid() bool {
@@ -142,7 +147,8 @@ func (s TaintSource) IsValid() bool {
 		TaintSourceAttachment,
 		TaintSourceMemory,
 		TaintSourceRunRecord,
-		TaintSourceWeb:
+		TaintSourceWeb,
+		TaintSourceRecordNote:
 		return true
 	default:
 		return false
@@ -151,7 +157,10 @@ func (s TaintSource) IsValid() bool {
 
 func (s TaintSource) String() string { return string(s) }
 
-const MaxTaintMarks = 16
+const (
+	MaxTaintMarks  = 16
+	HeldByTaintKey = "tainted"
+)
 
 type TaintMark struct {
 	Source   TaintSource `json:"source"`
@@ -252,12 +261,13 @@ type TaintCarrier interface {
 }
 
 const (
-	TaintEntityInboundMessage = "inbound_message"
-	TaintEntityDocument       = "document"
-	TaintEntityEDIInboundFile = "edi_inbound_file"
-	TaintEntityBankReceipt    = "bank_receipt"
-	TaintEntityAgentMemory    = "agent_memory"
-	TaintEntityAgentRun       = "agent_run"
+	TaintEntityInboundMessage  = "inbound_message"
+	TaintEntityDocument        = "document"
+	TaintEntityEDIInboundFile  = "edi_inbound_file"
+	TaintEntityBankReceipt     = "bank_receipt"
+	TaintEntityAgentMemory     = "agent_memory"
+	TaintEntityAgentRun        = "agent_run"
+	TaintEntityShipmentComment = "shipment_comment"
 )
 
 func (s SubjectType) TaintSource() (TaintSource, string, bool) {
@@ -286,6 +296,18 @@ func SubjectTaint(subjectType SubjectType, subjectID string, at int64) (TaintMar
 		Ref:    &RecordRef{EntityType: entity, ID: subjectID},
 		At:     at,
 	}, true
+}
+
+func RunRecordTaint(runID pulid.ID, at int64) *RunTaint {
+	mark := TaintMark{Source: TaintSourceRunRecord, At: at}
+	if runID.IsNotNil() {
+		mark.Ref = &RecordRef{EntityType: TaintEntityAgentRun, ID: runID.String()}
+	}
+
+	taint := &RunTaint{}
+	taint.Add(mark)
+
+	return taint
 }
 
 func AttachmentTaint(documentID string, at int64) TaintMark {
