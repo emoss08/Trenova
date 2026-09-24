@@ -1,6 +1,7 @@
 package stringutils
 
 import (
+	"iter"
 	"regexp"
 	"strings"
 )
@@ -18,18 +19,8 @@ func MailPreview(body string, maxLength int) string {
 	var b strings.Builder
 	b.Grow(min(len(body), maxLength*4+4))
 
-	for line := range strings.Lines(body) {
-		line = strings.TrimRight(line, "\r\n")
-		if isMailBoundary(line) {
-			break
-		}
-
-		trimmed := strings.TrimSpace(line)
-		if trimmed == "" || strings.HasPrefix(trimmed, ">") {
-			continue
-		}
-
-		for _, word := range strings.Fields(trimmed) {
+	for line := range mailOwnLines(body) {
+		for _, word := range strings.Fields(line) {
 			if b.Len() > 0 {
 				b.WriteByte(' ')
 			}
@@ -42,6 +33,40 @@ func MailPreview(body string, maxLength int) string {
 	}
 
 	return Ellipsize(b.String(), maxLength)
+}
+
+func MailBody(body string) string {
+	var b strings.Builder
+	b.Grow(len(body))
+
+	for line := range mailOwnLines(body) {
+		if b.Len() > 0 {
+			b.WriteByte('\n')
+		}
+		b.WriteString(line)
+	}
+
+	return b.String()
+}
+
+func mailOwnLines(body string) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		for line := range strings.Lines(body) {
+			line = strings.TrimRight(line, "\r\n")
+			if isMailBoundary(line) {
+				return
+			}
+
+			trimmed := strings.TrimSpace(line)
+			if trimmed == "" || strings.HasPrefix(trimmed, ">") {
+				continue
+			}
+
+			if !yield(trimmed) {
+				return
+			}
+		}
+	}
 }
 
 func isMailBoundary(line string) bool {

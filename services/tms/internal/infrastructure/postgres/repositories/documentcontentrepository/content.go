@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -265,15 +266,16 @@ func (r *repository) SearchByResource(
 	items := make([]*document.Document, 0)
 	query := strings.TrimSpace(req.Query)
 	docCols := buncolgen.DocumentColumns
+	contentCols := buncolgen.ContentColumns
 
 	selectQuery := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&items).
-		ColumnExpr(buncolgen.DocumentTable.Alias+".*").
-		Join(`LEFT JOIN document_contents AS dc
-			ON dc.document_id = doc.id
-			AND dc.organization_id = doc.organization_id
-			AND dc.business_unit_id = doc.business_unit_id`).
+		ColumnExpr(buncolgen.DocumentTable.All()).
+		Join("LEFT JOIN "+buncolgen.ContentTable.As(buncolgen.ContentTable.Alias)).
+		JoinOn(contentCols.DocumentID.EqColumn(docCols.ID)).
+		JoinOn(contentCols.OrganizationID.EqColumn(docCols.OrganizationID)).
+		JoinOn(contentCols.BusinessUnitID.EqColumn(docCols.BusinessUnitID)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.DocumentScopeTenant(sq, req.TenantInfo).
 				Where(docCols.IsCurrentVersion.Eq(), true).
@@ -285,25 +287,28 @@ func (r *repository) SearchByResource(
 	case query == "":
 		selectQuery = selectQuery.Order(docCols.CreatedAt.OrderDesc())
 	case dbdialect.FromBun(selectQuery.DB()).Supports(dbdialect.CapFullTextSearch):
-		selectQuery = selectQuery.Where(`
-			doc.search_vector @@ websearch_to_tsquery('english', ?)
-			OR dc.search_vector @@ websearch_to_tsquery('english', ?)`,
-			query,
-			query,
-		).OrderExpr(`
-			GREATEST(
-				ts_rank_cd(doc.search_vector, websearch_to_tsquery('english', ?)),
-				COALESCE(ts_rank_cd(dc.search_vector, websearch_to_tsquery('english', ?)), 0)
-			) DESC`,
-			query,
-			query,
-		)
+		selectQuery = selectQuery.
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Where(docCols.SearchVector.Expr(websearchMatch), query).
+					WhereOr(contentCols.SearchVector.Expr(websearchMatch), query)
+			}).
+			OrderExpr(
+				"GREATEST("+docCols.SearchVector.Expr(websearchRank)+", COALESCE("+
+					contentCols.SearchVector.Expr(websearchRank)+", 0)) DESC",
+				query,
+				query,
+			)
 	default:
-		pattern := "%" + query + "%"
-		selectQuery = selectQuery.Where(
-			"doc.file_name LIKE ? OR doc.original_name LIKE ? OR dc.content_text LIKE ?",
-			pattern, pattern, pattern,
-		).Order(docCols.CreatedAt.OrderDesc())
+		pattern := "%" + stringutils.EscapeLikePattern(query) + "%"
+		selectQuery = selectQuery.
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Where(docCols.FileName.Expr(escapedLike), pattern).
+					WhereOr(docCols.OriginalName.Expr(escapedLike), pattern).
+					WhereOr(contentCols.ContentText.Expr(escapedLike), pattern)
+			}).
+			Order(docCols.CreatedAt.OrderDesc())
 	}
 
 	if req.Limit > 0 {
@@ -316,3 +321,9 @@ func (r *repository) SearchByResource(
 
 	return items, nil
 }
+
+const (
+	websearchMatch = "{} @@ websearch_to_tsquery('english', ?)"
+	websearchRank  = "ts_rank_cd({}, websearch_to_tsquery('english', ?))"
+	escapedLike    = "{} LIKE ? ESCAPE '\\'"
+)

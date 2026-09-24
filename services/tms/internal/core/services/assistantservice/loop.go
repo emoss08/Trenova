@@ -156,6 +156,13 @@ func (s *Service) buildContext(
 		Page:        req.Page,
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
+		Query: serviceports.ContextQuery{
+			Actor:        req.Actor,
+			DefinitionID: definitionID(req.Definition),
+			ThreadID:     req.ThreadID,
+			Input:        req.Input,
+			History:      req.History,
+		}.Request(),
 	})
 	if err != nil {
 		s.logger.Warn("assistant context could not be built", zap.Error(err))
@@ -429,4 +436,12 @@ func pendingProposals(outcomes []serviceports.ProposalOutcome) []agentdefinition
 	}
 
 	return pending
+}
+
+func definitionID(definition *agentdefinition.Definition) pulid.ID {
+	if definition == nil {
+		return pulid.Nil
+	}
+
+	return definition.ID
 }

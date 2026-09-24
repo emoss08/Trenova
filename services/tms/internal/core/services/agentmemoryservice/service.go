@@ -11,10 +11,12 @@
 package agentmemoryservice
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 
@@ -28,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/rankfusion"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -38,6 +41,8 @@ const (
 	// maxValueChars bounds a proposed or corrected value in a correction, so
 	// a long note in one parameter does not become the whole memory.
 	maxValueChars = 80
+
+	recallCandidateFactor = 4
 )
 
 // SubjectLabeler names the record a memory is about, so the prompt can say
@@ -72,7 +77,9 @@ type Params struct {
 	Subjects repositories.AgentMemorySubjectRepository `optional:"true"`
 	// Ranker orders the memories a prompt may carry. Without one they are
 	// ordered by how recently they were recorded and how often they are used.
-	Ranker services.MemoryRanker `optional:"true"`
+	Ranker  services.MemoryRanker         `optional:"true"`
+	Indexer services.RetrievalIndexer     `optional:"true"`
+	Vectors services.MemoryVectorSearcher `optional:"true"`
 }
 
 type Service struct {
@@ -83,6 +90,8 @@ type Service struct {
 	audit    actionLogger
 	subjects SubjectResolver
 	ranker   services.MemoryRanker
+	indexer  services.RetrievalIndexer
+	vectors  services.MemoryVectorSearcher
 }
 
 func New(p Params) services.AgentMemoryService {
@@ -99,6 +108,8 @@ func New(p Params) services.AgentMemoryService {
 		audit:    p.AuditService,
 		subjects: NewSubjectResolver(p.Subjects),
 		ranker:   ranker,
+		indexer:  p.Indexer,
+		vectors:  p.Vectors,
 	}
 }
 
@@ -202,6 +213,7 @@ func (s *Service) Remember(
 	}
 
 	s.log(created, actor, permission.OpCreate, "Agent memory recorded")
+	s.queueForRetrieval(ctx, created)
 
 	return created, nil
 }
@@ -257,6 +269,7 @@ func (s *Service) Update(
 	}
 
 	s.logChange(updated, previous, actor, permission.OpUpdate, "Agent memory changed")
+	s.queueForRetrieval(ctx, updated)
 
 	return updated, nil
 }
@@ -324,6 +337,7 @@ func (s *Service) SetStatus(
 		comment = "Agent memory restored"
 	}
 	s.log(updated, actor, permission.OpUpdate, comment)
+	s.queueForRetrieval(ctx, updated)
 
 	return updated, nil
 }
@@ -384,6 +398,7 @@ func (s *Service) ApproveSuggestion(
 		permission.OpUpdate,
 		"Suggested agent memory approved",
 	)
+	s.queueForRetrieval(ctx, approved)
 
 	return approved, nil
 }
@@ -508,17 +523,141 @@ func (s *Service) Recall(
 	if err != nil {
 		return nil, err
 	}
-
-	var match agent.MemoryMatch
-	if search.Query != "" {
-		match = agent.MemoryMatchWords
+	if search.Query == "" {
+		return recalledAs(found, ""), nil
 	}
-	recalled := make([]services.RecalledMemory, 0, len(found))
-	for _, memory := range found {
+
+	similar, ok := s.similar(ctx, req, search)
+	if !ok {
+		return recalledAs(found, agent.MemoryMatchWords), nil
+	}
+
+	return s.fuseRecall(ctx, search, found, similar)
+}
+
+func recalledAs(memories []*agent.Memory, match agent.MemoryMatch) []services.RecalledMemory {
+	recalled := make([]services.RecalledMemory, 0, len(memories))
+	for _, memory := range memories {
 		recalled = append(recalled, services.RecalledMemory{Memory: memory, Match: match})
 	}
 
-	return recalled, nil
+	return recalled
+}
+
+func (s *Service) similar(
+	ctx context.Context,
+	req services.RecallAgentMemoriesRequest,
+	search repositories.SearchAgentMemoriesRequest,
+) (services.SimilarMemories, bool) {
+	if s.vectors == nil {
+		return services.SimilarMemories{}, false
+	}
+
+	similar, err := s.vectors.SimilarMemories(ctx, services.SimilarMemoriesRequest{
+		TenantInfo:  search.TenantInfo,
+		Text:        search.Query,
+		Limit:       search.Limit * recallCandidateFactor,
+		Attribution: req.Attribution,
+	})
+	if err != nil {
+		s.l.Warn("agent memory: recalling by meaning failed; recalling by words",
+			zap.String("organization", search.TenantInfo.OrgID.String()),
+			zap.Error(err),
+		)
+		return services.SimilarMemories{}, false
+	}
+
+	return similar, similar.Semantics.Used
+}
+
+func (s *Service) fuseRecall(
+	ctx context.Context,
+	search repositories.SearchAgentMemoriesRequest,
+	found []*agent.Memory,
+	similar services.SimilarMemories,
+) ([]services.RecalledMemory, error) {
+	byID := make(map[pulid.ID]*agent.Memory, len(found)+len(similar.Memories))
+	keywordIDs := make([]pulid.ID, 0, len(found))
+	for _, memory := range found {
+		byID[memory.ID] = memory
+		keywordIDs = append(keywordIDs, memory.ID)
+	}
+
+	missing := make([]pulid.ID, 0, len(similar.Memories))
+	for _, hit := range similar.Memories {
+		if _, ok := byID[hit.MemoryID]; !ok && hit.Similarity >= similar.Floor {
+			missing = append(missing, hit.MemoryID)
+		}
+	}
+	if len(missing) > 0 {
+		narrowed := search
+		narrowed.Query = ""
+		narrowed.IDs = missing
+		narrowed.Limit = len(missing)
+		loaded, err := s.repo.Search(ctx, narrowed)
+		if err != nil {
+			return nil, err
+		}
+		for _, memory := range loaded {
+			byID[memory.ID] = memory
+		}
+	}
+
+	vectorIDs := make([]pulid.ID, 0, len(similar.Memories))
+	for _, hit := range similar.Memories {
+		if _, ok := byID[hit.MemoryID]; ok &&
+			(hit.Similarity >= similar.Floor || slices.Contains(keywordIDs, hit.MemoryID)) {
+			vectorIDs = append(vectorIDs, hit.MemoryID)
+		}
+	}
+
+	return FuseRecall(byID, keywordIDs, vectorIDs, search.Limit), nil
+}
+
+func FuseRecall(
+	byID map[pulid.ID]*agent.Memory,
+	keywordIDs, vectorIDs []pulid.ID,
+	limit int,
+) []services.RecalledMemory {
+	scores := rankfusion.Reciprocal(rankfusion.DefaultK, keywordIDs, vectorIDs)
+	order := make([]pulid.ID, 0, len(scores))
+	order = append(order, keywordIDs...)
+	for _, id := range vectorIDs {
+		if !slices.Contains(order, id) {
+			order = append(order, id)
+		}
+	}
+	slices.SortStableFunc(order, func(a, b pulid.ID) int {
+		return cmp.Compare(scores[b], scores[a])
+	})
+
+	recalled := make([]services.RecalledMemory, 0, min(len(order), limit))
+	for _, id := range order {
+		memory, ok := byID[id]
+		if !ok {
+			continue
+		}
+		recalled = append(recalled, services.RecalledMemory{
+			Memory: memory,
+			Match:  recallMatch(slices.Contains(keywordIDs, id), slices.Contains(vectorIDs, id)),
+		})
+		if len(recalled) == limit {
+			break
+		}
+	}
+
+	return recalled
+}
+
+func recallMatch(words, meaning bool) agent.MemoryMatch {
+	switch {
+	case words && meaning:
+		return agent.MemoryMatchBoth
+	case meaning:
+		return agent.MemoryMatchMeaning
+	default:
+		return agent.MemoryMatchWords
+	}
 }
 
 func (s *Service) ForContext(
@@ -556,6 +695,7 @@ func (s *Service) ForContext(
 		TenantInfo: req.TenantInfo,
 		Now:        now,
 		Memories:   memories,
+		Query:      req.Query,
 	})
 	if err != nil {
 		s.l.Warn("agent memory: ranking failed; ordering by recency and use",
@@ -650,7 +790,13 @@ func (s *Service) RecordCorrection(
 		return nil, me
 	}
 
-	return s.repo.Create(ctx, entity)
+	created, err := s.repo.Create(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	s.queueForRetrieval(ctx, created)
+
+	return created, nil
 }
 
 // label resolves the subject's name so a prompt line and a list row can say

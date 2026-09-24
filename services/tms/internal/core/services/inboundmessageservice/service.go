@@ -89,6 +89,7 @@ type Params struct {
 	// inbox is still right on the next load without either.
 	Realtime      services.RealtimeService     `optional:"true"`
 	Notifications *notificationservice.Service `optional:"true"`
+	Indexer       services.RetrievalIndexer    `optional:"true"`
 }
 
 // reviewNotifier is the slice of the notification service the inbox uses.
@@ -116,6 +117,7 @@ type Service struct {
 	audit       services.AuditService
 	realtime    services.RealtimeService
 	notifier    reviewNotifier
+	indexer     services.RetrievalIndexer
 }
 
 func New(p Params) *Service {
@@ -141,6 +143,7 @@ func New(p Params) *Service {
 		audit:       p.Audit,
 		realtime:    p.Realtime,
 		notifier:    notifier,
+		indexer:     p.Indexer,
 	}
 }
 

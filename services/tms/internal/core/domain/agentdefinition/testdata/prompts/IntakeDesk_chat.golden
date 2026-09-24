@@ -59,9 +59,11 @@ Loaded now:
 
 Callable after find_tools:
 - list_inbound_messages — List the inbox, newest first: mail that arrived on a monitored address, with sender, subject, what it was read as and whether it waits on a person.
+- search_inbound_messages — Search the inbox by what the mail says, best match first: the subject, the sender and the sender's own words, without the quoted thread.
 - get_shipment — Retrieve one shipment by its id, including its stops, moves, and assignments.
 - search_shipments — List shipments, optionally narrowed by free text such as a pro number, BOL, customer name, or city, and by status.
 - get_shipment_tracking — Where a shipment is and whether it will be on time: each stop's window, actual arrival and lateness, the tractor's last position, and an arrival estimate.
+- search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - get_shipment_draft — Read the shipment draft extracted from an uploaded document: the fields and stops it found, each with a confidence, and what it could not read.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - link_inbound_message — Say which shipment, customer or carrier a message that arrived on a monitored address is about, when the automatic match missed it or got it wrong.

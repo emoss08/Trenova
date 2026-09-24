@@ -213,11 +213,18 @@ func (a *Activities) runRequest(
 	tenant := payload.tenantInfo()
 	actor := agentActor(tenant)
 
+	input := backgroundInput(payload, subject)
 	runtimeContext, err := a.contexts.Build(ctx, &serviceports.RuntimeContextRequest{
 		Definition: definition,
 		Actor:      actor,
 		Trigger:    payload.Trigger,
 		Subject:    subject,
+		Query: serviceports.ContextQuery{
+			Actor:        actor,
+			DefinitionID: definition.ID,
+			RunID:        payload.RunID,
+			Input:        input,
+		}.Request(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("build runtime context: %w", err)
@@ -227,7 +234,7 @@ func (a *Activities) runRequest(
 		Definition: definition,
 		Actor:      actor,
 		Context:    runtimeContext,
-		Input:      backgroundInput(payload, subject),
+		Input:      input,
 		RunID:      payload.RunID,
 		Unattended: true,
 		// The ledger is what makes a retried write safe. Without it a second

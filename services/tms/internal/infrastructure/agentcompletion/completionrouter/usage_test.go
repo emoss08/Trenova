@@ -207,6 +207,13 @@ func (f *fakeUsage) CostByDefinition(
 	return &repositories.AIUsageCost{}, nil
 }
 
+func (f *fakeUsage) SurfaceCost(
+	context.Context,
+	repositories.AIUsageSurfaceCostRequest,
+) (*repositories.AIUsageCost, error) {
+	return &repositories.AIUsageCost{CostUSD: decimal.Zero}, nil
+}
+
 func (f *fakeUsage) EvaluationCost(
 	context.Context,
 	repositories.AIUsageEvaluationCostRequest,

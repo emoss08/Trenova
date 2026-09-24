@@ -1,0 +1,99 @@
+# Synthetic inbound mail and the searches search_inbound_messages should
+# answer with it. Quoted history and signatures are stripped before either
+# leg reads a body. Metrics are recall@5, MRR and nDCG@10 per retrieval leg;
+# the floors live in inboxretrieval.floors.json and are set with -update.
+source: InboundMessage
+corpus:
+  - key: late-pickup-complaint
+    fromName: Dana Whitfield
+    from: ops@globexfoods.com
+    subject: Driver never showed for pickup
+    body: |-
+      Your driver was supposed to be at Plant 2 at 7 AM for load 5530 and never arrived.
+      Our dock sat empty all morning. This is the third time this month.
+
+      On Mon, Sep 21, 2026 at 8:02 AM Dispatch <dispatch@trenova.test> wrote:
+      > Confirmed, your lumber order ships in the morning.
+  - key: rate-increase
+    fromName: Mike Chen
+    from: pricing@fastfreightbrokers.com
+    subject: Rate update for Q4
+    body: |-
+      Effective October 1 our contract rates on the Dallas to Atlanta lane increase 6 percent because of diesel costs.
+      --
+      Mike Chen
+      Fast Freight Brokers
+  - key: reschedule-delivery
+    from: receiving@freshmart.com
+    subject: Appointment change for PO 88213
+    body: We need to move tomorrow's 10 AM delivery appointment for PO 88213 to Thursday at 2 PM. Please confirm.
+  - key: damaged-shipment
+    from: claims@acmeindustrial.com
+    subject: Damage on load 5520
+    body: Two pallets arrived crushed on load 5520. Photos attached. We will be filing a claim for the product.
+  - key: detention-dispute
+    from: ap@globexfoods.com
+    subject: Detention charges on invoice 7781
+    body: We dispute the detention on invoice 7781. Our records show the truck was unloaded within the free time.
+  - key: pod-request
+    from: billing@freshmart.com
+    subject: Need POD for shipment 5521
+    body: Please send the signed proof of delivery for shipment 5521 so we can release payment.
+  - key: tender-offer
+    from: loads@acmeindustrial.com
+    subject: Load tender Fort Worth to Memphis
+    body: Offering a Saturday pickup in Fort Worth delivering Monday in Memphis. Team drivers preferred. Rate $2,900 all in.
+  - key: status-request
+    from: tracking@globexfoods.com
+    subject: Where is load 5530?
+    body: Can you give us an ETA on load 5530? The receiver is asking.
+  - key: invoice-question
+    from: ap@acmeindustrial.com
+    subject: Invoice 7790 question
+    body: Invoice 7790 shows two stops but we only booked one. Please correct and resend.
+  - key: hazmat-docs
+    from: safety@chemco.com
+    subject: Updated SDS for sodium hypochlorite
+    body: Attached is the updated safety data sheet for our sodium hypochlorite shipments. Please make sure drivers carry it.
+  - key: newsletter
+    from: news@truckingweekly.com
+    subject: "Trucking Weekly: diesel prices fall"
+    body: This week diesel prices fell for the third straight week.
+  - key: thanks
+    fromName: Dana Whitfield
+    from: dana@globexfoods.com
+    subject: Thanks for the quick turnaround
+    body: Appreciate the team getting load 5541 delivered a day early.
+  - key: insurance-request
+    from: compliance@fastfreightbrokers.com
+    subject: Certificate of insurance needed
+    body: Please send a current certificate of insurance naming Fast Freight Brokers as certificate holder.
+cases:
+  - query: email where the shipper complained the driver missed pickup
+    relevant: [late-pickup-complaint]
+  - query: broker rate increase
+    relevant: [rate-increase]
+  - query: reschedule the delivery appointment
+    relevant: [reschedule-delivery]
+  - query: damaged pallets on load 5520
+    relevant: [damaged-shipment]
+  - query: detention dispute on invoice 7781
+    relevant: [detention-dispute]
+  - query: customer asking for proof of delivery
+    relevant: [pod-request]
+  - query: Fort Worth to Memphis tender
+    relevant: [tender-offer]
+  - query: ETA for load 5530
+    relevant: [status-request, late-pickup-complaint]
+  - query: invoice has the wrong number of stops
+    relevant: [invoice-question]
+  - query: safety data sheet from Chemco
+    relevant: [hazmat-docs]
+  - query: they want our insurance certificate
+    relevant: [insurance-request]
+  - query: a customer is upset nobody came to collect their freight
+    relevant: [late-pickup-complaint]
+  - query: who says we charged them for waiting when we should not have
+    relevant: [detention-dispute]
+  - query: messages from Dana Whitfield
+    relevant: [late-pickup-complaint, thanks]

@@ -22,9 +22,16 @@ type Service struct {
 	client client.Client
 }
 
-var _ serviceports.WorkflowStarter = (*Service)(nil)
+var (
+	_ serviceports.WorkflowStarter       = (*Service)(nil)
+	_ serviceports.WorkflowSignalStarter = (*Service)(nil)
+)
 
 func New(p Params) serviceports.WorkflowStarter {
+	return &Service{client: p.TemporalClient}
+}
+
+func NewSignalStarter(p Params) serviceports.WorkflowSignalStarter {
 	return &Service{client: p.TemporalClient}
 }
 
@@ -60,6 +67,31 @@ func (s *Service) SignalWorkflow(
 	}
 
 	return unreachable(s.client.SignalWorkflow(ctx, workflowID, runID, signalName, arg))
+}
+
+func (s *Service) SignalWithStartWorkflow(
+	ctx context.Context,
+	workflowID, signalName string,
+	signalArg any,
+	options client.StartWorkflowOptions,
+	workflow any,
+	args ...any,
+) (client.WorkflowRun, error) {
+	if s.client == nil {
+		return nil, serviceports.ErrWorkflowStarterDisabled
+	}
+
+	run, err := s.client.SignalWithStartWorkflow(
+		ctx,
+		workflowID,
+		signalName,
+		signalArg,
+		options,
+		workflow,
+		args...,
+	)
+
+	return run, unreachable(err)
 }
 
 func (s *Service) Enabled() bool {

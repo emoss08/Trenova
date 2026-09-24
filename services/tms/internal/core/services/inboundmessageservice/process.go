@@ -117,6 +117,7 @@ func (s *Service) ProcessMessage(
 	s.project(ctx, updated)
 	s.publishMessage(ctx, updated, inboxRealtimeAction)
 	s.notifyNeedsReview(ctx, updated)
+	s.queueForRetrieval(ctx, updated)
 	s.announce(ctx, updated)
 
 	return &ProcessResult{
@@ -165,6 +166,7 @@ func (s *Service) MarkFailed(
 	s.project(ctx, updated)
 	s.publishMessage(ctx, updated, inboxRealtimeAction)
 	s.notifyNeedsReview(ctx, updated)
+	s.queueForRetrieval(ctx, updated)
 
 	return nil
 }

@@ -116,3 +116,29 @@ cases:
     expect: [list_weather_alerts]
   - request: which service failures happened last week
     expect: [list_service_failures]
+  - request: find the rate confirmation that mentions a lumper fee
+    expect: [search_documents]
+  - request: which document says the consignee requires an appointment
+    expect: [search_documents]
+  - request: search our documents for bill of lading 88213
+    expect: [search_documents]
+  - request: find the contract clause about the fuel surcharge
+    expect: [search_documents]
+  - request: look through the attached files for the delivery receipt signed by Jones
+    expect: [search_documents]
+  - request: is there a proof of delivery that notes damaged pallets
+    expect: [search_documents]
+  - request: which permit document lists the oversize route through Ohio
+    expect: [search_documents]
+  - request: find the email where the shipper complained about a late pickup
+    expect: [search_inbound_messages]
+  - request: search the inbox for messages about load 4471
+    expect: [search_inbound_messages, list_inbound_messages]
+  - request: did a broker email us about a rate increase
+    expect: [search_inbound_messages]
+  - request: look for the message asking to reschedule the delivery appointment
+    expect: [search_inbound_messages]
+  - request: which emails mention a damaged shipment
+    expect: [search_inbound_messages]
+  - request: find mail from Globex about detention charges
+    expect: [search_inbound_messages]

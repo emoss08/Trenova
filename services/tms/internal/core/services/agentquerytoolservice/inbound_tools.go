@@ -2,6 +2,7 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -218,11 +219,7 @@ func (t *listInboundMessagesTool) Description() string {
 }
 
 func (t *listInboundMessagesTool) ParamSchema() map[string]any {
-	statuses := make([]string, 0, len(inboundmessage.AllStatuses())+1)
-	statuses = append(statuses, inboundWaitingStatus)
-	for _, status := range inboundmessage.AllStatuses() {
-		statuses = append(statuses, string(status))
-	}
+	statuses := inboundStatusNames()
 	kinds := make([]string, 0, len(inboundmessage.AllClassifications()))
 	for _, kind := range inboundmessage.AllClassifications() {
 		kinds = append(kinds, string(kind))
@@ -271,30 +268,54 @@ func (t *listInboundMessagesTool) Policy() serviceports.ToolPolicy {
 	})
 }
 
-func inboundStatusFilter(value string) []inboundmessage.Status {
+func inboundStatusNames() []string {
+	names := make([]string, 0, len(inboundmessage.AllStatuses())+1)
+	names = append(names, inboundWaitingStatus)
+	for _, status := range inboundmessage.AllStatuses() {
+		names = append(names, string(status))
+	}
+
+	return names
+}
+
+func inboundStatusFilter(value string) ([]inboundmessage.Status, error) {
+	if value == "" {
+		return nil, nil
+	}
 	if strings.EqualFold(value, inboundWaitingStatus) {
 		return []inboundmessage.Status{
 			inboundmessage.StatusInReview,
 			inboundmessage.StatusQuarantined,
-		}
+		}, nil
 	}
 	for _, status := range inboundmessage.AllStatuses() {
 		if strings.EqualFold(string(status), value) {
-			return []inboundmessage.Status{status}
+			return []inboundmessage.Status{status}, nil
 		}
 	}
 
-	return nil
+	return nil, fmt.Errorf(
+		"status %q is not one the inbox has; use one of %s, or leave it out",
+		value, strings.Join(inboundStatusNames(), ", "),
+	)
 }
 
-func inboundClassificationFilter(value string) inboundmessage.Classification {
+func inboundClassificationFilter(value string) (inboundmessage.Classification, error) {
+	if value == "" {
+		return "", nil
+	}
+	names := make([]string, 0, len(inboundmessage.AllClassifications()))
 	for _, kind := range inboundmessage.AllClassifications() {
 		if strings.EqualFold(string(kind), value) {
-			return kind
+			return kind, nil
 		}
+		names = append(names, string(kind))
 	}
 
-	return ""
+	return "", fmt.Errorf(
+		"classification %q is not a kind the inbox reads mail as; use one of %s, or leave it out",
+		value, strings.Join(names, ", "),
+	)
 }
 
 func (t *listInboundMessagesTool) Query(
@@ -309,8 +330,17 @@ func (t *listInboundMessagesTool) Query(
 		max(optionalInt(params.Params, "limit", inboundListDefaultLimit), 1),
 		inboundListLimit,
 	)
-	status := optionalString(params.Params, "status")
-	classification := inboundClassificationFilter(optionalString(params.Params, "classification"))
+	status := strings.TrimSpace(optionalString(params.Params, "status"))
+	statuses, err := inboundStatusFilter(status)
+	if err != nil {
+		return nil, err
+	}
+	classification, err := inboundClassificationFilter(
+		strings.TrimSpace(optionalString(params.Params, "classification")),
+	)
+	if err != nil {
+		return nil, err
+	}
 	query := optionalString(params.Params, "query")
 
 	criteria := filtercatalog.NewCriteria("inbound messages").At(clockFor(params))
@@ -318,9 +348,9 @@ func (t *listInboundMessagesTool) Query(
 	criteria.Field("kind", string(classification))
 	criteria.Field("search", query)
 
-	cursor, err := pagination.NewCursorInfo(limit, "")
-	if err != nil {
-		return nil, err
+	cursor, cursorErr := pagination.NewCursorInfo(limit, "")
+	if cursorErr != nil {
+		return nil, cursorErr
 	}
 
 	tenant := tenantOf(params)
@@ -332,7 +362,7 @@ func (t *listInboundMessagesTool) Query(
 			Query:      query,
 		},
 		Cursor:         cursor,
-		Statuses:       inboundStatusFilter(status),
+		Statuses:       statuses,
 		Classification: classification,
 	}
 	if mailbox := optionalString(params.Params, "mailboxId"); mailbox != "" {
