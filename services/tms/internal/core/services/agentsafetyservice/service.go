@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentaccessservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -56,6 +57,8 @@ type Service struct {
 	entries     []policyEntry
 	byName      map[string]int
 	resources   []string
+	toolRules   *memtable.Table[toolRuleRow]
+	agentTools  *memtable.Table[agentToolRow]
 }
 
 //nolint:gocritic // dependency injection
@@ -195,6 +198,8 @@ func (s *Service) Assess(
 		tainted := agenttoolpolicy.Assess(ctx, &input)
 
 		out = append(out, services.AgentToolSafety{
+			AgentID:    req.Subject.Agent.ID,
+			AgentName:  req.Subject.Agent.Name,
 			PolicyName: policy.Name,
 			Clean:      clean,
 			Tainted:    tainted,

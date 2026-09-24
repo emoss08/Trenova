@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, AI safety, tool rules, agent autonomy]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, AI safety, tool rules, agent autonomy, AI quality, agent evaluation, golden set, eval cases, agent regression]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -10,14 +10,14 @@ related:
 
 ## What it's for
 AI control is the one place for everything AI in the organization. A rail down the left side
-holds seven sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**,
-**Safety** and **Activity**. Providers say where AI work goes (the model endpoints Trenova calls
-and which AI tasks each one handles), agents say what AI may do (their instructions, tools,
-autonomy and trigger), extensions add abilities that work only for agents, such as searching the
-web, using the organization's own account with the vendor, memory holds the standing instructions
-and facts agents read, safety shows what each tool and agent can do without a person, and
-activity shows what agents did: their runs, the changes they proposed,
-multi-step plans, replays and exceptions.
+holds eight sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**,
+**Safety**, **Quality** and **Activity**. Providers say where AI work goes (the model endpoints
+Trenova calls and which AI tasks each one handles), agents say what AI may do (their
+instructions, tools, autonomy and trigger), extensions add abilities that work only for agents,
+such as searching the web, using the organization's own account with the vendor, memory holds the
+standing instructions and facts agents read, safety shows what each tool and agent can do without
+a person, quality says how well each agent does its work, and activity shows what agents did:
+their runs, the changes they proposed, multi-step plans, replays and exceptions.
 
 **Overview** shows whether AI can work at all (a banner warns when no provider is connected or a
 task has no provider), a strip of figures for providers and agents that are on, proposals
@@ -126,29 +126,64 @@ Keywords: kill switch, stop AI, shadow mode, earned autonomy
 
 ### See what agents can do without a person
 Keywords: AI safety, autonomy, what can the AI do on its own, auto execute, approval, tool policy, egress, prompt injection, outside text, sensitive tools, audit agents
-1. Open [AI control](/admin/agent-control) and select **Safety** in the rail.
+1. Open [AI control](/admin/agent-control) and select **Safety** in the rail. Safety has two
+   tables under it in the rail, **Tool rules** and **By agent**.
 2. Read the figures at the top: **Tools that run without a person** (tools that change records
    and, on at least one agent, can run without anyone approving), **Tools that send outside the
    organization**, and **Open agents with sensitive tools** (agents everyone can use that hold
    tools reaching restricted data or leaving the organization).
-3. In **Tool rules**, tools are listed a page at a time with **Who sees it**, its **Max tier**,
-   what it **Needs** of the person using it, and whether it **Reads outside content**. Type in
-   **Search tools** to find a tool by name, and narrow the list with **All classes**,
-   **All resources**, **All kinds** and **Runs without a person**. Move between pages and choose
-   **Rows per page** under the table.
-4. Open a row with the arrow at its start to read the **Rationale** for its rule,
-   **How far it may go** and any **Record condition**. A tool marked **Depends on the call** goes
-   further for some calls than others; its row says why.
-5. In **By agent**, select **Add an agent** and choose one; add more to compare them side by
-   side. Nothing is read until you add an agent. Each agent shows **Who can use it**, its
-   **Ceiling**, and the tools it holds a page at a time with what happens
+3. Select **Tool rules**. Every tool is listed with **Who sees it**, its **Max tier**, what it
+   **Needs** of the person using it, whether it **Reads outside content**, and whether it
+   **Runs without a person** on at least one agent. Use the search box to find a tool by name, or
+   select **Filter** to narrow by **Who sees it**, **Max tier**, **Needs**, **Kind**,
+   **Reads outside content** or **Runs without a person**, and **Sort** to order by any of them.
+   **Display** shows hidden columns such as **Name** and **Kind** and changes the row density.
+4. Select a row to open its rule: the **Rationale**, **How far it may go** and any
+   **Record condition**. A tool marked **Depends on the call** goes further for some calls than
+   others; its rule says why.
+5. Select **By agent**, then **Add an agent** and choose one; add up to ten to compare them in one
+   table. Nothing is read until you add an agent. Each agent shows **Who can use it** and its
+   **Ceiling**, and the table lists every tool the agents hold with what happens
    **Before outside text** and **After outside text**: **Runs on its own**,
-   **Depends on the call**, **Needs approval**, **Proposes only** or **Simulated**. Select the
-   cross beside an agent's name to take it out of the comparison.
+   **Depends on the call**, **Needs approval**, **Proposes only** or **Simulated**. Select
+   **Filter** to narrow to one **Agent**, an answer, or a **Held by** reason. Select the cross
+   beside an agent's name to take it out of the comparison.
 6. The **Held by** chips say which limit stops a tool going further, such as the agent's
    ceiling, where the work goes, or that the run has read outside text. A tool whose tier was
    earned shows **Tier earned**, and one still earning shows how many clean approvals it needs
-   for the next tier.
+   for the next tier. Select a row to read both answers beside the tool's rule.
+
+### Check how well an agent is doing
+Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden set, evaluation cases, nightly sweep, eval budget, agent got worse
+1. Open [AI control](/admin/agent-control) and select **Quality** in the rail. Quality lists its
+   tables under it in the rail: **Agents**, **Suite runs**, **Worst-rated answers**,
+   **Golden set** and **Settings**.
+2. Read the figures at the top: **Satisfaction** (the share of rated answers that were thumbs
+   up), **Ratings**, **Quality score** (how the agents score against their golden sets),
+   **Regressions**, and **Eval spend this month** against the monthly budget.
+3. In **Agents**, each agent is listed with its satisfaction against the window before, a line of
+   its recent suite scores, and how its **Last run** went: **Completed**, **Skipped** (nothing
+   about the agent or its cases changed), **Budget stopped** or **Failed**. An agent whose score
+   fell shows **Regressed**. Select **Filter** to narrow by **Last run** or **Regressed**, and
+   **Sort** to order by **Satisfaction** or **Quality score**.
+4. Select an agent's row to open it. **Quality over time** shows its scores. To score it now
+   instead of waiting for the nightly sweep, select **Run suite now**. Select **Its suite runs**
+   or **Its worst-rated answers** to open those tables narrowed to the agent; **Show every agent**
+   widens them again.
+5. In **Suite runs**, each run shows its **Status**, **Quality score**, **Cases** and
+   **What changed** about the agent since the run before, such as its instructions, tools or
+   model. Select a run to read it, then **See the cases** to list what each case scored; select a
+   case to read the reply and the judge's note. **Back to suite runs** returns to the runs.
+6. **Worst-rated answers** lists the answers people rated down in the last 30 days, most disliked
+   first. Select one to read the question, the answer and **Why**. Select **Open the
+   conversation** to read one you were part of.
+7. Keep the cases the agents are scored against in **Golden set**: **Activate** a candidate
+   captured from a decided proposal, **Add case** to write one by hand, or **Quarantine** a case
+   that is no longer fair.
+8. In **Settings**, turn **Run the nightly sweep** on or off, choose the **Hour it starts**, set
+   **Most cases per agent**, the **Nightly budget (USD)** and **Monthly budget (USD)**, the
+   **Regression threshold (points)**, and whether to **Have a judge read a sample**. Then select
+   **Save settings**.
 
 ### Record something every agent should know
 Keywords: agent memory, standing instruction, fact, correction, retire memory
@@ -172,7 +207,10 @@ one agent is kept for that agent alone once approved.
 Opening the page needs read access to AI control. Each section in the rail appears only for
 people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions,
 agent memory); a section someone cannot open is left out. **Safety** appears for people who may
-read agents. The organization-wide switches need
+read agents, and **Quality** for people who may read the evaluation suite. **Worst-rated answers**
+and satisfaction need read access to agent feedback, **Run suite now** needs create access to the
+evaluation suite, and changing **Settings** needs update access to both the evaluation suite and
+AI control, because the budgets are spend. The organization-wide switches need
 update access to AI control, deciding proposals needs update access to agent proposals, and
 **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read
 access to agent extensions, and turning one on, changing its settings or testing it needs update
@@ -201,6 +239,17 @@ access to an agent keeps their conversations with it, read-only. Setting who can
 needs update access to both agents and roles; someone without update access to roles can still
 save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page
 on [Roles](/admin/roles), under **Agents**.
+
+Every night, at the hour chosen in **Settings** (in the organization's timezone unless another
+is chosen there), each agent with active cases is replayed against a sample of its golden set
+with every write simulated. The sample always includes the cases the agent failed most recently
+and is otherwise spread across where the cases came from; it is the same sample for the same run.
+An agent is skipped when nothing about it (its instructions, tools, model or provider) or its
+cases changed since its last run, unless that run is older than the rerun limit. A run stops
+when the nightly or monthly budget is spent, and says so. When an agent's score falls below the
+median of its recent runs by more than the threshold, the run is marked **Regressed**, a
+Watchtower item is raised (critical when a case failed a hard check), and the people who can
+update AI control are told once, with what changed.
 
 Removing a provider stops any task routed only to it until another provider is assigned.
 Removing an agent keeps its existing conversations but they cannot be continued, and its schedule

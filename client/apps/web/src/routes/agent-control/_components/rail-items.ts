@@ -1,6 +1,6 @@
-import type { AIControlTab } from "../ai-control-tabs";
+import type { AIControlTab, RailView } from "../ai-control-tabs";
 
-export type ActivityView = "runs" | "proposals" | "plans" | "evaluations" | "exceptions";
+export type { ActivityView, QualityView, RailView, SafetyView } from "../ai-control-tabs";
 
 export type RailItem = {
   tab: AIControlTab;
@@ -9,7 +9,7 @@ export type RailItem = {
   /** The status calls for attention: something is waiting on a person. */
   attention: boolean;
   /** Views under the item, shown when it is the active one. */
-  children: { view: ActivityView; label: string }[];
+  children: { view: RailView; label: string }[];
 };
 
 export type RailCounts = {
@@ -22,6 +22,8 @@ export type RailCounts = {
   memoriesActive: number;
   extensionsOn: number;
   extensionsTotal: number;
+  /** Agents whose latest scored suite run regressed. */
+  qualityRegressions: number;
 };
 
 export type RailPermissions = {
@@ -34,6 +36,10 @@ export type RailPermissions = {
   memory: boolean;
   /** Reading what agents may do on their own is reading agents. */
   safety: boolean;
+  /** How well agents are doing is read under the golden set's right. */
+  quality: boolean;
+  /** The answers people rated down are read under the right to read agent feedback. */
+  ratings: boolean;
 };
 
 type Translate = (text: string, ...args: (string | number)[]) => string;
@@ -100,7 +106,36 @@ export function buildRailItems(
   }
 
   if (permissions.safety) {
-    items.push({ tab: "safety", status: "", attention: false, children: [] });
+    items.push({
+      tab: "safety",
+      status: "",
+      attention: false,
+      children: [
+        { view: "rules", label: t("Tool rules") },
+        { view: "agents", label: t("By agent") },
+      ],
+    });
+  }
+
+  if (permissions.quality) {
+    const regressed = counts?.qualityRegressions ?? 0;
+    items.push({
+      tab: "quality",
+      status:
+        regressed > 0
+          ? t("{0, plural, one {# agent regressed} other {# agents regressed}}", regressed)
+          : "",
+      attention: regressed > 0,
+      children: [
+        { view: "agents", label: t("Agents") },
+        { view: "runs", label: t("Suite runs") },
+        ...(permissions.ratings
+          ? [{ view: "ratings" as const, label: t("Worst-rated answers") }]
+          : []),
+        { view: "golden", label: t("Golden set") },
+        { view: "settings", label: t("Settings") },
+      ],
+    });
   }
 
   if (permissions.runs) {
@@ -128,4 +163,21 @@ export function buildRailItems(
   }
 
   return items;
+}
+
+/**
+ * The view to show under the active row: the one asked for when the row
+ * offers it, the row's first otherwise, and none for a row without views.
+ */
+export function resolveRailView(
+  item: RailItem | undefined,
+  requested: RailView | null,
+): RailView | null {
+  if (!item || item.children.length === 0) {
+    return null;
+  }
+
+  return item.children.some((child) => child.view === requested)
+    ? requested
+    : item.children[0].view;
 }

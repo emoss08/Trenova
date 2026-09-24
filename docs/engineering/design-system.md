@@ -643,44 +643,63 @@ nobody can escape. Everything else still answers an action, and
 
 **The desk at work is on the working line and nowhere else.** The one other
 loop is `DeskThinking` in `components/assistant/voice/desk-thinking.tsx`: a
-small desk scene at the height of a line of text (`h-4`, 16px), beside the
-words of the working line under a reply in progress, in the Desk and in the
-popover alike. It is a person in a chair at a desk with a monitor on it and a
-lamp, drawn on a 20 by 16 grid in solid shapes — never hairlines, which turn
+desk lamp at the height of a line of text (`h-4 w-5`), beside the words of the
+working line under a reply in progress, in the Desk and in the popover alike.
+It is drawn in solid shapes on a 28 by 22.4 grid — never hairlines, which turn
 to mush at 16px. It is the one illustration in the product, so it is the one
 place with a palette of its own, and the ink-only rule does not govern it; the
 token-only rule does:
 
 | Part | Colour |
 |---|---|
-| the person, the screen, the screen's glow | `--desk-accent`: the agent's accent, the brand where none is set |
-| the chair | `--desk-chair`: the accent sunk into the furniture's ink |
-| the desk, its pedestal | `--desk-wood`, `--desk-wood-shade` |
-| the monitor's frame, the keyboard, the lamp's arm | `--desk-frame` |
-| the lamp's shade and its light | `--desk-lamp`, `--desk-lamp-light` |
-| what is on the screen | `--desk-screen-ink`: near-white in light, near-black in dark, because a dark theme's accent is the light end of its ramp |
+| the lamp and the desk | `--desk-lamp`: the ink |
+| the beam | `--desk-accent`: the agent's accent, the brand where none is set |
+| the bulb, the pool of light, what is lit on the desk | `--desk-light`: the accent lifted toward white by `--desk-light-lift` |
+| an unlit bulb | `--desk-bulb-off` |
+| the light a turn closes on when a proposed write waits on a person | `--desk-await`: the warning tone |
+| the bulb of a failed turn | `--desk-failed`: the danger tone |
 
-`ui-desk-mark` reads the accent on the mark itself, so the scene takes the
-colour of whichever agent's turn it sits in. It moves the way a sprite does, a
-few small frames swapped on a beat rather than anything travelling across the
-line, and every motion is transform or opacity. The screen tells the story,
-with one pose per phase of a turn, chosen by `thinkingPose` from the same state
-the working line's words are read from, so the drawing and the sentence never
-disagree:
+`ui-desk-mark` reads the accent on the mark itself, so the lamp takes the
+colour of whichever agent's turn it sits in. The lamp never moves; its head
+turns about the hinge, its light changes, and a few small things appear on the
+desk under it. Every motion is transform or opacity, and every loop starts and
+ends at rest, so a change of moment never has to undo a pose. `thinkingPose`
+chooses the pose from the same state the working line's words are read from,
+so the drawing and the sentence never disagree:
 
 | Pose | When | What moves |
 |---|---|---|
-| (arrival) | the mark appears | the chair rolls out, the person sits, and it rolls back in to the desk, once (`animate-desk-sit`, `animate-desk-sit-figure`) |
-| `arrive` | the question is being checked, the model is thinking, a reply is starting over | three dots on the screen, one frame at a time (`animate-desk-think-*`) |
-| `busy` | a tool is running | the hands bob on the keys and the screen scrolls a line a frame (`animate-desk-type`, `animate-desk-scroll`) |
-| `write` | the answer is arriving | lines are written onto the screen one after another while its light swells and flickers softly (`animate-desk-write-*`, `animate-desk-glow`) |
-| `settle` | the turn is over, however it ended | the chair eases back from the desk while the scene fades (`animate-desk-settle`, `animate-desk-fade`), then the mark is gone |
+| `start` | the question is being checked | the bulb flickers on and the light comes up, once (`animate-desk-light-on`) |
+| `think` | the model is deciding | the light swells and eases (`animate-desk-breathe-*`) |
+| `write` | the answer is arriving | lines light up on the desk one after another (`animate-desk-dash-*`) |
+| `retry` | a reply is starting over | the light cuts out and the head shakes, then it comes back on (`animate-desk-light-retry`, `animate-desk-shake`) |
+| a tool pose | a tool is running | one motion per kind of tool, below |
+| `done` | the turn finished | the head dips and the light goes out, once, while the lamp fades (`animate-desk-nod`, `animate-desk-light-off`, `animate-desk-fade`) |
+| `await` | the turn finished with a proposed write waiting on a person | the light is amber while the lamp fades |
+| `failed` | the turn errored | the light flickers out, the head droops and the bulb goes red, once, while the lamp fades (`animate-desk-droop`, `animate-desk-light-fail`, `animate-desk-fault`) |
+
+The tool poses are read from the tool's effect, so a new tool is drawn the
+moment the server classifies it and nothing lists tool names; the web is the
+one exception, because it is a lookup that leaves the product. When several
+calls run at once the lamp draws the latest, the one the words name.
+
+| Effect | What moves |
+|---|---|
+| `lookup` | the head sweeps along the desk and holds at three stops (`animate-desk-scan`) |
+| `discover` | the head sways while the beam widens and narrows (`animate-desk-hunt`, `animate-desk-widen`) |
+| `navigate` | the light slides off the desk and a new pool arrives from the other side (`animate-desk-travel`) |
+| `change` | the head stamps twice and a tick appears in the light (`animate-desk-stamp`, `animate-desk-tick`) |
+| `present` | a card rises in the light (`animate-desk-card`) |
+| `ask` | the lamp turns to face the reader and blinks twice (`animate-desk-turn`, `animate-desk-blink`) |
+| `delegate` | a second, smaller lamp arrives and the light passes to it (`animate-desk-helper`, `animate-desk-handoff-*`) |
+| web search and read | the head turns up and out and signal waves leave it (`animate-desk-lookout`, `animate-desk-wave-*`) |
 
 It is announced as one `role="status"` named "Working on your answer", whose
 content never changes, so a screen reader hears the work start and is never
-told about the drawing moving; the SVG itself is `aria-hidden`. Under
-`prefers-reduced-motion` every pose is one still frame of the same moment —
-dots, lines or a lit screen — and the settle is skipped.
+told about the drawing moving; the SVG itself is `aria-hidden`, and the
+closing beats announce nothing. Under `prefers-reduced-motion` every pose is
+one still frame of the same moment — the head where the motion is about, and
+whatever that moment puts on the desk — and the closing beat is skipped.
 
 **Artifacts are the product of a turn.** A report answer is a table, an email is a
 draft, a plan is a checklist, a record is a card. They render in the pane beside the

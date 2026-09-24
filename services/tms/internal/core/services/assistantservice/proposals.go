@@ -56,7 +56,8 @@ type persistProposalsParams struct {
 	// plan as a checklist beside the conversation.
 	Artifacts *artifactRecorder
 	// Taint is the outside content the turn that proposed read.
-	Taint *agent.RunTaint
+	Taint       *agent.RunTaint
+	Fingerprint *agent.Fingerprint
 }
 
 // persistProposals records the turn's proposed writes so they can be approved.
@@ -92,6 +93,7 @@ func (s *Service) persistProposals(
 			Model:            params.Model,
 			PromptVersion:    chatPromptVersion,
 			InputContextHash: hashChatContext(params.Definition, params.Input),
+			Fingerprint:      params.Fingerprint,
 		},
 		Actions:          params.Actions,
 		Taint:            params.Taint,

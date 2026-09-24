@@ -206,3 +206,10 @@ func (f *fakeUsage) CostByDefinition(
 ) (*repositories.AIUsageCost, error) {
 	return &repositories.AIUsageCost{}, nil
 }
+
+func (f *fakeUsage) EvaluationCost(
+	context.Context,
+	repositories.AIUsageEvaluationCostRequest,
+) (*repositories.AIUsageCost, error) {
+	return &repositories.AIUsageCost{CostUSD: decimal.Zero}, nil
+}

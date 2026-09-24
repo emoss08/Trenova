@@ -170,6 +170,26 @@ func (r *repository) ListLive(
 	return turns, nil
 }
 
+func (r *repository) RecordFingerprint(
+	ctx context.Context,
+	req repositories.RecordAssistantTurnFingerprintRequest,
+) error {
+	if req.Fingerprint == nil {
+		return nil
+	}
+
+	cols := buncolgen.AssistantTurnColumns
+	q := r.db.DBForContext(ctx).NewUpdate().
+		Model((*conversation.AssistantTurn)(nil)).
+		Set(cols.Fingerprint.Set(), req.Fingerprint).
+		Where(cols.ID.Eq(), req.ID)
+	if _, err := buncolgen.AssistantTurnScopeTenantUpdate(q, req.TenantInfo).Exec(ctx); err != nil {
+		return fmt.Errorf("record the agent a turn ran as: %w", err)
+	}
+
+	return nil
+}
+
 func (r *repository) Complete(
 	ctx context.Context,
 	req repositories.CompleteAssistantTurnRequest,

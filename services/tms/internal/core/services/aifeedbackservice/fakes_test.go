@@ -357,3 +357,10 @@ func person(tenant pagination.TenantInfo) *services.RequestActor {
 		BusinessUnitID: tenant.BuID,
 	}
 }
+
+func (f *fakeStore) TotalsByAgent(
+	context.Context,
+	repositories.AIFeedbackAgentTotalsRequest,
+) ([]*repositories.AIFeedbackAgentTotals, error) {
+	return nil, nil
+}

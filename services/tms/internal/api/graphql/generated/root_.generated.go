@@ -42,10 +42,14 @@ type ResolverRoot interface {
 	AgentEvaluation() AgentEvaluationResolver
 	AgentPlan() AgentPlanResolver
 	AgentProposal() AgentProposalResolver
+	AgentQualityAgent() AgentQualityAgentResolver
+	AgentQualityControl() AgentQualityControlResolver
 	AgentRun() AgentRunResolver
 	AgentRunEvent() AgentRunEventResolver
 	AgentSafety() AgentSafetyResolver
+	AgentSuiteRun() AgentSuiteRunResolver
 	AgentToolSafety() AgentToolSafetyResolver
+	AgentWorstRatedAnswer() AgentWorstRatedAnswerResolver
 	ApiKey() ApiKeyResolver
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
@@ -815,6 +819,8 @@ type ComplexityRoot struct {
 		Status            func(childComplexity int) int
 		SubjectID         func(childComplexity int) int
 		SubjectType       func(childComplexity int) int
+		SuiteOrdinal      func(childComplexity int) int
+		SuiteRunID        func(childComplexity int) int
 		ToolCallsUsed     func(childComplexity int) int
 		Trigger           func(childComplexity int) int
 		UpdatedAt         func(childComplexity int) int
@@ -894,6 +900,12 @@ type ComplexityRoot struct {
 		TargetID    func(childComplexity int) int
 		TargetPart  func(childComplexity int) int
 		TargetType  func(childComplexity int) int
+	}
+
+	AgentFingerprintChange struct {
+		Field func(childComplexity int) int
+		From  func(childComplexity int) int
+		To    func(childComplexity int) int
 	}
 
 	AgentMemory struct {
@@ -1039,6 +1051,96 @@ type ComplexityRoot struct {
 		Required    func(childComplexity int) int
 	}
 
+	AgentQuality struct {
+		ActiveCases        func(childComplexity int) int
+		AgentDefinitionID  func(childComplexity int) int
+		AgentName          func(childComplexity int) int
+		Enabled            func(childComplexity int) int
+		LastSuiteRun       func(childComplexity int) int
+		QualityPoints      func(childComplexity int) int
+		Ratings            func(childComplexity int) int
+		RatingsVisible     func(childComplexity int) int
+		Satisfaction       func(childComplexity int) int
+		SatisfactionPoints func(childComplexity int) int
+		Since              func(childComplexity int) int
+		WindowDays         func(childComplexity int) int
+		WorstRated         func(childComplexity int) int
+	}
+
+	AgentQualityAgent struct {
+		AgentDefinitionID func(childComplexity int) int
+		Enabled           func(childComplexity int) int
+		ID                func(childComplexity int) int
+		LastSuiteRun      func(childComplexity int) int
+		Name              func(childComplexity int) int
+		OpenRegression    func(childComplexity int) int
+		QualityPoints     func(childComplexity int) int
+		QualityScore      func(childComplexity int) int
+		Ratings           func(childComplexity int) int
+		RatingsVisible    func(childComplexity int) int
+		Satisfaction      func(childComplexity int) int
+		SatisfactionDelta func(childComplexity int) int
+	}
+
+	AgentQualityAgentConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AgentQualityAgentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AgentQualityControl struct {
+		Enabled             func(childComplexity int) int
+		ForceRerunDays      func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		JudgeEnabled        func(childComplexity int) int
+		JudgeSampleRate     func(childComplexity int) int
+		MaxCasesPerAgent    func(childComplexity int) int
+		MinCases            func(childComplexity int) int
+		MonthlyBudgetUsd    func(childComplexity int) int
+		NightlyBudgetUsd    func(childComplexity int) int
+		RegressionThreshold func(childComplexity int) int
+		RunHourLocal        func(childComplexity int) int
+		Timezone            func(childComplexity int) int
+		UpdatedAt           func(childComplexity int) int
+		Version             func(childComplexity int) int
+	}
+
+	AgentQualityOverview struct {
+		AgentsScored        func(childComplexity int) int
+		AgentsWithCases     func(childComplexity int) int
+		EvalSpendMonthUSD   func(childComplexity int) int
+		EvalUnpricedCalls   func(childComplexity int) int
+		JudgeEnabled        func(childComplexity int) int
+		MonthStartedAt      func(childComplexity int) int
+		MonthlyBudgetUSD    func(childComplexity int) int
+		NextSweepHourLocal  func(childComplexity int) int
+		NextSweepTimezone   func(childComplexity int) int
+		OpenRegressions     func(childComplexity int) int
+		QualityScore        func(childComplexity int) int
+		Ratings             func(childComplexity int) int
+		RatingsVisible      func(childComplexity int) int
+		RegressionThreshold func(childComplexity int) int
+		Regressions         func(childComplexity int) int
+		Satisfaction        func(childComplexity int) int
+		Since               func(childComplexity int) int
+		SuiteRuns           func(childComplexity int) int
+		SweepEnabled        func(childComplexity int) int
+		WindowDays          func(childComplexity int) int
+	}
+
+	AgentQualityPoint struct {
+		At           func(childComplexity int) int
+		QualityScore func(childComplexity int) int
+		Regression   func(childComplexity int) int
+		Status       func(childComplexity int) int
+		SuiteRunID   func(childComplexity int) int
+	}
+
 	AgentReach struct {
 		AccessMode func(childComplexity int) int
 		Roles      func(childComplexity int) int
@@ -1173,6 +1275,63 @@ type ComplexityRoot struct {
 		Prompt func(childComplexity int) int
 	}
 
+	AgentSuiteRun struct {
+		AgentDefinitionID  func(childComplexity int) int
+		AgentName          func(childComplexity int) int
+		BaselineRunID      func(childComplexity int) int
+		BaselineScore      func(childComplexity int) int
+		BusinessUnitID     func(childComplexity int) int
+		CasesFailed        func(childComplexity int) int
+		CasesPassed        func(childComplexity int) int
+		CasesSkipped       func(childComplexity int) int
+		CasesTotal         func(childComplexity int) int
+		ChangeSummary      func(childComplexity int) int
+		Comments           func(childComplexity int) int
+		CostUsd            func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		DeterministicScore func(childComplexity int) int
+		Fingerprint        func(childComplexity int) int
+		FingerprintChanges func(childComplexity int) int
+		FingerprintHash    func(childComplexity int) int
+		FinishedAt         func(childComplexity int) int
+		HardFailures       func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		JudgeScore         func(childComplexity int) int
+		OrganizationID     func(childComplexity int) int
+		QualityScore       func(childComplexity int) int
+		Regression         func(childComplexity int) int
+		RequestedByUserID  func(childComplexity int) int
+		StartedAt          func(childComplexity int) int
+		Status             func(childComplexity int) int
+		SuiteRevision      func(childComplexity int) int
+		Trigger            func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+		WorkflowID         func(childComplexity int) int
+	}
+
+	AgentSuiteRunCaseConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AgentSuiteRunCaseEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AgentSuiteRunConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AgentSuiteRunEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	AgentTaintMark struct {
 		At       func(childComplexity int) int
 		CallID   func(childComplexity int) int
@@ -1215,6 +1374,7 @@ type ComplexityRoot struct {
 		Explanation          func(childComplexity int) int
 		HasClassify          func(childComplexity int) int
 		HasCondition         func(childComplexity int) int
+		ID                   func(childComplexity int) int
 		Idempotent           func(childComplexity int) int
 		Kind                 func(childComplexity int) int
 		LeavesOrganization   func(childComplexity int) int
@@ -1226,6 +1386,7 @@ type ComplexityRoot struct {
 		Rationale            func(childComplexity int) int
 		ReadsExternal        func(childComplexity int) int
 		Reversible           func(childComplexity int) int
+		RunsWithoutPerson    func(childComplexity int) int
 		Scope                func(childComplexity int) int
 		Source               func(childComplexity int) int
 		Title                func(childComplexity int) int
@@ -1248,10 +1409,24 @@ type ComplexityRoot struct {
 	}
 
 	AgentToolSafety struct {
+		AgentID    func(childComplexity int) int
+		AgentName  func(childComplexity int) int
 		Clean      func(childComplexity int) int
+		ID         func(childComplexity int) int
 		Policy     func(childComplexity int) int
 		PolicyName func(childComplexity int) int
 		Tainted    func(childComplexity int) int
+	}
+
+	AgentToolSafetyConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AgentToolSafetyEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	AgentToolTrust struct {
@@ -1265,6 +1440,32 @@ type ComplexityRoot struct {
 		Rejections        func(childComplexity int) int
 		Streak            func(childComplexity int) int
 		ToolName          func(childComplexity int) int
+	}
+
+	AgentWorstRatedAnswer struct {
+		AgentDefinitionID func(childComplexity int) int
+		AgentName         func(childComplexity int) int
+		CanOpenThread     func(childComplexity int) int
+		ID                func(childComplexity int) int
+		LastRatedAt       func(childComplexity int) int
+		Negative          func(childComplexity int) int
+		Positive          func(childComplexity int) int
+		Sample            func(childComplexity int) int
+		TargetID          func(childComplexity int) int
+		TargetPart        func(childComplexity int) int
+		TargetType        func(childComplexity int) int
+		ThreadID          func(childComplexity int) int
+	}
+
+	AgentWorstRatedAnswerConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AgentWorstRatedAnswerEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	ApiKey struct {
@@ -6904,6 +7105,7 @@ type ComplexityRoot struct {
 		RevokeWorkerPortalAccess              func(childComplexity int, workerID string) int
 		RollbackDocumentTemplate              func(childComplexity int, versionID string, notes *string) int
 		RotateInboundMailboxToken             func(childComplexity int, id string) int
+		RunAgentSuite                         func(childComplexity int, agentDefinitionID string) int
 		RunDOTRandomDraw                      func(childComplexity int, input gqlmodel.RunDOTRandomDrawInput) int
 		RunPTOAccrual                         func(childComplexity int, input gqlmodel.RunPTOAccrualInput) int
 		RunReport                             func(childComplexity int, input gqlmodel.RunReportInput) int
@@ -6950,6 +7152,7 @@ type ComplexityRoot struct {
 		UpdateAgentControl                    func(childComplexity int, input gqlmodel.AgentControlInput) int
 		UpdateAgentEvalCase                   func(childComplexity int, id string, input gqlmodel.UpdateAgentEvalCaseInput) int
 		UpdateAgentMemory                     func(childComplexity int, id string, input gqlmodel.AgentMemoryInput) int
+		UpdateAgentQualityControl             func(childComplexity int, input gqlmodel.UpdateAgentQualityControlInput) int
 		UpdateBenefitPlan                     func(childComplexity int, input gqlmodel.UpdateBenefitPlanInput) int
 		UpdateBillingQueueStatus              func(childComplexity int, id string, input gqlmodel.BillingQueueUpdateStatusInput) int
 		UpdateCarrierIntelControl             func(childComplexity int, input gqlmodel.CarrierIntelControlPatchInput) int
@@ -7946,14 +8149,28 @@ type ComplexityRoot struct {
 		AgentPlans                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentProposal                       func(childComplexity int, id string) int
 		AgentProposals                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentQuality                        func(childComplexity int, agentDefinitionID string, window *int) int
+		AgentQualityAgentConnection         func(childComplexity int, window *int, input gqlmodel.DataTableConnectionInput) int
+		AgentQualityAgents                  func(childComplexity int, input gqlmodel.AgentQualityAgentsInput) int
+		AgentQualityControl                 func(childComplexity int) int
+		AgentQualityOverview                func(childComplexity int, window *int) int
 		AgentRun                            func(childComplexity int, id string) int
 		AgentRunEvents                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentRuns                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentSafety                         func(childComplexity int, agentIds []string) int
 		AgentSafetySummary                  func(childComplexity int) int
 		AgentScorecard                      func(childComplexity int, input gqlmodel.AgentScorecardInput) int
+		AgentSuiteRun                       func(childComplexity int, id string) int
+		AgentSuiteRunCaseConnection         func(childComplexity int, suiteRunID string, input gqlmodel.DataTableConnectionInput) int
+		AgentSuiteRunCases                  func(childComplexity int, input gqlmodel.AgentSuiteRunCasesInput) int
+		AgentSuiteRunConnection             func(childComplexity int, agentDefinitionID *string, input gqlmodel.DataTableConnectionInput) int
+		AgentSuiteRuns                      func(childComplexity int, input gqlmodel.AgentSuiteRunsInput) int
 		AgentToolPolicies                   func(childComplexity int) int
 		AgentToolPolicyConnection           func(childComplexity int, input gqlmodel.AgentToolPolicyConnectionInput) int
+		AgentToolRuleConnection             func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentToolSafetyConnection           func(childComplexity int, agentIds []string, input gqlmodel.DataTableConnectionInput) int
+		AgentWorstRatedAnswerConnection     func(childComplexity int, agentDefinitionID *string, window *int, input gqlmodel.DataTableConnectionInput) int
+		AgentWorstRatedAnswers              func(childComplexity int, input gqlmodel.AgentWorstRatedAnswersInput) int
 		AiFeedback                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AiProvider                          func(childComplexity int, id string) int
 		AiProviders                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
@@ -14943,6 +15160,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentEvaluation.SubjectType(childComplexity), true
+	case "AgentEvaluation.suiteOrdinal":
+		if e.ComplexityRoot.AgentEvaluation.SuiteOrdinal == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvaluation.SuiteOrdinal(childComplexity), true
+	case "AgentEvaluation.suiteRunId":
+		if e.ComplexityRoot.AgentEvaluation.SuiteRunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentEvaluation.SuiteRunID(childComplexity), true
 	case "AgentEvaluation.toolCallsUsed":
 		if e.ComplexityRoot.AgentEvaluation.ToolCallsUsed == nil {
 			break
@@ -15264,6 +15493,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentFeedbackWorstRated.TargetType(childComplexity), true
+
+	case "AgentFingerprintChange.field":
+		if e.ComplexityRoot.AgentFingerprintChange.Field == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFingerprintChange.Field(childComplexity), true
+	case "AgentFingerprintChange.from":
+		if e.ComplexityRoot.AgentFingerprintChange.From == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFingerprintChange.From(childComplexity), true
+	case "AgentFingerprintChange.to":
+		if e.ComplexityRoot.AgentFingerprintChange.To == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFingerprintChange.To(childComplexity), true
 
 	case "AgentMemory.agentDefinitionId":
 		if e.ComplexityRoot.AgentMemory.AgentDefinitionID == nil {
@@ -15919,6 +16167,427 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentProposalField.Required(childComplexity), true
 
+	case "AgentQuality.activeCases":
+		if e.ComplexityRoot.AgentQuality.ActiveCases == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.ActiveCases(childComplexity), true
+	case "AgentQuality.agentDefinitionId":
+		if e.ComplexityRoot.AgentQuality.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.AgentDefinitionID(childComplexity), true
+	case "AgentQuality.agentName":
+		if e.ComplexityRoot.AgentQuality.AgentName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.AgentName(childComplexity), true
+	case "AgentQuality.enabled":
+		if e.ComplexityRoot.AgentQuality.Enabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.Enabled(childComplexity), true
+	case "AgentQuality.lastSuiteRun":
+		if e.ComplexityRoot.AgentQuality.LastSuiteRun == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.LastSuiteRun(childComplexity), true
+	case "AgentQuality.qualityPoints":
+		if e.ComplexityRoot.AgentQuality.QualityPoints == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.QualityPoints(childComplexity), true
+	case "AgentQuality.ratings":
+		if e.ComplexityRoot.AgentQuality.Ratings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.Ratings(childComplexity), true
+	case "AgentQuality.ratingsVisible":
+		if e.ComplexityRoot.AgentQuality.RatingsVisible == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.RatingsVisible(childComplexity), true
+	case "AgentQuality.satisfaction":
+		if e.ComplexityRoot.AgentQuality.Satisfaction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.Satisfaction(childComplexity), true
+	case "AgentQuality.satisfactionPoints":
+		if e.ComplexityRoot.AgentQuality.SatisfactionPoints == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.SatisfactionPoints(childComplexity), true
+	case "AgentQuality.since":
+		if e.ComplexityRoot.AgentQuality.Since == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.Since(childComplexity), true
+	case "AgentQuality.windowDays":
+		if e.ComplexityRoot.AgentQuality.WindowDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.WindowDays(childComplexity), true
+	case "AgentQuality.worstRated":
+		if e.ComplexityRoot.AgentQuality.WorstRated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQuality.WorstRated(childComplexity), true
+
+	case "AgentQualityAgent.agentDefinitionId":
+		if e.ComplexityRoot.AgentQualityAgent.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.AgentDefinitionID(childComplexity), true
+	case "AgentQualityAgent.enabled":
+		if e.ComplexityRoot.AgentQualityAgent.Enabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.Enabled(childComplexity), true
+	case "AgentQualityAgent.id":
+		if e.ComplexityRoot.AgentQualityAgent.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.ID(childComplexity), true
+	case "AgentQualityAgent.lastSuiteRun":
+		if e.ComplexityRoot.AgentQualityAgent.LastSuiteRun == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.LastSuiteRun(childComplexity), true
+	case "AgentQualityAgent.name":
+		if e.ComplexityRoot.AgentQualityAgent.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.Name(childComplexity), true
+	case "AgentQualityAgent.openRegression":
+		if e.ComplexityRoot.AgentQualityAgent.OpenRegression == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.OpenRegression(childComplexity), true
+	case "AgentQualityAgent.qualityPoints":
+		if e.ComplexityRoot.AgentQualityAgent.QualityPoints == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.QualityPoints(childComplexity), true
+	case "AgentQualityAgent.qualityScore":
+		if e.ComplexityRoot.AgentQualityAgent.QualityScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.QualityScore(childComplexity), true
+	case "AgentQualityAgent.ratings":
+		if e.ComplexityRoot.AgentQualityAgent.Ratings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.Ratings(childComplexity), true
+	case "AgentQualityAgent.ratingsVisible":
+		if e.ComplexityRoot.AgentQualityAgent.RatingsVisible == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.RatingsVisible(childComplexity), true
+	case "AgentQualityAgent.satisfaction":
+		if e.ComplexityRoot.AgentQualityAgent.Satisfaction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.Satisfaction(childComplexity), true
+	case "AgentQualityAgent.satisfactionDelta":
+		if e.ComplexityRoot.AgentQualityAgent.SatisfactionDelta == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgent.SatisfactionDelta(childComplexity), true
+
+	case "AgentQualityAgentConnection.edges":
+		if e.ComplexityRoot.AgentQualityAgentConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgentConnection.Edges(childComplexity), true
+	case "AgentQualityAgentConnection.pageInfo":
+		if e.ComplexityRoot.AgentQualityAgentConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgentConnection.PageInfo(childComplexity), true
+	case "AgentQualityAgentConnection.totalCount":
+		if e.ComplexityRoot.AgentQualityAgentConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgentConnection.TotalCount(childComplexity), true
+
+	case "AgentQualityAgentEdge.cursor":
+		if e.ComplexityRoot.AgentQualityAgentEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgentEdge.Cursor(childComplexity), true
+	case "AgentQualityAgentEdge.node":
+		if e.ComplexityRoot.AgentQualityAgentEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityAgentEdge.Node(childComplexity), true
+
+	case "AgentQualityControl.enabled":
+		if e.ComplexityRoot.AgentQualityControl.Enabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.Enabled(childComplexity), true
+	case "AgentQualityControl.forceRerunDays":
+		if e.ComplexityRoot.AgentQualityControl.ForceRerunDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.ForceRerunDays(childComplexity), true
+	case "AgentQualityControl.id":
+		if e.ComplexityRoot.AgentQualityControl.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.ID(childComplexity), true
+	case "AgentQualityControl.judgeEnabled":
+		if e.ComplexityRoot.AgentQualityControl.JudgeEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.JudgeEnabled(childComplexity), true
+	case "AgentQualityControl.judgeSampleRate":
+		if e.ComplexityRoot.AgentQualityControl.JudgeSampleRate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.JudgeSampleRate(childComplexity), true
+	case "AgentQualityControl.maxCasesPerAgent":
+		if e.ComplexityRoot.AgentQualityControl.MaxCasesPerAgent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.MaxCasesPerAgent(childComplexity), true
+	case "AgentQualityControl.minCases":
+		if e.ComplexityRoot.AgentQualityControl.MinCases == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.MinCases(childComplexity), true
+	case "AgentQualityControl.monthlyBudgetUsd":
+		if e.ComplexityRoot.AgentQualityControl.MonthlyBudgetUsd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.MonthlyBudgetUsd(childComplexity), true
+	case "AgentQualityControl.nightlyBudgetUsd":
+		if e.ComplexityRoot.AgentQualityControl.NightlyBudgetUsd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.NightlyBudgetUsd(childComplexity), true
+	case "AgentQualityControl.regressionThreshold":
+		if e.ComplexityRoot.AgentQualityControl.RegressionThreshold == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.RegressionThreshold(childComplexity), true
+	case "AgentQualityControl.runHourLocal":
+		if e.ComplexityRoot.AgentQualityControl.RunHourLocal == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.RunHourLocal(childComplexity), true
+	case "AgentQualityControl.timezone":
+		if e.ComplexityRoot.AgentQualityControl.Timezone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.Timezone(childComplexity), true
+	case "AgentQualityControl.updatedAt":
+		if e.ComplexityRoot.AgentQualityControl.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.UpdatedAt(childComplexity), true
+	case "AgentQualityControl.version":
+		if e.ComplexityRoot.AgentQualityControl.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityControl.Version(childComplexity), true
+
+	case "AgentQualityOverview.agentsScored":
+		if e.ComplexityRoot.AgentQualityOverview.AgentsScored == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.AgentsScored(childComplexity), true
+	case "AgentQualityOverview.agentsWithCases":
+		if e.ComplexityRoot.AgentQualityOverview.AgentsWithCases == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.AgentsWithCases(childComplexity), true
+	case "AgentQualityOverview.evalSpendMonthUsd":
+		if e.ComplexityRoot.AgentQualityOverview.EvalSpendMonthUSD == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.EvalSpendMonthUSD(childComplexity), true
+	case "AgentQualityOverview.evalUnpricedCalls":
+		if e.ComplexityRoot.AgentQualityOverview.EvalUnpricedCalls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.EvalUnpricedCalls(childComplexity), true
+	case "AgentQualityOverview.judgeEnabled":
+		if e.ComplexityRoot.AgentQualityOverview.JudgeEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.JudgeEnabled(childComplexity), true
+	case "AgentQualityOverview.monthStartedAt":
+		if e.ComplexityRoot.AgentQualityOverview.MonthStartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.MonthStartedAt(childComplexity), true
+	case "AgentQualityOverview.monthlyBudgetUsd":
+		if e.ComplexityRoot.AgentQualityOverview.MonthlyBudgetUSD == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.MonthlyBudgetUSD(childComplexity), true
+	case "AgentQualityOverview.nextSweepHourLocal":
+		if e.ComplexityRoot.AgentQualityOverview.NextSweepHourLocal == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.NextSweepHourLocal(childComplexity), true
+	case "AgentQualityOverview.nextSweepTimezone":
+		if e.ComplexityRoot.AgentQualityOverview.NextSweepTimezone == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.NextSweepTimezone(childComplexity), true
+	case "AgentQualityOverview.openRegressions":
+		if e.ComplexityRoot.AgentQualityOverview.OpenRegressions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.OpenRegressions(childComplexity), true
+	case "AgentQualityOverview.qualityScore":
+		if e.ComplexityRoot.AgentQualityOverview.QualityScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.QualityScore(childComplexity), true
+	case "AgentQualityOverview.ratings":
+		if e.ComplexityRoot.AgentQualityOverview.Ratings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.Ratings(childComplexity), true
+	case "AgentQualityOverview.ratingsVisible":
+		if e.ComplexityRoot.AgentQualityOverview.RatingsVisible == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.RatingsVisible(childComplexity), true
+	case "AgentQualityOverview.regressionThreshold":
+		if e.ComplexityRoot.AgentQualityOverview.RegressionThreshold == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.RegressionThreshold(childComplexity), true
+	case "AgentQualityOverview.regressions":
+		if e.ComplexityRoot.AgentQualityOverview.Regressions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.Regressions(childComplexity), true
+	case "AgentQualityOverview.satisfaction":
+		if e.ComplexityRoot.AgentQualityOverview.Satisfaction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.Satisfaction(childComplexity), true
+	case "AgentQualityOverview.since":
+		if e.ComplexityRoot.AgentQualityOverview.Since == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.Since(childComplexity), true
+	case "AgentQualityOverview.suiteRuns":
+		if e.ComplexityRoot.AgentQualityOverview.SuiteRuns == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.SuiteRuns(childComplexity), true
+	case "AgentQualityOverview.sweepEnabled":
+		if e.ComplexityRoot.AgentQualityOverview.SweepEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.SweepEnabled(childComplexity), true
+	case "AgentQualityOverview.windowDays":
+		if e.ComplexityRoot.AgentQualityOverview.WindowDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityOverview.WindowDays(childComplexity), true
+
+	case "AgentQualityPoint.at":
+		if e.ComplexityRoot.AgentQualityPoint.At == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityPoint.At(childComplexity), true
+	case "AgentQualityPoint.qualityScore":
+		if e.ComplexityRoot.AgentQualityPoint.QualityScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityPoint.QualityScore(childComplexity), true
+	case "AgentQualityPoint.regression":
+		if e.ComplexityRoot.AgentQualityPoint.Regression == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityPoint.Regression(childComplexity), true
+	case "AgentQualityPoint.status":
+		if e.ComplexityRoot.AgentQualityPoint.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityPoint.Status(childComplexity), true
+	case "AgentQualityPoint.suiteRunId":
+		if e.ComplexityRoot.AgentQualityPoint.SuiteRunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentQualityPoint.SuiteRunID(childComplexity), true
+
 	case "AgentReach.accessMode":
 		if e.ComplexityRoot.AgentReach.AccessMode == nil {
 			break
@@ -16485,6 +17154,263 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentStarter.Prompt(childComplexity), true
 
+	case "AgentSuiteRun.agentDefinitionId":
+		if e.ComplexityRoot.AgentSuiteRun.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.AgentDefinitionID(childComplexity), true
+	case "AgentSuiteRun.agentName":
+		if e.ComplexityRoot.AgentSuiteRun.AgentName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.AgentName(childComplexity), true
+	case "AgentSuiteRun.baselineRunId":
+		if e.ComplexityRoot.AgentSuiteRun.BaselineRunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.BaselineRunID(childComplexity), true
+	case "AgentSuiteRun.baselineScore":
+		if e.ComplexityRoot.AgentSuiteRun.BaselineScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.BaselineScore(childComplexity), true
+	case "AgentSuiteRun.businessUnitId":
+		if e.ComplexityRoot.AgentSuiteRun.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.BusinessUnitID(childComplexity), true
+	case "AgentSuiteRun.casesFailed":
+		if e.ComplexityRoot.AgentSuiteRun.CasesFailed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.CasesFailed(childComplexity), true
+	case "AgentSuiteRun.casesPassed":
+		if e.ComplexityRoot.AgentSuiteRun.CasesPassed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.CasesPassed(childComplexity), true
+	case "AgentSuiteRun.casesSkipped":
+		if e.ComplexityRoot.AgentSuiteRun.CasesSkipped == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.CasesSkipped(childComplexity), true
+	case "AgentSuiteRun.casesTotal":
+		if e.ComplexityRoot.AgentSuiteRun.CasesTotal == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.CasesTotal(childComplexity), true
+	case "AgentSuiteRun.changeSummary":
+		if e.ComplexityRoot.AgentSuiteRun.ChangeSummary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.ChangeSummary(childComplexity), true
+	case "AgentSuiteRun.comments":
+		if e.ComplexityRoot.AgentSuiteRun.Comments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.Comments(childComplexity), true
+	case "AgentSuiteRun.costUsd":
+		if e.ComplexityRoot.AgentSuiteRun.CostUsd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.CostUsd(childComplexity), true
+	case "AgentSuiteRun.createdAt":
+		if e.ComplexityRoot.AgentSuiteRun.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.CreatedAt(childComplexity), true
+	case "AgentSuiteRun.deterministicScore":
+		if e.ComplexityRoot.AgentSuiteRun.DeterministicScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.DeterministicScore(childComplexity), true
+	case "AgentSuiteRun.fingerprint":
+		if e.ComplexityRoot.AgentSuiteRun.Fingerprint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.Fingerprint(childComplexity), true
+	case "AgentSuiteRun.fingerprintChanges":
+		if e.ComplexityRoot.AgentSuiteRun.FingerprintChanges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.FingerprintChanges(childComplexity), true
+	case "AgentSuiteRun.fingerprintHash":
+		if e.ComplexityRoot.AgentSuiteRun.FingerprintHash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.FingerprintHash(childComplexity), true
+	case "AgentSuiteRun.finishedAt":
+		if e.ComplexityRoot.AgentSuiteRun.FinishedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.FinishedAt(childComplexity), true
+	case "AgentSuiteRun.hardFailures":
+		if e.ComplexityRoot.AgentSuiteRun.HardFailures == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.HardFailures(childComplexity), true
+	case "AgentSuiteRun.id":
+		if e.ComplexityRoot.AgentSuiteRun.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.ID(childComplexity), true
+	case "AgentSuiteRun.judgeScore":
+		if e.ComplexityRoot.AgentSuiteRun.JudgeScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.JudgeScore(childComplexity), true
+	case "AgentSuiteRun.organizationId":
+		if e.ComplexityRoot.AgentSuiteRun.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.OrganizationID(childComplexity), true
+	case "AgentSuiteRun.qualityScore":
+		if e.ComplexityRoot.AgentSuiteRun.QualityScore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.QualityScore(childComplexity), true
+	case "AgentSuiteRun.regression":
+		if e.ComplexityRoot.AgentSuiteRun.Regression == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.Regression(childComplexity), true
+	case "AgentSuiteRun.requestedByUserId":
+		if e.ComplexityRoot.AgentSuiteRun.RequestedByUserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.RequestedByUserID(childComplexity), true
+	case "AgentSuiteRun.startedAt":
+		if e.ComplexityRoot.AgentSuiteRun.StartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.StartedAt(childComplexity), true
+	case "AgentSuiteRun.status":
+		if e.ComplexityRoot.AgentSuiteRun.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.Status(childComplexity), true
+	case "AgentSuiteRun.suiteRevision":
+		if e.ComplexityRoot.AgentSuiteRun.SuiteRevision == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.SuiteRevision(childComplexity), true
+	case "AgentSuiteRun.trigger":
+		if e.ComplexityRoot.AgentSuiteRun.Trigger == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.Trigger(childComplexity), true
+	case "AgentSuiteRun.updatedAt":
+		if e.ComplexityRoot.AgentSuiteRun.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.UpdatedAt(childComplexity), true
+	case "AgentSuiteRun.version":
+		if e.ComplexityRoot.AgentSuiteRun.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.Version(childComplexity), true
+	case "AgentSuiteRun.workflowId":
+		if e.ComplexityRoot.AgentSuiteRun.WorkflowID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRun.WorkflowID(childComplexity), true
+
+	case "AgentSuiteRunCaseConnection.edges":
+		if e.ComplexityRoot.AgentSuiteRunCaseConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRunCaseConnection.Edges(childComplexity), true
+	case "AgentSuiteRunCaseConnection.pageInfo":
+		if e.ComplexityRoot.AgentSuiteRunCaseConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRunCaseConnection.PageInfo(childComplexity), true
+	case "AgentSuiteRunCaseConnection.totalCount":
+		if e.ComplexityRoot.AgentSuiteRunCaseConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRunCaseConnection.TotalCount(childComplexity), true
+
+	case "AgentSuiteRunCaseEdge.cursor":
+		if e.ComplexityRoot.AgentSuiteRunCaseEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRunCaseEdge.Cursor(childComplexity), true
+	case "AgentSuiteRunCaseEdge.node":
+		if e.ComplexityRoot.AgentSuiteRunCaseEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRunCaseEdge.Node(childComplexity), true
+
+	case "AgentSuiteRunConnection.edges":
+		if e.ComplexityRoot.AgentSuiteRunConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRunConnection.Edges(childComplexity), true
+	case "AgentSuiteRunConnection.pageInfo":
+		if e.ComplexityRoot.AgentSuiteRunConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRunConnection.PageInfo(childComplexity), true
+	case "AgentSuiteRunConnection.totalCount":
+		if e.ComplexityRoot.AgentSuiteRunConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRunConnection.TotalCount(childComplexity), true
+
+	case "AgentSuiteRunEdge.cursor":
+		if e.ComplexityRoot.AgentSuiteRunEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRunEdge.Cursor(childComplexity), true
+	case "AgentSuiteRunEdge.node":
+		if e.ComplexityRoot.AgentSuiteRunEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSuiteRunEdge.Node(childComplexity), true
+
 	case "AgentTaintMark.at":
 		if e.ComplexityRoot.AgentTaintMark.At == nil {
 			break
@@ -16663,6 +17589,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentToolPolicy.HasCondition(childComplexity), true
+	case "AgentToolPolicy.id":
+		if e.ComplexityRoot.AgentToolPolicy.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.ID(childComplexity), true
 	case "AgentToolPolicy.idempotent":
 		if e.ComplexityRoot.AgentToolPolicy.Idempotent == nil {
 			break
@@ -16729,6 +17661,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentToolPolicy.Reversible(childComplexity), true
+	case "AgentToolPolicy.runsWithoutPerson":
+		if e.ComplexityRoot.AgentToolPolicy.RunsWithoutPerson == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.RunsWithoutPerson(childComplexity), true
 	case "AgentToolPolicy.scope":
 		if e.ComplexityRoot.AgentToolPolicy.Scope == nil {
 			break
@@ -16793,12 +17731,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentToolRequirement.Resource(childComplexity), true
 
+	case "AgentToolSafety.agentId":
+		if e.ComplexityRoot.AgentToolSafety.AgentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafety.AgentID(childComplexity), true
+	case "AgentToolSafety.agentName":
+		if e.ComplexityRoot.AgentToolSafety.AgentName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafety.AgentName(childComplexity), true
 	case "AgentToolSafety.clean":
 		if e.ComplexityRoot.AgentToolSafety.Clean == nil {
 			break
 		}
 
 		return e.ComplexityRoot.AgentToolSafety.Clean(childComplexity), true
+	case "AgentToolSafety.id":
+		if e.ComplexityRoot.AgentToolSafety.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafety.ID(childComplexity), true
 	case "AgentToolSafety.policy":
 		if e.ComplexityRoot.AgentToolSafety.Policy == nil {
 			break
@@ -16817,6 +17773,38 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentToolSafety.Tainted(childComplexity), true
+
+	case "AgentToolSafetyConnection.edges":
+		if e.ComplexityRoot.AgentToolSafetyConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafetyConnection.Edges(childComplexity), true
+	case "AgentToolSafetyConnection.pageInfo":
+		if e.ComplexityRoot.AgentToolSafetyConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafetyConnection.PageInfo(childComplexity), true
+	case "AgentToolSafetyConnection.totalCount":
+		if e.ComplexityRoot.AgentToolSafetyConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafetyConnection.TotalCount(childComplexity), true
+
+	case "AgentToolSafetyEdge.cursor":
+		if e.ComplexityRoot.AgentToolSafetyEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafetyEdge.Cursor(childComplexity), true
+	case "AgentToolSafetyEdge.node":
+		if e.ComplexityRoot.AgentToolSafetyEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafetyEdge.Node(childComplexity), true
 
 	case "AgentToolTrust.approvals":
 		if e.ComplexityRoot.AgentToolTrust.Approvals == nil {
@@ -16878,6 +17866,111 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentToolTrust.ToolName(childComplexity), true
+
+	case "AgentWorstRatedAnswer.agentDefinitionId":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.AgentDefinitionID(childComplexity), true
+	case "AgentWorstRatedAnswer.agentName":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.AgentName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.AgentName(childComplexity), true
+	case "AgentWorstRatedAnswer.canOpenThread":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.CanOpenThread == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.CanOpenThread(childComplexity), true
+	case "AgentWorstRatedAnswer.id":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.ID(childComplexity), true
+	case "AgentWorstRatedAnswer.lastRatedAt":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.LastRatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.LastRatedAt(childComplexity), true
+	case "AgentWorstRatedAnswer.negative":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.Negative == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.Negative(childComplexity), true
+	case "AgentWorstRatedAnswer.positive":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.Positive == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.Positive(childComplexity), true
+	case "AgentWorstRatedAnswer.sample":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.Sample == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.Sample(childComplexity), true
+	case "AgentWorstRatedAnswer.targetId":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.TargetID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.TargetID(childComplexity), true
+	case "AgentWorstRatedAnswer.targetPart":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.TargetPart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.TargetPart(childComplexity), true
+	case "AgentWorstRatedAnswer.targetType":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.TargetType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.TargetType(childComplexity), true
+	case "AgentWorstRatedAnswer.threadId":
+		if e.ComplexityRoot.AgentWorstRatedAnswer.ThreadID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswer.ThreadID(childComplexity), true
+
+	case "AgentWorstRatedAnswerConnection.edges":
+		if e.ComplexityRoot.AgentWorstRatedAnswerConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswerConnection.Edges(childComplexity), true
+	case "AgentWorstRatedAnswerConnection.pageInfo":
+		if e.ComplexityRoot.AgentWorstRatedAnswerConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswerConnection.PageInfo(childComplexity), true
+	case "AgentWorstRatedAnswerConnection.totalCount":
+		if e.ComplexityRoot.AgentWorstRatedAnswerConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswerConnection.TotalCount(childComplexity), true
+
+	case "AgentWorstRatedAnswerEdge.cursor":
+		if e.ComplexityRoot.AgentWorstRatedAnswerEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswerEdge.Cursor(childComplexity), true
+	case "AgentWorstRatedAnswerEdge.node":
+		if e.ComplexityRoot.AgentWorstRatedAnswerEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentWorstRatedAnswerEdge.Node(childComplexity), true
 
 	case "ApiKey.businessUnitId":
 		if e.ComplexityRoot.ApiKey.BusinessUnitID == nil {
@@ -45151,6 +46244,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RotateInboundMailboxToken(childComplexity, args["id"].(string)), true
+	case "Mutation.runAgentSuite":
+		if e.ComplexityRoot.Mutation.RunAgentSuite == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_runAgentSuite_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RunAgentSuite(childComplexity, args["agentDefinitionId"].(string)), true
 	case "Mutation.runDotRandomDraw":
 		if e.ComplexityRoot.Mutation.RunDOTRandomDraw == nil {
 			break
@@ -45657,6 +46761,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateAgentMemory(childComplexity, args["id"].(string), args["input"].(gqlmodel.AgentMemoryInput)), true
+	case "Mutation.updateAgentQualityControl":
+		if e.ComplexityRoot.Mutation.UpdateAgentQualityControl == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAgentQualityControl_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateAgentQualityControl(childComplexity, args["input"].(gqlmodel.UpdateAgentQualityControlInput)), true
 	case "Mutation.updateBenefitPlan":
 		if e.ComplexityRoot.Mutation.UpdateBenefitPlan == nil {
 			break
@@ -50773,6 +51888,56 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentProposals(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentQuality":
+		if e.ComplexityRoot.Query.AgentQuality == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentQuality_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentQuality(childComplexity, args["agentDefinitionId"].(string), args["window"].(*int)), true
+	case "Query.agentQualityAgentConnection":
+		if e.ComplexityRoot.Query.AgentQualityAgentConnection == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentQualityAgentConnection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentQualityAgentConnection(childComplexity, args["window"].(*int), args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentQualityAgents":
+		if e.ComplexityRoot.Query.AgentQualityAgents == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentQualityAgents_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentQualityAgents(childComplexity, args["input"].(gqlmodel.AgentQualityAgentsInput)), true
+	case "Query.agentQualityControl":
+		if e.ComplexityRoot.Query.AgentQualityControl == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.AgentQualityControl(childComplexity), true
+	case "Query.agentQualityOverview":
+		if e.ComplexityRoot.Query.AgentQualityOverview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentQualityOverview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentQualityOverview(childComplexity, args["window"].(*int)), true
 	case "Query.agentRun":
 		if e.ComplexityRoot.Query.AgentRun == nil {
 			break
@@ -50834,6 +51999,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentScorecard(childComplexity, args["input"].(gqlmodel.AgentScorecardInput)), true
+	case "Query.agentSuiteRun":
+		if e.ComplexityRoot.Query.AgentSuiteRun == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentSuiteRun_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentSuiteRun(childComplexity, args["id"].(string)), true
+	case "Query.agentSuiteRunCaseConnection":
+		if e.ComplexityRoot.Query.AgentSuiteRunCaseConnection == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentSuiteRunCaseConnection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentSuiteRunCaseConnection(childComplexity, args["suiteRunId"].(string), args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentSuiteRunCases":
+		if e.ComplexityRoot.Query.AgentSuiteRunCases == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentSuiteRunCases_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentSuiteRunCases(childComplexity, args["input"].(gqlmodel.AgentSuiteRunCasesInput)), true
+	case "Query.agentSuiteRunConnection":
+		if e.ComplexityRoot.Query.AgentSuiteRunConnection == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentSuiteRunConnection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentSuiteRunConnection(childComplexity, args["agentDefinitionId"].(*string), args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentSuiteRuns":
+		if e.ComplexityRoot.Query.AgentSuiteRuns == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentSuiteRuns_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentSuiteRuns(childComplexity, args["input"].(gqlmodel.AgentSuiteRunsInput)), true
 	case "Query.agentToolPolicies":
 		if e.ComplexityRoot.Query.AgentToolPolicies == nil {
 			break
@@ -50851,6 +52071,50 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentToolPolicyConnection(childComplexity, args["input"].(gqlmodel.AgentToolPolicyConnectionInput)), true
+	case "Query.agentToolRuleConnection":
+		if e.ComplexityRoot.Query.AgentToolRuleConnection == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentToolRuleConnection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentToolRuleConnection(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentToolSafetyConnection":
+		if e.ComplexityRoot.Query.AgentToolSafetyConnection == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentToolSafetyConnection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentToolSafetyConnection(childComplexity, args["agentIds"].([]string), args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentWorstRatedAnswerConnection":
+		if e.ComplexityRoot.Query.AgentWorstRatedAnswerConnection == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentWorstRatedAnswerConnection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentWorstRatedAnswerConnection(childComplexity, args["agentDefinitionId"].(*string), args["window"].(*int), args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentWorstRatedAnswers":
+		if e.ComplexityRoot.Query.AgentWorstRatedAnswers == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentWorstRatedAnswers_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentWorstRatedAnswers(childComplexity, args["input"].(gqlmodel.AgentWorstRatedAnswersInput)), true
 	case "Query.aiFeedback":
 		if e.ComplexityRoot.Query.AiFeedback == nil {
 			break
@@ -73240,8 +74504,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAgentMemoryInput,
 		ec.unmarshalInputAgentPlanDecisionInput,
 		ec.unmarshalInputAgentProposalDecisionInput,
+		ec.unmarshalInputAgentQualityAgentsInput,
 		ec.unmarshalInputAgentScorecardInput,
+		ec.unmarshalInputAgentSuiteRunCasesInput,
+		ec.unmarshalInputAgentSuiteRunsInput,
 		ec.unmarshalInputAgentToolPolicyConnectionInput,
+		ec.unmarshalInputAgentWorstRatedAnswersInput,
 		ec.unmarshalInputAmendWorkerEmploymentEventInput,
 		ec.unmarshalInputApplyCarrierIntelSuggestionsInput,
 		ec.unmarshalInputApplyCreditMemoInput,
@@ -73535,6 +74803,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUnassignDocumentTemplateInput,
 		ec.unmarshalInputUpcomingWorkerPTOInput,
 		ec.unmarshalInputUpdateAgentEvalCaseInput,
+		ec.unmarshalInputUpdateAgentQualityControlInput,
 		ec.unmarshalInputUpdateBenefitPlanInput,
 		ec.unmarshalInputUpdateCarrierSettlementControlInput,
 		ec.unmarshalInputUpdateDOTRandomDrawEntryInput,
@@ -74493,6 +75762,10 @@ type AgentEvaluation {
   caseScore: Float
   "The agent version, prompt version, instructions hash and tools the replay ran against."
   fingerprint: JSON
+  "The suite run the replay belongs to; empty for a replay started on its own."
+  suiteRunId: ID
+  "The replay's place in its suite run."
+  suiteOrdinal: Int
   errorMessage: String!
   requestedByUserId: ID
   startedAt: Timestamp
@@ -75038,6 +76311,343 @@ extend type Mutation {
   "Replays a case against its agent as it is now, writes simulated, and scores it."
   replayAgentEvalCase(id: ID!): AgentEvaluation!
 }
+
+enum AgentSuiteRunStatus {
+  Running
+  Completed
+  "Nothing about the agent or its cases changed since its last run."
+  Skipped
+  "The nightly or monthly evaluation budget ran out before every case was asked."
+  BudgetStopped
+  Failed
+}
+
+enum AgentSuiteRunTrigger {
+  Scheduled
+  Manual
+}
+
+"One thing that changed about an agent between a suite run and the run it is compared with."
+type AgentFingerprintChange {
+  "definitionVersion, prompt, tools, model or provider."
+  field: String!
+  from: String!
+  to: String!
+}
+
+"""
+One agent answering a sample of its active evaluation cases, scored as a whole
+and compared with the runs before it.
+"""
+type AgentSuiteRun {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  agentDefinitionId: ID!
+  "The agent's name."
+  agentName: String!
+  trigger: AgentSuiteRunTrigger!
+  "The agent as it was scored: version, prompt hash, tool spec hash, model and provider."
+  fingerprint: JSON
+  fingerprintHash: String!
+  "What changed since the run it is compared with."
+  fingerprintChanges: [AgentFingerprintChange!]!
+  "What changed, in words."
+  changeSummary: String!
+  suiteRevision: String!
+  status: AgentSuiteRunStatus!
+  casesTotal: Int!
+  casesPassed: Int!
+  casesFailed: Int!
+  casesSkipped: Int!
+  hardFailures: Int!
+  deterministicScore: Float
+  judgeScore: Float
+  qualityScore: Float
+  "The median quality score of the recent runs it was compared with."
+  baselineScore: Float
+  baselineRunId: ID
+  regression: Boolean!
+  "What the run's replays and judgements cost, in US dollars."
+  costUsd: Decimal!
+  startedAt: Timestamp!
+  finishedAt: Timestamp
+  comments: String!
+  workflowId: String!
+  requestedByUserId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AgentSuiteRunEdge {
+  node: AgentSuiteRun!
+  cursor: String!
+}
+
+type AgentSuiteRunConnection {
+  edges: [AgentSuiteRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"One case of a suite run: its replay, with the checks, scores and judge's note."
+type AgentSuiteRunCaseEdge {
+  node: AgentEvaluation!
+  cursor: String!
+}
+
+type AgentSuiteRunCaseConnection {
+  edges: [AgentSuiteRunCaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"When and how far the nightly agent quality sweep runs."
+type AgentQualityControl {
+  "Empty until the organization saves its own controls."
+  id: ID
+  enabled: Boolean!
+  "The hour of the night the sweep starts, 0 to 23."
+  runHourLocal: Int!
+  "The timezone the hour is read in; empty for the organization's own."
+  timezone: String!
+  maxCasesPerAgent: Int!
+  nightlyBudgetUsd: Decimal!
+  monthlyBudgetUsd: Decimal!
+  judgeEnabled: Boolean!
+  "The share of each suite's cases the judge reads, 0 to 1."
+  judgeSampleRate: Float!
+  "How far below the recent median a suite score must fall to count as a regression."
+  regressionThreshold: Float!
+  "The fewest cases a run must score before a fall in its score counts."
+  minCases: Int!
+  "An unchanged agent is run again once its last run is this many days old."
+  forceRerunDays: Int!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+input UpdateAgentQualityControlInput {
+  "The version read; a save over a newer one is refused."
+  version: Int!
+  enabled: Boolean!
+  runHourLocal: Int!
+  "Empty for the organization's own timezone."
+  timezone: String
+  maxCasesPerAgent: Int!
+  nightlyBudgetUsd: Decimal!
+  monthlyBudgetUsd: Decimal!
+  judgeEnabled: Boolean!
+  judgeSampleRate: Float!
+  regressionThreshold: Float!
+  minCases: Int!
+  forceRerunDays: Int!
+}
+
+"One scored suite run on an agent's quality line."
+type AgentQualityPoint {
+  suiteRunId: ID!
+  at: Timestamp!
+  qualityScore: Float!
+  status: AgentSuiteRunStatus!
+  regression: Boolean!
+}
+
+"The organization's AI quality over a window."
+type AgentQualityOverview {
+  windowDays: Int!
+  since: Timestamp!
+  "Whether the caller may read ratings; satisfaction and ratings are empty when not."
+  ratingsVisible: Boolean!
+  "Share of agents' rated answers that were thumbs up; absent when nobody rated."
+  satisfaction: Float
+  ratings: Int!
+  "The mean of each scored agent's latest quality score."
+  qualityScore: Float
+  agentsScored: Int!
+  suiteRuns: Int!
+  "Suite runs in the window that regressed."
+  regressions: Int!
+  "Agents whose latest scored run regressed."
+  openRegressions: Int!
+  "What evaluation has spent since the start of the month, in US dollars."
+  evalSpendMonthUsd: Decimal!
+  "Evaluation calls this month to providers that carry no price."
+  evalUnpricedCalls: Int!
+  monthlyBudgetUsd: Decimal!
+  monthStartedAt: Timestamp!
+  sweepEnabled: Boolean!
+  nextSweepHourLocal: Int!
+  nextSweepTimezone: String!
+  agentsWithCases: Int!
+  judgeEnabled: Boolean!
+  regressionThreshold: Float!
+}
+
+"An answer people rated down, with the most recent thumbs down on it."
+type AgentWorstRatedAnswer {
+  "The rated output and its part, which key the row."
+  id: ID!
+  targetType: AIFeedbackTargetType!
+  targetId: ID!
+  targetPart: String!
+  positive: Int!
+  negative: Int!
+  lastRatedAt: Timestamp!
+  "What the person saw when they rated it down."
+  sample: AIFeedback
+  threadId: ID
+  "Whether the caller can open the conversation, which is only ever its owner."
+  canOpenThread: Boolean!
+  agentDefinitionId: ID
+  agentName: String!
+}
+
+type AgentWorstRatedAnswerEdge {
+  node: AgentWorstRatedAnswer!
+  cursor: String!
+}
+
+type AgentWorstRatedAnswerConnection {
+  edges: [AgentWorstRatedAnswerEdge!]!
+  pageInfo: PageInfo!
+  "Every answer matching the filters. Counted only when selected."
+  totalCount: Int
+}
+
+"One agent's quality over a window."
+type AgentQuality {
+  agentDefinitionId: ID!
+  agentName: String!
+  enabled: Boolean!
+  windowDays: Int!
+  since: Timestamp!
+  ratingsVisible: Boolean!
+  satisfaction: Float
+  ratings: Int!
+  "Satisfaction by day, in the organization's timezone."
+  satisfactionPoints: [AgentFeedbackDay!]!
+  "Each scored suite run in the window, oldest first."
+  qualityPoints: [AgentQualityPoint!]!
+  "The five answers people liked least."
+  worstRated: [AgentWorstRatedAnswer!]!
+  lastSuiteRun: AgentSuiteRun
+  activeCases: Int!
+}
+
+"One agent's row in the quality table."
+type AgentQualityAgent {
+  "The agent's id, which keys the row."
+  id: ID!
+  agentDefinitionId: ID!
+  name: String!
+  enabled: Boolean!
+  ratingsVisible: Boolean!
+  satisfaction: Float
+  "Satisfaction now less satisfaction in the window before; absent without ratings in both."
+  satisfactionDelta: Float
+  ratings: Int!
+  qualityScore: Float
+  qualityPoints: [AgentQualityPoint!]!
+  lastSuiteRun: AgentSuiteRun
+  openRegression: Boolean!
+}
+
+type AgentQualityAgentEdge {
+  node: AgentQualityAgent!
+  cursor: String!
+}
+
+type AgentQualityAgentConnection {
+  edges: [AgentQualityAgentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+input AgentQualityAgentsInput {
+  "Days of ratings and scores to read, 30 by default, at most 365."
+  window: Int
+  first: Int
+  after: String
+}
+
+input AgentWorstRatedAnswersInput {
+  agentDefinitionId: ID
+  window: Int
+  first: Int
+  after: String
+}
+
+input AgentSuiteRunsInput {
+  agentDefinitionId: ID
+  statuses: [AgentSuiteRunStatus!]
+  first: Int
+  after: String
+}
+
+input AgentSuiteRunCasesInput {
+  suiteRunId: ID!
+  first: Int
+  after: String
+}
+
+extend type Query {
+  "The organization's AI quality over the last window days."
+  agentQualityOverview(window: Int = 30): AgentQualityOverview!
+  "One agent's quality over the last window days."
+  agentQuality(agentDefinitionId: ID!, window: Int = 30): AgentQuality!
+  "Every agent with its satisfaction, quality line and last suite run, a page at a time."
+  agentQualityAgents(input: AgentQualityAgentsInput!): AgentQualityAgentConnection!
+    @deprecated(reason: "Use agentQualityAgentConnection, which takes the data table's filters and sort.")
+  """
+  Every agent with its satisfaction, quality line and last suite run over the
+  last window days, a page at a time. Filters on name, enabled, openRegression
+  and lastRunStatus; sorts on those and on satisfaction, satisfactionDelta,
+  ratings, qualityScore and lastRunAt.
+  """
+  agentQualityAgentConnection(
+    window: Int = 30
+    input: DataTableConnectionInput!
+  ): AgentQualityAgentConnection!
+  "The answers people liked least, a page at a time."
+  agentWorstRatedAnswers(input: AgentWorstRatedAnswersInput!): AgentWorstRatedAnswerConnection!
+    @deprecated(reason: "Use agentWorstRatedAnswerConnection, which takes the data table's filters and sort.")
+  """
+  The thousand answers people liked least over the last window days, most
+  disliked first, a page at a time. Filters on question, agentName,
+  agentDefinitionId, targetType, negative and positive; sorts on those and on
+  lastRatedAt.
+  """
+  agentWorstRatedAnswerConnection(
+    agentDefinitionId: ID
+    window: Int = 30
+    input: DataTableConnectionInput!
+  ): AgentWorstRatedAnswerConnection!
+  agentSuiteRuns(input: AgentSuiteRunsInput!): AgentSuiteRunConnection!
+    @deprecated(reason: "Use agentSuiteRunConnection, which takes the data table's filters and sort.")
+  "Suite runs a page at a time, newest first unless sorted, for one agent or all of them."
+  agentSuiteRunConnection(
+    agentDefinitionId: ID
+    input: DataTableConnectionInput!
+  ): AgentSuiteRunConnection!
+  agentSuiteRun(id: ID!): AgentSuiteRun
+  "A suite run's cases in the order they were asked."
+  agentSuiteRunCases(input: AgentSuiteRunCasesInput!): AgentSuiteRunCaseConnection!
+    @deprecated(reason: "Use agentSuiteRunCaseConnection, which takes the data table's filters and sort.")
+  "A suite run's cases a page at a time, in the order they were asked unless sorted."
+  agentSuiteRunCaseConnection(
+    suiteRunId: ID!
+    input: DataTableConnectionInput!
+  ): AgentSuiteRunCaseConnection!
+  agentQualityControl: AgentQualityControl!
+}
+
+extend type Mutation {
+  "Runs one agent's suite now, whatever changed or did not."
+  runAgentSuite(agentDefinitionId: ID!): AgentSuiteRun!
+  updateAgentQualityControl(input: UpdateAgentQualityControlInput!): AgentQualityControl!
+}
 `, BuiltIn: false},
 	{Name: "../schema/agentrunevent.graphqls", Input: `"""
 One thing an agent did, in the order it did it.
@@ -75171,6 +76781,8 @@ enum AgentTaintSource {
   RunRecord
   "A web page or search result an extension returned."
   Web
+  "A comment a driver, a trading partner or another system outside the organization left on a record."
+  RecordNote
 }
 
 "What a tool on an agent does when nobody is watching."
@@ -75195,6 +76807,8 @@ type AgentToolRequirement {
 
 "One tool's safety policy, as declared in code."
 type AgentToolPolicy {
+  "The tool's name, which keys its row."
+  id: ID!
   name: String!
   title: String!
   kind: AgentToolKind!
@@ -75228,6 +76842,12 @@ type AgentToolPolicy {
   rationale: String!
   "The policy in a sentence or two, as the agent's page shows it."
   explanation: String!
+  """
+  Whether the tool changes something and, on at least one of the
+  organization's agents, can do so without a person. Read only by
+  agentToolRuleConnection; null everywhere else.
+  """
+  runsWithoutPerson: Boolean
 }
 
 "What one tool does on one agent for a representative call."
@@ -75248,6 +76868,10 @@ type AgentToolAutonomy {
 
 "One tool an agent holds, before and after the run has read outside text."
 type AgentToolSafety {
+  "The agent and the tool together, which key the row."
+  id: ID!
+  agentId: ID!
+  agentName: String!
   policyName: String!
   "The rule the tool is held to, from the same catalog the runtime decides from."
   policy: AgentToolPolicy!
@@ -75319,6 +76943,18 @@ type AgentToolPolicyConnection {
   totalCount: Int
 }
 
+type AgentToolSafetyEdge {
+  node: AgentToolSafety!
+  cursor: String!
+}
+
+type AgentToolSafetyConnection {
+  edges: [AgentToolSafetyEdge!]!
+  pageInfo: PageInfo!
+  "Every held tool matching the filters. Counted only when selected."
+  totalCount: Int
+}
+
 "The figures that head the safety section, counted over every tool and agent."
 type AgentSafetySummary {
   "Every tool an agent can be given."
@@ -75336,9 +76972,26 @@ type AgentSafetySummary {
 extend type Query {
   "Every tool's safety policy, by name."
   agentToolPolicies: [AgentToolPolicy!]!
-    @deprecated(reason: "Use agentToolPolicyConnection, which pages and filters on the server.")
+    @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
   "The tool rules a page at a time, searched and filtered on the server."
   agentToolPolicyConnection(input: AgentToolPolicyConnectionInput!): AgentToolPolicyConnection!
+    @deprecated(reason: "Use agentToolRuleConnection, which takes the data table's filters and sort.")
+  """
+  The tool rules a page at a time. Filters on title, name, egress, maxTier,
+  resource, kind, readsExternal, leavesOrganization and runsWithoutPerson; sorts
+  on the same fields.
+  """
+  agentToolRuleConnection(input: DataTableConnectionInput!): AgentToolPolicyConnection!
+  """
+  Every tool the named agents hold, what each does before and after the run
+  has read outside text, a page at a time. Between one and ten agents. Filters
+  on agentId, agentName, title, policyName, egress, maxTier, kind, resource,
+  clean, tainted and heldBy.
+  """
+  agentToolSafetyConnection(
+    agentIds: [ID!]!
+    input: DataTableConnectionInput!
+  ): AgentToolSafetyConnection!
   "The safety figures, counted on the server so no client reads every rule to count them."
   agentSafetySummary: AgentSafetySummary!
   """
@@ -75677,6 +77330,7 @@ enum AITask {
   DailyBriefing
   QueryCompose
   InboundClassification
+  EvaluationJudge
   AssistantChat
   OperationalInsights
   General
@@ -92959,6 +94613,7 @@ enum WatchtowerSourceKind {
   InboundMessage
   WorkerCredential
   MoveCoverage
+  AgentQualityRegression
 }
 
 "How loudly an item asks to be looked at."
@@ -97137,6 +98792,10 @@ func (ec *executionContext) childFields_AgentEvaluation(ctx context.Context, fie
 		return ec.fieldContext_AgentEvaluation_caseScore(ctx, field)
 	case "fingerprint":
 		return ec.fieldContext_AgentEvaluation_fingerprint(ctx, field)
+	case "suiteRunId":
+		return ec.fieldContext_AgentEvaluation_suiteRunId(ctx, field)
+	case "suiteOrdinal":
+		return ec.fieldContext_AgentEvaluation_suiteOrdinal(ctx, field)
 	case "errorMessage":
 		return ec.fieldContext_AgentEvaluation_errorMessage(ctx, field)
 	case "requestedByUserId":
@@ -97303,6 +98962,18 @@ func (ec *executionContext) childFields_AgentFeedbackWorstRated(ctx context.Cont
 		return ec.fieldContext_AgentFeedbackWorstRated_sample(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentFeedbackWorstRated", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentFingerprintChange(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "field":
+		return ec.fieldContext_AgentFingerprintChange_field(ctx, field)
+	case "from":
+		return ec.fieldContext_AgentFingerprintChange_from(ctx, field)
+	case "to":
+		return ec.fieldContext_AgentFingerprintChange_to(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentFingerprintChange", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentMemory(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -97591,6 +99262,186 @@ func (ec *executionContext) childFields_AgentProposalField(ctx context.Context, 
 	return nil, fmt.Errorf("no field named %q was found under type AgentProposalField", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentQuality(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "agentDefinitionId":
+		return ec.fieldContext_AgentQuality_agentDefinitionId(ctx, field)
+	case "agentName":
+		return ec.fieldContext_AgentQuality_agentName(ctx, field)
+	case "enabled":
+		return ec.fieldContext_AgentQuality_enabled(ctx, field)
+	case "windowDays":
+		return ec.fieldContext_AgentQuality_windowDays(ctx, field)
+	case "since":
+		return ec.fieldContext_AgentQuality_since(ctx, field)
+	case "ratingsVisible":
+		return ec.fieldContext_AgentQuality_ratingsVisible(ctx, field)
+	case "satisfaction":
+		return ec.fieldContext_AgentQuality_satisfaction(ctx, field)
+	case "ratings":
+		return ec.fieldContext_AgentQuality_ratings(ctx, field)
+	case "satisfactionPoints":
+		return ec.fieldContext_AgentQuality_satisfactionPoints(ctx, field)
+	case "qualityPoints":
+		return ec.fieldContext_AgentQuality_qualityPoints(ctx, field)
+	case "worstRated":
+		return ec.fieldContext_AgentQuality_worstRated(ctx, field)
+	case "lastSuiteRun":
+		return ec.fieldContext_AgentQuality_lastSuiteRun(ctx, field)
+	case "activeCases":
+		return ec.fieldContext_AgentQuality_activeCases(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentQuality", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentQualityAgent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentQualityAgent_id(ctx, field)
+	case "agentDefinitionId":
+		return ec.fieldContext_AgentQualityAgent_agentDefinitionId(ctx, field)
+	case "name":
+		return ec.fieldContext_AgentQualityAgent_name(ctx, field)
+	case "enabled":
+		return ec.fieldContext_AgentQualityAgent_enabled(ctx, field)
+	case "ratingsVisible":
+		return ec.fieldContext_AgentQualityAgent_ratingsVisible(ctx, field)
+	case "satisfaction":
+		return ec.fieldContext_AgentQualityAgent_satisfaction(ctx, field)
+	case "satisfactionDelta":
+		return ec.fieldContext_AgentQualityAgent_satisfactionDelta(ctx, field)
+	case "ratings":
+		return ec.fieldContext_AgentQualityAgent_ratings(ctx, field)
+	case "qualityScore":
+		return ec.fieldContext_AgentQualityAgent_qualityScore(ctx, field)
+	case "qualityPoints":
+		return ec.fieldContext_AgentQualityAgent_qualityPoints(ctx, field)
+	case "lastSuiteRun":
+		return ec.fieldContext_AgentQualityAgent_lastSuiteRun(ctx, field)
+	case "openRegression":
+		return ec.fieldContext_AgentQualityAgent_openRegression(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentQualityAgent", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentQualityAgentConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AgentQualityAgentConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AgentQualityAgentConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AgentQualityAgentConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentQualityAgentConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentQualityAgentEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AgentQualityAgentEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AgentQualityAgentEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentQualityAgentEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentQualityControl(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentQualityControl_id(ctx, field)
+	case "enabled":
+		return ec.fieldContext_AgentQualityControl_enabled(ctx, field)
+	case "runHourLocal":
+		return ec.fieldContext_AgentQualityControl_runHourLocal(ctx, field)
+	case "timezone":
+		return ec.fieldContext_AgentQualityControl_timezone(ctx, field)
+	case "maxCasesPerAgent":
+		return ec.fieldContext_AgentQualityControl_maxCasesPerAgent(ctx, field)
+	case "nightlyBudgetUsd":
+		return ec.fieldContext_AgentQualityControl_nightlyBudgetUsd(ctx, field)
+	case "monthlyBudgetUsd":
+		return ec.fieldContext_AgentQualityControl_monthlyBudgetUsd(ctx, field)
+	case "judgeEnabled":
+		return ec.fieldContext_AgentQualityControl_judgeEnabled(ctx, field)
+	case "judgeSampleRate":
+		return ec.fieldContext_AgentQualityControl_judgeSampleRate(ctx, field)
+	case "regressionThreshold":
+		return ec.fieldContext_AgentQualityControl_regressionThreshold(ctx, field)
+	case "minCases":
+		return ec.fieldContext_AgentQualityControl_minCases(ctx, field)
+	case "forceRerunDays":
+		return ec.fieldContext_AgentQualityControl_forceRerunDays(ctx, field)
+	case "version":
+		return ec.fieldContext_AgentQualityControl_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AgentQualityControl_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentQualityControl", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentQualityOverview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "windowDays":
+		return ec.fieldContext_AgentQualityOverview_windowDays(ctx, field)
+	case "since":
+		return ec.fieldContext_AgentQualityOverview_since(ctx, field)
+	case "ratingsVisible":
+		return ec.fieldContext_AgentQualityOverview_ratingsVisible(ctx, field)
+	case "satisfaction":
+		return ec.fieldContext_AgentQualityOverview_satisfaction(ctx, field)
+	case "ratings":
+		return ec.fieldContext_AgentQualityOverview_ratings(ctx, field)
+	case "qualityScore":
+		return ec.fieldContext_AgentQualityOverview_qualityScore(ctx, field)
+	case "agentsScored":
+		return ec.fieldContext_AgentQualityOverview_agentsScored(ctx, field)
+	case "suiteRuns":
+		return ec.fieldContext_AgentQualityOverview_suiteRuns(ctx, field)
+	case "regressions":
+		return ec.fieldContext_AgentQualityOverview_regressions(ctx, field)
+	case "openRegressions":
+		return ec.fieldContext_AgentQualityOverview_openRegressions(ctx, field)
+	case "evalSpendMonthUsd":
+		return ec.fieldContext_AgentQualityOverview_evalSpendMonthUsd(ctx, field)
+	case "evalUnpricedCalls":
+		return ec.fieldContext_AgentQualityOverview_evalUnpricedCalls(ctx, field)
+	case "monthlyBudgetUsd":
+		return ec.fieldContext_AgentQualityOverview_monthlyBudgetUsd(ctx, field)
+	case "monthStartedAt":
+		return ec.fieldContext_AgentQualityOverview_monthStartedAt(ctx, field)
+	case "sweepEnabled":
+		return ec.fieldContext_AgentQualityOverview_sweepEnabled(ctx, field)
+	case "nextSweepHourLocal":
+		return ec.fieldContext_AgentQualityOverview_nextSweepHourLocal(ctx, field)
+	case "nextSweepTimezone":
+		return ec.fieldContext_AgentQualityOverview_nextSweepTimezone(ctx, field)
+	case "agentsWithCases":
+		return ec.fieldContext_AgentQualityOverview_agentsWithCases(ctx, field)
+	case "judgeEnabled":
+		return ec.fieldContext_AgentQualityOverview_judgeEnabled(ctx, field)
+	case "regressionThreshold":
+		return ec.fieldContext_AgentQualityOverview_regressionThreshold(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentQualityOverview", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentQualityPoint(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "suiteRunId":
+		return ec.fieldContext_AgentQualityPoint_suiteRunId(ctx, field)
+	case "at":
+		return ec.fieldContext_AgentQualityPoint_at(ctx, field)
+	case "qualityScore":
+		return ec.fieldContext_AgentQualityPoint_qualityScore(ctx, field)
+	case "status":
+		return ec.fieldContext_AgentQualityPoint_status(ctx, field)
+	case "regression":
+		return ec.fieldContext_AgentQualityPoint_regression(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentQualityPoint", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentReach(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "accessMode":
@@ -97859,6 +99710,120 @@ func (ec *executionContext) childFields_AgentStarter(ctx context.Context, field 
 	return nil, fmt.Errorf("no field named %q was found under type AgentStarter", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentSuiteRun(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentSuiteRun_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_AgentSuiteRun_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_AgentSuiteRun_businessUnitId(ctx, field)
+	case "agentDefinitionId":
+		return ec.fieldContext_AgentSuiteRun_agentDefinitionId(ctx, field)
+	case "agentName":
+		return ec.fieldContext_AgentSuiteRun_agentName(ctx, field)
+	case "trigger":
+		return ec.fieldContext_AgentSuiteRun_trigger(ctx, field)
+	case "fingerprint":
+		return ec.fieldContext_AgentSuiteRun_fingerprint(ctx, field)
+	case "fingerprintHash":
+		return ec.fieldContext_AgentSuiteRun_fingerprintHash(ctx, field)
+	case "fingerprintChanges":
+		return ec.fieldContext_AgentSuiteRun_fingerprintChanges(ctx, field)
+	case "changeSummary":
+		return ec.fieldContext_AgentSuiteRun_changeSummary(ctx, field)
+	case "suiteRevision":
+		return ec.fieldContext_AgentSuiteRun_suiteRevision(ctx, field)
+	case "status":
+		return ec.fieldContext_AgentSuiteRun_status(ctx, field)
+	case "casesTotal":
+		return ec.fieldContext_AgentSuiteRun_casesTotal(ctx, field)
+	case "casesPassed":
+		return ec.fieldContext_AgentSuiteRun_casesPassed(ctx, field)
+	case "casesFailed":
+		return ec.fieldContext_AgentSuiteRun_casesFailed(ctx, field)
+	case "casesSkipped":
+		return ec.fieldContext_AgentSuiteRun_casesSkipped(ctx, field)
+	case "hardFailures":
+		return ec.fieldContext_AgentSuiteRun_hardFailures(ctx, field)
+	case "deterministicScore":
+		return ec.fieldContext_AgentSuiteRun_deterministicScore(ctx, field)
+	case "judgeScore":
+		return ec.fieldContext_AgentSuiteRun_judgeScore(ctx, field)
+	case "qualityScore":
+		return ec.fieldContext_AgentSuiteRun_qualityScore(ctx, field)
+	case "baselineScore":
+		return ec.fieldContext_AgentSuiteRun_baselineScore(ctx, field)
+	case "baselineRunId":
+		return ec.fieldContext_AgentSuiteRun_baselineRunId(ctx, field)
+	case "regression":
+		return ec.fieldContext_AgentSuiteRun_regression(ctx, field)
+	case "costUsd":
+		return ec.fieldContext_AgentSuiteRun_costUsd(ctx, field)
+	case "startedAt":
+		return ec.fieldContext_AgentSuiteRun_startedAt(ctx, field)
+	case "finishedAt":
+		return ec.fieldContext_AgentSuiteRun_finishedAt(ctx, field)
+	case "comments":
+		return ec.fieldContext_AgentSuiteRun_comments(ctx, field)
+	case "workflowId":
+		return ec.fieldContext_AgentSuiteRun_workflowId(ctx, field)
+	case "requestedByUserId":
+		return ec.fieldContext_AgentSuiteRun_requestedByUserId(ctx, field)
+	case "version":
+		return ec.fieldContext_AgentSuiteRun_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AgentSuiteRun_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AgentSuiteRun_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentSuiteRun", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentSuiteRunCaseConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AgentSuiteRunCaseConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AgentSuiteRunCaseConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AgentSuiteRunCaseConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentSuiteRunCaseConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentSuiteRunCaseEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AgentSuiteRunCaseEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AgentSuiteRunCaseEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentSuiteRunCaseEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentSuiteRunConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AgentSuiteRunConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AgentSuiteRunConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AgentSuiteRunConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentSuiteRunConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentSuiteRunEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AgentSuiteRunEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AgentSuiteRunEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentSuiteRunEdge", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentTaintMark(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "source":
@@ -97925,6 +99890,8 @@ func (ec *executionContext) childFields_AgentToolOutcome(ctx context.Context, fi
 
 func (ec *executionContext) childFields_AgentToolPolicy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentToolPolicy_id(ctx, field)
 	case "name":
 		return ec.fieldContext_AgentToolPolicy_name(ctx, field)
 	case "title":
@@ -97971,6 +99938,8 @@ func (ec *executionContext) childFields_AgentToolPolicy(ctx context.Context, fie
 		return ec.fieldContext_AgentToolPolicy_rationale(ctx, field)
 	case "explanation":
 		return ec.fieldContext_AgentToolPolicy_explanation(ctx, field)
+	case "runsWithoutPerson":
+		return ec.fieldContext_AgentToolPolicy_runsWithoutPerson(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentToolPolicy", field.Name)
 }
@@ -98009,6 +99978,12 @@ func (ec *executionContext) childFields_AgentToolRequirement(ctx context.Context
 
 func (ec *executionContext) childFields_AgentToolSafety(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentToolSafety_id(ctx, field)
+	case "agentId":
+		return ec.fieldContext_AgentToolSafety_agentId(ctx, field)
+	case "agentName":
+		return ec.fieldContext_AgentToolSafety_agentName(ctx, field)
 	case "policyName":
 		return ec.fieldContext_AgentToolSafety_policyName(ctx, field)
 	case "policy":
@@ -98019,6 +99994,28 @@ func (ec *executionContext) childFields_AgentToolSafety(ctx context.Context, fie
 		return ec.fieldContext_AgentToolSafety_tainted(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentToolSafety", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentToolSafetyConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AgentToolSafetyConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AgentToolSafetyConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AgentToolSafetyConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentToolSafetyConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentToolSafetyEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AgentToolSafetyEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AgentToolSafetyEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentToolSafetyEdge", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentToolTrust(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
@@ -98045,6 +100042,58 @@ func (ec *executionContext) childFields_AgentToolTrust(ctx context.Context, fiel
 		return ec.fieldContext_AgentToolTrust_demotedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentToolTrust", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentWorstRatedAnswer(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentWorstRatedAnswer_id(ctx, field)
+	case "targetType":
+		return ec.fieldContext_AgentWorstRatedAnswer_targetType(ctx, field)
+	case "targetId":
+		return ec.fieldContext_AgentWorstRatedAnswer_targetId(ctx, field)
+	case "targetPart":
+		return ec.fieldContext_AgentWorstRatedAnswer_targetPart(ctx, field)
+	case "positive":
+		return ec.fieldContext_AgentWorstRatedAnswer_positive(ctx, field)
+	case "negative":
+		return ec.fieldContext_AgentWorstRatedAnswer_negative(ctx, field)
+	case "lastRatedAt":
+		return ec.fieldContext_AgentWorstRatedAnswer_lastRatedAt(ctx, field)
+	case "sample":
+		return ec.fieldContext_AgentWorstRatedAnswer_sample(ctx, field)
+	case "threadId":
+		return ec.fieldContext_AgentWorstRatedAnswer_threadId(ctx, field)
+	case "canOpenThread":
+		return ec.fieldContext_AgentWorstRatedAnswer_canOpenThread(ctx, field)
+	case "agentDefinitionId":
+		return ec.fieldContext_AgentWorstRatedAnswer_agentDefinitionId(ctx, field)
+	case "agentName":
+		return ec.fieldContext_AgentWorstRatedAnswer_agentName(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentWorstRatedAnswer", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentWorstRatedAnswerConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AgentWorstRatedAnswerConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AgentWorstRatedAnswerConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AgentWorstRatedAnswerConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentWorstRatedAnswerConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentWorstRatedAnswerEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AgentWorstRatedAnswerEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AgentWorstRatedAnswerEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentWorstRatedAnswerEdge", field.Name)
 }
 
 func (ec *executionContext) childFields_ApiKey(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

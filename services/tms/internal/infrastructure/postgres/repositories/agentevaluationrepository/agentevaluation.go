@@ -12,11 +12,14 @@ import (
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const maxSuitePage = 200
 
 type Params struct {
 	fx.In
@@ -148,7 +151,8 @@ func (r *repository) ListConnection(
 					(*agent.Evaluation)(nil),
 				)
 
-				return sq.Apply(buncolgen.EvaluationApplyTenant(req.Filter.TenantInfo))
+				return suiteScope(sq, req.SuiteRunID).
+					Apply(buncolgen.EvaluationApplyTenant(req.Filter.TenantInfo))
 			}).
 			Count(ctx)
 		if err != nil {
@@ -175,7 +179,7 @@ func (r *repository) ListConnection(
 			},
 			Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 				return querybuilder.ApplyCursorFilters(
-					sq,
+					suiteScope(sq, req.SuiteRunID),
 					buncolgen.EvaluationTable.Alias,
 					req.Filter,
 					req.Cursor,
@@ -190,4 +194,88 @@ func (r *repository) ListConnection(
 	}
 
 	return result, nil
+}
+
+func suiteScope(sq *bun.SelectQuery, suiteRunID pulid.ID) *bun.SelectQuery {
+	if suiteRunID.IsNil() {
+		return sq
+	}
+
+	return sq.Where(buncolgen.EvaluationColumns.SuiteRunID.Eq(), suiteRunID)
+}
+
+func (r *repository) CreateMany(ctx context.Context, entities []*agent.Evaluation) error {
+	if len(entities) == 0 {
+		return nil
+	}
+
+	if _, err := r.db.DBForContext(ctx).NewInsert().Model(&entities).Exec(ctx); err != nil {
+		r.l.Error("failed to create suite evaluations", zap.Error(err))
+
+		return fmt.Errorf("create suite evaluations: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) ListBySuiteRun(
+	ctx context.Context,
+	req repositories.ListSuiteEvaluationsRequest,
+) ([]*agent.Evaluation, error) {
+	cols := buncolgen.EvaluationColumns
+	limit := req.Limit
+	if limit <= 0 || limit > maxSuitePage {
+		limit = maxSuitePage
+	}
+
+	entities := make([]*agent.Evaluation, 0, limit)
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.EvaluationScopeTenant(sq, req.TenantInfo).
+				Where(cols.SuiteRunID.Eq(), req.SuiteRunID).
+				Where(cols.SuiteOrdinal.Gt(), req.AfterOrdinal)
+		}).
+		Order(cols.SuiteOrdinal.OrderAsc()).
+		Limit(limit).
+		Scan(ctx); err != nil {
+		return nil, fmt.Errorf("list suite evaluations: %w", err)
+	}
+
+	return entities, nil
+}
+
+func (r *repository) SkipPendingBySuiteRun(
+	ctx context.Context,
+	req repositories.SkipPendingSuiteEvaluationsRequest,
+) (int, error) {
+	cols := buncolgen.EvaluationColumns
+
+	res, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*agent.Evaluation)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.EvaluationScopeTenantUpdate(uq, req.TenantInfo).
+				Where(cols.SuiteRunID.Eq(), req.SuiteRunID).
+				Where(cols.Status.In(), bun.List([]agent.EvaluationStatus{
+					agent.EvaluationStatusPending,
+				}))
+		}).
+		Set(cols.Status.Set(), agent.EvaluationStatusSkipped).
+		Set(cols.ErrorMessage.Set(), req.Reason).
+		Set(cols.CompletedAt.Set(), req.At).
+		Set(cols.UpdatedAt.Set(), req.At).
+		Set(cols.Version.Inc(1)).
+		Exec(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("skip pending suite evaluations: %w", err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("skip pending suite evaluations rows: %w", err)
+	}
+
+	return int(rows), nil
 }

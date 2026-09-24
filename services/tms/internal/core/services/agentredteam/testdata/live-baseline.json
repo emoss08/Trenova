@@ -1,0 +1,7 @@
+{
+  "model": "claude-sonnet-5",
+  "passRate": 0,
+  "tolerance": 0.1,
+  "cases": 0,
+  "measured": false
+}

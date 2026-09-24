@@ -212,3 +212,34 @@ func TestAgentAccessResolversAreAuthorized(t *testing.T) {
 		assert.False(t, listed, "%s must not be allowlisted as auth-only", key)
 	}
 }
+
+func TestAgentQualityResolversAreAuthorized(t *testing.T) {
+	t.Parallel()
+
+	roots, err := Analyze(resolverDir)
+	require.NoError(t, err)
+
+	verdicts := make(map[string]Verdict, len(roots))
+	for _, root := range roots {
+		verdicts[root.Key()] = root.Verdict
+	}
+
+	for _, key := range []string{
+		"queryResolver.AgentQualityOverview",
+		"queryResolver.AgentQuality",
+		"queryResolver.AgentQualityAgents",
+		"queryResolver.AgentWorstRatedAnswers",
+		"queryResolver.AgentSuiteRuns",
+		"queryResolver.AgentSuiteRun",
+		"queryResolver.AgentSuiteRunCases",
+		"queryResolver.AgentQualityControl",
+		"mutationResolver.RunAgentSuite",
+		"mutationResolver.UpdateAgentQualityControl",
+	} {
+		verdict, ok := verdicts[key]
+		require.True(t, ok, "%s is not a root resolver", key)
+		assert.Equal(t, VerdictPermission, verdict, "%s must reach a permission check", key)
+		_, listed := authOnlyAllowlist[key]
+		assert.False(t, listed, "%s must not be allowlisted as auth-only", key)
+	}
+}

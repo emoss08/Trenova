@@ -107,10 +107,12 @@ never runs past Ask first. Earned autonomy moves a tool up one tier after a
 streak of clean approvals, and never past those limits.
 
 **Taint.** Some tools return text written outside the organization: an inbound
-message, a document, an EDI transaction, a bank receipt, a weather alert. Once
-a run has read such text, every call that would leave the organization or move
-money waits for approval, whatever its tier, so an instruction hidden in that
-text cannot act on its own.
+message, a document, an EDI transaction, a bank receipt, a weather alert, a
+comment a driver or a trading partner left on a shipment. Once a run has read
+such text, every call that would leave the organization or move money waits
+for approval, whatever its tier, and so does any call a tool's own taint hold
+names, so an instruction hidden in that text cannot act on its own. Every call
+taint held names it among what held it, whatever else held it too.
 
 **Personal exemption.** A call that changes only the caller's own records runs
 without a decision while that person is in the conversation, unless a person
@@ -184,12 +186,15 @@ func classList(egress []agent.EgressClass) string {
 }
 
 func condition(policy *serviceports.ToolPolicy) string {
-	parts := make([]string, 0, 3)
+	parts := make([]string, 0, 4)
 	if policy.Classify != nil {
 		parts = append(parts, "Each call is classified by what it reaches.")
 	}
 	if policy.Condition != nil {
 		parts = append(parts, policy.Condition.Description)
+	}
+	if policy.TaintHold != nil {
+		parts = append(parts, policy.TaintHold.Description)
 	}
 	if policy.PersonalRunsUnasked {
 		parts = append(parts, "A call on the caller's own records runs unasked while they "+

@@ -310,6 +310,16 @@ func taskDescriptors() []TaskDescriptor {
 				"afterwards, so the cheapest model that reads English reliably will do.",
 		},
 		{
+			Task:  aiprovider.TaskEvaluationJudge,
+			Label: "Evaluation judge",
+			Description: "Score a sample of agents' answers to their evaluation cases " +
+				"against each case's rubric.",
+			VolumeGuidance: "A few calls a night, only when judging is on in AI Control. " +
+				"Its reading counts toward the evaluation budget and never overrides a " +
+				"check that failed outright, so a capable model that follows a rubric " +
+				"closely is worth more here than a cheap one.",
+		},
+		{
 			Task:           aiprovider.TaskGeneral,
 			Label:          "General",
 			Description:    "Anything not routed to a more specific task.",

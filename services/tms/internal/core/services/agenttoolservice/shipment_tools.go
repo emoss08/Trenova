@@ -94,8 +94,10 @@ func (t *addShipmentCommentTool) Policy() serviceports.ToolPolicy {
 		Effect:        agent.ToolEffectChange,
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
+		CarriesTaint:  true,
 		Rationale: "An internal note stays inside the organization; a customer or driver " +
-			"note is read outside it, so its visibility argument decides.",
+			"note is read outside it, so its visibility argument decides. A note written " +
+			"on its own after the run read outside text is marked as drawn from it.",
 	}
 }
 
@@ -131,11 +133,20 @@ func (t *addShipmentCommentTool) Execute(
 		Visibility:     visibility,
 		Priority:       commentPriority(optionalString(params.Params, "priority")),
 		Source:         shipment.CommentSourceAI,
+		Metadata:       commentTaintMetadata(params),
 	}
 
 	_, err = t.comments.Create(ctx, entity, params.Actor)
 
 	return err
+}
+
+func commentTaintMetadata(params serviceports.ToolExecuteParams) map[string]any {
+	if params.ApprovedFromProposal() || !params.CarriedTaint(timeutils.NowUnix()).Tainted() {
+		return nil
+	}
+
+	return map[string]any{shipment.CommentMetadataTainted: true}
 }
 
 // commentVisibility defaults to Internal for anything it does not recognise.

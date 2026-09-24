@@ -8,42 +8,44 @@ import "github.com/emoss08/trenova/internal/core/domain/permission"
 type SourceKind string
 
 const (
-	SourceInsight               = SourceKind("Insight")
-	SourceAgentProposal         = SourceKind("AgentProposal")
-	SourceAgentPlan             = SourceKind("AgentPlan")
-	SourceAgentRunFailed        = SourceKind("AgentRunFailed")
-	SourceAgentException        = SourceKind("AgentException")
-	SourceServiceFailure        = SourceKind("ServiceFailure")
-	SourceCarrierIntelEvent     = SourceKind("CarrierIntelEvent")
-	SourceHOSViolation          = SourceKind("HOSViolation")
-	SourceWeatherAlert          = SourceKind("WeatherAlert")
-	SourceEDIInboundQuarantined = SourceKind("EDIInboundQuarantined")
-	SourceBillingException      = SourceKind("BillingException")
-	SourceDetentionOccurrence   = SourceKind("DetentionOccurrence")
-	SourceInboundMessage        = SourceKind("InboundMessage")
-	SourceWorkerCredential      = SourceKind("WorkerCredential")
-	SourceMoveCoverage          = SourceKind("MoveCoverage")
+	SourceInsight                = SourceKind("Insight")
+	SourceAgentProposal          = SourceKind("AgentProposal")
+	SourceAgentPlan              = SourceKind("AgentPlan")
+	SourceAgentRunFailed         = SourceKind("AgentRunFailed")
+	SourceAgentException         = SourceKind("AgentException")
+	SourceServiceFailure         = SourceKind("ServiceFailure")
+	SourceCarrierIntelEvent      = SourceKind("CarrierIntelEvent")
+	SourceHOSViolation           = SourceKind("HOSViolation")
+	SourceWeatherAlert           = SourceKind("WeatherAlert")
+	SourceEDIInboundQuarantined  = SourceKind("EDIInboundQuarantined")
+	SourceBillingException       = SourceKind("BillingException")
+	SourceDetentionOccurrence    = SourceKind("DetentionOccurrence")
+	SourceInboundMessage         = SourceKind("InboundMessage")
+	SourceWorkerCredential       = SourceKind("WorkerCredential")
+	SourceMoveCoverage           = SourceKind("MoveCoverage")
+	SourceAgentQualityRegression = SourceKind("AgentQualityRegression")
 )
 
 // readResources is the permission a reader needs to be shown items of each
 // kind: the same read that opens the source record, so the watchtower never
 // shows someone a headline about a record they could not open.
 var readResources = map[SourceKind]permission.Resource{
-	SourceInsight:               permission.ResourceInsight,
-	SourceAgentProposal:         permission.ResourceAgentProposal,
-	SourceAgentPlan:             permission.ResourceAgentProposal,
-	SourceAgentRunFailed:        permission.ResourceAgentRun,
-	SourceAgentException:        permission.ResourceAgentException,
-	SourceServiceFailure:        permission.ResourceServiceFailure,
-	SourceCarrierIntelEvent:     permission.ResourceCarrierIntelligence,
-	SourceHOSViolation:          permission.ResourceWorker,
-	SourceWeatherAlert:          permission.ResourceShipment,
-	SourceEDIInboundQuarantined: permission.ResourceEDI,
-	SourceBillingException:      permission.ResourceBillingQueue,
-	SourceDetentionOccurrence:   permission.ResourceDetentionPolicy,
-	SourceInboundMessage:        permission.ResourceInboundMessage,
-	SourceWorkerCredential:      permission.ResourceWorker,
-	SourceMoveCoverage:          permission.ResourceShipmentMove,
+	SourceInsight:                permission.ResourceInsight,
+	SourceAgentProposal:          permission.ResourceAgentProposal,
+	SourceAgentPlan:              permission.ResourceAgentProposal,
+	SourceAgentRunFailed:         permission.ResourceAgentRun,
+	SourceAgentException:         permission.ResourceAgentException,
+	SourceServiceFailure:         permission.ResourceServiceFailure,
+	SourceCarrierIntelEvent:      permission.ResourceCarrierIntelligence,
+	SourceHOSViolation:           permission.ResourceWorker,
+	SourceWeatherAlert:           permission.ResourceShipment,
+	SourceEDIInboundQuarantined:  permission.ResourceEDI,
+	SourceBillingException:       permission.ResourceBillingQueue,
+	SourceDetentionOccurrence:    permission.ResourceDetentionPolicy,
+	SourceInboundMessage:         permission.ResourceInboundMessage,
+	SourceWorkerCredential:       permission.ResourceWorker,
+	SourceMoveCoverage:           permission.ResourceShipmentMove,
+	SourceAgentQualityRegression: permission.ResourceAgentEvalSuite,
 }
 
 func (k SourceKind) IsValid() bool {
@@ -92,6 +94,8 @@ func (k SourceKind) Label() string {
 		return "Credential expiring"
 	case SourceMoveCoverage:
 		return "Coverage at risk"
+	case SourceAgentQualityRegression:
+		return "Agent quality regressed"
 	default:
 		return string(k)
 	}
@@ -114,6 +118,7 @@ func AllSourceKinds() []SourceKind {
 		SourceInboundMessage,
 		SourceWorkerCredential,
 		SourceMoveCoverage,
+		SourceAgentQualityRegression,
 	}
 }
 

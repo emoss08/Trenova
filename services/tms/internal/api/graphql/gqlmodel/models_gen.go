@@ -341,6 +341,14 @@ type AgentExceptionResolveInput struct {
 	ResolutionNotes *string               `json:"resolutionNotes,omitempty"`
 }
 
+// One thing that changed about an agent between a suite run and the run it is compared with.
+type AgentFingerprintChange struct {
+	// definitionVersion, prompt, tools, model or provider.
+	Field string `json:"field"`
+	From  string `json:"from"`
+	To    string `json:"to"`
+}
+
 type AgentMemoryConnection struct {
 	Edges      []*AgentMemoryEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
@@ -406,6 +414,24 @@ type AgentProposalDecisionResult struct {
 type AgentProposalEdge struct {
 	Node   *agent.AgentProposal `json:"node"`
 	Cursor string               `json:"cursor"`
+}
+
+type AgentQualityAgentConnection struct {
+	Edges      []*AgentQualityAgentEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+type AgentQualityAgentEdge struct {
+	Node   *services.AgentQualityAgent `json:"node"`
+	Cursor string                      `json:"cursor"`
+}
+
+type AgentQualityAgentsInput struct {
+	// Days of ratings and scores to read, 30 by default, at most 365.
+	Window *int    `json:"window,omitempty"`
+	First  *int    `json:"first,omitempty"`
+	After  *string `json:"after,omitempty"`
 }
 
 // Who can reach an agent.
@@ -479,8 +505,46 @@ type AgentScorecardInput struct {
 	Window            *agent.ScorecardWindow `json:"window,omitempty"`
 }
 
+type AgentSuiteRunCaseConnection struct {
+	Edges      []*AgentSuiteRunCaseEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+// One case of a suite run: its replay, with the checks, scores and judge's note.
+type AgentSuiteRunCaseEdge struct {
+	Node   *agent.Evaluation `json:"node"`
+	Cursor string            `json:"cursor"`
+}
+
+type AgentSuiteRunCasesInput struct {
+	SuiteRunID string  `json:"suiteRunId"`
+	First      *int    `json:"first,omitempty"`
+	After      *string `json:"after,omitempty"`
+}
+
+type AgentSuiteRunConnection struct {
+	Edges      []*AgentSuiteRunEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type AgentSuiteRunEdge struct {
+	Node   *agentquality.SuiteRun `json:"node"`
+	Cursor string                 `json:"cursor"`
+}
+
+type AgentSuiteRunsInput struct {
+	AgentDefinitionID *string                       `json:"agentDefinitionId,omitempty"`
+	Statuses          []agentquality.SuiteRunStatus `json:"statuses,omitempty"`
+	First             *int                          `json:"first,omitempty"`
+	After             *string                       `json:"after,omitempty"`
+}
+
 // One tool's safety policy, as declared in code.
 type AgentToolPolicy struct {
+	// The tool's name, which keys its row.
+	ID    string         `json:"id"`
 	Name  string         `json:"name"`
 	Title string         `json:"title"`
 	Kind  agent.ToolKind `json:"kind"`
@@ -514,6 +578,10 @@ type AgentToolPolicy struct {
 	Rationale    string `json:"rationale"`
 	// The policy in a sentence or two, as the agent's page shows it.
 	Explanation string `json:"explanation"`
+	// Whether the tool changes something and, on at least one of the
+	// organization's agents, can do so without a person. Read only by
+	// agentToolRuleConnection; null everywhere else.
+	RunsWithoutPerson *bool `json:"runsWithoutPerson,omitempty"`
 }
 
 type AgentToolPolicyConnection struct {
@@ -551,6 +619,18 @@ type AgentToolRequirement struct {
 	Operation string `json:"operation"`
 }
 
+type AgentToolSafetyConnection struct {
+	Edges    []*AgentToolSafetyEdge `json:"edges"`
+	PageInfo *PageInfo              `json:"pageInfo"`
+	// Every held tool matching the filters. Counted only when selected.
+	TotalCount *int `json:"totalCount,omitempty"`
+}
+
+type AgentToolSafetyEdge struct {
+	Node   *services.AgentToolSafety `json:"node"`
+	Cursor string                    `json:"cursor"`
+}
+
 // What one tool has earned on this agent.
 //
 // The ladder is not windowed: a tier is earned over the agent's whole life and
@@ -569,6 +649,25 @@ type AgentToolTrust struct {
 	LastDecisionAt *int                `json:"lastDecisionAt,omitempty"`
 	PromotedAt     *int                `json:"promotedAt,omitempty"`
 	DemotedAt      *int                `json:"demotedAt,omitempty"`
+}
+
+type AgentWorstRatedAnswerConnection struct {
+	Edges    []*AgentWorstRatedAnswerEdge `json:"edges"`
+	PageInfo *PageInfo                    `json:"pageInfo"`
+	// Every answer matching the filters. Counted only when selected.
+	TotalCount *int `json:"totalCount,omitempty"`
+}
+
+type AgentWorstRatedAnswerEdge struct {
+	Node   *services.AgentWorstRatedAnswer `json:"node"`
+	Cursor string                          `json:"cursor"`
+}
+
+type AgentWorstRatedAnswersInput struct {
+	AgentDefinitionID *string `json:"agentDefinitionId,omitempty"`
+	Window            *int    `json:"window,omitempty"`
+	First             *int    `json:"first,omitempty"`
+	After             *string `json:"after,omitempty"`
 }
 
 type AmendWorkerEmploymentEventInput struct {
@@ -7811,6 +7910,23 @@ type UpdateAgentEvalCaseInput struct {
 	Rubric    *string        `json:"rubric,omitempty"`
 	// Absent leaves the expiry alone; null clears it.
 	ExpiresAt graphql.Omittable[*int] `json:"expiresAt,omitempty"`
+}
+
+type UpdateAgentQualityControlInput struct {
+	// The version read; a save over a newer one is refused.
+	Version      int  `json:"version"`
+	Enabled      bool `json:"enabled"`
+	RunHourLocal int  `json:"runHourLocal"`
+	// Empty for the organization's own timezone.
+	Timezone            *string `json:"timezone,omitempty"`
+	MaxCasesPerAgent    int     `json:"maxCasesPerAgent"`
+	NightlyBudgetUsd    string  `json:"nightlyBudgetUsd"`
+	MonthlyBudgetUsd    string  `json:"monthlyBudgetUsd"`
+	JudgeEnabled        bool    `json:"judgeEnabled"`
+	JudgeSampleRate     float64 `json:"judgeSampleRate"`
+	RegressionThreshold float64 `json:"regressionThreshold"`
+	MinCases            int     `json:"minCases"`
+	ForceRerunDays      int     `json:"forceRerunDays"`
 }
 
 type UpdateBenefitPlanInput struct {

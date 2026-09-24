@@ -8,6 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/memtable"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,6 +70,7 @@ func TestToolPolicyViewToModel(t *testing.T) {
 
 	model := toolPolicyViewToModel(&view)
 
+	assert.Equal(t, "reply_to_inbound_message", model.ID)
 	assert.Equal(t, "reply_to_inbound_message", model.Name)
 	assert.Equal(t, "Reply to inbound message", model.Title)
 	assert.True(t, model.HasCondition)
@@ -95,10 +101,12 @@ func TestToolPolicyViewToModel(t *testing.T) {
 	assert.Equal(t, agent.TierAutoExecute, selfScoped.MaxTier)
 }
 
+// The deprecated connection's own filters become the table's field filters,
+// so both connections narrow the rules through the same code.
 func TestToolPolicyConnectionRequestLeavesAbsentFiltersOpen(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, &services.ListAgentToolPoliciesRequest{},
+	assert.Equal(t, memtable.Request{},
 		toolPolicyConnectionRequest(&gqlmodel.AgentToolPolicyConnectionInput{}))
 
 	first := 25
@@ -120,11 +128,73 @@ func TestToolPolicyConnectionRequestLeavesAbsentFiltersOpen(t *testing.T) {
 	assert.Equal(t, 25, req.First)
 	assert.Equal(t, "cursor", req.After)
 	assert.Equal(t, "email", req.Query)
-	assert.Equal(t, agent.EgressExternalRecipient, req.Egress)
-	assert.Equal(t, "customer", req.Resource)
-	assert.Equal(t, agent.ToolKindAction, req.Kind)
-	require.NotNil(t, req.RunsWithoutPerson)
-	assert.False(t, *req.RunsWithoutPerson)
+	assert.Equal(t, []domaintypes.FieldFilter{
+		{Field: "egress", Operator: dbtype.OpEqual, Value: "external_recipient"},
+		{Field: "resource", Operator: dbtype.OpEqual, Value: "customer"},
+		{Field: "kind", Operator: dbtype.OpEqual, Value: "action"},
+		{
+			Field:    agentsafetyservice.FieldRunsWithoutPerson,
+			Operator: dbtype.OpEqual,
+			Value:    false,
+		},
+	}, req.FieldFilters)
+}
+
+func TestMemtableRequestFromGraphQLCarriesEveryTableInput(t *testing.T) {
+	t.Parallel()
+
+	first := 50
+	after := "cursor"
+	query := "move"
+	req := memtableRequestFromGraphQL(t.Context(), &gqlmodel.DataTableConnectionInput{
+		First: &first,
+		After: &after,
+		Query: &query,
+		FieldFilters: []*gqlmodel.FieldFilterInput{
+			{Field: "egress", Operator: "in", Value: []any{"None", "Internal"}},
+		},
+		FilterGroups: []*gqlmodel.FilterGroupInput{{Filters: []*gqlmodel.FieldFilterInput{
+			{Field: "kind", Operator: "eq", Value: "Query"},
+		}}},
+		Sort: []*gqlmodel.SortFieldInput{{Field: "maxTier", Direction: "desc"}},
+	})
+
+	assert.Equal(t, 50, req.First)
+	assert.Equal(t, "cursor", req.After)
+	assert.Equal(t, "move", req.Query)
+	require.Len(t, req.FieldFilters, 1)
+	assert.Equal(t, "egress", req.FieldFilters[0].Field)
+	assert.Equal(t, []string{"None", "Internal"}, req.FieldFilters[0].Value)
+	require.Len(t, req.FilterGroups, 1)
+	assert.Equal(t, "kind", req.FilterGroups[0].Filters[0].Field)
+	assert.Equal(t, []domaintypes.SortField{
+		{Field: "maxTier", Direction: dbtype.SortDirectionDesc},
+	}, req.Sort)
+	assert.True(t, req.IncludeTotalCount, "outside a request the count is kept")
+
+	assert.Equal(t,
+		memtable.Request{IncludeTotalCount: true},
+		memtableRequestFromGraphQL(t.Context(), nil),
+	)
+}
+
+func TestAgentToolSafetyPageToModelEndsOnTheLastEdge(t *testing.T) {
+	t.Parallel()
+
+	agentID := pulid.MustNew("agdef_")
+	out := agentToolSafetyPageToModel(&services.AgentToolSafetyPage{
+		Edges: []services.AgentToolSafetyEdge{
+			{Node: services.AgentToolSafety{AgentID: agentID, PolicyName: "a"}, Cursor: "c1"},
+			{Node: services.AgentToolSafety{AgentID: agentID, PolicyName: "b"}, Cursor: "c2"},
+		},
+		HasNextPage: true,
+	})
+	require.Len(t, out.Edges, 2)
+	assert.Equal(t, agentID.String()+":b", out.Edges[1].Node.RowID())
+	require.NotNil(t, out.PageInfo.EndCursor)
+	assert.Equal(t, "c2", *out.PageInfo.EndCursor)
+	assert.True(t, out.PageInfo.HasNextPage)
+	assert.Nil(t, out.TotalCount)
 }
 
 func TestToolPolicyPageToModelEndsOnTheLastEdge(t *testing.T) {
@@ -137,13 +207,19 @@ func TestToolPolicyPageToModelEndsOnTheLastEdge(t *testing.T) {
 			Cursor: cursor,
 		}
 	}
+	alone := true
+	attended := edge("b", "c2")
+	attended.RunsWithoutPerson = &alone
 	out := toolPolicyPageToModel(&services.AgentToolPolicyPage{
-		Edges:       []services.AgentToolPolicyEdge{edge("a", "c1"), edge("b", "c2")},
+		Edges:       []services.AgentToolPolicyEdge{edge("a", "c1"), attended},
 		HasNextPage: true,
 		TotalCount:  &total,
 	})
 	require.Len(t, out.Edges, 2)
 	assert.Equal(t, "b", out.Edges[1].Node.Name)
+	assert.Nil(t, out.Edges[0].Node.RunsWithoutPerson, "a rule asked nothing of says nothing")
+	require.NotNil(t, out.Edges[1].Node.RunsWithoutPerson)
+	assert.True(t, *out.Edges[1].Node.RunsWithoutPerson)
 	assert.True(t, out.PageInfo.HasNextPage)
 	require.NotNil(t, out.PageInfo.EndCursor)
 	assert.Equal(t, "c2", *out.PageInfo.EndCursor)

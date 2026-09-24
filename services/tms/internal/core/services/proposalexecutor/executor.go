@@ -158,12 +158,12 @@ var ErrToolMissing = errors.New("proposal names a tool this system does not prov
 // ErrTenantMismatch is a proposal decided by someone outside its tenant.
 var ErrTenantMismatch = errors.New("proposal does not belong to the approver's organization")
 
-// ErrTaintedNeedsPerson is a write that leaves the organization, proposed by
-// a run that had read content written outside it, being run by anything but
-// a person's decision.
+// ErrTaintedNeedsPerson is a write taint held, proposed by a run that had
+// read content written outside the organization, being run by anything but a
+// person's decision.
 var ErrTaintedNeedsPerson = errors.New(
-	"this change leaves the organization and was proposed after the agent read outside " +
-		"content, so only a person can approve it",
+	"this change was held because the agent had read outside content before proposing " +
+		"it, so only a person can approve it",
 )
 
 // Execute runs an approved proposal's tool.
@@ -238,6 +238,7 @@ func (s *Service) Execute(
 		IdempotencyKey: proposal.ID.String(),
 		RunID:          proposal.RunID,
 		Params:         params,
+		ProposalID:     proposal.ID,
 	}
 	policy := tool.Policy()
 	if policy.CarriesTaint {
@@ -714,17 +715,7 @@ func proposalTaint(proposal *agent.AgentProposal) *agent.RunTaint {
 		return proposal.Taint.Clone()
 	}
 
-	taint := &agent.RunTaint{}
-	taint.Add(agent.TaintMark{
-		Source: agent.TaintSourceRunRecord,
-		Ref: &agent.RecordRef{
-			EntityType: agent.TaintEntityAgentRun,
-			ID:         proposal.RunID.String(),
-		},
-		At: timeutils.NowUnix(),
-	})
-
-	return taint
+	return agent.RunRecordTaint(proposal.RunID, timeutils.NowUnix())
 }
 
 func tenantOf(proposal *agent.AgentProposal) pagination.TenantInfo {

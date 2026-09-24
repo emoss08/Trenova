@@ -1,0 +1,234 @@
+name: Agent Evals
+
+# What an agent sees and what it may do, checked on every change that can move
+# either. The deterministic job needs no model and no secret: it proves the
+# harness contains a model that has been compromised. The live job asks a real
+# model and measures how often it declines the injected instruction at all.
+# See docs/engineering/agent-evals.md.
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - develop
+      - "claude/**"
+    paths:
+      - "services/tms/internal/core/domain/agentdefinition/**"
+      - "services/tms/internal/core/services/agentruntime/**"
+      - "services/tms/internal/core/services/agenttoolservice/**"
+      - "services/tms/internal/core/services/agentquerytoolservice/**"
+      - "services/tms/internal/core/services/agenttoolpolicy/**"
+      - "services/tms/internal/core/services/agenttoolcatalog/**"
+      - "services/tms/internal/core/services/agentguard/**"
+      - "services/tms/internal/core/services/agentscoring/**"
+      - "services/tms/internal/core/services/agentredteam/**"
+      - "services/tms/internal/core/services/agentevalgate/**"
+      - "services/tms/internal/core/ports/services/agenttool.go"
+      - "services/tms/internal/core/ports/services/toolpolicy.go"
+      - "services/tms/internal/core/ports/services/agentruntime.go"
+      - "services/tms/internal/core/services/insightservice/narrator/**"
+      - "services/tms/internal/core/services/briefingservice/briefingwriter/**"
+      - "shared/numberguard/**"
+      - ".github/workflows/agent-evals.yml"
+  pull_request:
+    branches:
+      - master
+      - main
+      - develop
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - "services/tms/internal/core/domain/agentdefinition/**"
+      - "services/tms/internal/core/services/agentruntime/**"
+      - "services/tms/internal/core/services/agenttoolservice/**"
+      - "services/tms/internal/core/services/agentquerytoolservice/**"
+      - "services/tms/internal/core/services/agenttoolpolicy/**"
+      - "services/tms/internal/core/services/agenttoolcatalog/**"
+      - "services/tms/internal/core/services/agentguard/**"
+      - "services/tms/internal/core/services/agentscoring/**"
+      - "services/tms/internal/core/services/agentredteam/**"
+      - "services/tms/internal/core/services/agentevalgate/**"
+      - "services/tms/internal/core/ports/services/agenttool.go"
+      - "services/tms/internal/core/ports/services/toolpolicy.go"
+      - "services/tms/internal/core/ports/services/agentruntime.go"
+      - "services/tms/internal/core/services/insightservice/narrator/**"
+      - "services/tms/internal/core/services/briefingservice/briefingwriter/**"
+      - "shared/numberguard/**"
+      - ".github/workflows/agent-evals.yml"
+  schedule:
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+    inputs:
+      record:
+        description: Record each live run as a cassette and upload them
+        type: boolean
+        default: false
+      update-baseline:
+        description: Write the measured live pass rate as the new baseline and upload it
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Matches test-tms.yml, so this job shares its build cache. Steps that pass
+  # -tags spell nomsgpack out themselves, because -tags replaces GOFLAGS' tags.
+  GOFLAGS: -tags=nomsgpack
+  APP_ENV: test
+
+jobs:
+  deterministic:
+    name: Deterministic
+    if: github.event_name != 'pull_request' || github.event.action != 'labeled'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Prompt snapshots
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          go test -tags=nofitz,nomsgpack -count=1 -run 'TestPromptSnapshots' \
+            ./internal/core/domain/agentdefinition/
+
+      - name: Tool catalog snapshot
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          go test -tags=nofitz,nomsgpack -count=1 -run 'TestToolCatalogSnapshot' \
+            ./internal/core/services/agentevalgate/
+
+      - name: find_tools ranking against its floors
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          go test -tags=nofitz,nomsgpack -count=1 -v -run 'TestToolSelectionAgainstFloors' \
+            ./internal/core/services/agentevalgate/
+
+      - name: Argument parsing and aliasing
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          go test -tags=nofitz,nomsgpack -count=1 \
+            -run 'TestArgumentCases|TestDeclaredArguments|TestAliasedArguments' \
+            ./internal/core/services/agentruntime/
+
+      - name: Red-team suite and recorded replays
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          go test -tags=nofitz,nomsgpack -count=1 -v ./internal/core/services/agentredteam/ \
+            | tee "$RUNNER_TEMP/redteam.log"
+          {
+            echo "## Red-team known gaps"
+            echo
+            if grep -q 'KNOWN GAP' "$RUNNER_TEMP/redteam.log"; then
+              grep -o 'KNOWN GAP [a-z-]*' "$RUNNER_TEMP/redteam.log" | sort | uniq -c \
+                | sed 's/^/- /'
+            else
+              echo "None reproduced."
+            fi
+            echo
+            echo "## Stale recordings"
+            echo
+            if grep -q 'stale recording' "$RUNNER_TEMP/redteam.log"; then
+              grep -o 'stale recording: [^ ]*' "$RUNNER_TEMP/redteam.log" | sort -u \
+                | sed 's/^/- /'
+            else
+              echo "None."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Policy, catalog, guard and scoring suites
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          go test -tags=nofitz,nomsgpack -count=1 \
+            ./internal/core/services/agenttoolpolicy/... \
+            ./internal/core/services/agenttoolcatalog/... \
+            ./internal/core/services/agentguard/... \
+            ./internal/core/services/agentscoring/... \
+            ./internal/core/services/insightservice/narrator/... \
+            ./internal/core/services/briefingservice/briefingwriter/...
+
+      - name: Number guard
+        working-directory: ./shared
+        run: go test -count=1 ./numberguard/...
+
+  live:
+    name: Live
+    if: >-
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+        contains(github.event.pull_request.labels.*.name, 'eval:live'))
+    runs-on: ubuntu-latest
+    env:
+      EVAL_KEY: ${{ secrets.TRENOVA_EVAL_API_KEY }}
+      EVAL_MODEL: ${{ vars.TRENOVA_EVAL_MODEL || 'claude-sonnet-5' }}
+      EVAL_PROVIDER_KIND: ${{ vars.TRENOVA_EVAL_PROVIDER_KIND }}
+      EVAL_BASE_URL: ${{ vars.TRENOVA_EVAL_BASE_URL }}
+
+    steps:
+      - name: Report a missing key
+        if: env.EVAL_KEY == ''
+        run: |
+          echo "::notice::TRENOVA_EVAL_API_KEY is not set, so the live agent evaluation was skipped"
+
+      - name: Checkout code
+        if: env.EVAL_KEY != ''
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        if: env.EVAL_KEY != ''
+        uses: ./.github/actions/setup-go
+        with:
+          cache-key: agent-evals-live
+
+      - name: Live red-team pass rate
+        if: env.EVAL_KEY != ''
+        working-directory: ./services/tms
+        env:
+          EVAL_REPORT: ${{ runner.temp }}/live-eval.json
+          RECORD: ${{ inputs.record && '-record' || '' }}
+          UPDATE_BASELINE: ${{ inputs.update-baseline && '-update-baseline' || '' }}
+        run: |
+          set -euo pipefail
+          go test -tags=nofitz,nomsgpack,liveeval -count=1 -v -timeout 30m \
+            -run 'TestLiveRedTeam' ./internal/core/services/agentredteam/ \
+            -args $RECORD $UPDATE_BASELINE
+
+      - name: Summarize the live run
+        if: always() && env.EVAL_KEY != ''
+        run: |
+          report="$RUNNER_TEMP/live-eval.json"
+          if [ -f "$report" ]; then
+            {
+              echo "## Live agent evaluation"
+              echo
+              echo '```json'
+              cat "$report"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload the live report and recordings
+        if: always() && env.EVAL_KEY != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-evals-live
+          path: |
+            ${{ runner.temp }}/live-eval.json
+            services/tms/internal/core/services/agentredteam/testdata/cassettes/live_*.json
+            services/tms/internal/core/services/agentredteam/testdata/live-baseline.json
+          if-no-files-found: ignore

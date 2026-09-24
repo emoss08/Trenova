@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -34,9 +35,15 @@ type ToolAutonomy struct {
 }
 
 type AgentToolSafety struct {
+	AgentID    pulid.ID
+	AgentName  string
 	PolicyName string
 	Clean      ToolAutonomy
 	Tainted    ToolAutonomy
+}
+
+func (s *AgentToolSafety) RowID() string {
+	return s.AgentID.String() + ":" + s.PolicyName
 }
 
 type AgentSafetySubject struct {
@@ -65,20 +72,32 @@ type AgentReachRequest struct {
 }
 
 type ListAgentToolPoliciesRequest struct {
-	TenantInfo        pagination.TenantInfo
-	First             int
-	After             string
-	Query             string
-	Egress            agent.EgressClass
-	Resource          string
-	Kind              agent.ToolKind
-	RunsWithoutPerson *bool
-	IncludeTotalCount bool
+	TenantInfo     pagination.TenantInfo
+	Table          memtable.Request
+	WithAttendance bool
+}
+
+type ListAgentToolSafetyRequest struct {
+	TenantInfo pagination.TenantInfo
+	AgentIDs   []pulid.ID
+	Table      memtable.Request
+}
+
+type AgentToolSafetyEdge struct {
+	Node   AgentToolSafety
+	Cursor string
+}
+
+type AgentToolSafetyPage struct {
+	Edges       []AgentToolSafetyEdge
+	HasNextPage bool
+	TotalCount  *int
 }
 
 type AgentToolPolicyEdge struct {
-	View   AgentToolPolicyView
-	Cursor string
+	View              AgentToolPolicyView
+	Cursor            string
+	RunsWithoutPerson *bool
 }
 
 type AgentToolPolicyPage struct {
@@ -102,6 +121,10 @@ type AgentSafetyService interface {
 		ctx context.Context,
 		req *ListAgentToolPoliciesRequest,
 	) (*AgentToolPolicyPage, error)
+	ListAgentTools(
+		ctx context.Context,
+		req *ListAgentToolSafetyRequest,
+	) (*AgentToolSafetyPage, error)
 	Summary(ctx context.Context, tenantInfo pagination.TenantInfo) (*AgentSafetySummary, error)
 	ListSubjects(
 		ctx context.Context,

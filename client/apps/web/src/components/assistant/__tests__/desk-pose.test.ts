@@ -1,8 +1,8 @@
-import type { AssistantStreamEvent } from "@/types/assistant";
+import type { AssistantStreamEvent, ToolEffect } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import { stepsFromSegments } from "../activity";
 import { initialTurnState, reduceTurn, type TurnState } from "../turn-stream";
-import { thinkingPose } from "../voice/desk-pose";
+import { isClosingPose, thinkingPose, toolPose, type DeskPose } from "../voice/desk-pose";
 
 function pose(events: AssistantStreamEvent[], from: TurnState = initialTurnState("Q")) {
   const state = events.reduce(reduceTurn, from);
@@ -14,48 +14,93 @@ const accepted: AssistantStreamEvent = {
   data: { content: "Q", scopeStage: "", scopeCategory: "" },
 };
 
-const started = (callId: string, name = "get_shipment"): AssistantStreamEvent => ({
+const started = (
+  callId: string,
+  name = "get_shipment",
+  effect?: ToolEffect,
+): AssistantStreamEvent => ({
   event: "tool_started",
-  data: { callId, name, arguments: {} },
+  data: { callId, name, arguments: {}, ...(effect ? { effect } : {}) },
 });
 
-const finished = (callId: string, name = "get_shipment"): AssistantStreamEvent => ({
+const finished = (
+  callId: string,
+  name = "get_shipment",
+  outcome: { failed?: boolean; proposed?: boolean } = {},
+): AssistantStreamEvent => ({
   event: "tool_finished",
-  data: { callId, name, failed: false, proposed: false, content: "{}" },
+  data: {
+    callId,
+    name,
+    failed: outcome.failed ?? false,
+    proposed: outcome.proposed ?? false,
+    content: "{}",
+  },
 });
+
+const done: AssistantStreamEvent = { event: "done", data: null };
 
 /**
- * The desk beside the working line draws the same moment the words say:
- * thinking dots on the screen while the model decides, hands on the keys
- * while a tool runs, lines written onto the screen while the answer
- * arrives, and a settle once the turn is over — however it ended.
+ * The lamp beside the working line draws the same moment the words say: the
+ * light coming on while the question is checked, the light breathing while
+ * the model decides, a motion for the kind of tool that is running, lines on
+ * the desk while the answer arrives, and a closing beat for how the turn
+ * ended.
  */
-describe("thinkingPose", () => {
-  it("thinks while the question is being checked", () => {
-    expect(pose([])).toBe("arrive");
+describe("thinkingPose while the turn runs", () => {
+  it("switches on while the question is being checked", () => {
+    expect(pose([])).toBe("start");
   });
 
   it("thinks once accepted and before anything arrives", () => {
-    expect(pose([accepted])).toBe("arrive");
+    expect(pose([accepted])).toBe("think");
   });
 
   it("thinks while the model is reasoning", () => {
-    expect(pose([accepted, { event: "reasoning", data: { text: "Look it up." } }])).toBe("arrive");
+    expect(pose([accepted, { event: "reasoning", data: { text: "Look it up." } }])).toBe("think");
   });
 
-  it("types while a tool is running", () => {
-    expect(pose([accepted, started("c1")])).toBe("busy");
+  it("draws the kind of tool that is running", () => {
+    expect(pose([accepted, started("c1", "get_shipment")])).toBe("lookup");
+    expect(pose([accepted, started("c1", "update_shipment")])).toBe("change");
+    expect(pose([accepted, started("c1", "open_page")])).toBe("navigate");
+    expect(pose([accepted, started("c1", "find_tools")])).toBe("discover");
+    expect(pose([accepted, started("c1", "run_report")])).toBe("present");
+    expect(pose([accepted, started("c1", "ask_user")])).toBe("ask");
+    expect(pose([accepted, started("c1", "delegate_task")])).toBe("delegate");
   });
 
-  it("stays busy while any one of several tools is still running", () => {
-    expect(pose([accepted, started("c1"), started("c2"), finished("c1")])).toBe("busy");
+  it("takes the kind the server gives over what the name suggests", () => {
+    expect(pose([accepted, started("c1", "get_quote_pdf", "present")])).toBe("present");
   });
 
-  it("goes back to the model once every tool has finished", () => {
-    expect(pose([accepted, started("c1"), finished("c1")])).toBe("arrive");
+  it("draws the web for a web read, though the server calls it a lookup", () => {
+    expect(pose([accepted, started("c1", "web_search", "lookup")])).toBe("web");
+    expect(pose([accepted, started("c1", "web_read", "lookup")])).toBe("web");
   });
 
-  it("writes onto the screen while the answer streams", () => {
+  it("follows the latest call still running, the one the words name", () => {
+    expect(pose([accepted, started("c1", "get_shipment"), started("c2", "update_rate")])).toBe(
+      "change",
+    );
+  });
+
+  it("goes back to an earlier call still running when the latest one finishes", () => {
+    expect(
+      pose([
+        accepted,
+        started("c1", "get_shipment"),
+        started("c2", "update_rate"),
+        finished("c2", "update_rate"),
+      ]),
+    ).toBe("lookup");
+  });
+
+  it("goes back to thinking once every tool has finished", () => {
+    expect(pose([accepted, started("c1"), finished("c1")])).toBe("think");
+  });
+
+  it("lights lines on the desk while the answer streams", () => {
     expect(pose([accepted, { event: "delta", data: { text: "S1 is" } }])).toBe("write");
   });
 
@@ -67,39 +112,64 @@ describe("thinkingPose", () => {
         { event: "message", data: { content: "Let me check.", model: "" } },
         started("c1"),
       ]),
-    ).toBe("busy");
+    ).toBe("lookup");
   });
 
-  it("goes back to thinking while a reply starts over, even with words on screen", () => {
+  it("cuts out while a reply starts over, even with words on screen or a tool running", () => {
+    const retrying: AssistantStreamEvent = {
+      event: "retrying",
+      data: { attempt: 1, provider: "Backup", reason: "", kind: "busy", waitSeconds: 3 },
+    };
+
+    expect(pose([accepted, { event: "delta", data: { text: "S1 is in " } }, retrying])).toBe(
+      "retry",
+    );
+    expect(pose([accepted, started("c1"), retrying])).toBe("retry");
+  });
+});
+
+describe("thinkingPose when the turn is over", () => {
+  it("is done when the turn finishes", () => {
+    expect(pose([accepted, { event: "delta", data: { text: "S1 is in Dallas." } }, done])).toBe(
+      "done",
+    );
+  });
+
+  it("waits on the reader when a write was proposed rather than made", () => {
     expect(
       pose([
         accepted,
-        { event: "delta", data: { text: "S1 is in " } },
-        {
-          event: "retrying",
-          data: { attempt: 1, provider: "Backup", reason: "", kind: "busy", waitSeconds: 3 },
-        },
+        started("c1", "update_rate"),
+        finished("c1", "update_rate", { proposed: true }),
+        done,
       ]),
-    ).toBe("arrive");
+    ).toBe("await");
   });
 
-  it("settles when the turn is done", () => {
+  it("is done, not failed, when a single call failed and the turn still finished", () => {
     expect(
-      pose([
-        accepted,
-        { event: "delta", data: { text: "S1 is in Dallas." } },
-        { event: "done", data: null },
-      ]),
-    ).toBe("settle");
+      pose([accepted, started("c1"), finished("c1", "get_shipment", { failed: true }), done]),
+    ).toBe("done");
   });
 
-  it("settles when the turn fails partway through a tool", () => {
+  it("fails when the turn fails partway through a tool", () => {
     expect(
       pose([accepted, started("c1"), { event: "error", data: { message: "Provider down" } }]),
-    ).toBe("settle");
+    ).toBe("failed");
   });
 
-  it("settles when the question is refused", () => {
+  it("fails rather than waiting when the turn errors after proposing a write", () => {
+    expect(
+      pose([
+        accepted,
+        started("c1", "update_rate"),
+        finished("c1", "update_rate", { proposed: true }),
+        { event: "error", data: { message: "Provider down" } },
+      ]),
+    ).toBe("failed");
+  });
+
+  it("is done when the question is refused", () => {
     expect(
       pose([
         {
@@ -107,6 +177,35 @@ describe("thinkingPose", () => {
           data: { message: "Out of scope", stage: "scope", reason: "scope", category: "other" },
         },
       ]),
-    ).toBe("settle");
+    ).toBe("done");
+  });
+});
+
+describe("toolPose", () => {
+  it.each<[ToolEffect, DeskPose]>([
+    ["lookup", "lookup"],
+    ["discover", "discover"],
+    ["navigate", "navigate"],
+    ["change", "change"],
+    ["present", "present"],
+    ["ask", "ask"],
+    ["delegate", "delegate"],
+  ])("draws a %s call as %s", (effect, expected) => {
+    expect(toolPose({ name: "any_tool", effect })).toBe(expected);
+  });
+});
+
+describe("isClosingPose", () => {
+  it.each<[DeskPose, boolean]>([
+    ["done", true],
+    ["await", true],
+    ["failed", true],
+    ["start", false],
+    ["think", false],
+    ["write", false],
+    ["retry", false],
+    ["change", false],
+  ])("%s closes a turn: %s", (candidate, closing) => {
+    expect(isClosingPose(candidate)).toBe(closing);
   });
 });

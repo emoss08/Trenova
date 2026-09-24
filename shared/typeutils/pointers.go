@@ -8,3 +8,12 @@ func EqualPtr[T comparable](a, b *T) bool {
 
 	return *a == *b
 }
+
+func Deref[T any](value *T) (T, bool) {
+	if value == nil {
+		var zero T
+		return zero, false
+	}
+
+	return *value, true
+}

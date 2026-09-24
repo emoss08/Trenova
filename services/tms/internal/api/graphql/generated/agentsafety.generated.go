@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -28,6 +29,8 @@ type AgentSafetyResolver interface {
 	Reach(ctx context.Context, obj *services.AgentSafetySubject) (*gqlmodel.AgentReach, error)
 }
 type AgentToolSafetyResolver interface {
+	ID(ctx context.Context, obj *services.AgentToolSafety) (string, error)
+
 	Policy(ctx context.Context, obj *services.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error)
 }
 
@@ -542,6 +545,29 @@ func (ec *executionContext) _AgentToolAutonomy_approvalsToNext(ctx context.Conte
 }
 func (ec *executionContext) fieldContext_AgentToolAutonomy_approvalsToNext(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AgentToolAutonomy", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AgentToolPolicy_id(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentToolPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentToolPolicy_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentToolPolicy_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentToolPolicy", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
 func (ec *executionContext) _AgentToolPolicy_name(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentToolPolicy) (ret graphql.Marshaler) {
@@ -1082,6 +1108,29 @@ func (ec *executionContext) fieldContext_AgentToolPolicy_explanation(_ context.C
 	return graphql.NewScalarFieldContext("AgentToolPolicy", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _AgentToolPolicy_runsWithoutPerson(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentToolPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentToolPolicy_runsWithoutPerson(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RunsWithoutPerson, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *bool) graphql.Marshaler {
+			return ec.marshalOBoolean2ᚖbool(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentToolPolicy_runsWithoutPerson(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentToolPolicy", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _AgentToolPolicyConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentToolPolicyConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1270,6 +1319,75 @@ func (ec *executionContext) fieldContext_AgentToolRequirement_operation(_ contex
 	return graphql.NewScalarFieldContext("AgentToolRequirement", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _AgentToolSafety_id(ctx context.Context, field graphql.CollectedField, obj *services.AgentToolSafety) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentToolSafety_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AgentToolSafety().ID(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNID2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentToolSafety_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentToolSafety", field, true, true, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AgentToolSafety_agentId(ctx context.Context, field graphql.CollectedField, obj *services.AgentToolSafety) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentToolSafety_agentId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AgentID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentToolSafety_agentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentToolSafety", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AgentToolSafety_agentName(ctx context.Context, field graphql.CollectedField, obj *services.AgentToolSafety) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentToolSafety_agentName(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AgentName, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentToolSafety_agentName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentToolSafety", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _AgentToolSafety_policyName(ctx context.Context, field graphql.CollectedField, obj *services.AgentToolSafety) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1387,6 +1505,148 @@ func (ec *executionContext) fieldContext_AgentToolSafety_tainted(_ context.Conte
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _AgentToolSafetyConnection_edges(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentToolSafetyConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentToolSafetyConnection_edges(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Edges, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []*gqlmodel.AgentToolSafetyEdge) graphql.Marshaler {
+			return ec.marshalNAgentToolSafetyEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolSafetyEdgeᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentToolSafetyConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentToolSafetyConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentToolSafetyEdge(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AgentToolSafetyConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentToolSafetyConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentToolSafetyConnection_pageInfo(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PageInfo, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {
+			return ec.marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentToolSafetyConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentToolSafetyConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_PageInfo(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AgentToolSafetyConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentToolSafetyConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentToolSafetyConnection_totalCount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TotalCount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentToolSafetyConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentToolSafetyConnection", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AgentToolSafetyEdge_node(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentToolSafetyEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentToolSafetyEdge_node(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Node, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.AgentToolSafety) graphql.Marshaler {
+			return ec.marshalNAgentToolSafety2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentToolSafety(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentToolSafetyEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentToolSafetyEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentToolSafety(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AgentToolSafetyEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.AgentToolSafetyEdge) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentToolSafetyEdge_cursor(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Cursor, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentToolSafetyEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentToolSafetyEdge", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
 // endregion **************************** field.gotpl *****************************
@@ -1886,6 +2146,11 @@ func (ec *executionContext) _AgentToolPolicy(ctx context.Context, sel ast.Select
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AgentToolPolicy")
+		case "id":
+			out.Values[i] = ec._AgentToolPolicy_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "name":
 			out.Values[i] = ec._AgentToolPolicy_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -1999,6 +2264,11 @@ func (ec *executionContext) _AgentToolPolicy(ctx context.Context, sel ast.Select
 		case "explanation":
 			out.Values[i] = ec._AgentToolPolicy_explanation(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "runsWithoutPerson":
+			out.Values[i] = ec._AgentToolPolicy_runsWithoutPerson(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		default:
@@ -2168,6 +2438,54 @@ func (ec *executionContext) _AgentToolSafety(ctx context.Context, sel ast.Select
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AgentToolSafety")
+		case "id":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AgentToolSafety_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "agentId":
+			out.Values[i] = ec._AgentToolSafety_agentId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "agentName":
+			out.Values[i] = ec._AgentToolSafety_agentName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "policyName":
 			out.Values[i] = ec._AgentToolSafety_policyName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -2220,6 +2538,97 @@ func (ec *executionContext) _AgentToolSafety(ctx context.Context, sel ast.Select
 			out.Values[i] = ec._AgentToolSafety_tainted(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var agentToolSafetyConnectionImplementors = []string{"AgentToolSafetyConnection"}
+
+func (ec *executionContext) _AgentToolSafetyConnection(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.AgentToolSafetyConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, agentToolSafetyConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AgentToolSafetyConnection")
+		case "edges":
+			out.Values[i] = ec._AgentToolSafetyConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._AgentToolSafetyConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._AgentToolSafetyConnection_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var agentToolSafetyEdgeImplementors = []string{"AgentToolSafetyEdge"}
+
+func (ec *executionContext) _AgentToolSafetyEdge(ctx context.Context, sel ast.SelectionSet, obj *gqlmodel.AgentToolSafetyEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, agentToolSafetyEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AgentToolSafetyEdge")
+		case "node":
+			out.Values[i] = ec._AgentToolSafetyEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._AgentToolSafetyEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -2495,6 +2904,7 @@ var (
 		"Memory":         agent.TaintSourceMemory,
 		"RunRecord":      agent.TaintSourceRunRecord,
 		"Web":            agent.TaintSourceWeb,
+		"RecordNote":     agent.TaintSourceRecordNote,
 	}
 	marshalNAgentTaintSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource = map[agent.TaintSource]string{
 		agent.TaintSourceInboundMessage: "InboundMessage",
@@ -2506,6 +2916,7 @@ var (
 		agent.TaintSourceMemory:         "Memory",
 		agent.TaintSourceRunRecord:      "RunRecord",
 		agent.TaintSourceWeb:            "Web",
+		agent.TaintSourceRecordNote:     "RecordNote",
 	}
 )
 
@@ -2674,6 +3085,42 @@ func (ec *executionContext) marshalNAgentToolSafety2ᚖgithubᚗcomᚋemoss08ᚋ
 	return ec._AgentToolSafety(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNAgentToolSafetyConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolSafetyConnection(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.AgentToolSafetyConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AgentToolSafetyConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAgentToolSafetyEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolSafetyEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*gqlmodel.AgentToolSafetyEdge) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAgentToolSafetyEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolSafetyEdge(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAgentToolSafetyEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentToolSafetyEdge(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.AgentToolSafetyEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AgentToolSafetyEdge(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNAgentToolScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐToolScope(ctx context.Context, v any) (agent.ToolScope, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNAgentToolScope2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐToolScope[tmp]
@@ -2774,6 +3221,7 @@ var (
 		"Memory":         agent.TaintSourceMemory,
 		"RunRecord":      agent.TaintSourceRunRecord,
 		"Web":            agent.TaintSourceWeb,
+		"RecordNote":     agent.TaintSourceRecordNote,
 	}
 	marshalOAgentTaintSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐTaintSource = map[agent.TaintSource]string{
 		agent.TaintSourceInboundMessage: "InboundMessage",
@@ -2785,6 +3233,7 @@ var (
 		agent.TaintSourceMemory:         "Memory",
 		agent.TaintSourceRunRecord:      "RunRecord",
 		agent.TaintSourceWeb:            "Web",
+		agent.TaintSourceRecordNote:     "RecordNote",
 	}
 )
 

@@ -19,6 +19,7 @@ enum WatchtowerSourceKind {
   InboundMessage
   WorkerCredential
   MoveCoverage
+  AgentQualityRegression
 }
 
 "How loudly an item asks to be looked at."

@@ -1,13 +1,17 @@
 import type {
-  AgentSafety,
+  AgentSafetyHeader,
   AgentToolAutonomy,
   AgentToolPolicy,
-  AgentToolSafety,
+  AgentToolRuleRow,
+  AgentToolSafetyRow,
 } from "@/lib/graphql/agent-safety";
 
+/** A rule as the server sends it; the id is the tool's name, as the server keys it. */
 export function policy(overrides: Partial<AgentToolPolicy>): AgentToolPolicy {
+  const name = overrides.name ?? "assign_move";
   return {
-    name: "assign_move",
+    id: name,
+    name,
     title: "Assign move",
     kind: "Action",
     needs: { resource: "shipment_move", operation: "update" },
@@ -34,6 +38,14 @@ export function policy(overrides: Partial<AgentToolPolicy>): AgentToolPolicy {
   };
 }
 
+/** A row of the tool rules table, which also says whether it runs without a person. */
+export function rule(
+  overrides: Partial<AgentToolPolicy>,
+  runsWithoutPerson: boolean | null = null,
+): AgentToolRuleRow {
+  return { ...policy(overrides), runsWithoutPerson };
+}
+
 export function autonomy(overrides: Partial<AgentToolAutonomy>): AgentToolAutonomy {
   return {
     answer: "RUNS_ON_ITS_OWN",
@@ -51,13 +63,18 @@ function titleOf(name: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/** One tool an agent holds; the row is keyed by the agent and the tool together. */
 export function tool(
   policyName: string,
   clean: Partial<AgentToolAutonomy>,
   tainted: Partial<AgentToolAutonomy> = clean,
   rule: Partial<AgentToolPolicy> = {},
-): AgentToolSafety {
+  agent: { id: string; name: string } = { id: "agdef_1", name: "Customer desk" },
+): AgentToolSafetyRow {
   return {
+    id: `${agent.id}:${policyName}`,
+    agentId: agent.id,
+    agentName: agent.name,
     policyName,
     policy: policy({ name: policyName, title: titleOf(policyName), ...rule }),
     clean: autonomy(clean),
@@ -68,13 +85,14 @@ export function tool(
 export function safety(
   id: string,
   name: string,
-  overrides: Partial<Omit<AgentSafety, "agent">> & { agent?: Partial<AgentSafety["agent"]> } = {},
-): AgentSafety {
+  overrides: Partial<Omit<AgentSafetyHeader, "agent">> & {
+    agent?: Partial<AgentSafetyHeader["agent"]>;
+  } = {},
+): AgentSafetyHeader {
   const { agent, ...rest } = overrides;
   return {
     agentId: id,
     organizationShadow: false,
-    tools: [],
     reach: { accessMode: "Everyone", roles: [], warnings: [] },
     ...rest,
     agent: {

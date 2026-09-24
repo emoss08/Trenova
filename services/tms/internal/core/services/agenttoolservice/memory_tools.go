@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 // rememberTool records something the agent was told or worked out, for
@@ -91,9 +92,28 @@ func (t *rememberTool) Policy() serviceports.ToolPolicy {
 		Reversible:    true,
 		ReadsExternal: agent.ExternalReadNever,
 		CarriesTaint:  true,
+		TaintHold: &serviceports.TaintHold{
+			Description: "An Instruction or a Correction recorded after the run read text " +
+				"from outside the organization waits for a person's approval; a Fact is " +
+				"recorded and stays marked as drawn from outside text.",
+			Applies: rememberHeldWhenTainted,
+		},
 		Rationale: "Saves a memory later runs read, so it keeps the taint of the run that " +
 			"wrote it.",
 	}
+}
+
+func rememberHeldWhenTainted(params serviceports.ToolExecuteParams) bool {
+	return rememberKind(params.Params) != agent.MemoryKindFact
+}
+
+func rememberKind(params map[string]any) agent.MemoryKind {
+	kind := agent.MemoryKind(optionalString(params, "kind"))
+	if kind == "" {
+		return agent.MemoryKindFact
+	}
+
+	return kind
 }
 
 func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
@@ -106,10 +126,7 @@ func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExec
 		return err
 	}
 
-	kind := agent.MemoryKind(optionalString(params.Params, "kind"))
-	if kind == "" {
-		kind = agent.MemoryKindFact
-	}
+	kind := rememberKind(params.Params)
 	if kind == agent.MemoryKindCorrection || !kind.IsValid() {
 		return fmt.Errorf("kind must be Instruction or Fact, not %q", kind)
 	}
@@ -132,7 +149,8 @@ func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExec
 		SubjectID:   subjectID,
 		ExpiresAt:   expiresAt,
 		RunID:       params.RunID,
-		Taint:       params.Taint,
+		ProposalID:  params.ProposalID,
+		Taint:       params.CarriedTaint(timeutils.NowUnix()),
 	}, params.Actor)
 
 	return err
