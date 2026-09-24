@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import {
@@ -7,8 +6,9 @@ import {
   updateAgentMemory,
   type AgentMemoryRow,
 } from "@/lib/graphql/agent-memories";
-import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useT } from "@trenova/shared/i18n/use-t";
+import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useForm, type Resolver } from "react-hook-form";
 import { MemoryForm } from "./memory-form";
 import {
@@ -42,6 +42,7 @@ export function MemoryPanel({
         open={open}
         onOpenChange={onOpenChange}
         row={row}
+        useDock
         form={form}
         queryKey={AGENT_MEMORY_LIST_KEY}
         title={t("Memory")}

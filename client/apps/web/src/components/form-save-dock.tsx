@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import {
   ACTION_DOCK_SECONDARY_BUTTON,
   ActionDock,
@@ -8,6 +7,7 @@ import {
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
 import { useCallback } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
