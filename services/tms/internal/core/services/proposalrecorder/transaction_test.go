@@ -136,6 +136,7 @@ func recordInTx(
 	svc.activity = activity
 
 	return svc.Record(t.Context(), &RecordRequest{
+		Evidence: messageEvidence,
 		Actor: &serviceports.RequestActor{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),
