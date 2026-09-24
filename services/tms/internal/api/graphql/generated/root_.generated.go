@@ -75987,6 +75987,7 @@ enum AgentSubjectType {
   InboundMessage
   Report
   Dashboard
+  FormulaTemplate
 }
 
 enum AgentRunTrigger {

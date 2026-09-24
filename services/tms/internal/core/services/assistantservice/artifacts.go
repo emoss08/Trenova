@@ -11,11 +11,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/productguide"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
@@ -304,6 +306,7 @@ func (r *artifactRecorder) save(
 			Title:            saved.Title,
 			SourceToolCallID: saved.SourceToolCallID,
 			Path:             navigationPath(saved),
+			Draft:            draftEditOf(saved),
 		},
 	})
 
@@ -386,6 +389,8 @@ func artifactFromObservation(observation services.ToolObservation) *assistantart
 		return runDiffArtifact(observation.Call.ID, result)
 	case name == toolOpenPage:
 		return navigationArtifact(observation.Call.ID, result)
+	case pagedraft.IsEditTool(name):
+		return draftEditArtifact(observation.Call.ID, result)
 	case strings.HasPrefix(name, listToolPrefix), strings.HasPrefix(name, searchToolPrefix):
 		return tableArtifact(observation.Call.ID, name, result)
 	default:
@@ -596,6 +601,55 @@ func navigationPath(artifact *assistantartifact.Artifact) string {
 	}
 
 	return stringOf(artifact.Payload["path"])
+}
+
+func draftEditArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
+	edit, ok := decodeDraftEdit(result["draft"])
+	if !ok {
+		return nil
+	}
+
+	payload, ok := toJSONDocument(edit)
+	if !ok {
+		return nil
+	}
+
+	return &assistantartifact.Artifact{
+		Kind:             assistantartifact.KindDraftEdit,
+		Status:           assistantartifact.StatusReady,
+		Title:            artifactTitle(edit.Title()),
+		Payload:          payload.fields,
+		SourceToolCallID: callID,
+	}
+}
+
+func decodeDraftEdit(raw any) (*pagedraft.Edit, bool) {
+	if raw == nil {
+		return nil, false
+	}
+
+	edit := new(pagedraft.Edit)
+	if err := jsonutils.Convert(raw, edit); err != nil {
+		return nil, false
+	}
+	if !edit.Action.IsValid() || edit.Surface != edit.Action.Surface() {
+		return nil, false
+	}
+
+	return edit, true
+}
+
+func draftEditOf(artifact *assistantartifact.Artifact) *pagedraft.Edit {
+	if artifact.Kind != assistantartifact.KindDraftEdit {
+		return nil
+	}
+
+	edit, ok := decodeDraftEdit(artifact.Payload)
+	if !ok {
+		return nil
+	}
+
+	return edit
 }
 
 func runDiffTitle(result map[string]any) string {

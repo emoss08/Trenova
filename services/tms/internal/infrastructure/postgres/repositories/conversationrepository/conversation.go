@@ -18,26 +18,6 @@ import (
 
 const defaultThreadLimit = 50
 
-// unlistedOrigins are the origins the rail hides: a quick question from the
-// palette is not a conversation until the person keeps it.
-func unlistedOrigins() []conversation.ThreadOrigin {
-	all := []conversation.ThreadOrigin{
-		conversation.ThreadOriginPanel,
-		conversation.ThreadOriginDesk,
-		conversation.ThreadOriginAsk,
-		conversation.ThreadOriginWatchtower,
-		conversation.ThreadOriginBriefing,
-	}
-	out := make([]conversation.ThreadOrigin, 0, len(all))
-	for _, o := range all {
-		if !o.Listed() {
-			out = append(out, o)
-		}
-	}
-
-	return out
-}
-
 type Params struct {
 	fx.In
 
@@ -139,7 +119,7 @@ func (r *repository) ListThreads(
 			sq = buncolgen.ThreadScopeTenant(sq, req.TenantInfo).
 				Where(cols.UserID.Eq(), req.UserID)
 			if !req.IncludeUnlisted {
-				sq = sq.Where(cols.Origin.NotIn(), bun.In(unlistedOrigins()))
+				sq = sq.Where(cols.Origin.NotIn(), bun.In(conversation.UnlistedOrigins()))
 			}
 
 			return sq
@@ -426,13 +406,16 @@ func (r *repository) DeleteStaleThreads(
 	deleted := 0
 	err := r.db.DB().RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
 		var stale []conversation.Thread
-		if err := tx.NewSelect().
+		q := tx.NewSelect().
 			Model(&stale).
 			Column(cols.ID.Bare(), cols.OrganizationID.Bare(), cols.BusinessUnitID.Bare()).
 			Where(cols.Origin.Eq(), req.Origin).
 			Where(cols.LastMessageAt.Lt(), req.Before).
-			Where(cols.CreatedAt.Lt(), req.Before).
-			Order(cols.LastMessageAt.OrderAsc()).
+			Where(cols.CreatedAt.Lt(), req.Before)
+		if req.SubjectlessOnly {
+			q = q.Where(cols.SubjectID.IsNull())
+		}
+		if err := q.Order(cols.LastMessageAt.OrderAsc()).
 			Limit(limit).
 			Scan(txCtx); err != nil {
 			return err

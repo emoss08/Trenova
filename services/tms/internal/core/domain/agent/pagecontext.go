@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -39,7 +40,8 @@ type PageContext struct {
 	Title      string `json:"title"`
 	// View is what a list page was showing: its filters, sort, selection and
 	// figures. Nil for a page that is not a table.
-	View *PageView `json:"view,omitempty"`
+	View  *PageView        `json:"view,omitempty"`
+	Draft *pagedraft.Draft `json:"draft,omitempty"`
 }
 
 // PageView is a table the person had in front of them, expressed in the same
@@ -163,6 +165,9 @@ func (p *PageContext) Validate(prefix string, multiErr *errortypes.MultiError) {
 
 	if p.View != nil {
 		p.View.Validate(field("view"), multiErr)
+	}
+	if p.Draft != nil {
+		p.Draft.Validate(field("draft"), multiErr)
 	}
 }
 
@@ -381,6 +386,7 @@ func (p *PageContext) Normalized() *PageContext {
 		EntityID:   strings.TrimSpace(p.EntityID),
 		Title:      strings.TrimSpace(p.Title),
 		View:       p.View.normalized(),
+		Draft:      p.Draft.Normalized(),
 	}
 }
 

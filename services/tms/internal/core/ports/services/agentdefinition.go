@@ -152,4 +152,20 @@ type AgentDefinitionService interface {
 	ToolCatalog(ctx context.Context, tenantInfo pagination.TenantInfo) ([]ToolCatalogEntry, error)
 	EventKinds() []agent.EventDescriptor
 	PreviewPrompt(ctx context.Context, req *PreviewPromptRequest) (string, error)
+	EnsureSystem(
+		ctx context.Context,
+		req EnsureSystemAgentRequest,
+	) (*agentdefinition.Definition, error)
+}
+
+type EnsureSystemAgentRequest struct {
+	TenantInfo pagination.TenantInfo
+	SystemKey  string
+}
+
+type SystemAgentProvisioner interface {
+	EnsureSystem(
+		ctx context.Context,
+		req EnsureSystemAgentRequest,
+	) (*agentdefinition.Definition, error)
 }

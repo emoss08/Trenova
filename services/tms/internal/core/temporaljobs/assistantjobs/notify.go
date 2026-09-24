@@ -123,7 +123,16 @@ func (a *Activities) NotifyUnseenTurnActivity(
 		return fmt.Errorf("read the conversation this reply is in: %w", err)
 	}
 
-	if !thread.Origin.Listed() {
+	if thread.Origin.PageBound() {
+		a.logger.Info("not announcing a reply that waits on the page it was asked from",
+			zap.String("turn", correlation),
+			zap.String("origin", string(thread.Origin)),
+		)
+
+		return nil
+	}
+
+	if thread.Origin.Keepable() {
 		thread, err = a.threads.UpdateThread(ctx, &serviceports.UpdateThreadRequest{
 			ThreadID:   thread.ID,
 			TenantInfo: tenant,

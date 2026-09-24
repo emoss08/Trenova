@@ -61,6 +61,10 @@ func (s *Service) validateDelegates(
 			multiErr.Add(field, errortypes.ErrInvalid, fmt.Sprintf(
 				"%s runs on its own and cannot be handed work", delegate.Name,
 			))
+		case delegate.IsPageAgent():
+			multiErr.Add(field, errortypes.ErrInvalid, fmt.Sprintf(
+				"%s works on its own page and cannot be handed work", delegate.Name,
+			))
 		case !delegate.Enabled && (previous == nil || !previous.MayDelegateTo(id)):
 			multiErr.Add(field, errortypes.ErrInvalid, fmt.Sprintf(
 				"%s is disabled. Enable it before letting another agent hand it work",

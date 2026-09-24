@@ -5,37 +5,37 @@ import (
 	"fmt"
 	"maps"
 	"strings"
+	"unicode/utf8"
 
-	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 )
 
 const (
-	maxInstructionLength = 4000
-	maxExpressionLength  = 8000
+	DefaultSchemaID     = "shipment"
+	MaxScenarios        = 5
+	MaxScenarioNameLen  = 120
+	MaxExplanationRunes = 4000
+	maxScenarioVars     = pagedraft.MaxFormulaVariables + 40
 )
 
 type Params struct {
 	fx.In
 
-	Completion      serviceports.StructuredCompleter
 	FormulaService  *formula.Service
 	TemplateService *formulatemplateservice.Service
 	RateMatrixRepo  repositories.RateMatrixRepository
 }
 
 type Service struct {
-	completion      serviceports.StructuredCompleter
 	formulaService  *formula.Service
 	templateService *formulatemplateservice.Service
 	rateMatrixRepo  repositories.RateMatrixRepository
@@ -43,406 +43,358 @@ type Service struct {
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
-		completion:      p.Completion,
 		formulaService:  p.FormulaService,
 		templateService: p.TemplateService,
 		rateMatrixRepo:  p.RateMatrixRepo,
 	}
 }
 
-type GenerateFormulaRequest struct {
-	TenantInfo   pagination.TenantInfo        `json:"-"`
-	Instruction  string                       `json:"instruction"`
-	SchemaID     string                       `json:"schemaId"`
-	TemplateType formulatemplate.TemplateType `json:"templateType"`
+type RateTable struct {
+	Code      string `json:"code"`
+	Name      string `json:"name"`
+	Axes      int    `json:"axes"`
+	Functions string `json:"functions"`
 }
 
-type GeneratedVariable struct {
-	Name         string `json:"name"`
-	Type         string `json:"type"`
-	Description  string `json:"description"`
-	DefaultValue any    `json:"defaultValue"`
+type Reference struct {
+	SchemaID   string                                    `json:"schemaId"`
+	Variables  []formulatemplatetypes.SchemaVariableInfo `json:"variables"`
+	Functions  []formulatemplatetypes.SchemaFunctionInfo `json:"functions"`
+	RateTables []RateTable                               `json:"rateTables"`
 }
 
-type ProposedScenario struct {
-	Name           string         `json:"name"`
-	Description    string         `json:"description"`
-	Variables      map[string]any `json:"variables"`
-	ExpectedAmount *float64       `json:"expectedAmount,omitempty"`
-	Valid          bool           `json:"valid"`
-	Error          string         `json:"error,omitempty"`
+type Scenario struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description,omitempty"`
+	Variables   map[string]any `json:"variables"`
 }
 
-type GenerateFormulaResponse struct {
-	Expression          string                                         `json:"expression"`
-	VariableDefinitions []*formulatypes.VariableDefinition             `json:"variableDefinitions"`
-	Explanation         string                                         `json:"explanation"`
-	Validation          *formulatemplateservice.TestExpressionResponse `json:"validation"`
-	Scenarios           []ProposedScenario                             `json:"scenarios"`
-	ModelIdentifier     string                                         `json:"modelIdentifier"`
-}
-
-type ExplainFormulaRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	Expression string                `json:"expression"`
-	SchemaID   string                `json:"schemaId"`
-}
-
-type ExplainFormulaResponse struct {
-	Explanation     string `json:"explanation"`
-	ModelIdentifier string `json:"modelIdentifier"`
-}
-
-type generatedPayload struct {
-	Expression  string              `json:"expression"`
-	Variables   []GeneratedVariable `json:"variables"`
-	Explanation string              `json:"explanation"`
-	Scenarios   []generatedScenario `json:"scenarios"`
-}
-
-type generatedScenario struct {
-	Name        string                   `json:"name"`
-	Description string                   `json:"description"`
-	Variables   []generatedScenarioValue `json:"variables"`
-}
-
-type generatedScenarioValue struct {
-	Name  string `json:"name"`
-	Value any    `json:"value"`
-}
-
-const maxProposedScenarios = 3
-
-type explanationPayload struct {
-	Explanation string `json:"explanation"`
-}
-
-func (s *Service) GenerateFormula(
-	ctx context.Context,
-	req *GenerateFormulaRequest,
-) (*GenerateFormulaResponse, error) {
-	if err := validateGenerateRequest(req); err != nil {
-		return nil, err
-	}
-
-	schemaID := defaultSchemaID(req.SchemaID)
-	description, err := s.formulaService.DescribeSchema(schemaID)
-	if err != nil {
-		return nil, err
-	}
-
-	lookupTables, err := s.listLookupTableCodes(ctx, req.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	templateType := string(req.TemplateType)
-	if templateType == "" {
-		templateType = string(formulatemplate.TemplateTypeFreightCharge)
-	}
-
-	result, err := s.completion.CompleteStructured(ctx, &serviceports.StructuredCompletionRequest{
-		TenantInfo: req.TenantInfo,
-		System:     generateSystemPrompt,
-		Context: buildGenerateContext(
-			description,
-			lookupTables,
-			templateType,
-			req.Instruction,
-		),
-		OutputSchema: generateOutputSchema(),
-		Attribution: formulaAttribution(
-			req.TenantInfo,
-			aiusage.FeatureFormulaGenerate,
-			schemaID,
-		),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	var payload generatedPayload
-	if err = sonic.Unmarshal([]byte(result.Text), &payload); err != nil {
-		return nil, fmt.Errorf("%w: %w", serviceports.ErrModelSchemaValidation, err)
-	}
-
-	variables, testValues := mapGeneratedVariables(payload.Variables)
-
-	validation := s.templateService.TestExpression(
-		ctx,
-		&formulatemplateservice.TestExpressionRequest{
-			Expression: payload.Expression,
-			SchemaID:   schemaID,
-			Variables:  testValues,
-			TenantInfo: req.TenantInfo,
-		},
-	)
-
-	scenarios := s.priceScenarios(ctx, &priceScenariosParams{
-		TenantInfo: req.TenantInfo,
-		SchemaID:   schemaID,
-		Expression: payload.Expression,
-		Defaults:   testValues,
-		Generated:  payload.Scenarios,
-	})
-
-	return &GenerateFormulaResponse{
-		Expression:          payload.Expression,
-		VariableDefinitions: variables,
-		Explanation:         payload.Explanation,
-		Validation:          validation,
-		Scenarios:           scenarios,
-		ModelIdentifier:     result.ModelIdentifier,
-	}, nil
-}
-
-type priceScenariosParams struct {
+type TestRequest struct {
 	TenantInfo pagination.TenantInfo
 	SchemaID   string
 	Expression string
-	Defaults   map[string]any
-	Generated  []generatedScenario
+	Variables  map[string]any
+	ShipmentID pulid.ID
+	Scenarios  []Scenario
 }
 
-// priceScenarios turns the model's proposed scenarios into concrete test cases
-// by pricing each one through the same preview path the studio uses. The model
-// never gets to assert an expected amount; the engine computes it.
-func (s *Service) priceScenarios(
+type TestOutcome struct {
+	SchemaID  string                     `json:"schemaId"`
+	Check     pagedraft.FormulaCheck     `json:"check"`
+	Warnings  []string                   `json:"warnings,omitempty"`
+	Resolved  map[string]any             `json:"resolvedVariables,omitempty"`
+	Scenarios []pagedraft.PricedScenario `json:"scenarios,omitempty"`
+}
+
+type ProposeRequest struct {
+	TenantInfo  pagination.TenantInfo
+	SchemaID    string
+	Expression  string
+	Variables   []pagedraft.FormulaVariable
+	Explanation string
+	Scenarios   []Scenario
+}
+
+func SchemaIDOrDefault(schemaID string) string {
+	if trimmed := strings.TrimSpace(schemaID); trimmed != "" {
+		return trimmed
+	}
+
+	return DefaultSchemaID
+}
+
+func (s *Service) Reference(
 	ctx context.Context,
-	params *priceScenariosParams,
-) []ProposedScenario {
-	scenarios := make([]ProposedScenario, 0, maxProposedScenarios)
-	for _, candidate := range params.Generated {
-		if len(scenarios) == maxProposedScenarios {
-			break
-		}
-		name := strings.TrimSpace(candidate.Name)
-		if name == "" {
-			continue
-		}
-
-		variables := make(map[string]any, len(params.Defaults)+len(candidate.Variables))
-		maps.Copy(variables, params.Defaults)
-		for _, value := range candidate.Variables {
-			if value.Name == "" || value.Value == nil {
-				continue
-			}
-			variables[value.Name] = value.Value
-		}
-
-		scenario := ProposedScenario{
-			Name:        name,
-			Description: strings.TrimSpace(candidate.Description),
-			Variables:   variables,
-		}
-
-		result := s.templateService.TestExpression(
-			ctx,
-			&formulatemplateservice.TestExpressionRequest{
-				Expression: params.Expression,
-				SchemaID:   params.SchemaID,
-				Variables:  variables,
-				TenantInfo: params.TenantInfo,
-			},
-		)
-		if amount, ok := resultAmount(result); ok {
-			scenario.Valid = true
-			scenario.ExpectedAmount = &amount
-		} else {
-			scenario.Error = result.Error
-			if scenario.Error == "" {
-				scenario.Error = result.Message
-			}
-		}
-
-		scenarios = append(scenarios, scenario)
-	}
-
-	return scenarios
-}
-
-func resultAmount(result *formulatemplateservice.TestExpressionResponse) (float64, bool) {
-	if result == nil || !result.Valid {
-		return 0, false
-	}
-	switch value := result.Result.(type) {
-	case decimal.Decimal:
-		return value.InexactFloat64(), true
-	case float64:
-		return value, true
-	case int:
-		return float64(value), true
-	case int64:
-		return float64(value), true
-	default:
-		return 0, false
-	}
-}
-
-func (s *Service) ExplainFormula(
-	ctx context.Context,
-	req *ExplainFormulaRequest,
-) (*ExplainFormulaResponse, error) {
-	if err := validateExplainRequest(req); err != nil {
-		return nil, err
-	}
-
-	schemaID := defaultSchemaID(req.SchemaID)
+	tenant pagination.TenantInfo,
+	schemaID string,
+) (*Reference, error) {
+	schemaID = SchemaIDOrDefault(schemaID)
 	description, err := s.formulaService.DescribeSchema(schemaID)
 	if err != nil {
-		return nil, err
+		return nil, errortypes.NewValidationError(
+			"schemaId", errortypes.ErrInvalid,
+			"There is no formula schema named "+schemaID,
+		)
 	}
 
-	result, err := s.completion.CompleteStructured(ctx, &serviceports.StructuredCompletionRequest{
-		TenantInfo:   req.TenantInfo,
-		System:       explainSystemPrompt,
-		Context:      buildExplainContext(description, req.Expression),
-		OutputSchema: explainOutputSchema(),
-		Attribution: formulaAttribution(
-			req.TenantInfo,
-			aiusage.FeatureFormulaExplain,
-			schemaID,
-		),
-	})
+	tables, err := s.rateTables(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
 
-	var payload explanationPayload
-	if err = sonic.Unmarshal([]byte(result.Text), &payload); err != nil {
-		return nil, fmt.Errorf("%w: %w", serviceports.ErrModelSchemaValidation, err)
-	}
-
-	return &ExplainFormulaResponse{
-		Explanation:     payload.Explanation,
-		ModelIdentifier: result.ModelIdentifier,
+	return &Reference{
+		SchemaID:   schemaID,
+		Variables:  description.Variables,
+		Functions:  description.Functions,
+		RateTables: tables,
 	}, nil
 }
 
-func validateGenerateRequest(req *GenerateFormulaRequest) error {
-	multiErr := errortypes.NewMultiError()
-
-	if req.Instruction == "" {
-		multiErr.Add("instruction", errortypes.ErrRequired, "An instruction is required")
-	}
-	if len(req.Instruction) > maxInstructionLength {
-		multiErr.Add(
-			"instruction",
-			errortypes.ErrInvalid,
-			"Instruction cannot exceed {0} characters", maxInstructionLength,
-		)
-	}
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
-}
-
-func validateExplainRequest(req *ExplainFormulaRequest) error {
-	multiErr := errortypes.NewMultiError()
-
-	if req.Expression == "" {
-		multiErr.Add("expression", errortypes.ErrRequired, "An expression is required")
-	}
-	if len(req.Expression) > maxExpressionLength {
-		multiErr.Add(
-			"expression",
-			errortypes.ErrInvalid,
-			"Expression cannot exceed {0} characters", maxExpressionLength,
-		)
-	}
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
-}
-
-func defaultSchemaID(schemaID string) string {
-	if schemaID == "" {
-		return "shipment"
-	}
-
-	return schemaID
-}
-
-func (s *Service) listLookupTableCodes(
+func (s *Service) rateTables(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) ([]string, error) {
+	tenant pagination.TenantInfo,
+) ([]RateTable, error) {
 	data, err := s.rateMatrixRepo.GetLookupData(
 		ctx,
-		&repositories.GetRateMatrixLookupDataRequest{TenantInfo: tenantInfo},
+		&repositories.GetRateMatrixLookupDataRequest{TenantInfo: tenant},
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("read the rate tables a formula may look up: %w", err)
 	}
 
-	codes := make([]string, 0, len(data))
+	tables := make([]RateTable, 0, len(data))
 	for _, entry := range data {
 		if entry == nil || entry.Matrix == nil {
 			continue
 		}
-		switch len(entry.Matrix.Dimensions) {
-		case 1:
-			codes = append(codes, entry.Matrix.Code+" (single-axis: use lookup/lookupOr)")
-		case 2:
-			codes = append(codes, entry.Matrix.Code+" (two-axis: use lookup2/lookup2Or)")
+		table := RateTable{
+			Code: entry.Matrix.Code,
+			Name: entry.Matrix.Name,
+			Axes: len(entry.Matrix.Dimensions),
 		}
-	}
-
-	return codes, nil
-}
-
-func mapGeneratedVariables(
-	generated []GeneratedVariable,
-) ([]*formulatypes.VariableDefinition, map[string]any) {
-	variables := make([]*formulatypes.VariableDefinition, 0, len(generated))
-	testValues := make(map[string]any, len(generated))
-
-	for _, variable := range generated {
-		if variable.Name == "" {
+		switch table.Axes {
+		case 1:
+			table.Functions = "lookup, lookupOr"
+		case 2:
+			table.Functions = "lookup2, lookup2Or"
+		default:
 			continue
 		}
-
-		variableType := formulatypes.VariableValueType(variable.Type)
-		switch variableType {
-		case formulatypes.VariableValueTypeNumber,
-			formulatypes.VariableValueTypeString,
-			formulatypes.VariableValueTypeBoolean:
-		default:
-			variableType = formulatypes.VariableValueTypeNumber
-		}
-
-		variables = append(variables, &formulatypes.VariableDefinition{
-			Name:         variable.Name,
-			Type:         variableType,
-			Description:  variable.Description,
-			DefaultValue: variable.DefaultValue,
-		})
-
-		if variable.DefaultValue != nil {
-			testValues[variable.Name] = variable.DefaultValue
-		}
+		tables = append(tables, table)
 	}
 
-	return variables, testValues
+	return tables, nil
 }
 
-func formulaAttribution(
-	tenantInfo pagination.TenantInfo,
-	feature aiusage.Feature,
-	schemaID string,
-) serviceports.AIUsageAttribution {
-	return serviceports.AIUsageAttribution{
-		UserID:  tenantInfo.UserID,
-		Feature: feature,
-		Subject: aiusage.Subject{
-			Type: aiusage.SubjectTypeFormulaSchema,
-			ID:   schemaID,
-		},
+func (s *Service) Test(ctx context.Context, req *TestRequest) (*TestOutcome, error) {
+	if err := validateTest(req); err != nil {
+		return nil, err
 	}
+
+	schemaID := SchemaIDOrDefault(req.SchemaID)
+	check := &formulatemplateservice.TestExpressionRequest{
+		Expression: req.Expression,
+		SchemaID:   schemaID,
+		Variables:  maps.Clone(req.Variables),
+		TenantInfo: req.TenantInfo,
+	}
+	if req.ShipmentID.IsNotNil() {
+		shipmentID := req.ShipmentID
+		check.ShipmentID = &shipmentID
+	}
+
+	result := s.templateService.TestExpression(ctx, check)
+	outcome := &TestOutcome{
+		SchemaID: schemaID,
+		Check:    checkOf(result),
+		Resolved: result.ResolvedVariables,
+	}
+	for _, warning := range result.Warnings {
+		outcome.Warnings = append(outcome.Warnings, warning.Message)
+	}
+	if outcome.Check.Valid {
+		outcome.Scenarios = s.price(ctx, req.TenantInfo, schemaID, req.Expression,
+			req.Variables, req.Scenarios)
+	}
+
+	return outcome, nil
+}
+
+func (s *Service) Propose(
+	ctx context.Context,
+	req *ProposeRequest,
+) (*pagedraft.FormulaProposal, error) {
+	if err := validatePropose(req); err != nil {
+		return nil, err
+	}
+
+	defaults := make(map[string]any, len(req.Variables))
+	for _, variable := range req.Variables {
+		if variable.DefaultValue != nil {
+			defaults[variable.Name] = variable.DefaultValue
+		}
+	}
+
+	outcome, err := s.Test(ctx, &TestRequest{
+		TenantInfo: req.TenantInfo,
+		SchemaID:   req.SchemaID,
+		Expression: req.Expression,
+		Variables:  defaults,
+		Scenarios:  req.Scenarios,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &pagedraft.FormulaProposal{
+		SchemaID:    outcome.SchemaID,
+		Expression:  strings.TrimSpace(req.Expression),
+		Variables:   req.Variables,
+		Explanation: strings.TrimSpace(req.Explanation),
+		Check:       outcome.Check,
+		Scenarios:   outcome.Scenarios,
+	}, nil
+}
+
+func (s *Service) price(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	schemaID, expression string,
+	defaults map[string]any,
+	scenarios []Scenario,
+) []pagedraft.PricedScenario {
+	priced := make([]pagedraft.PricedScenario, 0, len(scenarios))
+	for _, scenario := range scenarios {
+		variables := make(map[string]any, len(defaults)+len(scenario.Variables))
+		maps.Copy(variables, defaults)
+		for name, value := range scenario.Variables {
+			if value != nil {
+				variables[name] = value
+			}
+		}
+
+		result := s.templateService.TestExpression(ctx,
+			&formulatemplateservice.TestExpressionRequest{
+				Expression: expression,
+				SchemaID:   schemaID,
+				Variables:  variables,
+				TenantInfo: tenant,
+			})
+		check := checkOf(result)
+		priced = append(priced, pagedraft.PricedScenario{
+			Name:        strings.TrimSpace(scenario.Name),
+			Description: strings.TrimSpace(scenario.Description),
+			Variables:   variables,
+			Amount:      check.Result,
+			Valid:       check.Valid,
+			Error:       check.Error,
+		})
+	}
+
+	return priced
+}
+
+func checkOf(result *formulatemplateservice.TestExpressionResponse) pagedraft.FormulaCheck {
+	if result == nil {
+		return pagedraft.FormulaCheck{Error: "The expression could not be tested"}
+	}
+	if !result.Valid {
+		message := strings.TrimSpace(result.Error)
+		if message == "" {
+			message = strings.TrimSpace(result.Message)
+		}
+
+		return pagedraft.FormulaCheck{Error: message}
+	}
+
+	amount, ok := AmountOf(result.Result)
+	if !ok {
+		return pagedraft.FormulaCheck{
+			Error: "The expression evaluated to something other than an amount",
+		}
+	}
+
+	return pagedraft.FormulaCheck{Valid: true, Result: amount}
+}
+
+func AmountOf(value any) (string, bool) {
+	switch v := value.(type) {
+	case decimal.Decimal:
+		return v.String(), true
+	case *decimal.Decimal:
+		if v == nil {
+			return "", false
+		}
+
+		return v.String(), true
+	case float64:
+		return decimal.NewFromFloat(v).String(), true
+	case float32:
+		return decimal.NewFromFloat32(v).String(), true
+	case int:
+		return decimal.NewFromInt(int64(v)).String(), true
+	case int32:
+		return decimal.NewFromInt32(v).String(), true
+	case int64:
+		return decimal.NewFromInt(v).String(), true
+	default:
+		return "", false
+	}
+}
+
+func validateTest(req *TestRequest) error {
+	multiErr := errortypes.NewMultiError()
+
+	expression := strings.TrimSpace(req.Expression)
+	switch {
+	case expression == "":
+		multiErr.Add("expression", errortypes.ErrRequired, "An expression is required")
+	case utf8.RuneCountInString(expression) > pagedraft.MaxExpressionLength:
+		multiErr.Add("expression", errortypes.ErrInvalid,
+			"Expression cannot exceed {0} characters", pagedraft.MaxExpressionLength)
+	}
+	validateValues(multiErr, "variables", req.Variables)
+	if len(req.Scenarios) > MaxScenarios {
+		multiErr.Add("scenarios", errortypes.ErrInvalid,
+			"At most {0} scenarios are priced at once", MaxScenarios)
+	}
+	for idx, scenario := range req.Scenarios {
+		field := fmt.Sprintf("scenarios[%d]", idx)
+		name := strings.TrimSpace(scenario.Name)
+		if name == "" {
+			multiErr.Add(field+".name", errortypes.ErrRequired, "A scenario needs a name")
+		}
+		if utf8.RuneCountInString(name) > MaxScenarioNameLen ||
+			utf8.RuneCountInString(scenario.Description) > pagedraft.MaxVariableTextLength {
+			multiErr.Add(field, errortypes.ErrInvalid, "Scenario text is too long")
+		}
+		validateValues(multiErr, field+".variables", scenario.Variables)
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+func validateValues(multiErr *errortypes.MultiError, field string, values map[string]any) {
+	if len(values) > maxScenarioVars {
+		multiErr.Add(field, errortypes.ErrInvalid, "Too many variable values")
+		return
+	}
+	for name, value := range values {
+		if !pagedraft.ValidVariableName(name) {
+			multiErr.Add(field+"."+name, errortypes.ErrInvalid, "Variable name is invalid")
+			continue
+		}
+		if !pagedraft.ScalarValue(value, pagedraft.MaxVariableTextLength) {
+			multiErr.Add(field+"."+name, errortypes.ErrInvalid,
+				"A value must be a number, text or true/false")
+		}
+	}
+}
+
+func validatePropose(req *ProposeRequest) error {
+	multiErr := errortypes.NewMultiError()
+	if utf8.RuneCountInString(req.Explanation) > MaxExplanationRunes {
+		multiErr.Add("explanation", errortypes.ErrInvalid,
+			"Explanation cannot exceed {0} characters", MaxExplanationRunes)
+	}
+	if strings.TrimSpace(req.Explanation) == "" {
+		multiErr.Add("explanation", errortypes.ErrRequired,
+			"Say in plain words what the formula charges")
+	}
+	draft := pagedraft.Formula{
+		SchemaID:   SchemaIDOrDefault(req.SchemaID),
+		Expression: req.Expression,
+		Variables:  req.Variables,
+	}
+	(&pagedraft.Draft{Surface: pagedraft.SurfaceFormula, Formula: &draft}).
+		Validate("", multiErr)
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
 }

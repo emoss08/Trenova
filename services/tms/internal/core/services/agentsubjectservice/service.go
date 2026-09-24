@@ -55,6 +55,7 @@ type Params struct {
 	Reports      repositories.ReportDefinitionRepository    `optional:"true"`
 	Dashboards   repositories.ReportDashboardRepository     `optional:"true"`
 	Dispatch     repositories.DispatchControlRepository     `optional:"true"`
+	Formulas     repositories.FormulaTemplateRepository     `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -77,6 +78,7 @@ type Service struct {
 	reports      repositories.ReportDefinitionRepository
 	dashboards   repositories.ReportDashboardRepository
 	dispatch     repositories.DispatchControlRepository
+	formulas     repositories.FormulaTemplateRepository
 	logger       *zap.Logger
 }
 
@@ -98,6 +100,7 @@ func New(p Params) serviceports.AgentSubjectDescriber {
 		reports:      p.Reports,
 		dashboards:   p.Dashboards,
 		dispatch:     p.Dispatch,
+		formulas:     p.Formulas,
 		logger:       p.Logger.Named("service.agentsubject"),
 	}
 }
@@ -135,6 +138,8 @@ func (s *Service) Describe(
 		return s.report(ctx, tenant, subjectID)
 	case agent.SubjectDashboard:
 		return s.dashboard(ctx, tenant, subjectID)
+	case agent.SubjectFormulaTemplate:
+		return s.formulaTemplate(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:
@@ -946,6 +951,52 @@ func (s *Service) dashboard(
 		"visibility":  found.Visibility,
 		"tiles":       tiles,
 	})
+
+	return subject, nil
+}
+
+func (s *Service) formulaTemplate(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	templateID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectFormulaTemplate,
+		ID:    templateID.String(),
+		Label: "Formula template",
+	}
+	if s.formulas == nil {
+		return subject, nil
+	}
+
+	found, err := s.formulas.GetByID(ctx, repositories.GetFormulaTemplateByIDRequest{
+		TemplateID: templateID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load formula template: %w", err)
+	}
+
+	subject.Label = "Formula template: " + found.Name
+	notes := map[string]any{
+		"name":                found.Name,
+		"description":         found.Description,
+		"type":                found.Type,
+		"status":              found.Status,
+		"schemaId":            found.SchemaID,
+		"savedExpression":     found.Expression,
+		"variableDefinitions": found.VariableDefinitions,
+		"roundingMode":        found.RoundingMode,
+		"roundingPrecision":   found.RoundingPrecision,
+		"version":             found.CurrentVersionNumber,
+	}
+	if found.MinCharge.Valid {
+		notes["minCharge"] = found.MinCharge.Decimal.String()
+	}
+	if found.MaxCharge.Valid {
+		notes["maxCharge"] = found.MaxCharge.Decimal.String()
+	}
+	subject.Notes = marshalNotes(notes)
 
 	return subject, nil
 }

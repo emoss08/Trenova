@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
+	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -205,7 +206,8 @@ type AssistantArtifactEvent struct {
 	// Path is where a navigation artifact moves the app. It rides on the
 	// event because the app follows it the moment it arrives, before the
 	// artifact itself has been fetched.
-	Path string `json:"path,omitempty"`
+	Path  string          `json:"path,omitempty"`
+	Draft *pagedraft.Edit `json:"draft,omitempty"`
 }
 
 // ProposalHold names the switch holding a proposal and, when it is an agent's
@@ -508,6 +510,22 @@ type ThreadMessagesPage struct {
 	// Limit is how many messages a thread may hold before it must be
 	// continued in a new one, so the client can say so before the wall.
 	Limit int `json:"limit"`
+}
+
+type OpenPageThreadRequest struct {
+	TenantInfo  pagination.TenantInfo
+	Origin      conversation.ThreadOrigin
+	SubjectType agent.SubjectType
+	SubjectID   pulid.ID
+}
+
+type PageAssistant interface {
+	OpenPageThread(
+		ctx context.Context,
+		req *OpenPageThreadRequest,
+		actor *RequestActor,
+	) (*conversation.Thread, error)
+	ClosePageThreads(ctx context.Context, req repositories.ArchiveSubjectThreadsRequest) error
 }
 
 type AssistantService interface {

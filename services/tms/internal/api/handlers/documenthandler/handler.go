@@ -6,6 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -30,6 +32,7 @@ type Params struct {
 	UploadService          *documentuploadservice.Service
 	DocumentContentService serviceports.DocumentContentService
 	ImportAssistant        serviceports.ShipmentImportAssistantService
+	PageAssistant          serviceports.PageAssistant `optional:"true"`
 	ErrorHandler           *helpers.ErrorHandler
 	PermissionMiddleware   *middleware.PermissionMiddleware
 	Config                 *config.Config `optional:"true"`
@@ -41,6 +44,7 @@ type Handler struct {
 	uploadService   *documentuploadservice.Service
 	contentService  serviceports.DocumentContentService
 	importAssistant serviceports.ShipmentImportAssistantService
+	pageAssistant   serviceports.PageAssistant
 	eh              *helpers.ErrorHandler
 	pm              *middleware.PermissionMiddleware
 	storageConfig   config.StorageConfig
@@ -71,6 +75,7 @@ func New(p Params) *Handler {
 		uploadService:   p.UploadService,
 		contentService:  p.DocumentContentService,
 		importAssistant: p.ImportAssistant,
+		pageAssistant:   p.PageAssistant,
 		eh:              p.ErrorHandler,
 		pm:              p.PermissionMiddleware,
 		storageConfig:   storageConfig,
@@ -219,14 +224,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.attachToShipment,
 	)
 	api.POST(
-		"/:documentID/import-assistant/chat/",
+		"/:documentID/import-assistant/thread/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.importAssistantChat,
-	)
-	api.POST(
-		"/:documentID/import-assistant/chat-stream/",
-		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
-		h.importAssistantChatStream,
+		h.pm.RequirePermission(permission.ResourceAssistant.String(), permission.OpCreate),
+		h.openImportAssistantThread,
 	)
 	api.GET(
 		"/:documentID/import-assistant/history/",
@@ -1351,7 +1352,21 @@ func (h *Handler) attachToShipment(c *gin.Context) {
 	c.JSON(http.StatusOK, updated)
 }
 
-func (h *Handler) importAssistantChat(c *gin.Context) {
+// @Summary Open the import assistant's conversation about a document
+// @Description Opens, or returns, the caller's conversation with the shipment import assistant about one document. Turns are then asked on it through the assistant's turn routes, carrying the page's draft. Requires document read, assistant create, and access to the import assistant.
+// @ID openImportAssistantThread
+// @Tags Documents
+// @Produce json
+// @Param documentID path string true "Document ID"
+// @Success 200 {object} conversation.Thread
+// @Failure 400 {object} helpers.ProblemDetail
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Failure 422 {object} helpers.ProblemDetail
+// @Failure 500 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /documents/{documentID}/import-assistant/thread/ [post]
+func (h *Handler) openImportAssistantThread(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
 	documentID, err := pulid.Parse(c.Param("documentID"))
@@ -1367,87 +1382,34 @@ func (h *Handler) importAssistantChat(c *gin.Context) {
 		return
 	}
 
-	var body serviceports.ShipmentImportChatRequest
-	if err = c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(
-			c,
-			errortypes.NewValidationError("body", errortypes.ErrInvalid, "Invalid request body"),
-		)
+	if h.pageAssistant == nil {
+		h.eh.HandleError(c, errortypes.NewBusinessError(
+			"The import assistant is not available on this server",
+		))
 		return
 	}
 
-	body.TenantInfo = pagination.TenantInfo{
-		OrgID:  authCtx.OrganizationID,
-		BuID:   authCtx.BusinessUnitID,
-		UserID: authCtx.UserID,
-	}
-	body.DocumentID = documentID.String()
-
-	resp, err := h.importAssistant.Chat(c.Request.Context(), &body)
+	actor := requestActorFromAuthContext(authCtx)
+	thread, err := h.pageAssistant.OpenPageThread(
+		c.Request.Context(),
+		&serviceports.OpenPageThreadRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			Origin:      conversation.ThreadOriginImport,
+			SubjectType: agent.SubjectDocument,
+			SubjectID:   documentID,
+		},
+		&actor,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
-}
-
-func (h *Handler) importAssistantChatStream(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	documentID, err := pulid.Parse(c.Param("documentID"))
-	if err != nil {
-		h.eh.HandleError(
-			c,
-			errortypes.NewValidationError(
-				"documentId",
-				errortypes.ErrInvalid,
-				"Invalid document ID",
-			),
-		)
-		return
-	}
-
-	var body serviceports.ShipmentImportChatRequest
-	if err = c.ShouldBindJSON(&body); err != nil {
-		h.eh.HandleError(
-			c,
-			errortypes.NewValidationError("body", errortypes.ErrInvalid, "Invalid request body"),
-		)
-		return
-	}
-
-	body.TenantInfo = pagination.TenantInfo{
-		OrgID:  authCtx.OrganizationID,
-		BuID:   authCtx.BusinessUnitID,
-		UserID: authCtx.UserID,
-	}
-	body.DocumentID = documentID.String()
-
-	stream, err := helpers.OpenEventStream(c, helpers.EventStreamOptions{})
-	if err != nil {
-		h.eh.HandleError(c, errortypes.NewBusinessError("Streaming not supported"))
-		return
-	}
-	defer stream.Close()
-
-	emit := func(event serviceports.StreamEvent) {
-		if emitErr := stream.Emit(event.Event, event.Data); emitErr != nil {
-			h.logger.Error("import assistant stream event lost",
-				zap.String("event", event.Event),
-				zap.Error(emitErr),
-			)
-		}
-	}
-
-	if err = h.importAssistant.ChatStream(c.Request.Context(), &body, emit); err != nil {
-		emit(
-			serviceports.StreamEvent{
-				Event: "error",
-				Data:  map[string]string{"message": err.Error()},
-			},
-		)
-	}
+	c.JSON(http.StatusOK, thread)
 }
 
 func (h *Handler) getImportAssistantHistory(c *gin.Context) {

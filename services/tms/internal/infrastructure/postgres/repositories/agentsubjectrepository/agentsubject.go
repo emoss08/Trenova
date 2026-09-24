@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -121,6 +122,11 @@ var subjectTables = map[agent.SubjectType]subjectTable{
 		model:  func() any { return (*report.Dashboard)(nil) },
 		tenant: buncolgen.DashboardApplyTenant,
 		id:     buncolgen.DashboardColumns.ID,
+	},
+	agent.SubjectFormulaTemplate: {
+		model:  func() any { return (*formulatemplate.FormulaTemplate)(nil) },
+		tenant: buncolgen.FormulaTemplateApplyTenant,
+		id:     buncolgen.FormulaTemplateColumns.ID,
 	},
 }
 

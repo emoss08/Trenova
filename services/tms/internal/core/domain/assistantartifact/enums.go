@@ -33,6 +33,7 @@ const (
 	// KindNavigation is a page the agent took the person to, kept so the
 	// conversation still says where after a reload.
 	KindNavigation Kind = "navigation"
+	KindDraftEdit  Kind = "draft_edit"
 )
 
 // AllKinds is the whole set, in the order they were added.
@@ -55,6 +56,7 @@ func AllKinds() []Kind {
 		KindRunDiff,
 		KindDocument,
 		KindNavigation,
+		KindDraftEdit,
 	}
 }
 
