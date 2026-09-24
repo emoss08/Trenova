@@ -51,6 +51,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/iam"
 	"github.com/emoss08/trenova/internal/core/domain/ifta"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
@@ -1347,6 +1348,14 @@ type CommodityConnection struct {
 type CommodityEdge struct {
 	Node   *commodity.Commodity `json:"node"`
 	Cursor string               `json:"cursor"`
+}
+
+// What the accounting system returned to the callback page after the person approved access.
+type CompleteAccountingAuthorizationInput struct {
+	IntegrationType integration.Type `json:"integrationType"`
+	State           string           `json:"state"`
+	Code            string           `json:"code"`
+	RealmID         string           `json:"realmId"`
 }
 
 type CompleteClearinghouseQueryInput struct {

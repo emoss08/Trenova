@@ -177,6 +177,7 @@ type Params struct {
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
 	DetentionService             *detentionservice.Service
+	AccountingConnectionService  services.AccountingConnectionService
 	DetentionPolicyService       *detentionpolicyservice.Service
 	RateAgreementService         *rateagreementservice.Service
 	RateZoneService              *ratezoneservice.Service
@@ -338,6 +339,7 @@ type Resolver struct {
 	fuelSurchargeService         *fuelsurchargeservice.Service
 	costingService               *costingservice.Service
 	detentionService             *detentionservice.Service
+	accountingConnections        services.AccountingConnectionService
 	detentionPolicyService       *detentionpolicyservice.Service
 	rateAgreementService         *rateagreementservice.Service
 	rateZoneService              *ratezoneservice.Service
@@ -500,6 +502,7 @@ func New(p Params) *Resolver {
 		fuelSurchargeService:         p.FuelSurchargeService,
 		costingService:               p.CostingService,
 		detentionService:             p.DetentionService,
+		accountingConnections:        p.AccountingConnectionService,
 		detentionPolicyService:       p.DetentionPolicyService,
 		rateAgreementService:         p.RateAgreementService,
 		rateZoneService:              p.RateZoneService,

@@ -217,13 +217,13 @@ A deterministic scorer, then an optional model pass, each proposal carrying a co
 
 Designed around `SameSite=Strict` session cookies (§1.2):
 
-1. The user clicks **Connect QuickBooks** in the wizard. `POST /api/v1/accounting/connections/quickbooks/authorize/` (authenticated, `accounting_integration:manage`) creates a 32-byte state and PKCE verifier (if §1.3 confirms support; otherwise state plus nonce), stores `{state, userID, orgID, buID, verifier, returnTo}` in Redis for 10 minutes, and returns the Intuit authorize URL.
+1. The user clicks **Connect QuickBooks** in the wizard. The GraphQL mutation `startAccountingAuthorization` (authenticated, `accounting_integration:manage`, a signed-in person only) mints a 32-byte state, stores only its SHA-256 hash with `{userID, orgID, buID, integrationType}` in Redis for 10 minutes, and returns the Intuit authorize URL. Trenova is a confidential client (the client secret never leaves the server), so the state plus the secret-authenticated code exchange protect the flow; PKCE is added if Intuit's reference confirms support.
 2. The browser opens it in the same tab. Intuit redirects to the **web app** route `C/routes/admin/integrations/quickbooks/callback` with `code`, `state` and `realmId`.
-3. That page (a top-level navigation, so no API call has happened yet) immediately calls `POST /api/v1/accounting/connections/quickbooks/complete/` with the three values. This is a same-site request, so the `Strict` session cookie is sent.
+3. That page (a top-level navigation, so no API call has happened yet) immediately calls the GraphQL mutation `completeAccountingAuthorization` with the three values. This is a same-site request, so the `Strict` session cookie is sent.
 4. The server atomically takes the state (`GETDEL`, new `redishelpers.GetDelJSON`), requires that the session user and tenant equal the ones that started it, exchanges the code, reads company info and preferences, refuses a realm already connected to another tenant, stores encrypted tokens, sets `setup_step = Mappings`, audits, and returns.
 5. The page routes back to the integrations catalog with the wizard open at the mapping step.
 
-A state used twice, expired, or presented by a different user fails with a specific message and no side effect. The authorize and complete routes are REST because they are browser flow steps; everything else is GraphQL.
+A state used twice, expired, or presented by a different user fails with a specific message and no side effect. As built (M1), every authenticated step is GraphQL, so persisted operations, the resolver permission lint and generated client types cover it; only the public webhook is REST. The realm id in the redirect is not trusted on its own: the connection is saved only after the new access token successfully reads that company's info.
 
 ---
 

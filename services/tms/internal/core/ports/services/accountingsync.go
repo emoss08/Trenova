@@ -48,6 +48,12 @@ type ReceiveAccountingWebhookRequest struct {
 	Body            []byte
 }
 
+type AccountingHealthSweep struct {
+	Listed  int
+	Checked int
+	Failed  int
+}
+
 type AccountingConnectionService interface {
 	Status(
 		ctx context.Context,
@@ -71,6 +77,6 @@ type AccountingConnectionService interface {
 		tenantInfo pagination.TenantInfo,
 		connectionID pulid.ID,
 	) (*accountingsync.AccountingConnection, error)
-	CheckDue(ctx context.Context, limit int) (int, error)
+	CheckDue(ctx context.Context, limit int) (*AccountingHealthSweep, error)
 	ReceiveWebhook(ctx context.Context, req *ReceiveAccountingWebhookRequest) error
 }

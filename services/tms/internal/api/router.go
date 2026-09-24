@@ -7,6 +7,7 @@ import (
 	graphqlapi "github.com/emoss08/trenova/internal/api/graphql"
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialchargehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountingcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/accountingwebhookhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accounttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentcontrolhandler"
@@ -222,6 +223,7 @@ type RouterParams struct {
 	InboundHandler                  *inboundhandler.Handler
 	EmailHandler                    *emailhandler.Handler
 	TelematicsHandler               *telematicshandler.Handler
+	AccountingWebhookHandler        *accountingwebhookhandler.Handler
 	CommodityHandler                *commodityhandler.Handler
 	CarrierAssignmentHandler        *carrierassignmenthandler.Handler
 	TenderPublicHandler             *tenderpublichandler.Handler
@@ -358,6 +360,7 @@ type Router struct {
 	inboundHandler                  *inboundhandler.Handler
 	emailHandler                    *emailhandler.Handler
 	telematicsHandler               *telematicshandler.Handler
+	accountingWebhookHandler        *accountingwebhookhandler.Handler
 	commodityHandler                *commodityhandler.Handler
 	carrierAssignmentHandler        *carrierassignmenthandler.Handler
 	tenderPublicHandler             *tenderpublichandler.Handler
@@ -496,6 +499,7 @@ func NewRouter(p RouterParams) *Router {
 		inboundHandler:                  p.InboundHandler,
 		emailHandler:                    p.EmailHandler,
 		telematicsHandler:               p.TelematicsHandler,
+		accountingWebhookHandler:        p.AccountingWebhookHandler,
 		commodityHandler:                p.CommodityHandler,
 		carrierAssignmentHandler:        p.CarrierAssignmentHandler,
 		tenderPublicHandler:             p.TenderPublicHandler,
@@ -637,6 +641,7 @@ func (r *Router) setupPublicRoutes(parent *gin.RouterGroup) {
 	r.controlPlaneProvisioningHandler.RegisterPublicRoutes(rg)
 	r.emailHandler.RegisterPublicRoutes(rg)
 	r.telematicsHandler.RegisterPublicRoutes(rg)
+	r.accountingWebhookHandler.RegisterPublicRoutes(rg)
 	r.invoiceHandler.RegisterPublicRoutes(rg)
 	r.ediHandler.RegisterPublicRoutes(rg)
 	r.inboundHandler.RegisterPublicRoutes(rg)

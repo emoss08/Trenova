@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/runstepledger"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/accountingsyncjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentqualityjobs"
@@ -76,6 +77,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/watchtowerjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/weatheralertjobs"
+	accountinginfra "github.com/emoss08/trenova/internal/infrastructure/accounting"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/completionrouter"
 	agentextensioninfra "github.com/emoss08/trenova/internal/infrastructure/agentextension"
 	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
@@ -112,6 +114,7 @@ func Options() fx.Option {
 		)),
 		fuelcard.Module,
 		carrierintelinfra.Module,
+		accountinginfra.Module,
 		agentextensioninfra.Module,
 		agentextensionservice.Module,
 		fx.Provide(telematicsinfra.NewFactory),
@@ -135,6 +138,7 @@ func Options() fx.Option {
 		exchangeratejobs.Module,
 		fuelcardjobs.Module,
 		carrierintelligencejobs.Module,
+		accountingsyncjobs.Module,
 		fuelpricejobs.Module,
 		formulatemplatejobs.Module,
 		ratesimjobs.Module,

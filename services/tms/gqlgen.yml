@@ -3768,3 +3768,24 @@ models:
     fields:
       tableConfig:
         resolver: true
+  AccountingSystem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/integration.Type
+  AccountingConnectionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.ConnectionStatus
+  AccountingErrorCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.ErrorCategory
+  AccountingConnection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingConnection
+    fields:
+      lastErrorCategory:
+        resolver: true
+  AccountingSyncStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingSyncStatus
+  AccountingAuthorizationStart:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingAuthorizationStart

@@ -575,31 +575,32 @@ func (s *Service) CheckHealth(
 	return conn, nil
 }
 
-func (s *Service) CheckDue(ctx context.Context, limit int) (int, error) {
+func (s *Service) CheckDue(ctx context.Context, limit int) (*services.AccountingHealthSweep, error) {
 	now := timeutils.NowUnix()
 	due, err := s.connections.ListDueForHealthCheck(ctx, repositories.ListDueAccountingConnectionsRequest{
 		CheckedBefore: now - HealthCheckInterval + 60,
 		Limit:         limit,
 	})
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	checked := 0
+	sweep := &services.AccountingHealthSweep{Listed: len(due)}
 	for _, conn := range due {
 		if ctx.Err() != nil {
-			return checked, ctx.Err()
+			return sweep, ctx.Err()
 		}
 		tenant := pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID}
 		if _, checkErr := s.CheckHealth(ctx, tenant, conn.ID); checkErr != nil {
+			sweep.Failed++
 			s.l.Warn("accounting connection health check failed",
 				zap.String("connectionId", conn.ID.String()), zap.Error(checkErr))
 			continue
 		}
-		checked++
+		sweep.Checked++
 	}
 
-	return checked, nil
+	return sweep, nil
 }
 
 func (s *Service) ReceiveWebhook(

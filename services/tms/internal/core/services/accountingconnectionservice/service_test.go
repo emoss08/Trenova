@@ -457,13 +457,15 @@ func TestCheckDueChecksEveryDueConnection(t *testing.T) {
 	conn := h.connect(t)
 	h.markDue(conn)
 
-	checked, err := h.svc.CheckDue(t.Context(), 10)
+	sweep, err := h.svc.CheckDue(t.Context(), 10)
 	require.NoError(t, err)
-	assert.Equal(t, 1, checked)
+	assert.Equal(t, 1, sweep.Listed)
+	assert.Equal(t, 1, sweep.Checked)
+	assert.Zero(t, sweep.Failed)
 
-	checked, err = h.svc.CheckDue(t.Context(), 10)
+	sweep, err = h.svc.CheckDue(t.Context(), 10)
 	require.NoError(t, err)
-	assert.Zero(t, checked, "a connection just checked is not due again")
+	assert.Zero(t, sweep.Listed, "a connection just checked is not due again")
 }
 
 func TestReceiveWebhookVerifiesBeforeRecording(t *testing.T) {

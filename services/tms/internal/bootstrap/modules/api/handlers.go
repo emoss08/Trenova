@@ -4,6 +4,7 @@ package api
 import (
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialchargehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountingcontrolhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/accountingwebhookhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accounttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentcontrolhandler"
@@ -202,6 +203,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	inboundhandler.New,
 	emailhandler.New,
 	telematicshandler.New,
+	accountingwebhookhandler.New,
 	commodityhandler.New,
 	carrierassignmenthandler.New,
 	tenderpublichandler.New,
