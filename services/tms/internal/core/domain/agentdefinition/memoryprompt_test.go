@@ -101,7 +101,7 @@ func TestFitMemories_EveryHeldToolIsLoadedWhenNothingWasDisclosed(t *testing.T) 
 
 	fitted := definitionWithInstructions("Help.").FitMemories(rc)
 
-	assert.Equal(t, []*agent.Memory{f.loadedFix, f.unloadedFix, f.orgFact}, fitted,
+	assert.Equal(t, []*agent.Memory{f.unloadedFix, f.loadedFix, f.orgFact}, fitted,
 		"a turn that loaded every tool treats every tool's corrections as in hand")
 }
 
