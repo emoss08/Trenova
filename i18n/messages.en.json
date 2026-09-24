@@ -5653,6 +5653,15 @@
       "service/agentaccessservice"
     ]
   },
+  "A system agent is open to everyone who can use the assistant, because Trenova runs it for them. It cannot be given to particular roles.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A tag must be between 1 and 100 characters": {
     "sites": 3,
     "scope": [
@@ -7490,6 +7499,15 @@
       "routes/tender-offer-public"
     ]
   },
+  "Access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Access boundaries": {
     "sites": 1,
     "scope": [
@@ -9241,7 +9259,7 @@
     ]
   },
   "Add": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "ts"
     ],
@@ -9249,6 +9267,7 @@
       "apps/dash/_components",
       "apps/web/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/benefits",
       "routes/formula-template",
       "routes/fuel-management",
@@ -9742,13 +9761,14 @@
     ]
   },
   "Add an agent": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/permission",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -10866,6 +10886,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Add {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Add {0} legs": {
@@ -12191,12 +12220,13 @@
     ]
   },
   "Agents": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/agent-control",
       "routes/desk"
     ]
@@ -12255,6 +12285,15 @@
       "routes/agent-control"
     ]
   },
+  "Agents open to everyone who can use the assistant are included for this role automatically and need not be added.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Agents resumed": {
     "sites": 1,
     "scope": [
@@ -12271,6 +12310,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Agents this role grants": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Agents you choose": {
@@ -13913,6 +13961,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Among the people who can use the assistant, who may talk to this agent and decide what it proposes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Amount": {
@@ -26567,6 +26624,15 @@
       "apps/web/components"
     ]
   },
+  "Can use all of its tools": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Can view": {
     "sites": 1,
     "scope": [
@@ -26602,6 +26668,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Can't use the assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Canada": {
@@ -31492,6 +31567,15 @@
       "routes/reports"
     ]
   },
+  "Choose roles": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Choose the accessorial charge to reassign": {
     "sites": 1,
     "scope": [
@@ -31964,6 +32048,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Chosen": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Chosen for this agent": {
@@ -50329,7 +50422,7 @@
     ]
   },
   "Disabled": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -60807,6 +60900,15 @@
       "routes/agent-control"
     ]
   },
+  "Every agent is already granted to this role.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Every agent that asks for memory reads this on its next run.": {
     "sites": 1,
     "scope": [
@@ -61620,7 +61722,7 @@
     ]
   },
   "Everyone": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -61628,6 +61730,7 @@
     "areas": [
       "domain/briefing",
       "packages/shared/lib",
+      "routes/agent-control",
       "routes/my-team",
       "routes/policies"
     ]
@@ -61657,6 +61760,33 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Everyone who can use the assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Everyone who can use the assistant can use it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Everyone who can use the assistant can use it now. This grant applies once it is limited to specific roles.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Everyone whose approvals reach you: your own reports, people at a terminal you run, and anyone you are covering for under a delegation in force today.": {
@@ -68500,6 +68630,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Fix what is shown and save again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Fixed amount for each shipment regardless of miles.": {
@@ -86000,6 +86139,15 @@
       "domain/worker"
     ]
   },
+  "Limited to specific roles, and none is chosen, so nobody can use it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Limits applied": {
     "sites": 1,
     "scope": [
@@ -93771,6 +93919,15 @@
       "routes/edi"
     ]
   },
+  "Missing: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Mississippi (MS)": {
     "sites": 1,
     "scope": [
@@ -101435,6 +101592,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No role is chosen, so nobody can use this agent until one is.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "No roles": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No roles assigned to this user.": {
@@ -109769,6 +109944,24 @@
       "routes/reports"
     ]
   },
+  "Open to everyone": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Open to everyone, with tools that reach sensitive data": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Open worker": {
     "sites": 1,
     "scope": [
@@ -116318,6 +116511,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "People with any of these roles, or a role that inherits one, can use it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "People with nothing critical and nothing on watch: compliance in order, training current, safety rating Excellent or Good.": {
@@ -132000,12 +132202,13 @@
     ]
   },
   "Remove {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -137675,12 +137878,13 @@
     ]
   },
   "Roles": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Roles & permissions": {
@@ -153150,6 +153354,15 @@
       "routes/hazardous-material"
     ]
   },
+  "Specific roles": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Specific things the worker should keep doing.": {
     "sites": 1,
     "scope": [
@@ -156527,6 +156740,15 @@
       "routes/inbox"
     ]
   },
+  "Suggested roles": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Suggested updates": {
     "sites": 2,
     "scope": [
@@ -156579,6 +156801,24 @@
     ],
     "areas": [
       "service/carrierintelservice"
+    ]
+  },
+  "Suggestions appear once the agent is saved, from the tools it holds.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Suggestions could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Suite, floor, building, etc.": {
@@ -160523,6 +160763,33 @@
       "routes/agent-control"
     ]
   },
+  "The agent was created and who can use it was saved, but it could not be enabled. Open it to enable it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The agent was created but left disabled, because who can use it could not be saved. Open it to try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The agent was created, but who can use it could not be saved. Open it to try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The agent whose changes are waiting.": {
     "sites": 1,
     "scope": [
@@ -160558,6 +160825,24 @@
     "areas": [
       "apps/web/components",
       "routes/desk"
+    ]
+  },
+  "The agents limited to specific roles that people with this role can use. Changes here are saved as you make them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "The agents this role grants could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The agreed fuel surcharge amount.": {
@@ -170653,6 +170938,15 @@
       "routes/shipment"
     ]
   },
+  "This organization has no roles yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This organization requires a receipt before an expense can be approved": {
     "sites": 1,
     "scope": [
@@ -171285,6 +171579,15 @@
     ],
     "areas": [
       "service/agentaccessservice"
+    ]
+  },
+  "This role is granted no agents limited to specific roles.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "This rule compares against an expected value; give the argument a value": {
@@ -176018,7 +176321,7 @@
     ]
   },
   "Try again": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "ts"
     ],
@@ -187259,6 +187562,24 @@
       "routes/worker"
     ]
   },
+  "Who can use it": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Who can use this agent was saved, but the rest of it was not.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Who carries the card and which unit it fuels. Imported rows that name only the card fall back to this tractor.": {
     "sites": 1,
     "scope": [
@@ -188331,6 +188652,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Worked out from the tools the agent holds as saved, against what each role may do. A role missing something can still use the agent; the tools it lacks permission for are refused.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Worker": {
@@ -190162,6 +190492,15 @@
       "apps/web/components",
       "routes/admin",
       "routes/home"
+    ]
+  },
+  "You no longer have access to this agent. An administrator can give one of your roles access to it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "You stopped it before it finished": {
@@ -197115,6 +197454,24 @@
       "routes/admin"
     ]
   },
+  "{0, plural, one {# role stays chosen for when it is limited to specific roles again.} other {# roles stay chosen for when it is limited to specific roles again.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# role} other {# roles}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0, plural, one {# role} other {# roles}}{1}": {
     "sites": 1,
     "scope": [
@@ -200327,6 +200684,15 @@
     ],
     "areas": [
       "service/carrierintelservice"
+    ]
+  },
+  "{0} reach restricted or confidential records. Anyone who can use the assistant can ask this agent to use them, within their own permissions. Consider limiting it to specific roles.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} regressed": {
