@@ -1946,6 +1946,15 @@ models:
   AgentEvaluation:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.Evaluation
+  AgentEvalCaseSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentquality.CaseSource
+  AgentEvalCaseStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentquality.CaseStatus
+  AgentEvalCase:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentquality.EvalCase
   AgentAutonomyTier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier

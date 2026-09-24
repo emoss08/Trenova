@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -31,9 +32,9 @@ type Params struct {
 	Repo         repositories.AgentEvaluationRepository
 	Runs         repositories.AgentRunRepository
 	Definitions  repositories.AgentDefinitionRepository
+	Cases        repositories.AgentEvalCaseRepository
 	Workflows    services.WorkflowStarter
 	AuditService services.AuditService
-	Budgets      services.AgentBudgetService `optional:"true"`
 }
 
 type Service struct {
@@ -41,9 +42,9 @@ type Service struct {
 	repo        repositories.AgentEvaluationRepository
 	runs        repositories.AgentRunRepository
 	definitions repositories.AgentDefinitionRepository
+	cases       repositories.AgentEvalCaseRepository
 	workflows   services.WorkflowStarter
 	audit       services.AuditService
-	budgets     services.AgentBudgetService
 }
 
 func New(p Params) services.AgentEvaluationService {
@@ -52,15 +53,14 @@ func New(p Params) services.AgentEvaluationService {
 		repo:        p.Repo,
 		runs:        p.Runs,
 		definitions: p.Definitions,
+		cases:       p.Cases,
 		workflows:   p.Workflows,
 		audit:       p.AuditService,
-		budgets:     p.Budgets,
 	}
 }
 
 // Replay opens an evaluation for a recorded run and hands it to the
-// workflow that carries it out. A replay spends real model calls, so it
-// counts against the agent's budget like a run of its own.
+// workflow that carries it out.
 func (s *Service) Replay(
 	ctx context.Context,
 	req *services.ReplayAgentRunRequest,
@@ -91,16 +91,6 @@ func (s *Service) Replay(
 		return nil, err
 	}
 
-	if s.budgets != nil {
-		refusal, bErr := s.budgets.CheckRun(ctx, definition)
-		if bErr != nil {
-			return nil, bErr
-		}
-		if refusal.Refused() {
-			return nil, errortypes.NewBusinessError(refusal.Message(definition.Name))
-		}
-	}
-
 	evaluation := &agent.Evaluation{
 		OrganizationID:    req.TenantInfo.OrgID,
 		BusinessUnitID:    req.TenantInfo.BuID,
@@ -112,6 +102,65 @@ func (s *Service) Replay(
 		SubjectID:         run.SubjectID,
 		DefinitionVersion: definition.Version,
 	}
+
+	return s.start(ctx, evaluation, actor,
+		fmt.Sprintf("Replay of run %s of agent %s started", run.ID, definition.Name))
+}
+
+func (s *Service) ReplayCase(
+	ctx context.Context,
+	req *services.ReplayAgentEvalCaseRequest,
+	actor *services.RequestActor,
+) (*agent.Evaluation, error) {
+	if !s.workflows.Enabled() {
+		return nil, errortypes.NewBusinessError("The workflow engine is not available")
+	}
+
+	evalCase, err := s.cases.GetByID(ctx, repositories.GetAgentEvalCaseByIDRequest{
+		ID:         req.CaseID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if evalCase.Status == agentquality.CaseStatusRetired {
+		return nil, errortypes.NewBusinessError("A retired case is not replayed; restore it first")
+	}
+
+	definition, err := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+		ID:         evalCase.AgentDefinitionID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	caseID := evalCase.ID
+	evaluation := &agent.Evaluation{
+		OrganizationID:    req.TenantInfo.OrgID,
+		BusinessUnitID:    req.TenantInfo.BuID,
+		AgentDefinitionID: definition.ID,
+		EvalCaseID:        &caseID,
+		Status:            agent.EvaluationStatusPending,
+		Trigger:           evalCase.Trigger,
+		SubjectType:       evalCase.SubjectType,
+		SubjectID:         evalCase.SubjectID,
+		DefinitionVersion: definition.Version,
+	}
+
+	return s.start(ctx, evaluation, actor, fmt.Sprintf(
+		"Replay of evaluation case %s of agent %s started",
+		evalCase.ID,
+		definition.Name,
+	))
+}
+
+func (s *Service) start(
+	ctx context.Context,
+	evaluation *agent.Evaluation,
+	actor *services.RequestActor,
+	comment string,
+) (*agent.Evaluation, error) {
 	if actor != nil && actor.IsUser() && actor.UserID.IsNotNil() {
 		userID := actor.UserID
 		evaluation.RequestedByUserID = &userID
@@ -131,8 +180,8 @@ func (s *Service) Replay(
 	workflowID := "agent-evaluation-" + created.ID.String()
 	payload := &agentjobs.AgentEvaluationPayload{
 		BasePayload: temporaltype.BasePayload{
-			OrganizationID: req.TenantInfo.OrgID,
-			BusinessUnitID: req.TenantInfo.BuID,
+			OrganizationID: evaluation.OrganizationID,
+			BusinessUnitID: evaluation.BusinessUnitID,
 			UserID:         actor.UserIDOrNil(),
 			Timestamp:      timeutils.NowUnix(),
 		},
@@ -160,11 +209,7 @@ func (s *Service) Replay(
 		return nil, err
 	}
 
-	s.log(
-		updated,
-		actor,
-		fmt.Sprintf("Replay of run %s of agent %s started", run.ID, definition.Name),
-	)
+	s.log(updated, actor, comment)
 
 	return updated, nil
 }

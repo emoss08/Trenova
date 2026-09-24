@@ -1,0 +1,86 @@
+fragment AgentEvalCaseTableRowFields on AgentEvalCase {
+  id
+  organizationId
+  businessUnitId
+  agentDefinitionId
+  title
+  source
+  status
+  trigger
+  input
+  sourceThreadId
+  sourceProposalId
+  heldTools
+  expected
+  weight
+  expiresAt
+  version
+  createdAt
+  updatedAt
+}
+
+fragment AgentEvalCaseDetailFields on AgentEvalCase {
+  ...AgentEvalCaseTableRowFields
+  sourceRunId
+  sourceTurnId
+  sourceMessageId
+  sourceFeedbackId
+  history
+  pageContext
+  mentions
+  subjectType
+  subjectId
+  toolFixtures
+  rubric
+  redaction
+  contentHash
+  capturedFingerprint
+  createdByUserId
+}
+
+query AgentEvalCaseTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  agentEvalCases(input: $input) {
+    edges {
+      node {
+        ...AgentEvalCaseTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentEvalCaseDetail($id: ID!) {
+  agentEvalCase(id: $id) {
+    ...AgentEvalCaseDetailFields
+  }
+}
+
+mutation CreateAgentEvalCase($input: CreateAgentEvalCaseInput!) {
+  createAgentEvalCase(input: $input) {
+    duplicate
+    evalCase {
+      ...AgentEvalCaseDetailFields
+    }
+  }
+}
+
+mutation UpdateAgentEvalCase($id: ID!, $input: UpdateAgentEvalCaseInput!) {
+  updateAgentEvalCase(id: $id, input: $input) {
+    ...AgentEvalCaseDetailFields
+  }
+}
+
+mutation SetAgentEvalCaseStatus($id: ID!, $status: AgentEvalCaseStatus!) {
+  setAgentEvalCaseStatus(id: $id, status: $status) {
+    ...AgentEvalCaseDetailFields
+  }
+}
+
+mutation ReplayAgentEvalCase($id: ID!) {
+  replayAgentEvalCase(id: $id) {
+    ...AgentEvaluationTableRowFields
+  }
+}

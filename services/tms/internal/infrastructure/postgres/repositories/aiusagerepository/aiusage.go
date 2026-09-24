@@ -232,6 +232,7 @@ func (r *repository) CostByDefinition(
 		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
 		Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
 		Where(cols.CreatedAt.Gte(), req.Since).
+		Where(cols.Surface.NotEq(), aiusage.SurfaceEvaluation).
 		Scan(ctx, &row); err != nil {
 		return nil, fmt.Errorf("sum ai usage cost: %w", err)
 	}

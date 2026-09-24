@@ -26,6 +26,11 @@ type AgentEvaluationResolver interface {
 
 	Actions(ctx context.Context, obj *agent.Evaluation) ([]map[string]any, error)
 	Comparison(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
+
+	Checks(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
+	Judge(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
+
+	Fingerprint(ctx context.Context, obj *agent.Evaluation) (map[string]any, error)
 }
 type AgentPlanResolver interface {
 	Run(ctx context.Context, obj *agent.AgentPlan) (*agent.AgentRun, error)
@@ -695,6 +700,29 @@ func (ec *executionContext) fieldContext_AgentEvaluation_sourceRunId(_ context.C
 	return graphql.NewScalarFieldContext("AgentEvaluation", field, false, false, errors.New("field of type ID does not have child fields"))
 }
 
+func (ec *executionContext) _AgentEvaluation_evalCaseId(ctx context.Context, field graphql.CollectedField, obj *agent.Evaluation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentEvaluation_evalCaseId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.EvalCaseID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentEvaluation_evalCaseId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentEvaluation", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
 func (ec *executionContext) _AgentEvaluation_status(ctx context.Context, field graphql.CollectedField, obj *agent.Evaluation) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1015,6 +1043,98 @@ func (ec *executionContext) _AgentEvaluation_toolCallsUsed(ctx context.Context, 
 }
 func (ec *executionContext) fieldContext_AgentEvaluation_toolCallsUsed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AgentEvaluation", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AgentEvaluation_checks(ctx context.Context, field graphql.CollectedField, obj *agent.Evaluation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentEvaluation_checks(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AgentEvaluation().Checks(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentEvaluation_checks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentEvaluation", field, true, true, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _AgentEvaluation_judge(ctx context.Context, field graphql.CollectedField, obj *agent.Evaluation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentEvaluation_judge(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AgentEvaluation().Judge(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentEvaluation_judge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentEvaluation", field, true, true, errors.New("field of type JSON does not have child fields"))
+}
+
+func (ec *executionContext) _AgentEvaluation_caseScore(ctx context.Context, field graphql.CollectedField, obj *agent.Evaluation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentEvaluation_caseScore(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CaseScore, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentEvaluation_caseScore(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentEvaluation", field, false, false, errors.New("field of type Float does not have child fields"))
+}
+
+func (ec *executionContext) _AgentEvaluation_fingerprint(ctx context.Context, field graphql.CollectedField, obj *agent.Evaluation) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentEvaluation_fingerprint(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AgentEvaluation().Fingerprint(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v map[string]any) graphql.Marshaler {
+			return ec.marshalOJSON2map(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentEvaluation_fingerprint(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentEvaluation", field, true, true, errors.New("field of type JSON does not have child fields"))
 }
 
 func (ec *executionContext) _AgentEvaluation_errorMessage(ctx context.Context, field graphql.CollectedField, obj *agent.Evaluation) (ret graphql.Marshaler) {
@@ -5398,6 +5518,11 @@ func (ec *executionContext) _AgentEvaluation(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "evalCaseId":
+			out.Values[i] = ec._AgentEvaluation_evalCaseId(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "status":
 			out.Values[i] = ec._AgentEvaluation_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5567,6 +5692,125 @@ func (ec *executionContext) _AgentEvaluation(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "checks":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AgentEvaluation_checks(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "judge":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AgentEvaluation_judge(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "caseScore":
+			out.Values[i] = ec._AgentEvaluation_caseScore(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "fingerprint":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AgentEvaluation_fingerprint(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "errorMessage":
 			out.Values[i] = ec._AgentEvaluation_errorMessage(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -8041,6 +8285,25 @@ func (ec *executionContext) marshalOAgentRun2ᚖgithubᚗcomᚋemoss08ᚋtrenova
 		return graphql.Null
 	}
 	return ec._AgentRun(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOAgentRunTrigger2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRunTrigger(ctx context.Context, v any) (*agent.RunTrigger, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := agent.RunTrigger(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAgentRunTrigger2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRunTrigger(ctx context.Context, sel ast.SelectionSet, v *agent.RunTrigger) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func (ec *executionContext) unmarshalOAgentSubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐSubjectType(ctx context.Context, v any) (*agent.SubjectType, error) {

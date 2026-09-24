@@ -182,11 +182,57 @@ export type AgentDecisionType =
   | 'Modified'
   | 'Rejected';
 
+export type AgentEvalCaseCuratedInput = {
+  agentDefinitionId: string | number;
+  expected: unknown;
+  expiresAt?: number | null | undefined;
+  /** Defaults to every tool the agent holds now. */
+  heldTools?: Array<string> | null | undefined;
+  input: string;
+  mentions?: Array<unknown> | null | undefined;
+  pageContext?: unknown;
+  rubric?: string | null | undefined;
+  subjectId?: string | number | null | undefined;
+  subjectType?: string | null | undefined;
+  title?: string | null | undefined;
+  trigger?: AgentRunTrigger | null | undefined;
+};
+
+/** A reply someone rated as good, captured through their rating. */
+export type AgentEvalCaseFromFeedbackInput = {
+  feedbackId: string | number;
+  title?: string | null | undefined;
+};
+
+export type AgentEvalCaseFromMessageInput = {
+  messageId: string | number;
+  threadId: string | number;
+  title?: string | null | undefined;
+};
+
+export type AgentEvalCaseFromProposalInput = {
+  proposalId: string | number;
+  title?: string | null | undefined;
+};
+
+export type AgentEvalCaseSource =
+  | 'Curated'
+  | 'DecidedProposal'
+  | 'ThumbsUp';
+
+export type AgentEvalCaseStatus =
+  | 'Active'
+  | 'Candidate'
+  | 'Quarantined'
+  | 'Retired';
+
 export type AgentEvaluationStatus =
   | 'Completed'
   | 'Failed'
   | 'Pending'
-  | 'Running';
+  | 'Running'
+  /** The replay could not run as the original did; errorMessage says why. */
+  | 'Skipped';
 
 export type AgentExceptionCategory =
   | 'AccessorialDispute'
@@ -1206,6 +1252,14 @@ export type CoverageTier =
   | 'EmployeeChildren'
   | 'EmployeeSpouse'
   | 'Family';
+
+/** Exactly one of the four. */
+export type CreateAgentEvalCaseInput = {
+  curated?: AgentEvalCaseCuratedInput | null | undefined;
+  fromFeedback?: AgentEvalCaseFromFeedbackInput | null | undefined;
+  fromMessage?: AgentEvalCaseFromMessageInput | null | undefined;
+  fromProposal?: AgentEvalCaseFromProposalInput | null | undefined;
+};
 
 export type CreateCarrierInvoiceMatchInput = {
   /** Optional explicit assignment; otherwise resolved by pro number or shipment reference. */
@@ -5317,6 +5371,17 @@ export type UpcomingWorkerPtoInput = {
   workerId?: string | number | null | undefined;
 };
 
+export type UpdateAgentEvalCaseInput = {
+  expected?: unknown;
+  /** Absent leaves the expiry alone; null clears it. */
+  expiresAt?: number | null | undefined;
+  heldTools?: Array<string> | null | undefined;
+  input?: string | null | undefined;
+  rubric?: string | null | undefined;
+  title?: string | null | undefined;
+  version: number;
+};
+
 export type UpdateBenefitPlanInput = {
   carrier?: string | null | undefined;
   code: string;
@@ -6398,7 +6463,59 @@ export type AgentProposalCountQueryVariables = Exact<{
 
 export type AgentProposalCountQuery = { agentProposals: { totalCount: number | null } };
 
-export type AgentEvaluationTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentDefinitionId: string, sourceRunId: string, status: AgentEvaluationStatus, trigger: AgentRunTrigger, subjectType: string, subjectId: string, model: string, reply: string, comparison: unknown, originalProposals: number, toolCallsUsed: number, errorMessage: string, requestedByUserId: string | null, startedAt: number | null, completedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentEvaluationTableRowFieldsFragment' };
+export type AgentEvalCaseTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentDefinitionId: string, title: string, source: AgentEvalCaseSource, status: AgentEvalCaseStatus, trigger: AgentRunTrigger, input: string, sourceThreadId: string | null, sourceProposalId: string | null, heldTools: Array<string>, expected: unknown, weight: number, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentEvalCaseTableRowFieldsFragment' };
+
+export type AgentEvalCaseDetailFieldsFragment = (
+  { sourceRunId: string | null, sourceTurnId: string | null, sourceMessageId: string | null, sourceFeedbackId: string | null, history: Array<unknown>, pageContext: unknown, mentions: Array<unknown>, subjectType: string, subjectId: string | null, toolFixtures: Array<unknown>, rubric: string, redaction: unknown, contentHash: string, capturedFingerprint: unknown, createdByUserId: string | null }
+  & { ' $fragmentRefs'?: { 'AgentEvalCaseTableRowFieldsFragment': AgentEvalCaseTableRowFieldsFragment } }
+) & { ' $fragmentName'?: 'AgentEvalCaseDetailFieldsFragment' };
+
+export type AgentEvalCaseTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AgentEvalCaseTableQuery = { agentEvalCases: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AgentEvalCaseTableRowFieldsFragment': AgentEvalCaseTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AgentEvalCaseDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentEvalCaseDetailQuery = { agentEvalCase: { ' $fragmentRefs'?: { 'AgentEvalCaseDetailFieldsFragment': AgentEvalCaseDetailFieldsFragment } } | null };
+
+export type CreateAgentEvalCaseMutationVariables = Exact<{
+  input: CreateAgentEvalCaseInput;
+}>;
+
+
+export type CreateAgentEvalCaseMutation = { createAgentEvalCase: { duplicate: boolean, evalCase: { ' $fragmentRefs'?: { 'AgentEvalCaseDetailFieldsFragment': AgentEvalCaseDetailFieldsFragment } } } };
+
+export type UpdateAgentEvalCaseMutationVariables = Exact<{
+  id: string | number;
+  input: UpdateAgentEvalCaseInput;
+}>;
+
+
+export type UpdateAgentEvalCaseMutation = { updateAgentEvalCase: { ' $fragmentRefs'?: { 'AgentEvalCaseDetailFieldsFragment': AgentEvalCaseDetailFieldsFragment } } };
+
+export type SetAgentEvalCaseStatusMutationVariables = Exact<{
+  id: string | number;
+  status: AgentEvalCaseStatus;
+}>;
+
+
+export type SetAgentEvalCaseStatusMutation = { setAgentEvalCaseStatus: { ' $fragmentRefs'?: { 'AgentEvalCaseDetailFieldsFragment': AgentEvalCaseDetailFieldsFragment } } };
+
+export type ReplayAgentEvalCaseMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ReplayAgentEvalCaseMutation = { replayAgentEvalCase: { ' $fragmentRefs'?: { 'AgentEvaluationTableRowFieldsFragment': AgentEvaluationTableRowFieldsFragment } } };
+
+export type AgentEvaluationTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentDefinitionId: string, sourceRunId: string, evalCaseId: string | null, status: AgentEvaluationStatus, trigger: AgentRunTrigger, subjectType: string, subjectId: string, model: string, reply: string, comparison: unknown, caseScore: number | null, originalProposals: number, toolCallsUsed: number, errorMessage: string, requestedByUserId: string | null, startedAt: number | null, completedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentEvaluationTableRowFieldsFragment' };
 
 export type AgentEvaluationTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -6413,7 +6530,7 @@ export type AgentEvaluationDetailQueryVariables = Exact<{
 }>;
 
 
-export type AgentEvaluationDetailQuery = { agentEvaluation: { id: string, agentDefinitionId: string, sourceRunId: string, status: AgentEvaluationStatus, trigger: AgentRunTrigger, subjectType: string, subjectId: string, input: string, definitionVersion: number, promptVersion: string, model: string, providerId: string, reply: string, actions: Array<unknown>, comparison: unknown, originalProposals: number, toolCallsUsed: number, errorMessage: string, startedAt: number | null, completedAt: number | null, createdAt: number } | null };
+export type AgentEvaluationDetailQuery = { agentEvaluation: { id: string, agentDefinitionId: string, sourceRunId: string, status: AgentEvaluationStatus, trigger: AgentRunTrigger, subjectType: string, subjectId: string, input: string, definitionVersion: number, promptVersion: string, model: string, providerId: string, reply: string, actions: Array<unknown>, comparison: unknown, evalCaseId: string | null, checks: unknown, judge: unknown, caseScore: number | null, fingerprint: unknown, originalProposals: number, toolCallsUsed: number, errorMessage: string, startedAt: number | null, completedAt: number | null, createdAt: number } | null };
 
 export type ReplayAgentRunMutationVariables = Exact<{
   runId: string | number;
@@ -12848,6 +12965,67 @@ export const AgentChoiceFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AgentChoiceFields"}) as unknown as TypedDocumentString<AgentChoiceFieldsFragment, unknown>;
+export const AgentEvalCaseTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentEvalCaseTableRowFields on AgentEvalCase {
+  id
+  organizationId
+  businessUnitId
+  agentDefinitionId
+  title
+  source
+  status
+  trigger
+  input
+  sourceThreadId
+  sourceProposalId
+  heldTools
+  expected
+  weight
+  expiresAt
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AgentEvalCaseTableRowFields"}) as unknown as TypedDocumentString<AgentEvalCaseTableRowFieldsFragment, unknown>;
+export const AgentEvalCaseDetailFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentEvalCaseDetailFields on AgentEvalCase {
+  ...AgentEvalCaseTableRowFields
+  sourceRunId
+  sourceTurnId
+  sourceMessageId
+  sourceFeedbackId
+  history
+  pageContext
+  mentions
+  subjectType
+  subjectId
+  toolFixtures
+  rubric
+  redaction
+  contentHash
+  capturedFingerprint
+  createdByUserId
+}
+    fragment AgentEvalCaseTableRowFields on AgentEvalCase {
+  id
+  organizationId
+  businessUnitId
+  agentDefinitionId
+  title
+  source
+  status
+  trigger
+  input
+  sourceThreadId
+  sourceProposalId
+  heldTools
+  expected
+  weight
+  expiresAt
+  version
+  createdAt
+  updatedAt
+}`, {"fragmentName":"AgentEvalCaseDetailFields"}) as unknown as TypedDocumentString<AgentEvalCaseDetailFieldsFragment, unknown>;
 export const AgentEvaluationTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentEvaluationTableRowFields on AgentEvaluation {
   id
@@ -12855,6 +13033,7 @@ export const AgentEvaluationTableRowFieldsFragmentDoc = new TypedDocumentString(
   businessUnitId
   agentDefinitionId
   sourceRunId
+  evalCaseId
   status
   trigger
   subjectType
@@ -12862,6 +13041,7 @@ export const AgentEvaluationTableRowFieldsFragmentDoc = new TypedDocumentString(
   model
   reply
   comparison
+  caseScore
   originalProposals
   toolCallsUsed
   errorMessage
@@ -19785,9 +19965,15 @@ export const AgentChoicesDocument = {"__meta__":{"kind":"query","name":"AgentCho
 export const AgentDefinitionCountDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCount","hash":"sha256:daacf568820fcf8bddb93d6841d154a39ae37f4f40aab47e3e127efda1270831"}} as unknown as TypedDocumentString<AgentDefinitionCountQuery, AgentDefinitionCountQueryVariables>;
 export const AgentRunCountDocument = {"__meta__":{"kind":"query","name":"AgentRunCount","hash":"sha256:e5f44d80150fa3a53684e90b45779a0d12a9c75150f2ed16c1b816d22edb905e"}} as unknown as TypedDocumentString<AgentRunCountQuery, AgentRunCountQueryVariables>;
 export const AgentProposalCountDocument = {"__meta__":{"kind":"query","name":"AgentProposalCount","hash":"sha256:2eded728747d5256e64b681abdec7d5ec92e8868262c03bea6249352bc3deb28"}} as unknown as TypedDocumentString<AgentProposalCountQuery, AgentProposalCountQueryVariables>;
-export const AgentEvaluationTableDocument = {"__meta__":{"kind":"query","name":"AgentEvaluationTable","hash":"sha256:0be9cb6fd865efed333148edbc1d0c6a2c6b805588bfcec4fee1b3eeec463366"}} as unknown as TypedDocumentString<AgentEvaluationTableQuery, AgentEvaluationTableQueryVariables>;
-export const AgentEvaluationDetailDocument = {"__meta__":{"kind":"query","name":"AgentEvaluationDetail","hash":"sha256:b4c42d1fab671fe95ec03ec6141352f0fe894e1f3c5d6c91bf4e950608bafef1"}} as unknown as TypedDocumentString<AgentEvaluationDetailQuery, AgentEvaluationDetailQueryVariables>;
-export const ReplayAgentRunDocument = {"__meta__":{"kind":"mutation","name":"ReplayAgentRun","hash":"sha256:f0275315246f7b642fb91c2cf0e4b7ada7e6b84fa916aaeb4dda6755895f5037"}} as unknown as TypedDocumentString<ReplayAgentRunMutation, ReplayAgentRunMutationVariables>;
+export const AgentEvalCaseTableDocument = {"__meta__":{"kind":"query","name":"AgentEvalCaseTable","hash":"sha256:5e3392b2af6f7d552485ad9c8c6e6598132e2b9398f3c7d96465bb66570875e1"}} as unknown as TypedDocumentString<AgentEvalCaseTableQuery, AgentEvalCaseTableQueryVariables>;
+export const AgentEvalCaseDetailDocument = {"__meta__":{"kind":"query","name":"AgentEvalCaseDetail","hash":"sha256:c8f54c60d6575aebc1b527f39b11dbce52859470f602f7a2ee439711ed922799"}} as unknown as TypedDocumentString<AgentEvalCaseDetailQuery, AgentEvalCaseDetailQueryVariables>;
+export const CreateAgentEvalCaseDocument = {"__meta__":{"kind":"mutation","name":"CreateAgentEvalCase","hash":"sha256:75b53ec477e9ad120fe972fdd5d4890e5bb58ba673df78cee3cb879a791a3f1b"}} as unknown as TypedDocumentString<CreateAgentEvalCaseMutation, CreateAgentEvalCaseMutationVariables>;
+export const UpdateAgentEvalCaseDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentEvalCase","hash":"sha256:01ed203825730c0ee1bcfbcee73d9d0462fb07752a1da21963352e86b7df3df3"}} as unknown as TypedDocumentString<UpdateAgentEvalCaseMutation, UpdateAgentEvalCaseMutationVariables>;
+export const SetAgentEvalCaseStatusDocument = {"__meta__":{"kind":"mutation","name":"SetAgentEvalCaseStatus","hash":"sha256:de2f6cc5bb9a322e8add3f6d999387fe940583379fb290a1f0d0c4e02c9ed863"}} as unknown as TypedDocumentString<SetAgentEvalCaseStatusMutation, SetAgentEvalCaseStatusMutationVariables>;
+export const ReplayAgentEvalCaseDocument = {"__meta__":{"kind":"mutation","name":"ReplayAgentEvalCase","hash":"sha256:0ee6fe864b9105f172ebf270f1851d5f911b193d61d622027312b61ea3af561c"}} as unknown as TypedDocumentString<ReplayAgentEvalCaseMutation, ReplayAgentEvalCaseMutationVariables>;
+export const AgentEvaluationTableDocument = {"__meta__":{"kind":"query","name":"AgentEvaluationTable","hash":"sha256:bed3f579a978402f809e4abe94938122a40a667b6c67b4bf82251dc62a438752"}} as unknown as TypedDocumentString<AgentEvaluationTableQuery, AgentEvaluationTableQueryVariables>;
+export const AgentEvaluationDetailDocument = {"__meta__":{"kind":"query","name":"AgentEvaluationDetail","hash":"sha256:9b35aba04f49a6d9a69d857a31b57e871bc96dc0f726e58fe429eaad28efef30"}} as unknown as TypedDocumentString<AgentEvaluationDetailQuery, AgentEvaluationDetailQueryVariables>;
+export const ReplayAgentRunDocument = {"__meta__":{"kind":"mutation","name":"ReplayAgentRun","hash":"sha256:69d6e6741e010f3ca6599a756f70b31c179667c4fd58eb1f4d5a797afb0e5a27"}} as unknown as TypedDocumentString<ReplayAgentRunMutation, ReplayAgentRunMutationVariables>;
 export const AgentExceptionTableDocument = {"__meta__":{"kind":"query","name":"AgentExceptionTable","hash":"sha256:25ab7e258b1999dd80da81ecf0ad0c5b956991f6fc73cf33a2cd45def0a97b41"}} as unknown as TypedDocumentString<AgentExceptionTableQuery, AgentExceptionTableQueryVariables>;
 export const AgentExceptionDetailDocument = {"__meta__":{"kind":"query","name":"AgentExceptionDetail","hash":"sha256:a5f862a28f545ff7151df8c5e238d4c4ea80f137f9c237f2de408fa670227069"}} as unknown as TypedDocumentString<AgentExceptionDetailQuery, AgentExceptionDetailQueryVariables>;
 export const ResolveAgentExceptionDocument = {"__meta__":{"kind":"mutation","name":"ResolveAgentException","hash":"sha256:7560a022b9583caf64b19551a5703e3d4717a7ee8297e5359121c469f4357010"}} as unknown as TypedDocumentString<ResolveAgentExceptionMutation, ResolveAgentExceptionMutationVariables>;

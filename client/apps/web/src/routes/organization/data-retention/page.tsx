@@ -29,6 +29,10 @@ const dataRetentionFormSchema = z.object({
     .number()
     .int()
     .min(AI_FEEDBACK_RETENTION_MIN_DAYS, "AI feedback retention must be at least 30 days"),
+  agentEvalCaseRetentionPeriod: z
+    .number()
+    .int()
+    .min(0, "Agent evaluation case retention cannot be negative"),
 });
 
 type DataRetentionFormValues = z.infer<typeof dataRetentionFormSchema>;
@@ -52,6 +56,7 @@ export function DataRetentionPage() {
       ediInboundFileRetentionPeriod: 0,
       ediMessageRetentionPeriod: 0,
       aiFeedbackRetentionPeriod: AI_FEEDBACK_RETENTION_DEFAULT_DAYS,
+      agentEvalCaseRetentionPeriod: 365,
     },
     mode: "onChange",
   });
@@ -67,6 +72,7 @@ export function DataRetentionPage() {
         data.aiFeedbackRetentionPeriod > 0
           ? data.aiFeedbackRetentionPeriod
           : AI_FEEDBACK_RETENTION_DEFAULT_DAYS,
+      agentEvalCaseRetentionPeriod: data.agentEvalCaseRetentionPeriod,
     });
   }, [data, reset]);
 
@@ -143,6 +149,16 @@ export function DataRetentionPage() {
                   rules={{ required: true }}
                   description={t(
                     "Ratings of AI output, with the question and answer each person saw, are deleted after this many days. At least 30.",
+                  )}
+                />
+              </FormControl>
+              <FormControl>
+                <NumberField
+                  control={control}
+                  name="agentEvalCaseRetentionPeriod"
+                  label={t("Agent evaluation case retention (days)")}
+                  description={t(
+                    "Evaluation cases captured longer ago than this are purged with their replays, since they keep a redacted copy of what the agent was given. 0 keeps cases until they expire or their conversation is deleted.",
                   )}
                 />
               </FormControl>

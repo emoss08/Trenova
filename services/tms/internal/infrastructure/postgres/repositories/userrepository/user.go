@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -720,4 +721,39 @@ func (ur *repository) GetSystemUser(ctx context.Context, columns ...string) (*te
 	}
 
 	return user, nil
+}
+
+func (ur *repository) GetTenantMember(
+	ctx context.Context,
+	req repositories.GetTenantMemberRequest,
+) (*tenant.User, error) {
+	user := buncolgen.UserColumns
+	membership := buncolgen.OrganizationMembershipColumns
+	db := ur.db.DBForContext(ctx)
+
+	member := db.NewSelect().
+		Model((*tenant.OrganizationMembership)(nil)).
+		ColumnExpr("1").
+		Where(membership.UserID.EqColumn(user.ID)).
+		Where(membership.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(membership.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where(membership.ExpiresAt.IsNull()).
+				WhereOr(membership.ExpiresAt.Gt(), req.Now)
+		})
+
+	entity := new(tenant.User)
+	if err := db.NewSelect().
+		Model(entity).
+		Where(user.ID.Eq(), req.UserID).
+		Where(user.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("EXISTS (?)", member).
+				WhereOr(user.CurrentOrganizationID.Eq(), req.TenantInfo.OrgID)
+		}).
+		Scan(ctx); err != nil {
+		return nil, dberror.HandleNotFoundError(err, "User")
+	}
+
+	return entity, nil
 }

@@ -255,7 +255,7 @@ func (s *Service) runAmong(
 		s.record(ctx, usageAttempt{
 			provider:    provider,
 			task:        req.Task,
-			surface:     aiusage.SurfaceStructured,
+			surface:     surfaceFor(aiusage.SurfaceStructured, req.Attribution),
 			attribution: req.Attribution,
 			tenant:      req.TenantInfo,
 			latency:     latency,

@@ -16,6 +16,7 @@ export type ReplayMatch = {
   toolName: string;
   originalProposalId?: string;
   originalParams?: Record<string, unknown>;
+  correctedParams?: Record<string, unknown>;
   replayParams?: Record<string, unknown>;
   originalOutcome?: string;
   verdict: ReplayVerdict;
@@ -76,6 +77,10 @@ export function readComparison(value: unknown): ReplayComparison | null {
               match.originalParams && typeof match.originalParams === "object"
                 ? (match.originalParams as Record<string, unknown>)
                 : undefined,
+            correctedParams:
+              match.correctedParams && typeof match.correctedParams === "object"
+                ? (match.correctedParams as Record<string, unknown>)
+                : undefined,
             replayParams:
               match.replayParams && typeof match.replayParams === "object"
                 ? (match.replayParams as Record<string, unknown>)
@@ -133,4 +138,30 @@ export function summarizeComparison(
   if (comparison.undecided > 0) parts.push(t("{0} undecided", comparison.undecided));
 
   return parts.length === 0 ? t("Nothing to compare") : parts.join(" · ");
+}
+
+export type ParamCorrection = { field: string; from: string; to: string };
+
+function display(value: unknown): string {
+  if (value === undefined || value === null) return "";
+  return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+/**
+ * What a person changed before approving the original: each parameter whose
+ * approved value differs from the one the agent proposed. Empty when nobody
+ * changed anything, which is also the case for a proposal decided before
+ * corrections were recorded on the comparison.
+ */
+export function corrections(match: ReplayMatch): ParamCorrection[] {
+  const corrected = match.correctedParams;
+  if (!corrected) return [];
+  const proposed = match.originalParams ?? {};
+  const fields = [...new Set([...Object.keys(proposed), ...Object.keys(corrected)])].sort();
+
+  return fields.flatMap((field) => {
+    const from = display(proposed[field]);
+    const to = display(corrected[field]);
+    return from === to ? [] : [{ field, from, to }];
+  });
 }

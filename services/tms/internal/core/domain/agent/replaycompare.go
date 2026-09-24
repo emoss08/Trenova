@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -34,12 +35,65 @@ const (
 )
 
 // OriginalProposal is what the recorded run proposed and what became of it.
+// CorrectedParams is what a person approved when they edited the proposal
+// first: the proposed parameters with the latest Modified decision's changes
+// laid over them. Nil when nobody changed anything or the proposal ended
+// rejected.
 type OriginalProposal struct {
-	ID       pulid.ID
-	ToolName string
-	Params   map[string]any
-	Status   ProposalStatus
-	Decision DecisionType
+	ID              pulid.ID
+	ToolName        string
+	Params          map[string]any
+	CorrectedParams map[string]any `json:",omitempty"`
+	Status          ProposalStatus
+	Decision        DecisionType
+}
+
+func NewOriginalProposal(
+	proposal *AgentProposal,
+	decisions []*AgentDecision,
+) OriginalProposal {
+	original := OriginalProposal{
+		ID:       proposal.ID,
+		ToolName: proposal.ToolName,
+		Params:   proposal.ToolParams,
+		Status:   proposal.Status,
+	}
+	if len(decisions) == 0 {
+		return original
+	}
+
+	original.Decision = decisions[0].Decision
+	if original.Decision == DecisionRejected {
+		return original
+	}
+	for _, decision := range decisions {
+		if decision.Decision == DecisionModified && len(decision.Modifications) > 0 {
+			original.CorrectedParams = maputils.Overlay(proposal.ToolParams, decision.Modifications)
+			break
+		}
+	}
+
+	return original
+}
+
+func DecisionsByProposal(decisions []*AgentDecision) map[pulid.ID][]*AgentDecision {
+	grouped := make(map[pulid.ID][]*AgentDecision, len(decisions))
+	for _, decision := range decisions {
+		if decision == nil || decision.ProposalID == nil {
+			continue
+		}
+		grouped[*decision.ProposalID] = append(grouped[*decision.ProposalID], decision)
+	}
+
+	return grouped
+}
+
+func (o OriginalProposal) Expected() map[string]any {
+	if o.CorrectedParams != nil {
+		return o.CorrectedParams
+	}
+
+	return o.Params
 }
 
 // ReplayMatch pairs an original proposal with the replay's answer to it, or
@@ -48,6 +102,7 @@ type ReplayMatch struct {
 	ToolName           string         `json:"toolName"`
 	OriginalProposalID pulid.ID       `json:"originalProposalId,omitempty"`
 	OriginalParams     map[string]any `json:"originalParams,omitempty"`
+	CorrectedParams    map[string]any `json:"correctedParams,omitempty"`
 	ReplayParams       map[string]any `json:"replayParams,omitempty"`
 	OriginalOutcome    string         `json:"originalOutcome,omitempty"`
 	Verdict            ReplayVerdict  `json:"verdict"`
@@ -116,13 +171,14 @@ func CompareReplay(originals []OriginalProposal, replay []ReplayAction) *ReplayC
 	used := make([]bool, len(replay))
 
 	pick := func(original OriginalProposal) (int, bool) {
+		expected := NormalizeParams(original.Expected())
 		exact := -1
 		sameTool := -1
 		for i, action := range replay {
 			if used[i] || action.ToolName != original.ToolName {
 				continue
 			}
-			if reflect.DeepEqual(normalize(action.Arguments), normalize(original.Params)) {
+			if reflect.DeepEqual(NormalizeParams(action.Arguments), expected) {
 				exact = i
 				break
 			}
@@ -145,6 +201,7 @@ func CompareReplay(originals []OriginalProposal, replay []ReplayAction) *ReplayC
 			ToolName:           original.ToolName,
 			OriginalProposalID: original.ID,
 			OriginalParams:     original.Params,
+			CorrectedParams:    original.CorrectedParams,
 			OriginalOutcome:    outcomeOf(original),
 		}
 		index, exact := pick(original)
@@ -159,7 +216,7 @@ func CompareReplay(originals []OriginalProposal, replay []ReplayAction) *ReplayC
 			used[index] = true
 			match.ReplayParams = replay[index].Arguments
 			match.Verdict = VerdictChanged
-			match.Changes = diffParams(original.Params, replay[index].Arguments)
+			match.Changes = diffParams(original.Expected(), replay[index].Arguments)
 		}
 		out.count(match)
 		out.Matches = append(out.Matches, match)
@@ -231,10 +288,10 @@ func (c *ReplayComparison) count(match ReplayMatch) {
 	}
 }
 
-// normalize makes two parameter maps comparable whatever JSON round trip
+// NormalizeParams makes two parameter maps comparable whatever JSON round trip
 // they took: numbers come back as float64 from storage and as int from a
 // model, and an absent key is the same as an empty one.
-func normalize(params map[string]any) map[string]any {
+func NormalizeParams(params map[string]any) map[string]any {
 	out := make(map[string]any, len(params))
 	for key, value := range params {
 		if value == nil {
@@ -243,13 +300,13 @@ func normalize(params map[string]any) map[string]any {
 		if text, ok := value.(string); ok && strings.TrimSpace(text) == "" {
 			continue
 		}
-		out[key] = fmt.Sprint(normalizeValue(value))
+		out[key] = fmt.Sprint(NormalizeValue(value))
 	}
 
 	return out
 }
 
-func normalizeValue(value any) any {
+func NormalizeValue(value any) any {
 	switch v := value.(type) {
 	case int:
 		return float64(v)
@@ -287,8 +344,8 @@ func diffParams(original, replay map[string]any) []FieldChange {
 	}
 	sort.Strings(sorted)
 
-	before := normalize(original)
-	after := normalize(replay)
+	before := NormalizeParams(original)
+	after := NormalizeParams(replay)
 	changes := make([]FieldChange, 0, len(sorted))
 	for _, key := range sorted {
 		if before[key] == after[key] {

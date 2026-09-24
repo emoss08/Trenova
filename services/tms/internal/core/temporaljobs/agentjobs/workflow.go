@@ -115,6 +115,16 @@ func (w *Workflows) background() []registry.WorkflowDefinition {
 			Fn:          DeleteStaleAskThreadsWorkflow,
 			Description: "Remove quick questions nobody kept once they have gone quiet for a month",
 		},
+		{
+			Name:        CaptureEvalCaseCandidatesWorkflowName,
+			Fn:          CaptureEvalCaseCandidatesWorkflow,
+			Description: "Capture decided proposals as candidate evaluation cases",
+		},
+		{
+			Name:        PurgeEvalCasesWorkflowName,
+			Fn:          PurgeEvalCasesWorkflow,
+			Description: "Purge expired evaluation cases and those of deleted conversations",
+		},
 	}
 }
 

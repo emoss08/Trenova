@@ -13,7 +13,13 @@ import { toneVar } from "@/components/kpi/tone";
 import { fetchAgentEvaluation, type AgentEvaluationDetail } from "@/lib/graphql/agent-evaluations";
 import { useQuery } from "@tanstack/react-query";
 import { EvaluationStatusBadge, VerdictBadge } from "./agent-badges";
-import { readComparison, summarizeComparison, type ReplayMatch } from "./evaluation-comparison";
+import {
+  corrections,
+  readComparison,
+  summarizeComparison,
+  type ReplayMatch,
+} from "./evaluation-comparison";
+import { CaseScore } from "../quality/cases/case-score";
 
 export function EvaluationDetailDialog({
   evaluationId,
@@ -80,6 +86,16 @@ function EvaluationDetail({ evaluation }: { evaluation: AgentEvaluationDetail })
         </p>
       )}
 
+      {evaluation.status === "Skipped" && (
+        <p className="text-muted-foreground text-sm">
+          {evaluation.errorMessage || t("The replay could not run as the original did.")}
+        </p>
+      )}
+
+      {evaluation.evalCaseId && evaluation.checks ? (
+        <CaseScore checks={evaluation.checks} caseScore={evaluation.caseScore ?? null} />
+      ) : null}
+
       {evaluation.input !== "" && (
         <section className="flex flex-col gap-1">
           <h3 className="text-sm font-semibold">{t("What it was asked")}</h3>
@@ -134,6 +150,7 @@ function MatchRow({ match }: { match: ReplayMatch }) {
         )}
       </div>
       <span className="text-muted-foreground text-xs">{verdictLine(match, t)}</span>
+      <Corrections match={match} />
       {match.changes && match.changes.length > 0 && (
         <ul className="text-muted-foreground flex flex-col gap-0.5 text-xs tabular-nums">
           {match.changes.map((change) => (
@@ -148,6 +165,30 @@ function MatchRow({ match }: { match: ReplayMatch }) {
   );
 }
 
+function Corrections({ match }: { match: ReplayMatch }) {
+  const t = useT();
+  const changed = corrections(match);
+  if (changed.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5 text-xs">
+      <span className="text-foreground-subtle">
+        {t("A person changed this before approving; the replay is judged against their version.")}
+      </span>
+      <ul className="text-muted-foreground flex flex-col gap-0.5 tabular-nums">
+        {changed.map((change) => (
+          <li key={change.field}>
+            {change.field}: {change.from !== "" ? `${change.from} → ` : ""}
+            {change.to}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function verdictLine(match: ReplayMatch, t: ReturnType<typeof useT>): string {
   switch (match.verdict) {
     case "Agreed":
@@ -159,7 +200,9 @@ function verdictLine(match: ReplayMatch, t: ReturnType<typeof useT>): string {
     case "Repeated":
       return t("A person rejected this and the replay proposes it again.");
     case "Changed":
-      return t("The replay proposes the same change with different parameters.");
+      return match.correctedParams
+        ? t("The replay proposes the same change with parameters other than the ones approved.")
+        : t("The replay proposes the same change with different parameters.");
     case "Added":
       return t("The replay proposes this; the original did not.");
     default:

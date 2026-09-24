@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionqueueservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdecisionservice"
 	"github.com/emoss08/trenova/internal/core/services/agentdefinitionservice"
+	"github.com/emoss08/trenova/internal/core/services/agentevalcaseservice"
 	"github.com/emoss08/trenova/internal/core/services/agentevaluationservice"
 	"github.com/emoss08/trenova/internal/core/services/agentevents"
 	"github.com/emoss08/trenova/internal/core/services/agentexceptionservice"
@@ -333,6 +334,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	aifeedbackservice.AsMaintenance,
 	agentbudgetservice.New,
 	agentevaluationservice.New,
+	agentevalcaseservice.New,
 	assignmentservice.New,
 	fx.Annotate(
 		dispatchautoassignservice.New,

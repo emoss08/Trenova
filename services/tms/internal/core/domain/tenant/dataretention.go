@@ -19,6 +19,7 @@ var (
 const (
 	DefaultAIFeedbackRetentionDays    = 730
 	DefaultAIFeedbackRetentionMinDays = 30
+	DefaultAgentEvalCaseRetentionDays = 365
 )
 
 type DataRetention struct {
@@ -36,6 +37,7 @@ type DataRetention struct {
 	// falls back to that, so an unset value can never make every terminated
 	// file look purgeable. Files are only ever flagged; nothing deletes one.
 	DriverQualificationRetentionPeriod int   `json:"driverQualificationRetentionPeriod" bun:"driver_qualification_retention_period,type:INTEGER,notnull,default:1095"`
+	AgentEvalCaseRetentionPeriod       int   `json:"agentEvalCaseRetentionPeriod"       bun:"agent_eval_case_retention_period,type:INTEGER,notnull,default:365"`
 	AIFeedbackRetentionPeriod          int   `json:"aiFeedbackRetentionPeriod"          bun:"ai_feedback_retention_period,type:INTEGER,notnull,default:730"`
 	Version                            int64 `json:"version"                            bun:"version,type:BIGINT"`
 	CreatedAt                          int64 `json:"createdAt"                          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -61,6 +63,9 @@ func (dr *DataRetention) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&dr.DriverQualificationRetentionPeriod,
 			validation.Min(0).
 				Error("Driver qualification retention period cannot be negative"),
+		),
+		validation.Field(&dr.AgentEvalCaseRetentionPeriod,
+			validation.Min(0).Error("Agent evaluation case retention period cannot be negative"),
 		),
 		validation.Field(&dr.AIFeedbackRetentionPeriod,
 			validation.Min(0).Error("AI feedback retention period cannot be negative"),

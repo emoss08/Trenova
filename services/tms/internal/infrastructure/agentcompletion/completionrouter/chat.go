@@ -114,7 +114,7 @@ func (s *Service) runChat(
 		s.record(ctx, usageAttempt{
 			provider:    provider,
 			task:        aiprovider.TaskAssistantChat,
-			surface:     aiusage.SurfaceChat,
+			surface:     surfaceFor(aiusage.SurfaceChat, req.Attribution),
 			attribution: req.Attribution,
 			tenant:      req.TenantInfo,
 			latency:     latency,
