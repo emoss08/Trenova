@@ -219,12 +219,12 @@ func (a *Activities) runRequest(
 		Actor:      actor,
 		Trigger:    payload.Trigger,
 		Subject:    subject,
-		Query: serviceports.ContextQuery{
+		Query: (&serviceports.ContextQuery{
 			Actor:        actor,
 			DefinitionID: definition.ID,
 			RunID:        payload.RunID,
 			Input:        input,
-		}.Request(),
+		}).Request(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("build runtime context: %w", err)

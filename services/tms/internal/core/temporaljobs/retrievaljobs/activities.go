@@ -53,7 +53,7 @@ func (a *Activities) IndexRetrievalBatchActivity(
 	stop := modelcall.Heartbeat(ctx)
 	defer stop()
 
-	result, err := a.pipeline.IndexBatch(ctx, *input)
+	result, err := a.pipeline.IndexBatch(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("index a retrieval batch: %w", err)
 	}
@@ -132,7 +132,7 @@ func (a *Activities) ReindexRetrievalPageActivity(
 	ctx context.Context,
 	input *serviceports.RetrievalReindexPageRequest,
 ) (*serviceports.RetrievalReindexPage, error) {
-	page, err := a.pipeline.ReindexPage(ctx, *input)
+	page, err := a.pipeline.ReindexPage(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("re-index a page of %s sources: %w", input.SourceType, err)
 	}

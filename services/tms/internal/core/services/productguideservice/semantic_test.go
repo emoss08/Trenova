@@ -27,9 +27,9 @@ type stubVectorizer struct {
 
 func (v *stubVectorizer) Vectorize(
 	_ context.Context,
-	req serviceports.QueryVectorRequest,
+	req *serviceports.QueryVectorRequest,
 ) (serviceports.QueryVector, error) {
-	v.requests = append(v.requests, req)
+	v.requests = append(v.requests, *req)
 
 	return v.vector, nil
 }
@@ -48,9 +48,9 @@ type stubVectors struct {
 
 func (s *stubVectors) Similarities(
 	_ context.Context,
-	req serviceports.CatalogSimilarityRequest,
+	req *serviceports.CatalogSimilarityRequest,
 ) (serviceports.CatalogSimilarities, error) {
-	s.requests = append(s.requests, req)
+	s.requests = append(s.requests, *req)
 
 	return serviceports.CatalogSimilarities{Available: true, ByKey: s.similarity}, nil
 }

@@ -95,7 +95,7 @@ export function IntelligenceSyncPanel({
   const selectableCount = (plan?.suggestions.length ?? 0) + applicableInsurance.length;
   const selectedCount = selectedFields.size + selectedPolicies.size;
 
-  const apply = useApiMutation<number, void>({
+  const apply = useApiMutation<number, undefined>({
     resourceName: "Carrier intelligence suggestions",
     mutationFn: () =>
       applyCarrierIntelSuggestions({
@@ -224,7 +224,7 @@ export function IntelligenceSyncPanel({
                 variant="outline"
                 disabled={selectedCount === 0}
                 isLoading={apply.isPending}
-                onClick={() => apply.mutate()}
+                onClick={() => apply.mutate(undefined)}
               >
                 {t("Apply {0, plural, one {# change} other {# changes}}", selectedCount)}
               </Button>

@@ -61,10 +61,8 @@ func recordActions(
 				BusinessUnitID: buID,
 				Summary:        "Cover the two open moves",
 			},
-			Actions: actions,
-			Evidence: func(serviceports.PendingAction, pulid.ID) []agent.EvidenceRef {
-				return []agent.EvidenceRef{{Type: "message", ID: "amsg_1"}}
-			},
+			Actions:  actions,
+			Evidence: messageEvidence,
 		})
 	require.NoError(t, err)
 

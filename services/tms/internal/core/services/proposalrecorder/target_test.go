@@ -36,12 +36,10 @@ func recordOne(t *testing.T, action serviceports.PendingAction) *agent.AgentProp
 	}
 
 	_, err := NewWithStores(nil, nil, store).Record(t.Context(), &RecordRequest{
-		Actor:   actor,
-		Run:     &agent.AgentRun{ID: pulid.MustNew("arun_")},
-		Actions: []serviceports.PendingAction{action},
-		Evidence: func(serviceports.PendingAction, pulid.ID) []agent.EvidenceRef {
-			return []agent.EvidenceRef{{Type: "message", ID: "amsg_1"}}
-		},
+		Actor:    actor,
+		Run:      &agent.AgentRun{ID: pulid.MustNew("arun_")},
+		Actions:  []serviceports.PendingAction{action},
+		Evidence: messageEvidence,
 	})
 	require.NoError(t, err)
 	require.Len(t, store.created, 1)

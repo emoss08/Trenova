@@ -23,18 +23,18 @@ type fakeRetrievalSearcher struct {
 
 func (f *fakeRetrievalSearcher) SearchDocuments(
 	_ context.Context,
-	req serviceports.RetrievalSearchRequest,
+	req *serviceports.RetrievalSearchRequest,
 ) (*serviceports.DocumentSearchResult, error) {
-	f.requests = append(f.requests, req)
+	f.requests = append(f.requests, *req)
 
 	return f.documents, nil
 }
 
 func (f *fakeRetrievalSearcher) SearchInboundMessages(
 	_ context.Context,
-	req serviceports.RetrievalSearchRequest,
+	req *serviceports.RetrievalSearchRequest,
 ) (*serviceports.InboundMessageSearchResult, error) {
-	f.requests = append(f.requests, req)
+	f.requests = append(f.requests, *req)
 
 	return f.messages, nil
 }
@@ -71,7 +71,7 @@ func TestSearchDocumentsReturnsRowsAndMarksEveryDocument(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
-	outcome := result.(retrievalOutcome)
+	outcome := result.(*retrievalOutcome)
 	assert.Equal(t, "words and meaning", outcome.SearchedBy)
 	rows := outcome.Items.([]documentSearchRow)
 	require.Len(t, rows, 2)
@@ -111,7 +111,7 @@ func TestSearchDocumentsSaysWhenMeaningWasNotSearched(t *testing.T) {
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{"query": "bol 88213"}))
 	require.NoError(t, err)
-	outcome := result.(retrievalOutcome)
+	outcome := result.(*retrievalOutcome)
 	assert.Equal(t, "words only: meaning search is not set up", outcome.SearchedBy)
 	assert.Zero(t, outcome.Count)
 	assert.NotEmpty(t, outcome.Note)
@@ -156,7 +156,7 @@ func TestSearchInboundMessagesMarksEveryMessage(t *testing.T) {
 	result, err := tool.Query(t.Context(), testParams(map[string]any{"query": "detention dispute"}))
 	require.NoError(t, err)
 
-	outcome := result.(retrievalOutcome)
+	outcome := result.(*retrievalOutcome)
 	rows := outcome.Items.([]inboundSearchRow)
 	require.Len(t, rows, 1)
 	assert.Equal(t, message.ID.String(), rows[0].ID)

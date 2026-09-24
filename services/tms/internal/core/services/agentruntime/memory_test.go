@@ -56,6 +56,7 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 	builder := &ContextBuilder{
 		logger:        zap.NewNop(),
 		organizations: &stubOrganizations{org: &tenant.Organization{Timezone: "UTC"}},
+		users:         &stubUsers{user: &tenant.User{}},
 		runtime: newRuntime(
 			&scriptedCompletion{},
 			&stubQueryRegistry{},
@@ -68,8 +69,9 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 	shipment := pulid.MustNew("shp_").String()
 	location := pulid.MustNew("loc_").String()
 	parentRecord := pulid.MustNew("wrk_").String()
+	definition := testDefinition("assign_move")
 	rc, err := builder.Build(t.Context(), &serviceports.RuntimeContextRequest{
-		Definition: testDefinition("assign_move"),
+		Definition: definition,
 		Actor:      testActor(),
 		Trigger:    agent.RunTriggerChat,
 		Subject:    &agentdefinition.RuntimeSubject{Type: agent.SubjectShipment, ID: shipment},
@@ -89,7 +91,7 @@ func TestContextBuilder_ReadsTheMemoriesOfWhatTheTurnIsAbout(t *testing.T) {
 		{Type: "location", ID: location},
 		{Type: "worker", ID: parentRecord},
 	}, memories.asked.Records)
-	assert.Equal(t, []string{"assign_move"}, memories.asked.ToolNames)
+	assert.Equal(t, definition.EffectiveToolNames(), memories.asked.ToolNames)
 	assert.Equal(t, memories.answer.Memories, rc.Memories)
 	assert.Equal(t, memories.answer.Subjects, rc.MemorySubjects)
 	assert.Empty(t, memories.used, "building the context counts nothing as used")

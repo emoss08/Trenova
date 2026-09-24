@@ -224,7 +224,10 @@ func (l *liveTurns) ListLive(
 }
 
 func liveTurn() *repositories.LiveAssistantTurn {
-	return &repositories.LiveAssistantTurn{AssistantTurn: *runningTurn()}
+	turn := runningTurn()
+	turn.WorkflowID = conversation.AssistantTurnWorkflowID(turn.ID)
+
+	return &repositories.LiveAssistantTurn{AssistantTurn: *turn}
 }
 
 /*

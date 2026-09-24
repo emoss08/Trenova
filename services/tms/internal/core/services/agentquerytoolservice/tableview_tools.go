@@ -121,7 +121,7 @@ type unresolvedTermRow struct {
 
 func (t *composeTableViewTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -301,7 +301,7 @@ type dashboardTileRow struct {
 
 func (t *listDashboardsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

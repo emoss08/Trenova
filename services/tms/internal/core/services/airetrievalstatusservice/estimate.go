@@ -93,9 +93,10 @@ func maxChunks(sourceType airetrieval.SourceType) int {
 		return retrievalservice.MaxDocumentChunks
 	case airetrieval.SourceTypeInboundMessage:
 		return retrievalservice.MaxEmailChunks
-	default:
-		return 1
+	case airetrieval.SourceTypeMemory:
 	}
+
+	return 1
 }
 
 func (s *Service) ReindexEstimate(
@@ -204,7 +205,7 @@ func (s *Service) measureIndexed(
 	modelKey string,
 	in *EstimateInputs,
 ) error {
-	average, err := s.repo.AverageIndexChunks(ctx, repositories.AverageIndexChunksRequest{
+	average, err := s.repo.AverageIndexChunks(ctx, &repositories.AverageIndexChunksRequest{
 		TenantInfo: tenant,
 		SourceType: sourceType,
 		ModelKey:   modelKey,

@@ -222,7 +222,7 @@ func TestItems_KeyEachToolByTheHashOfItsText(t *testing.T) {
 		descriptor, ok := catalog.Descriptor(item.Key)
 		require.True(t, ok)
 		assert.Equal(t, catalog.Names()[idx], item.Key)
-		assert.Equal(t, DescriptorText(descriptor), item.Text)
+		assert.Equal(t, DescriptorText(&descriptor), item.Text)
 		assert.Equal(t, hashutils.SHA256Hex(item.Text), item.ContentHash)
 	}
 
@@ -246,7 +246,7 @@ func TestItems_KeyEachToolByTheHashOfItsText(t *testing.T) {
 func TestDescriptorText_NamesTheToolAndWhatPeopleCallIt(t *testing.T) {
 	t.Parallel()
 
-	text := DescriptorText(serviceports.AgentToolDescriptor{
+	text := DescriptorText(&serviceports.AgentToolDescriptor{
 		Name:        "get_my_home_layout",
 		Description: " Read the person's home page. ",
 		SearchTerms: []string{"my dashboard", "home"},

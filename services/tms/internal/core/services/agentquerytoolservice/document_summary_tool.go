@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -70,29 +71,29 @@ func (t *getDocumentSummaryTool) Description() string {
 
 func (t *getDocumentSummaryTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
 			"documentId": map[string]any{
-				"type": "string",
-				"description": "The document's id, from the attachments on the message, a " +
-					"documentId in get_inbound_message or get_worker_credential, or this " +
-					"run's subject.",
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "The document's id, from the attachments on the " +
+					"message, a documentId in get_inbound_message or get_worker_credential, " +
+					"or this run's subject.",
 			},
-			"page": map[string]any{
-				"type": "integer",
-				"description": "Optional: read only this page, for example the page " +
+			paramPage: map[string]any{
+				toolschema.KeyType: toolschema.TypeInteger,
+				toolschema.KeyDescription: "Optional: read only this page, for example the page " +
 					"search_documents found. Leave it out to read the whole text.",
-				"minimum": 1,
+				toolschema.KeyMinimum: 1,
 			},
 			"offset": map[string]any{
-				"type": "integer",
-				"description": "Where in the text to start, in characters, for a long document " +
-					"read in pieces. Defaults to the beginning.",
-				"minimum": 0,
+				toolschema.KeyType: toolschema.TypeInteger,
+				toolschema.KeyDescription: "Where in the text to start, in characters, for a " +
+					"long document read in pieces. Defaults to the beginning.",
+				toolschema.KeyMinimum: 0,
 			},
 		},
-		"required":             []string{"documentId"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{"documentId"},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -130,7 +131,7 @@ type documentSummary struct {
 
 func (t *getDocumentSummaryTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -141,7 +142,7 @@ func (t *getDocumentSummaryTool) Query(
 		return nil, err
 	}
 	offset := max(optionalInt(params.Params, "offset", 0), 0)
-	page := optionalInt(params.Params, "page", 0)
+	page := optionalInt(params.Params, paramPage, 0)
 	if page < 0 {
 		return nil, fmt.Errorf("page %d is not a page number; pages start at 1", page)
 	}

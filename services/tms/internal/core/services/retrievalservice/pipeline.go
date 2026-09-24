@@ -247,9 +247,15 @@ func (s *Service) retiredKeys(
 
 func (s *Service) IndexBatch(
 	ctx context.Context,
-	req serviceports.RetrievalIndexBatchRequest,
+	req *serviceports.RetrievalIndexBatchRequest,
 ) (serviceports.RetrievalIndexBatchResult, error) {
 	result := serviceports.RetrievalIndexBatchResult{CostUSD: decimal.Zero}
+
+	if req == nil {
+		return result, fmt.Errorf(
+			"%w: an index batch needs a request", airetrieval.ErrInvalidStorageRequest,
+		)
+	}
 
 	dimensions, ok := airetrieval.ModelKeyDimensions(req.ModelKey)
 	if !ok {
@@ -552,10 +558,15 @@ func (s *Service) sweepSource(
 
 func (s *Service) ReindexPage(
 	ctx context.Context,
-	req serviceports.RetrievalReindexPageRequest,
+	req *serviceports.RetrievalReindexPageRequest,
 ) (serviceports.RetrievalReindexPage, error) {
 	var page serviceports.RetrievalReindexPage
 
+	if req == nil {
+		return page, fmt.Errorf(
+			"%w: a re-index page needs a request", airetrieval.ErrInvalidStorageRequest,
+		)
+	}
 	if err := validateSourceType(req.SourceType); err != nil {
 		return page, err
 	}
@@ -574,7 +585,7 @@ func (s *Service) ReindexPage(
 		limit = reindexPageSize
 	}
 
-	ids, err := s.sources.ListSourceIDs(ctx, repositories.ListRetrievalSourceIDsRequest{
+	ids, err := s.sources.ListSourceIDs(ctx, &repositories.ListRetrievalSourceIDsRequest{
 		TenantInfo: req.TenantInfo,
 		SourceType: req.SourceType,
 		AfterID:    req.AfterID,

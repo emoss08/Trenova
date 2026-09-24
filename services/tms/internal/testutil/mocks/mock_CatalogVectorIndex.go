@@ -39,7 +39,7 @@ func (_m *MockCatalogVectorIndex) EXPECT() *MockCatalogVectorIndex_Expecter {
 }
 
 // Similarities provides a mock function for the type MockCatalogVectorIndex
-func (_mock *MockCatalogVectorIndex) Similarities(ctx context.Context, req services.CatalogSimilarityRequest) (services.CatalogSimilarities, error) {
+func (_mock *MockCatalogVectorIndex) Similarities(ctx context.Context, req *services.CatalogSimilarityRequest) (services.CatalogSimilarities, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -48,15 +48,15 @@ func (_mock *MockCatalogVectorIndex) Similarities(ctx context.Context, req servi
 
 	var r0 services.CatalogSimilarities
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CatalogSimilarityRequest) (services.CatalogSimilarities, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CatalogSimilarityRequest) (services.CatalogSimilarities, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.CatalogSimilarityRequest) services.CatalogSimilarities); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.CatalogSimilarityRequest) services.CatalogSimilarities); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Get(0).(services.CatalogSimilarities)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.CatalogSimilarityRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.CatalogSimilarityRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -71,20 +71,20 @@ type MockCatalogVectorIndex_Similarities_Call struct {
 
 // Similarities is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req services.CatalogSimilarityRequest
+//   - req *services.CatalogSimilarityRequest
 func (_e *MockCatalogVectorIndex_Expecter) Similarities(ctx any, req any) *MockCatalogVectorIndex_Similarities_Call {
 	return &MockCatalogVectorIndex_Similarities_Call{Call: _e.mock.On("Similarities", ctx, req)}
 }
 
-func (_c *MockCatalogVectorIndex_Similarities_Call) Run(run func(ctx context.Context, req services.CatalogSimilarityRequest)) *MockCatalogVectorIndex_Similarities_Call {
+func (_c *MockCatalogVectorIndex_Similarities_Call) Run(run func(ctx context.Context, req *services.CatalogSimilarityRequest)) *MockCatalogVectorIndex_Similarities_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 services.CatalogSimilarityRequest
+		var arg1 *services.CatalogSimilarityRequest
 		if args[1] != nil {
-			arg1 = args[1].(services.CatalogSimilarityRequest)
+			arg1 = args[1].(*services.CatalogSimilarityRequest)
 		}
 		run(
 			arg0,
@@ -99,7 +99,7 @@ func (_c *MockCatalogVectorIndex_Similarities_Call) Return(catalogSimilarities s
 	return _c
 }
 
-func (_c *MockCatalogVectorIndex_Similarities_Call) RunAndReturn(run func(ctx context.Context, req services.CatalogSimilarityRequest) (services.CatalogSimilarities, error)) *MockCatalogVectorIndex_Similarities_Call {
+func (_c *MockCatalogVectorIndex_Similarities_Call) RunAndReturn(run func(ctx context.Context, req *services.CatalogSimilarityRequest) (services.CatalogSimilarities, error)) *MockCatalogVectorIndex_Similarities_Call {
 	_c.Call.Return(run)
 	return _c
 }

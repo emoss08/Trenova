@@ -187,12 +187,13 @@ func TestImportAndMatchBankReceiptToCustomerPayment(t *testing.T) {
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-BR-1",
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-BR-1",
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)

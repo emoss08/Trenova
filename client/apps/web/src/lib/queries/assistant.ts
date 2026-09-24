@@ -72,13 +72,14 @@ export const assistant = createQueryKeys("assistant", {
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchMyAgents({ signal }),
   }),
   // Paged: read by useAgentChoices as an infinite query, one cursor at a time.
-  agentChoices: (query: AgentChoiceQuery, source: AgentChoiceSource = "mine") => ({
+  agentChoices: (query: AgentChoiceQuery, source: AgentChoiceSource, pageSize: number) => ({
     queryKey: [
       "agent-choices",
       source,
       query.search?.trim() ?? "",
       query.origin ?? "all",
       [...(query.excludeIds ?? [])],
+      pageSize,
     ],
   }),
   agentChoicesByIds: (ids: readonly string[]) => ({

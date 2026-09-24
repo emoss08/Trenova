@@ -92,7 +92,8 @@ func LoadRetrievalSuite(path string) (*RetrievalSuite, error) {
 
 func (s *RetrievalSuite) Validate() error {
 	keys := make(map[string]struct{}, len(s.Corpus))
-	for _, item := range s.Corpus {
+	for idx := range s.Corpus {
+		item := &s.Corpus[idx]
 		if strings.TrimSpace(item.Key) == "" {
 			return errors.New("every corpus item has a key")
 		}

@@ -53,7 +53,7 @@ type Service struct {
 	now        func() int64
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	registry := p.Registry
 	if registry == nil {
 		registry = permission.NewRegistry()

@@ -233,8 +233,8 @@ func (h *evalHarness) retrievers(
 	memories serviceports.AgentMemoryService,
 	corpora seeded,
 ) retrievers {
-	request := func(query string) serviceports.RetrievalSearchRequest {
-		return serviceports.RetrievalSearchRequest{
+	request := func(query string) *serviceports.RetrievalSearchRequest {
+		return &serviceports.RetrievalSearchRequest{
 			TenantInfo: h.tenant,
 			Query:      query,
 			Limit:      evalLimit,
@@ -525,7 +525,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 				for _, query := range allQueries(suites) {
 					documents, err := searcher.SearchDocuments(
 						h.ctx,
-						serviceports.RetrievalSearchRequest{
+						&serviceports.RetrievalSearchRequest{
 							TenantInfo: h.tenant, Query: query, Limit: 50, Access: caller.access,
 						},
 					)
@@ -538,7 +538,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 					}
 
 					messages, err := searcher.SearchInboundMessages(h.ctx,
-						serviceports.RetrievalSearchRequest{
+						&serviceports.RetrievalSearchRequest{
 							TenantInfo: h.tenant, Query: query, Limit: 50, Access: caller.access,
 						})
 					require.NoError(t, err)
@@ -565,7 +565,7 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 
 				quoted, err := searcher.SearchInboundMessages(
 					h.ctx,
-					serviceports.RetrievalSearchRequest{
+					&serviceports.RetrievalSearchRequest{
 						TenantInfo: h.tenant, Query: "lumber order", Limit: 50, Access: caller.access,
 					},
 				)

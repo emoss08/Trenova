@@ -16,6 +16,7 @@ import type {
   DataTablePanelProps,
   RowAction,
 } from "@trenova/shared/types/data-table";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import type { ComponentType, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -297,7 +298,7 @@ describe("QualityTab", () => {
   // Satisfaction is sorted on the server only for someone who may read it.
   it("sorts by satisfaction only with the right to read ratings", async () => {
     primeDefaults();
-    permissions.denied.add("agent_feedback:read");
+    permissions.denied.add(`${Resource.AgentFeedback}:${Operation.Read}`);
     renderTab("agents");
 
     await screen.findByRole("region", { name: "Agent Score table" });
@@ -418,7 +419,7 @@ describe("QualityTab", () => {
 
   it("will not save the settings without the right to change AI Control", async () => {
     primeDefaults();
-    permissions.denied.add("agent_control:update");
+    permissions.denied.add(`${Resource.AgentControl}:${Operation.Update}`);
     renderTab("settings");
 
     const save = await screen.findByRole("button", { name: "Save settings" });

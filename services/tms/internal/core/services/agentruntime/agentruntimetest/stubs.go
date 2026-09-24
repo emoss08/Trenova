@@ -163,10 +163,10 @@ func (t *StubQueryTool) Policy() serviceports.ToolPolicy {
 
 func (t *StubQueryTool) Query(
 	_ context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	t.Calls++
-	t.LastParams = params
+	t.LastParams = *params
 
 	return t.Result, t.Err
 }

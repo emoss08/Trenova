@@ -463,6 +463,7 @@ describe("reduceTurn artifacts", () => {
         status: "Pending",
         title: "Revenue by customer",
         sourceToolCallId: "call_1",
+        path: "",
       },
     ]);
     expect(state.status).toBe("working");

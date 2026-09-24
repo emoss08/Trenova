@@ -165,7 +165,7 @@ func (t *getInboundMessageTool) Policy() serviceports.ToolPolicy {
 
 func (t *getInboundMessageTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -320,7 +320,7 @@ func inboundClassificationFilter(value string) (inboundmessage.Classification, e
 
 func (t *listInboundMessagesTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

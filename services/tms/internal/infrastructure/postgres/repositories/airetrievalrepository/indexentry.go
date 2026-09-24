@@ -576,10 +576,13 @@ func (r *repository) FindStaleSources(
 
 func (r *repository) AverageIndexChunks(
 	ctx context.Context,
-	req repositories.AverageIndexChunksRequest,
+	req *repositories.AverageIndexChunksRequest,
 ) (repositories.IndexChunkAverage, error) {
 	var average repositories.IndexChunkAverage
 
+	if req == nil {
+		return average, invalid("an average of index chunks needs a request")
+	}
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return average, err
 	}
@@ -614,8 +617,11 @@ func (r *repository) AverageIndexChunks(
 
 func (r *repository) ListErroredIndexEntries(
 	ctx context.Context,
-	req repositories.ListErroredIndexEntriesRequest,
+	req *repositories.ListErroredIndexEntriesRequest,
 ) ([]*airetrieval.IndexEntry, error) {
+	if req == nil {
+		return nil, invalid("a list of failed index entries needs a request")
+	}
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return nil, err
 	}

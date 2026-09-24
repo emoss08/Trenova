@@ -59,7 +59,7 @@ var errNoReportNamed = errors.New(
 func resolveReportSource(
 	ctx context.Context,
 	reports reportRunner,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (reportSource, error) {
 	if raw := optionalString(params.Params, "definitionId"); raw != "" {
 		id, err := pulid.Parse(raw)
@@ -146,7 +146,7 @@ func newCatalogAccess(permissions serviceports.PermissionEngine) catalogAccess {
 // because a model told "you may not read invoices" will keep trying to.
 func (c catalogAccess) entity(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 	entity *reportcatalog.Entity,
 ) (*serviceports.ResourcePermissionDetail, bool, error) {
 	if c.permissions == nil {
@@ -276,7 +276,7 @@ func (t *listReportDatasetsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listReportDatasetsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -464,7 +464,7 @@ func (t *describeReportDatasetTool) Policy() serviceports.ToolPolicy {
 
 func (t *describeReportDatasetTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -772,7 +772,7 @@ func (t *describeReportTool) Policy() serviceports.ToolPolicy {
 
 func (t *describeReportTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -981,7 +981,7 @@ func (t *previewReportTool) Policy() serviceports.ToolPolicy {
 
 func (t *previewReportTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -1022,7 +1022,7 @@ func (t *previewReportTool) Query(
 // the case the tool exists for, and a named report otherwise.
 func (t *previewReportTool) source(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (reportSource, error) {
 	raw, given := params.Params["definition"]
 	if given && raw != nil {

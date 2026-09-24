@@ -5,6 +5,7 @@ package invoiceadjustmentservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
@@ -992,7 +993,22 @@ func newIntegrationHarness(
 		Logger:  logger,
 		M2MSync: m2msync.NewSyncer(m2msync.SyncerParams{Logger: logger}),
 	})
-	shipmentRepo := shipmentrepository.New(shipmentrepository.Params{DB: conn, Logger: logger})
+	shipmentRepo := shipmentrepository.New(shipmentrepository.Params{
+		DB:     conn,
+		Logger: logger,
+		MoveRepository: shipmentmoverepository.New(
+			shipmentmoverepository.Params{DB: conn, Logger: logger},
+		),
+		AdditionalChargeRepository: shipmentadditionalchargerepository.New(
+			shipmentadditionalchargerepository.Params{DB: conn, Logger: logger},
+		),
+		ChargeAllocationRepository: chargeallocationrepository.New(
+			chargeallocationrepository.Params{DB: conn, Logger: logger},
+		),
+		CommodityRepository: shipmentcommodityrepository.New(
+			shipmentcommodityrepository.Params{DB: conn, Logger: logger},
+		),
+	})
 	shipmentCtrlRepo := shipmentcontrolrepository.New(
 		shipmentcontrolrepository.Params{DB: conn, Logger: logger},
 	)
@@ -1173,6 +1189,9 @@ func (h *integrationHarness) buildBillingQueueService() servicesports.BillingQue
 		CommodityRepository: shipmentcommodityrepository.New(
 			shipmentcommodityrepository.Params{DB: h.conn, Logger: logger},
 		),
+		ChargeAllocationRepository: chargeallocationrepository.New(
+			chargeallocationrepository.Params{DB: h.conn, Logger: logger},
+		),
 		Logger: logger,
 	})
 
@@ -1293,6 +1312,7 @@ func (h *integrationHarness) createPostedInvoice(
 		OrganizationID:        h.orgID,
 		BusinessUnitID:        h.buID,
 		ShipmentID:            h.shipmentID,
+		BillToCustomerID:      h.customerID,
 		Number:                fmt.Sprintf("INV-%03d", h.nextNumber),
 		Status:                billingqueue.StatusPosted,
 		BillType:              billingqueue.BillTypeInvoice,

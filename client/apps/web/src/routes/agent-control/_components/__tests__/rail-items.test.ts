@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { buildRailItems, resolveRailView, type RailPermissions } from "../rail-items";
 import type { RetrievalRailState } from "../retrieval/retrieval-model";
 
-const t = (text: string, ...args: (string | number)[]) =>
-  text
+const t = (text: string | null | undefined, ...args: unknown[]) =>
+  (text ?? "")
     .replace(/\{(\d+), plural, one \{([^}]*)\} other \{([^}]*)\}\}/g, (_m, i, one, other) =>
       String(args[Number(i)]) === "1"
         ? one.replace("#", String(args[Number(i)]))

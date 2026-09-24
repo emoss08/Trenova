@@ -90,7 +90,7 @@ func NewCatalogIndex(p CatalogParams) *CatalogIndex {
 
 func (c *CatalogIndex) Similarities(
 	ctx context.Context,
-	req serviceports.CatalogSimilarityRequest,
+	req *serviceports.CatalogSimilarityRequest,
 ) (serviceports.CatalogSimilarities, error) {
 	if err := validateCatalogRequest(req); err != nil {
 		return serviceports.CatalogSimilarities{}, err
@@ -127,7 +127,7 @@ func (c *CatalogIndex) Similarities(
 func (c *CatalogIndex) vectorsFor(
 	ctx context.Context,
 	key catalogKey,
-	req serviceports.CatalogSimilarityRequest,
+	req *serviceports.CatalogSimilarityRequest,
 ) (*catalogVectors, airetrieval.UnavailableReason) {
 	if cached, ok := c.entries.Get(key); ok && covers(cached, req) {
 		return cached, ""
@@ -136,11 +136,12 @@ func (c *CatalogIndex) vectorsFor(
 		return nil, airetrieval.UnavailableReasonProviderFailed
 	}
 
+	snapshot := *req
 	flight := c.flights.DoChan(key.String(), func() (any, error) {
 		loadCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), catalogLoadTimeout)
 		defer cancel()
 
-		return c.load(loadCtx, key, req), nil
+		return c.load(loadCtx, key, &snapshot), nil
 	})
 
 	wait := time.NewTimer(c.waitTimeout)
@@ -167,7 +168,7 @@ func (c *CatalogIndex) vectorsFor(
 func (c *CatalogIndex) load(
 	ctx context.Context,
 	key catalogKey,
-	req serviceports.CatalogSimilarityRequest,
+	req *serviceports.CatalogSimilarityRequest,
 ) catalogLoad {
 	dimensions := req.Query.Dimensions
 	merged := &catalogVectors{
@@ -248,7 +249,7 @@ func (c *CatalogIndex) readStored(
 func (c *CatalogIndex) embedAbsent(
 	ctx context.Context,
 	key catalogKey,
-	req serviceports.CatalogSimilarityRequest,
+	req *serviceports.CatalogSimilarityRequest,
 	merged *catalogVectors,
 	absent []serviceports.EmbeddingCatalogItem,
 ) airetrieval.UnavailableReason {
@@ -392,7 +393,7 @@ func (c *CatalogIndex) clearBackOff(key catalogKey) {
 	delete(c.retryAt, key)
 }
 
-func covers(vectors *catalogVectors, req serviceports.CatalogSimilarityRequest) bool {
+func covers(vectors *catalogVectors, req *serviceports.CatalogSimilarityRequest) bool {
 	if vectors == nil || vectors.dimensions != req.Query.Dimensions {
 		return false
 	}
@@ -423,8 +424,8 @@ func missingItems(
 	return absent
 }
 
-func validateCatalogRequest(req serviceports.CatalogSimilarityRequest) error {
-	if !req.Corpus.IsValid() || len(req.Items) == 0 {
+func validateCatalogRequest(req *serviceports.CatalogSimilarityRequest) error {
+	if req == nil || !req.Corpus.IsValid() || len(req.Items) == 0 {
 		return serviceports.ErrCatalogRequestInvalid
 	}
 	if !req.Query.Usable() {

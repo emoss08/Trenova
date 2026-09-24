@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplaterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommodityrepository"
@@ -345,6 +346,9 @@ func newIntegrationService(
 		MoveRepository:             moveRepo,
 		AdditionalChargeRepository: additionalChargeRepo,
 		CommodityRepository:        commodityRepo,
+		ChargeAllocationRepository: chargeallocationrepository.New(
+			chargeallocationrepository.Params{DB: conn, Logger: zap.NewNop()},
+		),
 	})
 	controlRepo := mocks.NewMockShipmentControlRepository(t)
 	assignmentRepo := mocks.NewMockAssignmentRepository(t)

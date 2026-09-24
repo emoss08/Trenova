@@ -137,7 +137,7 @@ func (t *listReportsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listReportsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -418,7 +418,7 @@ func (t *runReportTool) Policy() serviceports.ToolPolicy {
 
 func (t *runReportTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -489,7 +489,7 @@ func (t *runReportTool) Query(
 // and the conversation's own card takes it from there.
 func (t *runReportTool) settle(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 	run *report.ReportRun,
 ) *report.ReportRun {
 	if t.settleWindow <= 0 || t.settlePoll <= 0 || run.Status.IsTerminal() {
@@ -660,7 +660,7 @@ func (t *getReportRunTool) Policy() serviceports.ToolPolicy {
 
 func (t *getReportRunTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -697,7 +697,7 @@ const maxRunSampleRows = maxPreviewRows
 func attachRunSample(
 	ctx context.Context,
 	reports reportRunner,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 	run *report.ReportRun,
 	status *reportRunStatus,
 ) {
@@ -786,7 +786,7 @@ func toRunStatus(run *report.ReportRun) reportRunStatus {
 	return status
 }
 
-func reportingRequestFor(params serviceports.QueryToolParams) reporting.Request {
+func reportingRequestFor(params *serviceports.QueryToolParams) reporting.Request {
 	return reporting.Request{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,

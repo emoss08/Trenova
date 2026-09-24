@@ -162,7 +162,7 @@ func (t *listInsightsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listInsightsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -297,7 +297,7 @@ func (t *getInsightTool) Policy() serviceports.ToolPolicy {
 
 func (t *getInsightTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

@@ -42,6 +42,6 @@ func TestEstimateCountsRunesNotBytes(t *testing.T) {
 func TestEstimateAllSumsEachTextRoundedUp(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, 3, llmtokens.EstimateAll([]string{"a", "bb", "ccccc"}))
+	assert.Equal(t, 4, llmtokens.EstimateAll([]string{"a", "bb", "ccccc"}))
 	assert.Zero(t, llmtokens.EstimateAll(nil))
 }

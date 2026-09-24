@@ -93,9 +93,9 @@ export function MemoDialog({
     }
   }, [open, billType, customerId, form]);
 
-  const lines = useWatch({ control: form.control, name: "lines" }) ?? [];
+  const lines = useWatch({ control: form.control, name: "lines" });
   const chosenBillType = useWatch({ control: form.control, name: "billType" });
-  const total = useMemo(() => memoFormTotal(lines), [lines]);
+  const total = useMemo(() => memoFormTotal(lines ?? []), [lines]);
   const billTypeOptions = useMemo(
     () => memoBillTypeChoices.map((choice) => ({ value: choice.value, label: t(choice.label) })),
     [t],

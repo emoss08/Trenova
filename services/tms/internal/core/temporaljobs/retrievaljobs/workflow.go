@@ -66,12 +66,13 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 
 func withOptions(
 	ctx workflow.Context,
-	options workflow.ActivityOptions,
+	options *workflow.ActivityOptions,
 	item temporaljobs.TenantWorkItem,
 ) workflow.Context {
-	options.Priority = retrievalservice.WorkflowPriorityFor(item.OrganizationID)
+	scoped := *options
+	scoped.Priority = retrievalservice.WorkflowPriorityFor(item.OrganizationID)
 
-	return workflow.WithActivityOptions(ctx, options)
+	return workflow.WithActivityOptions(ctx, scoped)
 }
 
 type indexRun struct {
@@ -165,7 +166,7 @@ func (r *indexRun) waitForSignal() bool {
 
 func (r *indexRun) plan() (*serviceports.RetrievalIndexPlan, error) {
 	r.steps++
-	actx := withOptions(r.ctx, quickOptions, r.item)
+	actx := withOptions(r.ctx, &quickOptions, r.item)
 
 	var a *Activities
 	var plan serviceports.RetrievalIndexPlan
@@ -176,7 +177,9 @@ func (r *indexRun) plan() (*serviceports.RetrievalIndexPlan, error) {
 	return &plan, err
 }
 
-func (r *indexRun) cycle(plan *serviceports.RetrievalIndexPlan) (bool, bool, error) {
+func (r *indexRun) cycle(
+	plan *serviceports.RetrievalIndexPlan,
+) (more, stopped bool, cycleErr error) {
 	for _, key := range plan.RetiredKeys {
 		if err := r.purge(key); err != nil {
 			return false, false, err
@@ -219,7 +222,7 @@ func (r *indexRun) indexBatch(
 	sourceTypes []airetrieval.SourceType,
 ) (*serviceports.RetrievalIndexBatchResult, error) {
 	r.steps++
-	actx := withOptions(r.ctx, longOptions, r.item)
+	actx := withOptions(r.ctx, &longOptions, r.item)
 
 	var a *Activities
 	var batch serviceports.RetrievalIndexBatchResult
@@ -241,7 +244,7 @@ func (r *indexRun) indexBatch(
 
 func (r *indexRun) completeModelChange(pendingModelKey string) (bool, error) {
 	r.steps++
-	actx := withOptions(r.ctx, quickOptions, r.item)
+	actx := withOptions(r.ctx, &quickOptions, r.item)
 
 	var a *Activities
 	var change serviceports.RetrievalModelChangeResult
@@ -268,7 +271,7 @@ func (r *indexRun) purge(modelKey string) error {
 	var a *Activities
 	for range maxPurgeCalls {
 		r.steps++
-		actx := withOptions(r.ctx, longOptions, r.item)
+		actx := withOptions(r.ctx, &longOptions, r.item)
 
 		var purged serviceports.RetrievalPurgeResult
 		if err := workflow.ExecuteActivity(actx, a.PurgeRetrievalModelActivity,
@@ -287,7 +290,7 @@ func (r *indexRun) purge(modelKey string) error {
 
 func (r *indexRun) sweep() (*serviceports.RetrievalSweepResult, error) {
 	r.steps++
-	actx := withOptions(r.ctx, longOptions, r.item)
+	actx := withOptions(r.ctx, &longOptions, r.item)
 
 	var a *Activities
 	var sweep serviceports.RetrievalSweepResult
@@ -305,7 +308,7 @@ func ReindexRetrievalSourceWorkflow(
 		OrganizationID: input.OrganizationID,
 		BusinessUnitID: input.BusinessUnitID,
 	}
-	actx := withOptions(ctx, quickOptions, item)
+	actx := withOptions(ctx, &quickOptions, item)
 	result := &ReindexResult{Marked: input.Marked}
 
 	var a *Activities
@@ -367,7 +370,7 @@ func RetrievalIndexSweepWorkflow(ctx workflow.Context, input *SweepInput) (*Swee
 			return &page, err
 		},
 		RunTenant: func(wctx workflow.Context, tenant temporaljobs.TenantWorkItem) (int, error) {
-			actx := withOptions(wctx, longOptions, tenant)
+			actx := withOptions(wctx, &longOptions, tenant)
 			var swept serviceports.RetrievalSweepResult
 			if err := workflow.ExecuteActivity(actx, a.SweepRetrievalSourcesActivity,
 				&OrganizationSweepInput{TenantWorkItem: tenant, Wake: true}).

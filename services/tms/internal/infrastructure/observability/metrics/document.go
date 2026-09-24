@@ -32,49 +32,49 @@ func NewDocument(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 		Subsystem: "document_intelligence",
 		Name:      "extraction_total",
 		Help:      "Total number of document extraction outcomes",
-	}, []string{"status", "source_kind", labelReason})
+	}, []string{labelStatus, "source_kind", labelReason})
 
 	m.shipmentDraftTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
 		Subsystem: "document_intelligence",
 		Name:      "shipment_draft_total",
 		Help:      "Total number of shipment draft decisions by resource type and detected kind",
-	}, []string{"status", "resource_type", "kind"})
+	}, []string{labelStatus, "resource_type", labelKind})
 
 	m.typeAssociationTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
 		Subsystem: "document_intelligence",
 		Name:      "type_association_total",
 		Help:      "Total number of inferred document type association outcomes",
-	}, []string{"outcome", "kind"})
+	}, []string{labelOutcome, labelKind})
 
 	m.searchProjectionSync = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
 		Subsystem: "document_intelligence",
 		Name:      "search_projection_sync_total",
 		Help:      "Total number of document search projection sync attempts",
-	}, []string{"status"})
+	}, []string{labelStatus})
 
 	m.searchQueryTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
 		Subsystem: "document_intelligence",
 		Name:      "search_query_total",
 		Help:      "Total number of document intelligence search queries by backend and outcome",
-	}, []string{"backend", "outcome"})
+	}, []string{"backend", labelOutcome})
 
 	m.reconciliationQueueTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
 		Subsystem: "document_intelligence",
 		Name:      "reconciliation_queue_total",
 		Help:      "Total number of document intelligence reconciliation queue attempts",
-	}, []string{"status"})
+	}, []string{labelStatus})
 
 	m.aiOutcomeTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
 		Subsystem: "document_intelligence",
 		Name:      "ai_outcome_total",
 		Help:      "Total number of AI-assisted document intelligence outcomes",
-	}, []string{"operation", "status", "outcome"})
+	}, []string{labelOperation, labelStatus, labelOutcome})
 
 	m.mustRegister(
 		m.extractionTotal,

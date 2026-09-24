@@ -55,7 +55,7 @@ func TestListTool_LastNDaysOpensOnADayBoundary(t *testing.T) {
 	assert.Less(t, timeutils.NowUnix()-lower, int64(8*secondsPerDay))
 }
 
-func testParamsIn(timezone string, params map[string]any) serviceports.QueryToolParams {
+func testParamsIn(timezone string, params map[string]any) *serviceports.QueryToolParams {
 	out := testParams(params)
 	out.Timezone = timezone
 

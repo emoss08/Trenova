@@ -56,8 +56,8 @@ func newCatalogIndex(repo *fakeRepository, embeddings serviceports.EmbeddingServ
 
 func similarityRequest(
 	items []serviceports.EmbeddingCatalogItem,
-) serviceports.CatalogSimilarityRequest {
-	return serviceports.CatalogSimilarityRequest{
+) *serviceports.CatalogSimilarityRequest {
+	return &serviceports.CatalogSimilarityRequest{
 		TenantInfo: testTenant(),
 		Corpus:     airetrieval.CatalogCorpusTools,
 		Items:      items,

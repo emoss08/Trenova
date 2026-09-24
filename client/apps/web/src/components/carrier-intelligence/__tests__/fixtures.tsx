@@ -1,6 +1,6 @@
 import type { CarrierIntelFinding, CarrierIntelProfile } from "@/lib/graphql/carrier-intelligence";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { MemoryRouter } from "react-router";
 
 export function emptyProfile(overrides: Partial<CarrierIntelProfile> = {}): CarrierIntelProfile {
@@ -109,7 +109,9 @@ export function buildFinding(overrides: Partial<CarrierIntelFinding> = {}): Carr
 }
 
 export function IntelTestProviders({ children }: { children: ReactNode }) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const [client] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+  );
   return (
     <QueryClientProvider client={client}>
       <MemoryRouter>{children}</MemoryRouter>

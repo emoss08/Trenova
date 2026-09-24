@@ -76,7 +76,7 @@ export function MyDotIntelligence() {
 
   const ruleLabels = useCarrierIntelRuleLabels(canRead);
 
-  const refresh = useApiMutation<MyCarrierIntelligence, void>({
+  const refresh = useApiMutation<MyCarrierIntelligence, undefined>({
     resourceName: "DOT profile refresh",
     mutationFn: () => fetchMyCarrierIntelligence(true),
     onSuccess: (result) => {
@@ -197,7 +197,7 @@ export function MyDotIntelligence() {
               type="button"
               size="sm"
               isLoading={refresh.isPending}
-              onClick={() => refresh.mutate()}
+              onClick={() => refresh.mutate(undefined)}
             >
               <RefreshCwIcon className="size-3.5" />
               {t("Pull profile")}
@@ -257,7 +257,7 @@ export function MyDotIntelligence() {
               size="sm"
               variant="outline"
               isLoading={refresh.isPending}
-              onClick={() => refresh.mutate()}
+              onClick={() => refresh.mutate(undefined)}
             >
               {t("Refresh")}
             </Button>

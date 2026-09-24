@@ -29,13 +29,13 @@ export const carrierIntelSettings = createQueryKeys("carrierIntelSettings", {
    * compile. The fallbacks are strings so they cannot be confused with a real
    * value: 0 days and false are both answers somebody might actually give.
    */
-  costEstimate: (params: CarrierIntelCostEstimateParams) => ({
-    queryKey: [
-      "cost-estimate",
-      params.policy,
-      params.recentUsageDays ?? "any",
-      params.includeOpenTenders ?? "unset",
-    ],
-    queryFn: async ({ signal }) => fetchCarrierIntelCostEstimate(params, { signal }),
+  costEstimate: ({
+    policy,
+    recentUsageDays,
+    includeOpenTenders,
+  }: CarrierIntelCostEstimateParams) => ({
+    queryKey: ["cost-estimate", policy, recentUsageDays ?? "any", includeOpenTenders ?? "unset"],
+    queryFn: async ({ signal }) =>
+      fetchCarrierIntelCostEstimate({ policy, recentUsageDays, includeOpenTenders }, { signal }),
   }),
 });

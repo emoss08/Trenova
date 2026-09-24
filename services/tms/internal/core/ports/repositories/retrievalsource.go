@@ -78,13 +78,13 @@ type RetrievalSourceRepository interface {
 	GetMemories(ctx context.Context, req RetrievalSourcesRequest) ([]*agent.Memory, error)
 	GetDocuments(
 		ctx context.Context,
-		req RetrievalDocumentsRequest,
+		req *RetrievalDocumentsRequest,
 	) ([]*RetrievalDocumentSource, error)
 	GetInboundMessages(
 		ctx context.Context,
 		req RetrievalSourcesRequest,
 	) ([]*inboundmessage.InboundMessage, error)
-	ListSourceIDs(ctx context.Context, req ListRetrievalSourceIDsRequest) ([]pulid.ID, error)
+	ListSourceIDs(ctx context.Context, req *ListRetrievalSourceIDsRequest) ([]pulid.ID, error)
 	SearchDocuments(
 		ctx context.Context,
 		req RetrievalKeywordSearchRequest,

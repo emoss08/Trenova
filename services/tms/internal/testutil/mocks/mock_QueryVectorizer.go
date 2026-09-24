@@ -107,7 +107,7 @@ func (_c *MockQueryVectorizer_Availability_Call) RunAndReturn(run func(ctx conte
 }
 
 // Vectorize provides a mock function for the type MockQueryVectorizer
-func (_mock *MockQueryVectorizer) Vectorize(ctx context.Context, req services.QueryVectorRequest) (services.QueryVector, error) {
+func (_mock *MockQueryVectorizer) Vectorize(ctx context.Context, req *services.QueryVectorRequest) (services.QueryVector, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -116,15 +116,15 @@ func (_mock *MockQueryVectorizer) Vectorize(ctx context.Context, req services.Qu
 
 	var r0 services.QueryVector
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.QueryVectorRequest) (services.QueryVector, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.QueryVectorRequest) (services.QueryVector, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.QueryVectorRequest) services.QueryVector); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.QueryVectorRequest) services.QueryVector); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Get(0).(services.QueryVector)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.QueryVectorRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.QueryVectorRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -139,20 +139,20 @@ type MockQueryVectorizer_Vectorize_Call struct {
 
 // Vectorize is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req services.QueryVectorRequest
+//   - req *services.QueryVectorRequest
 func (_e *MockQueryVectorizer_Expecter) Vectorize(ctx any, req any) *MockQueryVectorizer_Vectorize_Call {
 	return &MockQueryVectorizer_Vectorize_Call{Call: _e.mock.On("Vectorize", ctx, req)}
 }
 
-func (_c *MockQueryVectorizer_Vectorize_Call) Run(run func(ctx context.Context, req services.QueryVectorRequest)) *MockQueryVectorizer_Vectorize_Call {
+func (_c *MockQueryVectorizer_Vectorize_Call) Run(run func(ctx context.Context, req *services.QueryVectorRequest)) *MockQueryVectorizer_Vectorize_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 services.QueryVectorRequest
+		var arg1 *services.QueryVectorRequest
 		if args[1] != nil {
-			arg1 = args[1].(services.QueryVectorRequest)
+			arg1 = args[1].(*services.QueryVectorRequest)
 		}
 		run(
 			arg0,
@@ -167,7 +167,7 @@ func (_c *MockQueryVectorizer_Vectorize_Call) Return(queryVector services.QueryV
 	return _c
 }
 
-func (_c *MockQueryVectorizer_Vectorize_Call) RunAndReturn(run func(ctx context.Context, req services.QueryVectorRequest) (services.QueryVector, error)) *MockQueryVectorizer_Vectorize_Call {
+func (_c *MockQueryVectorizer_Vectorize_Call) RunAndReturn(run func(ctx context.Context, req *services.QueryVectorRequest) (services.QueryVector, error)) *MockQueryVectorizer_Vectorize_Call {
 	_c.Call.Return(run)
 	return _c
 }

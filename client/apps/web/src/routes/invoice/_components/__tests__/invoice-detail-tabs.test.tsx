@@ -100,7 +100,13 @@ function renderPane(searchParams: string, onUrlUpdate?: OnUrlUpdateFunction) {
 }
 
 function lastSearchParams(onUrlUpdate: ReturnType<typeof vi.fn>) {
-  return (onUrlUpdate.mock.calls.at(-1)?.[0] as { searchParams: URLSearchParams }).searchParams;
+  const update = onUrlUpdate.mock.calls.at(-1)?.[0] as
+    | { searchParams: URLSearchParams }
+    | undefined;
+  if (!update) {
+    throw new Error("the address was never updated");
+  }
+  return update.searchParams;
 }
 
 beforeEach(() => {

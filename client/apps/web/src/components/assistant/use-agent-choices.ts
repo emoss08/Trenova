@@ -103,7 +103,7 @@ export function useAgentChoices({
     ReturnType<typeof queries.assistant.agentChoices>["queryKey"],
     string | undefined
   >({
-    queryKey: queries.assistant.agentChoices(query, source).queryKey,
+    queryKey: queries.assistant.agentChoices(query, source, pageSize).queryKey,
     queryFn: ({ pageParam, signal }) =>
       fetchAgentChoices(
         query,

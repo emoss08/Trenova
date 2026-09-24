@@ -123,19 +123,19 @@ func (r *fakeRepo) CountIndexEntries(
 
 func (r *fakeRepo) AverageIndexChunks(
 	_ context.Context,
-	req repositories.AverageIndexChunksRequest,
+	req *repositories.AverageIndexChunksRequest,
 ) (repositories.IndexChunkAverage, error) {
 	return r.averages[req.SourceType], nil
 }
 
 func (r *fakeRepo) ListErroredIndexEntries(
 	_ context.Context,
-	req repositories.ListErroredIndexEntriesRequest,
+	req *repositories.ListErroredIndexEntriesRequest,
 ) ([]*airetrieval.IndexEntry, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.erroredReq = &req
+	r.erroredReq = req
 
 	return r.errored, nil
 }

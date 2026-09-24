@@ -118,7 +118,7 @@ func (t *recallMemoryTool) Policy() serviceports.ToolPolicy {
 
 func (t *recallMemoryTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

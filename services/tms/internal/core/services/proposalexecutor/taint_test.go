@@ -122,6 +122,7 @@ func TestExecute_ATaintedInternalWriteIsNotHeld(t *testing.T) {
 	executor := newExecutor(tool, repo, &fakePermissions{allowed: true})
 	proposal := taintedProposal(tool.name, orgID, buID)
 	proposal.EgressClass = agent.EgressInternal
+	proposal.HeldBy = nil
 
 	err := executor.Execute(t.Context(), proposal, nil,
 		principal(services.PrincipalTypeAgent, orgID, buID))

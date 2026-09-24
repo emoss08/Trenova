@@ -23,8 +23,8 @@ func newVectorizer(
 	return New(Params{Logger: zap.NewNop(), Repository: repo, Embeddings: embeddings})
 }
 
-func queryRequest(tenant pagination.TenantInfo, text string) serviceports.QueryVectorRequest {
-	return serviceports.QueryVectorRequest{
+func queryRequest(tenant pagination.TenantInfo, text string) *serviceports.QueryVectorRequest {
+	return &serviceports.QueryVectorRequest{
 		TenantInfo: tenant,
 		Text:       text,
 		Attribution: serviceports.AIUsageAttribution{

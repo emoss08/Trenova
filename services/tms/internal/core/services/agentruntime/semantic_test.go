@@ -31,9 +31,9 @@ type fixedVectorizer struct {
 
 func (v *fixedVectorizer) Vectorize(
 	_ context.Context,
-	req serviceports.QueryVectorRequest,
+	req *serviceports.QueryVectorRequest,
 ) (serviceports.QueryVector, error) {
-	v.calls = append(v.calls, req)
+	v.calls = append(v.calls, *req)
 
 	return v.vector, nil
 }
@@ -52,9 +52,9 @@ type fixedSimilarities struct {
 
 func (f *fixedSimilarities) Similarities(
 	_ context.Context,
-	req serviceports.CatalogSimilarityRequest,
+	req *serviceports.CatalogSimilarityRequest,
 ) (serviceports.CatalogSimilarities, error) {
-	f.requests = append(f.requests, req)
+	f.requests = append(f.requests, *req)
 
 	return serviceports.CatalogSimilarities{Available: true, ByKey: f.byKey}, nil
 }

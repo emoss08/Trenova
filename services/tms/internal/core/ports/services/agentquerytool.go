@@ -38,7 +38,7 @@ type AgentQueryTool interface {
 	// Query returns data for the model to reason over. The result is serialized
 	// and handed back as untrusted content, since records carry customer-authored
 	// text.
-	Query(ctx context.Context, params QueryToolParams) (any, error)
+	Query(ctx context.Context, params *QueryToolParams) (any, error)
 }
 
 // AgentQueryToolRegistry resolves query tools by name.

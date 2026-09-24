@@ -367,7 +367,7 @@ func chunkSources(
 
 	switch seed.SourceType {
 	case airetrieval.SourceTypeDocument:
-		sources, err := seed.Sources.GetDocuments(ctx, repositories.RetrievalDocumentsRequest{
+		sources, err := seed.Sources.GetDocuments(ctx, &repositories.RetrievalDocumentsRequest{
 			TenantInfo:   tenant,
 			IDs:          ids,
 			IncludePages: true,

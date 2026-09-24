@@ -84,7 +84,7 @@ type AgentProposal struct {
 	Tainted     bool        `json:"tainted"     bun:"tainted,type:BOOLEAN,notnull,default:false"`
 	Taint       *RunTaint   `json:"taint"       bun:"taint,type:JSONB,nullzero"`
 	EgressClass EgressClass `json:"egressClass" bun:"egress_class,type:VARCHAR(30),nullzero"`
-	HeldBy      []string    `json:"heldBy"      bun:"held_by,type:TEXT[],array,nullzero,default:'{}'"`
+	HeldBy      []string    `json:"heldBy"      bun:"held_by,type:TEXT[],array,notnull"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -185,6 +185,9 @@ func (p *AgentProposal) BeforeAppendModel(_ context.Context, query bun.Query) er
 		p.CreatedAt = now
 		if p.ExpiresAt == 0 {
 			p.ExpiresAt = now + int64(DefaultProposalTTL.Seconds())
+		}
+		if p.HeldBy == nil {
+			p.HeldBy = []string{}
 		}
 	case *bun.UpdateQuery:
 		p.UpdatedAt = now

@@ -54,7 +54,7 @@ func (t *getWorkerTool) Policy() serviceports.ToolPolicy {
 
 func (t *getWorkerTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -234,7 +234,7 @@ func (t *searchWorkerTool) Policy() serviceports.ToolPolicy {
 
 func (t *searchWorkerTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

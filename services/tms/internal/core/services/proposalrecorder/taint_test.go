@@ -20,6 +20,10 @@ func (r *openedRuns) Create(_ context.Context, run *agent.AgentRun) (*agent.Agen
 	return run, nil
 }
 
+func messageEvidence(serviceports.PendingAction, pulid.ID) []agent.EvidenceRef {
+	return []agent.EvidenceRef{{Type: "message", ID: "amsg_1"}}
+}
+
 func readTaint() *agent.RunTaint {
 	taint := &agent.RunTaint{}
 	taint.Add(agent.TaintMark{
@@ -46,7 +50,8 @@ func TestRecord_KeepsTheRunsTaintAndEachProposalsEgress(t *testing.T) {
 	}
 
 	_, err := NewWithStores(nil, runs, store).Record(t.Context(), &RecordRequest{
-		Actor: actor,
+		Evidence: messageEvidence,
+		Actor:    actor,
 		Open: &OpenRunRequest{
 			AgentType:        agent.TypeAssistantChat,
 			SubjectType:      agent.SubjectAssistantThread,
@@ -103,6 +108,7 @@ func TestRecord_ACleanRunIsNotMarked(t *testing.T) {
 
 	runs := &openedRuns{}
 	_, err := NewWithStores(nil, runs, &capturingStore{}).Record(t.Context(), &RecordRequest{
+		Evidence: messageEvidence,
 		Actor: &serviceports.RequestActor{
 			OrganizationID: pulid.MustNew("org_"),
 			BusinessUnitID: pulid.MustNew("bu_"),

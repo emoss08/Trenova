@@ -148,7 +148,7 @@ func (b *ContextBuilder) Build(
 			AgentDefinitionID: definition.ID,
 			ToolNames:         definition.EffectiveToolNames(),
 			Records:           rc.MemoryRecords(),
-			Query:             b.memoryQuery(ctx, req.Query),
+			Query:             b.memoryQuery(ctx, &req.Query),
 		})
 		if err != nil {
 			b.logger.Warn("agent context: memory lookup failed",
@@ -272,9 +272,9 @@ func (b *ContextBuilder) delegateTools(
 
 func (b *ContextBuilder) memoryQuery(
 	ctx context.Context,
-	req serviceports.QueryVectorRequest,
+	req *serviceports.QueryVectorRequest,
 ) serviceports.QueryVector {
-	if b.vectorizer == nil || strings.TrimSpace(req.Text) == "" ||
+	if b.vectorizer == nil || req == nil || strings.TrimSpace(req.Text) == "" ||
 		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
 		return serviceports.QueryVector{}
 	}

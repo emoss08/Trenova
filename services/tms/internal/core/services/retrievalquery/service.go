@@ -63,8 +63,12 @@ func New(p Params) *Service {
 
 func (s *Service) Vectorize(
 	ctx context.Context,
-	req serviceports.QueryVectorRequest,
+	req *serviceports.QueryVectorRequest,
 ) (serviceports.QueryVector, error) {
+	if req == nil {
+		return serviceports.QueryVector{}, serviceports.ErrQueryTextRequired
+	}
+
 	text := QueryText(req.Text)
 	if text == "" {
 		return serviceports.QueryVector{}, serviceports.ErrQueryTextRequired
@@ -102,7 +106,7 @@ func (s *Service) Vectorize(
 		return s.embedFailed(ctx, req.TenantInfo, settings.ActiveModelKey, err)
 	}
 
-	vector, err := queryVectorFrom(result, settings)
+	vector, err := queryVectorFrom(&result, settings)
 	if err != nil {
 		s.l.Error("the embedding provider answered a search query with an unusable vector; "+
 			"searching by keyword",
@@ -241,7 +245,13 @@ func (s *Service) embedFailed(
 			"searching by keyword", fields...)
 	case airetrieval.UnavailableReasonQueryTimeout:
 		s.l.Warn("embedding a search query took too long; searching by keyword", fields...)
-	default:
+	case airetrieval.UnavailableReasonProviderFailed,
+		airetrieval.UnavailableReasonExtensionMissing,
+		airetrieval.UnavailableReasonSchemaMissing,
+		airetrieval.UnavailableReasonTooOld,
+		airetrieval.UnavailableReasonDisabled,
+		airetrieval.UnavailableReasonBudgetPaused,
+		airetrieval.UnavailableReasonNotIndexed:
 		s.l.Warn("embedding a search query failed; searching by keyword", fields...)
 	}
 
@@ -260,7 +270,7 @@ func EmbedFailureReason(err error) airetrieval.UnavailableReason {
 }
 
 func queryVectorFrom(
-	result serviceports.EmbedResult,
+	result *serviceports.EmbedResult,
 	settings *airetrieval.Settings,
 ) (serviceports.QueryVector, error) {
 	if len(result.Vectors) != 1 {
