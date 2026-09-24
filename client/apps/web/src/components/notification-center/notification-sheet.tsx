@@ -3,6 +3,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@trenova/shared/components/ui
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
 import { cn } from "@trenova/shared/lib/utils";
 import { BellIcon } from "lucide-react";
+import { useAppDialogOpen, useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { lazy, Suspense, useCallback, useState } from "react";
 import { NotificationPanelSkeleton } from "./notification-skeletons";
 
@@ -16,7 +17,7 @@ function BellTrigger({ unreadCount, open }: { unreadCount: number; open: boolean
     <span className="relative">
       <BellIcon className={cn("size-3 transition-colors", open && "text-foreground")} />
       {unreadCount > 0 && (
-        <span className="bg-brand text-brand-foreground absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-0.5 text-3xs leading-none font-semibold tabular-nums">
+        <span className="bg-brand text-brand-foreground text-3xs absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-full px-0.5 leading-none font-semibold tabular-nums">
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       )}
@@ -25,16 +26,21 @@ function BellTrigger({ unreadCount, open }: { unreadCount: number; open: boolean
 }
 
 export function NotificationSheet() {
-  const [open, setOpen] = useState(false);
+  const open = useAppDialogOpen("notifications");
+  const setDialogOpen = useAppDialogsStore((state) => state.setDialogOpen);
   const [mounted, setMounted] = useState(false);
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
 
-  const handleOpenChange = useCallback((next: boolean) => {
-    if (next) setMounted(true);
-    setOpen(next);
-  }, []);
+  if (open && !mounted) {
+    setMounted(true);
+  }
 
-  const handleClose = useCallback(() => setOpen(false), []);
+  const handleOpenChange = useCallback(
+    (next: boolean) => setDialogOpen("notifications", next),
+    [setDialogOpen],
+  );
+
+  const handleClose = useCallback(() => setDialogOpen("notifications", false), [setDialogOpen]);
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>

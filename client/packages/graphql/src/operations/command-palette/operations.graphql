@@ -1,0 +1,26 @@
+# The command palette's customer preview: who the customer is and where they
+# stand on credit, without the rest of the billing and email profiles the edit
+# panel loads.
+query CommandPaletteCustomerPreview($id: ID!) {
+  customer(id: $id) {
+    id
+    status
+    code
+    name
+    addressLine1
+    city
+    postalCode
+    updatedAt
+    state {
+      abbreviation
+    }
+    billingProfile {
+      paymentTerm
+      creditStatus
+      creditLimit
+      creditBalance
+      invoiceDelivery
+      billingCycle
+    }
+  }
+}

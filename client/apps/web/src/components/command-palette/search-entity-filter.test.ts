@@ -4,6 +4,7 @@ import {
   filterMentionOptions,
   getMentionState,
   resolveEntityAlias,
+  resolveMentionCommit,
   stripMentionToken,
 } from "./search-entity-filter";
 
@@ -34,5 +35,16 @@ describe("search entity filter helpers", () => {
 
   it("resolves a committed alias to a canonical entity type", () => {
     expect(resolveEntityAlias("customers")).toBe("customer");
+  });
+
+  it("commits a mention to the only type its prefix can still mean", () => {
+    expect(resolveMentionCommit("work")).toBe("worker");
+    expect(resolveMentionCommit("cust")).toBe("customer");
+    expect(resolveMentionCommit("docu")).toBe("document");
+  });
+
+  it("commits nothing for an empty, unknown or ambiguous prefix", () => {
+    expect(resolveMentionCommit("")).toBeNull();
+    expect(resolveMentionCommit("zzz")).toBeNull();
   });
 });
