@@ -278,6 +278,7 @@ const (
 	TaintEntityAgentRun        = "agent_run"
 	TaintEntityShipmentComment = "shipment_comment"
 	TaintEntityWeatherAlert    = "weather_alert"
+	TaintEntityWatchtowerItem  = "watchtower_item"
 )
 
 func (s SubjectType) TaintSource() (TaintSource, string, bool) {

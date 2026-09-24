@@ -12376,11 +12376,12 @@
     ]
   },
   "Agent run not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/agentquerytoolservice",
       "service/agentredteam"
     ]
   },
