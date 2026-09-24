@@ -179634,6 +179634,15 @@
       "domain/shipmentimportchat"
     ]
   },
+  "Turn documents on before re-indexing them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/airetrievalstatusservice"
+    ]
+  },
   "Turn down": {
     "sites": 2,
     "scope": [
@@ -179652,6 +179661,15 @@
       "domain/permission"
     ]
   },
+  "Turn inbound email on before re-indexing it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/airetrievalstatusservice"
+    ]
+  },
   "Turn index cannot be negative": {
     "sites": 1,
     "scope": [
@@ -179659,6 +179677,15 @@
     ],
     "areas": [
       "domain/shipmentimportchat"
+    ]
+  },
+  "Turn memories on before re-indexing them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/airetrievalstatusservice"
     ]
   },
   "Turn memories, documents and mail into vectors so agents can find them by meaning rather than by exact words.": {
@@ -179749,15 +179776,6 @@
     ],
     "areas": [
       "routes/worker"
-    ]
-  },
-  "Turn {0} on before re-indexing it.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/airetrievalstatusservice"
     ]
   },
   "Turning a request down needs a reason": {

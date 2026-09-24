@@ -21,14 +21,6 @@ type failedEntryRow struct {
 	rank  int
 }
 
-func optionalNumber(value *int64) (float64, bool) {
-	if value == nil {
-		return 0, false
-	}
-
-	return float64(*value), true
-}
-
 var failedEntryTable = memtable.New(memtable.Config[failedEntryRow]{
 	CursorScope: failedEntryCursorScope,
 	Search: func(row *failedEntryRow) string {
@@ -94,7 +86,7 @@ var failedEntryTable = memtable.New(memtable.Config[failedEntryRow]{
 			Kind:     memtable.KindNumber,
 			Sortable: true,
 			Number: func(row *failedEntryRow) (float64, bool) {
-				return optionalNumber(row.entry.LastAttemptAt)
+				return memtable.OptionalNumber(row.entry.LastAttemptAt)
 			},
 		},
 		{
@@ -102,7 +94,7 @@ var failedEntryTable = memtable.New(memtable.Config[failedEntryRow]{
 			Kind:     memtable.KindNumber,
 			Sortable: true,
 			Number: func(row *failedEntryRow) (float64, bool) {
-				return optionalNumber(row.entry.NextAttemptAt)
+				return memtable.OptionalNumber(row.entry.NextAttemptAt)
 			},
 		},
 	},

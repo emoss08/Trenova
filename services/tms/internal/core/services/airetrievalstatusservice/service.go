@@ -413,10 +413,7 @@ func ReindexRefusal(
 	sourceType airetrieval.SourceType,
 ) error {
 	if !settings.SourceEnabled(sourceType) {
-		return errortypes.NewBusinessError(
-			"Turn {0} on before re-indexing it.",
-			SourceLabel(sourceType),
-		)
+		return sourceOffRefusal(sourceType)
 	}
 
 	switch availability.Reason {
@@ -442,6 +439,17 @@ func ReindexRefusal(
 	}
 
 	return nil
+}
+
+func sourceOffRefusal(sourceType airetrieval.SourceType) error {
+	switch sourceType {
+	case airetrieval.SourceTypeMemory:
+		return errortypes.NewBusinessError("Turn memories on before re-indexing them.")
+	case airetrieval.SourceTypeDocument:
+		return errortypes.NewBusinessError("Turn documents on before re-indexing them.")
+	default:
+		return errortypes.NewBusinessError("Turn inbound email on before re-indexing it.")
+	}
 }
 
 func SourceLabel(sourceType airetrieval.SourceType) string {
