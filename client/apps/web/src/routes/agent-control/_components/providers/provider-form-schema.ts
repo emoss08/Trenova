@@ -1,4 +1,9 @@
-import { aiTaskSchema, saveAIProviderRequestSchema } from "@/types/ai-provider";
+import {
+  aiTaskSchema,
+  EMBEDDING_DIMENSIONS,
+  saveAIProviderRequestSchema,
+  type AIProviderKind,
+} from "@/types/ai-provider";
 import type { AIProviderRow } from "@/lib/graphql/ai-provider";
 import { z } from "zod";
 import type { ProviderFormValues } from "./build-save-payload";
@@ -9,8 +14,16 @@ import type { ProviderFormValues } from "./build-save-payload";
  * group represents "none selected".
  */
 export const providerFormSchema = saveAIProviderRequestSchema
-  .omit({ tasks: true, extraBody: true })
+  .omit({ tasks: true, extraBody: true, embeddingDimensions: true })
   .extend({
+    embeddingDimensionsChoice: z
+      .string()
+      .default("")
+      .refine(
+        (value) =>
+          value === "" || (EMBEDDING_DIMENSIONS as readonly number[]).includes(Number(value)),
+        { message: "Embedding dimensions must be 768, 1024 or 1536" },
+      ),
     preset: z.string().default(""),
     tasks: z.array(aiTaskSchema).nullable().default(null),
     /**
@@ -42,7 +55,64 @@ export const providerFormSchema = saveAIProviderRequestSchema
           });
         }
       }),
+  })
+  .superRefine((values, ctx) => {
+    for (const issue of embeddingIssues(values)) {
+      ctx.addIssue({ code: "custom", path: [issue.path], message: issue.message });
+    }
   });
+
+/** Protocols with no embedding endpoint. Anthropic's Messages API has none. */
+const KINDS_WITHOUT_EMBEDDINGS: readonly AIProviderKind[] = ["AnthropicMessages"];
+
+export function kindSupportsEmbedding(kind: AIProviderKind): boolean {
+  return !KINDS_WITHOUT_EMBEDDINGS.includes(kind);
+}
+
+type EmbeddingIssue = {
+  path: "tasks" | "embeddingDimensionsChoice";
+  message: string;
+};
+
+/**
+ * The rules the server applies to an embedding provider, checked while the
+ * form is open: the protocol must have an embedding endpoint, an embedding
+ * model serves nothing else, and its vector size must be chosen because the
+ * index stores vectors of one size.
+ */
+export function embeddingIssues(values: {
+  kind: AIProviderKind;
+  tasks: readonly string[] | null;
+  embeddingDimensionsChoice: string;
+}): EmbeddingIssue[] {
+  const tasks = values.tasks ?? [];
+  if (!tasks.includes("Embedding")) {
+    return [];
+  }
+
+  const issues: EmbeddingIssue[] = [];
+  if (!kindSupportsEmbedding(values.kind)) {
+    issues.push({
+      path: "tasks",
+      message: "This protocol has no embedding endpoint, so it cannot serve the Embedding task",
+    });
+  }
+  if (tasks.length > 1) {
+    issues.push({
+      path: "tasks",
+      message:
+        "An embedding model cannot also serve tasks that write text; add a separate provider for those",
+    });
+  }
+  if (values.embeddingDimensionsChoice.trim() === "") {
+    issues.push({
+      path: "embeddingDimensionsChoice",
+      message: "Embedding dimensions are required for a provider that serves the Embedding task",
+    });
+  }
+
+  return issues;
+}
 
 export const providerFormDefaults: ProviderFormValues = {
   preset: "",
@@ -61,6 +131,8 @@ export const providerFormDefaults: ProviderFormValues = {
   maxTokens: 8192,
   tasks: null,
   priority: 100,
+  embeddingDimensionsChoice: "",
+  embeddingInputStyle: "None",
   trusted: false,
   enabled: true,
   version: 0,
@@ -96,6 +168,11 @@ export function toProviderPanelRow(provider: AIProviderRow): ProviderPanelRow {
     maxTokens: provider.maxTokens,
     tasks: provider.tasks.length > 0 ? [...provider.tasks] : null,
     priority: provider.priority,
+    embeddingDimensionsChoice:
+      provider.embeddingDimensions === null || provider.embeddingDimensions === undefined
+        ? ""
+        : String(provider.embeddingDimensions),
+    embeddingInputStyle: provider.embeddingInputStyle,
     trusted: provider.trusted,
     enabled: provider.enabled,
     version: provider.version,

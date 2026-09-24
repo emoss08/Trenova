@@ -22,6 +22,8 @@ function formValues(overrides: Partial<ProviderFormValues> = {}): ProviderFormVa
     maxTokens: 8192,
     tasks: null,
     priority: 100,
+    embeddingDimensionsChoice: "",
+    embeddingInputStyle: "None",
     trusted: false,
     enabled: true,
     version: 0,

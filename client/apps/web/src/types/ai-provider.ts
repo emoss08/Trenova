@@ -60,8 +60,26 @@ export const aiTaskSchema = z.enum([
   "QueryCompose",
   "InboundClassification",
   "EvaluationJudge",
+  "Embedding",
   "General",
 ]);
+
+/**
+ * How an embedding endpoint is told a stored document from a search query.
+ * Voyage takes an input_type field; nomic-embed-text wants a text prefix;
+ * everything else is sent both the same way.
+ */
+export const embeddingInputStyleSchema = z.enum(["None", "VoyageInputType", "NomicPrefix"]);
+
+/** The vector sizes the retrieval indexes are built for, mirrored from the server. */
+export const EMBEDDING_DIMENSIONS = [768, 1024, 1536] as const;
+
+export const embeddingDimensionsSchema = z
+  .number()
+  .int()
+  .refine((value) => (EMBEDDING_DIMENSIONS as readonly number[]).includes(value), {
+    message: "Embedding dimensions must be 768, 1024 or 1536",
+  });
 
 export const aiProviderTestOutcomeSchema = z.object({
   success: z.boolean(),
@@ -94,6 +112,8 @@ export const aiProviderSchema = z.object({
   /** `[]Task` with nullzero on the server: a provider with no tasks arrives as null. */
   tasks: z.preprocess((value) => value ?? [], z.array(aiTaskSchema)),
   priority: z.number().default(100),
+  embeddingDimensions: z.number().nullable().optional().default(null),
+  embeddingInputStyle: embeddingInputStyleSchema.default("None"),
   trusted: z.boolean().default(false),
   enabled: z.boolean().default(false),
   lastTest: aiProviderTestOutcomeSchema.nullable().optional().default(null),
@@ -122,6 +142,8 @@ export const saveAIProviderRequestSchema = z.object({
   maxTokens: z.number().min(256).max(200000).default(8192),
   tasks: z.array(aiTaskSchema).default([]),
   priority: z.number().min(0).default(100),
+  embeddingDimensions: embeddingDimensionsSchema.nullable().default(null),
+  embeddingInputStyle: embeddingInputStyleSchema.default("None"),
   trusted: z.boolean().default(false),
   enabled: z.boolean().default(false),
   version: z.number().default(0),
@@ -145,6 +167,7 @@ export const aiProviderKindDescriptorSchema = z.object({
   requiresBaseUrl: z.boolean().default(false),
   defaultStructuredOutputMode: structuredOutputModeSchema,
   supportsStructuredEnforced: z.boolean().default(false),
+  supportsEmbedding: z.boolean().default(false),
 });
 
 export const aiProviderPresetSchema = z.object({
@@ -160,6 +183,10 @@ export const aiProviderPresetSchema = z.object({
   notes: z.string().optional().default(""),
   /** Vendor web domain, used to resolve a brand logo. Empty for generic servers. */
   domain: z.string().optional().default(""),
+  /** Tasks the preset is made for; an embedding preset names only Embedding. */
+  tasks: z.preprocess((value) => value ?? [], z.array(aiTaskSchema)),
+  embeddingDimensions: z.number().optional().default(0),
+  embeddingInputStyle: embeddingInputStyleSchema.optional(),
 });
 
 export const aiTaskDescriptorSchema = z.object({
@@ -170,10 +197,21 @@ export const aiTaskDescriptorSchema = z.object({
   volumeGuidance: z.string().optional().default(""),
 });
 
+export const embeddingInputStyleDescriptorSchema = z.object({
+  style: embeddingInputStyleSchema,
+  label: z.string(),
+  description: z.string(),
+});
+
 export const aiProviderCatalogSchema = z.object({
   kinds: z.array(aiProviderKindDescriptorSchema),
   presets: z.array(aiProviderPresetSchema),
   tasks: z.array(aiTaskDescriptorSchema),
+  embeddingDimensions: z.preprocess((value) => value ?? [], z.array(z.number())),
+  embeddingInputStyles: z.preprocess(
+    (value) => value ?? [],
+    z.array(embeddingInputStyleDescriptorSchema),
+  ),
 });
 
 export type AIProvider = z.infer<typeof aiProviderSchema>;
@@ -188,3 +226,5 @@ export type AIProviderCatalog = z.infer<typeof aiProviderCatalogSchema>;
 export type AIProviderPreset = z.infer<typeof aiProviderPresetSchema>;
 export type AIProviderKindDescriptor = z.infer<typeof aiProviderKindDescriptorSchema>;
 export type AITaskDescriptor = z.infer<typeof aiTaskDescriptorSchema>;
+export type EmbeddingInputStyle = z.infer<typeof embeddingInputStyleSchema>;
+export type EmbeddingInputStyleDescriptor = z.infer<typeof embeddingInputStyleDescriptorSchema>;

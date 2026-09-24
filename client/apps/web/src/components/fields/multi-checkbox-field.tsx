@@ -15,6 +15,7 @@ type MultiCheckboxFieldProps<T extends FieldValues, TValue extends string> = For
  * A checkbox group bound to an array field. For small, fixed option sets where
  * an async multi-select would be overkill and every choice should stay visible.
  * An empty selection is stored as null so the server treats it as a wildcard.
+ * A disabled option shows its description as the reason it cannot be chosen.
  */
 export function MultiCheckboxField<T extends FieldValues, TValue extends string>({
   name,
@@ -53,6 +54,9 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
               {options.map((option) => {
                 const checked = selected.has(option.value);
                 const optionId = `${groupId}-${option.value}`;
+                // An unavailable option can still be cleared, so a choice that
+                // became invalid is never stuck on; it just cannot be made.
+                const unavailable = option.disabled === true && !checked;
 
                 return (
                   <div
@@ -61,17 +65,34 @@ export function MultiCheckboxField<T extends FieldValues, TValue extends string>
                       "border-input bg-field flex items-center gap-2 rounded-md border px-2.5 py-2",
                       "transition-[border-color,box-shadow] duration-200 ease-in-out",
                       checked && "border-foreground ring-foreground/10 ring-2",
+                      unavailable && "bg-sunken opacity-60",
                     )}
                   >
                     <Checkbox
                       id={optionId}
                       checked={checked}
-                      disabled={disabled}
+                      disabled={disabled || unavailable}
+                      aria-describedby={
+                        option.disabled && option.description ? `${optionId}-reason` : undefined
+                      }
                       onCheckedChange={(state) => toggle(option.value, state === true)}
                     />
-                    <Label htmlFor={optionId} className="cursor-pointer text-xs font-normal">
-                      {t(option.label)}
-                    </Label>
+                    <div className="flex min-w-0 flex-col">
+                      <Label
+                        htmlFor={optionId}
+                        className={cn(
+                          "text-xs font-normal",
+                          unavailable ? "cursor-not-allowed" : "cursor-pointer",
+                        )}
+                      >
+                        {t(option.label)}
+                      </Label>
+                      {option.disabled && option.description && (
+                        <span id={`${optionId}-reason`} className="text-2xs text-muted-foreground">
+                          {t(option.description)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })}
