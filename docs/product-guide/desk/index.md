@@ -36,7 +36,7 @@ Keywords: find chat, previous conversation, conversation history
 
 ### Move, shrink or hide the assistant on any page
 Keywords: assistant covers the screen, move chat button, hide AI button, assistant too big, resize assistant, assistant in the way
-1. To move it, drag the assistant button in the corner to any other corner of the screen. The panel opens in the same corner.
+1. To move it, drag the assistant button. While you drag, the four corners it can go to are outlined and the one it will land in is highlighted and named; let go anywhere in that quarter of the screen. The panel opens in the same corner.
 2. To hide it, hover over the button and select **Hide the assistant button**. A thin tab stays on the edge of the screen; select it, or press ⌘J (Ctrl+J), to open the assistant. The tab turns amber when a decision is waiting.
 3. To resize the open panel, drag its free corner (the one away from the screen edge), or focus that corner and use the arrow keys. Double-click the corner to go back to the standard size.
 4. The same choices are under **Position and size** at the top of the open panel: pick a corner, turn **Hide the button when closed** on or off, or select **Reset size**.

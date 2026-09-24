@@ -14,21 +14,9 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PanelBottomDashedIcon } from "lucide-react";
-
-function dockLabel(t: TranslateFn, dock: AssistantDock): string {
-  switch (dock) {
-    case "bottom-right":
-      return t("Bottom right");
-    case "bottom-left":
-      return t("Bottom left");
-    case "top-right":
-      return t("Top right");
-    case "top-left":
-      return t("Top left");
-  }
-}
+import { dockLabel } from "./dock-label";
 
 const DOCK_ORDER: readonly AssistantDock[] = [
   "bottom-right",

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:eac2955f78396dd3c7d96a83f1d1ad728c5e236a4e1a1e09de0cc0b17aabeee2",
+  "version": "sha256:a8e8f16527d899c44c5a8e2068bd2a6aa30d3ee11eefda07479f33b829c64d87",
   "modules": [
     {
       "id": "home",
@@ -6932,7 +6932,7 @@
             "assistant in the way"
           ],
           "steps": [
-            "To move it, drag the assistant button in the corner to any other corner of the screen. The panel opens in the same corner.",
+            "To move it, drag the assistant button. While you drag, the four corners it can go to are outlined and the one it will land in is highlighted and named; let go anywhere in that quarter of the screen. The panel opens in the same corner.",
             "To hide it, hover over the button and select **Hide the assistant button**. A thin tab stays on the edge of the screen; select it, or press ⌘J (Ctrl+J), to open the assistant. The tab turns amber when a decision is waiting.",
             "To resize the open panel, drag its free corner (the one away from the screen edge), or focus that corner and use the arrow keys. Double-click the corner to go back to the standard size.",
             "The same choices are under **Position and size** at the top of the open panel: pick a corner, turn **Hide the button when closed** on or off, or select **Reset size**."

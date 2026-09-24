@@ -11,6 +11,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { EyeOffIcon } from "lucide-react";
 import { m, useMotionValue, useReducedMotion, type PanInfo } from "motion/react";
 import { useRef, useState } from "react";
+import { AssistantDockTargets } from "./assistant-dock-targets";
 import { AssistantMark } from "./assistant-mark";
 import { ASSISTANT_SURFACE_ID } from "./assistant-surface";
 
@@ -85,6 +86,7 @@ export function AssistantLauncher({
   const reduceMotion = useReducedMotion();
   const [hovered, setHovered] = useState(false);
   const dragged = useRef(false);
+  const [dragTarget, setDragTarget] = useState<AssistantDock | null>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const hasPending = pendingCount > 0;
@@ -92,11 +94,20 @@ export function AssistantLauncher({
   const expanded = hasPending || isWriting;
   const movable = onMove !== undefined;
 
-  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const next = nearestDock(
+  const pointerDock = (info: PanInfo): AssistantDock =>
+    nearestDock(
       { x: info.point.x - window.scrollX, y: info.point.y - window.scrollY },
       { width: window.innerWidth, height: window.innerHeight },
     );
+
+  const handleDrag = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const next = pointerDock(info);
+    setDragTarget((current) => (current === next ? current : next));
+  };
+
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const next = pointerDock(info);
+    setDragTarget(null);
     x.set(0);
     y.set(0);
     if (next !== dock) {
@@ -115,7 +126,9 @@ export function AssistantLauncher({
       }}
       onDragStart={() => {
         dragged.current = true;
+        setDragTarget(dock);
       }}
+      onDrag={handleDrag}
       onDragEnd={handleDragEnd}
       transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }}
       className={cn(
@@ -124,6 +137,7 @@ export function AssistantLauncher({
         movable && "cursor-grab active:cursor-grabbing",
       )}
     >
+      {dragTarget && <AssistantDockTargets active={dragTarget} />}
       <Tooltip>
         <TooltipTrigger
           render={
