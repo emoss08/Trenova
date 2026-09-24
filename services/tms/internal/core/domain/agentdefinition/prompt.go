@@ -201,7 +201,7 @@ func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
 	}
 
 	if d.HasContextProvider(ContextMemory) {
-		recorded, outside := splitMemories(d.FitMemories(rc))
+		recorded, outside := splitMemories(d.FitMemories(&rc))
 		if section := buildMemorySection(recorded); section != "" {
 			builder.WriteString("\n\n")
 			builder.WriteString(section)

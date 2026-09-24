@@ -162,7 +162,7 @@ func (a openAIResponsesAdapter) Complete(ctx context.Context, call *Call) (*Resp
 		ctx,
 		call.Client,
 		call.Provider.ResolvedBaseURL()+"/v1/responses",
-		map[string]string{"Authorization": bearer(call.APIKey)},
+		bearerHeaders(call.APIKey),
 		a.requestFor(call),
 		&envelope,
 	)
@@ -202,7 +202,7 @@ func (a openAIResponsesAdapter) Submit(ctx context.Context, call *Call) (*Backgr
 		ctx,
 		call.Client,
 		call.Provider.ResolvedBaseURL()+"/v1/responses",
-		map[string]string{"Authorization": bearer(call.APIKey)},
+		bearerHeaders(call.APIKey),
 		body,
 		&envelope,
 	); err != nil {
@@ -230,7 +230,7 @@ func (a openAIResponsesAdapter) Poll(
 		ctx,
 		call.Client,
 		fmt.Sprintf("%s/v1/responses/%s", call.Provider.ResolvedBaseURL(), strings.TrimSpace(id)),
-		map[string]string{"Authorization": bearer(call.APIKey)},
+		bearerHeaders(call.APIKey),
 		&envelope,
 	); err != nil {
 		return nil, err
@@ -326,7 +326,7 @@ func (a openAIResponsesAdapter) Stream(
 		ctx,
 		call,
 		call.Provider.ResolvedBaseURL()+"/v1/responses",
-		map[string]string{"Authorization": bearer(call.APIKey)},
+		bearerHeaders(call.APIKey),
 		body,
 	)
 	if err != nil {

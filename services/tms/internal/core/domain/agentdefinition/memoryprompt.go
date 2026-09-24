@@ -23,7 +23,7 @@ const (
 
 const organizationMemoryHeading = "For the whole organization"
 
-func (rc RuntimeContext) MemoryRecords() []agent.EntityRef {
+func (rc *RuntimeContext) MemoryRecords() []agent.EntityRef {
 	records := make([]agent.EntityRef, 0, 2+len(rc.Mentions)+len(rc.DelegatorRecords))
 	seen := make(map[agent.EntityRef]struct{}, cap(records))
 	add := func(kind, id string) {
@@ -55,8 +55,8 @@ func (rc RuntimeContext) MemoryRecords() []agent.EntityRef {
 	return records
 }
 
-func (d *Definition) FitMemories(rc RuntimeContext) []*agent.Memory {
-	if len(rc.Memories) == 0 {
+func (d *Definition) FitMemories(rc *RuntimeContext) []*agent.Memory {
+	if rc == nil || len(rc.Memories) == 0 {
 		return nil
 	}
 
@@ -99,7 +99,7 @@ type rankedMemory struct {
 	rank   int
 }
 
-func orderMemoriesForPrompt(rc RuntimeContext) []*agent.Memory {
+func orderMemoriesForPrompt(rc *RuntimeContext) []*agent.Memory {
 	relations := memoryRelations(rc.MemorySubjects)
 	loaded := loadedToolNames(rc)
 
@@ -154,7 +154,7 @@ func memoryRelations(subjects []agent.MemorySubject) map[subjectKey]agent.Memory
 	return relations
 }
 
-func loadedToolNames(rc RuntimeContext) map[string]struct{} {
+func loadedToolNames(rc *RuntimeContext) map[string]struct{} {
 	loaded := make(map[string]struct{}, len(rc.Tools))
 	for _, tool := range rc.Tools {
 		if !rc.ToolsDisclosed || tool.Loaded {

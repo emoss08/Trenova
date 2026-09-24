@@ -203,7 +203,7 @@ func (s *Service) setBudgetPause(
 	settings *airetrieval.Settings,
 	paused bool,
 ) (*airetrieval.Settings, bool, error) {
-	req := repositories.SetAIRetrievalPausedRequest{
+	req := &repositories.SetAIRetrievalPausedRequest{
 		TenantInfo: tenant,
 		Paused:     paused,
 		Now:        s.now(),
@@ -298,7 +298,7 @@ func (s *Service) IndexBatch(
 		limit = DefaultBatchSize
 	}
 
-	entries, err := s.repo.ClaimIndexEntries(ctx, repositories.ClaimIndexEntriesRequest{
+	entries, err := s.repo.ClaimIndexEntries(ctx, &repositories.ClaimIndexEntriesRequest{
 		TenantInfo:  req.TenantInfo,
 		ModelKey:    req.ModelKey,
 		SourceTypes: sourceTypes,
@@ -413,7 +413,7 @@ func (s *Service) pendingModelComplete(
 	settings *airetrieval.Settings,
 ) (bool, error) {
 	for _, sourceType := range settings.EnabledSourceTypes() {
-		stale, err := s.repo.FindStaleSources(ctx, repositories.FindStaleAIRetrievalSourcesRequest{
+		stale, err := s.repo.FindStaleSources(ctx, &repositories.FindStaleAIRetrievalSourcesRequest{
 			TenantInfo: tenant,
 			SourceType: sourceType,
 			ModelKey:   settings.PendingModelKey,
@@ -531,7 +531,7 @@ func (s *Service) sweepSource(
 	marked := 0
 	after := pulid.Nil
 	for range maxSweepPages {
-		ids, err := s.repo.FindStaleSources(ctx, repositories.FindStaleAIRetrievalSourcesRequest{
+		ids, err := s.repo.FindStaleSources(ctx, &repositories.FindStaleAIRetrievalSourcesRequest{
 			TenantInfo: tenant,
 			SourceType: sourceType,
 			ModelKey:   modelKey,

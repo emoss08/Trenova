@@ -79,13 +79,26 @@ var postgresOnly = map[Capability]struct{}{
 	CapVectorSearch:      {},
 }
 
-var probed = map[Capability]struct{}{
-	CapVectorSearch: {},
-}
-
 func (c Capability) IsProbed() bool {
-	_, ok := probed[c]
-	return ok
+	switch c {
+	case CapVectorSearch:
+		return true
+	case CapPostGIS,
+		CapFullTextSearch,
+		CapChangeDataCapture,
+		CapExactDecimal,
+		CapMaterializedView,
+		CapAdvisoryLock,
+		CapRowLocking,
+		CapExclusionConstr,
+		CapTrigram,
+		CapConcurrentIndex,
+		CapPartitionedTable,
+		CapSessionDiagnostic:
+		return false
+	}
+
+	return false
 }
 
 func (k Kind) Supports(capability Capability) bool {

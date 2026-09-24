@@ -202,7 +202,7 @@ func (s *Searcher) vectorLeg(
 		return nil, serviceports.RetrievalSemantics{Reason: reason}
 	}
 
-	hits, err := s.repo.Search(ctx, repositories.VectorSearchRequest{
+	hits, err := s.repo.Search(ctx, &repositories.VectorSearchRequest{
 		TenantInfo:  req.TenantInfo,
 		SourceTypes: []airetrieval.SourceType{sourceType},
 		ModelKey:    vector.ModelKey,

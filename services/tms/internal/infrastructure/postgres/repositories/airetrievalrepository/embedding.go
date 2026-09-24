@@ -39,7 +39,7 @@ type storedChunk struct {
 }
 
 func embeddingSourceScope(
-	source repositories.AIRetrievalSourceRef,
+	source *repositories.AIRetrievalSourceRef,
 	modelKey string,
 ) func(*bun.SelectQuery) *bun.SelectQuery {
 	cols := buncolgen.EmbeddingColumns
@@ -54,9 +54,12 @@ func embeddingSourceScope(
 
 func (r *repository) ListChunkHashes(
 	ctx context.Context,
-	req repositories.ListEmbeddingChunkHashesRequest,
+	req *repositories.ListEmbeddingChunkHashesRequest,
 ) ([]repositories.EmbeddingChunkHash, error) {
-	if err := validateSource(req.Source); err != nil {
+	if req == nil {
+		return nil, invalid("listing chunk hashes needs a request")
+	}
+	if err := validateSource(&req.Source); err != nil {
 		return nil, err
 	}
 	if err := validateModelKey(req.ModelKey); err != nil {
@@ -72,7 +75,7 @@ func (r *repository) ListChunkHashes(
 		NewSelect().
 		Model((*airetrieval.Embedding)(nil)).
 		Column(cols.ChunkIndex.String(), cols.ContentHash.String()).
-		Apply(embeddingSourceScope(req.Source, req.ModelKey)).
+		Apply(embeddingSourceScope(&req.Source, req.ModelKey)).
 		OrderExpr(cols.ChunkIndex.OrderAsc()).
 		Scan(ctx, &hashes); err != nil {
 		return nil, fmt.Errorf("list embedding chunk hashes: %w", err)
@@ -81,8 +84,11 @@ func (r *repository) ListChunkHashes(
 	return hashes, nil
 }
 
-func validateReplace(req repositories.ReplaceEmbeddingChunksRequest) error {
-	if err := validateSource(req.Source); err != nil {
+func validateReplace(req *repositories.ReplaceEmbeddingChunksRequest) error {
+	if req == nil {
+		return invalid("replacing chunks needs a request")
+	}
+	if err := validateSource(&req.Source); err != nil {
 		return err
 	}
 	if err := validateModelKey(req.ModelKey); err != nil {
@@ -120,7 +126,7 @@ func validateReplace(req repositories.ReplaceEmbeddingChunksRequest) error {
 
 func (r *repository) ReplaceChunks(
 	ctx context.Context,
-	req repositories.ReplaceEmbeddingChunksRequest,
+	req *repositories.ReplaceEmbeddingChunksRequest,
 ) (repositories.ReplaceEmbeddingChunksResult, error) {
 	var result repositories.ReplaceEmbeddingChunksResult
 
@@ -164,14 +170,14 @@ func (r *repository) ReplaceChunks(
 func (r *repository) storedChunks(
 	ctx context.Context,
 	tx bun.Tx,
-	req repositories.ReplaceEmbeddingChunksRequest,
+	req *repositories.ReplaceEmbeddingChunksRequest,
 ) (map[int]storedChunk, error) {
 	cols := buncolgen.EmbeddingColumns
 	rows := make([]storedChunk, 0, len(req.Chunks))
 	if err := tx.NewSelect().
 		Model((*airetrieval.Embedding)(nil)).
 		Column(cols.ChunkIndex.String(), cols.ContentHash.String(), cols.Dimensions.String()).
-		Apply(embeddingSourceScope(req.Source, req.ModelKey)).
+		Apply(embeddingSourceScope(&req.Source, req.ModelKey)).
 		For("UPDATE").
 		Scan(ctx, &rows); err != nil {
 		return nil, fmt.Errorf("read stored embedding chunks: %w", err)
@@ -186,7 +192,7 @@ func (r *repository) storedChunks(
 }
 
 func planChunkWrites(
-	req repositories.ReplaceEmbeddingChunksRequest,
+	req *repositories.ReplaceEmbeddingChunksRequest,
 	stored map[int]storedChunk,
 	now int64,
 ) ([]*airetrieval.Embedding, int, error) {
@@ -233,7 +239,7 @@ func planChunkWrites(
 func (r *repository) removeChunksNotIn(
 	ctx context.Context,
 	tx bun.Tx,
-	req repositories.ReplaceEmbeddingChunksRequest,
+	req *repositories.ReplaceEmbeddingChunksRequest,
 ) (int, error) {
 	cols := buncolgen.EmbeddingColumns
 	indexes := make([]int, 0, len(req.Chunks))
@@ -298,7 +304,7 @@ var excludedEmbeddingColumns = struct {
 
 func (r *repository) DeleteSource(
 	ctx context.Context,
-	source repositories.AIRetrievalSourceRef,
+	source *repositories.AIRetrievalSourceRef,
 ) (repositories.DeleteAIRetrievalSourceResult, error) {
 	var result repositories.DeleteAIRetrievalSourceResult
 
@@ -363,7 +369,10 @@ type searchPlan struct {
 	dimensions  string
 }
 
-func planSearch(req repositories.VectorSearchRequest) (searchPlan, error) {
+func planSearch(req *repositories.VectorSearchRequest) (searchPlan, error) {
+	if req == nil {
+		return searchPlan{}, invalid("a vector search needs a request")
+	}
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return searchPlan{}, err
 	}
@@ -408,7 +417,7 @@ func planSearch(req repositories.VectorSearchRequest) (searchPlan, error) {
 
 func (r *repository) Search(
 	ctx context.Context,
-	req repositories.VectorSearchRequest,
+	req *repositories.VectorSearchRequest,
 ) ([]repositories.VectorSearchHit, error) {
 	plan, err := planSearch(req)
 	if err != nil {
@@ -449,7 +458,7 @@ func (r *repository) Search(
 
 func searchQuery(
 	tx bun.Tx,
-	req repositories.VectorSearchRequest,
+	req *repositories.VectorSearchRequest,
 	plan searchPlan,
 ) *bun.SelectQuery {
 	cols := buncolgen.EmbeddingColumns

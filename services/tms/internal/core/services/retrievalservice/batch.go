@@ -50,8 +50,10 @@ type sourceWork struct {
 }
 
 func (w *sourceWork) ref() repositories.AIRetrievalSourceRef {
+	key := w.entry.Key()
+
 	return repositories.AIRetrievalSourceRef{
-		TenantInfo: w.entry.Key().TenantInfo(),
+		TenantInfo: key.TenantInfo(),
 		SourceType: w.entry.SourceType,
 		SourceID:   w.entry.SourceID,
 	}
@@ -257,7 +259,7 @@ func (b *indexBatch) diff(ctx context.Context) error {
 
 		stored, err := b.service.repo.ListChunkHashes(
 			ctx,
-			repositories.ListEmbeddingChunkHashesRequest{
+			&repositories.ListEmbeddingChunkHashesRequest{
 				Source:   work.ref(),
 				ModelKey: b.modelKey,
 			},
@@ -306,7 +308,7 @@ func (b *indexBatch) embed(ctx context.Context) {
 		return
 	}
 
-	result, err := b.service.embeddings.Embed(ctx, serviceports.EmbedRequest{
+	result, err := b.service.embeddings.Embed(ctx, &serviceports.EmbedRequest{
 		TenantInfo: b.tenant,
 		Purpose:    serviceports.EmbeddingPurposeDocument,
 		Inputs:     inputs,
@@ -359,7 +361,8 @@ func (b *indexBatch) write(ctx context.Context) error {
 	for _, work := range b.works {
 		switch work.outcome {
 		case outcomeMissing:
-			if _, err := b.service.repo.DeleteSource(ctx, work.ref()); err != nil {
+			ref := work.ref()
+			if _, err := b.service.repo.DeleteSource(ctx, &ref); err != nil {
 				return fmt.Errorf("drop a source that no longer exists: %w", err)
 			}
 		case outcomeSkipped:
@@ -390,7 +393,7 @@ func (b *indexBatch) replace(
 	work *sourceWork,
 	chunks []repositories.EmbeddingChunk,
 ) error {
-	_, err := b.service.repo.ReplaceChunks(ctx, repositories.ReplaceEmbeddingChunksRequest{
+	_, err := b.service.repo.ReplaceChunks(ctx, &repositories.ReplaceEmbeddingChunksRequest{
 		Source:     work.ref(),
 		ModelKey:   b.modelKey,
 		Dimensions: b.dimensions,

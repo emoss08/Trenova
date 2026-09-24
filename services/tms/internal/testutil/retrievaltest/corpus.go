@@ -157,7 +157,7 @@ func SeedColleague(
 		colleague = seedtest.NewUser(tenant.OrgID, tenant.BuID).
 			WithName("Colleague").
 			WithUsername(marker).
-			WithEmail(marker + "@example.com").
+			WithEmail(marker+"@example.com").
 			Build(t, ctx, tx).ID
 
 		return nil
@@ -340,7 +340,7 @@ func SeedEmbeddings(t *testing.T, ctx context.Context, seed EmbedSeed) {
 			})
 		}
 
-		_, err := seed.Repo.ReplaceChunks(ctx, repositories.ReplaceEmbeddingChunksRequest{
+		_, err := seed.Repo.ReplaceChunks(ctx, &repositories.ReplaceEmbeddingChunksRequest{
 			Source: repositories.AIRetrievalSourceRef{
 				TenantInfo: seed.Corpus.Tenant,
 				SourceType: seed.SourceType,

@@ -262,7 +262,7 @@ func (c *CatalogIndex) embedAbsent(
 		inputs = append(inputs, item.Text)
 	}
 
-	result, err := c.embeddings.Embed(ctx, serviceports.EmbedRequest{
+	result, err := c.embeddings.Embed(ctx, &serviceports.EmbedRequest{
 		TenantInfo: req.TenantInfo,
 		Purpose:    serviceports.EmbeddingPurposeDocument,
 		Inputs:     inputs,

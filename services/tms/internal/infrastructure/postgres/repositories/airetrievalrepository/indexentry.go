@@ -46,8 +46,11 @@ const (
 
 func (r *repository) MarkStale(
 	ctx context.Context,
-	req repositories.MarkAIRetrievalStaleRequest,
+	req *repositories.MarkAIRetrievalStaleRequest,
 ) (int, error) {
+	if req == nil {
+		return 0, invalid("marking sources stale needs a request")
+	}
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return 0, err
 	}
@@ -120,8 +123,11 @@ func (r *repository) MarkStale(
 
 func (r *repository) ClaimIndexEntries(
 	ctx context.Context,
-	req repositories.ClaimIndexEntriesRequest,
+	req *repositories.ClaimIndexEntriesRequest,
 ) ([]*airetrieval.IndexEntry, error) {
+	if req == nil {
+		return nil, invalid("claiming index entries needs a request")
+	}
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -302,6 +308,9 @@ func outcomeRows(
 				retryAt := outcome.RetryAt
 				row.NextAttemptAt = &retryAt
 			}
+		case airetrieval.IndexStatusSkipped:
+		case airetrieval.IndexStatusPending:
+			return nil, invalid("an outcome records a result, not a pending entry")
 		}
 
 		if message := strings.TrimSpace(outcome.Error); message != "" {
@@ -394,8 +403,7 @@ func applyOutcome(
 		Set(cols.UpdatedAt.Set(), now).
 		Set(cols.LastError.SetExpr(o.LastError.Qualified()))
 
-	switch status {
-	case airetrieval.IndexStatusFailed:
+	if status == airetrieval.IndexStatusFailed {
 		q = q.
 			Set(
 				cols.Status.SetExpr(
@@ -405,7 +413,7 @@ func applyOutcome(
 				airetrieval.IndexStatusPending,
 			).
 			Set(cols.NextAttemptAt.SetExpr(o.NextAttemptAt.Qualified()))
-	default:
+	} else {
 		q = q.
 			Set(cols.Status.Set(), status).
 			Set(cols.ChunkCount.SetExpr(o.ChunkCount.Qualified())).
@@ -507,8 +515,11 @@ var sourceTables = map[airetrieval.SourceType]sourceTable{
 
 func (r *repository) FindStaleSources(
 	ctx context.Context,
-	req repositories.FindStaleAIRetrievalSourcesRequest,
+	req *repositories.FindStaleAIRetrievalSourcesRequest,
 ) ([]pulid.ID, error) {
+	if req == nil {
+		return nil, invalid("finding stale sources needs a request")
+	}
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return nil, err
 	}

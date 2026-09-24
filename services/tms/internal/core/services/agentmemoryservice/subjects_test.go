@@ -20,9 +20,9 @@ type fakeLinks struct {
 
 func (f *fakeLinks) ListRecordLinks(
 	_ context.Context,
-	req repositories.ListMemoryRecordLinksRequest,
+	req *repositories.ListMemoryRecordLinksRequest,
 ) ([]repositories.MemoryRecordLink, error) {
-	f.asked = append(f.asked, req)
+	f.asked = append(f.asked, *req)
 	if req.Kind == f.fail {
 		return nil, errors.New("links unavailable")
 	}

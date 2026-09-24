@@ -96,17 +96,17 @@ type AIEmbeddingRepository interface {
 	VectorAvailability(ctx context.Context) (airetrieval.Availability, error)
 	ListChunkHashes(
 		ctx context.Context,
-		req ListEmbeddingChunkHashesRequest,
+		req *ListEmbeddingChunkHashesRequest,
 	) ([]EmbeddingChunkHash, error)
 	ReplaceChunks(
 		ctx context.Context,
-		req ReplaceEmbeddingChunksRequest,
+		req *ReplaceEmbeddingChunksRequest,
 	) (ReplaceEmbeddingChunksResult, error)
 	DeleteSource(
 		ctx context.Context,
-		source AIRetrievalSourceRef,
+		source *AIRetrievalSourceRef,
 	) (DeleteAIRetrievalSourceResult, error)
-	Search(ctx context.Context, req VectorSearchRequest) ([]VectorSearchHit, error)
+	Search(ctx context.Context, req *VectorSearchRequest) ([]VectorSearchHit, error)
 	GetCatalogEmbeddings(
 		ctx context.Context,
 		req GetCatalogEmbeddingsRequest,
@@ -190,10 +190,10 @@ type FindStaleAIRetrievalSourcesRequest struct {
 }
 
 type AIIndexEntryRepository interface {
-	MarkStale(ctx context.Context, req MarkAIRetrievalStaleRequest) (int, error)
+	MarkStale(ctx context.Context, req *MarkAIRetrievalStaleRequest) (int, error)
 	ClaimIndexEntries(
 		ctx context.Context,
-		req ClaimIndexEntriesRequest,
+		req *ClaimIndexEntriesRequest,
 	) ([]*airetrieval.IndexEntry, error)
 	MarkIndexed(ctx context.Context, req MarkIndexEntriesRequest) (MarkIndexEntriesResult, error)
 	MarkFailed(ctx context.Context, req MarkIndexEntriesRequest) (MarkIndexEntriesResult, error)
@@ -209,7 +209,7 @@ type AIIndexEntryRepository interface {
 	) ([]*airetrieval.IndexEntry, error)
 	FindStaleSources(
 		ctx context.Context,
-		req FindStaleAIRetrievalSourcesRequest,
+		req *FindStaleAIRetrievalSourcesRequest,
 	) ([]pulid.ID, error)
 }
 
@@ -251,7 +251,10 @@ type AIRetrievalSettingsRepository interface {
 		tenantInfo pagination.TenantInfo,
 	) (*airetrieval.Settings, error)
 	UpdateSettings(ctx context.Context, entity *airetrieval.Settings) (*airetrieval.Settings, error)
-	SetPaused(ctx context.Context, req SetAIRetrievalPausedRequest) (*airetrieval.Settings, error)
+	SetPaused(
+		ctx context.Context,
+		req *SetAIRetrievalPausedRequest,
+	) (*airetrieval.Settings, error)
 	SwapModel(
 		ctx context.Context,
 		req SwapAIRetrievalModelRequest,

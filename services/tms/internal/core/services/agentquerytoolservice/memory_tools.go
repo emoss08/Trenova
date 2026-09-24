@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -49,21 +50,21 @@ func (t *recallMemoryTool) Description() string {
 
 func (t *recallMemoryTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"query": map[string]any{
-				"type": "string",
-				"description": "Words to look for in the memory, the name of what it is " +
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			paramQuery: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Words to look for in the memory, the name of what it is " +
 					"about, or its tool. Every word need not appear; the closest come first.",
 			},
 			"id": map[string]any{
-				"type": "string",
-				"description": "Optional: one memory's id, to read the whole of a memory " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Optional: one memory's id, to read the whole of a memory " +
 					"your instructions show cut short.",
 			},
 			"kind": map[string]any{
-				"type": "string",
-				"description": "Optional: Instruction for standing rules to follow, Fact " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Optional: Instruction for standing rules to follow, Fact " +
 					"for things agents were told, or Correction for fixes people made to " +
 					"earlier proposals.",
 				"enum": []string{
@@ -73,8 +74,8 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 				},
 			},
 			"subjectType": map[string]any{
-				"type": "string",
-				"description": "Optional: the kind of record subjectId names. Give both " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Optional: the kind of record subjectId names. Give both " +
 					"or neither.",
 				"enum": []string{
 					string(agent.MemorySubjectCustomer),
@@ -84,25 +85,25 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 				},
 			},
 			"subjectId": map[string]any{
-				"type": "string",
-				"description": "Optional: the record's id, from list_customers, " +
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Optional: the record's id, from list_customers, " +
 					"list_locations, search_worker or list_carriers to match subjectType, " +
 					"or the page you are on. Give it with subjectType.",
 			},
 			"toolName": map[string]any{
-				"type":        "string",
-				"description": "Only memories about one tool, such as corrections to assign_move.",
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "Only memories about one tool, such as corrections to assign_move.",
 			},
-			"limit": map[string]any{
-				"type":        "integer",
-				"description": fmt.Sprintf(
+			paramLimit: map[string]any{
+				toolschema.KeyType: toolschema.TypeInteger,
+				toolschema.KeyDescription: fmt.Sprintf(
 					"How many to return; %d when left out, at most %d.",
 					agent.DefaultMemoryRecallLimit,
 					agent.MaxMemoryRecallLimit,
 				),
 			},
 		},
-		"additionalProperties": false,
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 

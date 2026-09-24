@@ -83,8 +83,8 @@ func (r *repository) GetCatalogEmbeddings(
 		Model(&entities).
 		Apply(catalogScope(req.ModelKey, req.Corpus)).
 		Where(
-			buncolgen.Expr("({0}, {1}) IN (?)", cols.ItemKey, cols.ContentHash),
-			bun.In(catalogRefTuples(req.Items)),
+			buncolgen.Expr("({0}, {1}) IN ?", cols.ItemKey, cols.ContentHash),
+			bun.Tuple(catalogRefTuples(req.Items)),
 		).
 		OrderExpr(cols.ItemKey.OrderAsc()).
 		Scan(ctx); err != nil {
@@ -179,8 +179,8 @@ func (r *repository) PruneCatalogEmbeddings(
 		Where(cols.Corpus.Eq(), req.Corpus)
 	if len(req.Keep) > 0 {
 		q = q.Where(
-			buncolgen.Expr("({0}, {1}) NOT IN (?)", cols.ItemKey, cols.ContentHash),
-			bun.In(catalogRefTuples(req.Keep)),
+			buncolgen.Expr("({0}, {1}) NOT IN ?", cols.ItemKey, cols.ContentHash),
+			bun.Tuple(catalogRefTuples(req.Keep)),
 		)
 	}
 

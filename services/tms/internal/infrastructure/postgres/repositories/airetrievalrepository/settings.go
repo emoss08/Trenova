@@ -168,8 +168,11 @@ func (r *repository) updateSettings(
 
 func (r *repository) SetPaused(
 	ctx context.Context,
-	req repositories.SetAIRetrievalPausedRequest,
+	req *repositories.SetAIRetrievalPausedRequest,
 ) (*airetrieval.Settings, error) {
+	if req == nil {
+		return nil, invalid("pausing indexing needs a request")
+	}
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return nil, err
 	}
@@ -216,7 +219,7 @@ func (r *repository) SetPaused(
 
 func applyPause(
 	settings *airetrieval.Settings,
-	req repositories.SetAIRetrievalPausedRequest,
+	req *repositories.SetAIRetrievalPausedRequest,
 	now int64,
 ) {
 	if !req.Paused {

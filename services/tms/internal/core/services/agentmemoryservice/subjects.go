@@ -92,7 +92,7 @@ func (r SubjectResolver) linksOf(
 	}
 
 	for _, kind := range kinds {
-		links, err := r.links.ListRecordLinks(ctx, repositories.ListMemoryRecordLinksRequest{
+		links, err := r.links.ListRecordLinks(ctx, &repositories.ListMemoryRecordLinksRequest{
 			TenantInfo: tenant,
 			Kind:       kind,
 			IDs:        byKind[kind],

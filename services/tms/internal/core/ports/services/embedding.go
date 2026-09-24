@@ -84,6 +84,6 @@ type EmbedResult struct {
 }
 
 type EmbeddingService interface {
-	Embed(ctx context.Context, req EmbedRequest) (EmbedResult, error)
+	Embed(ctx context.Context, req *EmbedRequest) (EmbedResult, error)
 	ConfiguredModelKey(ctx context.Context, tenant pagination.TenantInfo) (string, error)
 }

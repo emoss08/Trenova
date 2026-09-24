@@ -61,7 +61,7 @@ func (s *Searcher) SimilarMemories(
 		limit = DefaultSimilarMemories
 	}
 
-	hits, err := s.repo.Search(ctx, repositories.VectorSearchRequest{
+	hits, err := s.repo.Search(ctx, &repositories.VectorSearchRequest{
 		TenantInfo:  req.TenantInfo,
 		SourceTypes: []airetrieval.SourceType{airetrieval.SourceTypeMemory},
 		ModelKey:    query.ModelKey,

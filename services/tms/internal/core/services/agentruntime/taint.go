@@ -8,7 +8,7 @@ import (
 
 func openTaint(
 	req *serviceports.RunRequest,
-	rc agentdefinition.RuntimeContext,
+	rc *agentdefinition.RuntimeContext,
 	now int64,
 ) (*agent.RunTaint, []agent.TaintMark) {
 	if req.Delegation != nil && req.Taint == nil {
@@ -20,10 +20,12 @@ func openTaint(
 		taint = &agent.RunTaint{}
 	}
 
-	return taint, taint.Absorb(contextTaint(rc, now))
+	opened := taint.Absorb(contextTaint(rc, now))
+
+	return taint, opened
 }
 
-func contextTaint(rc agentdefinition.RuntimeContext, now int64) []agent.TaintMark {
+func contextTaint(rc *agentdefinition.RuntimeContext, now int64) []agent.TaintMark {
 	marks := make([]agent.TaintMark, 0, 1+len(rc.Attachments)+len(rc.Memories))
 	if rc.Subject != nil {
 		if mark, ok := agent.SubjectTaint(rc.Subject.Type, rc.Subject.ID, now); ok {

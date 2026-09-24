@@ -2,6 +2,7 @@ package agentmemorysubjectrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -65,8 +66,11 @@ type ownerRow struct {
 
 func (r *repository) ListRecordLinks(
 	ctx context.Context,
-	req repositories.ListMemoryRecordLinksRequest,
+	req *repositories.ListMemoryRecordLinksRequest,
 ) ([]repositories.MemoryRecordLink, error) {
+	if req == nil {
+		return nil, errors.New("memory record links request is required")
+	}
 	if len(req.IDs) == 0 {
 		return []repositories.MemoryRecordLink{}, nil
 	}
@@ -88,6 +92,11 @@ func (r *repository) ListRecordLinks(
 		links, err = r.inboundMessageLinks(ctx, req.TenantInfo, req.IDs)
 	case agent.MemoryRecordDocument:
 		links, err = r.documentLinks(ctx, req.TenantInfo, req.IDs)
+	case agent.MemoryRecordCustomer,
+		agent.MemoryRecordLocation,
+		agent.MemoryRecordWorker,
+		agent.MemoryRecordCarrier:
+		return []repositories.MemoryRecordLink{}, nil
 	default:
 		return []repositories.MemoryRecordLink{}, nil
 	}
@@ -133,7 +142,7 @@ func (r *repository) shipmentLinks(
 		Model((*shipment.Stop)(nil)).
 		ColumnExpr(sm.ShipmentID.As("from_id")).
 		ColumnExpr(stp.LocationID.As("linked_id")).
-		Join(joinMove(stp.ShipmentMoveID, stp.OrganizationID, stp.BusinessUnitID)).
+		Join(joinMove(&stp.ShipmentMoveID, &stp.OrganizationID, &stp.BusinessUnitID)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.StopScopeTenant(sq, tenant).Where(sm.ShipmentID.In(), bun.List(ids))
 		}).
@@ -149,7 +158,7 @@ func (r *repository) shipmentLinks(
 		ColumnExpr(sm.ShipmentID.As("from_id")).
 		ColumnExpr(asn.PrimaryWorkerID.As("first_id")).
 		ColumnExpr(asn.SecondaryWorkerID.As("second_id")).
-		Join(joinMove(asn.ShipmentMoveID, asn.OrganizationID, asn.BusinessUnitID)).
+		Join(joinMove(&asn.ShipmentMoveID, &asn.OrganizationID, &asn.BusinessUnitID)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.AssignmentScopeTenant(sq, tenant).
 				Where(sm.ShipmentID.In(), bun.List(ids)).
@@ -165,7 +174,7 @@ func (r *repository) shipmentLinks(
 		Model((*shipment.CarrierAssignment)(nil)).
 		ColumnExpr(sm.ShipmentID.As("from_id")).
 		ColumnExpr(casn.CarrierID.As("linked_id")).
-		Join(joinMove(casn.ShipmentMoveID, casn.OrganizationID, casn.BusinessUnitID)).
+		Join(joinMove(&casn.ShipmentMoveID, &casn.OrganizationID, &casn.BusinessUnitID)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return buncolgen.CarrierAssignmentScopeTenant(sq, tenant).
 				Where(sm.ShipmentID.In(), bun.List(ids)).
@@ -335,13 +344,13 @@ func (r *repository) documentLinks(
 	return links, nil
 }
 
-func joinMove(moveID, organizationID, businessUnitID buncolgen.Column) string {
+func joinMove(moveID, organizationID, businessUnitID *buncolgen.Column) string {
 	sm := buncolgen.ShipmentMoveColumns
 
 	return "JOIN " + buncolgen.ShipmentMoveTable.As(buncolgen.ShipmentMoveTable.Alias) +
-		" ON " + sm.ID.EqColumn(moveID) +
-		" AND " + sm.OrganizationID.EqColumn(organizationID) +
-		" AND " + sm.BusinessUnitID.EqColumn(businessUnitID)
+		" ON " + sm.ID.EqColumn(*moveID) +
+		" AND " + sm.OrganizationID.EqColumn(*organizationID) +
+		" AND " + sm.BusinessUnitID.EqColumn(*businessUnitID)
 }
 
 func appendLink(

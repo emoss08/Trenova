@@ -617,7 +617,7 @@ func (h *evalHarness) plantVectors(
 				Vector:      vector,
 			})
 		}
-		_, err := h.repo.ReplaceChunks(h.ctx, repositories.ReplaceEmbeddingChunksRequest{
+		_, err := h.repo.ReplaceChunks(h.ctx, &repositories.ReplaceEmbeddingChunksRequest{
 			Source: repositories.AIRetrievalSourceRef{
 				TenantInfo: corpus.Tenant,
 				SourceType: sourceType,

@@ -259,7 +259,7 @@ func TestEmbed_BatchesAndKeepsInputOrder(t *testing.T) {
 	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
 
 	inputs := numberedInputs(200)
-	result, err := svc.Embed(t.Context(), serviceports.EmbedRequest{
+	result, err := svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo: embedTenant(),
 		Purpose:    serviceports.EmbeddingPurposeDocument,
 		Inputs:     inputs,
@@ -302,7 +302,7 @@ func TestEmbed_FailsOverOnlyToProvidersWithTheSameModelKey(t *testing.T) {
 	require.Equal(t, primary.EmbeddingModelKey(), secondary.EmbeddingModelKey())
 	require.NotEqual(t, primary.EmbeddingModelKey(), differentModel.EmbeddingModelKey())
 
-	_, err := svc.Embed(t.Context(), serviceports.EmbedRequest{
+	_, err := svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo: embedTenant(),
 		Purpose:    serviceports.EmbeddingPurposeDocument,
 		Inputs:     []string{"chunk #0"},
@@ -326,7 +326,7 @@ func TestEmbed_FallsThroughToTheNextProviderWithTheSameModelKey(t *testing.T) {
 	)
 	withProviders(svc, primary, secondary)
 
-	result, err := svc.Embed(t.Context(), serviceports.EmbedRequest{
+	result, err := svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo: embedTenant(),
 		Purpose:    serviceports.EmbeddingPurposeDocument,
 		Inputs:     []string{"chunk #0"},
@@ -347,7 +347,7 @@ func TestEmbed_HonoursAPinnedModelKey(t *testing.T) {
 	second := embeddingRouterProvider(t, svc, "pending", pending.server.URL, "n", "", 20)
 	withProviders(svc, first, second)
 
-	result, err := svc.Embed(t.Context(), serviceports.EmbedRequest{
+	result, err := svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo: embedTenant(),
 		Purpose:    serviceports.EmbeddingPurposeQuery,
 		Inputs:     []string{"chunk #0"},
@@ -366,7 +366,7 @@ func TestEmbed_PinnedModelKeyWithNoProviderIsNotConfigured(t *testing.T) {
 	svc := newEmbeddingService(t)
 	withProviders(svc, embeddingRouterProvider(t, svc, "current", endpoint.server.URL, "m", "", 10))
 
-	_, err := svc.Embed(t.Context(), serviceports.EmbedRequest{
+	_, err := svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo: embedTenant(),
 		Purpose:    serviceports.EmbeddingPurposeQuery,
 		Inputs:     []string{"chunk #0"},
@@ -392,7 +392,7 @@ func TestEmbed_NeverRoutesToAProtocolWithoutEmbeddings(t *testing.T) {
 		Enabled:             true,
 	})
 
-	_, err := svc.Embed(t.Context(), serviceports.EmbedRequest{
+	_, err := svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo: embedTenant(),
 		Purpose:    serviceports.EmbeddingPurposeDocument,
 		Inputs:     []string{"text"},
@@ -409,7 +409,7 @@ func TestEmbed_WrongDimensionIsNotRetried(t *testing.T) {
 	svc := newEmbeddingService(t)
 	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
 
-	_, err := svc.Embed(t.Context(), serviceports.EmbedRequest{
+	_, err := svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo: embedTenant(),
 		Purpose:    serviceports.EmbeddingPurposeDocument,
 		Inputs:     []string{"chunk #0"},
@@ -428,14 +428,14 @@ func TestEmbed_ScrubsDocumentsButNotQueries(t *testing.T) {
 	svc := newEmbeddingService(t)
 	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
 
-	_, err := svc.Embed(t.Context(), serviceports.EmbedRequest{
+	_, err := svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo: embedTenant(),
 		Purpose:    serviceports.EmbeddingPurposeDocument,
 		Inputs:     []string{"Driver SSN 123-45-6789 on file"},
 	})
 	require.NoError(t, err)
 
-	_, err = svc.Embed(t.Context(), serviceports.EmbedRequest{
+	_, err = svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo: embedTenant(),
 		Purpose:    serviceports.EmbeddingPurposeQuery,
 		Inputs:     []string{"account 12345678"},
@@ -458,7 +458,7 @@ func TestEmbed_QueryGivesUpAtItsDeadline(t *testing.T) {
 	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
 
 	started := time.Now()
-	_, err := svc.Embed(t.Context(), serviceports.EmbedRequest{
+	_, err := svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo:   embedTenant(),
 		Purpose:      serviceports.EmbeddingPurposeQuery,
 		Inputs:       []string{"late reefer loads"},
@@ -484,7 +484,7 @@ func TestEmbed_RefusesAnEmptyOrBlankRequest(t *testing.T) {
 	svc := newEmbeddingService(t)
 	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
 
-	for name, req := range map[string]serviceports.EmbedRequest{
+	for name, req := range map[string]*serviceports.EmbedRequest{
 		"no inputs": {Purpose: serviceports.EmbeddingPurposeDocument},
 		"blank input": {
 			Purpose: serviceports.EmbeddingPurposeDocument,
@@ -502,6 +502,8 @@ func TestEmbed_RefusesAnEmptyOrBlankRequest(t *testing.T) {
 		require.Error(t, err, name)
 		assert.True(t, errortypes.IsMultiError(err), name)
 	}
+	_, err := svc.Embed(t.Context(), nil)
+	require.Error(t, err, "a missing request")
 	assert.Zero(t, endpoint.calls.Load())
 }
 
@@ -524,7 +526,7 @@ func TestEmbed_RecordsOneUsageRowPerBatchPricedOnInput(t *testing.T) {
 		ThreadID:          pulid.MustNew("ath_"),
 		RunID:             pulid.MustNew("ar_"),
 	}
-	result, err := svc.Embed(t.Context(), serviceports.EmbedRequest{
+	result, err := svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo:  embedTenant(),
 		Purpose:     serviceports.EmbeddingPurposeQuery,
 		Inputs:      numberedInputs(EmbeddingBatchMaxInputs + 4),
@@ -571,7 +573,7 @@ func TestEmbed_DocumentUsageIsIndexingAndUnpricedStaysUnknown(t *testing.T) {
 	svc.usage = usage
 	withProviders(svc, embeddingRouterProvider(t, svc, "embedder", endpoint.server.URL, "m", "", 10))
 
-	result, err := svc.Embed(t.Context(), serviceports.EmbedRequest{
+	result, err := svc.Embed(t.Context(), &serviceports.EmbedRequest{
 		TenantInfo: embedTenant(),
 		Purpose:    serviceports.EmbeddingPurposeDocument,
 		Inputs:     []string{"chunk #0"},
