@@ -51,11 +51,20 @@ type RecallAgentMemoriesRequest struct {
 	TenantInfo        pagination.TenantInfo
 	AgentDefinitionID pulid.ID
 	Query             string
+	IDs               []pulid.ID
 	Kind              agent.MemoryKind
 	SubjectType       agent.MemorySubjectType
 	SubjectID         pulid.ID
 	ToolName          string
 	Limit             int
+}
+
+// RecalledMemory is one memory a recall returned and how it was found: by
+// its words, and once retrieval can compare meanings, by that too. Match is
+// empty when nothing was searched for and the recall only narrowed.
+type RecalledMemory struct {
+	Memory *agent.Memory
+	Match  agent.MemoryMatch
 }
 
 // MemoryContextRequest is the prompt builder's read: everything a run of
@@ -100,7 +109,7 @@ type AgentMemoryService interface {
 		ctx context.Context,
 		req *repositories.ListAgentMemoryConnectionRequest,
 	) (*pagination.CursorListResult[*agent.Memory], error)
-	Recall(ctx context.Context, req RecallAgentMemoriesRequest) ([]*agent.Memory, error)
+	Recall(ctx context.Context, req RecallAgentMemoriesRequest) ([]RecalledMemory, error)
 	// ForContext returns what a prompt should carry and counts each memory
 	// as used.
 	ForContext(ctx context.Context, req MemoryContextRequest) ([]*agent.Memory, error)

@@ -36,6 +36,12 @@ const (
 	MaxMemoryRecallLimit     = 50
 )
 
+type MemoryMatch string
+
+const (
+	MemoryMatchWords = MemoryMatch("words")
+)
+
 type MemoryKind string
 
 const (
@@ -244,6 +250,8 @@ type Memory struct {
 	LastUsedAt *int64 `json:"lastUsedAt" bun:"last_used_at,type:BIGINT,nullzero"`
 
 	Evidence *MemoryEvidence `json:"evidence" bun:"evidence,type:JSONB,nullzero"`
+
+	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

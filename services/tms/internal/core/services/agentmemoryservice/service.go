@@ -37,8 +37,6 @@ import (
 const (
 	// DefaultContextLimit is how many memories a prompt carries at most.
 	DefaultContextLimit = 40
-	defaultRecallLimit  = 20
-	maxRecallLimit      = 100
 	// maxValueChars bounds a proposed or corrected value in a correction, so
 	// a long note in one parameter does not become the whole memory.
 	maxValueChars = 80
@@ -471,20 +469,19 @@ func (s *Service) ListConnection(
 func (s *Service) Recall(
 	ctx context.Context,
 	req services.RecallAgentMemoriesRequest,
-) ([]*agent.Memory, error) {
+) ([]services.RecalledMemory, error) {
 	limit := req.Limit
 	if limit <= 0 {
-		limit = defaultRecallLimit
+		limit = agent.DefaultMemoryRecallLimit
 	}
-	if limit > maxRecallLimit {
-		limit = maxRecallLimit
-	}
+	limit = min(limit, agent.MaxMemoryRecallLimit)
 
 	search := repositories.SearchAgentMemoriesRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Now:               timeutils.NowUnix(),
-		Query:             req.Query,
+		Query:             strings.TrimSpace(req.Query),
+		IDs:               req.IDs,
 		Kind:              req.Kind,
 		ToolName:          req.ToolName,
 		Limit:             limit,
@@ -493,7 +490,21 @@ func (s *Service) Recall(
 		search.Subject = &repositories.MemorySubjectRef{Type: req.SubjectType, ID: req.SubjectID}
 	}
 
-	return s.repo.Search(ctx, search)
+	found, err := s.repo.Search(ctx, search)
+	if err != nil {
+		return nil, err
+	}
+
+	var match agent.MemoryMatch
+	if search.Query != "" {
+		match = agent.MemoryMatchWords
+	}
+	recalled := make([]services.RecalledMemory, 0, len(found))
+	for _, memory := range found {
+		recalled = append(recalled, services.RecalledMemory{Memory: memory, Match: match})
+	}
+
+	return recalled, nil
 }
 
 func (s *Service) ForContext(

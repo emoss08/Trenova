@@ -25,10 +25,11 @@ type ListAgentMemoryConnectionRequest struct {
 	Columns []string                 `json:"-"`
 }
 
-// ListActiveAgentMemoriesRequest reads what a prompt should carry: the
-// organization-wide memories, plus any about the subjects and tools named.
-// Instructions come before corrections before facts, newest first within
-// each, and the limit cuts from the end of that order.
+// ListActiveAgentMemoriesRequest reads the memories a prompt may carry: the
+// organization-wide ones, plus any about the subjects and tools named. Rows
+// about a subject come first, then organization-wide instructions, then rows
+// about a tool, then the rest; instructions before corrections before facts
+// within each, newest first, and the limit cuts from the end of that order.
 type ListActiveAgentMemoriesRequest struct {
 	TenantInfo pagination.TenantInfo
 	// AgentDefinitionID is the agent the prompt is for. Memories kept for one
@@ -41,17 +42,24 @@ type ListActiveAgentMemoriesRequest struct {
 	Limit             int
 }
 
-// SearchAgentMemoriesRequest is the recall tool's read: text over the
-// content and subject label, narrowed to a subject or a tool when given.
+// SearchAgentMemoriesRequest is the recall tool's read: the words of the
+// subject label, content and tool, ranked, narrowed to ids, a kind, a subject
+// or a tool when given.
 type SearchAgentMemoriesRequest struct {
 	TenantInfo        pagination.TenantInfo
 	AgentDefinitionID pulid.ID
 	Now               int64
 	Query             string
+	IDs               []pulid.ID
 	Kind              agent.MemoryKind
 	Subject           *MemorySubjectRef
 	ToolName          string
 	Limit             int
+}
+
+type CountActiveAgentMemoriesRequest struct {
+	TenantInfo pagination.TenantInfo
+	Now        int64
 }
 
 // FindActiveAgentMemoryRequest looks for a memory that already says this,
@@ -114,6 +122,7 @@ type AgentMemoryRepository interface {
 	ListActive(ctx context.Context, req ListActiveAgentMemoriesRequest) ([]*agent.Memory, error)
 	Search(ctx context.Context, req SearchAgentMemoriesRequest) ([]*agent.Memory, error)
 	FindActive(ctx context.Context, req FindActiveAgentMemoryRequest) (*agent.Memory, error)
+	CountActive(ctx context.Context, req CountActiveAgentMemoriesRequest) (int, error)
 	SetStatus(ctx context.Context, req SetAgentMemoryStatusRequest) (*agent.Memory, error)
 	MarkUsed(ctx context.Context, req MarkAgentMemoriesUsedRequest) error
 	ListSuggestionContext(
