@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 132.
+Tools listed: 134.
 
 ## The model
 
@@ -44,7 +44,7 @@ set the tool's tier on the agent. An unattended run never has it.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 79 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 81 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 6 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 31 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 1 |
@@ -132,6 +132,8 @@ Looks something up. Nothing changes and nothing is sent.
 | Rank move candidates (`rank_move_candidates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Recall memory (`recall_memory`) | Reads only | Automatic | — | When the record is marked, from memory | Reads memories earlier runs saved, which carry the taint of the run that wrote them. |
 | Run report (`run_report`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Search documents (`search_documents`) | Reads only | Automatic | — | Always, from document | Searches text extracted from documents, many of which someone outside wrote; each record returned is checked against what the caller may read, and nothing changes or is sent. |
+| Search inbound messages (`search_inbound_messages`) | Reads only | Automatic | — | Always, from inbound message | Searches mail outsiders wrote, subjects, senders and bodies included; nothing changes and nothing is sent. |
 | Search shipments (`search_shipments`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Search worker (`search_worker`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Shop carriers (`shop_carriers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
