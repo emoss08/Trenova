@@ -7,11 +7,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/rankfusion"
 )
 
 const (
-	DefaultRRFK            = 60
-	DefaultSimilarityFloor = 0.0
+	DefaultRRFK            = rankfusion.DefaultK
+	DefaultSimilarityFloor = 0.5
 	DefaultCandidateFactor = 4
 	DefaultMinCandidates   = 20
 )
@@ -77,46 +78,44 @@ func Fuse(
 	tuning SearchTuning,
 ) []FusedHit {
 	tuning = tuning.normalized()
-	k := float64(tuning.RRFK)
 
 	hits := make(map[pulid.ID]*FusedHit, len(keyword)+len(vector))
 	order := make([]pulid.ID, 0, len(keyword)+len(vector))
-	for idx, hit := range keyword {
+	keywordIDs := make([]pulid.ID, 0, len(keyword))
+	for _, hit := range keyword {
 		if _, seen := hits[hit.SourceID]; seen || hit.SourceID.IsNil() {
 			continue
 		}
-		rank := idx + 1
-		hits[hit.SourceID] = &FusedHit{
-			ID:          hit.SourceID,
-			Score:       1 / (k + float64(rank)),
-			KeywordRank: rank,
-		}
+		keywordIDs = append(keywordIDs, hit.SourceID)
+		hits[hit.SourceID] = &FusedHit{ID: hit.SourceID, KeywordRank: len(keywordIDs)}
 		order = append(order, hit.SourceID)
 	}
 
-	for idx, hit := range vector {
-		rank := idx + 1
+	vectorIDs := make([]pulid.ID, 0, len(vector))
+	for _, hit := range vector {
 		fused, seen := hits[hit.SourceID]
-		if seen && fused.VectorRank > 0 {
+		switch {
+		case hit.SourceID.IsNil(), seen && fused.VectorRank > 0:
 			continue
-		}
-		if !seen {
-			if hit.SourceID.IsNil() || hit.Similarity < tuning.SimilarityFloor {
-				continue
-			}
+		case !seen && hit.Similarity < tuning.SimilarityFloor:
+			continue
+		case !seen:
 			fused = &FusedHit{ID: hit.SourceID}
 			hits[hit.SourceID] = fused
 			order = append(order, hit.SourceID)
 		}
-		fused.VectorRank = rank
+		vectorIDs = append(vectorIDs, hit.SourceID)
+		fused.VectorRank = len(vectorIDs)
 		fused.Similarity = hit.Similarity
 		fused.ChunkIndex = hit.ChunkIndex
-		fused.Score += 1 / (k + float64(rank))
 	}
 
+	scores := rankfusion.Reciprocal(tuning.RRFK, keywordIDs, vectorIDs)
 	fused := make([]FusedHit, 0, len(order))
 	for _, id := range order {
-		fused = append(fused, *hits[id])
+		hit := *hits[id]
+		hit.Score = scores[id]
+		fused = append(fused, hit)
 	}
 
 	slices.SortStableFunc(fused, compareFused)
