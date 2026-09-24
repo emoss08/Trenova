@@ -109,11 +109,16 @@ func EffectOf(tool any) agent.ToolEffect {
 	if !ok {
 		return ""
 	}
-	if policy.Effect.IsValid() {
-		return policy.Effect
+
+	return policy.EffectiveEffect()
+}
+
+func (p ToolPolicy) EffectiveEffect() agent.ToolEffect {
+	if p.Effect.IsValid() {
+		return p.Effect
 	}
 
-	switch policy.Kind {
+	switch p.Kind {
 	case agent.ToolKindAction:
 		return agent.ToolEffectChange
 	case agent.ToolKindQuery:

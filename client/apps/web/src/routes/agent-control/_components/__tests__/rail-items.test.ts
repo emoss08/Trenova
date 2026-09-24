@@ -18,6 +18,7 @@ const all: RailPermissions = {
   proposals: true,
   exceptions: true,
   memory: true,
+  safety: true,
 };
 
 const counts = {
@@ -42,14 +43,16 @@ describe("buildRailItems", () => {
       "providers",
       "extensions",
       "memory",
+      "safety",
       "activity",
     ]);
     expect(items[1].status).toBe("3 of 4 on");
     expect(items[2].status).toBe("1 of 2 on");
     expect(items[3].status).toBe("1 of 1 on");
     expect(items[4].status).toBe("3 active");
-    expect(items[5].status).toBe("12 runs today");
-    expect(items[5].children.map((child) => child.view)).toEqual([
+    expect(items[5].status).toBe("");
+    expect(items[6].status).toBe("12 runs today");
+    expect(items[6].children.map((child) => child.view)).toEqual([
       "runs",
       "proposals",
       "plans",
@@ -63,8 +66,8 @@ describe("buildRailItems", () => {
   it("calls for attention when proposals wait on a person", () => {
     const items = buildRailItems({ ...counts, pendingProposals: 2 }, all, t);
 
-    expect(items[5].status).toBe("2 awaiting decision");
-    expect(items[5].attention).toBe(true);
+    expect(items[6].status).toBe("2 awaiting decision");
+    expect(items[6].attention).toBe(true);
   });
 
   it("calls for attention when no provider is on", () => {
@@ -79,7 +82,14 @@ describe("buildRailItems", () => {
   it("leaves out what the reader may not open", () => {
     const items = buildRailItems(
       counts,
-      { ...all, providers: false, extensions: false, exceptions: false, memory: false },
+      {
+        ...all,
+        providers: false,
+        extensions: false,
+        exceptions: false,
+        memory: false,
+        safety: false,
+      },
       t,
     );
 
@@ -97,7 +107,7 @@ describe("buildRailItems", () => {
   it("lists plans only where proposals may be read", () => {
     const items = buildRailItems(counts, { ...all, proposals: false }, t);
 
-    expect(items[5].children.map((child) => child.view)).toEqual([
+    expect(items[6].children.map((child) => child.view)).toEqual([
       "runs",
       "evaluations",
       "exceptions",
@@ -111,6 +121,20 @@ describe("buildRailItems", () => {
 
     expect(items[4].status).toBe("Nothing recorded");
     expect(items[4].attention).toBe(false);
+  });
+
+  // What agents may do without a person is read under the right to read
+  // agents, so a reader without it never sees the section.
+  it("lists safety only where agents may be read", () => {
+    const items = buildRailItems(counts, { ...all, safety: false }, t);
+
+    expect(items.map((item) => item.tab)).not.toContain("safety");
+    expect(buildRailItems(counts, all, t).find((item) => item.tab === "safety")).toEqual({
+      tab: "safety",
+      status: "",
+      attention: false,
+      children: [],
+    });
   });
 
   it("shows nothing under a label until the counts arrive", () => {

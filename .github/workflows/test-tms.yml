@@ -15,6 +15,7 @@ on:
       - ".golangci.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
+      - "docs/engineering/ai-tool-safety.md"
   pull_request:
     branches:
       - master
@@ -28,6 +29,7 @@ on:
       - ".golangci.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
+      - "docs/engineering/ai-tool-safety.md"
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
@@ -268,6 +270,16 @@ jobs:
           if ! git diff --quiet -- pkg/reportcatalog/catalog_gen.go; then
             echo "::error::Report catalog is stale - run 'go generate ./internal/infrastructure/database/reportcatalog/...' and commit"
             git diff --stat -- pkg/reportcatalog/catalog_gen.go
+            exit 1
+          fi
+
+      - name: AI tool safety document
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          go generate ./internal/core/services/agenttoolpolicy/safetydoc/...
+          if ! git diff --exit-code -- ../../docs/engineering/ai-tool-safety.md; then
+            echo "::error::docs/engineering/ai-tool-safety.md is stale - run 'go generate ./internal/core/services/agenttoolpolicy/safetydoc/...' in services/tms and commit"
             exit 1
           fi
 

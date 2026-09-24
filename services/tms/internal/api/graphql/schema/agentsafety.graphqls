@@ -1,0 +1,184 @@
+"Where a tool's work can be seen or felt."
+enum AgentEgressClass {
+  "Reads only; nothing changes and nothing is sent."
+  None
+  "Changes only the caller's own records."
+  Personal
+  "Changes records only people inside the organization see."
+  Internal
+  "Changes something a customer can see."
+  CustomerVisible
+  "Changes something a driver can see."
+  DriverVisible
+  "Sends to someone outside the organization."
+  ExternalRecipient
+  "Moves or commits money."
+  Money
+}
+
+enum AgentToolKind {
+  Query
+  Action
+  Runtime
+}
+
+"Whose records a tool acts on."
+enum AgentToolScope {
+  "The organization's records, under the caller's permissions."
+  Tenant
+  "Only the caller's own records."
+  Self
+  "Only the run it belongs to."
+  Run
+}
+
+enum AgentToolEffect {
+  Lookup
+  Change
+  Navigate
+  Discover
+  Present
+  Ask
+  Delegate
+}
+
+"Whether a tool's result carries text written outside the organization."
+enum AgentExternalRead {
+  Never
+  Always
+  "Only when the record it returns was itself marked as outside text."
+  Marked
+}
+
+"Where outside text a tool reads comes from."
+enum AgentTaintSource {
+  InboundMessage
+  Document
+  EDI
+  BankReceipt
+  Weather
+  Attachment
+  Memory
+  RunRecord
+}
+
+"What a tool on an agent does when nobody is watching."
+enum AgentAutonomyAnswer {
+  "Runs without asking anyone."
+  RUNS_ON_ITS_OWN
+  "Runs on its own for some calls and waits for a person on others."
+  CONDITIONAL
+  "Waits for a person to approve each call."
+  NEEDS_APPROVAL
+  "Only proposes; a person decides and nothing runs until then."
+  PROPOSE_ONLY
+  "The agent is in shadow or simulation: a change is previewed, never made."
+  SIMULATED
+}
+
+"The permission a person needs of their own to use a tool through an agent."
+type AgentToolRequirement {
+  resource: String!
+  operation: String!
+}
+
+"One tool's safety policy, as declared in code."
+type AgentToolPolicy {
+  name: String!
+  title: String!
+  kind: AgentToolKind!
+  "Null for a tool that acts only on the caller's own records and needs no grant."
+  needs: AgentToolRequirement
+  scope: AgentToolScope!
+  defaultTier: AgentAutonomyTier!
+  maxTier: AgentAutonomyTier!
+  "The most any agent may run it at: its max tier, held to approval when its work leaves the organization."
+  promotableTier: AgentAutonomyTier!
+  egress: [AgentEgressClass!]!
+  "Some of its work can leave the organization."
+  leavesOrganization: Boolean!
+  "Each call is classified by what it reaches, so one call may go further than another."
+  hasClassify: Boolean!
+  "A condition the call's record must meet decides how far it may go."
+  hasCondition: Boolean!
+  conditionDescription: String
+  "A call that changes only the caller's own records runs without a decision while they are present."
+  personalExemption: Boolean!
+  effect: AgentToolEffect!
+  "The record the tool produces or changes; empty when none."
+  artifact: String!
+  reversible: Boolean!
+  idempotent: Boolean!
+  readsExternal: AgentExternalRead!
+  "Where outside text in its result comes from; null when it reads none."
+  source: AgentTaintSource
+  "Its result can carry outside text into a later run."
+  carriesTaint: Boolean!
+  rationale: String!
+  "The policy in a sentence or two, as the agent's page shows it."
+  explanation: String!
+}
+
+"What one tool does on one agent for a representative call."
+type AgentToolAutonomy {
+  answer: AgentAutonomyAnswer!
+  "The most the call can reach."
+  tier: AgentAutonomyTier!
+  """
+  Why it goes no further: agent_ceiling, tool_max, egress_class, condition,
+  tainted, tool_tier, personal_exemption, shadow_mode, simulation_mode.
+  """
+  heldBy: [String!]!
+  "The tool's tier on the agent was earned from a streak of clean approvals."
+  earned: Boolean!
+  "Clean approvals still needed for the next tier; null when earned autonomy cannot move it."
+  approvalsToNext: Int
+}
+
+"One tool an agent holds, before and after the run has read outside text."
+type AgentToolSafety {
+  policyName: String!
+  clean: AgentToolAutonomy!
+  tainted: AgentToolAutonomy!
+}
+
+enum AgentReachWarningKind {
+  "Everyone who may use the assistant may use the agent, and it holds tools that reach restricted data or leave the organization."
+  OpenWithSensitiveTools
+  "The agent is restricted to roles and no role is granted it, so nobody may use it."
+  NoAudience
+}
+
+type AgentReachWarning {
+  kind: AgentReachWarningKind!
+  "The tools the warning is about; empty when it is about the agent as a whole."
+  tools: [String!]!
+}
+
+"Who can reach an agent."
+type AgentReach {
+  accessMode: AgentAccessMode!
+  "The roles granted the agent. Empty for a reader who may not read roles."
+  roles: [Role!]!
+  warnings: [AgentReachWarning!]!
+}
+
+"What one agent can do without a person."
+type AgentSafety {
+  agentId: ID!
+  agent: AgentDefinition!
+  "The organization-wide pause on agents is on."
+  organizationShadow: Boolean!
+  tools: [AgentToolSafety!]!
+  reach: AgentReach!
+}
+
+extend type Query {
+  "Every tool's safety policy, by name."
+  agentToolPolicies: [AgentToolPolicy!]!
+  """
+  What each agent can do without a person, by name. Null agentIds reads every
+  agent in the organization; at most 100 may be named.
+  """
+  agentSafety(agentIds: [ID!]): [AgentSafety!]!
+}

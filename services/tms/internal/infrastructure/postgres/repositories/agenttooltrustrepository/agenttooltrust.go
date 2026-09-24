@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -132,6 +133,41 @@ func (r *repository) ListByDefinition(
 	}
 
 	return rows, nil
+}
+
+func (r *repository) ListByDefinitionIDs(
+	ctx context.Context,
+	req repositories.ListToolTrustByDefinitionsRequest,
+) (map[pulid.ID][]*agent.ToolTrust, error) {
+	grouped := make(map[pulid.ID][]*agent.ToolTrust, len(req.AgentDefinitionIDs))
+	if len(req.AgentDefinitionIDs) == 0 {
+		return grouped, nil
+	}
+
+	cols := buncolgen.ToolTrustColumns
+	rows := make([]*agent.ToolTrust, 0, len(req.AgentDefinitionIDs))
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&rows).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ToolTrustScopeTenant(sq, req.TenantInfo).
+				Where(cols.AgentDefinitionID.In(), bun.List(req.AgentDefinitionIDs))
+		}).
+		OrderExpr(cols.ToolName.OrderAsc()).
+		Scan(ctx); err != nil {
+		r.l.Error("failed to list tool trust for agents",
+			zap.Int("agents", len(req.AgentDefinitionIDs)),
+			zap.Error(err),
+		)
+
+		return nil, fmt.Errorf("list tool trust for agents: %w", err)
+	}
+
+	for _, row := range rows {
+		grouped[row.AgentDefinitionID] = append(grouped[row.AgentDefinitionID], row)
+	}
+
+	return grouped, nil
 }
 
 // MarkTierChange moves the row's earned tier, conditioned on its version, so

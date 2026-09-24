@@ -152,6 +152,19 @@ export type AgentAudienceCoverage =
   /** The role may use the assistant but lacks some of what the agent's tools need. */
   | 'Partial';
 
+/** What a tool on an agent does when nobody is watching. */
+export type AgentAutonomyAnswer =
+  /** Runs on its own for some calls and waits for a person on others. */
+  | 'CONDITIONAL'
+  /** Waits for a person to approve each call. */
+  | 'NEEDS_APPROVAL'
+  /** Only proposes; a person decides and nothing runs until then. */
+  | 'PROPOSE_ONLY'
+  /** Runs without asking anyone. */
+  | 'RUNS_ON_ITS_OWN'
+  /** The agent is in shadow or simulation: a change is previewed, never made. */
+  | 'SIMULATED';
+
 export type AgentAutonomyTier =
   | 'ActWithApproval'
   | 'AutoExecute'
@@ -181,6 +194,23 @@ export type AgentDecisionType =
   | 'Accepted'
   | 'Modified'
   | 'Rejected';
+
+/** Where a tool's work can be seen or felt. */
+export type AgentEgressClass =
+  /** Changes something a customer can see. */
+  | 'CustomerVisible'
+  /** Changes something a driver can see. */
+  | 'DriverVisible'
+  /** Sends to someone outside the organization. */
+  | 'ExternalRecipient'
+  /** Changes records only people inside the organization see. */
+  | 'Internal'
+  /** Moves or commits money. */
+  | 'Money'
+  /** Reads only; nothing changes and nothing is sent. */
+  | 'None'
+  /** Changes only the caller's own records. */
+  | 'Personal';
 
 export type AgentEvalCaseCuratedInput = {
   agentDefinitionId: string | number;
@@ -257,6 +287,13 @@ export type AgentExceptionResolveInput = {
   resolutionNotes?: string | null | undefined;
   resolutionState: AgentResolutionState;
 };
+
+/** Whether a tool's result carries text written outside the organization. */
+export type AgentExternalRead =
+  | 'Always'
+  /** Only when the record it returns was itself marked as outside text. */
+  | 'Marked'
+  | 'Never';
 
 export type AgentMemoryInput = {
   content: string;
@@ -344,6 +381,12 @@ export type AgentProposalStatus =
   | 'Skipped'
   | 'Superseded';
 
+export type AgentReachWarningKind =
+  /** The agent is restricted to roles and no role is granted it, so nobody may use it. */
+  | 'NoAudience'
+  /** Everyone who may use the assistant may use the agent, and it holds tools that reach restricted data or leave the organization. */
+  | 'OpenWithSensitiveTools';
+
 export type AgentResolutionState =
   | 'Dismissed'
   | 'InReview'
@@ -400,6 +443,17 @@ export type AgentSubjectType =
   | 'ShipmentMove'
   | 'Worker';
 
+/** Where outside text a tool reads comes from. */
+export type AgentTaintSource =
+  | 'Attachment'
+  | 'BankReceipt'
+  | 'Document'
+  | 'EDI'
+  | 'InboundMessage'
+  | 'Memory'
+  | 'RunRecord'
+  | 'Weather';
+
 export type AgentTemplate =
   | 'BillingAssistant'
   | 'BillingException'
@@ -417,6 +471,29 @@ export type AgentTemplate =
   | 'IntakeDesk'
   | 'LoadMonitor'
   | 'ShipmentIntake';
+
+export type AgentToolEffect =
+  | 'Ask'
+  | 'Change'
+  | 'Delegate'
+  | 'Discover'
+  | 'Lookup'
+  | 'Navigate'
+  | 'Present';
+
+export type AgentToolKind =
+  | 'Action'
+  | 'Query'
+  | 'Runtime';
+
+/** Whose records a tool acts on. */
+export type AgentToolScope =
+  /** Only the run it belongs to. */
+  | 'Run'
+  /** Only the caller's own records. */
+  | 'Self'
+  /** The organization's records, under the caller's permissions. */
+  | 'Tenant';
 
 export type AgentTriggerMode =
   | 'Chat'
@@ -6701,6 +6778,24 @@ export type AgentRunDetailQuery = { agentRun: (
     { inputContextHash: string }
     & { ' $fragmentRefs'?: { 'AgentRunTableRowFieldsFragment': AgentRunTableRowFieldsFragment } }
   ) | null };
+
+export type AgentToolPolicyFieldsFragment = { name: string, title: string, kind: AgentToolKind, scope: AgentToolScope, defaultTier: AgentAutonomyTier, maxTier: AgentAutonomyTier, promotableTier: AgentAutonomyTier, egress: Array<AgentEgressClass>, leavesOrganization: boolean, hasClassify: boolean, hasCondition: boolean, conditionDescription: string | null, personalExemption: boolean, effect: AgentToolEffect, artifact: string, reversible: boolean, idempotent: boolean, readsExternal: AgentExternalRead, source: AgentTaintSource | null, carriesTaint: boolean, rationale: string, explanation: string, needs: { resource: string, operation: string } | null } & { ' $fragmentName'?: 'AgentToolPolicyFieldsFragment' };
+
+export type AgentToolAutonomyFieldsFragment = { answer: AgentAutonomyAnswer, tier: AgentAutonomyTier, heldBy: Array<string>, earned: boolean, approvalsToNext: number | null } & { ' $fragmentName'?: 'AgentToolAutonomyFieldsFragment' };
+
+export type AgentSafetyFieldsFragment = { agentId: string, organizationShadow: boolean, agent: { id: string, name: string, enabled: boolean, shadowMode: boolean, simulationMode: boolean, autonomyCeiling: AgentAutonomyTier, triggerMode: AgentTriggerMode }, tools: Array<{ policyName: string, clean: { ' $fragmentRefs'?: { 'AgentToolAutonomyFieldsFragment': AgentToolAutonomyFieldsFragment } }, tainted: { ' $fragmentRefs'?: { 'AgentToolAutonomyFieldsFragment': AgentToolAutonomyFieldsFragment } } }>, reach: { accessMode: AgentAccessMode, roles: Array<{ id: string, name: string }>, warnings: Array<{ kind: AgentReachWarningKind, tools: Array<string> }> } } & { ' $fragmentName'?: 'AgentSafetyFieldsFragment' };
+
+export type AgentToolPoliciesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentToolPoliciesQuery = { agentToolPolicies: Array<{ ' $fragmentRefs'?: { 'AgentToolPolicyFieldsFragment': AgentToolPolicyFieldsFragment } }> };
+
+export type AgentSafetyQueryVariables = Exact<{
+  agentIds?: Array<string | number> | string | number | null | undefined;
+}>;
+
+
+export type AgentSafetyQuery = { agentSafety: Array<{ ' $fragmentRefs'?: { 'AgentSafetyFieldsFragment': AgentSafetyFieldsFragment } }> };
 
 export type MyAiFeedbackFieldsFragment = { id: string, targetType: AiFeedbackTargetType, targetId: string, targetPart: string, rating: number, reasons: Array<AiFeedbackReason>, comment: string, version: number, updatedAt: number } & { ' $fragmentName'?: 'MyAiFeedbackFieldsFragment' };
 
@@ -13263,6 +13358,86 @@ export const AgentRunTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AgentRunTableRowFields"}) as unknown as TypedDocumentString<AgentRunTableRowFieldsFragment, unknown>;
+export const AgentToolPolicyFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentToolPolicyFields on AgentToolPolicy {
+  name
+  title
+  kind
+  needs {
+    resource
+    operation
+  }
+  scope
+  defaultTier
+  maxTier
+  promotableTier
+  egress
+  leavesOrganization
+  hasClassify
+  hasCondition
+  conditionDescription
+  personalExemption
+  effect
+  artifact
+  reversible
+  idempotent
+  readsExternal
+  source
+  carriesTaint
+  rationale
+  explanation
+}
+    `, {"fragmentName":"AgentToolPolicyFields"}) as unknown as TypedDocumentString<AgentToolPolicyFieldsFragment, unknown>;
+export const AgentToolAutonomyFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentToolAutonomyFields on AgentToolAutonomy {
+  answer
+  tier
+  heldBy
+  earned
+  approvalsToNext
+}
+    `, {"fragmentName":"AgentToolAutonomyFields"}) as unknown as TypedDocumentString<AgentToolAutonomyFieldsFragment, unknown>;
+export const AgentSafetyFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentSafetyFields on AgentSafety {
+  agentId
+  organizationShadow
+  agent {
+    id
+    name
+    enabled
+    shadowMode
+    simulationMode
+    autonomyCeiling
+    triggerMode
+  }
+  tools {
+    policyName
+    clean {
+      ...AgentToolAutonomyFields
+    }
+    tainted {
+      ...AgentToolAutonomyFields
+    }
+  }
+  reach {
+    accessMode
+    roles {
+      id
+      name
+    }
+    warnings {
+      kind
+      tools
+    }
+  }
+}
+    fragment AgentToolAutonomyFields on AgentToolAutonomy {
+  answer
+  tier
+  heldBy
+  earned
+  approvalsToNext
+}`, {"fragmentName":"AgentSafetyFields"}) as unknown as TypedDocumentString<AgentSafetyFieldsFragment, unknown>;
 export const MyAiFeedbackFieldsFragmentDoc = new TypedDocumentString(`
     fragment MyAIFeedbackFields on AIFeedback {
   id
@@ -19997,6 +20172,8 @@ export const AgentProposalDetailDocument = {"__meta__":{"kind":"query","name":"A
 export const DecideAgentProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposal","hash":"sha256:ba06fd0f5bb9168980d5d967514bf0bcbd80382200e836955aa5704c4c9f1836"}} as unknown as TypedDocumentString<DecideAgentProposalMutation, DecideAgentProposalMutationVariables>;
 export const AgentRunTableDocument = {"__meta__":{"kind":"query","name":"AgentRunTable","hash":"sha256:938af4f2a45104c1bf195b3a992b531ebb470f63a2b1dd65dd1b933827662d5d"}} as unknown as TypedDocumentString<AgentRunTableQuery, AgentRunTableQueryVariables>;
 export const AgentRunDetailDocument = {"__meta__":{"kind":"query","name":"AgentRunDetail","hash":"sha256:780230a3bc44a3aed467ed21d5aabd4142c705410579b4bcd855316f808315c5"}} as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;
+export const AgentToolPoliciesDocument = {"__meta__":{"kind":"query","name":"AgentToolPolicies","hash":"sha256:afe4f44747ff9d5288e84aa150ccbbc0f31693a2d801433dea981a86514dd3cb"}} as unknown as TypedDocumentString<AgentToolPoliciesQuery, AgentToolPoliciesQueryVariables>;
+export const AgentSafetyDocument = {"__meta__":{"kind":"query","name":"AgentSafety","hash":"sha256:e9ff19e211d2e7dfba2a5b2e303a7fd03990b44bd1c04df21d2c70bca2a2e2ad"}} as unknown as TypedDocumentString<AgentSafetyQuery, AgentSafetyQueryVariables>;
 export const MyAiFeedbackDocument = {"__meta__":{"kind":"query","name":"MyAIFeedback","hash":"sha256:4ecd6a4f48bdf601fe636a9cf2dc691b4d999c948e5c8b19b34aa57b705ddd8f"}} as unknown as TypedDocumentString<MyAiFeedbackQuery, MyAiFeedbackQueryVariables>;
 export const SetMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"SetMyAIFeedback","hash":"sha256:dcf84160135d294e635b4b982adf957300ba21c8a9f703ddad23cfcbcc32dde3"}} as unknown as TypedDocumentString<SetMyAiFeedbackMutation, SetMyAiFeedbackMutationVariables>;
 export const ClearMyAiFeedbackDocument = {"__meta__":{"kind":"mutation","name":"ClearMyAIFeedback","hash":"sha256:fe3ab8a659e88516571a342f231d0e575d1a136d9c5a9655bcca2fd93613510a"}} as unknown as TypedDocumentString<ClearMyAiFeedbackMutation, ClearMyAiFeedbackMutationVariables>;

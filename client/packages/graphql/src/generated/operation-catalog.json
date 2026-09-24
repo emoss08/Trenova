@@ -1,6 +1,6 @@
 {
-  "operationCount": 820,
-  "fragmentCount": 218,
+  "operationCount": 822,
+  "fragmentCount": 221,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -962,6 +962,29 @@
       "sdl": "query AgentRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentRuns(input: $input) {\n    edges {\n      node {\n        ...AgentRunTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
+      "name": "AgentSafety",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/safety.graphql",
+      "hash": "sha256:e9ff19e211d2e7dfba2a5b2e303a7fd03990b44bd1c04df21d2c70bca2a2e2ad",
+      "rootFields": [
+        "agentSafety"
+      ],
+      "variables": [
+        {
+          "name": "agentIds",
+          "type": "[ID!]",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentSafetyFields",
+        "AgentToolAutonomyFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentSafety($agentIds: [ID!]) {\n  agentSafety(agentIds: $agentIds) {\n    ...AgentSafetyFields\n  }\n}\n\nfragment AgentSafetyFields on AgentSafety {\n  agentId\n  organizationShadow\n  agent {\n    id\n    name\n    enabled\n    shadowMode\n    simulationMode\n    autonomyCeiling\n    triggerMode\n  }\n  tools {\n    policyName\n    clean {\n      ...AgentToolAutonomyFields\n    }\n    tainted {\n      ...AgentToolAutonomyFields\n    }\n  }\n  reach {\n    accessMode\n    roles {\n      id\n      name\n    }\n    warnings {\n      kind\n      tools\n    }\n  }\n}\n\nfragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}"
+    },
+    {
       "name": "AgentScorecard",
       "kind": "query",
       "domain": "agent-scorecard",
@@ -982,6 +1005,22 @@
       ],
       "usages": [],
       "sdl": "query AgentScorecard($input: AgentScorecardInput!) {\n  agentScorecard(input: $input) {\n    ...AgentScorecardFields\n  }\n}\n\nfragment AgentScorecardFields on AgentScorecard {\n  agentDefinitionId\n  window\n  since\n  runs\n  runsFailed\n  exceptions\n  proposals\n  approved\n  modified\n  rejected\n  pending\n  executed\n  executionFailures\n  autoExecuted\n  approvalRate\n  inputTokens\n  outputTokens\n  costUsd\n  estimatedMinutesSaved\n  byTool {\n    toolName\n    approved\n    modified\n    rejected\n    executed\n    failed\n    pending\n    automatic\n  }\n  toolTrust {\n    toolName\n    streak\n    approvals\n    modifications\n    rejections\n    executionFailures\n    earnedTier\n    lastDecisionAt\n    promotedAt\n    demotedAt\n  }\n}"
+    },
+    {
+      "name": "AgentToolPolicies",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/safety.graphql",
+      "hash": "sha256:afe4f44747ff9d5288e84aa150ccbbc0f31693a2d801433dea981a86514dd3cb",
+      "rootFields": [
+        "agentToolPolicies"
+      ],
+      "variables": [],
+      "fragments": [
+        "AgentToolPolicyFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentToolPolicies {\n  agentToolPolicies {\n    ...AgentToolPolicyFields\n  }\n}\n\nfragment AgentToolPolicyFields on AgentToolPolicy {\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}"
     },
     {
       "name": "AIFeedbackTable",
@@ -19114,6 +19153,20 @@
       "sdl": "fragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentSafetyFields",
+      "typeCondition": "AgentSafety",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/safety.graphql",
+      "fragments": [
+        "AgentToolAutonomyFields"
+      ],
+      "usedByOperations": [
+        "AgentSafety"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentSafetyFields on AgentSafety {\n  agentId\n  organizationShadow\n  agent {\n    id\n    name\n    enabled\n    shadowMode\n    simulationMode\n    autonomyCeiling\n    triggerMode\n  }\n  tools {\n    policyName\n    clean {\n      ...AgentToolAutonomyFields\n    }\n    tainted {\n      ...AgentToolAutonomyFields\n    }\n  }\n  reach {\n    accessMode\n    roles {\n      id\n      name\n    }\n    warnings {\n      kind\n      tools\n    }\n  }\n}\n\nfragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}"
+    },
+    {
       "name": "AgentScorecardFields",
       "typeCondition": "AgentScorecard",
       "domain": "agent-scorecard",
@@ -19124,6 +19177,30 @@
       ],
       "usages": [],
       "sdl": "fragment AgentScorecardFields on AgentScorecard {\n  agentDefinitionId\n  window\n  since\n  runs\n  runsFailed\n  exceptions\n  proposals\n  approved\n  modified\n  rejected\n  pending\n  executed\n  executionFailures\n  autoExecuted\n  approvalRate\n  inputTokens\n  outputTokens\n  costUsd\n  estimatedMinutesSaved\n  byTool {\n    toolName\n    approved\n    modified\n    rejected\n    executed\n    failed\n    pending\n    automatic\n  }\n  toolTrust {\n    toolName\n    streak\n    approvals\n    modifications\n    rejections\n    executionFailures\n    earnedTier\n    lastDecisionAt\n    promotedAt\n    demotedAt\n  }\n}"
+    },
+    {
+      "name": "AgentToolAutonomyFields",
+      "typeCondition": "AgentToolAutonomy",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/safety.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentSafety"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}"
+    },
+    {
+      "name": "AgentToolPolicyFields",
+      "typeCondition": "AgentToolPolicy",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/safety.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentToolPolicies"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentToolPolicyFields on AgentToolPolicy {\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}"
     },
     {
       "name": "AIFeedbackTableRowFields",
