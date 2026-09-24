@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
@@ -381,6 +382,7 @@ func (s *Service) JudgeCase(ctx context.Context, req *JudgeCaseRequest) (*Judged
 			AgentDefinitionID: evaluation.AgentDefinitionID,
 			RunID:             evaluation.ID,
 			Purpose:           services.AIUsagePurposeEvaluation,
+			Feature:           aiusage.FeatureAgentEvaluation,
 		},
 	})
 	if errors.Is(err, services.ErrNoProviderConfigured) {

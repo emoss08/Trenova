@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -444,6 +445,7 @@ func (t *Turn) completionRequest() *serviceports.ChatCompletionRequest {
 			ThreadID:          req.ThreadID,
 			RunID:             req.RunID,
 			Purpose:           req.AttributedPurpose(),
+			Feature:           aiusage.FeatureAgentTurn,
 		},
 	}
 }

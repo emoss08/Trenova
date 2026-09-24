@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	assistant "github.com/emoss08/trenova/internal/core/services/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
@@ -182,6 +183,11 @@ func TestImportAssistantTurnWorkflow_AttributesEveryModelCallAndTotalsItsUsage(t
 	require.Len(t, attributed, 2)
 	for _, attribution := range attributed {
 		assert.Equal(t, payload.TenantInfo.UserID, attribution.UserID)
+		assert.Equal(t, aiusage.FeatureShipmentImportChat, attribution.Feature)
+		assert.Equal(t, aiusage.Subject{
+			Type: aiusage.SubjectTypeDocument,
+			ID:   payload.Request.DocumentID,
+		}, attribution.Subject)
 	}
 	require.NotNil(t, saved)
 	assert.Equal(t, "second-model", saved.Record.Model)

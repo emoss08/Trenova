@@ -3,8 +3,6 @@ package shipmentimportassistantservice
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json" //nolint:depguard // external API payloads
 	"fmt"
 	"strconv"
@@ -12,7 +10,6 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -32,11 +29,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	maxLocationCodeLength = 10
-	promptPreviewLength   = 512
-	responsePreviewLength = 1024
-)
+const maxLocationCodeLength = 10
 
 type Params struct {
 	fx.In
@@ -45,7 +38,6 @@ type Params struct {
 	Config               *config.Config
 	DB                   *postgres.Connection
 	Completion           serviceports.CompletionService
-	AILogRepo            repositories.AILogRepository
 	ChatRepo             repositories.ShipmentImportChatRepository
 	ChatCacheRepo        repositories.ShipmentImportChatCacheRepository
 	CustomerRepo         repositories.CustomerRepository
@@ -69,7 +61,6 @@ type Service struct {
 	cfg                  *config.AIConfig
 	db                   *postgres.Connection
 	completion           serviceports.CompletionService
-	aiLogRepo            repositories.AILogRepository
 	chatRepo             repositories.ShipmentImportChatRepository
 	chatCacheRepo        repositories.ShipmentImportChatCacheRepository
 	customerRepo         repositories.CustomerRepository
@@ -96,7 +87,6 @@ func New(
 		cfg:                  p.Config.GetAIConfig(),
 		db:                   p.DB,
 		completion:           p.Completion,
-		aiLogRepo:            p.AILogRepo,
 		chatRepo:             p.ChatRepo,
 		chatCacheRepo:        p.ChatCacheRepo,
 		customerRepo:         p.CustomerRepo,
@@ -1319,49 +1309,6 @@ func (s *Service) getShipmentControl(ctx context.Context, tenantInfo pagination.
 		"trackDetentionTime":     control.TrackDetentionTime,
 	})
 	return string(data)
-}
-
-func (s *Service) logAICall(
-	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
-	record *TurnRecord,
-) {
-	promptHash := sha256.Sum256([]byte(req.UserMessage))
-	responseHash := sha256.Sum256([]byte(record.Message))
-
-	promptPreview := stringutils.TruncateRunes(req.UserMessage, promptPreviewLength)
-	responsePreview := stringutils.TruncateRunes(record.Message, responsePreviewLength)
-
-	entry := &ailog.Log{
-		ID:             pulid.MustNew("ail_"),
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		UserID:         req.TenantInfo.UserID,
-		Prompt: fmt.Sprintf(
-			"sha256=%s preview=%s",
-			hex.EncodeToString(promptHash[:]),
-			promptPreview,
-		),
-		Response: fmt.Sprintf(
-			"sha256=%s preview=%s",
-			hex.EncodeToString(responseHash[:]),
-			responsePreview,
-		),
-		Model:            ailog.Model(record.Model),
-		ProviderKind:     string(record.ProviderKind),
-		ProviderID:       record.ProviderID,
-		Operation:        ailog.OperationShipmentImportChat,
-		Object:           req.DocumentID,
-		PromptTokens:     record.InputTokens,
-		CompletionTokens: record.OutputTokens,
-		TotalTokens:      record.InputTokens + record.OutputTokens,
-		ReasoningTokens:  record.ReasoningTokens,
-		Timestamp:        timeutils.NowUnix(),
-	}
-
-	if _, err := s.aiLogRepo.Create(ctx, entry); err != nil {
-		s.logger.Error("failed to log AI call", zap.Error(err))
-	}
 }
 
 func (s *Service) GetHistory(

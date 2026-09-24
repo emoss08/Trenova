@@ -1,13 +1,9 @@
 package aidocumentservice
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
 	"strings"
 
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func convertExtractResponse(parsed *extractResponse) *serviceports.AIExtractResult {
@@ -60,31 +56,6 @@ func firstNonEmpty(values ...string) string {
 	}
 
 	return ""
-}
-
-// redactPrompt keeps a document's text out of the AI log. The prompt is a
-// customer's rate confirmation; the log is read to audit what was asked, which
-// a hash and a short preview answer without copying the document into a second
-// table.
-func redactPrompt(systemPrompt, userPrompt string) string {
-	sum := sha256.Sum256([]byte(userPrompt))
-
-	return fmt.Sprintf(
-		"system=%q user_sha256=%s user_preview=%q",
-		systemPrompt,
-		hex.EncodeToString(sum[:]),
-		stringutils.Truncate(userPrompt, 512),
-	)
-}
-
-func redactResponse(text string) string {
-	sum := sha256.Sum256([]byte(text))
-
-	return fmt.Sprintf(
-		"sha256=%s preview=%q",
-		hex.EncodeToString(sum[:]),
-		stringutils.Truncate(text, 1024),
-	)
 }
 
 func normalizeReviewStatus(status string) string {

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -863,6 +864,7 @@ func TestRun_KeepsLatencyAndCostOnTheTurn(t *testing.T) {
 	// And the call said who it was for.
 	assert.Equal(t, testDefinition().ID, completion.LastReq.Attribution.AgentDefinitionID)
 	assert.False(t, completion.LastReq.Attribution.ThreadID.IsNil())
+	assert.Equal(t, aiusage.FeatureAgentTurn, completion.LastReq.Attribution.Feature)
 }
 
 func TestRun_AttributesAReplayToEvaluationNotTheLiveAgent(t *testing.T) {

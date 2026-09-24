@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatLatency, formatTokens, formatUsd, formatWorkDuration } from "../ai-usage-format";
+import {
+  aiUsageFeatureLabel,
+  formatLatency,
+  formatTokens,
+  formatUsd,
+  formatWorkDuration,
+} from "../ai-usage-format";
 
 describe("formatLatency", () => {
   it("reads in the unit a person uses", () => {
@@ -43,5 +49,15 @@ describe("formatWorkDuration", () => {
     expect(formatWorkDuration(3600)).toBe("1h");
     expect(formatWorkDuration(3780)).toBe("1h 3m");
     expect(formatWorkDuration(Number.NaN)).toBe("<1s");
+  });
+});
+
+describe("aiUsageFeatureLabel", () => {
+  const t = (message: string | null | undefined) => message ?? "";
+
+  it("names the feature, and gathers calls that named none under Other", () => {
+    expect(aiUsageFeatureLabel("DocumentIntelligenceExtract", t)).toBe("Document extraction");
+    expect(aiUsageFeatureLabel("ShipmentImportChat", t)).toBe("Import assistant");
+    expect(aiUsageFeatureLabel(null, t)).toBe("Other");
   });
 });
