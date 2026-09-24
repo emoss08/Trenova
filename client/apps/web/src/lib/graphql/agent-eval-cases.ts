@@ -26,7 +26,10 @@ export const agentEvalCaseTableGraphQLConfig = defineDataTableGraphQLConfig({
 
 export type AgentEvalCaseRow = DataTableConfigRow<typeof agentEvalCaseTableGraphQLConfig>;
 
-export type AgentEvalCaseDetail = Omit<AgentEvalCaseDetailFieldsFragment, " $fragmentRefs"> &
+export type AgentEvalCaseDetail = Omit<
+  AgentEvalCaseDetailFieldsFragment,
+  " $fragmentRefs" | " $fragmentName"
+> &
   Omit<AgentEvalCaseTableRowFieldsFragment, " $fragmentName">;
 
 export const AGENT_EVAL_CASE_LIST_KEY = "agent-eval-case-list";
