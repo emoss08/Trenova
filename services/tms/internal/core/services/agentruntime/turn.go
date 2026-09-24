@@ -352,9 +352,13 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	}
 
 	messages := toAdapterMessages(history, req.Proposals)
+	input := req.Input
+	if req.Delegation == nil {
+		input = outOfViewDecisions(history, req.Proposals) + input
+	}
 	messages = append(messages, serviceports.Message{
 		Role:    serviceports.RoleUser,
-		Content: req.Input,
+		Content: input,
 	})
 
 	return &Turn{

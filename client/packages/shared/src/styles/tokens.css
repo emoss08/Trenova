@@ -305,15 +305,29 @@
   --desk-glow-opacity: 0.055;
   --desk-spine: color-mix(in oklch, var(--foreground) 11%, transparent);
 
-  /* The drawn desk: the mark that says an agent is at work, and the one the
-     Desk's greeting sits beside. It is line work in the ink, so the only
-     colour it carries is these three. The monitor's screen is the agent's
-     accent at a whisper, lifted while words are arriving; the lamp throws a
-     warm cone in the evening. Both stay small enough that the drawing reads
-     as ink with a light on, not as an illustration in colour. */
-  --desk-screen-rest: 0.16;
-  --desk-screen-lit: 0.6;
-  --desk-lamp-light: color-mix(in oklch, var(--highlight) 45%, transparent);
+  /* The desk at work: the small scene on the working line while an agent
+     answers. It is the one illustration in the product, so it is the one
+     place with a palette of its own, and every colour in it is named here.
+     The agent's accent drives the scene (the screen, the person at the desk
+     and a tint in the chair, set on the mark itself by ui-desk-mark); these
+     are the furniture and the light around it. Solid fills and no hairlines,
+     because the scene is drawn at the height of a line of text. */
+  --desk-wood: oklch(0.78 0.068 66);
+  --desk-wood-shade: oklch(0.68 0.07 60);
+  --desk-frame: oklch(0.37 0.022 var(--hue-neutral));
+  --desk-lamp: oklch(0.8 0.15 80);
+  --desk-lamp-light: color-mix(in oklch, var(--desk-lamp) 24%, transparent);
+  --desk-screen-ink: oklch(0.985 0.004 var(--hue-neutral));
+  --desk-glow: 0.3;
+
+  /* The sky over the Desk's greeting: a wash of the part of the day behind
+     the first line of the front page. It is weather, not decoration, so it is
+     the faintest colour on the page and fades out before it reaches anything
+     it could be mistaken for. The hues are the categorical accents; this is
+     how much of them reaches the canvas. */
+  --daylight-strength: 20%;
+  --daylight-sun: oklch(0.79 0.15 76);
+  --daylight-moon: oklch(0.58 0.13 var(--hue-indigo));
 
   /* Charts ---------------------------------------------------------------
      Eight series on the categorical hue family. Light and dark differ only in
@@ -648,12 +662,23 @@
   --desk-glow-opacity: 0.1;
   --desk-spine: color-mix(in oklch, var(--foreground) 16%, transparent);
 
-  /* A lit screen in a dark room is brighter against it, so the rest is
-     higher and the lift reaches further; the lamp's cone is thinner,
-     because warm light on a near-black ground carries further than on white. */
-  --desk-screen-rest: 0.24;
-  --desk-screen-lit: 0.78;
-  --desk-lamp-light: color-mix(in oklch, var(--highlight) 24%, transparent);
+  /* The desk in a dark room: the furniture steps down so the lit screen is
+     the brightest thing in it, the ink on the screen turns dark because a
+     dark theme's accent is the light end of its ramp, and the lamp's cone
+     is thinner, because warm light on a near-black ground carries further. */
+  --desk-wood: oklch(0.6 0.062 66);
+  --desk-wood-shade: oklch(0.5 0.058 60);
+  --desk-frame: oklch(0.5 0.018 var(--hue-neutral));
+  --desk-lamp: oklch(0.84 0.14 84);
+  --desk-lamp-light: color-mix(in oklch, var(--desk-lamp) 16%, transparent);
+  --desk-screen-ink: oklch(0.2 0.012 var(--hue-neutral));
+  --desk-glow: 0.4;
+
+  /* Colour on a near-black ground reads weaker at the same mix, so the sky
+     takes a little more of it. */
+  --daylight-strength: 20%;
+  --daylight-sun: oklch(0.84 0.14 84);
+  --daylight-moon: oklch(0.88 0.06 95);
 
   --lift-ring: 0 0 0 1px color-mix(in oklch, var(--foreground) 12%, transparent);
   --lift-whisper: var(--lift-ring), 0 1px 2px -1px oklch(0 0 0 / 0.4);
@@ -992,40 +1017,50 @@
        land        a step of an agent's work arrives in the ledger
        materialise something the agent produced appears in the workspace
        draw        the spine extends as a turn grows
-       work        an agent is at its desk; the ONLY loops in the system,
-                   and they run on a live indicator that stops when the
-                   work does
+       breathe     an agent is working; with the desk below, the ONLY
+                   loops in the system, and they run on a live indicator
+                   that stops when the work does
 
      Everything else on a working screen still answers an action. */
   --animate-land: land 200ms var(--ease-settle) both;
   --animate-materialise: materialise 320ms var(--ease-settle) both;
   --animate-draw: draw 280ms var(--ease-swift) both;
+  --animate-breathe: breathe 2.4s ease-in-out infinite;
   --animate-caret: caret 1.1s steps(2, start) infinite;
 
-  /* The drawn desk at work. One pose per phase of a turn, so the mark says
-     what kind of waiting this is without a word:
+  /* The desk at work, on the working line and nowhere else. It moves the
+     way a sprite does, a few small frames swapped on a beat rather than
+     anything travelling across the line, so it reads as alive at the height
+     of a line of text without pulling the eye. One motion per phase:
 
-       desk-roll    waiting on the model: the chair rolls out, someone sits,
-                    and it rolls back in
-       desk-shake   a tool is running: the desk gives a small busy shake,
-                    then holds still for most of the beat
-       desk-screen  the answer is arriving: the monitor pulses softly
+       desk-sit      the mark arrives: the chair rolls out, someone sits,
+                     and it rolls back in to the desk, once
+       desk-think-*  waiting on the model: three dots on the screen, one
+                     frame at a time
+       desk-type     a tool is running: the hands bob on the keys
+       desk-scroll   a tool is running: the screen scrolls a line a frame
+       desk-write-*  the answer is arriving: lines are written onto the
+                     screen, one after another
+       desk-glow     the answer is arriving: the screen's light swells and
+                     flickers softly
+       desk-settle   the turn is over: the chair eases back from the desk
+       desk-fade     while the scene fades, and then the mark is gone
 
-     Each is slow and eased both ways, because a loop that hurries reads as
-     a fault rather than as work. They stop the instant the turn does, and
-     the two one-shots below close the scene:
-
-       desk-settle  the turn is over: the chair tucks in on the confirm
-                    spring, and then the mark is gone
-       desk-arrive  the greeting's desk: the chair settles in once as the
-                    page opens
-       desk-lamp    the evening lamp switches on, with one flicker, once */
-  --animate-desk-roll: desk-roll 3.6s ease-in-out infinite;
-  --animate-desk-shake: desk-shake 2.4s ease-in-out infinite;
-  --animate-desk-screen: desk-screen 1.8s ease-in-out infinite;
-  --animate-desk-settle: desk-settle 320ms var(--ease-spring) both;
-  --animate-desk-arrive: desk-arrive 720ms var(--ease-settle) 180ms both;
-  --animate-desk-lamp: desk-lamp 1s var(--ease-swift) 520ms both;
+     Every one is transform or opacity, and all of them stop the instant
+     the turn does. */
+  --animate-desk-sit: desk-sit 1.3s var(--ease-settle) both;
+  --animate-desk-sit-figure: desk-sit-figure 1.3s var(--ease-settle) both;
+  --animate-desk-think-1: desk-think-1 1.6s step-end infinite;
+  --animate-desk-think-2: desk-think-2 1.6s step-end infinite;
+  --animate-desk-think-3: desk-think-3 1.6s step-end infinite;
+  --animate-desk-type: desk-type 0.46s step-end infinite;
+  --animate-desk-scroll: desk-scroll 1.35s steps(3, end) infinite;
+  --animate-desk-write-1: desk-write-1 2.4s steps(3, end) infinite;
+  --animate-desk-write-2: desk-write-2 2.4s steps(3, end) infinite;
+  --animate-desk-write-3: desk-write-3 2.4s steps(3, end) infinite;
+  --animate-desk-glow: desk-glow 2.4s ease-in-out infinite;
+  --animate-desk-settle: desk-settle 420ms var(--ease-settle) both;
+  --animate-desk-fade: desk-fade 420ms var(--ease-settle) both;
 
   --lift-whisper-shadow: var(--lift-whisper);
   --lift-card-shadow: var(--lift-card);
@@ -1036,6 +1071,18 @@
   --color-desk-column: var(--desk-column);
   --color-desk-hairline: var(--desk-hairline);
   --color-desk-spine: var(--desk-spine);
+
+  --color-desk-wood: var(--desk-wood);
+  --color-desk-wood-shade: var(--desk-wood-shade);
+  --color-desk-frame: var(--desk-frame);
+  --color-desk-lamp: var(--desk-lamp);
+  --color-desk-lamp-light: var(--desk-lamp-light);
+  --color-desk-screen-ink: var(--desk-screen-ink);
+  --color-desk-accent: var(--desk-accent);
+  --color-desk-figure: var(--desk-figure);
+  --color-desk-chair: var(--desk-chair);
+  --color-daylight-sun: var(--daylight-sun);
+  --color-daylight-moon: var(--daylight-moon);
 }
 
 @keyframes land {
@@ -1071,93 +1118,175 @@
   }
 }
 
-/* The chair's round trip: out, a small dip as someone sits, a beat, and
-   back under the desk. Lengths inside an SVG are user units, so the travel
-   scales with the drawing rather than with the screen. */
-@keyframes desk-roll {
+@keyframes breathe {
   0%,
   100% {
-    transform: none;
-  }
-  30% {
-    transform: translate3d(3.5px, 0, 0);
-  }
-  42% {
-    transform: translate3d(3.5px, 0.6px, 0);
-  }
-  54% {
-    transform: translate3d(3.5px, 0, 0);
-  }
-  84% {
-    transform: none;
-  }
-}
-
-/* A burst in the first third of the beat and stillness for the rest, so it
-   reads as someone busy at the desk rather than as a desk that is broken.
-   The pivot is the foot of the desk, set by the element. */
-@keyframes desk-shake {
-  0%,
-  36%,
-  100% {
-    transform: none;
-  }
-  7% {
-    transform: translate3d(-0.35px, 0, 0) rotate(-1.4deg);
-  }
-  15% {
-    transform: translate3d(0.35px, 0, 0) rotate(1.2deg);
-  }
-  23% {
-    transform: translate3d(-0.2px, 0, 0) rotate(-0.7deg);
-  }
-  30% {
-    transform: rotate(0.3deg);
-  }
-}
-
-@keyframes desk-screen {
-  0%,
-  100% {
-    opacity: var(--desk-screen-rest);
+    opacity: 0.35;
+    transform: scale(0.82);
   }
   50% {
-    opacity: var(--desk-screen-lit);
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The desk's frames. Lengths inside an SVG are user units, so every travel
+   here is a fraction of the drawing rather than of the screen. */
+
+/* The chair rolls out from the desk, holds while someone sits, and rolls
+   back in with them. */
+@keyframes desk-sit {
+  0% {
+    transform: none;
+  }
+  24%,
+  58% {
+    transform: translate3d(3px, 0, 0);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* The person drops into the chair while it is out. */
+@keyframes desk-sit-figure {
+  0%,
+  30% {
+    opacity: 0;
+    transform: translate3d(0, -1.5px, 0);
+  }
+  46% {
+    opacity: 1;
+    transform: translate3d(0, 0.3px, 0);
+  }
+  54%,
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Four frames: one dot, two, three, and a beat with the screen clear. */
+@keyframes desk-think-1 {
+  0% {
+    opacity: 1;
+  }
+  75%,
+  100% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes desk-think-2 {
+  0% {
+    opacity: 0.2;
+  }
+  25% {
+    opacity: 1;
+  }
+  75%,
+  100% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes desk-think-3 {
+  0% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+  75%,
+  100% {
+    opacity: 0.2;
+  }
+}
+
+@keyframes desk-type {
+  0% {
+    transform: none;
+  }
+  50% {
+    transform: translate3d(0, -0.6px, 0);
+  }
+}
+
+@keyframes desk-scroll {
+  from {
+    transform: none;
+  }
+  to {
+    transform: translate3d(0, -3px, 0);
+  }
+}
+
+/* Three lines written one after another, a word a frame, held, and the
+   screen cleared for the next. */
+@keyframes desk-write-1 {
+  0% {
+    transform: scaleX(0);
+  }
+  22%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes desk-write-2 {
+  0%,
+  26% {
+    transform: scaleX(0);
+  }
+  48%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes desk-write-3 {
+  0%,
+  52% {
+    transform: scaleX(0);
+  }
+  74%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes desk-glow {
+  0%,
+  100% {
+    opacity: calc(var(--desk-glow) * 0.45);
+  }
+  42% {
+    opacity: var(--desk-glow);
+  }
+  52% {
+    opacity: calc(var(--desk-glow) * 0.7);
+  }
+  62% {
+    opacity: var(--desk-glow);
   }
 }
 
 @keyframes desk-settle {
   from {
-    transform: translate3d(3px, 0, 0);
+    transform: none;
   }
   to {
-    transform: none;
+    transform: translate3d(1.5px, 0, 0);
   }
 }
 
-@keyframes desk-arrive {
-  from {
-    transform: translate3d(5px, 0, 0);
-  }
-  to {
-    transform: none;
-  }
-}
-
-/* A lamp does not fade on; it catches, dips once, and holds. */
-@keyframes desk-lamp {
-  0% {
-    opacity: 0;
-  }
-  16% {
-    opacity: 0.85;
-  }
-  26% {
-    opacity: 0.2;
-  }
-  42%,
-  100% {
+@keyframes desk-fade {
+  0%,
+  35% {
     opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
@@ -1321,6 +1450,54 @@
   }
 }
 
+/* The desk at work takes its colour from the agent it draws. The accent is
+   read on the mark itself, where the agent's surface has set it, and the
+   brand stands in where no agent is set. The person at the desk is the
+   agent, so it wears the accent; the chair is the accent sunk into the
+   furniture's ink, so the two never merge where the person sits in it. */
+@utility ui-desk-mark {
+  --desk-accent: var(--agent-accent, var(--brand));
+  --desk-figure: var(--desk-accent);
+  --desk-chair: color-mix(in oklch, var(--desk-accent) 34%, var(--desk-frame));
+}
+
+/* The part of the day behind the Desk's greeting: two soft pools of light
+   falling from above, the sky's own colour over the greeting and a second
+   hue further off, as a sky has. Each ellipse is sized in its box's own
+   proportions and ends inside it at the sides and the foot, so the light
+   fades to nothing before any edge the eye could find; the box's head sits
+   above the top of the page, where there is nothing to see. */
+@utility ui-daylight {
+  --daylight-near: var(--accent-sky);
+  --daylight-far: var(--daylight-sun);
+  background:
+    radial-gradient(
+      26% 50% at 27% 30%,
+      color-mix(in oklch, var(--daylight-near) var(--daylight-strength), transparent),
+      transparent
+    ),
+    radial-gradient(
+      32% 44% at 62% 22%,
+      color-mix(in oklch, var(--daylight-far) calc(var(--daylight-strength) * 0.6), transparent),
+      transparent
+    );
+
+  &[data-sky="dawn"] {
+    --daylight-near: var(--daylight-sun);
+    --daylight-far: var(--accent-rose);
+  }
+
+  &[data-sky="dusk"] {
+    --daylight-near: var(--accent-rose);
+    --daylight-far: var(--accent-violet);
+  }
+
+  &[data-sky="night"] {
+    --daylight-near: var(--accent-indigo);
+    --daylight-far: var(--accent-violet);
+  }
+}
+
 /* Reduced motion takes the loops and the travel, and keeps the state
    changes: a step still arrives, it just does not slide to get there. */
 @media (prefers-reduced-motion: reduce) {
@@ -1335,6 +1512,7 @@
     animation-delay: 0ms !important;
   }
 
+  [class*="animate-breathe"],
   [class*="animate-desk-"],
   .ui-stream-caret::after {
     animation: none !important;

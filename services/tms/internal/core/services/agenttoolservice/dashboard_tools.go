@@ -64,6 +64,8 @@ func (t *createDashboardTool) Description() string {
 		"Use it when a person describes a screen of reports they want, such as \"this " +
 		"week's revenue, on-time percentage and the unbilled backlog\". Find each tile's " +
 		"report with list_reports first; never invent an id. Tiles are laid out for you. " +
+		"For a dashboard about a measure, lead with its headline figures as kpi tiles when " +
+		"the report has a column for them, then the detail table. " +
 		"Not for the person's home page — get_my_home_layout and add_home_widget are for that."
 }
 

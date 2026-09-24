@@ -121,12 +121,14 @@ function optionsFrom(raw: unknown): AskOption[] {
       continue;
     }
     const { value, label, detail } = entry as Record<string, unknown>;
-    if (typeof value !== "string" || value === "") {
+    const text = typeof label === "string" ? label : "";
+    const answer = typeof value === "string" && value !== "" ? value : text;
+    if (answer === "") {
       continue;
     }
     options.push({
-      value,
-      label: typeof label === "string" && label !== "" ? label : value,
+      value: answer,
+      label: text !== "" ? text : answer,
       detail: typeof detail === "string" ? detail : "",
     });
   }

@@ -374,7 +374,8 @@ var toolFamilies = [][]starterQuestion{
 	{
 		ask(
 			"Build a dashboard",
-			"Build a dashboard of this month's on-time delivery.",
+			"Build a dashboard of this month's on-time delivery: its headline figures "+
+				"first, as KPI tiles if the report gives them, then the detail table.",
 			"create_dashboard", "add_dashboard_tile",
 		),
 		ask(

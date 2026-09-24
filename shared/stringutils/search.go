@@ -23,6 +23,18 @@ func SearchWords(text string) []string {
 	})
 }
 
+// SearchableKey spells a camelCase or dotted key as words for
+// MatchesWordPrefixes, keeping the key whole beside them:
+// "scheduledWindowEnd" reads "scheduled_window_end scheduledWindowEnd", so
+// "window" finds it and so does the key itself.
+func SearchableKey(key string) string {
+	if key == "" {
+		return ""
+	}
+
+	return ConvertCamelToSnake(key) + " " + key
+}
+
 // MatchesWordPrefixes reports whether every word begins some word of the
 // texts, so "deliver" finds "delivery" and "on" does not find "operations".
 // No words matches everything.

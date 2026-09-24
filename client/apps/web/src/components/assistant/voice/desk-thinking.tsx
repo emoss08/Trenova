@@ -1,200 +1,228 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import type { PartOfDay } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useReducedMotion } from "motion/react";
-import { useEffect, useState, type CSSProperties } from "react";
-import type { DeskPose, DeskWorkingPose } from "./desk-pose";
+import { useEffect, useId, useState, type CSSProperties } from "react";
+import type { DeskPose } from "./desk-pose";
 
-/** How long the closing pose holds before the mark is gone: the confirm spring and a beat. */
+/** How long the closing pose holds before the mark is gone. */
 export const DESK_SETTLE_MS = 420;
 
-/**
- * Three sizes on one 40 by 32 drawing. The stroke is set per size in the
- * drawing's own units so the line lands near the same weight on screen as an
- * icon's at every size, and the small details (a drawer, the wheels) are only
- * drawn where there are pixels to draw them with.
- */
-const SIZES = {
-  inline: { box: "h-4 w-5", stroke: 2.4, detail: false },
-  lg: { box: "h-8 w-10", stroke: 1.5, detail: true },
-  xl: { box: "h-12 w-15", stroke: 1.15, detail: true },
-} as const;
+/** The lines the screen scrolls through while a tool runs: two screens' worth, so the loop is seamless. */
+const SCROLL_LINES = [3.4, 2.2, 2.9, 3.4, 2.2, 2.9] as const;
 
-export type DeskMarkSize = keyof typeof SIZES;
+/** The lines written onto the screen while the answer arrives. */
+const WRITE_LINES = [
+  { width: 3.6, className: "animate-desk-write-1" },
+  { width: 2.6, className: "animate-desk-write-2" },
+  { width: 3.1, className: "animate-desk-write-3" },
+] as const;
 
-/** The chair's distance out from under the desk, in the drawing's units. */
-const CHAIR_OUT = "translate3d(3.5px, 0, 0)";
+/** The glow is the screen's own colour, read from the mark like every other part. */
+const GLOW_STOP: CSSProperties = { stopColor: "var(--desk-accent)" };
 
-const SCREEN_OPACITY: Record<DeskPose, string> = {
-  arrive: "var(--desk-screen-rest)",
-  busy: "var(--desk-screen-lit)",
-  write: "var(--desk-screen-lit)",
-  settle: "0",
-  idle: "var(--desk-screen-rest)",
-};
+const THINK_DOTS = [
+  { cx: 7.3, className: "animate-desk-think-1" },
+  { cx: 8.5, className: "animate-desk-think-2" },
+  { cx: 9.7, className: "animate-desk-think-3" },
+] as const;
 
 export type DeskMarkProps = {
   pose: DeskPose;
-  size?: DeskMarkSize;
   /**
-   * Whether the pose may move. Off, every pose is a still drawing of the same
-   * moment, which is what reduced motion and a list of rows both want.
+   * Whether the scene may move. Off, every pose is one still frame of the
+   * same moment, which is what reduced motion wants.
    */
   animate?: boolean;
-  /** Draws the sky and the lamp for this part of the day: the Desk's greeting. */
-  timeOfDay?: PartOfDay;
-  /** The page has just opened: the chair settles in and the lamp switches on, once. */
-  welcome?: boolean;
   className?: string;
 };
 
 /**
- * A desk drawn in the ink: a monitor on it, a pedestal of drawers, and a
- * chair that rolls in and out from under it.
+ * A small desk scene at the height of a line of text: a desk with a lamp on
+ * it, a monitor, and a person in a chair working at it.
  *
- * It is line work in `currentColor`, so it takes the colour of the text it
- * sits beside and follows the theme with nothing of its own. The one tinted
- * detail is the screen, which glows in the agent's accent where one is set
- * and in the ink where none is. The lamp's cone is the only warm light, and
- * it is only on in the evening.
+ * It is drawn in solid shapes on a 20 by 16 grid, one unit to a pixel at its
+ * resting size, so every edge lands on the pixel grid and nothing turns to
+ * mush the way a hairline does at 16px. The agent's accent is the person and
+ * the screen, and a tint in the chair; the furniture is warm wood and ink,
+ * and the lamp is the one warm light. Every colour is a token.
+ *
+ * The screen tells the story, frame by frame, the way a sprite does: dots
+ * while the model thinks, lines scrolling past while a tool runs, lines being
+ * written while the answer arrives. The person sits down once as the mark
+ * arrives, types while a tool runs, and pushes back from the desk when the
+ * turn is over.
  *
  * The drawing never announces anything; the component around it does.
  */
-export function DeskMark({
-  pose,
-  size = "inline",
-  animate = true,
-  timeOfDay,
-  welcome = false,
-  className,
-}: DeskMarkProps) {
-  const { box, stroke, detail } = SIZES[size];
-  const move = animate;
-  const lamp = timeOfDay === "evening";
-
-  const chairClass = cn(
-    "transition-transform duration-500 ease-settle",
-    move && pose === "arrive" && "animate-desk-roll",
-    move && pose === "settle" && "animate-desk-settle",
-    move && welcome && pose === "idle" && "animate-desk-arrive",
-  );
-  const chairStyle: CSSProperties | undefined =
-    pose === "arrive" && !move ? { transform: CHAIR_OUT } : undefined;
+export function DeskMark({ pose, animate = true, className }: DeskMarkProps) {
+  const settling = pose === "settle";
+  const typing = pose === "busy" || pose === "write";
+  const id = useId().replace(/[^\w-]/g, "");
+  const clipId = `desk-screen-${id}`;
+  const glowId = `desk-glow-${id}`;
 
   return (
     <svg
-      viewBox="0 0 40 32"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={stroke}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      overflow="visible"
+      viewBox="0 0 20 16"
       aria-hidden
       focusable="false"
       data-slot="desk-mark"
       data-pose={pose}
-      data-motion={move ? "moving" : "still"}
-      className={cn("shrink-0", box, className)}
+      data-motion={animate ? "moving" : "still"}
+      className={cn(
+        "ui-desk-mark h-4 w-5 shrink-0 overflow-visible",
+        animate && settling && "animate-desk-fade",
+        className,
+      )}
     >
-      {timeOfDay && <DeskSky timeOfDay={timeOfDay} rise={move && welcome} />}
+      <defs>
+        <clipPath id={clipId}>
+          <rect x="5.9" y="2.9" width="5.2" height="3.7" rx="0.45" />
+        </clipPath>
+        <radialGradient id={glowId}>
+          <stop offset="0.35" style={GLOW_STOP} />
+          <stop offset="1" stopOpacity="0" style={GLOW_STOP} />
+        </radialGradient>
+      </defs>
 
-      <g
-        data-part="desk"
-        className={cn(
-          "origin-bottom [transform-box:fill-box]",
-          move && pose === "busy" && "animate-desk-shake",
-        )}
-      >
-        {lamp && (
-          <path
-            data-part="lamp-light"
-            d="M7.4 8.8L11.2 7.8L13 15.5H6Z"
-            stroke="none"
-            className={cn("fill-[var(--desk-lamp-light)]", move && welcome && "animate-desk-lamp")}
-          />
-        )}
-        <rect
-          data-part="screen"
-          x="13"
-          y="4.5"
-          width="11"
-          height="8"
-          rx="1"
-          stroke="none"
-          className={cn(
-            "fill-[var(--agent-accent,currentColor)] transition-opacity duration-300 ease-settle",
-            move && pose === "write" && "animate-desk-screen",
-          )}
-          style={{ opacity: SCREEN_OPACITY[pose] }}
-        />
-        <rect x="13" y="4.5" width="11" height="8" rx="1" />
-        <path d="M18.5 12.5V15.5M2 15.5H29M4 15.5V29.5H11V15.5M26.5 15.5V29.5" />
-        {detail && <path d="M4 21.5H11M6.5 18.5H8.5" />}
-        {lamp && <path d="M5.5 15.5V9.5L8 7M8.2 5.6L7.4 8.8L11.2 7.8Z" />}
+      <g data-part="lamp">
+        <path d="M0.9 5.6L4.3 5.6L5.3 9L-0.1 9Z" className="fill-desk-lamp-light" />
+        <rect x="2" y="5" width="0.8" height="3.6" className="fill-desk-frame" />
+        <rect x="1" y="8.2" width="2.8" height="0.9" rx="0.45" className="fill-desk-frame" />
+        <path d="M0.8 5.8C0.8 3.3 4.4 3.3 4.4 5.8Z" className="fill-desk-lamp" />
       </g>
 
-      <g data-part="chair" className={chairClass} style={chairStyle}>
-        <path d="M27.5 21H34M34 21L35.5 12M30.75 21V26.5M27.5 26.5H34" />
-        {detail && (
-          <>
-            <circle cx="28" cy="28.6" r="1" />
-            <circle cx="33.5" cy="28.6" r="1" />
-          </>
+      <g data-part="desk">
+        <rect x="1.2" y="10" width="3.6" height="5.6" rx="0.4" className="fill-desk-wood-shade" />
+        <rect x="2.2" y="12.2" width="1.6" height="0.7" rx="0.35" className="fill-desk-wood" />
+        <rect x="0.4" y="9" width="13.6" height="1.4" rx="0.5" className="fill-desk-wood" />
+      </g>
+
+      <g data-part="monitor">
+        <ellipse
+          data-part="glow"
+          cx="8.5"
+          cy="4.75"
+          rx="6.5"
+          ry="5.5"
+          fill={`url(#${glowId})`}
+          className={cn(
+            "transition-opacity duration-300",
+            pose === "write" ? "opacity-(--desk-glow)" : "opacity-0",
+            animate && pose === "write" && "animate-desk-glow",
+          )}
+        />
+        <rect x="8" y="7.2" width="1" height="1.6" className="fill-desk-frame" />
+        <rect x="6.6" y="8.3" width="3.8" height="0.7" rx="0.35" className="fill-desk-frame" />
+        <rect x="5" y="2" width="7" height="5.5" rx="1" className="fill-desk-frame" />
+        <rect
+          data-part="screen"
+          x="5.9"
+          y="2.9"
+          width="5.2"
+          height="3.7"
+          rx="0.45"
+          className={cn(
+            "fill-desk-accent transition-opacity duration-300",
+            settling && "opacity-40",
+          )}
+        />
+        <rect x="10.9" y="8.4" width="2.4" height="0.6" rx="0.3" className="fill-desk-frame" />
+        <g clipPath={`url(#${clipId})`} className="fill-desk-screen-ink">
+          <ScreenContent pose={pose} animate={animate} />
+        </g>
+      </g>
+
+      <g
+        data-part="seat"
+        className={cn(
+          animate && !settling && "animate-desk-sit",
+          animate && settling && "animate-desk-settle",
         )}
+      >
+        <g data-part="chair" className="fill-desk-chair">
+          <rect x="17.3" y="4.9" width="1.6" height="6.3" rx="0.8" />
+          <rect x="13.9" y="10.1" width="5" height="1.1" rx="0.55" />
+          <rect x="15.9" y="11.2" width="1" height="2.5" />
+          <rect x="14.2" y="13.5" width="4.4" height="0.8" rx="0.4" />
+          <circle cx="14.8" cy="15.1" r="0.7" />
+          <circle cx="18" cy="15.1" r="0.7" />
+        </g>
+        <g
+          data-part="figure"
+          className={cn("fill-desk-figure", animate && !settling && "animate-desk-sit-figure")}
+        >
+          <circle cx="15.5" cy="4.3" r="1.7" />
+          <rect x="14.3" y="6.4" width="3" height="4.2" rx="1.3" />
+          <rect x="12.3" y="9.6" width="3.6" height="1.3" rx="0.65" />
+          <rect x="12.3" y="10.2" width="1.2" height="4.6" rx="0.6" />
+          <rect x="11.2" y="14.3" width="2.3" height="1" rx="0.5" />
+          <rect
+            data-part="arms"
+            x="11.9"
+            y="7.8"
+            width="3.8"
+            height="1"
+            rx="0.5"
+            className={cn(animate && typing && "animate-desk-type")}
+          />
+        </g>
       </g>
     </svg>
   );
 }
 
-/** Eight short rays around a small sun, drawn as one path. */
-function sunRays(cx: number, cy: number): string {
-  const segments: string[] = [];
-  for (let step = 0; step < 8; step += 1) {
-    const angle = (step * Math.PI) / 4;
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    segments.push(
-      `M${(cx + cos * 2.9).toFixed(2)} ${(cy + sin * 2.9).toFixed(2)}` +
-        `L${(cx + cos * 3.8).toFixed(2)} ${(cy + sin * 3.8).toFixed(2)}`,
-    );
+/** What is on the screen: the one part of the scene that changes with every phase. */
+function ScreenContent({ pose, animate }: { pose: DeskPose; animate: boolean }) {
+  switch (pose) {
+    case "arrive":
+      return (
+        <g data-part="thinking">
+          {THINK_DOTS.map((dot) => (
+            <circle
+              key={dot.cx}
+              cx={dot.cx}
+              cy="4.75"
+              r="0.5"
+              className={cn(animate && dot.className)}
+            />
+          ))}
+        </g>
+      );
+    case "busy":
+      return (
+        <g data-part="scrolling" className={cn(animate && "animate-desk-scroll")}>
+          {SCROLL_LINES.map((width, index) => (
+            <rect
+              key={`${index}-${width}`}
+              x="6.6"
+              y={3.45 + index}
+              width={width}
+              height="0.5"
+              rx="0.25"
+            />
+          ))}
+        </g>
+      );
+    case "write":
+      return (
+        <g data-part="writing">
+          {WRITE_LINES.map((line, index) => (
+            <rect
+              key={line.className}
+              x="6.6"
+              y={3.45 + index}
+              width={line.width}
+              height="0.5"
+              rx="0.25"
+              className={cn("origin-left [transform-box:fill-box]", animate && line.className)}
+            />
+          ))}
+        </g>
+      );
+    default:
+      return null;
   }
-
-  return segments.join("");
-}
-
-const MORNING_RAYS = sunRays(35, 7);
-const AFTERNOON_RAYS = sunRays(32.5, 4);
-
-/**
- * The part of the day, up in the corner of the drawing: a sun low in the
- * morning and high in the afternoon, and a moon once the lamp is on. It is
- * drawn a step lighter than the desk, because it is the room's weather and
- * not its furniture.
- */
-function DeskSky({ timeOfDay, rise }: { timeOfDay: PartOfDay; rise: boolean }) {
-  const className = cn("opacity-60", rise && "animate-rise");
-  const style: CSSProperties | undefined = rise ? { animationDelay: "360ms" } : undefined;
-
-  if (timeOfDay === "evening") {
-    return (
-      <path
-        data-part="moon"
-        d="M37 3.2A3.2 3.2 0 1 0 37 9.2A3 3 0 1 1 37 3.2Z"
-        className={className}
-        style={style}
-      />
-    );
-  }
-
-  const morning = timeOfDay === "morning";
-
-  return (
-    <g data-part="sun" className={className} style={style}>
-      <circle cx={morning ? 35 : 32.5} cy={morning ? 7 : 4} r="1.8" />
-      <path d={morning ? MORNING_RAYS : AFTERNOON_RAYS} />
-    </g>
-  );
 }
 
 export type ThinkingPresence = "working" | "settling" | "gone";
@@ -203,9 +231,8 @@ export type ThinkingPresence = "working" | "settling" | "gone";
  * Whether the working mark is on screen, and in which state.
  *
  * It is there while the work is, and the moment the work stops it takes the
- * closing pose for one beat and is gone. A mark that may not move — reduced
- * motion, or a still mark in a row — has no closing pose to show, so it goes
- * at once.
+ * closing pose for one beat and is gone. Under reduced motion there is no
+ * closing pose to show, so it goes at once.
  */
 export function useThinkingPresence(working: boolean, canSettle: boolean): ThinkingPresence {
   const [settling, setSettling] = useState(false);
@@ -232,63 +259,26 @@ export function useThinkingPresence(working: boolean, canSettle: boolean): Think
   return settling ? "settling" : "gone";
 }
 
-export type DeskThinkingProps = {
-  /** Whether the agent is at work. The mark is absent when it is not. */
-  working: boolean;
-  pose?: DeskWorkingPose;
-  size?: Exclude<DeskMarkSize, "xl">;
-  /**
-   * Keeps the drawing and drops the motion. A list marks many rows at once
-   * and stays on screen while the person works elsewhere in it, so a desk
-   * moving on each would be a column of motion on a working screen; there the
-   * mark says "under way" by being there.
-   */
-  still?: boolean;
-  /**
-   * The words beside the mark already say what is happening, so the mark is
-   * hidden from assistive technology rather than announced twice.
-   */
-  decorative?: boolean;
-  className?: string;
-};
-
 /**
- * The live indicator: the drawn desk at work, for as long as an agent is.
+ * The live indicator on the working line: the desk scene at work, for as
+ * long as the agent is.
  *
- * This is the only loop in the product, and it earns the exception the way a
- * heartbeat monitor does — it moves because the thing it describes is still
- * going, and it stops the instant that stops. Then the chair tucks in on the
- * confirm spring and the mark is gone.
- *
- * It is one shape in one place so that "something is happening" reads the
- * same in the working line, on a tool step and anywhere else it turns up.
+ * It lives in one place only, beside the words of the working line under a
+ * reply in progress. Everywhere else a small thing still going is the
+ * breathing dot; this is the one that gets to be a scene, because it sits
+ * beside the words that say what the scene shows.
  *
  * Announced, it is a status with a fixed name and no content that changes,
- * so a screen reader hears that the work is under way once and is never
- * told about the drawing moving.
+ * so a screen reader hears that the work is under way once and is never told
+ * about the drawing moving. Settling, it is already over, so it says nothing.
  */
-export function DeskThinking({
-  working,
-  pose = "arrive",
-  size = "inline",
-  still = false,
-  decorative = false,
-  className,
-}: DeskThinkingProps) {
+export function DeskThinking({ pose, className }: { pose: DeskPose; className?: string }) {
   const t = useT();
   const reduceMotion = useReducedMotion() ?? false;
-  const animate = !still && !reduceMotion;
-  const presence = useThinkingPresence(working, animate);
-
-  if (presence === "gone") {
-    return null;
-  }
-
-  const settling = presence === "settling";
-  const mark = <DeskMark pose={settling ? "settle" : pose} size={size} animate={animate} />;
   const frame = cn("inline-flex shrink-0 items-center justify-center", className);
+  const mark = <DeskMark pose={pose} animate={!reduceMotion} />;
 
-  if (decorative || settling) {
+  if (pose === "settle") {
     return (
       <span aria-hidden data-slot="desk-thinking" className={frame}>
         {mark}

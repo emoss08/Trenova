@@ -28,3 +28,20 @@ func TestMatchesWordPrefixes(t *testing.T) {
 	assert.True(t, MatchesWordPrefixes(SearchWords("detention"), "Dwell", "stop-dwell-and-detention"),
 		"any of the texts can carry a word")
 }
+
+func TestSearchableKey_ReadsACamelCaseKeyAsWords(t *testing.T) {
+	t.Parallel()
+
+	key := SearchableKey("scheduledWindowEnd")
+	assert.True(t, MatchesWordPrefixes(SearchWords("window"), key))
+	assert.True(t, MatchesWordPrefixes(SearchWords("scheduled end"), key))
+	assert.True(t, MatchesWordPrefixes(SearchWords("scheduledWindowEnd"), key),
+		"the key itself still finds it")
+	assert.False(t, MatchesWordPrefixes(SearchWords("indow"), key))
+
+	dotted := SearchableKey("destinationStop.actualArrival")
+	assert.True(t, MatchesWordPrefixes(SearchWords("arrival"), dotted))
+	assert.True(t, MatchesWordPrefixes(SearchWords("destination stop"), dotted))
+	assert.True(t, MatchesWordPrefixes(SearchWords("edi inbound"), SearchableKey("EDIInboundFile")))
+	assert.Empty(t, SearchableKey(""))
+}

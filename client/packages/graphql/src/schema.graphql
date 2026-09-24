@@ -1493,12 +1493,14 @@ enum AgentSubjectType {
   BankReceipt
   BillingQueueItem
   CarrierIntelEvent
+  Dashboard
   DetentionOccurrence
   Document
   EDIInboundFile
   InboundMessage
   Insight
   Organization
+  Report
   Shipment
   ShipmentMove
   Worker

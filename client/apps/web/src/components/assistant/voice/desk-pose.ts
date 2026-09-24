@@ -4,18 +4,17 @@ import { isTurnActive, type TurnState } from "../turn-stream";
 /**
  * What the drawn desk is doing while an agent works.
  *
- * - arrive: waiting on the model; the chair rolls out, someone sits, it rolls back in
- * - busy: a tool is running; the desk gives a small busy shake
- * - write: the answer is arriving; the monitor pulses softly
+ * - arrive: waiting on the model; dots on the screen, one frame at a time
+ * - busy: a tool is running; hands on the keys and the screen scrolling
+ * - write: the answer is arriving; lines written onto a glowing screen
  */
 export type DeskWorkingPose = "arrive" | "busy" | "write";
 
 /**
- * Every pose the drawing has. `settle` closes a turn (the chair tucks in and
- * the screen goes dark); `idle` is the desk at rest, as the Desk's greeting
- * draws it.
+ * Every pose the drawing has. `settle` closes a turn: the person pushes back
+ * from the desk, the screen goes dark and the scene fades.
  */
-export type DeskPose = DeskWorkingPose | "settle" | "idle";
+export type DeskPose = DeskWorkingPose | "settle";
 
 /**
  * The pose for the moment of a turn, read the same way as the working line's
