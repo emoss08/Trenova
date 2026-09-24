@@ -44,6 +44,10 @@ type dispatchParams struct {
 	// idempotencyKey names this operation to the tool. It is the run's step
 	// key where there is a ledger, and the provider's call id otherwise.
 	idempotencyKey string
+	// afterExternal holds every write to a proposal: the turn has read
+	// content from outside the organization, which may have been written to
+	// steer it.
+	afterExternal bool
 }
 
 func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
@@ -53,7 +57,10 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	proposedSoFar := p.proposedSoFar
 	// The loop refuses a tool the agent does not hold before it gets here, with
 	// the nearest tools it does hold; this is the backstop for any other caller.
-	if !s.holds(req.Definition, call.Name) {
+	if refusal, refused := s.extensionRefusal(ctx, req, call.Name); refused {
+		return refusal
+	}
+	if !s.holdsFor(ctx, req, call.Name) {
 		return failedOutcome("Tool %q is not available to this agent.", call.Name)
 	}
 
@@ -121,8 +128,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		Params:     tierParams,
 		Definition: req.Definition,
 		Unattended: req.Unattended,
-		Taint:      &agent.RunTaint{},
+		Taint:      externalTaint(p.afterExternal),
 	}).Tier
+	tier, heldForExternal := afterExternalContent(tier, p.afterExternal)
 	action := &serviceports.PendingAction{
 		ToolName:  call.Name,
 		Arguments: call.Arguments,
@@ -172,6 +180,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			call.Name,
 			tier,
 		)
+		if heldForExternal {
+			content += externalContentNote
+		}
 		if req.Definition.SimulationMode {
 			content += " This agent is in simulation: an approval will preview the change, not make it."
 		}

@@ -170,6 +170,12 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 	ResourceWatchtower: {
 		OpRead: {},
 	},
+	// Searching and reading public pages, through an extension the
+	// organization turned on. What the agent reads there can only lead to a
+	// proposal for the rest of its run, never an automatic write.
+	ResourceWebResearch: {
+		OpRead: {},
+	},
 	ResourceBriefing: {
 		OpRead: {},
 	},

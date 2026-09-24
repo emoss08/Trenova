@@ -6770,11 +6770,13 @@
     ]
   },
   "API key": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "domain/agentextension",
       "routes/agent-control"
     ]
   },
@@ -10194,6 +10196,15 @@
       "routes/formula-template"
     ]
   },
+  "Add its tools to an agent in Agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Add lane": {
     "sites": 1,
     "scope": [
@@ -12190,6 +12201,24 @@
       "routes/desk"
     ]
   },
+  "Agents can look up current regulations, rules and public information — hours of service, ELD requirements, hazmat placarding, IFTA filing — and cite the page and its date instead of answering from memory. Government sites are ranked first and marked as official.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentextensionservice"
+    ]
+  },
+  "Agents can use its tools only while it is on and its API key is saved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Agents cannot be started on this deployment": {
     "sites": 1,
     "scope": [
@@ -12227,6 +12256,24 @@
     ]
   },
   "Agents resumed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agents searching and reading public web pages on a person's behalf, through an enabled extension": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Agents you choose": {
     "sites": 1,
     "scope": [
       "ts"
@@ -12546,7 +12593,7 @@
     ]
   },
   "All": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -12554,6 +12601,7 @@
       "apps/web/components",
       "packages/shared/lib",
       "routes/admin",
+      "routes/agent-control",
       "routes/carrier-invoice-matching",
       "routes/carrier-monitoring",
       "routes/carrier-settlement-workspace",
@@ -12641,12 +12689,13 @@
     ]
   },
   "All categories": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/reports"
     ]
   },
@@ -14814,6 +14863,15 @@
     ],
     "areas": [
       "domain/iam"
+    ]
+  },
+  "An enabled extension must record who enabled it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentextension"
     ]
   },
   "An enabled integration must record who enabled it": {
@@ -21616,6 +21674,15 @@
       "routes/agent-control"
     ]
   },
+  "Availability is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentextension"
+    ]
+  },
   "Available": {
     "sites": 2,
     "scope": [
@@ -21687,6 +21754,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Available to": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Available {0}": {
@@ -25788,13 +25864,14 @@
     ]
   },
   "Business unit is required": {
-    "sites": 115,
+    "sites": 116,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/agent",
       "domain/agentdefinition",
+      "domain/agentextension",
       "domain/agentquality",
       "domain/aifeedback",
       "domain/ailog",
@@ -25948,6 +26025,15 @@
       "routes/fleet-safety",
       "routes/my-team",
       "routes/org-structure"
+    ]
+  },
+  "By {0} · {1}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Bypass review within tolerance": {
@@ -26537,7 +26623,7 @@
     ]
   },
   "Cancel": {
-    "sites": 251,
+    "sites": 252,
     "scope": [
       "ts"
     ],
@@ -27625,6 +27711,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Capabilities turned on for agents only, such as web research, and their credentials": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Capability is listed more than once": {
@@ -29284,7 +29379,7 @@
     ]
   },
   "Category": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -33234,7 +33329,7 @@
     ]
   },
   "Close": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "ts"
     ],
@@ -33243,6 +33338,7 @@
       "apps/web/components",
       "packages/shared/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/carrier",
       "routes/carrier-monitoring",
@@ -36911,6 +37007,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Connection works": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Consent expires": {
@@ -44089,6 +44194,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Daily request limit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentextension"
     ]
   },
   "Daily sweep for expiring driver credentials (CDL, medical, MVR, ...)": {
@@ -52515,12 +52629,13 @@
     ]
   },
   "Documentation": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/agent-control"
     ]
   },
   "Documentation requirements": {
@@ -60666,6 +60781,15 @@
     ]
   },
   "Every agent": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Every agent can use it": {
     "sites": 1,
     "scope": [
       "ts"
@@ -62112,6 +62236,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Excluded sites": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentextension"
     ]
   },
   "Exclusive consolidation": {
@@ -64048,6 +64181,24 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Extensions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Extensions give agents abilities that work only inside AI features, using your organization's own account with the vendor.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "External EDI partner created": {
@@ -67855,6 +68006,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Finds public pages about a topic and returns short passages from each.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentextensionservice"
     ]
   },
   "Fine": {
@@ -77743,6 +77903,15 @@
       "routes/agent-control"
     ]
   },
+  "Including the assistant": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Income Statement": {
     "sites": 2,
     "scope": [
@@ -85336,6 +85505,24 @@
       "domain/trailer"
     ]
   },
+  "Let agents search and read the web for this person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Let agents search the web and read pages when an answer is not in Trenova.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentextensionservice"
+    ]
+  },
   "Let dispatch know so they can plan around you.": {
     "sites": 1,
     "scope": [
@@ -89185,11 +89372,12 @@
     ]
   },
   "Manage": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/inbox",
       "routes/my-team",
       "routes/settlement-workspace",
@@ -96331,12 +96519,13 @@
     ]
   },
   "Needs setup": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Needs the hours worked from the 300A figures": {
@@ -99411,6 +99600,24 @@
       "apps/web/components"
     ]
   },
+  "No extensions available": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "No extensions match these filters.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No external identities found.": {
     "sites": 1,
     "scope": [
@@ -100260,6 +100467,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No more than 100 sites can be excluded": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentextension"
     ]
   },
   "No moves were included in this load tender.": {
@@ -102572,6 +102788,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "None on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "None on file": {
@@ -105512,7 +105737,7 @@
     ]
   },
   "Off": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -105962,11 +106187,12 @@
     ]
   },
   "On": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/carrier-invoice-matching"
     ]
   },
@@ -107375,6 +107601,15 @@
     ],
     "areas": [
       "domain/carriersettlement"
+    ]
+  },
+  "Only agents it is added to can use it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Only agents people talk to can be asked": {
@@ -111162,13 +111397,14 @@
     ]
   },
   "Organization is required": {
-    "sites": 114,
+    "sites": 115,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/agent",
       "domain/agentdefinition",
+      "domain/agentextension",
       "domain/agentquality",
       "domain/aifeedback",
       "domain/ailog",
@@ -123051,7 +123287,7 @@
       "routes/agent-control"
     ]
   },
-  "Providers say where AI work goes, agents say what it may do, and activity shows what it did.": {
+  "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, and activity shows what it did.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -126396,6 +126632,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "Read a web page": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentextensionservice"
+    ]
+  },
   "Read and update access": {
     "sites": 2,
     "scope": [
@@ -126692,6 +126937,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Reads the full text of a page a search returned.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentextensionservice"
     ]
   },
   "Reads the price from a grid instead of a rating method — the matrix's own rating method says what its cells mean": {
@@ -135393,6 +135647,15 @@
       "domain/shipmentimportchat"
     ]
   },
+  "Results per search": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentextension"
+    ]
+  },
   "Resume": {
     "sites": 6,
     "scope": [
@@ -140302,6 +140565,15 @@
       "routes/worker"
     ]
   },
+  "Save an API key first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Save and close": {
     "sites": 1,
     "scope": [
@@ -140339,7 +140611,7 @@
     ]
   },
   "Save changes": {
-    "sites": 42,
+    "sites": 43,
     "scope": [
       "ts"
     ],
@@ -140347,6 +140619,7 @@
       "apps/web/components",
       "routes/accounting-control",
       "routes/admin",
+      "routes/agent-control",
       "routes/billing-control",
       "routes/carrier-settlement-control",
       "routes/cost-control",
@@ -140900,7 +141173,7 @@
     ]
   },
   "Saving...": {
-    "sites": 58,
+    "sites": 59,
     "scope": [
       "ts"
     ],
@@ -142218,6 +142491,24 @@
       "routes/home"
     ]
   },
+  "Search depth": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentextension"
+    ]
+  },
+  "Search depth must be auto, fast or deep": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentextension"
+    ]
+  },
   "Search driver or number": {
     "sites": 1,
     "scope": [
@@ -142261,6 +142552,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Search extensions": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Search facility, customer, PRO": {
@@ -142648,6 +142948,15 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "Search the web": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentextensionservice"
     ]
   },
   "Search tools": {
@@ -147507,11 +147816,12 @@
     ]
   },
   "Set up": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/fuel-purchase"
     ]
   },
@@ -148236,6 +148546,15 @@
     ],
     "areas": [
       "routes/my-team"
+    ]
+  },
+  "Share of today's request limit used": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Share of today's rostered people who can work": {
@@ -152130,11 +152449,12 @@
     ]
   },
   "Sort by": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/carrier-sourcing"
     ]
   },
@@ -154366,7 +154686,7 @@
     ]
   },
   "Status": {
-    "sites": 235,
+    "sites": 236,
     "scope": [
       "go",
       "ts"
@@ -159252,12 +159572,13 @@
     ]
   },
   "Test connection": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -159335,12 +159656,13 @@
     ]
   },
   "Testing...": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Tests": {
@@ -163023,6 +163345,15 @@
       "domain/documenttemplate"
     ]
   },
+  "The extensions could not be loaded. Reload the page to try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The extracted shipment draft is ready for review.": {
     "sites": 1,
     "scope": [
@@ -166692,6 +167023,15 @@
       "packages/shared/components"
     ]
   },
+  "The settings could not be loaded. Close the dialog and try again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The settlement this concerns, so a driver can find it in their history.": {
     "sites": 1,
     "scope": [
@@ -168235,6 +168575,15 @@
       "routes/desk"
     ]
   },
+  "There is no extension named {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentextensionservice"
+    ]
+  },
   "There is no leave to end": {
     "sites": 1,
     "scope": [
@@ -168350,6 +168699,15 @@
     ],
     "areas": [
       "template/report.delivery.email"
+    ]
+  },
+  "These settings were changed by someone else while you were editing. Reload and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentextensionservice"
     ]
   },
   "These thresholds came from Trenova's researched baseline and have not been confirmed against the issuing authority by your organization. Verify them in jurisdiction rules before relying on them for a permit filing.": {
@@ -169452,6 +169810,15 @@
       "routes/insights"
     ]
   },
+  "This extension was set up by someone else while you were editing. Reload and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This extraction has no AI provider recorded and cannot be checked — run it again": {
     "sites": 1,
     "scope": [
@@ -169729,6 +170096,15 @@
     ],
     "areas": [
       "service/fuelpurchaseservice"
+    ]
+  },
+  "This installation does not offer any extensions yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "This interchange was already processed and was skipped.": {
@@ -175746,6 +176122,15 @@
       "routes/worker"
     ]
   },
+  "Turn extensions on or off, change their settings and test them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Turn index cannot be negative": {
     "sites": 1,
     "scope": [
@@ -175798,6 +176183,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Turn on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Turn this off to keep the series as an on-demand template — occurrences are only created when someone runs Generate Now.": {
@@ -175924,11 +176318,12 @@
     ]
   },
   "Type is required": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/agentextension",
       "domain/email",
       "domain/formulatemplate",
       "domain/iam",
@@ -181048,6 +181443,15 @@
       "domain/permission"
     ]
   },
+  "View": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "View AI providers": {
     "sites": 1,
     "scope": [
@@ -182087,6 +182491,15 @@
     ]
   },
   "View test records, violations and Clearinghouse queries": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "View the extension marketplace": {
     "sites": 1,
     "scope": [
       "go"
@@ -191313,6 +191726,24 @@
       "routes/carrier-settlement"
     ]
   },
+  "could not check the extension's daily limit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentextensionservice"
+    ]
+  },
+  "could not read which extensions are turned on": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdefinitionservice"
+    ]
+  },
   "count_distinct is not supported across to-many relationships": {
     "sites": 2,
     "scope": [
@@ -197695,6 +198126,15 @@
       "domain/rateagreement"
     ]
   },
+  "{0} cannot be tested": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentextensionservice"
+    ]
+  },
   "{0} cannot exceed {1}": {
     "sites": 2,
     "scope": [
@@ -198712,6 +199152,15 @@
       "routes/admin"
     ]
   },
+  "{0} is on for your agents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} is open again": {
     "sites": 2,
     "scope": [
@@ -199439,7 +199888,7 @@
     ]
   },
   "{0} of {1} on": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -199454,6 +199903,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} of {1} requests today": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} of {1} required courses are current.": {
@@ -200186,6 +200644,15 @@
       "routes/ar-open-items"
     ]
   },
+  "{0} settings saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} settled {1} across {2} {3} · {4}% ran past free time {5}": {
     "sites": 1,
     "scope": [
@@ -200302,6 +200769,15 @@
     ],
     "areas": [
       "template/rateconfirmation.pdf"
+    ]
+  },
+  "{0} this month": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} this resource": {

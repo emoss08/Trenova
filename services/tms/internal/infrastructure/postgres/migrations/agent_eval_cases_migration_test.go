@@ -1,7 +1,6 @@
 package migrations
 
 import (
-	"io/fs"
 	"regexp"
 	"strings"
 	"testing"
@@ -15,15 +14,6 @@ const (
 	evalCasesDown = "20261231005710_agent_eval_cases.tx.down.sql"
 	retentionUp   = "20261231005720_agent_eval_case_retention.tx.up.sql"
 )
-
-func readMigration(t *testing.T, name string) string {
-	t.Helper()
-
-	body, err := fs.ReadFile(sqlMigrations, name)
-	require.NoError(t, err)
-
-	return string(body)
-}
 
 func createTableColumns(t *testing.T, body, table string) map[string]string {
 	t.Helper()

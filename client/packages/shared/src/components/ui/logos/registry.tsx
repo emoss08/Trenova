@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { AnthropicLogo } from "./anthropic";
 import { AWSLogo } from "./aws";
 import { DeepSeekLogo } from "./deepseek";
+import { ExaLogo } from "./exa";
 import { FireworksLogo } from "./fireworks";
 import { GeminiLogo } from "./gemini";
 import { GroqLogo } from "./groq";
@@ -63,6 +64,7 @@ const MARKS_BY_DOMAIN: Record<string, BrandMark> = {
   "together.ai": TogetherLogo,
   "together.xyz": TogetherLogo,
   "fireworks.ai": FireworksLogo,
+  "exa.ai": ExaLogo,
 };
 
 export type BrandMarkLookup = {

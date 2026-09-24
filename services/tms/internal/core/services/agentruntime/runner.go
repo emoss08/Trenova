@@ -37,6 +37,8 @@ type Params struct {
 	// cap is refused before it runs.
 	Budgets serviceports.AgentBudgetService       `optional:"true"`
 	Trust   repositories.AgentToolTrustRepository `optional:"true"`
+	// Extensions is optional. Without it no extension's tools are offered.
+	Extensions serviceports.AgentExtensionGate `optional:"true"`
 }
 
 type Service struct {
@@ -49,6 +51,7 @@ type Service struct {
 	versions    serviceports.RecordVersionReader
 	budgets     serviceports.AgentBudgetService
 	trust       repositories.AgentToolTrustRepository
+	extensions  serviceports.AgentExtensionGate
 }
 
 func New(p Params) *Service {
@@ -62,6 +65,7 @@ func New(p Params) *Service {
 		versions:    p.Versions,
 		budgets:     p.Budgets,
 		trust:       p.Trust,
+		extensions:  p.Extensions,
 	}
 }
 
@@ -320,13 +324,16 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 			}
 
 			outcome := fx.Dispatch(t, DispatchCall{
-				Call:           call,
-				CompletionText: completion.Text,
-				ProposedSoFar:  result.Actions,
-				Ordinal:        t.counts.next(call),
+				Call:                 call,
+				CompletionText:       completion.Text,
+				ProposedSoFar:        result.Actions,
+				Ordinal:              t.counts.next(call),
+				AfterExternalContent: t.external,
 			}).internal()
 			if outcome.failed {
 				t.repeats.record(call, outcome.content)
+			} else if ReadsExternalContent(call.Name) {
+				t.external = true
 			}
 			result.ToolCallsUsed++
 			s.recordToolResult(t, fx, call, outcome)
@@ -593,7 +600,13 @@ const truncationNotice = "\n\n_This reply was cut off before it finished. " +
 func (s *Service) ToolSummaries(
 	definition *agentdefinition.Definition,
 ) []agentdefinition.ToolSummary {
-	names := s.heldTools(definition)
+	return s.summarize(definition, s.heldTools(definition))
+}
+
+func (s *Service) summarize(
+	definition *agentdefinition.Definition,
+	names []string,
+) []agentdefinition.ToolSummary {
 	summaries := make([]agentdefinition.ToolSummary, 0, len(names))
 
 	for _, name := range names {

@@ -3,6 +3,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import { useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
 import { lazy, useCallback, useMemo } from "react";
 import {
@@ -15,10 +16,13 @@ import {
 import { ControlRail } from "./_components/control-rail";
 import { buildRailItems, type ActivityView } from "./_components/rail-items";
 import { useAIControlStats } from "./_components/overview/use-ai-control-stats";
+import { extensionState } from "./_components/extensions/extension-roster";
+import { queries } from "@/lib/queries";
 
 const OverviewTab = lazy(() => import("./_components/overview/overview-tab"));
 const AgentsTab = lazy(() => import("./_components/agents/agents-tab"));
 const ProvidersTab = lazy(() => import("./_components/providers/providers-tab"));
+const ExtensionsTab = lazy(() => import("./_components/extensions/extensions-tab"));
 const MemoryTab = lazy(() => import("./_components/memory/memory-tab"));
 const ActivityTab = lazy(() => import("./_components/activity/activity-tab"));
 
@@ -39,8 +43,18 @@ export function AgentControlPage() {
   const { allowed: canReadProposals } = usePermission(Resource.AgentProposal, Operation.Read);
   const { allowed: canReadExceptions } = usePermission(Resource.AgentException, Operation.Read);
   const { allowed: canReadMemory } = usePermission(Resource.AgentMemory, Operation.Read);
+  const { allowed: canReadExtensions } = usePermission(Resource.AgentExtension, Operation.Read);
 
   const stats = useAIControlStats();
+  const extensionsQuery = useQuery({
+    ...queries.agentExtension.catalog(),
+    enabled: canReadExtensions,
+  });
+  const extensionItems = extensionsQuery.data?.items;
+  const extensionsOn = useMemo(
+    () => extensionItems?.filter((item) => extensionState(item) === "on").length ?? 0,
+    [extensionItems],
+  );
   const items = useMemo(
     () =>
       buildRailItems(
@@ -54,10 +68,13 @@ export function AgentControlPage() {
               pendingProposals: stats.counts?.pendingProposals ?? 0,
               runsLast24h: stats.counts?.runsLast24h ?? 0,
               memoriesActive: stats.counts?.memoriesActive ?? 0,
+              extensionsOn,
+              extensionsTotal: extensionItems?.length ?? 0,
             },
         {
           agents: canReadAgents,
           providers: canReadProviders,
+          extensions: canReadExtensions,
           runs: canReadRuns,
           proposals: canReadProposals,
           exceptions: canReadExceptions,
@@ -68,6 +85,9 @@ export function AgentControlPage() {
     [
       canReadAgents,
       canReadExceptions,
+      canReadExtensions,
+      extensionItems?.length,
+      extensionsOn,
       canReadMemory,
       canReadProposals,
       canReadProviders,
@@ -109,7 +129,7 @@ export function AgentControlPage() {
       pageHeaderProps={{
         title: t("AI control"),
         description: t(
-          "Providers say where AI work goes, agents say what it may do, and activity shows what it did.",
+          "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, and activity shows what it did.",
         ),
       }}
     >
@@ -127,6 +147,7 @@ export function AgentControlPage() {
             )}
             {activeTab === "agents" && <AgentsTab />}
             {activeTab === "providers" && <ProvidersTab />}
+            {activeTab === "extensions" && <ExtensionsTab />}
             {activeTab === "memory" && <MemoryTab />}
             {activeTab === "activity" && <ActivityTab view={activeView} />}
           </DataTableLazyComponent>

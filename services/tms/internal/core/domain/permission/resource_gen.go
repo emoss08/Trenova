@@ -126,6 +126,8 @@ const (
 	ResourceAgentException  Resource = "agent_exception"
 	ResourceAgentControl    Resource = "agent_control"
 	ResourceAIProvider      Resource = "ai_provider"
+	ResourceAgentExtension  Resource = "agent_extension"
+	ResourceWebResearch     Resource = "web_research"
 	ResourceAgentDefinition Resource = "agent_definition"
 	ResourceAgentMemory     Resource = "agent_memory"
 	ResourceAgentEvalSuite  Resource = "agent_eval_suite"

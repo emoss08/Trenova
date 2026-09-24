@@ -22,6 +22,8 @@ function tool(overrides: Partial<ToolCatalogEntry>): ToolCatalogEntry {
     reversible: false,
     core: false,
     prerequisites: [],
+    extension: "",
+    grantedToEveryAgent: false,
     ...overrides,
   };
 }
@@ -163,5 +165,35 @@ describe("impliedReads", () => {
 
   it("does not repeat a read that was chosen outright", () => {
     expect(impliedReads(["create_dashboard", "list_reports"], withDependencies)).toEqual([]);
+  });
+});
+
+describe("extension tools", () => {
+  const webSearch = tool({
+    name: "web_search",
+    resource: "web_research",
+    extension: "Exa",
+    grantedToEveryAgent: true,
+  });
+  const webRead = tool({ name: "web_read", resource: "web_research", extension: "Exa" });
+
+  // An extension turned on for every agent gives its tools to all of them, so
+  // a checkbox for one would change nothing.
+  it("shows a tool given to every agent as always on", () => {
+    const { core, selectable } = splitCoreTools([tool({}), webSearch, webRead]);
+
+    expect(core.map((entry) => entry.name)).toEqual(["web_search"]);
+    expect(selectable.map((entry) => entry.name)).toEqual(["get_shipment", "web_read"]);
+  });
+
+  it("does not count a tool every agent already holds as chosen", () => {
+    const summary = summarizeSelection(
+      ["get_shipment", "web_search", "web_read"],
+      [tool({}), webSearch, webRead],
+      {},
+      "Propose",
+    );
+
+    expect(summary).toMatchObject({ reads: 2, changes: 0, unknown: [] });
   });
 });

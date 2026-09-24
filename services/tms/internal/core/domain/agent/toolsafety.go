@@ -129,6 +129,7 @@ const (
 	TaintSourceAttachment     = TaintSource("attachment")
 	TaintSourceMemory         = TaintSource("memory")
 	TaintSourceRunRecord      = TaintSource("run_record")
+	TaintSourceWeb            = TaintSource("web")
 )
 
 func (s TaintSource) IsValid() bool {
@@ -140,7 +141,8 @@ func (s TaintSource) IsValid() bool {
 		TaintSourceWeather,
 		TaintSourceAttachment,
 		TaintSourceMemory,
-		TaintSourceRunRecord:
+		TaintSourceRunRecord,
+		TaintSourceWeb:
 		return true
 	default:
 		return false
