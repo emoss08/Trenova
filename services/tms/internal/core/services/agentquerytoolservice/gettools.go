@@ -82,7 +82,7 @@ func (s getSpec) idDescription() string {
 
 func (t *getTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

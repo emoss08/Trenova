@@ -27,13 +27,13 @@ func AsMemoryVectorSearcher(s *Searcher) serviceports.MemoryVectorSearcher { ret
 
 func (s *Searcher) SimilarMemories(
 	ctx context.Context,
-	req serviceports.SimilarMemoriesRequest,
+	req *serviceports.SimilarMemoriesRequest,
 ) (serviceports.SimilarMemories, error) {
 	result := serviceports.SimilarMemories{
 		Memories: []serviceports.MemorySimilarity{},
 		Floor:    s.tuning.SimilarityFloor,
 	}
-	if req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
+	if req == nil || req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
 		return result, errors.New("similar memories need an organization and a business unit")
 	}
 
@@ -95,7 +95,7 @@ func (s *Searcher) SimilarMemories(
 
 func (s *Searcher) memoryQuery(
 	ctx context.Context,
-	req serviceports.SimilarMemoriesRequest,
+	req *serviceports.SimilarMemoriesRequest,
 ) (serviceports.QueryVector, airetrieval.UnavailableReason) {
 	if req.Query.Usable() {
 		return req.Query, ""
@@ -153,14 +153,18 @@ func NewMemoryRankerFrom(
 
 func (r *MemoryRanker) RankMemories(
 	ctx context.Context,
-	req serviceports.RankMemoriesRequest,
+	req *serviceports.RankMemoriesRequest,
 ) ([]*agent.Memory, error) {
+	if req == nil {
+		return []*agent.Memory{}, nil
+	}
+
 	recency := agentmemoryservice.RankByRecencyAndUse(req.Memories, req.Now)
 	if !req.Query.Usable() || len(recency) < 2 {
 		return recency, nil
 	}
 
-	similar, err := r.searcher.SimilarMemories(ctx, serviceports.SimilarMemoriesRequest{
+	similar, err := r.searcher.SimilarMemories(ctx, &serviceports.SimilarMemoriesRequest{
 		TenantInfo: req.TenantInfo,
 		Query:      req.Query,
 		Limit:      MaxSimilarMemories,

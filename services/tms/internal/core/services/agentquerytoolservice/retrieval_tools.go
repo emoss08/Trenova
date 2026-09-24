@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -20,6 +21,10 @@ const (
 	documentSearchMaxLimit     = 10
 	inboundSearchDefaultLimit  = 5
 	inboundSearchMaxLimit      = 10
+
+	paramQuery = "query"
+	paramLimit = "limit"
+	paramPage  = "page"
 )
 
 var errSearchQueryRequired = errors.New("query is required: say what to search for")
@@ -32,7 +37,7 @@ type retrievalOutcome struct {
 	tainted []agent.RecordRef
 }
 
-func (o retrievalOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
+func (o *retrievalOutcome) TaintedRecords() []agent.RecordRef { return o.tainted }
 
 func searchedBy(semantics serviceports.RetrievalSemantics) string {
 	if semantics.Used {
@@ -49,12 +54,16 @@ func searchedBy(semantics serviceports.RetrievalSemantics) string {
 		return "words only: meaning search is paused at this month's indexing budget"
 	case airetrieval.UnavailableReasonDisabled:
 		return "words only: meaning search is turned off for these records"
-	default:
-		return "words only: meaning search is not set up"
+	case airetrieval.UnavailableReasonExtensionMissing,
+		airetrieval.UnavailableReasonSchemaMissing,
+		airetrieval.UnavailableReasonTooOld,
+		airetrieval.UnavailableReasonNoProvider:
 	}
+
+	return "words only: meaning search is not set up"
 }
 
-func retrievalAttribution(params serviceports.QueryToolParams) serviceports.AIUsageAttribution {
+func retrievalAttribution(params *serviceports.QueryToolParams) serviceports.AIUsageAttribution {
 	attribution := serviceports.AIUsageAttribution{AgentDefinitionID: params.AgentDefinitionID}
 	if params.Actor != nil {
 		attribution.UserID = params.Actor.UserID
@@ -63,8 +72,8 @@ func retrievalAttribution(params serviceports.QueryToolParams) serviceports.AIUs
 	return attribution
 }
 
-func searchQuery(params serviceports.QueryToolParams) (string, error) {
-	query := strings.TrimSpace(optionalString(params.Params, "query"))
+func searchQuery(params *serviceports.QueryToolParams) (string, error) {
+	query := strings.TrimSpace(optionalString(params.Params, paramQuery))
 	if query == "" {
 		return "", errSearchQueryRequired
 	}
@@ -72,8 +81,8 @@ func searchQuery(params serviceports.QueryToolParams) (string, error) {
 	return query, nil
 }
 
-func searchLimit(params serviceports.QueryToolParams, fallback, ceiling int) int {
-	return min(max(optionalInt(params.Params, "limit", fallback), 1), ceiling)
+func searchLimit(params *serviceports.QueryToolParams, fallback, ceiling int) int {
+	return min(max(optionalInt(params.Params, paramLimit, fallback), 1), ceiling)
 }
 
 type searchDocumentsTool struct {
@@ -107,7 +116,7 @@ func (t *searchDocumentsTool) Description() string {
 func (t *searchDocumentsTool) SearchTerms() []string {
 	return []string{
 		"document", "file", "attachment", "attached", "text", "says", "mentions", "passage",
-		"page", "clause", "contract", "rate confirmation", "bill of lading", "bol",
+		paramPage, "clause", "contract", "rate confirmation", "bill of lading", "bol",
 		"proof of delivery", "pod", "delivery receipt", "permit", "invoice copy", "pdf",
 		"scan", "notes", "signed",
 	}
@@ -115,22 +124,23 @@ func (t *searchDocumentsTool) SearchTerms() []string {
 
 func (t *searchDocumentsTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"query": map[string]any{
-				"type": "string",
-				"description": "What the document says or is about, in words or as a " +
-					"question: a reference number, a clause, a charge, a place.",
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			paramQuery: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "What the document says or is about, in words " +
+					"or as a question: a reference number, a clause, a charge, a place.",
 			},
-			"limit": map[string]any{
-				"type":        "integer",
-				"minimum":     1,
-				"maximum":     documentSearchMaxLimit,
-				"description": "How many documents to return, best first. Defaults to 5.",
+			paramLimit: map[string]any{
+				toolschema.KeyType:    toolschema.TypeInteger,
+				toolschema.KeyMinimum: 1,
+				toolschema.KeyMaximum: documentSearchMaxLimit,
+				toolschema.KeyDescription: "How many documents to return, best first. " +
+					"Defaults to 5.",
 			},
 		},
-		"required":             []string{"query"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{paramQuery},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -157,7 +167,7 @@ type documentSearchRow struct {
 
 func (t *searchDocumentsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -168,7 +178,7 @@ func (t *searchDocumentsTool) Query(
 		return nil, err
 	}
 
-	result, err := t.searcher.SearchDocuments(ctx, serviceports.RetrievalSearchRequest{
+	result, err := t.searcher.SearchDocuments(ctx, &serviceports.RetrievalSearchRequest{
 		TenantInfo:  tenantOf(params),
 		Query:       query,
 		Limit:       searchLimit(params, documentSearchDefaultLimit, documentSearchMaxLimit),
@@ -206,7 +216,7 @@ func (t *searchDocumentsTool) Query(
 	criteria := filtercatalog.NewCriteria("documents").At(clockFor(params))
 	criteria.Text(query)
 
-	return retrievalOutcome{
+	return &retrievalOutcome{
 		searchOutcome: searchResult(criteria, rows, len(rows)),
 		SearchedBy:    searchedBy(result.Semantics),
 		tainted:       tainted,
@@ -246,22 +256,23 @@ func (t *searchInboundMessagesTool) SearchTerms() []string {
 
 func (t *searchInboundMessagesTool) ParamSchema() map[string]any {
 	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"query": map[string]any{
-				"type": "string",
-				"description": "What the message says or is about: a load, a complaint, " +
-					"a request, a reference number, a sender.",
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			paramQuery: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "What the message says or is about: a load, " +
+					"a complaint, a request, a reference number, a sender.",
 			},
-			"limit": map[string]any{
-				"type":        "integer",
-				"minimum":     1,
-				"maximum":     inboundSearchMaxLimit,
-				"description": "How many messages to return, best first. Defaults to 5.",
+			paramLimit: map[string]any{
+				toolschema.KeyType:    toolschema.TypeInteger,
+				toolschema.KeyMinimum: 1,
+				toolschema.KeyMaximum: inboundSearchMaxLimit,
+				toolschema.KeyDescription: "How many messages to return, best first. " +
+					"Defaults to 5.",
 			},
 		},
-		"required":             []string{"query"},
-		"additionalProperties": false,
+		toolschema.KeyRequired:             []string{paramQuery},
+		toolschema.KeyAdditionalProperties: false,
 	}
 }
 
@@ -289,7 +300,7 @@ type inboundSearchRow struct {
 
 func (t *searchInboundMessagesTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -300,7 +311,7 @@ func (t *searchInboundMessagesTool) Query(
 		return nil, err
 	}
 
-	result, err := t.searcher.SearchInboundMessages(ctx, serviceports.RetrievalSearchRequest{
+	result, err := t.searcher.SearchInboundMessages(ctx, &serviceports.RetrievalSearchRequest{
 		TenantInfo:  tenantOf(params),
 		Query:       query,
 		Limit:       searchLimit(params, inboundSearchDefaultLimit, inboundSearchMaxLimit),
@@ -335,7 +346,7 @@ func (t *searchInboundMessagesTool) Query(
 	criteria := filtercatalog.NewCriteria("inbound messages").At(clockFor(params))
 	criteria.Text(query)
 
-	return retrievalOutcome{
+	return &retrievalOutcome{
 		searchOutcome: searchResult(criteria, rows, len(rows)),
 		SearchedBy:    searchedBy(result.Semantics),
 		tainted:       tainted,

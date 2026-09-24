@@ -177,7 +177,7 @@ func (q *recordingQuery) Prerequisites() []string { return prerequisitesOf(q.inn
 
 func (q *recordingQuery) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	q.rec.read(ReadTool, q.Name(), pagination.TenantInfo{
 		OrgID: params.OrganizationID,

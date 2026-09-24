@@ -153,9 +153,9 @@ type fakeVectors struct {
 
 func (f *fakeVectors) SimilarMemories(
 	_ context.Context,
-	req services.SimilarMemoriesRequest,
+	req *services.SimilarMemoriesRequest,
 ) (services.SimilarMemories, error) {
-	f.asked = append(f.asked, req)
+	f.asked = append(f.asked, *req)
 
 	return f.similar, f.err
 }

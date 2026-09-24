@@ -74,7 +74,7 @@ func (t *getShipmentTool) Policy() serviceports.ToolPolicy {
 
 func (t *getShipmentTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func (t *getShipmentTool) Query(
 
 func (t *getShipmentTool) recentComments(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*shipment.ShipmentComment, error) {
@@ -187,7 +187,7 @@ func (t *searchShipmentsTool) Policy() serviceports.ToolPolicy {
 
 func (t *searchShipmentsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

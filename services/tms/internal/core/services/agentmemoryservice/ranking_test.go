@@ -64,7 +64,7 @@ func TestRecencyRanker_RanksThroughThePort(t *testing.T) {
 	now := int64(1_800_000_000)
 	old, recent := memoryAt(now-60*day, 0), memoryAt(now, 0)
 
-	ranked, err := NewRecencyRanker().RankMemories(t.Context(), services.RankMemoriesRequest{
+	ranked, err := NewRecencyRanker().RankMemories(t.Context(), &services.RankMemoriesRequest{
 		TenantInfo: tenant(),
 		Now:        now,
 		Memories:   []*agent.Memory{old, recent},

@@ -235,7 +235,7 @@ func TestIndexBatchEmbedsOnlyChangedChunks(t *testing.T) {
 		entry(airetrieval.SourceTypeMemory, unchanged.ID),
 	}
 
-	result, err := svc.IndexBatch(t.Context(), serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -295,7 +295,7 @@ func TestIndexBatchSkipsWhatMayNotBeEmbedded(t *testing.T) {
 		entry(airetrieval.SourceTypeInboundMessage, missing),
 	}
 
-	result, err := svc.IndexBatch(t.Context(), serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -338,7 +338,7 @@ func TestIndexBatchIndexesAShipmentDocumentAndMail(t *testing.T) {
 		entry(airetrieval.SourceTypeInboundMessage, message.ID),
 	}
 
-	result, err := svc.IndexBatch(t.Context(), serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -363,7 +363,7 @@ func TestIndexBatchRecordsAnEmbeddingFailureForARetry(t *testing.T) {
 	svc.repo.claim = []*airetrieval.IndexEntry{entry(airetrieval.SourceTypeMemory, memory.ID)}
 	svc.embeddings.embedErr = errors.New("provider timed out")
 
-	result, err := svc.IndexBatch(t.Context(), serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -390,7 +390,7 @@ func TestIndexBatchFailsAConfigurationErrorForGood(t *testing.T) {
 	svc.embeddings.embedErr = errortypes.NewBusinessError("the provider returned 512 dimensions").
 		WithInternal(serviceports.ErrEmbeddingDimensionMismatch)
 
-	_, err := svc.IndexBatch(t.Context(), serviceports.RetrievalIndexBatchRequest{
+	_, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -413,7 +413,7 @@ func TestIndexBatchStopsAtTheBudget(t *testing.T) {
 	svc.sources.memories = []*agent.Memory{memory}
 	svc.repo.claim = []*airetrieval.IndexEntry{entry(airetrieval.SourceTypeMemory, memory.ID)}
 
-	result, err := svc.IndexBatch(t.Context(), serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -423,7 +423,7 @@ func TestIndexBatchStopsAtTheBudget(t *testing.T) {
 	require.Len(t, svc.repo.paused, 1)
 	assert.Equal(t, airetrieval.PauseReasonBudget, svc.repo.paused[0].Reason)
 
-	next, err := svc.IndexBatch(t.Context(), serviceports.RetrievalIndexBatchRequest{
+	next, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -439,7 +439,7 @@ func TestIndexBatchClaimsOnlyEnabledSources(t *testing.T) {
 	settings.DocumentsEnabled = false
 	svc := newTestService(settings)
 
-	_, err := svc.IndexBatch(t.Context(), serviceports.RetrievalIndexBatchRequest{
+	_, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   activeKey,
 	})
@@ -455,7 +455,7 @@ func TestIndexBatchIgnoresARetiredModelKey(t *testing.T) {
 	t.Parallel()
 
 	svc := newTestService(activeSettings())
-	result, err := svc.IndexBatch(t.Context(), serviceports.RetrievalIndexBatchRequest{
+	result, err := svc.IndexBatch(t.Context(), &serviceports.RetrievalIndexBatchRequest{
 		TenantInfo: testTenant,
 		ModelKey:   "old.example.com/embed@1536",
 	})
@@ -602,7 +602,7 @@ func TestReindexPageMarksAPageAndSaysWhereToGoOn(t *testing.T) {
 	svc := newTestService(activeSettings())
 	svc.sources.ids = []pulid.ID{pulid.MustNew("doc_"), pulid.MustNew("doc_")}
 
-	page, err := svc.ReindexPage(t.Context(), serviceports.RetrievalReindexPageRequest{
+	page, err := svc.ReindexPage(t.Context(), &serviceports.RetrievalReindexPageRequest{
 		TenantInfo: testTenant,
 		SourceType: airetrieval.SourceTypeDocument,
 		Limit:      2,
@@ -613,7 +613,7 @@ func TestReindexPageMarksAPageAndSaysWhereToGoOn(t *testing.T) {
 	assert.Equal(t, svc.sources.ids[1], page.Next)
 	assert.Len(t, svc.signals.signals, 1)
 
-	page, err = svc.ReindexPage(t.Context(), serviceports.RetrievalReindexPageRequest{
+	page, err = svc.ReindexPage(t.Context(), &serviceports.RetrievalReindexPageRequest{
 		TenantInfo: testTenant,
 		SourceType: airetrieval.SourceTypeDocument,
 		AfterID:    page.Next,

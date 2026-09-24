@@ -86,8 +86,8 @@ type searchPlan struct {
 	candidates int
 }
 
-func (s *Searcher) plan(req serviceports.RetrievalSearchRequest) (searchPlan, error) {
-	if req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
+func (s *Searcher) plan(req *serviceports.RetrievalSearchRequest) (searchPlan, error) {
+	if req == nil || req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
 		return searchPlan{}, errortypes.NewValidationError(
 			"tenant", errortypes.ErrRequired, "Organization and business unit are required")
 	}
@@ -123,7 +123,7 @@ type keywordLeg func(
 
 func (s *Searcher) legs(
 	ctx context.Context,
-	req serviceports.RetrievalSearchRequest,
+	req *serviceports.RetrievalSearchRequest,
 	plan searchPlan,
 	sourceType airetrieval.SourceType,
 	keyword keywordLeg,
@@ -160,7 +160,7 @@ func (s *Searcher) legs(
 
 func (s *Searcher) vectorLeg(
 	ctx context.Context,
-	req serviceports.RetrievalSearchRequest,
+	req *serviceports.RetrievalSearchRequest,
 	plan searchPlan,
 	sourceType airetrieval.SourceType,
 ) ([]repositories.VectorSearchHit, serviceports.RetrievalSemantics) {
@@ -237,7 +237,7 @@ func fusedIDs(hits []FusedHit) []pulid.ID {
 
 func (s *Searcher) SearchDocuments(
 	ctx context.Context,
-	req serviceports.RetrievalSearchRequest,
+	req *serviceports.RetrievalSearchRequest,
 ) (*serviceports.DocumentSearchResult, error) {
 	plan, err := s.plan(req)
 	if err != nil {
@@ -264,7 +264,7 @@ func (s *Searcher) SearchDocuments(
 		return result, nil
 	}
 
-	sources, err := s.sources.GetDocuments(ctx, repositories.RetrievalDocumentsRequest{
+	sources, err := s.sources.GetDocuments(ctx, &repositories.RetrievalDocumentsRequest{
 		TenantInfo:   req.TenantInfo,
 		IDs:          fusedIDs(kept),
 		IncludePages: true,
@@ -293,11 +293,11 @@ func (s *Searcher) SearchDocuments(
 
 func (s *Searcher) readableDocuments(
 	ctx context.Context,
-	req serviceports.RetrievalSearchRequest,
+	req *serviceports.RetrievalSearchRequest,
 	plan searchPlan,
 	fused []FusedHit,
 ) ([]FusedHit, error) {
-	sources, err := s.sources.GetDocuments(ctx, repositories.RetrievalDocumentsRequest{
+	sources, err := s.sources.GetDocuments(ctx, &repositories.RetrievalDocumentsRequest{
 		TenantInfo: req.TenantInfo,
 		IDs:        fusedIDs(fused),
 	})
@@ -335,7 +335,7 @@ func (s *Searcher) readableDocuments(
 
 func (s *Searcher) documentHit(
 	ctx context.Context,
-	req serviceports.RetrievalSearchRequest,
+	req *serviceports.RetrievalSearchRequest,
 	plan searchPlan,
 	hit FusedHit,
 	source *repositories.RetrievalDocumentSource,
@@ -374,7 +374,7 @@ func (s *Searcher) documentHit(
 
 func (s *Searcher) SearchInboundMessages(
 	ctx context.Context,
-	req serviceports.RetrievalSearchRequest,
+	req *serviceports.RetrievalSearchRequest,
 ) (*serviceports.InboundMessageSearchResult, error) {
 	plan, err := s.plan(req)
 	if err != nil {

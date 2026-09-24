@@ -156,13 +156,13 @@ func (s *Service) buildContext(
 		Page:        req.Page,
 		Attachments: req.Attachments,
 		Mentions:    req.Mentions,
-		Query: serviceports.ContextQuery{
+		Query: (&serviceports.ContextQuery{
 			Actor:        req.Actor,
 			DefinitionID: definitionID(req.Definition),
 			ThreadID:     req.ThreadID,
 			Input:        req.Input,
 			History:      req.History,
-		}.Request(),
+		}).Request(),
 	})
 	if err != nil {
 		s.logger.Warn("assistant context could not be built", zap.Error(err))

@@ -527,12 +527,12 @@ func (s *Service) Recall(
 		return recalledAs(found, ""), nil
 	}
 
-	similar, ok := s.similar(ctx, req, search)
+	similar, ok := s.similar(ctx, &req, &search)
 	if !ok {
 		return recalledAs(found, agent.MemoryMatchWords), nil
 	}
 
-	return s.fuseRecall(ctx, search, found, similar)
+	return s.fuseRecall(ctx, &search, found, similar)
 }
 
 func recalledAs(memories []*agent.Memory, match agent.MemoryMatch) []services.RecalledMemory {
@@ -546,14 +546,14 @@ func recalledAs(memories []*agent.Memory, match agent.MemoryMatch) []services.Re
 
 func (s *Service) similar(
 	ctx context.Context,
-	req services.RecallAgentMemoriesRequest,
-	search repositories.SearchAgentMemoriesRequest,
+	req *services.RecallAgentMemoriesRequest,
+	search *repositories.SearchAgentMemoriesRequest,
 ) (services.SimilarMemories, bool) {
 	if s.vectors == nil {
 		return services.SimilarMemories{}, false
 	}
 
-	similar, err := s.vectors.SimilarMemories(ctx, services.SimilarMemoriesRequest{
+	similar, err := s.vectors.SimilarMemories(ctx, &services.SimilarMemoriesRequest{
 		TenantInfo:  search.TenantInfo,
 		Text:        search.Query,
 		Limit:       search.Limit * recallCandidateFactor,
@@ -572,7 +572,7 @@ func (s *Service) similar(
 
 func (s *Service) fuseRecall(
 	ctx context.Context,
-	search repositories.SearchAgentMemoriesRequest,
+	search *repositories.SearchAgentMemoriesRequest,
 	found []*agent.Memory,
 	similar services.SimilarMemories,
 ) ([]services.RecalledMemory, error) {
@@ -590,7 +590,7 @@ func (s *Service) fuseRecall(
 		}
 	}
 	if len(missing) > 0 {
-		narrowed := search
+		narrowed := *search
 		narrowed.Query = ""
 		narrowed.IDs = missing
 		narrowed.Limit = len(missing)
@@ -691,7 +691,7 @@ func (s *Service) ForContext(
 	if ranker == nil {
 		ranker = NewRecencyRanker()
 	}
-	ranked, err := ranker.RankMemories(ctx, services.RankMemoriesRequest{
+	ranked, err := ranker.RankMemories(ctx, &services.RankMemoriesRequest{
 		TenantInfo: req.TenantInfo,
 		Now:        now,
 		Memories:   memories,

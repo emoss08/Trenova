@@ -234,7 +234,7 @@ func (t *listTool) ParamSchema() map[string]any {
 
 func (t *listTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

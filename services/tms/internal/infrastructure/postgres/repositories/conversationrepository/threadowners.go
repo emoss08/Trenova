@@ -2,6 +2,7 @@ package conversationrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
@@ -33,7 +34,7 @@ func (r *repository) ThreadOwners(
 	req repositories.ThreadOwnersRequest,
 ) (map[pulid.ID]pulid.ID, error) {
 	if req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
-		return nil, fmt.Errorf("thread owners need an organization and a business unit")
+		return nil, errors.New("thread owners need an organization and a business unit")
 	}
 
 	ids := sliceutils.Dedupe(req.ThreadIDs)

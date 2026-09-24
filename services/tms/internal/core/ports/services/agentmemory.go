@@ -105,7 +105,7 @@ type RankMemoriesRequest struct {
 // MemoryRanker orders the memories a prompt may carry. Order decides which
 // Facts and Corrections for tools not loaded this turn fit in the budget.
 type MemoryRanker interface {
-	RankMemories(ctx context.Context, req RankMemoriesRequest) ([]*agent.Memory, error)
+	RankMemories(ctx context.Context, req *RankMemoriesRequest) ([]*agent.Memory, error)
 }
 
 // AgentMemoryUsage is how much an organization keeps for its agents against

@@ -150,8 +150,8 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 	params := func(
 		principal serviceports.PrincipalType,
 		query string,
-	) serviceports.QueryToolParams {
-		return serviceports.QueryToolParams{
+	) *serviceports.QueryToolParams {
+		return &serviceports.QueryToolParams{
 			OrganizationID: tenant.OrgID,
 			BusinessUnitID: tenant.BuID,
 			Actor: &serviceports.RequestActor{
@@ -256,7 +256,7 @@ func searchTools(
 
 type leakCheck struct {
 	tool      serviceports.AgentQueryTool
-	params    serviceports.QueryToolParams
+	params    *serviceports.QueryToolParams
 	idField   string
 	entity    string
 	own       *retrievaltest.Corpus

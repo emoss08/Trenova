@@ -366,7 +366,7 @@ func (s *Service) runQueryTool(
 	tool serviceports.AgentQueryTool,
 	call serviceports.ToolCall,
 ) toolOutcome {
-	data, err := tool.Query(ctx, serviceports.QueryToolParams{
+	data, err := tool.Query(ctx, &serviceports.QueryToolParams{
 		OrganizationID:    req.Actor.OrganizationID,
 		BusinessUnitID:    req.Actor.BusinessUnitID,
 		Actor:             req.Actor,

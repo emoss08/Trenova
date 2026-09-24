@@ -40,7 +40,7 @@ func (a fieldAccess) withThreads(threads repositories.ThreadOwnerRepository) fie
 // the Internal tier: enough for the record, none of the person behind it.
 func (a fieldAccess) ceiling(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 	resource permission.Resource,
 ) permission.FieldSensitivity {
 	if a.permissions == nil || params.Actor == nil || !params.Actor.IsUser() {
@@ -83,7 +83,7 @@ func (a fieldAccess) visible(
 // principal, a person and an API key are each answered by their own rules.
 func (a fieldAccess) mayRead(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 	resource permission.Resource,
 ) bool {
 	actor := params.Actor
@@ -107,7 +107,7 @@ func (a fieldAccess) mayRead(
 
 func (a fieldAccess) mayReadRecord(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 	resource permission.Resource,
 	recordID string,
 ) bool {
@@ -145,7 +145,7 @@ func personOf(actor *serviceports.RequestActor) pulid.ID {
 
 func (a fieldAccess) readableDocuments(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 	docs []*document.Document,
 	mayReadRecord func(permission.Resource, string) bool,
 ) (map[pulid.ID]bool, error) {
@@ -174,16 +174,16 @@ func (a fieldAccess) readableDocuments(
 
 func (a fieldAccess) conversationOwners(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 	person pulid.ID,
 	docs []*document.Document,
 ) (map[pulid.ID]pulid.ID, error) {
 	if a.threads == nil || person.IsNil() {
-		return nil, nil
+		return map[pulid.ID]pulid.ID{}, nil
 	}
 	ids := document.ConversationIDs(docs)
 	if len(ids) == 0 {
-		return nil, nil
+		return map[pulid.ID]pulid.ID{}, nil
 	}
 
 	owners, err := a.threads.ThreadOwners(ctx, repositories.ThreadOwnersRequest{
@@ -209,7 +209,7 @@ func (a fieldAccess) recordTextVisible(
 	return ceiling.CanAccess(definition.DefaultSensitivity)
 }
 
-func (a fieldAccess) forRetrieval(params serviceports.QueryToolParams) *retrievalAccess {
+func (a fieldAccess) forRetrieval(params *serviceports.QueryToolParams) *retrievalAccess {
 	return &retrievalAccess{
 		access:    a,
 		params:    params,
@@ -221,7 +221,7 @@ func (a fieldAccess) forRetrieval(params serviceports.QueryToolParams) *retrieva
 
 type retrievalAccess struct {
 	access    fieldAccess
-	params    serviceports.QueryToolParams
+	params    *serviceports.QueryToolParams
 	resources map[permission.Resource]bool
 	records   map[string]bool
 	ceilings  map[permission.Resource]permission.FieldSensitivity

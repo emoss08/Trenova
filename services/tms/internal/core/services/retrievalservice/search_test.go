@@ -122,8 +122,8 @@ func newTestSearcher(
 func searchRequest(
 	query string,
 	access serviceports.RetrievalAccess,
-) serviceports.RetrievalSearchRequest {
-	return serviceports.RetrievalSearchRequest{
+) *serviceports.RetrievalSearchRequest {
+	return &serviceports.RetrievalSearchRequest{
 		TenantInfo: testTenant,
 		Query:      query,
 		Limit:      5,
@@ -444,7 +444,7 @@ func TestSimilarMemoriesEmbedsTheTextUnlessGivenAVector(t *testing.T) {
 	vectorizer := &fakeVectorizer{vector: usableVector()}
 	searcher := newTestSearcher(repo, &fakeSources{}, vectorizer)
 
-	similar, err := searcher.SimilarMemories(t.Context(), serviceports.SimilarMemoriesRequest{
+	similar, err := searcher.SimilarMemories(t.Context(), &serviceports.SimilarMemoriesRequest{
 		TenantInfo: testTenant,
 		Text:       "free time at Globex",
 	})
@@ -456,7 +456,7 @@ func TestSimilarMemoriesEmbedsTheTextUnlessGivenAVector(t *testing.T) {
 	assert.Equal(t, []airetrieval.SourceType{airetrieval.SourceTypeMemory},
 		repo.searches[0].SourceTypes)
 
-	_, err = searcher.SimilarMemories(t.Context(), serviceports.SimilarMemoriesRequest{
+	_, err = searcher.SimilarMemories(t.Context(), &serviceports.SimilarMemoriesRequest{
 		TenantInfo: testTenant,
 		Query:      usableVector(),
 	})
@@ -466,7 +466,7 @@ func TestSimilarMemoriesEmbedsTheTextUnlessGivenAVector(t *testing.T) {
 	settings := activeSettings()
 	settings.MemoryEnabled = false
 	off, err := newTestSearcher(newFakeRetrievalRepo(settings), &fakeSources{}, vectorizer).
-		SimilarMemories(t.Context(), serviceports.SimilarMemoriesRequest{
+		SimilarMemories(t.Context(), &serviceports.SimilarMemoriesRequest{
 			TenantInfo: testTenant,
 			Text:       "anything",
 		})
@@ -503,7 +503,7 @@ func TestMemoryRankerLiftsSimilarMemoriesAboveRecency(t *testing.T) {
 	}
 	ranker := NewMemoryRanker(newTestSearcher(repo, &fakeSources{}, nil))
 
-	ranked, err := ranker.RankMemories(t.Context(), serviceports.RankMemoriesRequest{
+	ranked, err := ranker.RankMemories(t.Context(), &serviceports.RankMemoriesRequest{
 		TenantInfo: testTenant,
 		Now:        2_000,
 		Memories:   memories,
@@ -513,7 +513,7 @@ func TestMemoryRankerLiftsSimilarMemoriesAboveRecency(t *testing.T) {
 	assert.Equal(t, memories[0].ID, ranked[0].ID, "the most similar memory leads")
 	assert.Len(t, ranked, 4)
 
-	unranked, err := ranker.RankMemories(t.Context(), serviceports.RankMemoriesRequest{
+	unranked, err := ranker.RankMemories(t.Context(), &serviceports.RankMemoriesRequest{
 		TenantInfo: testTenant,
 		Now:        2_000,
 		Memories:   memories,
@@ -526,7 +526,7 @@ func recencyOrder(t *testing.T, memories []*agent.Memory) []*agent.Memory {
 	t.Helper()
 
 	ranked, err := NewMemoryRankerFrom(nil, DefaultSearchTuning(), zap.NewNop()).
-		RankMemories(t.Context(), serviceports.RankMemoriesRequest{
+		RankMemories(t.Context(), &serviceports.RankMemoriesRequest{
 			Now:      2_000,
 			Memories: memories,
 		})

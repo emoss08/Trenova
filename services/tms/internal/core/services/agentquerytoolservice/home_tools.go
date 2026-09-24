@@ -34,7 +34,7 @@ type homeLayoutReader interface {
 
 // homeRequest is the reader's own home page request: their tenant, and the
 // principal the page resolves for.
-func homeRequest(params serviceports.QueryToolParams) *homelayoutservice.Request {
+func homeRequest(params *serviceports.QueryToolParams) *homelayoutservice.Request {
 	return &homelayoutservice.Request{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
@@ -111,7 +111,7 @@ type homeLayoutView struct {
 
 func (t *getMyHomeLayoutTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -245,7 +245,7 @@ type homeWidgetCatalogView struct {
 
 func (t *listHomeWidgetsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

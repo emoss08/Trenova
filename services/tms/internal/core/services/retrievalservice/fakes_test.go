@@ -272,7 +272,7 @@ func (f *fakeSources) GetMemories(
 
 func (f *fakeSources) GetDocuments(
 	_ context.Context,
-	req repositories.RetrievalDocumentsRequest,
+	req *repositories.RetrievalDocumentsRequest,
 ) ([]*repositories.RetrievalDocumentSource, error) {
 	return slices.DeleteFunc(slices.Clone(f.documents),
 		func(source *repositories.RetrievalDocumentSource) bool {
@@ -292,9 +292,9 @@ func (f *fakeSources) GetInboundMessages(
 
 func (f *fakeSources) ListSourceIDs(
 	_ context.Context,
-	req repositories.ListRetrievalSourceIDsRequest,
+	req *repositories.ListRetrievalSourceIDsRequest,
 ) ([]pulid.ID, error) {
-	f.listed = append(f.listed, req)
+	f.listed = append(f.listed, *req)
 
 	return f.ids, nil
 }

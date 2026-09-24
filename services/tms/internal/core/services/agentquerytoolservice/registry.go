@@ -95,8 +95,8 @@ var (
 // guardQuery repeats the tenant check the write tools make. The tenant comes
 // from the actor rather than from the model either way, but asserting it here
 // means a future caller that builds params by hand cannot skip it silently.
-func guardQuery(params serviceports.QueryToolParams) error {
-	if params.Actor == nil {
+func guardQuery(params *serviceports.QueryToolParams) error {
+	if params == nil || params.Actor == nil {
 		return ErrMissingActor
 	}
 

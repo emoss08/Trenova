@@ -165,7 +165,7 @@ func (b *indexBatch) readDocuments(ctx context.Context) error {
 		return nil
 	}
 
-	sources, err := b.service.sources.GetDocuments(ctx, repositories.RetrievalDocumentsRequest{
+	sources, err := b.service.sources.GetDocuments(ctx, &repositories.RetrievalDocumentsRequest{
 		TenantInfo:   b.tenant,
 		IDs:          ids,
 		IncludePages: true,

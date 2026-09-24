@@ -49,7 +49,7 @@ func conversationDocument(threadID pulid.ID) *document.Document {
 	}
 }
 
-func personParams(principal serviceports.PrincipalType) serviceports.QueryToolParams {
+func personParams(principal serviceports.PrincipalType) *serviceports.QueryToolParams {
 	params := testParams(map[string]any{})
 	params.Actor.PrincipalType = principal
 
@@ -92,6 +92,8 @@ func TestGetDocumentSummary_ConversationFileIsReadOnlyByItsOwner(t *testing.T) {
 	colleague := personParams(serviceports.PrincipalTypeUser)
 	colleague.OrganizationID = owner.OrganizationID
 	colleague.BusinessUnitID = owner.BusinessUnitID
+	colleague.Actor.OrganizationID = owner.OrganizationID
+	colleague.Actor.BusinessUnitID = owner.BusinessUnitID
 	colleague.Params = map[string]any{"documentId": doc.ID.String()}
 
 	_, err = conversationSummaryTool(doc, threads).Query(t.Context(), colleague)

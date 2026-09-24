@@ -117,7 +117,7 @@ func (r *repository) GetMemories(
 
 func (r *repository) GetDocuments(
 	ctx context.Context,
-	req repositories.RetrievalDocumentsRequest,
+	req *repositories.RetrievalDocumentsRequest,
 ) ([]*repositories.RetrievalDocumentSource, error) {
 	ids, err := sourceIDs(req.TenantInfo, req.IDs)
 	if err != nil || len(ids) == 0 {
@@ -287,7 +287,7 @@ var sourceTables = map[airetrieval.SourceType]sourceTable{
 
 func (r *repository) ListSourceIDs(
 	ctx context.Context,
-	req repositories.ListRetrievalSourceIDsRequest,
+	req *repositories.ListRetrievalSourceIDsRequest,
 ) ([]pulid.ID, error) {
 	if err := validateTenant(req.TenantInfo); err != nil {
 		return nil, err
@@ -355,22 +355,22 @@ func anyWordQuery(config string) string {
 		"' | !', ' & !')::tsquery"
 }
 
-func matchesAnyWord(vector buncolgen.Column, config string) string {
+func matchesAnyWord(vector *buncolgen.Column, config string) string {
 	return vector.Expr("{} @@ " + anyWordQuery(config))
 }
 
-func rankAnyWord(vector buncolgen.Column, config string) string {
+func rankAnyWord(vector *buncolgen.Column, config string) string {
 	return vector.Expr("ts_rank_cd({}, " + anyWordQuery(config) + ")")
 }
 
-func likeAnyWord(query string, columns ...buncolgen.Column) (string, []any) {
+func likeAnyWord(query string, columns ...*buncolgen.Column) (clause string, args []any) {
 	words := strings.Fields(strings.ToLower(query))
 	if len(words) > maxFallbackWords {
 		words = words[:maxFallbackWords]
 	}
 
 	clauses := make([]string, 0, len(words)*len(columns))
-	args := make([]any, 0, len(words)*len(columns))
+	args = make([]any, 0, len(words)*len(columns))
 	for _, word := range words {
 		pattern := "%" + stringutils.EscapeLikePattern(word) + "%"
 		for _, column := range columns {
@@ -409,19 +409,19 @@ func (r *repository) SearchDocuments(
 	if dbdialect.FromBun(dba).Supports(dbdialect.CapFullTextSearch) {
 		q = q.
 			ColumnExpr(
-				"GREATEST("+rankAnyWord(docs.SearchVector, "simple")+", COALESCE("+
-					rankAnyWord(content.SearchVector, "english")+", 0)) AS "+rankColumn,
+				"GREATEST("+rankAnyWord(&docs.SearchVector, "simple")+", COALESCE("+
+					rankAnyWord(&content.SearchVector, "english")+", 0)) AS "+rankColumn,
 				plan.query, plan.query,
 			).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 				return sq.
-					Where(matchesAnyWord(docs.SearchVector, "simple"), plan.query).
-					WhereOr(matchesAnyWord(content.SearchVector, "english"), plan.query)
+					Where(matchesAnyWord(&docs.SearchVector, "simple"), plan.query).
+					WhereOr(matchesAnyWord(&content.SearchVector, "english"), plan.query)
 			}).
 			OrderExpr(rankColumn + " DESC")
 	} else {
 		clause, args := likeAnyWord(plan.query,
-			docs.OriginalName, docs.Description, content.ContentText)
+			&docs.OriginalName, &docs.Description, &content.ContentText)
 		q = q.
 			ColumnExpr("1.0 AS "+rankColumn).
 			Where(clause, args...).
@@ -455,13 +455,13 @@ func (r *repository) SearchInboundMessages(
 
 	if dbdialect.FromBun(dba).Supports(dbdialect.CapFullTextSearch) {
 		q = q.
-			ColumnExpr(rankAnyWord(cols.SearchVector, "english")+" AS "+rankColumn, plan.query).
-			Where(matchesAnyWord(cols.SearchVector, "english"), plan.query).
+			ColumnExpr(rankAnyWord(&cols.SearchVector, "english")+" AS "+rankColumn, plan.query).
+			Where(matchesAnyWord(&cols.SearchVector, "english"), plan.query).
 			OrderExpr(rankColumn + " DESC").
 			OrderExpr(cols.ReceivedAt.OrderDesc())
 	} else {
 		clause, args := likeAnyWord(plan.query,
-			cols.Subject, cols.FromName, cols.FromAddress, cols.TextBody)
+			&cols.Subject, &cols.FromName, &cols.FromAddress, &cols.TextBody)
 		q = q.
 			ColumnExpr("1.0 AS "+rankColumn).
 			Where(clause, args...).

@@ -42,7 +42,7 @@ type RetrievalIndexPlan struct {
 	RetiredKeys     []string                      `json:"retiredKeys,omitempty"`
 }
 
-func (p RetrievalIndexPlan) ModelKeys() []string {
+func (p *RetrievalIndexPlan) ModelKeys() []string {
 	keys := make([]string, 0, 2)
 	if p.ActiveModelKey != "" {
 		keys = append(keys, p.ActiveModelKey)
@@ -109,7 +109,7 @@ type RetrievalIndexPipeline interface {
 	Plan(ctx context.Context, tenant pagination.TenantInfo) (RetrievalIndexPlan, error)
 	IndexBatch(
 		ctx context.Context,
-		req RetrievalIndexBatchRequest,
+		req *RetrievalIndexBatchRequest,
 	) (RetrievalIndexBatchResult, error)
 	CompleteModelChange(
 		ctx context.Context,
@@ -123,7 +123,7 @@ type RetrievalIndexPipeline interface {
 	) (RetrievalPurgeResult, error)
 	Sweep(ctx context.Context, tenant pagination.TenantInfo) (RetrievalSweepResult, error)
 	Wake(ctx context.Context, tenant pagination.TenantInfo)
-	ReindexPage(ctx context.Context, req RetrievalReindexPageRequest) (RetrievalReindexPage, error)
+	ReindexPage(ctx context.Context, req *RetrievalReindexPageRequest) (RetrievalReindexPage, error)
 }
 
 type RetrievalMatch string
@@ -189,10 +189,10 @@ type InboundMessageSearchResult struct {
 }
 
 type RetrievalSearcher interface {
-	SearchDocuments(ctx context.Context, req RetrievalSearchRequest) (*DocumentSearchResult, error)
+	SearchDocuments(ctx context.Context, req *RetrievalSearchRequest) (*DocumentSearchResult, error)
 	SearchInboundMessages(
 		ctx context.Context,
-		req RetrievalSearchRequest,
+		req *RetrievalSearchRequest,
 	) (*InboundMessageSearchResult, error)
 }
 
@@ -216,7 +216,7 @@ type SimilarMemories struct {
 }
 
 type MemoryVectorSearcher interface {
-	SimilarMemories(ctx context.Context, req SimilarMemoriesRequest) (SimilarMemories, error)
+	SimilarMemories(ctx context.Context, req *SimilarMemoriesRequest) (SimilarMemories, error)
 }
 
 type ContextQuery struct {
@@ -228,8 +228,8 @@ type ContextQuery struct {
 	History      []conversation.Message
 }
 
-func (q ContextQuery) Request() QueryVectorRequest {
-	if q.Actor == nil {
+func (q *ContextQuery) Request() QueryVectorRequest {
+	if q == nil || q.Actor == nil {
 		return QueryVectorRequest{}
 	}
 

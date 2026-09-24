@@ -22,8 +22,12 @@ func NewRecencyRanker() services.MemoryRanker { return RecencyRanker{} }
 
 func (RecencyRanker) RankMemories(
 	_ context.Context,
-	req services.RankMemoriesRequest,
+	req *services.RankMemoriesRequest,
 ) ([]*agent.Memory, error) {
+	if req == nil {
+		return []*agent.Memory{}, nil
+	}
+
 	return RankByRecencyAndUse(req.Memories, req.Now), nil
 }
 

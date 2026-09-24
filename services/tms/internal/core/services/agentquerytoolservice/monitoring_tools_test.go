@@ -701,7 +701,7 @@ func TestListVehiclePositions_NamesTheDriverOnlyToAReaderOfWorkers(t *testing.T)
 func vehicleRows(
 	t *testing.T,
 	tool serviceports.AgentQueryTool,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) []vehiclePositionRow {
 	t.Helper()
 

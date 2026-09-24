@@ -109,7 +109,7 @@ func (t *getShipmentTrackingTool) Policy() serviceports.ToolPolicy {
 
 func (t *getShipmentTrackingTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -313,7 +313,7 @@ func (t *getShipmentTrackingTool) hours(
 	return out, nil
 }
 
-func tenantOf(params serviceports.QueryToolParams) pagination.TenantInfo {
+func tenantOf(params *serviceports.QueryToolParams) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  params.OrganizationID,
 		BuID:   params.BusinessUnitID,
@@ -386,7 +386,7 @@ func (t *listVehiclePositionsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listVehiclePositionsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -521,7 +521,7 @@ func (t *getWorkerHOSTool) Policy() serviceports.ToolPolicy {
 
 func (t *getWorkerHOSTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
