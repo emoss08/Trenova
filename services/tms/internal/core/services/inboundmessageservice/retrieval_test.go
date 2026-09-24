@@ -40,7 +40,11 @@ func (f *fakeIndexer) DeleteSource(
 	return nil
 }
 
-func (f *fakeIndexer) Reindex(context.Context, pagination.TenantInfo, airetrieval.SourceType) error {
+func (f *fakeIndexer) Reindex(
+	context.Context,
+	pagination.TenantInfo,
+	airetrieval.SourceType,
+) error {
 	return nil
 }
 
@@ -50,7 +54,10 @@ func TestProcessMessage_QueuesTheSettledMessageForSemanticIndexing(t *testing.T)
 	repo := &settleRepo{
 		message: staged(inboundmessage.StatusReceived, inboundmessage.ReviewAutoHandle),
 	}
-	svc := settler(repo, `{"classification":"Tender","confidence":0.9,"reasoning":"Offers a load."}`)
+	svc := settler(
+		repo,
+		`{"classification":"Tender","confidence":0.9,"reasoning":"Offers a load."}`,
+	)
 	indexer := &fakeIndexer{}
 	svc.indexer = indexer
 

@@ -119,9 +119,11 @@ func TestChunkDocumentWindowsEachPageUnderAHeader(t *testing.T) {
 	assert.Contains(t, fields.Text, "Document: acme-ratecon.pdf")
 	assert.Contains(t, fields.Text, "Kind: RateConfirmation")
 	assert.Contains(t, fields.Text, "Attached to: shipment")
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		"hazmat: false\nloadNumber: 4471\nstops[0].city: Dallas\nstops[1].city: Chicago\nweight: 42000.5",
-		fields.Body)
+		fields.Body,
+	)
 
 	assert.Equal(t, 1, chunks[1].Page)
 	assert.Contains(t, chunks[1].Text, "Page 1 of 2")
@@ -213,7 +215,11 @@ func TestChunkMemoryIsOneLine(t *testing.T) {
 	}
 	chunks := ChunkMemory(correction)
 	require.Len(t, chunks, 1)
-	assert.Equal(t, "[Correction] tool assign_move: Loads over 900 miles need a team.", chunks[0].Text)
+	assert.Equal(
+		t,
+		"[Correction] tool assign_move: Loads over 900 miles need a team.",
+		chunks[0].Text,
+	)
 	assert.Equal(t, ChunkHash(MemoryChunkerVersion, chunks[0].Text), chunks[0].Hash)
 
 	fact := ChunkMemory(&agent.Memory{Kind: agent.MemoryKindFact, Content: "Acme closes at 3."})

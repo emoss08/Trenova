@@ -30,7 +30,9 @@ import (
 )
 
 func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
-	documents, err := agentevalgate.LoadRetrievalSuite("../agentevalgate/evals/documentretrieval.yaml")
+	documents, err := agentevalgate.LoadRetrievalSuite(
+		"../agentevalgate/evals/documentretrieval.yaml",
+	)
 	require.NoError(t, err)
 	inbox, err := agentevalgate.LoadRetrievalSuite("../agentevalgate/evals/inboxretrieval.yaml")
 	require.NoError(t, err)
@@ -98,7 +100,10 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 				SourceType: airetrieval.SourceTypeInboundMessage, Corpus: corpus,
 			})
 		}
-		vectorizer = retrievaltest.FixtureVectorizer{Fixture: fixture, ModelKey: retrievaltest.ModelKey}
+		vectorizer = retrievaltest.FixtureVectorizer{
+			Fixture:  fixture,
+			ModelKey: retrievaltest.ModelKey,
+		}
 	} else if !errors.Is(fixtureErr, agentevalgate.ErrEmbeddingFixtureMissing) && fixtureErr != nil {
 		require.NoError(t, fixtureErr)
 	}

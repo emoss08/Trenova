@@ -255,10 +255,13 @@ func (b *indexBatch) diff(ctx context.Context) error {
 			continue
 		}
 
-		stored, err := b.service.repo.ListChunkHashes(ctx, repositories.ListEmbeddingChunkHashesRequest{
-			Source:   work.ref(),
-			ModelKey: b.modelKey,
-		})
+		stored, err := b.service.repo.ListChunkHashes(
+			ctx,
+			repositories.ListEmbeddingChunkHashesRequest{
+				Source:   work.ref(),
+				ModelKey: b.modelKey,
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("list stored chunk hashes: %w", err)
 		}
@@ -338,7 +341,8 @@ func (b *indexBatch) failEmbedding(err error, owners []*sourceWork) {
 		zap.Error(err),
 	)
 
-	permanent := errortypes.IsBusinessError(err) && !errors.Is(err, serviceports.ErrNoProviderConfigured)
+	permanent := errortypes.IsBusinessError(err) &&
+		!errors.Is(err, serviceports.ErrNoProviderConfigured)
 	for _, work := range owners {
 		if work.outcome == outcomeFailed {
 			continue

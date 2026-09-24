@@ -43,7 +43,11 @@ func (f *fakeIndexer) DeleteSource(
 	return nil
 }
 
-func (f *fakeIndexer) Reindex(context.Context, pagination.TenantInfo, airetrieval.SourceType) error {
+func (f *fakeIndexer) Reindex(
+	context.Context,
+	pagination.TenantInfo,
+	airetrieval.SourceType,
+) error {
 	return nil
 }
 

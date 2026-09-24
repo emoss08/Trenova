@@ -71,7 +71,11 @@ func (f *fakeAccess) MayReadRecord(
 	return f.MayReadResource(ctx, resource)
 }
 
-func (f *fakeAccess) ShowsField(_ context.Context, resource permission.Resource, field string) bool {
+func (f *fakeAccess) ShowsField(
+	_ context.Context,
+	resource permission.Resource,
+	field string,
+) bool {
 	return !f.hidden[resource.String()+"."+field]
 }
 
@@ -93,7 +97,10 @@ func newTestSearcher(
 	})
 }
 
-func searchRequest(query string, access serviceports.RetrievalAccess) serviceports.RetrievalSearchRequest {
+func searchRequest(
+	query string,
+	access serviceports.RetrievalAccess,
+) serviceports.RetrievalSearchRequest {
 	return serviceports.RetrievalSearchRequest{
 		TenantInfo: testTenant,
 		Query:      query,
@@ -107,7 +114,10 @@ func TestSearchDocumentsFusesBothLegsAndLabelsTheMatch(t *testing.T) {
 
 	both := documentSource("Lumper fee reimbursed with receipt.", "Detention billed hourly.")
 	words := documentSource("Lumper receipt for load 4471.")
-	meaning := documentSource("Unloading service paid in cash.", "Capstone crew unloaded 24 pallets.")
+	meaning := documentSource(
+		"Unloading service paid in cash.",
+		"Capstone crew unloaded 24 pallets.",
+	)
 
 	repo := newFakeRetrievalRepo(activeSettings())
 	repo.search = []repositories.VectorSearchHit{
@@ -311,7 +321,10 @@ func TestSearchInboundMessagesRespectsFieldVisibility(t *testing.T) {
 	}
 	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
 
-	result, err := searcher.SearchInboundMessages(t.Context(), searchRequest("pickup", &fakeAccess{}))
+	result, err := searcher.SearchInboundMessages(
+		t.Context(),
+		searchRequest("pickup", &fakeAccess{}),
+	)
 	require.NoError(t, err)
 	require.Len(t, result.Hits, 1)
 	assert.Equal(t, "Driver never showed", result.Hits[0].Subject)
@@ -342,7 +355,13 @@ func TestSearchInboundMessagesRespectsFieldVisibility(t *testing.T) {
 func TestSnippetCentresOnTheFirstTermAndStaysWithinTheLimit(t *testing.T) {
 	t.Parallel()
 
-	body := strings.Repeat("filler ", 200) + "the lumper fee was reimbursed " + strings.Repeat("tail ", 200)
+	body := strings.Repeat(
+		"filler ",
+		200,
+	) + "the lumper fee was reimbursed " + strings.Repeat(
+		"tail ",
+		200,
+	)
 	snippet := Snippet(body, QueryTerms("lumper fee"))
 
 	assert.LessOrEqual(t, len([]rune(snippet)), MaxSnippetChars)

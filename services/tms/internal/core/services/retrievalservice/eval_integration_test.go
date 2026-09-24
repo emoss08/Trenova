@@ -474,9 +474,12 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 	for name, searcher := range searchers {
 		t.Run(name, func(t *testing.T) {
 			for _, query := range allQueries(suites) {
-				documents, err := searcher.SearchDocuments(h.ctx, serviceports.RetrievalSearchRequest{
-					TenantInfo: h.tenant, Query: query, Limit: 50, Access: denyWorker,
-				})
+				documents, err := searcher.SearchDocuments(
+					h.ctx,
+					serviceports.RetrievalSearchRequest{
+						TenantInfo: h.tenant, Query: query, Limit: 50, Access: denyWorker,
+					},
+				)
 				require.NoError(t, err)
 				for _, hit := range documents.Hits {
 					assert.NotContains(t, forbidden, hit.Document.ID, "document for %q", query)
@@ -503,9 +506,12 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 				}
 			}
 
-			quoted, err := searcher.SearchInboundMessages(h.ctx, serviceports.RetrievalSearchRequest{
-				TenantInfo: h.tenant, Query: "lumber order", Limit: 50, Access: denyWorker,
-			})
+			quoted, err := searcher.SearchInboundMessages(
+				h.ctx,
+				serviceports.RetrievalSearchRequest{
+					TenantInfo: h.tenant, Query: "lumber order", Limit: 50, Access: denyWorker,
+				},
+			)
 			require.NoError(t, err)
 			for _, hit := range quoted.Hits {
 				assert.NotEqual(t, corpora.inbox.IDs["late-pickup-complaint"], hit.Message.ID,

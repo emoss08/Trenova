@@ -58,7 +58,10 @@ type DocumentSeed struct {
 	Items        []agentevalgate.RetrievalItem
 }
 
-func DocumentFor(item agentevalgate.RetrievalItem, owner string) *repositories.RetrievalDocumentSource {
+func DocumentFor(
+	item agentevalgate.RetrievalItem,
+	owner string,
+) *repositories.RetrievalDocumentSource {
 	if owner == "" {
 		owner = item.AttachedTo
 	}

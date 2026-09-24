@@ -80,7 +80,11 @@ func (f *fakeIndexer) DeleteSource(
 	return f.err
 }
 
-func (f *fakeIndexer) Reindex(context.Context, pagination.TenantInfo, airetrieval.SourceType) error {
+func (f *fakeIndexer) Reindex(
+	context.Context,
+	pagination.TenantInfo,
+	airetrieval.SourceType,
+) error {
 	return nil
 }
 
@@ -126,7 +130,10 @@ func TestDeleteDropsTheDocumentFromTheSemanticIndex(t *testing.T) {
 	indexer := &fakeIndexer{}
 	id := pulid.MustNew("doc_")
 
-	require.NoError(t, newTestService(repo, indexer).Delete(t.Context(), id, pagination.TenantInfo{}))
+	require.NoError(
+		t,
+		newTestService(repo, indexer).Delete(t.Context(), id, pagination.TenantInfo{}),
+	)
 	assert.Equal(t, []pulid.ID{id}, repo.deleted)
 	assert.Equal(t, []pulid.ID{id}, indexer.deleted)
 }

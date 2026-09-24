@@ -213,7 +213,10 @@ func (f *fakeRetrievalRepo) SwapModel(
 
 	copied := *f.settings
 
-	return &repositories.SwapAIRetrievalModelResult{Settings: &copied, RetiredModelKey: retired}, nil
+	return &repositories.SwapAIRetrievalModelResult{
+		Settings:        &copied,
+		RetiredModelKey: retired,
+	}, nil
 }
 
 func (f *fakeRetrievalRepo) PurgeModel(

@@ -104,7 +104,11 @@ func TestEvaluateRetrievalAveragesEveryCase(t *testing.T) {
 	}, report.Floors())
 	assert.Contains(t, report.Misses(), `"second" wants b, first at 2`)
 	assert.Empty(t, report.Below(report.Floors()))
-	assert.Len(t, report.Below(agentevalgate.RetrievalFloors{RecallAt5: 1.1, MRR: 1, NDCGAt10: 1}), 3)
+	assert.Len(
+		t,
+		report.Below(agentevalgate.RetrievalFloors{RecallAt5: 1.1, MRR: 1, NDCGAt10: 1}),
+		3,
+	)
 }
 
 func TestEvaluateRetrievalReportsARetrieverError(t *testing.T) {

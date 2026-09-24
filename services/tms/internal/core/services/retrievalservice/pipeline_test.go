@@ -480,14 +480,22 @@ func TestCompleteModelChangeWaitsForTheWholeCorpus(t *testing.T) {
 	assert.False(t, result.Swapped, "a source not yet indexed under the new model holds the swap")
 
 	svc.repo.counts = []repositories.IndexEntryCount{
-		{SourceType: airetrieval.SourceTypeMemory, Status: airetrieval.IndexStatusPending, Count: 2},
+		{
+			SourceType: airetrieval.SourceTypeMemory,
+			Status:     airetrieval.IndexStatusPending,
+			Count:      2,
+		},
 	}
 	result, err = svc.CompleteModelChange(t.Context(), testTenant, pendingKey)
 	require.NoError(t, err)
 	assert.False(t, result.Swapped, "pending entries hold the swap")
 
 	svc.repo.counts = []repositories.IndexEntryCount{
-		{SourceType: airetrieval.SourceTypeMemory, Status: airetrieval.IndexStatusIndexed, Count: 2},
+		{
+			SourceType: airetrieval.SourceTypeMemory,
+			Status:     airetrieval.IndexStatusIndexed,
+			Count:      2,
+		},
 	}
 	result, err = svc.CompleteModelChange(t.Context(), testTenant, pendingKey)
 	require.NoError(t, err)
@@ -539,7 +547,12 @@ func TestMarkStaleSurvivesAnUnreachableTemporal(t *testing.T) {
 	svc := newTestService(activeSettings())
 	svc.signals.err = errors.New("temporal is down")
 
-	err := svc.MarkStale(t.Context(), testTenant, airetrieval.SourceTypeMemory, pulid.MustNew("amem_"))
+	err := svc.MarkStale(
+		t.Context(),
+		testTenant,
+		airetrieval.SourceTypeMemory,
+		pulid.MustNew("amem_"),
+	)
 	require.NoError(t, err)
 	assert.Len(t, svc.repo.marked, 1, "the outbox keeps the source for the hourly sweep")
 }

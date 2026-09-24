@@ -89,7 +89,13 @@ func TestRecordRetrievalEmbeddingFixture(t *testing.T) {
 	inputs := retrievaltest.EmbeddingInputs(documents, inbox, memories)
 
 	fixture, err := agentevalgate.RecordEmbeddingFixture(t.Context(), embed, dimensions, inputs)
-	require.NoError(t, err, "is Ollama serving %s at %s?", agentevalgate.EmbeddingFixtureModel, baseURL)
+	require.NoError(
+		t,
+		err,
+		"is Ollama serving %s at %s?",
+		agentevalgate.EmbeddingFixtureModel,
+		baseURL,
+	)
 
 	encoded, err := agentevalgate.MarshalJSON(fixture)
 	require.NoError(t, err)

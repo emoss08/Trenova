@@ -414,7 +414,11 @@ func (s *Service) pendingModelComplete(
 			Limit:      1,
 		})
 		if err != nil {
-			return false, fmt.Errorf("check %s sources under the pending model: %w", sourceType, err)
+			return false, fmt.Errorf(
+				"check %s sources under the pending model: %w",
+				sourceType,
+				err,
+			)
 		}
 		if len(stale) > 0 {
 			return false, nil
