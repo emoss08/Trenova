@@ -18987,39 +18987,6 @@
       "sdl": "fragment AgentEvalCaseTableRowFields on AgentEvalCase {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  title\n  source\n  status\n  trigger\n  input\n  sourceThreadId\n  sourceProposalId\n  heldTools\n  expected\n  weight\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
-      "name": "AgentEvalCaseDetailFields",
-      "typeCondition": "AgentEvalCase",
-      "domain": "agent",
-      "sourceFile": "src/operations/agent/eval-cases.graphql",
-      "fragments": [
-        "AgentEvalCaseTableRowFields"
-      ],
-      "usedByOperations": [
-        "AgentEvalCaseDetail",
-        "CreateAgentEvalCase",
-        "SetAgentEvalCaseStatus",
-        "UpdateAgentEvalCase"
-      ],
-      "usages": [],
-      "sdl": "fragment AgentEvalCaseDetailFields on AgentEvalCase {\n  ...AgentEvalCaseTableRowFields\n  sourceRunId\n  sourceTurnId\n  sourceMessageId\n  sourceFeedbackId\n  history\n  pageContext\n  mentions\n  subjectType\n  subjectId\n  toolFixtures\n  rubric\n  redaction\n  contentHash\n  capturedFingerprint\n  createdByUserId\n}\n\nfragment AgentEvalCaseTableRowFields on AgentEvalCase {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  title\n  source\n  status\n  trigger\n  input\n  sourceThreadId\n  sourceProposalId\n  heldTools\n  expected\n  weight\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
-    },
-    {
-      "name": "AgentEvalCaseTableRowFields",
-      "typeCondition": "AgentEvalCase",
-      "domain": "agent",
-      "sourceFile": "src/operations/agent/eval-cases.graphql",
-      "fragments": [],
-      "usedByOperations": [
-        "AgentEvalCaseDetail",
-        "AgentEvalCaseTable",
-        "CreateAgentEvalCase",
-        "SetAgentEvalCaseStatus",
-        "UpdateAgentEvalCase"
-      ],
-      "usages": [],
-      "sdl": "fragment AgentEvalCaseTableRowFields on AgentEvalCase {\n  id\n  organizationId\n  businessUnitId\n  agentDefinitionId\n  title\n  source\n  status\n  trigger\n  input\n  sourceThreadId\n  sourceProposalId\n  heldTools\n  expected\n  weight\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
-    },
-    {
       "name": "AgentEvaluationTableRowFields",
       "typeCondition": "AgentEvaluation",
       "domain": "agent",
