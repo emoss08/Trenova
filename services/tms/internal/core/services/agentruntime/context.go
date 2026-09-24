@@ -61,13 +61,14 @@ func (b *ContextBuilder) Build(
 ) (agentdefinition.RuntimeContext, error) {
 	definition := req.Definition
 	rc := agentdefinition.RuntimeContext{
-		Now:         timeutils.NowUnix(),
-		Trigger:     req.Trigger,
-		Subject:     req.Subject,
-		Page:        req.Page,
-		Attachments: req.Attachments,
-		Mentions:    req.Mentions,
-		Tools:       b.runtime.ToolSummaries(definition),
+		Now:              timeutils.NowUnix(),
+		Trigger:          req.Trigger,
+		Subject:          req.Subject,
+		Page:             req.Page,
+		Attachments:      req.Attachments,
+		Mentions:         req.Mentions,
+		DelegatorRecords: req.DelegatorRecords,
+		Tools:            b.runtime.ToolSummaries(definition),
 	}
 
 	b.describeTrenova(&rc, req)
@@ -134,21 +135,25 @@ func (b *ContextBuilder) Build(
 	}
 
 	// Memory is read for every agent that asks for it, scoped to the
-	// organization and to the agent's own tools: a correction to assign_move
-	// belongs in the prompt of an agent that can assign, and nowhere else.
+	// organization, to the agent's own tools, and to the records the turn is
+	// about: a correction to assign_move belongs in the prompt of an agent
+	// that can assign, and what was recorded about Acme belongs in a turn
+	// about one of Acme's shipments. The prompt keeps what its budget holds.
 	if definition.HasContextProvider(agentdefinition.ContextMemory) && b.memories != nil {
 		memories, err := b.memories.ForContext(ctx, serviceports.MemoryContextRequest{
 			TenantInfo:        tenant,
 			AgentDefinitionID: definition.ID,
 			ToolNames:         definition.EffectiveToolNames(),
+			Records:           rc.MemoryRecords(),
 		})
 		if err != nil {
 			b.logger.Warn("agent context: memory lookup failed",
 				zap.String("organization", tenant.OrgID.String()),
 				zap.Error(err),
 			)
-		} else {
-			rc.Memories = memories
+		} else if memories != nil {
+			rc.Memories = memories.Memories
+			rc.MemorySubjects = memories.Subjects
 		}
 	}
 

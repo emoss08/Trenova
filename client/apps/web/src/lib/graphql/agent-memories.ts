@@ -3,6 +3,7 @@ import {
   AgentMemoryCountDocument,
   AgentMemoryTableDocument,
   AgentMemoryTableRowFieldsFragmentDoc,
+  AgentMemoryUsageDocument,
   ApproveAgentMemorySuggestionDocument,
   CreateAgentMemoryDocument,
   DismissAgentMemorySuggestionDocument,
@@ -71,6 +72,35 @@ export async function fetchActiveAgentMemoryCount(options?: {
   });
 
   return data.agentMemories.totalCount ?? 0;
+}
+
+/**
+ * How many memories agents may read against the organization's soft cap. It
+ * sits under the list's key, so whatever refreshes the list refreshes it too.
+ */
+export const agentMemoryUsageQueryKey = [AGENT_MEMORY_LIST_KEY, "usage"] as const;
+
+export type AgentMemoryUsage = {
+  activeCount: number;
+  activeSoftCap: number;
+  warnAt: number;
+};
+
+export async function fetchAgentMemoryUsage(options?: {
+  signal?: AbortSignal;
+}): Promise<AgentMemoryUsage> {
+  const data = await requestGraphQL({
+    document: AgentMemoryUsageDocument,
+    operationName: "AgentMemoryUsage",
+    signal: options?.signal,
+  });
+
+  return data.agentMemoryUsage;
+}
+
+/** Whether the organization keeps enough memories that AI Control should say so. */
+export function memoryUsageNearCap(usage: AgentMemoryUsage | undefined): boolean {
+  return usage !== undefined && usage.activeCount >= usage.warnAt;
 }
 
 export type AgentMemorySuggestion = AgentMemoryTableRowFieldsFragment;

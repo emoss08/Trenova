@@ -105,6 +105,11 @@ type AgentDefinition {
   toolDailyLimits: JSON!
   "Writes are previewed and recorded, never made."
   simulationMode: Boolean!
+  """
+  Approximate tokens of recorded memory one prompt of this agent may carry,
+  1000 to 16000. Absent uses the default of 6000.
+  """
+  memoryTokenBudget: Int
   contextProviders: [AgentContextProvider!]!
   outputMode: AgentOutputMode!
   "Chosen icon name; empty falls back to the icon the starter template implies."

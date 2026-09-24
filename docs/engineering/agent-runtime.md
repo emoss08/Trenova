@@ -229,13 +229,79 @@ outside a proposal as unknown and marks what it writes with the run's record.
 The prompt renders memories in two sections. What the organization recorded, and
 any memory a person approved (`Memory.ApprovedByPerson`: written from a proposal
 a person decided), goes under "What this organization has recorded for its
-agents", where an Instruction is followed as if the person who recorded it were
-asking now. A tainted memory nobody approved (`Memory.DrawnFromOutside`) goes
-under "Recorded by agents after reading outside content", fenced as
+agents", grouped under a heading per thing it is about ("About Acme Foods
+(customer)", "About tool assign_move", "For the whole organization"), where an
+Instruction is followed as if the person who recorded it were asking now. A
+tainted memory nobody approved (`Memory.DrawnFromOutside`) goes under "Recorded
+by agents after reading outside content", fenced as
 `<memory_from_outside_content>`, each line naming the kind it was recorded as,
 and framed as information drawn from outside text that is never followed. It
 still taints the turn that reads it. Trust promotion is unaffected: the ceiling is applied in `Decide` on
 every call, whatever tier was earned.
+
+**What a turn reads.** `ContextBuilder.Build` collects the records the turn is
+about (`RuntimeContext.MemoryRecords`: its subject, the page's record, the records
+the person mentioned, and for a delegate the records of the turn that handed it
+the task) and `agentmemoryservice` resolves them to at most twelve memory
+subjects (`SubjectResolver`):
+
+| Record | Subjects |
+|---|---|
+| customer, location, worker, carrier | itself, as the record the turn is about |
+| shipment | its customer and bill-to, its stops' locations in order, its assigned workers, its carriers |
+| shipment move | its shipment, then as above |
+| invoice, billing queue item | its customer |
+| inbound message | its matched customer and carrier, and its matched shipment as above |
+| document | the record it is attached to, as above |
+
+The records a turn is about come first; the ones they name follow in the order
+a person reads the record. The links are batched reads
+(`agentmemorysubjectrepository.ListRecordLinks`, one query per kind per hop). Up
+to 500 active, unexpired candidates are then read, subject rows first, and
+ordered by `services.MemoryRanker` — recency and use count until retrieval can
+rank by meaning.
+
+**What the prompt carries.** `OpenTurn` fits the candidates to the agent's
+`memory_token_budget` (6,000 tokens by default, 1,000–16,000; estimated with
+`shared/llmtokens`) in this order, skipping whatever does not fit and filling
+what is left:
+
+1. memories about a record the turn is about;
+2. memories about a record it names;
+3. organization-wide Instructions;
+4. memories about a tool loaded this turn (every held tool when the turn
+   disclosed none);
+5. everything else — Facts, and Corrections to tools not loaded — in the
+   ranker's order.
+
+A memory over 1,200 characters is shown cut short with its id, and the prompt
+tells the model to read the rest with `recall_memory`. Only what fits is counted
+as used (`AgentMemoryService.RecordUse`), and only what fits taints the turn. A
+preview built outside a turn (`PreviewPrompt`) applies the same fit and counts
+nothing.
+
+**Determinism.** All of it runs in activities: `Build` in the prepare and open
+activities, the fit in `OpenTurn`. The records a delegate inherits travel as
+optional data (`RunRequest.Records`, `TurnPlan.Records`, `agentflow.RunContext.Records`)
+from an activity result into the delegate's open activity. Workflow code only
+copies them; a history recorded before they existed replays with none, and the
+delegate reads the memories of no record. No `GetVersion` gate.
+
+**Recall.** `recall_memory` searches a generated `search_vector` on
+`agent_memories` (`'simple'` configuration: subject label A, content B, tool C;
+GIN index). A query is `websearch_to_tsquery` or'd with every word as a prefix,
+ranked by `ts_rank_cd`; when nothing matches every word, any word's prefix is
+tried, so a question finds the memories that share most of its words. A query
+with websearch operators (quotes, `or`, `-word`) is taken as written. It returns
+10 rows by default and at most 50, reads one memory whole by `id`, and marks each
+row a search found `match: "words"`.
+
+**Limits.** A memory holds at most 4,000 characters
+(`agent.MaxMemoryContentChars`). An organization should keep at most 5,000
+active memories; `agentMemoryUsage` reports the count and AI Control's Memory
+section warns from 4,000. Recording the same sentence again returns the existing
+row only when it is unexpired, kept for the same readers (organization, or the
+same agent) and, for a clean write, not tainted.
 
 ### Taint is data
 

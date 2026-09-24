@@ -28,6 +28,7 @@ fragment AgentDefinitionCardFields on AgentDefinition {
   dailyRunLimit
   toolDailyLimits
   simulationMode
+  memoryTokenBudget
   contextProviders
   outputMode
   preferredProviderId

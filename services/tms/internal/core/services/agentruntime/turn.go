@@ -371,6 +371,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	// configuration: a tool named there and refused when called reads as
 	// the system refusing rather than the person lacking the right.
 	runtimeContext.Tools = usableSummaries(runtimeContext.Tools, tools)
+	runtimeContext.Memories = s.memoriesForPrompt(ctx, req, runtimeContext)
 	repeats := newRepeatGuard()
 	counts := newOrdinals()
 	// A delegate's turn shares the ledger of the turn that delegated, and is
@@ -390,7 +391,7 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 		Content: input,
 	})
 	now := timeutils.NowUnix()
-	taint, opened := openTaint(req, now)
+	taint, opened := openTaint(req, runtimeContext, now)
 
 	return &Turn{
 		s:         s,

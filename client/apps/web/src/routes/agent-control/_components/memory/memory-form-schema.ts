@@ -5,8 +5,13 @@ import type {
 } from "@trenova/graphql/generated/graphql";
 import { z } from "zod";
 
-/** The server's bound; a memory is read into every prompt that asks for it. */
-export const MEMORY_CONTENT_LIMIT = 2000;
+/**
+ * The most characters one memory may hold. The single client copy of the
+ * server's `agent.MaxMemoryContentChars`; every field and counter reads it
+ * from here. A prompt shows the first 1200 and names the memory's id so the
+ * agent can read the rest.
+ */
+export const MEMORY_CONTENT_LIMIT = 4000;
 
 export const memoryKindValues = [
   "Instruction",

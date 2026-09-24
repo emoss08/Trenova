@@ -21,6 +21,16 @@ type fakeMemoryRepo struct {
 	found   *agent.Memory
 	used    []pulid.ID
 	listed  *repositories.ListActiveAgentMemoriesRequest
+	sought  *repositories.FindActiveAgentMemoryRequest
+
+	activeCount int
+}
+
+func (f *fakeMemoryRepo) CountActive(
+	context.Context,
+	repositories.CountActiveAgentMemoriesRequest,
+) (int, error) {
+	return f.activeCount, nil
 }
 
 func (f *fakeMemoryRepo) Create(_ context.Context, entity *agent.Memory) (*agent.Memory, error) {
@@ -31,9 +41,11 @@ func (f *fakeMemoryRepo) Create(_ context.Context, entity *agent.Memory) (*agent
 }
 
 func (f *fakeMemoryRepo) FindActive(
-	context.Context,
-	repositories.FindActiveAgentMemoryRequest,
+	_ context.Context,
+	req repositories.FindActiveAgentMemoryRequest,
 ) (*agent.Memory, error) {
+	f.sought = &req
+
 	return f.found, nil
 }
 
@@ -161,7 +173,45 @@ func TestRemember_ReturnsTheExistingRowForTheSameSentence(t *testing.T) {
 	assert.Empty(t, repo.created)
 }
 
-func TestForContext_ReadsOrganizationWideAndToolScopedAndCountsUse(t *testing.T) {
+func TestRemember_LooksForTheSameMemoryOnlyWhereItWouldBeRead(t *testing.T) {
+	t.Parallel()
+
+	definitionID := pulid.MustNew("agdef_")
+	runs := &fakeRuns{run: &agent.AgentRun{AgentDefinitionID: definitionID}}
+
+	clean := &fakeMemoryRepo{}
+	_, err := newService(clean, runs, &fakeLabeler{}).Remember(t.Context(),
+		&services.RememberRequest{TenantInfo: tenant(), Content: "Quote in dollars."},
+		userActor(),
+	)
+	require.NoError(t, err)
+	require.NotNil(t, clean.sought)
+	assert.False(t, clean.sought.Tainted, "a person's own write never matches a tainted row")
+	assert.Equal(t, agent.MemoryScopeOrganization, clean.sought.Scope)
+	assert.True(t, clean.sought.AgentDefinitionID.IsNil())
+	assert.Positive(t, clean.sought.Now, "an expired row is not the same memory")
+
+	tainted := &fakeMemoryRepo{}
+	taint := &agent.RunTaint{}
+	taint.Add(agent.TaintMark{Source: agent.TaintSourceInboundMessage})
+	_, err = newService(tainted, runs, &fakeLabeler{}).Remember(t.Context(),
+		&services.RememberRequest{
+			TenantInfo: tenant(),
+			Content:    "Ship to dock 9.",
+			RunID:      pulid.MustNew("arun_"),
+			Taint:      taint,
+		},
+		userActor(),
+	)
+	require.NoError(t, err)
+	require.NotNil(t, tainted.sought)
+	assert.True(t, tainted.sought.Tainted)
+	assert.Equal(t, definitionID, tainted.sought.AgentDefinitionID)
+	assert.Equal(t, agent.MemoryScopeOrganization, tainted.sought.Scope,
+		"an agent's remember is read by every agent, so it matches only organization rows")
+}
+
+func TestForContext_ReadsCandidatesWithoutCountingThemUsed(t *testing.T) {
 	t.Parallel()
 
 	one := &agent.Memory{ID: pulid.MustNew("amem_")}
@@ -174,11 +224,78 @@ func TestForContext_ReadsOrganizationWideAndToolScopedAndCountsUse(t *testing.T)
 	})
 	require.NoError(t, err)
 
-	assert.Len(t, got, 1)
+	assert.Equal(t, []*agent.Memory{one}, got.Memories)
 	assert.True(t, repo.listed.OrganizationWide)
 	assert.Equal(t, []string{"assign_move"}, repo.listed.ToolNames)
-	assert.Equal(t, DefaultContextLimit, repo.listed.Limit)
-	assert.Equal(t, []pulid.ID{one.ID}, repo.used)
+	assert.Equal(t, agent.MaxMemoryCandidates, repo.listed.Limit)
+	assert.Empty(t, repo.used, "a candidate is counted only once a prompt carries it")
+}
+
+func TestForContext_ReadsTheMemoriesOfTheRecordsTheTurnIsAbout(t *testing.T) {
+	t.Parallel()
+
+	customerID := pulid.MustNew("cus_")
+	shipmentID := pulid.MustNew("shp_")
+	locationID := pulid.MustNew("loc_")
+	repo := &fakeMemoryRepo{}
+	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
+	links := map[agent.MemoryRecordKind][]repositories.MemoryRecordLink{
+		agent.MemoryRecordShipment: {
+			{From: shipmentID, Kind: agent.MemoryRecordLocation, ID: locationID},
+		},
+	}
+	svc.subjects = NewSubjectResolver(&fakeLinks{links: links})
+
+	got, err := svc.ForContext(t.Context(), services.MemoryContextRequest{
+		TenantInfo: tenant(),
+		Records: []agent.EntityRef{
+			{Type: "customer", ID: customerID.String()},
+			{Type: string(agent.SubjectShipment), ID: shipmentID.String()},
+		},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, []agent.MemorySubject{
+		{Type: agent.MemorySubjectCustomer, ID: customerID, Relation: agent.MemoryRelationDirect},
+		{Type: agent.MemorySubjectLocation, ID: locationID, Relation: agent.MemoryRelationRelated},
+	}, got.Subjects)
+	assert.Equal(t, []repositories.MemorySubjectRef{
+		{Type: agent.MemorySubjectCustomer, ID: customerID},
+		{Type: agent.MemorySubjectLocation, ID: locationID},
+	}, repo.listed.Subjects)
+}
+
+func TestRecordUse_CountsWhatAPromptCarried(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeMemoryRepo{}
+	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
+	ids := []pulid.ID{pulid.MustNew("amem_"), pulid.MustNew("amem_")}
+
+	require.NoError(t, svc.RecordUse(t.Context(), services.RecordMemoryUseRequest{
+		TenantInfo: tenant(),
+		IDs:        ids,
+	}))
+	assert.Equal(t, ids, repo.used)
+
+	require.NoError(t, svc.RecordUse(t.Context(), services.RecordMemoryUseRequest{
+		TenantInfo: tenant(),
+	}))
+	assert.Len(t, repo.used, 2, "nothing carried is nothing to count")
+}
+
+func TestUsage_ReportsTheCountAgainstTheSoftCap(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeMemoryRepo{activeCount: 4200}
+	usage, err := newService(repo, &fakeRuns{}, &fakeLabeler{}).Usage(t.Context(), tenant())
+	require.NoError(t, err)
+
+	assert.Equal(t, &services.AgentMemoryUsage{
+		ActiveCount:   4200,
+		ActiveSoftCap: agent.MemoryActiveSoftCap,
+		WarnAt:        agent.MemoryActiveWarnAt,
+	}, usage)
 }
 
 func proposal(tool string, params map[string]any) *agent.AgentProposal {

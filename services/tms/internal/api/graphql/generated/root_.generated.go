@@ -708,6 +708,7 @@ type ComplexityRoot struct {
 		LastRunAt              func(childComplexity int) int
 		MaxConcurrentRuns      func(childComplexity int) int
 		MaxToolCalls           func(childComplexity int) int
+		MemoryTokenBudget      func(childComplexity int) int
 		MonthlyBudgetUsd       func(childComplexity int) int
 		Name                   func(childComplexity int) int
 		NextRunAt              func(childComplexity int) int
@@ -961,6 +962,12 @@ type ComplexityRoot struct {
 		Quotes          func(childComplexity int) int
 		RatingCount     func(childComplexity int) int
 		Reason          func(childComplexity int) int
+	}
+
+	AgentMemoryUsage struct {
+		ActiveCount   func(childComplexity int) int
+		ActiveSoftCap func(childComplexity int) int
+		WarnAt        func(childComplexity int) int
 	}
 
 	AgentPlan struct {
@@ -8147,6 +8154,7 @@ type ComplexityRoot struct {
 		AgentFeedbackSummary                func(childComplexity int, agentDefinitionID string, window *int) int
 		AgentMemories                       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentMemory                         func(childComplexity int, id string) int
+		AgentMemoryUsage                    func(childComplexity int) int
 		AgentPlan                           func(childComplexity int, id string) int
 		AgentPlans                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentProposal                       func(childComplexity int, id string) int
@@ -14615,6 +14623,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDefinition.MaxToolCalls(childComplexity), true
+	case "AgentDefinition.memoryTokenBudget":
+		if e.ComplexityRoot.AgentDefinition.MemoryTokenBudget == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDefinition.MemoryTokenBudget(childComplexity), true
 	case "AgentDefinition.monthlyBudgetUsd":
 		if e.ComplexityRoot.AgentDefinition.MonthlyBudgetUsd == nil {
 			break
@@ -15776,6 +15790,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentMemoryEvidence.Reason(childComplexity), true
+
+	case "AgentMemoryUsage.activeCount":
+		if e.ComplexityRoot.AgentMemoryUsage.ActiveCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryUsage.ActiveCount(childComplexity), true
+	case "AgentMemoryUsage.activeSoftCap":
+		if e.ComplexityRoot.AgentMemoryUsage.ActiveSoftCap == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryUsage.ActiveSoftCap(childComplexity), true
+	case "AgentMemoryUsage.warnAt":
+		if e.ComplexityRoot.AgentMemoryUsage.WarnAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryUsage.WarnAt(childComplexity), true
 
 	case "AgentPlan.businessUnitId":
 		if e.ComplexityRoot.AgentPlan.BusinessUnitID == nil {
@@ -51858,6 +51891,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentMemory(childComplexity, args["id"].(string)), true
+	case "Query.agentMemoryUsage":
+		if e.ComplexityRoot.Query.AgentMemoryUsage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.AgentMemoryUsage(childComplexity), true
 	case "Query.agentPlan":
 		if e.ComplexityRoot.Query.AgentPlan == nil {
 			break
@@ -75694,6 +75733,16 @@ type AgentMemory {
   updatedAt: Timestamp!
 }
 
+"How much the organization keeps for its agents, against what it should keep."
+type AgentMemoryUsage {
+  "Active memories that have not expired: what agents may read."
+  activeCount: Int!
+  "The number of active memories an organization should keep at most. Past it, fewer of them fit in each prompt."
+  activeSoftCap: Int!
+  "The count at which AI Control warns that the cap is near."
+  warnAt: Int!
+}
+
 type AgentMemoryEdge {
   node: AgentMemory!
   cursor: String!
@@ -75851,6 +75900,8 @@ extend type Query {
   agentEvaluations(input: DataTableConnectionInput!): AgentEvaluationConnection!
   agentEvaluation(id: ID!): AgentEvaluation
   agentMemory(id: ID!): AgentMemory
+  "How many active memories the organization keeps, against its soft cap."
+  agentMemoryUsage: AgentMemoryUsage!
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
   agentControl: AgentControl!
@@ -75991,6 +76042,11 @@ type AgentDefinition {
   toolDailyLimits: JSON!
   "Writes are previewed and recorded, never made."
   simulationMode: Boolean!
+  """
+  Approximate tokens of recorded memory one prompt of this agent may carry,
+  1000 to 16000. Absent uses the default of 6000.
+  """
+  memoryTokenBudget: Int
   contextProviders: [AgentContextProvider!]!
   outputMode: AgentOutputMode!
   "Chosen icon name; empty falls back to the icon the starter template implies."
@@ -98611,6 +98667,8 @@ func (ec *executionContext) childFields_AgentDefinition(ctx context.Context, fie
 		return ec.fieldContext_AgentDefinition_toolDailyLimits(ctx, field)
 	case "simulationMode":
 		return ec.fieldContext_AgentDefinition_simulationMode(ctx, field)
+	case "memoryTokenBudget":
+		return ec.fieldContext_AgentDefinition_memoryTokenBudget(ctx, field)
 	case "contextProviders":
 		return ec.fieldContext_AgentDefinition_contextProviders(ctx, field)
 	case "outputMode":
@@ -99115,6 +99173,18 @@ func (ec *executionContext) childFields_AgentMemoryEvidence(ctx context.Context,
 		return ec.fieldContext_AgentMemoryEvidence_lastRatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentMemoryEvidence", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentMemoryUsage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "activeCount":
+		return ec.fieldContext_AgentMemoryUsage_activeCount(ctx, field)
+	case "activeSoftCap":
+		return ec.fieldContext_AgentMemoryUsage_activeSoftCap(ctx, field)
+	case "warnAt":
+		return ec.fieldContext_AgentMemoryUsage_warnAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentMemoryUsage", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentPlan(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

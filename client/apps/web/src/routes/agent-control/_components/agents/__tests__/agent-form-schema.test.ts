@@ -1,4 +1,5 @@
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import { MEMORY_TOKEN_BUDGET } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import {
   accessOf,
@@ -29,6 +30,34 @@ function issuesOf(input: Record<string, unknown>): Record<string, string> {
 describe("agentFormSchema", () => {
   it("accepts a chat agent with only a name", () => {
     expect(issuesOf(values({}))).toEqual({});
+  });
+
+  // agentdefinition.validateMemoryBudget: 1000 to 16000 tokens, or nothing
+  // for the default of 6000.
+  it("bounds the memory budget the way the server does", () => {
+    expect(issuesOf(values({ memoryTokenBudget: null }))).toEqual({});
+    expect(issuesOf(values({ memoryTokenBudget: MEMORY_TOKEN_BUDGET.min }))).toEqual({});
+    expect(issuesOf(values({ memoryTokenBudget: MEMORY_TOKEN_BUDGET.max }))).toEqual({});
+    expect(issuesOf(values({ memoryTokenBudget: 999 }))).toEqual({
+      memoryTokenBudget: "Memory in the prompt must be at least 1000 tokens",
+    });
+    expect(issuesOf(values({ memoryTokenBudget: 16001 }))).toEqual({
+      memoryTokenBudget: "Memory in the prompt can be at most 16000 tokens",
+    });
+    expect(issuesOf(values({ memoryTokenBudget: 1500.5 }))).toHaveProperty("memoryTokenBudget");
+    expect(MEMORY_TOKEN_BUDGET.default).toBe(6000);
+  });
+
+  it("sends the memory budget as set and none when it was left empty", () => {
+    expect(
+      toSaveRequest({ ...agentFormDefaults, name: "Rates", memoryTokenBudget: 9000 })
+        .memoryTokenBudget,
+    ).toBe(9000);
+    expect(toSaveRequest({ ...agentFormDefaults, name: "Rates" }).memoryTokenBudget).toBeNull();
+    expect(toAgentPanelRow({ ...agentRow(), memoryTokenBudget: 12000 }).memoryTokenBudget).toBe(
+      12000,
+    );
+    expect(toAgentPanelRow(agentRow()).memoryTokenBudget).toBeNull();
   });
 
   // The server refuses a daily limit on a tool the agent does not hold. A
@@ -300,6 +329,7 @@ function agentRow(): AgentDefinitionRow {
     dailyRunLimit: 0,
     toolDailyLimits: {},
     simulationMode: false,
+    memoryTokenBudget: null,
     contextProviders: [],
     outputMode: "Conversational",
     preferredProviderId: "",

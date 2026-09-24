@@ -404,6 +404,7 @@ func (r *repository) Update(
 		Set(cols.MaxConcurrentRuns.Set(), entity.MaxConcurrentRuns).
 		Set(cols.RunTimeoutSeconds.Set(), entity.RunTimeoutSeconds).
 		Set(cols.MaxToolCalls.Set(), entity.MaxToolCalls).
+		Set(cols.MemoryTokenBudget.Set(), entity.MemoryTokenBudget).
 		Set(cols.Icon.Set(), stringutils.NilIfEmpty(entity.Icon)).
 		Set(cols.Accent.Set(), stringutils.NilIfEmpty(entity.Accent)).
 		Set(cols.ContextProviders.Set(), dbhelper.TextArray(entity.ContextProviders)).
