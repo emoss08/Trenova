@@ -40,7 +40,7 @@ type IndexEntryKey struct {
 	ModelKey       string
 }
 
-func (k IndexEntryKey) TenantInfo() pagination.TenantInfo {
+func (k *IndexEntryKey) TenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: k.OrganizationID, BuID: k.BusinessUnitID}
 }
 

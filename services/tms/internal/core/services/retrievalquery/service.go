@@ -95,7 +95,7 @@ func (s *Service) Vectorize(
 		return cached, nil
 	}
 
-	result, err := s.embeddings.Embed(ctx, serviceports.EmbedRequest{
+	result, err := s.embeddings.Embed(ctx, &serviceports.EmbedRequest{
 		TenantInfo:  req.TenantInfo,
 		Purpose:     serviceports.EmbeddingPurposeQuery,
 		Inputs:      []string{text},

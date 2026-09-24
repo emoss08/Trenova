@@ -130,7 +130,7 @@ func (s *Service) markStale(
 ) (int, error) {
 	marked := 0
 	for batch := range slices.Chunk(ids, maxStaleIDsPerCall) {
-		count, err := s.repo.MarkStale(ctx, repositories.MarkAIRetrievalStaleRequest{
+		count, err := s.repo.MarkStale(ctx, &repositories.MarkAIRetrievalStaleRequest{
 			TenantInfo: tenant,
 			SourceType: sourceType,
 			SourceIDs:  batch,
@@ -184,7 +184,7 @@ func (s *Service) DeleteSource(
 		return nil
 	}
 
-	if _, err := s.repo.DeleteSource(ctx, repositories.AIRetrievalSourceRef{
+	if _, err := s.repo.DeleteSource(ctx, &repositories.AIRetrievalSourceRef{
 		TenantInfo: tenant,
 		SourceType: sourceType,
 		SourceID:   id,

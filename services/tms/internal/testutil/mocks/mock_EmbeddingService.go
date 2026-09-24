@@ -106,7 +106,7 @@ func (_c *MockEmbeddingService_ConfiguredModelKey_Call) RunAndReturn(run func(ct
 }
 
 // Embed provides a mock function for the type MockEmbeddingService
-func (_mock *MockEmbeddingService) Embed(ctx context.Context, req services.EmbedRequest) (services.EmbedResult, error) {
+func (_mock *MockEmbeddingService) Embed(ctx context.Context, req *services.EmbedRequest) (services.EmbedResult, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -115,15 +115,15 @@ func (_mock *MockEmbeddingService) Embed(ctx context.Context, req services.Embed
 
 	var r0 services.EmbedResult
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.EmbedRequest) (services.EmbedResult, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.EmbedRequest) (services.EmbedResult, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.EmbedRequest) services.EmbedResult); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.EmbedRequest) services.EmbedResult); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Get(0).(services.EmbedResult)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.EmbedRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.EmbedRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -138,20 +138,20 @@ type MockEmbeddingService_Embed_Call struct {
 
 // Embed is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req services.EmbedRequest
+//   - req *services.EmbedRequest
 func (_e *MockEmbeddingService_Expecter) Embed(ctx any, req any) *MockEmbeddingService_Embed_Call {
 	return &MockEmbeddingService_Embed_Call{Call: _e.mock.On("Embed", ctx, req)}
 }
 
-func (_c *MockEmbeddingService_Embed_Call) Run(run func(ctx context.Context, req services.EmbedRequest)) *MockEmbeddingService_Embed_Call {
+func (_c *MockEmbeddingService_Embed_Call) Run(run func(ctx context.Context, req *services.EmbedRequest)) *MockEmbeddingService_Embed_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 services.EmbedRequest
+		var arg1 *services.EmbedRequest
 		if args[1] != nil {
-			arg1 = args[1].(services.EmbedRequest)
+			arg1 = args[1].(*services.EmbedRequest)
 		}
 		run(
 			arg0,
@@ -166,7 +166,7 @@ func (_c *MockEmbeddingService_Embed_Call) Return(embedResult services.EmbedResu
 	return _c
 }
 
-func (_c *MockEmbeddingService_Embed_Call) RunAndReturn(run func(ctx context.Context, req services.EmbedRequest) (services.EmbedResult, error)) *MockEmbeddingService_Embed_Call {
+func (_c *MockEmbeddingService_Embed_Call) RunAndReturn(run func(ctx context.Context, req *services.EmbedRequest) (services.EmbedResult, error)) *MockEmbeddingService_Embed_Call {
 	_c.Call.Return(run)
 	return _c
 }

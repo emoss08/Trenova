@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -72,12 +71,19 @@ func batchEmbeddingInputs(inputs []string, limits embeddingBatchLimits) []embedd
 
 func (s *Service) Embed(
 	ctx context.Context,
-	req serviceports.EmbedRequest,
+	req *serviceports.EmbedRequest,
 ) (serviceports.EmbedResult, error) {
 	if !s.ai.AIEnabled() {
 		return serviceports.EmbedResult{}, errortypes.NewBusinessError(aiDisabledMessage)
 	}
-	if err := validateEmbedRequest(&req); err != nil {
+	if req == nil {
+		return serviceports.EmbedResult{}, errortypes.NewValidationError(
+			"request",
+			errortypes.ErrRequired,
+			"An embedding request is required",
+		)
+	}
+	if err := validateEmbedRequest(req); err != nil {
 		return serviceports.EmbedResult{}, err
 	}
 
@@ -107,9 +113,9 @@ func (s *Service) Embed(
 	priced := true
 
 	for _, batch := range batchEmbeddingInputs(inputs, embeddingLimitsFor(candidates[0])) {
-		served, err := s.embedBatch(ctx, candidates, &req, batch)
-		if err != nil {
-			return serviceports.EmbedResult{}, err
+		served, batchErr := s.embedBatch(ctx, candidates, req, batch)
+		if batchErr != nil {
+			return serviceports.EmbedResult{}, batchErr
 		}
 
 		result.Vectors = append(result.Vectors, served.vectors...)
@@ -159,9 +165,7 @@ func validateEmbedRequest(req *serviceports.EmbedRequest) error {
 		)
 	}
 
-	switch surface := req.ResolvedSurface(); surface {
-	case aiusage.SurfaceIndexing, aiusage.SurfaceRetrieval:
-	default:
+	if !req.ResolvedSurface().IsEmbedding() {
 		multiErr.Add(
 			"surface",
 			errortypes.ErrInvalid,

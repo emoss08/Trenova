@@ -128,12 +128,12 @@ type fakeEmbeddings struct {
 
 func (e *fakeEmbeddings) Embed(
 	_ context.Context,
-	req serviceports.EmbedRequest,
+	req *serviceports.EmbedRequest,
 ) (serviceports.EmbedResult, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	e.requests = append(e.requests, req)
+	e.requests = append(e.requests, *req)
 	if e.err != nil {
 		return serviceports.EmbedResult{}, e.err
 	}

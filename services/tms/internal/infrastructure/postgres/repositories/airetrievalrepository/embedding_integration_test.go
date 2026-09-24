@@ -59,7 +59,7 @@ func TestSearch_FiltersByTenantAndModelAndKeepsTheBestChunk(t *testing.T) {
 			Vector: axisVector(1024, map[int]float32{0: 1})},
 	)
 
-	hits, err := h.repo.Search(h.ctx, repositories.VectorSearchRequest{
+	hits, err := h.repo.Search(h.ctx, &repositories.VectorSearchRequest{
 		TenantInfo:  h.tenant,
 		SourceTypes: []airetrieval.SourceType{airetrieval.SourceTypeMemory},
 		ModelKey:    modelA,
@@ -83,7 +83,7 @@ func TestSearch_FiltersByTenantAndModelAndKeepsTheBestChunk(t *testing.T) {
 		assert.Equal(t, airetrieval.SourceTypeMemory, hit.SourceType)
 	}
 
-	floored, err := h.repo.Search(h.ctx, repositories.VectorSearchRequest{
+	floored, err := h.repo.Search(h.ctx, &repositories.VectorSearchRequest{
 		TenantInfo:    h.tenant,
 		ModelKey:      modelA,
 		Dimensions:    768,
@@ -93,7 +93,7 @@ func TestSearch_FiltersByTenantAndModelAndKeepsTheBestChunk(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, floored, 2, "the similarity floor drops the unrelated source")
 
-	documents, err := h.repo.Search(h.ctx, repositories.VectorSearchRequest{
+	documents, err := h.repo.Search(h.ctx, &repositories.VectorSearchRequest{
 		TenantInfo:  h.tenant,
 		SourceTypes: []airetrieval.SourceType{airetrieval.SourceTypeDocument},
 		ModelKey:    modelA,
@@ -103,7 +103,7 @@ func TestSearch_FiltersByTenantAndModelAndKeepsTheBestChunk(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, documents, "the source type filter is applied")
 
-	_, err = h.repo.Search(h.ctx, repositories.VectorSearchRequest{
+	_, err = h.repo.Search(h.ctx, &repositories.VectorSearchRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Dimensions: 768,
@@ -132,7 +132,7 @@ func TestSearch_UsesThePartialHNSWIndexForItsDimensions(t *testing.T) {
 		)
 	}
 
-	req := repositories.VectorSearchRequest{
+	req := &repositories.VectorSearchRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Dimensions: 768,
@@ -195,7 +195,7 @@ func TestReplaceChunks_KeepsUnchangedHashesAndDropsRemovedChunks(t *testing.T) {
 	assert.Equal(t, before, h.rowVersion(t, sourceID, 0),
 		"a chunk whose hash did not change is not written again")
 
-	hashes, err := h.repo.ListChunkHashes(h.ctx, repositories.ListEmbeddingChunkHashesRequest{
+	hashes, err := h.repo.ListChunkHashes(h.ctx, &repositories.ListEmbeddingChunkHashesRequest{
 		Source: repositories.AIRetrievalSourceRef{
 			TenantInfo: h.tenant,
 			SourceType: airetrieval.SourceTypeDocument,
@@ -216,7 +216,7 @@ func TestReplaceChunks_KeepsUnchangedHashesAndDropsRemovedChunks(t *testing.T) {
 	assert.Equal(t, repositories.ReplaceEmbeddingChunksResult{Unchanged: 2}, unchanged,
 		"an unchanged chunk needs no embedding")
 
-	_, err = h.repo.ReplaceChunks(h.ctx, repositories.ReplaceEmbeddingChunksRequest{
+	_, err = h.repo.ReplaceChunks(h.ctx, &repositories.ReplaceEmbeddingChunksRequest{
 		Source: repositories.AIRetrievalSourceRef{
 			TenantInfo: h.tenant,
 			SourceType: airetrieval.SourceTypeDocument,
@@ -341,7 +341,7 @@ func TestModelSwap_PromotesThePendingModelAndPurgesTheOldOneInBatches(t *testing
 			repositories.EmbeddingChunk{ChunkIndex: 0, ContentHash: "a",
 				Vector: axisVector(1024, map[int]float32{i: 1})})
 	}
-	_, err = h.repo.MarkStale(h.ctx, repositories.MarkAIRetrievalStaleRequest{
+	_, err = h.repo.MarkStale(h.ctx, &repositories.MarkAIRetrievalStaleRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		SourceIDs:  sources,

@@ -34,7 +34,7 @@ func TestDeletingASourceRemovesItsRetrievalRows(t *testing.T) {
 		{airetrieval.SourceTypeMemory, kept.ID},
 		{airetrieval.SourceTypeDocument, doc.ID},
 	} {
-		_, err := h.repo.MarkStale(h.ctx, repositories.MarkAIRetrievalStaleRequest{
+		_, err := h.repo.MarkStale(h.ctx, &repositories.MarkAIRetrievalStaleRequest{
 			TenantInfo: h.tenant,
 			SourceType: source.sourceType,
 			SourceIDs:  []pulid.ID{source.id},
@@ -122,7 +122,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	second := h.insertMemory(t, "Carrier Blue Ox needs a lumper receipt")
 	now := time.Now().Unix()
 
-	marked, err := h.repo.MarkStale(h.ctx, repositories.MarkAIRetrievalStaleRequest{
+	marked, err := h.repo.MarkStale(h.ctx, &repositories.MarkAIRetrievalStaleRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		SourceIDs:  []pulid.ID{first.ID, second.ID, first.ID},
@@ -132,7 +132,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, marked, "a repeated id is marked once")
 
-	claimed, err := h.repo.ClaimIndexEntries(h.ctx, repositories.ClaimIndexEntriesRequest{
+	claimed, err := h.repo.ClaimIndexEntries(h.ctx, &repositories.ClaimIndexEntriesRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Limit:      10,
@@ -147,7 +147,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 		assert.Equal(t, now+60, *entry.LeaseExpiresAt)
 	}
 
-	again, err := h.repo.ClaimIndexEntries(h.ctx, repositories.ClaimIndexEntriesRequest{
+	again, err := h.repo.ClaimIndexEntries(h.ctx, &repositories.ClaimIndexEntriesRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Now:        now + 1,
@@ -155,7 +155,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, again, "a leased entry is not claimed twice")
 
-	_, err = h.repo.MarkStale(h.ctx, repositories.MarkAIRetrievalStaleRequest{
+	_, err = h.repo.MarkStale(h.ctx, &repositories.MarkAIRetrievalStaleRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		SourceIDs:  []pulid.ID{second.ID},
@@ -180,7 +180,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	assert.Equal(t, repositories.MarkIndexEntriesResult{Applied: 1, Superseded: 1}, result,
 		"a source written while it was being indexed stays pending")
 
-	retry, err := h.repo.ClaimIndexEntries(h.ctx, repositories.ClaimIndexEntriesRequest{
+	retry, err := h.repo.ClaimIndexEntries(h.ctx, &repositories.ClaimIndexEntriesRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Now:        now + 4,
@@ -202,7 +202,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, failed.Applied)
 
-	early, err := h.repo.ClaimIndexEntries(h.ctx, repositories.ClaimIndexEntriesRequest{
+	early, err := h.repo.ClaimIndexEntries(h.ctx, &repositories.ClaimIndexEntriesRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Now:        now + 6,
@@ -225,7 +225,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 		airetrieval.IndexStatusPending: 1,
 	}, byStatus)
 
-	stale, err := h.repo.FindStaleSources(h.ctx, repositories.FindStaleAIRetrievalSourcesRequest{
+	stale, err := h.repo.FindStaleSources(h.ctx, &repositories.FindStaleAIRetrievalSourcesRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		ModelKey:   modelA,
@@ -245,7 +245,7 @@ func TestIndexOutbox_ClaimsOnceAndKeepsLateWritesPending(t *testing.T) {
 		Exec(h.ctx)
 	require.NoError(t, err)
 
-	stale, err = h.repo.FindStaleSources(h.ctx, repositories.FindStaleAIRetrievalSourcesRequest{
+	stale, err = h.repo.FindStaleSources(h.ctx, &repositories.FindStaleAIRetrievalSourcesRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		ModelKey:   modelA,
@@ -283,7 +283,7 @@ func TestFallback_ReportsUnavailableWithoutTheExtension(t *testing.T) {
 		Reason: airetrieval.UnavailableReasonExtensionMissing,
 	}, availability)
 
-	_, err = repo.Search(h.ctx, repositories.VectorSearchRequest{
+	_, err = repo.Search(h.ctx, &repositories.VectorSearchRequest{
 		TenantInfo: h.tenant,
 		ModelKey:   modelA,
 		Dimensions: 768,
@@ -294,7 +294,7 @@ func TestFallback_ReportsUnavailableWithoutTheExtension(t *testing.T) {
 	require.ErrorAs(t, err, &unavailable)
 	assert.Equal(t, airetrieval.UnavailableReasonExtensionMissing, unavailable.Reason)
 
-	_, err = repo.ReplaceChunks(h.ctx, repositories.ReplaceEmbeddingChunksRequest{
+	_, err = repo.ReplaceChunks(h.ctx, &repositories.ReplaceEmbeddingChunksRequest{
 		Source: repositories.AIRetrievalSourceRef{
 			TenantInfo: h.tenant,
 			SourceType: airetrieval.SourceTypeMemory,
@@ -317,12 +317,12 @@ func TestFallback_ReportsUnavailableWithoutTheExtension(t *testing.T) {
 	require.ErrorIs(t, err, airetrieval.ErrVectorUnavailable)
 
 	memory := h.insertMemory(t, "Keyword search keeps working")
-	source := repositories.AIRetrievalSourceRef{
+	source := &repositories.AIRetrievalSourceRef{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		SourceID:   memory.ID,
 	}
-	marked, err := repo.MarkStale(h.ctx, repositories.MarkAIRetrievalStaleRequest{
+	marked, err := repo.MarkStale(h.ctx, &repositories.MarkAIRetrievalStaleRequest{
 		TenantInfo: h.tenant,
 		SourceType: airetrieval.SourceTypeMemory,
 		SourceIDs:  []pulid.ID{memory.ID},

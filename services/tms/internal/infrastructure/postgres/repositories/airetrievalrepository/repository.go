@@ -116,7 +116,10 @@ func validateModelKey(modelKey string) error {
 	}
 }
 
-func validateSource(source repositories.AIRetrievalSourceRef) error {
+func validateSource(source *repositories.AIRetrievalSourceRef) error {
+	if source == nil {
+		return invalid("a source is required")
+	}
 	if err := validateTenant(source.TenantInfo); err != nil {
 		return err
 	}

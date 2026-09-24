@@ -93,12 +93,12 @@ func (f *fakeRetrievalRepo) UpdateSettings(
 
 func (f *fakeRetrievalRepo) SetPaused(
 	_ context.Context,
-	req repositories.SetAIRetrievalPausedRequest,
+	req *repositories.SetAIRetrievalPausedRequest,
 ) (*airetrieval.Settings, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	f.paused = append(f.paused, req)
+	f.paused = append(f.paused, *req)
 	f.settings.Paused = req.Paused
 	f.settings.PausedReason = req.Reason
 
@@ -109,21 +109,21 @@ func (f *fakeRetrievalRepo) SetPaused(
 
 func (f *fakeRetrievalRepo) MarkStale(
 	_ context.Context,
-	req repositories.MarkAIRetrievalStaleRequest,
+	req *repositories.MarkAIRetrievalStaleRequest,
 ) (int, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	f.marked = append(f.marked, req)
+	f.marked = append(f.marked, *req)
 
 	return len(req.SourceIDs) * len(req.ModelKeys), nil
 }
 
 func (f *fakeRetrievalRepo) ClaimIndexEntries(
 	_ context.Context,
-	req repositories.ClaimIndexEntriesRequest,
+	req *repositories.ClaimIndexEntriesRequest,
 ) ([]*airetrieval.IndexEntry, error) {
-	f.claims = append(f.claims, req)
+	f.claims = append(f.claims, *req)
 	claimed := f.claim
 	f.claim = nil
 
@@ -132,25 +132,25 @@ func (f *fakeRetrievalRepo) ClaimIndexEntries(
 
 func (f *fakeRetrievalRepo) ListChunkHashes(
 	_ context.Context,
-	req repositories.ListEmbeddingChunkHashesRequest,
+	req *repositories.ListEmbeddingChunkHashesRequest,
 ) ([]repositories.EmbeddingChunkHash, error) {
 	return f.hashes[req.Source.SourceID], nil
 }
 
 func (f *fakeRetrievalRepo) ReplaceChunks(
 	_ context.Context,
-	req repositories.ReplaceEmbeddingChunksRequest,
+	req *repositories.ReplaceEmbeddingChunksRequest,
 ) (repositories.ReplaceEmbeddingChunksResult, error) {
-	f.replaced = append(f.replaced, req)
+	f.replaced = append(f.replaced, *req)
 
 	return repositories.ReplaceEmbeddingChunksResult{Written: len(req.Chunks)}, nil
 }
 
 func (f *fakeRetrievalRepo) DeleteSource(
 	_ context.Context,
-	source repositories.AIRetrievalSourceRef,
+	source *repositories.AIRetrievalSourceRef,
 ) (repositories.DeleteAIRetrievalSourceResult, error) {
-	f.deleted = append(f.deleted, source)
+	f.deleted = append(f.deleted, *source)
 
 	return repositories.DeleteAIRetrievalSourceResult{IndexEntries: 1}, nil
 }
@@ -184,7 +184,7 @@ func (f *fakeRetrievalRepo) MarkFailed(
 
 func (f *fakeRetrievalRepo) FindStaleSources(
 	_ context.Context,
-	req repositories.FindStaleAIRetrievalSourcesRequest,
+	req *repositories.FindStaleAIRetrievalSourcesRequest,
 ) ([]pulid.ID, error) {
 	key := string(req.SourceType) + "|" + req.ModelKey
 	ids := f.stale[key]
@@ -235,9 +235,9 @@ func (f *fakeRetrievalRepo) PurgeModel(
 
 func (f *fakeRetrievalRepo) Search(
 	_ context.Context,
-	req repositories.VectorSearchRequest,
+	req *repositories.VectorSearchRequest,
 ) ([]repositories.VectorSearchHit, error) {
-	f.searches = append(f.searches, req)
+	f.searches = append(f.searches, *req)
 
 	return f.search, f.searchErr
 }
@@ -343,9 +343,9 @@ func (f *fakeEmbeddings) ConfiguredModelKey(
 
 func (f *fakeEmbeddings) Embed(
 	_ context.Context,
-	req serviceports.EmbedRequest,
+	req *serviceports.EmbedRequest,
 ) (serviceports.EmbedResult, error) {
-	f.requests = append(f.requests, req)
+	f.requests = append(f.requests, *req)
 	if f.embedErr != nil {
 		return serviceports.EmbedResult{}, f.embedErr
 	}
