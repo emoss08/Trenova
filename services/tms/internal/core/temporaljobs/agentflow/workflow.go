@@ -116,7 +116,10 @@ func unsettledToolOutcome(name string, err error) agentruntime.ToolOutcome {
 	}
 }
 
-func (fx *workflowEffects) Find(t *agentruntime.Turn, arguments map[string]any) string {
+func (fx *workflowEffects) Find(
+	t *agentruntime.Turn,
+	arguments map[string]any,
+) agentruntime.FindAnswer {
 	var a *Activities
 	ctx := workflow.WithActivityOptions(fx.ctx, fx.findOptions())
 
@@ -127,12 +130,14 @@ func (fx *workflowEffects) Find(t *agentruntime.Turn, arguments map[string]any) 
 		Arguments: arguments,
 	}).Get(ctx, &result)
 	if err != nil {
-		return "Tools could not be searched just now. Use the ones you have."
+		return agentruntime.FindAnswer{
+			Content: "Tools could not be searched just now. Use the ones you have.",
+		}
 	}
 
 	t.LoadTools(result.Loaded)
 
-	return result.Content
+	return agentruntime.FindAnswer{Content: result.Content, Found: result.Found}
 }
 
 func (fx *workflowEffects) Emit(event serviceports.StreamEvent) {

@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/productguideservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
+	"github.com/emoss08/trenova/internal/core/services/retrievalquery"
 	"github.com/emoss08/trenova/internal/core/services/runstepledger"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
@@ -152,6 +153,7 @@ func Options() fx.Option {
 		agenttoolcatalog.Module,
 		agenttoolpolicy.Module,
 		productguideservice.Module,
+		retrievalquery.Module,
 		agentguard.Module,
 		agentruntime.Module,
 		runstepledger.Module,

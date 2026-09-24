@@ -32,6 +32,7 @@ type toolOutcome struct {
 	delegateReport *conversation.DelegateReport
 	// taint is the outside content the call read.
 	taint []agent.TaintMark
+	found []string
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {

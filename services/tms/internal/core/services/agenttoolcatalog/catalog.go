@@ -40,6 +40,7 @@ type Catalog struct {
 	entries []indexed
 	byName  map[string]int
 	family  map[string][]string
+	items   []serviceports.EmbeddingCatalogItem
 }
 
 func New(descriptors []serviceports.AgentToolDescriptor) *Catalog {
@@ -51,6 +52,7 @@ func New(descriptors []serviceports.AgentToolDescriptor) *Catalog {
 		entries: make([]indexed, 0, len(sorted)),
 		byName:  make(map[string]int, len(sorted)),
 		family:  indexFamilies(),
+		items:   make([]serviceports.EmbeddingCatalogItem, 0, len(sorted)),
 	}
 
 	for i, descriptor := range sorted {
@@ -64,6 +66,10 @@ func New(descriptors []serviceports.AgentToolDescriptor) *Catalog {
 			paramTokens: agentsearch.TokenSet(parameterText(descriptor.Parameters)),
 			catalogRank: i,
 		})
+		catalog.items = append(
+			catalog.items,
+			serviceports.NewEmbeddingCatalogItem(descriptor.Name, DescriptorText(descriptor)),
+		)
 	}
 
 	return catalog
@@ -103,14 +109,35 @@ func (c *Catalog) rank(
 		return nil
 	}
 
-	wanted := c.allowedSet(allowed)
-	terms := agentsearch.Terms(query)
-
-	type scored struct {
-		entry *indexed
-		score int
+	candidates := c.keywordRanked(
+		c.allowedSet(allowed),
+		agentsearch.Terms(query),
+		minScore,
+		minScore > 0,
+	)
+	if len(candidates) > limit {
+		candidates = candidates[:limit]
 	}
 
+	out := make([]serviceports.AgentToolDescriptor, 0, len(candidates))
+	for _, candidate := range candidates {
+		out = append(out, candidate.entry.descriptor)
+	}
+
+	return out
+}
+
+type scored struct {
+	entry *indexed
+	score int
+}
+
+func (c *Catalog) keywordRanked(
+	wanted map[string]struct{},
+	terms map[string]struct{},
+	minScore int,
+	cutoff bool,
+) []scored {
 	candidates := make([]scored, 0, len(c.entries))
 	for i := range c.entries {
 		entry := &c.entries[i]
@@ -137,7 +164,7 @@ func (c *Catalog) rank(
 		return candidates[i].entry.catalogRank < candidates[j].entry.catalogRank
 	})
 
-	if minScore > 0 && len(candidates) > 0 {
+	if cutoff && len(candidates) > 0 {
 		floor := candidates[0].score / findCutoffDivisor
 		kept := candidates[:0]
 		for _, candidate := range candidates {
@@ -148,16 +175,7 @@ func (c *Catalog) rank(
 		candidates = kept
 	}
 
-	if len(candidates) > limit {
-		candidates = candidates[:limit]
-	}
-
-	out := make([]serviceports.AgentToolDescriptor, 0, len(candidates))
-	for _, candidate := range candidates {
-		out = append(out, candidate.entry.descriptor)
-	}
-
-	return out
+	return candidates
 }
 
 // Find is the model's recovery path when pre-selection guessed wrong. It returns

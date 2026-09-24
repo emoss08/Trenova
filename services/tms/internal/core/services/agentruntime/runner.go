@@ -41,7 +41,9 @@ type Params struct {
 	Extensions serviceports.AgentExtensionGate `optional:"true"`
 	// Memories is optional. With it every memory a prompt carries is
 	// counted as used; without it the prompt still carries them.
-	Memories serviceports.AgentMemoryService `optional:"true"`
+	Memories       serviceports.AgentMemoryService `optional:"true"`
+	Vectorizer     serviceports.QueryVectorizer    `optional:"true"`
+	CatalogVectors serviceports.CatalogVectorIndex `optional:"true"`
 }
 
 type Service struct {
@@ -56,6 +58,8 @@ type Service struct {
 	trust       repositories.AgentToolTrustRepository
 	extensions  serviceports.AgentExtensionGate
 	memories    serviceports.AgentMemoryService
+	vectorizer  serviceports.QueryVectorizer
+	vectors     serviceports.CatalogVectorIndex
 }
 
 func New(p Params) *Service {
@@ -71,6 +75,8 @@ func New(p Params) *Service {
 		trust:       p.Trust,
 		extensions:  p.Extensions,
 		memories:    p.Memories,
+		vectorizer:  p.Vectorizer,
+		vectors:     p.CatalogVectors,
 	}
 }
 
@@ -262,7 +268,8 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 						maxFindCalls,
 					)
 				} else {
-					outcome = toolOutcome{content: fx.Find(t, call.Arguments)}
+					answer := fx.Find(t, call.Arguments)
+					outcome = toolOutcome{content: answer.Content, found: answer.Found}
 				}
 				s.recordToolResult(t, fx, call, outcome)
 				continue
@@ -452,6 +459,7 @@ func (s *Service) recordToolResult(
 		ToolFailed:     outcome.failed,
 		ToolEffect:     effect,
 		ToolSummary:    summary,
+		FoundTools:     outcome.found,
 		DelegateReport: outcome.delegateReport,
 		CreatedAt:      fx.Now(),
 	})
