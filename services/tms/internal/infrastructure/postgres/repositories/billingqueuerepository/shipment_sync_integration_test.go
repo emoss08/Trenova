@@ -195,10 +195,10 @@ func TestShipmentFollowsItsLatestInvoiceItem(t *testing.T) {
 	older := f.createItem(
 		t,
 		"BQ-SYNC-0101",
-		billingqueue.StatusReadyForReview,
+		billingqueue.StatusPosted,
 		billingqueue.BillTypeInvoice,
 	)
-	older = f.updateStatus(t, older, billingqueue.StatusSentBackToOps)
+	requireTransferStatus(t, f.shipmentRow(t), billingqueue.StatusPosted)
 
 	newer := f.createItem(
 		t,
@@ -206,11 +206,13 @@ func TestShipmentFollowsItsLatestInvoiceItem(t *testing.T) {
 		billingqueue.StatusReadyForReview,
 		billingqueue.BillTypeInvoice,
 	)
-	requireTransferStatus(t, f.shipmentRow(t), billingqueue.StatusReadyForReview)
+	row := f.shipmentRow(t)
+	requireTransferStatus(t, row, billingqueue.StatusReadyForReview)
+	require.Equal(t, newer.CreatedAt, *row.TransferredToBillingAt)
 
 	f.updateStatus(t, older, billingqueue.StatusCanceled)
 
-	row := f.shipmentRow(t)
+	row = f.shipmentRow(t)
 	requireTransferStatus(t, row, billingqueue.StatusReadyForReview)
 	require.Equal(t, newer.CreatedAt, *row.TransferredToBillingAt)
 }
