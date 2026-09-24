@@ -105,7 +105,6 @@ func (r *repository) GetMemories(
 	if err = r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&memories).
-		ExcludeColumn(buncolgen.MemoryColumns.SearchVector.String()).
 		Apply(buncolgen.MemoryApplyTenant(req.TenantInfo)).
 		Where(buncolgen.MemoryColumns.ID.In(), bun.List(ids)).
 		Scan(ctx); err != nil {

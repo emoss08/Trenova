@@ -201,7 +201,6 @@ func (r *repository) ListActive(
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&rows).
-		ExcludeColumn(cols.SearchVector.String()).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now)
 			sq = forAgent(sq, req.AgentDefinitionID)
@@ -282,7 +281,6 @@ func (r *repository) search(
 	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&rows).
-		ExcludeColumn(cols.SearchVector.String()).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = forAgent(
 				activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now),
