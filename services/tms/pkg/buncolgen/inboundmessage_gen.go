@@ -285,6 +285,7 @@ var InboundMessageColumns = struct {
 	ReviewNote        Column // "review_note" → qualified: "imsg.review_note"
 	FailureCode       Column // "failure_code" → qualified: "imsg.failure_code"
 	FailureText       Column // "failure_text" → qualified: "imsg.failure_text"
+	SearchVector      Column // "search_vector" → qualified: "imsg.search_vector"
 	Version           Column // "version" → qualified: "imsg.version"
 	CreatedAt         Column // "created_at" → qualified: "imsg.created_at"
 	UpdatedAt         Column // "updated_at" → qualified: "imsg.updated_at"
@@ -319,6 +320,7 @@ var InboundMessageColumns = struct {
 	ReviewNote:        NewColumn("review_note", "imsg"),
 	FailureCode:       NewColumn("failure_code", "imsg"),
 	FailureText:       NewColumn("failure_text", "imsg"),
+	SearchVector:      NewColumn("search_vector", "imsg"),
 	Version:           NewColumn("version", "imsg"),
 	CreatedAt:         NewColumn("created_at", "imsg"),
 	UpdatedAt:         NewColumn("updated_at", "imsg"),

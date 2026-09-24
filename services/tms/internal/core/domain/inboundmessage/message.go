@@ -85,6 +85,8 @@ type InboundMessage struct {
 	FailureCode string   `json:"failureCode" bun:"failure_code,type:VARCHAR(100),nullzero"`
 	FailureText string   `json:"failureText" bun:"failure_text,type:TEXT,nullzero"`
 
+	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
