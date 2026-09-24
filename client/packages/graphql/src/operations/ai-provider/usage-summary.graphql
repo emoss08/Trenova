@@ -24,6 +24,18 @@ query AIUsageSummary($since: Timestamp) {
       latencyP50Ms
       latencyP95Ms
     }
+    byFeature {
+      feature
+      calls
+      failed
+      inputTokens
+      outputTokens
+      reasoningTokens
+      costUsd
+      pricedCalls
+      latencyP50Ms
+      latencyP95Ms
+    }
     recentFailures {
       providerId
       providerName

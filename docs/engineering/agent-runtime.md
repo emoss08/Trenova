@@ -568,7 +568,9 @@ document read, so each tool that reads or writes another record checks that
 person's permission first (`toolGrants`): customer read for `search_customers`
 and `get_customer_requirements`, location read for `search_locations`, location
 create for `add_location`. A refusal is a tool error the model reports; the turn
-goes on. Every model call carries the person as its usage attribution.
+goes on. Every model call carries the person, the `ShipmentImportChat` feature and the
+document as its usage attribution, so its cost lands on the `ai_usage_records` row that
+the AI Control overview breaks down by feature.
 
 ## Batch work
 

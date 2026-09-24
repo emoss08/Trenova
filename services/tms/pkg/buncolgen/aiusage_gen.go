@@ -61,6 +61,9 @@ var AIUsageRecordColumns = struct {
 	AgentDefinitionID Column // "agent_definition_id" → qualified: "aiu.agent_definition_id"
 	ThreadID          Column // "thread_id" → qualified: "aiu.thread_id"
 	RunID             Column // "run_id" → qualified: "aiu.run_id"
+	Feature           Column // "feature" → qualified: "aiu.feature"
+	SubjectType       Column // "subject_type" → qualified: "aiu.subject_type"
+	SubjectID         Column // "subject_id" → qualified: "aiu.subject_id"
 	Succeeded         Column // "succeeded" → qualified: "aiu.succeeded"
 	ErrorClass        Column // "error_class" → qualified: "aiu.error_class"
 	ErrorMessage      Column // "error_message" → qualified: "aiu.error_message"
@@ -84,6 +87,9 @@ var AIUsageRecordColumns = struct {
 	AgentDefinitionID: NewColumn("agent_definition_id", "aiu"),
 	ThreadID:          NewColumn("thread_id", "aiu"),
 	RunID:             NewColumn("run_id", "aiu"),
+	Feature:           NewColumn("feature", "aiu"),
+	SubjectType:       NewColumn("subject_type", "aiu"),
+	SubjectID:         NewColumn("subject_id", "aiu"),
 	Succeeded:         NewColumn("succeeded", "aiu"),
 	ErrorClass:        NewColumn("error_class", "aiu"),
 	ErrorMessage:      NewColumn("error_message", "aiu"),
@@ -113,6 +119,9 @@ var AIUsageRecordFieldMap = map[string]string{
 	"agentDefinitionId": "agent_definition_id",
 	"threadId":          "thread_id",
 	"runId":             "run_id",
+	"feature":           "feature",
+	"subjectType":       "subject_type",
+	"subjectId":         "subject_id",
 	"succeeded":         "succeeded",
 	"errorClass":        "error_class",
 	"errorMessage":      "error_message",
@@ -140,6 +149,9 @@ var AIUsageRecordInsertableColumns = []string{
 	"agent_definition_id",
 	"thread_id",
 	"run_id",
+	"feature",
+	"subject_type",
+	"subject_id",
 	"succeeded",
 	"error_class",
 	"error_message",
@@ -214,6 +226,9 @@ var AIUsageRecordFilter = struct {
 	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
 	ThreadID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
 	RunID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	Feature           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "feature" → DB: "feature"
+	SubjectType       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
+	SubjectID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
 	Succeeded         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "succeeded" → DB: "succeeded"
 	ErrorClass        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorClass" → DB: "error_class"
 	ErrorMessage      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
@@ -260,6 +275,15 @@ var AIUsageRecordFilter = struct {
 	},
 	RunID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("runId", op, value)
+	},
+	Feature: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("feature", op, value)
+	},
+	SubjectType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subjectType", op, value)
+	},
+	SubjectID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("subjectId", op, value)
 	},
 	Succeeded: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("succeeded", op, value)

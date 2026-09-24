@@ -40,9 +40,15 @@ type AIUsageProviderTotals struct {
 	AIUsageTotals
 }
 
+type AIUsageFeatureTotals struct {
+	Feature aiusage.Feature
+	AIUsageTotals
+}
+
 type AIUsageSummary struct {
 	Totals         AIUsageTotals
 	ByProvider     []AIUsageProviderTotals
+	ByFeature      []AIUsageFeatureTotals
 	RecentFailures []AIUsageFailure
 }
 

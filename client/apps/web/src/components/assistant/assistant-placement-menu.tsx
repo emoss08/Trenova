@@ -85,9 +85,11 @@ export function AssistantPlacementMenu() {
         >
           {t("Hide the button when closed")}
         </DropdownMenuCheckboxItem>
-        <DropdownMenuItem disabled={panelSize === null} onClick={() => setPanelSize(null)}>
-          {t("Reset size")}
-        </DropdownMenuItem>
+        <DropdownMenuItem
+          title={t("Reset size")}
+          disabled={panelSize === null}
+          onClick={() => setPanelSize(null)}
+        />
       </DropdownMenuContent>
     </DropdownMenu>
   );

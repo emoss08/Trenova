@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/activity"
@@ -436,9 +437,10 @@ func (a *Activities) pollExtraction(
 				BuID:   row.BusinessUnitID,
 				UserID: row.UserID,
 			},
-			DocumentID: row.DocumentID,
-			ResponseID: row.ResponseID,
-			ProviderID: row.ProviderID,
+			DocumentID:  row.DocumentID,
+			ResponseID:  row.ResponseID,
+			ProviderID:  row.ProviderID,
+			SubmittedAt: typeutils.ValueOrZero(row.SubmittedAt),
 		},
 	)
 	if err != nil {

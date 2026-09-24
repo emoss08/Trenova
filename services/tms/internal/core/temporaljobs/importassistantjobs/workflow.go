@@ -97,13 +97,11 @@ func (t *turn) converse() (*serviceports.ShipmentImportChatResponse, *modelcall.
 		var result serviceports.ChatCompletionResult
 		if err := workflow.ExecuteActivity(modelCtx, a.ImportModelCallActivity, &ModelInput{
 			Request: &serviceports.ChatCompletionRequest{
-				TenantInfo: t.payload.TenantInfo,
-				System:     prepared.System,
-				Messages:   messages,
-				Tools:      prepared.Tools,
-				Attribution: serviceports.AIUsageAttribution{
-					UserID: t.payload.TenantInfo.UserID,
-				},
+				TenantInfo:  t.payload.TenantInfo,
+				System:      prepared.System,
+				Messages:    messages,
+				Tools:       prepared.Tools,
+				Attribution: t.payload.attribution(),
 			},
 			Stream: t.payload.Stream,
 		}).Get(modelCtx, &result); err != nil {

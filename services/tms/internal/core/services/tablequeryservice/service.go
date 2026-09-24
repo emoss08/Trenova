@@ -21,6 +21,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -146,7 +147,10 @@ func (s *Service) Compose(ctx context.Context, req *ComposeRequest) (*ComposeRes
 			OutputSchema: outputSchema(resource),
 			SchemaName:   "table_query",
 			MaxTokens:    maxOutputTokens,
-			Attribution:  serviceports.AIUsageAttribution{UserID: req.Actor.UserID},
+			Attribution: serviceports.AIUsageAttribution{
+				UserID:  req.Actor.UserID,
+				Feature: aiusage.FeatureTableQuery,
+			},
 		},
 	)
 	if err != nil {

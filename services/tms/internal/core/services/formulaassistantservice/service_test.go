@@ -3,11 +3,9 @@ package formulaassistantservice
 import (
 	"context"
 	"errors"
-	"strings"
 	"testing"
-	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/core/domain/ailog"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -144,15 +142,11 @@ func newTestService(t *testing.T, completion serviceports.CompletionService) *Se
 		RateMatrixRepo: &stubMatrixRepo{},
 	})
 
-	aiLogRepo := &noopAILogRepo{}
-
 	return &Service{
-		l:               zap.NewNop(),
 		completion:      completion,
 		formulaService:  formulaSvc,
 		templateService: newTemplateService(formulaSvc),
 		rateMatrixRepo:  &stubMatrixRepo{},
-		aiLogRepo:       aiLogRepo,
 	}
 }
 
@@ -161,16 +155,6 @@ func newTemplateService(formulaSvc *formula.Service) *formulatemplateservice.Ser
 		Logger:         zap.NewNop(),
 		FormulaService: formulaSvc,
 	})
-}
-
-type noopAILogRepo struct {
-	repositories.AILogRepository
-	created []*ailog.Log
-}
-
-func (n *noopAILogRepo) Create(_ context.Context, entry *ailog.Log) (*ailog.Log, error) {
-	n.created = append(n.created, entry)
-	return entry, nil
 }
 
 func newTenant() pagination.TenantInfo {
@@ -293,38 +277,6 @@ func TestMapGeneratedVariables(t *testing.T) {
 	assert.False(t, hasWeird)
 }
 
-func TestLogCallRecordsUsage(t *testing.T) {
-	t.Parallel()
-
-	aiLogRepo := &noopAILogRepo{}
-	svc := &Service{l: zap.NewNop(), aiLogRepo: aiLogRepo}
-
-	svc.logCall(
-		t.Context(),
-		newTenant(),
-		ailog.OperationFormulaGenerate,
-		"shipment",
-		"per mile",
-		&serviceports.StructuredCompletionResult{
-			Text:            "{}",
-			ModelIdentifier: "qwen2.5-coder:32b",
-			InputTokens:     120,
-			OutputTokens:    30,
-		},
-	)
-
-	require.Len(t, aiLogRepo.created, 1)
-	entry := aiLogRepo.created[0]
-	// The log used to record a fixed constant, which said the same thing on
-	// every row and stopped being true the moment a second provider could serve
-	// the task. What ran is what the provider reported.
-	assert.Equal(t, ailog.Model("qwen2.5-coder:32b"), entry.Model)
-	assert.Equal(t, ailog.OperationFormulaGenerate, entry.Operation)
-	assert.Equal(t, 120, entry.PromptTokens)
-	assert.Equal(t, 30, entry.CompletionTokens)
-	assert.Equal(t, 150, entry.TotalTokens)
-}
-
 func TestGenerateFormula_PricesProposedScenarios(t *testing.T) {
 	t.Parallel()
 
@@ -380,7 +332,7 @@ func (*stubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (s
 	return "", nil
 }
 
-func TestGenerateFormula_AttributesTheCallToThePerson(t *testing.T) {
+func TestGenerateFormula_AttributesTheCallToThePersonFeatureAndSchema(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{
@@ -402,12 +354,16 @@ func TestGenerateFormula_AttributesTheCallToThePerson(t *testing.T) {
 	require.NotNil(t, completion.lastRequest)
 	assert.Equal(
 		t,
-		serviceports.AIUsageAttribution{UserID: tenant.UserID},
+		serviceports.AIUsageAttribution{
+			UserID:  tenant.UserID,
+			Feature: aiusage.FeatureFormulaGenerate,
+			Subject: aiusage.Subject{Type: aiusage.SubjectTypeFormulaSchema, ID: "shipment"},
+		},
 		completion.lastRequest.Attribution,
 	)
 }
 
-func TestExplainFormula_AttributesTheCallToThePerson(t *testing.T) {
+func TestExplainFormula_AttributesTheCallToThePersonFeatureAndSchema(t *testing.T) {
 	t.Parallel()
 
 	completion := &stubCompletion{text: `{"explanation": "Charges by distance."}`}
@@ -417,35 +373,18 @@ func TestExplainFormula_AttributesTheCallToThePerson(t *testing.T) {
 	_, err := svc.ExplainFormula(t.Context(), &ExplainFormulaRequest{
 		TenantInfo: tenant,
 		Expression: "baseRate * totalDistance",
+		SchemaID:   "shipment",
 	})
 
 	require.NoError(t, err)
 	require.NotNil(t, completion.lastRequest)
 	assert.Equal(
 		t,
-		serviceports.AIUsageAttribution{UserID: tenant.UserID},
+		serviceports.AIUsageAttribution{
+			UserID:  tenant.UserID,
+			Feature: aiusage.FeatureFormulaExplain,
+			Subject: aiusage.Subject{Type: aiusage.SubjectTypeFormulaSchema, ID: "shipment"},
+		},
 		completion.lastRequest.Attribution,
 	)
-}
-
-func TestLogCallKeepsThePromptPreviewOnACharacterBoundary(t *testing.T) {
-	t.Parallel()
-
-	aiLogRepo := &noopAILogRepo{}
-	svc := &Service{l: zap.NewNop(), aiLogRepo: aiLogRepo}
-	prompt := strings.Repeat("a", logPreviewLength-1) + "€" + "tail"
-
-	svc.logCall(
-		t.Context(),
-		newTenant(),
-		ailog.OperationFormulaGenerate,
-		"shipment",
-		prompt,
-		&serviceports.StructuredCompletionResult{Text: "{}", ModelIdentifier: "m"},
-	)
-
-	require.Len(t, aiLogRepo.created, 1)
-	entry := aiLogRepo.created[0]
-	assert.True(t, utf8.ValidString(entry.Prompt))
-	assert.True(t, strings.HasSuffix(entry.Prompt, strings.Repeat("a", logPreviewLength-1)+"€"))
 }

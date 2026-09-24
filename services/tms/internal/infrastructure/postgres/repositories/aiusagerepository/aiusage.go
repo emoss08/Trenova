@@ -44,6 +44,7 @@ func (r *repository) Create(ctx context.Context, record *aiusage.AIUsageRecord) 
 // taken over successful calls only, in SQL, because a failure refused in a
 // millisecond is not a fast answer and would drag the median down.
 type totalsRow struct {
+	Feature         string  `bun:"feature"`
 	ProviderID      string  `bun:"provider_id"`
 	ProviderName    string  `bun:"provider_name"`
 	Model           string  `bun:"model"`
@@ -85,8 +86,10 @@ const aggregateColumns = `
 	COALESCE(SUM(aiu.reasoning_tokens), 0) AS reasoning_tokens,
 	COALESCE(SUM(aiu.cost_usd), 0)::text AS cost_usd,
 	COUNT(aiu.cost_usd) AS priced_calls,
-	COALESCE(percentile_cont(0.5) WITHIN GROUP (ORDER BY aiu.latency_ms) FILTER (WHERE aiu.succeeded), 0) AS latency_p50,
-	COALESCE(percentile_cont(0.95) WITHIN GROUP (ORDER BY aiu.latency_ms) FILTER (WHERE aiu.succeeded), 0) AS latency_p95`
+	COALESCE(percentile_cont(0.5) WITHIN GROUP (ORDER BY aiu.latency_ms) FILTER (WHERE ` + waitedFor + `), 0) AS latency_p50,
+	COALESCE(percentile_cont(0.95) WITHIN GROUP (ORDER BY aiu.latency_ms) FILTER (WHERE ` + waitedFor + `), 0) AS latency_p95`
+
+const waitedFor = `aiu.succeeded AND aiu.surface <> '` + string(aiusage.SurfaceBackground) + `'`
 
 func (r *repository) Summary(
 	ctx context.Context,
@@ -125,9 +128,31 @@ func (r *repository) Summary(
 		return nil, fmt.Errorf("summarise ai usage by provider: %w", err)
 	}
 
+	var byFeature []totalsRow
+	if err := db.NewSelect().
+		Model((*aiusage.AIUsageRecord)(nil)).
+		ColumnExpr("COALESCE("+cols.Feature.Qualified()+", '') AS feature").
+		ColumnExpr(aggregateColumns).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where(cols.CreatedAt.Gte(), req.Since).
+		GroupExpr(cols.Feature.Qualified()).
+		OrderExpr("calls DESC").
+		Scan(ctx, &byFeature); err != nil {
+		return nil, fmt.Errorf("summarise ai usage by feature: %w", err)
+	}
+
 	summary := &repositories.AIUsageSummary{
 		Totals:     total.totals(),
 		ByProvider: make([]repositories.AIUsageProviderTotals, 0, len(byProvider)),
+		ByFeature:  make([]repositories.AIUsageFeatureTotals, 0, len(byFeature)),
+	}
+	for i := range byFeature {
+		row := &byFeature[i]
+		summary.ByFeature = append(summary.ByFeature, repositories.AIUsageFeatureTotals{
+			Feature:       aiusage.Feature(row.Feature),
+			AIUsageTotals: row.totals(),
+		})
 	}
 	for i := range byProvider {
 		row := &byProvider[i]

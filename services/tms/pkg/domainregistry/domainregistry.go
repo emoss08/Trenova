@@ -2,7 +2,6 @@ package domainregistry
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -45,7 +44,6 @@ func RegisterEntities() []any {
 		&documenttemplate.DocumentTemplateVersion{},
 		&documenttemplate.DocumentTemplateAssignment{},
 		&documenttemplate.GeneratedDocument{},
-		&ailog.Log{},
 		&dispatchcontrol.DispatchControl{},
 		&tenant.BillingControl{},
 		&invoice.Invoice{},

@@ -145,7 +145,8 @@ type AIBackgroundExtractPollRequest struct {
 	// ProviderID names the endpoint that issued ResponseID. A submission that
 	// predates this field carries a nil id; the poll fails rather than guessing
 	// at a provider, because guessing wrong reads another endpoint's call.
-	ProviderID pulid.ID
+	ProviderID  pulid.ID
+	SubmittedAt int64
 }
 
 type AIBackgroundExtractPollResult struct {

@@ -481,6 +481,36 @@ type AIUsageFailure {
   task: String!
 }
 
+"""The product feature that made a model call."""
+enum AIUsageFeature {
+  AgentEvaluation
+  AgentTurn
+  DocumentIntelligenceExtract
+  DocumentIntelligenceRoute
+  FormulaExplain
+  FormulaGenerate
+  ShipmentImportChat
+  TableQuery
+}
+
+"""One feature's share of a usage window."""
+type AIUsageFeatureSlice {
+  calls: Int!
+  """Sum over the calls that carried a price; see pricedCalls."""
+  costUsd: Decimal!
+  failed: Int!
+  """
+  Null for calls made before features were recorded, or by a caller that names none.
+  """
+  feature: AIUsageFeature
+  inputTokens: Int!
+  latencyP50Ms: Int!
+  latencyP95Ms: Int!
+  outputTokens: Int!
+  pricedCalls: Int!
+  reasoningTokens: Int!
+}
+
 """One provider and model's share of a usage window."""
 type AIUsageProviderSlice {
   calls: Int!
@@ -504,6 +534,8 @@ failed, what they consumed, what it cost where the price is known, and how
 long a person waited. Latency percentiles are over successful calls only.
 """
 type AIUsageSummary {
+  """Usage by the feature that made the calls, busiest first."""
+  byFeature: [AIUsageFeatureSlice!]!
   byProvider: [AIUsageProviderSlice!]!
   calls: Int!
   costUsd: Decimal!

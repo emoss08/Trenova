@@ -58,6 +58,10 @@ type AIUsageRecord struct {
 	ThreadID          pulid.ID `json:"threadId"          bun:"thread_id,type:VARCHAR(100),nullzero"`
 	RunID             pulid.ID `json:"runId"             bun:"run_id,type:VARCHAR(100),nullzero"`
 
+	Feature     Feature     `json:"feature"     bun:"feature,type:VARCHAR(50),nullzero"`
+	SubjectType SubjectType `json:"subjectType" bun:"subject_type,type:VARCHAR(50),nullzero"`
+	SubjectID   string      `json:"subjectId"   bun:"subject_id,type:VARCHAR(100),nullzero"`
+
 	Succeeded  bool   `json:"succeeded"    bun:"succeeded,type:BOOLEAN,notnull"`
 	ErrorClass string `json:"errorClass"   bun:"error_class,type:VARCHAR(50),nullzero"`
 	// ErrorMessage is the provider's own words for a failed attempt, cut to

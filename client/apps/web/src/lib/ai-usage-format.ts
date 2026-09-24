@@ -1,3 +1,5 @@
+import type { AiUsageFeature } from "@trenova/graphql/generated/graphql";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 
 /**
@@ -72,4 +74,32 @@ export function formatTokens(count: number): string {
     return `${Math.round(count / 1000)}k`;
   }
   return count.toLocaleString();
+}
+
+/**
+ * The feature that made a model call, as a person names it. A slice with no
+ * feature holds the calls made before features were recorded, or by a caller
+ * that names none.
+ */
+export function aiUsageFeatureLabel(feature: AiUsageFeature | null, t: TranslateFn): string {
+  switch (feature) {
+    case "AgentTurn":
+      return t("Agents and assistant");
+    case "AgentEvaluation":
+      return t("Agent evaluations");
+    case "TableQuery":
+      return t("Table questions");
+    case "FormulaGenerate":
+      return t("Formula writing");
+    case "FormulaExplain":
+      return t("Formula explanations");
+    case "ShipmentImportChat":
+      return t("Import assistant");
+    case "DocumentIntelligenceRoute":
+      return t("Document sorting");
+    case "DocumentIntelligenceExtract":
+      return t("Document extraction");
+    case null:
+      return t("Other");
+  }
 }

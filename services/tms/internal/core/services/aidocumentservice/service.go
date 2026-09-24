@@ -11,9 +11,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -29,7 +28,6 @@ type Params struct {
 	Config     *config.Config
 	Metrics    *metrics.Registry
 	Completion serviceports.CompletionService
-	AILogRepo  repositories.AILogRepository
 }
 
 type Service struct {
@@ -37,7 +35,6 @@ type Service struct {
 	cfg        *config.AIConfig
 	metrics    *metrics.Registry
 	completion serviceports.CompletionService
-	aiLogRepo  repositories.AILogRepository
 }
 
 func New(p Params) serviceports.AIDocumentService {
@@ -46,7 +43,6 @@ func New(p Params) serviceports.AIDocumentService {
 		cfg:        p.Config.GetAIConfig(),
 		metrics:    p.Metrics,
 		completion: p.Completion,
-		aiLogRepo:  p.AILogRepo,
 	}
 }
 
@@ -64,7 +60,7 @@ func (s *Service) RouteDocument(
 	if _, err := s.runStructured(ctx, &structuredCall{
 		tenant:     req.TenantInfo,
 		documentID: req.DocumentID,
-		operation:  ailog.OperationDocumentIntelligenceRoute,
+		feature:    aiusage.FeatureDocumentIntelligenceRoute,
 		task:       aiprovider.TaskDocumentClassification,
 		metric:     "route",
 		system:     routeSystemPrompt,
@@ -111,7 +107,7 @@ func (s *Service) extractCall(req *serviceports.AIExtractRequest) *structuredCal
 	return &structuredCall{
 		tenant:     req.TenantInfo,
 		documentID: req.DocumentID,
-		operation:  ailog.OperationDocumentIntelligenceExtract,
+		feature:    aiusage.FeatureDocumentIntelligenceExtract,
 		task:       aiprovider.TaskDocumentExtraction,
 		metric:     "extract",
 		system:     extractSystemPrompt,
@@ -178,7 +174,6 @@ func (s *Service) SubmitRateConfirmationBackgroundExtraction(
 		return nil, err
 	}
 
-	s.logInteraction(ctx, call, submission.Result)
 	s.recordAIUsage(call.metric, true, "inline")
 
 	result.Model = submission.Result.ModelIdentifier
@@ -207,20 +202,26 @@ func (s *Service) PollRateConfirmationBackgroundExtraction(
 	}
 
 	outcome, err := s.completion.PollBackground(ctx, &serviceports.BackgroundPollRequest{
-		TenantInfo: req.TenantInfo,
-		ProviderID: req.ProviderID,
-		Handle:     req.ResponseID,
+		TenantInfo:  req.TenantInfo,
+		ProviderID:  req.ProviderID,
+		Handle:      req.ResponseID,
+		Task:        aiprovider.TaskDocumentExtraction,
+		SubmittedAt: req.SubmittedAt,
+		Attribution: documentAttribution(
+			req.TenantInfo,
+			req.DocumentID,
+			aiusage.FeatureDocumentIntelligenceExtract,
+		),
 	})
 	if err != nil {
 		s.recordAIUsage("extract_background_poll", false, failureOutcome(err))
 		return nil, err
 	}
 
-	return s.describePoll(ctx, req, outcome), nil
+	return s.describePoll(req, outcome), nil
 }
 
 func (s *Service) describePoll(
-	ctx context.Context,
 	req *serviceports.AIBackgroundExtractPollRequest,
 	outcome *serviceports.BackgroundOutcome,
 ) *serviceports.AIBackgroundExtractPollResult {
@@ -267,13 +268,6 @@ func (s *Service) describePoll(
 
 		return result
 	}
-
-	s.logInteraction(ctx, &structuredCall{
-		tenant:     req.TenantInfo,
-		documentID: req.DocumentID,
-		operation:  ailog.OperationDocumentIntelligenceExtract,
-		system:     extractSystemPrompt,
-	}, outcome.Result)
 
 	result.Status = serviceports.AIBackgroundExtractionStatusCompleted
 	result.ExtractResult = convertExtractResponse(parsed)
