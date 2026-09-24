@@ -291,10 +291,9 @@ func TestUsage_ReportsTheCountAgainstTheSoftCap(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, &services.AgentMemoryUsage{
-		ActiveCount:     4200,
-		ActiveSoftCap:   agent.MemoryActiveSoftCap,
-		WarnAt:          agent.MemoryActiveWarnAt,
-		ContentMaxChars: agent.MaxMemoryContentChars,
+		ActiveCount:   4200,
+		ActiveSoftCap: agent.MemoryActiveSoftCap,
+		WarnAt:        agent.MemoryActiveWarnAt,
 	}, usage)
 }
 

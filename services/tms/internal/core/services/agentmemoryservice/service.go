@@ -593,10 +593,9 @@ func (s *Service) Usage(
 	}
 
 	return &services.AgentMemoryUsage{
-		ActiveCount:     count,
-		ActiveSoftCap:   agent.MemoryActiveSoftCap,
-		WarnAt:          agent.MemoryActiveWarnAt,
-		ContentMaxChars: agent.MaxMemoryContentChars,
+		ActiveCount:   count,
+		ActiveSoftCap: agent.MemoryActiveSoftCap,
+		WarnAt:        agent.MemoryActiveWarnAt,
 	}, nil
 }
 

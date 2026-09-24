@@ -1149,6 +1149,10 @@ func init() {
 				FieldMapKey: "simulationMode",
 			},
 			{
+				Name:        "memoryTokenBudget",
+				FieldMapKey: "memoryTokenBudget",
+			},
+			{
 				Name:        "contextProviders",
 				FieldMapKey: "contextProviders",
 			},

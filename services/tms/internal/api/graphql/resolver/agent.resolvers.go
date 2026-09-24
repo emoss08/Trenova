@@ -617,6 +617,15 @@ func (r *queryResolver) AgentMemory(ctx context.Context, id string) (*agent.Memo
 	})
 }
 
+func (r *queryResolver) AgentMemoryUsage(ctx context.Context) (*services.AgentMemoryUsage, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentMemory, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentMemoryService.Usage(ctx, tenantInfo(authCtx))
+}
+
 func (r *queryResolver) AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error) {
 	authCtx, err := r.requirePermission(
 		ctx,

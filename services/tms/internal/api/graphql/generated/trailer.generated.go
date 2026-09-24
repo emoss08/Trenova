@@ -572,6 +572,7 @@ type QueryResolver interface {
 	AgentEvaluations(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentEvaluationConnection, error)
 	AgentEvaluation(ctx context.Context, id string) (*agent.Evaluation, error)
 	AgentMemory(ctx context.Context, id string) (*agent.Memory, error)
+	AgentMemoryUsage(ctx context.Context) (*services.AgentMemoryUsage, error)
 	AgentExceptions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentExceptionConnection, error)
 	AgentException(ctx context.Context, id string) (*agent.AgentException, error)
 	AgentControl(ctx context.Context) (*tenant.AgentControl, error)
@@ -35635,6 +35636,38 @@ func (ec *executionContext) fieldContext_Query_agentMemory(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_agentMemoryUsage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Query_agentMemoryUsage(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.Query().AgentMemoryUsage(ctx)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.AgentMemoryUsage) graphql.Marshaler {
+			return ec.marshalNAgentMemoryUsage2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAgentMemoryUsage(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Query_agentMemoryUsage(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentMemoryUsage(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_agentExceptions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -60801,6 +60834,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}()
 				res = ec._Query_agentMemory(ctx, field)
 				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "agentMemoryUsage":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_agentMemoryUsage(ctx, field)
+				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
 				return res

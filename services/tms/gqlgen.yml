@@ -1910,6 +1910,9 @@ models:
   AgentMemoryEvidence:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.MemoryEvidence
+  AgentMemoryUsage:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentMemoryUsage
   AIFeedback:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aifeedback.Feedback

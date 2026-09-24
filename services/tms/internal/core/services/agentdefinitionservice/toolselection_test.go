@@ -383,3 +383,17 @@ func TestValidateToolSelection_ExplainsTheCapWithTheToolsRationale(t *testing.T)
 	assert.Empty(t, tierMessages(t, booking, agent.TierActWithApproval))
 	assert.Empty(t, tierMessages(t, mail, agent.TierActWithApproval))
 }
+
+func TestApply_StoresTheMemoryBudgetAsSent(t *testing.T) {
+	t.Parallel()
+
+	budget := 12000
+	d := &agentdefinition.Definition{}
+	apply(d, &serviceports.SaveAgentDefinitionRequest{Name: "Rates", MemoryTokenBudget: &budget})
+	require.NotNil(t, d.MemoryTokenBudget)
+	assert.Equal(t, 12000, d.EffectiveMemoryTokenBudget())
+
+	apply(d, &serviceports.SaveAgentDefinitionRequest{Name: "Rates"})
+	assert.Nil(t, d.MemoryTokenBudget, "clearing the field returns the agent to the default")
+	assert.Equal(t, agentdefinition.DefaultMemoryTokenBudget, d.EffectiveMemoryTokenBudget())
+}

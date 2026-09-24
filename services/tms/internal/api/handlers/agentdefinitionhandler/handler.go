@@ -226,6 +226,7 @@ type saveAgentRequest struct {
 	DailyRunLimit          int                               `json:"dailyRunLimit"`
 	ToolDailyLimits        map[string]int                    `json:"toolDailyLimits"`
 	SimulationMode         bool                              `json:"simulationMode"`
+	MemoryTokenBudget      *int                              `json:"memoryTokenBudget"`
 	ContextProviders       []agentdefinition.ContextProvider `json:"contextProviders"`
 	OutputMode             agentdefinition.OutputMode        `json:"outputMode"`
 	PreferredProviderID    pulid.ID                          `json:"preferredProviderId"`
@@ -301,6 +302,7 @@ func (r *saveAgentRequest) toServiceRequest(
 		DailyRunLimit:          r.DailyRunLimit,
 		ToolDailyLimits:        r.ToolDailyLimits,
 		SimulationMode:         r.SimulationMode,
+		MemoryTokenBudget:      r.MemoryTokenBudget,
 		ContextProviders:       r.ContextProviders,
 		OutputMode:             r.OutputMode,
 		PreferredProviderID:    r.PreferredProviderID,

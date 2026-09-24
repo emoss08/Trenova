@@ -108,10 +108,9 @@ type MemoryRanker interface {
 // AgentMemoryUsage is how much an organization keeps for its agents against
 // what it should keep.
 type AgentMemoryUsage struct {
-	ActiveCount     int
-	ActiveSoftCap   int
-	WarnAt          int
-	ContentMaxChars int
+	ActiveCount   int
+	ActiveSoftCap int
+	WarnAt        int
 }
 
 type ApproveAgentMemorySuggestionRequest struct {
