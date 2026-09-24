@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/stretchr/testify/require"
@@ -121,6 +122,26 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_ai_providers_embedding_input_style",
 			values: stringsOf(aiprovider.AllEmbeddingInputStyles()),
+		},
+		{
+			name:   "ck_ai_index_entries_source_type",
+			values: stringsOf(airetrieval.AllSourceTypes()),
+		},
+		{
+			name:   "ck_ai_index_entries_status",
+			values: stringsOf(airetrieval.AllIndexStatuses()),
+		},
+		{
+			name:   "ck_ai_retrieval_settings_paused_reason",
+			values: stringsOf(airetrieval.AllPauseReasons()),
+		},
+		{
+			name:   "ck_ai_embeddings_source_type",
+			values: stringsOf(airetrieval.AllSourceTypes()),
+		},
+		{
+			name:   "ck_ai_catalog_embeddings_corpus",
+			values: stringsOf(airetrieval.AllCatalogCorpora()),
 		},
 	}
 

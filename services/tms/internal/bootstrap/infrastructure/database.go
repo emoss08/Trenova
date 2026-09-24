@@ -12,5 +12,11 @@ func asDBConnection(conn *postgres.Connection) ports.DBConnection {
 
 var DatabaseModule = fx.Module(
 	"database",
-	fx.Provide(postgres.NewConnection, postgres.NewReportingConnection, asDBConnection),
+	fx.Provide(
+		postgres.NewConnection,
+		postgres.NewReportingConnection,
+		asDBConnection,
+		postgres.NewCapabilityProbe,
+	),
+	fx.Invoke(func(*postgres.CapabilityProbe) {}),
 )

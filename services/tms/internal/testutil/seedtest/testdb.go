@@ -28,7 +28,10 @@ const (
 	// starting a throwaway one. The server must have PostGIS available.
 	PostgresDSNEnv = "TRENOVA_TEST_POSTGRES_DSN"
 
-	postgresImage    = "postgis/postgis:16-3.4-alpine"
+	PostgresImageEnv = "TRENOVA_TEST_POSTGRES_IMAGE"
+
+	DefaultPostgresImage = "postgis/postgis:18-3.6-alpine"
+
 	postgresDatabase = "trenova_seed_test"
 	postgresUser     = "test"
 	postgresPassword = "test"
@@ -137,7 +140,7 @@ func resolveAdminDSN(ctx context.Context) (string, error) {
 	}
 
 	req := testcontainers.ContainerRequest{
-		Image:        postgresImage,
+		Image:        PostgresImage(),
 		ExposedPorts: []string{"5432/tcp"},
 		Cmd:          []string{"postgres", "-c", "max_connections=300"},
 		Env: map[string]string{
@@ -178,6 +181,14 @@ func resolveAdminDSN(ctx context.Context) (string, error) {
 		port.Port(),
 		postgresDatabase,
 	), nil
+}
+
+func PostgresImage() string {
+	if image := strings.TrimSpace(os.Getenv(PostgresImageEnv)); image != "" {
+		return image
+	}
+
+	return DefaultPostgresImage
 }
 
 func waitForDB(ctx context.Context, db *bun.DB) error {
