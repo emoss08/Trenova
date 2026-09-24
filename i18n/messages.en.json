@@ -12203,6 +12203,15 @@
       "api/graphql"
     ]
   },
+  "Agent memory not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentredteam"
+    ]
+  },
   "Agent not found": {
     "sites": 1,
     "scope": [
@@ -12309,6 +12318,15 @@
     ],
     "areas": [
       "domain/watchtower"
+    ]
+  },
+  "Agent run not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentredteam"
     ]
   },
   "Agent runs, proposals, and exception handling.": {
@@ -132663,6 +132681,15 @@
     "areas": [
       "routes/carrier-settlement",
       "routes/carrier-settlement-batch"
+    ]
+  },
+  "Remittance advice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentredteam"
     ]
   },
   "Remote Directory": {
