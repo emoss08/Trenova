@@ -39,7 +39,7 @@ const FORM_ID = "agent-quality-control-form";
  */
 export function SettingsPanel() {
   const t = useT();
-  const control = useQuery({ ...queries.agentQuality.control() });
+  const controlQuery = useQuery({ ...queries.agentQuality.control() });
 
   return (
     <SectionPanel
@@ -48,15 +48,15 @@ export function SettingsPanel() {
         "The sweep runs once a night at this hour and skips an agent whose instructions, tools, model and cases have not changed since its last run, until that run is older than the rerun period. Evaluation stops for the night when either budget is spent.",
       )}
     >
-      {control.isError ? (
+      {controlQuery.isError ? (
         <div className="p-3">
           <Alert variant="destructive" size="sm">
             <CircleAlertIcon />
             <AlertDescription>{t("The quality settings could not be loaded.")}</AlertDescription>
           </Alert>
         </div>
-      ) : control.data ? (
-        <SettingsForm control={control.data} />
+      ) : controlQuery.data ? (
+        <SettingsForm control={controlQuery.data} />
       ) : (
         <div className="flex flex-col gap-2 p-3" aria-busy>
           <Skeleton className="h-8" />

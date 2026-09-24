@@ -111,32 +111,36 @@ export function useBulkBillingTransfer(runId: string | null, onRunIdChange: (id:
     },
   });
 
+  const { mutateAsync: startRun } = startMutation;
+  const { mutateAsync: retryRun } = retryMutation;
+  const { mutate: cancelRun } = cancelMutation;
+
   const start = useCallback(
     async (target: BulkBillingTransferTarget) => {
       setStartError(null);
       try {
-        await startMutation.mutateAsync(target);
+        await startRun(target);
       } catch (error) {
         setStartError(error);
       }
     },
-    [startMutation],
+    [startRun],
   );
 
   const retry = useCallback(async () => {
     if (!run) return;
     setStartError(null);
     try {
-      await retryMutation.mutateAsync(run.id);
+      await retryRun(run.id);
     } catch (error) {
       setStartError(error);
     }
-  }, [run, retryMutation]);
+  }, [run, retryRun]);
 
   const stop = useCallback(() => {
     if (!run) return;
-    cancelMutation.mutate(run.id);
-  }, [run, cancelMutation]);
+    cancelRun(run.id);
+  }, [run, cancelRun]);
 
   // Clearing only drops what this dialog is looking at. The run itself, if one
   // is still going, keeps going — that is the point of it living server side.

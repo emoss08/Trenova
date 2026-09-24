@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
 import type { DetentionOccurrence } from "@trenova/shared/types/detention";
 import type { Shipment } from "@trenova/shared/types/shipment";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import AdditionalChargesSection from "../shipment-additional-charges";
@@ -83,7 +83,9 @@ function occurrence(
 
 function Harness({ values, children }: { values: Partial<Shipment>; children: ReactNode }) {
   const form = useForm<Shipment>({ defaultValues: values as Shipment });
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const [client] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+  );
   return (
     <QueryClientProvider client={client}>
       <FormProvider {...form}>{children}</FormProvider>

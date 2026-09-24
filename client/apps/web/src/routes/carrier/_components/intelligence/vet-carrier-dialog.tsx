@@ -64,7 +64,7 @@ export function VetCarrierDialog({
 
   const cost = depth ? carrierIntelVetCost(provider.provider, depth) : null;
 
-  const vet = useApiMutation<CarrierIntelVetResult, void>({
+  const vet = useApiMutation<CarrierIntelVetResult, undefined>({
     resourceName: "Carrier vetting",
     mutationFn: () => vetCarrier({ carrierId, depth, force }),
     onSuccess: (result) => {
@@ -166,7 +166,7 @@ export function VetCarrierDialog({
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             {t("Cancel")}
           </Button>
-          <Button type="button" isLoading={vet.isPending} onClick={() => vet.mutate()}>
+          <Button type="button" isLoading={vet.isPending} onClick={() => vet.mutate(undefined)}>
             {t("Vet now")}
           </Button>
         </DialogFooter>

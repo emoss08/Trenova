@@ -19,6 +19,7 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
+import process from "node:process";
 
 import { readGuides, referencesIn } from "./guides.mjs";
 import {
