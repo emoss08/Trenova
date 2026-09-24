@@ -15,6 +15,7 @@ const (
 const (
 	labelResult = "result"
 	labelReason = "reason"
+	labelStatus = "status"
 )
 
 var (
