@@ -143,19 +143,28 @@ export type RecordAtLocation = {
   entityId: string;
 };
 
-function pathPattern(path: string): RegExp {
-  const escaped = path
+function templatePattern(template: string, capture: string): string {
+  return template
     .split(ID)
     .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-    .join("([^/]+)");
-  return new RegExp(`^${escaped}/?$`);
+    .join(capture);
+}
+
+function pathPattern(path: string): RegExp {
+  return new RegExp(`^${templatePattern(path, "([^/]+)")}/?$`);
+}
+
+function valuePattern(template: string): RegExp {
+  return new RegExp(`^${templatePattern(template, "(.+?)")}$`);
 }
 
 const LOCATORS = (Object.keys(RECORD_LINKS) as RecordEntityType[])
   .map((entityType) => {
     const link: RecordLink = RECORD_LINKS[entityType];
-    const idParam = Object.entries(link.params ?? {}).find(([, value]) => value === ID)?.[0];
-    return { entityType, pattern: pathPattern(link.path), idParam, specificity: link.path.length };
+    const idParams = Object.entries(link.params ?? {})
+      .filter(([, value]) => value.includes(ID))
+      .map(([key, value]) => ({ key, pattern: valuePattern(value) }));
+    return { entityType, pattern: pathPattern(link.path), idParams, specificity: link.path.length };
   })
   // Longest path first, so a page nested under another is not claimed by it.
   .sort((a, b) => b.specificity - a.specificity);
@@ -173,7 +182,14 @@ export function recordAtLocation(pathname: string, search: string): RecordAtLoca
     }
 
     const fromPath = match[1] === undefined ? "" : decodeURIComponent(match[1]);
-    const fromQuery = locator.idParam ? (params.get(locator.idParam) ?? "") : "";
+    let fromQuery = "";
+    for (const idParam of locator.idParams) {
+      const found = idParam.pattern.exec(params.get(idParam.key) ?? "");
+      if (found?.[1]) {
+        fromQuery = found[1];
+        break;
+      }
+    }
     return { entityType: locator.entityType, entityId: (fromPath || fromQuery).trim() };
   }
 

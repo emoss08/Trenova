@@ -71,7 +71,7 @@ func (t *listReportRunsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listReportRunsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -250,7 +250,7 @@ func (t *compareReportRunsTool) Policy() serviceports.ToolPolicy {
 
 func (t *compareReportRunsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

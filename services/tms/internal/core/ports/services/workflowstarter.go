@@ -24,3 +24,14 @@ type WorkflowStarter interface {
 	) error
 	Enabled() bool
 }
+
+type WorkflowSignalStarter interface {
+	SignalWithStartWorkflow(
+		ctx context.Context,
+		workflowID, signalName string,
+		signalArg any,
+		options client.StartWorkflowOptions,
+		workflow any,
+		args ...any,
+	) (client.WorkflowRun, error)
+}

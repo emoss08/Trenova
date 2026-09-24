@@ -63,8 +63,10 @@ func TestMemoryReaders_NeverReturnASuggestion(t *testing.T) {
 		agent.MemoryStatusSuggested, "Check the lane before quoting a rate"))
 	require.NoError(t, err)
 
-	_, err = repo.Create(ctx, suggestedMemory(tenant, agentID,
-		agent.MemoryStatusDismissed, "Check the lane before quoting anything"))
+	dismissed := suggestedMemory(tenant, agentID,
+		agent.MemoryStatusDismissed, "Check the lane before quoting anything")
+	dismissed.RetiredAt = &now
+	_, err = repo.Create(ctx, dismissed)
 	require.NoError(t, err)
 
 	listed, err := repo.ListActive(ctx, repositories.ListActiveAgentMemoriesRequest{

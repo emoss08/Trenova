@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -75,7 +76,7 @@ func (r *controlRepository) Upsert(
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
 	})
-	if err != nil && !dberror.IsNotFoundError(err) {
+	if err != nil && !errortypes.IsNotFoundError(err) {
 		return nil, err
 	}
 
@@ -182,7 +183,7 @@ func (r *controlRepository) ScheduleTarget(
 	switch {
 	case err == nil:
 		target.Control = control
-	case !dberror.IsNotFoundError(err):
+	case !errortypes.IsNotFoundError(err):
 		return nil, err
 	}
 

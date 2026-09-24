@@ -29,6 +29,7 @@ func (o *delegateOpener) OpenDelegate(
 		ThreadID:  run.ThreadID,
 		StepOwner: run.StepOwner,
 		Call:      call,
+		Records:   run.Records,
 	})
 	if err != nil {
 		if refusal, ok := assistantservice.IsDelegateDeclined(err); ok {

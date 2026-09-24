@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { getMemoryColumns } from "./memory-columns";
 import { MemoryPanel } from "./memory-panel";
 import { MemorySuggestions } from "./memory-suggestions";
+import { MemoryUsageNotice } from "./memory-usage-notice";
 
 /**
  * What the organization has told its agents. Every row here is read into
@@ -60,6 +61,7 @@ export default function MemoryTab() {
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
+      <MemoryUsageNotice />
       <MemorySuggestions canDecide={canUpdate} />
       <DataTable<AgentMemoryRow>
         name="Memory"

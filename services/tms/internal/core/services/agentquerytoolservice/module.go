@@ -91,6 +91,8 @@ func ToolProviders() []any {
 		provideListCustomerPaymentsTool,
 		provideGetInboundMessageTool,
 		provideListInboundMessagesTool,
+		provideSearchDocumentsTool,
+		provideSearchInboundMessagesTool,
 		newGetMyHomeLayoutTool,
 		newListHomeWidgetsTool,
 		newFindInTrenovaTool,
@@ -216,8 +218,10 @@ func provideListEmailProfilesTool(profiles *emailservice.Service) services.Agent
 func provideGetDocumentSummaryTool(
 	documents repositories.DocumentRepository,
 	content services.DocumentContentService,
+	permissions services.PermissionEngine,
+	threads repositories.ThreadOwnerRepository,
 ) services.AgentQueryTool {
-	return newGetDocumentSummaryTool(documents, content)
+	return newGetDocumentSummaryTool(documents, content, permissions, threads)
 }
 
 func provideGetShipmentDraftTool(content services.DocumentContentService) services.AgentQueryTool {
@@ -297,4 +301,19 @@ func provideListInboundMessagesTool(
 	messages *inboundmessageservice.Service,
 ) services.AgentQueryTool {
 	return newListInboundMessagesTool(messages)
+}
+
+func provideSearchDocumentsTool(
+	searcher services.RetrievalSearcher,
+	permissions services.PermissionEngine,
+	threads repositories.ThreadOwnerRepository,
+) services.AgentQueryTool {
+	return newSearchDocumentsTool(searcher, permissions, threads)
+}
+
+func provideSearchInboundMessagesTool(
+	searcher services.RetrievalSearcher,
+	permissions services.PermissionEngine,
+) services.AgentQueryTool {
+	return newSearchInboundMessagesTool(searcher, permissions)
 }

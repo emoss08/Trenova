@@ -210,20 +210,8 @@ func (s *Service) createConsolidatedTx(
 	for _, item := range params.QueueItems {
 		itemIDs = append(itemIDs, item.ID)
 	}
-	attached, txErr := s.billingQueueRepo.AttachInvoice(txCtx, &repositories.AttachInvoiceRequest{
-		TenantInfo: params.TenantInfo,
-		InvoiceID:  created.ID,
-		ItemIDs:    itemIDs,
-	})
-	if txErr != nil {
+	if txErr = s.attachQueueItems(txCtx, params.TenantInfo, created.ID, itemIDs); txErr != nil {
 		return nil, txErr
-	}
-	if attached != int64(len(itemIDs)) {
-		return nil, errortypes.NewValidationError(
-			"shipmentIds",
-			errortypes.ErrInvalidOperation,
-			"Some shipments were invoiced elsewhere while this invoice was being created",
-		)
 	}
 
 	auditActor := actor.AuditActor()

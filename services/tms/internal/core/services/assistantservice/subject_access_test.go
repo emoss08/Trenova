@@ -125,7 +125,7 @@ func TestStartThread_RefusesASubjectThePersonCannotRead(t *testing.T) {
 
 	svc, conversations, permissions := subjectService(chatDefinition("Dispatch", ""))
 
-	_, err := svc.StartThread(t.Context(), workerThread(), testActor())
+	_, err := startAs(t, svc, workerThread(), testActor())
 
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
@@ -139,7 +139,7 @@ func TestStartThread_OpensAConversationAboutARecordThePersonMayRead(t *testing.T
 
 	svc, conversations, _ := subjectService(chatDefinition("Dispatch", ""), "worker:read")
 
-	thread, err := svc.StartThread(t.Context(), workerThread(), testActor())
+	thread, err := startAs(t, svc, workerThread(), testActor())
 
 	require.NoError(t, err)
 	require.NotNil(t, conversations.created)
@@ -153,7 +153,7 @@ func TestStartThread_NeedsNoGrantWithoutARecord(t *testing.T) {
 
 	svc, _, permissions := subjectService(chatDefinition("Dispatch", ""))
 
-	_, err := svc.StartThread(t.Context(), &serviceports.StartThreadRequest{
+	_, err := startAs(t, svc, &serviceports.StartThreadRequest{
 		AgentDefinitionID: pulid.MustNew("agdef_"),
 	}, testActor())
 
@@ -170,7 +170,7 @@ func TestStartThread_RefusesAnAgentThatRunsOnItsOwn(t *testing.T) {
 	desk.TriggerMode = agentdefinition.TriggerEvent
 	svc, conversations, _ := subjectService(desk)
 
-	_, err := svc.StartThread(t.Context(), &serviceports.StartThreadRequest{
+	_, err := startAs(t, svc, &serviceports.StartThreadRequest{
 		AgentDefinitionID: desk.ID,
 	}, testActor())
 

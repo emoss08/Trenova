@@ -32,7 +32,7 @@ const (
 	createAction     = "create"
 )
 
-func guideTenant(params serviceports.QueryToolParams) pagination.TenantInfo {
+func guideTenant(params *serviceports.QueryToolParams) pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  params.OrganizationID,
 		BuID:   params.BusinessUnitID,
@@ -115,7 +115,7 @@ type guideSearchResult struct {
 
 func (t *findInTrenovaTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -132,6 +132,10 @@ func (t *findInTrenovaTool) Query(
 		Query:      question,
 		Page:       optionalString(params.Params, "page"),
 		Limit:      guideAnswerLimit,
+		Attribution: serviceports.AIUsageAttribution{
+			UserID:            params.Actor.UserID,
+			AgentDefinitionID: params.AgentDefinitionID,
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -262,7 +266,7 @@ type NavigationResult struct {
 
 func (t *openPageTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

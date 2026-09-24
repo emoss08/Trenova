@@ -114,6 +114,14 @@ export function ProviderRow({
             {provider.name}
           </button>
           <span className="text-muted-foreground truncate font-mono text-xs">{provider.model}</span>
+          {provider.embeddingDimensions != null && (
+            <span className="text-muted-foreground text-xs tabular-nums">
+              {t(
+                "{0, plural, one {# dimension} other {# dimensions}}",
+                provider.embeddingDimensions,
+              )}
+            </span>
+          )}
           {!provider.enabled && (
             <Badge variant="neutral" appearance="outline">
               {t("Off")}
@@ -169,7 +177,11 @@ export function ProviderRow({
             </span>
           )}
         </div>
-        <ProviderTestSummary outcome={provider.lastTest} className="min-w-0" />
+        <ProviderTestSummary
+          outcome={provider.lastTest}
+          embedding={provider.tasks.includes("Embedding")}
+          className="min-w-0"
+        />
       </div>
 
       <div className="flex shrink-0 items-center gap-1">

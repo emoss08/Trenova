@@ -21,6 +21,19 @@ func restrictedChatDefinition(name string) *agentdefinition.Definition {
 	return definition
 }
 
+func startAs(
+	t *testing.T,
+	svc *Service,
+	req *serviceports.StartThreadRequest,
+	actor *serviceports.RequestActor,
+) (*conversation.Thread, error) {
+	t.Helper()
+
+	req.TenantInfo = actor.TenantInfo()
+
+	return svc.StartThread(t.Context(), req, actor)
+}
+
 /*
 An agent restricted to roles is refused to a person none of whose roles is
 granted it, before anything is stored; granting one of their roles the agent
@@ -32,7 +45,7 @@ func TestStartThread_RefusesAnAgentThePersonMayNotUse(t *testing.T) {
 	restricted := restrictedChatDefinition("Payroll Helper")
 	svc, conversations, permissions := subjectService(restricted)
 
-	_, err := svc.StartThread(t.Context(), &serviceports.StartThreadRequest{
+	_, err := startAs(t, svc, &serviceports.StartThreadRequest{
 		AgentDefinitionID: restricted.ID,
 	}, testActor())
 
@@ -43,7 +56,7 @@ func TestStartThread_RefusesAnAgentThePersonMayNotUse(t *testing.T) {
 	assert.Equal(t, []pulid.ID{restricted.ID}, permissions.agentChecks)
 
 	permissions.granted = []pulid.ID{restricted.ID}
-	thread, err := svc.StartThread(t.Context(), &serviceports.StartThreadRequest{
+	thread, err := startAs(t, svc, &serviceports.StartThreadRequest{
 		AgentDefinitionID: restricted.ID,
 	}, testActor())
 
@@ -60,7 +73,7 @@ func TestStartThread_RefusesEveryAgentWithoutTheAssistant(t *testing.T) {
 	svc, conversations, permissions := subjectService(open)
 	permissions.allowed = map[string]bool{}
 
-	_, err := svc.StartThread(t.Context(), &serviceports.StartThreadRequest{
+	_, err := startAs(t, svc, &serviceports.StartThreadRequest{
 		AgentDefinitionID: open.ID,
 	}, testActor())
 

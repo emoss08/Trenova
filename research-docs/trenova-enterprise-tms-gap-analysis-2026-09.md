@@ -216,11 +216,27 @@ credits AP.
 | Public API is a 13-resource allowlist | `apikeyservice/policy.go`, read/create/update only | No billing, invoice, settlement, document, or EDI access via API |
 | US-only geography | `domain/usstate/` is the only jurisdiction entity; no provinces | Cross-border Canada is impossible; no PARS/PAPS, ACE eManifest, in-bond, or customs broker |
 | Telematics is Samsara-only | `domain/integration/telematics.go:9` returns true only for Samsara; Motive is a commented-out enum member | The 12-method provider interface is ready; implementations are not |
-| Realtime hard-coupled to one vendor | `realtimeservice` mints JWTs for Foony (`wss://realtime.foony.io`); no self-hosted WebSocket or SSE fallback | A vendor outage means no realtime and no degraded mode |
 | Deployment is single-node | `deploy/` is a Caddyfile, three Dockerfiles, and Prometheus/Grafana. No Kubernetes, Helm, or Terraform | Nothing in the repository describes running more than one API replica |
 | Web app is desktop-only | Four responsive utility classes across roughly 600 `.tsx` files | Operations managers cannot work from a phone |
 
 ### Closed Since This Analysis
+
+**Realtime is self-hosted.** Live updates no longer depend on a third-party
+WebSocket vendor. The API serves them as server-sent events from
+`GET /api/v1/realtime/stream/`, fanned out through sharded Redis Streams that
+every API replica reads, so any replica can serve any reader. A dropped reader
+resumes from its `Last-Event-ID` for as long as the stream still holds its
+cursor, and is told to refetch (`reset`) when it does not. Publishing never waits
+on the network: domain writes queue events for a background writer that flushes
+them to Redis in pipelined batches. Presence and typing are tied to the stream's
+connection and kept in Redis with a TTL that the owning replica refreshes and any
+replica sweeps, so a killed replica's readers drop out within one TTL. Events
+addressed to one person (notifications, assistant turns) are filtered on the
+server, and driver-portal streams carry invalidations without entity payloads.
+Streams are recycled on a jittered clock so sessions re-authenticate, slow
+readers are disconnected rather than allowed to stall the fan-out, and shutdown
+drains every stream so readers reconnect to another replica. See
+`docs/engineering/realtime.md`.
 
 **Rate limiting is distributed and principal-scoped.** `middleware/ratelimit.go`
 no longer keeps `x/time/rate` buckets in a process-local map keyed by

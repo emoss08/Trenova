@@ -163,11 +163,6 @@ func TestListInboundMessages_TranslatesTheFilters(t *testing.T) {
 			limit:          inboundListDefaultLimit,
 		},
 		{
-			name:   "an unknown status and kind filter nothing rather than everything wrongly",
-			params: map[string]any{"status": "Deleted", "classification": "Spam"},
-			limit:  inboundListDefaultLimit,
-		},
-		{
 			name:   "the limit is capped",
 			params: map[string]any{"limit": 500},
 			limit:  inboundListLimit,
@@ -222,4 +217,41 @@ func TestListInboundMessages_RowsCarryAPreviewNotTheBody(t *testing.T) {
 	assert.True(t, rows[0].NeedsReview)
 	assert.LessOrEqual(t, len([]rune(rows[0].Preview)), inboundPreviewChars+1)
 	assert.Contains(t, outcome.Columns, "subject")
+}
+
+func TestListInboundMessages_RefusesAnUnknownFilterRatherThanDroppingIt(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name   string
+		params map[string]any
+		want   string
+	}{
+		{
+			name:   "an unknown status",
+			params: map[string]any{"status": "Deleted"},
+			want:   `status "Deleted" is not one the inbox has`,
+		},
+		{
+			name:   "an unknown kind",
+			params: map[string]any{"classification": "Spam"},
+			want:   `classification "Spam" is not a kind`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			messages := &fakeInboundMessages{}
+			_, err := newListInboundMessagesTool(messages).Query(
+				t.Context(),
+				testParams(tc.params),
+			)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tc.want)
+			assert.Contains(t, err.Error(), "leave it out")
+			assert.Nil(t, messages.gotList, "nothing is listed under a filter that was dropped")
+		})
+	}
 }

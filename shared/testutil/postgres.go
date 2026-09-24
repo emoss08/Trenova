@@ -47,12 +47,21 @@ type PostgresOptions struct {
 	Image    string
 }
 
+const PostgresImageEnv = "TRENOVA_TEST_POSTGRES_IMAGE"
+
+const defaultPostgresImage = "postgres:18-alpine"
+
 func DefaultPostgresOptions() PostgresOptions {
+	image := strings.TrimSpace(os.Getenv(PostgresImageEnv))
+	if image == "" {
+		image = defaultPostgresImage
+	}
+
 	return PostgresOptions{
 		Database: "trenova_test",
 		Username: "test",
 		Password: "test",
-		Image:    "postgres:16-alpine",
+		Image:    image,
 	}
 }
 

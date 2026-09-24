@@ -178,12 +178,13 @@ func TestAccountsReceivableRepositoryReturnsLedgerAndAging(t *testing.T) {
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-AR-1",
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-AR-1",
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)
@@ -435,12 +436,13 @@ func TestAccountsReceivableRepositoryReturnsOpenItems(t *testing.T) {
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-AR-OPEN-1",
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-AR-OPEN-1",
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)
@@ -661,12 +663,13 @@ func TestAccountsReceivableRepositoryReturnsCustomerNameAndAging(t *testing.T) {
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-AR-STMT-1",
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-AR-STMT-1",
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)

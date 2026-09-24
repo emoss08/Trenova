@@ -5,6 +5,18 @@ schema {
 
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
+"""
+How an embedding endpoint is told whether a text is a stored document or a
+search query. None sends both the same way; VoyageInputType sends Voyage's
+input_type field; NomicPrefix adds the search_document and search_query
+prefixes nomic-embed-text expects.
+"""
+enum AIEmbeddingInputStyle {
+  NomicPrefix
+  None
+  VoyageInputType
+}
+
 """A person's thumbs up or down on something an AI wrote for them."""
 type AIFeedback {
   """The agent the rating is credited to."""
@@ -144,6 +156,12 @@ type AIProvider {
   businessUnitId: ID!
   createdAt: Timestamp!
   description: String!
+  """
+  Vector size an embedding provider returns: 768, 1024 or 1536. Null for a provider that serves no embeddings.
+  """
+  embeddingDimensions: Int
+  """How documents and search queries are told apart on the wire."""
+  embeddingInputStyle: AIEmbeddingInputStyle!
   enabled: Boolean!
   """
   Vendor request fields this endpoint takes that the protocol does not
@@ -214,6 +232,218 @@ enum AIReasoningEffort {
   Off
 }
 
+type AIRetrievalAvailability {
+  available: Boolean!
+  extensionInstalled: Boolean!
+  extensionVersion: String
+  """Absent when search by meaning is available."""
+  reason: AIRetrievalUnavailableReason
+}
+
+"""
+A source whose last attempt to index failed, with the error kept for it.
+"""
+type AIRetrievalFailedEntry {
+  attempts: Int!
+  error: String!
+  id: ID!
+  lastAttemptAt: Timestamp
+  modelKey: String!
+  nextAttemptAt: Timestamp
+  sourceId: ID!
+  sourceType: AIRetrievalSourceType!
+  """
+  Failed when no retry is left; Pending when another attempt is scheduled.
+  """
+  status: AIRetrievalIndexStatus!
+}
+
+type AIRetrievalFailedEntryConnection {
+  edges: [AIRetrievalFailedEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AIRetrievalFailedEntryEdge {
+  cursor: String!
+  node: AIRetrievalFailedEntry!
+}
+
+"""Where one source stands in the index under one embedding model."""
+enum AIRetrievalIndexStatus {
+  """Every retry was spent, or the provider refused the text."""
+  Failed
+  Indexed
+  """Waiting to be embedded, or waiting to retry after a failed attempt."""
+  Pending
+  """
+  Not embedded on purpose: retired, superseded, too sensitive or without text.
+  """
+  Skipped
+}
+
+"""
+A change of embedding model: every source is indexed under the new model beside the old one before searches move to it.
+"""
+type AIRetrievalModelChange {
+  dimensions: Int!
+  failed: Int!
+  fromModelKey: String!
+  """Indexed or skipped under the new model."""
+  indexed: Int!
+  pending: Int!
+  toModelKey: String!
+  """Sources of the enabled types that must be indexed under the new model."""
+  total: Int!
+}
+
+enum AIRetrievalPauseReason {
+  """
+  The monthly indexing budget ran out; indexing resumes on its own under a new month or a raised budget.
+  """
+  Budget
+  """A person paused indexing."""
+  Manual
+}
+
+"""
+An estimate of what re-indexing one source type would cost if every chunk were
+embedded again: sources × average chunks × average tokens × the provider's
+input price. A re-index embeds only chunks whose text changed, so the real cost
+is at most this, and nothing when nothing changed.
+"""
+type AIRetrievalReindexEstimate {
+  averageChunks: Float!
+  averageTokensPerChunk: Float!
+  """
+  Whether the chunks per source were measured from indexed sources rather than assumed from their text.
+  """
+  chunksMeasured: Boolean!
+  """Absent when the provider has no input price or no model is routed."""
+  estimatedCostUsd: Decimal
+  estimatedTokens: Int!
+  """Absent when the provider has no input price."""
+  inputCostPerMillionUsd: Decimal
+  """The model the chunks would be embedded with."""
+  modelKey: String
+  """What is left of this month's indexing budget."""
+  remainingBudgetUsd: Decimal!
+  sourceType: AIRetrievalSourceType!
+  """Sources that would be embedded; skipped ones are left out."""
+  sources: Int!
+}
+
+type AIRetrievalSettings {
+  """The embedding model searches use: host/model@dimensions."""
+  activeModelKey: String
+  dimensions: Int
+  documentsEnabled: Boolean!
+  inboundMessagesEnabled: Boolean!
+  memoryEnabled: Boolean!
+  """What indexing may spend in a calendar month (UTC)."""
+  monthlyIndexingBudgetUsd: Decimal!
+  paused: Boolean!
+  pausedAt: Timestamp
+  pausedReason: AIRetrievalPauseReason
+  pendingDimensions: Int
+  """The model being indexed beside the active one during a model change."""
+  pendingModelKey: String
+  updatedAt: Timestamp
+  version: Int!
+}
+
+"""
+Changes only the fields given. Turning paused off also lifts a budget pause;
+indexing pauses again at once if the month's cost is still at the budget.
+"""
+input AIRetrievalSettingsPatchInput {
+  documentsEnabled: Boolean @goField(omittable: true)
+  inboundMessagesEnabled: Boolean @goField(omittable: true)
+  memoryEnabled: Boolean @goField(omittable: true)
+  monthlyIndexingBudgetUsd: Decimal @goField(omittable: true)
+  paused: Boolean @goField(omittable: true)
+}
+
+"""One source type under the active embedding model."""
+type AIRetrievalSourceStatus {
+  enabled: Boolean!
+  failed: Int!
+  indexed: Int!
+  lastAttemptAt: Timestamp
+  lastIndexedAt: Timestamp
+  pending: Int!
+  skipped: Int!
+  sourceType: AIRetrievalSourceType!
+  """Rows of this kind the organization keeps, indexed or not."""
+  total: Int!
+}
+
+"""What retrieval indexes by meaning."""
+enum AIRetrievalSourceType {
+  """
+  Uploaded and generated documents whose owning record may be read by a model.
+  """
+  Document
+  """Inbound email, the sender's own words only."""
+  InboundMessage
+  """What the organization told its agents, or what they recorded."""
+  Memory
+}
+
+type AIRetrievalStatus {
+  availability: AIRetrievalAvailability!
+  """
+  The routed model differs from the one searches use, so a model change will start or is under way.
+  """
+  configuredModelDiffers: Boolean!
+  """
+  The model the Embedding routing names now; absent when no provider embeds.
+  """
+  configuredModelKey: String
+  """
+  What indexing has cost since the first of the month (UTC), priced calls only.
+  """
+  indexingCostMonthUsd: Decimal!
+  indexingUnpricedCalls: Int!
+  lastIndexedAt: Timestamp
+  """Absent unless a pending model is being indexed."""
+  modelChange: AIRetrievalModelChange
+  monthStartedAt: Timestamp!
+  """
+  What embedding search queries has cost since the first of the month (UTC), priced calls only.
+  """
+  retrievalCostMonthUsd: Decimal!
+  retrievalUnpricedCalls: Int!
+  settings: AIRetrievalSettings!
+  sources: [AIRetrievalSourceStatus!]!
+}
+
+"""Why search by meaning is not answering, so every search is by keyword."""
+enum AIRetrievalUnavailableReason {
+  """This month's indexing budget is spent."""
+  BudgetPaused
+  """A person paused indexing, or every source is turned off."""
+  Disabled
+  """The database has no pgvector extension."""
+  ExtensionMissing
+  """No enabled provider is routed the Embedding task."""
+  NoProvider
+  """A provider is routed but nothing has been indexed under its model yet."""
+  NotIndexed
+  """
+  The provider failed to embed a query, or answered with the wrong model or size.
+  """
+  ProviderFailed
+  """The provider did not embed a query within its time budget."""
+  QueryTimeout
+  """
+  pgvector is installed but the retrieval tables are not; run trenova db enable-vector.
+  """
+  SchemaMissing
+  """pgvector is older than 0.8."""
+  TooOld
+}
+
 enum AIStructuredOutputMode {
   JSONMode
   JSONSchema
@@ -226,6 +456,7 @@ enum AITask {
   DailyBriefing
   DocumentClassification
   DocumentExtraction
+  Embedding
   EvaluationJudge
   FormulaAssistant
   General
@@ -843,6 +1074,11 @@ type AgentDefinition {
   maxConcurrentRuns: Int!
   maxToolCalls: Int!
   """
+  Approximate tokens of recorded memory one prompt of this agent may carry,
+  1000 to 16000. Absent uses the default of 6000.
+  """
+  memoryTokenBudget: Int
+  """
   Cost cap for a calendar month across the agent's runs; absent for none.
   """
   monthlyBudgetUsd: Decimal
@@ -1357,6 +1593,20 @@ enum AgentMemorySubjectType {
   Customer
   Location
   Worker
+}
+
+"""
+How much the organization keeps for its agents, against what it should keep.
+"""
+type AgentMemoryUsage {
+  """Active memories that have not expired: what agents may read."""
+  activeCount: Int!
+  """
+  The number of active memories an organization should keep at most. Past it, fewer of them fit in each prompt.
+  """
+  activeSoftCap: Int!
+  """The count at which AI Control warns that the cap is near."""
+  warnAt: Int!
 }
 
 enum AgentOutputMode {
@@ -12367,6 +12617,10 @@ type Mutation {
   Writes today's page again from current figures, replacing what was there.
   """
   regenerateBriefing(input: TodaysBriefingInput!): Briefing!
+  """
+  Marks every source of one type stale; only chunks whose text changed are embedded again.
+  """
+  reindexAIRetrievalSource(sourceType: AIRetrievalSourceType!): AIRetrievalStatus!
   rejectCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
   rejectCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   rejectDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
@@ -12536,6 +12790,7 @@ type Mutation {
   uncertifyOshaSummary(year: Int!): OSHAAnnualSummary!
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
+  updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
   updateAgentControl(input: AgentControlInput!): AgentControl!
   updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
@@ -14364,6 +14619,8 @@ type Query {
   agentFeedbackSummary(agentDefinitionId: ID!, window: Int = 30): AgentFeedbackSummary!
   agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!
   agentMemory(id: ID!): AgentMemory
+  """How many active memories the organization keeps, against its soft cap."""
+  agentMemoryUsage: AgentMemoryUsage!
   agentPlan(id: ID!): AgentPlan
   agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
   agentProposal(id: ID!): AgentProposal
@@ -14440,6 +14697,19 @@ type Query {
   aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
   aiProvider(id: ID!): AIProvider
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
+  """
+  The thousand most recent sources whose indexing failed or is waiting to retry,
+  for one source type or all of them, a page at a time. Filters on sourceType,
+  status, sourceId, modelKey, error and attempts; sorts on those and on
+  lastAttemptAt and nextAttemptAt.
+  """
+  aiRetrievalFailedEntryConnection(input: DataTableConnectionInput!, sourceType: AIRetrievalSourceType): AIRetrievalFailedEntryConnection!
+  """What re-indexing one source type would cost at most."""
+  aiRetrievalReindexEstimate(sourceType: AIRetrievalSourceType!): AIRetrievalReindexEstimate!
+  """
+  Whether search by meaning works, what is indexed, and what it has cost this month.
+  """
+  aiRetrievalStatus: AIRetrievalStatus!
   """
   Model usage since the given instant, defaulting to the last seven days.
   """

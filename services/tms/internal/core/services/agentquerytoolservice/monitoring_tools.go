@@ -200,7 +200,7 @@ func (t *listReasonCodesTool) Policy() serviceports.ToolPolicy {
 
 func (t *listReasonCodesTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -308,7 +308,7 @@ func (t *listDetentionDeskTool) Policy() serviceports.ToolPolicy {
 
 func (t *listDetentionDeskTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -435,7 +435,7 @@ var severityRank = map[string]int{
 
 func (t *listWeatherAlertsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

@@ -250,3 +250,18 @@ function isPage(value: unknown): value is CommentPage {
     Array.isArray((value as { results: unknown[] }).results)
   );
 }
+
+/**
+ * The realtime scope for one shipment's comment thread, and the endpoints that
+ * authorize joining it and typing in it. The server builds the same scope from
+ * the shipment id in the path, so the two can never disagree about which
+ * thread a signal belongs to.
+ */
+export function shipmentCommentsRealtime(shipmentId: string) {
+  const base = `/shipments/${encodeURIComponent(shipmentId)}/comments`;
+  return {
+    scope: `shipment-comments:${shipmentId}`,
+    presencePath: `${base}/presence/`,
+    typingPath: `${base}/typing/`,
+  };
+}

@@ -3,6 +3,7 @@ import type {
   AgentSuiteRunStatus,
   UpdateAgentQualityControlInput,
 } from "@/lib/graphql/agent-quality";
+import { centsToDecimal, decimalToCents } from "@/lib/decimal-cents";
 import type { AiFeedbackTargetType } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
@@ -112,16 +113,7 @@ export function sparklineValues(points: { qualityScore: number }[]): number[] {
   return points.map((point) => Math.round(point.qualityScore * 1000) / 10);
 }
 
-/** Dollars as the Decimal scalar carries them, from the cents a money field holds. */
-export function centsToDecimal(cents: number): string {
-  return (Math.round(cents) / 100).toFixed(2);
-}
-
-export function decimalToCents(value: string): number {
-  const parsed = Number(value);
-
-  return Number.isFinite(parsed) ? Math.round(parsed * 100) : 0;
-}
+export { centsToDecimal, decimalToCents };
 
 export const qualityControlSchema = z
   .object({

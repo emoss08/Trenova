@@ -953,6 +953,29 @@ func (ec *executionContext) fieldContext_AgentDefinition_simulationMode(_ contex
 	return graphql.NewScalarFieldContext("AgentDefinition", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _AgentDefinition_memoryTokenBudget(ctx context.Context, field graphql.CollectedField, obj *agentdefinition.Definition) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentDefinition_memoryTokenBudget(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.MemoryTokenBudget, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int) graphql.Marshaler {
+			return ec.marshalOInt2ᚖint(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentDefinition_memoryTokenBudget(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentDefinition", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
 func (ec *executionContext) _AgentDefinition_contextProviders(ctx context.Context, field graphql.CollectedField, obj *agentdefinition.Definition) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2601,6 +2624,11 @@ func (ec *executionContext) _AgentDefinition(ctx context.Context, sel ast.Select
 		case "simulationMode":
 			out.Values[i] = ec._AgentDefinition_simulationMode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "memoryTokenBudget":
+			out.Values[i] = ec._AgentDefinition_memoryTokenBudget(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "contextProviders":

@@ -29,6 +29,7 @@ import { ControlRail } from "./_components/control-rail";
 import { buildRailItems, resolveRailView } from "./_components/rail-items";
 import { useAIControlStats } from "./_components/overview/use-ai-control-stats";
 import { extensionState } from "./_components/extensions/extension-roster";
+import { RETRIEVAL_STALE_MS, retrievalRailState } from "./_components/retrieval/retrieval-model";
 import { useAIControlNavigation } from "./use-ai-control-navigation";
 import { queries } from "@/lib/queries";
 
@@ -37,6 +38,7 @@ const AgentsTab = lazy(() => import("./_components/agents/agents-tab"));
 const ProvidersTab = lazy(() => import("./_components/providers/providers-tab"));
 const ExtensionsTab = lazy(() => import("./_components/extensions/extensions-tab"));
 const MemoryTab = lazy(() => import("./_components/memory/memory-tab"));
+const RetrievalTab = lazy(() => import("./_components/retrieval/retrieval-tab"));
 const SafetyTab = lazy(() => import("./_components/safety/safety-tab"));
 const QualityTab = lazy(() => import("./_components/quality/quality-tab"));
 const ActivityTab = lazy(() => import("./_components/activity/activity-tab"));
@@ -80,6 +82,15 @@ export function AgentControlPage() {
     staleTime: 60_000,
   });
   const qualityRegressions = qualityQuery.data?.openRegressions ?? 0;
+  const retrievalQuery = useQuery({
+    ...queries.aiRetrieval.status(),
+    enabled: canReadProviders,
+    staleTime: RETRIEVAL_STALE_MS,
+  });
+  const retrievalState = useMemo(
+    () => (retrievalQuery.data ? retrievalRailState(retrievalQuery.data) : null),
+    [retrievalQuery.data],
+  );
   const extensionItems = extensionsQuery.data?.items;
   const extensionsOn = useMemo(
     () => extensionItems?.filter((item) => extensionState(item) === "on").length ?? 0,
@@ -101,6 +112,7 @@ export function AgentControlPage() {
               extensionsOn,
               extensionsTotal: extensionItems?.length ?? 0,
               qualityRegressions,
+              retrieval: retrievalState,
             },
         {
           agents: canReadAgents,
@@ -110,6 +122,7 @@ export function AgentControlPage() {
           proposals: canReadProposals,
           exceptions: canReadExceptions,
           memory: canReadMemory,
+          retrieval: canReadProviders,
           safety: canReadAgents,
           quality: canReadQuality,
           ratings: canReadRatings,
@@ -124,6 +137,7 @@ export function AgentControlPage() {
       extensionsOn,
       canReadMemory,
       qualityRegressions,
+      retrievalState,
       canReadProposals,
       canReadProviders,
       canReadQuality,
@@ -187,6 +201,7 @@ export function AgentControlPage() {
             {activeTab === "providers" && <ProvidersTab />}
             {activeTab === "extensions" && <ExtensionsTab />}
             {activeTab === "memory" && <MemoryTab />}
+            {activeTab === "retrieval" && <RetrievalTab onOpenProviders={openProviders} />}
             {activeTab === "safety" && <SafetyTab view={activeView as SafetyView} />}
             {activeTab === "quality" && <QualityTab view={activeView as QualityView} />}
             {activeTab === "activity" && <ActivityTab view={activeView as ActivityView} />}

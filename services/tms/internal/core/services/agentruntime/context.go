@@ -29,6 +29,7 @@ type ContextBuilderParams struct {
 	// hand work to. Without them it is offered none.
 	Definitions repositories.AgentDefinitionRepository `optional:"true"`
 	Permissions serviceports.PermissionEngine          `optional:"true"`
+	Vectorizer  serviceports.QueryVectorizer           `optional:"true"`
 }
 
 type ContextBuilder struct {
@@ -40,6 +41,7 @@ type ContextBuilder struct {
 	guide         serviceports.ProductGuide
 	definitions   repositories.AgentDefinitionRepository
 	permissions   serviceports.PermissionEngine
+	vectorizer    serviceports.QueryVectorizer
 }
 
 func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilder {
@@ -52,6 +54,7 @@ func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilde
 		guide:         p.Guide,
 		definitions:   p.Definitions,
 		permissions:   p.Permissions,
+		vectorizer:    p.Vectorizer,
 	}
 }
 
@@ -61,13 +64,14 @@ func (b *ContextBuilder) Build(
 ) (agentdefinition.RuntimeContext, error) {
 	definition := req.Definition
 	rc := agentdefinition.RuntimeContext{
-		Now:         timeutils.NowUnix(),
-		Trigger:     req.Trigger,
-		Subject:     req.Subject,
-		Page:        req.Page,
-		Attachments: req.Attachments,
-		Mentions:    req.Mentions,
-		Tools:       b.runtime.ToolSummaries(definition),
+		Now:              timeutils.NowUnix(),
+		Trigger:          req.Trigger,
+		Subject:          req.Subject,
+		Page:             req.Page,
+		Attachments:      req.Attachments,
+		Mentions:         req.Mentions,
+		DelegatorRecords: req.DelegatorRecords,
+		Tools:            b.runtime.ToolSummaries(definition),
 	}
 
 	b.describeTrenova(&rc, req)
@@ -134,21 +138,26 @@ func (b *ContextBuilder) Build(
 	}
 
 	// Memory is read for every agent that asks for it, scoped to the
-	// organization and to the agent's own tools: a correction to assign_move
-	// belongs in the prompt of an agent that can assign, and nowhere else.
+	// organization, to the agent's own tools, and to the records the turn is
+	// about: a correction to assign_move belongs in the prompt of an agent
+	// that can assign, and what was recorded about Acme belongs in a turn
+	// about one of Acme's shipments. The prompt keeps what its budget holds.
 	if definition.HasContextProvider(agentdefinition.ContextMemory) && b.memories != nil {
 		memories, err := b.memories.ForContext(ctx, serviceports.MemoryContextRequest{
 			TenantInfo:        tenant,
 			AgentDefinitionID: definition.ID,
 			ToolNames:         definition.EffectiveToolNames(),
+			Records:           rc.MemoryRecords(),
+			Query:             b.memoryQuery(ctx, &req.Query),
 		})
 		if err != nil {
 			b.logger.Warn("agent context: memory lookup failed",
 				zap.String("organization", tenant.OrgID.String()),
 				zap.Error(err),
 			)
-		} else {
-			rc.Memories = memories
+		} else if memories != nil {
+			rc.Memories = memories.Memories
+			rc.MemorySubjects = memories.Subjects
 		}
 	}
 
@@ -259,4 +268,26 @@ func (b *ContextBuilder) delegateTools(
 	}
 
 	return b.runtime.PermittedTools(ctx, actor, names)
+}
+
+func (b *ContextBuilder) memoryQuery(
+	ctx context.Context,
+	req *serviceports.QueryVectorRequest,
+) serviceports.QueryVector {
+	if b.vectorizer == nil || req == nil || strings.TrimSpace(req.Text) == "" ||
+		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
+		return serviceports.QueryVector{}
+	}
+
+	query, err := b.vectorizer.Vectorize(ctx, req)
+	if err != nil {
+		b.logger.Warn("agent context: the turn could not be embedded; ranking memories by recency",
+			zap.String("organization", req.TenantInfo.OrgID.String()),
+			zap.Error(err),
+		)
+
+		return serviceports.QueryVector{}
+	}
+
+	return query
 }

@@ -1,10 +1,18 @@
 import type { AITask, SaveAIProviderRequest } from "@/types/ai-provider";
 
-export type ProviderFormValues = Omit<SaveAIProviderRequest, "tasks" | "extraBody"> & {
+export type ProviderFormValues = Omit<
+  SaveAIProviderRequest,
+  "tasks" | "extraBody" | "embeddingDimensions"
+> & {
   tasks: AITask[] | null;
   preset: string;
   /** The vendor fields as JSON text; the form edits text, the server takes an object. */
   extraBodyText: string;
+  /**
+   * The vector size as the select holds it: a string, blank for none. The
+   * server takes a number or null.
+   */
+  embeddingDimensionsChoice: string;
 };
 
 /**
@@ -21,16 +29,42 @@ export function buildSavePayload(
   values: ProviderFormValues,
   isEditing: boolean,
 ): SaveAIProviderRequest {
-  const { preset: _preset, tasks, apiKey, extraBodyText, ...rest } = values;
+  const {
+    preset: _preset,
+    tasks,
+    apiKey,
+    extraBodyText,
+    embeddingDimensionsChoice,
+    ...rest
+  } = values;
 
   const trimmedKey = apiKey?.trim() ?? "";
+  const assigned = tasks ?? [];
+  // Only a provider that embeds carries a vector size or an input style; one
+  // that does not is saved with neither, so a later retask starts clean.
+  const embeds = assigned.includes("Embedding");
 
   return {
     ...rest,
-    tasks: tasks ?? [],
+    tasks: assigned,
     apiKey: trimmedKey !== "" ? trimmedKey : isEditing ? undefined : "",
     extraBody: parseExtraBody(extraBodyText),
+    embeddingDimensions: embeds ? parseEmbeddingDimensions(embeddingDimensionsChoice) : null,
+    embeddingInputStyle: embeds ? rest.embeddingInputStyle : "None",
   };
+}
+
+/**
+ * Reads the chosen vector size. Blank is none; anything else went through the
+ * form schema, which only admits the sizes the server accepts.
+ */
+export function parseEmbeddingDimensions(choice: string): number | null {
+  const trimmed = choice.trim();
+  if (trimmed === "") {
+    return null;
+  }
+  const parsed = Number(trimmed);
+  return Number.isInteger(parsed) ? parsed : null;
 }
 
 /**

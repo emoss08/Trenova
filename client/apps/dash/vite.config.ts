@@ -55,12 +55,6 @@ export default defineConfig({
     // is outside a router.
     dedupe: ["react-router"],
   },
-  optimizeDeps: {
-    // @foony/realtime builds its Node-only `ws` fallback specifier at runtime
-    // (with @vite-ignore) so browser bundlers skip it. Excluding it from
-    // pre-bundling keeps esbuild from trying to resolve `ws`.
-    exclude: ["@foony/realtime"],
-  },
   server: {
     port: 5174,
     strictPort: true,

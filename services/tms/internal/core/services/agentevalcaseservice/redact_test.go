@@ -38,7 +38,7 @@ func (t fakeQueryTool) Policy() serviceports.ToolPolicy {
 		ReadsExternal: agent.ExternalReadNever,
 	}
 }
-func (fakeQueryTool) Query(context.Context, serviceports.QueryToolParams) (any, error) {
+func (fakeQueryTool) Query(context.Context, *serviceports.QueryToolParams) (any, error) {
 	return nil, nil
 }
 

@@ -3,7 +3,6 @@ module github.com/emoss08/trenova
 go 1.26.0
 
 require (
-	github.com/Foony-Limited/realtime-go v0.1.1
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/gen2brain/webp v0.6.4
@@ -105,6 +104,7 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nexus-rpc/nexus-proto-annotations v0.1.0 // indirect
+	github.com/pgvector/pgvector-go v0.4.1 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/richardlehane/mscfb v1.0.8 // indirect

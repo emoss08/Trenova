@@ -52,9 +52,11 @@ Loaded now:
 Callable after find_tools:
 - get_inbound_message — Read one message that arrived on a monitored address: sender, subject, body, what it was read as and how sure, and what it was matched to and why.
 - list_inbound_messages — List the inbox, newest first: mail that arrived on a monitored address, with sender, subject, what it was read as and whether it waits on a person.
+- search_inbound_messages — Search the inbox by what the mail says, best match first: the subject, the sender and the sender's own words, without the quoted thread.
 - get_customer — Retrieve one customer by id, with their billing and email profiles.
 - get_carrier — Retrieve one carrier by id, including its authority, insurance and compliance state.
 - get_document_summary — Read a document by id: what kind of document it looks like, how many pages, the text extracted from it, and the structured fields document intelligence found.
+- search_documents — Search the text of documents: rate confirmations, bills of lading, proofs of delivery, invoices, contracts, permits and other files attached to records.
 - list_carriers — List the carriers this organization tenders freight to, narrowed by status, compliance, safety rating or authority number.
 - list_email_profiles — The sending profiles email can go out from: each has a name, a sender address and a reply-to.
 - mark_inbound_message — Settle a message that arrived on a monitored address as Actioned or Ignored.

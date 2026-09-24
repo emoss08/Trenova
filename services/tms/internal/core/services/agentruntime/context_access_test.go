@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
@@ -82,6 +83,7 @@ func TestContextBuilder_OffersOnlyDelegatesThePersonMayUse(t *testing.T) {
 	permissions := &agentruntimetest.StubPermissions{}
 	builder := &ContextBuilder{
 		logger:      zap.NewNop(),
+		users:       &stubUsers{user: &tenant.User{}},
 		runtime:     toollessRuntime{},
 		permissions: permissions,
 		definitions: &listedDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{

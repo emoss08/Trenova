@@ -192,9 +192,6 @@ func newValidConfig() *Config {
 			SecretKey: "minioadmin",
 			Bucket:    "trenova",
 		},
-		Foony: FoonyConfig{
-			APIKey: "foony.test:key",
-		},
 		System: SystemConfig{
 			SystemUserPassword: "test-system-password",
 		},
@@ -1146,7 +1143,6 @@ func stageProductionBase(t *testing.T, path string) {
 			"secretKey": "storage-secret-key",
 		},
 		"system": map[string]any{"systemUserPassword": "system-user-password"},
-		"foony":  map[string]any{"apiKey": "foony-api-key"},
 		"audit": map[string]any{
 			"batchSize":          100,
 			"maxEntriesPerFlush": 1000,
@@ -1283,8 +1279,6 @@ storage:
   accessKey: "test"
   secretKey: "test"
   bucket: "test"
-foony:
-  apiKey: "foony.test:key"
 system:
   systemUserPassword: "test-system-password"
 `

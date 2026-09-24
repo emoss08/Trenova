@@ -196,7 +196,7 @@ func (t *listBankReceiptExceptionsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listBankReceiptExceptionsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -325,7 +325,7 @@ func (t *getBankReceiptTool) Policy() serviceports.ToolPolicy {
 
 func (t *getBankReceiptTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err
@@ -509,7 +509,7 @@ func (t *listCustomerPaymentsTool) Policy() serviceports.ToolPolicy {
 
 func (t *listCustomerPaymentsTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

@@ -1832,6 +1832,74 @@ func (_c *MockShipmentRepository_Update_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// MarkReadyToInvoice provides a mock function for the type MockShipmentRepository
+func (_mock *MockShipmentRepository) MarkReadyToInvoice(ctx context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
+	ret := _mock.Called(ctx, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkReadyToInvoice")
+	}
+
+	var r0 *shipment.Shipment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) (*shipment.Shipment, error)); ok {
+		return returnFunc(ctx, entity)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment) *shipment.Shipment); ok {
+		r0 = returnFunc(ctx, entity)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*shipment.Shipment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipment.Shipment) error); ok {
+		r1 = returnFunc(ctx, entity)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentRepository_MarkReadyToInvoice_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkReadyToInvoice'
+type MockShipmentRepository_MarkReadyToInvoice_Call struct {
+	*mock.Call
+}
+
+// MarkReadyToInvoice is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entity *shipment.Shipment
+func (_e *MockShipmentRepository_Expecter) MarkReadyToInvoice(ctx any, entity any) *MockShipmentRepository_MarkReadyToInvoice_Call {
+	return &MockShipmentRepository_MarkReadyToInvoice_Call{Call: _e.mock.On("MarkReadyToInvoice", ctx, entity)}
+}
+
+func (_c *MockShipmentRepository_MarkReadyToInvoice_Call) Run(run func(ctx context.Context, entity *shipment.Shipment)) *MockShipmentRepository_MarkReadyToInvoice_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *shipment.Shipment
+		if args[1] != nil {
+			arg1 = args[1].(*shipment.Shipment)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentRepository_MarkReadyToInvoice_Call) Return(shipment1 *shipment.Shipment, err error) *MockShipmentRepository_MarkReadyToInvoice_Call {
+	_c.Call.Return(shipment1, err)
+	return _c
+}
+
+func (_c *MockShipmentRepository_MarkReadyToInvoice_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.Shipment) (*shipment.Shipment, error)) *MockShipmentRepository_MarkReadyToInvoice_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateDerivedState provides a mock function for the type MockShipmentRepository
 func (_mock *MockShipmentRepository) UpdateDerivedState(ctx context.Context, entity *shipment.Shipment) (*shipment.Shipment, error) {
 	ret := _mock.Called(ctx, entity)

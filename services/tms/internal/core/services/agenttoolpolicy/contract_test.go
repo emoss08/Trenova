@@ -83,6 +83,8 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 	cases := map[string]agent.ExternalRead{
 		"get_inbound_message":          agent.ExternalReadAlways,
 		"list_inbound_messages":        agent.ExternalReadAlways,
+		"search_inbound_messages":      agent.ExternalReadAlways,
+		"search_documents":             agent.ExternalReadAlways,
 		"get_document_summary":         agent.ExternalReadAlways,
 		"get_shipment_draft":           agent.ExternalReadAlways,
 		"get_bank_receipt":             agent.ExternalReadAlways,

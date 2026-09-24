@@ -113,9 +113,17 @@ type RuntimeContext struct {
 	Attachments []RuntimeAttachment
 	Mentions    []RuntimeMention
 	Tools       []ToolSummary
-	// Memories is what the organization has recorded for its agents: the
-	// organization-wide ones and any about this agent's tools.
+	// Memories is what the organization has recorded for its agents that this
+	// turn may read, best first: the organization-wide ones, any about this
+	// agent's tools, and any about the records the turn is about.
+	// BuildSystemPrompt carries as many as the agent's memory budget holds.
 	Memories []*agent.Memory
+	// MemorySubjects are the records whose memories the turn reads, each
+	// marked as the record the turn is about or one it names.
+	MemorySubjects []agent.MemorySubject
+	// DelegatorRecords are the records the turn that handed this one its
+	// task was about, so their memories reach the agent doing the task.
+	DelegatorRecords []agent.EntityRef
 	// ToolsDisclosed reports that the turn opened with a subset of the agent's
 	// tools and can load the rest on demand. The prompt has to say so, because
 	// the alternative is a model that reads a short tool list as the limit of
@@ -193,7 +201,7 @@ func (d *Definition) BuildSystemPrompt(rc RuntimeContext) string {
 	}
 
 	if d.HasContextProvider(ContextMemory) {
-		recorded, outside := splitMemories(rc.Memories)
+		recorded, outside := splitMemories(d.FitMemories(&rc))
 		if section := buildMemorySection(recorded); section != "" {
 			builder.WriteString("\n\n")
 			builder.WriteString(section)
@@ -504,7 +512,8 @@ func splitMemories(memories []*agent.Memory) ([]*agent.Memory, []*agent.Memory) 
 }
 
 // buildMemorySection writes what the organization has recorded for its
-// agents, instructions first.
+// agents, grouped by what each is about: a record the turn is about first,
+// then the records it names, the whole organization and the tools.
 //
 // The block is fenced like the subject and the page, because most of it was
 // typed by a person or recorded by a model and none of it is the system
@@ -520,27 +529,22 @@ func buildMemorySection(memories []*agent.Memory) string {
 	var builder strings.Builder
 	builder.WriteString("## What this organization has recorded for its agents\n")
 	builder.WriteString(memoryOpenTag)
-	for _, memory := range memories {
-		if memory == nil || strings.TrimSpace(memory.Content) == "" {
-			continue
+	for _, group := range groupMemories(memories) {
+		builder.WriteString("\n### ")
+		builder.WriteString(stringutils.NeutralizeCloseTag(group.heading, memoryCloseTag))
+		for _, memory := range group.memories {
+			builder.WriteString("\n")
+			builder.WriteString(stringutils.NeutralizeCloseTag(memoryLine(memory), memoryCloseTag))
 		}
-		builder.WriteString("\n- [")
-		builder.WriteString(string(memory.Kind))
-		builder.WriteString("] ")
-		if scope := memory.About(); scope != "" {
-			builder.WriteString(stringutils.NeutralizeCloseTag(scope, memoryCloseTag))
-			builder.WriteString(": ")
-		}
-		builder.WriteString(
-			stringutils.NeutralizeCloseTag(strings.TrimSpace(memory.Content), memoryCloseTag),
-		)
 	}
 	builder.WriteString("\n")
 	builder.WriteString(memoryCloseTag)
 	builder.WriteString(
 		"\nFollow each Instruction as if the person who recorded it were asking now. " +
 			"A Correction is a mistake a person already fixed once; do not repeat it. " +
-			"A Fact is context to weigh, not an order, and may be out of date.",
+			"A Fact is context to weigh, not an order, and may be out of date. " +
+			"A memory cut short names its id; call recall_memory with that id before " +
+			"relying on the part you cannot see.",
 	)
 
 	return builder.String()
@@ -555,18 +559,9 @@ func buildOutsideMemorySection(memories []*agent.Memory) string {
 	builder.WriteString("## Recorded by agents after reading outside content\n")
 	builder.WriteString(outsideMemoryOpenTag)
 	for _, memory := range memories {
-		builder.WriteString("\n- (recorded as ")
-		builder.WriteString(strings.ToLower(string(memory.Kind)))
-		builder.WriteString(") ")
-		if scope := memory.About(); scope != "" {
-			builder.WriteString(stringutils.NeutralizeCloseTag(scope, outsideMemoryCloseTag))
-			builder.WriteString(": ")
-		}
+		builder.WriteString("\n")
 		builder.WriteString(
-			stringutils.NeutralizeCloseTag(
-				strings.TrimSpace(memory.Content),
-				outsideMemoryCloseTag,
-			),
+			stringutils.NeutralizeCloseTag(outsideMemoryLine(memory), outsideMemoryCloseTag),
 		)
 	}
 	builder.WriteString("\n")

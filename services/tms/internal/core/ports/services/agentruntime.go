@@ -111,6 +111,10 @@ type RunRequest struct {
 	// its thread's, the agent's that handed it a task. The turn adds what its
 	// own subject, attachments and memories bring.
 	Taint *agent.RunTaint
+	// Records are the records the turn is about: its subject, the page, the
+	// records the person named. A turn it hands a task to reads their
+	// memories too.
+	Records []agent.EntityRef
 
 	UsagePurpose AIUsagePurpose
 }
@@ -320,4 +324,8 @@ type RuntimeContextRequest struct {
 	// DelegatedBy names the agent that handed this turn its task, when it is
 	// working for another agent. Such a turn is offered no delegates.
 	DelegatedBy string
+	// DelegatorRecords are the records the turn that handed this one its task
+	// was about. The turn reads their memories as if it were about them too.
+	DelegatorRecords []agent.EntityRef
+	Query            QueryVectorRequest
 }

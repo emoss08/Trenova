@@ -272,10 +272,10 @@ func TestControlPlaneAccessMiddleware_BypassesAccountShellRoutes(t *testing.T) {
 			path:         "/api/v1/page-favorites/check",
 		},
 		{
-			name:         "realtime token request",
+			name:         "realtime stream",
 			method:       http.MethodGet,
-			routePattern: "/api/v1/realtime/token-request/",
-			path:         "/api/v1/realtime/token-request/",
+			routePattern: "/api/v1/realtime/stream/",
+			path:         "/api/v1/realtime/stream/",
 		},
 		{
 			name:         "organization read",

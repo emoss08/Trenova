@@ -21,6 +21,8 @@ function useNowSeconds(): number {
 
 type ProviderTestSummaryProps = {
   outcome: AIProviderTestOutcome | null | undefined;
+  /** An embedding provider is checked for the vector size it returns, not for a JSON schema. */
+  embedding?: boolean;
   className?: string;
 };
 
@@ -29,7 +31,7 @@ type ProviderTestSummaryProps = {
  * answers but ignores the JSON schema will fail later, deep inside a billing
  * diagnosis, so that case is a warning rather than a success.
  */
-export function ProviderTestSummary({ outcome, className }: ProviderTestSummaryProps) {
+export function ProviderTestSummary({ outcome, embedding, className }: ProviderTestSummaryProps) {
   const t = useT();
   const now = useNowSeconds();
 
@@ -54,7 +56,11 @@ export function ProviderTestSummary({ outcome, className }: ProviderTestSummaryP
   const parts = [t("Tested {0}", ago)];
   if (outcome.success) {
     parts.push(`${outcome.latencyMs} ms`);
-    parts.push(outcome.schemaHonoured ? t("Schema honoured") : t("Schema not honoured"));
+    if (embedding) {
+      parts.push(outcome.schemaHonoured ? t("Dimensions match") : t("Dimensions do not match"));
+    } else {
+      parts.push(outcome.schemaHonoured ? t("Schema honoured") : t("Schema not honoured"));
+    }
   }
 
   return (
@@ -71,9 +77,7 @@ export function ProviderTestSummary({ outcome, className }: ProviderTestSummaryP
         <p className="font-medium">{outcome.message}</p>
         {outcome.detail && <p className="text-muted-foreground mt-1 text-xs">{outcome.detail}</p>}
         {outcome.modelIdentifier && (
-          <p className="text-muted-foreground mt-1 font-mono text-xs">
-            {outcome.modelIdentifier}
-          </p>
+          <p className="text-muted-foreground mt-1 font-mono text-xs">{outcome.modelIdentifier}</p>
         )}
       </TooltipContent>
     </Tooltip>

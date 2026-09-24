@@ -132,23 +132,19 @@ func (s *service) AutoMarkReadyToInvoiceIfEligible(
 }
 
 type markReadyToInvoiceParams struct {
-	ShipmentID pulid.ID
-	TenantInfo pagination.TenantInfo
-	Actor      services.AuditActor
-	Comment    string
+	ShipmentID        pulid.ID
+	TenantInfo        pagination.TenantInfo
+	Actor             services.AuditActor
+	Comment           string
+	Entity            *shipment.Shipment
+	RecordStatusEvent bool
 }
 
 func (s *service) markReadyToInvoice(
 	ctx context.Context,
 	p *markReadyToInvoiceParams,
 ) (*shipment.Shipment, bool, error) {
-	entity, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         p.ShipmentID,
-		TenantInfo: p.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
+	entity, err := s.shipmentForMarkReady(ctx, p)
 	if err != nil {
 		return nil, false, err
 	}
@@ -170,17 +166,20 @@ func (s *service) markReadyToInvoice(
 	now := timeutils.NowUnix()
 	entity.MarkedReadyToBillAt = &now
 
-	updatedEntity, err := s.repo.UpdateDerivedState(ctx, entity)
+	updatedEntity, err := s.repo.MarkReadyToInvoice(ctx, entity)
 	if err != nil {
+		*entity = previousEntity
 		return nil, false, err
 	}
 
-	if err = s.recomputeOrdersForShipments(
-		ctx,
-		p.TenantInfo,
-		[]*shipment.Shipment{updatedEntity},
-	); err != nil {
-		s.l.Warn("failed to recompute order after marking ready to invoice", zap.Error(err))
+	if !p.RecordStatusEvent {
+		if err = s.recomputeOrdersForShipments(
+			ctx,
+			p.TenantInfo,
+			[]*shipment.Shipment{updatedEntity},
+		); err != nil {
+			s.l.Warn("failed to recompute order after marking ready to invoice", zap.Error(err))
+		}
 	}
 
 	if err = s.logShipmentAction(
@@ -208,7 +207,29 @@ func (s *service) markReadyToInvoice(
 		)
 	}
 
+	if p.RecordStatusEvent {
+		s.emitStatusChangeEvent(ctx, &previousEntity, updatedEntity, p.Actor)
+	}
+
 	return updatedEntity, true, nil
+}
+
+func (s *service) shipmentForMarkReady(
+	ctx context.Context,
+	p *markReadyToInvoiceParams,
+) (*shipment.Shipment, error) {
+	if e := p.Entity; e != nil && e.ID == p.ShipmentID &&
+		e.OrganizationID == p.TenantInfo.OrgID && e.BusinessUnitID == p.TenantInfo.BuID {
+		return e, nil
+	}
+
+	return s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         p.ShipmentID,
+		TenantInfo: p.TenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
 }
 
 func (s *service) validateBillingReadinessForStatusChange(
@@ -307,7 +328,7 @@ func (s *service) evaluateBillingReadiness(
 	ctx context.Context,
 	entity *shipment.Shipment,
 ) (*services.ShipmentBillingReadiness, error) {
-	return s.evaluateBillingReadinessCached(ctx, entity, nil)
+	return s.evaluateBillingReadinessCached(ctx, entity, nil, false)
 }
 
 // evaluateBillingReadinessCached is the readiness check with somewhere to put
@@ -320,6 +341,7 @@ func (s *service) evaluateBillingReadinessCached(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	cache *billingReadinessCache,
+	detailsLoaded bool,
 ) (*services.ShipmentBillingReadiness, error) {
 	if s.customerRepo == nil || s.documentRepo == nil || s.billingRepo == nil {
 		return nil, errortypes.NewConflictError("Shipment billing readiness service is unavailable")
@@ -330,7 +352,7 @@ func (s *service) evaluateBillingReadinessCached(
 		BuID:  entity.BusinessUnitID,
 	}
 
-	resolution, err := s.resolvePayerShares(ctx, entity, tenantInfo)
+	resolution, err := s.resolvePayerShares(ctx, entity, tenantInfo, detailsLoaded)
 	if err != nil {
 		return nil, err
 	}
@@ -469,9 +491,11 @@ func (s *service) resolvePayerShares(
 	ctx context.Context,
 	entity *shipment.Shipment,
 	tenantInfo pagination.TenantInfo,
+	detailsLoaded bool,
 ) (*shipment.ShareResolution, error) {
 	source := entity
-	if (entity.AdditionalCharges == nil || entity.ChargeAllocations == nil) &&
+	if !detailsLoaded &&
+		(entity.AdditionalCharges == nil || entity.ChargeAllocations == nil) &&
 		s.repo != nil && entity.ID.IsNotNil() {
 		full, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 			ID:         entity.ID,

@@ -60,6 +60,7 @@ const (
 	CapConcurrentIndex   = Capability("concurrent_index")
 	CapPartitionedTable  = Capability("partitioned_table")
 	CapSessionDiagnostic = Capability("session_diagnostics")
+	CapVectorSearch      = Capability("vector_search")
 )
 
 var postgresOnly = map[Capability]struct{}{
@@ -75,9 +76,36 @@ var postgresOnly = map[Capability]struct{}{
 	CapConcurrentIndex:   {},
 	CapPartitionedTable:  {},
 	CapSessionDiagnostic: {},
+	CapVectorSearch:      {},
+}
+
+func (c Capability) IsProbed() bool {
+	switch c {
+	case CapVectorSearch:
+		return true
+	case CapPostGIS,
+		CapFullTextSearch,
+		CapChangeDataCapture,
+		CapExactDecimal,
+		CapMaterializedView,
+		CapAdvisoryLock,
+		CapRowLocking,
+		CapExclusionConstr,
+		CapTrigram,
+		CapConcurrentIndex,
+		CapPartitionedTable,
+		CapSessionDiagnostic:
+		return false
+	}
+
+	return false
 }
 
 func (k Kind) Supports(capability Capability) bool {
+	if capability.IsProbed() {
+		return false
+	}
+
 	if k.IsPostgres() {
 		return true
 	}
@@ -113,6 +141,8 @@ func (c Capability) DisplayName() string {
 		return "declarative table partitioning"
 	case CapSessionDiagnostic:
 		return "database session diagnostics"
+	case CapVectorSearch:
+		return "pgvector semantic search"
 	default:
 		return string(c)
 	}

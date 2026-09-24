@@ -1,6 +1,6 @@
 import { ApiRequestError, clearCsrfToken } from "@trenova/shared/lib/api";
 import { setUserDatePreferences } from "@trenova/shared/lib/date";
-import { realtimeService } from "@trenova/shared/services/realtime";
+import { realtimeClient } from "@trenova/shared/services/realtime";
 import { userService } from "@trenova/shared/services/user";
 import { authService } from "@trenova/shared/services/auth";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           await authService.logout();
         } finally {
-          realtimeService.safeClose();
+          realtimeClient.disconnect();
           clearCsrfToken();
           set({ user: null, isAuthenticated: false });
           usePermissionStore.getState().clearPermissions();

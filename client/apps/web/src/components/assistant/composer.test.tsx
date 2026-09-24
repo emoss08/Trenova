@@ -272,9 +272,9 @@ describe("Composer hints", () => {
 
     fireEvent.focus(screen.getByRole("textbox"));
 
-    expect(screen.getByText("for commands")).toBeInTheDocument();
-    expect(screen.getByText("for records")).toBeInTheDocument();
-    expect(screen.queryByText("to send")).toBeNull();
+    expect(screen.getByText(/for commands/)).toBeInTheDocument();
+    expect(screen.getByText(/for records/)).toBeInTheDocument();
+    expect(screen.queryByText(/to send/)).toBeNull();
   });
 
   it("says how to send once there is something to send", () => {
@@ -282,15 +282,15 @@ describe("Composer hints", () => {
 
     fireEvent.focus(screen.getByRole("textbox"));
 
-    expect(screen.getByText("to send")).toBeInTheDocument();
-    expect(screen.queryByText("for commands")).toBeNull();
+    expect(screen.getByText(/to send/)).toBeInTheDocument();
+    expect(screen.queryByText(/for commands/)).toBeNull();
   });
 
   it("says nothing while the box is not in use", () => {
     renderComposer({ draft: "Where is PRO 1234?" });
 
-    expect(screen.queryByText("to send")).toBeNull();
-    expect(screen.queryByText("for commands")).toBeNull();
+    expect(screen.queryByText(/to send/)).toBeNull();
+    expect(screen.queryByText(/for commands/)).toBeNull();
   });
 
   it("keeps the full list of keys behind the shortcuts button", async () => {

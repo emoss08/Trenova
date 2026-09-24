@@ -196,12 +196,13 @@ func TestPostAndApplyCreatesPaymentApplicationJournalAndSettlementUpdate(t *test
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-PAY-1",
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-PAY-1",
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)
@@ -467,12 +468,13 @@ func TestPostAndApplySupportsUnappliedCash(t *testing.T) {
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-PAY-2",
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-PAY-2",
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)
@@ -726,20 +728,22 @@ func TestApplyUnappliedLaterCreatesReclassificationEntry(t *testing.T) {
 	require.NoError(t, err)
 
 	queue1 := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-PAY-3",
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-PAY-3",
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	queue2 := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-PAY-4",
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-PAY-4",
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue1).Exec(ctx)
 	require.NoError(t, err)
@@ -1052,12 +1056,13 @@ func TestReversePaymentRestoresInvoiceAndBalances(t *testing.T) {
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-PAY-5",
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-PAY-5",
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)
@@ -1350,12 +1355,13 @@ func TestPostAndApplyRecognizesShortPayAndSettlesInvoice(t *testing.T) {
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-SP-1",
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-SP-1",
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)
@@ -1602,12 +1608,13 @@ func TestListAndGetCustomerPayments(t *testing.T) {
 	require.NoError(t, err)
 
 	queue := &billingqueue.BillingQueueItem{
-		OrganizationID: org.ID,
-		BusinessUnitID: org.BusinessUnitID,
-		ShipmentID:     shp.ID,
-		Number:         "INV-PAY-LIST-1",
-		Status:         billingqueue.StatusPosted,
-		BillType:       billingqueue.BillTypeInvoice,
+		OrganizationID:   org.ID,
+		BusinessUnitID:   org.BusinessUnitID,
+		ShipmentID:       shp.ID,
+		BillToCustomerID: shp.CustomerID,
+		Number:           "INV-PAY-LIST-1",
+		Status:           billingqueue.StatusPosted,
+		BillType:         billingqueue.BillTypeInvoice,
 	}
 	_, err = db.NewInsert().Model(queue).Exec(ctx)
 	require.NoError(t, err)

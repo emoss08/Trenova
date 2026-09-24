@@ -742,6 +742,14 @@ func init() {
 				FieldMapKey: "priority",
 			},
 			{
+				Name:        "embeddingDimensions",
+				FieldMapKey: "embeddingDimensions",
+			},
+			{
+				Name:        "embeddingInputStyle",
+				FieldMapKey: "embeddingInputStyle",
+			},
+			{
 				Name:        "trusted",
 				FieldMapKey: "trusted",
 			},
@@ -1147,6 +1155,10 @@ func init() {
 			{
 				Name:        "simulationMode",
 				FieldMapKey: "simulationMode",
+			},
+			{
+				Name:        "memoryTokenBudget",
+				FieldMapKey: "memoryTokenBudget",
 			},
 			{
 				Name:        "contextProviders",

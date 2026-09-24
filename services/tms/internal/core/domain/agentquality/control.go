@@ -46,7 +46,7 @@ type Control struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 
-	Enabled             bool            `json:"enabled"             bun:"enabled,type:BOOLEAN,notnull,default:true"`
+	Enabled             bool            `json:"enabled"             bun:"enabled,type:BOOLEAN,notnull"`
 	RunHourLocal        int             `json:"runHourLocal"        bun:"run_hour_local,type:SMALLINT,notnull,default:2"`
 	Timezone            string          `json:"timezone"            bun:"timezone,type:VARCHAR(100),nullzero"`
 	MaxCasesPerAgent    int             `json:"maxCasesPerAgent"    bun:"max_cases_per_agent,type:INTEGER,notnull,default:50"`
@@ -130,14 +130,11 @@ func (c *Control) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
+var budgetRule = domainvalidation.BudgetUSD(MaxBudgetUSD, "100,000")
+
 func validateBudget(multiErr *errortypes.MultiError, field string, value decimal.Decimal) {
-	switch {
-	case value.IsNegative():
-		multiErr.Add(field, errortypes.ErrInvalid, "A budget cannot be negative")
-	case value.GreaterThan(MaxBudgetUSD):
-		multiErr.Add(field, errortypes.ErrInvalid, "A budget is at most 100,000")
-	case !value.Equal(value.Round(2)):
-		multiErr.Add(field, errortypes.ErrInvalid, "A budget is in whole cents")
+	if err := budgetRule.Validate(value); err != nil {
+		multiErr.Add(field, errortypes.ErrInvalid, err.Error())
 	}
 }
 

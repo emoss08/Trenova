@@ -150,7 +150,7 @@ func (t *getDispatchBoardTool) Policy() serviceports.ToolPolicy {
 
 func (t *getDispatchBoardTool) Query(
 	ctx context.Context,
-	params serviceports.QueryToolParams,
+	params *serviceports.QueryToolParams,
 ) (any, error) {
 	if err := guardQuery(params); err != nil {
 		return nil, err

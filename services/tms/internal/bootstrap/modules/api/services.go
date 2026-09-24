@@ -38,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/aifeedbackservice"
 	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
+	"github.com/emoss08/trenova/internal/core/services/airetrievalstatusservice"
 	"github.com/emoss08/trenova/internal/core/services/aiusageservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
@@ -161,6 +162,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/recurringshipmentservice"
 	reportingservice "github.com/emoss08/trenova/internal/core/services/reporting"
 	reportingcompiler "github.com/emoss08/trenova/internal/core/services/reporting/compiler"
+	"github.com/emoss08/trenova/internal/core/services/retrievalservice"
 	"github.com/emoss08/trenova/internal/core/services/roleassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/roleservice"
 	"github.com/emoss08/trenova/internal/core/services/routingguideservice"
@@ -242,6 +244,16 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	auditservice.New,
 	datatransformer.New,
 	workflowstarter.New,
+	workflowstarter.NewSignalStarter,
+	retrievalservice.New,
+	retrievalservice.AsIndexer,
+	retrievalservice.AsPipeline,
+	retrievalservice.NewSearcher,
+	retrievalservice.AsSearcher,
+	retrievalservice.AsMemoryVectorSearcher,
+	retrievalservice.NewMemoryRanker,
+	airetrievalstatusservice.New,
+	airetrievalstatusservice.AsService,
 	permission.NewEngine,
 	roleservice.New,
 	permissiondomain.NewRegistry,

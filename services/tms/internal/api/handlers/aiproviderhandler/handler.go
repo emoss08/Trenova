@@ -127,6 +127,8 @@ type saveProviderRequest struct {
 	MaxTokens            int                             `json:"maxTokens"`
 	Tasks                []aiprovider.Task               `json:"tasks"`
 	Priority             int                             `json:"priority"`
+	EmbeddingDimensions  *int                            `json:"embeddingDimensions"`
+	EmbeddingInputStyle  aiprovider.EmbeddingInputStyle  `json:"embeddingInputStyle"`
 	Trusted              bool                            `json:"trusted"`
 	Enabled              bool                            `json:"enabled"`
 	Version              int64                           `json:"version"`
@@ -153,6 +155,8 @@ func (r *saveProviderRequest) toServiceRequest(
 		MaxTokens:            r.MaxTokens,
 		Tasks:                r.Tasks,
 		Priority:             r.Priority,
+		EmbeddingDimensions:  r.EmbeddingDimensions,
+		EmbeddingInputStyle:  r.EmbeddingInputStyle,
 		Trusted:              r.Trusted,
 		Enabled:              r.Enabled,
 		Version:              r.Version,
@@ -258,8 +262,10 @@ func (h *Handler) test(c *gin.Context) {
 // the form does not hardcode a list that drifts from the domain.
 func (h *Handler) catalog(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"kinds":   kindDescriptors(),
-		"presets": Presets(),
-		"tasks":   taskDescriptors(),
+		"kinds":                kindDescriptors(),
+		"presets":              Presets(),
+		"tasks":                taskDescriptors(),
+		"embeddingDimensions":  aiprovider.AllowedEmbeddingDimensions(),
+		"embeddingInputStyles": embeddingInputStyleDescriptors(),
 	})
 }

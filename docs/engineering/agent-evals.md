@@ -128,9 +128,14 @@ The same job fails when what a model is shown changes without the change being c
   name, description, parameter schema, search terms, prerequisites and policy.
 - **`find_tools` ranking**: `services/agentevalgate/evals/toolselection.yaml` maps
   natural-language requests to the tools that should be found. Recall@5 and top-1 over the
-  catalog's real `Find` are checked against the floors in `toolselection.floors.json`. A
-  description edit that stops a request reaching its tool fails here, and the log lists
-  every request whose first result was wrong.
+  catalog's real `Find` are checked against the `keyword` floors in
+  `toolselection.floors.json`. A description edit that stops a request reaching its tool
+  fails here, and the log lists every request whose first result was wrong.
+  `toolselection.paraphrase.yaml` adds requests that share no word with their tool's name;
+  the `hybrid` floors cover both files ranked by keyword and meaning together, from the
+  recorded embeddings (see "Ranking" in [ai-retrieval.md](ai-retrieval.md)).
+- **`find_in_trenova` ranking**: `guideselection.yaml` does the same for product guide
+  questions and pages, against `guideselection.floors.json`.
 - **Argument handling**: `agentruntime/testdata/arguments/cases.yaml` pins aliasing, pruning
   to a closed schema (checked on the functions and end to end through `Run`) and the refusal
   of arguments that did not parse.
@@ -141,7 +146,7 @@ Refresh them after an intended change, and commit the result with it:
 cd services/tms
 go test -tags nofitz -run TestPromptSnapshots ./internal/core/domain/agentdefinition/ -update
 go test -tags nofitz -run TestToolCatalogSnapshot ./internal/core/services/agentevalgate/ -update
-go test -tags nofitz -run TestToolSelectionAgainstFloors ./internal/core/services/agentevalgate/ -update
+go test -tags nofitz -run AgainstFloors ./internal/core/services/agentevalgate/ -update
 ```
 
 `-update` goes after the package. Raise the floors when a change improves the ranking; never

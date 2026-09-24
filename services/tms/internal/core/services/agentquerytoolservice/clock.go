@@ -12,6 +12,6 @@ type clock = filtercatalog.Clock
 
 const secondsPerDay = filtercatalog.SecondsPerDay
 
-func clockFor(params serviceports.QueryToolParams) clock {
+func clockFor(params *serviceports.QueryToolParams) clock {
 	return filtercatalog.NewClock(params.Timezone)
 }

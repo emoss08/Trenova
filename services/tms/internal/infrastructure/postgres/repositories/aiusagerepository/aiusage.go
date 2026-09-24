@@ -267,6 +267,23 @@ func scanCost(
 	}, nil
 }
 
+func (r *repository) SurfaceCost(
+	ctx context.Context,
+	req repositories.AIUsageSurfaceCostRequest,
+) (*repositories.AIUsageCost, error) {
+	cols := buncolgen.AIUsageRecordColumns
+
+	q := costSums(r.db.DBForContext(ctx).NewSelect()).
+		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
+		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
+		Where(cols.Surface.Eq(), req.Surface)
+	if req.Since > 0 {
+		q = q.Where(cols.CreatedAt.Gte(), req.Since)
+	}
+
+	return scanCost(ctx, q, string(req.Surface)+" cost")
+}
+
 func (r *repository) EvaluationCost(
 	ctx context.Context,
 	req repositories.AIUsageEvaluationCostRequest,

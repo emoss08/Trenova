@@ -10,7 +10,6 @@ const (
 	ediSubsystem    = "edi"
 	ediLabelMethod  = "method"
 	ediLabelPartner = "partner"
-	ediLabelStatus  = "status"
 )
 
 var (
@@ -56,14 +55,14 @@ func NewEDI(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *ED
 		Name:      "delivery_duration_seconds",
 		Help:      "Duration of outbound EDI transport deliveries in seconds",
 		Buckets:   TemporalDurationBuckets,
-	}, []string{ediLabelMethod, ediLabelStatus})
+	}, []string{ediLabelMethod, labelStatus})
 
 	m.deliveriesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
 		Subsystem: ediSubsystem,
 		Name:      "deliveries_total",
 		Help:      "Total number of outbound EDI delivery attempts by partner and transaction set",
-	}, []string{ediLabelPartner, "transaction_set", ediLabelMethod, ediLabelStatus})
+	}, []string{ediLabelPartner, "transaction_set", ediLabelMethod, labelStatus})
 
 	m.deadLetteredTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
@@ -78,7 +77,7 @@ func NewEDI(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *ED
 		Name:      "ack_latency_seconds",
 		Help:      "Latency between sending an outbound EDI message and receiving its 997/999 acknowledgment",
 		Buckets:   EDIAckLatencyBuckets,
-	}, []string{ediLabelStatus})
+	}, []string{labelStatus})
 
 	m.mdnRoundTrip = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: Namespace,
@@ -93,7 +92,7 @@ func NewEDI(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *ED
 		Subsystem: ediSubsystem,
 		Name:      "inbound_files_total",
 		Help:      "Total number of inbound EDI files by partner and staging outcome",
-	}, []string{ediLabelPartner, ediLabelMethod, ediLabelStatus})
+	}, []string{ediLabelPartner, ediLabelMethod, labelStatus})
 
 	m.inboundParseDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: Namespace,
@@ -101,21 +100,21 @@ func NewEDI(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *ED
 		Name:      "inbound_parse_duration_seconds",
 		Help:      "Duration of inbound EDI file parsing and routing in seconds",
 		Buckets:   HTTPDurationBuckets,
-	}, []string{ediLabelStatus})
+	}, []string{labelStatus})
 
 	m.inboundOutcomesTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
 		Subsystem: ediSubsystem,
 		Name:      "inbound_outcomes_total",
 		Help:      "Total number of processed inbound EDI files by partner and final status",
-	}, []string{ediLabelPartner, ediLabelStatus})
+	}, []string{ediLabelPartner, labelStatus})
 
 	m.inboundPollTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
 		Subsystem: ediSubsystem,
 		Name:      "inbound_poll_total",
 		Help:      "Total number of inbound EDI mailbox poll attempts by transport method and outcome",
-	}, []string{ediLabelMethod, ediLabelStatus})
+	}, []string{ediLabelMethod, labelStatus})
 
 	m.mustRegister(
 		m.deliveryDuration,

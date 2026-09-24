@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
+	"github.com/emoss08/trenova/shared/llmtokens"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -123,7 +124,7 @@ func TestStreamChat_AStoppedReplyIsAnErrorNotAFinishedReply(t *testing.T) {
 	assert.False(t, row.Succeeded)
 	assert.Equal(t, "cancelled", row.ErrorClass)
 	assert.Equal(t, "stalled-model", row.Model)
-	assert.Equal(t, approxTokens(len("Sarah Williams - ")), row.OutputTokens,
+	assert.Equal(t, llmtokens.FromRunes(len("Sarah Williams - ")), row.OutputTokens,
 		"the words the provider wrote before the stop were billed")
 	require.NotNil(t, row.CostUSD, "a stopped attempt on a priced provider is not free")
 	assert.True(t, row.CostUSD.IsPositive(), row.CostUSD.String())

@@ -96,6 +96,8 @@ type Definition struct {
 	ToolDailyLimits map[string]int `json:"toolDailyLimits"  bun:"tool_daily_limits,type:JSONB,notnull"`
 	SimulationMode  bool           `json:"simulationMode"   bun:"simulation_mode,type:BOOLEAN,notnull"`
 
+	MemoryTokenBudget *int `json:"memoryTokenBudget" bun:"memory_token_budget,type:INTEGER,nullzero"`
+
 	Icon   string `json:"icon"   bun:"icon,type:VARCHAR(40),nullzero"`
 	Accent string `json:"accent" bun:"accent,type:VARCHAR(20),nullzero"`
 
@@ -382,6 +384,7 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 	d.validateTrigger(multiErr)
 	d.validateContextProviders(multiErr)
 	d.validateBudget(multiErr)
+	d.validateMemoryBudget(multiErr)
 	d.validateDelegates(multiErr)
 	d.validateAccess(multiErr)
 }

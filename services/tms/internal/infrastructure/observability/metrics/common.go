@@ -11,6 +11,16 @@ const (
 	UnknownValue = "unknown"
 )
 
+// Label names shared by more than one metric family.
+const (
+	labelResult    = "result"
+	labelReason    = "reason"
+	labelStatus    = "status"
+	labelKind      = "kind"
+	labelOperation = "operation"
+	labelOutcome   = "outcome"
+)
+
 var (
 	HTTPDurationBuckets     = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10}
 	HTTPResponseSizeBuckets = prometheus.ExponentialBuckets(100, 10, 7)

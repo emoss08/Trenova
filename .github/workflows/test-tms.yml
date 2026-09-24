@@ -15,6 +15,7 @@ on:
       - ".golangci.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
+      - "deploy/Dockerfile.postgres"
       - "docs/engineering/ai-tool-safety.md"
   pull_request:
     branches:
@@ -29,6 +30,7 @@ on:
       - ".golangci.yml"
       - ".github/workflows/test-tms.yml"
       - ".github/actions/setup-go/**"
+      - "deploy/Dockerfile.postgres"
       - "docs/engineering/ai-tool-safety.md"
   schedule:
     - cron: "0 6 * * *"
@@ -90,22 +92,10 @@ jobs:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
+    # Postgres is not a service container here: it runs the image built from
+    # deploy/Dockerfile.postgres (PostGIS + pg_cron + pgvector), which only
+    # exists once a step has built it. Nothing is pushed to a registry.
     services:
-      # PostGIS, not plain postgres: the migrations create spatial types.
-      postgres:
-        image: postgis/postgis:16-3.4-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: trenova_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-
       redis:
         image: redis:8
         ports:
@@ -116,9 +106,48 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
+    env:
+      # Vector tests fail rather than skip when the capability is missing, so a
+      # broken image cannot turn this job into a second fallback run.
+      TRENOVA_TEST_EXPECT_VECTOR: "true"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Postgres image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./deploy
+          file: ./deploy/Dockerfile.postgres
+          push: false
+          load: true
+          tags: trenova-postgres:ci
+          cache-from: type=gha,scope=trenova-postgres
+          cache-to: type=gha,mode=max,scope=trenova-postgres
+
+      - name: Start Postgres
+        run: |
+          set -euo pipefail
+          docker run -d --name trenova-test-postgres \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_PASSWORD=postgres \
+            -e POSTGRES_DB=trenova_test \
+            -p 5432:5432 \
+            trenova-postgres:ci \
+            postgres -c max_connections=300
+          for _ in $(seq 1 60); do
+            if docker exec trenova-test-postgres pg_isready -U postgres -d trenova_test >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs trenova-test-postgres
+          echo "::error::Postgres did not become ready"
+          exit 1
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
@@ -147,6 +176,55 @@ jobs:
           name: go-integration-coverage
           path: services/tms/coverage-integration.out
           if-no-files-found: error
+
+      - name: Postgres logs
+        if: failure()
+        run: docker logs trenova-test-postgres || true
+
+  # The keyword-only fallback: every migration applies on plain PostGIS with no
+  # pgvector, and the retrieval storage reports itself unavailable instead of
+  # failing. This is what an installation without the extension runs.
+  integration-tests-fallback:
+    name: Integration Tests (no pgvector)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+
+    services:
+      # The base image of deploy/Dockerfile.postgres without the extensions
+      # built on top, so the fallback runs on the same server version.
+      postgres:
+        image: postgis/postgis:18-3.6-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: trenova_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d trenova_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      TRENOVA_TEST_EXPECT_VECTOR: "false"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache-key: integration
+
+      - name: Run retrieval storage tests without pgvector
+        working-directory: ./services/tms
+        run: |
+          set -euo pipefail
+          go test -p 2 -tags=integration,nomsgpack \
+            ./internal/infrastructure/postgres/repositories/airetrievalrepository/... \
+            ./internal/infrastructure/postgres/schemalint/...
 
   lint:
     name: Lint
@@ -323,7 +401,7 @@ jobs:
 
     services:
       postgres:
-        image: postgis/postgis:16-3.4-alpine
+        image: postgis/postgis:18-3.6-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -331,7 +409,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U postgres -d trenova_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10

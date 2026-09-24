@@ -32,6 +32,7 @@ type toolOutcome struct {
 	delegateReport *conversation.DelegateReport
 	// taint is the outside content the call read.
 	taint []agent.TaintMark
+	found []string
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {
@@ -121,6 +122,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		owned[serviceports.SelfScopeOwnerParam] = req.Actor.UserID.String()
 		call.Arguments = owned
 	}
+	p.call = call
 	tierParams := serviceports.ToolExecuteParams{
 		OrganizationID: req.Actor.OrganizationID,
 		BusinessUnitID: req.Actor.BusinessUnitID,
@@ -364,7 +366,7 @@ func (s *Service) runQueryTool(
 	tool serviceports.AgentQueryTool,
 	call serviceports.ToolCall,
 ) toolOutcome {
-	data, err := tool.Query(ctx, serviceports.QueryToolParams{
+	data, err := tool.Query(ctx, &serviceports.QueryToolParams{
 		OrganizationID:    req.Actor.OrganizationID,
 		BusinessUnitID:    req.Actor.BusinessUnitID,
 		Actor:             req.Actor,

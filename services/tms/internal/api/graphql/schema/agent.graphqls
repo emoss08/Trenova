@@ -431,6 +431,16 @@ type AgentMemory {
   updatedAt: Timestamp!
 }
 
+"How much the organization keeps for its agents, against what it should keep."
+type AgentMemoryUsage {
+  "Active memories that have not expired: what agents may read."
+  activeCount: Int!
+  "The number of active memories an organization should keep at most. Past it, fewer of them fit in each prompt."
+  activeSoftCap: Int!
+  "The count at which AI Control warns that the cap is near."
+  warnAt: Int!
+}
+
 type AgentMemoryEdge {
   node: AgentMemory!
   cursor: String!
@@ -588,6 +598,8 @@ extend type Query {
   agentEvaluations(input: DataTableConnectionInput!): AgentEvaluationConnection!
   agentEvaluation(id: ID!): AgentEvaluation
   agentMemory(id: ID!): AgentMemory
+  "How many active memories the organization keeps, against its soft cap."
+  agentMemoryUsage: AgentMemoryUsage!
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
   agentControl: AgentControl!

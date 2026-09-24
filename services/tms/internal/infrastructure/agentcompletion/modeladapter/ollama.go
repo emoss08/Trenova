@@ -102,7 +102,7 @@ func (a ollamaAdapter) Stream(
 		ctx,
 		call,
 		call.Provider.ResolvedBaseURL()+"/api/chat",
-		map[string]string{"Authorization": bearer(call.APIKey)},
+		bearerHeaders(call.APIKey),
 		body,
 	)
 	if err != nil {
@@ -192,7 +192,7 @@ func (a ollamaAdapter) Complete(ctx context.Context, call *Call) (*Response, err
 		call.Provider.ResolvedBaseURL()+"/api/chat",
 		// Ollama itself takes no credential, but the same protocol is served
 		// behind authenticating reverse proxies, so a key is sent when present.
-		map[string]string{"Authorization": bearer(call.APIKey)},
+		bearerHeaders(call.APIKey),
 		body,
 		&envelope,
 	)

@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { recordPath } from "@/config/record-links";
 import OshaLogConsole from "../osha-log-console";
 
 const mocks = vi.hoisted(() => ({
@@ -405,7 +406,7 @@ describe("OshaLogConsole", () => {
     expect(within(sheet).getByText("Cara Diaz")).toBeInTheDocument();
     expect(within(sheet).getByRole("link", { name: /Cara Diaz/ })).toHaveAttribute(
       "href",
-      "/hr/workers?entityId=wrk_cara&modType=edit&tab=safety",
+      recordPath("worker", "wrk_cara", { tab: "safety" }),
     );
     expect(within(sheet).getByText(/Privacy case\. The posted log reads/)).toBeInTheDocument();
     expect(within(sheet).getByText("No claim has been filed.")).toBeInTheDocument();

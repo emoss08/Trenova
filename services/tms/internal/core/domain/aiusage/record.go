@@ -20,7 +20,20 @@ const (
 	SurfaceStructured = Surface("Structured")
 	SurfaceBackground = Surface("Background")
 	SurfaceEvaluation = Surface("Evaluation")
+	SurfaceIndexing   = Surface("Indexing")
+	SurfaceRetrieval  = Surface("Retrieval")
 )
+
+func (s Surface) IsEmbedding() bool {
+	switch s {
+	case SurfaceIndexing, SurfaceRetrieval:
+		return true
+	case SurfaceChat, SurfaceStructured, SurfaceBackground, SurfaceEvaluation:
+		return false
+	}
+
+	return false
+}
 
 // AIUsageRecord is one attempt to have a model answer: which provider, how long it
 // took, what it consumed and what that consumption cost. One row per attempt

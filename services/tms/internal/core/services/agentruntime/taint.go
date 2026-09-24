@@ -2,10 +2,15 @@ package agentruntime
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 )
 
-func openTaint(req *serviceports.RunRequest, now int64) (*agent.RunTaint, []agent.TaintMark) {
+func openTaint(
+	req *serviceports.RunRequest,
+	rc *agentdefinition.RuntimeContext,
+	now int64,
+) (*agent.RunTaint, []agent.TaintMark) {
 	if req.Delegation != nil && req.Taint == nil {
 		return nil, nil
 	}
@@ -15,11 +20,12 @@ func openTaint(req *serviceports.RunRequest, now int64) (*agent.RunTaint, []agen
 		taint = &agent.RunTaint{}
 	}
 
-	return taint, taint.Absorb(contextTaint(req, now))
+	opened := taint.Absorb(contextTaint(rc, now))
+
+	return taint, opened
 }
 
-func contextTaint(req *serviceports.RunRequest, now int64) []agent.TaintMark {
-	rc := req.Context
+func contextTaint(rc *agentdefinition.RuntimeContext, now int64) []agent.TaintMark {
 	marks := make([]agent.TaintMark, 0, 1+len(rc.Attachments)+len(rc.Memories))
 	if rc.Subject != nil {
 		if mark, ok := agent.SubjectTaint(rc.Subject.Type, rc.Subject.ID, now); ok {

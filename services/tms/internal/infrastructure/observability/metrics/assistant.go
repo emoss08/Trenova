@@ -76,7 +76,7 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 			Name:      "turns_stopped_total",
 			Help:      "Turns a person ended themselves, by whether anything had to be cancelled",
 		},
-		[]string{"result"},
+		[]string{labelResult},
 	)
 
 	// The reliability figure the issue asks for: a replayed step is a write a
@@ -103,7 +103,7 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 			Name:      "trajectory_events_total",
 			Help:      "Trajectory events by owner kind and whether they were stored",
 		},
-		[]string{"owner_kind", "result"},
+		[]string{"owner_kind", labelResult},
 	)
 
 	m.streamAttached = prometheus.NewCounterVec(
@@ -113,7 +113,7 @@ func NewAssistant(registry *prometheus.Registry, logger *zap.Logger, enabled boo
 			Name:      "stream_attach_total",
 			Help:      "Readers attaching to a turn, by what they found",
 		},
-		[]string{"result"},
+		[]string{labelResult},
 	)
 
 	m.mustRegister(

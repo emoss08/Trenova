@@ -1,0 +1,78 @@
+# Synthetic memories and the searches recall_memory should answer with them,
+# and the order a prompt should carry them in for a turn about the query.
+# Every memory is organization-wide and active; the leak test adds memories
+# kept for another agent, retired or expired, and from another organization,
+# and none of those may ever be recalled. Metrics are recall@5, MRR and
+# nDCG@10 per retrieval leg; the floors live in memoryretrieval.floors.json.
+source: Memory
+corpus:
+  - key: acme-closes-early
+    kind: Fact
+    content: Acme Industrial's Fort Worth dock closes at 3 PM on Fridays.
+  - key: globex-appointments
+    kind: Instruction
+    content: Always book Globex Foods deliveries with a dock appointment at least a day ahead.
+  - key: freshmart-pod
+    kind: Instruction
+    content: Fresh Mart will not pay an invoice until they receive a signed POD.
+  - key: detention-free-time
+    kind: Fact
+    content: Globex Foods allows two hours of free time before detention starts.
+  - key: assign-team-drivers
+    kind: Correction
+    tool: assign_move
+    content: Loads over 900 miles need a team, not a solo driver.
+  - key: email-tone
+    kind: Instruction
+    content: Keep customer emails short and never promise a delivery time we cannot confirm.
+  - key: swift-haul-insurance
+    kind: Fact
+    content: Swift Haul's cargo insurance only covers $100,000, so do not tender high-value loads to them.
+  - key: reefer-setpoint
+    kind: Fact
+    content: Fresh Mart requires reefer loads to run at 34 degrees.
+  - key: hazmat-endorsement
+    kind: Instruction
+    content: Check that the driver has a hazmat endorsement before assigning class 8 loads.
+  - key: weekend-pickups
+    kind: Fact
+    content: Acme Industrial often tenders Saturday pickups and pays a weekend premium.
+  - key: billing-contact
+    kind: Fact
+    content: Send Globex invoices to ap@globexfoods.com, not to the operations inbox.
+  - key: waive-detention-rule
+    kind: Correction
+    tool: waive_detention
+    content: Do not waive detention for Globex without a manager's approval.
+  - key: chicago-traffic
+    kind: Fact
+    content: Deliveries into downtown Chicago must arrive before 7 AM because of traffic restrictions.
+cases:
+  - query: when does Acme close on Friday
+    relevant: [acme-closes-early]
+  - query: do Globex deliveries need an appointment
+    relevant: [globex-appointments]
+  - query: what does Fresh Mart need before paying
+    relevant: [freshmart-pod]
+  - query: how much free time does Globex give before detention
+    relevant: [detention-free-time]
+  - query: long haul needs team drivers
+    relevant: [assign-team-drivers]
+  - query: how should I write emails to customers
+    relevant: [email-tone]
+  - query: is Swift Haul insured enough for an expensive load
+    relevant: [swift-haul-insurance]
+  - query: temperature for Fresh Mart reefer loads
+    relevant: [reefer-setpoint]
+  - query: hazmat endorsement before assigning
+    relevant: [hazmat-endorsement]
+  - query: Saturday pickups for Acme
+    relevant: [weekend-pickups]
+  - query: where to send Globex invoices
+    relevant: [billing-contact]
+  - query: can I waive detention for Globex
+    relevant: [waive-detention-rule, detention-free-time]
+  - query: the customer only settles the bill once they see a signed delivery receipt
+    relevant: [freshmart-pod]
+  - query: morning cutoff for city center drops
+    relevant: [chicago-traffic]

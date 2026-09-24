@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/commodityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplaterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazmatsegregationrulerepository"
@@ -998,6 +999,9 @@ func newIntegrationShipmentService(
 		AdditionalChargeRepository: additionalChargeRepo,
 		CommodityRepository:        shipmentCommodityRepo,
 		OrderRepository:            orderRepo,
+		ChargeAllocationRepository: chargeallocationrepository.New(
+			chargeallocationrepository.Params{DB: conn, Logger: zap.NewNop()},
+		),
 	})
 	controlRepo := shipmentcontrolrepository.New(shipmentcontrolrepository.Params{
 		DB:     conn,

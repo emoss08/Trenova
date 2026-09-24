@@ -34,6 +34,7 @@ server:
       - Content-Type
       - Accept
       - X-CSRF-Token
+      - Last-Event-ID
     credentials: true
     maxAge: 86400
 

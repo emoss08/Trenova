@@ -93,7 +93,7 @@ func (f *Feedback) Validate(multiErr *errortypes.MultiError) {
 			domainvalidation.ValidEnum[FingerprintSource]("Fingerprint source is invalid"),
 		),
 		validation.Field(&f.Comment,
-			validation.Length(0, MaxCommentRunes).
+			validation.RuneLength(0, MaxCommentRunes).
 				Error(fmt.Sprintf("Comment must be at most %d characters", MaxCommentRunes)),
 		),
 		validation.Field(&f.PatternKey,

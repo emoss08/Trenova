@@ -55,6 +55,14 @@ query AgentMemoryCount($input: DataTableConnectionInput!) {
   }
 }
 
+query AgentMemoryUsage {
+  agentMemoryUsage {
+    activeCount
+    activeSoftCap
+    warnAt
+  }
+}
+
 mutation CreateAgentMemory($input: AgentMemoryInput!) {
   createAgentMemory(input: $input) {
     ...AgentMemoryTableRowFields

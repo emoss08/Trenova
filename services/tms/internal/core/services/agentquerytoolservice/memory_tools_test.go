@@ -20,10 +20,19 @@ type fakeRecall struct {
 func (f *fakeRecall) Recall(
 	_ context.Context,
 	req serviceports.RecallAgentMemoriesRequest,
-) ([]*agent.Memory, error) {
+) ([]serviceports.RecalledMemory, error) {
 	f.captured = req
 
-	return f.items, nil
+	var match agent.MemoryMatch
+	if req.Query != "" {
+		match = agent.MemoryMatchWords
+	}
+	recalled := make([]serviceports.RecalledMemory, 0, len(f.items))
+	for _, item := range f.items {
+		recalled = append(recalled, serviceports.RecalledMemory{Memory: item, Match: match})
+	}
+
+	return recalled, nil
 }
 
 func TestRecallMemory_NarrowsToASubjectAndReadsBackTheFilters(t *testing.T) {
@@ -61,6 +70,7 @@ func TestRecallMemory_NarrowsToASubjectAndReadsBackTheFilters(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "Acme Freight (customer)", rows[0].About)
 	assert.Equal(t, "a person", rows[0].RecordedBy)
+	assert.Equal(t, "words", rows[0].Match, "a row found by its words says so")
 }
 
 func TestRecallMemory_SaysNothingMatchedRatherThanNothingExists(t *testing.T) {
@@ -121,4 +131,66 @@ func TestRecallMemory_RefusesHalfASubject(t *testing.T) {
 	_, err := tool.Query(t.Context(), testParams(map[string]any{"subjectId": "cus_1"}))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "both or neither")
+}
+
+func TestRecordedBy_NamesEverySource(t *testing.T) {
+	t.Parallel()
+
+	for _, source := range agent.AllMemorySources() {
+		said := recordedBy(source)
+		assert.NotEqual(t, string(source), said, "%s is named in words, not by its code", source)
+		assert.NotEmpty(t, said)
+	}
+	assert.Equal(t, "people's ratings of an agent's work", recordedBy(agent.MemorySourceFeedback))
+}
+
+func TestRecallMemory_DefaultsToTenAndCapsAtFifty(t *testing.T) {
+	t.Parallel()
+
+	recall := &fakeRecall{}
+	tool := newRecallMemoryTool(recall)
+
+	_, err := tool.Query(t.Context(), testParams(map[string]any{"query": "dock"}))
+	require.NoError(t, err)
+	assert.Equal(t, agent.DefaultMemoryRecallLimit, recall.captured.Limit)
+
+	_, err = tool.Query(t.Context(), testParams(map[string]any{"query": "dock", "limit": 500}))
+	require.NoError(t, err)
+	assert.Equal(t, agent.MaxMemoryRecallLimit, recall.captured.Limit)
+
+	_, err = tool.Query(t.Context(), testParams(map[string]any{"query": "dock", "limit": 0}))
+	require.NoError(t, err)
+	assert.Equal(t, agent.DefaultMemoryRecallLimit, recall.captured.Limit)
+}
+
+func TestRecallMemory_ReadsOneMemoryByIDWithoutAMatchLabel(t *testing.T) {
+	t.Parallel()
+
+	memoryID := pulid.MustNew("amem_")
+	recall := &fakeRecall{items: []*agent.Memory{{
+		ID:      memoryID,
+		Kind:    agent.MemoryKindInstruction,
+		Source:  agent.MemorySourceUser,
+		Content: "The whole of a long memory.",
+	}}}
+
+	result, err := newRecallMemoryTool(recall).Query(
+		t.Context(),
+		testParams(map[string]any{"id": memoryID.String()}),
+	)
+	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{memoryID}, recall.captured.IDs)
+
+	outcome := result.(recallOutcome).searchOutcome
+	rows, ok := outcome.Items.([]memoryRow)
+	require.True(t, ok)
+	require.Len(t, rows, 1)
+	assert.Empty(t, rows[0].Match, "nothing was searched for, so nothing is labelled a match")
+	assert.Contains(t, outcome.SearchedFor, "id "+memoryID.String())
+
+	_, err = newRecallMemoryTool(recall).Query(
+		t.Context(),
+		testParams(map[string]any{"id": "not an id"}),
+	)
+	require.Error(t, err)
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentexceptionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentextensionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentmemoryrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentmemorysubjectrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentplanrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentproposalrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentqualityrepository"
@@ -30,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aifeedbackrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ailogrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiproviderrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/airetrievalrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiusagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
@@ -173,6 +175,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recordversionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recurringshipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/reportrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleagentgrantrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/roleassignmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rolerepository"
@@ -314,6 +317,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	agentproposalrepository.New,
 	agentplanrepository.New,
 	agentmemoryrepository.New,
+	agentmemorysubjectrepository.New,
 	aifeedbackrepository.New,
 	aifeedbackrepository.NewSource,
 	agentdecisionqueuerepository.New,
@@ -322,6 +326,14 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	agentevalcaserepository.New,
 	agentqualityrepository.NewSuiteRuns,
 	agentqualityrepository.NewControls,
+	fx.Annotate(
+		airetrievalrepository.New,
+		fx.As(new(repositories.AIRetrievalRepository)),
+		fx.As(new(repositories.AIEmbeddingRepository)),
+		fx.As(new(repositories.AIIndexEntryRepository)),
+		fx.As(new(repositories.AIRetrievalSettingsRepository)),
+	),
+	retrievalsourcerepository.New,
 	recordversionrepository.New,
 	aiusagerepository.New,
 	insightrepository.New,
@@ -334,6 +346,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	agentscorecardrepository.New,
 	agenttooltrustrepository.New,
 	conversationrepository.New,
+	conversationrepository.NewThreadOwners,
 	aiproviderrepository.New,
 	assignmentrepository.New,
 	bankreceiptrepository.New,

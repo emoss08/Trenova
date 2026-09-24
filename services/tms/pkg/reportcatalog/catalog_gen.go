@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:ab91b61bd855a719f3c151c9a065c14fbb56fb640ba50800cfb875881f213b53"
+const Version = "sha256:096af1c3460dd41cce86487a5ecf2e6c227bf9ae6f5cea66bc1b8322247a837f"
 
 var Default = indexed(defaultCatalog)
 
@@ -849,7 +849,7 @@ var defaultCatalog = Catalog{
 				{
 					Key:          "mcNumber",
 					Column:       buncolgen.NewColumn("mc_number", "carr"),
-					Label:        "Mc Number",
+					Label:        "MC Number",
 					Type:         FieldString,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
@@ -2206,7 +2206,7 @@ var defaultCatalog = Catalog{
 				{
 					Key:          "mcNumber",
 					Column:       buncolgen.NewColumn("mc_number", "cus"),
-					Label:        "Mc Number",
+					Label:        "MC Number",
 					Type:         FieldString,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
@@ -6471,7 +6471,7 @@ var defaultCatalog = Catalog{
 				{
 					Key:          "unNumber",
 					Column:       buncolgen.NewColumn("un_number", "hm"),
-					Label:        "Un Number",
+					Label:        "UN Number",
 					Type:         FieldString,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
@@ -7757,7 +7757,7 @@ var defaultCatalog = Catalog{
 				{
 					Key:          "shipmentBol",
 					Column:       buncolgen.NewColumn("shipment_bol", "inv"),
-					Label:        "Shipment Bol",
+					Label:        "Shipment BOL",
 					Type:         FieldString,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
@@ -9029,7 +9029,7 @@ var defaultCatalog = Catalog{
 				{
 					Key:          "shipmentBol",
 					Column:       buncolgen.NewColumn("shipment_bol", "invl"),
-					Label:        "Shipment Bol",
+					Label:        "Shipment BOL",
 					Type:         FieldString,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
@@ -11059,7 +11059,7 @@ var defaultCatalog = Catalog{
 				{
 					Key:          "bol",
 					Column:       buncolgen.NewColumn("bol", "ord"),
-					Label:        "Bol",
+					Label:        "BOL",
 					Type:         FieldString,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
@@ -17713,9 +17713,9 @@ var defaultCatalog = Catalog{
 						{Value: "LicenseExpiry", Label: "License Expiry"},
 						{Value: "HazmatExpiry", Label: "Hazmat Expiry"},
 						{Value: "MedicalCardExpiry", Label: "Medical Card Expiry"},
-						{Value: "TWICExpiry", Label: "Twic Expiry"},
+						{Value: "TWICExpiry", Label: "TWIC Expiry"},
 						{Value: "PhysicalDueDate", Label: "Physical Due Date"},
-						{Value: "MVRDueDate", Label: "Mvr Due Date"},
+						{Value: "MVRDueDate", Label: "MVR Due Date"},
 					},
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
@@ -18140,7 +18140,7 @@ var defaultCatalog = Catalog{
 				{
 					Key:          "twicCardNumber",
 					Column:       buncolgen.NewColumn("twic_card_number", "wrkp"),
-					Label:        "Twic Card Number",
+					Label:        "TWIC Card Number",
 					Type:         FieldString,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},

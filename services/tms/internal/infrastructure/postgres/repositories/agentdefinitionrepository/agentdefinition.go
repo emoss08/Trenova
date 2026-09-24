@@ -404,6 +404,11 @@ func (r *repository) Update(
 		Set(cols.MaxConcurrentRuns.Set(), entity.MaxConcurrentRuns).
 		Set(cols.RunTimeoutSeconds.Set(), entity.RunTimeoutSeconds).
 		Set(cols.MaxToolCalls.Set(), entity.MaxToolCalls).
+		Set(cols.MonthlyBudgetUSD.Set(), entity.MonthlyBudgetUSD).
+		Set(cols.DailyRunLimit.Set(), entity.DailyRunLimit).
+		Set(cols.ToolDailyLimits.Set(), entity.ToolDailyLimits).
+		Set(cols.SimulationMode.Set(), entity.SimulationMode).
+		Set(cols.MemoryTokenBudget.Set(), entity.MemoryTokenBudget).
 		Set(cols.Icon.Set(), stringutils.NilIfEmpty(entity.Icon)).
 		Set(cols.Accent.Set(), stringutils.NilIfEmpty(entity.Accent)).
 		Set(cols.ContextProviders.Set(), dbhelper.TextArray(entity.ContextProviders)).

@@ -38,68 +38,6 @@ func (_m *MockRealtimeService) EXPECT() *MockRealtimeService_Expecter {
 	return &MockRealtimeService_Expecter{mock: &_m.Mock}
 }
 
-// CreateToken provides a mock function for the type MockRealtimeService
-func (_mock *MockRealtimeService) CreateToken(req *services.CreateRealtimeTokenRequest) (*services.RealtimeToken, error) {
-	ret := _mock.Called(req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateToken")
-	}
-
-	var r0 *services.RealtimeToken
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(*services.CreateRealtimeTokenRequest) (*services.RealtimeToken, error)); ok {
-		return returnFunc(req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(*services.CreateRealtimeTokenRequest) *services.RealtimeToken); ok {
-		r0 = returnFunc(req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*services.RealtimeToken)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(*services.CreateRealtimeTokenRequest) error); ok {
-		r1 = returnFunc(req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockRealtimeService_CreateToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateToken'
-type MockRealtimeService_CreateToken_Call struct {
-	*mock.Call
-}
-
-// CreateToken is a helper method to define mock.On call
-//   - req *services.CreateRealtimeTokenRequest
-func (_e *MockRealtimeService_Expecter) CreateToken(req any) *MockRealtimeService_CreateToken_Call {
-	return &MockRealtimeService_CreateToken_Call{Call: _e.mock.On("CreateToken", req)}
-}
-
-func (_c *MockRealtimeService_CreateToken_Call) Run(run func(req *services.CreateRealtimeTokenRequest)) *MockRealtimeService_CreateToken_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *services.CreateRealtimeTokenRequest
-		if args[0] != nil {
-			arg0 = args[0].(*services.CreateRealtimeTokenRequest)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockRealtimeService_CreateToken_Call) Return(realtimeToken *services.RealtimeToken, err error) *MockRealtimeService_CreateToken_Call {
-	_c.Call.Return(realtimeToken, err)
-	return _c
-}
-
-func (_c *MockRealtimeService_CreateToken_Call) RunAndReturn(run func(req *services.CreateRealtimeTokenRequest) (*services.RealtimeToken, error)) *MockRealtimeService_CreateToken_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // PublishResourceInvalidation provides a mock function for the type MockRealtimeService
 func (_mock *MockRealtimeService) PublishResourceInvalidation(ctx context.Context, req *services.PublishResourceInvalidationRequest) error {
 	ret := _mock.Called(ctx, req)

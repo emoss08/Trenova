@@ -1,0 +1,74 @@
+# Requests worded the way people talk, sharing no word with the name of the
+# tool they need. Keyword ranking is measured on them and not gated; hybrid
+# ranking is gated on them together with toolselection.yaml, against the
+# hybrid floors in toolselection.floors.json. `nothing` lists requests no tool
+# answers: find_tools must return nothing for them, by keyword and by meaning.
+cases:
+  - request: chase the shipper for paperwork
+    expect: [request_missing_docs]
+  - request: who's out on leave this week
+    expect: [list_time_off]
+  - request: is anyone's medical certificate about to lapse
+    expect: [list_expiring_credentials, get_worker_credential]
+  - request: ping the trucker that pickup slipped to three
+    expect: [notify_driver]
+  - request: let the buyer know we are running late
+    expect: [email_customer]
+  - request: freeze that load until we sort things out
+    expect: [place_shipment_hold]
+  - request: unfreeze that load, we are good to go
+    expect: [release_shipment_hold]
+  - request: how long can this operator legally keep rolling today
+    expect: [get_worker_hos]
+  - request: which power units are sidelined right now
+    expect: [list_tractors]
+  - request: who is the best person to haul this leg
+    expect: [rank_move_candidates]
+  - request: offer this freight to outside haulers
+    expect: [tender_move_to_carriers, tender_move_to_routing_guide, shop_carriers]
+  - request: what is the going price to haul freight from Denver to Phoenix
+    expect: [quote_shipment, shop_carriers]
+  - request: who still owes us money past thirty days
+    expect: [list_invoices]
+  - request: the client wired us funds, apply them to their bills
+    expect: [post_customer_payment]
+  - request: pull up what the broker wrote to our shared mailbox
+    expect: [list_inbound_messages, get_inbound_message]
+  - request: write back to that broker's note
+    expect: [reply_to_inbound_message]
+  - request: where are our rigs at the moment
+    expect: [list_vehicle_positions, get_shipment_tracking]
+  - request: which loads are rolling out of the dock today
+    expect: [list_shipments, search_shipments]
+  - request: note down that Acme's dock shuts at four on Fridays
+    expect: [remember]
+  - request: what have we jotted down about Acme before
+    expect: [recall_memory]
+  - request: storms threatening our lanes
+    expect: [list_weather_alerts]
+  - request: sign off on Maria's vacation
+    expect: [approve_worker_pto]
+  - request: turn down the holiday she asked for
+    expect: [reject_worker_pto]
+  - request: forgive the waiting fee
+    expect: [waive_detention]
+  - request: log when the trucker pulled into the receiver
+    expect: [record_stop_actual]
+  - request: how do I configure lane pricing grids
+    expect: [find_in_trenova]
+  - request: chart revenue per client each month
+    expect: [create_dashboard, run_report]
+  - request: have a human look at this
+    expect: [flag_for_manual_review, raise_exception]
+  - request: what's happening with safety scores on haulers we use
+    expect: [get_carrier_intel_event, acknowledge_carrier_intel_event, get_carrier]
+  - request: late deliveries last week and why
+    expect: [list_service_failures, evaluate_service_failures]
+  - request: book a new load for Acme out of Dallas
+    expect: [create_shipment]
+  - request: put Juan on the Houston leg with truck 42
+    expect: [assign_move]
+nothing:
+  - xyzzy plugh
+  - quantum chromodynamics lattice
+  - penguin sonnet

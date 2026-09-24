@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -89,7 +90,7 @@ func (r *repository) GetEffectiveCurrent(
 
 		entity, err = r.GetByID(ctx, entity.PreviousContinuityID)
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
+			if errortypes.IsNotFoundError(err) {
 				return nil, nil //nolint:nilnil // nil result represents an optional absence in this API
 			}
 			return nil, err

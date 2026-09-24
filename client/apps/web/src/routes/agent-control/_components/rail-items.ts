@@ -1,4 +1,6 @@
 import type { AIControlTab, RailView } from "../ai-control-tabs";
+import { retrievalRailStatus, type RetrievalRailState } from "./retrieval/retrieval-model";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
 export type { ActivityView, QualityView, RailView, SafetyView } from "../ai-control-tabs";
 
@@ -24,6 +26,8 @@ export type RailCounts = {
   extensionsTotal: number;
   /** Agents whose latest scored suite run regressed. */
   qualityRegressions: number;
+  /** Where search by meaning stands; null until it has been read. */
+  retrieval: RetrievalRailState | null;
 };
 
 export type RailPermissions = {
@@ -34,6 +38,8 @@ export type RailPermissions = {
   proposals: boolean;
   exceptions: boolean;
   memory: boolean;
+  /** The index is the providers' work, so it is read under the right to read providers. */
+  retrieval: boolean;
   /** Reading what agents may do on their own is reading agents. */
   safety: boolean;
   /** How well agents are doing is read under the golden set's right. */
@@ -41,8 +47,6 @@ export type RailPermissions = {
   /** The answers people rated down are read under the right to read agent feedback. */
   ratings: boolean;
 };
-
-type Translate = (text: string, ...args: (string | number)[]) => string;
 
 /**
  * The rail's items in order, with what each one can say about itself
@@ -53,7 +57,7 @@ type Translate = (text: string, ...args: (string | number)[]) => string;
 export function buildRailItems(
   counts: RailCounts | undefined,
   permissions: RailPermissions,
-  t: Translate,
+  t: TranslateFn,
 ): RailItem[] {
   const items: RailItem[] = [{ tab: "overview", status: "", attention: false, children: [] }];
 
@@ -101,6 +105,17 @@ export function buildRailItems(
           : t("{0, plural, one {# active} other {# active}}", counts.memoriesActive)
         : "",
       attention: false,
+      children: [],
+    });
+  }
+
+  if (permissions.retrieval) {
+    const state = counts?.retrieval ?? null;
+    const summary = state ? retrievalRailStatus(state, t) : { status: "", attention: false };
+    items.push({
+      tab: "retrieval",
+      status: summary.status,
+      attention: summary.attention,
       children: [],
     });
   }

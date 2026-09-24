@@ -706,6 +706,15 @@ func (s *Service) createOrderInvoicesTx(
 			return nil, err
 		}
 
+		if err = s.attachQueueItems(
+			txCtx,
+			req.TenantInfo,
+			created.ID,
+			queueItems.ItemIDs,
+		); err != nil {
+			return nil, err
+		}
+
 		if err = s.markOrderChargeSharesInvoiced(
 			txCtx,
 			req.TenantInfo,
@@ -795,6 +804,31 @@ func orderChargeShareFor(
 type legQueueItems struct {
 	Anchor  *billingqueue.BillingQueueItem
 	ItemIDs []pulid.ID
+}
+
+func (s *Service) attachQueueItems(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	invoiceID pulid.ID,
+	itemIDs []pulid.ID,
+) error {
+	attached, err := s.billingQueueRepo.AttachInvoice(ctx, &repositories.AttachInvoiceRequest{
+		TenantInfo: tenantInfo,
+		InvoiceID:  invoiceID,
+		ItemIDs:    itemIDs,
+	})
+	if err != nil {
+		return err
+	}
+	if attached != int64(len(itemIDs)) {
+		return errortypes.NewValidationError(
+			"shipmentIds",
+			errortypes.ErrInvalidOperation,
+			"Some shipments were invoiced elsewhere while this invoice was being created",
+		)
+	}
+
+	return nil
 }
 
 // createLegQueueItems creates one approved billing-queue item per billable leg

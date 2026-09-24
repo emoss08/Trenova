@@ -9,6 +9,7 @@ import {
   QUALITY_AGENT_PARAM,
   QUALITY_SUITE_RUN_PARAM,
   QUALITY_VIEW_PARAM,
+  RETRIEVAL_SOURCE_PARAM,
   SAFETY_VIEW_PARAM,
   activityViewParser,
   activityViews,
@@ -17,12 +18,14 @@ import {
   qualitySuiteRunParser,
   qualityViewParser,
   qualityViews,
+  retrievalSourceParser,
   safetyViewParser,
   safetyViews,
   type ActivityView,
   type AIControlTab,
   type QualityView,
   type RailView,
+  type RetrievalSource,
   type SafetyView,
 } from "./ai-control-tabs";
 
@@ -34,6 +37,7 @@ const navigationParsers = {
   [QUALITY_VIEW_PARAM]: qualityViewParser,
   [QUALITY_AGENT_PARAM]: qualityAgentParser,
   [QUALITY_SUITE_RUN_PARAM]: qualitySuiteRunParser,
+  [RETRIEVAL_SOURCE_PARAM]: retrievalSourceParser,
 };
 
 export type AIControlDestination = {
@@ -43,6 +47,8 @@ export type AIControlDestination = {
   qualityAgent?: string | null;
   /** Opens one suite run's cases. */
   suiteRun?: string | null;
+  /** Narrows Retrieval's failed items to one source. */
+  retrievalSource?: RetrievalSource | null;
   /** Filters the destination's table starts with, in its own field names. */
   fieldFilters?: FieldFilter[];
 };
@@ -80,6 +86,8 @@ export function useAIControlNavigation() {
             destination.tab === "quality" && view && isQualityView(view) ? view : null,
           [QUALITY_AGENT_PARAM]: destination.qualityAgent ?? null,
           [QUALITY_SUITE_RUN_PARAM]: destination.suiteRun ?? null,
+          [RETRIEVAL_SOURCE_PARAM]:
+            destination.tab === "retrieval" ? (destination.retrievalSource ?? null) : null,
         },
         { history: "push" },
       );

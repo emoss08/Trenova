@@ -39,11 +39,11 @@ func (f *fakeWorkerRepo) List(
 	return &pagination.CursorListResult[*worker.Worker]{Items: f.items}, nil
 }
 
-func testParams(params map[string]any) serviceports.QueryToolParams {
+func testParams(params map[string]any) *serviceports.QueryToolParams {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	return serviceports.QueryToolParams{
+	return &serviceports.QueryToolParams{
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
 		Actor: &serviceports.RequestActor{

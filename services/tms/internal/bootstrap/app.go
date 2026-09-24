@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/productguideservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/rateengine"
+	"github.com/emoss08/trenova/internal/core/services/retrievalquery"
 	"github.com/emoss08/trenova/internal/core/services/runstepledger"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
@@ -64,6 +65,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/ratesimjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/recurringshipmentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/retrievaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/settlementjobs"
@@ -152,6 +154,7 @@ func Options() fx.Option {
 		agenttoolcatalog.Module,
 		agenttoolpolicy.Module,
 		productguideservice.Module,
+		retrievalquery.Module,
 		agentguard.Module,
 		agentruntime.Module,
 		runstepledger.Module,
@@ -173,6 +176,7 @@ func Options() fx.Option {
 		inboundjobs.Module,
 		briefingjobs.Module,
 		aifeedbackjobs.Module,
+		retrievaljobs.Module,
 		iftajobs.Module,
 		dispatchjobs.Module,
 		weatheralertjobs.Module,
@@ -210,7 +214,8 @@ func APIOptions() fx.Option {
 		modulesinfra.SMSModule,
 		modulesinfra.PDFRenderModule,
 		modulesinfra.TemplatingModule,
-		modulesinfra.FoonyClientModule,
+		modulesinfra.RealtimePublisherModule,
+		modulesinfra.RealtimeGatewayModule,
 		modulesinfra.MeilisearchClientModule,
 	)
 }
@@ -218,7 +223,7 @@ func APIOptions() fx.Option {
 func WorkerOptions() fx.Option {
 	return fx.Options(
 		modulesinfra.StorageModule,
-		modulesinfra.FoonyClientModule,
+		modulesinfra.RealtimePublisherModule,
 		modulesinfra.MeilisearchClientModule,
 		modulesinfra.SMSModule,
 		modulesinfra.PDFRenderModule,

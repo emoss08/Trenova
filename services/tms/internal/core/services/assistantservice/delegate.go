@@ -36,6 +36,9 @@ type OpenDelegateRequest struct {
 	ThreadID  pulid.ID
 	StepOwner services.RunStepOwner
 	Call      agentruntime.DelegateCall
+	// Records are the records the parent's turn is about. The delegate reads
+	// their memories, since the task is about them too.
+	Records []agent.EntityRef
 }
 
 // DelegateOpening is the delegate's turn, ready to drive.
@@ -116,7 +119,7 @@ func (s *Service) OpenDelegate(
 	runReq := &services.RunRequest{
 		Definition: delegate,
 		Actor:      req.Actor,
-		Context:    s.delegateContext(ctx, parent, delegate, req.Actor),
+		Context:    s.delegateContext(ctx, parent, delegate, req),
 		Input:      req.Call.Task,
 		ThreadID:   req.ThreadID,
 		// Earlier proposals keep the delegate from proposing again a write
@@ -148,21 +151,29 @@ func (s *Service) OpenDelegate(
 func (s *Service) delegateContext(
 	ctx context.Context,
 	parent, delegate *agentdefinition.Definition,
-	actor *services.RequestActor,
+	req *OpenDelegateRequest,
 ) agentdefinition.RuntimeContext {
 	bare := agentdefinition.RuntimeContext{
-		Trigger:     agent.RunTriggerChat,
-		DelegatedBy: parent.Name,
+		Trigger:          agent.RunTriggerChat,
+		DelegatedBy:      parent.Name,
+		DelegatorRecords: req.Records,
 	}
 	if s.contexts == nil {
 		return bare
 	}
 
 	built, err := s.contexts.Build(ctx, &services.RuntimeContextRequest{
-		Definition:  delegate,
-		Actor:       actor,
-		Trigger:     agent.RunTriggerChat,
-		DelegatedBy: parent.Name,
+		Definition:       delegate,
+		Actor:            req.Actor,
+		Trigger:          agent.RunTriggerChat,
+		DelegatedBy:      parent.Name,
+		DelegatorRecords: req.Records,
+		Query: (&services.ContextQuery{
+			Actor:        req.Actor,
+			DefinitionID: definitionID(delegate),
+			ThreadID:     req.ThreadID,
+			Input:        req.Call.Task,
+		}).Request(),
 	})
 	if err != nil {
 		s.logger.Warn("the context of an agent handed a task could not be built",

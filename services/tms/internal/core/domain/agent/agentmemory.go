@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -21,9 +22,27 @@ var (
 	_ validationframework.TenantedEntity = (*Memory)(nil)
 )
 
-// MaxMemoryContentChars bounds one memory. Every active memory is read into
-// a prompt, so a long one costs every run the organization makes.
-const MaxMemoryContentChars = 2000
+// MaxMemoryContentChars bounds one memory. A prompt shows at most
+// MemoryPromptExcerptChars of it and names its id, so the rest is read through
+// recall_memory rather than paid for by every run.
+const MaxMemoryContentChars = 4000
+
+const (
+	MemoryPromptExcerptChars = 1200
+	MaxMemoryCandidates      = 500
+	MemoryActiveSoftCap      = 5000
+	MemoryActiveWarnAt       = MemoryActiveSoftCap * 4 / 5
+	DefaultMemoryRecallLimit = 10
+	MaxMemoryRecallLimit     = 50
+)
+
+type MemoryMatch string
+
+const (
+	MemoryMatchWords   = MemoryMatch("words")
+	MemoryMatchMeaning = MemoryMatch("meaning")
+	MemoryMatchBoth    = MemoryMatch("both")
+)
 
 type MemoryKind string
 
@@ -234,6 +253,8 @@ type Memory struct {
 
 	Evidence *MemoryEvidence `json:"evidence" bun:"evidence,type:JSONB,nullzero"`
 
+	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -268,12 +289,17 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 				domainvalidation.ValidEnum[MemorySubjectType]("Subject type is invalid"),
 			),
 		),
-		validation.Field(&m.Content,
-			validation.Required.Error("Content is required"),
-			validation.Length(1, MaxMemoryContentChars).
-				Error("Content must be at most 2000 characters"),
-		),
+		validation.Field(&m.Content, validation.Required.Error("Content is required")),
 	))
+
+	if utf8.RuneCountInString(m.Content) > MaxMemoryContentChars {
+		multiErr.Add(
+			"content",
+			errortypes.ErrInvalid,
+			"Content must be at most {0} characters",
+			MaxMemoryContentChars,
+		)
+	}
 
 	hasType := m.SubjectType != ""
 	hasID := m.SubjectID != nil && m.SubjectID.IsNotNil()

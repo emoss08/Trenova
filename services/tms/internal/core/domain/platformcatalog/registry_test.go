@@ -569,9 +569,9 @@ func accountShellRoutePatterns() []accountShellRoute {
 			routePattern: "/api/v1/page-favorites/toggle",
 		},
 		{
-			name:         "realtime token request",
+			name:         "realtime stream",
 			method:       "GET",
-			routePattern: "/api/v1/realtime/token-request/",
+			routePattern: "/api/v1/realtime/stream/",
 		},
 		{
 			name:         "platform catalog",
@@ -618,6 +618,7 @@ func protectedProductRoutePrefixes() []protectedProductRoutePrefix {
 		{prefix: "/api/v1/agent-plans/", featureKey: FeatureAgentAutomation},
 		{prefix: "/api/v1/agent-proposals/", featureKey: FeatureAgentAutomation},
 		{prefix: "/api/v1/agent-definitions/", featureKey: FeatureAgentAutomation},
+		{prefix: "/api/v1/agent-extensions/", featureKey: FeatureAgentAutomation},
 		{prefix: "/api/v1/agent-plans/", featureKey: FeatureAgentAutomation},
 		{prefix: "/api/v1/agent-runs/", featureKey: FeatureAgentAutomation},
 		{prefix: "/api/v1/ai-providers/", featureKey: FeatureAgentAutomation},
