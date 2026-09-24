@@ -51,6 +51,7 @@ type fingerprintTool struct {
 	Description string             `json:"description,omitempty"`
 	Parameters  map[string]any     `json:"parameters,omitempty"`
 	Tier        agent.AutonomyTier `json:"tier,omitempty"`
+	SetTier     agent.AutonomyTier `json:"setTier,omitempty"`
 	Policy      *fingerprintPolicy `json:"policy,omitempty"`
 }
 
@@ -102,8 +103,7 @@ func (s *Service) fingerprintTool(
 	}
 	if tool, ok := s.actionTools.Get(name); ok {
 		policy := tool.Policy()
-
-		return fingerprintTool{
+		projected := fingerprintTool{
 			Name:        name,
 			Registered:  true,
 			Description: tool.Description(),
@@ -111,6 +111,11 @@ func (s *Service) fingerprintTool(
 			Tier:        agenttoolpolicy.StaticTier(definition, policy),
 			Policy:      projectPolicy(policy),
 		}
+		if definition != nil && definition.SetsToolTier(name) {
+			projected.SetTier = definition.ToolTiers[name]
+		}
+
+		return projected
 	}
 	if policy, ok := runtimePolicyNamed(name); ok {
 		return fingerprintTool{Name: name, Registered: true, Policy: projectPolicy(policy)}
