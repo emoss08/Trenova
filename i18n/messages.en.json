@@ -14028,6 +14028,15 @@
       "service/timesheetservice"
     ]
   },
+  "Also amounts and pay, such as invoice totals and net pay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Also enroll carriers with a tender that is still open.": {
     "sites": 1,
     "scope": [
@@ -45235,6 +45244,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Data access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Data as of": {
@@ -80680,7 +80698,7 @@
     ]
   },
   "Internal": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -104770,6 +104788,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Nobody is watching when it runs, so whatever it reads can appear in its reports and proposals. Only people whose own role reaches restricted fields can give an agent this access.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nobody it applies to is on the roster yet.": {
@@ -132662,6 +132689,15 @@
       "apps/web/components"
     ]
   },
+  "Records without amounts, pay or other restricted fields": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Records you touched most recently": {
     "sites": 1,
     "scope": [
@@ -138567,14 +138603,24 @@
     ]
   },
   "Restricted": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/components",
+      "routes/agent-control",
       "routes/osha"
+    ]
+  },
+  "Restricted lets its tools show amounts, pay, balances and rates, such as invoice totals and a driver's net pay. Internal leaves them out and names what was left out. In chat it never sees more than the person asking.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Restricted or transferred": {
@@ -172980,6 +173026,15 @@
       "apps/web/components"
     ]
   },
+  "This agent reads amounts and pay on its own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This agent was removed.": {
     "sites": 1,
     "scope": [
@@ -194427,6 +194482,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "You can give an agent only the data access your own role has": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdefinitionservice"
     ]
   },
   "You can view these settings but not change them.": {
