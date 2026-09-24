@@ -163,6 +163,24 @@ type IndexEntryCount struct {
 	LastAttemptAt *int64                  `bun:"last_attempt_at"`
 }
 
+type AverageIndexChunksRequest struct {
+	TenantInfo pagination.TenantInfo
+	SourceType airetrieval.SourceType
+	ModelKey   string
+}
+
+type IndexChunkAverage struct {
+	Entries       int     `bun:"entries"`
+	AverageChunks float64 `bun:"average_chunks"`
+}
+
+type ListErroredIndexEntriesRequest struct {
+	TenantInfo pagination.TenantInfo
+	SourceType airetrieval.SourceType
+	ModelKeys  []string
+	Limit      int
+}
+
 type FindStaleAIRetrievalSourcesRequest struct {
 	TenantInfo pagination.TenantInfo
 	SourceType airetrieval.SourceType
@@ -181,6 +199,11 @@ type AIIndexEntryRepository interface {
 	MarkFailed(ctx context.Context, req MarkIndexEntriesRequest) (MarkIndexEntriesResult, error)
 	MarkSkipped(ctx context.Context, req MarkIndexEntriesRequest) (MarkIndexEntriesResult, error)
 	CountIndexEntries(ctx context.Context, req CountIndexEntriesRequest) ([]IndexEntryCount, error)
+	AverageIndexChunks(ctx context.Context, req AverageIndexChunksRequest) (IndexChunkAverage, error)
+	ListErroredIndexEntries(
+		ctx context.Context,
+		req ListErroredIndexEntriesRequest,
+	) ([]*airetrieval.IndexEntry, error)
 	FindStaleSources(
 		ctx context.Context,
 		req FindStaleAIRetrievalSourcesRequest,

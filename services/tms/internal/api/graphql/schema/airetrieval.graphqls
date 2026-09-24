@@ -1,0 +1,208 @@
+"What retrieval indexes by meaning."
+enum AIRetrievalSourceType {
+  "What the organization told its agents, or what they recorded."
+  Memory
+  "Uploaded and generated documents whose owning record may be read by a model."
+  Document
+  "Inbound email, the sender's own words only."
+  InboundMessage
+}
+
+"Where one source stands in the index under one embedding model."
+enum AIRetrievalIndexStatus {
+  "Waiting to be embedded, or waiting to retry after a failed attempt."
+  Pending
+  Indexed
+  "Every retry was spent, or the provider refused the text."
+  Failed
+  "Not embedded on purpose: retired, superseded, too sensitive or without text."
+  Skipped
+}
+
+"Why search by meaning is not answering, so every search is by keyword."
+enum AIRetrievalUnavailableReason {
+  "The database has no pgvector extension."
+  ExtensionMissing
+  "pgvector is installed but the retrieval tables are not; run trenova db enable-vector."
+  SchemaMissing
+  "pgvector is older than 0.8."
+  TooOld
+  "No enabled provider is routed the Embedding task."
+  NoProvider
+  "A person paused indexing, or every source is turned off."
+  Disabled
+  "This month's indexing budget is spent."
+  BudgetPaused
+  "A provider is routed but nothing has been indexed under its model yet."
+  NotIndexed
+  "The provider did not embed a query within its time budget."
+  QueryTimeout
+  "The provider failed to embed a query, or answered with the wrong model or size."
+  ProviderFailed
+}
+
+enum AIRetrievalPauseReason {
+  "A person paused indexing."
+  Manual
+  "The monthly indexing budget ran out; indexing resumes on its own under a new month or a raised budget."
+  Budget
+}
+
+type AIRetrievalAvailability {
+  available: Boolean!
+  "Absent when search by meaning is available."
+  reason: AIRetrievalUnavailableReason
+  extensionInstalled: Boolean!
+  extensionVersion: String
+}
+
+type AIRetrievalSettings {
+  memoryEnabled: Boolean!
+  documentsEnabled: Boolean!
+  inboundMessagesEnabled: Boolean!
+  "What indexing may spend in a calendar month (UTC)."
+  monthlyIndexingBudgetUsd: Decimal!
+  paused: Boolean!
+  pausedReason: AIRetrievalPauseReason
+  pausedAt: Timestamp
+  "The embedding model searches use: host/model@dimensions."
+  activeModelKey: String
+  dimensions: Int
+  "The model being indexed beside the active one during a model change."
+  pendingModelKey: String
+  pendingDimensions: Int
+  version: Int!
+  updatedAt: Timestamp
+}
+
+"One source type under the active embedding model."
+type AIRetrievalSourceStatus {
+  sourceType: AIRetrievalSourceType!
+  enabled: Boolean!
+  "Rows of this kind the organization keeps, indexed or not."
+  total: Int!
+  indexed: Int!
+  pending: Int!
+  failed: Int!
+  skipped: Int!
+  lastIndexedAt: Timestamp
+  lastAttemptAt: Timestamp
+}
+
+"A change of embedding model: every source is indexed under the new model beside the old one before searches move to it."
+type AIRetrievalModelChange {
+  fromModelKey: String!
+  toModelKey: String!
+  dimensions: Int!
+  "Sources of the enabled types that must be indexed under the new model."
+  total: Int!
+  "Indexed or skipped under the new model."
+  indexed: Int!
+  pending: Int!
+  failed: Int!
+}
+
+type AIRetrievalStatus {
+  availability: AIRetrievalAvailability!
+  settings: AIRetrievalSettings!
+  sources: [AIRetrievalSourceStatus!]!
+  monthStartedAt: Timestamp!
+  "What indexing has cost since the first of the month (UTC), priced calls only."
+  indexingCostMonthUsd: Decimal!
+  indexingUnpricedCalls: Int!
+  "What embedding search queries has cost since the first of the month (UTC), priced calls only."
+  retrievalCostMonthUsd: Decimal!
+  retrievalUnpricedCalls: Int!
+  lastIndexedAt: Timestamp
+  "Absent unless a pending model is being indexed."
+  modelChange: AIRetrievalModelChange
+  "The model the Embedding routing names now; absent when no provider embeds."
+  configuredModelKey: String
+  "The routed model differs from the one searches use, so a model change will start or is under way."
+  configuredModelDiffers: Boolean!
+}
+
+"""
+An estimate of what re-indexing one source type would cost if every chunk were
+embedded again: sources × average chunks × average tokens × the provider's
+input price. A re-index embeds only chunks whose text changed, so the real cost
+is at most this, and nothing when nothing changed.
+"""
+type AIRetrievalReindexEstimate {
+  sourceType: AIRetrievalSourceType!
+  "The model the chunks would be embedded with."
+  modelKey: String
+  "Sources that would be embedded; skipped ones are left out."
+  sources: Int!
+  averageChunks: Float!
+  "Whether the chunks per source were measured from indexed sources rather than assumed from their text."
+  chunksMeasured: Boolean!
+  averageTokensPerChunk: Float!
+  estimatedTokens: Int!
+  "Absent when the provider has no input price."
+  inputCostPerMillionUsd: Decimal
+  "Absent when the provider has no input price or no model is routed."
+  estimatedCostUsd: Decimal
+  "What is left of this month's indexing budget."
+  remainingBudgetUsd: Decimal!
+}
+
+"A source whose last attempt to index failed, with the error kept for it."
+type AIRetrievalFailedEntry {
+  id: ID!
+  sourceType: AIRetrievalSourceType!
+  sourceId: ID!
+  modelKey: String!
+  "Failed when no retry is left; Pending when another attempt is scheduled."
+  status: AIRetrievalIndexStatus!
+  attempts: Int!
+  error: String!
+  lastAttemptAt: Timestamp
+  nextAttemptAt: Timestamp
+}
+
+type AIRetrievalFailedEntryEdge {
+  node: AIRetrievalFailedEntry!
+  cursor: String!
+}
+
+type AIRetrievalFailedEntryConnection {
+  edges: [AIRetrievalFailedEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Changes only the fields given. Turning paused off also lifts a budget pause;
+indexing pauses again at once if the month's cost is still at the budget.
+"""
+input AIRetrievalSettingsPatchInput {
+  memoryEnabled: Boolean @goField(omittable: true)
+  documentsEnabled: Boolean @goField(omittable: true)
+  inboundMessagesEnabled: Boolean @goField(omittable: true)
+  monthlyIndexingBudgetUsd: Decimal @goField(omittable: true)
+  paused: Boolean @goField(omittable: true)
+}
+
+extend type Query {
+  "Whether search by meaning works, what is indexed, and what it has cost this month."
+  aiRetrievalStatus: AIRetrievalStatus!
+  "What re-indexing one source type would cost at most."
+  aiRetrievalReindexEstimate(sourceType: AIRetrievalSourceType!): AIRetrievalReindexEstimate!
+  """
+  The thousand most recent sources whose indexing failed or is waiting to retry,
+  for one source type or all of them, a page at a time. Filters on sourceType,
+  status, sourceId, modelKey, error and attempts; sorts on those and on
+  lastAttemptAt and nextAttemptAt.
+  """
+  aiRetrievalFailedEntryConnection(
+    sourceType: AIRetrievalSourceType
+    input: DataTableConnectionInput!
+  ): AIRetrievalFailedEntryConnection!
+}
+
+extend type Mutation {
+  updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
+  "Marks every source of one type stale; only chunks whose text changed are embedded again."
+  reindexAIRetrievalSource(sourceType: AIRetrievalSourceType!): AIRetrievalStatus!
+}

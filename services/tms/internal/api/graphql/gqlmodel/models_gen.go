@@ -140,6 +140,27 @@ type AIProviderEdge struct {
 	Cursor string               `json:"cursor"`
 }
 
+type AIRetrievalFailedEntryConnection struct {
+	Edges      []*AIRetrievalFailedEntryEdge `json:"edges"`
+	PageInfo   *PageInfo                     `json:"pageInfo"`
+	TotalCount *int                          `json:"totalCount,omitempty"`
+}
+
+type AIRetrievalFailedEntryEdge struct {
+	Node   *services.AIRetrievalFailedEntry `json:"node"`
+	Cursor string                           `json:"cursor"`
+}
+
+// Changes only the fields given. Turning paused off also lifts a budget pause;
+// indexing pauses again at once if the month's cost is still at the budget.
+type AIRetrievalSettingsPatchInput struct {
+	MemoryEnabled            graphql.Omittable[*bool]   `json:"memoryEnabled,omitempty"`
+	DocumentsEnabled         graphql.Omittable[*bool]   `json:"documentsEnabled,omitempty"`
+	InboundMessagesEnabled   graphql.Omittable[*bool]   `json:"inboundMessagesEnabled,omitempty"`
+	MonthlyIndexingBudgetUsd graphql.Omittable[*string] `json:"monthlyIndexingBudgetUsd,omitempty"`
+	Paused                   graphql.Omittable[*bool]   `json:"paused,omitempty"`
+}
+
 type AccessorialChargeConnection struct {
 	Edges      []*AccessorialChargeEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
