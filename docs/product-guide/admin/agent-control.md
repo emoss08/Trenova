@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, AI safety, tool rules, agent autonomy, AI quality, agent evaluation, golden set, eval cases, agent regression]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, AI safety, tool rules, agent autonomy, AI quality, agent evaluation, golden set, eval cases, agent regression]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -10,13 +10,14 @@ related:
 
 ## What it's for
 AI control is the one place for everything AI in the organization. A rail down the left side
-holds eight sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**,
-**Safety**, **Quality** and **Activity**. Providers say where AI work goes (the model endpoints
-Trenova calls and which AI tasks each one handles), agents say what AI may do (their
-instructions, tools, autonomy and trigger), extensions add abilities that work only for agents,
-such as searching the web, using the organization's own account with the vendor, memory holds the
-standing instructions and facts agents read, safety shows what each tool and agent can do without
-a person, quality says how well each agent does its work, and activity shows what agents did:
+holds nine sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**,
+**Retrieval**, **Safety**, **Quality** and **Activity**. Providers say where AI work goes (the
+model endpoints Trenova calls and which AI tasks each one handles), agents say what AI may do
+(their instructions, tools, autonomy and trigger), extensions add abilities that work only for
+agents, such as searching the web, using the organization's own account with the vendor, memory
+holds the standing instructions and facts agents read, retrieval shows whether agents find
+memories, documents and inbound email by meaning and what indexing them costs, safety shows what
+each tool and agent can do without a person, quality says how well each agent does its work, and activity shows what agents did:
 their runs, the changes they proposed, multi-step plans, replays and exceptions.
 
 **Overview** shows whether AI can work at all (a banner warns when no provider is connected or a
@@ -70,6 +71,27 @@ Keywords: web search, internet, Exa, look up regulations, ELD rules, hours of se
    changes**.
 6. Optionally change the search depth, the results per search, the daily request limit and the
    sites agents never receive results from.
+
+### Set up search by meaning
+Keywords: semantic search, search by meaning, retrieval, vector search, embeddings, index documents, index email, re-index, indexing budget, pgvector, keyword only, words only
+1. Set up an embedding provider first (see the task above). Until one is routed, agents search by
+   keywords only.
+2. Open [AI control](/admin/agent-control) and select **Retrieval** in the rail.
+3. Read the notice at the top, if there is one. It says why agents are searching by keyword only
+   and what fixes it: install pgvector 0.8 or newer and run the command it shows on the server,
+   route the Embedding task (**Open Providers** goes there), or change the settings on this page
+   (**Go to the settings**). With none shown, search by meaning is working.
+4. Read the figures: **Indexed**, **Pending**, **Failed**, **Cost this month** against the
+   indexing budget, and **Last run**.
+5. In **Settings**, turn **Memories**, **Documents** and **Inbound email** on or off, set the
+   **Monthly indexing budget (USD)**, and use **Pause indexing** to stop indexing for a while.
+   Then select **Save settings**. A source turned on is indexed within the hour.
+6. In **Sources**, each source shows how far it is indexed. To embed a source again after its
+   text or the model changed, select **Re-index** on its row; the dialog shows what it could cost
+   at most before you confirm with **Re-index**.
+7. Select **Show failures** on a source to list the items that could not be indexed, with the
+   error for each, in the table at the bottom. **Show every source** lists them all again. Select
+   a row to read the whole error.
 
 ### Create an agent
 Keywords: new agent, build agent, automation, scheduled agent, agent template
@@ -218,6 +240,16 @@ only. Social security, card and bank account numbers are masked before a documen
 Changing the embedding model or its size re-indexes everything that was embedded. Providers with
 the same model and size back each other up; a provider with a different model is never used in
 their place.
+
+Retrieval is read with read access to AI providers; changing its settings or re-indexing needs
+update access to AI providers. Only chunks whose text changed are embedded again on a re-index,
+so the cost shown before one is the most it could cost, and a re-index when nothing changed costs
+nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is
+spent indexing pauses, and it resumes on its own the next month or as soon as the budget is
+raised. What agents' searches cost counts against each agent's own monthly budget. When the
+Embedding task is routed to a different model, every source is indexed under the new model
+beside the old one, and searches move to it only when all of it is done; **Sources** shows how far
+that has come.
 
 An agent that has read content written outside the organization (an inbound email, an
 extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a

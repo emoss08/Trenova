@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
+	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
@@ -323,6 +324,102 @@ type ComplexityRoot struct {
 		SchemaHonoured  func(childComplexity int) int
 		Success         func(childComplexity int) int
 		TestedAt        func(childComplexity int) int
+	}
+
+	AIRetrievalAvailability struct {
+		Available          func(childComplexity int) int
+		ExtensionInstalled func(childComplexity int) int
+		ExtensionVersion   func(childComplexity int) int
+		Reason             func(childComplexity int) int
+	}
+
+	AIRetrievalFailedEntry struct {
+		Attempts      func(childComplexity int) int
+		Error         func(childComplexity int) int
+		ID            func(childComplexity int) int
+		LastAttemptAt func(childComplexity int) int
+		ModelKey      func(childComplexity int) int
+		NextAttemptAt func(childComplexity int) int
+		SourceID      func(childComplexity int) int
+		SourceType    func(childComplexity int) int
+		Status        func(childComplexity int) int
+	}
+
+	AIRetrievalFailedEntryConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AIRetrievalFailedEntryEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AIRetrievalModelChange struct {
+		Dimensions   func(childComplexity int) int
+		Failed       func(childComplexity int) int
+		FromModelKey func(childComplexity int) int
+		Indexed      func(childComplexity int) int
+		Pending      func(childComplexity int) int
+		ToModelKey   func(childComplexity int) int
+		Total        func(childComplexity int) int
+	}
+
+	AIRetrievalReindexEstimate struct {
+		AverageChunks          func(childComplexity int) int
+		AverageTokensPerChunk  func(childComplexity int) int
+		ChunksMeasured         func(childComplexity int) int
+		EstimatedCostUSD       func(childComplexity int) int
+		EstimatedTokens        func(childComplexity int) int
+		InputCostPerMillionUSD func(childComplexity int) int
+		ModelKey               func(childComplexity int) int
+		RemainingBudgetUSD     func(childComplexity int) int
+		SourceType             func(childComplexity int) int
+		Sources                func(childComplexity int) int
+	}
+
+	AIRetrievalSettings struct {
+		ActiveModelKey           func(childComplexity int) int
+		Dimensions               func(childComplexity int) int
+		DocumentsEnabled         func(childComplexity int) int
+		InboundMessagesEnabled   func(childComplexity int) int
+		MemoryEnabled            func(childComplexity int) int
+		MonthlyIndexingBudgetUSD func(childComplexity int) int
+		Paused                   func(childComplexity int) int
+		PausedAt                 func(childComplexity int) int
+		PausedReason             func(childComplexity int) int
+		PendingDimensions        func(childComplexity int) int
+		PendingModelKey          func(childComplexity int) int
+		UpdatedAt                func(childComplexity int) int
+		Version                  func(childComplexity int) int
+	}
+
+	AIRetrievalSourceStatus struct {
+		Enabled       func(childComplexity int) int
+		Failed        func(childComplexity int) int
+		Indexed       func(childComplexity int) int
+		LastAttemptAt func(childComplexity int) int
+		LastIndexedAt func(childComplexity int) int
+		Pending       func(childComplexity int) int
+		Skipped       func(childComplexity int) int
+		SourceType    func(childComplexity int) int
+		Total         func(childComplexity int) int
+	}
+
+	AIRetrievalStatus struct {
+		Availability           func(childComplexity int) int
+		ConfiguredModelDiffers func(childComplexity int) int
+		ConfiguredModelKey     func(childComplexity int) int
+		IndexingCostMonthUSD   func(childComplexity int) int
+		IndexingUnpricedCalls  func(childComplexity int) int
+		LastIndexedAt          func(childComplexity int) int
+		ModelChange            func(childComplexity int) int
+		MonthStartedAt         func(childComplexity int) int
+		RetrievalCostMonthUSD  func(childComplexity int) int
+		RetrievalUnpricedCalls func(childComplexity int) int
+		Settings               func(childComplexity int) int
+		Sources                func(childComplexity int) int
 	}
 
 	AIUsageFailure struct {
@@ -7068,6 +7165,7 @@ type ComplexityRoot struct {
 		RecordWorkerEmploymentEvent           func(childComplexity int, input gqlmodel.RecordWorkerEmploymentEventInput) int
 		RecordWorkerInjury                    func(childComplexity int, input gqlmodel.RecordWorkerInjuryInput) int
 		RegenerateBriefing                    func(childComplexity int, input gqlmodel.TodaysBriefingInput) int
+		ReindexAIRetrievalSource              func(childComplexity int, sourceType airetrieval.SourceType) int
 		RejectCarrierInvoiceMatch             func(childComplexity int, input gqlmodel.CarrierInvoiceMatchActionInput) int
 		RejectCarrierSettlement               func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		RejectDriverSettlement                func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
@@ -7158,6 +7256,7 @@ type ComplexityRoot struct {
 		UncertifyOshaSummary                  func(childComplexity int, year int) int
 		UnpinShipmentComment                  func(childComplexity int, shipmentID string, commentID string) int
 		UnresolveShipmentComment              func(childComplexity int, shipmentID string, commentID string) int
+		UpdateAIRetrievalSettings             func(childComplexity int, input gqlmodel.AIRetrievalSettingsPatchInput) int
 		UpdateAgentControl                    func(childComplexity int, input gqlmodel.AgentControlInput) int
 		UpdateAgentEvalCase                   func(childComplexity int, id string, input gqlmodel.UpdateAgentEvalCaseInput) int
 		UpdateAgentMemory                     func(childComplexity int, id string, input gqlmodel.AgentMemoryInput) int
@@ -8184,6 +8283,9 @@ type ComplexityRoot struct {
 		AiFeedback                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AiProvider                          func(childComplexity int, id string) int
 		AiProviders                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AiRetrievalFailedEntryConnection    func(childComplexity int, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) int
+		AiRetrievalReindexEstimate          func(childComplexity int, sourceType airetrieval.SourceType) int
+		AiRetrievalStatus                   func(childComplexity int) int
 		AiUsageSummary                      func(childComplexity int, since *int) int
 		ApprovalDelegations                 func(childComplexity int, delegatorID *string, delegateID *string, activeOnly *bool) int
 		ArAgingSummary                      func(childComplexity int, asOfDate *int) int
@@ -12908,6 +13010,429 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AIProviderTestOutcome.TestedAt(childComplexity), true
+
+	case "AIRetrievalAvailability.available":
+		if e.ComplexityRoot.AIRetrievalAvailability.Available == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalAvailability.Available(childComplexity), true
+	case "AIRetrievalAvailability.extensionInstalled":
+		if e.ComplexityRoot.AIRetrievalAvailability.ExtensionInstalled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalAvailability.ExtensionInstalled(childComplexity), true
+	case "AIRetrievalAvailability.extensionVersion":
+		if e.ComplexityRoot.AIRetrievalAvailability.ExtensionVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalAvailability.ExtensionVersion(childComplexity), true
+	case "AIRetrievalAvailability.reason":
+		if e.ComplexityRoot.AIRetrievalAvailability.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalAvailability.Reason(childComplexity), true
+
+	case "AIRetrievalFailedEntry.attempts":
+		if e.ComplexityRoot.AIRetrievalFailedEntry.Attempts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntry.Attempts(childComplexity), true
+	case "AIRetrievalFailedEntry.error":
+		if e.ComplexityRoot.AIRetrievalFailedEntry.Error == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntry.Error(childComplexity), true
+	case "AIRetrievalFailedEntry.id":
+		if e.ComplexityRoot.AIRetrievalFailedEntry.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntry.ID(childComplexity), true
+	case "AIRetrievalFailedEntry.lastAttemptAt":
+		if e.ComplexityRoot.AIRetrievalFailedEntry.LastAttemptAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntry.LastAttemptAt(childComplexity), true
+	case "AIRetrievalFailedEntry.modelKey":
+		if e.ComplexityRoot.AIRetrievalFailedEntry.ModelKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntry.ModelKey(childComplexity), true
+	case "AIRetrievalFailedEntry.nextAttemptAt":
+		if e.ComplexityRoot.AIRetrievalFailedEntry.NextAttemptAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntry.NextAttemptAt(childComplexity), true
+	case "AIRetrievalFailedEntry.sourceId":
+		if e.ComplexityRoot.AIRetrievalFailedEntry.SourceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntry.SourceID(childComplexity), true
+	case "AIRetrievalFailedEntry.sourceType":
+		if e.ComplexityRoot.AIRetrievalFailedEntry.SourceType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntry.SourceType(childComplexity), true
+	case "AIRetrievalFailedEntry.status":
+		if e.ComplexityRoot.AIRetrievalFailedEntry.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntry.Status(childComplexity), true
+
+	case "AIRetrievalFailedEntryConnection.edges":
+		if e.ComplexityRoot.AIRetrievalFailedEntryConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntryConnection.Edges(childComplexity), true
+	case "AIRetrievalFailedEntryConnection.pageInfo":
+		if e.ComplexityRoot.AIRetrievalFailedEntryConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntryConnection.PageInfo(childComplexity), true
+	case "AIRetrievalFailedEntryConnection.totalCount":
+		if e.ComplexityRoot.AIRetrievalFailedEntryConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntryConnection.TotalCount(childComplexity), true
+
+	case "AIRetrievalFailedEntryEdge.cursor":
+		if e.ComplexityRoot.AIRetrievalFailedEntryEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntryEdge.Cursor(childComplexity), true
+	case "AIRetrievalFailedEntryEdge.node":
+		if e.ComplexityRoot.AIRetrievalFailedEntryEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalFailedEntryEdge.Node(childComplexity), true
+
+	case "AIRetrievalModelChange.dimensions":
+		if e.ComplexityRoot.AIRetrievalModelChange.Dimensions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalModelChange.Dimensions(childComplexity), true
+	case "AIRetrievalModelChange.failed":
+		if e.ComplexityRoot.AIRetrievalModelChange.Failed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalModelChange.Failed(childComplexity), true
+	case "AIRetrievalModelChange.fromModelKey":
+		if e.ComplexityRoot.AIRetrievalModelChange.FromModelKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalModelChange.FromModelKey(childComplexity), true
+	case "AIRetrievalModelChange.indexed":
+		if e.ComplexityRoot.AIRetrievalModelChange.Indexed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalModelChange.Indexed(childComplexity), true
+	case "AIRetrievalModelChange.pending":
+		if e.ComplexityRoot.AIRetrievalModelChange.Pending == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalModelChange.Pending(childComplexity), true
+	case "AIRetrievalModelChange.toModelKey":
+		if e.ComplexityRoot.AIRetrievalModelChange.ToModelKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalModelChange.ToModelKey(childComplexity), true
+	case "AIRetrievalModelChange.total":
+		if e.ComplexityRoot.AIRetrievalModelChange.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalModelChange.Total(childComplexity), true
+
+	case "AIRetrievalReindexEstimate.averageChunks":
+		if e.ComplexityRoot.AIRetrievalReindexEstimate.AverageChunks == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalReindexEstimate.AverageChunks(childComplexity), true
+	case "AIRetrievalReindexEstimate.averageTokensPerChunk":
+		if e.ComplexityRoot.AIRetrievalReindexEstimate.AverageTokensPerChunk == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalReindexEstimate.AverageTokensPerChunk(childComplexity), true
+	case "AIRetrievalReindexEstimate.chunksMeasured":
+		if e.ComplexityRoot.AIRetrievalReindexEstimate.ChunksMeasured == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalReindexEstimate.ChunksMeasured(childComplexity), true
+	case "AIRetrievalReindexEstimate.estimatedCostUsd":
+		if e.ComplexityRoot.AIRetrievalReindexEstimate.EstimatedCostUSD == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalReindexEstimate.EstimatedCostUSD(childComplexity), true
+	case "AIRetrievalReindexEstimate.estimatedTokens":
+		if e.ComplexityRoot.AIRetrievalReindexEstimate.EstimatedTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalReindexEstimate.EstimatedTokens(childComplexity), true
+	case "AIRetrievalReindexEstimate.inputCostPerMillionUsd":
+		if e.ComplexityRoot.AIRetrievalReindexEstimate.InputCostPerMillionUSD == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalReindexEstimate.InputCostPerMillionUSD(childComplexity), true
+	case "AIRetrievalReindexEstimate.modelKey":
+		if e.ComplexityRoot.AIRetrievalReindexEstimate.ModelKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalReindexEstimate.ModelKey(childComplexity), true
+	case "AIRetrievalReindexEstimate.remainingBudgetUsd":
+		if e.ComplexityRoot.AIRetrievalReindexEstimate.RemainingBudgetUSD == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalReindexEstimate.RemainingBudgetUSD(childComplexity), true
+	case "AIRetrievalReindexEstimate.sourceType":
+		if e.ComplexityRoot.AIRetrievalReindexEstimate.SourceType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalReindexEstimate.SourceType(childComplexity), true
+	case "AIRetrievalReindexEstimate.sources":
+		if e.ComplexityRoot.AIRetrievalReindexEstimate.Sources == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalReindexEstimate.Sources(childComplexity), true
+
+	case "AIRetrievalSettings.activeModelKey":
+		if e.ComplexityRoot.AIRetrievalSettings.ActiveModelKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.ActiveModelKey(childComplexity), true
+	case "AIRetrievalSettings.dimensions":
+		if e.ComplexityRoot.AIRetrievalSettings.Dimensions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.Dimensions(childComplexity), true
+	case "AIRetrievalSettings.documentsEnabled":
+		if e.ComplexityRoot.AIRetrievalSettings.DocumentsEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.DocumentsEnabled(childComplexity), true
+	case "AIRetrievalSettings.inboundMessagesEnabled":
+		if e.ComplexityRoot.AIRetrievalSettings.InboundMessagesEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.InboundMessagesEnabled(childComplexity), true
+	case "AIRetrievalSettings.memoryEnabled":
+		if e.ComplexityRoot.AIRetrievalSettings.MemoryEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.MemoryEnabled(childComplexity), true
+	case "AIRetrievalSettings.monthlyIndexingBudgetUsd":
+		if e.ComplexityRoot.AIRetrievalSettings.MonthlyIndexingBudgetUSD == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.MonthlyIndexingBudgetUSD(childComplexity), true
+	case "AIRetrievalSettings.paused":
+		if e.ComplexityRoot.AIRetrievalSettings.Paused == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.Paused(childComplexity), true
+	case "AIRetrievalSettings.pausedAt":
+		if e.ComplexityRoot.AIRetrievalSettings.PausedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.PausedAt(childComplexity), true
+	case "AIRetrievalSettings.pausedReason":
+		if e.ComplexityRoot.AIRetrievalSettings.PausedReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.PausedReason(childComplexity), true
+	case "AIRetrievalSettings.pendingDimensions":
+		if e.ComplexityRoot.AIRetrievalSettings.PendingDimensions == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.PendingDimensions(childComplexity), true
+	case "AIRetrievalSettings.pendingModelKey":
+		if e.ComplexityRoot.AIRetrievalSettings.PendingModelKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.PendingModelKey(childComplexity), true
+	case "AIRetrievalSettings.updatedAt":
+		if e.ComplexityRoot.AIRetrievalSettings.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.UpdatedAt(childComplexity), true
+	case "AIRetrievalSettings.version":
+		if e.ComplexityRoot.AIRetrievalSettings.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSettings.Version(childComplexity), true
+
+	case "AIRetrievalSourceStatus.enabled":
+		if e.ComplexityRoot.AIRetrievalSourceStatus.Enabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSourceStatus.Enabled(childComplexity), true
+	case "AIRetrievalSourceStatus.failed":
+		if e.ComplexityRoot.AIRetrievalSourceStatus.Failed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSourceStatus.Failed(childComplexity), true
+	case "AIRetrievalSourceStatus.indexed":
+		if e.ComplexityRoot.AIRetrievalSourceStatus.Indexed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSourceStatus.Indexed(childComplexity), true
+	case "AIRetrievalSourceStatus.lastAttemptAt":
+		if e.ComplexityRoot.AIRetrievalSourceStatus.LastAttemptAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSourceStatus.LastAttemptAt(childComplexity), true
+	case "AIRetrievalSourceStatus.lastIndexedAt":
+		if e.ComplexityRoot.AIRetrievalSourceStatus.LastIndexedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSourceStatus.LastIndexedAt(childComplexity), true
+	case "AIRetrievalSourceStatus.pending":
+		if e.ComplexityRoot.AIRetrievalSourceStatus.Pending == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSourceStatus.Pending(childComplexity), true
+	case "AIRetrievalSourceStatus.skipped":
+		if e.ComplexityRoot.AIRetrievalSourceStatus.Skipped == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSourceStatus.Skipped(childComplexity), true
+	case "AIRetrievalSourceStatus.sourceType":
+		if e.ComplexityRoot.AIRetrievalSourceStatus.SourceType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSourceStatus.SourceType(childComplexity), true
+	case "AIRetrievalSourceStatus.total":
+		if e.ComplexityRoot.AIRetrievalSourceStatus.Total == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalSourceStatus.Total(childComplexity), true
+
+	case "AIRetrievalStatus.availability":
+		if e.ComplexityRoot.AIRetrievalStatus.Availability == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.Availability(childComplexity), true
+	case "AIRetrievalStatus.configuredModelDiffers":
+		if e.ComplexityRoot.AIRetrievalStatus.ConfiguredModelDiffers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.ConfiguredModelDiffers(childComplexity), true
+	case "AIRetrievalStatus.configuredModelKey":
+		if e.ComplexityRoot.AIRetrievalStatus.ConfiguredModelKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.ConfiguredModelKey(childComplexity), true
+	case "AIRetrievalStatus.indexingCostMonthUsd":
+		if e.ComplexityRoot.AIRetrievalStatus.IndexingCostMonthUSD == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.IndexingCostMonthUSD(childComplexity), true
+	case "AIRetrievalStatus.indexingUnpricedCalls":
+		if e.ComplexityRoot.AIRetrievalStatus.IndexingUnpricedCalls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.IndexingUnpricedCalls(childComplexity), true
+	case "AIRetrievalStatus.lastIndexedAt":
+		if e.ComplexityRoot.AIRetrievalStatus.LastIndexedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.LastIndexedAt(childComplexity), true
+	case "AIRetrievalStatus.modelChange":
+		if e.ComplexityRoot.AIRetrievalStatus.ModelChange == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.ModelChange(childComplexity), true
+	case "AIRetrievalStatus.monthStartedAt":
+		if e.ComplexityRoot.AIRetrievalStatus.MonthStartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.MonthStartedAt(childComplexity), true
+	case "AIRetrievalStatus.retrievalCostMonthUsd":
+		if e.ComplexityRoot.AIRetrievalStatus.RetrievalCostMonthUSD == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.RetrievalCostMonthUSD(childComplexity), true
+	case "AIRetrievalStatus.retrievalUnpricedCalls":
+		if e.ComplexityRoot.AIRetrievalStatus.RetrievalUnpricedCalls == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.RetrievalUnpricedCalls(childComplexity), true
+	case "AIRetrievalStatus.settings":
+		if e.ComplexityRoot.AIRetrievalStatus.Settings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.Settings(childComplexity), true
+	case "AIRetrievalStatus.sources":
+		if e.ComplexityRoot.AIRetrievalStatus.Sources == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIRetrievalStatus.Sources(childComplexity), true
 
 	case "AIUsageFailure.at":
 		if e.ComplexityRoot.AIUsageFailure.At == nil {
@@ -45795,6 +46320,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RegenerateBriefing(childComplexity, args["input"].(gqlmodel.TodaysBriefingInput)), true
+	case "Mutation.reindexAIRetrievalSource":
+		if e.ComplexityRoot.Mutation.ReindexAIRetrievalSource == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_reindexAIRetrievalSource_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ReindexAIRetrievalSource(childComplexity, args["sourceType"].(airetrieval.SourceType)), true
 	case "Mutation.rejectCarrierInvoiceMatch":
 		if e.ComplexityRoot.Mutation.RejectCarrierInvoiceMatch == nil {
 			break
@@ -46775,6 +47311,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UnresolveShipmentComment(childComplexity, args["shipmentId"].(string), args["commentId"].(string)), true
+	case "Mutation.updateAIRetrievalSettings":
+		if e.ComplexityRoot.Mutation.UpdateAIRetrievalSettings == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAIRetrievalSettings_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateAIRetrievalSettings(childComplexity, args["input"].(gqlmodel.AIRetrievalSettingsPatchInput)), true
 	case "Mutation.updateAgentControl":
 		if e.ComplexityRoot.Mutation.UpdateAgentControl == nil {
 			break
@@ -52201,6 +52748,34 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AiProviders(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.aiRetrievalFailedEntryConnection":
+		if e.ComplexityRoot.Query.AiRetrievalFailedEntryConnection == nil {
+			break
+		}
+
+		args, err := ec.field_Query_aiRetrievalFailedEntryConnection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AiRetrievalFailedEntryConnection(childComplexity, args["sourceType"].(*airetrieval.SourceType), args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.aiRetrievalReindexEstimate":
+		if e.ComplexityRoot.Query.AiRetrievalReindexEstimate == nil {
+			break
+		}
+
+		args, err := ec.field_Query_aiRetrievalReindexEstimate_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AiRetrievalReindexEstimate(childComplexity, args["sourceType"].(airetrieval.SourceType)), true
+	case "Query.aiRetrievalStatus":
+		if e.ComplexityRoot.Query.AiRetrievalStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.AiRetrievalStatus(childComplexity), true
 	case "Query.aiUsageSummary":
 		if e.ComplexityRoot.Query.AiUsageSummary == nil {
 			break
@@ -74542,6 +75117,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAIFeedbackTargetInput,
+		ec.unmarshalInputAIRetrievalSettingsPatchInput,
 		ec.unmarshalInputAcknowledgeMyPolicyInput,
 		ec.unmarshalInputAddCarrierSettlementAdjustmentInput,
 		ec.unmarshalInputAddSettlementAdjustmentInput,
@@ -77486,6 +78062,215 @@ type AIProviderConnection {
 extend type Query {
   aiProviders(input: DataTableConnectionInput!): AIProviderConnection!
   aiProvider(id: ID!): AIProvider
+}
+`, BuiltIn: false},
+	{Name: "../schema/airetrieval.graphqls", Input: `"What retrieval indexes by meaning."
+enum AIRetrievalSourceType {
+  "What the organization told its agents, or what they recorded."
+  Memory
+  "Uploaded and generated documents whose owning record may be read by a model."
+  Document
+  "Inbound email, the sender's own words only."
+  InboundMessage
+}
+
+"Where one source stands in the index under one embedding model."
+enum AIRetrievalIndexStatus {
+  "Waiting to be embedded, or waiting to retry after a failed attempt."
+  Pending
+  Indexed
+  "Every retry was spent, or the provider refused the text."
+  Failed
+  "Not embedded on purpose: retired, superseded, too sensitive or without text."
+  Skipped
+}
+
+"Why search by meaning is not answering, so every search is by keyword."
+enum AIRetrievalUnavailableReason {
+  "The database has no pgvector extension."
+  ExtensionMissing
+  "pgvector is installed but the retrieval tables are not; run trenova db enable-vector."
+  SchemaMissing
+  "pgvector is older than 0.8."
+  TooOld
+  "No enabled provider is routed the Embedding task."
+  NoProvider
+  "A person paused indexing, or every source is turned off."
+  Disabled
+  "This month's indexing budget is spent."
+  BudgetPaused
+  "A provider is routed but nothing has been indexed under its model yet."
+  NotIndexed
+  "The provider did not embed a query within its time budget."
+  QueryTimeout
+  "The provider failed to embed a query, or answered with the wrong model or size."
+  ProviderFailed
+}
+
+enum AIRetrievalPauseReason {
+  "A person paused indexing."
+  Manual
+  "The monthly indexing budget ran out; indexing resumes on its own under a new month or a raised budget."
+  Budget
+}
+
+type AIRetrievalAvailability {
+  available: Boolean!
+  "Absent when search by meaning is available."
+  reason: AIRetrievalUnavailableReason
+  extensionInstalled: Boolean!
+  extensionVersion: String
+}
+
+type AIRetrievalSettings {
+  memoryEnabled: Boolean!
+  documentsEnabled: Boolean!
+  inboundMessagesEnabled: Boolean!
+  "What indexing may spend in a calendar month (UTC)."
+  monthlyIndexingBudgetUsd: Decimal!
+  paused: Boolean!
+  pausedReason: AIRetrievalPauseReason
+  pausedAt: Timestamp
+  "The embedding model searches use: host/model@dimensions."
+  activeModelKey: String
+  dimensions: Int
+  "The model being indexed beside the active one during a model change."
+  pendingModelKey: String
+  pendingDimensions: Int
+  version: Int!
+  updatedAt: Timestamp
+}
+
+"One source type under the active embedding model."
+type AIRetrievalSourceStatus {
+  sourceType: AIRetrievalSourceType!
+  enabled: Boolean!
+  "Rows of this kind the organization keeps, indexed or not."
+  total: Int!
+  indexed: Int!
+  pending: Int!
+  failed: Int!
+  skipped: Int!
+  lastIndexedAt: Timestamp
+  lastAttemptAt: Timestamp
+}
+
+"A change of embedding model: every source is indexed under the new model beside the old one before searches move to it."
+type AIRetrievalModelChange {
+  fromModelKey: String!
+  toModelKey: String!
+  dimensions: Int!
+  "Sources of the enabled types that must be indexed under the new model."
+  total: Int!
+  "Indexed or skipped under the new model."
+  indexed: Int!
+  pending: Int!
+  failed: Int!
+}
+
+type AIRetrievalStatus {
+  availability: AIRetrievalAvailability!
+  settings: AIRetrievalSettings!
+  sources: [AIRetrievalSourceStatus!]!
+  monthStartedAt: Timestamp!
+  "What indexing has cost since the first of the month (UTC), priced calls only."
+  indexingCostMonthUsd: Decimal!
+  indexingUnpricedCalls: Int!
+  "What embedding search queries has cost since the first of the month (UTC), priced calls only."
+  retrievalCostMonthUsd: Decimal!
+  retrievalUnpricedCalls: Int!
+  lastIndexedAt: Timestamp
+  "Absent unless a pending model is being indexed."
+  modelChange: AIRetrievalModelChange
+  "The model the Embedding routing names now; absent when no provider embeds."
+  configuredModelKey: String
+  "The routed model differs from the one searches use, so a model change will start or is under way."
+  configuredModelDiffers: Boolean!
+}
+
+"""
+An estimate of what re-indexing one source type would cost if every chunk were
+embedded again: sources × average chunks × average tokens × the provider's
+input price. A re-index embeds only chunks whose text changed, so the real cost
+is at most this, and nothing when nothing changed.
+"""
+type AIRetrievalReindexEstimate {
+  sourceType: AIRetrievalSourceType!
+  "The model the chunks would be embedded with."
+  modelKey: String
+  "Sources that would be embedded; skipped ones are left out."
+  sources: Int!
+  averageChunks: Float!
+  "Whether the chunks per source were measured from indexed sources rather than assumed from their text."
+  chunksMeasured: Boolean!
+  averageTokensPerChunk: Float!
+  estimatedTokens: Int!
+  "Absent when the provider has no input price."
+  inputCostPerMillionUsd: Decimal
+  "Absent when the provider has no input price or no model is routed."
+  estimatedCostUsd: Decimal
+  "What is left of this month's indexing budget."
+  remainingBudgetUsd: Decimal!
+}
+
+"A source whose last attempt to index failed, with the error kept for it."
+type AIRetrievalFailedEntry {
+  id: ID!
+  sourceType: AIRetrievalSourceType!
+  sourceId: ID!
+  modelKey: String!
+  "Failed when no retry is left; Pending when another attempt is scheduled."
+  status: AIRetrievalIndexStatus!
+  attempts: Int!
+  error: String!
+  lastAttemptAt: Timestamp
+  nextAttemptAt: Timestamp
+}
+
+type AIRetrievalFailedEntryEdge {
+  node: AIRetrievalFailedEntry!
+  cursor: String!
+}
+
+type AIRetrievalFailedEntryConnection {
+  edges: [AIRetrievalFailedEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+Changes only the fields given. Turning paused off also lifts a budget pause;
+indexing pauses again at once if the month's cost is still at the budget.
+"""
+input AIRetrievalSettingsPatchInput {
+  memoryEnabled: Boolean @goField(omittable: true)
+  documentsEnabled: Boolean @goField(omittable: true)
+  inboundMessagesEnabled: Boolean @goField(omittable: true)
+  monthlyIndexingBudgetUsd: Decimal @goField(omittable: true)
+  paused: Boolean @goField(omittable: true)
+}
+
+extend type Query {
+  "Whether search by meaning works, what is indexed, and what it has cost this month."
+  aiRetrievalStatus: AIRetrievalStatus!
+  "What re-indexing one source type would cost at most."
+  aiRetrievalReindexEstimate(sourceType: AIRetrievalSourceType!): AIRetrievalReindexEstimate!
+  """
+  The thousand most recent sources whose indexing failed or is waiting to retry,
+  for one source type or all of them, a page at a time. Filters on sourceType,
+  status, sourceId, modelKey, error and attempts; sorts on those and on
+  lastAttemptAt and nextAttemptAt.
+  """
+  aiRetrievalFailedEntryConnection(
+    sourceType: AIRetrievalSourceType
+    input: DataTableConnectionInput!
+  ): AIRetrievalFailedEntryConnection!
+}
+
+extend type Mutation {
+  updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
+  "Marks every source of one type stale; only chunks whose text changed are embedded again."
+  reindexAIRetrievalSource(sourceType: AIRetrievalSourceType!): AIRetrievalStatus!
 }
 `, BuiltIn: false},
 	{Name: "../schema/aiusage.graphqls", Input: `"""
@@ -97895,6 +98680,198 @@ func (ec *executionContext) childFields_AIProviderTestOutcome(ctx context.Contex
 		return ec.fieldContext_AIProviderTestOutcome_testedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AIProviderTestOutcome", field.Name)
+}
+
+func (ec *executionContext) childFields_AIRetrievalAvailability(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "available":
+		return ec.fieldContext_AIRetrievalAvailability_available(ctx, field)
+	case "reason":
+		return ec.fieldContext_AIRetrievalAvailability_reason(ctx, field)
+	case "extensionInstalled":
+		return ec.fieldContext_AIRetrievalAvailability_extensionInstalled(ctx, field)
+	case "extensionVersion":
+		return ec.fieldContext_AIRetrievalAvailability_extensionVersion(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIRetrievalAvailability", field.Name)
+}
+
+func (ec *executionContext) childFields_AIRetrievalFailedEntry(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AIRetrievalFailedEntry_id(ctx, field)
+	case "sourceType":
+		return ec.fieldContext_AIRetrievalFailedEntry_sourceType(ctx, field)
+	case "sourceId":
+		return ec.fieldContext_AIRetrievalFailedEntry_sourceId(ctx, field)
+	case "modelKey":
+		return ec.fieldContext_AIRetrievalFailedEntry_modelKey(ctx, field)
+	case "status":
+		return ec.fieldContext_AIRetrievalFailedEntry_status(ctx, field)
+	case "attempts":
+		return ec.fieldContext_AIRetrievalFailedEntry_attempts(ctx, field)
+	case "error":
+		return ec.fieldContext_AIRetrievalFailedEntry_error(ctx, field)
+	case "lastAttemptAt":
+		return ec.fieldContext_AIRetrievalFailedEntry_lastAttemptAt(ctx, field)
+	case "nextAttemptAt":
+		return ec.fieldContext_AIRetrievalFailedEntry_nextAttemptAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIRetrievalFailedEntry", field.Name)
+}
+
+func (ec *executionContext) childFields_AIRetrievalFailedEntryConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AIRetrievalFailedEntryConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AIRetrievalFailedEntryConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AIRetrievalFailedEntryConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIRetrievalFailedEntryConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AIRetrievalFailedEntryEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AIRetrievalFailedEntryEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AIRetrievalFailedEntryEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIRetrievalFailedEntryEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AIRetrievalModelChange(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "fromModelKey":
+		return ec.fieldContext_AIRetrievalModelChange_fromModelKey(ctx, field)
+	case "toModelKey":
+		return ec.fieldContext_AIRetrievalModelChange_toModelKey(ctx, field)
+	case "dimensions":
+		return ec.fieldContext_AIRetrievalModelChange_dimensions(ctx, field)
+	case "total":
+		return ec.fieldContext_AIRetrievalModelChange_total(ctx, field)
+	case "indexed":
+		return ec.fieldContext_AIRetrievalModelChange_indexed(ctx, field)
+	case "pending":
+		return ec.fieldContext_AIRetrievalModelChange_pending(ctx, field)
+	case "failed":
+		return ec.fieldContext_AIRetrievalModelChange_failed(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIRetrievalModelChange", field.Name)
+}
+
+func (ec *executionContext) childFields_AIRetrievalReindexEstimate(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "sourceType":
+		return ec.fieldContext_AIRetrievalReindexEstimate_sourceType(ctx, field)
+	case "modelKey":
+		return ec.fieldContext_AIRetrievalReindexEstimate_modelKey(ctx, field)
+	case "sources":
+		return ec.fieldContext_AIRetrievalReindexEstimate_sources(ctx, field)
+	case "averageChunks":
+		return ec.fieldContext_AIRetrievalReindexEstimate_averageChunks(ctx, field)
+	case "chunksMeasured":
+		return ec.fieldContext_AIRetrievalReindexEstimate_chunksMeasured(ctx, field)
+	case "averageTokensPerChunk":
+		return ec.fieldContext_AIRetrievalReindexEstimate_averageTokensPerChunk(ctx, field)
+	case "estimatedTokens":
+		return ec.fieldContext_AIRetrievalReindexEstimate_estimatedTokens(ctx, field)
+	case "inputCostPerMillionUsd":
+		return ec.fieldContext_AIRetrievalReindexEstimate_inputCostPerMillionUsd(ctx, field)
+	case "estimatedCostUsd":
+		return ec.fieldContext_AIRetrievalReindexEstimate_estimatedCostUsd(ctx, field)
+	case "remainingBudgetUsd":
+		return ec.fieldContext_AIRetrievalReindexEstimate_remainingBudgetUsd(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIRetrievalReindexEstimate", field.Name)
+}
+
+func (ec *executionContext) childFields_AIRetrievalSettings(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "memoryEnabled":
+		return ec.fieldContext_AIRetrievalSettings_memoryEnabled(ctx, field)
+	case "documentsEnabled":
+		return ec.fieldContext_AIRetrievalSettings_documentsEnabled(ctx, field)
+	case "inboundMessagesEnabled":
+		return ec.fieldContext_AIRetrievalSettings_inboundMessagesEnabled(ctx, field)
+	case "monthlyIndexingBudgetUsd":
+		return ec.fieldContext_AIRetrievalSettings_monthlyIndexingBudgetUsd(ctx, field)
+	case "paused":
+		return ec.fieldContext_AIRetrievalSettings_paused(ctx, field)
+	case "pausedReason":
+		return ec.fieldContext_AIRetrievalSettings_pausedReason(ctx, field)
+	case "pausedAt":
+		return ec.fieldContext_AIRetrievalSettings_pausedAt(ctx, field)
+	case "activeModelKey":
+		return ec.fieldContext_AIRetrievalSettings_activeModelKey(ctx, field)
+	case "dimensions":
+		return ec.fieldContext_AIRetrievalSettings_dimensions(ctx, field)
+	case "pendingModelKey":
+		return ec.fieldContext_AIRetrievalSettings_pendingModelKey(ctx, field)
+	case "pendingDimensions":
+		return ec.fieldContext_AIRetrievalSettings_pendingDimensions(ctx, field)
+	case "version":
+		return ec.fieldContext_AIRetrievalSettings_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AIRetrievalSettings_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIRetrievalSettings", field.Name)
+}
+
+func (ec *executionContext) childFields_AIRetrievalSourceStatus(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "sourceType":
+		return ec.fieldContext_AIRetrievalSourceStatus_sourceType(ctx, field)
+	case "enabled":
+		return ec.fieldContext_AIRetrievalSourceStatus_enabled(ctx, field)
+	case "total":
+		return ec.fieldContext_AIRetrievalSourceStatus_total(ctx, field)
+	case "indexed":
+		return ec.fieldContext_AIRetrievalSourceStatus_indexed(ctx, field)
+	case "pending":
+		return ec.fieldContext_AIRetrievalSourceStatus_pending(ctx, field)
+	case "failed":
+		return ec.fieldContext_AIRetrievalSourceStatus_failed(ctx, field)
+	case "skipped":
+		return ec.fieldContext_AIRetrievalSourceStatus_skipped(ctx, field)
+	case "lastIndexedAt":
+		return ec.fieldContext_AIRetrievalSourceStatus_lastIndexedAt(ctx, field)
+	case "lastAttemptAt":
+		return ec.fieldContext_AIRetrievalSourceStatus_lastAttemptAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIRetrievalSourceStatus", field.Name)
+}
+
+func (ec *executionContext) childFields_AIRetrievalStatus(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "availability":
+		return ec.fieldContext_AIRetrievalStatus_availability(ctx, field)
+	case "settings":
+		return ec.fieldContext_AIRetrievalStatus_settings(ctx, field)
+	case "sources":
+		return ec.fieldContext_AIRetrievalStatus_sources(ctx, field)
+	case "monthStartedAt":
+		return ec.fieldContext_AIRetrievalStatus_monthStartedAt(ctx, field)
+	case "indexingCostMonthUsd":
+		return ec.fieldContext_AIRetrievalStatus_indexingCostMonthUsd(ctx, field)
+	case "indexingUnpricedCalls":
+		return ec.fieldContext_AIRetrievalStatus_indexingUnpricedCalls(ctx, field)
+	case "retrievalCostMonthUsd":
+		return ec.fieldContext_AIRetrievalStatus_retrievalCostMonthUsd(ctx, field)
+	case "retrievalUnpricedCalls":
+		return ec.fieldContext_AIRetrievalStatus_retrievalUnpricedCalls(ctx, field)
+	case "lastIndexedAt":
+		return ec.fieldContext_AIRetrievalStatus_lastIndexedAt(ctx, field)
+	case "modelChange":
+		return ec.fieldContext_AIRetrievalStatus_modelChange(ctx, field)
+	case "configuredModelKey":
+		return ec.fieldContext_AIRetrievalStatus_configuredModelKey(ctx, field)
+	case "configuredModelDiffers":
+		return ec.fieldContext_AIRetrievalStatus_configuredModelDiffers(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIRetrievalStatus", field.Name)
 }
 
 func (ec *executionContext) childFields_AIUsageFailure(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

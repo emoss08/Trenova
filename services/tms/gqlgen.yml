@@ -2065,6 +2065,39 @@ models:
   AIEmbeddingInputStyle:
     model:
       - github.com/emoss08/trenova/internal/core/domain/aiprovider.EmbeddingInputStyle
+  AIRetrievalSourceType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/airetrieval.SourceType
+  AIRetrievalIndexStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/airetrieval.IndexStatus
+  AIRetrievalUnavailableReason:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/airetrieval.UnavailableReason
+  AIRetrievalPauseReason:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/airetrieval.PauseReason
+  AIRetrievalAvailability:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalAvailability
+  AIRetrievalSettings:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalSettings
+  AIRetrievalSourceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalSourceStatus
+  AIRetrievalModelChange:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalModelChange
+  AIRetrievalStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalStatus
+  AIRetrievalReindexEstimate:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalReindexEstimate
+  AIRetrievalFailedEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIRetrievalFailedEntry
   AgentStarter:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.Starter

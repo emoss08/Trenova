@@ -7,6 +7,7 @@ import {
   LayoutDashboardIcon,
   PlugZapIcon,
   PuzzleIcon,
+  ScanSearchIcon,
   ShieldCheckIcon,
   TargetIcon,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const ICONS: Record<AIControlTab, typeof BotIcon> = {
   providers: PlugZapIcon,
   extensions: PuzzleIcon,
   memory: BrainIcon,
+  retrieval: ScanSearchIcon,
   safety: ShieldCheckIcon,
   quality: TargetIcon,
   activity: ActivityIcon,
@@ -140,6 +142,7 @@ const LABELS: Record<AIControlTab, { label: string }> = {
   providers: { label: "Providers" },
   extensions: { label: "Extensions" },
   memory: { label: "Memory" },
+  retrieval: { label: "Retrieval" },
   safety: { label: "Safety" },
   quality: { label: "Quality" },
   activity: { label: "Activity" },

@@ -767,3 +767,130 @@ always gate. To record:
 cd services/tms && ollama pull nomic-embed-text && TRENOVA_EVAL_OLLAMA_URL=http://localhost:11434 go test -tags nofitz -count=1 -run 'TestRecordRetrievalEmbeddingFixture' ./internal/core/services/retrievalservice/ -record
 task test-db-image && TRENOVA_TEST_POSTGRES_IMAGE=trenova-postgres:local go test -tags 'integration nofitz' -count=1 -run 'TestRetrievalAgainstFloors' ./internal/core/services/retrievalservice/ -update
 ```
+
+## Retrieval in AI Control
+
+**AI control → Retrieval** is where an operator sees whether agents find things by meaning, what
+the index holds and costs, and fixes what stops it. It sits in the rail after **Memory**. The
+server side is `internal/core/services/airetrievalstatusservice` behind
+`serviceports.AIRetrievalStatusService`; the resolvers only check the permission and map.
+
+### GraphQL
+
+`internal/api/graphql/schema/airetrieval.graphqls`. Every root field checks the `AIProvider`
+resource: read for the queries, update for the mutations (the index is the providers' work, and
+its cost is theirs). The types bind to the port's view structs, so `projection.yml` needs no
+entries.
+
+| Field | Answers |
+| --- | --- |
+| `aiRetrievalStatus` | `availability` (`available`, `reason`: every `UnavailableReason`, `extensionInstalled`, `extensionVersion`), `settings`, `sources`, the month's `indexingCostMonthUsd` / `retrievalCostMonthUsd` (surfaces `Indexing` and `Retrieval`, priced calls only, with the unpriced call counts), `lastIndexedAt`, `modelChange`, `configuredModelKey` and `configuredModelDiffers` |
+| `aiRetrievalReindexEstimate(sourceType)` | what re-indexing one source type could cost at most |
+| `aiRetrievalFailedEntryConnection(sourceType, input)` | the entries whose last attempt failed, for one source type or all |
+| `updateAIRetrievalSettings(input)` | patches the settings and returns the new status |
+| `reindexAIRetrievalSource(sourceType)` | starts `ReindexRetrievalSourceWorkflow` through `RetrievalIndexer.Reindex` and returns the status |
+
+**Availability** is `QueryVectorizer.Availability`: the storage probe, then a person's pause
+(`Disabled`) or the budget's (`BudgetPaused`), then the routing (`NoProvider`), then an active
+key (`NotIndexed`). `QueryTimeout` and `ProviderFailed` come only from a query and are in the
+enum so a client can show a search's own reason.
+
+**Sources** are always all three, in `AllSourceTypes` order. `total` counts the organization's
+rows of that kind (`RetrievalSourceRepository.CountSources`); `indexed`, `pending`, `failed`,
+`skipped` and the last indexed and attempted times are `CountIndexEntries` under the **active**
+key. Without an active key they are zero and no entry is read.
+
+**Model change** is present only while `pending_model_key` is set: `total` is the rows of the
+enabled source types, `indexed` counts entries under the pending key that are indexed or skipped,
+and `pending` and `failed` the rest. `total` is never less than the entries counted, so the share
+never passes 1.
+
+The status gathers its reads concurrently (`errgroup`). A business refusal from
+`EmbeddingService.ConfiguredModelKey` (AI off, no provider) reads as no configured model; any
+other failure fails the query.
+
+### Settings
+
+`AIRetrievalSettingsPatchInput` marks every field `@goField(omittable: true)`: an absent field is
+left alone, and an explicit `null` is refused, because none of them can be cleared. The fields are
+the three source toggles, `monthlyIndexingBudgetUsd` and `paused`. The model keys are the
+indexer's and are never patched.
+
+- `paused: true` pauses with reason `Manual`, stamping `paused_at` unless a person had already
+  paused it. Pausing over a budget pause makes it a person's pause, which `Plan` never lifts.
+- `paused: false` clears any pause. A budget pause lifted while the month's cost is still at the
+  budget comes back on the indexer's next round, so a person cannot spend past the budget by
+  resuming.
+- The service reads the current row, applies the patch, validates it with
+  `airetrieval.Settings.Validate`, and writes it at the version it read. The indexer also writes
+  this row (adopting a model, pausing at the budget), so a version conflict is retried up to three
+  times against a fresh read; a patch only ever changes the fields it names.
+- A real change is audited under `AIProvider` and wakes the indexer (`RetrievalIndexPipeline.Wake`)
+  unless a person paused it, so a raised budget or a source turned on takes effect within
+  seconds rather than at the next hourly sweep.
+
+There is no `resumeAIRetrievalIndexing`. `SetPaused` does not need one: a budget pause is lifted
+by `Plan` as soon as the budget allows, and a person's pause is `paused: false`.
+
+### Re-index and its estimate
+
+`reindexAIRetrievalSource` is refused, with the fix in the message, when the source is turned off,
+the storage probe says pgvector is missing, too old or its tables are missing, no provider is
+routed, or nothing has an active key yet (indexing starts on its own). While indexing is paused
+the re-index is accepted and waits for the pause to end.
+
+The estimate is labelled an estimate everywhere, and is the most a full re-embed could cost:
+
+```
+sources × average chunks × average tokens per chunk × input price per million / 1,000,000
+```
+
+- **sources**: `CountSources` minus the entries `Skipped` under the active key.
+- **average chunks**: measured, `AVG(chunk_count)` over `Indexed` entries of the type under the
+  active key (`AverageIndexChunks`), capped at the chunker's maximum; when none are indexed,
+  assumed: one for a memory, otherwise the sampled text length over the chunker's stride
+  (350 tokens less the 15% overlap). `chunksMeasured` says which.
+- **average tokens per chunk**: from the average text length of the newest 500 rows
+  (`AverageSourceChars`, `LENGTH` so SQLite answers too) at four characters a token, spread over
+  the chunks with the overlap, capped at the 350-token window, plus a header allowance
+  (`ChunkHeaderTokens` 24, `MemoryHeaderTokens` 8).
+- **price**: `InputCostPerMillion` of the first enabled provider that can serve Embedding under
+  the configured model key (the active key when none is configured). A provider without a price
+  gives no cost, never zero.
+
+`remainingBudgetUsd` is the monthly budget less the month's `Indexing` cost, never below zero; the
+dialog warns when the estimate is more.
+
+### Failed items
+
+`ListErroredIndexEntries` reads, under the active and pending keys, entries that are `Failed` and
+entries still `Pending` with a `last_error` (a retry is scheduled), newest attempt first, at most
+1,000. `pkg/memtable` then searches (error, source id, model key), filters (`sourceType`,
+`status`, `sourceId`, `modelKey`, `error`, `attempts`), sorts (those and `lastAttemptAt`,
+`nextAttemptAt`) and pages them, and counts only when `totalCount` is selected. A row's `id` is
+`<sourceType>:<sourceId>@<modelKey>`.
+
+### The section
+
+`client/apps/web/src/routes/agent-control/_components/retrieval/`:
+
+- **Notice** (`<Alert size="sm">`): one entry in `UNAVAILABLE_NOTICE` per reason, each with its
+  fix: the `trenova db enable-vector` command for `ExtensionMissing`, `TooOld` and
+  `SchemaMissing`; **Open Providers** for `NoProvider`, `QueryTimeout` and `ProviderFailed`;
+  **Go to the settings** for `Disabled` and `BudgetPaused`; none for `NotIndexed`, which starts on
+  its own.
+- **Figures** (`KpiStrip`): **Indexed**, **Pending** (queued entries and rows the sweep has not
+  reached), **Failed**, **Cost this month** against the indexing budget, **Last run**.
+- **Sources** (`SectionPanel`): each source's state, counts and last indexed time, **Re-index**
+  (with the estimate dialog) and **Show failures**, and the model change's progress. States map to
+  phases: Pending → queued, Indexing → active, Indexed → complete, Failed → failed,
+  Paused → attention, Off → closed.
+- **Settings** (`SectionPanel`): the source toggles, the monthly budget and **Pause indexing**,
+  saved as a patch of what changed.
+- **Failed items**: the section's one `DataTable`. **Show failures** narrows it to a source
+  through the `retrievalSource` address key, which moving to another section clears.
+
+The rail says **On**, how many items are left to index or failed, **Paused**, **Starting**,
+**Budget spent**, **Provider failing** or **Words only**, with the warning dot only when something
+already set up has stopped (a spent budget, a failing provider, missing tables, pgvector too
+old). An installation that never set retrieval up is not told something is wrong.

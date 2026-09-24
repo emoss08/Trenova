@@ -1,6 +1,6 @@
 {
-  "operationCount": 837,
-  "fragmentCount": 227,
+  "operationCount": 842,
+  "fragmentCount": 229,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -1415,6 +1415,75 @@
       ],
       "usages": [],
       "sdl": "query AIProviderDetail($id: ID!) {\n  aiProvider(id: $id) {\n    ...AIProviderCardFields\n  }\n}\n\nfragment AIProviderCardFields on AIProvider {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  kind\n  baseUrl\n  model\n  hasApiKey\n  allowPrivateNetwork\n  structuredOutputMode\n  reasoningEffort\n  extraBody\n  inputCostPerMillion\n  outputCostPerMillion\n  maxTokens\n  tasks\n  priority\n  embeddingDimensions\n  embeddingInputStyle\n  trusted\n  enabled\n  lastTest {\n    success\n    message\n    modelIdentifier\n    schemaHonoured\n    latencyMs\n    detail\n    testedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AIRetrievalFailedEntryTable",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/retrieval.graphql",
+      "hash": "sha256:f66b10c655b8b92d46cf9375a72fc29311347e8ed92be27582ec46ac36812a05",
+      "rootFields": [
+        "aiRetrievalFailedEntryConnection"
+      ],
+      "variables": [
+        {
+          "name": "sourceType",
+          "type": "AIRetrievalSourceType",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "AIRetrievalFailedEntryFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AIRetrievalFailedEntryTable($sourceType: AIRetrievalSourceType, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  aiRetrievalFailedEntryConnection(sourceType: $sourceType, input: $input) {\n    edges {\n      node {\n        ...AIRetrievalFailedEntryFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AIRetrievalFailedEntryFields on AIRetrievalFailedEntry {\n  id\n  sourceType\n  sourceId\n  modelKey\n  status\n  attempts\n  error\n  lastAttemptAt\n  nextAttemptAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AIRetrievalReindexEstimate",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/retrieval.graphql",
+      "hash": "sha256:85b255f3bd3740a8ef61d5d36bacdd75730c8aaa3b04b64844d48218e59f41bf",
+      "rootFields": [
+        "aiRetrievalReindexEstimate"
+      ],
+      "variables": [
+        {
+          "name": "sourceType",
+          "type": "AIRetrievalSourceType!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query AIRetrievalReindexEstimate($sourceType: AIRetrievalSourceType!) {\n  aiRetrievalReindexEstimate(sourceType: $sourceType) {\n    sourceType\n    modelKey\n    sources\n    averageChunks\n    chunksMeasured\n    averageTokensPerChunk\n    estimatedTokens\n    inputCostPerMillionUsd\n    estimatedCostUsd\n    remainingBudgetUsd\n  }\n}"
+    },
+    {
+      "name": "AIRetrievalStatus",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/retrieval.graphql",
+      "hash": "sha256:cd6c1de4d0da2748bf0688c1b7431a7d641dce7c1c000bb9b1c85bf3c3553481",
+      "rootFields": [
+        "aiRetrievalStatus"
+      ],
+      "variables": [],
+      "fragments": [
+        "AIRetrievalStatusFields"
+      ],
+      "usages": [],
+      "sdl": "query AIRetrievalStatus {\n  aiRetrievalStatus {\n    ...AIRetrievalStatusFields\n  }\n}\n\nfragment AIRetrievalStatusFields on AIRetrievalStatus {\n  availability {\n    available\n    reason\n    extensionInstalled\n    extensionVersion\n  }\n  settings {\n    memoryEnabled\n    documentsEnabled\n    inboundMessagesEnabled\n    monthlyIndexingBudgetUsd\n    paused\n    pausedReason\n    pausedAt\n    activeModelKey\n    dimensions\n    pendingModelKey\n    pendingDimensions\n    version\n    updatedAt\n  }\n  sources {\n    sourceType\n    enabled\n    total\n    indexed\n    pending\n    failed\n    skipped\n    lastIndexedAt\n    lastAttemptAt\n  }\n  monthStartedAt\n  indexingCostMonthUsd\n  indexingUnpricedCalls\n  retrievalCostMonthUsd\n  retrievalUnpricedCalls\n  lastIndexedAt\n  modelChange {\n    fromModelKey\n    toModelKey\n    dimensions\n    total\n    indexed\n    pending\n    failed\n  }\n  configuredModelKey\n  configuredModelDiffers\n}"
     },
     {
       "name": "AIUsageSummary",
@@ -12560,6 +12629,28 @@
       "sdl": "mutation RegenerateBriefing($input: TodaysBriefingInput!) {\n  regenerateBriefing(input: $input) {\n    ...BriefingFields\n  }\n}\n\nfragment BriefingFields on Briefing {\n  id\n  roleKey\n  briefingDate\n  status\n  headline\n  narrated\n  readAt\n  sections {\n    key\n    title\n    summary\n    body\n    read\n    path\n    items {\n      label\n      value\n      path\n    }\n  }\n}"
     },
     {
+      "name": "ReindexAIRetrievalSource",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/retrieval.graphql",
+      "hash": "sha256:e12a16a86ab028021de08057a122aca1c4003046b2ebfd026f416b7232e9979c",
+      "rootFields": [
+        "reindexAIRetrievalSource"
+      ],
+      "variables": [
+        {
+          "name": "sourceType",
+          "type": "AIRetrievalSourceType!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AIRetrievalStatusFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ReindexAIRetrievalSource($sourceType: AIRetrievalSourceType!) {\n  reindexAIRetrievalSource(sourceType: $sourceType) {\n    ...AIRetrievalStatusFields\n  }\n}\n\nfragment AIRetrievalStatusFields on AIRetrievalStatus {\n  availability {\n    available\n    reason\n    extensionInstalled\n    extensionVersion\n  }\n  settings {\n    memoryEnabled\n    documentsEnabled\n    inboundMessagesEnabled\n    monthlyIndexingBudgetUsd\n    paused\n    pausedReason\n    pausedAt\n    activeModelKey\n    dimensions\n    pendingModelKey\n    pendingDimensions\n    version\n    updatedAt\n  }\n  sources {\n    sourceType\n    enabled\n    total\n    indexed\n    pending\n    failed\n    skipped\n    lastIndexedAt\n    lastAttemptAt\n  }\n  monthStartedAt\n  indexingCostMonthUsd\n  indexingUnpricedCalls\n  retrievalCostMonthUsd\n  retrievalUnpricedCalls\n  lastIndexedAt\n  modelChange {\n    fromModelKey\n    toModelKey\n    dimensions\n    total\n    indexed\n    pending\n    failed\n  }\n  configuredModelKey\n  configuredModelDiffers\n}"
+    },
+    {
       "name": "RejectCarrierInvoiceMatch",
       "kind": "mutation",
       "domain": "carrier-settlement",
@@ -16414,6 +16505,28 @@
       "sdl": "mutation UpdateAgentQualityControl($input: UpdateAgentQualityControlInput!) {\n  updateAgentQualityControl(input: $input) {\n    ...AgentQualityControlFields\n  }\n}\n\nfragment AgentQualityControlFields on AgentQualityControl {\n  id\n  enabled\n  runHourLocal\n  timezone\n  maxCasesPerAgent\n  nightlyBudgetUsd\n  monthlyBudgetUsd\n  judgeEnabled\n  judgeSampleRate\n  regressionThreshold\n  minCases\n  forceRerunDays\n  version\n  updatedAt\n}"
     },
     {
+      "name": "UpdateAIRetrievalSettings",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/retrieval.graphql",
+      "hash": "sha256:f7dbeff8284e4d9a3415e034e3323fed148e823f8a4cd1686ac3177dea576c4c",
+      "rootFields": [
+        "updateAIRetrievalSettings"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AIRetrievalSettingsPatchInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AIRetrievalStatusFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateAIRetrievalSettings($input: AIRetrievalSettingsPatchInput!) {\n  updateAIRetrievalSettings(input: $input) {\n    ...AIRetrievalStatusFields\n  }\n}\n\nfragment AIRetrievalStatusFields on AIRetrievalStatus {\n  availability {\n    available\n    reason\n    extensionInstalled\n    extensionVersion\n  }\n  settings {\n    memoryEnabled\n    documentsEnabled\n    inboundMessagesEnabled\n    monthlyIndexingBudgetUsd\n    paused\n    pausedReason\n    pausedAt\n    activeModelKey\n    dimensions\n    pendingModelKey\n    pendingDimensions\n    version\n    updatedAt\n  }\n  sources {\n    sourceType\n    enabled\n    total\n    indexed\n    pending\n    failed\n    skipped\n    lastIndexedAt\n    lastAttemptAt\n  }\n  monthStartedAt\n  indexingCostMonthUsd\n  indexingUnpricedCalls\n  retrievalCostMonthUsd\n  retrievalUnpricedCalls\n  lastIndexedAt\n  modelChange {\n    fromModelKey\n    toModelKey\n    dimensions\n    total\n    indexed\n    pending\n    failed\n  }\n  configuredModelKey\n  configuredModelDiffers\n}"
+    },
+    {
       "name": "UpdateBenefitPlan",
       "kind": "mutation",
       "domain": "benefits",
@@ -19701,6 +19814,32 @@
       "sdl": "fragment AIProviderCardFields on AIProvider {\n  id\n  organizationId\n  businessUnitId\n  name\n  description\n  kind\n  baseUrl\n  model\n  hasApiKey\n  allowPrivateNetwork\n  structuredOutputMode\n  reasoningEffort\n  extraBody\n  inputCostPerMillion\n  outputCostPerMillion\n  maxTokens\n  tasks\n  priority\n  embeddingDimensions\n  embeddingInputStyle\n  trusted\n  enabled\n  lastTest {\n    success\n    message\n    modelIdentifier\n    schemaHonoured\n    latencyMs\n    detail\n    testedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AIRetrievalFailedEntryFields",
+      "typeCondition": "AIRetrievalFailedEntry",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/retrieval.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AIRetrievalFailedEntryTable"
+      ],
+      "usages": [],
+      "sdl": "fragment AIRetrievalFailedEntryFields on AIRetrievalFailedEntry {\n  id\n  sourceType\n  sourceId\n  modelKey\n  status\n  attempts\n  error\n  lastAttemptAt\n  nextAttemptAt\n}"
+    },
+    {
+      "name": "AIRetrievalStatusFields",
+      "typeCondition": "AIRetrievalStatus",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/retrieval.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AIRetrievalStatus",
+        "ReindexAIRetrievalSource",
+        "UpdateAIRetrievalSettings"
+      ],
+      "usages": [],
+      "sdl": "fragment AIRetrievalStatusFields on AIRetrievalStatus {\n  availability {\n    available\n    reason\n    extensionInstalled\n    extensionVersion\n  }\n  settings {\n    memoryEnabled\n    documentsEnabled\n    inboundMessagesEnabled\n    monthlyIndexingBudgetUsd\n    paused\n    pausedReason\n    pausedAt\n    activeModelKey\n    dimensions\n    pendingModelKey\n    pendingDimensions\n    version\n    updatedAt\n  }\n  sources {\n    sourceType\n    enabled\n    total\n    indexed\n    pending\n    failed\n    skipped\n    lastIndexedAt\n    lastAttemptAt\n  }\n  monthStartedAt\n  indexingCostMonthUsd\n  indexingUnpricedCalls\n  retrievalCostMonthUsd\n  retrievalUnpricedCalls\n  lastIndexedAt\n  modelChange {\n    fromModelKey\n    toModelKey\n    dimensions\n    total\n    indexed\n    pending\n    failed\n  }\n  configuredModelKey\n  configuredModelDiffers\n}"
+    },
+    {
       "name": "ApiKeyTableRowFields",
       "typeCondition": "ApiKey",
       "domain": "api-key",
@@ -20173,6 +20312,7 @@
         "AgentWorstRatedAnswerTable",
         "AIFeedbackTable",
         "AIProviderCards",
+        "AIRetrievalFailedEntryTable",
         "ApiKeyTable",
         "AuditLogTable",
         "CarrierCostEventTable",
@@ -23081,6 +23221,46 @@
         }
       ],
       "sdl": "input AIFeedbackTargetInput {\n  targetId: ID!\n  \"\"\"Required for a briefing section, its key; empty otherwise.\"\"\"\n  targetPart: String\n  targetType: AIFeedbackTargetType!\n}"
+    },
+    "AIRetrievalSettingsPatchInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "documentsEnabled",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "inboundMessagesEnabled",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "memoryEnabled",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "monthlyIndexingBudgetUsd",
+          "type": "Decimal",
+          "defaultValue": null
+        },
+        {
+          "name": "paused",
+          "type": "Boolean",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nChanges only the fields given. Turning paused off also lifts a budget pause;\nindexing pauses again at once if the month's cost is still at the budget.\n\"\"\"\ninput AIRetrievalSettingsPatchInput {\n  documentsEnabled: Boolean @goField(omittable: true)\n  inboundMessagesEnabled: Boolean @goField(omittable: true)\n  memoryEnabled: Boolean @goField(omittable: true)\n  monthlyIndexingBudgetUsd: Decimal @goField(omittable: true)\n  paused: Boolean @goField(omittable: true)\n}"
+    },
+    "AIRetrievalSourceType": {
+      "kind": "enum",
+      "values": [
+        "Document",
+        "InboundMessage",
+        "Memory"
+      ],
+      "sdl": "\"\"\"What retrieval indexes by meaning.\"\"\"\nenum AIRetrievalSourceType {\n  \"\"\"\n  Uploaded and generated documents whose owning record may be read by a model.\n  \"\"\"\n  Document\n  \"\"\"Inbound email, the sender's own words only.\"\"\"\n  InboundMessage\n  \"\"\"What the organization told its agents, or what they recorded.\"\"\"\n  Memory\n}"
     },
     "AmendWorkerEmploymentEventInput": {
       "kind": "input",
