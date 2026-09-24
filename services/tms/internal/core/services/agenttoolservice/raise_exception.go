@@ -55,7 +55,8 @@ func (t *raiseExceptionTool) ParamSchema() map[string]any {
 				"type": "string",
 				"description": "The id of that record: usually this run's subject, or an id a " +
 					"tool such as get_shipment or list_shipments returned. Its prefix must " +
-					"match subjectType: a report's id starts rd_, an insight's inst_.",
+					"match subjectType: a report's id starts rd_, a dashboard's rdb_, an " +
+					"insight's inst_.",
 			},
 			"category": map[string]any{
 				"type":        "string",

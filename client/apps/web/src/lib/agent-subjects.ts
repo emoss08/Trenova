@@ -9,6 +9,7 @@ import { recordPath, type RecordEntityType } from "@/config/record-links";
 const SUBJECT_RECORDS: Partial<Record<AgentSubjectType, RecordEntityType>> = {
   AssistantThread: "assistant_thread",
   BillingQueueItem: "billing_queue_item",
+  Dashboard: "dashboard",
   EDIInboundFile: "edi_inbound_file",
   Report: "report",
   Shipment: "shipment",

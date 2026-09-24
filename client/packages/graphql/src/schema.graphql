@@ -1438,6 +1438,7 @@ enum AgentSubjectType {
   BankReceipt
   BillingQueueItem
   CarrierIntelEvent
+  Dashboard
   DetentionOccurrence
   Document
   EDIInboundFile

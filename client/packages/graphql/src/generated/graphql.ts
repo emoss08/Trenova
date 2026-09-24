@@ -326,6 +326,7 @@ export type AgentSubjectType =
   | 'BankReceipt'
   | 'BillingQueueItem'
   | 'CarrierIntelEvent'
+  | 'Dashboard'
   | 'DetentionOccurrence'
   | 'Document'
   | 'EDIInboundFile'

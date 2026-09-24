@@ -363,10 +363,9 @@ func TestFinishTurn_ResumesTheFollowUpsItKeptOut(t *testing.T) {
 	assert.Equal(t, turn.OrganizationID, followUps.resumed[0].TenantInfo.OrgID)
 }
 
-// A turn that never got as far as a plan saved nothing, a follow-up that
-// could not be prepared among them. Resuming from it would start the same
-// failing follow-up again, for ever.
-func TestFinishTurn_DoesNotResumeFromATurnThatNeverStarted(t *testing.T) {
+// A question turned away before it was planned still held the conversation
+// while a decision was made, so it resumes the report it kept out.
+func TestFinishTurn_ResumesFromAQuestionTurnedAway(t *testing.T) {
 	t.Parallel()
 
 	turn := runningTurn()
@@ -377,5 +376,29 @@ func TestFinishTurn_DoesNotResumeFromATurnThatNeverStarted(t *testing.T) {
 	finish(t, a, finishInput(turn))
 
 	require.Len(t, records.completed, 1)
-	assert.Empty(t, followUps.resumed)
+	require.Len(t, followUps.resumed, 1)
+	assert.Equal(t, turn.ThreadID, followUps.resumed[0].ThreadID)
+}
+
+// A follow-up that could not be prepared saved no note. Resuming from it
+// would start the same failing follow-up again, for ever.
+func TestFinishTurn_DoesNotResumeFromAFollowUpThatNeverStarted(t *testing.T) {
+	t.Parallel()
+
+	for name, request := range map[string]AssistantTurnRequest{
+		"proposal": {FollowUpProposalID: pulid.MustNew("aprop_")},
+		"plan":     {FollowUpPlanID: pulid.MustNew("apl_")},
+	} {
+		turn := runningTurn()
+		a, records := finishActivities(turn, newLedger())
+		followUps := &resumedFollowUps{}
+		a.followUps = followUps
+		in := finishInput(turn)
+		in.Payload.Request = request
+
+		finish(t, a, in)
+
+		require.Lenf(t, records.completed, 1, name)
+		assert.Emptyf(t, followUps.resumed, name)
+	}
 }

@@ -90,6 +90,12 @@ type AssistantTurnRequest struct {
 	Awaited bool `json:"awaited,omitempty"`
 }
 
+// reportsDecision says the turn was started to report a decision rather than
+// to answer something the person asked.
+func (r AssistantTurnRequest) reportsDecision() bool {
+	return r.FollowUpProposalID.IsNotNil() || r.FollowUpPlanID.IsNotNil()
+}
+
 // AssistantTurnResult is what the turn came to.
 type AssistantTurnResult struct {
 	Status  string `json:"status"`

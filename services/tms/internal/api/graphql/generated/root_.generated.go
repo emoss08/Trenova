@@ -72677,6 +72677,7 @@ enum AgentSubjectType {
   EDIInboundFile
   InboundMessage
   Report
+  Dashboard
 }
 
 enum AgentRunTrigger {

@@ -6,6 +6,10 @@ describe("agentSubjectPath", () => {
     expect(agentSubjectPath("Report", "rd_01J")).toBe("/reports/explore/rd_01J");
   });
 
+  it("opens a dashboard an exception is about on the dashboard", () => {
+    expect(agentSubjectPath("Dashboard", "rdb_01J")).toBe("/reports/dashboards/rdb_01J");
+  });
+
   it("opens a shipment on its own page", () => {
     expect(agentSubjectPath("Shipment", "shp_01J")).toBe(
       "/shipment-management/shipments?expanded=shp_01J&panelType=edit&panelEntityId=shp_01J",

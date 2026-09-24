@@ -117,6 +117,11 @@ var subjectTables = map[agent.SubjectType]subjectTable{
 		tenant: buncolgen.ReportDefinitionApplyTenant,
 		id:     buncolgen.ReportDefinitionColumns.ID,
 	},
+	agent.SubjectDashboard: {
+		model:  func() any { return (*report.Dashboard)(nil) },
+		tenant: buncolgen.DashboardApplyTenant,
+		id:     buncolgen.DashboardColumns.ID,
+	},
 }
 
 func (r *repository) Exists(

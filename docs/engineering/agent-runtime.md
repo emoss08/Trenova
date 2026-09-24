@@ -237,12 +237,13 @@ conversation, whoever decided it and wherever. `agentdecisionservice` and
 `assistantfollowupservice` opens a turn with origin `DecisionFollowUp`, as the
 thread's owner. A conversation already producing a reply is not interrupted,
 and the reply under way read the proposal before it was decided, so it cannot
-report it. Instead the follow-up waits: when a turn that got as far as a plan
-closes its record, `FinishTurnActivity` asks `DecisionFollowUpResumer` to
-start the follow-up for the oldest decision in the last day that the thread
-carries no Decision note for. That follow-up resumes the next one when it
-ends, so decisions made in a burst (several cards approved in a row, or a
-batch from the decisions inbox) are each reported, in order.
+report it. Instead the follow-up waits: when a turn closes its record,
+`FinishTurnActivity` asks `DecisionFollowUpResumer` to start the follow-up for
+the oldest decision in the last day that the thread carries no Decision note
+for. That follow-up resumes the next one when it ends, so decisions made in a
+burst (several cards approved in a row, or a batch from the decisions inbox)
+are each reported, in order. A follow-up turned away before it was planned
+saved no note and does not resume, or it would start itself again.
 
 Every turn also reads what became of the conversation's proposals. A replayed
 tool result that recorded a proposal is swapped for its current state; a

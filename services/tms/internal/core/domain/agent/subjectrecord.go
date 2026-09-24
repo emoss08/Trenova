@@ -27,6 +27,7 @@ var subjectRecords = map[SubjectType]subjectRecord{
 	SubjectEDIInboundFile:      {"ediinf_", "EDI inbound file", "an"},
 	SubjectInboundMessage:      {"imsg_", "inbound message", "an"},
 	SubjectReport:              {"rd_", "report", "a"},
+	SubjectDashboard:           {"rdb_", "dashboard", "a"},
 }
 
 var subjectsByPrefix = func() map[string]SubjectType {

@@ -206,11 +206,12 @@ func (a *Activities) FinishTurnActivity(
 // proposals before that decision, so it could not report it, and the
 // decision's own follow-up found the conversation busy.
 //
-// A turn that never got as far as a plan saved nothing, a follow-up that
-// could not be prepared among them; resuming from it would start the same
-// failing follow-up again, so the conversation's next turn resumes instead.
+// A turn the person started resumes however it ended, since it held the
+// conversation either way. A follow-up that could not be prepared does not:
+// it saved no note, so resuming from it would start the same failing
+// follow-up again, and the conversation's next turn resumes instead.
 func (a *Activities) resumeFollowUps(ctx context.Context, in *FinishTurnInput) {
-	if a.followUps == nil || in.Plan == nil {
+	if a.followUps == nil || (in.Plan == nil && in.Payload.Request.reportsDecision()) {
 		return
 	}
 
