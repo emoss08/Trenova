@@ -166,6 +166,174 @@
                     "CategoryExpense"
                 ]
             },
+            "agent.RecordRef": {
+                "properties": {
+                    "entityType": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "agent.RunTaint": {
+                "properties": {
+                    "marks": {
+                        "items": {
+                            "$ref": "#/components/schemas/agent.TaintMark"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "agent.SubjectType": {
+                "enum": [
+                    "BillingQueueItem",
+                    "ShipmentMove",
+                    "AssistantThread",
+                    "Shipment",
+                    "Document",
+                    "Organization",
+                    "Insight",
+                    "BankReceipt",
+                    "DetentionOccurrence",
+                    "Worker",
+                    "CarrierIntelEvent",
+                    "EDIInboundFile",
+                    "InboundMessage",
+                    "Report",
+                    "Dashboard",
+                    "FormulaTemplate"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "SubjectBillingQueueItem",
+                    "SubjectShipmentMove",
+                    "SubjectAssistantThread",
+                    "SubjectShipment",
+                    "SubjectDocument",
+                    "SubjectOrganization",
+                    "SubjectInsight",
+                    "SubjectBankReceipt",
+                    "SubjectDetentionOccurrence",
+                    "SubjectWorker",
+                    "SubjectCarrierIntelEvent",
+                    "SubjectEDIInboundFile",
+                    "SubjectInboundMessage",
+                    "SubjectReport",
+                    "SubjectDashboard",
+                    "SubjectFormulaTemplate"
+                ]
+            },
+            "agent.TaintMark": {
+                "properties": {
+                    "at": {
+                        "type": "integer"
+                    },
+                    "callId": {
+                        "type": "string"
+                    },
+                    "ref": {
+                        "$ref": "#/components/schemas/agent.RecordRef"
+                    },
+                    "source": {
+                        "$ref": "#/components/schemas/agent.TaintSource"
+                    },
+                    "toolName": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "agent.TaintSource": {
+                "enum": [
+                    "inbound_message",
+                    "document",
+                    "edi",
+                    "bank_receipt",
+                    "weather",
+                    "attachment",
+                    "memory",
+                    "run_record",
+                    "web",
+                    "record_note"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "TaintSourceInboundMessage",
+                    "TaintSourceDocument",
+                    "TaintSourceEDI",
+                    "TaintSourceBankReceipt",
+                    "TaintSourceWeather",
+                    "TaintSourceAttachment",
+                    "TaintSourceMemory",
+                    "TaintSourceRunRecord",
+                    "TaintSourceWeb",
+                    "TaintSourceRecordNote"
+                ]
+            },
+            "agentdefinition.Starter": {
+                "properties": {
+                    "label": {
+                        "type": "string"
+                    },
+                    "prompt": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "agentdefinition.Template": {
+                "enum": [
+                    "DispatchAssistant",
+                    "BillingAssistant",
+                    "ComplianceAssistant",
+                    "CustomerAssistant",
+                    "GeneralAssistant",
+                    "BillingException",
+                    "DispatchAssignment",
+                    "ImportAssistant",
+                    "LoadMonitor",
+                    "ShipmentIntake",
+                    "CashApplication",
+                    "DetentionDesk",
+                    "CredentialDesk",
+                    "CustomerUpdateDesk",
+                    "CarrierRiskDesk",
+                    "IntakeDesk",
+                    "LoadEntryCheck",
+                    "ServiceFailureDesk",
+                    "InsightAnalyst",
+                    "EDIDesk",
+                    "FormulaAssistant"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "TemplateDispatchAssistant",
+                    "TemplateBillingAssistant",
+                    "TemplateComplianceAssistant",
+                    "TemplateCustomerAssistant",
+                    "TemplateGeneralAssistant",
+                    "TemplateBillingException",
+                    "TemplateDispatchAssignment",
+                    "TemplateImportAssistant",
+                    "TemplateLoadMonitor",
+                    "TemplateShipmentIntake",
+                    "TemplateCashApplication",
+                    "TemplateDetentionDesk",
+                    "TemplateCredentialDesk",
+                    "TemplateCustomerUpdateDesk",
+                    "TemplateCarrierRiskDesk",
+                    "TemplateIntakeDesk",
+                    "TemplateLoadEntryCheck",
+                    "TemplateServiceFailureDesk",
+                    "TemplateInsightAnalyst",
+                    "TemplateEDIDesk",
+                    "TemplateFormulaAssistant"
+                ]
+            },
             "apikeyservice.AllowedResourceCategory": {
                 "properties": {
                     "category": {
@@ -1226,6 +1394,140 @@
                     "FreightClass300",
                     "FreightClass400",
                     "FreightClass500"
+                ]
+            },
+            "conversation.ContinueRefusal": {
+                "enum": [
+                    "AgentDeleted",
+                    "AgentDisabled",
+                    "AgentNotConversational",
+                    "NoAccess"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ContinueAgentDeleted",
+                    "ContinueAgentDisabled",
+                    "ContinueAgentNotConversational",
+                    "ContinueNoAccess"
+                ]
+            },
+            "conversation.Thread": {
+                "properties": {
+                    "agentDefinitionId": {
+                        "type": "string"
+                    },
+                    "businessUnit": {
+                        "$ref": "#/components/schemas/tenant.BusinessUnit"
+                    },
+                    "businessUnitId": {
+                        "type": "string"
+                    },
+                    "canContinue": {
+                        "description": "CanContinue is whether the person reading the conversation may still\nask its agent anything. It is worked out when the thread is served and\nnever stored: a conversation with an agent they lost access to stays\nreadable.",
+                        "type": "boolean"
+                    },
+                    "cannotContinueReason": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/conversation.ContinueRefusal"
+                            }
+                        ],
+                        "description": "CannotContinueReason says why CanContinue is false, so the reader is\ntold whether the agent was turned off, removed, or taken from them.\nEmpty while the conversation can continue. Never stored."
+                    },
+                    "createdAt": {
+                        "type": "integer"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "lastMessageAt": {
+                        "description": "LastMessageAt orders a user's thread list without a join onto messages.",
+                        "type": "integer"
+                    },
+                    "organization": {
+                        "$ref": "#/components/schemas/tenant.Organization"
+                    },
+                    "organizationId": {
+                        "type": "string"
+                    },
+                    "origin": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/conversation.ThreadOrigin"
+                            }
+                        ],
+                        "description": "Origin is where the conversation began; Pinned keeps it at the top of\nthe Desk's rail. SubjectType and SubjectID name the record the\nconversation is about when it was opened from one, so every turn\ncarries that record's context without the person restating it."
+                    },
+                    "pinned": {
+                        "type": "boolean"
+                    },
+                    "preferredProviderId": {
+                        "description": "PreferredProviderID is the model the person chose for this conversation.\nEmpty means the organization's priority order decides, which is the\ndefault and what every thread did before the picker existed.\n\nIt is a preference, not a pin: the router tries it first and falls through\nto the rest if it fails, so a rate-limited free endpoint degrades into a\nslower answer rather than no answer. Each message records the provider\nthat actually served it, which is how the reader sees the difference.",
+                        "type": "string"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/conversation.ThreadStatus"
+                    },
+                    "subjectId": {
+                        "type": "string"
+                    },
+                    "subjectType": {
+                        "$ref": "#/components/schemas/agent.SubjectType"
+                    },
+                    "taint": {
+                        "$ref": "#/components/schemas/agent.RunTaint"
+                    },
+                    "taintedAt": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "updatedAt": {
+                        "type": "integer"
+                    },
+                    "user": {
+                        "$ref": "#/components/schemas/tenant.User"
+                    },
+                    "userId": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "conversation.ThreadOrigin": {
+                "enum": [
+                    "Panel",
+                    "Desk",
+                    "Ask",
+                    "Watchtower",
+                    "Briefing",
+                    "Import",
+                    "Formula"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ThreadOriginPanel",
+                    "ThreadOriginDesk",
+                    "ThreadOriginAsk",
+                    "ThreadOriginWatchtower",
+                    "ThreadOriginBriefing",
+                    "ThreadOriginImport",
+                    "ThreadOriginFormula"
+                ]
+            },
+            "conversation.ThreadStatus": {
+                "enum": [
+                    "Active",
+                    "Archived"
+                ],
+                "type": "string",
+                "x-enum-varnames": [
+                    "ThreadStatusActive",
+                    "ThreadStatusArchived"
                 ]
             },
             "customer.BillingCycle": {
@@ -5750,95 +6052,6 @@
                 },
                 "type": "object"
             },
-            "formulaassistantservice.ExplainFormulaRequest": {
-                "properties": {
-                    "expression": {
-                        "type": "string"
-                    },
-                    "schemaId": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "formulaassistantservice.ExplainFormulaResponse": {
-                "properties": {
-                    "explanation": {
-                        "type": "string"
-                    },
-                    "modelIdentifier": {
-                        "type": "string"
-                    }
-                },
-                "type": "object"
-            },
-            "formulaassistantservice.GenerateFormulaRequest": {
-                "properties": {
-                    "instruction": {
-                        "type": "string"
-                    },
-                    "schemaId": {
-                        "type": "string"
-                    },
-                    "templateType": {
-                        "$ref": "#/components/schemas/formulatemplate.TemplateType"
-                    }
-                },
-                "type": "object"
-            },
-            "formulaassistantservice.GenerateFormulaResponse": {
-                "properties": {
-                    "explanation": {
-                        "type": "string"
-                    },
-                    "expression": {
-                        "type": "string"
-                    },
-                    "modelIdentifier": {
-                        "type": "string"
-                    },
-                    "scenarios": {
-                        "items": {
-                            "$ref": "#/components/schemas/formulaassistantservice.ProposedScenario"
-                        },
-                        "type": "array"
-                    },
-                    "validation": {
-                        "$ref": "#/components/schemas/formulatemplateservice.TestExpressionResponse"
-                    },
-                    "variableDefinitions": {
-                        "items": {
-                            "$ref": "#/components/schemas/formulatypes.VariableDefinition"
-                        },
-                        "type": "array"
-                    }
-                },
-                "type": "object"
-            },
-            "formulaassistantservice.ProposedScenario": {
-                "properties": {
-                    "description": {
-                        "type": "string"
-                    },
-                    "error": {
-                        "type": "string"
-                    },
-                    "expectedAmount": {
-                        "type": "number"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "valid": {
-                        "type": "boolean"
-                    },
-                    "variables": {
-                        "additionalProperties": {},
-                        "type": "object"
-                    }
-                },
-                "type": "object"
-            },
             "formulatemplate.FormulaTemplate": {
                 "properties": {
                     "approvedAt": {
@@ -6231,6 +6444,14 @@
                     },
                     "sourceVersion": {
                         "type": "integer"
+                    }
+                },
+                "type": "object"
+            },
+            "formulatemplatehandler.openAssistantThreadRequest": {
+                "properties": {
+                    "templateId": {
+                        "type": "string"
                     }
                 },
                 "type": "object"
@@ -16669,6 +16890,55 @@
                     },
                     "name": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "services.PageAgent": {
+                "properties": {
+                    "accent": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "icon": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "starters": {
+                        "items": {
+                            "$ref": "#/components/schemas/agentdefinition.Starter"
+                        },
+                        "type": "array"
+                    },
+                    "systemKey": {
+                        "type": "string"
+                    },
+                    "template": {
+                        "$ref": "#/components/schemas/agentdefinition.Template"
+                    },
+                    "toolNames": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    }
+                },
+                "type": "object"
+            },
+            "services.PageThread": {
+                "properties": {
+                    "agent": {
+                        "$ref": "#/components/schemas/services.PageAgent"
+                    },
+                    "thread": {
+                        "$ref": "#/components/schemas/conversation.Thread"
                     }
                 },
                 "type": "object"
@@ -33154,6 +33424,94 @@
                 ]
             }
         },
+        "/documents/{documentID}/import-assistant/thread/": {
+            "post": {
+                "description": "Opens, or returns, the caller's conversation with the shipment import assistant about one document. Turns are then asked on it through the assistant's turn routes, carrying the page's draft. Requires document read, assistant create, and access to the import assistant.",
+                "operationId": "openImportAssistantThread",
+                "parameters": [
+                    {
+                        "description": "Document ID",
+                        "in": "path",
+                        "name": "documentID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/services.PageThread"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
+                    },
+                    "422": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unprocessable Entity"
+                    },
+                    "500": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Internal Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Open the import assistant's conversation about a document",
+                "tags": [
+                    "Documents"
+                ]
+            }
+        },
         "/documents/{documentID}/preview/": {
             "get": {
                 "operationId": "previewDocument",
@@ -37379,18 +37737,19 @@
                 ]
             }
         },
-        "/formula-templates/ai/explain": {
+        "/formula-templates/ai/thread/": {
             "post": {
-                "operationId": "explainFormulaExpression",
+                "description": "Opens, or returns, the caller's conversation with the formula assistant about one formula template, or a new one for a template not yet saved. Turns are then asked on it through the assistant's turn routes, carrying the editor's draft. Requires formula template read, assistant create, and access to the formula assistant.",
+                "operationId": "openFormulaAssistantThread",
                 "requestBody": {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/formulaassistantservice.ExplainFormulaRequest"
+                                "$ref": "#/components/schemas/formulatemplatehandler.openAssistantThreadRequest"
                             }
                         }
                     },
-                    "description": "Explanation request",
+                    "description": "The template the conversation is about, when it is saved",
                     "required": true,
                     "x-originalParamName": "request"
                 },
@@ -37399,7 +37758,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/formulaassistantservice.ExplainFormulaResponse"
+                                    "$ref": "#/components/schemas/services.PageThread"
                                 }
                             }
                         },
@@ -37424,6 +37783,16 @@
                             }
                         },
                         "description": "Unauthorized"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Forbidden"
                     },
                     "422": {
                         "content": {
@@ -37451,85 +37820,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "summary": "Explain a formula expression in plain English",
-                "tags": [
-                    "Formula Templates"
-                ]
-            }
-        },
-        "/formula-templates/ai/generate": {
-            "post": {
-                "operationId": "generateFormulaExpression",
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/formulaassistantservice.GenerateFormulaRequest"
-                            }
-                        }
-                    },
-                    "description": "Generation request",
-                    "required": true,
-                    "x-originalParamName": "request"
-                },
-                "responses": {
-                    "200": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/formulaassistantservice.GenerateFormulaResponse"
-                                }
-                            }
-                        },
-                        "description": "OK"
-                    },
-                    "400": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
-                                }
-                            }
-                        },
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
-                                }
-                            }
-                        },
-                        "description": "Unauthorized"
-                    },
-                    "422": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
-                                }
-                            }
-                        },
-                        "description": "Unprocessable Entity"
-                    },
-                    "500": {
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
-                                }
-                            }
-                        },
-                        "description": "Internal Server Error"
-                    }
-                },
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "summary": "Generate a formula expression from a natural-language description",
+                "summary": "Open the formula assistant's conversation",
                 "tags": [
                     "Formula Templates"
                 ]

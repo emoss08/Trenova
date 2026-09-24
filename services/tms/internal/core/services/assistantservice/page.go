@@ -2,7 +2,6 @@ package assistantservice
 
 import (
 	"context"
-	"fmt"
 	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -214,21 +213,6 @@ func (s *Service) claimPageThread(
 	}
 
 	return s.pageThreads.ClaimPageThread(ctx, thread)
-}
-
-func (s *Service) ClosePageThreads(
-	ctx context.Context,
-	req repositories.ArchiveSubjectThreadsRequest,
-) error {
-	if s.pageThreads == nil {
-		return nil
-	}
-	if _, err := s.pageThreads.ArchiveSubjectThreads(ctx, req); err != nil {
-		return fmt.Errorf("close the conversations about %s %s: %w",
-			req.SubjectType.Noun(), req.SubjectID, err)
-	}
-
-	return nil
 }
 
 func (s *Service) assertPageTurn(

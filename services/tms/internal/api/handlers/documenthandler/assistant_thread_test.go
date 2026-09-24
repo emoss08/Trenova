@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -69,13 +68,6 @@ func (p *pageAssistant) OpenPageThread(
 			SystemKey: "import_assistant",
 		},
 	}, nil
-}
-
-func (p *pageAssistant) ClosePageThreads(
-	context.Context,
-	repositories.ArchiveSubjectThreadsRequest,
-) error {
-	return nil
 }
 
 func openImportThread(

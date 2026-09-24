@@ -60,13 +60,6 @@ func (p *formulaPageAssistant) OpenPageThread(
 	}, nil
 }
 
-func (p *formulaPageAssistant) ClosePageThreads(
-	context.Context,
-	repositories.ArchiveSubjectThreadsRequest,
-) error {
-	return nil
-}
-
 func openFormulaThread(
 	t *testing.T,
 	granted map[string]bool,

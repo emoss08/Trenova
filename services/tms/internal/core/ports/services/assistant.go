@@ -543,7 +543,6 @@ type PageAssistant interface {
 		req *OpenPageThreadRequest,
 		actor *RequestActor,
 	) (*PageThread, error)
-	ClosePageThreads(ctx context.Context, req repositories.ArchiveSubjectThreadsRequest) error
 }
 
 type AssistantService interface {
