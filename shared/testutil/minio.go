@@ -46,13 +46,14 @@ type MinioOptions struct {
 	Bucket    string
 }
 
-// minioImage is the server the object-storage tests run against. It names
-// quay.io, which is where MinIO publishes and where docker-compose-local.yml
-// already pulls from: the Docker Hub mirror this used to track was withdrawn,
-// and an unqualified name resolves there, so every test needing a bucket failed
-// to start its container. The release is pinned so a new upstream build cannot
-// change what the suite is testing against without a commit saying so.
-const minioImage = "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z"
+// minioImage is the server the object-storage tests run against: SILO, the
+// maintained fork of MinIO (pgsty/silo), which keeps MinIO's environment
+// variables, `server` command and /minio/health/live endpoint. Upstream MinIO
+// stopped serving its images to anonymous pulls from quay.io, and the Docker
+// Hub copy was withdrawn before that. The release is pinned by tag and by the
+// multi-arch digest, so neither a new upstream build nor a re-pushed tag can
+// change what the suite runs against without a commit saying so.
+const minioImage = "docker.io/pgsty/silo:RELEASE.2026-09-16T00-00-00Z@sha256:635197cb9f36d01bee221d34d1c7d7960f6a95c48b0b6c01d99cd13bdae51a46"
 
 func DefaultMinioOptions() MinioOptions {
 	return MinioOptions{
