@@ -45151,7 +45151,7 @@
     ]
   },
   "Dashboard": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -45160,7 +45160,8 @@
       "apps/web/components",
       "apps/web/config",
       "domain/homelayout",
-      "routes/home"
+      "routes/home",
+      "service/agentsubjectservice"
     ]
   },
   "Dashboard configuration": {
@@ -135280,7 +135281,7 @@
     ]
   },
   "Report": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -135292,7 +135293,8 @@
       "routes/agent-control",
       "routes/desk",
       "routes/home",
-      "routes/reports"
+      "routes/reports",
+      "service/agentsubjectservice"
     ]
   },
   "Report actions": {
