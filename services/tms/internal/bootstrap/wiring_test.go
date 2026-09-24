@@ -74,6 +74,8 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						// It matters most in the worker, where the background runs
 						// that had no durable account of themselves execute.
 						services.AgentRunEventRecorder,
+						services.QueryVectorizer,
+						services.CatalogVectorIndex,
 					) {
 					},
 				),
