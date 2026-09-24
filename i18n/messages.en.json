@@ -123549,6 +123549,15 @@
       "domain/integration"
     ]
   },
+  "Private conversation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Private key": {
     "sites": 2,
     "scope": [
