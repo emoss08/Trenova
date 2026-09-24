@@ -82,6 +82,24 @@ Never edit the file by hand: the next generate overwrites it and CI rejects the 
 A tool constructor that dereferences a dependency while building fails the generator the
 same way it fails the contract tests; keep constructors to storing what they are given.
 
+## Agent prompt and tool snapshots
+
+The `Deterministic` job of `.github/workflows/agent-evals.yml` compares what a model is shown
+against checked-in fixtures, so **changing a prompt, a starter template, a tool's description,
+schema or policy, or adding or removing a tool means refreshing them**:
+
+```bash
+cd services/tms
+go test -tags nofitz -run TestPromptSnapshots ./internal/core/domain/agentdefinition/ -update
+go test -tags nofitz -run TestToolCatalogSnapshot ./internal/core/services/agentevalgate/ -update
+```
+
+A tool description edit can also move `find_tools` ranking below its floors
+(`agentevalgate/evals/toolselection.floors.json`); the failure lists the requests that no
+longer find their tool. Fix the description rather than the floor. The flag goes after the
+package. The job also runs the prompt-injection red-team suite; see
+[agent-evals.md](agent-evals.md) for what it proves and its known gaps.
+
 ## gqlgen
 
 - The model plugin can miss the `models_gen.go` it just wrote when a schema adds a model, so

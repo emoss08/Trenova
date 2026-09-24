@@ -1,0 +1,140 @@
+# What the runtime does to a tool call's arguments before the tool sees them.
+#
+# aliases: aliasedArguments alone, which every read and write goes through.
+# pipeline: what a write receives, aliasing then pruning to a closed schema,
+#   checked on the function and end to end through Run.
+# malformed: calls whose argument text did not parse. The tool must not run.
+aliases:
+  - name: snake case names the required parameter
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}}
+      required: [shipmentId]
+    args: {shipment_id: shp_1}
+    want: {shipmentId: shp_1}
+  - name: another capitalisation names the required parameter
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}}
+      required: [shipmentId]
+    args: {ShipmentID: shp_1}
+    want: {shipmentId: shp_1}
+  - name: hyphens name the required parameter
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}}
+      required: [shipmentId]
+    args: {shipment-id: shp_1}
+    want: {shipmentId: shp_1}
+  - name: a bare id fills the one missing id parameter
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}, note: {type: string}}
+      required: [shipmentId]
+    args: {id: shp_1, note: late}
+    want: {shipmentId: shp_1, note: late}
+  - name: a bare id is left alone when two id parameters are missing
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}, workerId: {type: string}}
+      required: [shipmentId, workerId]
+    args: {id: shp_1}
+    want: {id: shp_1}
+  - name: a bare id is left alone when the schema declares id
+    schema:
+      type: object
+      properties: {id: {type: string}, shipmentId: {type: string}}
+      required: [shipmentId]
+    args: {id: rec_1}
+    want: {id: rec_1}
+  - name: nothing is renamed when every required parameter is present
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}}
+      required: [shipmentId]
+    args: {shipmentId: shp_1, shipment_id: shp_2}
+    want: {shipmentId: shp_1, shipment_id: shp_2}
+  - name: a null required parameter counts as missing
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}}
+      required: [shipmentId]
+    args: {shipmentId: null, shipment_id: shp_1}
+    want: {shipmentId: shp_1}
+  - name: an optional parameter is never a target
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}, note: {type: string}}
+      required: [shipmentId]
+    args: {shipmentId: shp_1, NOTE: late}
+    want: {shipmentId: shp_1, NOTE: late}
+  - name: a schema without properties leaves the arguments alone
+    schema: {type: object}
+    args: {shipment_id: shp_1}
+    want: {shipment_id: shp_1}
+
+pipeline:
+  - name: a closed schema drops what it never declared
+    schema:
+      type: object
+      properties: {subjectId: {type: string}, attemptSummary: {type: string}}
+      required: [subjectId]
+      additionalProperties: false
+    args: {subjectId: shp_1, attemptSummary: no BOL, runId: ar_made_up}
+    want: {subjectId: shp_1, attemptSummary: no BOL}
+  - name: a closed schema drops a tenant the model names
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}}
+      required: [shipmentId]
+      additionalProperties: false
+    args:
+      shipmentId: shp_1
+      organizationId: org_01JOTHERTENANT000000000000
+      businessUnitId: bu_01JOTHERTENANT0000000000000
+    want: {shipmentId: shp_1}
+  - name: a closed schema drops a tier or owner the model asks for
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}}
+      required: [shipmentId]
+      additionalProperties: false
+    args: {shipmentId: shp_1, autonomyTier: AutoExecute, heldBy: [], _owner: usr_other}
+    want: {shipmentId: shp_1}
+  - name: aliasing runs before pruning
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}}
+      required: [shipmentId]
+      additionalProperties: false
+    args: {shipment_id: shp_1, runId: ar_made_up}
+    want: {shipmentId: shp_1}
+  - name: an open schema keeps what it did not declare
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}}
+      required: [shipmentId]
+      additionalProperties: true
+    args: {shipmentId: shp_1, runId: ar_1}
+    want: {shipmentId: shp_1, runId: ar_1}
+  - name: a schema that does not close itself keeps what it did not declare
+    schema:
+      type: object
+      properties: {shipmentId: {type: string}}
+      required: [shipmentId]
+    args: {shipmentId: shp_1, runId: ar_1}
+    want: {shipmentId: shp_1, runId: ar_1}
+  - name: a closed schema that declares nothing cannot say what is undeclared
+    schema:
+      type: object
+      additionalProperties: false
+    args: {shipmentId: shp_1}
+    want: {shipmentId: shp_1}
+
+malformed:
+  - name: text cut off by the output limit
+    error: unexpected end of JSON input
+  - name: a trailing comma
+    error: "invalid character '}' looking for beginning of object key string"
+  - name: a single-quoted object
+    error: "invalid character '\\'' looking for beginning of object key string"
