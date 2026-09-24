@@ -46,8 +46,9 @@ func (t *rememberTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"content": map[string]any{
 				"type": "string",
-				"description": "One or two plain sentences, at most 2000 characters, " +
-					"written so a reader with no other context understands them.",
+				"description": fmt.Sprintf("One or two plain sentences, at most %d "+
+					"characters, written so a reader with no other context understands them.",
+					agent.MaxMemoryContentChars),
 			},
 			"kind": map[string]any{
 				"type": "string",

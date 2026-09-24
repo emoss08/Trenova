@@ -176,12 +176,7 @@ func (s *Service) Remember(
 	// The same sentence about the same record is one memory. Returning the
 	// existing row is what lets an agent say "noted" twice without the
 	// prompt carrying it twice.
-	existing, err := s.repo.FindActive(ctx, repositories.FindActiveAgentMemoryRequest{
-		TenantInfo: req.TenantInfo,
-		Content:    entity.Content,
-		Subject:    subjectRefOf(entity),
-		ToolName:   entity.ToolName,
-	})
+	existing, err := s.repo.FindActive(ctx, sameMemoryRequest(req.TenantInfo, entity))
 	if err != nil {
 		return nil, err
 	}
@@ -579,11 +574,7 @@ func (s *Service) RecordCorrection(
 	}
 
 	tenant := pagination.TenantInfo{OrgID: proposal.OrganizationID, BuID: proposal.BusinessUnitID}
-	existing, err := s.repo.FindActive(ctx, repositories.FindActiveAgentMemoryRequest{
-		TenantInfo: tenant,
-		Content:    content,
-		ToolName:   proposal.ToolName,
-	})
+	existing, err := s.repo.FindActive(ctx, sameMemoryRequest(tenant, entity))
 	if err != nil {
 		return nil, err
 	}
@@ -667,6 +658,31 @@ func (s *Service) logChange(
 		BusinessUnitID: entity.BusinessUnitID,
 	}, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log agent memory audit", zap.Error(err))
+	}
+}
+
+func sameMemoryRequest(
+	tenant pagination.TenantInfo,
+	entity *agent.Memory,
+) repositories.FindActiveAgentMemoryRequest {
+	scope := entity.Scope
+	if scope == "" {
+		scope = agent.MemoryScopeOrganization
+	}
+	agentID := pulid.Nil
+	if entity.AgentDefinitionID != nil {
+		agentID = *entity.AgentDefinitionID
+	}
+
+	return repositories.FindActiveAgentMemoryRequest{
+		TenantInfo:        tenant,
+		Now:               timeutils.NowUnix(),
+		Content:           entity.Content,
+		Subject:           subjectRefOf(entity),
+		ToolName:          entity.ToolName,
+		Scope:             scope,
+		AgentDefinitionID: agentID,
+		Tainted:           entity.Tainted,
 	}
 }
 

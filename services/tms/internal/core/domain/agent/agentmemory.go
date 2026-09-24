@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -21,9 +22,19 @@ var (
 	_ validationframework.TenantedEntity = (*Memory)(nil)
 )
 
-// MaxMemoryContentChars bounds one memory. Every active memory is read into
-// a prompt, so a long one costs every run the organization makes.
-const MaxMemoryContentChars = 2000
+// MaxMemoryContentChars bounds one memory. A prompt shows at most
+// MemoryPromptExcerptChars of it and names its id, so the rest is read through
+// recall_memory rather than paid for by every run.
+const MaxMemoryContentChars = 4000
+
+const (
+	MemoryPromptExcerptChars = 1200
+	MaxMemoryCandidates      = 500
+	MemoryActiveSoftCap      = 5000
+	MemoryActiveWarnAt       = MemoryActiveSoftCap * 4 / 5
+	DefaultMemoryRecallLimit = 10
+	MaxMemoryRecallLimit     = 50
+)
 
 type MemoryKind string
 
@@ -271,7 +282,7 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&m.Content,
 			validation.Required.Error("Content is required"),
 			validation.Length(1, MaxMemoryContentChars).
-				Error("Content must be at most 2000 characters"),
+				Error("Content must be at most "+strconv.Itoa(MaxMemoryContentChars)+" characters"),
 		),
 	))
 

@@ -303,10 +303,13 @@ func (r *repository) FindActive(
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = buncolgen.MemoryScopeTenant(sq, req.TenantInfo).
-				Where(cols.Status.Eq(), agent.MemoryStatusActive).
-				Where("LOWER(TRIM("+cols.Content.Qualified()+")) = ?",
+			sq = activeOnly(buncolgen.MemoryScopeTenant(sq, req.TenantInfo), req.Now).
+				Where(cols.Content.Expr("LOWER(TRIM({})) = ?"),
 					strings.ToLower(strings.TrimSpace(req.Content)))
+			sq = sameReaders(sq, req.Scope, req.AgentDefinitionID)
+			if !req.Tainted {
+				sq = sq.Where(cols.Tainted.IsFalse())
+			}
 			if req.Subject != nil {
 				sq = sq.Where(cols.SubjectType.Eq(), req.Subject.Type).
 					Where(cols.SubjectID.Eq(), req.Subject.ID)
@@ -321,6 +324,8 @@ func (r *repository) FindActive(
 
 			return sq
 		}).
+		OrderExpr(cols.Tainted.OrderAsc()).
+		OrderExpr(cols.CreatedAt.OrderDesc()).
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
@@ -524,6 +529,20 @@ func forAgent(sq *bun.SelectQuery, agentID pulid.ID) *bun.SelectQuery {
 				Where(cols.AgentDefinitionID.Eq(), agentID)
 		})
 	})
+}
+
+func sameReaders(
+	sq *bun.SelectQuery,
+	scope agent.MemoryScope,
+	agentID pulid.ID,
+) *bun.SelectQuery {
+	cols := buncolgen.MemoryColumns
+	if scope != agent.MemoryScopeAgent {
+		return sq.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization)
+	}
+
+	return sq.Where(cols.Scope.Eq(), agent.MemoryScopeAgent).
+		Where(cols.AgentDefinitionID.Eq(), agentID)
 }
 
 func suggestionStatuses() []agent.MemoryStatus {

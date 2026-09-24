@@ -122,3 +122,14 @@ func TestRecallMemory_RefusesHalfASubject(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "both or neither")
 }
+
+func TestRecordedBy_NamesEverySource(t *testing.T) {
+	t.Parallel()
+
+	for _, source := range agent.AllMemorySources() {
+		said := recordedBy(source)
+		assert.NotEqual(t, string(source), said, "%s is named in words, not by its code", source)
+		assert.NotEmpty(t, said)
+	}
+	assert.Equal(t, "people's ratings of an agent's work", recordedBy(agent.MemorySourceFeedback))
+}

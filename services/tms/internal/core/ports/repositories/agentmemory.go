@@ -55,12 +55,18 @@ type SearchAgentMemoriesRequest struct {
 }
 
 // FindActiveAgentMemoryRequest looks for a memory that already says this,
-// so recording the same thing twice keeps one row.
+// so recording the same thing twice keeps one row. Only a row the new one
+// would have been read as counts: unexpired, kept for the same readers, and
+// never a tainted row standing in for a clean write.
 type FindActiveAgentMemoryRequest struct {
-	TenantInfo pagination.TenantInfo
-	Content    string
-	Subject    *MemorySubjectRef
-	ToolName   string
+	TenantInfo        pagination.TenantInfo
+	Now               int64
+	Content           string
+	Subject           *MemorySubjectRef
+	ToolName          string
+	Scope             agent.MemoryScope
+	AgentDefinitionID pulid.ID
+	Tainted           bool
 }
 
 type SetAgentMemoryStatusRequest struct {

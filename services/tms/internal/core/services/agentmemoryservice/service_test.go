@@ -21,6 +21,7 @@ type fakeMemoryRepo struct {
 	found   *agent.Memory
 	used    []pulid.ID
 	listed  *repositories.ListActiveAgentMemoriesRequest
+	sought  *repositories.FindActiveAgentMemoryRequest
 }
 
 func (f *fakeMemoryRepo) Create(_ context.Context, entity *agent.Memory) (*agent.Memory, error) {
@@ -31,9 +32,11 @@ func (f *fakeMemoryRepo) Create(_ context.Context, entity *agent.Memory) (*agent
 }
 
 func (f *fakeMemoryRepo) FindActive(
-	context.Context,
-	repositories.FindActiveAgentMemoryRequest,
+	_ context.Context,
+	req repositories.FindActiveAgentMemoryRequest,
 ) (*agent.Memory, error) {
+	f.sought = &req
+
 	return f.found, nil
 }
 
@@ -159,6 +162,44 @@ func TestRemember_ReturnsTheExistingRowForTheSameSentence(t *testing.T) {
 
 	assert.Same(t, existing, got)
 	assert.Empty(t, repo.created)
+}
+
+func TestRemember_LooksForTheSameMemoryOnlyWhereItWouldBeRead(t *testing.T) {
+	t.Parallel()
+
+	definitionID := pulid.MustNew("agdef_")
+	runs := &fakeRuns{run: &agent.AgentRun{AgentDefinitionID: definitionID}}
+
+	clean := &fakeMemoryRepo{}
+	_, err := newService(clean, runs, &fakeLabeler{}).Remember(t.Context(),
+		&services.RememberRequest{TenantInfo: tenant(), Content: "Quote in dollars."},
+		userActor(),
+	)
+	require.NoError(t, err)
+	require.NotNil(t, clean.sought)
+	assert.False(t, clean.sought.Tainted, "a person's own write never matches a tainted row")
+	assert.Equal(t, agent.MemoryScopeOrganization, clean.sought.Scope)
+	assert.True(t, clean.sought.AgentDefinitionID.IsNil())
+	assert.Positive(t, clean.sought.Now, "an expired row is not the same memory")
+
+	tainted := &fakeMemoryRepo{}
+	taint := &agent.RunTaint{}
+	taint.Add(agent.TaintMark{Source: agent.TaintSourceInboundMessage})
+	_, err = newService(tainted, runs, &fakeLabeler{}).Remember(t.Context(),
+		&services.RememberRequest{
+			TenantInfo: tenant(),
+			Content:    "Ship to dock 9.",
+			RunID:      pulid.MustNew("arun_"),
+			Taint:      taint,
+		},
+		userActor(),
+	)
+	require.NoError(t, err)
+	require.NotNil(t, tainted.sought)
+	assert.True(t, tainted.sought.Tainted)
+	assert.Equal(t, definitionID, tainted.sought.AgentDefinitionID)
+	assert.Equal(t, agent.MemoryScopeOrganization, tainted.sought.Scope,
+		"an agent's remember is read by every agent, so it matches only organization rows")
 }
 
 func TestForContext_ReadsOrganizationWideAndToolScopedAndCountsUse(t *testing.T) {
