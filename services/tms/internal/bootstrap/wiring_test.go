@@ -76,6 +76,11 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						services.AgentRunEventRecorder,
 						services.QueryVectorizer,
 						services.CatalogVectorIndex,
+						services.RetrievalIndexer,
+						services.RetrievalSearcher,
+						services.MemoryVectorSearcher,
+						services.MemoryRanker,
+						services.WorkflowSignalStarter,
 					) {
 					},
 				),
