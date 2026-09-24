@@ -71,6 +71,7 @@ func (s *Service) Create(
 		&servicesport.PublishResourceInvalidationRequest{
 			OrganizationID: created.OrganizationID,
 			BusinessUnitID: buID,
+			AudienceUserID: pulid.ConvertFromPtr(created.TargetUserID),
 			Resource:       "notifications",
 			Action:         "created",
 			Entity:         created,

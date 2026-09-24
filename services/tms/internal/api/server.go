@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
@@ -21,6 +22,10 @@ type Params struct {
 	Logger       *zap.Logger
 	ErrorHandler *helpers.ErrorHandler
 	LC           fx.Lifecycle
+	// Realtime ends its event streams as soon as shutdown begins. Shutdown
+	// otherwise waits on every open stream until its deadline, since a stream
+	// is a request that never finishes on its own.
+	Realtime services.RealtimeGateway `optional:"true"`
 }
 
 type Server struct {
@@ -47,6 +52,9 @@ func NewServer(p Params) (*Server, error) {
 		ReadHeaderTimeout: p.Config.Server.ReadHeaderTimeout,
 		WriteTimeout:      p.Config.Server.WriteTimeout,
 		IdleTimeout:       p.Config.Server.IdleTimeout,
+	}
+	if p.Realtime != nil {
+		httpServer.RegisterOnShutdown(p.Realtime.Drain)
 	}
 
 	server := &Server{

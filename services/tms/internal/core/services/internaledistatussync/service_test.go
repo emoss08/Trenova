@@ -707,12 +707,6 @@ type fakeRealtimeService struct {
 	published []*services.PublishResourceInvalidationRequest
 }
 
-func (fakeRealtimeService) CreateToken(
-	*services.CreateRealtimeTokenRequest,
-) (*services.RealtimeToken, error) {
-	return nil, nil
-}
-
 func (s *fakeRealtimeService) PublishResourceInvalidation(
 	_ context.Context,
 	req *services.PublishResourceInvalidationRequest,

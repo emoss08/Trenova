@@ -147,12 +147,6 @@ func (failingShipmentEventObserver) OnShipmentEvent(
 
 type noopRealtimeService struct{}
 
-func (noopRealtimeService) CreateToken(
-	*services.CreateRealtimeTokenRequest,
-) (*services.RealtimeToken, error) {
-	return nil, nil
-}
-
 func (noopRealtimeService) PublishResourceInvalidation(
 	context.Context,
 	*services.PublishResourceInvalidationRequest,

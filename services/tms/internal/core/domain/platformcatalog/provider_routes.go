@@ -300,6 +300,8 @@ func dispatchRouteRefs() []RouteRef {
 			"/api/v1/shipments/",
 			"/api/v1/shipments/:shipmentID/cancel/",
 			"/api/v1/shipments/:shipmentID/comments/",
+			"/api/v1/shipments/:shipmentID/comments/presence/",
+			"/api/v1/shipments/:shipmentID/comments/typing/",
 			"/api/v1/shipments/:shipmentID/holds/",
 			"/api/v1/shipments/:shipmentID/holds/:holdID/release/",
 			"/api/v1/shipments/:shipmentID/transfer-ownership/",
@@ -361,6 +363,7 @@ func dispatchRouteRefs() []RouteRef {
 			"/api/v1/shipment-moves/:moveID/assignment/",
 			"/api/v1/shipment-moves/:moveID/carrier-assignment/",
 			"/api/v1/shipments/:shipmentID/comments/:commentID/",
+			"/api/v1/shipments/:shipmentID/comments/presence/",
 			"/api/v1/stored-mileages/:storedMileageID/",
 		),
 	)

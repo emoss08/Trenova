@@ -105,7 +105,7 @@ func (f *bulkTransferFixture) expectShipment(entity *shipment.Shipment) {
 		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
 			return req.ID == entity.ID &&
 				req.TenantInfo == f.tenant() &&
-				!req.ExpandShipmentDetails
+				req.ExpandShipmentDetails
 		})).
 		Return(entity, nil).
 		Once()
@@ -117,14 +117,6 @@ func (f *bulkTransferFixture) expectReadiness(
 	control *tenant.BillingControl,
 	docs []*document.Document,
 ) {
-	f.repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
-			return req.ID == entity.ID &&
-				req.TenantInfo == f.tenant() &&
-				req.ExpandShipmentDetails
-		})).
-		Return(entity, nil).
-		Once()
 	f.customerRepo.EXPECT().
 		GetByIDs(mock.Anything, mock.MatchedBy(func(req repositories.GetCustomersByIDsRequest) bool {
 			return len(req.CustomerIDs) == 1 && req.CustomerIDs[0] == entity.CustomerID &&
@@ -172,7 +164,8 @@ func (f *bulkTransferFixture) expectQueued(
 		TransferToBillingItems(mock.Anything, mock.MatchedBy(func(req *services.TransferToBillingRequest) bool {
 			return req.ShipmentID == entity.ID &&
 				req.BillType == billingqueue.BillTypeInvoice &&
-				req.TenantInfo == f.tenant()
+				req.TenantInfo == f.tenant() &&
+				req.DetailedShipment == entity
 		}), mock.Anything).
 		Return(&services.TransferToBillingResult{
 			Items:   []*billingqueue.BillingQueueItem{item},
@@ -273,18 +266,11 @@ func TestBulkTransferToBilling_MarksCompletedShipmentsReadyBeforeTransferring(t 
 	f := newBulkTransferFixture(t)
 
 	completed := f.newShipment("PRO-10", shipment.StatusCompleted)
-	expanded := *completed
 
 	f.expectShipment(completed)
 	f.expectReadiness(completed, &customer.CustomerBillingProfile{}, manualBillingControl(), nil)
 	f.repo.EXPECT().
-		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
-			return req.ID == completed.ID && req.ExpandShipmentDetails
-		})).
-		Return(&expanded, nil).
-		Once()
-	f.repo.EXPECT().
-		UpdateDerivedState(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
+		MarkReadyToInvoice(mock.Anything, mock.MatchedBy(func(entity *shipment.Shipment) bool {
 			return entity.ID == completed.ID &&
 				entity.Status == shipment.StatusReadyToInvoice &&
 				entity.MarkedReadyToBillAt != nil &&
@@ -341,7 +327,7 @@ func TestBulkTransferToBilling_LeavesCompletedShipmentsAloneWithoutOptIn(t *test
 	assert.False(t, result.MarkedReadyToInvoice)
 	assert.Equal(t, services.BillingTransferFailureInvalidStatus, result.FailureCode)
 	assert.Equal(t, "PRO-20", result.ProNumber)
-	f.repo.AssertNotCalled(t, "UpdateDerivedState", mock.Anything, mock.Anything)
+	f.repo.AssertNotCalled(t, "MarkReadyToInvoice", mock.Anything, mock.Anything)
 }
 
 func TestBulkTransferToBilling_DoesNotMarkCompletedShipmentsThatFailReadiness(t *testing.T) {
@@ -374,7 +360,7 @@ func TestBulkTransferToBilling_DoesNotMarkCompletedShipmentsThatFailReadiness(t 
 	assert.Equal(t, services.BillingTransferFailureRateValidation, result.FailureCode)
 	require.Len(t, result.ValidationFailures, 1)
 	assert.Equal(t, "rate_missing_basis", result.ValidationFailures[0].Code)
-	f.repo.AssertNotCalled(t, "UpdateDerivedState", mock.Anything, mock.Anything)
+	f.repo.AssertNotCalled(t, "MarkReadyToInvoice", mock.Anything, mock.Anything)
 }
 
 func TestBulkTransferToBilling_ReportsMissingShipmentsAndKeepsGoing(t *testing.T) {
@@ -692,7 +678,7 @@ func TestBulkTransferToBilling_ReportsEachOutcomeAsItHappens(t *testing.T) {
 
 	f.repo.EXPECT().
 		GetByID(mock.Anything, mock.MatchedBy(func(req *repositories.GetShipmentByIDRequest) bool {
-			return req.ID == missing.ID && !req.ExpandShipmentDetails
+			return req.ID == missing.ID && req.ExpandShipmentDetails
 		})).
 		Return(nil, errortypes.NewNotFoundError("Shipment not found")).
 		Once()

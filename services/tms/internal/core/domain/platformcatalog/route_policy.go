@@ -121,7 +121,7 @@ var pageFavoriteShellRoutes = mergeRouteRefs(
 )
 
 var realtimeShellRoutes = routeRefsFor("GET",
-	"/api/v1/realtime/token-request/",
+	"/api/v1/realtime/stream/",
 )
 
 var platformCatalogShellRoutes = routeRefsFor("GET",

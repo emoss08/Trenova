@@ -79,6 +79,7 @@ server:
       - Content-Type
       - Accept
       - X-CSRF-Token
+      - Last-Event-ID # Lets an event stream resume where it left off
     exposeHeaders: # Headers exposed to the client
       - X-Request-Id
     credentials: true # Allow credentials
@@ -132,6 +133,25 @@ search:
       customers: customers
       workers: workers
       documents: documents
+
+# Live updates over server-sent events. Every value has a production default;
+# set only what you need to change. Events travel through Redis Streams, so
+# every API and worker instance sharing a Redis must use the same shardCount.
+realtime:
+  shardCount: 16 # Streams a tenant's events are spread over; identical on every instance
+  streamMaxLen: 10000 # Entries kept per shard for resuming readers (approximate trim)
+  replayScanLimit: 5000 # Entries a resuming reader may be behind before it is told to refetch
+  subscriberBuffer: 256 # Frames buffered per stream before a slow reader is disconnected
+  maxConnections: 20000 # Open streams per API instance
+  maxConnectionsPerUser: 20 # Open streams per user per API instance (one per tab)
+  heartbeatInterval: 15s # Keep-alive frame and presence refresh interval
+  presenceTTL: 45s # How long a member survives without a refresh (at least two heartbeats)
+  maxStreamLifetime: 30m # Streams are recycled (with jitter) so sessions re-authenticate
+  publishQueueSize: 16384 # Events buffered in memory before new ones are dropped
+  publishBatchSize: 256 # Events written per pipelined Redis flush
+  publishTimeout: 5s # Deadline for one flush to Redis
+  maxEntityBytes: 65536 # Larger payloads are sent without the entity; readers refetch instead
+  typingThrottle: 1s # Minimum interval between typing signals per connection and scope
 
 # Object storage configuration
 storage:

@@ -49,8 +49,6 @@ const connectSources = [
   "https://maps.googleapis.com",
   "https://*.googleapis.com",
   "https://*.gstatic.com",
-  "https://realtime.foony.io",
-  "wss://realtime.foony.io",
 ] as const;
 const localDevelopmentConnectSources = [
   "http://localhost:*",

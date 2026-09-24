@@ -148,6 +148,9 @@ func (s *service) attemptBillingTransfer(
 	entity, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:         p.ShipmentID,
 		TenantInfo: tenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -181,7 +184,7 @@ func (s *service) attemptBillingTransfer(
 		)
 	}
 
-	readiness, err := s.evaluateBillingReadinessCached(ctx, entity, p.Cache)
+	readiness, err := s.evaluateBillingReadinessCached(ctx, entity, p.Cache, true)
 	if err != nil {
 		log.Error("failed to evaluate billing readiness for transfer", zap.Error(err))
 		return attempt.fail(services.BillingTransferFailureUnexpected, err)
@@ -197,10 +200,12 @@ func (s *service) attemptBillingTransfer(
 
 	if markReady {
 		updated, marked, markErr := s.markReadyToInvoice(ctx, &markReadyToInvoiceParams{
-			ShipmentID: entity.ID,
-			TenantInfo: tenantInfo,
-			Actor:      p.Actor.AuditActor(),
-			Comment:    "Shipment marked ready to invoice for billing transfer",
+			ShipmentID:        entity.ID,
+			TenantInfo:        tenantInfo,
+			Actor:             p.Actor.AuditActor(),
+			Comment:           "Shipment marked ready to invoice for billing transfer",
+			Entity:            entity,
+			RecordStatusEvent: true,
 		})
 		if markErr != nil {
 			if errortypes.IsError(markErr) {
@@ -209,10 +214,9 @@ func (s *service) attemptBillingTransfer(
 			log.Error("failed to mark shipment ready to invoice for transfer", zap.Error(markErr))
 			return attempt.fail(services.BillingTransferFailureUnexpected, markErr)
 		}
-		if marked {
-			attempt.markedReady = true
-			s.emitStatusChangeEvent(ctx, entity, updated, p.Actor.AuditActor())
-		}
+		attempt.markedReady = marked
+		entity = updated
+		attempt.entity = updated
 	}
 
 	billType := p.BillType
@@ -228,6 +232,7 @@ func (s *service) attemptBillingTransfer(
 			AutoApprove:         readiness.ShouldAutoApproveBilling,
 			AutoApprovePayerIDs: autoApprovePayerIDs(readiness),
 			TenantInfo:          tenantInfo,
+			DetailedShipment:    entity,
 		},
 		p.Actor,
 	)

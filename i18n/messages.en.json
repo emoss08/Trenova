@@ -5406,6 +5406,15 @@
       "routes/policies"
     ]
   },
+  "A signed-in user is required for live updates": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
+    ]
+  },
   "A simulation cannot replay more than 100,000 shipments": {
     "sites": 1,
     "scope": [
@@ -37648,6 +37657,24 @@
     "areas": [
       "routes/admin",
       "routes/edi"
+    ]
+  },
+  "Connection ID is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
+    ]
+  },
+  "Connection ID is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
     ]
   },
   "Connection test failed": {
@@ -87967,6 +87994,24 @@
       "routes/dispatch-console"
     ]
   },
+  "Live updates are at capacity on this server. Retrying shortly.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Live updates are available to signed-in users only": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Live updates paused — reconnecting…": {
     "sites": 1,
     "scope": [
@@ -122331,6 +122376,15 @@
       "apps/web/components"
     ]
   },
+  "Presence is not available in the portal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
+    ]
+  },
   "Preset": {
     "sites": 2,
     "scope": [
@@ -143887,22 +143941,42 @@
     ]
   },
   "Scope is invalid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/billingtransferservice"
-    ]
-  },
-  "Scope is required": {
     "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/billingtransferservice",
+      "service/realtimeservice"
+    ]
+  },
+  "Scope is required": {
+    "sites": 5,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "domain/billingtransfer",
-      "domain/worker"
+      "domain/worker",
+      "service/realtimeservice"
+    ]
+  },
+  "Scope is reserved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
+    ]
+  },
+  "Scope is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
     ]
   },
   "Scope this session at {0}. You can switch later without signing out.": {
@@ -150889,6 +150963,15 @@
       "routes/shipment"
     ]
   },
+  "Shipment ID is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Shipment ID is required": {
     "sites": 32,
     "scope": [
@@ -157830,7 +157913,7 @@
     ]
   },
   "Streaming is not supported": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -172799,6 +172882,24 @@
       "routes/auth"
     ]
   },
+  "This live connection belongs to another session": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/realtimeservice"
+    ]
+  },
+  "This live connection has ended. Reconnect and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This load has been canceled": {
     "sites": 1,
     "scope": [
@@ -175935,6 +176036,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "Too many live connections are open for this account. Close a tab and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Too many mentioned records": {
@@ -197008,15 +197118,6 @@
       "service/exchangerateservice"
     ]
   },
-  "invalid realtime auth context": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/realtimeservice"
-    ]
-  },
   "invalid realtime invalidation payload": {
     "sites": 1,
     "scope": [
@@ -197805,24 +197906,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "realtime service is not configured": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/realtimeservice"
-    ]
-  },
-  "realtime token request is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/realtimeservice"
     ]
   },
   "recent median {0}": {
