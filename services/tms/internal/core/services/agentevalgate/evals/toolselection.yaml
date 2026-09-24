@@ -1,0 +1,118 @@
+# Natural-language requests and the tools find_tools should load for them.
+# A case passes top-1 when the first tool found is one of `expect`, and
+# recall@5 when one of them is among the first five. The floors both are
+# checked against live in toolselection.floors.json; raise them with -update
+# after an improvement, never lower them to hide a regression.
+cases:
+  - request: email the customer an update
+    expect: [email_customer]
+  - request: send the customer a delay notice by email
+    expect: [email_customer]
+  - request: who is driving load 123
+    expect: [get_shipment, search_shipments, get_dispatch_board]
+  - request: which driver is assigned to shipment 4471
+    expect: [get_shipment, search_shipments, get_dispatch_board]
+  - request: text the driver that the pickup moved to 3pm
+    expect: [notify_driver]
+  - request: message the driver about the new delivery window
+    expect: [notify_driver]
+  - request: record a customer payment against their open invoices
+    expect: [post_customer_payment]
+  - request: apply the ACH payment we received to invoice 889
+    expect: [post_customer_payment, match_bank_receipt]
+  - request: match this bank receipt to the posted payment
+    expect: [match_bank_receipt]
+  - request: show the bank receipts that did not reconcile
+    expect: [list_bank_receipt_exceptions]
+  - request: read the email that came in from the shipper
+    expect: [get_inbound_message, list_inbound_messages]
+  - request: reply to the inbound email from the broker
+    expect: [reply_to_inbound_message]
+  - request: which shipments are picking up today
+    expect: [list_shipments, search_shipments]
+  - request: find shipment by pro number
+    expect: [search_shipments]
+  - request: where is my truck right now
+    expect: [list_vehicle_positions, get_shipment_tracking]
+  - request: track the shipment location
+    expect: [get_shipment_tracking]
+  - request: which driver licenses and medical cards expire this month
+    expect: [list_expiring_credentials]
+  - request: ask the driver to renew their medical card
+    expect: [request_credential_renewal]
+  - request: how many hours of service does the driver have left
+    expect: [get_worker_hos]
+  - request: rank the best drivers for this move
+    expect: [rank_move_candidates]
+  - request: assign a driver and tractor to the move
+    expect: [assign_move]
+  - request: tender the load to carriers
+    expect: [tender_move_to_carriers, tender_move_to_routing_guide]
+  - request: shop carriers for a rate on this lane
+    expect: [shop_carriers]
+  - request: put the shipment on hold
+    expect: [place_shipment_hold]
+  - request: release the hold on the shipment
+    expect: [release_shipment_hold]
+  - request: cancel the shipment
+    expect: [cancel_shipment]
+  - request: create a new shipment for Acme
+    expect: [create_shipment]
+  - request: quote a rate for a load from Dallas to Chicago
+    expect: [quote_shipment]
+  - request: add a comment to the shipment
+    expect: [add_shipment_comment]
+  - request: who has time off booked this week
+    expect: [list_time_off]
+  - request: approve the driver's PTO request
+    expect: [approve_worker_pto]
+  - request: reject the vacation request
+    expect: [reject_worker_pto]
+  - request: which invoices are overdue
+    expect: [list_invoices]
+  - request: look up the customer's billing details
+    expect: [get_customer, list_customers]
+  - request: waive the detention charge
+    expect: [waive_detention]
+  - request: send the customer a detention notice
+    expect: [send_detention_notice]
+  - request: which stops are accruing detention
+    expect: [list_detention_desk, get_detention_occurrence]
+  - request: fix the wrong accessorial charge code
+    expect: [correct_charge_code]
+  - request: ask the shipper for the missing proof of delivery
+    expect: [request_missing_docs]
+  - request: attach the BOL document to the shipment
+    expect: [attach_document_to_shipment]
+  - request: what does the rate confirmation document say
+    expect: [get_document_summary]
+  - request: record the arrival time at the stop
+    expect: [record_stop_actual]
+  - request: mark the tractor out of service
+    expect: [update_tractor_status]
+  - request: list the trailers in the yard
+    expect: [list_trailers]
+  - request: run the on-time delivery report
+    expect: [run_report, list_reports]
+  - request: build a dashboard of revenue by customer
+    expect: [create_dashboard]
+  - request: email this report every Monday
+    expect: [schedule_report]
+  - request: remember that Acme closes at four on Fridays
+    expect: [remember]
+  - request: what did we record about this customer before
+    expect: [recall_memory]
+  - request: open the shipments page
+    expect: [open_page]
+  - request: how do I set up a rate matrix in Trenova
+    expect: [find_in_trenova]
+  - request: flag this for a person to review
+    expect: [flag_for_manual_review, raise_exception]
+  - request: what are the carrier risk alerts
+    expect: [get_carrier_intel_event, acknowledge_carrier_intel_event]
+  - request: add a widget to my home dashboard
+    expect: [add_home_widget]
+  - request: which weather alerts affect our lanes
+    expect: [list_weather_alerts]
+  - request: which service failures happened last week
+    expect: [list_service_failures]
