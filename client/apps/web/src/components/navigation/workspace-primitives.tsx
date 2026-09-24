@@ -42,7 +42,7 @@ export function WorkspaceNavRow({
         sub ? "h-6.5 text-sm" : "h-7 text-base",
         active
           ? "bg-nav-active text-nav-active-foreground font-medium"
-          : cn("text-foreground hover:bg-muted", sub && "text-foreground/85"),
+          : cn("text-foreground hover:bg-sidebar-accent", sub && "text-foreground/85"),
         disabled && "pointer-events-none opacity-40",
         className,
       )}
