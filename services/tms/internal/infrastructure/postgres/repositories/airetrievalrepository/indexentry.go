@@ -39,6 +39,9 @@ const (
 	maxStaleLimit     = 5000
 
 	outcomeAlias = "_outcome"
+
+	defaultErroredLimit = 500
+	maxErroredLimit     = 2000
 )
 
 func (r *repository) MarkStale(
@@ -569,4 +572,103 @@ func (r *repository) FindStaleSources(
 	}
 
 	return ids, nil
+}
+
+func (r *repository) AverageIndexChunks(
+	ctx context.Context,
+	req repositories.AverageIndexChunksRequest,
+) (repositories.IndexChunkAverage, error) {
+	var average repositories.IndexChunkAverage
+
+	if err := validateTenant(req.TenantInfo); err != nil {
+		return average, err
+	}
+	if err := validateModelKey(req.ModelKey); err != nil {
+		return average, err
+	}
+	if !req.SourceType.IsValid() {
+		return average, invalid("source type %q is not one retrieval indexes", req.SourceType)
+	}
+
+	cols := buncolgen.IndexEntryColumns
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*airetrieval.IndexEntry)(nil)).
+		ColumnExpr(buncolgen.Count("entries")).
+		ColumnExpr(cols.ChunkCount.Expr("COALESCE(AVG({}), 0) AS average_chunks")).
+		Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+		Where(cols.SourceType.Eq(), req.SourceType).
+		Where(cols.ModelKey.Eq(), req.ModelKey).
+		Where(cols.Status.Eq(), airetrieval.IndexStatusIndexed).
+		Where(cols.ChunkCount.Gt(), 0).
+		Scan(ctx, &average); err != nil {
+		return repositories.IndexChunkAverage{}, fmt.Errorf(
+			"average %s chunks per source: %w",
+			req.SourceType,
+			err,
+		)
+	}
+
+	return average, nil
+}
+
+func (r *repository) ListErroredIndexEntries(
+	ctx context.Context,
+	req repositories.ListErroredIndexEntriesRequest,
+) ([]*airetrieval.IndexEntry, error) {
+	if err := validateTenant(req.TenantInfo); err != nil {
+		return nil, err
+	}
+	if req.SourceType != "" && !req.SourceType.IsValid() {
+		return nil, invalid("source type %q is not one retrieval indexes", req.SourceType)
+	}
+	if len(req.ModelKeys) > maxModelKeysPerCall {
+		return nil, invalid("at most %d model keys per call", maxModelKeysPerCall)
+	}
+	for _, key := range req.ModelKeys {
+		if err := validateModelKey(key); err != nil {
+			return nil, err
+		}
+	}
+
+	modelKeys := sliceutils.Dedupe(req.ModelKeys)
+	if len(modelKeys) == 0 {
+		return []*airetrieval.IndexEntry{}, nil
+	}
+
+	limit := req.Limit
+	if limit <= 0 {
+		limit = defaultErroredLimit
+	}
+	limit = intutils.Clamp(limit, 1, maxErroredLimit)
+
+	cols := buncolgen.IndexEntryColumns
+	entries := make([]*airetrieval.IndexEntry, 0, limit)
+	q := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entries).
+		Apply(buncolgen.IndexEntryApplyTenant(req.TenantInfo)).
+		Where(cols.ModelKey.In(), bun.List(modelKeys)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where(cols.Status.Eq(), airetrieval.IndexStatusFailed).
+				WhereOr(
+					buncolgen.Expr("{0} = ? AND {1} IS NOT NULL", cols.Status, cols.LastError),
+					airetrieval.IndexStatusPending,
+				)
+		}).
+		OrderExpr(cols.LastAttemptAt.Expr("{} DESC NULLS LAST")).
+		OrderExpr(cols.SourceType.OrderAsc()).
+		OrderExpr(cols.SourceID.OrderAsc()).
+		OrderExpr(cols.ModelKey.OrderAsc()).
+		Limit(limit)
+	if req.SourceType != "" {
+		q = q.Where(cols.SourceType.Eq(), req.SourceType)
+	}
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, fmt.Errorf("list errored index entries: %w", err)
+	}
+
+	return entries, nil
 }

@@ -6,6 +6,7 @@ export const aiControlTabValues = [
   "providers",
   "extensions",
   "memory",
+  "retrieval",
   "safety",
   "quality",
   "activity",
@@ -67,6 +68,17 @@ export const QUALITY_SUITE_RUN_PARAM = "suiteRun";
 
 export const qualityAgentParser = parseAsString.withOptions({ history: "push", shallow: true });
 export const qualitySuiteRunParser = parseAsString.withOptions({ history: "push", shallow: true });
+
+/** Narrows Retrieval's failed items to one source; a source's row sets it. */
+export const RETRIEVAL_SOURCE_PARAM = "retrievalSource";
+
+export const retrievalSourceValues = ["Memory", "Document", "InboundMessage"] as const;
+export type RetrievalSource = (typeof retrievalSourceValues)[number];
+
+export const retrievalSourceParser = parseAsStringLiteral(retrievalSourceValues).withOptions({
+  history: "replace",
+  shallow: true,
+});
 
 /** A view below a rail row, whichever row it belongs to. */
 export type RailView = ActivityView | SafetyView | QualityView;

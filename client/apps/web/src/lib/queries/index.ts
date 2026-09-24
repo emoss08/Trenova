@@ -32,6 +32,7 @@ import { formulaTemplate } from "./formula-template";
 import { googleMaps } from "./google-maps";
 import { agentExtension } from "./agent-extension";
 import { aiProvider } from "./ai-provider";
+import { aiRetrieval } from "./ai-retrieval";
 import { assistant } from "./assistant";
 import { insight } from "./insight";
 import { integration } from "./integration";
@@ -127,6 +128,7 @@ const workspaceQueries = mergeQueryKeys(
   organization,
   integration,
   aiProvider,
+  aiRetrieval,
   agentExtension,
   assistant,
   insight,

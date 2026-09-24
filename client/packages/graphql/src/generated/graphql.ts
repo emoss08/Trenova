@@ -77,6 +77,64 @@ export type AiReasoningEffort =
   | 'Medium'
   | 'Off';
 
+/** Where one source stands in the index under one embedding model. */
+export type AiRetrievalIndexStatus =
+  /** Every retry was spent, or the provider refused the text. */
+  | 'Failed'
+  | 'Indexed'
+  /** Waiting to be embedded, or waiting to retry after a failed attempt. */
+  | 'Pending'
+  /** Not embedded on purpose: retired, superseded, too sensitive or without text. */
+  | 'Skipped';
+
+export type AiRetrievalPauseReason =
+  /** The monthly indexing budget ran out; indexing resumes on its own under a new month or a raised budget. */
+  | 'Budget'
+  /** A person paused indexing. */
+  | 'Manual';
+
+/**
+ * Changes only the fields given. Turning paused off also lifts a budget pause;
+ * indexing pauses again at once if the month's cost is still at the budget.
+ */
+export type AiRetrievalSettingsPatchInput = {
+  documentsEnabled?: boolean | null | undefined;
+  inboundMessagesEnabled?: boolean | null | undefined;
+  memoryEnabled?: boolean | null | undefined;
+  monthlyIndexingBudgetUsd?: string | null | undefined;
+  paused?: boolean | null | undefined;
+};
+
+/** What retrieval indexes by meaning. */
+export type AiRetrievalSourceType =
+  /** Uploaded and generated documents whose owning record may be read by a model. */
+  | 'Document'
+  /** Inbound email, the sender's own words only. */
+  | 'InboundMessage'
+  /** What the organization told its agents, or what they recorded. */
+  | 'Memory';
+
+/** Why search by meaning is not answering, so every search is by keyword. */
+export type AiRetrievalUnavailableReason =
+  /** This month's indexing budget is spent. */
+  | 'BudgetPaused'
+  /** A person paused indexing, or every source is turned off. */
+  | 'Disabled'
+  /** The database has no pgvector extension. */
+  | 'ExtensionMissing'
+  /** No enabled provider is routed the Embedding task. */
+  | 'NoProvider'
+  /** A provider is routed but nothing has been indexed under its model yet. */
+  | 'NotIndexed'
+  /** The provider failed to embed a query, or answered with the wrong model or size. */
+  | 'ProviderFailed'
+  /** The provider did not embed a query within its time budget. */
+  | 'QueryTimeout'
+  /** pgvector is installed but the retrieval tables are not; run trenova db enable-vector. */
+  | 'SchemaMissing'
+  /** pgvector is older than 0.8. */
+  | 'TooOld';
+
 export type AiStructuredOutputMode =
   | 'JSONMode'
   | 'JSONSchema'
@@ -6932,6 +6990,45 @@ export type RunAgentSuiteMutationVariables = Exact<{
 
 export type RunAgentSuiteMutation = { runAgentSuite: { ' $fragmentRefs'?: { 'AgentSuiteRunFieldsFragment': AgentSuiteRunFieldsFragment } } };
 
+export type AiRetrievalStatusFieldsFragment = { monthStartedAt: number, indexingCostMonthUsd: string, indexingUnpricedCalls: number, retrievalCostMonthUsd: string, retrievalUnpricedCalls: number, lastIndexedAt: number | null, configuredModelKey: string | null, configuredModelDiffers: boolean, availability: { available: boolean, reason: AiRetrievalUnavailableReason | null, extensionInstalled: boolean, extensionVersion: string | null }, settings: { memoryEnabled: boolean, documentsEnabled: boolean, inboundMessagesEnabled: boolean, monthlyIndexingBudgetUsd: string, paused: boolean, pausedReason: AiRetrievalPauseReason | null, pausedAt: number | null, activeModelKey: string | null, dimensions: number | null, pendingModelKey: string | null, pendingDimensions: number | null, version: number, updatedAt: number | null }, sources: Array<{ sourceType: AiRetrievalSourceType, enabled: boolean, total: number, indexed: number, pending: number, failed: number, skipped: number, lastIndexedAt: number | null, lastAttemptAt: number | null }>, modelChange: { fromModelKey: string, toModelKey: string, dimensions: number, total: number, indexed: number, pending: number, failed: number } | null } & { ' $fragmentName'?: 'AiRetrievalStatusFieldsFragment' };
+
+export type AiRetrievalFailedEntryFieldsFragment = { id: string, sourceType: AiRetrievalSourceType, sourceId: string, modelKey: string, status: AiRetrievalIndexStatus, attempts: number, error: string, lastAttemptAt: number | null, nextAttemptAt: number | null } & { ' $fragmentName'?: 'AiRetrievalFailedEntryFieldsFragment' };
+
+export type AiRetrievalStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AiRetrievalStatusQuery = { aiRetrievalStatus: { ' $fragmentRefs'?: { 'AiRetrievalStatusFieldsFragment': AiRetrievalStatusFieldsFragment } } };
+
+export type AiRetrievalReindexEstimateQueryVariables = Exact<{
+  sourceType: AiRetrievalSourceType;
+}>;
+
+
+export type AiRetrievalReindexEstimateQuery = { aiRetrievalReindexEstimate: { sourceType: AiRetrievalSourceType, modelKey: string | null, sources: number, averageChunks: number, chunksMeasured: boolean, averageTokensPerChunk: number, estimatedTokens: number, inputCostPerMillionUsd: string | null, estimatedCostUsd: string | null, remainingBudgetUsd: string } };
+
+export type AiRetrievalFailedEntryTableQueryVariables = Exact<{
+  sourceType?: AiRetrievalSourceType | null | undefined;
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AiRetrievalFailedEntryTableQuery = { aiRetrievalFailedEntryConnection: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiRetrievalFailedEntryFieldsFragment': AiRetrievalFailedEntryFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type UpdateAiRetrievalSettingsMutationVariables = Exact<{
+  input: AiRetrievalSettingsPatchInput;
+}>;
+
+
+export type UpdateAiRetrievalSettingsMutation = { updateAIRetrievalSettings: { ' $fragmentRefs'?: { 'AiRetrievalStatusFieldsFragment': AiRetrievalStatusFieldsFragment } } };
+
+export type ReindexAiRetrievalSourceMutationVariables = Exact<{
+  sourceType: AiRetrievalSourceType;
+}>;
+
+
+export type ReindexAiRetrievalSourceMutation = { reindexAIRetrievalSource: { ' $fragmentRefs'?: { 'AiRetrievalStatusFieldsFragment': AiRetrievalStatusFieldsFragment } } };
+
 export type AgentRunTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentType: AgentType, agentDefinitionId: string, trigger: AgentRunTrigger, summary: string, subjectType: AgentSubjectType, subjectId: string, status: AgentRunStatus, workflowId: string, modelIdentifier: string, promptVersion: string, startedAt: number | null, completedAt: number | null, errorMessage: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentRunTableRowFieldsFragment' };
 
 export type AgentRunTableQueryVariables = Exact<{
@@ -13651,6 +13748,72 @@ export const AgentSuiteRunCaseFieldsFragmentDoc = new TypedDocumentString(`
   completedAt
 }
     `, {"fragmentName":"AgentSuiteRunCaseFields"}) as unknown as TypedDocumentString<AgentSuiteRunCaseFieldsFragment, unknown>;
+export const AiRetrievalStatusFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AIRetrievalStatusFields on AIRetrievalStatus {
+  availability {
+    available
+    reason
+    extensionInstalled
+    extensionVersion
+  }
+  settings {
+    memoryEnabled
+    documentsEnabled
+    inboundMessagesEnabled
+    monthlyIndexingBudgetUsd
+    paused
+    pausedReason
+    pausedAt
+    activeModelKey
+    dimensions
+    pendingModelKey
+    pendingDimensions
+    version
+    updatedAt
+  }
+  sources {
+    sourceType
+    enabled
+    total
+    indexed
+    pending
+    failed
+    skipped
+    lastIndexedAt
+    lastAttemptAt
+  }
+  monthStartedAt
+  indexingCostMonthUsd
+  indexingUnpricedCalls
+  retrievalCostMonthUsd
+  retrievalUnpricedCalls
+  lastIndexedAt
+  modelChange {
+    fromModelKey
+    toModelKey
+    dimensions
+    total
+    indexed
+    pending
+    failed
+  }
+  configuredModelKey
+  configuredModelDiffers
+}
+    `, {"fragmentName":"AIRetrievalStatusFields"}) as unknown as TypedDocumentString<AiRetrievalStatusFieldsFragment, unknown>;
+export const AiRetrievalFailedEntryFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AIRetrievalFailedEntryFields on AIRetrievalFailedEntry {
+  id
+  sourceType
+  sourceId
+  modelKey
+  status
+  attempts
+  error
+  lastAttemptAt
+  nextAttemptAt
+}
+    `, {"fragmentName":"AIRetrievalFailedEntryFields"}) as unknown as TypedDocumentString<AiRetrievalFailedEntryFieldsFragment, unknown>;
 export const AgentRunTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentRunTableRowFields on AgentRun {
   id
@@ -20539,6 +20702,11 @@ export const AgentSuiteRunCaseTableDocument = {"__meta__":{"kind":"query","name"
 export const AgentQualityControlDocument = {"__meta__":{"kind":"query","name":"AgentQualityControl","hash":"sha256:fe916f7dcbf87425e4a4e37497621cfdf4e1301a34655de9b14198f584a33385"}} as unknown as TypedDocumentString<AgentQualityControlQuery, AgentQualityControlQueryVariables>;
 export const UpdateAgentQualityControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentQualityControl","hash":"sha256:4d6d353625adb69497f2bd7c1f587aad6d9e4e55f6d7d1dc13fcb0c96b69f486"}} as unknown as TypedDocumentString<UpdateAgentQualityControlMutation, UpdateAgentQualityControlMutationVariables>;
 export const RunAgentSuiteDocument = {"__meta__":{"kind":"mutation","name":"RunAgentSuite","hash":"sha256:e677381bfd94f66200362ed2017c07dfb147ff2ea856f941627d481d01637647"}} as unknown as TypedDocumentString<RunAgentSuiteMutation, RunAgentSuiteMutationVariables>;
+export const AiRetrievalStatusDocument = {"__meta__":{"kind":"query","name":"AIRetrievalStatus","hash":"sha256:cd6c1de4d0da2748bf0688c1b7431a7d641dce7c1c000bb9b1c85bf3c3553481"}} as unknown as TypedDocumentString<AiRetrievalStatusQuery, AiRetrievalStatusQueryVariables>;
+export const AiRetrievalReindexEstimateDocument = {"__meta__":{"kind":"query","name":"AIRetrievalReindexEstimate","hash":"sha256:85b255f3bd3740a8ef61d5d36bacdd75730c8aaa3b04b64844d48218e59f41bf"}} as unknown as TypedDocumentString<AiRetrievalReindexEstimateQuery, AiRetrievalReindexEstimateQueryVariables>;
+export const AiRetrievalFailedEntryTableDocument = {"__meta__":{"kind":"query","name":"AIRetrievalFailedEntryTable","hash":"sha256:f66b10c655b8b92d46cf9375a72fc29311347e8ed92be27582ec46ac36812a05"}} as unknown as TypedDocumentString<AiRetrievalFailedEntryTableQuery, AiRetrievalFailedEntryTableQueryVariables>;
+export const UpdateAiRetrievalSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateAIRetrievalSettings","hash":"sha256:f7dbeff8284e4d9a3415e034e3323fed148e823f8a4cd1686ac3177dea576c4c"}} as unknown as TypedDocumentString<UpdateAiRetrievalSettingsMutation, UpdateAiRetrievalSettingsMutationVariables>;
+export const ReindexAiRetrievalSourceDocument = {"__meta__":{"kind":"mutation","name":"ReindexAIRetrievalSource","hash":"sha256:e12a16a86ab028021de08057a122aca1c4003046b2ebfd026f416b7232e9979c"}} as unknown as TypedDocumentString<ReindexAiRetrievalSourceMutation, ReindexAiRetrievalSourceMutationVariables>;
 export const AgentRunTableDocument = {"__meta__":{"kind":"query","name":"AgentRunTable","hash":"sha256:938af4f2a45104c1bf195b3a992b531ebb470f63a2b1dd65dd1b933827662d5d"}} as unknown as TypedDocumentString<AgentRunTableQuery, AgentRunTableQueryVariables>;
 export const AgentRunDetailDocument = {"__meta__":{"kind":"query","name":"AgentRunDetail","hash":"sha256:780230a3bc44a3aed467ed21d5aabd4142c705410579b4bcd855316f808315c5"}} as unknown as TypedDocumentString<AgentRunDetailQuery, AgentRunDetailQueryVariables>;
 export const AgentToolRuleTableDocument = {"__meta__":{"kind":"query","name":"AgentToolRuleTable","hash":"sha256:408a5464ca8da78c9b4d995f96b6215368d54ed469ba804e9dac583ad637166b"}} as unknown as TypedDocumentString<AgentToolRuleTableQuery, AgentToolRuleTableQueryVariables>;

@@ -52,7 +52,28 @@ type ListRetrievalModelKeysRequest struct {
 	IncludeEmbeddings bool
 }
 
+type CountRetrievalSourcesRequest struct {
+	TenantInfo pagination.TenantInfo
+	SourceType airetrieval.SourceType
+}
+
+type AverageRetrievalSourceCharsRequest struct {
+	TenantInfo pagination.TenantInfo
+	SourceType airetrieval.SourceType
+	Sample     int
+}
+
+type RetrievalSourceChars struct {
+	Sampled      int     `bun:"sampled"`
+	AverageChars float64 `bun:"average_chars"`
+}
+
 type RetrievalSourceRepository interface {
+	CountSources(ctx context.Context, req CountRetrievalSourcesRequest) (int, error)
+	AverageSourceChars(
+		ctx context.Context,
+		req AverageRetrievalSourceCharsRequest,
+	) (RetrievalSourceChars, error)
 	ListModelKeys(ctx context.Context, req ListRetrievalModelKeysRequest) ([]string, error)
 	GetMemories(ctx context.Context, req RetrievalSourcesRequest) ([]*agent.Memory, error)
 	GetDocuments(

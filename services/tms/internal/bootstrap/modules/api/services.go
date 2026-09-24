@@ -38,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/aifeedbackservice"
 	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
+	"github.com/emoss08/trenova/internal/core/services/airetrievalstatusservice"
 	"github.com/emoss08/trenova/internal/core/services/aiusageservice"
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/assignmentservice"
@@ -251,6 +252,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	retrievalservice.AsSearcher,
 	retrievalservice.AsMemoryVectorSearcher,
 	retrievalservice.NewMemoryRanker,
+	airetrievalstatusservice.New,
+	airetrievalstatusservice.AsService,
 	permission.NewEngine,
 	roleservice.New,
 	permissiondomain.NewRegistry,
