@@ -258,13 +258,7 @@ func (s *service) TransferToBillingItems(
 		)
 	}
 
-	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         req.ShipmentID,
-		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
+	shp, err := s.shipmentForTransfer(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -382,6 +376,24 @@ func (s *service) TransferToBillingItems(
 	}
 
 	return result, nil
+}
+
+func (s *service) shipmentForTransfer(
+	ctx context.Context,
+	req *services.TransferToBillingRequest,
+) (*shipment.Shipment, error) {
+	if shp := req.DetailedShipment; shp != nil && shp.ID == req.ShipmentID &&
+		shp.OrganizationID == req.TenantInfo.OrgID && shp.BusinessUnitID == req.TenantInfo.BuID {
+		return shp, nil
+	}
+
+	return s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         req.ShipmentID,
+		TenantInfo: req.TenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
 }
 
 // shouldAutoApprove reports whether one payer's item may skip review: either the

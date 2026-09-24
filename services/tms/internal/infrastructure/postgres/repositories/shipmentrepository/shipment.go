@@ -592,6 +592,48 @@ func (r *repository) UpdateOperationalLifecycle(
 	return entity, nil
 }
 
+func (r *repository) MarkReadyToInvoice(
+	ctx context.Context,
+	entity *shipment.Shipment,
+) (*shipment.Shipment, error) {
+	sp := buncolgen.ShipmentColumns
+	ov := entity.Version
+	entity.Version++
+
+	results, err := r.db.DBForContext(ctx).NewUpdate().
+		Model(entity).
+		Column(
+			sp.Status.Bare(),
+			sp.MarkedReadyToBillAt.Bare(),
+			sp.Version.Bare(),
+			sp.UpdatedAt.Bare(),
+		).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.ShipmentScopeTenantUpdate(uq, pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			}).
+				Where(sp.ID.Eq(), entity.ID).
+				Where(sp.Version.Eq(), ov)
+		}).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		entity.Version = ov
+		return nil, dberror.MapRetryableTransactionError(
+			err,
+			"Shipment is busy. Retry the request.",
+		)
+	}
+
+	if err = dberror.CheckRowsAffected(results, "Shipment", entity.ID.String()); err != nil {
+		entity.Version = ov
+		return nil, err
+	}
+
+	return entity, nil
+}
+
 func (r *repository) UpdateDerivedState(
 	ctx context.Context,
 	entity *shipment.Shipment,

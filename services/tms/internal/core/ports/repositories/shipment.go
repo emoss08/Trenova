@@ -532,6 +532,10 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		entity *shipment.Shipment,
 	) (*shipment.Shipment, error)
+	MarkReadyToInvoice(
+		ctx context.Context,
+		entity *shipment.Shipment,
+	) (*shipment.Shipment, error)
 	UpdateStatus(
 		ctx context.Context,
 		req *UpdateShipmentStatusRequest,
