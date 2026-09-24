@@ -57,6 +57,7 @@ type RecallAgentMemoriesRequest struct {
 	SubjectID         pulid.ID
 	ToolName          string
 	Limit             int
+	Attribution       AIUsageAttribution
 }
 
 // RecalledMemory is one memory a recall returned and how it was found: by
@@ -76,6 +77,7 @@ type MemoryContextRequest struct {
 	AgentDefinitionID pulid.ID
 	ToolNames         []string
 	Records           []agent.EntityRef
+	Query             QueryVector
 }
 
 // MemoryContext is what a prompt may carry, best first, and the records whose
@@ -97,6 +99,7 @@ type RankMemoriesRequest struct {
 	TenantInfo pagination.TenantInfo
 	Now        int64
 	Memories   []*agent.Memory
+	Query      QueryVector
 }
 
 // MemoryRanker orders the memories a prompt may carry. Order decides which

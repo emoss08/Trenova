@@ -29,6 +29,7 @@ type ContextBuilderParams struct {
 	// hand work to. Without them it is offered none.
 	Definitions repositories.AgentDefinitionRepository `optional:"true"`
 	Permissions serviceports.PermissionEngine          `optional:"true"`
+	Vectorizer  serviceports.QueryVectorizer           `optional:"true"`
 }
 
 type ContextBuilder struct {
@@ -40,6 +41,7 @@ type ContextBuilder struct {
 	guide         serviceports.ProductGuide
 	definitions   repositories.AgentDefinitionRepository
 	permissions   serviceports.PermissionEngine
+	vectorizer    serviceports.QueryVectorizer
 }
 
 func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilder {
@@ -52,6 +54,7 @@ func NewContextBuilder(p ContextBuilderParams) serviceports.RuntimeContextBuilde
 		guide:         p.Guide,
 		definitions:   p.Definitions,
 		permissions:   p.Permissions,
+		vectorizer:    p.Vectorizer,
 	}
 }
 
@@ -145,6 +148,7 @@ func (b *ContextBuilder) Build(
 			AgentDefinitionID: definition.ID,
 			ToolNames:         definition.EffectiveToolNames(),
 			Records:           rc.MemoryRecords(),
+			Query:             b.memoryQuery(ctx, req.Query),
 		})
 		if err != nil {
 			b.logger.Warn("agent context: memory lookup failed",
@@ -264,4 +268,26 @@ func (b *ContextBuilder) delegateTools(
 	}
 
 	return b.runtime.PermittedTools(ctx, actor, names)
+}
+
+func (b *ContextBuilder) memoryQuery(
+	ctx context.Context,
+	req serviceports.QueryVectorRequest,
+) serviceports.QueryVector {
+	if b.vectorizer == nil || strings.TrimSpace(req.Text) == "" ||
+		req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
+		return serviceports.QueryVector{}
+	}
+
+	query, err := b.vectorizer.Vectorize(ctx, req)
+	if err != nil {
+		b.logger.Warn("agent context: the turn could not be embedded; ranking memories by recency",
+			zap.String("organization", req.TenantInfo.OrgID.String()),
+			zap.Error(err),
+		)
+
+		return serviceports.QueryVector{}
+	}
+
+	return query
 }

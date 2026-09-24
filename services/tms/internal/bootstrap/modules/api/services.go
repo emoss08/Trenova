@@ -249,6 +249,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	retrievalservice.AsPipeline,
 	retrievalservice.NewSearcher,
 	retrievalservice.AsSearcher,
+	retrievalservice.AsMemoryVectorSearcher,
+	retrievalservice.NewMemoryRanker,
 	permission.NewEngine,
 	roleservice.New,
 	permissiondomain.NewRegistry,

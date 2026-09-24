@@ -39,7 +39,9 @@ const (
 type MemoryMatch string
 
 const (
-	MemoryMatchWords = MemoryMatch("words")
+	MemoryMatchWords   = MemoryMatch("words")
+	MemoryMatchMeaning = MemoryMatch("meaning")
+	MemoryMatchBoth    = MemoryMatch("both")
 )
 
 type MemoryKind string

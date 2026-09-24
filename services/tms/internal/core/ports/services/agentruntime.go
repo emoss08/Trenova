@@ -327,4 +327,5 @@ type RuntimeContextRequest struct {
 	// DelegatorRecords are the records the turn that handed this one its task
 	// was about. The turn reads their memories as if it were about them too.
 	DelegatorRecords []agent.EntityRef
+	Query            QueryVectorRequest
 }

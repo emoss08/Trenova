@@ -168,6 +168,12 @@ func (s *Service) delegateContext(
 		Trigger:          agent.RunTriggerChat,
 		DelegatedBy:      parent.Name,
 		DelegatorRecords: req.Records,
+		Query: services.ContextQuery{
+			Actor:        req.Actor,
+			DefinitionID: definitionID(delegate),
+			ThreadID:     req.ThreadID,
+			Input:        req.Call.Task,
+		}.Request(),
 	})
 	if err != nil {
 		s.logger.Warn("the context of an agent handed a task could not be built",

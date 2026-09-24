@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -189,4 +190,53 @@ type RetrievalSearcher interface {
 		ctx context.Context,
 		req RetrievalSearchRequest,
 	) (*InboundMessageSearchResult, error)
+}
+
+type SimilarMemoriesRequest struct {
+	TenantInfo  pagination.TenantInfo
+	Text        string
+	Query       QueryVector
+	Limit       int
+	Attribution AIUsageAttribution
+}
+
+type MemorySimilarity struct {
+	MemoryID   pulid.ID
+	Similarity float64
+}
+
+type SimilarMemories struct {
+	Memories  []MemorySimilarity
+	Semantics RetrievalSemantics
+	Floor     float64
+}
+
+type MemoryVectorSearcher interface {
+	SimilarMemories(ctx context.Context, req SimilarMemoriesRequest) (SimilarMemories, error)
+}
+
+type ContextQuery struct {
+	Actor        *RequestActor
+	DefinitionID pulid.ID
+	ThreadID     pulid.ID
+	RunID        pulid.ID
+	Input        string
+	History      []conversation.Message
+}
+
+func (q ContextQuery) Request() QueryVectorRequest {
+	if q.Actor == nil {
+		return QueryVectorRequest{}
+	}
+
+	return QueryVectorRequest{
+		TenantInfo: q.Actor.TenantInfo(),
+		Text:       TurnQueryText(q.Input, q.History),
+		Attribution: AIUsageAttribution{
+			UserID:            q.Actor.UserID,
+			AgentDefinitionID: q.DefinitionID,
+			ThreadID:          q.ThreadID,
+			RunID:             q.RunID,
+		},
+	}
 }
