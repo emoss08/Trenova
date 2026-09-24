@@ -5,6 +5,7 @@ export const aiControlTabValues = [
   "agents",
   "providers",
   "memory",
+  "safety",
   "activity",
 ] as const;
 export type AIControlTab = (typeof aiControlTabValues)[number];

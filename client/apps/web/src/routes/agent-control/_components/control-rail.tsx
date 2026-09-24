@@ -1,6 +1,13 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { ActivityIcon, BotIcon, BrainIcon, LayoutDashboardIcon, PlugZapIcon } from "lucide-react";
+import {
+  ActivityIcon,
+  BotIcon,
+  BrainIcon,
+  LayoutDashboardIcon,
+  PlugZapIcon,
+  ShieldCheckIcon,
+} from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { AIControlTab } from "../ai-control-tabs";
 import type { ActivityView, RailItem } from "./rail-items";
@@ -10,6 +17,7 @@ const ICONS: Record<AIControlTab, typeof BotIcon> = {
   agents: BotIcon,
   providers: PlugZapIcon,
   memory: BrainIcon,
+  safety: ShieldCheckIcon,
   activity: ActivityIcon,
 };
 
@@ -126,5 +134,6 @@ const LABELS: Record<AIControlTab, string> = {
   agents: "Agents",
   providers: "Providers",
   memory: "Memory",
+  safety: "Safety",
   activity: "Activity",
 };

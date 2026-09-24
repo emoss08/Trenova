@@ -44,6 +44,7 @@ type ResolverRoot interface {
 	AgentProposal() AgentProposalResolver
 	AgentRun() AgentRunResolver
 	AgentRunEvent() AgentRunEventResolver
+	AgentSafety() AgentSafetyResolver
 	ApiKey() ApiKeyResolver
 	ApprovalDelegation() ApprovalDelegationResolver
 	AuditEntry() AuditEntryResolver
@@ -1024,6 +1025,17 @@ type ComplexityRoot struct {
 		Required    func(childComplexity int) int
 	}
 
+	AgentReach struct {
+		AccessMode func(childComplexity int) int
+		Roles      func(childComplexity int) int
+		Warnings   func(childComplexity int) int
+	}
+
+	AgentReachWarning struct {
+		Kind  func(childComplexity int) int
+		Tools func(childComplexity int) int
+	}
+
 	AgentRun struct {
 		AgentDefinitionID func(childComplexity int) int
 		AgentType         func(childComplexity int) int
@@ -1087,6 +1099,14 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	AgentSafety struct {
+		Agent              func(childComplexity int) int
+		AgentID            func(childComplexity int) int
+		OrganizationShadow func(childComplexity int) int
+		Reach              func(childComplexity int) int
+		Tools              func(childComplexity int) int
+	}
+
 	AgentScorecard struct {
 		AgentDefinitionID     func(childComplexity int) int
 		ApprovalRate          func(childComplexity int) int
@@ -1124,6 +1144,14 @@ type ComplexityRoot struct {
 		Prompt func(childComplexity int) int
 	}
 
+	AgentToolAutonomy struct {
+		Answer          func(childComplexity int) int
+		ApprovalsToNext func(childComplexity int) int
+		Earned          func(childComplexity int) int
+		HeldBy          func(childComplexity int) int
+		Tier            func(childComplexity int) int
+	}
+
 	AgentToolOutcome struct {
 		Approved  func(childComplexity int) int
 		Automatic func(childComplexity int) int
@@ -1133,6 +1161,43 @@ type ComplexityRoot struct {
 		Pending   func(childComplexity int) int
 		Rejected  func(childComplexity int) int
 		ToolName  func(childComplexity int) int
+	}
+
+	AgentToolPolicy struct {
+		Artifact             func(childComplexity int) int
+		CarriesTaint         func(childComplexity int) int
+		ConditionDescription func(childComplexity int) int
+		DefaultTier          func(childComplexity int) int
+		Effect               func(childComplexity int) int
+		Egress               func(childComplexity int) int
+		Explanation          func(childComplexity int) int
+		HasClassify          func(childComplexity int) int
+		HasCondition         func(childComplexity int) int
+		Idempotent           func(childComplexity int) int
+		Kind                 func(childComplexity int) int
+		LeavesOrganization   func(childComplexity int) int
+		MaxTier              func(childComplexity int) int
+		Name                 func(childComplexity int) int
+		Needs                func(childComplexity int) int
+		PersonalExemption    func(childComplexity int) int
+		PromotableTier       func(childComplexity int) int
+		Rationale            func(childComplexity int) int
+		ReadsExternal        func(childComplexity int) int
+		Reversible           func(childComplexity int) int
+		Scope                func(childComplexity int) int
+		Source               func(childComplexity int) int
+		Title                func(childComplexity int) int
+	}
+
+	AgentToolRequirement struct {
+		Operation func(childComplexity int) int
+		Resource  func(childComplexity int) int
+	}
+
+	AgentToolSafety struct {
+		Clean      func(childComplexity int) int
+		PolicyName func(childComplexity int) int
+		Tainted    func(childComplexity int) int
 	}
 
 	AgentToolTrust struct {
@@ -7827,7 +7892,9 @@ type ComplexityRoot struct {
 		AgentRun                            func(childComplexity int, id string) int
 		AgentRunEvents                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentRuns                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentSafety                         func(childComplexity int, agentIds []string) int
 		AgentScorecard                      func(childComplexity int, input gqlmodel.AgentScorecardInput) int
+		AgentToolPolicies                   func(childComplexity int) int
 		AiFeedback                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AiProvider                          func(childComplexity int, id string) int
 		AiProviders                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
@@ -15732,6 +15799,38 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentProposalField.Required(childComplexity), true
 
+	case "AgentReach.accessMode":
+		if e.ComplexityRoot.AgentReach.AccessMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentReach.AccessMode(childComplexity), true
+	case "AgentReach.roles":
+		if e.ComplexityRoot.AgentReach.Roles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentReach.Roles(childComplexity), true
+	case "AgentReach.warnings":
+		if e.ComplexityRoot.AgentReach.Warnings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentReach.Warnings(childComplexity), true
+
+	case "AgentReachWarning.kind":
+		if e.ComplexityRoot.AgentReachWarning.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentReachWarning.Kind(childComplexity), true
+	case "AgentReachWarning.tools":
+		if e.ComplexityRoot.AgentReachWarning.Tools == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentReachWarning.Tools(childComplexity), true
+
 	case "AgentRun.agentDefinitionId":
 		if e.ComplexityRoot.AgentRun.AgentDefinitionID == nil {
 			break
@@ -16008,6 +16107,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentRunEventEdge.Node(childComplexity), true
 
+	case "AgentSafety.agent":
+		if e.ComplexityRoot.AgentSafety.Agent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSafety.Agent(childComplexity), true
+	case "AgentSafety.agentId":
+		if e.ComplexityRoot.AgentSafety.AgentID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSafety.AgentID(childComplexity), true
+	case "AgentSafety.organizationShadow":
+		if e.ComplexityRoot.AgentSafety.OrganizationShadow == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSafety.OrganizationShadow(childComplexity), true
+	case "AgentSafety.reach":
+		if e.ComplexityRoot.AgentSafety.Reach == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSafety.Reach(childComplexity), true
+	case "AgentSafety.tools":
+		if e.ComplexityRoot.AgentSafety.Tools == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentSafety.Tools(childComplexity), true
+
 	case "AgentScorecard.agentDefinitionId":
 		if e.ComplexityRoot.AgentScorecard.AgentDefinitionID == nil {
 			break
@@ -16179,6 +16309,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentStarter.Prompt(childComplexity), true
 
+	case "AgentToolAutonomy.answer":
+		if e.ComplexityRoot.AgentToolAutonomy.Answer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolAutonomy.Answer(childComplexity), true
+	case "AgentToolAutonomy.approvalsToNext":
+		if e.ComplexityRoot.AgentToolAutonomy.ApprovalsToNext == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolAutonomy.ApprovalsToNext(childComplexity), true
+	case "AgentToolAutonomy.earned":
+		if e.ComplexityRoot.AgentToolAutonomy.Earned == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolAutonomy.Earned(childComplexity), true
+	case "AgentToolAutonomy.heldBy":
+		if e.ComplexityRoot.AgentToolAutonomy.HeldBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolAutonomy.HeldBy(childComplexity), true
+	case "AgentToolAutonomy.tier":
+		if e.ComplexityRoot.AgentToolAutonomy.Tier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolAutonomy.Tier(childComplexity), true
+
 	case "AgentToolOutcome.approved":
 		if e.ComplexityRoot.AgentToolOutcome.Approved == nil {
 			break
@@ -16227,6 +16388,177 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentToolOutcome.ToolName(childComplexity), true
+
+	case "AgentToolPolicy.artifact":
+		if e.ComplexityRoot.AgentToolPolicy.Artifact == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Artifact(childComplexity), true
+	case "AgentToolPolicy.carriesTaint":
+		if e.ComplexityRoot.AgentToolPolicy.CarriesTaint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.CarriesTaint(childComplexity), true
+	case "AgentToolPolicy.conditionDescription":
+		if e.ComplexityRoot.AgentToolPolicy.ConditionDescription == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.ConditionDescription(childComplexity), true
+	case "AgentToolPolicy.defaultTier":
+		if e.ComplexityRoot.AgentToolPolicy.DefaultTier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.DefaultTier(childComplexity), true
+	case "AgentToolPolicy.effect":
+		if e.ComplexityRoot.AgentToolPolicy.Effect == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Effect(childComplexity), true
+	case "AgentToolPolicy.egress":
+		if e.ComplexityRoot.AgentToolPolicy.Egress == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Egress(childComplexity), true
+	case "AgentToolPolicy.explanation":
+		if e.ComplexityRoot.AgentToolPolicy.Explanation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Explanation(childComplexity), true
+	case "AgentToolPolicy.hasClassify":
+		if e.ComplexityRoot.AgentToolPolicy.HasClassify == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.HasClassify(childComplexity), true
+	case "AgentToolPolicy.hasCondition":
+		if e.ComplexityRoot.AgentToolPolicy.HasCondition == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.HasCondition(childComplexity), true
+	case "AgentToolPolicy.idempotent":
+		if e.ComplexityRoot.AgentToolPolicy.Idempotent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Idempotent(childComplexity), true
+	case "AgentToolPolicy.kind":
+		if e.ComplexityRoot.AgentToolPolicy.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Kind(childComplexity), true
+	case "AgentToolPolicy.leavesOrganization":
+		if e.ComplexityRoot.AgentToolPolicy.LeavesOrganization == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.LeavesOrganization(childComplexity), true
+	case "AgentToolPolicy.maxTier":
+		if e.ComplexityRoot.AgentToolPolicy.MaxTier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.MaxTier(childComplexity), true
+	case "AgentToolPolicy.name":
+		if e.ComplexityRoot.AgentToolPolicy.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Name(childComplexity), true
+	case "AgentToolPolicy.needs":
+		if e.ComplexityRoot.AgentToolPolicy.Needs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Needs(childComplexity), true
+	case "AgentToolPolicy.personalExemption":
+		if e.ComplexityRoot.AgentToolPolicy.PersonalExemption == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.PersonalExemption(childComplexity), true
+	case "AgentToolPolicy.promotableTier":
+		if e.ComplexityRoot.AgentToolPolicy.PromotableTier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.PromotableTier(childComplexity), true
+	case "AgentToolPolicy.rationale":
+		if e.ComplexityRoot.AgentToolPolicy.Rationale == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Rationale(childComplexity), true
+	case "AgentToolPolicy.readsExternal":
+		if e.ComplexityRoot.AgentToolPolicy.ReadsExternal == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.ReadsExternal(childComplexity), true
+	case "AgentToolPolicy.reversible":
+		if e.ComplexityRoot.AgentToolPolicy.Reversible == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Reversible(childComplexity), true
+	case "AgentToolPolicy.scope":
+		if e.ComplexityRoot.AgentToolPolicy.Scope == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Scope(childComplexity), true
+	case "AgentToolPolicy.source":
+		if e.ComplexityRoot.AgentToolPolicy.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Source(childComplexity), true
+	case "AgentToolPolicy.title":
+		if e.ComplexityRoot.AgentToolPolicy.Title == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolPolicy.Title(childComplexity), true
+
+	case "AgentToolRequirement.operation":
+		if e.ComplexityRoot.AgentToolRequirement.Operation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolRequirement.Operation(childComplexity), true
+	case "AgentToolRequirement.resource":
+		if e.ComplexityRoot.AgentToolRequirement.Resource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolRequirement.Resource(childComplexity), true
+
+	case "AgentToolSafety.clean":
+		if e.ComplexityRoot.AgentToolSafety.Clean == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafety.Clean(childComplexity), true
+	case "AgentToolSafety.policyName":
+		if e.ComplexityRoot.AgentToolSafety.PolicyName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafety.PolicyName(childComplexity), true
+	case "AgentToolSafety.tainted":
+		if e.ComplexityRoot.AgentToolSafety.Tainted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentToolSafety.Tainted(childComplexity), true
 
 	case "AgentToolTrust.approvals":
 		if e.ComplexityRoot.AgentToolTrust.Approvals == nil {
@@ -50188,6 +50520,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentRuns(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentSafety":
+		if e.ComplexityRoot.Query.AgentSafety == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentSafety_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentSafety(childComplexity, args["agentIds"].([]string)), true
 	case "Query.agentScorecard":
 		if e.ComplexityRoot.Query.AgentScorecard == nil {
 			break
@@ -50199,6 +50542,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentScorecard(childComplexity, args["input"].(gqlmodel.AgentScorecardInput)), true
+	case "Query.agentToolPolicies":
+		if e.ComplexityRoot.Query.AgentToolPolicies == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.AgentToolPolicies(childComplexity), true
 	case "Query.aiFeedback":
 		if e.ComplexityRoot.Query.AiFeedback == nil {
 			break
@@ -74362,6 +74711,191 @@ extend type Query {
   agentRunEvents(input: DataTableConnectionInput!): AgentRunEventConnection!
 }
 `, BuiltIn: false},
+	{Name: "../schema/agentsafety.graphqls", Input: `"Where a tool's work can be seen or felt."
+enum AgentEgressClass {
+  "Reads only; nothing changes and nothing is sent."
+  None
+  "Changes only the caller's own records."
+  Personal
+  "Changes records only people inside the organization see."
+  Internal
+  "Changes something a customer can see."
+  CustomerVisible
+  "Changes something a driver can see."
+  DriverVisible
+  "Sends to someone outside the organization."
+  ExternalRecipient
+  "Moves or commits money."
+  Money
+}
+
+enum AgentToolKind {
+  Query
+  Action
+  Runtime
+}
+
+"Whose records a tool acts on."
+enum AgentToolScope {
+  "The organization's records, under the caller's permissions."
+  Tenant
+  "Only the caller's own records."
+  Self
+  "Only the run it belongs to."
+  Run
+}
+
+enum AgentToolEffect {
+  Lookup
+  Change
+  Navigate
+  Discover
+  Present
+  Ask
+  Delegate
+}
+
+"Whether a tool's result carries text written outside the organization."
+enum AgentExternalRead {
+  Never
+  Always
+  "Only when the record it returns was itself marked as outside text."
+  Marked
+}
+
+"Where outside text a tool reads comes from."
+enum AgentTaintSource {
+  InboundMessage
+  Document
+  EDI
+  BankReceipt
+  Weather
+  Attachment
+  Memory
+  RunRecord
+}
+
+"What a tool on an agent does when nobody is watching."
+enum AgentAutonomyAnswer {
+  "Runs without asking anyone."
+  RUNS_ON_ITS_OWN
+  "Runs on its own for some calls and waits for a person on others."
+  CONDITIONAL
+  "Waits for a person to approve each call."
+  NEEDS_APPROVAL
+  "Only proposes; a person decides and nothing runs until then."
+  PROPOSE_ONLY
+  "The agent is in shadow or simulation: a change is previewed, never made."
+  SIMULATED
+}
+
+"The permission a person needs of their own to use a tool through an agent."
+type AgentToolRequirement {
+  resource: String!
+  operation: String!
+}
+
+"One tool's safety policy, as declared in code."
+type AgentToolPolicy {
+  name: String!
+  title: String!
+  kind: AgentToolKind!
+  "Null for a tool that acts only on the caller's own records and needs no grant."
+  needs: AgentToolRequirement
+  scope: AgentToolScope!
+  defaultTier: AgentAutonomyTier!
+  maxTier: AgentAutonomyTier!
+  "The most any agent may run it at: its max tier, held to approval when its work leaves the organization."
+  promotableTier: AgentAutonomyTier!
+  egress: [AgentEgressClass!]!
+  "Some of its work can leave the organization."
+  leavesOrganization: Boolean!
+  "Each call is classified by what it reaches, so one call may go further than another."
+  hasClassify: Boolean!
+  "A condition the call's record must meet decides how far it may go."
+  hasCondition: Boolean!
+  conditionDescription: String
+  "A call that changes only the caller's own records runs without a decision while they are present."
+  personalExemption: Boolean!
+  effect: AgentToolEffect!
+  "The record the tool produces or changes; empty when none."
+  artifact: String!
+  reversible: Boolean!
+  idempotent: Boolean!
+  readsExternal: AgentExternalRead!
+  "Where outside text in its result comes from; null when it reads none."
+  source: AgentTaintSource
+  "Its result can carry outside text into a later run."
+  carriesTaint: Boolean!
+  rationale: String!
+  "The policy in a sentence or two, as the agent's page shows it."
+  explanation: String!
+}
+
+"What one tool does on one agent for a representative call."
+type AgentToolAutonomy {
+  answer: AgentAutonomyAnswer!
+  "The most the call can reach."
+  tier: AgentAutonomyTier!
+  """
+  Why it goes no further: agent_ceiling, tool_max, egress_class, condition,
+  tainted, tool_tier, personal_exemption, shadow_mode, simulation_mode.
+  """
+  heldBy: [String!]!
+  "The tool's tier on the agent was earned from a streak of clean approvals."
+  earned: Boolean!
+  "Clean approvals still needed for the next tier; null when earned autonomy cannot move it."
+  approvalsToNext: Int
+}
+
+"One tool an agent holds, before and after the run has read outside text."
+type AgentToolSafety {
+  policyName: String!
+  clean: AgentToolAutonomy!
+  tainted: AgentToolAutonomy!
+}
+
+enum AgentReachWarningKind {
+  "Everyone who may use the assistant may use the agent, and it holds tools that reach restricted data or leave the organization."
+  OpenWithSensitiveTools
+  "The agent is restricted to roles and no role is granted it, so nobody may use it."
+  NoAudience
+}
+
+type AgentReachWarning {
+  kind: AgentReachWarningKind!
+  "The tools the warning is about; empty when it is about the agent as a whole."
+  tools: [String!]!
+}
+
+"Who can reach an agent."
+type AgentReach {
+  accessMode: AgentAccessMode!
+  "The roles granted the agent. Empty for a reader who may not read roles."
+  roles: [Role!]!
+  warnings: [AgentReachWarning!]!
+}
+
+"What one agent can do without a person."
+type AgentSafety {
+  agentId: ID!
+  agent: AgentDefinition!
+  "The organization-wide pause on agents is on."
+  organizationShadow: Boolean!
+  tools: [AgentToolSafety!]!
+  reach: AgentReach!
+}
+
+extend type Query {
+  "Every tool's safety policy, by name."
+  agentToolPolicies: [AgentToolPolicy!]!
+  """
+  What each agent can do without a person, by name. Null agentIds reads every
+  agent in the organization; at most 100 may be named.
+  """
+  agentSafety(agentIds: [ID!]): [AgentSafety!]!
+}
+`, BuiltIn: false},
 	{Name: "../schema/agentscorecard.graphqls", Input: `"How far back a scorecard looks."
 enum AgentScorecardWindow {
   Last7Days
@@ -96579,6 +97113,28 @@ func (ec *executionContext) childFields_AgentProposalField(ctx context.Context, 
 	return nil, fmt.Errorf("no field named %q was found under type AgentProposalField", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentReach(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "accessMode":
+		return ec.fieldContext_AgentReach_accessMode(ctx, field)
+	case "roles":
+		return ec.fieldContext_AgentReach_roles(ctx, field)
+	case "warnings":
+		return ec.fieldContext_AgentReach_warnings(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentReach", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentReachWarning(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "kind":
+		return ec.fieldContext_AgentReachWarning_kind(ctx, field)
+	case "tools":
+		return ec.fieldContext_AgentReachWarning_tools(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentReachWarning", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentRun(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -96705,6 +97261,22 @@ func (ec *executionContext) childFields_AgentRunEventEdge(ctx context.Context, f
 	return nil, fmt.Errorf("no field named %q was found under type AgentRunEventEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentSafety(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "agentId":
+		return ec.fieldContext_AgentSafety_agentId(ctx, field)
+	case "agent":
+		return ec.fieldContext_AgentSafety_agent(ctx, field)
+	case "organizationShadow":
+		return ec.fieldContext_AgentSafety_organizationShadow(ctx, field)
+	case "tools":
+		return ec.fieldContext_AgentSafety_tools(ctx, field)
+	case "reach":
+		return ec.fieldContext_AgentSafety_reach(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentSafety", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentScorecard(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "agentDefinitionId":
@@ -96779,6 +97351,22 @@ func (ec *executionContext) childFields_AgentStarter(ctx context.Context, field 
 	return nil, fmt.Errorf("no field named %q was found under type AgentStarter", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentToolAutonomy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "answer":
+		return ec.fieldContext_AgentToolAutonomy_answer(ctx, field)
+	case "tier":
+		return ec.fieldContext_AgentToolAutonomy_tier(ctx, field)
+	case "heldBy":
+		return ec.fieldContext_AgentToolAutonomy_heldBy(ctx, field)
+	case "earned":
+		return ec.fieldContext_AgentToolAutonomy_earned(ctx, field)
+	case "approvalsToNext":
+		return ec.fieldContext_AgentToolAutonomy_approvalsToNext(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentToolAutonomy", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentToolOutcome(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "toolName":
@@ -96799,6 +97387,80 @@ func (ec *executionContext) childFields_AgentToolOutcome(ctx context.Context, fi
 		return ec.fieldContext_AgentToolOutcome_automatic(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentToolOutcome", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentToolPolicy(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_AgentToolPolicy_name(ctx, field)
+	case "title":
+		return ec.fieldContext_AgentToolPolicy_title(ctx, field)
+	case "kind":
+		return ec.fieldContext_AgentToolPolicy_kind(ctx, field)
+	case "needs":
+		return ec.fieldContext_AgentToolPolicy_needs(ctx, field)
+	case "scope":
+		return ec.fieldContext_AgentToolPolicy_scope(ctx, field)
+	case "defaultTier":
+		return ec.fieldContext_AgentToolPolicy_defaultTier(ctx, field)
+	case "maxTier":
+		return ec.fieldContext_AgentToolPolicy_maxTier(ctx, field)
+	case "promotableTier":
+		return ec.fieldContext_AgentToolPolicy_promotableTier(ctx, field)
+	case "egress":
+		return ec.fieldContext_AgentToolPolicy_egress(ctx, field)
+	case "leavesOrganization":
+		return ec.fieldContext_AgentToolPolicy_leavesOrganization(ctx, field)
+	case "hasClassify":
+		return ec.fieldContext_AgentToolPolicy_hasClassify(ctx, field)
+	case "hasCondition":
+		return ec.fieldContext_AgentToolPolicy_hasCondition(ctx, field)
+	case "conditionDescription":
+		return ec.fieldContext_AgentToolPolicy_conditionDescription(ctx, field)
+	case "personalExemption":
+		return ec.fieldContext_AgentToolPolicy_personalExemption(ctx, field)
+	case "effect":
+		return ec.fieldContext_AgentToolPolicy_effect(ctx, field)
+	case "artifact":
+		return ec.fieldContext_AgentToolPolicy_artifact(ctx, field)
+	case "reversible":
+		return ec.fieldContext_AgentToolPolicy_reversible(ctx, field)
+	case "idempotent":
+		return ec.fieldContext_AgentToolPolicy_idempotent(ctx, field)
+	case "readsExternal":
+		return ec.fieldContext_AgentToolPolicy_readsExternal(ctx, field)
+	case "source":
+		return ec.fieldContext_AgentToolPolicy_source(ctx, field)
+	case "carriesTaint":
+		return ec.fieldContext_AgentToolPolicy_carriesTaint(ctx, field)
+	case "rationale":
+		return ec.fieldContext_AgentToolPolicy_rationale(ctx, field)
+	case "explanation":
+		return ec.fieldContext_AgentToolPolicy_explanation(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentToolPolicy", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentToolRequirement(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "resource":
+		return ec.fieldContext_AgentToolRequirement_resource(ctx, field)
+	case "operation":
+		return ec.fieldContext_AgentToolRequirement_operation(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentToolRequirement", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentToolSafety(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "policyName":
+		return ec.fieldContext_AgentToolSafety_policyName(ctx, field)
+	case "clean":
+		return ec.fieldContext_AgentToolSafety_clean(ctx, field)
+	case "tainted":
+		return ec.fieldContext_AgentToolSafety_tainted(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentToolSafety", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentToolTrust(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, automation agents, agent proposals, agent memory, sub-agents, agent delegation]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, automation agents, agent proposals, agent memory, sub-agents, agent delegation, AI safety, tool rules, agent autonomy]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -9,11 +9,13 @@ related:
 
 ## What it's for
 AI control is the one place for everything AI in the organization. A rail down the left side
-holds five sections: **Overview**, **Agents**, **Providers**, **Memory** and **Activity**.
+holds six sections: **Overview**, **Agents**, **Providers**, **Memory**, **Safety** and
+**Activity**.
 Providers say where AI work goes (the model endpoints Trenova calls and which AI tasks each one
 handles), agents say what AI may do (their instructions, tools, autonomy and trigger), memory
-holds the standing instructions and facts agents read, and activity shows what agents did: their
-runs, the changes they proposed, multi-step plans, replays and exceptions.
+holds the standing instructions and facts agents read, safety shows what each tool and agent can
+do without a person, and activity shows what agents did: their runs, the changes they proposed,
+multi-step plans, replays and exceptions.
 
 **Overview** shows whether AI can work at all (a banner warns when no provider is connected or a
 task has no provider), a strip of figures for providers and agents that are on, proposals
@@ -91,6 +93,26 @@ Keywords: kill switch, stop AI, shadow mode, earned autonomy
 3. In the same panel, turn **Earned autonomy** on or off and choose the **Promotion threshold**
    (clean approvals in a row before a tool moves up a tier on that agent).
 
+### See what agents can do without a person
+Keywords: AI safety, autonomy, what can the AI do on its own, auto execute, approval, tool policy, egress, prompt injection, outside text, sensitive tools, audit agents
+1. Open [AI control](/admin/agent-control) and select **Safety** in the rail.
+2. Read the figures at the top: **Tools that run without a person** (tools that change records
+   and, on at least one agent, can run without anyone approving), **Tools that send outside the
+   organization**, and **Open agents with sensitive tools** (agents everyone can use that hold
+   tools reaching restricted data or leaving the organization).
+3. In **Tool rules**, every tool is listed with **Who sees it**, its **Max tier**, what it
+   **Needs** of the person using it, whether it **Reads outside content**, and the **Rationale**
+   for its rule. Narrow the list with **All classes** and **All resources**. A tool marked
+   **Depends on the call** goes further for some calls than others; hover it to read why.
+4. In **By agent**, select **Pick agents** and choose the agents to compare. Each agent shows
+   **Who can use it**, its **Ceiling**, and every tool it holds with what happens
+   **Before outside text** and **After outside text**: **Runs on its own**,
+   **Depends on the call**, **Needs approval**, **Proposes only** or **Simulated**.
+5. The **Held by** chips say which limit stops a tool going further, such as the agent's
+   ceiling, where the work goes, or that the run has read outside text. A tool whose tier was
+   earned shows **Tier earned**, and one still earning shows how many clean approvals it needs
+   for the next tier.
+
 ### Record something every agent should know
 Keywords: agent memory, standing instruction, fact, correction, retire memory
 1. Open [AI control](/admin/agent-control) and select **Memory** in the rail.
@@ -105,7 +127,8 @@ Keywords: agent memory, standing instruction, fact, correction, retire memory
 ## Notes
 Opening the page needs read access to AI control. Each section in the rail appears only for
 people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions,
-agent memory); a section someone cannot open is left out. The organization-wide switches need
+agent memory); a section someone cannot open is left out. **Safety** appears for people who may
+read agents. The organization-wide switches need
 update access to AI control, deciding proposals needs update access to agent proposals, and
 **Test** on a provider needs manage access to AI providers.
 

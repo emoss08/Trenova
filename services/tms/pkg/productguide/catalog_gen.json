@@ -1,5 +1,5 @@
 {
-  "version": "sha256:ac2dc15cbfd64143c123cbadfe000bdf26f4d4d9f44c30cee208704170a81b8a",
+  "version": "sha256:0b2ec8bb19ff6c9e6bd48cc16b26021a15853107eac82d869a34defd69b4ef14",
   "modules": [
     {
       "id": "home",
@@ -1728,7 +1728,7 @@
         "AI control"
       ],
       "description": "Providers say where AI work goes, agents say what it may do, and activity shows what it did.",
-      "summary": "AI control is the one place for everything AI in the organization. A rail down the left side holds five sections: **Overview**, **Agents**, **Providers**, **Memory** and **Activity**. Providers say where AI work goes (the model endpoints Trenova calls and which AI tasks each one handles), agents say what AI may do (their instructions, tools, autonomy and trigger), memory holds the standing instructions and facts agents read, and activity shows what agents did: their runs, the changes they proposed, multi-step plans, replays and exceptions.\n\n**Overview** shows whether AI can work at all (a banner warns when no provider is connected or a task has no provider), a strip of figures for providers and agents that are on, proposals awaiting a decision, runs in the last 24 hours, model calls, spend, response time and tokens, the **Organization-wide** switches, and every agent at a glance. Administrators use this page to set up providers and agents; reviewers use **Activity** to approve or reject what agents propose.",
+      "summary": "AI control is the one place for everything AI in the organization. A rail down the left side holds six sections: **Overview**, **Agents**, **Providers**, **Memory**, **Safety** and **Activity**. Providers say where AI work goes (the model endpoints Trenova calls and which AI tasks each one handles), agents say what AI may do (their instructions, tools, autonomy and trigger), memory holds the standing instructions and facts agents read, safety shows what each tool and agent can do without a person, and activity shows what agents did: their runs, the changes they proposed, multi-step plans, replays and exceptions.\n\n**Overview** shows whether AI can work at all (a banner warns when no provider is connected or a task has no provider), a strip of figures for providers and agents that are on, proposals awaiting a decision, runs in the last 24 hours, model calls, spend, response time and tokens, the **Organization-wide** switches, and every agent at a glance. Administrators use this page to set up providers and agents; reviewers use **Activity** to approve or reject what agents propose.",
       "requires": [
         {
           "resource": "agent_control",
@@ -1746,7 +1746,10 @@
         "agent proposals",
         "agent memory",
         "sub-agents",
-        "agent delegation"
+        "agent delegation",
+        "AI safety",
+        "tool rules",
+        "agent autonomy"
       ],
       "tasks": [
         {
@@ -1852,6 +1855,29 @@
           ]
         },
         {
+          "title": "See what agents can do without a person",
+          "keywords": [
+            "AI safety",
+            "autonomy",
+            "what can the AI do on its own",
+            "auto execute",
+            "approval",
+            "tool policy",
+            "egress",
+            "prompt injection",
+            "outside text",
+            "sensitive tools",
+            "audit agents"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Safety** in the rail.",
+            "Read the figures at the top: **Tools that run without a person** (tools that change records and, on at least one agent, can run without anyone approving), **Tools that send outside the organization**, and **Open agents with sensitive tools** (agents everyone can use that hold tools reaching restricted data or leaving the organization).",
+            "In **Tool rules**, every tool is listed with **Who sees it**, its **Max tier**, what it **Needs** of the person using it, whether it **Reads outside content**, and the **Rationale** for its rule. Narrow the list with **All classes** and **All resources**. A tool marked **Depends on the call** goes further for some calls than others; hover it to read why.",
+            "In **By agent**, select **Pick agents** and choose the agents to compare. Each agent shows **Who can use it**, its **Ceiling**, and every tool it holds with what happens **Before outside text** and **After outside text**: **Runs on its own**, **Depends on the call**, **Needs approval**, **Proposes only** or **Simulated**.",
+            "The **Held by** chips say which limit stops a tool going further, such as the agent's ceiling, where the work goes, or that the run has read outside text. A tool whose tier was earned shows **Tier earned**, and one still earning shows how many clean approvals it needs for the next tier."
+          ]
+        },
+        {
           "title": "Record something every agent should know",
           "keywords": [
             "agent memory",
@@ -1869,7 +1895,7 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
+      "notes": "Opening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. **Safety** appears for people who may read agents. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
       "related": [
         "/admin/document-intelligence",
         "/admin/inbound-mailboxes",

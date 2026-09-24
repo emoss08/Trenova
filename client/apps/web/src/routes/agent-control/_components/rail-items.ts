@@ -29,6 +29,8 @@ export type RailPermissions = {
   proposals: boolean;
   exceptions: boolean;
   memory: boolean;
+  /** Reading what agents may do on their own is reading agents. */
+  safety: boolean;
 };
 
 type Translate = (text: string, ...args: (string | number)[]) => string;
@@ -79,6 +81,10 @@ export function buildRailItems(
       attention: false,
       children: [],
     });
+  }
+
+  if (permissions.safety) {
+    items.push({ tab: "safety", status: "", attention: false, children: [] });
   }
 
   if (permissions.runs) {

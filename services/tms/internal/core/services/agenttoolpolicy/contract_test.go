@@ -1,66 +1,36 @@
 package agenttoolpolicy_test
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
-	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
-	"github.com/emoss08/trenova/internal/testutil/providertest"
-	"github.com/emoss08/trenova/pkg/filtercatalog"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy/registered"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type registered struct {
-	queries []serviceports.AgentQueryTool
-	actions []serviceports.AgentTool
-}
-
-// buildRegistered calls every registered constructor with zero-valued
-// dependencies. A constructor only stores what it is given, and a policy is
-// declared without touching any of it.
-func buildRegistered(t *testing.T) registered {
+func buildRegistered(t *testing.T) registered.Tools {
 	t.Helper()
 
-	supplied := map[reflect.Type]reflect.Value{
-		reflect.TypeFor[*filtercatalog.Catalog](): reflect.ValueOf(
-			agentquerytoolservice.FilterCatalog(),
-		),
-	}
+	tools, err := registered.Build()
+	require.NoError(t, err)
 
-	var out registered
-	for _, provider := range append(
-		agentquerytoolservice.ToolProviders(),
-		agenttoolservice.ToolProviders()...,
-	) {
-		switch tool := providertest.Build(t, provider, supplied).(type) {
-		case serviceports.AgentQueryTool:
-			out.queries = append(out.queries, tool)
-		case serviceports.AgentTool:
-			out.actions = append(out.actions, tool)
-		default:
-			t.Fatalf("%T builds neither a query nor an action tool", provider)
-		}
-	}
-
-	return out
+	return tools
 }
 
 func registeredPolicy(t *testing.T, name string) serviceports.ToolPolicy {
 	t.Helper()
 
 	tools := buildRegistered(t)
-	for _, tool := range tools.actions {
+	for _, tool := range tools.Actions {
 		if tool.Name() == name {
 			return tool.Policy()
 		}
 	}
-	for _, tool := range tools.queries {
+	for _, tool := range tools.Queries {
 		if tool.Name() == name {
 			return tool.Policy()
 		}
@@ -80,13 +50,13 @@ func TestEveryRegisteredToolValidates(t *testing.T) {
 
 	tools := buildRegistered(t)
 	catalog, err := agenttoolpolicy.Build(
-		tools.queries,
-		tools.actions,
+		tools.Queries,
+		tools.Actions,
 		agentruntime.RuntimePolicies(),
 	)
 	require.NoError(t, err)
 
-	total := len(tools.queries) + len(tools.actions) + len(agentruntime.RuntimePolicies())
+	total := len(tools.Queries) + len(tools.Actions) + len(agentruntime.RuntimePolicies())
 	assert.Len(t, catalog.All(), total)
 	for _, policy := range catalog.All() {
 		found, ok := catalog.Get(policy.Name)
@@ -98,7 +68,7 @@ func TestEveryRegisteredToolValidates(t *testing.T) {
 func TestEveryQueryToolChangesNothingAndSendsNothing(t *testing.T) {
 	t.Parallel()
 
-	for _, tool := range buildRegistered(t).queries {
+	for _, tool := range buildRegistered(t).Queries {
 		policy := tool.Policy()
 		assert.Equal(t, agent.ToolKindQuery, policy.Kind, tool.Name())
 		assert.Equal(t, []agent.EgressClass{agent.EgressNone}, policy.Egress, tool.Name())
@@ -197,7 +167,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 	}
 
 	tools := buildRegistered(t)
-	require.Len(t, cases, len(tools.actions), "every action tool is classified here")
+	require.Len(t, cases, len(tools.Actions), "every action tool is classified here")
 	for name, want := range cases {
 		assert.Equal(t, want, registeredPolicy(t, name).Egress, name)
 	}

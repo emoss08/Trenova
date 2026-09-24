@@ -66,6 +66,7 @@ type FactoryParams struct {
 	AgentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
 	AccessRolesByAgentID                      *AccessRolesByAgentIDLoaderFactory
 	AgentsByRoleID                            *AgentsByRoleIDLoaderFactory
+	ToolTrustByAgentID                        *ToolTrustByAgentIDLoaderFactory
 	DocumentTemplateKindByTemplateID          *DocumentTemplateKindByTemplateIDLoaderFactory
 	IFTAJurisdictionByID                      *IFTAJurisdictionByIDLoaderFactory
 	IFTAReturnByID                            *IFTAReturnByIDLoaderFactory
@@ -118,6 +119,7 @@ type Factory struct {
 	agentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
 	accessRolesByAgentID                      *AccessRolesByAgentIDLoaderFactory
 	agentsByRoleID                            *AgentsByRoleIDLoaderFactory
+	toolTrustByAgentID                        *ToolTrustByAgentIDLoaderFactory
 	documentTemplateKindByTemplateID          *DocumentTemplateKindByTemplateIDLoaderFactory
 	iFTAJurisdictionByID                      *IFTAJurisdictionByIDLoaderFactory
 	iFTAReturnByID                            *IFTAReturnByIDLoaderFactory
@@ -170,6 +172,7 @@ type Loaders struct {
 	AgentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
 	AccessRolesByAgentID                      *dataloadgen.Loader[string, []*permission.Role]
 	AgentsByRoleID                            *dataloadgen.Loader[string, []*agentdefinition.Definition]
+	ToolTrustByAgentID                        *dataloadgen.Loader[string, []*agent.ToolTrust]
 	DocumentTemplateKindByTemplateID          *dataloadgen.Loader[string, documenttemplate.Kind]
 	IFTAJurisdictionByID                      *dataloadgen.Loader[string, *ifta.Jurisdiction]
 	IFTAReturnByID                            *dataloadgen.Loader[string, *ifta.Return]
@@ -223,6 +226,7 @@ func NewFactory(p FactoryParams) *Factory {
 		agentDefinitionByID:                       p.AgentDefinitionByID,
 		accessRolesByAgentID:                      p.AccessRolesByAgentID,
 		agentsByRoleID:                            p.AgentsByRoleID,
+		toolTrustByAgentID:                        p.ToolTrustByAgentID,
 		documentTemplateKindByTemplateID:          p.DocumentTemplateKindByTemplateID,
 		iFTAJurisdictionByID:                      p.IFTAJurisdictionByID,
 		iFTAReturnByID:                            p.IFTAReturnByID,
@@ -309,6 +313,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		AgentDefinitionByID:  f.agentDefinitionByID.NewForTenant(tenantInfo),
 		AccessRolesByAgentID: f.accessRolesByAgentID.NewForTenant(tenantInfo),
 		AgentsByRoleID:       f.agentsByRoleID.NewForTenant(tenantInfo),
+		ToolTrustByAgentID:   f.toolTrustByAgentID.NewForTenant(tenantInfo),
 		DocumentTemplateKindByTemplateID: f.documentTemplateKindByTemplateID.NewForTenant(
 			tenantInfo,
 		),

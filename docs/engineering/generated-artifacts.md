@@ -11,7 +11,7 @@ covers how to build a resource; this covers what breaks afterwards.
 
 ## Run the whole gate locally
 
-`Codegen Checks` in `.github/workflows/test-tms.yml` is five independent steps. All paths
+`Codegen Checks` in `.github/workflows/test-tms.yml` is six independent steps. All paths
 are relative to `services/tms`:
 
 ```bash
@@ -21,12 +21,13 @@ git status --porcelain -- internal/api/graphql/generated internal/api/graphql/gq
 go generate ./internal/infrastructure/database/seeder/...          # pkg/seedhelpers/seed_ids_gen.go
 go generate ./internal/api/graphql/projection/...                  # internal/api/graphql/projection/specs_gen.go
 go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
+go generate ./internal/core/services/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
 
 go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency --outputTypes json,yaml
 go run ./cmd/openapi-postprocess                                   # then: git diff --quiet -- docs
 ```
 
-A clean `git status` after all five means the job will pass.
+A clean `git status` after all six means the job will pass.
 
 ## GraphQL projections: the one that fails on correct code
 
@@ -56,6 +57,30 @@ The four override kinds:
 
 So: **removing a column means editing `projection.yml`, not only the migration.** Adding a
 resolver-computed field means adding it to `virtuals` in the same commit.
+
+## AI tool safety document
+
+`docs/engineering/ai-tool-safety.md` is the auditable list of what every agent tool may do
+without a person: its class, the most it can run at, any condition on the call, whether it
+reads text written outside the organization, and its rationale. It is written from the
+`Policy()` each tool declares, by building every registered tool with zero-valued
+dependencies (`agenttoolpolicy/registered`, the same construction the contract tests use)
+and rendering the catalog (`agenttoolpolicy/safetydoc`).
+
+So **changing a tool's policy, adding a tool or removing one means regenerating the
+document**:
+
+```bash
+cd services/tms
+go generate ./internal/core/services/agenttoolpolicy/safetydoc/...
+git diff --exit-code -- ../../docs/engineering/ai-tool-safety.md
+```
+
+The `AI tool safety document` step runs exactly that and fails on any difference, and
+`TestCommittedDocumentIsCurrent` in the `safetydoc` package says the same under `task test`.
+Never edit the file by hand: the next generate overwrites it and CI rejects the hand edit.
+A tool constructor that dereferences a dependency while building fails the generator the
+same way it fails the contract tests; keep constructors to storing what they are given.
 
 ## gqlgen
 

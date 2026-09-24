@@ -2039,6 +2039,130 @@ models:
   AgentAudienceCoverage:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.AudienceCoverage
+  AgentEgressClass:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.EgressClass
+    enum_values:
+      None:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.EgressNone
+      Personal:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.EgressPersonal
+      Internal:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.EgressInternal
+      CustomerVisible:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.EgressCustomerVisible
+      DriverVisible:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.EgressDriverVisible
+      ExternalRecipient:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.EgressExternalRecipient
+      Money:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.EgressMoney
+  AgentToolKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ToolKind
+    enum_values:
+      Query:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolKindQuery
+      Action:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolKindAction
+      Runtime:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolKindRuntime
+  AgentToolScope:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ToolScope
+    enum_values:
+      Tenant:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolScopeTenant
+      Self:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolScopeSelf
+      Run:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolScopeRun
+  AgentToolEffect:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ToolEffect
+    enum_values:
+      Lookup:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolEffectLookup
+      Change:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolEffectChange
+      Navigate:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolEffectNavigate
+      Discover:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolEffectDiscover
+      Present:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolEffectPresent
+      Ask:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolEffectAsk
+      Delegate:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ToolEffectDelegate
+  AgentExternalRead:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ExternalRead
+    enum_values:
+      Never:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ExternalReadNever
+      Always:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ExternalReadAlways
+      Marked:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.ExternalReadMarked
+  AgentTaintSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.TaintSource
+    enum_values:
+      InboundMessage:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceInboundMessage
+      Document:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceDocument
+      EDI:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceEDI
+      BankReceipt:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceBankReceipt
+      Weather:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceWeather
+      Attachment:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceAttachment
+      Memory:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceMemory
+      RunRecord:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.TaintSourceRunRecord
+  AgentAutonomyAnswer:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyAnswer
+    enum_values:
+      RUNS_ON_ITS_OWN:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.AutonomyRunsOnItsOwn
+      CONDITIONAL:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.AutonomyConditional
+      NEEDS_APPROVAL:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.AutonomyNeedsApproval
+      PROPOSE_ONLY:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.AutonomyProposeOnly
+      SIMULATED:
+        value: github.com/emoss08/trenova/internal/core/domain/agent.AutonomySimulated
+  AgentReachWarningKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentdefinition.ReachWarningKind
+  AgentReachWarning:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentReachWarning
+  AgentToolAutonomy:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.ToolAutonomy
+  AgentToolSafety:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentToolSafety
+  AgentSafety:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentSafetySubject
+    fields:
+      agentId:
+        resolver: true
+      organizationShadow:
+        resolver: true
+      tools:
+        resolver: true
+      reach:
+        resolver: true
   AgentTemplate:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentdefinition.Template

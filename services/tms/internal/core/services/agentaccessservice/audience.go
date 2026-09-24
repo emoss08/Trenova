@@ -100,9 +100,13 @@ func (s *Service) heldTool(name string) (HeldTool, bool) {
 		return HeldTool{}, false
 	}
 
-	held := HeldTool{Name: name, Egress: policy.Egress}
+	return HeldToolOf(policy), true
+}
+
+func HeldToolOf(policy services.ToolPolicy) HeldTool {
+	held := HeldTool{Name: policy.Name, Egress: policy.Egress}
 	if policy.Scope == agent.ToolScopeSelf || policy.Resource == "" {
-		return held, true
+		return held
 	}
 
 	held.Resource = policy.Resource
@@ -111,7 +115,7 @@ func (s *Service) heldTool(name string) (HeldTool, bool) {
 		held.Operation = permission.OpRead
 	}
 
-	return held, true
+	return held
 }
 
 func requiredGrants(held []HeldTool) []services.RequiredGrant {
