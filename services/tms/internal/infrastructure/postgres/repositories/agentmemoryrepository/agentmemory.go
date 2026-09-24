@@ -250,13 +250,13 @@ func (r *repository) Search(
 ) ([]*agent.Memory, error) {
 	text := newTextQuery(req.Query)
 	if text.empty() {
-		return r.search(ctx, req, nil)
+		return r.search(ctx, &req, nil)
 	}
 	if text.unmatchable() {
 		return []*agent.Memory{}, nil
 	}
 
-	rows, err := r.search(ctx, req, text.primary())
+	rows, err := r.search(ctx, &req, text.primary())
 	if err != nil || len(rows) > 0 {
 		return rows, err
 	}
@@ -266,12 +266,12 @@ func (r *repository) Search(
 		return rows, nil
 	}
 
-	return r.search(ctx, req, fallback)
+	return r.search(ctx, &req, fallback)
 }
 
 func (r *repository) search(
 	ctx context.Context,
-	req repositories.SearchAgentMemoriesRequest,
+	req *repositories.SearchAgentMemoriesRequest,
 	match *textMatch,
 ) ([]*agent.Memory, error) {
 	cols := buncolgen.MemoryColumns

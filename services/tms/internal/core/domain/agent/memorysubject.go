@@ -60,9 +60,16 @@ func (k MemoryRecordKind) Subject() (MemorySubjectType, bool) {
 		return MemorySubjectWorker, true
 	case MemoryRecordCarrier:
 		return MemorySubjectCarrier, true
-	default:
+	case MemoryRecordShipment,
+		MemoryRecordShipmentMove,
+		MemoryRecordInvoice,
+		MemoryRecordBillingQueueItem,
+		MemoryRecordInboundMessage,
+		MemoryRecordDocument:
 		return "", false
 	}
+
+	return "", false
 }
 
 func (k MemoryRecordKind) NamesOthers() bool {
@@ -74,9 +81,14 @@ func (k MemoryRecordKind) NamesOthers() bool {
 		MemoryRecordInboundMessage,
 		MemoryRecordDocument:
 		return true
-	default:
+	case MemoryRecordCustomer,
+		MemoryRecordLocation,
+		MemoryRecordWorker,
+		MemoryRecordCarrier:
 		return false
 	}
+
+	return false
 }
 
 type MemoryRecordRef struct {

@@ -30,6 +30,6 @@ type ListMemoryRecordLinksRequest struct {
 type AgentMemorySubjectRepository interface {
 	ListRecordLinks(
 		ctx context.Context,
-		req ListMemoryRecordLinksRequest,
+		req *ListMemoryRecordLinksRequest,
 	) ([]MemoryRecordLink, error)
 }
