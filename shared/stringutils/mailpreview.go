@@ -35,9 +35,6 @@ func MailPreview(body string, maxLength int) string {
 	return Ellipsize(b.String(), maxLength)
 }
 
-// MailBody is the sender's own words: every line before a quoted reply, a
-// forwarded header or a signature begins, without quoted lines or blank ones.
-// Line breaks are kept, so a caller can still tell paragraphs apart.
 func MailBody(body string) string {
 	var b strings.Builder
 	b.Grow(len(body))
