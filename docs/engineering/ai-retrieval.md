@@ -327,3 +327,175 @@ embedding instead of the JSON-schema probe, and fails the test when the size dif
 presets fill in the endpoint, model, task, dimension and input style. The Embedding task is shown
 disabled, with its reason, for the Anthropic protocol; choosing it opens the **Embedding** section
 (**Dimensions**, **Input style**) and hides the settings that only apply to text generation.
+
+## Ranking
+
+Tools and product guide pages are ranked by meaning as well as by words once an organization
+can embed a query. Keyword ranking is unchanged underneath, and it is the whole answer
+whenever a vector is not available.
+
+### Query vectors
+
+`serviceports.QueryVectorizer` (implemented by `retrievalquery.Service`) turns a search text
+into a vector under the organization's active embedding model:
+
+```go
+type QueryVectorizer interface {
+	Vectorize(ctx context.Context, req QueryVectorRequest) (QueryVector, error)
+	Availability(ctx context.Context, tenant pagination.TenantInfo) (airetrieval.Availability, error)
+}
+```
+
+`Vectorize` embeds the text (trimmed, at most `MaxQueryTextRunes` = 2000 runes) with purpose
+`Query`, the model pinned to `active_model_key`, and the router's 1.5 s query budget. The
+usage row is surface `Retrieval`, attributed to whatever `QueryVectorRequest.Attribution`
+names. When retrieval cannot answer, it returns `Available=false` with a reason and a **nil
+error**, and the caller ranks by keyword:
+
+| Reason | When |
+| --- | --- |
+| `ExtensionMissing`, `SchemaMissing`, `TooOld` | the storage probe says so |
+| `Disabled` | `ai_retrieval_settings.paused` with reason `Manual` |
+| `BudgetPaused` | paused with reason `Budget` |
+| `NoProvider` | no embedding service, no enabled provider for the task, or none serving the active key |
+| `NotIndexed` | a provider exists but the settings have no `active_model_key` yet |
+| `QueryTimeout` | the provider missed the query budget |
+| `ProviderFailed` | any other provider failure, or a reply of the wrong size or model |
+
+A timeout or provider failure is logged. Only a blank text, a missing tenant, a failed read of
+the storage probe or the settings, and the caller's own cancellation come back as errors.
+`UnavailableReason.Transient()` is true for `QueryTimeout` and `ProviderFailed`.
+
+Successful vectors are kept in-process for 15 minutes (1024 entries), keyed by organization,
+business unit, model key and the text's SHA-256. Asking twice in one activity embeds once.
+`Availability` is the same check without embedding, for status screens.
+
+### One vector per turn
+
+A turn embeds its request once, in the activity that opens it (`OpenTurn`, called by the
+chat prepare activity, `OpenRunActivity`, the delegate opening and the evaluation replay).
+The text is `serviceports.TurnQueryText`: the new message and the person's previous one,
+which is also what keyword preselection ranks.
+
+The vector rides on the turn as data: `ToolSetState.Query` holds the model key, the
+dimensions and the vector packed as little-endian float32 (4 KB for 768 dimensions, 8 KB
+base64 in the payload). `FindToolsActivity` reads it back from its input, so `find_tools`
+ranks with the same vector on any worker, a retried activity never embeds again, and a
+replay reads the recorded vector. The alternative, recomputing in each activity with a
+per-turn in-process cache, would re-embed on every cache miss (another worker, a restart),
+charge the turn again, and could rank differently if the provider changed in between. A turn
+whose state has no vector (opened before this release, or retrieval unavailable) ranks by
+keyword. Only a disclosed turn (more than 12 tools) embeds anything.
+
+**Hook for other rankers.** Anything ranking by the turn's request in the same activity asks
+the vectorizer for the same text and gets the memoized vector:
+
+```go
+vector, err := vectorizer.Vectorize(ctx, serviceports.TurnQueryRequest(runRequest))
+// or, from the runtime itself:
+vector := runtime.TurnQueryVector(ctx, runRequest)
+```
+
+`TurnQueryRequest` builds the tenant, text and attribution (user, agent, thread, run,
+evaluation purpose) from a `RunRequest`. Memory ranking in the context builder can use it:
+the context is built in the same activity as the turn, so the turn's own vectorize is a
+cache hit.
+
+### Catalog embeddings
+
+`serviceports.CatalogVectorIndex` (`retrievalquery.CatalogIndex`) compares a query vector
+with a fixed corpus kept in `ai_catalog_embeddings`:
+
+| Corpus | Item key | Text |
+| --- | --- | --- |
+| `Tools` | tool name | `agenttoolcatalog.DescriptorText`: the name in words, the description, the search terms |
+| `ProductGuide` | page path | `productguideservice.PageText`: name, location, description, summary, aliases, task titles |
+
+Each item is keyed by the SHA-256 of its text, so an edited description is a new row and is
+embedded again; nothing else is. On the first request for a model key and corpus, the index
+reads the stored rows, embeds what is missing (purpose `Document`, surface `Indexing`, the
+same pinned model key, paid by the organization whose request found it missing), stores it
+with `PutCatalogEmbeddings`, and keeps the unit vectors in memory (16 model-key and corpus
+pairs). From then on a turn reads nothing. A request waits at most 5 s for that load, then
+ranks by keyword while the load finishes in the background (45 s budget); a failed embed
+backs off for a minute. The first complete load in a process prunes rows whose hash is no
+longer current.
+
+### Hybrid ranking
+
+`agenttoolcatalog.Catalog.RankHybrid` (preselection) and `FindHybrid` (`find_tools`) take an
+optional `Semantic` (similarity per tool). With none they are `Rank` and `Find`, byte for
+byte. With one:
+
+1. The keyword leg is the keyword ranking of the tools that matched at all (`Find` keeps its
+   half-of-the-best cutoff).
+2. The vector leg is the tools by similarity, at most `max(4 × limit, 24)`.
+3. The legs are fused by reciprocal rank (`shared/rankfusion`, k = 60); ties break on
+   catalog position.
+4. A tool found only by meaning is dropped below the similarity floor
+   (`serviceports.DefaultCatalogSimilarityFloor`, 0.5), so nonsense still finds nothing. A
+   keyword hit is kept whatever its similarity.
+5. Preselection fills any remaining slots in keyword order, as before; `find_tools` appends
+   families after its matches, as before.
+
+The vector is the turn's request, which preselection has already spent, so `find_tools`'
+vector leg skips the tools the turn already carries and adds the next closest ones.
+`unheldRefusal` runs in workflow code and stays keyword-only.
+
+`find_in_trenova` does the same through `productguideservice`: it embeds the question (the
+tool passes the user and agent for attribution), fuses the keyword and vector page rankings,
+and drops pages found only by meaning below the floor. A page found only by meaning names no
+task unless the question's words match one. A question about one page (`page` given) is
+answered from that page alone and embeds nothing.
+
+The floor is one value for every model, a starting point for `nomic-embed-text` that has not
+yet been checked against recorded vectors. A model whose similarities run lower overall
+mostly loses its vector-only hits, which falls back toward keyword ranking; one whose
+similarities run higher lets more through. Tune it with the recorded fixture: the hybrid gate
+fails if a nonsense request finds anything, and its log lists every miss.
+
+### Carrying a turn's tools over
+
+`find_tools`' result message records the tools the search found
+(`assistant_messages.found_tools`, `conversation.Message.FoundTools`, migration
+`20261231006480`). The runtime's answer carries them (`FindAnswer.Found`,
+`FindToolsResult.Found`, `ToolOutcome.Found`) into the message the finish activity saves.
+`carryOver` reloads those names for the recent turns' searches instead of searching again,
+because the ranking now depends on the vector and on the model. A result saved without
+names (before this release, or a search that found nothing) is searched again by keyword, as
+it always was. `load` still checks every name against what the agent holds and the person
+may use, so a recorded name never widens the grant.
+
+None of this took a `GetVersion` gate. The vector and the found names are optional data on
+activity inputs and results; no command depends on them, and a recorded history without them
+replays with keyword ranking and issues the same commands.
+
+### Evaluation
+
+`agentevalgate` gates ranking offline in the `Deterministic` job:
+
+| Suite | Floors | Gate |
+| --- | --- | --- |
+| `toolselection.yaml` | `toolselection.floors.json` `keyword` | `TestToolSelectionAgainstFloors` |
+| `toolselection.yaml` + `toolselection.paraphrase.yaml` | `toolselection.floors.json` `hybrid` | `TestToolSelectionAgainstFloorsHybrid` |
+| `guideselection.yaml` | `guideselection.floors.json` `keyword` / `hybrid` | `TestGuideSelectionAgainstFloors`, `…Hybrid` |
+
+The paraphrase suite holds requests that share no word with their tool's name
+(`TestParaphrasesShareNoWordWithTheirTool` checks). Each suite's `nothing` list must find
+nothing, by keyword and by meaning.
+
+The hybrid gates rank from `evals/embeddings/nomic-embed-text.json`: Ollama
+`nomic-embed-text` vectors (768, `NomicPrefix` style), packed float32 in base64, keyed by
+content hash for every tool descriptor and guide page and by SHA-256 for every eval request.
+A missing or unused hash fails with the command that re-records it. **The fixture has not
+been recorded yet**, so the hybrid gates skip, saying so, and the hybrid floors are absent. To
+record it and set the floors, on a machine running Ollama:
+
+```bash
+cd services/tms && ollama pull nomic-embed-text && TRENOVA_EVAL_OLLAMA_URL=http://localhost:11434 go test -tags nofitz -count=1 -run 'TestRecordEmbeddingFixture' ./internal/core/services/agentevalgate/ -record && go test -tags nofitz -count=1 -run 'AgainstFloors' ./internal/core/services/agentevalgate/ -update
+```
+
+Then commit the fixture and both floors files, and set the repository variable
+`TRENOVA_EVAL_REQUIRE_HYBRID` to `true`: with it, a missing fixture fails the job instead
+of skipping. The recorder goes through the production Ollama adapter, so the prefixes are
+the ones a Nomic provider sends.

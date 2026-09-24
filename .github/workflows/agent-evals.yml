@@ -24,9 +24,13 @@ on:
       - "services/tms/internal/core/services/agentscoring/**"
       - "services/tms/internal/core/services/agentredteam/**"
       - "services/tms/internal/core/services/agentevalgate/**"
+      - "services/tms/internal/core/services/productguideservice/**"
+      - "services/tms/pkg/productguide/catalog_gen.json"
       - "services/tms/internal/core/ports/services/agenttool.go"
       - "services/tms/internal/core/ports/services/toolpolicy.go"
       - "services/tms/internal/core/ports/services/agentruntime.go"
+      - "services/tms/internal/core/ports/services/retrievalquery.go"
+      - "shared/rankfusion/**"
       - "services/tms/internal/core/services/insightservice/narrator/**"
       - "services/tms/internal/core/services/briefingservice/briefingwriter/**"
       - "shared/numberguard/**"
@@ -48,9 +52,13 @@ on:
       - "services/tms/internal/core/services/agentscoring/**"
       - "services/tms/internal/core/services/agentredteam/**"
       - "services/tms/internal/core/services/agentevalgate/**"
+      - "services/tms/internal/core/services/productguideservice/**"
+      - "services/tms/pkg/productguide/catalog_gen.json"
       - "services/tms/internal/core/ports/services/agenttool.go"
       - "services/tms/internal/core/ports/services/toolpolicy.go"
       - "services/tms/internal/core/ports/services/agentruntime.go"
+      - "services/tms/internal/core/ports/services/retrievalquery.go"
+      - "shared/rankfusion/**"
       - "services/tms/internal/core/services/insightservice/narrator/**"
       - "services/tms/internal/core/services/briefingservice/briefingwriter/**"
       - "shared/numberguard/**"
@@ -108,11 +116,17 @@ jobs:
           go test -tags=nofitz,nomsgpack -count=1 -run 'TestToolCatalogSnapshot' \
             ./internal/core/services/agentevalgate/
 
-      - name: find_tools ranking against its floors
+      # The hybrid gates rank from evals/embeddings/nomic-embed-text.json and
+      # skip until it is recorded; set the repository variable
+      # TRENOVA_EVAL_REQUIRE_HYBRID to true once it is, so a missing fixture fails.
+      - name: find_tools and find_in_trenova ranking against their floors
         working-directory: ./services/tms
+        env:
+          TRENOVA_EVAL_REQUIRE_HYBRID: ${{ vars.TRENOVA_EVAL_REQUIRE_HYBRID || 'false' }}
         run: |
           set -euo pipefail
-          go test -tags=nofitz,nomsgpack -count=1 -v -run 'TestToolSelectionAgainstFloors' \
+          go test -tags=nofitz,nomsgpack -count=1 -v \
+            -run 'AgainstFloors|TestParaphrasesShareNoWordWithTheirTool|EmbeddingFixture' \
             ./internal/core/services/agentevalgate/
 
       - name: Argument parsing and aliasing

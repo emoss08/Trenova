@@ -606,6 +606,11 @@ activity input, decided from the tool's name, and adds no command. See
 
 Taint took no gate either: see [Taint is data](#taint-is-data).
 
+Hybrid tool ranking took no gate. The turn's query vector rides on `ToolSetState.Query`, and
+the tools a `find_tools` call found ride on `FindToolsResult.Found` into the saved message;
+both are optional data, and a history without them replays by keyword. See "Ranking" in
+[ai-retrieval.md](ai-retrieval.md).
+
 Agent delegation (`delegate_task`) took no gate: whether a turn holds the tool
 is decided when it opens, in an activity, and kept in `TurnState.Held`, so an
 execution opened before it never takes the new branch. Keeping the hand-off's

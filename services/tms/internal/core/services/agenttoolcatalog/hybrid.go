@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DefaultSimilarityFloor = 0.5
+	DefaultSimilarityFloor = serviceports.DefaultCatalogSimilarityFloor
 	RRFK                   = rankfusion.DefaultK
 
 	vectorCandidateFactor = 4

@@ -94,6 +94,12 @@ go test -tags nofitz -run TestPromptSnapshots ./internal/core/domain/agentdefini
 go test -tags nofitz -run TestToolCatalogSnapshot ./internal/core/services/agentevalgate/ -update
 ```
 
+A tool description, a product guide page or an eval request is also embedded, by content
+hash, in `agentevalgate/evals/embeddings/nomic-embed-text.json`. Once that fixture is
+recorded, editing any of them makes it stale, and the hybrid ranking gate names the one-line
+command that re-records it from a local Ollama (see "Ranking" in
+[ai-retrieval.md](ai-retrieval.md)).
+
 A tool description edit can also move `find_tools` ranking below its floors
 (`agentevalgate/evals/toolselection.floors.json`); the failure lists the requests that no
 longer find their tool. Fix the description rather than the floor. The flag goes after the
