@@ -279,6 +279,10 @@ func (s *Service) runToolCall(
 		return `{"error":"unknown tool"}`, nil
 	}
 
+	if refusal, allowed := s.authorizeTool(ctx, tenantInfo, name); !allowed {
+		return refusal, nil
+	}
+
 	return handler(s, ctx, tenantInfo, shipmentImportToolCallArgs{m: arguments})
 }
 

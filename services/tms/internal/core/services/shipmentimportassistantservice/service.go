@@ -51,6 +51,7 @@ type Params struct {
 	LocationService      *locationservice.Service
 	UsStateRepo          repositories.UsStateRepository
 	LocationCategoryRepo repositories.LocationCategoryRepository
+	Permissions          serviceports.PermissionEngine
 	// Turns answers a message on a worker, which runs the turn through this
 	// service's steps.
 	Turns serviceports.ShipmentImportTurns
@@ -74,6 +75,7 @@ type Service struct {
 	locationService      *locationservice.Service
 	usStateRepo          repositories.UsStateRepository
 	locationCategoryRepo repositories.LocationCategoryRepository
+	permissions          serviceports.PermissionEngine
 	turns                serviceports.ShipmentImportTurns
 }
 
@@ -100,6 +102,7 @@ func New(
 		locationService:      p.LocationService,
 		usStateRepo:          p.UsStateRepo,
 		locationCategoryRepo: p.LocationCategoryRepo,
+		permissions:          p.Permissions,
 		turns:                p.Turns,
 	}
 }
@@ -720,23 +723,6 @@ func toolCallStatusFromResult(result string) string {
 	return toolStatusCompleted
 }
 
-func (s *Service) executeToolCall(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	name, arguments string,
-) (string, []serviceports.ShipmentImportAction) {
-	var args map[string]any
-	if err := json.Unmarshal([]byte(arguments), &args); err != nil {
-		return `{"error":"invalid arguments"}`, nil
-	}
-
-	h, ok := shipmentImportToolCallHandlers[name]
-	if !ok {
-		return `{"error":"unknown tool"}`, nil
-	}
-	return h(s, ctx, tenantInfo, shipmentImportToolCallArgs{m: args})
-}
-
 type shipmentImportToolCallArgs struct {
 	m map[string]any
 }
@@ -1264,15 +1250,7 @@ func (s *Service) addLocation(
 		PostalCode:         postalCode,
 	}
 
-	actor := &serviceports.RequestActor{
-		PrincipalType:  serviceports.PrincipalTypeUser,
-		PrincipalID:    tenantInfo.UserID,
-		UserID:         tenantInfo.UserID,
-		BusinessUnitID: tenantInfo.BuID,
-		OrganizationID: tenantInfo.OrgID,
-	}
-
-	created, createErr := s.locationService.Create(ctx, entity, actor)
+	created, createErr := s.locationService.Create(ctx, entity, actingUser(tenantInfo))
 	if createErr != nil {
 		s.logger.Error("failed to create location", zap.Error(createErr))
 		return fmt.Sprintf(`{"error":"failed to create location: %s"}`, createErr.Error())
