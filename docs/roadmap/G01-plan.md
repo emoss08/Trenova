@@ -1,7 +1,7 @@
 # G01 plan: accounting sync, QuickBooks Online first
 
 Brief: [Gap Program G01](trenova-gap-program.md#g01-accounting-sync-the-ledger-that-stays-in-step-on-its-own).
-Status: **plan, awaiting approval**. Nothing below is built.
+Status: **approved 2026-09-24** with every recommendation in §12 accepted. Building M1.
 Verified against the code on 2026-09-24. `S/` is `services/tms/internal/`, `C/` is `client/apps/web/src/`.
 
 ---
@@ -395,6 +395,8 @@ Brief acceptance criteria map: connect and push within a minute (M3), drift with
 ---
 
 ## 12. Decisions for Eric
+
+All seven were decided on 2026-09-24: Eric accepted every recommendation below.
 
 | # | Decision | Recommendation |
 |---|---|---|

@@ -13,6 +13,7 @@ const (
 	catalogViewIntegrationLabel   = "View Integration"
 	catalogFuelCardsLabel         = "Fuel Cards"
 	catalogCarrierComplianceLabel = "Carrier Compliance"
+	catalogAccountingLabel        = "Accounting"
 	catalogPostmarkLogoURL        = "/integrations/logos/postmark_all.png"
 	catalogSlateColor             = "#0f172a"
 	catalogGoogleMapsLogoURL      = "/integrations/logos/googleMaps.svg"
@@ -442,6 +443,36 @@ var CatalogDefinitions = []CatalogItem{
 		Featured:           false,
 		SortOrder:          61,
 		PrimaryActionLabel: catalogViewIntegrationLabel,
+	},
+	{
+		Type:          integration.TypeQuickBooksOnline,
+		Name:          "QuickBooks Online",
+		Description:   "Keep your books in step with Trenova: invoices, credit memos, payments and carrier bills reach QuickBooks within a minute of posting, every record shows whether it synced and why not, and differences between the two are found for you.",
+		Category:      integration.CategoryAccounting,
+		CategoryLabel: catalogAccountingLabel,
+		LogoURL:       "/integrations/logos/quickbooks-light.svg",
+		LogoLightURL:  "/integrations/logos/quickbooks-light.svg",
+		LogoDarkURL:   "/integrations/logos/quickbooks-dark.svg",
+		DocsURL:       "https://developer.intuit.com/app/developer/qbo/docs/get-started",
+		WebsiteURL:    "https://quickbooks.intuit.com/",
+		Color:         "#2CA01C",
+		GlowFrom:      "#2CA01C",
+		GlowTo:        "#7ED957",
+		Links: []CatalogLink{
+			{
+				Kind:  CatalogLinkKindDocs,
+				Label: catalogDocsLabel,
+				URL:   "https://developer.intuit.com/app/developer/qbo/docs/get-started",
+			},
+			{
+				Kind:  CatalogLinkKindWebsite,
+				Label: catalogWebsiteLabel,
+				URL:   "https://quickbooks.intuit.com/",
+			},
+		},
+		Featured:           true,
+		SortOrder:          70,
+		PrimaryActionLabel: "Connect",
 	},
 }
 

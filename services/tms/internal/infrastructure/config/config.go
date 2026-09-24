@@ -1753,6 +1753,44 @@ type Config struct {
 	Push                PushConfig                `mapstructure:"push"`
 	Tendering           TenderingConfig           `mapstructure:"tendering"`
 	CarrierIntelligence CarrierIntelligenceConfig `mapstructure:"carrierIntelligence"`
+	Accounting          AccountingConfig          `mapstructure:"accounting"`
+}
+
+type AccountingConfig struct {
+	QuickBooks QuickBooksConfig `mapstructure:"quickbooks"`
+}
+
+type QuickBooksConfig struct {
+	ClientID             string `mapstructure:"clientId"`
+	ClientSecret         string `mapstructure:"clientSecret"`
+	WebhookVerifierToken string `mapstructure:"webhookVerifierToken"`
+	Environment          string `mapstructure:"environment"          validate:"omitempty,oneof=sandbox production"`
+	RedirectURL          string `mapstructure:"redirectUrl"          validate:"omitempty,url"`
+}
+
+const quickBooksCallbackPath = "/admin/integrations/quickbooks/callback"
+
+func (c *QuickBooksConfig) GetEnvironment() string {
+	if c.Environment == "" {
+		return "production"
+	}
+	return c.Environment
+}
+
+func (c *QuickBooksConfig) GetRedirectURL(app *AppConfig) string {
+	if c.RedirectURL != "" {
+		return c.RedirectURL
+	}
+	if base := app.GetWebBaseURL(); base != "" {
+		return base + quickBooksCallbackPath
+	}
+	return ""
+}
+
+func (c *QuickBooksConfig) IsConfigured(app *AppConfig) bool {
+	return strings.TrimSpace(c.ClientID) != "" &&
+		strings.TrimSpace(c.ClientSecret) != "" &&
+		c.GetRedirectURL(app) != ""
 }
 
 type CarrierIntelligenceConfig struct {

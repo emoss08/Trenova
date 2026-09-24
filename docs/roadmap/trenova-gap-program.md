@@ -280,6 +280,7 @@ Paths below are relative to `services/tms/internal/` (backend, `S/`) and `client
 ### 3.9 Integration type
 
 - `S/core/domain/integration/enums.go` plus a migration; `config_spec.go` `ConfigSpecs` drives the settings form; secrets through `S/core/services/integrationservice/secrets.go`; connection tests in `testers.go`; catalog card in `S/core/ports/services/integration.go`. The UI at `C/routes/admin/integrations/page.tsx` renders from the spec, so a new integration needs no bespoke settings page unless its setup is a wizard (OAuth, mapping).
+- **Every integration ships the vendor's brand logo from Brandfetch**: `BRANDFETCH_API_KEY=... pnpm logos:fetch -- --domain <vendor domain> --slug <slug>` from `client/` writes `<slug>-light.svg`, `<slug>-dark.svg` and `<slug>-icon.svg` to `apps/web/public/integrations/logos/` (add `--icon-viewbox` when Brandfetch has no square SVG mark). Set the catalog item's `LogoLightURL`/`LogoDarkURL` to them and render both on a light and a dark background before committing. The API key is never committed.
 
 ### 3.10 Notifications
 

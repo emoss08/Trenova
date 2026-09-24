@@ -306,6 +306,17 @@ push:
     vapidPrivateKey: ""
     subject: mailto:admin@example.com
 
+# Accounting sync. One Intuit app serves every tenant: register it at
+# developer.intuit.com, set its redirect URI to <webBaseUrl>/admin/integrations/quickbooks/callback
+# and its webhook endpoint to <api origin>/webhooks/accounting/quickbooks/. Leave the client id
+# and secret empty and the QuickBooks card explains that the instance is not set up.
+# Secrets come from TRENOVA_QUICKBOOKS_CLIENT_ID, TRENOVA_QUICKBOOKS_CLIENT_SECRET and
+# TRENOVA_QUICKBOOKS_WEBHOOK_VERIFIER_TOKEN rather than this file.
+accounting:
+  quickbooks:
+    environment: sandbox # sandbox or production
+    redirectUrl: "" # Defaults to app.webBaseUrl + /admin/integrations/quickbooks/callback
+
 system:
   # Instance-wide figures on the sign-in screen, served without a session. Off by
   # default: enabling it lets anyone who can load the login page read the shipment
