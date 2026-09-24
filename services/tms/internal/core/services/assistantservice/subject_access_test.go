@@ -26,6 +26,15 @@ type subjectPermissions struct {
 	// granted are the agents restricted to roles that the person's roles
 	// grant.
 	granted []pulid.ID
+	// agentChecks are the agents MayUseAgent was asked about.
+	agentChecks []pulid.ID
+}
+
+func (p *subjectPermissions) usable(operation permission.Operation) *serviceports.UsableAgents {
+	return &serviceports.UsableAgents{
+		Assistant:  p.allowed[permission.ResourceAssistant.String()+":"+string(operation)],
+		GrantedIDs: p.granted,
+	}
 }
 
 func (p *subjectPermissions) AgentsUsable(
@@ -33,23 +42,19 @@ func (p *subjectPermissions) AgentsUsable(
 	_ *serviceports.RequestActor,
 	operation permission.Operation,
 ) (*serviceports.UsableAgents, error) {
-	return &serviceports.UsableAgents{
-		Assistant:  p.allowed[permission.ResourceAssistant.String()+":"+string(operation)],
-		GrantedIDs: p.granted,
-	}, nil
+	p.asked = append(p.asked, permission.ResourceAssistant.String()+":"+string(operation))
+
+	return p.usable(operation), nil
 }
 
 func (p *subjectPermissions) MayUseAgent(
-	ctx context.Context,
-	actor *serviceports.RequestActor,
+	_ context.Context,
+	_ *serviceports.RequestActor,
 	definition *agentdefinition.Definition,
 ) (bool, error) {
-	usable, err := p.AgentsUsable(ctx, actor, permission.OpCreate)
-	if err != nil {
-		return false, err
-	}
+	p.agentChecks = append(p.agentChecks, definition.ID)
 
-	return usable.Allows(definition), nil
+	return p.usable(permission.OpCreate).Allows(definition), nil
 }
 
 func (p *subjectPermissions) Check(

@@ -3,6 +3,7 @@ package agentaccessservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -65,8 +66,8 @@ func (s *Service) SuggestAudience(
 }
 
 // HeldTools is every registered tool the agent holds with the grant it needs
-// of the person using it. A tool that acts only on the person's own records
-// needs no grant and is left out.
+// of the person using it and where its work can go. A tool that acts only on
+// the person's own records needs no grant and names no resource.
 func (s *Service) HeldTools(definition *agentdefinition.Definition) []HeldTool {
 	if s.runtime == nil || definition == nil {
 		return []HeldTool{}
@@ -90,39 +91,35 @@ func (s *Service) HeldTools(definition *agentdefinition.Definition) []HeldTool {
 }
 
 func (s *Service) heldTool(name string) (HeldTool, bool) {
-	if s.queryTools != nil {
-		if tool, ok := s.queryTools.Get(name); ok {
-			if services.IsSelfScoped(tool) {
-				return HeldTool{}, false
-			}
-
-			return HeldTool{
-				Name:      name,
-				Resource:  tool.PermissionResource(),
-				Operation: permission.OpRead,
-			}, true
-		}
-	}
-	if s.tools != nil {
-		if tool, ok := s.tools.Get(name); ok {
-			if services.IsSelfScoped(tool) {
-				return HeldTool{}, false
-			}
-
-			return HeldTool{
-				Name:      name,
-				Resource:  tool.PermissionResource(),
-				Operation: tool.PermissionOperation(),
-			}, true
-		}
+	if s.policies == nil {
+		return HeldTool{}, false
 	}
 
-	return HeldTool{}, false
+	policy, ok := s.policies.Get(name)
+	if !ok {
+		return HeldTool{}, false
+	}
+
+	held := HeldTool{Name: name, Egress: policy.Egress}
+	if policy.Scope == agent.ToolScopeSelf || policy.Resource == "" {
+		return held, true
+	}
+
+	held.Resource = policy.Resource
+	held.Operation = policy.Operation
+	if held.Operation == "" {
+		held.Operation = permission.OpRead
+	}
+
+	return held, true
 }
 
 func requiredGrants(held []HeldTool) []services.RequiredGrant {
 	required := make([]services.RequiredGrant, 0, len(held))
 	for _, tool := range held {
+		if tool.Resource == "" {
+			continue
+		}
 		required = append(required, services.RequiredGrant{
 			Tool:      tool.Name,
 			Resource:  tool.Resource,

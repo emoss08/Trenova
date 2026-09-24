@@ -3,6 +3,7 @@ package agentaccessservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/stretchr/testify/assert"
 )
@@ -57,4 +58,31 @@ func TestAnySensitive_OrsItsRules(t *testing.T) {
 
 	assert.Equal(t, []string{"send_email", "get_worker_pay"}, SensitiveTools(held, rule))
 	assert.Empty(t, SensitiveTools(held, nil))
+}
+
+func TestDefaultSensitiveRule_NamesToolsWhoseWorkLeavesTheOrganization(t *testing.T) {
+	t.Parallel()
+
+	registry := permission.NewEmptyRegistry()
+	held := []HeldTool{
+		{
+			Name:      "email_customer",
+			Resource:  "shipment",
+			Operation: permission.OpUpdate,
+			Egress:    []agent.EgressClass{agent.EgressInternal, agent.EgressExternalRecipient},
+		},
+		{
+			Name:      "add_shipment_comment",
+			Resource:  "shipment",
+			Operation: permission.OpUpdate,
+			Egress:    []agent.EgressClass{agent.EgressInternal},
+		},
+		{Name: "remember", Egress: []agent.EgressClass{agent.EgressPersonal}},
+		{Name: "get_shipment", Resource: "shipment", Operation: permission.OpRead},
+	}
+
+	assert.Equal(t,
+		[]string{"email_customer"},
+		SensitiveTools(held, DefaultSensitiveRule(registry)),
+	)
 }

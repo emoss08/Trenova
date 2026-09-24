@@ -3,11 +3,13 @@ package permission
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -44,11 +46,27 @@ type agentAccessFixture struct {
 }
 
 // newAgentAccessFixture is a person holding a role that inherits another. The
-// parent holds the assistant; the child holds nothing of its own.
+// parent holds the assistant; the child holds nothing of its own. Nothing is
+// cached, so every read computes the person's permissions afresh.
 func newAgentAccessFixture(t *testing.T, parentOps ...permission.Operation) *agentAccessFixture {
 	t.Helper()
 
 	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
+	f := agentAccessClosure(eng, roleRepo, parentOps...)
+
+	key := allRolesKey(f.actor.UserID, f.actor.OrganizationID)
+	cacheRepo.On("Get", mock.Anything, key).Return(nil, nil)
+	cacheRepo.On("Set", mock.Anything, key,
+		mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).Return(nil)
+
+	return f
+}
+
+func agentAccessClosure(
+	eng *engine,
+	roleRepo *mocks.MockRoleRepository,
+	parentOps ...permission.Operation,
+) *agentAccessFixture {
 	grants := &fakeAgentGrants{byRole: map[pulid.ID][]pulid.ID{}}
 	eng.agentGrants = grants
 
@@ -60,16 +78,18 @@ func newAgentAccessFixture(t *testing.T, parentOps ...permission.Operation) *age
 		parentOps = []permission.Operation{permission.OpRead, permission.OpCreate}
 	}
 
-	cacheRepo.On("Get", mock.Anything, allRolesKey(userID, orgID)).Return(nil, nil)
-	cacheRepo.On("Set", mock.Anything, allRolesKey(userID, orgID),
-		mock.AnythingOfType("*repositories.CachedPermissions"), cacheTTL).Return(nil)
 	roleRepo.On("GetUserRoleAssignments", mock.Anything, userID, orgID).
 		Return([]*permission.UserRoleAssignment{
 			{ID: pulid.MustNew("ura_"), RoleID: child, UserID: userID, OrganizationID: orgID},
 		}, nil)
 	roleRepo.On("GetRolesWithInheritance", mock.Anything, []pulid.ID{child}).
 		Return([]*permission.Role{
-			{ID: child, Name: "Dispatcher", OrganizationID: orgID, ParentRoleIDs: []pulid.ID{parent}},
+			{
+				ID:             child,
+				Name:           "Dispatcher",
+				OrganizationID: orgID,
+				ParentRoleIDs:  []pulid.ID{parent},
+			},
 			{
 				ID:             parent,
 				Name:           "Assistant user",
@@ -95,6 +115,33 @@ func newAgentAccessFixture(t *testing.T, parentOps ...permission.Operation) *age
 			BusinessUnitID: pulid.MustNew("bu_"),
 		},
 	}
+}
+
+type memoryPermissionCache struct {
+	repositories.PermissionCacheRepository
+
+	entries map[repositories.PermissionCacheKey]*repositories.CachedPermissions
+}
+
+func (c *memoryPermissionCache) Get(
+	_ context.Context,
+	key repositories.PermissionCacheKey,
+) (*repositories.CachedPermissions, error) {
+	return c.entries[key], nil
+}
+
+func (c *memoryPermissionCache) Set(
+	_ context.Context,
+	key repositories.PermissionCacheKey,
+	perms *repositories.CachedPermissions,
+	_ time.Duration,
+) error {
+	c.entries[key] = perms
+	return nil
+}
+
+func (c *memoryPermissionCache) invalidate() {
+	clear(c.entries)
 }
 
 func restrictedAgent() *agentdefinition.Definition {
@@ -125,6 +172,46 @@ func TestAgentsUsable_ResolvesAGrantThroughAnInheritedRole(t *testing.T) {
 	assert.ElementsMatch(t, []pulid.ID{f.child, f.parent}, f.grants.asked[0].RoleIDs,
 		"the grants are read for the role and every role it inherits")
 	assert.Equal(t, f.actor.OrganizationID, f.grants.asked[0].OrganizationID)
+}
+
+/*
+The agents a person's roles grant are cached with the rest of their
+permissions, so a grant made while they are cached reaches them once the cache
+is invalidated, which is what a grant write does for every holder of the role.
+*/
+func TestAgentsUsable_ReadsAGrantAgainOnceTheCacheIsInvalidated(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, _, _ := setupTestEngine(t)
+	cache := &memoryPermissionCache{
+		entries: map[repositories.PermissionCacheKey]*repositories.CachedPermissions{},
+	}
+	eng.cacheRepo = cache
+	f := agentAccessClosure(eng, roleRepo)
+	agent := restrictedAgent()
+
+	allowed, err := f.engine.MayUseAgent(t.Context(), f.actor, agent)
+	require.NoError(t, err)
+	assert.False(t, allowed)
+	require.Len(t, f.grants.asked, 1)
+
+	f.grants.byRole[f.parent] = []pulid.ID{agent.ID}
+	allowed, err = f.engine.MayUseAgent(t.Context(), f.actor, agent)
+	require.NoError(t, err)
+	assert.False(t, allowed, "the cached permissions are served until invalidated")
+	assert.Len(t, f.grants.asked, 1, "a cached read does not touch the grants")
+
+	cache.invalidate()
+	allowed, err = f.engine.MayUseAgent(t.Context(), f.actor, agent)
+	require.NoError(t, err)
+	assert.True(t, allowed, "the inherited grant is read once the cache is invalidated")
+	assert.Len(t, f.grants.asked, 2)
+
+	f.grants.byRole[f.parent] = nil
+	cache.invalidate()
+	allowed, err = f.engine.MayUseAgent(t.Context(), f.actor, agent)
+	require.NoError(t, err)
+	assert.False(t, allowed, "a revoked grant is gone once the cache is invalidated")
 }
 
 func TestMayUseAgent_UnderEachMode(t *testing.T) {
@@ -204,7 +291,10 @@ func TestRoleCoverage_FullPartialAndNone(t *testing.T) {
 	none := pulid.MustNew("rol_")
 	elsewhere := pulid.MustNew("rol_")
 
-	grant := func(resource permission.Resource, ops ...permission.Operation) *permission.ResourcePermission {
+	grant := func(
+		resource permission.Resource,
+		ops ...permission.Operation,
+	) *permission.ResourcePermission {
 		return &permission.ResourcePermission{
 			Resource:   resource.String(),
 			Operations: ops,
@@ -246,8 +336,16 @@ func TestRoleCoverage_FullPartialAndNone(t *testing.T) {
 		OrganizationID: orgID,
 		RoleIDs:        requested,
 		Required: []services.RequiredGrant{
-			{Tool: "get_shipment", Resource: permission.ResourceShipment, Operation: permission.OpRead},
-			{Tool: "hold_shipment", Resource: permission.ResourceShipment, Operation: permission.OpUpdate},
+			{
+				Tool:      "get_shipment",
+				Resource:  permission.ResourceShipment,
+				Operation: permission.OpRead,
+			},
+			{
+				Tool:      "hold_shipment",
+				Resource:  permission.ResourceShipment,
+				Operation: permission.OpUpdate,
+			},
 			{Tool: "get_worker", Resource: permission.ResourceWorker, Operation: permission.OpRead},
 		},
 	})

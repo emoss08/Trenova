@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -47,7 +48,9 @@ func (f *fakeDefinitions) GetByID(
 ) (*agentdefinition.Definition, error) {
 	definition, ok := f.byID[req.ID]
 	if !ok {
-		return nil, errortypes.NewNotFoundError("AgentDefinition not found within your organization")
+		return nil, errortypes.NewNotFoundError(
+			"AgentDefinition not found within your organization",
+		)
 	}
 	copied := *definition
 
@@ -166,7 +169,10 @@ type recordingAudit struct {
 	logged []*services.LogActionParams
 }
 
-func (a *recordingAudit) LogAction(params *services.LogActionParams, _ ...services.LogOption) error {
+func (a *recordingAudit) LogAction(
+	params *services.LogActionParams,
+	_ ...services.LogOption,
+) error {
 	a.logged = append(a.logged, params)
 	return nil
 }
@@ -191,7 +197,7 @@ func newFixture(t *testing.T) *fixture {
 	t.Helper()
 
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	agent := &agentdefinition.Definition{
+	payroll := &agentdefinition.Definition{
 		ID:             pulid.MustNew("agdef_"),
 		Name:           "Payroll helper",
 		OrganizationID: tenant.OrgID,
@@ -206,14 +212,22 @@ func newFixture(t *testing.T) *fixture {
 		BusinessUnitID: tenant.BuID,
 		AccessMode:     agentdefinition.AccessEveryone,
 	}
-	roleA := &permission.Role{ID: pulid.MustNew("rol_"), Name: "Payroll", OrganizationID: tenant.OrgID}
-	roleB := &permission.Role{ID: pulid.MustNew("rol_"), Name: "Finance", OrganizationID: tenant.OrgID}
+	roleA := &permission.Role{
+		ID:             pulid.MustNew("rol_"),
+		Name:           "Payroll",
+		OrganizationID: tenant.OrgID,
+	}
+	roleB := &permission.Role{
+		ID:             pulid.MustNew("rol_"),
+		Name:           "Finance",
+		OrganizationID: tenant.OrgID,
+	}
 
 	f := &fixture{
 		db: &txDB{},
 		definitions: &fakeDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
-			agent.ID:  agent,
-			system.ID: system,
+			payroll.ID: payroll,
+			system.ID:  system,
 		}},
 		grants: &fakeGrants{
 			roles:      map[pulid.ID]*permission.Role{roleA.ID: roleA, roleB.ID: roleB},
@@ -231,7 +245,7 @@ func newFixture(t *testing.T) *fixture {
 			BusinessUnitID: tenant.BuID,
 		},
 		tenant: tenant,
-		agent:  agent,
+		agent:  payroll,
 		system: system,
 		roleA:  roleA,
 		roleB:  roleB,
@@ -472,4 +486,75 @@ func TestInvalidate_KeepsGoingPastAFailure(t *testing.T) {
 	f.cache.On("InvalidateByRole", mock.Anything, f.roleB.ID, mock.Anything).Return(nil).Once()
 
 	f.service.invalidate(t.Context(), []pulid.ID{f.roleA.ID, f.roleB.ID}, []pulid.ID{f.roleA.ID})
+}
+
+type summarizingRuntime struct {
+	services.AgentRuntime
+	names []string
+}
+
+func (r summarizingRuntime) ToolSummaries(
+	*agentdefinition.Definition,
+) []agentdefinition.ToolSummary {
+	out := make([]agentdefinition.ToolSummary, 0, len(r.names))
+	for _, name := range r.names {
+		out = append(out, agentdefinition.ToolSummary{Name: name})
+	}
+
+	return out
+}
+
+type policyTable map[string]services.ToolPolicy
+
+func (p policyTable) Get(name string) (services.ToolPolicy, bool) {
+	policy, ok := p[name]
+	return policy, ok
+}
+
+/*
+What an agent holds is read from each tool's declared policy: the resource and
+operation it needs of the person, and where its work can go. A self-scoped tool
+needs no grant but its egress still counts, and a name the catalog does not
+know is left out.
+*/
+func TestHeldTools_ReadsEachToolsPolicy(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture(t)
+	f.service.runtime = summarizingRuntime{
+		names: []string{"get_shipment", "email_customer", "remember", "get_shipment", "gone"},
+	}
+	f.service.policies = policyTable{
+		"get_shipment": {Name: "get_shipment", Resource: "shipment"},
+		"email_customer": {
+			Name:      "email_customer",
+			Resource:  "shipment",
+			Operation: permission.OpUpdate,
+			Egress:    []agent.EgressClass{agent.EgressExternalRecipient},
+		},
+		"remember": {
+			Name:     "remember",
+			Resource: "agent_memory",
+			Scope:    agent.ToolScopeSelf,
+			Egress:   []agent.EgressClass{agent.EgressPersonal},
+		},
+	}
+
+	held := f.service.HeldTools(f.agent)
+
+	assert.Equal(t, []HeldTool{
+		{Name: "get_shipment", Resource: "shipment", Operation: permission.OpRead},
+		{
+			Name:      "email_customer",
+			Resource:  "shipment",
+			Operation: permission.OpUpdate,
+			Egress:    []agent.EgressClass{agent.EgressExternalRecipient},
+		},
+		{Name: "remember", Egress: []agent.EgressClass{agent.EgressPersonal}},
+	}, held)
+	assert.Equal(t, []services.RequiredGrant{
+		{Tool: "get_shipment", Resource: "shipment", Operation: permission.OpRead},
+		{Tool: "email_customer", Resource: "shipment", Operation: permission.OpUpdate},
+	}, requiredGrants(held))
+	assert.Equal(t, []string{"email_customer"}, SensitiveTools(held, f.service.sensitive))
 }

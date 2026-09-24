@@ -338,4 +338,3 @@ func TestFollowUp_ReportsWhenTheOwnersRoleIsGrantedTheAgent(t *testing.T) {
 	require.Len(t, f.turns.started, 1)
 	assert.Len(t, f.workflows.payloads, 1)
 }
-

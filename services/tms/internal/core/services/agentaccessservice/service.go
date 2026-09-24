@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -21,6 +22,18 @@ import (
 )
 
 const maxGrantsPerWrite = 100
+
+type toolPolicies interface {
+	Get(name string) (services.ToolPolicy, bool)
+}
+
+func policyLookup(catalog *agenttoolpolicy.Catalog) toolPolicies {
+	if catalog == nil {
+		return nil
+	}
+
+	return catalog
+}
 
 type Params struct {
 	fx.In
@@ -34,8 +47,7 @@ type Params struct {
 	Permissions     services.PermissionEngine
 	AuditService    services.AuditService
 	Runtime         services.AgentRuntime
-	Tools           services.AgentToolRegistry
-	QueryTools      services.AgentQueryToolRegistry
+	Policies        *agenttoolpolicy.Catalog `optional:"true"`
 	Registry        *permission.Registry
 }
 
@@ -49,8 +61,7 @@ type Service struct {
 	permissions services.PermissionEngine
 	audit       services.AuditService
 	runtime     services.AgentRuntime
-	tools       services.AgentToolRegistry
-	queryTools  services.AgentQueryToolRegistry
+	policies    toolPolicies
 	sensitive   SensitiveToolRule
 }
 
@@ -66,8 +77,7 @@ func New(p Params) services.AgentAccessService {
 		permissions: p.Permissions,
 		audit:       p.AuditService,
 		runtime:     p.Runtime,
-		tools:       p.Tools,
-		queryTools:  p.QueryTools,
+		policies:    policyLookup(p.Policies),
 		sensitive:   DefaultSensitiveRule(p.Registry),
 	}
 }
@@ -123,11 +133,14 @@ func (s *Service) SetAgentAccess(
 
 		previousMode = definition.EffectiveAccessMode()
 		if definition.AccessMode != req.Mode {
-			txErr = s.definitions.SetAccessMode(txCtx, repositories.SetAgentDefinitionAccessModeRequest{
-				ID:         definition.ID,
-				TenantInfo: req.TenantInfo,
-				Mode:       req.Mode,
-			})
+			txErr = s.definitions.SetAccessMode(
+				txCtx,
+				repositories.SetAgentDefinitionAccessModeRequest{
+					ID:         definition.ID,
+					TenantInfo: req.TenantInfo,
+					Mode:       req.Mode,
+				},
+			)
 			if txErr != nil {
 				return txErr
 			}
@@ -249,7 +262,10 @@ func (s *Service) authorize(
 	}
 
 	for _, resource := range resources {
-		result, err := s.permissions.Check(ctx, actor.PermissionCheck(resource, permission.OpUpdate))
+		result, err := s.permissions.Check(
+			ctx,
+			actor.PermissionCheck(resource, permission.OpUpdate),
+		)
 		if err != nil {
 			return fmt.Errorf("check %s permission: %w", resource, err)
 		}
@@ -310,7 +326,8 @@ func validateAgentAccess(
 	}
 	if definition.IsSystem() && len(roleIDs) > 0 {
 		multiErr.Add("roleIds", errortypes.ErrInvalid,
-			"A system agent is open to everyone who can use the assistant and is granted to no role")
+			"A system agent is open to everyone who can use the assistant and is granted "+
+				"to no role")
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -384,7 +401,11 @@ func (s *Service) tenantAgents(
 		agent, ok := byID[id]
 		switch {
 		case !ok:
-			multiErr.Add(field, errortypes.ErrInvalid, "This agent does not exist in this organization")
+			multiErr.Add(
+				field,
+				errortypes.ErrInvalid,
+				"This agent does not exist in this organization",
+			)
 		case agent.IsSystem():
 			multiErr.Add(field, errortypes.ErrInvalid,
 				"{0} is a system agent and is open to everyone who can use the assistant",
