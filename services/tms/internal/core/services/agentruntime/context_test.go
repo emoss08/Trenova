@@ -41,6 +41,7 @@ func TestContextBuilder_ResolvesTheTimezoneWhateverThePromptWants(t *testing.T) 
 	builder := &ContextBuilder{
 		logger:        zap.NewNop(),
 		organizations: orgs,
+		users:         &stubUsers{user: &tenant.User{}},
 		runtime: newRuntime(
 			&scriptedCompletion{},
 			&stubQueryRegistry{},
@@ -77,10 +78,24 @@ func (s *stubPageGuide) PageForPath(path string) (*productguide.Page, bool) {
 	return page, ok
 }
 
+type stubUsers struct {
+	repositories.UserRepository
+
+	user *tenant.User
+}
+
+func (s *stubUsers) GetByID(
+	context.Context,
+	repositories.GetUserByIDRequest,
+) (*tenant.User, error) {
+	return s.user, nil
+}
+
 func guideBuilder(guide serviceports.ProductGuide) *ContextBuilder {
 	return &ContextBuilder{
 		logger:        zap.NewNop(),
 		organizations: &stubOrganizations{org: &tenant.Organization{Name: "Acme"}},
+		users:         &stubUsers{user: &tenant.User{Name: "Dana Dispatcher"}},
 		runtime:       newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil),
 		guide:         guide,
 	}
