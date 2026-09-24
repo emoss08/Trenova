@@ -1,0 +1,62 @@
+# Questions about Trenova itself and the product guide pages find_in_trenova
+# should answer them from. A case passes top-1 when the first page is one of
+# `expect`, and recall@5 when one of them is among the first five. Keyword and
+# hybrid floors are in guideselection.floors.json, set with -update, never by
+# hand. `nothing` lists questions no page answers.
+cases:
+  - request: how do I add a rate matrix
+    expect: [/billing/configuration-files/rate-matrices]
+  - request: where do I set up tariff grids for LTL
+    expect: [/billing/configuration-files/rate-matrices]
+  - request: where are the aged receivables
+    expect: [/accounting/ar/aging]
+  - request: how do I record a check a customer mailed us
+    expect: [/accounting/ar/payments]
+  - request: where do I match bank deposits
+    expect: [/accounting/reconciliation/bank-receipts, /accounting/reconciliation/work-queue]
+  - request: where do I book a manual journal entry
+    expect: [/accounting/manual-journals]
+  - request: profit and loss for last quarter
+    expect: [/accounting/reports/income-statement]
+  - request: where do I give someone access to billing
+    expect: [/admin/roles, /admin/users]
+  - request: where do I set up our AI models
+    expect: [/admin/agent-control]
+  - request: change how PRO numbers are numbered
+    expect: [/admin/sequence-configs]
+  - request: where do I add a new customer
+    expect: [/billing/configuration-files/customers]
+  - request: where do I see loads ready to bill
+    expect: [/billing/queue]
+  - request: where is the dispatch board
+    expect: [/dispatch/console]
+  - request: find a trucking company for a brokered load
+    expect: [/dispatch/carrier-sourcing, /dispatch/carriers]
+  - request: where do I set a carrier waterfall
+    expect: [/dispatch/routing-guides]
+  - request: where are the trucks listed
+    expect: [/equipment/tractors]
+  - request: where do I file the quarterly fuel tax
+    expect: [/fuel/ifta-returns]
+  - request: where do I set up vacation accrual rules
+    expect: [/hr/pto-policies]
+  - request: who is scheduled to work this weekend
+    expect: [/hr/scheduling]
+  - request: where do I run payroll for drivers
+    expect: [/payroll/workspace, /payroll/settlement-batches]
+  - request: how do I give a driver a cash advance
+    expect: [/payroll/advances]
+  - request: where do I build a custom report
+    expect: [/reports/builder]
+  - request: which shipments missed their appointment
+    expect: [/shipment-management/service-failures]
+  - request: create a load from a rate confirmation PDF
+    expect: [/shipment-management/shipments/import]
+  - request: where do I approve what the AI proposed
+    expect: [/desk/decisions]
+  - request: where do I read emails customers sent in
+    expect: [/inbox]
+nothing:
+  - xyzzy plugh
+  - quantum chromodynamics lattice
+  - penguin sonnet
