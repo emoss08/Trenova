@@ -2,10 +2,8 @@ import type { AgentExtensionCatalogItem } from "@/types/agent-extension";
 import { BrandLogo } from "@trenova/shared/components/brand-logo";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Progress } from "@trenova/shared/components/ui/progress";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatCurrency } from "@trenova/shared/lib/utils";
-import { ExternalLinkIcon, UsersIcon, WrenchIcon } from "lucide-react";
+import { ExternalLinkIcon, WrenchIcon } from "lucide-react";
 import { dailyUsageShare, extensionState, type ExtensionState } from "./extension-roster";
 
 type ExtensionCardProps = {
@@ -61,31 +59,6 @@ export function ExtensionCard({ extension, canUpdate, onOpen }: ExtensionCardPro
           </Badge>
         ))}
       </div>
-
-      {state === "on" && (
-        <div className="flex flex-col gap-1.5">
-          <div className="text-muted-foreground flex items-center justify-between text-xs tabular-nums">
-            <span>
-              {t(
-                "{0} of {1} requests today",
-                extension.usage.requestsToday,
-                extension.dailyRequestLimit,
-              )}
-            </span>
-            <span>{t("{0} this month", formatCurrency(extension.usage.costThisMonthUsd))}</span>
-          </div>
-          <Progress
-            value={Math.round(share * 100)}
-            aria-label={t("Share of today's request limit used")}
-          />
-          <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-            <UsersIcon className="size-3.5" aria-hidden />
-            {extension.availability === "AllAgents"
-              ? t("Every agent can use it")
-              : t("Only agents it is added to can use it")}
-          </span>
-        </div>
-      )}
 
       <footer className="mt-auto flex items-center justify-between gap-2">
         <a
