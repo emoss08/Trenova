@@ -94,7 +94,7 @@ Keywords: semantic search, search by meaning, retrieval, vector search, embeddin
    a row to read the whole error.
 
 ### Create an agent
-Keywords: new agent, build agent, automation, scheduled agent, agent template
+Keywords: new agent, build agent, automation, scheduled agent, agent template, data access, agent sees amounts, agent pay access, restricted fields
 1. Open [AI control](/admin/agent-control) and select **Agents** in the rail.
 2. Select **New agent**.
 3. Optionally choose a starter in **Start from** to fill in instructions, tools and a trigger you
@@ -102,7 +102,10 @@ Keywords: new agent, build agent, automation, scheduled agent, agent template
 4. Fill in **Name**, **Description** and **System instructions**. Add hard lines the agent must
    not cross under **Never**, pressing Enter after each.
 5. Under **Tools**, select **Choose tools**, pick what the agent may look up and change, then
-   select **Done**.
+   select **Done**. Set **Data access** to **Restricted** only for an agent that needs amounts and
+   pay, such as invoice totals, balances, rates or a driver's net pay; at **Internal** its tools
+   leave them out and say so. In chat it never sees more than the person asking, and only
+   someone whose own role reaches restricted fields can give an agent **Restricted**.
 6. Under **Autonomy**, set the **Ceiling**: **Propose only**, **Act with approval** or **Act
    automatically**. Turn on **Shadow mode** or **Simulation** to try the agent without it
    changing anything.

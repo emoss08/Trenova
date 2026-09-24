@@ -62,3 +62,7 @@ func normalizeCurrencyCode(currencyCode string) string {
 
 	return code
 }
+
+func CurrencyCode(currencyCode string) string {
+	return normalizeCurrencyCode(currencyCode)
+}

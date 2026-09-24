@@ -554,16 +554,23 @@ func TestGetDailyBriefing_AReaderOfEverySectionGetsTheNarratedPage(t *testing.T)
 func TestGetDailyBriefing_AnAgentReadsOnlyWhatTheAllowListGrants(t *testing.T) {
 	t.Parallel()
 
-	briefings := &fakeBriefings{page: morningPage()}
+	page := morningPage()
+	page.Sections[0].Items[1] = briefing.Item{
+		Label: "Agent quality regressed",
+		Value: "1",
+		Path:  "/desk/watchtower?kinds=AgentQualityRegression",
+	}
+	briefings := &fakeBriefings{page: page}
 	tool := newGetDailyBriefingTool(briefings, &fakePermissions{})
 	params := testParams(map[string]any{})
 	params.Actor.PrincipalType = serviceports.PrincipalTypeAgent
 
 	view := queryBriefing(t, tool, params)
 
-	require.False(t, permission.IsAgentAllowed(permission.ResourceEDI, permission.OpRead))
+	require.False(t, permission.IsAgentAllowed(permission.ResourceAgentEvalSuite, permission.OpRead))
 	assert.Equal(t, []string{"Attention", "Coverage", "Cash"}, sectionKeys(view))
-	require.Len(t, view.Sections[0].Items, 1, "no agent reads EDI, so its line is dropped")
+	require.Len(t, view.Sections[0].Items, 1,
+		"no agent reads the quality suites, so their line is dropped")
 	assert.Equal(t, []string{"Needs attention: the kinds you may not read"}, view.Withheld)
 	assert.Equal(t, briefing.RoleGeneral, briefings.requests[0].RoleKey,
 		"a call that names no role reads everyone's page")

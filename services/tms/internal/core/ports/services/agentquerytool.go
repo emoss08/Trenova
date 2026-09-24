@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -20,6 +21,7 @@ type QueryToolParams struct {
 	// AgentDefinitionID is the agent the call is made for, which decides
 	// what it may recall of what was kept for one agent alone.
 	AgentDefinitionID pulid.ID
+	DataAccessCeiling permission.FieldSensitivity
 }
 
 // AgentQueryTool reads data and returns it.

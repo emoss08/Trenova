@@ -103,5 +103,20 @@ describe("agentTemplateSchema", () => {
 
     expect(parsed.starterTools).toEqual([]);
     expect(parsed.starterEvents).toEqual([]);
+    expect(parsed.starterDataAccess).toBe("Internal");
+  });
+
+  it("reads the data access a starter asks for", () => {
+    const parsed = agentTemplateSchema.parse({
+      template: "CashApplication",
+      label: "Cash application",
+      description: "Matches bank receipts.",
+      starterTrigger: "Event",
+      starterCeiling: "Propose",
+      starterDataAccess: "Restricted",
+      starterOutput: "Report",
+    });
+
+    expect(parsed.starterDataAccess).toBe("Restricted");
   });
 });

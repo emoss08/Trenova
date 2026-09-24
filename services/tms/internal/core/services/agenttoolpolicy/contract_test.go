@@ -97,6 +97,17 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 		"list_agent_runs":              agent.ExternalReadMarked,
 		"get_daily_briefing":           agent.ExternalReadNever,
 		"get_customer":                 agent.ExternalReadNever,
+		"list_edi_inbound_files":       agent.ExternalReadAlways,
+		"get_edi_inbound_file":         agent.ExternalReadAlways,
+		"list_edi_transfers":           agent.ExternalReadAlways,
+		"get_edi_partner":              agent.ExternalReadNever,
+		"get_settlement_dispute":       agent.ExternalReadMarked,
+		"list_carrier_invoice_matches": agent.ExternalReadMarked,
+		"get_invoice":                  agent.ExternalReadNever,
+		"get_ar_aging":                 agent.ExternalReadNever,
+		"get_driver_settlement":        agent.ExternalReadNever,
+		"get_rate_agreement":           agent.ExternalReadNever,
+		"get_order":                    agent.ExternalReadNever,
 	}
 	for name, want := range cases {
 		policy := registeredPolicy(t, name)
@@ -106,6 +117,16 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 		}
 	}
 	assert.Equal(t, agent.TaintSourceRecordNote, registeredPolicy(t, "get_shipment").Source)
+	assert.Equal(t, agent.TaintSourceRecordNote,
+		registeredPolicy(t, "get_settlement_dispute").Source)
+	for _, name := range []string{
+		"list_edi_inbound_files",
+		"get_edi_inbound_file",
+		"list_edi_transfers",
+		"list_carrier_invoice_matches",
+	} {
+		assert.Equal(t, agent.TaintSourceEDI, registeredPolicy(t, name).Source, name)
+	}
 	assert.Equal(t, agent.TaintSourceRunRecord, registeredPolicy(t, "list_agent_runs").Source)
 	watchtower := registeredPolicy(t, "list_watchtower_items")
 	assert.Equal(t, agent.TaintSourceInboundMessage, watchtower.Source)

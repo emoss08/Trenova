@@ -23,6 +23,7 @@ type SaveAgentDefinitionRequest struct {
 	ToolNames              []string
 	ToolTiers              map[string]agent.AutonomyTier
 	AutonomyCeiling        agent.AutonomyTier
+	DataAccessCeiling      agentdefinition.DataAccessCeiling
 	Enabled                bool
 	ShadowMode             bool
 	DecisionTimeoutSeconds int
@@ -66,6 +67,7 @@ type AgentTemplateDescriptor struct {
 	StarterEvents       []agent.EventKind                 `json:"starterEvents"`
 	StarterCron         string                            `json:"starterCron"`
 	StarterCeiling      agent.AutonomyTier                `json:"starterCeiling"`
+	StarterDataAccess   agentdefinition.DataAccessCeiling `json:"starterDataAccess"`
 	StarterOutput       agentdefinition.OutputMode        `json:"starterOutput"`
 	SystemKey           string                            `json:"systemKey"`
 	ContextProviders    []agentdefinition.ContextProvider `json:"contextProviders"`

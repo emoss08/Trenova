@@ -118,6 +118,13 @@ taint held names it among what held it, whatever else held it too.
 without a decision while that person is in the conversation, unless a person
 set the tool's tier on the agent. An unattended run never has it.
 
+**Data access.** A read shows a field only when the reader's data access
+reaches it. An unattended agent reads at its own data access setting, Internal
+unless someone whose role reaches Restricted raises it; a run a person is in
+reads at the lower of that setting and the person's own role. Amounts, pay,
+memos and raw EDI above that tier are left out and named in withheldByAccess,
+and Confidential fields never reach a model at all.
+
 `, command, total)
 }
 

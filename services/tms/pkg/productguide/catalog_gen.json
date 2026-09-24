@@ -1,5 +1,5 @@
 {
-  "version": "sha256:a8e8f16527d899c44c5a8e2068bd2a6aa30d3ee11eefda07479f33b829c64d87",
+  "version": "sha256:59f37cf4206f216f7799caa99ae5b07d95e1bd195fa2a99d0708baed11ea7249",
   "modules": [
     {
       "id": "home",
@@ -1867,14 +1867,18 @@
             "build agent",
             "automation",
             "scheduled agent",
-            "agent template"
+            "agent template",
+            "data access",
+            "agent sees amounts",
+            "agent pay access",
+            "restricted fields"
           ],
           "steps": [
             "Open [AI control](/admin/agent-control) and select **Agents** in the rail.",
             "Select **New agent**.",
             "Optionally choose a starter in **Start from** to fill in instructions, tools and a trigger you can change freely.",
             "Fill in **Name**, **Description** and **System instructions**. Add hard lines the agent must not cross under **Never**, pressing Enter after each.",
-            "Under **Tools**, select **Choose tools**, pick what the agent may look up and change, then select **Done**.",
+            "Under **Tools**, select **Choose tools**, pick what the agent may look up and change, then select **Done**. Set **Data access** to **Restricted** only for an agent that needs amounts and pay, such as invoice totals, balances, rates or a driver's net pay; at **Internal** its tools leave them out and say so. In chat it never sees more than the person asking, and only someone whose own role reaches restricted fields can give an agent **Restricted**.",
             "Under **Autonomy**, set the **Ceiling**: **Propose only**, **Act with approval** or **Act automatically**. Turn on **Shadow mode** or **Simulation** to try the agent without it changing anything.",
             "Under **When it runs**, pick **Chat**, **Scheduled**, **Event** or **Continuous** and fill in the schedule or events it asks for.",
             "Optionally set a **Monthly budget**, **Runs per day** and a **Preferred provider**, leave **Enabled** on, and select **Save**."

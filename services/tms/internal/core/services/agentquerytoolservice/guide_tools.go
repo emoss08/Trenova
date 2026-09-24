@@ -89,7 +89,10 @@ func (t *findInTrenovaTool) Policy() serviceports.ToolPolicy {
 }
 
 func (t *findInTrenovaTool) SearchTerms() []string {
-	return []string{"how do i", "where is", "help", "guide", "page", "menu", "navigate", "find"}
+	return []string{
+		"how do i", "where is", "help", "guide", "page", "menu", "navigate", "find",
+		"set", "setup", "configure",
+	}
 }
 
 type guideTask struct {

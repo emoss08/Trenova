@@ -67,6 +67,8 @@ type Definition struct {
 	ToolTiers       map[string]agent.AutonomyTier `json:"toolTiers"       bun:"tool_tiers,type:JSONB,nullzero"`
 	AutonomyCeiling agent.AutonomyTier            `json:"autonomyCeiling" bun:"autonomy_ceiling,type:VARCHAR(50),notnull"`
 
+	DataAccessCeiling DataAccessCeiling `json:"dataAccessCeiling" bun:"data_access_ceiling,type:VARCHAR(20),notnull,default:'Internal'"`
+
 	Enabled                bool `json:"enabled"                bun:"enabled,type:BOOLEAN,notnull"`
 	ShadowMode             bool `json:"shadowMode"             bun:"shadow_mode,type:BOOLEAN,notnull"`
 	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"decision_timeout_seconds,type:INTEGER,notnull"`
@@ -174,6 +176,9 @@ func (d *Definition) ApplyDefaults() {
 	}
 	if d.AutonomyCeiling == "" {
 		d.AutonomyCeiling = agent.TierPropose
+	}
+	if d.DataAccessCeiling == "" {
+		d.DataAccessCeiling = DataAccessInternal
 	}
 	if d.DecisionTimeoutSeconds == 0 {
 		d.DecisionTimeoutSeconds = DefaultDecisionTimeoutSeconds
@@ -326,6 +331,9 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&d.AutonomyCeiling,
 			validation.Required.Error("Autonomy ceiling is required"),
 			domainvalidation.ValidEnum[agent.AutonomyTier]("Autonomy ceiling is invalid"),
+		),
+		validation.Field(&d.DataAccessCeiling,
+			domainvalidation.ValidEnum[DataAccessCeiling]("Data access must be Internal or Restricted"),
 		),
 		validation.Field(&d.TriggerMode,
 			validation.Required.Error("Trigger mode is required"),

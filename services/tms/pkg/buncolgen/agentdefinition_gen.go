@@ -60,6 +60,7 @@ var DefinitionColumns = struct {
 	ToolNames              Column // "tool_names" → qualified: "agdef.tool_names"
 	ToolTiers              Column // "tool_tiers" → qualified: "agdef.tool_tiers"
 	AutonomyCeiling        Column // "autonomy_ceiling" → qualified: "agdef.autonomy_ceiling"
+	DataAccessCeiling      Column // "data_access_ceiling" → qualified: "agdef.data_access_ceiling"
 	Enabled                Column // "enabled" → qualified: "agdef.enabled"
 	ShadowMode             Column // "shadow_mode" → qualified: "agdef.shadow_mode"
 	DecisionTimeoutSeconds Column // "decision_timeout_seconds" → qualified: "agdef.decision_timeout_seconds"
@@ -102,6 +103,7 @@ var DefinitionColumns = struct {
 	ToolNames:              NewColumn("tool_names", "agdef"),
 	ToolTiers:              NewColumn("tool_tiers", "agdef"),
 	AutonomyCeiling:        NewColumn("autonomy_ceiling", "agdef"),
+	DataAccessCeiling:      NewColumn("data_access_ceiling", "agdef"),
 	Enabled:                NewColumn("enabled", "agdef"),
 	ShadowMode:             NewColumn("shadow_mode", "agdef"),
 	DecisionTimeoutSeconds: NewColumn("decision_timeout_seconds", "agdef"),
@@ -150,6 +152,7 @@ var DefinitionFieldMap = map[string]string{
 	"toolNames":              "tool_names",
 	"toolTiers":              "tool_tiers",
 	"autonomyCeiling":        "autonomy_ceiling",
+	"dataAccessCeiling":      "data_access_ceiling",
 	"enabled":                "enabled",
 	"shadowMode":             "shadow_mode",
 	"decisionTimeoutSeconds": "decision_timeout_seconds",
@@ -196,6 +199,7 @@ var DefinitionInsertableColumns = []string{
 	"tool_names",
 	"tool_tiers",
 	"autonomy_ceiling",
+	"data_access_ceiling",
 	"enabled",
 	"shadow_mode",
 	"decision_timeout_seconds",
@@ -302,6 +306,7 @@ var DefinitionFilter = struct {
 	ToolNames              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolNames" → DB: "tool_names"
 	ToolTiers              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolTiers" → DB: "tool_tiers"
 	AutonomyCeiling        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autonomyCeiling" → DB: "autonomy_ceiling"
+	DataAccessCeiling      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dataAccessCeiling" → DB: "data_access_ceiling"
 	Enabled                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enabled" → DB: "enabled"
 	ShadowMode             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shadowMode" → DB: "shadow_mode"
 	DecisionTimeoutSeconds func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decisionTimeoutSeconds" → DB: "decision_timeout_seconds"
@@ -365,6 +370,9 @@ var DefinitionFilter = struct {
 	},
 	AutonomyCeiling: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("autonomyCeiling", op, value)
+	},
+	DataAccessCeiling: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("dataAccessCeiling", op, value)
 	},
 	Enabled: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("enabled", op, value)

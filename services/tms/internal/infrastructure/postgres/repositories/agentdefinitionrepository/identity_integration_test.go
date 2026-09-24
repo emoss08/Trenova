@@ -5,6 +5,7 @@ package agentdefinitionrepository
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
@@ -124,4 +125,51 @@ func TestUpdate_SavesBudgetsLimitsAndSimulation(t *testing.T) {
 	cleared, err := repo.GetByID(ctx, request)
 	require.NoError(t, err)
 	require.Nil(t, cleared.MonthlyBudgetUSD)
+}
+
+func TestUpdate_SavesTheDataAccessCeiling(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	registry := seeder.NewRegistry()
+	seeds.Register(registry)
+	engine := seeder.NewEngine(
+		db,
+		registry,
+		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
+	)
+	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
+	require.NoError(t, err)
+
+	var row tierDefinitionRow
+	require.NoError(t, db.NewSelect().
+		Table("agent_definitions").
+		Column("id", "organization_id", "business_unit_id").
+		Where("trigger_mode <> 'Chat'").
+		Limit(1).
+		Scan(ctx, &row))
+
+	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	tenant := pagination.TenantInfo{OrgID: row.OrganizationID, BuID: row.BusinessUnitID}
+	request := repositories.GetAgentDefinitionByIDRequest{ID: row.ID, TenantInfo: tenant}
+
+	definition, err := repo.GetByID(ctx, request)
+	require.NoError(t, err)
+	require.Equal(t, agentdefinition.DataAccessInternal, definition.DataAccessCeiling)
+
+	definition.DataAccessCeiling = agentdefinition.DataAccessRestricted
+	_, err = repo.Update(ctx, definition)
+	require.NoError(t, err)
+
+	saved, err := repo.GetByID(ctx, request)
+	require.NoError(t, err)
+	require.Equal(t, agentdefinition.DataAccessRestricted, saved.DataAccessCeiling)
+
+	saved.DataAccessCeiling = agentdefinition.DataAccessInternal
+	_, err = repo.Update(ctx, saved)
+	require.NoError(t, err)
+
+	lowered, err := repo.GetByID(ctx, request)
+	require.NoError(t, err)
+	require.Equal(t, agentdefinition.DataAccessInternal, lowered.DataAccessCeiling)
 }

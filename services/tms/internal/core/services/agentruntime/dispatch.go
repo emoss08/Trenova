@@ -373,6 +373,7 @@ func (s *Service) runQueryTool(
 		Timezone:          req.Context.Timezone,
 		Params:            call.Arguments,
 		AgentDefinitionID: req.Definition.ID,
+		DataAccessCeiling: req.Definition.DataAccessSensitivity(),
 	})
 	if err != nil {
 		return failedOutcome("Tool %q failed: %s", call.Name, err.Error())

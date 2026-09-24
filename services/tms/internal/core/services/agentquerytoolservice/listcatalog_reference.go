@@ -429,13 +429,17 @@ type invoiceRow struct {
 	BillTo           string       `json:"billTo,omitempty"`
 	ProNumber        string       `json:"proNumber,omitempty"`
 	TotalAmount      string       `json:"totalAmount,omitempty"`
+	Currency         string       `json:"currency,omitempty"`
 	InvoiceDate      optionalDate `json:"invoiceDate"`
 	// A receivable with no due date is not a receivable that is current; it is
 	// one nobody gave terms to. Omitting the key made it look like the former.
 	DueDate optionalDate `json:"dueDate"`
 }
 
-func newListInvoicesTool(repo repositories.InvoiceRepository) serviceports.AgentQueryTool {
+func newListInvoicesTool(
+	repo repositories.InvoiceRepository,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_invoices",
 		entityPlural: "invoices",
@@ -475,11 +479,18 @@ func newListInvoicesTool(repo repositories.InvoiceRepository) serviceports.Agent
 			{Name: "totalAmount", Kind: filterNumber, Sortable: true},
 			{Name: "createdAt", Kind: filterDate, Sortable: true},
 		},
-		fetch: func(ctx context.Context, opts *pagination.QueryOptions) ([]any, error) {
+		access: newFieldAccess(permissions),
+		fetchGated: func(
+			ctx context.Context,
+			opts *pagination.QueryOptions,
+			gate *fieldGate,
+		) ([]any, error) {
 			result, err := repo.List(ctx, &repositories.ListInvoicesRequest{Filter: opts})
 			if err != nil {
 				return nil, err
 			}
+
+			showTotal := gate.show("totalAmount", "totalAmount")
 
 			return listRows(result.Items, func(item *invoice.Invoice) any {
 				row := invoiceRow{
@@ -490,9 +501,12 @@ func newListInvoicesTool(repo repositories.InvoiceRepository) serviceports.Agent
 					DisputeStatus:    string(item.DisputeStatus),
 					BillTo:           item.BillToName,
 					ProNumber:        item.ShipmentProNumber,
-					TotalAmount:      item.TotalAmount.String(),
+					Currency:         item.CurrencyCode,
 					InvoiceDate:      recordedDate(item.InvoiceDate),
 					DueDate:          pointerDate(item.DueDate),
+				}
+				if showTotal {
+					row.TotalAmount = item.TotalAmount.StringFixed(2)
 				}
 
 				return row
