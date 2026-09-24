@@ -74,7 +74,7 @@ func TestScheduleReport_RefusesASendWithNoRecipients(t *testing.T) {
 func TestScheduleReport_NeedsAnIdempotencyKey(t *testing.T) {
 	t.Parallel()
 
-	require.True(t, (&scheduleReportTool{}).RequiresIdempotencyKey())
+	require.True(t, (&scheduleReportTool{}).Policy().Idempotent)
 }
 
 /*

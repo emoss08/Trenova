@@ -88,20 +88,21 @@ func (t *raiseExceptionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *raiseExceptionTool) Reversible() bool { return false }
-
-func (t *raiseExceptionTool) PermissionResource() permission.Resource {
-	return permission.ResourceAgentException
-}
-
-func (t *raiseExceptionTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *raiseExceptionTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *raiseExceptionTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierAutoExecute
+func (t *raiseExceptionTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceAgentException,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeRun,
+		DefaultTier:   agent.TierAutoExecute,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Records an exception against the run itself for a person inside the " +
+			"organization.",
+	}
 }
 
 func (t *raiseExceptionTool) Execute(

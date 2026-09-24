@@ -65,26 +65,80 @@ const (
 	MemorySourceUser     = MemorySource("User")
 	MemorySourceAgent    = MemorySource("Agent")
 	MemorySourceDecision = MemorySource("Decision")
+	MemorySourceFeedback = MemorySource("Feedback")
 )
 
 func (s MemorySource) IsValid() bool {
 	switch s {
-	case MemorySourceUser, MemorySourceAgent, MemorySourceDecision:
+	case MemorySourceUser, MemorySourceAgent, MemorySourceDecision, MemorySourceFeedback:
 		return true
 	default:
 		return false
 	}
 }
 
+func AllMemorySources() []MemorySource {
+	return []MemorySource{
+		MemorySourceUser,
+		MemorySourceAgent,
+		MemorySourceDecision,
+		MemorySourceFeedback,
+	}
+}
+
+func AllMemoryKinds() []MemoryKind {
+	return []MemoryKind{MemoryKindInstruction, MemoryKindFact, MemoryKindCorrection}
+}
+
 type MemoryStatus string
 
 const (
-	MemoryStatusActive  = MemoryStatus("Active")
-	MemoryStatusRetired = MemoryStatus("Retired")
+	MemoryStatusActive    = MemoryStatus("Active")
+	MemoryStatusRetired   = MemoryStatus("Retired")
+	MemoryStatusSuggested = MemoryStatus("Suggested")
+	MemoryStatusDismissed = MemoryStatus("Dismissed")
 )
 
 func (s MemoryStatus) IsValid() bool {
-	return s == MemoryStatusActive || s == MemoryStatusRetired
+	switch s {
+	case MemoryStatusActive, MemoryStatusRetired, MemoryStatusSuggested, MemoryStatusDismissed:
+		return true
+	default:
+		return false
+	}
+}
+
+func (s MemoryStatus) IsSuggestion() bool {
+	return s == MemoryStatusSuggested || s == MemoryStatusDismissed
+}
+
+func AllMemoryStatuses() []MemoryStatus {
+	return []MemoryStatus{
+		MemoryStatusActive,
+		MemoryStatusRetired,
+		MemoryStatusSuggested,
+		MemoryStatusDismissed,
+	}
+}
+
+type MemoryEvidence struct {
+	FeedbackIDs     []pulid.ID `json:"feedbackIds"`
+	PatternKey      string     `json:"patternKey"`
+	RatingCount     int        `json:"ratingCount"`
+	DistinctUsers   int        `json:"distinctUsers"`
+	DistinctThreads int        `json:"distinctThreads"`
+	Reason          string     `json:"reason"`
+	Quotes          []string   `json:"quotes,omitempty"`
+	FirstRatedAt    int64      `json:"firstRatedAt"`
+	LastRatedAt     int64      `json:"lastRatedAt"`
+}
+
+func (e *MemoryEvidence) Count() int {
+	if e == nil {
+		return 0
+	}
+
+	return len(e.FeedbackIDs)
 }
 
 // MemorySubjectType is what a memory can be about beyond the organization as
@@ -155,6 +209,8 @@ type Memory struct {
 	UseCount   int    `json:"useCount"   bun:"use_count,type:INTEGER,notnull,default:0"`
 	LastUsedAt *int64 `json:"lastUsedAt" bun:"last_used_at,type:BIGINT,nullzero"`
 
+	Evidence *MemoryEvidence `json:"evidence" bun:"evidence,type:JSONB,nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -206,6 +262,17 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 
 	if m.ExpiresAt != nil && *m.ExpiresAt <= 0 {
 		multiErr.Add("expiresAt", errortypes.ErrInvalid, "Expiry must be a time")
+	}
+
+	if m.Source == MemorySourceFeedback && m.Evidence.Count() == 0 {
+		multiErr.Add(
+			"evidence",
+			errortypes.ErrRequired,
+			"A memory drawn from feedback needs the ratings it was drawn from",
+		)
+	}
+	if m.Status.IsSuggestion() && m.Source != MemorySourceFeedback {
+		multiErr.Add("status", errortypes.ErrInvalid, "Only feedback can suggest a memory")
 	}
 }
 

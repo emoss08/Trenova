@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
@@ -183,8 +184,14 @@ func (t *listBankReceiptExceptionsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listBankReceiptExceptionsTool) PermissionResource() permission.Resource {
-	return permission.ResourceBankReceipt
+func (t *listBankReceiptExceptionsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceBankReceipt,
+		reads:    agent.ExternalReadAlways,
+		source:   agent.TaintSourceBankReceipt,
+		rationale: "Lists bank receipts whose memos the payers wrote; nothing changes and " +
+			"nothing is sent.",
+	})
 }
 
 func (t *listBankReceiptExceptionsTool) Query(
@@ -306,8 +313,14 @@ func (t *getBankReceiptTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getBankReceiptTool) PermissionResource() permission.Resource {
-	return permission.ResourceBankReceipt
+func (t *getBankReceiptTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceBankReceipt,
+		reads:    agent.ExternalReadAlways,
+		source:   agent.TaintSourceBankReceipt,
+		rationale: "Reads a bank receipt whose memo the payer wrote; nothing changes and nothing " +
+			"is sent.",
+	})
 }
 
 func (t *getBankReceiptTool) Query(
@@ -488,8 +501,10 @@ func (t *listCustomerPaymentsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listCustomerPaymentsTool) PermissionResource() permission.Resource {
-	return permission.ResourceCustomerPayment
+func (t *listCustomerPaymentsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceCustomerPayment,
+	})
 }
 
 func (t *listCustomerPaymentsTool) Query(

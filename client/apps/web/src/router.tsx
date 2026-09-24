@@ -4,10 +4,10 @@ import {
   createPermissionLoader,
 } from "@/lib/route-permission";
 import { createPrefetchLoader, lazyPrefetch } from "@/lib/route-prefetch";
-import { AppLayout } from "@/routes/app-layout";
+import { AppErrorLayout, AppLayout } from "@/routes/app-layout";
 import { DeskShellLayout } from "@/routes/desk/shell-layout";
 import { RootLayout } from "@/routes/root-layout";
-import { RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
+import { NotFoundRoute, RouteErrorBoundary } from "@trenova/shared/components/error-boundary";
 import LoadingSkeleton from "@trenova/shared/components/loading-skeleton";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
@@ -45,6 +45,9 @@ export const routes: RouteObject[] = [
     children: [
       {
         element: <AppLayout />,
+        // A page that fails to load or render keeps the shell standing, so the way to
+        // anywhere else is still on screen.
+        errorElement: <AppErrorLayout />,
         loader: protectedLoader,
         children: [
           {
@@ -1865,6 +1868,10 @@ export const routes: RouteObject[] = [
                 },
               },
             ],
+          },
+          {
+            path: "*",
+            element: <NotFoundRoute />,
           },
         ],
       },

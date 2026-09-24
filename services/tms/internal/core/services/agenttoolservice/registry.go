@@ -45,7 +45,7 @@ func (r *registry) Descriptors() []serviceports.AgentToolDescriptor {
 
 	for _, tool := range r.ordered {
 		descriptors = append(descriptors,
-			serviceports.DescribeTool(tool, tool.DefaultAutonomyTier(), false))
+			serviceports.DescribeTool(tool, tool.Policy().DefaultTier, false))
 	}
 
 	return descriptors

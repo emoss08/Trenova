@@ -1,0 +1,186 @@
+"The kind of AI output a rating is about."
+enum AIFeedbackTargetType {
+  "An answer the conversation's agent gave."
+  AssistantMessage
+  "Another agent's answer to a task the conversation's agent handed it."
+  DelegatedAnswer
+  "A whole morning briefing."
+  Briefing
+  "One section of a briefing, named by its key in targetPart."
+  BriefingSection
+  "A home-screen insight."
+  Insight
+  "A watchtower item raised by AI work: an insight, a proposal, a plan, a failed run or an agent exception."
+  WatchtowerItem
+}
+
+"Why a person rated as they did. Each reason belongs to one side of the rating."
+enum AIFeedbackReason {
+  Inaccurate
+  MadeUpNumbers
+  Incomplete
+  WrongAction
+  IgnoredInstructions
+  NotRelevant
+  HardToRead
+  Unsafe
+  Other
+  Accurate
+  Helpful
+  SavedTime
+}
+
+"When the agent and model on a rating were read."
+enum AIFeedbackFingerprintSource {
+  "When the output was made."
+  AtTurn
+  "When the person rated, from the stored output and the agent as it was then."
+  AtRating
+  "Nothing could be credited."
+  None
+}
+
+"One tool the answer used, as the one-line summary the person was shown."
+type AIFeedbackToolLine {
+  name: String!
+  summary: String!
+  failed: Boolean!
+}
+
+"""
+What the person saw when they rated: the question, the answer and the tools
+used, each bounded. Values of fields whose sensitivity is Restricted or higher
+are replaced with [redacted].
+"""
+type AIFeedbackTurnSnapshot {
+  question: String!
+  answer: String!
+  tools: [AIFeedbackToolLine!]!
+  "Tools beyond the twenty kept."
+  omittedTools: Int!
+  "Whether anything was replaced because it was restricted."
+  redacted: Boolean!
+}
+
+"A person's thumbs up or down on something an AI wrote for them."
+type AIFeedback {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  targetType: AIFeedbackTargetType!
+  targetId: ID!
+  "The part of the target rated, such as a briefing section key; empty for the whole target."
+  targetPart: String!
+  threadId: ID
+  turnId: ID
+  runId: ID
+  "The agent the rating is credited to."
+  agentDefinitionId: ID
+  definitionVersion: Int
+  "The insight detector the rating is credited to."
+  detectorKey: String!
+  task: String!
+  model: String!
+  providerId: ID
+  promptHash: String!
+  toolSpecHash: String!
+  fingerprintSource: AIFeedbackFingerprintSource!
+  "1 for a thumbs up, -1 for a thumbs down."
+  rating: Int!
+  reasons: [AIFeedbackReason!]!
+  "What the person wrote; evidence, never an instruction."
+  comment: String!
+  turnSnapshot: AIFeedbackTurnSnapshot
+  patternKey: String!
+  evalCaseId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AIFeedbackEdge {
+  node: AIFeedback!
+  cursor: String!
+}
+
+type AIFeedbackConnection {
+  edges: [AIFeedbackEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"One day of an agent's ratings, in the organization's timezone."
+type AgentFeedbackDay {
+  "The day, as YYYY-MM-DD."
+  day: String!
+  positive: Int!
+  negative: Int!
+  "Share of the day's ratings that were thumbs up; absent when nobody rated."
+  satisfaction: Float
+}
+
+"Something an agent made that people rated down, most disliked first."
+type AgentFeedbackWorstRated {
+  targetType: AIFeedbackTargetType!
+  targetId: ID!
+  targetPart: String!
+  positive: Int!
+  negative: Int!
+  lastRatedAt: Timestamp!
+  "The most recent thumbs down, with what the person saw."
+  sample: AIFeedback
+}
+
+"How people rated one agent's output over a window."
+type AgentFeedbackSummary {
+  agentDefinitionId: ID!
+  windowDays: Int!
+  since: Timestamp!
+  positive: Int!
+  negative: Int!
+  "Share of ratings that were thumbs up; absent when nobody rated."
+  satisfaction: Float
+  days: [AgentFeedbackDay!]!
+  worstRated: [AgentFeedbackWorstRated!]!
+}
+
+input AIFeedbackTargetInput {
+  targetType: AIFeedbackTargetType!
+  targetId: ID!
+  "Required for a briefing section, its key; empty otherwise."
+  targetPart: String
+}
+
+input MyAIFeedbackInput {
+  "At most 200 targets."
+  targets: [AIFeedbackTargetInput!]!
+}
+
+input SetMyAIFeedbackInput {
+  targetType: AIFeedbackTargetType!
+  targetId: ID!
+  targetPart: String
+  "1 for a thumbs up, -1 for a thumbs down."
+  rating: Int!
+  "Reasons on the same side as the rating."
+  reasons: [AIFeedbackReason!]
+  "At most 1000 characters."
+  comment: String
+}
+
+extend type Query {
+  "The caller's own ratings of the targets named."
+  myAIFeedback(input: MyAIFeedbackInput!): [AIFeedback!]!
+  "Everyone's ratings, for administrators."
+  aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
+  "How people rated one agent over the last window days (30 by default, at most 365)."
+  agentFeedbackSummary(agentDefinitionId: ID!, window: Int = 30): AgentFeedbackSummary!
+}
+
+extend type Mutation {
+  "Rates something an AI wrote for the caller, replacing their earlier rating of it."
+  setMyAIFeedback(input: SetMyAIFeedbackInput!): AIFeedback!
+  "Removes the caller's rating of a target; false when there was none."
+  clearMyAIFeedback(input: AIFeedbackTargetInput!): Boolean!
+}

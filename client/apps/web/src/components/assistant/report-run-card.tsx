@@ -11,7 +11,7 @@ import {
   FileSpreadsheetIcon,
 } from "lucide-react";
 import type { ThreadReportRun } from "./report-runs";
-import { WorkingDot } from "./voice/working-dot";
+import { DeskThinking } from "./voice/desk-thinking";
 
 /**
  * A report the assistant started, following itself to the finish.
@@ -139,10 +139,10 @@ function describe({ status, record, failure, t }: DescribeArgs): string {
 }
 
 /**
- * The run's state as a mark in a small well: the spreadsheet with a breathing
- * dot while it is still going — the one loop the product allows, because the
- * work it describes is still running — and a tone once it lands, which
- * settles in with the confirm spring so the finish is felt, not just seen.
+ * The run's state as a mark in a small well: the desk at work while it is
+ * still going — the one loop the product allows, because the work it
+ * describes is still running — and a tone once it lands, which settles in
+ * with the confirm spring so the finish is felt, not just seen.
  */
 function StatusMark({
   status,
@@ -159,17 +159,18 @@ function StatusMark({
   return (
     <span className="bg-sunken relative flex size-8 shrink-0 items-center justify-center rounded-md">
       <span key={settled ? status : "working"} className={cn("flex", landed && "animate-confirm")}>
-        {settled && status === "succeeded" ? (
+        {working ? (
+          <DeskThinking working pose="busy" decorative className="text-foreground-muted" />
+        ) : status === "succeeded" ? (
           <CircleCheckIcon className={cn(glyph, "text-success")} />
-        ) : settled && status === "failed" ? (
+        ) : status === "failed" ? (
           <CircleAlertIcon className={cn(glyph, "text-danger")} />
-        ) : settled && (status === "canceled" || status === "expired") ? (
+        ) : status === "canceled" || status === "expired" ? (
           <CircleSlashIcon className={cn(glyph, "text-warning")} />
         ) : (
           <FileSpreadsheetIcon className={cn(glyph, "text-foreground-muted")} />
         )}
       </span>
-      {working && <WorkingDot working className="absolute -top-0.5 -right-0.5 ring-2 ring-card" />}
     </span>
   );
 }

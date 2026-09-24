@@ -47,8 +47,10 @@ func (t *getShipmentTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getShipmentTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipment
+func (t *getShipmentTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceShipment,
+	})
 }
 
 func (t *getShipmentTool) Query(
@@ -118,8 +120,10 @@ func (t *searchShipmentsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *searchShipmentsTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipment
+func (t *searchShipmentsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceShipment,
+	})
 }
 
 func (t *searchShipmentsTool) Query(

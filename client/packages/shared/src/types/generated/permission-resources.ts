@@ -131,6 +131,7 @@ export const Resource = {
   AIProvider: "ai_provider",
   AgentDefinition: "agent_definition",
   AgentMemory: "agent_memory",
+  AgentFeedback: "agent_feedback",
   Assistant: "assistant",
   Insight: "insight",
   Watchtower: "watchtower",

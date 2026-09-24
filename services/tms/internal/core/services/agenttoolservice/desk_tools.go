@@ -92,20 +92,21 @@ func (t *escalateDetentionTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *escalateDetentionTool) Reversible() bool { return true }
-
-func (t *escalateDetentionTool) PermissionResource() permission.Resource {
-	return permission.ResourceDetentionPolicy
-}
-
-func (t *escalateDetentionTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *escalateDetentionTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *escalateDetentionTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *escalateDetentionTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceDetentionPolicy,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Hands a detention clock to a person inside the organization.",
+	}
 }
 
 func (t *escalateDetentionTool) arguments(
@@ -275,25 +276,21 @@ func (t *requestCredentialRenewalTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *requestCredentialRenewalTool) Reversible() bool { return false }
-
-func (t *requestCredentialRenewalTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorkerCredential
-}
-
-func (t *requestCredentialRenewalTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-// Asking twice for the same renewal is a driver told twice, so the ask is
-// keyed and replayed rather than repeated.
-func (t *requestCredentialRenewalTool) RequiresIdempotencyKey() bool { return true }
-
-// Asking a driver to renew a paper takes nothing away and is the same thing
-// the compliance sweep already does by notification, so it is the one write
-// on these desks that can earn its way to running unattended.
-func (t *requestCredentialRenewalTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *requestCredentialRenewalTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceWorkerCredential,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressDriverVisible},
+		Effect:        agent.ToolEffectChange,
+		Idempotent:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Sends a driver a renewal request the model wrote.",
+	}
 }
 
 func (t *requestCredentialRenewalTool) arguments(
@@ -438,20 +435,21 @@ func (t *placeWorkerDispatchHoldTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *placeWorkerDispatchHoldTool) Reversible() bool { return true }
-
-func (t *placeWorkerDispatchHoldTool) PermissionResource() permission.Resource {
-	return permission.ResourceWorkerDispatchHold
-}
-
-func (t *placeWorkerDispatchHoldTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *placeWorkerDispatchHoldTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *placeWorkerDispatchHoldTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *placeWorkerDispatchHoldTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceWorkerDispatchHold,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Keeps a driver off new freight inside Trenova; the driver is not messaged.",
+	}
 }
 
 func (t *placeWorkerDispatchHoldTool) arguments(
@@ -604,23 +602,25 @@ func (t *acknowledgeCarrierIntelEventTool) Name() string {
 
 func (t *resolveCarrierIntelEventTool) Name() string { return "resolve_carrier_intel_event" }
 
-// Each tool states its own permission rather than inheriting it. A tool whose
-// resource is only readable by following an embedded type is one a reader has
-// to run to understand, and one the coverage check cannot see at all.
-func (t *acknowledgeCarrierIntelEventTool) PermissionResource() permission.Resource {
-	return permission.ResourceCarrierIntelligence
-}
+func (t *carrierIntelEventTool) Policy() serviceports.ToolPolicy {
+	rationale := "Acknowledges a carrier finding inside Trenova."
+	if t.resolves {
+		rationale = "Closes a carrier finding inside Trenova."
+	}
 
-func (t *acknowledgeCarrierIntelEventTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *resolveCarrierIntelEventTool) PermissionResource() permission.Resource {
-	return permission.ResourceCarrierIntelligence
-}
-
-func (t *resolveCarrierIntelEventTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceCarrierIntelligence,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     rationale,
+	}
 }
 
 func (t *carrierIntelEventTool) Description() string {
@@ -678,22 +678,6 @@ func (t *carrierIntelEventTool) required() []string {
 	}
 
 	return []string{"eventId", "note"}
-}
-
-func (t *carrierIntelEventTool) Reversible() bool { return false }
-
-func (t *carrierIntelEventTool) PermissionResource() permission.Resource {
-	return permission.ResourceCarrierIntelligence
-}
-
-func (t *carrierIntelEventTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *carrierIntelEventTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *carrierIntelEventTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
 }
 
 func (t *carrierIntelEventTool) arguments(

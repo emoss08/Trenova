@@ -77,8 +77,8 @@ func TestRemember_PassesTheRunAndSubjectThrough(t *testing.T) {
 	assert.Equal(t, customerID, memories.remembered.SubjectID)
 	require.NotNil(t, memories.remembered.ExpiresAt)
 	assert.Equal(t, int64(1798761600), *memories.remembered.ExpiresAt, "the end of the day named")
-	assert.Equal(t, permission.ResourceAgentMemory, tool.PermissionResource())
-	assert.Equal(t, agent.TierActWithApproval, tool.DefaultAutonomyTier())
+	assert.Equal(t, permission.ResourceAgentMemory, tool.Policy().Resource)
+	assert.Equal(t, agent.TierActWithApproval, tool.Policy().DefaultTier)
 }
 
 func TestRemember_RefusesACorrectionAndHalfASubject(t *testing.T) {
@@ -122,5 +122,5 @@ func TestForgetMemory_RetiresRatherThanDeletes(t *testing.T) {
 
 	assert.Equal(t, memoryID, memories.status.ID)
 	assert.Equal(t, agent.MemoryStatusRetired, memories.status.Status)
-	assert.True(t, tool.Reversible())
+	assert.True(t, tool.Policy().Reversible)
 }

@@ -33,6 +33,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
+	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
 	AccessorialCharge() AccessorialChargeResolver
 	AgentDefinition() AgentDefinitionResolver
@@ -209,6 +210,62 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AIFeedback struct {
+		AgentDefinitionID func(childComplexity int) int
+		BusinessUnitID    func(childComplexity int) int
+		Comment           func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		DefinitionVersion func(childComplexity int) int
+		DetectorKey       func(childComplexity int) int
+		EvalCaseID        func(childComplexity int) int
+		FingerprintSource func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Model             func(childComplexity int) int
+		OrganizationID    func(childComplexity int) int
+		PatternKey        func(childComplexity int) int
+		PromptHash        func(childComplexity int) int
+		ProviderID        func(childComplexity int) int
+		Rating            func(childComplexity int) int
+		Reasons           func(childComplexity int) int
+		RunID             func(childComplexity int) int
+		TargetID          func(childComplexity int) int
+		TargetPart        func(childComplexity int) int
+		TargetType        func(childComplexity int) int
+		Task              func(childComplexity int) int
+		ThreadID          func(childComplexity int) int
+		ToolSpecHash      func(childComplexity int) int
+		TurnID            func(childComplexity int) int
+		TurnSnapshot      func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+		UserID            func(childComplexity int) int
+		Version           func(childComplexity int) int
+	}
+
+	AIFeedbackConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AIFeedbackEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AIFeedbackToolLine struct {
+		Failed  func(childComplexity int) int
+		Name    func(childComplexity int) int
+		Summary func(childComplexity int) int
+	}
+
+	AIFeedbackTurnSnapshot struct {
+		Answer       func(childComplexity int) int
+		OmittedTools func(childComplexity int) int
+		Question     func(childComplexity int) int
+		Redacted     func(childComplexity int) int
+		Tools        func(childComplexity int) int
+	}
+
 	AIProvider struct {
 		AllowPrivateNetwork  func(childComplexity int) int
 		BaseURL              func(childComplexity int) int
@@ -727,12 +784,41 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	AgentFeedbackDay struct {
+		Day          func(childComplexity int) int
+		Negative     func(childComplexity int) int
+		Positive     func(childComplexity int) int
+		Satisfaction func(childComplexity int) int
+	}
+
+	AgentFeedbackSummary struct {
+		AgentDefinitionID func(childComplexity int) int
+		Days              func(childComplexity int) int
+		Negative          func(childComplexity int) int
+		Positive          func(childComplexity int) int
+		Satisfaction      func(childComplexity int) int
+		Since             func(childComplexity int) int
+		WindowDays        func(childComplexity int) int
+		WorstRated        func(childComplexity int) int
+	}
+
+	AgentFeedbackWorstRated struct {
+		LastRatedAt func(childComplexity int) int
+		Negative    func(childComplexity int) int
+		Positive    func(childComplexity int) int
+		Sample      func(childComplexity int) int
+		TargetID    func(childComplexity int) int
+		TargetPart  func(childComplexity int) int
+		TargetType  func(childComplexity int) int
+	}
+
 	AgentMemory struct {
 		AgentDefinitionID func(childComplexity int) int
 		BusinessUnitID    func(childComplexity int) int
 		Content           func(childComplexity int) int
 		CreatedAt         func(childComplexity int) int
 		CreatedByUserID   func(childComplexity int) int
+		Evidence          func(childComplexity int) int
 		ExpiresAt         func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Kind              func(childComplexity int) int
@@ -762,6 +848,18 @@ type ComplexityRoot struct {
 	AgentMemoryEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	AgentMemoryEvidence struct {
+		DistinctThreads func(childComplexity int) int
+		DistinctUsers   func(childComplexity int) int
+		FeedbackIDs     func(childComplexity int) int
+		FirstRatedAt    func(childComplexity int) int
+		LastRatedAt     func(childComplexity int) int
+		PatternKey      func(childComplexity int) int
+		Quotes          func(childComplexity int) int
+		RatingCount     func(childComplexity int) int
+		Reason          func(childComplexity int) int
 	}
 
 	AgentPlan struct {
@@ -6318,6 +6416,7 @@ type ComplexityRoot struct {
 		ApplyCarrierIntelSuggestions          func(childComplexity int, input gqlmodel.ApplyCarrierIntelSuggestionsInput) int
 		ApplyCreditMemo                       func(childComplexity int, input gqlmodel.ApplyCreditMemoInput) int
 		ApplyUnappliedCustomerPayment         func(childComplexity int, input gqlmodel.ApplyCustomerPaymentInput) int
+		ApproveAgentMemorySuggestion          func(childComplexity int, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) int
 		ApproveCarrierSettlement              func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		ApproveDetentionOccurrence            func(childComplexity int, occurrenceID string) int
 		ApproveDriverSettlement               func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
@@ -6373,6 +6472,7 @@ type ComplexityRoot struct {
 		CertifyOshaSummary                    func(childComplexity int, year int) int
 		CheckShipmentDuplicateBOL             func(childComplexity int, input gqlmodel.ShipmentDuplicateBOLInput) int
 		CheckShipmentHazmatSegregation        func(childComplexity int, input gqlmodel.ShipmentHazmatInput) int
+		ClearMyAIFeedback                     func(childComplexity int, input gqlmodel.AIFeedbackTargetInput) int
 		ClockIn                               func(childComplexity int, input gqlmodel.ClockInput) int
 		ClockOut                              func(childComplexity int, input gqlmodel.ClockInput) int
 		CloseEscrowAccount                    func(childComplexity int, accountID string) int
@@ -6472,6 +6572,7 @@ type ComplexityRoot struct {
 		DetachPayEventFromSettlement          func(childComplexity int, input gqlmodel.DetachPayEventInput) int
 		DetentionBacktest                     func(childComplexity int, input gqlmodel.DetentionBacktestInput) int
 		DiscardFuelPurchaseImport             func(childComplexity int, id string, version int, reason *string) int
+		DismissAgentMemorySuggestion          func(childComplexity int, id string, version int) int
 		DismissMyNotifications                func(childComplexity int, ids []string) int
 		DismissNotifications                  func(childComplexity int, ids []string) int
 		DismissWatchtowerItem                 func(childComplexity int, id string) int
@@ -6616,6 +6717,7 @@ type ComplexityRoot struct {
 		SetCarrierMonitoring                  func(childComplexity int, carrierIds []string, enabled bool) int
 		SetDefaultTableConfiguration          func(childComplexity int, id string) int
 		SetInboundMailboxSigningSecret        func(childComplexity int, id string, secret string) int
+		SetMyAIFeedback                       func(childComplexity int, input gqlmodel.SetMyAIFeedbackInput) int
 		SetMyAvailability                     func(childComplexity int, input gqlmodel.SetMyAvailabilityInput) int
 		SetOrderChargeAllocations             func(childComplexity int, input gqlmodel.SetOrderChargeAllocationsInput) int
 		SetOrgDefaultTableConfiguration       func(childComplexity int, id string, enabled bool) int
@@ -7607,6 +7709,7 @@ type ComplexityRoot struct {
 		AgentEvaluations                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentException                      func(childComplexity int, id string) int
 		AgentExceptions                     func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AgentFeedbackSummary                func(childComplexity int, agentDefinitionID string, window *int) int
 		AgentMemories                       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentMemory                         func(childComplexity int, id string) int
 		AgentPlan                           func(childComplexity int, id string) int
@@ -7617,6 +7720,7 @@ type ComplexityRoot struct {
 		AgentRunEvents                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentRuns                           func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentScorecard                      func(childComplexity int, input gqlmodel.AgentScorecardInput) int
+		AiFeedback                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AiProvider                          func(childComplexity int, id string) int
 		AiProviders                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AiUsageSummary                      func(childComplexity int, since *int) int
@@ -7833,6 +7937,7 @@ type ComplexityRoot struct {
 		ManualJournal                       func(childComplexity int, id string) int
 		ManualJournals                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		MatchRoutingGuide                   func(childComplexity int, input gqlmodel.MatchRoutingGuideInput) int
+		MyAIFeedback                        func(childComplexity int, input gqlmodel.MyAIFeedbackInput) int
 		MyActiveBillingTransferRun          func(childComplexity int) int
 		MyAdvances                          func(childComplexity int) int
 		MyAvailability                      func(childComplexity int) int
@@ -11857,6 +11962,257 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	_ = ec
 	switch typeName + "." + field {
 
+	case "AIFeedback.agentDefinitionId":
+		if e.ComplexityRoot.AIFeedback.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.AgentDefinitionID(childComplexity), true
+	case "AIFeedback.businessUnitId":
+		if e.ComplexityRoot.AIFeedback.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.BusinessUnitID(childComplexity), true
+	case "AIFeedback.comment":
+		if e.ComplexityRoot.AIFeedback.Comment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.Comment(childComplexity), true
+	case "AIFeedback.createdAt":
+		if e.ComplexityRoot.AIFeedback.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.CreatedAt(childComplexity), true
+	case "AIFeedback.definitionVersion":
+		if e.ComplexityRoot.AIFeedback.DefinitionVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.DefinitionVersion(childComplexity), true
+	case "AIFeedback.detectorKey":
+		if e.ComplexityRoot.AIFeedback.DetectorKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.DetectorKey(childComplexity), true
+	case "AIFeedback.evalCaseId":
+		if e.ComplexityRoot.AIFeedback.EvalCaseID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.EvalCaseID(childComplexity), true
+	case "AIFeedback.fingerprintSource":
+		if e.ComplexityRoot.AIFeedback.FingerprintSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.FingerprintSource(childComplexity), true
+	case "AIFeedback.id":
+		if e.ComplexityRoot.AIFeedback.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.ID(childComplexity), true
+	case "AIFeedback.model":
+		if e.ComplexityRoot.AIFeedback.Model == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.Model(childComplexity), true
+	case "AIFeedback.organizationId":
+		if e.ComplexityRoot.AIFeedback.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.OrganizationID(childComplexity), true
+	case "AIFeedback.patternKey":
+		if e.ComplexityRoot.AIFeedback.PatternKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.PatternKey(childComplexity), true
+	case "AIFeedback.promptHash":
+		if e.ComplexityRoot.AIFeedback.PromptHash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.PromptHash(childComplexity), true
+	case "AIFeedback.providerId":
+		if e.ComplexityRoot.AIFeedback.ProviderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.ProviderID(childComplexity), true
+	case "AIFeedback.rating":
+		if e.ComplexityRoot.AIFeedback.Rating == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.Rating(childComplexity), true
+	case "AIFeedback.reasons":
+		if e.ComplexityRoot.AIFeedback.Reasons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.Reasons(childComplexity), true
+	case "AIFeedback.runId":
+		if e.ComplexityRoot.AIFeedback.RunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.RunID(childComplexity), true
+	case "AIFeedback.targetId":
+		if e.ComplexityRoot.AIFeedback.TargetID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.TargetID(childComplexity), true
+	case "AIFeedback.targetPart":
+		if e.ComplexityRoot.AIFeedback.TargetPart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.TargetPart(childComplexity), true
+	case "AIFeedback.targetType":
+		if e.ComplexityRoot.AIFeedback.TargetType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.TargetType(childComplexity), true
+	case "AIFeedback.task":
+		if e.ComplexityRoot.AIFeedback.Task == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.Task(childComplexity), true
+	case "AIFeedback.threadId":
+		if e.ComplexityRoot.AIFeedback.ThreadID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.ThreadID(childComplexity), true
+	case "AIFeedback.toolSpecHash":
+		if e.ComplexityRoot.AIFeedback.ToolSpecHash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.ToolSpecHash(childComplexity), true
+	case "AIFeedback.turnId":
+		if e.ComplexityRoot.AIFeedback.TurnID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.TurnID(childComplexity), true
+	case "AIFeedback.turnSnapshot":
+		if e.ComplexityRoot.AIFeedback.TurnSnapshot == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.TurnSnapshot(childComplexity), true
+	case "AIFeedback.updatedAt":
+		if e.ComplexityRoot.AIFeedback.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.UpdatedAt(childComplexity), true
+	case "AIFeedback.userId":
+		if e.ComplexityRoot.AIFeedback.UserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.UserID(childComplexity), true
+	case "AIFeedback.version":
+		if e.ComplexityRoot.AIFeedback.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedback.Version(childComplexity), true
+
+	case "AIFeedbackConnection.edges":
+		if e.ComplexityRoot.AIFeedbackConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackConnection.Edges(childComplexity), true
+	case "AIFeedbackConnection.pageInfo":
+		if e.ComplexityRoot.AIFeedbackConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackConnection.PageInfo(childComplexity), true
+	case "AIFeedbackConnection.totalCount":
+		if e.ComplexityRoot.AIFeedbackConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackConnection.TotalCount(childComplexity), true
+
+	case "AIFeedbackEdge.cursor":
+		if e.ComplexityRoot.AIFeedbackEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackEdge.Cursor(childComplexity), true
+	case "AIFeedbackEdge.node":
+		if e.ComplexityRoot.AIFeedbackEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackEdge.Node(childComplexity), true
+
+	case "AIFeedbackToolLine.failed":
+		if e.ComplexityRoot.AIFeedbackToolLine.Failed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackToolLine.Failed(childComplexity), true
+	case "AIFeedbackToolLine.name":
+		if e.ComplexityRoot.AIFeedbackToolLine.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackToolLine.Name(childComplexity), true
+	case "AIFeedbackToolLine.summary":
+		if e.ComplexityRoot.AIFeedbackToolLine.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackToolLine.Summary(childComplexity), true
+
+	case "AIFeedbackTurnSnapshot.answer":
+		if e.ComplexityRoot.AIFeedbackTurnSnapshot.Answer == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackTurnSnapshot.Answer(childComplexity), true
+	case "AIFeedbackTurnSnapshot.omittedTools":
+		if e.ComplexityRoot.AIFeedbackTurnSnapshot.OmittedTools == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackTurnSnapshot.OmittedTools(childComplexity), true
+	case "AIFeedbackTurnSnapshot.question":
+		if e.ComplexityRoot.AIFeedbackTurnSnapshot.Question == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackTurnSnapshot.Question(childComplexity), true
+	case "AIFeedbackTurnSnapshot.redacted":
+		if e.ComplexityRoot.AIFeedbackTurnSnapshot.Redacted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackTurnSnapshot.Redacted(childComplexity), true
+	case "AIFeedbackTurnSnapshot.tools":
+		if e.ComplexityRoot.AIFeedbackTurnSnapshot.Tools == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIFeedbackTurnSnapshot.Tools(childComplexity), true
+
 	case "AIProvider.allowPrivateNetwork":
 		if e.ComplexityRoot.AIProvider.AllowPrivateNetwork == nil {
 			break
@@ -14200,6 +14556,123 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentExceptionEdge.Node(childComplexity), true
 
+	case "AgentFeedbackDay.day":
+		if e.ComplexityRoot.AgentFeedbackDay.Day == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackDay.Day(childComplexity), true
+	case "AgentFeedbackDay.negative":
+		if e.ComplexityRoot.AgentFeedbackDay.Negative == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackDay.Negative(childComplexity), true
+	case "AgentFeedbackDay.positive":
+		if e.ComplexityRoot.AgentFeedbackDay.Positive == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackDay.Positive(childComplexity), true
+	case "AgentFeedbackDay.satisfaction":
+		if e.ComplexityRoot.AgentFeedbackDay.Satisfaction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackDay.Satisfaction(childComplexity), true
+
+	case "AgentFeedbackSummary.agentDefinitionId":
+		if e.ComplexityRoot.AgentFeedbackSummary.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackSummary.AgentDefinitionID(childComplexity), true
+	case "AgentFeedbackSummary.days":
+		if e.ComplexityRoot.AgentFeedbackSummary.Days == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackSummary.Days(childComplexity), true
+	case "AgentFeedbackSummary.negative":
+		if e.ComplexityRoot.AgentFeedbackSummary.Negative == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackSummary.Negative(childComplexity), true
+	case "AgentFeedbackSummary.positive":
+		if e.ComplexityRoot.AgentFeedbackSummary.Positive == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackSummary.Positive(childComplexity), true
+	case "AgentFeedbackSummary.satisfaction":
+		if e.ComplexityRoot.AgentFeedbackSummary.Satisfaction == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackSummary.Satisfaction(childComplexity), true
+	case "AgentFeedbackSummary.since":
+		if e.ComplexityRoot.AgentFeedbackSummary.Since == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackSummary.Since(childComplexity), true
+	case "AgentFeedbackSummary.windowDays":
+		if e.ComplexityRoot.AgentFeedbackSummary.WindowDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackSummary.WindowDays(childComplexity), true
+	case "AgentFeedbackSummary.worstRated":
+		if e.ComplexityRoot.AgentFeedbackSummary.WorstRated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackSummary.WorstRated(childComplexity), true
+
+	case "AgentFeedbackWorstRated.lastRatedAt":
+		if e.ComplexityRoot.AgentFeedbackWorstRated.LastRatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackWorstRated.LastRatedAt(childComplexity), true
+	case "AgentFeedbackWorstRated.negative":
+		if e.ComplexityRoot.AgentFeedbackWorstRated.Negative == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackWorstRated.Negative(childComplexity), true
+	case "AgentFeedbackWorstRated.positive":
+		if e.ComplexityRoot.AgentFeedbackWorstRated.Positive == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackWorstRated.Positive(childComplexity), true
+	case "AgentFeedbackWorstRated.sample":
+		if e.ComplexityRoot.AgentFeedbackWorstRated.Sample == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackWorstRated.Sample(childComplexity), true
+	case "AgentFeedbackWorstRated.targetId":
+		if e.ComplexityRoot.AgentFeedbackWorstRated.TargetID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackWorstRated.TargetID(childComplexity), true
+	case "AgentFeedbackWorstRated.targetPart":
+		if e.ComplexityRoot.AgentFeedbackWorstRated.TargetPart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackWorstRated.TargetPart(childComplexity), true
+	case "AgentFeedbackWorstRated.targetType":
+		if e.ComplexityRoot.AgentFeedbackWorstRated.TargetType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentFeedbackWorstRated.TargetType(childComplexity), true
+
 	case "AgentMemory.agentDefinitionId":
 		if e.ComplexityRoot.AgentMemory.AgentDefinitionID == nil {
 			break
@@ -14230,6 +14703,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentMemory.CreatedByUserID(childComplexity), true
+	case "AgentMemory.evidence":
+		if e.ComplexityRoot.AgentMemory.Evidence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemory.Evidence(childComplexity), true
 	case "AgentMemory.expiresAt":
 		if e.ComplexityRoot.AgentMemory.ExpiresAt == nil {
 			break
@@ -14370,6 +14849,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentMemoryEdge.Node(childComplexity), true
+
+	case "AgentMemoryEvidence.distinctThreads":
+		if e.ComplexityRoot.AgentMemoryEvidence.DistinctThreads == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryEvidence.DistinctThreads(childComplexity), true
+	case "AgentMemoryEvidence.distinctUsers":
+		if e.ComplexityRoot.AgentMemoryEvidence.DistinctUsers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryEvidence.DistinctUsers(childComplexity), true
+	case "AgentMemoryEvidence.feedbackIds":
+		if e.ComplexityRoot.AgentMemoryEvidence.FeedbackIDs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryEvidence.FeedbackIDs(childComplexity), true
+	case "AgentMemoryEvidence.firstRatedAt":
+		if e.ComplexityRoot.AgentMemoryEvidence.FirstRatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryEvidence.FirstRatedAt(childComplexity), true
+	case "AgentMemoryEvidence.lastRatedAt":
+		if e.ComplexityRoot.AgentMemoryEvidence.LastRatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryEvidence.LastRatedAt(childComplexity), true
+	case "AgentMemoryEvidence.patternKey":
+		if e.ComplexityRoot.AgentMemoryEvidence.PatternKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryEvidence.PatternKey(childComplexity), true
+	case "AgentMemoryEvidence.quotes":
+		if e.ComplexityRoot.AgentMemoryEvidence.Quotes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryEvidence.Quotes(childComplexity), true
+	case "AgentMemoryEvidence.ratingCount":
+		if e.ComplexityRoot.AgentMemoryEvidence.RatingCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryEvidence.RatingCount(childComplexity), true
+	case "AgentMemoryEvidence.reason":
+		if e.ComplexityRoot.AgentMemoryEvidence.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentMemoryEvidence.Reason(childComplexity), true
 
 	case "AgentPlan.businessUnitId":
 		if e.ComplexityRoot.AgentPlan.BusinessUnitID == nil {
@@ -40377,6 +40911,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ApplyUnappliedCustomerPayment(childComplexity, args["input"].(gqlmodel.ApplyCustomerPaymentInput)), true
+	case "Mutation.approveAgentMemorySuggestion":
+		if e.ComplexityRoot.Mutation.ApproveAgentMemorySuggestion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_approveAgentMemorySuggestion_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ApproveAgentMemorySuggestion(childComplexity, args["id"].(string), args["input"].(gqlmodel.ApproveAgentMemorySuggestionInput)), true
 	case "Mutation.approveCarrierSettlement":
 		if e.ComplexityRoot.Mutation.ApproveCarrierSettlement == nil {
 			break
@@ -40982,6 +41527,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CheckShipmentHazmatSegregation(childComplexity, args["input"].(gqlmodel.ShipmentHazmatInput)), true
+	case "Mutation.clearMyAIFeedback":
+		if e.ComplexityRoot.Mutation.ClearMyAIFeedback == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_clearMyAIFeedback_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ClearMyAIFeedback(childComplexity, args["input"].(gqlmodel.AIFeedbackTargetInput)), true
 	case "Mutation.clockIn":
 		if e.ComplexityRoot.Mutation.ClockIn == nil {
 			break
@@ -42071,6 +42627,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DiscardFuelPurchaseImport(childComplexity, args["id"].(string), args["version"].(int), args["reason"].(*string)), true
+	case "Mutation.dismissAgentMemorySuggestion":
+		if e.ComplexityRoot.Mutation.DismissAgentMemorySuggestion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_dismissAgentMemorySuggestion_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DismissAgentMemorySuggestion(childComplexity, args["id"].(string), args["version"].(int)), true
 	case "Mutation.dismissMyNotifications":
 		if e.ComplexityRoot.Mutation.DismissMyNotifications == nil {
 			break
@@ -43635,6 +44202,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetInboundMailboxSigningSecret(childComplexity, args["id"].(string), args["secret"].(string)), true
+	case "Mutation.setMyAIFeedback":
+		if e.ComplexityRoot.Mutation.SetMyAIFeedback == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setMyAIFeedback_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetMyAIFeedback(childComplexity, args["input"].(gqlmodel.SetMyAIFeedbackInput)), true
 	case "Mutation.setMyAvailability":
 		if e.ComplexityRoot.Mutation.SetMyAvailability == nil {
 			break
@@ -48867,6 +49445,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentExceptions(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.agentFeedbackSummary":
+		if e.ComplexityRoot.Query.AgentFeedbackSummary == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentFeedbackSummary_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentFeedbackSummary(childComplexity, args["agentDefinitionId"].(string), args["window"].(*int)), true
 	case "Query.agentMemories":
 		if e.ComplexityRoot.Query.AgentMemories == nil {
 			break
@@ -48977,6 +49566,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentScorecard(childComplexity, args["input"].(gqlmodel.AgentScorecardInput)), true
+	case "Query.aiFeedback":
+		if e.ComplexityRoot.Query.AiFeedback == nil {
+			break
+		}
+
+		args, err := ec.field_Query_aiFeedback_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AiFeedback(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.aiProvider":
 		if e.ComplexityRoot.Query.AiProvider == nil {
 			break
@@ -51209,6 +51809,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MatchRoutingGuide(childComplexity, args["input"].(gqlmodel.MatchRoutingGuideInput)), true
+	case "Query.myAIFeedback":
+		if e.ComplexityRoot.Query.MyAIFeedback == nil {
+			break
+		}
+
+		args, err := ec.field_Query_myAIFeedback_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.MyAIFeedback(childComplexity, args["input"].(gqlmodel.MyAIFeedbackInput)), true
 	case "Query.myActiveBillingTransferRun":
 		if e.ComplexityRoot.Query.MyActiveBillingTransferRun == nil {
 			break
@@ -71300,6 +71911,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := newExecutionContext(opCtx, e, make(chan graphql.DeferredResult))
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAIFeedbackTargetInput,
 		ec.unmarshalInputAcknowledgeMyPolicyInput,
 		ec.unmarshalInputAddCarrierSettlementAdjustmentInput,
 		ec.unmarshalInputAddSettlementAdjustmentInput,
@@ -71315,6 +71927,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputApplyCarrierIntelSuggestionsInput,
 		ec.unmarshalInputApplyCreditMemoInput,
 		ec.unmarshalInputApplyCustomerPaymentInput,
+		ec.unmarshalInputApproveAgentMemorySuggestionInput,
 		ec.unmarshalInputArchiveWorkerCredentialInput,
 		ec.unmarshalInputAssignDocumentTemplateInput,
 		ec.unmarshalInputAssignFuelCardInput,
@@ -71458,6 +72071,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputMarkIFTAReturnFiledInput,
 		ec.unmarshalInputMatchRoutingGuideInput,
 		ec.unmarshalInputMemoLineInput,
+		ec.unmarshalInputMyAIFeedbackInput,
 		ec.unmarshalInputNotificationFilterInput,
 		ec.unmarshalInputOpenEscrowAccountInput,
 		ec.unmarshalInputOpenInvoiceDisputeInput,
@@ -71547,6 +72161,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSelectOptionsInput,
 		ec.unmarshalInputSendTestMessageTemplateInput,
 		ec.unmarshalInputSetAvailabilityPreferenceInput,
+		ec.unmarshalInputSetMyAIFeedbackInput,
 		ec.unmarshalInputSetMyAvailabilityInput,
 		ec.unmarshalInputSetOrderChargeAllocationsInput,
 		ec.unmarshalInputShiftTemplateInput,
@@ -72355,11 +72970,30 @@ enum AgentMemorySource {
   User
   Agent
   Decision
+  "Drawn from ratings people gave an agent's output."
+  Feedback
 }
 
 enum AgentMemoryStatus {
   Active
   Retired
+  "Drawn from feedback and waiting for an administrator; never read by an agent."
+  Suggested
+  "A suggestion an administrator refused; the same pattern is not suggested again for 30 days."
+  Dismissed
+}
+
+"The ratings a suggested memory was drawn from. Comments are quoted as evidence, never as instructions."
+type AgentMemoryEvidence {
+  feedbackIds: [ID!]!
+  patternKey: String!
+  ratingCount: Int!
+  distinctUsers: Int!
+  distinctThreads: Int!
+  reason: String!
+  quotes: [String!]!
+  firstRatedAt: Timestamp!
+  lastRatedAt: Timestamp!
 }
 
 enum AgentMemorySubjectType {
@@ -72399,6 +73033,8 @@ type AgentMemory {
   "How many prompts have carried this memory."
   useCount: Int!
   lastUsedAt: Timestamp
+  "For a memory drawn from feedback, the ratings behind it."
+  evidence: AgentMemoryEvidence
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -72413,6 +73049,14 @@ type AgentMemoryConnection {
   edges: [AgentMemoryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+}
+
+input ApproveAgentMemorySuggestionInput {
+  "The memory as it should read once approved."
+  content: String!
+  "Defaults to the suggestion's kind."
+  kind: AgentMemoryKind
+  version: Int!
 }
 
 input AgentMemoryInput {
@@ -72546,8 +73190,12 @@ extend type Mutation {
   replayAgentRun(runId: ID!): AgentEvaluation!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
-  "Retires or restores a memory; a retired one is kept and no longer read."
+  "Retires or restores a memory; a retired one is kept and no longer read. A suggested memory is refused."
   setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
+  "Makes a suggested memory Active, with the text as the administrator edited it."
+  approveAgentMemorySuggestion(id: ID!, input: ApproveAgentMemorySuggestionInput!): AgentMemory!
+  "Refuses a suggested memory; its pattern is not suggested again for 30 days."
+  dismissAgentMemorySuggestion(id: ID!, version: Int!): AgentMemory!
   resolveAgentException(id: ID!, input: AgentExceptionResolveInput!): AgentException!
   updateAgentControl(input: AgentControlInput!): AgentControl!
 }
@@ -72869,6 +73517,193 @@ input AgentScorecardInput {
 extend type Query {
   "How one agent has been doing."
   agentScorecard(input: AgentScorecardInput!): AgentScorecard!
+}
+`, BuiltIn: false},
+	{Name: "../schema/aifeedback.graphqls", Input: `"The kind of AI output a rating is about."
+enum AIFeedbackTargetType {
+  "An answer the conversation's agent gave."
+  AssistantMessage
+  "Another agent's answer to a task the conversation's agent handed it."
+  DelegatedAnswer
+  "A whole morning briefing."
+  Briefing
+  "One section of a briefing, named by its key in targetPart."
+  BriefingSection
+  "A home-screen insight."
+  Insight
+  "A watchtower item raised by AI work: an insight, a proposal, a plan, a failed run or an agent exception."
+  WatchtowerItem
+}
+
+"Why a person rated as they did. Each reason belongs to one side of the rating."
+enum AIFeedbackReason {
+  Inaccurate
+  MadeUpNumbers
+  Incomplete
+  WrongAction
+  IgnoredInstructions
+  NotRelevant
+  HardToRead
+  Unsafe
+  Other
+  Accurate
+  Helpful
+  SavedTime
+}
+
+"When the agent and model on a rating were read."
+enum AIFeedbackFingerprintSource {
+  "When the output was made."
+  AtTurn
+  "When the person rated, from the stored output and the agent as it was then."
+  AtRating
+  "Nothing could be credited."
+  None
+}
+
+"One tool the answer used, as the one-line summary the person was shown."
+type AIFeedbackToolLine {
+  name: String!
+  summary: String!
+  failed: Boolean!
+}
+
+"""
+What the person saw when they rated: the question, the answer and the tools
+used, each bounded. Values of fields whose sensitivity is Restricted or higher
+are replaced with [redacted].
+"""
+type AIFeedbackTurnSnapshot {
+  question: String!
+  answer: String!
+  tools: [AIFeedbackToolLine!]!
+  "Tools beyond the twenty kept."
+  omittedTools: Int!
+  "Whether anything was replaced because it was restricted."
+  redacted: Boolean!
+}
+
+"A person's thumbs up or down on something an AI wrote for them."
+type AIFeedback {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  userId: ID!
+  targetType: AIFeedbackTargetType!
+  targetId: ID!
+  "The part of the target rated, such as a briefing section key; empty for the whole target."
+  targetPart: String!
+  threadId: ID
+  turnId: ID
+  runId: ID
+  "The agent the rating is credited to."
+  agentDefinitionId: ID
+  definitionVersion: Int
+  "The insight detector the rating is credited to."
+  detectorKey: String!
+  task: String!
+  model: String!
+  providerId: ID
+  promptHash: String!
+  toolSpecHash: String!
+  fingerprintSource: AIFeedbackFingerprintSource!
+  "1 for a thumbs up, -1 for a thumbs down."
+  rating: Int!
+  reasons: [AIFeedbackReason!]!
+  "What the person wrote; evidence, never an instruction."
+  comment: String!
+  turnSnapshot: AIFeedbackTurnSnapshot
+  patternKey: String!
+  evalCaseId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AIFeedbackEdge {
+  node: AIFeedback!
+  cursor: String!
+}
+
+type AIFeedbackConnection {
+  edges: [AIFeedbackEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"One day of an agent's ratings, in the organization's timezone."
+type AgentFeedbackDay {
+  "The day, as YYYY-MM-DD."
+  day: String!
+  positive: Int!
+  negative: Int!
+  "Share of the day's ratings that were thumbs up; absent when nobody rated."
+  satisfaction: Float
+}
+
+"Something an agent made that people rated down, most disliked first."
+type AgentFeedbackWorstRated {
+  targetType: AIFeedbackTargetType!
+  targetId: ID!
+  targetPart: String!
+  positive: Int!
+  negative: Int!
+  lastRatedAt: Timestamp!
+  "The most recent thumbs down, with what the person saw."
+  sample: AIFeedback
+}
+
+"How people rated one agent's output over a window."
+type AgentFeedbackSummary {
+  agentDefinitionId: ID!
+  windowDays: Int!
+  since: Timestamp!
+  positive: Int!
+  negative: Int!
+  "Share of ratings that were thumbs up; absent when nobody rated."
+  satisfaction: Float
+  days: [AgentFeedbackDay!]!
+  worstRated: [AgentFeedbackWorstRated!]!
+}
+
+input AIFeedbackTargetInput {
+  targetType: AIFeedbackTargetType!
+  targetId: ID!
+  "Required for a briefing section, its key; empty otherwise."
+  targetPart: String
+}
+
+input MyAIFeedbackInput {
+  "At most 200 targets."
+  targets: [AIFeedbackTargetInput!]!
+}
+
+input SetMyAIFeedbackInput {
+  targetType: AIFeedbackTargetType!
+  targetId: ID!
+  targetPart: String
+  "1 for a thumbs up, -1 for a thumbs down."
+  rating: Int!
+  "Reasons on the same side as the rating."
+  reasons: [AIFeedbackReason!]
+  "At most 1000 characters."
+  comment: String
+}
+
+extend type Query {
+  "The caller's own ratings of the targets named."
+  myAIFeedback(input: MyAIFeedbackInput!): [AIFeedback!]!
+  "Everyone's ratings, for administrators."
+  aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
+  "How people rated one agent over the last window days (30 by default, at most 365)."
+  agentFeedbackSummary(agentDefinitionId: ID!, window: Int = 30): AgentFeedbackSummary!
+}
+
+extend type Mutation {
+  "Rates something an AI wrote for the caller, replacing their earlier rating of it."
+  setMyAIFeedback(input: SetMyAIFeedbackInput!): AIFeedback!
+  "Removes the caller's rating of a target; false when there was none."
+  clearMyAIFeedback(input: AIFeedbackTargetInput!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../schema/aiprovider.graphqls", Input: `enum AIProviderKind {
@@ -93165,6 +94000,118 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // Each function is generated once per unique object type, deduplicating the
 // switch statements that were previously inlined in every fieldContext_* function.
 
+func (ec *executionContext) childFields_AIFeedback(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AIFeedback_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_AIFeedback_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_AIFeedback_businessUnitId(ctx, field)
+	case "userId":
+		return ec.fieldContext_AIFeedback_userId(ctx, field)
+	case "targetType":
+		return ec.fieldContext_AIFeedback_targetType(ctx, field)
+	case "targetId":
+		return ec.fieldContext_AIFeedback_targetId(ctx, field)
+	case "targetPart":
+		return ec.fieldContext_AIFeedback_targetPart(ctx, field)
+	case "threadId":
+		return ec.fieldContext_AIFeedback_threadId(ctx, field)
+	case "turnId":
+		return ec.fieldContext_AIFeedback_turnId(ctx, field)
+	case "runId":
+		return ec.fieldContext_AIFeedback_runId(ctx, field)
+	case "agentDefinitionId":
+		return ec.fieldContext_AIFeedback_agentDefinitionId(ctx, field)
+	case "definitionVersion":
+		return ec.fieldContext_AIFeedback_definitionVersion(ctx, field)
+	case "detectorKey":
+		return ec.fieldContext_AIFeedback_detectorKey(ctx, field)
+	case "task":
+		return ec.fieldContext_AIFeedback_task(ctx, field)
+	case "model":
+		return ec.fieldContext_AIFeedback_model(ctx, field)
+	case "providerId":
+		return ec.fieldContext_AIFeedback_providerId(ctx, field)
+	case "promptHash":
+		return ec.fieldContext_AIFeedback_promptHash(ctx, field)
+	case "toolSpecHash":
+		return ec.fieldContext_AIFeedback_toolSpecHash(ctx, field)
+	case "fingerprintSource":
+		return ec.fieldContext_AIFeedback_fingerprintSource(ctx, field)
+	case "rating":
+		return ec.fieldContext_AIFeedback_rating(ctx, field)
+	case "reasons":
+		return ec.fieldContext_AIFeedback_reasons(ctx, field)
+	case "comment":
+		return ec.fieldContext_AIFeedback_comment(ctx, field)
+	case "turnSnapshot":
+		return ec.fieldContext_AIFeedback_turnSnapshot(ctx, field)
+	case "patternKey":
+		return ec.fieldContext_AIFeedback_patternKey(ctx, field)
+	case "evalCaseId":
+		return ec.fieldContext_AIFeedback_evalCaseId(ctx, field)
+	case "version":
+		return ec.fieldContext_AIFeedback_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AIFeedback_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AIFeedback_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIFeedback", field.Name)
+}
+
+func (ec *executionContext) childFields_AIFeedbackConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AIFeedbackConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AIFeedbackConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AIFeedbackConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIFeedbackConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AIFeedbackEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AIFeedbackEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AIFeedbackEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIFeedbackEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AIFeedbackToolLine(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "name":
+		return ec.fieldContext_AIFeedbackToolLine_name(ctx, field)
+	case "summary":
+		return ec.fieldContext_AIFeedbackToolLine_summary(ctx, field)
+	case "failed":
+		return ec.fieldContext_AIFeedbackToolLine_failed(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIFeedbackToolLine", field.Name)
+}
+
+func (ec *executionContext) childFields_AIFeedbackTurnSnapshot(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "question":
+		return ec.fieldContext_AIFeedbackTurnSnapshot_question(ctx, field)
+	case "answer":
+		return ec.fieldContext_AIFeedbackTurnSnapshot_answer(ctx, field)
+	case "tools":
+		return ec.fieldContext_AIFeedbackTurnSnapshot_tools(ctx, field)
+	case "omittedTools":
+		return ec.fieldContext_AIFeedbackTurnSnapshot_omittedTools(ctx, field)
+	case "redacted":
+		return ec.fieldContext_AIFeedbackTurnSnapshot_redacted(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIFeedbackTurnSnapshot", field.Name)
+}
+
 func (ec *executionContext) childFields_AIProvider(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -94201,6 +95148,62 @@ func (ec *executionContext) childFields_AgentExceptionEdge(ctx context.Context, 
 	return nil, fmt.Errorf("no field named %q was found under type AgentExceptionEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentFeedbackDay(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "day":
+		return ec.fieldContext_AgentFeedbackDay_day(ctx, field)
+	case "positive":
+		return ec.fieldContext_AgentFeedbackDay_positive(ctx, field)
+	case "negative":
+		return ec.fieldContext_AgentFeedbackDay_negative(ctx, field)
+	case "satisfaction":
+		return ec.fieldContext_AgentFeedbackDay_satisfaction(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentFeedbackDay", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentFeedbackSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "agentDefinitionId":
+		return ec.fieldContext_AgentFeedbackSummary_agentDefinitionId(ctx, field)
+	case "windowDays":
+		return ec.fieldContext_AgentFeedbackSummary_windowDays(ctx, field)
+	case "since":
+		return ec.fieldContext_AgentFeedbackSummary_since(ctx, field)
+	case "positive":
+		return ec.fieldContext_AgentFeedbackSummary_positive(ctx, field)
+	case "negative":
+		return ec.fieldContext_AgentFeedbackSummary_negative(ctx, field)
+	case "satisfaction":
+		return ec.fieldContext_AgentFeedbackSummary_satisfaction(ctx, field)
+	case "days":
+		return ec.fieldContext_AgentFeedbackSummary_days(ctx, field)
+	case "worstRated":
+		return ec.fieldContext_AgentFeedbackSummary_worstRated(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentFeedbackSummary", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentFeedbackWorstRated(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "targetType":
+		return ec.fieldContext_AgentFeedbackWorstRated_targetType(ctx, field)
+	case "targetId":
+		return ec.fieldContext_AgentFeedbackWorstRated_targetId(ctx, field)
+	case "targetPart":
+		return ec.fieldContext_AgentFeedbackWorstRated_targetPart(ctx, field)
+	case "positive":
+		return ec.fieldContext_AgentFeedbackWorstRated_positive(ctx, field)
+	case "negative":
+		return ec.fieldContext_AgentFeedbackWorstRated_negative(ctx, field)
+	case "lastRatedAt":
+		return ec.fieldContext_AgentFeedbackWorstRated_lastRatedAt(ctx, field)
+	case "sample":
+		return ec.fieldContext_AgentFeedbackWorstRated_sample(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentFeedbackWorstRated", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentMemory(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -94243,6 +95246,8 @@ func (ec *executionContext) childFields_AgentMemory(ctx context.Context, field g
 		return ec.fieldContext_AgentMemory_useCount(ctx, field)
 	case "lastUsedAt":
 		return ec.fieldContext_AgentMemory_lastUsedAt(ctx, field)
+	case "evidence":
+		return ec.fieldContext_AgentMemory_evidence(ctx, field)
 	case "version":
 		return ec.fieldContext_AgentMemory_version(ctx, field)
 	case "createdAt":
@@ -94273,6 +95278,30 @@ func (ec *executionContext) childFields_AgentMemoryEdge(ctx context.Context, fie
 		return ec.fieldContext_AgentMemoryEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentMemoryEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentMemoryEvidence(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "feedbackIds":
+		return ec.fieldContext_AgentMemoryEvidence_feedbackIds(ctx, field)
+	case "patternKey":
+		return ec.fieldContext_AgentMemoryEvidence_patternKey(ctx, field)
+	case "ratingCount":
+		return ec.fieldContext_AgentMemoryEvidence_ratingCount(ctx, field)
+	case "distinctUsers":
+		return ec.fieldContext_AgentMemoryEvidence_distinctUsers(ctx, field)
+	case "distinctThreads":
+		return ec.fieldContext_AgentMemoryEvidence_distinctThreads(ctx, field)
+	case "reason":
+		return ec.fieldContext_AgentMemoryEvidence_reason(ctx, field)
+	case "quotes":
+		return ec.fieldContext_AgentMemoryEvidence_quotes(ctx, field)
+	case "firstRatedAt":
+		return ec.fieldContext_AgentMemoryEvidence_firstRatedAt(ctx, field)
+	case "lastRatedAt":
+		return ec.fieldContext_AgentMemoryEvidence_lastRatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentMemoryEvidence", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentPlan(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

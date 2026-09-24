@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -233,7 +234,7 @@ func (s *Service) promote(
 ) error {
 	next, ok := change.current.Next()
 	if !ok || !change.definition.WithinCeiling(next) ||
-		next.Above(s.toolCeiling(change.row.ToolName)) {
+		next.Above(s.promotable(change.row.ToolName)) {
 		// At the ceiling there is nowhere to go. The streak keeps counting so
 		// the agent's page can show it, and a raised ceiling lets the next
 		// clean approval promote.
@@ -381,29 +382,36 @@ func (s *Service) setTier(ctx context.Context, change tierChange, tier agent.Aut
 }
 
 func (s *Service) defaultTier(toolName string) agent.AutonomyTier {
-	if s.tools == nil {
-		return agent.TierPropose
-	}
-	tool, ok := s.tools.Get(toolName)
+	policy, ok := s.policyOf(toolName)
 	if !ok {
 		return agent.TierPropose
 	}
 
-	return tool.DefaultAutonomyTier()
+	return policy.DefaultTier
 }
 
-// toolCeiling is the most a tool may ever be promoted to: a tool whose work
-// leaves the organization is never earned past a person's approval.
-func (s *Service) toolCeiling(toolName string) agent.AutonomyTier {
-	if s.tools == nil {
-		return agent.TierAutoExecute
-	}
-	tool, ok := s.tools.Get(toolName)
+// promotable is the most a tool may ever be promoted to: the most its policy
+// lets it run at, held below approval for a tool whose work leaves the
+// organization.
+func (s *Service) promotable(toolName string) agent.AutonomyTier {
+	policy, ok := s.policyOf(toolName)
 	if !ok {
 		return agent.TierAutoExecute
 	}
 
-	return services.CeilingOf(tool)
+	return agenttoolpolicy.Promotable(policy)
+}
+
+func (s *Service) policyOf(toolName string) (services.ToolPolicy, bool) {
+	if s.tools == nil {
+		return services.ToolPolicy{}, false
+	}
+	tool, ok := s.tools.Get(toolName)
+	if !ok {
+		return services.ToolPolicy{}, false
+	}
+
+	return tool.Policy(), true
 }
 
 func (s *Service) logTierChange(change tierChange, to agent.AutonomyTier, comment string) {

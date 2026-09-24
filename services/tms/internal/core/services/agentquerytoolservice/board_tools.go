@@ -142,8 +142,10 @@ func (t *getDispatchBoardTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *getDispatchBoardTool) PermissionResource() permission.Resource {
-	return permission.ResourceShipmentMove
+func (t *getDispatchBoardTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceShipmentMove,
+	})
 }
 
 func (t *getDispatchBoardTool) Query(

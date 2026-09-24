@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/emoss08/trenova/shared/stringutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -267,8 +268,10 @@ func (t *listReportDatasetsTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *listReportDatasetsTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
+func (t *listReportDatasetsTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceReport,
+	})
 }
 
 func (t *listReportDatasetsTool) Query(
@@ -453,8 +456,10 @@ func (t *describeReportDatasetTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *describeReportDatasetTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
+func (t *describeReportDatasetTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceReport,
+	})
 }
 
 func (t *describeReportDatasetTool) Query(
@@ -759,8 +764,10 @@ func (t *describeReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *describeReportTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
+func (t *describeReportTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceReport,
+	})
 }
 
 func (t *describeReportTool) Query(
@@ -966,8 +973,10 @@ func (t *previewReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *previewReportTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
+func (t *previewReportTool) Policy() serviceports.ToolPolicy {
+	return readPolicy(t.Name(), readSpec{
+		resource: permission.ResourceReport,
+	})
 }
 
 func (t *previewReportTool) Query(

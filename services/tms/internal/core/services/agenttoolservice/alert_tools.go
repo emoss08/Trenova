@@ -3,8 +3,9 @@ package agenttoolservice
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/shared/pulid"
 	"strings"
+
+	"github.com/emoss08/trenova/shared/pulid"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -105,23 +106,23 @@ func (t *scheduleReportTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *scheduleReportTool) Reversible() bool { return true }
-
-func (t *scheduleReportTool) PermissionResource() permission.Resource {
-	return permission.ResourceReport
-}
-
-func (t *scheduleReportTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-// RequiresIdempotencyKey is true because this one sends. A retry that creates
-// a second schedule mails the same report twice, every week, until somebody
-// notices and goes looking for the duplicate.
-func (t *scheduleReportTool) RequiresIdempotencyKey() bool { return true }
-
-func (t *scheduleReportTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *scheduleReportTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceReport,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		Idempotent:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Emails a report on a schedule to whatever addresses the call names, " +
+			"which may be outside the organization.",
+	}
 }
 
 func (t *scheduleReportTool) Validate(
@@ -329,20 +330,21 @@ func alertOperators() []string {
 	return names
 }
 
-func (t *createTableChangeAlertTool) Reversible() bool { return true }
-
-func (t *createTableChangeAlertTool) PermissionResource() permission.Resource {
-	return permission.ResourceTableChangeAlert
-}
-
-func (t *createTableChangeAlertTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *createTableChangeAlertTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *createTableChangeAlertTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *createTableChangeAlertTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceTableChangeAlert,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Creates an alert whose notices go to people inside the organization.",
+	}
 }
 
 func (t *createTableChangeAlertTool) Validate(

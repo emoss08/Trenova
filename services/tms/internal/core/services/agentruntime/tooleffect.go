@@ -21,15 +21,8 @@ var (
 )
 
 func (s *Service) ToolEffect(name string) agent.ToolEffect {
-	switch name {
-	case findToolsName:
-		return agent.ToolEffectDiscover
-	case askUserName:
-		return agent.ToolEffectAsk
-	case publishArtifactName:
-		return agent.ToolEffectPresent
-	case delegateTaskName:
-		return agent.ToolEffectDelegate
+	if policy, ok := runtimePolicyNamed(name); ok {
+		return policy.Effect
 	}
 
 	return serviceports.EffectOf(s.toolNamed(name))

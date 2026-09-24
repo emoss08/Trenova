@@ -188,6 +188,6 @@ func TestListExpiringCredentials_IsGatedOnTheCredentialNotTheWorker(t *testing.T
 	t.Parallel()
 
 	tool := newListExpiringCredentialsTool(&fakeCredentialRepo{})
-	assert.Equal(t, permission.ResourceWorkerCredential, tool.PermissionResource())
-	assert.True(t, permission.IsAgentAllowed(tool.PermissionResource(), permission.OpRead))
+	assert.Equal(t, permission.ResourceWorkerCredential, tool.Policy().Resource)
+	assert.True(t, permission.IsAgentAllowed(tool.Policy().Resource, permission.OpRead))
 }

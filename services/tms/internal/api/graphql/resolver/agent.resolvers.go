@@ -233,6 +233,49 @@ func (r *mutationResolver) SetAgentMemoryStatus(ctx context.Context, id string, 
 	}, actorutil.FromAuthContext(authCtx))
 }
 
+func (r *mutationResolver) ApproveAgentMemorySuggestion(ctx context.Context, id string, input gqlmodel.ApproveAgentMemorySuggestionInput) (*agent.Memory, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	memoryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	kind := agent.MemoryKind("")
+	if input.Kind != nil {
+		kind = *input.Kind
+	}
+
+	return r.agentMemoryService.ApproveSuggestion(ctx, &services.ApproveAgentMemorySuggestionRequest{
+		ID:         memoryID,
+		TenantInfo: tenantInfo(authCtx),
+		Kind:       kind,
+		Content:    input.Content,
+		Version:    int64(input.Version),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *mutationResolver) DismissAgentMemorySuggestion(ctx context.Context, id string, version int) (*agent.Memory, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentMemory, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	memoryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.agentMemoryService.DismissSuggestion(ctx, services.DismissAgentMemorySuggestionRequest{
+		ID:         memoryID,
+		TenantInfo: tenantInfo(authCtx),
+		Version:    int64(version),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
 func (r *mutationResolver) ResolveAgentException(ctx context.Context, id string, input gqlmodel.AgentExceptionResolveInput) (*agent.AgentException, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentException, permission.OpUpdate)
 	if err != nil {

@@ -1,6 +1,6 @@
 {
-  "operationCount": 800,
-  "fragmentCount": 210,
+  "operationCount": 807,
+  "fragmentCount": 212,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -621,6 +621,33 @@
       "sdl": "query AgentExceptionTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentExceptions(input: $input) {\n    edges {\n      node {\n        ...AgentExceptionTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentExceptionTableRowFields on AgentException {\n  id\n  organizationId\n  businessUnitId\n  runId\n  category\n  severity\n  subjectType\n  subjectId\n  attemptSummary\n  blastRadius\n  resolutionState\n  resolutionNotes\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
+      "name": "AgentFeedbackSummary",
+      "kind": "query",
+      "domain": "ai-feedback",
+      "sourceFile": "src/operations/ai-feedback/ai-feedback.graphql",
+      "hash": "sha256:0a99eeca389833697ab85daf88747a577c77f96c073a0fdc51df38e67aad7e1b",
+      "rootFields": [
+        "agentFeedbackSummary"
+      ],
+      "variables": [
+        {
+          "name": "agentDefinitionId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "window",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AIFeedbackTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentFeedbackSummary($agentDefinitionId: ID!, $window: Int) {\n  agentFeedbackSummary(agentDefinitionId: $agentDefinitionId, window: $window) {\n    agentDefinitionId\n    windowDays\n    since\n    positive\n    negative\n    satisfaction\n    days {\n      day\n      positive\n      negative\n      satisfaction\n    }\n    worstRated {\n      targetType\n      targetId\n      targetPart\n      positive\n      negative\n      lastRatedAt\n      sample {\n        ...AIFeedbackTableRowFields\n      }\n    }\n  }\n}\n\nfragment AIFeedbackTableRowFields on AIFeedback {\n  id\n  userId\n  targetType\n  targetId\n  targetPart\n  threadId\n  turnId\n  runId\n  agentDefinitionId\n  definitionVersion\n  detectorKey\n  task\n  model\n  providerId\n  fingerprintSource\n  rating\n  reasons\n  comment\n  patternKey\n  turnSnapshot {\n    question\n    answer\n    tools {\n      name\n      summary\n      failed\n    }\n    omittedTools\n    redacted\n  }\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "AgentMemoryCount",
       "kind": "query",
       "domain": "agent",
@@ -645,7 +672,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/memories.graphql",
-      "hash": "sha256:2de699796ae97e218c05a0221fa5b51b3174e20451ad0142d57bfb71f2374e28",
+      "hash": "sha256:d99d28d2422db1a09310ff97b588ad4581e73c2f9ac866e4324be32cbaafea77",
       "rootFields": [
         "agentMemories"
       ],
@@ -666,7 +693,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentMemoryTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentMemories(input: $input) {\n    edges {\n      node {\n        ...AgentMemoryTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentMemoryTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentMemories(input: $input) {\n    edges {\n      node {\n        ...AgentMemoryTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n  }\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentPlanDetail",
@@ -881,6 +908,34 @@
       ],
       "usages": [],
       "sdl": "query AgentScorecard($input: AgentScorecardInput!) {\n  agentScorecard(input: $input) {\n    ...AgentScorecardFields\n  }\n}\n\nfragment AgentScorecardFields on AgentScorecard {\n  agentDefinitionId\n  window\n  since\n  runs\n  runsFailed\n  exceptions\n  proposals\n  approved\n  modified\n  rejected\n  pending\n  executed\n  executionFailures\n  autoExecuted\n  approvalRate\n  inputTokens\n  outputTokens\n  costUsd\n  estimatedMinutesSaved\n  byTool {\n    toolName\n    approved\n    modified\n    rejected\n    executed\n    failed\n    pending\n    automatic\n  }\n  toolTrust {\n    toolName\n    streak\n    approvals\n    modifications\n    rejections\n    executionFailures\n    earnedTier\n    lastDecisionAt\n    promotedAt\n    demotedAt\n  }\n}"
+    },
+    {
+      "name": "AIFeedbackTable",
+      "kind": "query",
+      "domain": "ai-feedback",
+      "sourceFile": "src/operations/ai-feedback/ai-feedback.graphql",
+      "hash": "sha256:340427dceb61302fa430510e09fb15618155e62a07eda870abd25d331ae9ee8f",
+      "rootFields": [
+        "aiFeedback"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "AIFeedbackTableRowFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AIFeedbackTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  aiFeedback(input: $input) {\n    edges {\n      node {\n        ...AIFeedbackTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AIFeedbackTableRowFields on AIFeedback {\n  id\n  userId\n  targetType\n  targetId\n  targetPart\n  threadId\n  turnId\n  runId\n  agentDefinitionId\n  definitionVersion\n  detectorKey\n  task\n  model\n  providerId\n  fingerprintSource\n  rating\n  reasons\n  comment\n  patternKey\n  turnSnapshot {\n    question\n    answer\n    tools {\n      name\n      summary\n      failed\n    }\n    omittedTools\n    redacted\n  }\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AIProviderCards",
@@ -1117,6 +1172,33 @@
       "fragments": [],
       "usages": [],
       "sdl": "query ApprovalDelegations($delegatorId: ID, $delegateId: ID, $activeOnly: Boolean) {\n  approvalDelegations(\n    delegatorId: $delegatorId\n    delegateId: $delegateId\n    activeOnly: $activeOnly\n  ) {\n    id\n    delegatorId\n    delegateId\n    scope\n    startsAt\n    endsAt\n    reason\n    revokedAt\n    version\n    delegator {\n      id\n      name\n    }\n    delegate {\n      id\n      name\n    }\n  }\n}"
+    },
+    {
+      "name": "ApproveAgentMemorySuggestion",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/memories.graphql",
+      "hash": "sha256:e45cf624daecc0ea00cd996541d6f0aaa4d8f79c7176647c972c15cc495a9f88",
+      "rootFields": [
+        "approveAgentMemorySuggestion"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "ApproveAgentMemorySuggestionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentMemoryTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ApproveAgentMemorySuggestion($id: ID!, $input: ApproveAgentMemorySuggestionInput!) {\n  approveAgentMemorySuggestion(id: $id, input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "ApproveCarrierSettlement",
@@ -3488,6 +3570,26 @@
       "sdl": "mutation CheckShipmentHazmatSegregation($input: ShipmentHazmatInput!) {\n  checkShipmentHazmatSegregation(input: $input) {\n    valid\n  }\n}"
     },
     {
+      "name": "ClearMyAIFeedback",
+      "kind": "mutation",
+      "domain": "ai-feedback",
+      "sourceFile": "src/operations/ai-feedback/ai-feedback.graphql",
+      "hash": "sha256:fe3ab8a659e88516571a342f231d0e575d1a136d9c5a9655bcca2fd93613510a",
+      "rootFields": [
+        "clearMyAIFeedback"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AIFeedbackTargetInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation ClearMyAIFeedback($input: AIFeedbackTargetInput!) {\n  clearMyAIFeedback(input: $input)\n}"
+    },
+    {
       "name": "ClockIn",
       "kind": "mutation",
       "domain": "timesheet",
@@ -3773,7 +3875,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/memories.graphql",
-      "hash": "sha256:7d67d0ac3cce5989826837f41e3a44c9d109962bed881313e03bbbf3b996c45a",
+      "hash": "sha256:f34dfbfff1a02c5a8544b8cad8f849b33eff8eb9c64ad479110bb66a6048e1e8",
       "rootFields": [
         "createAgentMemory"
       ],
@@ -3788,7 +3890,7 @@
         "AgentMemoryTableRowFields"
       ],
       "usages": [],
-      "sdl": "mutation CreateAgentMemory($input: AgentMemoryInput!) {\n  createAgentMemory(input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation CreateAgentMemory($input: AgentMemoryInput!) {\n  createAgentMemory(input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "CreateBenefitPlan",
@@ -5967,6 +6069,33 @@
       ],
       "usages": [],
       "sdl": "mutation DiscardFuelPurchaseImport($id: ID!, $version: Int!, $reason: String) {\n  discardFuelPurchaseImport(id: $id, version: $version, reason: $reason) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+    },
+    {
+      "name": "DismissAgentMemorySuggestion",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/memories.graphql",
+      "hash": "sha256:11fa59f6e07e839ced6aa31b86540b0a357d81af4f5819ce0774c1f96b1b98fe",
+      "rootFields": [
+        "dismissAgentMemorySuggestion"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentMemoryTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation DismissAgentMemorySuggestion($id: ID!, $version: Int!) {\n  dismissAgentMemorySuggestion(id: $id, version: $version) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "DismissMyNotifications",
@@ -9581,6 +9710,28 @@
       "fragments": [],
       "usages": [],
       "sdl": "query MyAdvances {\n  myAdvances {\n    id\n    status\n    source\n    reference\n    amountMinor\n    recoveredMinor\n    outstandingMinor\n    currencyCode\n    issuedDate\n  }\n}"
+    },
+    {
+      "name": "MyAIFeedback",
+      "kind": "query",
+      "domain": "ai-feedback",
+      "sourceFile": "src/operations/ai-feedback/ai-feedback.graphql",
+      "hash": "sha256:4ecd6a4f48bdf601fe636a9cf2dc691b4d999c948e5c8b19b34aa57b705ddd8f",
+      "rootFields": [
+        "myAIFeedback"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "MyAIFeedbackInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "MyAIFeedbackFields"
+      ],
+      "usages": [],
+      "sdl": "query MyAIFeedback($input: MyAIFeedbackInput!) {\n  myAIFeedback(input: $input) {\n    ...MyAIFeedbackFields\n  }\n}\n\nfragment MyAIFeedbackFields on AIFeedback {\n  id\n  targetType\n  targetId\n  targetPart\n  rating\n  reasons\n  comment\n  version\n  updatedAt\n}"
     },
     {
       "name": "MyAvailability",
@@ -13543,7 +13694,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/memories.graphql",
-      "hash": "sha256:f8e8211545bd948906958154e42165569a3e447e79a6b2cf3570a7420634778f",
+      "hash": "sha256:524e01ce4ee37f8091fc80d5a48b3538a6e12970b4ccd1e2199d9f6cdd0bde0d",
       "rootFields": [
         "setAgentMemoryStatus"
       ],
@@ -13563,7 +13714,7 @@
         "AgentMemoryTableRowFields"
       ],
       "usages": [],
-      "sdl": "mutation SetAgentMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {\n  setAgentMemoryStatus(id: $id, status: $status) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation SetAgentMemoryStatus($id: ID!, $status: AgentMemoryStatus!) {\n  setAgentMemoryStatus(id: $id, status: $status) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "SetCarrierMonitoring",
@@ -13638,6 +13789,28 @@
       ],
       "usages": [],
       "sdl": "mutation SetInboundMailboxSigningSecret($id: ID!, $secret: String!) {\n  setInboundMailboxSigningSecret(id: $id, secret: $secret) {\n    ...InboundMailboxFields\n  }\n}\n\nfragment InboundMailboxFields on InboundMailbox {\n  id\n  name\n  address\n  provider\n  purpose\n  reviewPolicy\n  minConfidence\n  status\n  hasSigningSecret\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "SetMyAIFeedback",
+      "kind": "mutation",
+      "domain": "ai-feedback",
+      "sourceFile": "src/operations/ai-feedback/ai-feedback.graphql",
+      "hash": "sha256:dcf84160135d294e635b4b982adf957300ba21c8a9f703ddad23cfcbcc32dde3",
+      "rootFields": [
+        "setMyAIFeedback"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "SetMyAIFeedbackInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "MyAIFeedbackFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SetMyAIFeedback($input: SetMyAIFeedbackInput!) {\n  setMyAIFeedback(input: $input) {\n    ...MyAIFeedbackFields\n  }\n}\n\nfragment MyAIFeedbackFields on AIFeedback {\n  id\n  targetType\n  targetId\n  targetPart\n  rating\n  reasons\n  comment\n  version\n  updatedAt\n}"
     },
     {
       "name": "SetMyAvailability",
@@ -15462,7 +15635,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/memories.graphql",
-      "hash": "sha256:ba7e14c6d4458b4175312df32e93cdab318958dabfe298bd8dcb7ca6c441ab7d",
+      "hash": "sha256:da2b52afcd2ecc9a53be6df3a173ccd003d8bb748d0bb1b58984aebd7631e01b",
       "rootFields": [
         "updateAgentMemory"
       ],
@@ -15482,7 +15655,7 @@
         "AgentMemoryTableRowFields"
       ],
       "usages": [],
-      "sdl": "mutation UpdateAgentMemory($id: ID!, $input: AgentMemoryInput!) {\n  updateAgentMemory(id: $id, input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "mutation UpdateAgentMemory($id: ID!, $input: AgentMemoryInput!) {\n  updateAgentMemory(id: $id, input: $input) {\n    ...AgentMemoryTableRowFields\n  }\n}\n\nfragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "UpdateBenefitPlan",
@@ -18486,12 +18659,14 @@
       "fragments": [],
       "usedByOperations": [
         "AgentMemoryTable",
+        "ApproveAgentMemorySuggestion",
         "CreateAgentMemory",
+        "DismissAgentMemorySuggestion",
         "SetAgentMemoryStatus",
         "UpdateAgentMemory"
       ],
       "usages": [],
-      "sdl": "fragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentPlanTableRowFields",
@@ -18559,6 +18734,19 @@
       ],
       "usages": [],
       "sdl": "fragment AgentScorecardFields on AgentScorecard {\n  agentDefinitionId\n  window\n  since\n  runs\n  runsFailed\n  exceptions\n  proposals\n  approved\n  modified\n  rejected\n  pending\n  executed\n  executionFailures\n  autoExecuted\n  approvalRate\n  inputTokens\n  outputTokens\n  costUsd\n  estimatedMinutesSaved\n  byTool {\n    toolName\n    approved\n    modified\n    rejected\n    executed\n    failed\n    pending\n    automatic\n  }\n  toolTrust {\n    toolName\n    streak\n    approvals\n    modifications\n    rejections\n    executionFailures\n    earnedTier\n    lastDecisionAt\n    promotedAt\n    demotedAt\n  }\n}"
+    },
+    {
+      "name": "AIFeedbackTableRowFields",
+      "typeCondition": "AIFeedback",
+      "domain": "ai-feedback",
+      "sourceFile": "src/operations/ai-feedback/ai-feedback.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentFeedbackSummary",
+        "AIFeedbackTable"
+      ],
+      "usages": [],
+      "sdl": "fragment AIFeedbackTableRowFields on AIFeedback {\n  id\n  userId\n  targetType\n  targetId\n  targetPart\n  threadId\n  turnId\n  runId\n  agentDefinitionId\n  definitionVersion\n  detectorKey\n  task\n  model\n  providerId\n  fingerprintSource\n  rating\n  reasons\n  comment\n  patternKey\n  turnSnapshot {\n    question\n    answer\n    tools {\n      name\n      summary\n      failed\n    }\n    omittedTools\n    redacted\n  }\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AIProviderCardFields",
@@ -19037,6 +19225,7 @@
         "AgentPlanTable",
         "AgentProposalTable",
         "AgentRunTable",
+        "AIFeedbackTable",
         "AIProviderCards",
         "ApiKeyTable",
         "AuditLogTable",
@@ -20111,6 +20300,19 @@
       ],
       "usages": [],
       "sdl": "fragment ManualJournalTableRowFields on ManualJournal {\n  id\n  businessUnitId\n  organizationId\n  requestNumber\n  status\n  description\n  reason\n  accountingDate\n  requestedFiscalYearId\n  requestedFiscalPeriodId\n  currencyCode\n  totalDebit\n  totalCredit\n  approvedAt\n  approvedById\n  rejectedAt\n  rejectedById\n  rejectionReason\n  cancelledAt\n  cancelledById\n  cancelReason\n  postedBatchId\n  createdById\n  updatedById\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "MyAIFeedbackFields",
+      "typeCondition": "AIFeedback",
+      "domain": "ai-feedback",
+      "sourceFile": "src/operations/ai-feedback/ai-feedback.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "MyAIFeedback",
+        "SetMyAIFeedback"
+      ],
+      "usages": [],
+      "sdl": "fragment MyAIFeedbackFields on AIFeedback {\n  id\n  targetType\n  targetId\n  targetPart\n  rating\n  reasons\n  comment\n  version\n  updatedAt\n}"
     },
     {
       "name": "NotificationFields",
@@ -21796,9 +21998,11 @@
       "kind": "enum",
       "values": [
         "Active",
-        "Retired"
+        "Dismissed",
+        "Retired",
+        "Suggested"
       ],
-      "sdl": "enum AgentMemoryStatus {\n  Active\n  Retired\n}"
+      "sdl": "enum AgentMemoryStatus {\n  Active\n  \"\"\"\n  A suggestion an administrator refused; the same pattern is not suggested again for 30 days.\n  \"\"\"\n  Dismissed\n  Retired\n  \"\"\"\n  Drawn from feedback and waiting for an administrator; never read by an agent.\n  \"\"\"\n  Suggested\n}"
     },
     "AgentPlanDecisionInput": {
       "kind": "input",
@@ -21853,6 +22057,27 @@
         }
       ],
       "sdl": "input AgentScorecardInput {\n  agentDefinitionId: ID!\n  window: AgentScorecardWindow = Last30Days\n}"
+    },
+    "AIFeedbackTargetInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "targetId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "targetPart",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "targetType",
+          "type": "AIFeedbackTargetType!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AIFeedbackTargetInput {\n  targetId: ID!\n  \"\"\"Required for a briefing section, its key; empty otherwise.\"\"\"\n  targetPart: String\n  targetType: AIFeedbackTargetType!\n}"
     },
     "AmendWorkerEmploymentEventInput": {
       "kind": "input",
@@ -21957,6 +22182,27 @@
         }
       ],
       "sdl": "input ApplyCustomerPaymentInput {\n  accountingDate: Timestamp!\n  applications: [CustomerPaymentApplicationInput!]!\n  paymentId: ID!\n}"
+    },
+    "ApproveAgentMemorySuggestionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "content",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "kind",
+          "type": "AgentMemoryKind",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ApproveAgentMemorySuggestionInput {\n  \"\"\"The memory as it should read once approved.\"\"\"\n  content: String!\n  \"\"\"Defaults to the suggestion's kind.\"\"\"\n  kind: AgentMemoryKind\n  version: Int!\n}"
     },
     "ArchiveWorkerCredentialInput": {
       "kind": "input",
@@ -26415,6 +26661,17 @@
       ],
       "sdl": "input MatchRoutingGuideInput {\n  destinationCity: String\n  destinationLocationId: ID\n  destinationState: String\n  originCity: String\n  originLocationId: ID\n  originState: String\n}"
     },
+    "MyAIFeedbackInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "targets",
+          "type": "[AIFeedbackTargetInput!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input MyAIFeedbackInput {\n  \"\"\"At most 200 targets.\"\"\"\n  targets: [AIFeedbackTargetInput!]!\n}"
+    },
     "NotificationFilterInput": {
       "kind": "input",
       "fields": [
@@ -28726,6 +28983,42 @@
         }
       ],
       "sdl": "input SetAvailabilityPreferenceInput {\n  dayOfWeek: Int!\n  note: String\n  preference: AvailabilityPreference!\n  workerId: ID!\n}"
+    },
+    "SetMyAIFeedbackInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "comment",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "rating",
+          "type": "Int!",
+          "defaultValue": null
+        },
+        {
+          "name": "reasons",
+          "type": "[AIFeedbackReason!]",
+          "defaultValue": null
+        },
+        {
+          "name": "targetId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "targetPart",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "targetType",
+          "type": "AIFeedbackTargetType!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SetMyAIFeedbackInput {\n  \"\"\"At most 1000 characters.\"\"\"\n  comment: String\n  \"\"\"1 for a thumbs up, -1 for a thumbs down.\"\"\"\n  rating: Int!\n  \"\"\"Reasons on the same side as the rating.\"\"\"\n  reasons: [AIFeedbackReason!]\n  targetId: ID!\n  targetPart: String\n  targetType: AIFeedbackTargetType!\n}"
     },
     "SetMyAvailabilityInput": {
       "kind": "input",
@@ -32662,6 +32955,18 @@
       ],
       "sdl": "\"\"\"How far back a scorecard looks.\"\"\"\nenum AgentScorecardWindow {\n  Last7Days\n  Last30Days\n  Last90Days\n}"
     },
+    "AIFeedbackTargetType": {
+      "kind": "enum",
+      "values": [
+        "AssistantMessage",
+        "Briefing",
+        "BriefingSection",
+        "DelegatedAnswer",
+        "Insight",
+        "WatchtowerItem"
+      ],
+      "sdl": "\"\"\"The kind of AI output a rating is about.\"\"\"\nenum AIFeedbackTargetType {\n  \"\"\"An answer the conversation's agent gave.\"\"\"\n  AssistantMessage\n  \"\"\"A whole morning briefing.\"\"\"\n  Briefing\n  \"\"\"One section of a briefing, named by its key in targetPart.\"\"\"\n  BriefingSection\n  \"\"\"Another agent's answer to a task the conversation's agent handed it.\"\"\"\n  DelegatedAnswer\n  \"\"\"A home-screen insight.\"\"\"\n  Insight\n  \"\"\"\n  A watchtower item raised by AI work: an insight, a proposal, a plan, a failed run or an agent exception.\n  \"\"\"\n  WatchtowerItem\n}"
+    },
     "CarrierIntelSyncField": {
       "kind": "enum",
       "values": [
@@ -34518,6 +34823,24 @@
         "Unavailable"
       ],
       "sdl": "\"\"\"\nWhat a driver would rather work on a weekday. It is a statement, never a\nconstraint: dispatch is free to override it, and the rota shows where it did so\nthe override is visible rather than silent.\n\"\"\"\nenum AvailabilityPreference {\n  Available\n  Preferred\n  Unavailable\n}"
+    },
+    "AIFeedbackReason": {
+      "kind": "enum",
+      "values": [
+        "Accurate",
+        "HardToRead",
+        "Helpful",
+        "IgnoredInstructions",
+        "Inaccurate",
+        "Incomplete",
+        "MadeUpNumbers",
+        "NotRelevant",
+        "Other",
+        "SavedTime",
+        "Unsafe",
+        "WrongAction"
+      ],
+      "sdl": "\"\"\"\nWhy a person rated as they did. Each reason belongs to one side of the rating.\n\"\"\"\nenum AIFeedbackReason {\n  Accurate\n  HardToRead\n  Helpful\n  IgnoredInstructions\n  Inaccurate\n  Incomplete\n  MadeUpNumbers\n  NotRelevant\n  Other\n  SavedTime\n  Unsafe\n  WrongAction\n}"
     },
     "ShipmentStatus": {
       "kind": "enum",

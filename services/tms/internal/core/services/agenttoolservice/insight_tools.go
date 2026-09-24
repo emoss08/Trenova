@@ -61,20 +61,21 @@ func (t *dismissInsightTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *dismissInsightTool) Reversible() bool { return true }
-
-func (t *dismissInsightTool) PermissionResource() permission.Resource {
-	return permission.ResourceInsight
-}
-
-func (t *dismissInsightTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *dismissInsightTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *dismissInsightTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *dismissInsightTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceInsight,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Dismisses an insight inside Trenova; it can be restored.",
+	}
 }
 
 func (t *dismissInsightTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {

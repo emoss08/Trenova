@@ -49,20 +49,22 @@ func (t *correctChargeCodeTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *correctChargeCodeTool) Reversible() bool { return true }
-
-func (t *correctChargeCodeTool) PermissionResource() permission.Resource {
-	return permission.ResourceBillingQueue
-}
-
-func (t *correctChargeCodeTool) PermissionOperation() permission.Operation {
-	return permission.OpUpdate
-}
-
-func (t *correctChargeCodeTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *correctChargeCodeTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *correctChargeCodeTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceBillingQueue,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressMoney},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Rewrites the accessorial charges a customer will be invoiced, so it " +
+			"moves money.",
+	}
 }
 
 func (t *correctChargeCodeTool) Execute(

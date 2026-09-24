@@ -15,6 +15,9 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+const AI_FEEDBACK_RETENTION_MIN_DAYS = 30;
+const AI_FEEDBACK_RETENTION_DEFAULT_DAYS = 730;
+
 const dataRetentionFormSchema = z.object({
   auditRetentionPeriod: z.number().int().min(1, "Audit retention must be at least 1 day"),
   ediInboundFileRetentionPeriod: z
@@ -22,6 +25,10 @@ const dataRetentionFormSchema = z.object({
     .int()
     .min(0, "EDI inbound file retention cannot be negative"),
   ediMessageRetentionPeriod: z.number().int().min(0, "EDI message retention cannot be negative"),
+  aiFeedbackRetentionPeriod: z
+    .number()
+    .int()
+    .min(AI_FEEDBACK_RETENTION_MIN_DAYS, "AI feedback retention must be at least 30 days"),
 });
 
 type DataRetentionFormValues = z.infer<typeof dataRetentionFormSchema>;
@@ -44,6 +51,7 @@ export function DataRetentionPage() {
       auditRetentionPeriod: 120,
       ediInboundFileRetentionPeriod: 0,
       ediMessageRetentionPeriod: 0,
+      aiFeedbackRetentionPeriod: AI_FEEDBACK_RETENTION_DEFAULT_DAYS,
     },
     mode: "onChange",
   });
@@ -55,6 +63,10 @@ export function DataRetentionPage() {
       auditRetentionPeriod: data.auditRetentionPeriod,
       ediInboundFileRetentionPeriod: data.ediInboundFileRetentionPeriod,
       ediMessageRetentionPeriod: data.ediMessageRetentionPeriod,
+      aiFeedbackRetentionPeriod:
+        data.aiFeedbackRetentionPeriod > 0
+          ? data.aiFeedbackRetentionPeriod
+          : AI_FEEDBACK_RETENTION_DEFAULT_DAYS,
     });
   }, [data, reset]);
 
@@ -120,6 +132,17 @@ export function DataRetentionPage() {
                   label={t("EDI Message Retention (days)")}
                   description={t(
                     "Raw X12 and payload snapshots for delivered/inbound messages older than this are blanked. 0 keeps raw payloads forever. Purged messages can no longer be replayed.",
+                  )}
+                />
+              </FormControl>
+              <FormControl>
+                <NumberField
+                  control={control}
+                  name="aiFeedbackRetentionPeriod"
+                  label={t("AI feedback retention (days)")}
+                  rules={{ required: true }}
+                  description={t(
+                    "Ratings of AI output, with the question and answer each person saw, are deleted after this many days. At least 30.",
                   )}
                 />
               </FormControl>

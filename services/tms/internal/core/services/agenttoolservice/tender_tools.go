@@ -74,22 +74,22 @@ func (t *tenderToRoutingGuideTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *tenderToRoutingGuideTool) Reversible() bool { return true }
-
-func (t *tenderToRoutingGuideTool) PermissionResource() permission.Resource {
-	return permission.ResourceTender
-}
-
-func (t *tenderToRoutingGuideTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-// RequiresIdempotencyKey is true because a second tender for the same move
-// is refused by the service, and a retry should not read as a failure.
-func (t *tenderToRoutingGuideTool) RequiresIdempotencyKey() bool { return true }
-
-func (t *tenderToRoutingGuideTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *tenderToRoutingGuideTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceTender,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		Idempotent:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Offers the load to carriers outside the organization.",
+	}
 }
 
 func (t *tenderToRoutingGuideTool) Execute(
@@ -208,20 +208,22 @@ func (t *tenderToCarriersTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *tenderToCarriersTool) Reversible() bool { return true }
-
-func (t *tenderToCarriersTool) PermissionResource() permission.Resource {
-	return permission.ResourceTender
-}
-
-func (t *tenderToCarriersTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *tenderToCarriersTool) RequiresIdempotencyKey() bool { return true }
-
-func (t *tenderToCarriersTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierActWithApproval
+func (t *tenderToCarriersTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceTender,
+		Operation:     permission.OpCreate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierActWithApproval,
+		Egress:        []agent.EgressClass{agent.EgressExternalRecipient},
+		Effect:        agent.ToolEffectChange,
+		Reversible:    true,
+		Idempotent:    true,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale:     "Offers the load to carriers outside the organization.",
+	}
 }
 
 type tenderLineParam struct {

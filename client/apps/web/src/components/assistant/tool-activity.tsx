@@ -50,7 +50,7 @@ import {
 } from "./tool-presentation";
 import { DelegateStep } from "./delegate-step";
 import { DisplayValue } from "./display-value";
-import { WorkingDot } from "./voice/working-dot";
+import { DeskThinking } from "./voice/desk-thinking";
 
 export type { ToolActivityStatus, ToolStep } from "./activity";
 
@@ -243,7 +243,7 @@ function ActivityMark({
       )}
     >
       {line.state === "running" ? (
-        <WorkingDot working still />
+        <DeskThinking working pose="busy" still decorative />
       ) : line.state === "failed" ? (
         <CircleAlertIcon className={cn("text-danger size-3", live && "animate-confirm")} />
       ) : live ? (
@@ -274,7 +274,7 @@ function StepRow({ step }: { step: ToolStep }) {
           className="group/step ui-focus-ring hover:bg-surface-hover -mx-1.5 flex w-[calc(100%+0.75rem)] min-w-0 items-center gap-2 rounded-control px-1.5 py-0.5 text-left text-xs transition-colors disabled:cursor-default"
         >
           {running ? (
-            <WorkingDot working still className="mx-0.75" />
+            <DeskThinking working pose="busy" still decorative className="-mx-0.75" />
           ) : failed ? (
             <CircleAlertIcon aria-hidden className="text-danger size-3 shrink-0" />
           ) : (

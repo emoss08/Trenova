@@ -67,7 +67,7 @@ func TestGetShipmentDraft_ReadsFieldsStopsAndWhatNeedsAPerson(t *testing.T) {
 		},
 	}}
 	tool := newGetShipmentDraftTool(drafts)
-	assert.Equal(t, permission.ResourceDocument, tool.PermissionResource())
+	assert.Equal(t, permission.ResourceDocument, tool.Policy().Resource)
 
 	params := testParams(map[string]any{"documentId": docID.String()})
 	result, err := tool.Query(t.Context(), params)
@@ -182,7 +182,7 @@ func TestQuoteShipment_BuildsTheLaneFromLocationsAndNeverPersists(t *testing.T) 
 	tool := newQuoteShipmentTool(quoter, &fakeLocations{byID: map[pulid.ID]*location.Location{
 		origin.ID: origin, destination.ID: destination,
 	}})
-	assert.Equal(t, permission.ResourceRateQuote, tool.PermissionResource())
+	assert.Equal(t, permission.ResourceRateQuote, tool.Policy().Resource)
 
 	customerID := pulid.MustNew("cust_")
 	serviceTypeID := pulid.MustNew("st_")

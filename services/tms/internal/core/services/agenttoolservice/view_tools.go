@@ -91,20 +91,24 @@ func (t *saveTableViewTool) ParamSchema() map[string]any {
 	}
 }
 
-func (t *saveTableViewTool) Reversible() bool { return true }
-
-func (t *saveTableViewTool) PermissionResource() permission.Resource {
-	return permission.ResourceTableConfiguration
-}
-
-func (t *saveTableViewTool) PermissionOperation() permission.Operation {
-	return permission.OpCreate
-}
-
-func (t *saveTableViewTool) RequiresIdempotencyKey() bool { return false }
-
-func (t *saveTableViewTool) DefaultAutonomyTier() agent.AutonomyTier {
-	return agent.TierPropose
+func (t *saveTableViewTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:                t.Name(),
+		Kind:                agent.ToolKindAction,
+		Resource:            permission.ResourceTableConfiguration,
+		Operation:           permission.OpCreate,
+		Scope:               agent.ToolScopeTenant,
+		DefaultTier:         agent.TierPropose,
+		MaxTier:             agent.TierAutoExecute,
+		Egress:              []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal},
+		Classify:            classifyTableView,
+		PersonalRunsUnasked: true,
+		Effect:              agent.ToolEffectChange,
+		Reversible:          true,
+		ReadsExternal:       agent.ExternalReadNever,
+		Rationale: "A private view is the caller's own picker entry; a shared one " +
+			"appears for every colleague, and nothing leaves the organization.",
+	}
 }
 
 func (t *saveTableViewTool) Validate(
