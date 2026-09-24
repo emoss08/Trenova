@@ -144,7 +144,7 @@ func NewGraphQL(
 			Name:      "rejections_total",
 			Help:      "Total number of GraphQL requests rejected before execution",
 		},
-		[]string{"reason"},
+		[]string{labelReason},
 	)
 
 	m.parseDuration = prometheus.NewHistogram(

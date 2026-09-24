@@ -208,7 +208,8 @@ func APIOptions() fx.Option {
 		modulesinfra.SMSModule,
 		modulesinfra.PDFRenderModule,
 		modulesinfra.TemplatingModule,
-		modulesinfra.FoonyClientModule,
+		modulesinfra.RealtimePublisherModule,
+		modulesinfra.RealtimeGatewayModule,
 		modulesinfra.MeilisearchClientModule,
 	)
 }
@@ -216,7 +217,7 @@ func APIOptions() fx.Option {
 func WorkerOptions() fx.Option {
 	return fx.Options(
 		modulesinfra.StorageModule,
-		modulesinfra.FoonyClientModule,
+		modulesinfra.RealtimePublisherModule,
 		modulesinfra.MeilisearchClientModule,
 		modulesinfra.SMSModule,
 		modulesinfra.PDFRenderModule,

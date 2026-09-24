@@ -11949,13 +11949,22 @@ components:
                 totalEstimatedFee:
                     type: number
             type: object
-        github_com_emoss08_trenova_internal_core_ports_services.RealtimeToken:
+        github_com_emoss08_trenova_internal_core_ports_services.RealtimePresenceMember:
             properties:
-                clientId:
+                connectionId:
                     type: string
-                expiresAt:
-                    type: integer
-                token:
+                name:
+                    type: string
+                userId:
+                    type: string
+            type: object
+        github_com_emoss08_trenova_internal_core_ports_services.RealtimePresenceSnapshot:
+            properties:
+                members:
+                    items:
+                        $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.RealtimePresenceMember'
+                    type: array
+                scope:
                     type: string
             type: object
         github_com_emoss08_trenova_internal_core_ports_services.ReassignChargeResult:
@@ -15244,6 +15253,18 @@ components:
                 - rateAgreementId
                 - sampleFrom
                 - sampleTo
+            type: object
+        internal_api_handlers_realtimehandler.presenceRequest:
+            properties:
+                connectionId:
+                    type: string
+            type: object
+        internal_api_handlers_realtimehandler.typingRequest:
+            properties:
+                connectionId:
+                    type: string
+                stop:
+                    type: boolean
             type: object
         internal_api_handlers_recurringshipmenthandler.generateRequest:
             properties:
@@ -33010,32 +33031,51 @@ paths:
             summary: List rate zone options
             tags:
                 - Rate Zones
-    /realtime/token-request/:
+    /realtime/stream/:
         get:
-            description: Returns a signed realtime access token for the authenticated actor.
-            operationId: getRealtimeToken
+            description: |-
+                Streams resource invalidations, presence, and typing events for the caller's
+                tenant as server-sent events. Send Last-Event-ID to resume after a disconnect.
+            operationId: openRealtimeStream
+            parameters:
+                - description: Set to 'users' to join the tenant's online-user presence
+                  in: query
+                  name: presence
+                  schema:
+                    type: string
+                - description: The id of the last event applied
+                  in: header
+                  name: Last-Event-ID
+                  schema:
+                    type: string
             responses:
                 "200":
                     content:
-                        application/json:
+                        text/event-stream:
                             schema:
-                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.RealtimeToken'
-                    description: OK
+                                type: string
+                    description: text/event-stream
                 "401":
                     content:
-                        application/json:
+                        text/event-stream:
                             schema:
                                 $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
                     description: Unauthorized
-                "500":
+                "403":
                     content:
-                        application/json:
+                        text/event-stream:
                             schema:
                                 $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
-                    description: Internal Server Error
+                    description: Forbidden
+                "429":
+                    content:
+                        text/event-stream:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Too Many Requests
             security:
                 - BearerAuth: []
-            summary: Get realtime token
+            summary: Open the live event stream
             tags:
                 - Realtime
     /recurring-shipments/:
@@ -37062,6 +37102,139 @@ paths:
             summary: Get shipment comment count
             tags:
                 - Shipments
+    /shipments/{shipmentID}/comments/presence/:
+        delete:
+            operationId: leaveShipmentCommentPresence
+            parameters:
+                - description: Shipment ID
+                  in: path
+                  name: shipmentID
+                  required: true
+                  schema:
+                    type: string
+                - description: Live connection ID
+                  in: query
+                  name: connectionId
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "204":
+                    description: No Content
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+            security:
+                - BearerAuth: []
+            summary: Leave shipment comment presence
+            tags:
+                - Realtime
+        post:
+            description: |-
+                Marks the caller's live connection as viewing a shipment's comments and
+                returns everyone else viewing them.
+            operationId: joinShipmentCommentPresence
+            parameters:
+                - description: Shipment ID
+                  in: path
+                  name: shipmentID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/internal_api_handlers_realtimehandler.presenceRequest'
+                description: Live connection
+                required: true
+                x-originalParamName: request
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_core_ports_services.RealtimePresenceSnapshot'
+                    description: OK
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+            security:
+                - BearerAuth: []
+            summary: Join shipment comment presence
+            tags:
+                - Realtime
+    /shipments/{shipmentID}/comments/typing/:
+        post:
+            description: |-
+                Tells the other viewers of a shipment's comments that the caller is typing,
+                or has stopped.
+            operationId: signalShipmentCommentTyping
+            parameters:
+                - description: Shipment ID
+                  in: path
+                  name: shipmentID
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/internal_api_handlers_realtimehandler.typingRequest'
+                description: Typing signal
+                required: true
+                x-originalParamName: request
+            responses:
+                "204":
+                    description: No Content
+                "400":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Bad Request
+                "403":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Forbidden
+                "404":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/github_com_emoss08_trenova_internal_api_helpers.ProblemDetail'
+                    description: Not Found
+            security:
+                - BearerAuth: []
+            summary: Signal typing in shipment comments
+            tags:
+                - Realtime
     /shipments/{shipmentID}/holds/:
         get:
             operationId: listShipmentHolds

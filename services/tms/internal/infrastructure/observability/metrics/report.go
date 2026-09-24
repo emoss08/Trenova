@@ -99,7 +99,7 @@ func (m *Report) registerOperationalMetrics() {
 		Subsystem: reportingSubsystem,
 		Name:      "enqueue_rejections_total",
 		Help:      "Report run enqueue rejections by reason (concurrency, queue_depth)",
-	}, []string{"reason"})
+	}, []string{labelReason})
 
 	m.compileErrorsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,

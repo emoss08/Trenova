@@ -3,7 +3,6 @@ module github.com/emoss08/trenova
 go 1.26.0
 
 require (
-	github.com/Foony-Limited/realtime-go v0.1.1
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/gen2brain/webp v0.6.4

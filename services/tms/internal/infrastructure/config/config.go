@@ -69,8 +69,143 @@ type TwilioConfig struct {
 	FromNumber string `mapstructure:"fromNumber" validate:"required_if=Enabled true"`
 }
 
-type FoonyConfig struct {
-	APIKey string `mapstructure:"apiKey" validate:"required"`
+// RealtimeConfig tunes the server-sent event fan-out. Every value has a
+// production default, so an empty section is a working one. ShardCount must be
+// identical on every instance that shares a Redis, because it decides which
+// stream a tenant's events are written to and read from.
+type RealtimeConfig struct {
+	ShardCount            int           `mapstructure:"shardCount"            validate:"omitempty,min=1,max=256"`
+	StreamMaxLen          int64         `mapstructure:"streamMaxLen"          validate:"omitempty,min=100"`
+	ReplayScanLimit       int64         `mapstructure:"replayScanLimit"       validate:"omitempty,min=1"`
+	SubscriberBuffer      int           `mapstructure:"subscriberBuffer"      validate:"omitempty,min=8"`
+	MaxConnections        int           `mapstructure:"maxConnections"        validate:"omitempty,min=1"`
+	MaxConnectionsPerUser int           `mapstructure:"maxConnectionsPerUser" validate:"omitempty,min=1"`
+	HeartbeatInterval     time.Duration `mapstructure:"heartbeatInterval"`
+	PresenceTTL           time.Duration `mapstructure:"presenceTTL"`
+	MaxStreamLifetime     time.Duration `mapstructure:"maxStreamLifetime"`
+	PublishQueueSize      int           `mapstructure:"publishQueueSize"      validate:"omitempty,min=1"`
+	PublishBatchSize      int           `mapstructure:"publishBatchSize"      validate:"omitempty,min=1"`
+	PublishTimeout        time.Duration `mapstructure:"publishTimeout"`
+	MaxEntityBytes        int           `mapstructure:"maxEntityBytes"        validate:"omitempty,min=0"`
+	TypingThrottle        time.Duration `mapstructure:"typingThrottle"`
+}
+
+const (
+	DefaultRealtimeShardCount            = 16
+	DefaultRealtimeStreamMaxLen          = 10_000
+	DefaultRealtimeReplayScanLimit       = 5_000
+	DefaultRealtimeSubscriberBuffer      = 256
+	DefaultRealtimeMaxConnections        = 20_000
+	DefaultRealtimeMaxConnectionsPerUser = 20
+	DefaultRealtimeHeartbeatInterval     = 15 * time.Second
+	DefaultRealtimePresenceTTL           = 45 * time.Second
+	DefaultRealtimeMaxStreamLifetime     = 30 * time.Minute
+	DefaultRealtimePublishQueueSize      = 16_384
+	DefaultRealtimePublishBatchSize      = 256
+	DefaultRealtimePublishTimeout        = 5 * time.Second
+	DefaultRealtimeMaxEntityBytes        = 64 * 1024
+	DefaultRealtimeTypingThrottle        = time.Second
+)
+
+func (c *RealtimeConfig) GetShardCount() int {
+	if c.ShardCount <= 0 {
+		return DefaultRealtimeShardCount
+	}
+	return c.ShardCount
+}
+
+func (c *RealtimeConfig) GetStreamMaxLen() int64 {
+	if c.StreamMaxLen <= 0 {
+		return DefaultRealtimeStreamMaxLen
+	}
+	return c.StreamMaxLen
+}
+
+func (c *RealtimeConfig) GetReplayScanLimit() int64 {
+	if c.ReplayScanLimit <= 0 {
+		return DefaultRealtimeReplayScanLimit
+	}
+	return c.ReplayScanLimit
+}
+
+func (c *RealtimeConfig) GetSubscriberBuffer() int {
+	if c.SubscriberBuffer <= 0 {
+		return DefaultRealtimeSubscriberBuffer
+	}
+	return c.SubscriberBuffer
+}
+
+func (c *RealtimeConfig) GetMaxConnections() int {
+	if c.MaxConnections <= 0 {
+		return DefaultRealtimeMaxConnections
+	}
+	return c.MaxConnections
+}
+
+func (c *RealtimeConfig) GetMaxConnectionsPerUser() int {
+	if c.MaxConnectionsPerUser <= 0 {
+		return DefaultRealtimeMaxConnectionsPerUser
+	}
+	return c.MaxConnectionsPerUser
+}
+
+func (c *RealtimeConfig) GetHeartbeatInterval() time.Duration {
+	if c.HeartbeatInterval <= 0 {
+		return DefaultRealtimeHeartbeatInterval
+	}
+	return c.HeartbeatInterval
+}
+
+// GetPresenceTTL is never shorter than two heartbeats, so one late refresh
+// never drops a member who is still connected.
+func (c *RealtimeConfig) GetPresenceTTL() time.Duration {
+	ttl := c.PresenceTTL
+	if ttl <= 0 {
+		ttl = DefaultRealtimePresenceTTL
+	}
+	return max(ttl, 2*c.GetHeartbeatInterval())
+}
+
+func (c *RealtimeConfig) GetMaxStreamLifetime() time.Duration {
+	if c.MaxStreamLifetime <= 0 {
+		return DefaultRealtimeMaxStreamLifetime
+	}
+	return c.MaxStreamLifetime
+}
+
+func (c *RealtimeConfig) GetPublishQueueSize() int {
+	if c.PublishQueueSize <= 0 {
+		return DefaultRealtimePublishQueueSize
+	}
+	return c.PublishQueueSize
+}
+
+func (c *RealtimeConfig) GetPublishBatchSize() int {
+	if c.PublishBatchSize <= 0 {
+		return DefaultRealtimePublishBatchSize
+	}
+	return c.PublishBatchSize
+}
+
+func (c *RealtimeConfig) GetPublishTimeout() time.Duration {
+	if c.PublishTimeout <= 0 {
+		return DefaultRealtimePublishTimeout
+	}
+	return c.PublishTimeout
+}
+
+func (c *RealtimeConfig) GetMaxEntityBytes() int {
+	if c.MaxEntityBytes <= 0 {
+		return DefaultRealtimeMaxEntityBytes
+	}
+	return c.MaxEntityBytes
+}
+
+func (c *RealtimeConfig) GetTypingThrottle() time.Duration {
+	if c.TypingThrottle <= 0 {
+		return DefaultRealtimeTypingThrottle
+	}
+	return c.TypingThrottle
 }
 
 type MetricsConfig struct {
@@ -1605,7 +1740,7 @@ type Config struct {
 	Temporal            TemporalConfig            `mapstructure:"temporal"            validate:"required"`
 	Storage             StorageConfig             `mapstructure:"storage"             validate:"required"`
 	System              SystemConfig              `mapstructure:"system"              validate:"required"`
-	Foony               FoonyConfig               `mapstructure:"foony"               validate:"required"`
+	Realtime            RealtimeConfig            `mapstructure:"realtime"`
 	Search              SearchConfig              `mapstructure:"search"`
 	AI                  AIConfig                  `mapstructure:"ai"`
 	Audit               AuditConfig               `mapstructure:"audit"`
@@ -1699,7 +1834,7 @@ func (c *Config) GetStorageConfig() *StorageConfig { return &c.Storage }
 
 func (c *Config) GetTwilioConfig() *TwilioConfig { return &c.Twilio }
 
-func (c *Config) GetFoonyConfig() *FoonyConfig { return &c.Foony }
+func (c *Config) GetRealtimeConfig() *RealtimeConfig { return &c.Realtime }
 
 func (c *Config) GetSystemConfig() *SystemConfig { return &c.System }
 
