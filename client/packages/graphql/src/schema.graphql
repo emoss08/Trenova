@@ -1673,6 +1673,28 @@ type AgentSafety {
 }
 
 """
+The figures that head the safety section, counted over every tool and agent.
+"""
+type AgentSafetySummary {
+  """Tools some of whose work leaves the organization."""
+  leaveOrganization: Int!
+  """
+  Agents open to everyone that hold a tool reaching restricted data or leaving the organization.
+  """
+  openWithSensitive: Int!
+  """
+  The resources the tools need, for filtering; general for a tool that needs no grant.
+  """
+  resources: [String!]!
+  """
+  Tools that change something and, on at least one agent, can do so without a person.
+  """
+  runWithoutPerson: Int!
+  """Every tool an agent can be given."""
+  toolCount: Int!
+}
+
+"""
 One agent's record, counted at read time from its runs, its proposals and its
 usage. Nothing here is stored, so there is no second copy to drift out of step
 with the rows a person can audit.
@@ -1919,6 +1941,41 @@ type AgentToolPolicy {
   title: String!
 }
 
+type AgentToolPolicyConnection {
+  edges: [AgentToolPolicyEdge!]!
+  pageInfo: PageInfo!
+  """Every tool matching the filters. Counted only when selected."""
+  totalCount: Int
+}
+
+"""
+Narrows the tool rules. A filter left out matches every tool; the rules come
+back ordered by tool name.
+"""
+input AgentToolPolicyConnectionInput {
+  after: String
+  """Tools some of whose work reaches this class."""
+  egress: AgentEgressClass
+  first: Int = 25
+  kind: AgentToolKind
+  """Matched against the tool's name and title, ignoring case."""
+  query: String
+  """
+  The permission resource the tool needs; general for a tool that needs no grant.
+  """
+  resource: String
+  """
+  True keeps the tools that change something and, on at least one agent, can do
+  so without a person; false keeps every other tool.
+  """
+  runsWithoutPerson: Boolean
+}
+
+type AgentToolPolicyEdge {
+  cursor: String!
+  node: AgentToolPolicy!
+}
+
 """
 The permission a person needs of their own to use a tool through an agent.
 """
@@ -1932,6 +1989,10 @@ One tool an agent holds, before and after the run has read outside text.
 """
 type AgentToolSafety {
   clean: AgentToolAutonomy!
+  """
+  The rule the tool is held to, from the same catalog the runtime decides from.
+  """
+  policy: AgentToolPolicy!
   policyName: String!
   tainted: AgentToolAutonomy!
 }
@@ -13940,10 +14001,16 @@ type Query {
   agent in the organization; at most 100 may be named.
   """
   agentSafety(agentIds: [ID!]): [AgentSafety!]!
+  """
+  The safety figures, counted on the server so no client reads every rule to count them.
+  """
+  agentSafetySummary: AgentSafetySummary!
   """How one agent has been doing."""
   agentScorecard(input: AgentScorecardInput!): AgentScorecard!
   """Every tool's safety policy, by name."""
-  agentToolPolicies: [AgentToolPolicy!]!
+  agentToolPolicies: [AgentToolPolicy!]! @deprecated(reason: "Use agentToolPolicyConnection, which pages and filters on the server.")
+  """The tool rules a page at a time, searched and filtered on the server."""
+  agentToolPolicyConnection(input: AgentToolPolicyConnectionInput!): AgentToolPolicyConnection!
   """Everyone's ratings, for administrators."""
   aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
   aiProvider(id: ID!): AIProvider

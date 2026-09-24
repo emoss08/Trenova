@@ -49,6 +49,9 @@ fragment AgentSafetyFields on AgentSafety {
   }
   tools {
     policyName
+    policy {
+      ...AgentToolPolicyFields
+    }
     clean {
       ...AgentToolAutonomyFields
     }
@@ -69,9 +72,31 @@ fragment AgentSafetyFields on AgentSafety {
   }
 }
 
-query AgentToolPolicies {
-  agentToolPolicies {
-    ...AgentToolPolicyFields
+query AgentToolPolicyConnection(
+  $input: AgentToolPolicyConnectionInput!
+  $includeTotalCount: Boolean = false
+) {
+  agentToolPolicyConnection(input: $input) {
+    edges {
+      cursor
+      node {
+        ...AgentToolPolicyFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentSafetySummary {
+  agentSafetySummary {
+    toolCount
+    runWithoutPerson
+    leaveOrganization
+    openWithSensitive
+    resources
   }
 }
 

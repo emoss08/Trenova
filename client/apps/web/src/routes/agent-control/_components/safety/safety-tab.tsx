@@ -5,27 +5,33 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CircleAlertIcon } from "lucide-react";
-import { useMemo } from "react";
 import { ByAgentPanel } from "./by-agent-panel";
-import { safetyFigures } from "./safety-model";
 import { ToolRulesPanel } from "./tool-rules-panel";
+
+/** The figures move with agents' settings and trust; a minute old is still true enough. */
+const SUMMARY_STALE_MS = 60_000;
 
 /**
  * What the AI can do without a person, answered from the same policies the
- * runtime decides every call from: the rule each tool is held to, and what
- * each agent's settings, trust and reach make of those rules.
+ * runtime decides every call from: the figures counted on the server over
+ * every tool and agent, the rule each tool is held to a page at a time, and
+ * what the agents someone picks make of those rules.
  */
 export default function SafetyTab() {
-  const t = useT();
-  const policies = useQuery(queries.agentSafety.policies());
-  const agents = useQuery(queries.agentSafety.agents());
-
-  const figures = useMemo(
-    () => (policies.data && agents.data ? safetyFigures(policies.data, agents.data) : undefined),
-    [agents.data, policies.data],
+  return (
+    <div className="flex min-w-0 flex-col gap-4">
+      <SafetyFigures />
+      <ToolRulesPanel />
+      <ByAgentPanel />
+    </div>
   );
+}
 
-  if (policies.isError || agents.isError) {
+function SafetyFigures() {
+  const t = useT();
+  const summary = useQuery({ ...queries.agentSafety.summary(), staleTime: SUMMARY_STALE_MS });
+
+  if (summary.isError) {
     return (
       <Alert variant="destructive" size="sm">
         <CircleAlertIcon />
@@ -36,39 +42,30 @@ export default function SafetyTab() {
     );
   }
 
-  if (!policies.data || !agents.data || !figures) {
-    return (
-      <div className="flex min-w-0 flex-col gap-4" aria-busy>
-        <Skeleton className="h-16" />
-        <Skeleton className="h-64" />
-        <Skeleton className="h-48" />
-      </div>
-    );
+  if (!summary.data) {
+    return <Skeleton className="h-16" aria-busy />;
   }
 
+  const figures = summary.data;
   return (
-    <div className="flex min-w-0 flex-col gap-4">
-      <KpiStrip aria-label={t("AI safety figures")}>
-        <KpiStripItem
-          label={t("Tools that run without a person")}
-          value={figures.runWithoutPerson}
-          sub={t("on at least one agent")}
-          tone={figures.runWithoutPerson > 0 ? "info" : undefined}
-        />
-        <KpiStripItem
-          label={t("Tools that send outside the organization")}
-          value={figures.leaveOrganization}
-          sub={t("never past approval")}
-        />
-        <KpiStripItem
-          label={t("Open agents with sensitive tools")}
-          value={figures.openWithSensitive}
-          sub={t("usable by everyone")}
-          tone={figures.openWithSensitive > 0 ? "warning" : undefined}
-        />
-      </KpiStrip>
-      <ToolRulesPanel policies={policies.data} />
-      <ByAgentPanel agents={agents.data} policies={policies.data} />
-    </div>
+    <KpiStrip aria-label={t("AI safety figures")}>
+      <KpiStripItem
+        label={t("Tools that run without a person")}
+        value={figures.runWithoutPerson}
+        sub={t("on at least one agent")}
+        tone={figures.runWithoutPerson > 0 ? "info" : undefined}
+      />
+      <KpiStripItem
+        label={t("Tools that send outside the organization")}
+        value={figures.leaveOrganization}
+        sub={t("never past approval")}
+      />
+      <KpiStripItem
+        label={t("Open agents with sensitive tools")}
+        value={figures.openWithSensitive}
+        sub={t("usable by everyone")}
+        tone={figures.openWithSensitive > 0 ? "warning" : undefined}
+      />
+    </KpiStrip>
   );
 }

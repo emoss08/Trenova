@@ -129,15 +129,21 @@ Keywords: AI safety, autonomy, what can the AI do on its own, auto execute, appr
    and, on at least one agent, can run without anyone approving), **Tools that send outside the
    organization**, and **Open agents with sensitive tools** (agents everyone can use that hold
    tools reaching restricted data or leaving the organization).
-3. In **Tool rules**, every tool is listed with **Who sees it**, its **Max tier**, what it
-   **Needs** of the person using it, whether it **Reads outside content**, and the **Rationale**
-   for its rule. Narrow the list with **All classes** and **All resources**. A tool marked
-   **Depends on the call** goes further for some calls than others; hover it to read why.
-4. In **By agent**, select **Pick agents** and choose the agents to compare. Each agent shows
-   **Who can use it**, its **Ceiling**, and every tool it holds with what happens
+3. In **Tool rules**, tools are listed a page at a time with **Who sees it**, its **Max tier**,
+   what it **Needs** of the person using it, and whether it **Reads outside content**. Type in
+   **Search tools** to find a tool by name, and narrow the list with **All classes**,
+   **All resources**, **All kinds** and **Runs without a person**. Move between pages and choose
+   **Rows per page** under the table.
+4. Open a row with the arrow at its start to read the **Rationale** for its rule,
+   **How far it may go** and any **Record condition**. A tool marked **Depends on the call** goes
+   further for some calls than others; its row says why.
+5. In **By agent**, select **Add an agent** and choose one; add more to compare them side by
+   side. Nothing is read until you add an agent. Each agent shows **Who can use it**, its
+   **Ceiling**, and the tools it holds a page at a time with what happens
    **Before outside text** and **After outside text**: **Runs on its own**,
-   **Depends on the call**, **Needs approval**, **Proposes only** or **Simulated**.
-5. The **Held by** chips say which limit stops a tool going further, such as the agent's
+   **Depends on the call**, **Needs approval**, **Proposes only** or **Simulated**. Select the
+   cross beside an agent's name to take it out of the comparison.
+6. The **Held by** chips say which limit stops a tool going further, such as the agent's
    ceiling, where the work goes, or that the run has read outside text. A tool whose tier was
    earned shows **Tier earned**, and one still earning shows how many clean approvals it needs
    for the next tier.

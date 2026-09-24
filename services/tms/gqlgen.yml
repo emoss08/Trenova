@@ -2165,6 +2165,12 @@ models:
   AgentToolSafety:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentToolSafety
+    fields:
+      policy:
+        resolver: true
+  AgentSafetySummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentSafetySummary
   AgentSafety:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentSafetySubject

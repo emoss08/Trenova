@@ -64,8 +64,45 @@ type AgentReachRequest struct {
 	GrantedRoles int
 }
 
+type ListAgentToolPoliciesRequest struct {
+	TenantInfo        pagination.TenantInfo
+	First             int
+	After             string
+	Query             string
+	Egress            agent.EgressClass
+	Resource          string
+	Kind              agent.ToolKind
+	RunsWithoutPerson *bool
+	IncludeTotalCount bool
+}
+
+type AgentToolPolicyEdge struct {
+	View   AgentToolPolicyView
+	Cursor string
+}
+
+type AgentToolPolicyPage struct {
+	Edges       []AgentToolPolicyEdge
+	HasNextPage bool
+	TotalCount  *int
+}
+
+type AgentSafetySummary struct {
+	ToolCount         int
+	RunWithoutPerson  int
+	LeaveOrganization int
+	OpenWithSensitive int
+	Resources         []string
+}
+
 type AgentSafetyService interface {
 	ToolPolicies() []AgentToolPolicyView
+	ToolPolicy(name string) (AgentToolPolicyView, bool)
+	ListToolPolicies(
+		ctx context.Context,
+		req *ListAgentToolPoliciesRequest,
+	) (*AgentToolPolicyPage, error)
+	Summary(ctx context.Context, tenantInfo pagination.TenantInfo) (*AgentSafetySummary, error)
 	ListSubjects(
 		ctx context.Context,
 		req *ListAgentSafetyRequest,

@@ -481,15 +481,6 @@
       "routes/shipment"
     ]
   },
-  "1 agent": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "1 day": {
     "sites": 1,
     "scope": [
@@ -9788,7 +9779,7 @@
     ]
   },
   "Add an agent": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -9796,6 +9787,15 @@
     "areas": [
       "domain/permission",
       "routes/admin",
+      "routes/agent-control"
+    ]
+  },
+  "Add an agent to see what it can do without a person.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -12385,15 +12385,6 @@
       "routes/admin"
     ]
   },
-  "Agents to compare": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Agents you choose": {
     "sites": 1,
     "scope": [
@@ -13015,11 +13006,12 @@
     ]
   },
   "All kinds": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/fleet-safety"
     ]
   },
@@ -30265,13 +30257,14 @@
     ]
   },
   "Changes": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/rate-agreement"
     ]
   },
@@ -32888,6 +32881,15 @@
       "domain/hazardousmaterial"
     ]
   },
+  "Class is not recognized": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentsafetyservice"
+    ]
+  },
   "Class is required": {
     "sites": 1,
     "scope": [
@@ -35425,6 +35427,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Compare up to 10 agents at once": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Compare value": {
@@ -43116,7 +43127,7 @@
     ]
   },
   "Cursor is invalid": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
@@ -43124,6 +43135,7 @@
       "api/graphql",
       "go/other",
       "service/agentdecisionqueueservice",
+      "service/agentsafetyservice",
       "service/watchtowerservice"
     ]
   },
@@ -47023,6 +47035,15 @@
       "routes/review-template"
     ]
   },
+  "Default tier": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Default transport profile": {
     "sites": 1,
     "scope": [
@@ -49535,7 +49556,7 @@
     ]
   },
   "Details": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -61079,15 +61100,6 @@
       "routes/agent-control"
     ]
   },
-  "Every agent can use it": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Every agent in this organization is paused. Runs finish and their proposals are stored for review later, but none appear for a decision. Turn this off to let agents surface their work.": {
     "sites": 1,
     "scope": [
@@ -61104,6 +61116,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Every agent is already shown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Every agent that asks for memory reads this on its next run.": {
@@ -74468,6 +74489,15 @@
       "routes/desk"
     ]
   },
+  "Hide details for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Hide findings": {
     "sites": 1,
     "scope": [
@@ -75545,6 +75575,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "How far it may go": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "How far, and whether the tractor was under load.": {
@@ -83720,7 +83759,7 @@
     ]
   },
   "Kind": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -83741,6 +83780,15 @@
     ],
     "areas": [
       "domain/inboundmessage"
+    ]
+  },
+  "Kind is not recognized": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentsafetyservice"
     ]
   },
   "Kind is required": {
@@ -98224,7 +98272,7 @@
     ]
   },
   "No": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -98232,6 +98280,7 @@
       "apps/web/components",
       "packages/shared/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/document-packet-rule",
       "routes/journal-entry",
@@ -98611,15 +98660,6 @@
       "routes/desk"
     ]
   },
-  "No agent matches.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "No agent subscribes to this yet": {
     "sites": 1,
     "scope": [
@@ -98687,15 +98727,6 @@
     ]
   },
   "No agents yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
-  "No agents yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -102584,6 +102615,15 @@
     ]
   },
   "No tool may go beyond this, whatever it is set to on its own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "No tool rules yet.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -108050,15 +108090,6 @@
     ],
     "areas": [
       "domain/carriersettlement"
-    ]
-  },
-  "Only agents it is added to can use it": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "Only agents people talk to can be asked": {
@@ -118559,15 +118590,6 @@
       "routes/time-attendance"
     ]
   },
-  "Pick agents": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Pick an adjustment from the list to see why it needs approval, what it changes, and to approve or reject it.": {
     "sites": 1,
     "scope": [
@@ -122625,6 +122647,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Produces": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Production": {
@@ -127498,6 +127529,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Reads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Reads a banded single-axis table as a curve: between two band floors the value is interpolated linearly between those bands' values. Below the first floor or past the last, the edge band's value is used.": {
     "sites": 1,
     "scope": [
@@ -129450,7 +129490,7 @@
     ]
   },
   "Record condition": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -132000,13 +132040,14 @@
     ]
   },
   "Remove": {
-    "sites": 19,
+    "sites": 21,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/carrier",
       "routes/detention-policy",
       "routes/dispatch-console",
@@ -132620,6 +132661,15 @@
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/agent-control"
+    ]
+  },
+  "Remove {0} from the comparison": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -137289,7 +137339,7 @@
     ]
   },
   "Reversible": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -140179,6 +140229,15 @@
       "routes/agent-control"
     ]
   },
+  "Runs without a person": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Runs, but its proposals are recorded rather than offered": {
     "sites": 1,
     "scope": [
@@ -140189,6 +140248,15 @@
     ]
   },
   "Runs, last 24 hours": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Runtime": {
     "sites": 1,
     "scope": [
       "ts"
@@ -140683,6 +140751,15 @@
     ],
     "areas": [
       "routes/review-template"
+    ]
+  },
+  "Safe to retry": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Safety": {
@@ -142916,7 +142993,7 @@
     ]
   },
   "Search agents": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -143377,6 +143454,15 @@
       "apps/web/components"
     ]
   },
+  "Search must be at most 200 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentsafetyservice"
+    ]
+  },
   "Search operations…": {
     "sites": 1,
     "scope": [
@@ -143612,7 +143698,7 @@
     ]
   },
   "Search tools": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -149218,15 +149304,6 @@
       "routes/my-team"
     ]
   },
-  "Share of today's request limit used": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Share of today's rostered people who can work": {
     "sites": 1,
     "scope": [
@@ -151430,7 +151507,7 @@
     ]
   },
   "Show details for {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -169705,6 +169782,15 @@
       "routes/agent-control"
     ]
   },
+  "This agent no longer exists.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This allocation is already carried on a posted invoice and cannot change": {
     "sites": 1,
     "scope": [
@@ -174385,7 +174471,7 @@
     ]
   },
   "Tool maximum": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -174411,6 +174497,24 @@
       "domain/agent"
     ]
   },
+  "Tool not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "Tool policy not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Tool results it was given": {
     "sites": 1,
     "scope": [
@@ -174421,6 +174525,15 @@
     ]
   },
   "Tool rules": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tool rules could not be loaded.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -174466,6 +174579,15 @@
     ]
   },
   "Tools that send outside the organization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tools {0} holds": {
     "sites": 1,
     "scope": [
       "ts"
@@ -176859,7 +176981,7 @@
     ]
   },
   "Try again": {
-    "sites": 34,
+    "sites": 36,
     "scope": [
       "ts"
     ],
@@ -176868,6 +176990,7 @@
       "packages/shared/components",
       "routes/accept.tsx",
       "routes/admin",
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/desk",
       "routes/detention-desk",
@@ -186286,6 +186409,15 @@
       "routes/org-structure"
     ]
   },
+  "What this agent can do without a person could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What this agreement covers": {
     "sites": 1,
     "scope": [
@@ -188923,6 +189055,15 @@
       "routes/org-structure"
     ]
   },
+  "With or without a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Withdraw": {
     "sites": 4,
     "scope": [
@@ -190558,7 +190699,7 @@
     ]
   },
   "Yes": {
-    "sites": 18,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -190566,6 +190707,7 @@
       "apps/web/components",
       "packages/shared/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/document-packet-rule",
       "routes/journal-entry",
@@ -197273,15 +197415,6 @@
       "routes/carrier-sourcing"
     ]
   },
-  "{0, plural, one {# agent} other {# agents}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "{0, plural, one {# anchor} other {# anchors}}": {
     "sites": 1,
     "scope": [
@@ -200971,15 +201104,6 @@
       "routes/shipment"
     ]
   },
-  "{0} of {1} requests today": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "{0} of {1} required courses are current.": {
     "sites": 1,
     "scope": [
@@ -201853,15 +201977,6 @@
     ],
     "areas": [
       "template/rateconfirmation.pdf"
-    ]
-  },
-  "{0} this month": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
     ]
   },
   "{0} this resource": {

@@ -45,12 +45,24 @@ export function autonomy(overrides: Partial<AgentToolAutonomy>): AgentToolAutono
   };
 }
 
+/** "email_customer" reads "Email customer", as the server titles it. */
+function titleOf(name: string): string {
+  const words = name.replace(/_/g, " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export function tool(
   policyName: string,
   clean: Partial<AgentToolAutonomy>,
   tainted: Partial<AgentToolAutonomy> = clean,
+  rule: Partial<AgentToolPolicy> = {},
 ): AgentToolSafety {
-  return { policyName, clean: autonomy(clean), tainted: autonomy(tainted) };
+  return {
+    policyName,
+    policy: policy({ name: policyName, title: titleOf(policyName), ...rule }),
+    clean: autonomy(clean),
+    tainted: autonomy(tainted),
+  };
 }
 
 export function safety(

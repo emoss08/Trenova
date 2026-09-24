@@ -1,5 +1,5 @@
 {
-  "operationCount": 822,
+  "operationCount": 823,
   "fragmentCount": 221,
   "operations": [
     {
@@ -966,7 +966,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/safety.graphql",
-      "hash": "sha256:e9ff19e211d2e7dfba2a5b2e303a7fd03990b44bd1c04df21d2c70bca2a2e2ad",
+      "hash": "sha256:571671fd99c761a5d4fd69126512daf912bbb93ebc244a2c6d6508fe826c9d1c",
       "rootFields": [
         "agentSafety"
       ],
@@ -979,10 +979,25 @@
       ],
       "fragments": [
         "AgentSafetyFields",
-        "AgentToolAutonomyFields"
+        "AgentToolAutonomyFields",
+        "AgentToolPolicyFields"
       ],
       "usages": [],
-      "sdl": "query AgentSafety($agentIds: [ID!]) {\n  agentSafety(agentIds: $agentIds) {\n    ...AgentSafetyFields\n  }\n}\n\nfragment AgentSafetyFields on AgentSafety {\n  agentId\n  organizationShadow\n  agent {\n    id\n    name\n    enabled\n    shadowMode\n    simulationMode\n    autonomyCeiling\n    triggerMode\n  }\n  tools {\n    policyName\n    clean {\n      ...AgentToolAutonomyFields\n    }\n    tainted {\n      ...AgentToolAutonomyFields\n    }\n  }\n  reach {\n    accessMode\n    roles {\n      id\n      name\n    }\n    warnings {\n      kind\n      tools\n    }\n  }\n}\n\nfragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}"
+      "sdl": "query AgentSafety($agentIds: [ID!]) {\n  agentSafety(agentIds: $agentIds) {\n    ...AgentSafetyFields\n  }\n}\n\nfragment AgentSafetyFields on AgentSafety {\n  agentId\n  organizationShadow\n  agent {\n    id\n    name\n    enabled\n    shadowMode\n    simulationMode\n    autonomyCeiling\n    triggerMode\n  }\n  tools {\n    policyName\n    policy {\n      ...AgentToolPolicyFields\n    }\n    clean {\n      ...AgentToolAutonomyFields\n    }\n    tainted {\n      ...AgentToolAutonomyFields\n    }\n  }\n  reach {\n    accessMode\n    roles {\n      id\n      name\n    }\n    warnings {\n      kind\n      tools\n    }\n  }\n}\n\nfragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}\n\nfragment AgentToolPolicyFields on AgentToolPolicy {\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}"
+    },
+    {
+      "name": "AgentSafetySummary",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/safety.graphql",
+      "hash": "sha256:f4e64ef49ec0933e10409b183413a900d0c5d7de2c4f1f7239c6a998dbc341b2",
+      "rootFields": [
+        "agentSafetySummary"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query AgentSafetySummary {\n  agentSafetySummary {\n    toolCount\n    runWithoutPerson\n    leaveOrganization\n    openWithSensitive\n    resources\n  }\n}"
     },
     {
       "name": "AgentScorecard",
@@ -1007,20 +1022,32 @@
       "sdl": "query AgentScorecard($input: AgentScorecardInput!) {\n  agentScorecard(input: $input) {\n    ...AgentScorecardFields\n  }\n}\n\nfragment AgentScorecardFields on AgentScorecard {\n  agentDefinitionId\n  window\n  since\n  runs\n  runsFailed\n  exceptions\n  proposals\n  approved\n  modified\n  rejected\n  pending\n  executed\n  executionFailures\n  autoExecuted\n  approvalRate\n  inputTokens\n  outputTokens\n  costUsd\n  estimatedMinutesSaved\n  byTool {\n    toolName\n    approved\n    modified\n    rejected\n    executed\n    failed\n    pending\n    automatic\n  }\n  toolTrust {\n    toolName\n    streak\n    approvals\n    modifications\n    rejections\n    executionFailures\n    earnedTier\n    lastDecisionAt\n    promotedAt\n    demotedAt\n  }\n}"
     },
     {
-      "name": "AgentToolPolicies",
+      "name": "AgentToolPolicyConnection",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/safety.graphql",
-      "hash": "sha256:afe4f44747ff9d5288e84aa150ccbbc0f31693a2d801433dea981a86514dd3cb",
+      "hash": "sha256:d921a3676bb237d7be340b14b14c0d88a30be7ac35e1a0714f8d00ea29bcd619",
       "rootFields": [
-        "agentToolPolicies"
+        "agentToolPolicyConnection"
       ],
-      "variables": [],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AgentToolPolicyConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "false"
+        }
+      ],
       "fragments": [
-        "AgentToolPolicyFields"
+        "AgentToolPolicyFields",
+        "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentToolPolicies {\n  agentToolPolicies {\n    ...AgentToolPolicyFields\n  }\n}\n\nfragment AgentToolPolicyFields on AgentToolPolicy {\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}"
+      "sdl": "query AgentToolPolicyConnection($input: AgentToolPolicyConnectionInput!, $includeTotalCount: Boolean = false) {\n  agentToolPolicyConnection(input: $input) {\n    edges {\n      cursor\n      node {\n        ...AgentToolPolicyFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentToolPolicyFields on AgentToolPolicy {\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AIFeedbackTable",
@@ -19158,13 +19185,14 @@
       "domain": "agent",
       "sourceFile": "src/operations/agent/safety.graphql",
       "fragments": [
-        "AgentToolAutonomyFields"
+        "AgentToolAutonomyFields",
+        "AgentToolPolicyFields"
       ],
       "usedByOperations": [
         "AgentSafety"
       ],
       "usages": [],
-      "sdl": "fragment AgentSafetyFields on AgentSafety {\n  agentId\n  organizationShadow\n  agent {\n    id\n    name\n    enabled\n    shadowMode\n    simulationMode\n    autonomyCeiling\n    triggerMode\n  }\n  tools {\n    policyName\n    clean {\n      ...AgentToolAutonomyFields\n    }\n    tainted {\n      ...AgentToolAutonomyFields\n    }\n  }\n  reach {\n    accessMode\n    roles {\n      id\n      name\n    }\n    warnings {\n      kind\n      tools\n    }\n  }\n}\n\nfragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}"
+      "sdl": "fragment AgentSafetyFields on AgentSafety {\n  agentId\n  organizationShadow\n  agent {\n    id\n    name\n    enabled\n    shadowMode\n    simulationMode\n    autonomyCeiling\n    triggerMode\n  }\n  tools {\n    policyName\n    policy {\n      ...AgentToolPolicyFields\n    }\n    clean {\n      ...AgentToolAutonomyFields\n    }\n    tainted {\n      ...AgentToolAutonomyFields\n    }\n  }\n  reach {\n    accessMode\n    roles {\n      id\n      name\n    }\n    warnings {\n      kind\n      tools\n    }\n  }\n}\n\nfragment AgentToolAutonomyFields on AgentToolAutonomy {\n  answer\n  tier\n  heldBy\n  earned\n  approvalsToNext\n}\n\nfragment AgentToolPolicyFields on AgentToolPolicy {\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}"
     },
     {
       "name": "AgentScorecardFields",
@@ -19197,7 +19225,8 @@
       "sourceFile": "src/operations/agent/safety.graphql",
       "fragments": [],
       "usedByOperations": [
-        "AgentToolPolicies"
+        "AgentSafety",
+        "AgentToolPolicyConnection"
       ],
       "usages": [],
       "sdl": "fragment AgentToolPolicyFields on AgentToolPolicy {\n  name\n  title\n  kind\n  needs {\n    resource\n    operation\n  }\n  scope\n  defaultTier\n  maxTier\n  promotableTier\n  egress\n  leavesOrganization\n  hasClassify\n  hasCondition\n  conditionDescription\n  personalExemption\n  effect\n  artifact\n  reversible\n  idempotent\n  readsExternal\n  source\n  carriesTaint\n  rationale\n  explanation\n}"
@@ -19693,6 +19722,7 @@
         "AgentPlanTable",
         "AgentProposalTable",
         "AgentRunTable",
+        "AgentToolPolicyConnection",
         "AIFeedbackTable",
         "AIProviderCards",
         "ApiKeyTable",
@@ -22561,6 +22591,48 @@
         }
       ],
       "sdl": "input AgentScorecardInput {\n  agentDefinitionId: ID!\n  window: AgentScorecardWindow = Last30Days\n}"
+    },
+    "AgentToolPolicyConnectionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "egress",
+          "type": "AgentEgressClass",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": "25",
+          "defaultJson": 25
+        },
+        {
+          "name": "kind",
+          "type": "AgentToolKind",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "resource",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "runsWithoutPerson",
+          "type": "Boolean",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nNarrows the tool rules. A filter left out matches every tool; the rules come\nback ordered by tool name.\n\"\"\"\ninput AgentToolPolicyConnectionInput {\n  after: String\n  \"\"\"Tools some of whose work reaches this class.\"\"\"\n  egress: AgentEgressClass\n  first: Int = 25\n  kind: AgentToolKind\n  \"\"\"Matched against the tool's name and title, ignoring case.\"\"\"\n  query: String\n  \"\"\"\n  The permission resource the tool needs; general for a tool that needs no grant.\n  \"\"\"\n  resource: String\n  \"\"\"\n  True keeps the tools that change something and, on at least one agent, can do\n  so without a person; false keeps every other tool.\n  \"\"\"\n  runsWithoutPerson: Boolean\n}"
     },
     "AIFeedbackTargetInput": {
       "kind": "input",
@@ -33584,6 +33656,28 @@
         "Last90Days"
       ],
       "sdl": "\"\"\"How far back a scorecard looks.\"\"\"\nenum AgentScorecardWindow {\n  Last7Days\n  Last30Days\n  Last90Days\n}"
+    },
+    "AgentEgressClass": {
+      "kind": "enum",
+      "values": [
+        "CustomerVisible",
+        "DriverVisible",
+        "ExternalRecipient",
+        "Internal",
+        "Money",
+        "None",
+        "Personal"
+      ],
+      "sdl": "\"\"\"Where a tool's work can be seen or felt.\"\"\"\nenum AgentEgressClass {\n  \"\"\"Changes something a customer can see.\"\"\"\n  CustomerVisible\n  \"\"\"Changes something a driver can see.\"\"\"\n  DriverVisible\n  \"\"\"Sends to someone outside the organization.\"\"\"\n  ExternalRecipient\n  \"\"\"Changes records only people inside the organization see.\"\"\"\n  Internal\n  \"\"\"Moves or commits money.\"\"\"\n  Money\n  \"\"\"Reads only; nothing changes and nothing is sent.\"\"\"\n  None\n  \"\"\"Changes only the caller's own records.\"\"\"\n  Personal\n}"
+    },
+    "AgentToolKind": {
+      "kind": "enum",
+      "values": [
+        "Action",
+        "Query",
+        "Runtime"
+      ],
+      "sdl": "enum AgentToolKind {\n  Action\n  Query\n  Runtime\n}"
     },
     "AIFeedbackTargetType": {
       "kind": "enum",

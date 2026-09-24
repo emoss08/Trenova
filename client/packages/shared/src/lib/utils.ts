@@ -274,6 +274,15 @@ export function chunk<T>(items: readonly T[], size: number): T[][] {
   return groups;
 }
 
+/** The items on one zero-based page; a page past the end is empty. */
+export function pageSlice<T>(items: readonly T[], pageIndex: number, pageSize: number): T[] {
+  if (!Number.isInteger(pageSize) || pageSize < 1) {
+    throw new RangeError(`page size must be a positive integer, received ${pageSize}`);
+  }
+  const start = Math.max(0, Math.trunc(pageIndex)) * pageSize;
+  return items.slice(start, start + pageSize);
+}
+
 export function findDuplicateIds<T>(
   items: T[],
   getId: (item: T) => string | undefined,

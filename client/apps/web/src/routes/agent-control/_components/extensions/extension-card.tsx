@@ -4,7 +4,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ExternalLinkIcon, WrenchIcon } from "lucide-react";
-import { dailyUsageShare, extensionState, type ExtensionState } from "./extension-roster";
+import { extensionState, type ExtensionState } from "./extension-roster";
 
 type ExtensionCardProps = {
   extension: AgentExtensionCatalogItem;
@@ -30,7 +30,6 @@ export function ExtensionCard({ extension, canUpdate, onOpen }: ExtensionCardPro
   const t = useT();
   const state = extensionState(extension);
   const badge = STATE_BADGE[state];
-  const share = dailyUsageShare(extension);
 
   return (
     <article className="bg-card flex flex-col gap-4 rounded-lg border p-4">

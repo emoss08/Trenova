@@ -140,6 +140,8 @@ type AgentToolAutonomy {
 "One tool an agent holds, before and after the run has read outside text."
 type AgentToolSafety {
   policyName: String!
+  "The rule the tool is held to, from the same catalog the runtime decides from."
+  policy: AgentToolPolicy!
   clean: AgentToolAutonomy!
   tainted: AgentToolAutonomy!
 }
@@ -175,9 +177,61 @@ type AgentSafety {
   reach: AgentReach!
 }
 
+"""
+Narrows the tool rules. A filter left out matches every tool; the rules come
+back ordered by tool name.
+"""
+input AgentToolPolicyConnectionInput {
+  first: Int = 25
+  after: String
+  "Matched against the tool's name and title, ignoring case."
+  query: String
+  "Tools some of whose work reaches this class."
+  egress: AgentEgressClass
+  "The permission resource the tool needs; general for a tool that needs no grant."
+  resource: String
+  kind: AgentToolKind
+  """
+  True keeps the tools that change something and, on at least one agent, can do
+  so without a person; false keeps every other tool.
+  """
+  runsWithoutPerson: Boolean
+}
+
+type AgentToolPolicyEdge {
+  node: AgentToolPolicy!
+  cursor: String!
+}
+
+type AgentToolPolicyConnection {
+  edges: [AgentToolPolicyEdge!]!
+  pageInfo: PageInfo!
+  "Every tool matching the filters. Counted only when selected."
+  totalCount: Int
+}
+
+"The figures that head the safety section, counted over every tool and agent."
+type AgentSafetySummary {
+  "Every tool an agent can be given."
+  toolCount: Int!
+  "Tools that change something and, on at least one agent, can do so without a person."
+  runWithoutPerson: Int!
+  "Tools some of whose work leaves the organization."
+  leaveOrganization: Int!
+  "Agents open to everyone that hold a tool reaching restricted data or leaving the organization."
+  openWithSensitive: Int!
+  "The resources the tools need, for filtering; general for a tool that needs no grant."
+  resources: [String!]!
+}
+
 extend type Query {
   "Every tool's safety policy, by name."
   agentToolPolicies: [AgentToolPolicy!]!
+    @deprecated(reason: "Use agentToolPolicyConnection, which pages and filters on the server.")
+  "The tool rules a page at a time, searched and filtered on the server."
+  agentToolPolicyConnection(input: AgentToolPolicyConnectionInput!): AgentToolPolicyConnection!
+  "The safety figures, counted on the server so no client reads every rule to count them."
+  agentSafetySummary: AgentSafetySummary!
   """
   What each agent can do without a person, by name. Null agentIds reads every
   agent in the organization; at most 100 may be named.

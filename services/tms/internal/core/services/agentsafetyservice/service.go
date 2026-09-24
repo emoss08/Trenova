@@ -42,6 +42,7 @@ type Params struct {
 	Runtime     services.AgentRuntime
 	Definitions repositories.AgentDefinitionRepository
 	Controls    repositories.AgentControlRepository
+	Trust       repositories.AgentToolTrustRepository
 	Registry    *permission.Registry
 }
 
@@ -50,8 +51,11 @@ type Service struct {
 	holder      toolHolder
 	definitions repositories.AgentDefinitionRepository
 	controls    repositories.AgentControlRepository
+	trust       toolTrustLister
 	sensitive   agentaccessservice.SensitiveToolRule
-	views       []services.AgentToolPolicyView
+	entries     []policyEntry
+	byName      map[string]int
+	resources   []string
 }
 
 //nolint:gocritic // dependency injection
@@ -61,6 +65,7 @@ func New(p Params) services.AgentSafetyService {
 		holder:      p.Runtime,
 		definitions: p.Definitions,
 		controls:    p.Controls,
+		trust:       p.Trust,
 		sensitive:   agentaccessservice.DefaultSensitiveRule(p.Registry),
 	})
 }
@@ -70,6 +75,7 @@ type serviceDeps struct {
 	holder      toolHolder
 	definitions repositories.AgentDefinitionRepository
 	controls    repositories.AgentControlRepository
+	trust       toolTrustLister
 	sensitive   agentaccessservice.SensitiveToolRule
 }
 
@@ -79,9 +85,10 @@ func newService(deps serviceDeps) *Service {
 		holder:      deps.holder,
 		definitions: deps.definitions,
 		controls:    deps.controls,
+		trust:       deps.trust,
 		sensitive:   deps.sensitive,
 	}
-	svc.views = PolicyViews(deps.policies.All())
+	svc.indexPolicies(PolicyViews(deps.policies.All()))
 
 	return svc
 }
@@ -113,7 +120,21 @@ func PolicyView(policy services.ToolPolicy) services.AgentToolPolicyView {
 }
 
 func (s *Service) ToolPolicies() []services.AgentToolPolicyView {
-	return slices.Clone(s.views)
+	out := make([]services.AgentToolPolicyView, 0, len(s.entries))
+	for idx := range s.entries {
+		out = append(out, s.entries[idx].view)
+	}
+
+	return out
+}
+
+func (s *Service) ToolPolicy(name string) (services.AgentToolPolicyView, bool) {
+	idx, ok := s.byName[name]
+	if !ok {
+		return services.AgentToolPolicyView{}, false
+	}
+
+	return s.entries[idx].view, true
 }
 
 func (s *Service) ListSubjects(
@@ -191,12 +212,7 @@ func (s *Service) ReachWarnings(req *services.AgentReachRequest) []services.Agen
 
 	definition := req.Subject.Agent
 	if definition.OpenToEveryone() {
-		policies := s.heldPolicies(definition)
-		held := make([]agentaccessservice.HeldTool, 0, len(policies))
-		for idx := range policies {
-			held = append(held, agentaccessservice.HeldToolOf(policies[idx]))
-		}
-		if sensitive := agentaccessservice.SensitiveTools(held, s.sensitive); len(sensitive) > 0 {
+		if sensitive := s.sensitiveTools(s.heldPolicies(definition)); len(sensitive) > 0 {
 			warnings = append(warnings, services.AgentReachWarning{
 				Kind:  agentdefinition.ReachOpenWithSensitiveTools,
 				Tools: sensitive,
@@ -211,6 +227,15 @@ func (s *Service) ReachWarnings(req *services.AgentReachRequest) []services.Agen
 	}
 
 	return warnings
+}
+
+func (s *Service) sensitiveTools(policies []services.ToolPolicy) []string {
+	held := make([]agentaccessservice.HeldTool, 0, len(policies))
+	for idx := range policies {
+		held = append(held, agentaccessservice.HeldToolOf(policies[idx]))
+	}
+
+	return agentaccessservice.SensitiveTools(held, s.sensitive)
 }
 
 func (s *Service) heldPolicies(definition *agentdefinition.Definition) []services.ToolPolicy {
