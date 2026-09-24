@@ -499,3 +499,259 @@ Then commit the fixture and both floors files, and set the repository variable
 `TRENOVA_EVAL_REQUIRE_HYBRID` to `true`: with it, a missing fixture fails the job instead
 of skipping. The recorder goes through the production Ollama adapter, so the prefixes are
 the ones a Nomic provider sends.
+
+## Indexing
+
+Memories, documents and inbound email are embedded in the background, per organization, so a
+search never waits for an embedding call on the corpus. The code is
+`internal/core/services/retrievalservice` (the indexer and the pipeline) and
+`internal/core/temporaljobs/retrievaljobs` (the workflows).
+
+### Marking a source stale
+
+```go
+type RetrievalIndexer interface {
+	MarkStale(ctx context.Context, tenant pagination.TenantInfo, sourceType airetrieval.SourceType, ids ...pulid.ID) error
+	DeleteSource(ctx context.Context, tenant pagination.TenantInfo, sourceType airetrieval.SourceType, id pulid.ID) error
+	Reindex(ctx context.Context, tenant pagination.TenantInfo, sourceType airetrieval.SourceType) error
+}
+```
+
+`MarkStale` upserts a `Pending` outbox entry for each indexed model key (the active one, and
+the pending one during a model change), then signals `IndexOrganizationWorkflow` with
+SignalWithStart (workflow id `ai-index:<organization>`, signal `retrieval-index-stale`). The
+signal is best effort: when Temporal cannot be reached it is logged, the entry stays in the
+outbox, and the hourly sweep picks it up. A source type the organization turned off, or an
+organization with no active model yet, is not marked. `DeleteSource` drops a source's
+entries and embeddings at once; the `AFTER DELETE` triggers already do that for a deleted row.
+
+The writes that mark:
+
+| Source | Where | When |
+| --- | --- | --- |
+| Memory | `agentmemoryservice` | `Remember` (a new row), `Update`, `SetStatus`, `ApproveSuggestion`, `RecordCorrection` |
+| Document | `documentsearchprojectionservice` | `Upsert` marks the document; `Delete` (a superseded version) drops it |
+| Inbound message | `inboundmessageservice` | once `ProcessMessage` settles it, or `MarkFailed` puts it in review |
+
+Every path that writes document text goes through the search projection: upload, the
+extraction activities (success, failure, async AI extraction), re-extraction, versioning and
+moving a lineage. A write that only changes diagnostics in `structured_data` does not, and
+the sweep catches any metadata edit through `documents.updated_at`. No hook ever fails the
+write that triggered it; it logs and carries on.
+
+### The workflows
+
+All of them run on `system-queue` at priority 4 with the organization as fairness key.
+
+- **`IndexOrganizationWorkflow`** plans (an activity), purges rows of retired model keys, and
+  indexes one batch per model key per round (`DefaultBatchSize` 25, a ten-minute lease).
+  When every key is drained it completes a pending model change if the pending key is fully
+  indexed, then sweeps once more; when nothing is left it waits five minutes for a signal,
+  checks once more after the wait (for failures whose retry was short), and ends. It
+  continues as new after 200 activities. Every read, chunk, hash and embed is inside an
+  activity, and the workflow takes no decision from anything but activity results.
+- **`RetrievalIndexSweepWorkflow`**, scheduled hourly (`retrieval-index-sweep`, minute 17),
+  fans out over organizations with `temporaljobs.RunTenantFanOut`. Each organization's sweep
+  runs `FindStaleSources` for every enabled source type and indexed key (sources changed
+  since they were indexed, and sources with no entry yet), marks them, counts entries still
+  `Pending` (retries waiting out their backoff), and wakes the indexer when there is work.
+- **`ReindexRetrievalSourceWorkflow`** (`ai-reindex:<organization>:<source type>`, started by
+  `RetrievalIndexer.Reindex` for the AI Control screen) marks every source of one type stale,
+  500 per page. Hash diffing then re-embeds only what changed, so a re-index after a chunker
+  change re-embeds everything and one after nothing changed costs nothing.
+
+### Planning a round
+
+`Plan` decides whether the organization can be indexed right now:
+
+1. The vector storage must be available (`VectorAvailability`).
+2. At least one source type must be on, and indexing must not be paused by a person
+   (`Disabled`).
+3. The embedding router must name a configured model key (`NoProvider` otherwise), whose
+   dimensions are read from the key (`airetrieval.ModelKeyDimensions`).
+4. With no active key, the configured key becomes active. When the configured key differs
+   from the active one it becomes pending, and the next rounds index every source under it
+   beside the old rows (searches keep using the active key). Configuring the active key
+   again drops the pending one.
+5. The month's `Indexing` cost (`AIUsageRepository.SurfaceCost` since the first of the month,
+   UTC) is compared with `monthly_indexing_budget_usd`. At or over it, indexing is paused
+   with reason `Budget` and the workflow stops; a later round under the budget (a new month,
+   or a raised budget) lifts that pause. A pause a person set is never lifted here.
+6. Model keys that still have rows but are neither active nor pending are listed for purging.
+
+`CompleteModelChange` swaps the pending key in only when no source of an enabled type is
+stale under it and none of its entries is `Pending`; `PurgeRetiredModel` then deletes the old
+key's embeddings and entries a thousand rows at a time, twenty batches per activity, until
+the repository reports it done.
+
+### A batch
+
+`IndexBatch` rechecks the settings and the budget, claims entries of the enabled source types
+(`ClaimIndexEntries`), and for each one:
+
+1. reads the live row: a missing row is dropped (`DeleteSource`); a retired or expired memory,
+   a superseded or rejected document, a document whose owning record's default sensitivity
+   is above **Internal** (or whose owner is not a registered resource), and a document with
+   no text read yet are **skipped**: their embeddings are removed and the entry says why;
+2. chunks it with the versioned chunker for its type;
+3. compares each chunk's hash with `ListChunkHashes` and embeds only the chunks that changed,
+   in one `EmbeddingService.Embed` call per batch (purpose `Document`, surface `Indexing`, the
+   batch's model key pinned);
+4. writes the source with `ReplaceChunks` (unchanged chunks are passed without a vector) and
+   records the outcome for the generation it claimed (`MarkIndexed`, `MarkSkipped`,
+   `MarkFailed`).
+
+A failed embed marks the batch's entries `Failed` with a retry: one minute, doubling, at most
+six hours, and after eight attempts no more retries. A business error (a wrong dimension, a
+refused request) is not retried at all. After the batch, when the month's cost has reached the
+budget, the organization is paused and the workflow stops; what was already paid for is kept.
+
+### Chunking
+
+Every chunk's hash is SHA-256 of the chunker version and the chunk text, so bumping a version
+re-embeds that source type and nothing else.
+
+| Source | Version | Chunks |
+| --- | --- | --- |
+| Memory | `memory/1` | one: `[Kind] about: content` |
+| Document | `document/1` | an optional first chunk of the extracted fields (sorted, flattened, at most two windows long), then each page of `document_content_pages` (or the content text when there are no pages) in windows of about 350 tokens with 15% overlap, each under a header naming the file, its kind, what it is attached to and the page; at most 200 chunks |
+| Inbound message | `email/1` | the sender's own words (`stringutils.MailBody`: quoted lines, a quoted reply, a forwarded header and a signature removed) in the same windows under a header naming the sender and subject; at most 20; a message with no words of its own is one chunk of its header |
+
+Tokens are estimated with `shared/llmtokens` (four runes per token). A single word longer than
+two windows is cut.
+
+### What is sent
+
+Memory content is embedded. Document text (and the extracted fields) is embedded only when
+the owning record type's default sensitivity is at most Internal, from the permission
+registry the query tools read field sensitivity from: a shipment's rate confirmation is; a
+worker's medical card is not, and is only ever found by its words. Email subject, sender and
+own words are embedded; the quoted thread never is. Everything sent passes the provider's
+PII scrubbing (`shared/piiscrub`).
+
+## Search
+
+`retrievalservice.Searcher` answers `search_documents`, `search_inbound_messages` and the
+vector side of `recall_memory` and memory ranking:
+
+```go
+type RetrievalSearcher interface {
+	SearchDocuments(ctx context.Context, req RetrievalSearchRequest) (*DocumentSearchResult, error)
+	SearchInboundMessages(ctx context.Context, req RetrievalSearchRequest) (*InboundMessageSearchResult, error)
+}
+
+type MemoryVectorSearcher interface {
+	SimilarMemories(ctx context.Context, req SimilarMemoriesRequest) (SimilarMemories, error)
+}
+```
+
+`RetrievalSearchRequest` carries the tenant, the query, the limit (default 5, at most 50;
+the tools cap it at 10), the usage attribution and a `RetrievalAccess`, which is required: a
+search that cannot say who is asking is refused.
+
+### Two legs
+
+- **Keyword.** Documents match `documents.search_vector` (file name, description, tags; the
+  `simple` configuration) or `document_contents.search_vector` (the text and detected kind;
+  `english`), current versions only and never a rejected one. Inbound mail matches the new
+  generated `inbound_messages.search_vector` (migration `20261231006400`): the subject
+  (weight A), the sender (B) and `mail_own_words(text_body)` (C), a SQL function that strips
+  the quoted history the same way `stringutils.MailBody` does, with a GIN index. Any word of
+  the query may match (the `websearch_to_tsquery` conjunctions become disjunctions, a
+  negation stays a negation) and `ts_rank_cd` orders the result. SQLite falls back to an
+  escaped `LIKE` on any word.
+- **Vector.** When the source type is on and the query can be embedded
+  (`QueryVectorizer.Vectorize`), `AIRetrievalRepository.Search` returns the best chunk per
+  source under the active key, tenant, source type and dimensions in one `WHERE`.
+
+Both legs ask for four times the limit (at least 20 candidates) and run concurrently. They are
+fused by reciprocal rank (`shared/rankfusion`, k = 60); ties go to the keyword rank. A source
+found only by meaning must clear the similarity floor (`DefaultCatalogSimilarityFloor`, 0.5,
+shared with catalog ranking and tunable with `Searcher.WithTuning`). Each hit says how it was
+found: `words`, `meaning` or `both`. When the vector leg cannot run the result says why
+(`RetrievalSemantics.Reason`) and the search is keyword only; the tools say "words only" and
+the reason.
+
+### Filtering before anything reaches the model
+
+1. **Tenant** in SQL on both legs.
+2. **Every hit is joined back to its live row**; a hit whose row is gone, superseded or
+   rejected is dropped.
+3. **Read access.** The tool's policy gates the whole call on `Document` or
+   `InboundMessage`; the searcher checks that resource again, then each document's **owning
+   record** (`document.OwnerResource` maps `resource_type` to a permission resource:
+   `shipment`, `Worker`, `invoice_adjustment` → invoice, `assistant_thread` → assistant) with
+   the record id, so a grant scoped to the caller's own or their team's records is honoured
+   per row. An owner that is not a registered resource is never returned.
+4. **Field ceiling.** A passage is built only when the caller may see the document's text
+   field and the owning record's default sensitivity is within their ceiling
+   (`fieldAccess`, where nothing Confidential ever reaches a model and an agent reads at
+   Internal); the file name only when its field is visible; a message's subject, sender and
+   passage each by their own field.
+5. **Taint.** Both tools read outside text (`ExternalReadAlways`, sources `document` and
+   `inbound_message`) and name every record they return (`TaintedRecords()`), so the turn
+   gets one mark per record, or one for the call when nothing came back.
+
+The passage is the chunk that matched: the vector's chunk for a hit found only by meaning,
+otherwise the chunk with the most query words, cut to 600 characters around the first of
+them. A document's page comes with it.
+
+Output goes through the runtime's `<untrusted_data>` fence and its 12,000-character limit like
+every tool result.
+
+### The tools
+
+| Tool | Returns |
+| --- | --- |
+| `search_documents` | up to 10 (default 5): `documentId`, `fileName`, `looksLike`, `page`, `snippet`, `attachedTo`, `match`, and `searchedBy` for the whole result |
+| `search_inbound_messages` | up to 10 (default 5), best first: `id`, `receivedAt`, `from`, `subject`, `snippet`, `status`, `needsReview`, `classification`, `match` |
+| `get_document_summary` | now takes `page` to read one page, reports a failed content read as an error instead of "nothing read yet", and refuses a document whose owning record the caller may not read |
+| `list_inbound_messages` | unchanged ordering (newest first); an unknown `status` or `classification` is now refused with the values it accepts instead of being dropped |
+
+The intake desk template carries both search tools.
+
+### Memories
+
+`recall_memory` fuses WP4's tsvector keyword leg with a vector leg: `SimilarMemories` returns
+up to four times the limit of memory ids by similarity (embedding the query, or reusing a
+vector the caller already has); ids found only by meaning are read back through the same
+repository search with the same scope, agent, activity, expiry, kind, subject and tool
+filters, so a memory kept for another agent, retired or expired is never recalled by meaning
+either. Rows gain `match` (`words`, `meaning` or `both`).
+
+The prompt's memory context ranks by meaning too. Chat turns, delegated tasks and background
+runs name the turn's text on `RuntimeContextRequest.Query` (`serviceports.ContextQuery`); the
+context builder embeds it (the same text the turn itself embeds, so the vectorizer's cache
+answers the second ask) and passes the vector on `MemoryContextRequest.Query` to the
+`MemoryRanker`. `retrievalservice.MemoryRanker` fuses the similarity ranking of the
+candidates (those above the floor) with WP4's recency-and-use ranking by reciprocal rank,
+and falls back to recency and use when there is no vector.
+
+### Evaluation
+
+| Suite | Floors | Gate |
+| --- | --- | --- |
+| `evals/documentretrieval.yaml` | `documentretrieval.floors.json` `keyword` / `hybrid` | `TestRetrievalAgainstFloors/search_documents` |
+| `evals/inboxretrieval.yaml` | `inboxretrieval.floors.json` | `TestRetrievalAgainstFloors/search_inbound_messages` |
+| `evals/memoryretrieval.yaml` | `memoryretrieval.floors.json` | `TestRetrievalAgainstFloors/recall_memory` |
+
+The suites are synthetic corpora with relevance judgements, scored by recall@5, MRR and
+nDCG@10 (`agentevalgate.EvaluateRetrieval`). They run against Postgres in the integration job
+(`retrievalservice/eval_integration_test.go`, build tag `integration`): the keyword leg
+always, the hybrid leg when pgvector is present and
+`evals/embeddings/retrieval-nomic-embed-text.json` has been recorded (chunk vectors keyed by
+chunk hash, query vectors by SHA-256). `TestRetrievalNeverLeaks` and the tools'
+`TestSearchToolsNeverLeakAndMarkEveryRecord` seed the same corpus for a second organization,
+on worker records the caller may not read, and as memories kept for another agent, retired or
+expired, and fail on any of them coming back by either leg, on a returned record without a
+taint mark, or on quoted mail history being searchable.
+
+**Neither the fixture nor the floors have been recorded yet.** Until they are, the floor
+checks log their measurements and pass (set `TRENOVA_EVAL_REQUIRE_FLOORS=true` to fail
+instead, and `TRENOVA_EVAL_REQUIRE_HYBRID=true` to fail without the fixture); the leak tests
+always gate. To record:
+
+```bash
+cd services/tms && ollama pull nomic-embed-text && TRENOVA_EVAL_OLLAMA_URL=http://localhost:11434 go test -tags nofitz -count=1 -run 'TestRecordRetrievalEmbeddingFixture' ./internal/core/services/retrievalservice/ -record
+task test-db-image && TRENOVA_TEST_POSTGRES_IMAGE=trenova-postgres:local go test -tags 'integration nofitz' -count=1 -run 'TestRetrievalAgainstFloors' ./internal/core/services/retrievalservice/ -update
+```
