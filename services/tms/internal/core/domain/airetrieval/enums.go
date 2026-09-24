@@ -65,6 +65,9 @@ const (
 	UnavailableReasonNoProvider       = UnavailableReason("NoProvider")
 	UnavailableReasonDisabled         = UnavailableReason("Disabled")
 	UnavailableReasonBudgetPaused     = UnavailableReason("BudgetPaused")
+	UnavailableReasonNotIndexed       = UnavailableReason("NotIndexed")
+	UnavailableReasonQueryTimeout     = UnavailableReason("QueryTimeout")
+	UnavailableReasonProviderFailed   = UnavailableReason("ProviderFailed")
 )
 
 func AllUnavailableReasons() []UnavailableReason {
@@ -75,6 +78,9 @@ func AllUnavailableReasons() []UnavailableReason {
 		UnavailableReasonNoProvider,
 		UnavailableReasonDisabled,
 		UnavailableReasonBudgetPaused,
+		UnavailableReasonNotIndexed,
+		UnavailableReasonQueryTimeout,
+		UnavailableReasonProviderFailed,
 	}
 }
 
@@ -85,7 +91,10 @@ func (r UnavailableReason) IsValid() bool {
 		UnavailableReasonTooOld,
 		UnavailableReasonNoProvider,
 		UnavailableReasonDisabled,
-		UnavailableReasonBudgetPaused:
+		UnavailableReasonBudgetPaused,
+		UnavailableReasonNotIndexed,
+		UnavailableReasonQueryTimeout,
+		UnavailableReasonProviderFailed:
 		return true
 	default:
 		return false
@@ -93,6 +102,10 @@ func (r UnavailableReason) IsValid() bool {
 }
 
 func (r UnavailableReason) String() string { return string(r) }
+
+func (r UnavailableReason) Transient() bool {
+	return r == UnavailableReasonQueryTimeout || r == UnavailableReasonProviderFailed
+}
 
 type PauseReason string
 
