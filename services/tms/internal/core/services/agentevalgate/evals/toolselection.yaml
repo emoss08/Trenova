@@ -142,3 +142,111 @@ cases:
     expect: [search_inbound_messages]
   - request: find mail from Globex about detention charges
     expect: [search_inbound_messages]
+  - request: show the accounts receivable aging by customer
+    expect: [get_ar_aging]
+  - request: which customers owe us money over 90 days
+    expect: [get_ar_aging, list_ar_open_items]
+  - request: list the open unpaid invoices for Acme with days past due
+    expect: [list_ar_open_items, list_invoices]
+  - request: which receivables are disputed or short paid
+    expect: [list_ar_open_items, list_collections_worklist]
+  - request: pull the account statement for this customer
+    expect: [get_customer_statement]
+  - request: what was Acme billed and paid this quarter, and what is the running balance
+    expect: [get_customer_statement]
+  - request: who should collections call first today
+    expect: [list_collections_worklist]
+  - request: show the critical collections worklist
+    expect: [list_collections_worklist]
+  - request: list the posted journal entries from last month
+    expect: [list_journal_entries]
+  - request: find the journal entry for invoice 1042
+    expect: [list_journal_entries, get_journal_entry]
+  - request: open the journal entry and show its debit and credit lines
+    expect: [get_journal_entry]
+  - request: which GL accounts did this journal entry post to
+    expect: [get_journal_entry]
+  - request: show the chart of accounts
+    expect: [list_gl_accounts]
+  - request: find the general ledger account code for fuel expense
+    expect: [list_gl_accounts]
+  - request: which fiscal periods are still open
+    expect: [list_fiscal_periods]
+  - request: when does the current fiscal period end
+    expect: [list_fiscal_periods]
+  - request: what is blocking us from closing the fiscal period
+    expect: [get_fiscal_close_blockers]
+  - request: can we close the books for March
+    expect: [get_fiscal_close_blockers, list_fiscal_periods]
+  - request: list the driver settlements waiting for approval
+    expect: [list_driver_settlements]
+  - request: which driver pay settlements have exceptions
+    expect: [list_driver_settlements]
+  - request: open this driver settlement and show its deduction lines
+    expect: [get_driver_settlement]
+  - request: why is the net pay on Maria's settlement negative
+    expect: [get_driver_settlement, list_driver_settlements]
+  - request: which loads has the driver been paid for
+    expect: [list_driver_pay_events]
+  - request: is the pay event for shipment 4471 on hold
+    expect: [list_driver_pay_events]
+  - request: how much has the driver earned that is not settled yet
+    expect: [get_worker_earnings_summary]
+  - request: what is the driver's escrow balance and outstanding advances
+    expect: [get_worker_earnings_summary]
+  - request: read the pay dispute the driver submitted
+    expect: [get_settlement_dispute]
+  - request: what did the driver say in their settlement dispute
+    expect: [get_settlement_dispute]
+  - request: list the carrier settlements paid this month
+    expect: [list_carrier_settlements]
+  - request: which carrier settlements are pending approval
+    expect: [list_carrier_settlements]
+  - request: open the carrier settlement and show its cost lines
+    expect: [get_carrier_settlement]
+  - request: when was this carrier settlement paid
+    expect: [get_carrier_settlement, list_carrier_settlements]
+  - request: which carrier invoices have a variance against the expected cost
+    expect: [list_carrier_invoice_matches]
+  - request: show the carrier freight invoice matches for Swift
+    expect: [list_carrier_invoice_matches]
+  - request: list the active rate agreements for this customer
+    expect: [list_rate_agreements]
+  - request: which carrier contracts and tariffs do we have
+    expect: [list_rate_agreements]
+  - request: show the lane rules and weight breaks in this rate agreement
+    expect: [get_rate_agreement]
+  - request: what minimum charge does the contract set on the Dallas lane
+    expect: [get_rate_agreement]
+  - request: show the cells of the rate matrix
+    expect: [get_rate_matrix]
+  - request: what does the zone to zone rate grid say for freight class 70
+    expect: [get_rate_matrix]
+  - request: what is this week's fuel surcharge rate per mile
+    expect: [get_fuel_surcharge_rates]
+  - request: which diesel index price is the fuel program using
+    expect: [get_fuel_surcharge_rates]
+  - request: list the customer orders that are in progress
+    expect: [list_orders]
+  - request: find the order with PO number 88213
+    expect: [list_orders]
+  - request: which shipments and charges belong to this order
+    expect: [get_order]
+  - request: has the order charge been invoiced yet
+    expect: [get_order]
+  - request: which inbound EDI files were quarantined today
+    expect: [list_edi_inbound_files]
+  - request: show the EDI files the trading partner sent this week
+    expect: [list_edi_inbound_files]
+  - request: why did this inbound EDI file fail to process
+    expect: [get_edi_inbound_file]
+  - request: show the raw X12 of the EDI file
+    expect: [get_edi_inbound_file]
+  - request: which EDI load tenders are pending approval
+    expect: [list_edi_transfers]
+  - request: why was the EDI tender transfer rejected
+    expect: [list_edi_transfers]
+  - request: is the EDI trading partner set up and ready
+    expect: [get_edi_partner]
+  - request: is inbound turned on for this EDI partner
+    expect: [get_edi_partner]

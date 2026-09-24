@@ -68,6 +68,60 @@ cases:
     expect: [create_shipment]
   - request: put Juan on the Houston leg with truck 42
     expect: [assign_move]
+  - request: who is dragging their feet paying us
+    expect: [get_ar_aging, list_collections_worklist, list_ar_open_items]
+  - request: which bills is this client still sitting on
+    expect: [list_ar_open_items, list_invoices]
+  - request: send me everything this client was charged and what they paid back
+    expect: [get_customer_statement]
+  - request: who do I phone about late money first
+    expect: [list_collections_worklist]
+  - request: what hit the books yesterday
+    expect: [list_journal_entries]
+  - request: break down that posting line by line
+    expect: [get_journal_entry]
+  - request: what bucket does diesel spend land in
+    expect: [list_gl_accounts]
+  - request: which months are still open for posting
+    expect: [list_fiscal_periods]
+  - request: why won't the month close
+    expect: [get_fiscal_close_blockers]
+  - request: whose paychecks are ready to go out
+    expect: [list_driver_settlements]
+  - request: walk me through Juan's pay stub
+    expect: [get_driver_settlement]
+  - request: which trips has she been credited for
+    expect: [list_driver_pay_events]
+  - request: what does he have coming that hasn't been paid out
+    expect: [get_worker_earnings_summary]
+  - request: what's the trucker complaining about on his check
+    expect: [get_settlement_dispute]
+  - request: what do we owe the outside haulers this week
+    expect: [list_carrier_settlements]
+  - request: itemize what we're paying that hauler
+    expect: [get_carrier_settlement]
+  - request: which hauler bills don't agree with what we expected
+    expect: [list_carrier_invoice_matches]
+  - request: what pricing deals do we have with Acme
+    expect: [list_rate_agreements]
+  - request: what did we negotiate for the Chicago lane
+    expect: [get_rate_agreement]
+  - request: pull up the pricing grid behind that lane
+    expect: [get_rate_matrix]
+  - request: what are we adding for diesel right now
+    expect: [get_fuel_surcharge_rates]
+  - request: which customer purchase orders are still open
+    expect: [list_orders]
+  - request: what legs and charges sit under that PO
+    expect: [get_order]
+  - request: which partner transmissions got stuck
+    expect: [list_edi_inbound_files]
+  - request: show me exactly what the partner transmitted
+    expect: [get_edi_inbound_file]
+  - request: which electronic tenders are waiting on us
+    expect: [list_edi_transfers]
+  - request: is our electronic hookup with that shipper finished
+    expect: [get_edi_partner]
 nothing:
   - xyzzy plugh
   - quantum chromodynamics lattice

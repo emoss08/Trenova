@@ -10,6 +10,7 @@ package agentquerytoolservice
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -245,4 +246,93 @@ func decodeParam(params map[string]any, key string, out any) error {
 	}
 
 	return nil
+}
+
+func readDay(params map[string]any, key string, clk clock) (int64, error) {
+	raw := optionalString(params, key)
+	if raw == "" {
+		return 0, nil
+	}
+	if strings.EqualFold(raw, "today") {
+		return clk.Today(), nil
+	}
+
+	day, ok := clk.ParseDate(raw)
+	if !ok {
+		return 0, fmt.Errorf("parameter %q must be a date as YYYY-MM-DD", key)
+	}
+
+	return clk.DayStart(day), nil
+}
+
+func endOfDay(clk clock, day int64) int64 {
+	return clk.DayStart(day) + secondsPerDay - 1
+}
+
+func dateParam(description string) map[string]any {
+	return map[string]any{
+		"type":        "string",
+		"description": description + " A date as YYYY-MM-DD, or today.",
+	}
+}
+
+func intParam(description string) map[string]any {
+	return map[string]any{"type": "integer", "description": description}
+}
+
+func boolParam(description string) map[string]any {
+	return map[string]any{"type": "boolean", "description": description}
+}
+
+func stringParam(description string) map[string]any {
+	return map[string]any{"type": "string", "description": description}
+}
+
+func enumParam(description string, values []string) map[string]any {
+	return map[string]any{"type": "string", "enum": values, "description": description}
+}
+
+func objectSchema(properties map[string]any, required ...string) map[string]any {
+	schema := map[string]any{
+		"type":                 "object",
+		"properties":           properties,
+		"additionalProperties": false,
+	}
+	if len(required) > 0 {
+		schema["required"] = required
+	}
+
+	return schema
+}
+
+func optionalID(params map[string]any, key string) (pulid.ID, error) {
+	id, _, err := optionalPulid(params, key)
+
+	return id, err
+}
+
+func validEnum(params map[string]any, key string, values []string) (string, error) {
+	value := optionalString(params, key)
+	if value == "" || slices.Contains(values, value) {
+		return value, nil
+	}
+
+	return "", fmt.Errorf("%s %q is not one of %s", key, value, strings.Join(values, ", "))
+}
+
+func optionalBoolPointer(params map[string]any, key string) *bool {
+	value, ok := params[key].(bool)
+	if !ok {
+		return nil
+	}
+
+	return &value
+}
+
+func pointerIDString(id *pulid.ID) string {
+	if id == nil {
+		return ""
+	}
+
+	return pulidString(*id)
 }

@@ -470,7 +470,7 @@ func listCatalogSpecs() []listSpec {
 		specOf(newListTrailersTool(nil)),
 		specOf(newListCustomersTool(nil)),
 		specOf(newListLocationsTool(nil)),
-		specOf(newListInvoicesTool(nil)),
+		specOf(newListInvoicesTool(nil, nil)),
 		specOf(newListCarriersTool(nil)),
 		specOf(newListEquipmentTypesTool(nil)),
 		specOf(newListFleetCodesTool(nil)),
@@ -482,6 +482,9 @@ func listCatalogSpecs() []listSpec {
 		specOf(newListDocumentTypesTool(nil)),
 		specOf(newListLocationCategoriesTool(nil)),
 		specOf(newListHoldReasonsTool(nil)),
+		specOf(newListGLAccountsTool(nil, nil)),
+		specOf(newListFiscalPeriodsTool(nil, nil)),
+		specOf(newListOrdersTool(nil, nil)),
 	}
 }
 
