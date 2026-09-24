@@ -130,14 +130,11 @@ func (c *Control) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
+var budgetRule = domainvalidation.BudgetUSD(MaxBudgetUSD, "100,000")
+
 func validateBudget(multiErr *errortypes.MultiError, field string, value decimal.Decimal) {
-	switch {
-	case value.IsNegative():
-		multiErr.Add(field, errortypes.ErrInvalid, "A budget cannot be negative")
-	case value.GreaterThan(MaxBudgetUSD):
-		multiErr.Add(field, errortypes.ErrInvalid, "A budget is at most 100,000")
-	case !value.Equal(value.Round(2)):
-		multiErr.Add(field, errortypes.ErrInvalid, "A budget is in whole cents")
+	if err := budgetRule.Validate(value); err != nil {
+		multiErr.Add(field, errortypes.ErrInvalid, err.Error())
 	}
 }
 
