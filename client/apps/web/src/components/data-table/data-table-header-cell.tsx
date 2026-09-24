@@ -1,16 +1,16 @@
 "use no memo";
-import { TableHead } from "@trenova/shared/components/ui/table";
 import {
   columnHeaderLabel,
   columnSizeVar,
   pinnedCellClass,
   pinnedCellStyle,
 } from "@/lib/data-table";
-import { cn } from "@trenova/shared/lib/utils";
-import type { SortDirection, SortField, Header } from "@trenova/shared/types/data-table";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { flexRender, type RowData } from "@tanstack/react-table";
+import { TableHead } from "@trenova/shared/components/ui/table";
+import { cn } from "@trenova/shared/lib/utils";
+import type { Header, SortDirection, SortField } from "@trenova/shared/types/data-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableColumnResizeHandle } from "./data-table-column-resize-handle";
 
