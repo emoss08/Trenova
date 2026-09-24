@@ -22859,6 +22859,15 @@
       "service/distancecalculationservice"
     ]
   },
+  "Background work is not available, so the source cannot be re-indexed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/retrievalservice"
+    ]
+  },
   "Background work is temporarily unavailable. Try again in a moment.": {
     "sites": 1,
     "scope": [
@@ -58317,6 +58326,15 @@
       "routes/admin"
     ]
   },
+  "Embed an organization's stale retrieval sources until the outbox drains": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Embed operational identity fields resolved at generation time.": {
     "sites": 1,
     "scope": [
@@ -68889,6 +68907,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "Find retrieval sources changed since they were indexed, per organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Find someone": {
@@ -91629,6 +91656,15 @@
       "go/other"
     ]
   },
+  "Mark every source of one type stale so the indexer re-checks it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Mark filed": {
     "sites": 1,
     "scope": [
@@ -91755,6 +91791,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Mark retrieval sources changed since they were indexed, per organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Mark reviewed": {
@@ -112871,6 +112916,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Organization and business unit are required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/retrievalservice"
     ]
   },
   "Organization branding": {
@@ -137620,6 +137674,15 @@
       "routes/desk"
     ]
   },
+  "Retrieval index sweep": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Retrieved from the web on {0}": {
     "sites": 1,
     "scope": [
@@ -143227,6 +143290,15 @@
       "service/tablequeryservice"
     ]
   },
+  "Say what to search for": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/retrievalservice"
+    ]
+  },
   "Say what was done about it — coaching, a repair, a dismissed citation. Points already recorded stay on the scorecard until they roll off.": {
     "sites": 1,
     "scope": [
@@ -145075,6 +145147,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Searching needs to know who is asking": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/retrievalservice"
     ]
   },
   "Searching records…": {
@@ -155133,6 +155214,15 @@
     ],
     "areas": [
       "domain/equipmentcontinuity"
+    ]
+  },
+  "Source type must be Memory, Document or InboundMessage": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/retrievalservice"
     ]
   },
   "Source unit": {
