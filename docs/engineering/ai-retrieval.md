@@ -683,12 +683,22 @@ the reason.
    `shipment`, `Worker`, `invoice_adjustment` → invoice, `assistant_thread` → assistant) with
    the record id, so a grant scoped to the caller's own or their team's records is honoured
    per row. An owner that is not a registered resource is never returned.
-4. **Field ceiling.** A passage is built only when the caller may see the document's text
+4. **Conversation files are private.** A document attached to a conversation
+   (`assistant_thread`) is authorized against the Assistant resource, which every chat user
+   holds, so Assistant read alone would show one person's chat attachments to everyone. The
+   same `RetrievalAccess.ReadableDocuments` check that `search_documents` and
+   `get_document_summary` share reads the owners of every conversation among the candidates
+   in one query (`ThreadOwnerRepository.ThreadOwners`, tenant-scoped) and keeps such a file
+   only when the conversation belongs to the acting user. A caller without a person behind
+   it (a background agent run, an API key) never sees one, and a failed owner lookup fails
+   the search instead of guessing. `assistant_thread` is the only per-person owner type;
+   every other owner, `user` included, is governed by its permission resource.
+5. **Field ceiling.** A passage is built only when the caller may see the document's text
    field and the owning record's default sensitivity is within their ceiling
    (`fieldAccess`, where nothing Confidential ever reaches a model and an agent reads at
    Internal); the file name only when its field is visible; a message's subject, sender and
    passage each by their own field.
-5. **Taint.** Both tools read outside text (`ExternalReadAlways`, sources `document` and
+6. **Taint.** Both tools read outside text (`ExternalReadAlways`, sources `document` and
    `inbound_message`) and name every record they return (`TaintedRecords()`), so the turn
    gets one mark per record, or one for the call when nothing came back.
 
@@ -705,7 +715,7 @@ every tool result.
 | --- | --- |
 | `search_documents` | up to 10 (default 5): `documentId`, `fileName`, `looksLike`, `page`, `snippet`, `attachedTo`, `match`, and `searchedBy` for the whole result |
 | `search_inbound_messages` | up to 10 (default 5), best first: `id`, `receivedAt`, `from`, `subject`, `snippet`, `status`, `needsReview`, `classification`, `match` |
-| `get_document_summary` | now takes `page` to read one page, reports a failed content read as an error instead of "nothing read yet", and refuses a document whose owning record the caller may not read |
+| `get_document_summary` | now takes `page` to read one page, reports a failed content read as an error instead of "nothing read yet", and refuses a document whose owning record the caller may not read, or that is attached to someone else's conversation |
 | `list_inbound_messages` | unchanged ordering (newest first); an unknown `status` or `classification` is now refused with the values it accepts instead of being dropped |
 
 The intake desk template carries both search tools.
@@ -742,8 +752,10 @@ always, the hybrid leg when pgvector is present and
 `evals/embeddings/retrieval-nomic-embed-text.json` has been recorded (chunk vectors keyed by
 chunk hash, query vectors by SHA-256). `TestRetrievalNeverLeaks` and the tools'
 `TestSearchToolsNeverLeakAndMarkEveryRecord` seed the same corpus for a second organization,
-on worker records the caller may not read, and as memories kept for another agent, retired or
-expired, and fail on any of them coming back by either leg, on a returned record without a
+on worker records the caller may not read, attached to a colleague's conversation, and as
+memories kept for another agent, retired or expired, and run as the person and as a background
+agent (which must not see even the person's own conversation files). They fail on any of them
+coming back by either leg, on the person's own conversation files never coming back, on a returned record without a
 taint mark, or on quoted mail history being searchable.
 
 **Neither the fixture nor the floors have been recorded yet.** Until they are, the floor

@@ -63,7 +63,7 @@ func TestSearchDocumentsReturnsRowsAndMarksEveryDocument(t *testing.T) {
 		},
 		Semantics: serviceports.RetrievalSemantics{Used: true},
 	}}
-	tool := newSearchDocumentsTool(searcher, &fakePermissions{allowed: true})
+	tool := newSearchDocumentsTool(searcher, &fakePermissions{allowed: true}, nil)
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{
 		"query": "lumper fee",
@@ -107,7 +107,7 @@ func TestSearchDocumentsSaysWhenMeaningWasNotSearched(t *testing.T) {
 			Reason: airetrieval.UnavailableReasonNoProvider,
 		},
 	}}
-	tool := newSearchDocumentsTool(searcher, &fakePermissions{allowed: true})
+	tool := newSearchDocumentsTool(searcher, &fakePermissions{allowed: true}, nil)
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{"query": "bol 88213"}))
 	require.NoError(t, err)
@@ -124,7 +124,7 @@ func TestSearchToolsNeedAQuery(t *testing.T) {
 
 	searcher := &fakeRetrievalSearcher{}
 	for _, tool := range []serviceports.AgentQueryTool{
-		newSearchDocumentsTool(searcher, &fakePermissions{allowed: true}),
+		newSearchDocumentsTool(searcher, &fakePermissions{allowed: true}, nil),
 		newSearchInboundMessagesTool(searcher, &fakePermissions{allowed: true}),
 	} {
 		_, err := tool.Query(t.Context(), testParams(map[string]any{"query": "  "}))
@@ -172,7 +172,7 @@ func TestSearchInboundMessagesMarksEveryMessage(t *testing.T) {
 func TestSearchToolPoliciesReadOutsideTextAlways(t *testing.T) {
 	t.Parallel()
 
-	documents := newSearchDocumentsTool(nil, nil).Policy()
+	documents := newSearchDocumentsTool(nil, nil, nil).Policy()
 	assert.Equal(t, permission.ResourceDocument, documents.Resource)
 	assert.Equal(t, agent.ExternalReadAlways, documents.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceDocument, documents.Source)

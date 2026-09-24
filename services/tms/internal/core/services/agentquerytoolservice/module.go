@@ -219,8 +219,9 @@ func provideGetDocumentSummaryTool(
 	documents repositories.DocumentRepository,
 	content services.DocumentContentService,
 	permissions services.PermissionEngine,
+	threads repositories.ThreadOwnerRepository,
 ) services.AgentQueryTool {
-	return newGetDocumentSummaryTool(documents, content, permissions)
+	return newGetDocumentSummaryTool(documents, content, permissions, threads)
 }
 
 func provideGetShipmentDraftTool(content services.DocumentContentService) services.AgentQueryTool {
@@ -305,8 +306,9 @@ func provideListInboundMessagesTool(
 func provideSearchDocumentsTool(
 	searcher services.RetrievalSearcher,
 	permissions services.PermissionEngine,
+	threads repositories.ThreadOwnerRepository,
 ) services.AgentQueryTool {
-	return newSearchDocumentsTool(searcher, permissions)
+	return newSearchDocumentsTool(searcher, permissions, threads)
 }
 
 func provideSearchInboundMessagesTool(

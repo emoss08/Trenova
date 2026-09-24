@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -55,6 +56,27 @@ type fakeAccess struct {
 	hidden     map[string]bool
 	textHidden map[permission.Resource]bool
 	records    []string
+	offered    []pulid.ID
+	readErr    error
+}
+
+func (f *fakeAccess) ReadableDocuments(
+	ctx context.Context,
+	docs []*document.Document,
+) (map[pulid.ID]bool, error) {
+	if f.readErr != nil {
+		return nil, f.readErr
+	}
+
+	readable := make(map[pulid.ID]bool, len(docs))
+	for _, doc := range docs {
+		f.offered = append(f.offered, doc.ID)
+		if f.MayReadRecord(ctx, doc.OwnerResource(), doc.ResourceID) {
+			readable[doc.ID] = true
+		}
+	}
+
+	return readable, nil
 }
 
 func (f *fakeAccess) MayReadResource(_ context.Context, resource permission.Resource) bool {
@@ -187,7 +209,25 @@ func TestSearchDocumentsDropsWhatTheCallerMayNotRead(t *testing.T) {
 	require.Len(t, result.Hits, 1)
 	assert.Equal(t, shipment.Document.ID, result.Hits[0].Document.ID)
 	assert.Contains(t, access.records, "worker:"+worker.Document.ResourceID)
+	assert.NotContains(t, access.offered, mystery.Document.ID)
+	assert.NotContains(t, access.offered, rejected.Document.ID)
 	assert.Equal(t, airetrieval.UnavailableReasonNoProvider, result.Semantics.Reason)
+}
+
+func TestSearchDocumentsFailsClosedWhenAccessCannotBeChecked(t *testing.T) {
+	t.Parallel()
+
+	shipment := documentSource("Linehaul rate for load 4471.")
+	sources := &fakeSources{
+		documents: []*repositories.RetrievalDocumentSource{shipment},
+		keyword:   []repositories.RetrievalKeywordHit{{SourceID: shipment.Document.ID}},
+	}
+	access := &fakeAccess{readErr: errors.New("thread owners unavailable")}
+	searcher := newTestSearcher(newFakeRetrievalRepo(activeSettings()), sources, nil)
+
+	result, err := searcher.SearchDocuments(t.Context(), searchRequest("load 4471", access))
+	require.ErrorContains(t, err, "thread owners unavailable")
+	assert.Nil(t, result)
 }
 
 func TestSearchDocumentsBuildsSnippetsOnlyFromVisibleFields(t *testing.T) {

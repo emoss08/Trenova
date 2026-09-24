@@ -7,12 +7,14 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
 	"github.com/emoss08/trenova/internal/core/services/retrievalservice"
+	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -55,6 +57,7 @@ type DocumentSeed struct {
 	Tenant       pagination.TenantInfo
 	UploadedByID pulid.ID
 	OwnerType    string
+	OwnerID      pulid.ID
 	Items        []agentevalgate.RetrievalItem
 }
 
@@ -108,6 +111,9 @@ func SeedDocuments(t *testing.T, ctx context.Context, db bun.IDB, seed DocumentS
 		doc.OrganizationID = seed.Tenant.OrgID
 		doc.BusinessUnitID = seed.Tenant.BuID
 		doc.ResourceID = pulid.MustNew("shp_").String()
+		if seed.OwnerID.IsNotNil() {
+			doc.ResourceID = seed.OwnerID.String()
+		}
 		doc.UploadedByID = seed.UploadedByID
 		_, err := db.NewInsert().Model(doc).Exec(ctx)
 		require.NoError(t, err, item.Key)
@@ -134,6 +140,54 @@ func SeedDocuments(t *testing.T, ctx context.Context, db bun.IDB, seed DocumentS
 	}
 
 	return corpus
+}
+
+func SeedColleague(
+	t *testing.T,
+	ctx context.Context,
+	db bun.IDB,
+	tenant pagination.TenantInfo,
+) pulid.ID {
+	t.Helper()
+
+	id := strings.ToLower(pulid.MustNew("usr_").String())
+	marker := "c" + id[len(id)-12:]
+	var colleague pulid.ID
+	require.NoError(t, db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		colleague = seedtest.NewUser(tenant.OrgID, tenant.BuID).
+			WithName("Colleague").
+			WithUsername(marker).
+			WithEmail(marker + "@example.com").
+			Build(t, ctx, tx).ID
+
+		return nil
+	}))
+
+	return colleague
+}
+
+func SeedConversation(
+	t *testing.T,
+	ctx context.Context,
+	db bun.IDB,
+	tenant pagination.TenantInfo,
+	userID pulid.ID,
+) pulid.ID {
+	t.Helper()
+
+	thread := &conversation.Thread{
+		OrganizationID:    tenant.OrgID,
+		BusinessUnitID:    tenant.BuID,
+		UserID:            userID,
+		AgentDefinitionID: pulid.MustNew("agdef_"),
+		Title:             "Private conversation",
+		Status:            conversation.ThreadStatusActive,
+		Origin:            conversation.ThreadOriginPanel,
+	}
+	_, err := db.NewInsert().Model(thread).Exec(ctx)
+	require.NoError(t, err)
+
+	return thread.ID
 }
 
 func structuredFields(fields []string) map[string]any {

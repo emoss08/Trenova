@@ -53,8 +53,8 @@ func summaryDocument() *document.Document {
 		ID:           pulid.MustNew("doc_"),
 		OriginalName: "tender.pdf",
 		FileType:     "application/pdf",
-		ResourceType: "assistant_thread",
-		ResourceID:   "athr_1",
+		ResourceType: "shipment",
+		ResourceID:   pulid.MustNew("shp_").String(),
 	}
 }
 
@@ -74,6 +74,7 @@ func TestGetDocumentSummary_ReadsTextAndFieldsInWindows(t *testing.T) {
 			StructuredData:           map[string]any{"bol": "BOL-1"},
 		}},
 		&fakePermissions{allowed: true},
+		nil,
 	)
 
 	result, err := tool.Query(
@@ -83,7 +84,7 @@ func TestGetDocumentSummary_ReadsTextAndFieldsInWindows(t *testing.T) {
 	require.NoError(t, err)
 	summary := result.(*documentSummary)
 	assert.Equal(t, "tender.pdf", summary.FileName)
-	assert.Equal(t, "assistant_thread athr_1", summary.AttachedTo)
+	assert.Equal(t, "shipment "+doc.ResourceID, summary.AttachedTo)
 	assert.Equal(t, "Extracted", summary.Reading)
 	assert.Equal(t, 3, summary.PageCount)
 	assert.Equal(t, "tender", summary.LooksLike)
@@ -114,6 +115,7 @@ func TestGetDocumentSummary_SaysWhenNothingHasBeenReadYet(t *testing.T) {
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{err: errortypes.NewNotFoundError("Document content not found")},
 		&fakePermissions{allowed: true},
+		nil,
 	)
 
 	result, err := tool.Query(
@@ -131,6 +133,7 @@ func TestGetDocumentSummary_SaysWhenNothingHasBeenReadYet(t *testing.T) {
 			Status: documentcontent.StatusExtracting,
 		}},
 		&fakePermissions{allowed: true},
+		nil,
 	)
 	result, err = pending.Query(
 		t.Context(),
@@ -147,6 +150,7 @@ func TestGetDocumentSummary_IsGatedOnDocumentsAndRefusesANonID(t *testing.T) {
 		&stubDocumentRepo{},
 		&stubContentReader{},
 		&fakePermissions{allowed: true},
+		nil,
 	)
 	assert.Equal(t, permission.ResourceDocument, tool.Policy().Resource)
 	assert.Equal(t, "get_document_summary", tool.Name())
@@ -163,6 +167,7 @@ func TestGetDocumentSummary_SurfacesADatabaseError(t *testing.T) {
 		&stubDocumentRepo{doc: doc},
 		&stubContentReader{err: errors.New("connection reset by peer")},
 		&fakePermissions{allowed: true},
+		nil,
 	)
 
 	_, err := tool.Query(
@@ -192,6 +197,7 @@ func TestGetDocumentSummary_RefusesADocumentOnARecordTheCallerCannotRead(t *test
 			ContentText: "Medical examiner's certificate",
 		}},
 		permissions,
+		nil,
 	)
 
 	_, err := tool.Query(
@@ -222,6 +228,7 @@ func TestGetDocumentSummary_ReadsOnePage(t *testing.T) {
 			},
 		}},
 		&fakePermissions{allowed: true},
+		nil,
 	)
 
 	result, err := tool.Query(t.Context(), testParams(map[string]any{

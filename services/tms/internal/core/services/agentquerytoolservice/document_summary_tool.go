@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -46,11 +47,12 @@ func newGetDocumentSummaryTool(
 	documents repositories.DocumentRepository,
 	contents contentReader,
 	permissions serviceports.PermissionEngine,
+	threads repositories.ThreadOwnerRepository,
 ) serviceports.AgentQueryTool {
 	return &getDocumentSummaryTool{
 		documents: documents,
 		contents:  contents,
-		access:    newFieldAccess(permissions),
+		access:    newFieldAccess(permissions).withThreads(threads),
 	}
 }
 
@@ -153,11 +155,17 @@ func (t *getDocumentSummaryTool) Query(
 		return nil, err
 	}
 
-	owner := doc.OwnerResource()
-	if !t.access.mayReadRecord(ctx, params, owner, doc.ResourceID) {
+	readable, err := t.access.readableDocuments(ctx, params, []*document.Document{doc},
+		func(resource permission.Resource, recordID string) bool {
+			return t.access.mayReadRecord(ctx, params, resource, recordID)
+		})
+	if err != nil {
+		return nil, err
+	}
+	if !readable[doc.ID] {
 		return nil, fmt.Errorf(
 			"document %s is attached to a %s you may not read",
-			doc.ID, stringutils.HumanizeSnakeCase(owner.String()),
+			doc.ID, stringutils.HumanizeSnakeCase(doc.OwnerResource().String()),
 		)
 	}
 

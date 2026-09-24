@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -256,8 +257,11 @@ func (s *Searcher) SearchDocuments(
 	}
 
 	kept, err := s.readableDocuments(ctx, req, plan, fused)
-	if err != nil || len(kept) == 0 {
-		return result, err
+	if err != nil {
+		return nil, err
+	}
+	if len(kept) == 0 {
+		return result, nil
 	}
 
 	sources, err := s.sources.GetDocuments(ctx, repositories.RetrievalDocumentsRequest{
@@ -301,20 +305,23 @@ func (s *Searcher) readableDocuments(
 		return nil, fmt.Errorf("read matched documents: %w", err)
 	}
 
-	byID := make(map[pulid.ID]*repositories.RetrievalDocumentSource, len(sources))
+	candidates := make([]*document.Document, 0, len(sources))
 	for _, source := range sources {
-		byID[source.Document.ID] = source
+		if source.Document == nil || !source.Document.Searchable() ||
+			!s.registry.HasResource(source.Document.OwnerResource().String()) {
+			continue
+		}
+		candidates = append(candidates, source.Document)
+	}
+
+	readable, err := req.Access.ReadableDocuments(ctx, candidates)
+	if err != nil {
+		return nil, fmt.Errorf("check which matched documents may be read: %w", err)
 	}
 
 	kept := make([]FusedHit, 0, plan.limit)
 	for _, hit := range fused {
-		source, ok := byID[hit.ID]
-		if !ok || !source.Document.Searchable() {
-			continue
-		}
-		owner := source.Document.OwnerResource()
-		if !s.registry.HasResource(owner.String()) ||
-			!req.Access.MayReadRecord(ctx, owner, source.Document.ResourceID) {
+		if !readable[hit.ID] {
 			continue
 		}
 		kept = append(kept, hit)

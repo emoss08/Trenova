@@ -7,12 +7,14 @@ import (
 	"errors"
 	"flag"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -22,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentmemoryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/airetrievalrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/conversationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/testutil/retrievaltest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -56,6 +59,7 @@ type evalHarness struct {
 	repo     repositories.AIRetrievalRepository
 	sources  repositories.RetrievalSourceRepository
 	memories repositories.AgentMemoryRepository
+	threads  repositories.ThreadOwnerRepository
 	registry *permission.Registry
 	data     *seedtest.TestData
 	tenant   pagination.TenantInfo
@@ -85,6 +89,10 @@ func newEvalHarness(t *testing.T) (*evalHarness, evalSuites) {
 			Logger: zap.NewNop(),
 		}),
 		memories: agentmemoryrepository.New(agentmemoryrepository.Params{
+			DB:     conn,
+			Logger: zap.NewNop(),
+		}),
+		threads: conversationrepository.NewThreadOwners(conversationrepository.Params{
 			DB:     conn,
 			Logger: zap.NewNop(),
 		}),
@@ -426,6 +434,22 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 		OwnerType:    "worker",
 		Items:        suites.documents.Corpus,
 	})
+	ownConversation := retrievaltest.SeedDocuments(t, h.ctx, h.db, retrievaltest.DocumentSeed{
+		Tenant:       h.tenant,
+		UploadedByID: h.data.User.ID,
+		OwnerType:    document.ConversationResourceType,
+		OwnerID:      retrievaltest.SeedConversation(t, h.ctx, h.db, h.tenant, h.data.User.ID),
+		Items:        suites.documents.Corpus,
+	})
+	colleague := retrievaltest.SeedColleague(t, h.ctx, h.db, h.tenant)
+	colleagueConversation := retrievaltest.SeedDocuments(t, h.ctx, h.db,
+		retrievaltest.DocumentSeed{
+			Tenant:       h.tenant,
+			UploadedByID: colleague,
+			OwnerType:    document.ConversationResourceType,
+			OwnerID:      retrievaltest.SeedConversation(t, h.ctx, h.db, h.tenant, colleague),
+			Items:        suites.documents.Corpus,
+		})
 	agentScoped := retrievaltest.SeedMemories(t, h.ctx, h.db, retrievaltest.MemorySeed{
 		Tenant:            h.tenant,
 		Items:             suites.memories.Corpus,
@@ -452,7 +476,11 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 		}
 		h.embed(t, fixture, corpora)
 		h.embed(t, fixture, foreign)
-		h.plantVectors(t, fixture, suites.documents, sensitive, airetrieval.SourceTypeDocument)
+		for _, planted := range []*retrievaltest.Corpus{
+			sensitive, ownConversation, colleagueConversation,
+		} {
+			h.plantVectors(t, fixture, suites.documents, planted, airetrieval.SourceTypeDocument)
+		}
 		for _, planted := range []*retrievaltest.Corpus{agentScoped, retired, expired} {
 			h.plantVectors(t, fixture, suites.memories, planted, airetrieval.SourceTypeMemory)
 		}
@@ -464,61 +492,101 @@ func TestRetrievalNeverLeaks(t *testing.T) {
 		memoryServices["hybrid"] = h.memoryService(searcher)
 	}
 
-	denyWorker := retrievaltest.Access{
+	person := retrievaltest.Access{
 		Registry:   h.registry,
 		Unreadable: map[permission.Resource]bool{permission.ResourceWorker: true},
+		Tenant:     h.tenant,
+		UserID:     h.data.User.ID,
+		Threads:    h.threads,
 	}
+	background := person
+	background.UserID = pulid.Nil
 	forbidden := forbiddenIDs(foreign.documents, foreign.inbox, foreign.memories,
-		sensitive, agentScoped, retired, expired)
+		sensitive, colleagueConversation, agentScoped, retired, expired)
+
+	callers := []struct {
+		name      string
+		access    retrievaltest.Access
+		forbidden []pulid.ID
+		sees      *retrievaltest.Corpus
+	}{
+		{name: "person", access: person, forbidden: forbidden, sees: ownConversation},
+		{
+			name:      "background",
+			access:    background,
+			forbidden: append(slices.Clone(forbidden), forbiddenIDs(ownConversation)...),
+		},
+	}
 
 	for name, searcher := range searchers {
-		t.Run(name, func(t *testing.T) {
-			for _, query := range allQueries(suites) {
-				documents, err := searcher.SearchDocuments(
+		for _, caller := range callers {
+			t.Run(name+"/"+caller.name, func(t *testing.T) {
+				seen := make(map[pulid.ID]struct{}, 64)
+				for _, query := range allQueries(suites) {
+					documents, err := searcher.SearchDocuments(
+						h.ctx,
+						serviceports.RetrievalSearchRequest{
+							TenantInfo: h.tenant, Query: query, Limit: 50, Access: caller.access,
+						},
+					)
+					require.NoError(t, err)
+					for _, hit := range documents.Hits {
+						assert.NotContains(t, caller.forbidden, hit.Document.ID,
+							"document for %q", query)
+						assert.Equal(t, h.tenant.OrgID, hit.Document.OrganizationID)
+						seen[hit.Document.ID] = struct{}{}
+					}
+
+					messages, err := searcher.SearchInboundMessages(h.ctx,
+						serviceports.RetrievalSearchRequest{
+							TenantInfo: h.tenant, Query: query, Limit: 50, Access: caller.access,
+						})
+					require.NoError(t, err)
+					for _, hit := range messages.Hits {
+						assert.NotContains(t, caller.forbidden, hit.Message.ID,
+							"message for %q", query)
+						assert.Equal(t, h.tenant.OrgID, hit.Message.OrganizationID)
+					}
+
+					recalled, err := memoryServices[name].Recall(h.ctx,
+						serviceports.RecallAgentMemoriesRequest{
+							TenantInfo: h.tenant, Query: query, Limit: agent.MaxMemoryRecallLimit,
+						})
+					require.NoError(t, err)
+					for _, memory := range recalled {
+						assert.NotContains(t, caller.forbidden, memory.Memory.ID,
+							"memory for %q", query)
+					}
+				}
+				if caller.sees != nil {
+					assert.True(t, anyOf(seen, caller.sees),
+						"the owner finds files attached to their own conversation")
+				}
+
+				quoted, err := searcher.SearchInboundMessages(
 					h.ctx,
 					serviceports.RetrievalSearchRequest{
-						TenantInfo: h.tenant, Query: query, Limit: 50, Access: denyWorker,
+						TenantInfo: h.tenant, Query: "lumber order", Limit: 50, Access: caller.access,
 					},
 				)
 				require.NoError(t, err)
-				for _, hit := range documents.Hits {
-					assert.NotContains(t, forbidden, hit.Document.ID, "document for %q", query)
-					assert.Equal(t, h.tenant.OrgID, hit.Document.OrganizationID)
+				for _, hit := range quoted.Hits {
+					assert.NotEqual(t, corpora.inbox.IDs["late-pickup-complaint"], hit.Message.ID,
+						"quoted history is never searched")
 				}
-
-				messages, err := searcher.SearchInboundMessages(h.ctx,
-					serviceports.RetrievalSearchRequest{
-						TenantInfo: h.tenant, Query: query, Limit: 50, Access: denyWorker,
-					})
-				require.NoError(t, err)
-				for _, hit := range messages.Hits {
-					assert.NotContains(t, forbidden, hit.Message.ID, "message for %q", query)
-					assert.Equal(t, h.tenant.OrgID, hit.Message.OrganizationID)
-				}
-
-				recalled, err := memoryServices[name].Recall(h.ctx,
-					serviceports.RecallAgentMemoriesRequest{
-						TenantInfo: h.tenant, Query: query, Limit: agent.MaxMemoryRecallLimit,
-					})
-				require.NoError(t, err)
-				for _, memory := range recalled {
-					assert.NotContains(t, forbidden, memory.Memory.ID, "memory for %q", query)
-				}
-			}
-
-			quoted, err := searcher.SearchInboundMessages(
-				h.ctx,
-				serviceports.RetrievalSearchRequest{
-					TenantInfo: h.tenant, Query: "lumber order", Limit: 50, Access: denyWorker,
-				},
-			)
-			require.NoError(t, err)
-			for _, hit := range quoted.Hits {
-				assert.NotEqual(t, corpora.inbox.IDs["late-pickup-complaint"], hit.Message.ID,
-					"quoted history is never searched")
-			}
-		})
+			})
+		}
 	}
+}
+
+func anyOf(seen map[pulid.ID]struct{}, corpus *retrievaltest.Corpus) bool {
+	for id := range corpus.Keys {
+		if _, ok := seen[id]; ok {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (h *evalHarness) plantVectors(

@@ -6,11 +6,14 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
 	"github.com/emoss08/trenova/internal/core/services/retrievalservice"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
@@ -103,6 +106,9 @@ type Access struct {
 	Unreadable map[permission.Resource]bool
 	Ceiling    permission.FieldSensitivity
 	Registry   *permission.Registry
+	Tenant     pagination.TenantInfo
+	UserID     pulid.ID
+	Threads    repositories.ThreadOwnerRepository
 }
 
 var _ serviceports.RetrievalAccess = Access{}
@@ -113,6 +119,34 @@ func (a Access) MayReadResource(_ context.Context, resource permission.Resource)
 
 func (a Access) MayReadRecord(ctx context.Context, resource permission.Resource, _ string) bool {
 	return a.MayReadResource(ctx, resource)
+}
+
+func (a Access) ReadableDocuments(
+	ctx context.Context,
+	docs []*document.Document,
+) (map[pulid.ID]bool, error) {
+	var owners map[pulid.ID]pulid.ID
+	if ids := document.ConversationIDs(docs); len(ids) > 0 && a.Threads != nil &&
+		a.UserID.IsNotNil() {
+		found, err := a.Threads.ThreadOwners(ctx, repositories.ThreadOwnersRequest{
+			TenantInfo: a.Tenant,
+			ThreadIDs:  ids,
+		})
+		if err != nil {
+			return nil, err
+		}
+		owners = found
+	}
+
+	readable := make(map[pulid.ID]bool, len(docs))
+	for _, doc := range docs {
+		if doc.VisibleToPerson(owners, a.UserID) &&
+			a.MayReadRecord(ctx, doc.OwnerResource(), doc.ResourceID) {
+			readable[doc.ID] = true
+		}
+	}
+
+	return readable, nil
 }
 
 func (a Access) ceiling() permission.FieldSensitivity {

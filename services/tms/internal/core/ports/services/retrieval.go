@@ -137,6 +137,10 @@ const (
 type RetrievalAccess interface {
 	MayReadResource(ctx context.Context, resource permission.Resource) bool
 	MayReadRecord(ctx context.Context, resource permission.Resource, recordID string) bool
+	ReadableDocuments(
+		ctx context.Context,
+		docs []*document.Document,
+	) (map[pulid.ID]bool, error)
 	ShowsField(ctx context.Context, resource permission.Resource, field string) bool
 	ShowsRecordText(ctx context.Context, resource permission.Resource) bool
 }

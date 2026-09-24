@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -83,8 +84,12 @@ type searchDocumentsTool struct {
 func newSearchDocumentsTool(
 	searcher serviceports.RetrievalSearcher,
 	permissions serviceports.PermissionEngine,
+	threads repositories.ThreadOwnerRepository,
 ) serviceports.AgentQueryTool {
-	return &searchDocumentsTool{searcher: searcher, access: newFieldAccess(permissions)}
+	return &searchDocumentsTool{
+		searcher: searcher,
+		access:   newFieldAccess(permissions).withThreads(threads),
+	}
 }
 
 func (t *searchDocumentsTool) Name() string { return "search_documents" }

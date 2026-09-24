@@ -11,13 +11,16 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentevalgate"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/retrievalservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/airetrievalrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/conversationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/testutil/retrievaltest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -50,6 +53,21 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 	})
 	sensitive := retrievaltest.SeedDocuments(t, ctx, db, retrievaltest.DocumentSeed{
 		Tenant: tenant, UploadedByID: data.User.ID, OwnerType: "worker", Items: documents.Corpus,
+	})
+	ownConversation := retrievaltest.SeedDocuments(t, ctx, db, retrievaltest.DocumentSeed{
+		Tenant:       tenant,
+		UploadedByID: data.User.ID,
+		OwnerType:    document.ConversationResourceType,
+		OwnerID:      retrievaltest.SeedConversation(t, ctx, db, tenant, data.User.ID),
+		Items:        documents.Corpus,
+	})
+	colleague := retrievaltest.SeedColleague(t, ctx, db, tenant)
+	colleagueConversation := retrievaltest.SeedDocuments(t, ctx, db, retrievaltest.DocumentSeed{
+		Tenant:       tenant,
+		UploadedByID: colleague,
+		OwnerType:    document.ConversationResourceType,
+		OwnerID:      retrievaltest.SeedConversation(t, ctx, db, tenant, colleague),
+		Items:        documents.Corpus,
 	})
 	foreignDocs := retrievaltest.SeedDocuments(t, ctx, db, retrievaltest.DocumentSeed{
 		Tenant: otherTenant, UploadedByID: other.User.ID, Items: documents.Corpus,
@@ -88,7 +106,9 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 			_, err = repo.UpdateSettings(ctx, settings)
 			require.NoError(t, err)
 		}
-		for _, corpus := range []*retrievaltest.Corpus{own, foreignDocs} {
+		for _, corpus := range []*retrievaltest.Corpus{
+			own, ownConversation, colleagueConversation, foreignDocs,
+		} {
 			retrievaltest.SeedEmbeddings(t, ctx, retrievaltest.EmbedSeed{
 				Repo: repo, Sources: sources, Fixture: fixture, ModelKey: retrievaltest.ModelKey,
 				SourceType: airetrieval.SourceTypeDocument, Corpus: corpus,
@@ -122,16 +142,20 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 		permission.ResourceShipment,
 		permission.ResourceCustomer,
 		permission.ResourceCarrier,
+		permission.ResourceAssistant,
 	} {
 		permissions.readable[resource] = true
 	}
 
-	params := func(query string) serviceports.QueryToolParams {
+	params := func(
+		principal serviceports.PrincipalType,
+		query string,
+	) serviceports.QueryToolParams {
 		return serviceports.QueryToolParams{
 			OrganizationID: tenant.OrgID,
 			BusinessUnitID: tenant.BuID,
 			Actor: &serviceports.RequestActor{
-				PrincipalType:  serviceports.PrincipalTypeUser,
+				PrincipalType:  principal,
 				PrincipalID:    data.User.ID,
 				UserID:         data.User.ID,
 				OrganizationID: tenant.OrgID,
@@ -141,27 +165,35 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 		}
 	}
 
-	forbidden := make(map[string]struct{}, 64)
-	for _, corpus := range []*retrievaltest.Corpus{sensitive, foreignDocs, foreignMail} {
-		for id := range corpus.Keys {
-			forbidden[id.String()] = struct{}{}
-		}
-	}
+	forbidden := idSet(sensitive, colleagueConversation, foreignDocs, foreignMail)
+	forbiddenInBackground := idSet(sensitive, colleagueConversation, ownConversation,
+		foreignDocs, foreignMail)
+	personDocs := &retrievaltest.Corpus{Keys: merged(own, ownConversation)}
 
-	tools := searchTools(t, searcher, permissions)
+	tools := searchTools(t, searcher, permissions, conversationrepository.NewThreadOwners(
+		conversationrepository.Params{DB: conn, Logger: zap.NewNop()},
+	))
 	queries := append(documents.Queries(), inbox.Queries()...)
 	for _, query := range queries {
 		assertNoLeak(t, leakCheck{
 			tool:      tools["search_documents"],
-			params:    params(query),
+			params:    params(serviceports.PrincipalTypeUser, query),
 			idField:   "documentId",
 			entity:    agent.TaintEntityDocument,
-			own:       own,
+			own:       personDocs,
 			forbidden: forbidden,
 		})
 		assertNoLeak(t, leakCheck{
+			tool:      tools["search_documents"],
+			params:    params(serviceports.PrincipalTypeAgent, query),
+			idField:   "documentId",
+			entity:    agent.TaintEntityDocument,
+			own:       own,
+			forbidden: forbiddenInBackground,
+		})
+		assertNoLeak(t, leakCheck{
 			tool:      tools["search_inbound_messages"],
-			params:    params(query),
+			params:    params(serviceports.PrincipalTypeUser, query),
 			idField:   "id",
 			entity:    agent.TaintEntityInboundMessage,
 			own:       ownMail,
@@ -170,16 +202,40 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 	}
 }
 
+func idSet(corpora ...*retrievaltest.Corpus) map[string]struct{} {
+	ids := make(map[string]struct{}, 64)
+	for _, corpus := range corpora {
+		for id := range corpus.Keys {
+			ids[id.String()] = struct{}{}
+		}
+	}
+
+	return ids
+}
+
+func merged(corpora ...*retrievaltest.Corpus) map[pulid.ID]string {
+	keys := make(map[pulid.ID]string, 64)
+	for _, corpus := range corpora {
+		for id, key := range corpus.Keys {
+			keys[id] = key
+		}
+	}
+
+	return keys
+}
+
 func searchTools(
 	t *testing.T,
 	searcher serviceports.RetrievalSearcher,
 	permissions serviceports.PermissionEngine,
+	threads repositories.ThreadOwnerRepository,
 ) map[string]serviceports.AgentQueryTool {
 	t.Helper()
 
 	supplied := map[reflect.Type]reflect.Value{
-		reflect.TypeFor[serviceports.RetrievalSearcher](): reflect.ValueOf(searcher),
-		reflect.TypeFor[serviceports.PermissionEngine]():  reflect.ValueOf(permissions),
+		reflect.TypeFor[serviceports.RetrievalSearcher]():     reflect.ValueOf(searcher),
+		reflect.TypeFor[serviceports.PermissionEngine]():      reflect.ValueOf(permissions),
+		reflect.TypeFor[repositories.ThreadOwnerRepository](): reflect.ValueOf(threads),
 	}
 	tools := make(map[string]serviceports.AgentQueryTool, 2)
 	for _, provider := range agentquerytoolservice.ToolProviders() {
