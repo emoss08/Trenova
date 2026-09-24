@@ -343,7 +343,7 @@ func (s *Service) SubmitDraft(
 		return nil, multiErr
 	}
 
-	computation, err := s.computePreview(ctx, draftReq, true, entity.ID)
+	computation, err := s.computePreview(ctx, draftReq, entity.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -416,7 +416,7 @@ func (s *Service) Preview(
 		return nil, multiErr
 	}
 
-	computation, err := s.computePreview(ctx, req, false, pulid.ID(""))
+	computation, err := s.computePreview(ctx, req, pulid.ID(""))
 	if err != nil {
 		return nil, err
 	}
@@ -444,7 +444,7 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 		return existing, nil
 	}
 
-	computation, err := s.computePreview(ctx, req, true, pulid.ID(""))
+	computation, err := s.computePreview(ctx, req, pulid.ID(""))
 	if err != nil {
 		return nil, err
 	}
@@ -902,7 +902,6 @@ func (s *Service) GetOperationsSummary(
 func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 	ctx context.Context,
 	req *servicesports.InvoiceAdjustmentRequest,
-	checkAttachments bool,
 	excludeAdjustmentID pulid.ID,
 ) (*previewComputation, error) {
 	entity, err := s.invoiceRepo.GetByID(ctx, repositories.GetInvoiceByIDRequest{
@@ -953,9 +952,7 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 		control.AdjustmentReasonRequirement == tenant.RequirementPolicyRequired {
 		appendPreviewError(preview, "reason", "Adjustment reason is required by policy")
 	}
-	if checkAttachments {
-		s.validateAttachments(ctx, req, preview)
-	}
+	s.validateAttachments(ctx, req, preview)
 
 	switch {
 	case entity.CorrectionGroupID.IsNotNil():
@@ -1866,7 +1863,7 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 	}
 	req.TenantInfo = tenantInfo
 
-	computation, err := s.computePreview(ctx, req, true, adjustment.ID)
+	computation, err := s.computePreview(ctx, req, adjustment.ID)
 	if err != nil {
 		return nil, err
 	}
