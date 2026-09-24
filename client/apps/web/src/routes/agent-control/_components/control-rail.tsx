@@ -7,6 +7,7 @@ import {
   LayoutDashboardIcon,
   PlugZapIcon,
   PuzzleIcon,
+  ShieldCheckIcon,
 } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { AIControlTab } from "../ai-control-tabs";
@@ -18,6 +19,7 @@ const ICONS: Record<AIControlTab, typeof BotIcon> = {
   providers: PlugZapIcon,
   extensions: PuzzleIcon,
   memory: BrainIcon,
+  safety: ShieldCheckIcon,
   activity: ActivityIcon,
 };
 
@@ -135,5 +137,6 @@ const LABELS: Record<AIControlTab, string> = {
   providers: "Providers",
   extensions: "Extensions",
   memory: "Memory",
+  safety: "Safety",
   activity: "Activity",
 };

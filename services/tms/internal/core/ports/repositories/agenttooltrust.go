@@ -23,6 +23,11 @@ type ListToolTrustRequest struct {
 	AgentDefinitionID pulid.ID
 }
 
+type ListToolTrustByDefinitionsRequest struct {
+	TenantInfo         pagination.TenantInfo
+	AgentDefinitionIDs []pulid.ID
+}
+
 // MarkToolTierChangeRequest records that the ledger moved the tool to a
 // tier, or took one back. A promotion starts a fresh streak; a demotion
 // clears the earned tier so anything further has to be re-earned.
@@ -44,5 +49,9 @@ type MarkToolTierChangeRequest struct {
 type AgentToolTrustRepository interface {
 	Record(ctx context.Context, req RecordToolTrustRequest) (*agent.ToolTrust, error)
 	ListByDefinition(ctx context.Context, req ListToolTrustRequest) ([]*agent.ToolTrust, error)
+	ListByDefinitionIDs(
+		ctx context.Context,
+		req ListToolTrustByDefinitionsRequest,
+	) (map[pulid.ID][]*agent.ToolTrust, error)
 	MarkTierChange(ctx context.Context, req MarkToolTierChangeRequest) (*agent.ToolTrust, error)
 }

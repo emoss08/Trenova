@@ -1,0 +1,82 @@
+fragment AgentToolPolicyFields on AgentToolPolicy {
+  name
+  title
+  kind
+  needs {
+    resource
+    operation
+  }
+  scope
+  defaultTier
+  maxTier
+  promotableTier
+  egress
+  leavesOrganization
+  hasClassify
+  hasCondition
+  conditionDescription
+  personalExemption
+  effect
+  artifact
+  reversible
+  idempotent
+  readsExternal
+  source
+  carriesTaint
+  rationale
+  explanation
+}
+
+fragment AgentToolAutonomyFields on AgentToolAutonomy {
+  answer
+  tier
+  heldBy
+  earned
+  approvalsToNext
+}
+
+fragment AgentSafetyFields on AgentSafety {
+  agentId
+  organizationShadow
+  agent {
+    id
+    name
+    enabled
+    shadowMode
+    simulationMode
+    autonomyCeiling
+    triggerMode
+  }
+  tools {
+    policyName
+    clean {
+      ...AgentToolAutonomyFields
+    }
+    tainted {
+      ...AgentToolAutonomyFields
+    }
+  }
+  reach {
+    accessMode
+    roles {
+      id
+      name
+    }
+    warnings {
+      kind
+      tools
+    }
+  }
+}
+
+query AgentToolPolicies {
+  agentToolPolicies {
+    ...AgentToolPolicyFields
+  }
+}
+
+query AgentSafety($agentIds: [ID!]) {
+  agentSafety(agentIds: $agentIds) {
+    ...AgentSafetyFields
+  }
+}

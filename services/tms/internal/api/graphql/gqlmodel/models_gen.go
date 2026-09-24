@@ -386,6 +386,14 @@ type AgentProposalEdge struct {
 	Cursor string               `json:"cursor"`
 }
 
+// Who can reach an agent.
+type AgentReach struct {
+	AccessMode agentdefinition.AccessMode `json:"accessMode"`
+	// The roles granted the agent. Empty for a reader who may not read roles.
+	Roles    []*permission.Role            `json:"roles"`
+	Warnings []*services.AgentReachWarning `json:"warnings"`
+}
+
 type AgentRunConnection struct {
 	Edges      []*AgentRunEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
@@ -447,6 +455,49 @@ type AgentScorecard struct {
 type AgentScorecardInput struct {
 	AgentDefinitionID string                 `json:"agentDefinitionId"`
 	Window            *agent.ScorecardWindow `json:"window,omitempty"`
+}
+
+// One tool's safety policy, as declared in code.
+type AgentToolPolicy struct {
+	Name  string         `json:"name"`
+	Title string         `json:"title"`
+	Kind  agent.ToolKind `json:"kind"`
+	// Null for a tool that acts only on the caller's own records and needs no grant.
+	Needs       *AgentToolRequirement `json:"needs,omitempty"`
+	Scope       agent.ToolScope       `json:"scope"`
+	DefaultTier agent.AutonomyTier    `json:"defaultTier"`
+	MaxTier     agent.AutonomyTier    `json:"maxTier"`
+	// The most any agent may run it at: its max tier, held to approval when its work leaves the organization.
+	PromotableTier agent.AutonomyTier  `json:"promotableTier"`
+	Egress         []agent.EgressClass `json:"egress"`
+	// Some of its work can leave the organization.
+	LeavesOrganization bool `json:"leavesOrganization"`
+	// Each call is classified by what it reaches, so one call may go further than another.
+	HasClassify bool `json:"hasClassify"`
+	// A condition the call's record must meet decides how far it may go.
+	HasCondition         bool    `json:"hasCondition"`
+	ConditionDescription *string `json:"conditionDescription,omitempty"`
+	// A call that changes only the caller's own records runs without a decision while they are present.
+	PersonalExemption bool             `json:"personalExemption"`
+	Effect            agent.ToolEffect `json:"effect"`
+	// The record the tool produces or changes; empty when none.
+	Artifact      string             `json:"artifact"`
+	Reversible    bool               `json:"reversible"`
+	Idempotent    bool               `json:"idempotent"`
+	ReadsExternal agent.ExternalRead `json:"readsExternal"`
+	// Where outside text in its result comes from; null when it reads none.
+	Source *agent.TaintSource `json:"source,omitempty"`
+	// Its result can carry outside text into a later run.
+	CarriesTaint bool   `json:"carriesTaint"`
+	Rationale    string `json:"rationale"`
+	// The policy in a sentence or two, as the agent's page shows it.
+	Explanation string `json:"explanation"`
+}
+
+// The permission a person needs of their own to use a tool through an agent.
+type AgentToolRequirement struct {
+	Resource  string `json:"resource"`
+	Operation string `json:"operation"`
 }
 
 // What one tool has earned on this agent.

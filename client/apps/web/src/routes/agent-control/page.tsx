@@ -24,6 +24,7 @@ const AgentsTab = lazy(() => import("./_components/agents/agents-tab"));
 const ProvidersTab = lazy(() => import("./_components/providers/providers-tab"));
 const ExtensionsTab = lazy(() => import("./_components/extensions/extensions-tab"));
 const MemoryTab = lazy(() => import("./_components/memory/memory-tab"));
+const SafetyTab = lazy(() => import("./_components/safety/safety-tab"));
 const ActivityTab = lazy(() => import("./_components/activity/activity-tab"));
 
 /**
@@ -79,6 +80,7 @@ export function AgentControlPage() {
           proposals: canReadProposals,
           exceptions: canReadExceptions,
           memory: canReadMemory,
+          safety: canReadAgents,
         },
         t,
       ),
@@ -149,6 +151,7 @@ export function AgentControlPage() {
             {activeTab === "providers" && <ProvidersTab />}
             {activeTab === "extensions" && <ExtensionsTab />}
             {activeTab === "memory" && <MemoryTab />}
+            {activeTab === "safety" && <SafetyTab />}
             {activeTab === "activity" && <ActivityTab view={activeView} />}
           </DataTableLazyComponent>
         </div>

@@ -262,12 +262,12 @@ func (s *Service) promote(
 			"%s now runs %s at \"%s\"",
 			change.definition.Name,
 			stringutils.HumanizeSnakeCase(change.row.ToolName),
-			tierLabel(next),
+			next.Label(),
 		),
 		message: fmt.Sprintf(
 			"%d approvals in a row without a change met the organization's threshold of %d, "+
 				"so the tool moved up from \"%s\". A rejection or a failed run takes it back.",
-			change.row.Streak, control.PromotionThreshold, tierLabel(change.current),
+			change.row.Streak, control.PromotionThreshold, change.current.Label(),
 		),
 	})
 
@@ -299,13 +299,13 @@ func (s *Service) demote(ctx context.Context, change tierChange) error {
 		title: fmt.Sprintf(
 			"%s lost \"%s\" on %s",
 			change.definition.Name,
-			tierLabel(change.current),
+			change.current.Label(),
 			stringutils.HumanizeSnakeCase(change.row.ToolName),
 		),
 		message: fmt.Sprintf(
 			"The tier was earned from a streak of approvals, and a rejection or a failed run ended the streak. "+
 				"The tool is back at \"%s\" and must earn its way up again.",
-			tierLabel(previous),
+			previous.Label(),
 		),
 	})
 
@@ -495,16 +495,5 @@ func (s *Service) notify(
 			zap.String("agent", change.definition.ID.String()),
 			zap.Error(err),
 		)
-	}
-}
-
-func tierLabel(tier agent.AutonomyTier) string {
-	switch tier {
-	case agent.TierActWithApproval:
-		return "Ask first"
-	case agent.TierAutoExecute:
-		return "Automatic"
-	default:
-		return "Propose"
 	}
 }
