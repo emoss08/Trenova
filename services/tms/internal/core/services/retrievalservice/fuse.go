@@ -12,7 +12,7 @@ import (
 
 const (
 	DefaultRRFK            = rankfusion.DefaultK
-	DefaultSimilarityFloor = 0.5
+	DefaultSimilarityFloor = serviceports.DefaultCatalogSimilarityFloor
 	DefaultCandidateFactor = 4
 	DefaultMinCandidates   = 20
 )
