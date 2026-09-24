@@ -285,7 +285,7 @@ func TestRetrievalResolvers_ScopeEveryCallToTheCallersTenant(t *testing.T) {
 			require.Len(t, f.service.tenants, 1)
 			assert.Equal(
 				t,
-				pagination.TenantInfo{OrgID: f.orgID, BuID: f.buID},
+				pagination.TenantInfo{OrgID: f.orgID, BuID: f.buID, UserID: f.userID},
 				f.service.tenants[0],
 			)
 		})

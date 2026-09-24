@@ -199,10 +199,13 @@ type AIIndexEntryRepository interface {
 	MarkFailed(ctx context.Context, req MarkIndexEntriesRequest) (MarkIndexEntriesResult, error)
 	MarkSkipped(ctx context.Context, req MarkIndexEntriesRequest) (MarkIndexEntriesResult, error)
 	CountIndexEntries(ctx context.Context, req CountIndexEntriesRequest) ([]IndexEntryCount, error)
-	AverageIndexChunks(ctx context.Context, req AverageIndexChunksRequest) (IndexChunkAverage, error)
+	AverageIndexChunks(
+		ctx context.Context,
+		req *AverageIndexChunksRequest,
+	) (IndexChunkAverage, error)
 	ListErroredIndexEntries(
 		ctx context.Context,
-		req ListErroredIndexEntriesRequest,
+		req *ListErroredIndexEntriesRequest,
 	) ([]*airetrieval.IndexEntry, error)
 	FindStaleSources(
 		ctx context.Context,

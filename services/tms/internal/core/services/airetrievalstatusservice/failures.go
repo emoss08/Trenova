@@ -143,7 +143,7 @@ func (s *Service) ListFailedEntries(
 	if keys := settings.IndexedModelKeys(); len(keys) > 0 {
 		entries, lerr := s.repo.ListErroredIndexEntries(
 			ctx,
-			repositories.ListErroredIndexEntriesRequest{
+			&repositories.ListErroredIndexEntriesRequest{
 				TenantInfo: req.TenantInfo,
 				SourceType: req.SourceType,
 				ModelKeys:  keys,

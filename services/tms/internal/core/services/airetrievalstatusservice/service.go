@@ -53,7 +53,7 @@ type Service struct {
 	now        func() int64
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
 		l:          p.Logger.Named("service.ai-retrieval-status"),
 		repo:       p.Repo,
@@ -430,6 +430,11 @@ func ReindexRefusal(
 		return errortypes.NewBusinessError(
 			"No provider is routed the Embedding task, so nothing can be indexed. Route it on the Providers tab.",
 		)
+	case airetrieval.UnavailableReasonDisabled,
+		airetrieval.UnavailableReasonBudgetPaused,
+		airetrieval.UnavailableReasonNotIndexed,
+		airetrieval.UnavailableReasonQueryTimeout,
+		airetrieval.UnavailableReasonProviderFailed:
 	}
 
 	if !settings.HasActiveModel() {
@@ -447,9 +452,10 @@ func sourceOffRefusal(sourceType airetrieval.SourceType) error {
 		return errortypes.NewBusinessError("Turn memories on before re-indexing them.")
 	case airetrieval.SourceTypeDocument:
 		return errortypes.NewBusinessError("Turn documents on before re-indexing them.")
-	default:
-		return errortypes.NewBusinessError("Turn inbound email on before re-indexing it.")
+	case airetrieval.SourceTypeInboundMessage:
 	}
+
+	return errortypes.NewBusinessError("Turn inbound email on before re-indexing it.")
 }
 
 func SourceLabel(sourceType airetrieval.SourceType) string {
