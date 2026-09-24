@@ -3,7 +3,11 @@ import type {
   AgentQualityRow,
   AgentSuiteRun,
   AgentSuiteRunCase,
+  AgentSuiteRunCaseRow,
+  AgentSuiteRunRow,
   AgentSuiteRunStatus,
+  AgentWorstRatedAnswer,
+  AgentWorstRatedRow,
 } from "@/lib/graphql/agent-quality";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -12,13 +16,17 @@ import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
+import { evaluationStatusChoices } from "../activity/agent-badges";
 import { readCaseChecks } from "./cases/case-checks";
 import {
   SUITE_RUN_STATUS,
+  TARGET_TYPE_LABEL,
   formatDelta,
   formatShare,
   formatUsd,
   sparklineValues,
+  suiteRunStatusChoices,
+  targetTypeChoices,
 } from "./quality-model";
 
 const RUN_TIME_FORMAT = {
@@ -27,6 +35,8 @@ const RUN_TIME_FORMAT = {
   hour: "numeric",
   minute: "2-digit",
 } as const;
+
+const RATED_FORMAT = { month: "short", day: "numeric" } as const;
 
 const DELTA_TONE = {
   success: "text-success-foreground",
@@ -107,11 +117,18 @@ function SatisfactionCell({ row }: { row: AgentQualityRow }) {
   );
 }
 
-/** Every agent, one line an agent: how people rate it and how it scores. */
-export function agentQualityColumns(t: TranslateFn): ColumnDef<AgentQualityRow>[] {
+/**
+ * Every agent, one line an agent: how people rate it and how it scores. What
+ * a column is filtered or sorted by is the server's field for it, so the
+ * table's builders offer only what the server can answer.
+ */
+export function getAgentQualityColumns(
+  t: TranslateFn,
+  ratingsVisible: boolean,
+): ColumnDef<AgentQualityRow>[] {
   return [
     {
-      id: "agent",
+      accessorKey: "name",
       header: t("Agent"),
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-2">
@@ -123,40 +140,117 @@ export function agentQualityColumns(t: TranslateFn): ColumnDef<AgentQualityRow>[
           ) : null}
         </div>
       ),
-      meta: { cellClassName: "max-w-64" },
+      size: 240,
+      meta: {
+        label: t("Agent"),
+        apiField: "name",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+      },
     },
     {
-      id: "satisfaction",
+      accessorKey: "enabled",
+      header: t("On"),
+      cell: ({ row }) => (row.original.enabled ? t("Yes") : t("No")),
+      size: 80,
+      meta: {
+        label: t("On"),
+        apiField: "enabled",
+        filterable: true,
+        sortable: true,
+        filterType: "boolean",
+      },
+    },
+    {
+      accessorKey: "satisfaction",
       header: t("Satisfaction"),
       cell: ({ row }) => <SatisfactionCell row={row.original} />,
+      size: 150,
+      meta: {
+        label: t("Satisfaction"),
+        apiField: "satisfaction",
+        filterable: false,
+        sortable: ratingsVisible,
+      },
     },
     {
-      id: "quality",
+      accessorKey: "qualityScore",
       header: t("Quality score"),
       cell: ({ row }) => <QualityLineCell row={row.original} />,
+      size: 170,
+      meta: {
+        label: t("Quality score"),
+        apiField: "qualityScore",
+        filterable: false,
+        sortable: true,
+      },
+    },
+    {
+      accessorKey: "openRegression",
+      header: t("Regressed"),
+      cell: ({ row }) => (row.original.openRegression ? t("Yes") : t("No")),
+      size: 110,
+      meta: {
+        label: t("Regressed"),
+        apiField: "openRegression",
+        filterable: true,
+        sortable: true,
+        filterType: "boolean",
+      },
     },
     {
       id: "lastRun",
+      accessorFn: (row) => row.lastSuiteRun?.status ?? null,
       header: t("Last run"),
-      cell: ({ row }) => <LastRunCell run={row.original.lastSuiteRun} />,
+      cell: ({ row }) => <LastRunCell run={row.original.lastSuiteRun ?? null} />,
+      size: 190,
+      meta: {
+        label: t("Last run"),
+        apiField: "lastRunStatus",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: suiteRunStatusChoices(t),
+        defaultFilterOperator: "eq",
+      },
     },
   ];
 }
 
-/** An agent's suite runs, newest first. */
-export function suiteRunColumns(t: TranslateFn): ColumnDef<AgentSuiteRun>[] {
+/** Suite runs, newest first unless sorted. */
+export function getSuiteRunColumns(t: TranslateFn): ColumnDef<AgentSuiteRunRow>[] {
   return [
     {
-      id: "started",
+      accessorKey: "startedAt",
       header: t("Started"),
       cell: ({ row }) => (
         <span className="tabular-nums">
           {formatUnixInUserTimezone(row.original.startedAt, RUN_TIME_FORMAT)}
         </span>
       ),
+      size: 160,
+      meta: {
+        label: t("Started"),
+        apiField: "startedAt",
+        filterable: true,
+        sortable: true,
+        filterType: "date",
+      },
     },
     {
-      id: "status",
+      accessorKey: "agentName",
+      header: t("Agent"),
+      cell: ({ row }) => <span className="truncate">{row.original.agentName}</span>,
+      size: 200,
+      meta: {
+        label: t("Agent"),
+        filterable: false,
+        sortable: false,
+      },
+    },
+    {
+      accessorKey: "status",
       header: t("Status"),
       cell: ({ row }) => (
         <div className="flex items-center gap-1.5">
@@ -164,16 +258,46 @@ export function suiteRunColumns(t: TranslateFn): ColumnDef<AgentSuiteRun>[] {
           {row.original.regression ? <Badge variant="danger">{t("Regressed")}</Badge> : null}
         </div>
       ),
+      size: 190,
+      meta: {
+        label: t("Status"),
+        apiField: "status",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: suiteRunStatusChoices(t),
+        defaultFilterOperator: "eq",
+      },
     },
     {
-      id: "score",
+      accessorKey: "regression",
+      header: t("Regressed"),
+      cell: ({ row }) => (row.original.regression ? t("Yes") : t("No")),
+      size: 110,
+      meta: {
+        label: t("Regressed"),
+        apiField: "regression",
+        filterable: true,
+        sortable: true,
+        filterType: "boolean",
+      },
+    },
+    {
+      accessorKey: "qualityScore",
       header: t("Quality score"),
       cell: ({ row }) => (
         <span className="tabular-nums">{formatShare(row.original.qualityScore)}</span>
       ),
+      size: 130,
+      meta: {
+        label: t("Quality score"),
+        apiField: "qualityScore",
+        filterable: false,
+        sortable: true,
+      },
     },
     {
-      id: "cases",
+      accessorKey: "casesFailed",
       header: t("Cases"),
       cell: ({ row }) => (
         <span className="text-muted-foreground tabular-nums">
@@ -185,11 +309,39 @@ export function suiteRunColumns(t: TranslateFn): ColumnDef<AgentSuiteRun>[] {
           )}
         </span>
       ),
+      size: 220,
+      meta: {
+        label: t("Cases failed"),
+        apiField: "casesFailed",
+        filterable: true,
+        sortable: true,
+        filterType: "number",
+      },
     },
     {
-      id: "cost",
+      accessorKey: "changeSummary",
+      header: t("What changed"),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground line-clamp-2">{row.original.changeSummary}</span>
+      ),
+      size: 280,
+      meta: {
+        label: t("What changed"),
+        filterable: false,
+        sortable: false,
+      },
+    },
+    {
+      accessorKey: "costUsd",
       header: t("Cost"),
       cell: ({ row }) => <span className="tabular-nums">{formatUsd(row.original.costUsd)}</span>,
+      size: 110,
+      meta: {
+        label: t("Cost"),
+        apiField: "costUsd",
+        filterable: false,
+        sortable: true,
+      },
     },
   ];
 }
@@ -214,29 +366,54 @@ function judgeScore(value: unknown): number | null {
 
 export const readJudge = (value: unknown) => ({ note: judgeNote(value), score: judgeScore(value) });
 
-/** One suite run's cases in the order they were asked. */
-export function suiteCaseColumns(t: TranslateFn): ColumnDef<AgentSuiteRunCase>[] {
+/** One suite run's cases, in the order they were asked unless sorted. */
+export function getSuiteCaseColumns(t: TranslateFn): ColumnDef<AgentSuiteRunCaseRow>[] {
   return [
     {
-      id: "ordinal",
+      accessorKey: "suiteOrdinal",
       header: t("Case"),
       cell: ({ row }) => <span className="tabular-nums">{row.original.suiteOrdinal ?? "—"}</span>,
-      meta: { headerClassName: "w-14", cellClassName: "w-14" },
+      size: 80,
+      meta: {
+        label: t("Case"),
+        apiField: "suiteOrdinal",
+        filterable: true,
+        sortable: true,
+        filterType: "number",
+      },
     },
     {
-      id: "result",
+      accessorKey: "status",
       header: t("Result"),
       cell: ({ row }) => <CaseResultCell evaluation={row.original} />,
+      size: 190,
+      meta: {
+        label: t("Result"),
+        apiField: "status",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: evaluationStatusChoices,
+        defaultFilterOperator: "eq",
+      },
     },
     {
-      id: "score",
+      accessorKey: "caseScore",
       header: t("Score"),
       cell: ({ row }) => (
         <span className="tabular-nums">{formatShare(row.original.caseScore ?? null)}</span>
       ),
+      size: 100,
+      meta: {
+        label: t("Score"),
+        apiField: "caseScore",
+        filterable: false,
+        sortable: true,
+      },
     },
     {
       id: "judge",
+      accessorFn: (row) => readJudge(row.judge).score,
       header: t("Judge"),
       cell: ({ row }) => {
         const judge = readJudge(row.original.judge);
@@ -246,6 +423,27 @@ export function suiteCaseColumns(t: TranslateFn): ColumnDef<AgentSuiteRunCase>[]
         ) : (
           <span className="tabular-nums">{formatShare(judge.score)}</span>
         );
+      },
+      size: 110,
+      meta: {
+        label: t("Judge"),
+        filterable: false,
+        sortable: false,
+      },
+    },
+    {
+      accessorKey: "model",
+      header: t("Model"),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground font-mono text-xs">{row.original.model || "—"}</span>
+      ),
+      size: 180,
+      meta: {
+        label: t("Model"),
+        apiField: "model",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
       },
     },
   ];
@@ -272,4 +470,94 @@ function CaseResultCell({ evaluation }: { evaluation: AgentSuiteRunCase }) {
   ) : (
     <Badge variant="warning">{t("Below the pass mark")}</Badge>
   );
+}
+
+/** What was asked, or a note that it was not kept. */
+export function answerQuestion(answer: AgentWorstRatedAnswer): string {
+  return answer.sample?.turnSnapshot?.question.trim() ?? "";
+}
+
+/** The answers people liked least, most disliked first unless sorted. */
+export function getWorstRatedColumns(t: TranslateFn): ColumnDef<AgentWorstRatedRow>[] {
+  return [
+    {
+      id: "question",
+      accessorFn: (row) => answerQuestion(row),
+      header: t("Question"),
+      cell: ({ row }) => (
+        <span className="line-clamp-2">
+          {answerQuestion(row.original) || t("What was asked was not kept")}
+        </span>
+      ),
+      size: 380,
+      meta: {
+        label: t("Question"),
+        apiField: "question",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+      },
+    },
+    {
+      accessorKey: "agentName",
+      header: t("Agent"),
+      cell: ({ row }) => <span className="truncate">{row.original.agentName || "—"}</span>,
+      size: 180,
+      meta: {
+        label: t("Agent"),
+        apiField: "agentName",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+      },
+    },
+    {
+      accessorKey: "targetType",
+      header: t("Answer type"),
+      cell: ({ row }) => t(TARGET_TYPE_LABEL[row.original.targetType]),
+      size: 170,
+      meta: {
+        label: t("Answer type"),
+        apiField: "targetType",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: targetTypeChoices(t),
+        defaultFilterOperator: "eq",
+      },
+    },
+    {
+      accessorKey: "negative",
+      header: t("Down / up"),
+      cell: ({ row }) => (
+        <span className="tabular-nums">
+          {row.original.negative} / {row.original.positive}
+        </span>
+      ),
+      size: 110,
+      meta: {
+        label: t("Thumbs down"),
+        apiField: "negative",
+        filterable: true,
+        sortable: true,
+        filterType: "number",
+      },
+    },
+    {
+      accessorKey: "lastRatedAt",
+      header: t("Last rated"),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground tabular-nums">
+          {formatUnixInUserTimezone(row.original.lastRatedAt, RATED_FORMAT)}
+        </span>
+      ),
+      size: 120,
+      meta: {
+        label: t("Last rated"),
+        apiField: "lastRatedAt",
+        filterable: false,
+        sortable: true,
+      },
+    },
+  ];
 }

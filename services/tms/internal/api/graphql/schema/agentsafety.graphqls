@@ -88,6 +88,8 @@ type AgentToolRequirement {
 
 "One tool's safety policy, as declared in code."
 type AgentToolPolicy {
+  "The tool's name, which keys its row."
+  id: ID!
   name: String!
   title: String!
   kind: AgentToolKind!
@@ -121,6 +123,12 @@ type AgentToolPolicy {
   rationale: String!
   "The policy in a sentence or two, as the agent's page shows it."
   explanation: String!
+  """
+  Whether the tool changes something and, on at least one of the
+  organization's agents, can do so without a person. Read only by
+  agentToolRuleConnection; null everywhere else.
+  """
+  runsWithoutPerson: Boolean
 }
 
 "What one tool does on one agent for a representative call."
@@ -141,6 +149,10 @@ type AgentToolAutonomy {
 
 "One tool an agent holds, before and after the run has read outside text."
 type AgentToolSafety {
+  "The agent and the tool together, which key the row."
+  id: ID!
+  agentId: ID!
+  agentName: String!
   policyName: String!
   "The rule the tool is held to, from the same catalog the runtime decides from."
   policy: AgentToolPolicy!
@@ -212,6 +224,18 @@ type AgentToolPolicyConnection {
   totalCount: Int
 }
 
+type AgentToolSafetyEdge {
+  node: AgentToolSafety!
+  cursor: String!
+}
+
+type AgentToolSafetyConnection {
+  edges: [AgentToolSafetyEdge!]!
+  pageInfo: PageInfo!
+  "Every held tool matching the filters. Counted only when selected."
+  totalCount: Int
+}
+
 "The figures that head the safety section, counted over every tool and agent."
 type AgentSafetySummary {
   "Every tool an agent can be given."
@@ -229,9 +253,26 @@ type AgentSafetySummary {
 extend type Query {
   "Every tool's safety policy, by name."
   agentToolPolicies: [AgentToolPolicy!]!
-    @deprecated(reason: "Use agentToolPolicyConnection, which pages and filters on the server.")
+    @deprecated(reason: "Use agentToolRuleConnection, which pages, filters and sorts on the server.")
   "The tool rules a page at a time, searched and filtered on the server."
   agentToolPolicyConnection(input: AgentToolPolicyConnectionInput!): AgentToolPolicyConnection!
+    @deprecated(reason: "Use agentToolRuleConnection, which takes the data table's filters and sort.")
+  """
+  The tool rules a page at a time. Filters on title, name, egress, maxTier,
+  resource, kind, readsExternal, leavesOrganization and runsWithoutPerson; sorts
+  on the same fields.
+  """
+  agentToolRuleConnection(input: DataTableConnectionInput!): AgentToolPolicyConnection!
+  """
+  Every tool the named agents hold, what each does before and after the run
+  has read outside text, a page at a time. Between one and ten agents. Filters
+  on agentId, agentName, title, policyName, egress, maxTier, kind, resource,
+  clean, tainted and heldBy.
+  """
+  agentToolSafetyConnection(
+    agentIds: [ID!]!
+    input: DataTableConnectionInput!
+  ): AgentToolSafetyConnection!
   "The safety figures, counted on the server so no client reads every rule to count them."
   agentSafetySummary: AgentSafetySummary!
   """

@@ -110,3 +110,12 @@ func EnumPtrValue[T ~string](v any) *T {
 	converted := T(value)
 	return &converted
 }
+
+func Pointers[T any](items []T) []*T {
+	out := make([]*T, len(items))
+	for idx := range items {
+		out[idx] = &items[idx]
+	}
+
+	return out
+}

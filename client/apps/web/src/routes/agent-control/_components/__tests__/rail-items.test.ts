@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildRailItems, type RailPermissions } from "../rail-items";
+import { buildRailItems, resolveRailView, type RailPermissions } from "../rail-items";
 
 const t = (text: string, ...args: (string | number)[]) =>
   text
@@ -20,6 +20,7 @@ const all: RailPermissions = {
   memory: true,
   safety: true,
   quality: true,
+  ratings: true,
 };
 
 const counts = {
@@ -138,7 +139,10 @@ describe("buildRailItems", () => {
       tab: "safety",
       status: "",
       attention: false,
-      children: [],
+      children: [
+        { view: "rules", label: "Tool rules" },
+        { view: "agents", label: "By agent" },
+      ],
     });
   });
 
@@ -160,7 +164,8 @@ describe("buildRailItems", () => {
   // scored worse after they changed, and draws the warning dot.
   it("calls for attention when an agent's quality regressed", () => {
     const quiet = buildRailItems(counts, all, t).find((item) => item.tab === "quality");
-    expect(quiet).toEqual({ tab: "quality", status: "", attention: false, children: [] });
+    expect(quiet?.status).toBe("");
+    expect(quiet?.attention).toBe(false);
 
     const one = buildRailItems({ ...counts, qualityRegressions: 1 }, all, t).find(
       (item) => item.tab === "quality",
@@ -174,10 +179,44 @@ describe("buildRailItems", () => {
     expect(two?.status).toBe("2 agents regressed");
   });
 
+  // Each quality table is its own view, so the section lists them; the
+  // answers people rated down are read under the right to read feedback.
+  it("lists the quality views, worst-rated answers only where feedback may be read", () => {
+    const views = (permissions: RailPermissions) =>
+      buildRailItems(counts, permissions, t)
+        .find((item) => item.tab === "quality")
+        ?.children.map((child) => child.view);
+
+    expect(views(all)).toEqual(["agents", "runs", "ratings", "golden", "settings"]);
+    expect(views({ ...all, ratings: false })).toEqual(["agents", "runs", "golden", "settings"]);
+  });
+
   it("lists quality only where the golden set may be read", () => {
     const items = buildRailItems(counts, { ...all, quality: false }, t);
 
     expect(items.map((item) => item.tab)).not.toContain("quality");
     expect(items.at(-1)?.tab).toBe("activity");
+  });
+});
+
+describe("resolveRailView", () => {
+  const items = buildRailItems(counts, { ...all, ratings: false }, t);
+  const item = (tab: string) => items.find((entry) => entry.tab === tab);
+
+  it("opens the view asked for when the row offers it", () => {
+    expect(resolveRailView(item("safety"), "agents")).toBe("agents");
+    expect(resolveRailView(item("quality"), "runs")).toBe("runs");
+  });
+
+  // A link can name a view the reader may not open; the row's first view is
+  // shown instead of an empty section.
+  it("falls back to the row's first view", () => {
+    expect(resolveRailView(item("quality"), "ratings")).toBe("agents");
+    expect(resolveRailView(item("safety"), null)).toBe("rules");
+  });
+
+  it("has no view for a row without views", () => {
+    expect(resolveRailView(item("memory"), "runs")).toBeNull();
+    expect(resolveRailView(undefined, "runs")).toBeNull();
   });
 });

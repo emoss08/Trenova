@@ -8,10 +8,12 @@ package resolver
 import (
 	"context"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentsafetyservice"
 )
 
 func (r *agentSafetyResolver) AgentID(ctx context.Context, obj *services.AgentSafetySubject) (string, error) {
@@ -34,6 +36,14 @@ func (r *agentSafetyResolver) Reach(ctx context.Context, obj *services.AgentSafe
 	return r.agentSafetyReach(ctx, obj)
 }
 
+func (r *agentToolSafetyResolver) ID(ctx context.Context, obj *services.AgentToolSafety) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+
+	return obj.RowID(), nil
+}
+
 func (r *agentToolSafetyResolver) Policy(ctx context.Context, obj *services.AgentToolSafety) (*gqlmodel.AgentToolPolicy, error) {
 	return r.agentToolSafetyPolicy(obj)
 }
@@ -52,16 +62,62 @@ func (r *queryResolver) AgentToolPolicyConnection(ctx context.Context, input gql
 		return nil, err
 	}
 
-	req := toolPolicyConnectionRequest(&input)
-	req.TenantInfo = tenantInfo(authCtx)
-	req.IncludeTotalCount = connectionFieldRequested(ctx, connectionTotalCountField)
+	table := toolPolicyConnectionRequest(&input)
+	table.IncludeTotalCount = connectionFieldRequested(ctx, connectionTotalCountField)
 
-	page, err := r.agentSafetyService.ListToolPolicies(ctx, req)
+	page, err := r.agentSafetyService.ListToolPolicies(ctx, &services.ListAgentToolPoliciesRequest{
+		TenantInfo: tenantInfo(authCtx),
+		Table:      table,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	return toolPolicyPageToModel(page), nil
+}
+
+func (r *queryResolver) AgentToolRuleConnection(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolPolicyConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	page, err := r.agentSafetyService.ListToolPolicies(ctx, &services.ListAgentToolPoliciesRequest{
+		TenantInfo: tenantInfo(authCtx),
+		Table:      memtableRequestFromGraphQL(ctx, &input),
+		WithAttendance: graphql.FieldRequested(
+			ctx,
+			"edges.node."+agentsafetyservice.FieldRunsWithoutPerson,
+		),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return toolPolicyPageToModel(page), nil
+}
+
+func (r *queryResolver) AgentToolSafetyConnection(ctx context.Context, agentIds []string, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentToolSafetyConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	ids, err := parseIDs(agentIds)
+	if err != nil {
+		return nil, err
+	}
+
+	page, err := r.agentSafetyService.ListAgentTools(ctx, &services.ListAgentToolSafetyRequest{
+		TenantInfo: tenantInfo(authCtx),
+		AgentIDs:   ids,
+		Table:      memtableRequestFromGraphQL(ctx, &input),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return agentToolSafetyPageToModel(page), nil
 }
 
 func (r *queryResolver) AgentSafetySummary(ctx context.Context) (*services.AgentSafetySummary, error) {

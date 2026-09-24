@@ -5,35 +5,26 @@ import (
 	"context"
 	"slices"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/memtable"
 )
 
 const (
-	DefaultToolPolicyPageSize = 25
-	GeneralResource           = "general"
-	MaxToolPolicyQueryLength  = 200
-	toolPolicyCursorScope     = "agent_tool_policy"
+	GeneralResource        = "general"
+	FieldRunsWithoutPerson = "runsWithoutPerson"
+	toolRuleCursorScope    = "agent_tool_rule"
 )
 
 type policyEntry struct {
 	view     services.AgentToolPolicyView
-	search   string
 	resource string
 }
 
-type policyFilter struct {
-	query      string
-	egress     agent.EgressClass
-	resource   string
-	kind       agent.ToolKind
-	unattended map[string]struct{}
-	wantAlone  bool
-	byAlone    bool
+type toolRuleRow struct {
+	entry *policyEntry
+	alone bool
 }
 
 func (s *Service) indexPolicies(views []services.AgentToolPolicyView) {
@@ -52,7 +43,6 @@ func (s *Service) indexPolicies(views []services.AgentToolPolicyView) {
 
 		entry := policyEntry{
 			view:     view,
-			search:   strings.ToLower(view.Policy.Name + "\x00" + view.Title),
 			resource: GeneralResource,
 		}
 		if view.Needs != nil {
@@ -69,6 +59,9 @@ func (s *Service) indexPolicies(views []services.AgentToolPolicyView) {
 		s.resources = append(s.resources, resource)
 	}
 	slices.Sort(s.resources)
+
+	s.toolRules = newToolRuleTable(s.resources)
+	s.agentTools = newAgentToolTable(s.resources)
 }
 
 func (s *Service) ListToolPolicies(
@@ -79,152 +72,230 @@ func (s *Service) ListToolPolicies(
 		req = &services.ListAgentToolPoliciesRequest{}
 	}
 
-	filter, err := s.policyFilter(ctx, req)
-	if err != nil {
-		return nil, err
+	rows := make([]toolRuleRow, len(s.entries))
+	for idx := range s.entries {
+		rows[idx].entry = &s.entries[idx]
 	}
 
-	start, err := s.startAfter(req.After)
-	if err != nil {
-		return nil, err
-	}
-
-	limit := toolPolicyPageSize(req.First)
-	page := &services.AgentToolPolicyPage{
-		Edges: make([]services.AgentToolPolicyEdge, 0, min(limit, len(s.entries))),
-	}
-
-	from := start
-	if req.IncludeTotalCount {
-		from = 0
-	}
-
-	total := 0
-	for idx := from; idx < len(s.entries); idx++ {
-		entry := &s.entries[idx]
-		if !filter.matches(entry) {
-			continue
-		}
-		total++
-		if idx < start {
-			continue
-		}
-		if len(page.Edges) < limit {
-			page.Edges = append(page.Edges, services.AgentToolPolicyEdge{
-				View:   entry.view,
-				Cursor: pagination.EncodeKeyCursor(toolPolicyCursorScope, entry.view.Policy.Name),
-			})
-			continue
-		}
-
-		page.HasNextPage = true
-		if !req.IncludeTotalCount {
-			break
-		}
-	}
-
-	if req.IncludeTotalCount {
-		page.TotalCount = &total
-	}
-
-	return page, nil
-}
-
-func (s *Service) policyFilter(
-	ctx context.Context,
-	req *services.ListAgentToolPoliciesRequest,
-) (*policyFilter, error) {
-	query := strings.TrimSpace(req.Query)
-	multiErr := errortypes.NewMultiError()
-	if utf8.RuneCountInString(query) > MaxToolPolicyQueryLength {
-		multiErr.Add("query", errortypes.ErrInvalid,
-			"Search must be at most 200 characters")
-	}
-	if req.Egress != "" && !req.Egress.IsValid() {
-		multiErr.Add("egress", errortypes.ErrInvalid, "Class is not recognized")
-	}
-	if req.Kind != "" && !req.Kind.IsValid() {
-		multiErr.Add("kind", errortypes.ErrInvalid, "Kind is not recognized")
-	}
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	filter := &policyFilter{
-		query:    strings.ToLower(query),
-		egress:   req.Egress,
-		resource: strings.TrimSpace(req.Resource),
-		kind:     req.Kind,
-	}
-	if req.RunsWithoutPerson != nil {
+	attended := req.WithAttendance || s.toolRules.References(&req.Table, FieldRunsWithoutPerson)
+	if attended {
 		survey, err := s.survey(ctx, req.TenantInfo)
 		if err != nil {
 			return nil, err
 		}
-		filter.byAlone = true
-		filter.wantAlone = *req.RunsWithoutPerson
-		filter.unattended = survey.unattended
-	}
-
-	return filter, nil
-}
-
-func (f *policyFilter) matches(entry *policyEntry) bool {
-	policy := &entry.view.Policy
-	if f.egress != "" && !slices.Contains(policy.Egress, f.egress) {
-		return false
-	}
-	if f.kind != "" && policy.Kind != f.kind {
-		return false
-	}
-	if f.resource != "" && entry.resource != f.resource {
-		return false
-	}
-	if f.query != "" && !strings.Contains(entry.search, f.query) {
-		return false
-	}
-	if f.byAlone {
-		_, alone := f.unattended[policy.Name]
-		if alone != f.wantAlone {
-			return false
+		for idx := range rows {
+			_, rows[idx].alone = survey.unattended[rows[idx].entry.view.Policy.Name]
 		}
 	}
 
-	return true
-}
-
-func (s *Service) startAfter(after string) (int, error) {
-	if after == "" {
-		return 0, nil
-	}
-
-	name, err := pagination.DecodeKeyCursor(toolPolicyCursorScope, after)
+	page, err := s.toolRules.List(rows, &req.Table)
 	if err != nil {
-		return 0, errortypes.NewValidationError(
-			"after",
-			errortypes.ErrInvalidFormat,
-			"Cursor is invalid",
-		)
+		return nil, err
 	}
 
-	idx, found := slices.BinarySearchFunc(
-		s.entries,
-		name,
-		func(entry policyEntry, target string) int {
-			return cmp.Compare(entry.view.Policy.Name, target)
-		},
-	)
-	if found {
-		idx++
+	out := &services.AgentToolPolicyPage{
+		Edges:       make([]services.AgentToolPolicyEdge, 0, len(page.Items)),
+		HasNextPage: page.HasNextPage,
+		TotalCount:  page.TotalCount,
+	}
+	for idx, row := range page.Items {
+		edge := services.AgentToolPolicyEdge{
+			View:   row.entry.view,
+			Cursor: page.Cursors[idx],
+		}
+		if attended {
+			alone := row.alone
+			edge.RunsWithoutPerson = &alone
+		}
+		out.Edges = append(out.Edges, edge)
 	}
 
-	return idx, nil
+	return out, nil
 }
 
-func toolPolicyPageSize(first int) int {
-	if first <= 0 {
-		return DefaultToolPolicyPageSize
+func newToolRuleTable(resources []string) *memtable.Table[toolRuleRow] {
+	view := func(row *toolRuleRow) *services.AgentToolPolicyView { return &row.entry.view }
+
+	return memtable.New(memtable.Config[toolRuleRow]{
+		CursorScope: toolRuleCursorScope,
+		Search: func(row *toolRuleRow) string {
+			return row.entry.view.Policy.Name + "\x00" + row.entry.view.Title
+		},
+		Order: func(a, b *toolRuleRow) int {
+			return cmp.Compare(a.entry.view.Policy.Name, b.entry.view.Policy.Name)
+		},
+		Fields: []memtable.Field[toolRuleRow]{
+			{
+				Name:       "title",
+				Kind:       memtable.KindText,
+				Filterable: true,
+				Sortable:   true,
+				Text:       func(row *toolRuleRow) string { return view(row).Title },
+			},
+			{
+				Name:       "name",
+				Kind:       memtable.KindText,
+				Filterable: true,
+				Sortable:   true,
+				Text:       func(row *toolRuleRow) string { return view(row).Policy.Name },
+			},
+			policyEgressField(view),
+			policyTierField(view),
+			{
+				Name:       "resource",
+				Kind:       memtable.KindEnum,
+				Values:     resources,
+				Filterable: true,
+				Sortable:   true,
+				Text:       func(row *toolRuleRow) string { return row.entry.resource },
+			},
+			policyKindField(view),
+			policyExternalReadField(view),
+			{
+				Name:       "leavesOrganization",
+				Kind:       memtable.KindBoolean,
+				Filterable: true,
+				Sortable:   true,
+				Bool:       func(row *toolRuleRow) bool { return view(row).Leaves },
+			},
+			{
+				Name:       FieldRunsWithoutPerson,
+				Kind:       memtable.KindBoolean,
+				Filterable: true,
+				Sortable:   true,
+				Bool:       func(row *toolRuleRow) bool { return row.alone },
+			},
+		},
+	})
+}
+
+func policyEgressField[T any](
+	view func(*T) *services.AgentToolPolicyView,
+) memtable.Field[T] {
+	return memtable.Field[T]{
+		Name:       "egress",
+		Kind:       memtable.KindSet,
+		Values:     egressValues(),
+		Filterable: true,
+		Sortable:   true,
+		Set: func(row *T) []string {
+			return egressStrings(view(row).Policy.Egress)
+		},
+		Compare: func(a, b *T) int {
+			return cmp.Compare(egressRank(view(a).Policy.Egress), egressRank(view(b).Policy.Egress))
+		},
+	}
+}
+
+func policyTierField[T any](
+	view func(*T) *services.AgentToolPolicyView,
+) memtable.Field[T] {
+	return memtable.Field[T]{
+		Name: "maxTier",
+		Kind: memtable.KindEnum,
+		Values: []string{
+			string(agent.TierPropose),
+			string(agent.TierActWithApproval),
+			string(agent.TierAutoExecute),
+		},
+		Filterable: true,
+		Sortable:   true,
+		Text:       func(row *T) string { return string(view(row).Promotable) },
+		Compare: func(a, b *T) int {
+			return cmp.Compare(view(a).Promotable.Rank(), view(b).Promotable.Rank())
+		},
+	}
+}
+
+func policyKindField[T any](
+	view func(*T) *services.AgentToolPolicyView,
+) memtable.Field[T] {
+	return memtable.Field[T]{
+		Name: "kind",
+		Kind: memtable.KindEnum,
+		Values: []string{
+			agent.ToolKindQuery.String(),
+			agent.ToolKindAction.String(),
+			agent.ToolKindRuntime.String(),
+		},
+		Filterable: true,
+		Sortable:   true,
+		Text:       func(row *T) string { return view(row).Policy.Kind.String() },
+	}
+}
+
+func policyExternalReadField[T any](
+	view func(*T) *services.AgentToolPolicyView,
+) memtable.Field[T] {
+	return memtable.Field[T]{
+		Name: "readsExternal",
+		Kind: memtable.KindEnum,
+		Values: []string{
+			agent.ExternalReadNever.String(),
+			agent.ExternalReadAlways.String(),
+			agent.ExternalReadMarked.String(),
+		},
+		Filterable: true,
+		Sortable:   true,
+		Text: func(row *T) string {
+			read := view(row).Policy.ReadsExternal
+			if !read.IsValid() {
+				return agent.ExternalReadNever.String()
+			}
+
+			return read.String()
+		},
+		Compare: func(a, b *T) int {
+			return cmp.Compare(
+				externalReadRank(view(a).Policy.ReadsExternal),
+				externalReadRank(view(b).Policy.ReadsExternal),
+			)
+		},
+	}
+}
+
+func externalReadRank(read agent.ExternalRead) int {
+	switch read {
+	case agent.ExternalReadMarked:
+		return 1
+	case agent.ExternalReadAlways:
+		return 2
+	default:
+		return 0
+	}
+}
+
+func egressValues() []string {
+	classes := agent.EgressClasses()
+	out := make([]string, 0, len(classes))
+	for _, class := range classes {
+		out = append(out, class.String())
 	}
 
-	return pagination.ClampLimit(first)
+	return out
+}
+
+func egressStrings(classes []agent.EgressClass) []string {
+	out := make([]string, 0, len(classes))
+	for _, class := range classes {
+		out = append(out, class.String())
+	}
+
+	return out
+}
+
+func egressRank(classes []agent.EgressClass) int {
+	order := agent.EgressClasses()
+	rank := -1
+	for _, class := range classes {
+		if idx := slices.Index(order, class); idx > rank {
+			rank = idx
+		}
+	}
+
+	return rank
+}
+
+func compareFold(a, b string) int {
+	return cmp.Compare(strings.ToLower(a), strings.ToLower(b))
 }

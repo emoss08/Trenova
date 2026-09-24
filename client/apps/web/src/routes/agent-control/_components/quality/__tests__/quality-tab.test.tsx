@@ -3,17 +3,23 @@ import type {
   AgentQualityOverview,
   AgentQualityRow,
   AgentSuiteRun,
-  AgentWorstRatedAnswer,
-  QualityPage,
-  QualityPageRequest,
+  AgentSuiteRunRow,
+  AgentWorstRatedRow,
 } from "@/lib/graphql/agent-quality";
 import { stubLayout } from "@/test/layout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import type { ReactNode } from "react";
+import type {
+  ColumnDef,
+  DataTableGraphQLSource,
+  DataTablePanelProps,
+  RowAction,
+} from "@trenova/shared/types/data-table";
+import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
+import type { ComponentType, ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { QualityView } from "../../../ai-control-tabs";
 
 const permissions = vi.hoisted(() => ({ denied: new Set<string>() }));
 
@@ -30,29 +36,68 @@ vi.mock("../cases", () => ({
   EvalCasesTable: () => <p>Golden set table</p>,
 }));
 
+type StubTableProps = {
+  name: string;
+  graphql: DataTableGraphQLSource<Record<string, unknown>>;
+  columns: ColumnDef<Record<string, unknown>>[];
+  contextMenuActions?: RowAction<Record<string, unknown>>[];
+  TablePanel?: ComponentType<DataTablePanelProps<Record<string, unknown>>>;
+  enableReadOnlyPanel?: boolean;
+};
+
+/**
+ * The data table has its own tests; here it only has to show what the tab
+ * hands it: the rows a test gives it through the tab's own columns, and the
+ * tab's own panel on the row a test names.
+ */
+const table = vi.hoisted(() => ({
+  rows: [] as Record<string, unknown>[],
+  openRow: null as Record<string, unknown> | null,
+  props: [] as StubTableProps[],
+}));
+
+vi.mock("@/components/data-table/data-table", () => ({
+  DataTable: (props: StubTableProps) => {
+    table.props.push(props);
+    const { TablePanel } = props;
+    return (
+      <section aria-label={`${props.name} table`}>
+        <table>
+          <tbody>
+            {table.rows.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {props.columns.map((column, index) => (
+                  <td key={index}>
+                    {typeof column.cell === "function"
+                      ? (column.cell as (context: unknown) => ReactNode)({ row: { original: row } })
+                      : null}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {TablePanel && table.openRow ? (
+          <TablePanel open onOpenChange={() => {}} mode="edit" row={table.openRow} />
+        ) : null}
+      </section>
+    );
+  },
+}));
+
 const fetchAgentQualityOverview = vi.fn<() => Promise<AgentQualityOverview>>();
-const fetchAgentQualityAgents =
-  vi.fn<(page: QualityPageRequest) => Promise<QualityPage<AgentQualityRow>>>();
-const fetchAgentWorstRatedAnswers =
-  vi.fn<
-    (
-      agentId: string | null,
-      page: QualityPageRequest,
-    ) => Promise<QualityPage<AgentWorstRatedAnswer>>
-  >();
 const fetchAgentQualityControl = vi.fn<() => Promise<AgentQualityControl>>();
+const fetchAgentQuality = vi.fn();
+const fetchAgentSuiteRun = vi.fn();
 
 vi.mock("@/lib/graphql/agent-quality", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/graphql/agent-quality")>();
   return {
     ...actual,
     fetchAgentQualityOverview: () => fetchAgentQualityOverview(),
-    fetchAgentQualityAgents: (page: QualityPageRequest) => fetchAgentQualityAgents(page),
-    fetchAgentWorstRatedAnswers: (agentId: string | null, page: QualityPageRequest) =>
-      fetchAgentWorstRatedAnswers(agentId, page),
     fetchAgentQualityControl: () => fetchAgentQualityControl(),
-    fetchAgentQuality: vi.fn(() => new Promise(() => {})),
-    fetchAgentSuiteRuns: vi.fn(() => new Promise(() => {})),
+    fetchAgentQuality: (...args: unknown[]) => fetchAgentQuality(...args),
+    fetchAgentSuiteRun: (...args: unknown[]) => fetchAgentSuiteRun(...args),
   };
 });
 
@@ -64,9 +109,12 @@ beforeEach(() => {
   restoreLayout = stubLayout();
   permissions.denied.clear();
   fetchAgentQualityOverview.mockReset();
-  fetchAgentQualityAgents.mockReset();
-  fetchAgentWorstRatedAnswers.mockReset();
   fetchAgentQualityControl.mockReset();
+  fetchAgentQuality.mockReset();
+  fetchAgentSuiteRun.mockReset();
+  table.rows = [];
+  table.openRow = null;
+  table.props = [];
 });
 
 afterEach(() => {
@@ -97,7 +145,7 @@ const overview: AgentQualityOverview = {
   regressionThreshold: 0.1,
 };
 
-function suiteRun(overrides: Partial<AgentSuiteRun> = {}): AgentSuiteRun {
+function suiteRun(overrides: Partial<AgentSuiteRun> = {}): AgentSuiteRunRow {
   return {
     id: "asr_1",
     agentDefinitionId: "agdef_1",
@@ -125,11 +173,12 @@ function suiteRun(overrides: Partial<AgentSuiteRun> = {}): AgentSuiteRun {
     comments: "",
     requestedByUserId: null,
     ...overrides,
-  } as AgentSuiteRun;
+  } as AgentSuiteRunRow;
 }
 
 const rows: AgentQualityRow[] = [
   {
+    id: "agdef_1",
     agentDefinitionId: "agdef_1",
     name: "Billing desk",
     enabled: true,
@@ -146,6 +195,7 @@ const rows: AgentQualityRow[] = [
     lastSuiteRun: suiteRun(),
   } as AgentQualityRow,
   {
+    id: "agdef_2",
     agentDefinitionId: "agdef_2",
     name: "Dispatch desk",
     enabled: true,
@@ -177,37 +227,36 @@ const control: AgentQualityControl = {
   updatedAt: 0,
 } as AgentQualityControl;
 
-function renderTab() {
+function renderTab(view: QualityView, searchParams = "", onUrlUpdate?: OnUrlUpdateFunction) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={client}>
-      <NuqsTestingAdapter hasMemory>{children}</NuqsTestingAdapter>
+      <NuqsTestingAdapter hasMemory searchParams={searchParams} onUrlUpdate={onUrlUpdate}>
+        {children}
+      </NuqsTestingAdapter>
     </QueryClientProvider>
   );
-  return render(<QualityTab />, { wrapper });
+  return render(<QualityTab view={view} />, { wrapper });
+}
+
+function lastTable(): StubTableProps {
+  const props = table.props.at(-1);
+  if (!props) {
+    throw new Error("no table was drawn");
+  }
+  return props;
 }
 
 function primeDefaults() {
   fetchAgentQualityOverview.mockResolvedValue(overview);
-  fetchAgentQualityAgents.mockResolvedValue({
-    items: rows,
-    endCursor: "c2",
-    hasNextPage: true,
-    totalCount: 30,
-  });
-  fetchAgentWorstRatedAnswers.mockResolvedValue({
-    items: [],
-    endCursor: null,
-    hasNextPage: false,
-    totalCount: null,
-  });
   fetchAgentQualityControl.mockResolvedValue(control);
+  fetchAgentQuality.mockReturnValue(new Promise(() => {}));
 }
 
 describe("QualityTab", () => {
   it("shows the organization's quality in five figures", async () => {
     primeDefaults();
-    renderTab();
+    renderTab("agents");
 
     const figures = await screen.findByRole("group", { name: "AI quality figures" });
     await within(figures).findByText("82%");
@@ -218,73 +267,159 @@ describe("QualityTab", () => {
     expect(within(figures).getByText("1 agent still regressed")).toBeTruthy();
   });
 
-  it("pages the agents on the server and draws each one's last run as a phase", async () => {
-    primeDefaults();
-    renderTab();
-
-    const table = await screen.findByRole("table", { name: "Agents" });
-    await within(table).findByText("Billing desk");
-    expect(within(table).getByText("Completed")).toBeTruthy();
-    expect(within(table).getByText("Budget stopped")).toBeTruthy();
-    expect(within(table).getByText("-5 pts")).toBeTruthy();
-    expect(within(table).getByText("No ratings")).toBeTruthy();
-
-    expect(fetchAgentQualityAgents).toHaveBeenCalledWith(
-      expect.objectContaining({ after: null, includeTotalCount: true }),
-    );
-    expect(fetchAgentQualityAgents.mock.calls[0][0].first).toBeLessThanOrEqual(100);
-  });
-
-  it("asks for the next page after the cursor the first page ended on", async () => {
-    primeDefaults();
-    const user = userEvent.setup();
-    renderTab();
-
-    const panel = await screen.findByRole("region", { name: "Agents" });
-    await within(panel).findByText("Billing desk");
-    await user.click(within(panel).getByRole("button", { name: "Go to next page" }));
-
-    await waitFor(() =>
-      expect(fetchAgentQualityAgents).toHaveBeenCalledWith(
-        expect.objectContaining({ after: "c2", includeTotalCount: false }),
-      ),
-    );
-  });
-
-  it("mounts the golden set and the settings", async () => {
-    primeDefaults();
-    renderTab();
-
-    expect(await screen.findByText("Golden set table")).toBeTruthy();
-    expect(await screen.findByRole("button", { name: "Save settings" })).toBeTruthy();
-  });
-
-  // Ratings are read under their own right; without it the panel of
-  // worst-rated answers is not drawn and nothing about them is asked for.
-  it("leaves out the worst-rated answers without the right to read ratings", async () => {
-    primeDefaults();
-    permissions.denied.add("agent_feedback:read");
-    renderTab();
-
-    await screen.findByRole("table", { name: "Agents" });
-    expect(screen.queryByRole("region", { name: "Worst-rated answers" })).toBeNull();
-    expect(fetchAgentWorstRatedAnswers).not.toHaveBeenCalled();
-  });
-
   it("says when the figures could not be loaded", async () => {
     primeDefaults();
     fetchAgentQualityOverview.mockRejectedValue(new Error("down"));
-    renderTab();
+    renderTab("agents");
 
     expect(
       await screen.findByText("How well agents are doing could not be loaded. Try again shortly."),
     ).toBeTruthy();
   });
 
+  // Each view is one data table, so only the view asked for is drawn.
+  it("draws the agents in the data table and each one's last run as a phase", async () => {
+    primeDefaults();
+    table.rows = rows;
+    renderTab("agents");
+
+    const agents = await screen.findByRole("region", { name: "Agent Score table" });
+    expect(lastTable().graphql.operationName).toBe("AgentQualityAgentTable");
+    expect(lastTable().graphql.extraVariables).toEqual({ window: 30 });
+    expect(within(agents).getByText("Billing desk")).toBeTruthy();
+    expect(within(agents).getAllByText("Completed").length).toBeGreaterThan(0);
+    expect(within(agents).getByText("Budget stopped")).toBeTruthy();
+    expect(within(agents).getByText("-5 pts")).toBeTruthy();
+    expect(within(agents).getByText("No ratings")).toBeTruthy();
+    expect(table.props.every((props) => props.name === "Agent Score")).toBe(true);
+  });
+
+  // Satisfaction is sorted on the server only for someone who may read it.
+  it("sorts by satisfaction only with the right to read ratings", async () => {
+    primeDefaults();
+    permissions.denied.add("agent_feedback:read");
+    renderTab("agents");
+
+    await screen.findByRole("region", { name: "Agent Score table" });
+    const satisfaction = lastTable().columns.find(
+      (column) => column.meta?.apiField === "satisfaction",
+    );
+    expect(satisfaction?.meta?.sortable).toBe(false);
+    const actions = lastTable().contextMenuActions ?? [];
+    const ratings = actions.find((action) => action.id === "ratings");
+    expect(ratings?.hidden?.({ original: rows[0] } as never)).toBe(true);
+  });
+
+  // The agent's panel leads to its runs: the runs view, narrowed to the
+  // agent, with the table's own state cleared.
+  it("opens an agent's suite runs from its panel", async () => {
+    primeDefaults();
+    table.rows = rows;
+    table.openRow = rows[0] as unknown as Record<string, unknown>;
+    const updates: URLSearchParams[] = [];
+    renderTab("agents", "?panelType=edit&panelEntityId=agdef_1", (event) => {
+      updates.push(event.searchParams);
+    });
+
+    await userEvent.click(await screen.findByRole("button", { name: "Its suite runs" }));
+
+    await waitFor(() => expect(updates.at(-1)?.get("quality")).toBe("runs"));
+    expect(updates.at(-1)?.get("tab")).toBe("quality");
+    expect(updates.at(-1)?.get("agent")).toBe("agdef_1");
+    expect(updates.at(-1)?.get("panelType")).toBeNull();
+  });
+
+  it("narrows the suite runs to the agent a link names, and widens them again", async () => {
+    primeDefaults();
+    fetchAgentQuality.mockResolvedValue({ agentName: "Billing desk" });
+    table.rows = [suiteRun()];
+    const updates: URLSearchParams[] = [];
+    renderTab("runs", "?tab=quality&quality=runs&agent=agdef_1", (event) => {
+      updates.push(event.searchParams);
+    });
+
+    await screen.findByRole("region", { name: "Suite Run table" });
+    expect(lastTable().graphql.operationName).toBe("AgentSuiteRunTable");
+    expect(lastTable().graphql.extraVariables).toEqual({ agentDefinitionId: "agdef_1" });
+    expect(await screen.findByText("Showing Billing desk only")).toBeTruthy();
+
+    await userEvent.click(screen.getByRole("button", { name: "Show every agent" }));
+    await waitFor(() => expect(updates.at(-1)?.get("agent")).toBeNull());
+  });
+
+  // A notification links to a run's cases; they replace the runs, with the
+  // way back above them.
+  it("shows a run's cases in place of the runs", async () => {
+    primeDefaults();
+    fetchAgentSuiteRun.mockResolvedValue(suiteRun());
+    const updates: URLSearchParams[] = [];
+    renderTab("runs", "?tab=quality&agent=agdef_1&suiteRun=asr_1", (event) => {
+      updates.push(event.searchParams);
+    });
+
+    await screen.findByRole("region", { name: "Suite Run Case table" });
+    expect(lastTable().graphql.operationName).toBe("AgentSuiteRunCaseTable");
+    expect(lastTable().graphql.extraVariables).toEqual({ suiteRunId: "asr_1" });
+    expect(fetchAgentSuiteRun).toHaveBeenCalledWith("asr_1", expect.anything());
+
+    await userEvent.click(screen.getByRole("button", { name: "Back to suite runs" }));
+    await waitFor(() => expect(updates.at(-1)?.get("suiteRun")).toBeNull());
+    expect(updates.at(-1)?.get("agent")).toBe("agdef_1");
+  });
+
+  it("opens what a person saw when they rated an answer down", async () => {
+    primeDefaults();
+    const answer = {
+      id: "AssistantMessage:msg_1:",
+      targetType: "AssistantMessage",
+      targetId: "msg_1",
+      targetPart: "",
+      positive: 0,
+      negative: 3,
+      lastRatedAt: 1_790_000_000,
+      threadId: "thr_1",
+      canOpenThread: false,
+      agentDefinitionId: "agdef_1",
+      agentName: "Billing desk",
+      sample: {
+        id: "fb_1",
+        reasons: [],
+        comment: "Wrong invoice total.",
+        createdAt: 1_790_000_000,
+        turnSnapshot: {
+          question: "What is the total on invoice 12?",
+          answer: "It is $12.",
+          tools: [],
+          omittedTools: 0,
+          redacted: false,
+        },
+      },
+    } as unknown as AgentWorstRatedRow;
+    table.rows = [answer as unknown as Record<string, unknown>];
+    table.openRow = answer as unknown as Record<string, unknown>;
+    renderTab("ratings");
+
+    await screen.findByRole("region", { name: "Worst-Rated Answer table" });
+    expect(lastTable().graphql.extraVariables).toEqual({ window: 30 });
+    expect(await screen.findByText("Wrong invoice total.")).toBeTruthy();
+    expect(screen.getAllByText("What is the total on invoice 12?").length).toBeGreaterThan(0);
+  });
+
+  it("mounts the golden set and the settings as views of their own", async () => {
+    primeDefaults();
+    renderTab("golden");
+    expect(await screen.findByText("Golden set table")).toBeTruthy();
+    cleanup();
+
+    renderTab("settings");
+    expect(await screen.findByRole("button", { name: "Save settings" })).toBeTruthy();
+    expect(screen.queryByRole("group", { name: "AI quality figures" })).toBeNull();
+  });
+
   it("will not save the settings without the right to change AI Control", async () => {
     primeDefaults();
     permissions.denied.add("agent_control:update");
-    renderTab();
+    renderTab("settings");
 
     const save = await screen.findByRole("button", { name: "Save settings" });
     expect((save as HTMLButtonElement).disabled).toBe(true);

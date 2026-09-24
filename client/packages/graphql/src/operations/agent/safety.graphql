@@ -1,4 +1,5 @@
 fragment AgentToolPolicyFields on AgentToolPolicy {
+  id
   name
   title
   kind
@@ -35,7 +36,7 @@ fragment AgentToolAutonomyFields on AgentToolAutonomy {
   approvalsToNext
 }
 
-fragment AgentSafetyFields on AgentSafety {
+fragment AgentSafetyHeaderFields on AgentSafety {
   agentId
   organizationShadow
   agent {
@@ -46,18 +47,6 @@ fragment AgentSafetyFields on AgentSafety {
     simulationMode
     autonomyCeiling
     triggerMode
-  }
-  tools {
-    policyName
-    policy {
-      ...AgentToolPolicyFields
-    }
-    clean {
-      ...AgentToolAutonomyFields
-    }
-    tainted {
-      ...AgentToolAutonomyFields
-    }
   }
   reach {
     accessMode
@@ -72,15 +61,46 @@ fragment AgentSafetyFields on AgentSafety {
   }
 }
 
-query AgentToolPolicyConnection(
-  $input: AgentToolPolicyConnectionInput!
-  $includeTotalCount: Boolean = false
-) {
-  agentToolPolicyConnection(input: $input) {
+fragment AgentToolSafetyRowFields on AgentToolSafety {
+  id
+  agentId
+  agentName
+  policyName
+  policy {
+    ...AgentToolPolicyFields
+  }
+  clean {
+    ...AgentToolAutonomyFields
+  }
+  tainted {
+    ...AgentToolAutonomyFields
+  }
+}
+
+query AgentToolRuleTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  agentToolRuleConnection(input: $input) {
     edges {
-      cursor
       node {
         ...AgentToolPolicyFields
+        runsWithoutPerson
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentToolSafetyTable(
+  $agentIds: [ID!]!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  agentToolSafetyConnection(agentIds: $agentIds, input: $input) {
+    edges {
+      node {
+        ...AgentToolSafetyRowFields
       }
     }
     totalCount @include(if: $includeTotalCount)
@@ -102,6 +122,6 @@ query AgentSafetySummary {
 
 query AgentSafety($agentIds: [ID!]) {
   agentSafety(agentIds: $agentIds) {
-    ...AgentSafetyFields
+    ...AgentSafetyHeaderFields
   }
 }

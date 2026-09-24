@@ -126,47 +126,56 @@ Keywords: kill switch, stop AI, shadow mode, earned autonomy
 
 ### See what agents can do without a person
 Keywords: AI safety, autonomy, what can the AI do on its own, auto execute, approval, tool policy, egress, prompt injection, outside text, sensitive tools, audit agents
-1. Open [AI control](/admin/agent-control) and select **Safety** in the rail.
+1. Open [AI control](/admin/agent-control) and select **Safety** in the rail. Safety has two
+   tables under it in the rail, **Tool rules** and **By agent**.
 2. Read the figures at the top: **Tools that run without a person** (tools that change records
    and, on at least one agent, can run without anyone approving), **Tools that send outside the
    organization**, and **Open agents with sensitive tools** (agents everyone can use that hold
    tools reaching restricted data or leaving the organization).
-3. In **Tool rules**, tools are listed a page at a time with **Who sees it**, its **Max tier**,
-   what it **Needs** of the person using it, and whether it **Reads outside content**. Type in
-   **Search tools** to find a tool by name, and narrow the list with **All classes**,
-   **All resources**, **All kinds** and **Runs without a person**. Move between pages and choose
-   **Rows per page** under the table.
-4. Open a row with the arrow at its start to read the **Rationale** for its rule,
-   **How far it may go** and any **Record condition**. A tool marked **Depends on the call** goes
-   further for some calls than others; its row says why.
-5. In **By agent**, select **Add an agent** and choose one; add more to compare them side by
-   side. Nothing is read until you add an agent. Each agent shows **Who can use it**, its
-   **Ceiling**, and the tools it holds a page at a time with what happens
+3. Select **Tool rules**. Every tool is listed with **Who sees it**, its **Max tier**, what it
+   **Needs** of the person using it, whether it **Reads outside content**, and whether it
+   **Runs without a person** on at least one agent. Use the search box to find a tool by name, or
+   select **Filter** to narrow by **Who sees it**, **Max tier**, **Needs**, **Kind**,
+   **Reads outside content** or **Runs without a person**, and **Sort** to order by any of them.
+   **Display** shows hidden columns such as **Name** and **Kind** and changes the row density.
+4. Select a row to open its rule: the **Rationale**, **How far it may go** and any
+   **Record condition**. A tool marked **Depends on the call** goes further for some calls than
+   others; its rule says why.
+5. Select **By agent**, then **Add an agent** and choose one; add up to ten to compare them in one
+   table. Nothing is read until you add an agent. Each agent shows **Who can use it** and its
+   **Ceiling**, and the table lists every tool the agents hold with what happens
    **Before outside text** and **After outside text**: **Runs on its own**,
-   **Depends on the call**, **Needs approval**, **Proposes only** or **Simulated**. Select the
-   cross beside an agent's name to take it out of the comparison.
+   **Depends on the call**, **Needs approval**, **Proposes only** or **Simulated**. Select
+   **Filter** to narrow to one **Agent**, an answer, or a **Held by** reason. Select the cross
+   beside an agent's name to take it out of the comparison.
 6. The **Held by** chips say which limit stops a tool going further, such as the agent's
    ceiling, where the work goes, or that the run has read outside text. A tool whose tier was
    earned shows **Tier earned**, and one still earning shows how many clean approvals it needs
-   for the next tier.
+   for the next tier. Select a row to read both answers beside the tool's rule.
 
 ### Check how well an agent is doing
 Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden set, evaluation cases, nightly sweep, eval budget, agent got worse
-1. Open [AI control](/admin/agent-control) and select **Quality** in the rail.
+1. Open [AI control](/admin/agent-control) and select **Quality** in the rail. Quality lists its
+   tables under it in the rail: **Agents**, **Suite runs**, **Worst-rated answers**,
+   **Golden set** and **Settings**.
 2. Read the figures at the top: **Satisfaction** (the share of rated answers that were thumbs
    up), **Ratings**, **Quality score** (how the agents score against their golden sets),
    **Regressions**, and **Eval spend this month** against the monthly budget.
-3. In **Agents**, each agent is listed a page at a time with its satisfaction against the window
-   before, a line of its recent suite scores, and how its **Last run** went: **Completed**,
-   **Skipped** (nothing about the agent or its cases changed), **Budget stopped** or **Failed**.
-   An agent whose score fell shows **Regressed**.
-4. Select the arrow at the end of an agent's row to open it. **Quality over time** shows its
-   scores, and **Suite runs** lists every run with **What changed** about the agent since the
-   run before, such as its instructions, tools or model. Select **Cases** on a run to see what
-   each case scored under **Cases in this run**, and open a case to read the reply and the
-   judge's note.
-5. To score an agent now instead of waiting for the nightly sweep, select **Run suite now**.
-6. **Worst-rated answers** lists the answers people rated down, with **Why**. Select **Open the
+3. In **Agents**, each agent is listed with its satisfaction against the window before, a line of
+   its recent suite scores, and how its **Last run** went: **Completed**, **Skipped** (nothing
+   about the agent or its cases changed), **Budget stopped** or **Failed**. An agent whose score
+   fell shows **Regressed**. Select **Filter** to narrow by **Last run** or **Regressed**, and
+   **Sort** to order by **Satisfaction** or **Quality score**.
+4. Select an agent's row to open it. **Quality over time** shows its scores. To score it now
+   instead of waiting for the nightly sweep, select **Run suite now**. Select **Its suite runs**
+   or **Its worst-rated answers** to open those tables narrowed to the agent; **Show every agent**
+   widens them again.
+5. In **Suite runs**, each run shows its **Status**, **Quality score**, **Cases** and
+   **What changed** about the agent since the run before, such as its instructions, tools or
+   model. Select a run to read it, then **See the cases** to list what each case scored; select a
+   case to read the reply and the judge's note. **Back to suite runs** returns to the runs.
+6. **Worst-rated answers** lists the answers people rated down in the last 30 days, most disliked
+   first. Select one to read the question, the answer and **Why**. Select **Open the
    conversation** to read one you were part of.
 7. Keep the cases the agents are scored against in **Golden set**: **Activate** a candidate
    captured from a decided proposal, **Add case** to write one by hand, or **Quarantine** a case

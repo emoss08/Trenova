@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { AIControlTab } from "../ai-control-tabs";
-import type { ActivityView, RailItem } from "./rail-items";
+import type { RailItem, RailView } from "./rail-items";
 
 const ICONS: Record<AIControlTab, typeof BotIcon> = {
   overview: LayoutDashboardIcon,
@@ -28,8 +28,9 @@ const ICONS: Record<AIControlTab, typeof BotIcon> = {
 type ControlRailProps = {
   items: RailItem[];
   active: AIControlTab;
-  activeView: ActivityView;
-  onSelect: (tab: AIControlTab, view?: ActivityView) => void;
+  /** The view open under the active row, when that row has views. */
+  activeView: RailView | null;
+  onSelect: (tab: AIControlTab, view?: RailView) => void;
 };
 
 /**

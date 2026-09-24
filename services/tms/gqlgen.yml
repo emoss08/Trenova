@@ -1984,12 +1984,18 @@ models:
   AgentWorstRatedAnswer:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentWorstRatedAnswer
+    fields:
+      id:
+        resolver: true
   AgentQuality:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityDetail
   AgentQualityAgent:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityAgent
+    fields:
+      id:
+        resolver: true
   AgentAutonomyTier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier
@@ -2205,6 +2211,8 @@ models:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AgentToolSafety
     fields:
+      id:
+        resolver: true
       policy:
         resolver: true
   AgentSafetySummary:

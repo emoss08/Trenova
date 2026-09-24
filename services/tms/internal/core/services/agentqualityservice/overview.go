@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/memtable"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -326,52 +327,17 @@ func (s *Service) worstRated(
 		scores = scores[:limit]
 	}
 
-	sampleIDs := make([]pulid.ID, 0, len(scores))
-	for _, score := range scores {
-		if score.SampleID.IsNotNil() {
-			sampleIDs = append(sampleIDs, score.SampleID)
-		}
-	}
-	samples := map[pulid.ID]*aifeedback.Feedback{}
-	if len(sampleIDs) > 0 {
-		rows, listErr := s.feedback.ListByIDs(ctx, repositories.ListAIFeedbackByIDsRequest{
-			TenantInfo: req.TenantInfo,
-			IDs:        sampleIDs,
-		})
-		if listErr != nil {
-			return nil, false, listErr
-		}
-		for _, row := range rows {
-			samples[row.ID] = row
-		}
-	}
-
-	names, err := s.agentNames(ctx, req.TenantInfo, samples)
-	if err != nil {
+	rows := worstRatedRows(scores)
+	if err = s.attachSamples(ctx, sampleScope{
+		tenant: req.TenantInfo,
+		viewer: viewerID,
+	}, scores, rows); err != nil {
 		return nil, false, err
 	}
 
-	answers := make([]*services.AgentWorstRatedAnswer, 0, len(scores))
-	for _, score := range scores {
-		answer := &services.AgentWorstRatedAnswer{
-			TargetType:  score.TargetType,
-			TargetID:    score.TargetID,
-			TargetPart:  score.TargetPart,
-			Positive:    score.Positive,
-			Negative:    score.Negative,
-			LastRatedAt: score.LastRatedAt,
-		}
-		if sample := samples[score.SampleID]; sample != nil {
-			answer.Sample = sample
-			answer.ThreadID = sample.ThreadID
-			answer.CanOpenThread = sample.ThreadID != nil && viewerID.IsNotNil() &&
-				sample.UserID == viewerID
-			if sample.AgentDefinitionID != nil {
-				answer.AgentDefinitionID = sample.AgentDefinitionID
-				answer.AgentName = names[*sample.AgentDefinitionID]
-			}
-		}
-		answers = append(answers, answer)
+	answers := make([]*services.AgentWorstRatedAnswer, 0, len(rows))
+	for idx := range rows {
+		answers = append(answers, rows[idx].answer)
 	}
 
 	return answers, hasNext, nil
@@ -417,128 +383,32 @@ func (s *Service) ListWorstRated(
 	ctx context.Context,
 	req *services.ListAgentWorstRatedRequest,
 ) (*services.AgentWorstRatedPage, error) {
-	window, err := windowDays(req.WindowDays)
-	if err != nil {
-		return nil, err
-	}
-	offset, err := decodeOffset(worstRatedCursorScope, req.After)
-	if err != nil {
-		return nil, err
-	}
-	control, err := s.control(ctx, req.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	limit := pageSize(req.First)
-	answers, hasNext, err := s.worstRated(ctx, repositories.AIFeedbackWindowRequest{
+	return s.ListWorstRatedTable(ctx, &services.ListAgentWorstRatedTableRequest{
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
-		Since:             s.now() - int64(window)*secondsPerDay,
-		Timezone:          s.timezoneOf(ctx, control, req.TenantInfo),
-		Limit:             limit,
-		Offset:            offset,
-	}, req.ViewerID)
-	if err != nil {
-		return nil, err
-	}
-
-	page := &services.AgentWorstRatedPage{
-		Edges:       make([]*services.AgentWorstRatedEdge, 0, len(answers)),
-		HasNextPage: hasNext,
-	}
-	for idx, answer := range answers {
-		page.Edges = append(page.Edges, &services.AgentWorstRatedEdge{
-			Node:   answer,
-			Cursor: pagination.EncodeOffsetCursor(worstRatedCursorScope, offset+idx+1),
-		})
-	}
-
-	return page, nil
+		WindowDays:        req.WindowDays,
+		ViewerID:          req.ViewerID,
+		Table: memtable.Request{
+			First: req.First,
+			After: req.After,
+		},
+	})
 }
 
 func (s *Service) ListAgents(
 	ctx context.Context,
 	req *services.ListAgentQualityAgentsRequest,
 ) (*services.AgentQualityAgentPage, error) {
-	window, err := windowDays(req.WindowDays)
-	if err != nil {
-		return nil, err
-	}
-	offset, err := decodeOffset(agentsCursorScope, req.After)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := s.suiteRuns.ListAgents(ctx, repositories.ListAgentQualityAgentsRequest{
-		TenantInfo:        req.TenantInfo,
-		Limit:             pageSize(req.First),
-		Offset:            offset,
-		IncludeTotalCount: req.IncludeTotalCount,
+	return s.ListAgentTable(ctx, &services.ListAgentQualityAgentTableRequest{
+		TenantInfo:     req.TenantInfo,
+		WindowDays:     req.WindowDays,
+		IncludeRatings: req.IncludeRatings,
+		Table: memtable.Request{
+			First:             req.First,
+			After:             req.After,
+			IncludeTotalCount: req.IncludeTotalCount,
+		},
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	page := &services.AgentQualityAgentPage{
-		Edges:       make([]*services.AgentQualityAgentEdge, 0, len(rows.Items)),
-		HasNextPage: rows.HasNextPage,
-		TotalCount:  rows.TotalCount,
-	}
-	if len(rows.Items) == 0 {
-		return page, nil
-	}
-
-	ids := make([]pulid.ID, 0, len(rows.Items))
-	for _, row := range rows.Items {
-		ids = append(ids, row.ID)
-	}
-
-	now := s.now()
-	since := now - int64(window)*secondsPerDay
-	pageData, err := s.agentPageData(ctx, agentPageRequest{
-		tenant:         req.TenantInfo,
-		ids:            ids,
-		since:          since,
-		previousSince:  since - int64(window)*secondsPerDay,
-		includeRatings: req.IncludeRatings,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	for idx, row := range rows.Items {
-		node := &services.AgentQualityAgent{
-			AgentDefinitionID: row.ID,
-			Name:              row.Name,
-			Enabled:           row.Enabled,
-			RatingsVisible:    req.IncludeRatings,
-			QualityPoints:     qualityPoints(pageData.history[row.ID]),
-			LastSuiteRun:      pageData.latest[row.ID],
-		}
-		if req.IncludeRatings {
-			current := pageData.current[row.ID]
-			previous := pageData.previous[row.ID]
-			node.Ratings = current.Positive + current.Negative
-			node.Satisfaction = satisfaction(current.Positive, current.Negative)
-			if before := satisfaction(previous.Positive, previous.Negative); before != nil &&
-				node.Satisfaction != nil {
-				delta := *node.Satisfaction - *before
-				node.SatisfactionDelta = &delta
-			}
-		}
-		if len(node.QualityPoints) > 0 {
-			score := node.QualityPoints[len(node.QualityPoints)-1].QualityScore
-			node.QualityScore = &score
-			node.OpenRegression = node.QualityPoints[len(node.QualityPoints)-1].Regression
-		}
-		page.Edges = append(page.Edges, &services.AgentQualityAgentEdge{
-			Node:   node,
-			Cursor: pagination.EncodeOffsetCursor(agentsCursorScope, offset+idx+1),
-		})
-	}
-
-	return page, nil
 }
 
 type agentPageRequest struct {
@@ -547,6 +417,8 @@ type agentPageRequest struct {
 	since          int64
 	previousSince  int64
 	includeRatings bool
+	skipHistory    bool
+	skipLatest     bool
 }
 
 type ratingTotals struct {
@@ -569,38 +441,42 @@ func (s *Service) agentPageData(ctx context.Context, req agentPageRequest) (*age
 		previous: make(map[pulid.ID]ratingTotals, len(req.ids)),
 	}
 
-	history, err := s.suiteRuns.History(ctx, repositories.AgentSuiteRunHistoryRequest{
-		TenantInfo:         req.tenant,
-		AgentDefinitionIDs: req.ids,
-		Since:              req.since,
-		PerAgent:           services.AgentQualityHistoryPoints,
-	})
-	if err != nil {
-		return nil, err
-	}
-	for _, run := range history {
-		data.history[run.AgentDefinitionID] = append(data.history[run.AgentDefinitionID], run)
+	if !req.skipHistory {
+		history, err := s.suiteRuns.History(ctx, repositories.AgentSuiteRunHistoryRequest{
+			TenantInfo:         req.tenant,
+			AgentDefinitionIDs: req.ids,
+			Since:              req.since,
+			PerAgent:           services.AgentQualityHistoryPoints,
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, run := range history {
+			data.history[run.AgentDefinitionID] = append(data.history[run.AgentDefinitionID], run)
+		}
 	}
 
-	latest, err := s.suiteRuns.Latest(ctx, repositories.LatestAgentSuiteRunsRequest{
-		TenantInfo:         req.tenant,
-		AgentDefinitionIDs: req.ids,
-	})
-	if err != nil {
-		return nil, err
-	}
-	for _, run := range latest {
-		data.latest[run.AgentDefinitionID] = run
+	if !req.skipLatest {
+		latest, err := s.suiteRuns.Latest(ctx, repositories.LatestAgentSuiteRunsRequest{
+			TenantInfo:         req.tenant,
+			AgentDefinitionIDs: req.ids,
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, run := range latest {
+			data.latest[run.AgentDefinitionID] = run
+		}
 	}
 
 	if !req.includeRatings {
 		return data, nil
 	}
 
-	if err = s.fillTotals(ctx, req, req.since, 0, data.current); err != nil {
+	if err := s.fillTotals(ctx, req, req.since, 0, data.current); err != nil {
 		return nil, err
 	}
-	if err = s.fillTotals(ctx, req, req.previousSince, req.since, data.previous); err != nil {
+	if err := s.fillTotals(ctx, req, req.previousSince, req.since, data.previous); err != nil {
 		return nil, err
 	}
 

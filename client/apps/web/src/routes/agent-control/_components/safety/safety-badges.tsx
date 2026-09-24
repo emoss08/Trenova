@@ -1,8 +1,4 @@
-import type {
-  AgentEgressClass,
-  AgentToolAutonomy,
-  AgentToolPolicy,
-} from "@/lib/graphql/agent-safety";
+import type { AgentAutonomyAnswer, AgentEgressClass } from "@/lib/graphql/agent-safety";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
@@ -20,23 +16,24 @@ export function EgressBadge({ egress }: { egress: AgentEgressClass }) {
   return <Badge variant={EGRESS_ACCENT[egress]}>{egressLabel(t, egress)}</Badge>;
 }
 
-export function EgressBadges({ policy }: { policy: AgentToolPolicy }) {
-  const ordered = EGRESS_ORDER.filter((egress) => policy.egress.includes(egress));
+/** Who sees a tool's work, one badge a class, nowhere first and money last. */
+export function EgressBadges({ egress }: { egress: readonly AgentEgressClass[] }) {
+  const ordered = EGRESS_ORDER.filter((entry) => egress.includes(entry));
   return (
     <span className="flex flex-wrap gap-1">
-      {ordered.map((egress) => (
-        <EgressBadge key={egress} egress={egress} />
+      {ordered.map((entry) => (
+        <EgressBadge key={entry} egress={entry} />
       ))}
     </span>
   );
 }
 
-export function AnswerBadge({ autonomy }: { autonomy: AgentToolAutonomy }) {
+export function AnswerBadge({ answer }: { answer: AgentAutonomyAnswer }) {
   const t = useT();
-  const { phase, appearance } = ANSWER_BADGE[autonomy.answer];
+  const { phase, appearance } = ANSWER_BADGE[answer];
   return (
     <Badge variant={phaseTone(phase)} appearance={appearance}>
-      {answerLabel(t, autonomy.answer)}
+      {answerLabel(t, answer)}
     </Badge>
   );
 }
