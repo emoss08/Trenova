@@ -122,6 +122,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		owned[serviceports.SelfScopeOwnerParam] = req.Actor.UserID.String()
 		call.Arguments = owned
 	}
+	p.call = call
 	tierParams := serviceports.ToolExecuteParams{
 		OrganizationID: req.Actor.OrganizationID,
 		BusinessUnitID: req.Actor.BusinessUnitID,
