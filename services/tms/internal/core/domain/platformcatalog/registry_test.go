@@ -569,9 +569,9 @@ func accountShellRoutePatterns() []accountShellRoute {
 			routePattern: "/api/v1/page-favorites/toggle",
 		},
 		{
-			name:         "realtime token request",
+			name:         "realtime stream",
 			method:       "GET",
-			routePattern: "/api/v1/realtime/token-request/",
+			routePattern: "/api/v1/realtime/stream/",
 		},
 		{
 			name:         "platform catalog",

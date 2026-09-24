@@ -32,7 +32,7 @@ func NewDocument(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 		Subsystem: "document_intelligence",
 		Name:      "extraction_total",
 		Help:      "Total number of document extraction outcomes",
-	}, []string{"status", "source_kind", "reason"})
+	}, []string{"status", "source_kind", labelReason})
 
 	m.shipmentDraftTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,

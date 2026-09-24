@@ -23,6 +23,7 @@ type TransferToBillingRequest struct {
 	// AutoApprovePayerIDs narrows auto-approval to these payers' items when the
 	// shipment is split-billed and only some payers opted in.
 	AutoApprovePayerIDs []pulid.ID
+	DetailedShipment    *shipment.Shipment
 }
 
 // TransferToBillingResult is every queue item a transfer created: one per payer

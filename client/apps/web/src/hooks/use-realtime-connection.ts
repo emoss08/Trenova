@@ -2,9 +2,9 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { downloadReportRun } from "@/hooks/use-reports";
 import { APP_ENV } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
-import { apiService } from "@/services/api";
+import { realtimeClient, type RealtimeConnectionState } from "@trenova/shared/services/realtime";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { useRealtimeStore, type RealtimeConnectionState } from "@/stores/realtime-store";
+import { useRealtimeStore } from "@/stores/realtime-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
@@ -34,12 +34,6 @@ import { releaseTurnReaders } from "@/components/assistant/turn-readers";
 
 const COALESCE_DELAY_MS = 300;
 
-function mapConnectionState(state: string): RealtimeConnectionState {
-  if (state === "connected") return "connected";
-  if (state === "initialized" || state === "connecting") return "connecting";
-  return "disconnected";
-}
-
 export function useRealtimeConnection() {
   const t = useT();
 
@@ -65,7 +59,7 @@ export function useRealtimeConnection() {
       !user.currentOrganizationId ||
       !user.businessUnitId
     ) {
-      apiService.realtimeService.safeClose();
+      realtimeClient.disconnect();
       useRealtimeStore.getState().setConnectionState("disconnected");
       // The session is gone, and with it every reply the person had open:
       // a reader left behind would keep reattaching against a dead session.
@@ -73,12 +67,7 @@ export function useRealtimeConnection() {
       return;
     }
 
-    useRealtimeStore.getState().setConnectionState("connecting");
     const pendingKeys = pendingKeysRef.current;
-    const presenceChannelName = apiService.realtimeService.getUsersPresenceChannelName(
-      user.currentOrganizationId,
-      user.businessUnitId,
-    );
     let disposed = false;
 
     const enqueueInvalidation = (roots: readonly QueryKeyRoot[]) => {
@@ -123,123 +112,100 @@ export function useRealtimeConnection() {
       return patched;
     };
 
-    const client = apiService.realtimeService.connect();
-    const presenceChannel = apiService.realtimeService.getChannel(presenceChannelName);
-    const dataEventsChannel = apiService.realtimeService.getChannel(
-      apiService.realtimeService.getDataEventsChannelName(
-        user.currentOrganizationId,
-        user.businessUnitId,
-      ),
-    );
-
-    const enterPresence = async () => {
-      if (disposed || client.getState() !== "connected") {
-        return;
-      }
-
-      try {
-        await presenceChannel.presence.enter({
-          userId: user.id,
-          name: user.name,
-          emailAddress: user.emailAddress,
-        });
-      } catch {
-        // Ignore teardown/reconnect races; connection listener will retry when stable.
-      }
-    };
-
-    const onConnectionState = (state: string) => {
-      if (disposed) {
-        return;
-      }
-
-      useRealtimeStore.getState().setConnectionState(mapConnectionState(state));
-
-      if (state === "connected") {
-        void enterPresence();
+    // A gap the server could not replay (the tab was away longer than the
+    // stream keeps) means some change was missed: refetch what every screen
+    // leans on rather than trust anything cached.
+    const onReset = () => {
+      if (!disposed) {
         invalidateCoreKeys();
       }
     };
 
-    const onResourceEvent = (message: { name?: string; data?: unknown }) => {
-      if (message.name === RESOURCE_EVENT_NAME) {
-        const notifEvt = parseInvalidationEvent(message.data);
+    const onConnectionState = (state: RealtimeConnectionState) => {
+      if (disposed) {
+        return;
+      }
+      if (APP_ENV === "development") {
+        console.debug("[Trenova] realtime state:", state);
+      }
+      useRealtimeStore.getState().setConnectionState(state);
+    };
+
+    const onResourceEvent = (data: unknown) => {
+      const notifEvt = parseInvalidationEvent(data);
+      if (
+        notifEvt &&
+        notifEvt.resource === "notifications" &&
+        notifEvt.action === "created" &&
+        notifEvt.entity
+      ) {
         if (
-          notifEvt &&
-          notifEvt.resource === "notifications" &&
-          notifEvt.action === "created" &&
-          notifEvt.entity
+          notifEvt.organizationId !== user.currentOrganizationId ||
+          notifEvt.businessUnitId !== user.businessUnitId
         ) {
-          if (
-            notifEvt.organizationId !== user.currentOrganizationId ||
-            notifEvt.businessUnitId !== user.businessUnitId
-          ) {
-            // Ignore notifications from other tenants
-          } else {
-            const notif = notifEvt.entity as {
-              id?: string;
-              targetUserId?: string | null;
-              eventType?: string;
-              title?: string;
-              message?: string;
-              data?: Record<string, unknown> | null;
-            };
+          // Ignore notifications from other tenants
+        } else {
+          const notif = notifEvt.entity as {
+            id?: string;
+            targetUserId?: string | null;
+            eventType?: string;
+            title?: string;
+            message?: string;
+            data?: Record<string, unknown> | null;
+          };
 
-            const isForCurrentUser = !notif.targetUserId || notif.targetUserId === user.id;
-            const replyReady = isForCurrentUser ? parseReplyReady(notif) : null;
+          const isForCurrentUser = !notif.targetUserId || notif.targetUserId === user.id;
+          const replyReady = isForCurrentUser ? parseReplyReady(notif) : null;
 
-            if (replyReady) {
-              void announceReplyReady({
-                reply: replyReady,
-                notificationId: notif.id ?? null,
-                queryClient,
-                navigate: (to) => void navigateRef.current(to),
-                t,
-              });
-            } else if (isForCurrentUser && notif.title) {
-              const runId =
-                notif.eventType === "report_run_completed" && typeof notif.data?.runId === "string"
-                  ? notif.data.runId
-                  : null;
+          if (replyReady) {
+            void announceReplyReady({
+              reply: replyReady,
+              notificationId: notif.id ?? null,
+              queryClient,
+              navigate: (to) => void navigateRef.current(to),
+              t,
+            });
+          } else if (isForCurrentUser && notif.title) {
+            const runId =
+              notif.eventType === "report_run_completed" && typeof notif.data?.runId === "string"
+                ? notif.data.runId
+                : null;
 
-              // A bulk billing transfer runs unattended, so its result has to
-              // come back to whoever started it with a way into the report —
-              // the shipments that did not transfer are their next piece of work.
-              const transferRunId =
-                notif.eventType?.startsWith("billing_transfer_run_") &&
-                typeof notif.data?.runId === "string"
-                  ? notif.data.runId
-                  : null;
+            // A bulk billing transfer runs unattended, so its result has to
+            // come back to whoever started it with a way into the report —
+            // the shipments that did not transfer are their next piece of work.
+            const transferRunId =
+              notif.eventType?.startsWith("billing_transfer_run_") &&
+              typeof notif.data?.runId === "string"
+                ? notif.data.runId
+                : null;
 
-              toast.info(notif.title, {
-                description: notif.message,
-                action: runId
+            toast.info(notif.title, {
+              description: notif.message,
+              action: runId
+                ? {
+                    label: t("Download"),
+                    onClick: () => downloadReportRun({ id: runId }),
+                  }
+                : transferRunId
                   ? {
-                      label: t("Download"),
-                      onClick: () => downloadReportRun({ id: runId }),
+                      label: t("View report"),
+                      onClick: () =>
+                        navigateRef.current(
+                          `/billing-queue?transferRun=${encodeURIComponent(transferRunId)}`,
+                        ),
                     }
-                  : transferRunId
-                    ? {
-                        label: t("View report"),
-                        onClick: () =>
-                          navigateRef.current(
-                            `/billing-queue?transferRun=${encodeURIComponent(transferRunId)}`,
-                          ),
-                      }
-                    : undefined,
-              });
-            }
+                  : undefined,
+            });
           }
-
-          void queryClient.invalidateQueries({
-            queryKey: queries.notification._def,
-          });
         }
+
+        void queryClient.invalidateQueries({
+          queryKey: queries.notification._def,
+        });
       }
 
-      if (message.name !== RESOURCE_EVENT_NAME) return;
-
-      const evt = parseInvalidationEvent(message.data);
+      const evt = parseInvalidationEvent(data);
       if (!evt) return;
       if (
         evt.organizationId !== user.currentOrganizationId ||
@@ -282,25 +248,20 @@ export function useRealtimeConnection() {
       enqueueInvalidation(queryKeys);
     };
 
-    const onDebugConnectionState = (state: string) => {
-      console.debug("[Trenova] realtime state:", state);
-    };
-    if (APP_ENV === "development") {
-      client.connection.on(onDebugConnectionState);
-    }
-    client.connection.on(onConnectionState);
-    dataEventsChannel.subscribe(onResourceEvent);
-    onConnectionState(client.getState());
+    const offState = realtimeClient.onStateChange(onConnectionState);
+    const offResource = realtimeClient.on(RESOURCE_EVENT_NAME, onResourceEvent);
+    const offReset = realtimeClient.on("reset", onReset);
+    realtimeClient.connect({
+      identity: `${user.id}:${user.currentOrganizationId}:${user.businessUnitId}`,
+      joinUsers: true,
+    });
+    onConnectionState(realtimeClient.getState());
 
     return () => {
       disposed = true;
-      client.connection.off(onConnectionState);
-      if (APP_ENV === "development") {
-        client.connection.off(onDebugConnectionState);
-      }
-      dataEventsChannel.unsubscribe(onResourceEvent);
-      void apiService.realtimeService.leavePresenceIfPossible(presenceChannelName);
-      useRealtimeStore.getState().setConnectionState("disconnected");
+      offState();
+      offResource();
+      offReset();
       if (flushTimeoutRef.current !== null) {
         clearTimeout(flushTimeoutRef.current);
         flushTimeoutRef.current = null;

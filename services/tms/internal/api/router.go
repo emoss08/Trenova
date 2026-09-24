@@ -599,6 +599,9 @@ func (r *Router) setupMiddleware() {
 			gzip.WithExcludedPaths([]string{"/metrics", "/health"}),
 			gzip.WithExcludedPathsRegexs([]string{
 				`^/api/v1/documents/[^/]+/(download|view|preview)/$`,
+				// An event stream is flushed a frame at a time; compressing it
+				// adds a buffer between each frame and the reader.
+				`^/api/v1/realtime/stream/$`,
 			}),
 		),
 	)

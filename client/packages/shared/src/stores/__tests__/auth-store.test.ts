@@ -5,7 +5,7 @@ import { userSchema, type User } from "@trenova/shared/types/user";
 import { ApiRequestError, clearCsrfToken, setCsrfToken } from "@trenova/shared/lib/api";
 import { userService } from "@trenova/shared/services/user";
 import { authService } from "@trenova/shared/services/auth";
-import { realtimeService } from "@trenova/shared/services/realtime";
+import { realtimeClient } from "@trenova/shared/services/realtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Parsed through userSchema rather than cast, so adding a required field to User fails
@@ -165,12 +165,12 @@ describe("auth store teardown", () => {
 
   it("logout closes the realtime connection and clears the session", async () => {
     const logoutCall = vi.spyOn(authService, "logout").mockResolvedValue(undefined);
-    const safeClose = vi.spyOn(realtimeService, "safeClose").mockImplementation(() => {});
+    const disconnect = vi.spyOn(realtimeClient, "disconnect").mockImplementation(() => {});
 
     await useAuthStore.getState().logout();
 
     expect(logoutCall).toHaveBeenCalledTimes(1);
-    expect(safeClose).toHaveBeenCalledTimes(1);
+    expect(disconnect).toHaveBeenCalledTimes(1);
     expect(useAuthStore.getState().user).toBeNull();
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
     expect(clearPermissions).toHaveBeenCalledTimes(1);
@@ -180,7 +180,7 @@ describe("auth store teardown", () => {
   // believing it is still signed in.
   it("logout clears the session even when the request fails", async () => {
     vi.spyOn(authService, "logout").mockRejectedValue(authError(500));
-    vi.spyOn(realtimeService, "safeClose").mockImplementation(() => {});
+    vi.spyOn(realtimeClient, "disconnect").mockImplementation(() => {});
 
     await expect(useAuthStore.getState().logout()).rejects.toBeInstanceOf(ApiRequestError);
 

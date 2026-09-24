@@ -254,9 +254,6 @@ importers:
       '@fontsource/ibm-plex-mono':
         specifier: ^5.3.0
         version: 5.3.0
-      '@foony/realtime':
-        specifier: ^0.16.0
-        version: 0.16.0
       '@graphql-typed-document-node/core':
         specifier: ^3.2.0
         version: 3.2.0(graphql@17.0.2)
@@ -660,9 +657,6 @@ importers:
       '@fontsource/ibm-plex-mono':
         specifier: ^5.3.0
         version: 5.3.0
-      '@foony/realtime':
-        specifier: ^0.16.0
-        version: 0.16.0
       '@graphql-typed-document-node/core':
         specifier: ^3.2.0
         version: 3.2.0(graphql@17.0.2)
@@ -1690,10 +1684,6 @@ packages:
 
   '@fontsource/ibm-plex-mono@5.3.0':
     resolution: {integrity: sha512-eTgnZjZEGk1QtD3ZstF+Vclo2HLAni8YMy34/DxllwZvyz1lR/1RF/xTiAquOBO7MvqBx8D2Ig2WCPMVfdZu7Q==}
-
-  '@foony/realtime@0.16.0':
-    resolution: {integrity: sha512-v/vLYcMqGdFax3/zOVvvT02uhwhfQilcPCduzjpicBvyMW+LcoT9Y6F1KSK5ptbK/o9ZR3okxgc1oKnZIyKxPQ==}
-    engines: {node: '>=20'}
 
   '@googlemaps/js-api-loader@2.1.1':
     resolution: {integrity: sha512-yUpAwksbHrlZIWD49JmveNSfBG4oAK0AwMknfSaPMnP5N7UT8oFRVCqwjGb1XQovi//7KLbPQKZpbofiLGzpDw==}
@@ -10523,13 +10513,6 @@ snapshots:
   '@fontsource/geist-mono@5.3.0': {}
 
   '@fontsource/ibm-plex-mono@5.3.0': {}
-
-  '@foony/realtime@0.16.0':
-    dependencies:
-      ws: 8.21.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
 
   '@googlemaps/js-api-loader@2.1.1':
     dependencies:
