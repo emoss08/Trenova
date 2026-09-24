@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -94,6 +95,38 @@ func (m *mockPermissionEngine) SimulatePermissions(
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*services.EffectivePermissions), args.Error(1)
+}
+
+func (m *mockPermissionEngine) AgentsUsable(
+	ctx context.Context,
+	actor *services.RequestActor,
+	operation permission.Operation,
+) (*services.UsableAgents, error) {
+	args := m.Called(ctx, actor, operation)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*services.UsableAgents), args.Error(1)
+}
+
+func (m *mockPermissionEngine) MayUseAgent(
+	ctx context.Context,
+	actor *services.RequestActor,
+	definition *agentdefinition.Definition,
+) (bool, error) {
+	args := m.Called(ctx, actor, definition)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *mockPermissionEngine) RoleCoverage(
+	ctx context.Context,
+	req *services.RoleCoverageRequest,
+) ([]services.RoleCoverage, error) {
+	args := m.Called(ctx, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]services.RoleCoverage), args.Error(1)
 }
 
 func newTestErrorHandler() *helpers.ErrorHandler {

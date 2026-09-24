@@ -50,8 +50,8 @@ type DelegateOpening struct {
 // Every check is made again here, against the records as they are now rather
 // than as the turn began: the parent must still list the delegate, the
 // delegate must still exist in the tenant, be enabled and be an agent people
-// talk to, the person must still be allowed to use the assistant, and the
-// delegate's own budget must not be spent. A refusal is a
+// talk to, the person must still be allowed to use the assistant and the
+// delegate itself, and the delegate's own budget must not be spent. A refusal is a
 // *DelegateDeclinedError.
 //
 // The turn is opened as the delegate: its tools narrowed to what the person
@@ -95,9 +95,15 @@ func (s *Service) OpenDelegate(
 	if refusal := parent.DelegateRefusal(delegate); refusal != "" {
 		return nil, declined(refusal)
 	}
-	if !agentruntime.MayUseAssistant(ctx, s.permissions, req.Actor, s.logger) {
+	usable := agentruntime.UsableAgentsFor(ctx, s.permissions, req.Actor, s.logger)
+	if !usable.Assistant {
 		return nil, declined("The person is not allowed to use other agents, so " +
 			delegate.Name + " cannot be asked.")
+	}
+	if !usable.Allows(delegate) {
+		return nil, declined("The person may not use " + delegate.Name + ", so it cannot " +
+			"be asked. Do the task with your own tools, or tell them an administrator can " +
+			"give one of their roles access to it.")
 	}
 	if err = s.assertWithinBudget(ctx, delegate); err != nil {
 		if errortypes.IsBusinessError(err) {

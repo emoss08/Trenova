@@ -136,6 +136,22 @@ export type AdjustWorkerPtoBalanceInput = {
   workerId: string | number;
 };
 
+/** Who may use an agent, among the people who may use the assistant. */
+export type AgentAccessMode =
+  /** Everyone who may use the assistant. */
+  | 'Everyone'
+  /** Only the roles granted it, and the roles that inherit them. Nobody when no role is. */
+  | 'Roles';
+
+/** How much of an agent a role could use. */
+export type AgentAudienceCoverage =
+  /** The role grants everything the agent's tools need. */
+  | 'Full'
+  /** The role may not use the assistant. */
+  | 'None'
+  /** The role may use the assistant but lacks some of what the agent's tools need. */
+  | 'Partial';
+
 export type AgentAutonomyTier =
   | 'ActWithApproval'
   | 'AutoExecute'
@@ -3281,6 +3297,26 @@ export type MyAiFeedbackInput = {
   targets: Array<AiFeedbackTargetInput>;
 };
 
+/** Where an agent came from. */
+export type MyAgentOrigin =
+  | 'All'
+  /** Built by hand. */
+  | 'Custom'
+  /** Made from one of the platform's templates. */
+  | 'Template';
+
+export type MyAgentsInput = {
+  after?: string | null | undefined;
+  /** Agents already shown, so a page never repeats them. At most 100. */
+  excludeIds?: Array<string | number> | null | undefined;
+  first?: number | null | undefined;
+  /** Only these agents. At most 100. */
+  ids?: Array<string | number> | null | undefined;
+  origin?: MyAgentOrigin | null | undefined;
+  /** Matched against the agent's name and description. */
+  search?: string | null | undefined;
+};
+
 /**
  * The driver's own answer to a swap. Approving and rejecting are deliberately
  * absent: a swap is decided by the office.
@@ -4604,6 +4640,15 @@ export type ServiceFailureType =
   | 'MissedDelivery'
   | 'MissedPickup'
   | 'Other';
+
+export type SetAgentAccessInput = {
+  accessMode: AgentAccessMode;
+  /**
+   * The roles granted the agent, replacing those granted now. Kept whatever the
+   * mode, so an agent opened to everyone and restricted again keeps its audience.
+   */
+  roleIds: Array<string | number>;
+};
 
 export type SetAvailabilityPreferenceInput = {
   dayOfWeek: number;
@@ -6260,6 +6305,67 @@ export type AgentScorecardQueryVariables = Exact<{
 
 
 export type AgentScorecardQuery = { agentScorecard: { ' $fragmentRefs'?: { 'AgentScorecardFieldsFragment': AgentScorecardFieldsFragment } } };
+
+export type MyAgentFieldsFragment = { id: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, toolNames: Array<string>, systemKey: string, starters: Array<{ label: string, prompt: string }> } & { ' $fragmentName'?: 'MyAgentFieldsFragment' };
+
+export type MyAgentsQueryVariables = Exact<{
+  input: MyAgentsInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type MyAgentsQuery = { myAgents: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'MyAgentFieldsFragment': MyAgentFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type DecideMyProposalMutationVariables = Exact<{
+  id: string | number;
+  input: AgentProposalDecisionInput;
+}>;
+
+
+export type DecideMyProposalMutation = { decideMyProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, version: number, createdAt: number } };
+
+export type AgentAccessRoleFieldsFragment = { id: string, name: string, description: string, isSystem: boolean } & { ' $fragmentName'?: 'AgentAccessRoleFieldsFragment' };
+
+export type AgentAccessFieldsFragment = { id: string, name: string, systemKey: string, accessMode: AgentAccessMode, accessRoles: Array<{ ' $fragmentRefs'?: { 'AgentAccessRoleFieldsFragment': AgentAccessRoleFieldsFragment } }> } & { ' $fragmentName'?: 'AgentAccessFieldsFragment' };
+
+export type AgentAccessQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentAccessQuery = { agentDefinition: { ' $fragmentRefs'?: { 'AgentAccessFieldsFragment': AgentAccessFieldsFragment } } | null };
+
+export type SetAgentAccessMutationVariables = Exact<{
+  agentId: string | number;
+  input: SetAgentAccessInput;
+}>;
+
+
+export type SetAgentAccessMutation = { setAgentAccess: { ' $fragmentRefs'?: { 'AgentAccessFieldsFragment': AgentAccessFieldsFragment } } };
+
+export type RoleAgentAccessFieldsFragment = { id: string, name: string, agents: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null, accessMode: AgentAccessMode, enabled: boolean, triggerMode: AgentTriggerMode, systemKey: string }> } & { ' $fragmentName'?: 'RoleAgentAccessFieldsFragment' };
+
+export type RoleAgentAccessQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type RoleAgentAccessQuery = { role: { ' $fragmentRefs'?: { 'RoleAgentAccessFieldsFragment': RoleAgentAccessFieldsFragment } } | null };
+
+export type SetRoleAgentAccessMutationVariables = Exact<{
+  roleId: string | number;
+  agentIds: Array<string | number> | string | number;
+}>;
+
+
+export type SetRoleAgentAccessMutation = { setRoleAgentAccess: { ' $fragmentRefs'?: { 'RoleAgentAccessFieldsFragment': RoleAgentAccessFieldsFragment } } };
+
+export type SuggestedAgentAudienceQueryVariables = Exact<{
+  agentId: string | number;
+}>;
+
+
+export type SuggestedAgentAudienceQuery = { suggestedAgentAudience: { agentId: string, accessMode: AgentAccessMode, sensitiveTools: Array<string>, roles: Array<{ coverage: AgentAudienceCoverage, missingResources: Array<string>, granted: boolean, role: { ' $fragmentRefs'?: { 'AgentAccessRoleFieldsFragment': AgentAccessRoleFieldsFragment } } }> } };
 
 export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
 
@@ -12627,6 +12733,63 @@ export const AgentScorecardFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"AgentScorecardFields"}) as unknown as TypedDocumentString<AgentScorecardFieldsFragment, unknown>;
+export const MyAgentFieldsFragmentDoc = new TypedDocumentString(`
+    fragment MyAgentFields on MyAgent {
+  id
+  name
+  description
+  template
+  icon
+  accent
+  toolNames
+  systemKey
+  starters {
+    label
+    prompt
+  }
+}
+    `, {"fragmentName":"MyAgentFields"}) as unknown as TypedDocumentString<MyAgentFieldsFragment, unknown>;
+export const AgentAccessRoleFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentAccessRoleFields on Role {
+  id
+  name
+  description
+  isSystem
+}
+    `, {"fragmentName":"AgentAccessRoleFields"}) as unknown as TypedDocumentString<AgentAccessRoleFieldsFragment, unknown>;
+export const AgentAccessFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentAccessFields on AgentDefinition {
+  id
+  name
+  systemKey
+  accessMode
+  accessRoles {
+    ...AgentAccessRoleFields
+  }
+}
+    fragment AgentAccessRoleFields on Role {
+  id
+  name
+  description
+  isSystem
+}`, {"fragmentName":"AgentAccessFields"}) as unknown as TypedDocumentString<AgentAccessFieldsFragment, unknown>;
+export const RoleAgentAccessFieldsFragmentDoc = new TypedDocumentString(`
+    fragment RoleAgentAccessFields on Role {
+  id
+  name
+  agents {
+    id
+    name
+    icon
+    accent
+    template
+    accessMode
+    enabled
+    triggerMode
+    systemKey
+  }
+}
+    `, {"fragmentName":"RoleAgentAccessFields"}) as unknown as TypedDocumentString<RoleAgentAccessFieldsFragment, unknown>;
 export const AgentControlFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentControlFields on AgentControl {
   id
@@ -19784,6 +19947,13 @@ export const ArCollectionsWorklistDocument = {"__meta__":{"kind":"query","name":
 export const ArPaymentStatsDocument = {"__meta__":{"kind":"query","name":"ArPaymentStats","hash":"sha256:a4fe33f6233932aadde3e5ec2e4dc656c78b2e73188bab35638f674c3045bbeb"}} as unknown as TypedDocumentString<ArPaymentStatsQuery, ArPaymentStatsQueryVariables>;
 export const ArCustomerProfileDocument = {"__meta__":{"kind":"query","name":"ArCustomerProfile","hash":"sha256:b82086fc8a84f2dcc1c322b26634a1465bf4d240b6a5ff5f9bfd36300fbe7b37"}} as unknown as TypedDocumentString<ArCustomerProfileQuery, ArCustomerProfileQueryVariables>;
 export const AgentScorecardDocument = {"__meta__":{"kind":"query","name":"AgentScorecard","hash":"sha256:4ad32e77a6c5d07bddbf798b32093cb772102fd0a3a232f14c6c0e1136dc699f"}} as unknown as TypedDocumentString<AgentScorecardQuery, AgentScorecardQueryVariables>;
+export const MyAgentsDocument = {"__meta__":{"kind":"query","name":"MyAgents","hash":"sha256:396c2dbadc8d811918486b2a3cd4778f814c78f547e5af124b2e301be5bbed89"}} as unknown as TypedDocumentString<MyAgentsQuery, MyAgentsQueryVariables>;
+export const DecideMyProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposal","hash":"sha256:64dea8adddc7bea71fcfb7abc268678df95b4aa90847396b783656abc92f0180"}} as unknown as TypedDocumentString<DecideMyProposalMutation, DecideMyProposalMutationVariables>;
+export const AgentAccessDocument = {"__meta__":{"kind":"query","name":"AgentAccess","hash":"sha256:a96fd576cc93fef1d6389a872a52d1d681ed4ce882cba36bb6ef2199d6fda41f"}} as unknown as TypedDocumentString<AgentAccessQuery, AgentAccessQueryVariables>;
+export const SetAgentAccessDocument = {"__meta__":{"kind":"mutation","name":"SetAgentAccess","hash":"sha256:e6df898351f5a8c4e7ba13ec77ffd0d5b05464e9abe0fff637b90a0d2e6e61ce"}} as unknown as TypedDocumentString<SetAgentAccessMutation, SetAgentAccessMutationVariables>;
+export const RoleAgentAccessDocument = {"__meta__":{"kind":"query","name":"RoleAgentAccess","hash":"sha256:4320bfe8fce105b07adf7782d513aaff38f3b1aa012079c2d259df9de7eaebcc"}} as unknown as TypedDocumentString<RoleAgentAccessQuery, RoleAgentAccessQueryVariables>;
+export const SetRoleAgentAccessDocument = {"__meta__":{"kind":"mutation","name":"SetRoleAgentAccess","hash":"sha256:dd0999e8751bca239fb25ebad5054c71404e98c83deea9439010bd3b5d3b410b"}} as unknown as TypedDocumentString<SetRoleAgentAccessMutation, SetRoleAgentAccessMutationVariables>;
+export const SuggestedAgentAudienceDocument = {"__meta__":{"kind":"query","name":"SuggestedAgentAudience","hash":"sha256:79bdbda787008c4d10159a18a778009b985209e55670b365e0bc0675e361a021"}} as unknown as TypedDocumentString<SuggestedAgentAudienceQuery, SuggestedAgentAudienceQueryVariables>;
 export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:a44ebbd4e0c314668190068941ad623cefb3b405b0fb345a4dfe58072465cf70"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
 export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:5f38f15ae16abb622bccc80b578ce30e1743ab4b89440782ac1b96232f48a2c3"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
 export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"PendingDecisions","hash":"sha256:830984fb64f11f16fc179642cec7259c4e9c4274405f3cf81a86367a8bc77a91"}} as unknown as TypedDocumentString<PendingDecisionsQuery, PendingDecisionsQueryVariables>;

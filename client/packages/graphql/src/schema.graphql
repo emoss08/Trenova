@@ -621,6 +621,54 @@ input AdjustWorkerPTOBalanceInput {
   workerId: ID!
 }
 
+"""Who may use an agent, among the people who may use the assistant."""
+enum AgentAccessMode {
+  """Everyone who may use the assistant."""
+  Everyone
+  """
+  Only the roles granted it, and the roles that inherit them. Nobody when no role is.
+  """
+  Roles
+}
+
+"""How much of an agent a role could use."""
+enum AgentAudienceCoverage {
+  """The role grants everything the agent's tools need."""
+  Full
+  """The role may not use the assistant."""
+  None
+  """
+  The role may use the assistant but lacks some of what the agent's tools need.
+  """
+  Partial
+}
+
+"""
+How much of an agent one role could use, and whether it is granted the agent.
+"""
+type AgentAudienceRole {
+  coverage: AgentAudienceCoverage!
+  granted: Boolean!
+  """
+  Resources the agent's tools need that the role does not grant; empty unless coverage is Partial.
+  """
+  missingResources: [String!]!
+  role: Role!
+}
+
+"""Who an agent could be given to."""
+type AgentAudienceSuggestion {
+  accessMode: AgentAccessMode!
+  agentId: ID!
+  """Every role in the organization, by name."""
+  roles: [AgentAudienceRole!]!
+  """
+  While the agent is open to everyone, the tools it holds that reach
+  restricted or confidential data. Empty while it is restricted to roles.
+  """
+  sensitiveTools: [String!]!
+}
+
 enum AgentAutonomyTier {
   ActWithApproval
   AutoExecute
@@ -699,6 +747,13 @@ type AgentDefinition {
   Chosen accent name; empty falls back to an accent derived from the agent id.
   """
   accent: String!
+  """Who may use the agent. A system agent is always Everyone."""
+  accessMode: AgentAccessMode!
+  """
+  The roles granted the agent, whatever its access mode. They decide who may use
+  it only while accessMode is Roles. Empty for a reader who may not read roles.
+  """
+  accessRoles: [Role!]!
   autonomyCeiling: AgentAutonomyTier!
   businessUnitId: ID!
   contextProviders: [AgentContextProvider!]!
@@ -11426,6 +11481,11 @@ type Mutation {
   """
   decideAgentProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
   decideLeaveCase(input: DecideLeaveCaseInput!): WorkerLeaveCase!
+  """
+  Decides a proposal raised in one of the caller's own conversations. The
+  approved write still runs only if the caller may make it.
+  """
+  decideMyProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
   decideProfileChange(input: DecideProfileChangeInput!): WorkerProfileChangeRequest!
   delegateApproval(input: DelegateApprovalInput!): ApprovalDelegation!
   deleteDetentionPolicy(id: ID!): Boolean!
@@ -11715,6 +11775,10 @@ type Mutation {
   sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
   setAgentEvalCaseStatus(id: ID!, status: AgentEvalCaseStatus!): AgentEvalCase!
   """
+  Sets who may use an agent. Needs permission to update agents and roles.
+  """
+  setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!
+  """
   Retires or restores a memory; a retired one is kept and no longer read. A suggested memory is refused.
   """
   setAgentMemoryStatus(id: ID!, status: AgentMemoryStatus!): AgentMemory!
@@ -11734,6 +11798,8 @@ type Mutation {
   setMyAvailability(input: SetMyAvailabilityInput!): WorkerAvailabilityPreference!
   setOrderChargeAllocations(input: SetOrderChargeAllocationsInput!): Order!
   setOrgDefaultTableConfiguration(enabled: Boolean!, id: ID!): TableConfiguration!
+  """Replaces the agents a role is granted."""
+  setRoleAgentAccess(agentIds: [ID!]!, roleId: ID!): Role!
   setWorkerAvailabilityPreference(input: SetAvailabilityPreferenceInput!): WorkerAvailabilityPreference!
   skipWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   """
@@ -11879,6 +11945,64 @@ type Mutation {
 input MyAIFeedbackInput {
   """At most 200 targets."""
   targets: [AIFeedbackTargetInput!]!
+}
+
+"""
+An agent as the person asking it sees it: who it is and what to ask it. Its
+instructions, tools' settings and budget are an administrator's, and are not
+here.
+"""
+type MyAgent {
+  """
+  Chosen accent name; empty falls back to an accent derived from the agent id.
+  """
+  accent: String!
+  description: String!
+  """
+  Chosen icon name; empty falls back to the icon the starter template implies.
+  """
+  icon: String!
+  id: ID!
+  name: String!
+  """Up to four opening questions the agent can answer with its tools."""
+  starters: [AgentStarter!]!
+  """Set on the agents the platform itself creates and fires."""
+  systemKey: String!
+  """The starter this agent was created from, if any."""
+  template: AgentTemplate
+  toolNames: [String!]!
+}
+
+type MyAgentConnection {
+  edges: [MyAgentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type MyAgentEdge {
+  cursor: String!
+  node: MyAgent!
+}
+
+"""Where an agent came from."""
+enum MyAgentOrigin {
+  All
+  """Built by hand."""
+  Custom
+  """Made from one of the platform's templates."""
+  Template
+}
+
+input MyAgentsInput {
+  after: String
+  """Agents already shown, so a page never repeats them. At most 100."""
+  excludeIds: [ID!]
+  first: Int = 20
+  """Only these agents. At most 100."""
+  ids: [ID!]
+  origin: MyAgentOrigin = All
+  """Matched against the agent's name and description."""
+  search: String
 }
 
 type MyCarrierIntelligence {
@@ -13823,6 +13947,8 @@ type Query {
   """
   myActiveBillingTransferRun: BillingTransferRun
   myAdvances: [PayAdvance!]!
+  """The chat agents the caller may use, enabled and by name."""
+  myAgents(input: MyAgentsInput!): MyAgentConnection!
   """What the signed-in driver has said they would rather work."""
   myAvailability: [WorkerAvailabilityPreference!]!
   myCarrierIntelligence(refresh: Boolean): MyCarrierIntelligence!
@@ -14053,6 +14179,8 @@ type Query {
   Suggests a carrier for an EDI invoice by SCAC/DOT lookup against the carrier master.
   """
   suggestCarrierForEdiInvoice(invoiceId: ID!): Carrier
+  """Each role's coverage of an agent's tools, for choosing who may use it."""
+  suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion!
   tableConfiguration(id: ID!): TableConfiguration
   tableConfigurations(input: DataTableConnectionInput!, resource: String, visibility: ConfigurationVisibility): TableConfigurationConnection!
   tcaSubscription(id: ID!): TCASubscription
@@ -15363,6 +15491,11 @@ input ReviewRatingInput {
 }
 
 type Role {
+  """
+  The agents restricted to roles that this role is granted. Empty for a reader
+  who may not read agents.
+  """
+  agents: [AgentDefinition!]!
   businessUnitId: ID!
   coreResponsibility: String
   createdAt: Timestamp!
@@ -15955,6 +16088,15 @@ type ServiceTypeConnection {
 type ServiceTypeEdge {
   cursor: String!
   node: ServiceType!
+}
+
+input SetAgentAccessInput {
+  accessMode: AgentAccessMode!
+  """
+  The roles granted the agent, replacing those granted now. Kept whatever the
+  mode, so an agent opened to everyone and restricted again keeps its audience.
+  """
+  roleIds: [ID!]!
 }
 
 input SetAvailabilityPreferenceInput {

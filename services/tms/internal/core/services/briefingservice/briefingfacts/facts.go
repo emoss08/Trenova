@@ -232,7 +232,7 @@ func (b *Builder) decisions(ctx context.Context, req Request, facts *Facts) {
 		return
 	}
 
-	summary, err := b.sources.Decisions.Summary(ctx, req.TenantInfo)
+	summary, err := b.sources.Decisions.Summary(ctx, req.TenantInfo, nil)
 	if err != nil || summary == nil {
 		facts.miss("decisions")
 

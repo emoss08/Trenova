@@ -57,6 +57,12 @@ type Thread struct {
 	SubjectType agent.SubjectType `json:"subjectType" bun:"subject_type,type:VARCHAR(50),nullzero"`
 	SubjectID   pulid.ID          `json:"subjectId"   bun:"subject_id,type:VARCHAR(100),nullzero"`
 
+	// CanContinue is whether the person reading the conversation may still
+	// ask its agent anything. It is worked out when the thread is served and
+	// never stored: a conversation with an agent they lost access to stays
+	// readable.
+	CanContinue bool `json:"canContinue" bun:"-"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

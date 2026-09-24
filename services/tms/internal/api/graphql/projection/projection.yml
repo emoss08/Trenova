@@ -105,6 +105,11 @@ virtuals:
     - pendingProposals
     - openRuns
     - starters
+    - accessRoles
+  MyAgent:
+    - starters
+  Role:
+    - agents
   AIProvider:
     - hasApiKey
   Carrier:

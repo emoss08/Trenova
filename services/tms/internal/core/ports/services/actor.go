@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -131,4 +132,26 @@ func (a *RequestActor) AuditActor() AuditActor {
 	}
 
 	return auditActor
+}
+
+// PermissionCheck is the check of the actor holding the operation on the
+// resource.
+func (a *RequestActor) PermissionCheck(
+	resource permission.Resource,
+	operation permission.Operation,
+) *PermissionCheckRequest {
+	if a == nil {
+		return &PermissionCheckRequest{Resource: resource.String(), Operation: operation}
+	}
+
+	return &PermissionCheckRequest{
+		PrincipalType:  a.PrincipalType,
+		PrincipalID:    a.PrincipalID,
+		UserID:         a.UserID,
+		APIKeyID:       a.APIKeyID,
+		BusinessUnitID: a.BusinessUnitID,
+		OrganizationID: a.OrganizationID,
+		Resource:       resource.String(),
+		Operation:      operation,
+	}
 }

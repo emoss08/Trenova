@@ -110,6 +110,11 @@ type Definition struct {
 	// as the same person, and never delegates further.
 	DelegateIDs []pulid.ID `json:"delegateIds" bun:"delegate_ids,type:TEXT[],array,nullzero"`
 
+	// AccessMode is who may use the agent among the people who may use the
+	// assistant: everyone, or only the roles granted it. Only the agent
+	// access service writes it.
+	AccessMode AccessMode `json:"accessMode" bun:"access_mode,type:VARCHAR(20),notnull,default:'Everyone'"`
+
 	LastRunAt *int64 `json:"lastRunAt" bun:"last_run_at,type:BIGINT,nullzero"`
 	NextRunAt *int64 `json:"nextRunAt" bun:"next_run_at,type:BIGINT,nullzero"`
 
@@ -187,6 +192,9 @@ func (d *Definition) ApplyDefaults() {
 	// cannot hold an absent one.
 	if d.ToolDailyLimits == nil {
 		d.ToolDailyLimits = map[string]int{}
+	}
+	if d.AccessMode == "" {
+		d.AccessMode = AccessEveryone
 	}
 }
 
@@ -375,6 +383,7 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 	d.validateContextProviders(multiErr)
 	d.validateBudget(multiErr)
 	d.validateDelegates(multiErr)
+	d.validateAccess(multiErr)
 }
 
 // Delegates reports whether the agent may hand work to another agent at all:

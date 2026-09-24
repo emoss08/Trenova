@@ -104,9 +104,19 @@ func (r *queryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 		return nil, err
 	}
 
+	usable, err := r.permissionEngine.AgentsUsable(
+		ctx,
+		actorutil.FromAuthContext(authCtx),
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	req := services.ListPendingDecisionsRequest{
 		TenantInfo:        tenantInfo(authCtx),
 		IncludeTotalCount: connectionFieldRequested(ctx, connectionTotalCountField),
+		Usable:            usable,
 	}
 	if input.First != nil {
 		req.First = *input.First
@@ -164,7 +174,16 @@ func (r *queryResolver) PendingDecisionSummary(ctx context.Context) (*gqlmodel.P
 		return nil, err
 	}
 
-	summary, err := r.agentDecisionQueueService.Summary(ctx, tenantInfo(authCtx))
+	usable, err := r.permissionEngine.AgentsUsable(
+		ctx,
+		actorutil.FromAuthContext(authCtx),
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	summary, err := r.agentDecisionQueueService.Summary(ctx, tenantInfo(authCtx), usable)
 	if err != nil {
 		return nil, err
 	}

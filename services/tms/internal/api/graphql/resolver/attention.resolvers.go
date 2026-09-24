@@ -9,6 +9,7 @@ import (
 	"context"
 	"sync"
 
+	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -70,7 +71,15 @@ func (r *queryResolver) AttentionSummary(ctx context.Context) (*gqlmodel.Attenti
 	})
 
 	run(permission.ResourceAgentProposal, "agent decision count", func(ctx context.Context) error {
-		count, sErr := r.agentDecisionQueueService.Count(ctx, tenantInfo(authCtx))
+		usable, uErr := r.permissionEngine.AgentsUsable(
+			ctx,
+			actorutil.FromAuthContext(authCtx),
+			permission.OpRead,
+		)
+		if uErr != nil {
+			return uErr
+		}
+		count, sErr := r.agentDecisionQueueService.Count(ctx, tenantInfo(authCtx), usable)
 		if sErr != nil {
 			return sErr
 		}

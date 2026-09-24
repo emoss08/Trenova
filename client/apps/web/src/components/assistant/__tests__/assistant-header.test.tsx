@@ -19,6 +19,7 @@ const thread: AssistantThread = {
   pinned: false,
   subjectType: "",
   subjectId: "",
+  canContinue: true,
   version: 1,
   createdAt: 1,
   updatedAt: 1,

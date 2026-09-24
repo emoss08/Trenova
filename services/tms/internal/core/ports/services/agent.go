@@ -228,6 +228,13 @@ type AgentDecisionService interface {
 		req *DecideAgentProposalRequest,
 		actor *RequestActor,
 	) (*DecisionOutcome, error)
+	// DecideOwn is Decide for a proposal raised in one of the actor's own
+	// conversations; any other is not found.
+	DecideOwn(
+		ctx context.Context,
+		req *DecideAgentProposalRequest,
+		actor *RequestActor,
+	) (*agent.AgentDecision, error)
 }
 
 type UpdateAgentControlRequest struct {
@@ -376,6 +383,9 @@ type ListPendingDecisionsRequest struct {
 	AgentDefinitionID pulid.ID
 	ToolName          string
 	IncludeTotalCount bool
+	// Usable keeps only what agents the reader may use raised. Nil keeps
+	// everything, for a caller reading the queue for the organization.
+	Usable *UsableAgents
 }
 
 type PendingDecisionsPage struct {
@@ -406,11 +416,13 @@ type AgentProposalDecisionResult struct {
 
 type AgentDecisionQueueService interface {
 	ListPending(ctx context.Context, req ListPendingDecisionsRequest) (*PendingDecisionsPage, error)
-	// Count is the size of the queue, for a badge.
-	Count(ctx context.Context, tenant pagination.TenantInfo) (int, error)
+	// Count is the size of the queue, for a badge. Usable narrows it to what
+	// the reader's agents raised; nil counts everything.
+	Count(ctx context.Context, tenant pagination.TenantInfo, usable *UsableAgents) (int, error)
 	Summary(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
+		usable *UsableAgents,
 	) (*repositories.PendingDecisionSummary, error)
 	DecideMany(
 		ctx context.Context,

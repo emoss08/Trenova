@@ -6,9 +6,11 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -85,6 +87,7 @@ func pendingUnion(req repositories.ListPendingDecisionsRequest) *unionQuery {
 		if req.ExcludeShadowDefinitions {
 			u.write(" AND COALESCE(" + definitions.ShadowMode.Qualified() + ", FALSE) = FALSE")
 		}
+		writeAudience(u, req.Audience)
 	}
 
 	u.write("SELECT ? AS kind, "+proposals.ID.Qualified()+" AS id, "+
@@ -139,6 +142,25 @@ func pendingUnion(req repositories.ListPendingDecisionsRequest) *unionQuery {
 	}
 
 	return u
+}
+
+// writeAudience keeps what agents the reader may use raised: an agent open to
+// everyone, a system agent, one granted to the reader's roles, and a run of a
+// retired built-in agent, which has no definition to restrict it.
+func writeAudience(u *unionQuery, audience *repositories.AgentAudience) {
+	if audience == nil {
+		return
+	}
+
+	definitions := buncolgen.DefinitionColumns
+	u.write(" AND ("+definitions.ID.Qualified()+" IS NULL OR "+
+		definitions.AccessMode.Qualified()+" = ? OR "+
+		definitions.SystemKey.Qualified()+" IS NOT NULL",
+		agentdefinition.AccessEveryone)
+	if len(audience.GrantedAgentIDs) > 0 {
+		u.write(" OR "+definitions.ID.Qualified()+" IN (?)", bun.List(audience.GrantedAgentIDs))
+	}
+	u.write(")")
 }
 
 // planToolName is how a plan reads in a by-tool count: several writes
@@ -211,6 +233,7 @@ func (r *repository) Summary(
 	listReq := repositories.ListPendingDecisionsRequest{
 		TenantInfo:               req.TenantInfo,
 		ExcludeShadowDefinitions: req.ExcludeShadowDefinitions,
+		Audience:                 req.Audience,
 		Now:                      req.Now,
 	}
 	db := r.db.DBForContext(ctx)

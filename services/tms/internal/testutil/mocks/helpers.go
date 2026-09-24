@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -20,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -137,6 +139,29 @@ func (a *AllowAllPermissionEngine) SimulatePermissions(
 	_ *services.SimulatePermissionsRequest,
 ) (*services.EffectivePermissions, error) {
 	return nil, nil
+}
+
+func (a *AllowAllPermissionEngine) AgentsUsable(
+	_ context.Context,
+	_ *services.RequestActor,
+	_ permission.Operation,
+) (*services.UsableAgents, error) {
+	return &services.UsableAgents{Assistant: true}, nil
+}
+
+func (a *AllowAllPermissionEngine) MayUseAgent(
+	_ context.Context,
+	_ *services.RequestActor,
+	_ *agentdefinition.Definition,
+) (bool, error) {
+	return true, nil
+}
+
+func (a *AllowAllPermissionEngine) RoleCoverage(
+	_ context.Context,
+	req *services.RoleCoverageRequest,
+) ([]services.RoleCoverage, error) {
+	return permtest.FullCoverage(req), nil
 }
 
 var _ services.DataTransformer = (*NoopDataTransformer)(nil)

@@ -200,7 +200,8 @@ func (b *ContextBuilder) delegates(
 		b.definitions == nil || req.Actor == nil {
 		return nil
 	}
-	if !MayUseAssistant(ctx, b.permissions, req.Actor, b.logger) {
+	usable := UsableAgentsFor(ctx, b.permissions, req.Actor, b.logger)
+	if !usable.Assistant {
 		return nil
 	}
 
@@ -225,7 +226,7 @@ func (b *ContextBuilder) delegates(
 	delegates := make([]agentdefinition.RuntimeDelegate, 0, len(definition.DelegateIDs))
 	for _, id := range definition.DelegateIDs {
 		delegate, ok := byID[id]
-		if !ok || definition.DelegateRefusal(delegate) != "" {
+		if !ok || definition.DelegateRefusal(delegate) != "" || !usable.Allows(delegate) {
 			continue
 		}
 		delegates = append(delegates, agentdefinition.RuntimeDelegate{

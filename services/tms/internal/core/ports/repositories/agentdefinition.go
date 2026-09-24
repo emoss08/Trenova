@@ -23,12 +23,16 @@ type ListAgentDefinitionRequest struct {
 	Filter      *pagination.QueryOptions `json:"filter"`
 	EnabledOnly bool
 	ChatOnly    bool
+	Audience    *AgentAudience
 }
 
 type ListAgentDefinitionConnectionRequest struct {
-	Filter  *pagination.QueryOptions `json:"filter"`
-	Cursor  pagination.CursorInfo    `json:"-"`
-	Columns []string                 `json:"-"`
+	Filter      *pagination.QueryOptions `json:"filter"`
+	Cursor      pagination.CursorInfo    `json:"-"`
+	Columns     []string                 `json:"-"`
+	EnabledOnly bool                     `json:"-"`
+	ChatOnly    bool                     `json:"-"`
+	Audience    *AgentAudience           `json:"-"`
 }
 
 type ListAgentDefinitionsByTriggerRequest struct {
@@ -66,6 +70,12 @@ type SetAgentDefinitionToolTierRequest struct {
 	TenantInfo pagination.TenantInfo
 	ToolName   string
 	Tier       agent.AutonomyTier
+}
+
+type SetAgentDefinitionAccessModeRequest struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	Mode       agentdefinition.AccessMode
 }
 
 type DeleteAgentDefinitionRequest struct {
@@ -128,6 +138,7 @@ type AgentDefinitionRepository interface {
 	) (*agentdefinition.Definition, error)
 	MarkRun(ctx context.Context, req MarkAgentDefinitionRunRequest) (bool, error)
 	SetToolTier(ctx context.Context, req SetAgentDefinitionToolTierRequest) error
+	SetAccessMode(ctx context.Context, req SetAgentDefinitionAccessModeRequest) error
 	Delete(ctx context.Context, req DeleteAgentDefinitionRequest) error
 	StatsByIDs(
 		ctx context.Context,

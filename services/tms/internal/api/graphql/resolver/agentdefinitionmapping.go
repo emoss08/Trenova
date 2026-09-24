@@ -16,8 +16,19 @@ import (
 )
 
 func agentDefinitionColumns(ctx context.Context, nodePathPrefix string) []string {
+	return definitionColumns(ctx, projection.AgentDefinitionSpec, nodePathPrefix)
+}
+
+// definitionColumns is the columns a selection of an agent needs. Its
+// opening questions are worked out from its template and its tools, so
+// asking for them reads both.
+func definitionColumns(
+	ctx context.Context,
+	spec projection.TypeSpec,
+	nodePathPrefix string,
+) []string {
 	selection := projection.Select(
-		projection.AgentDefinitionSpec,
+		spec,
 		func(path string) bool {
 			return graphql.FieldRequested(ctx, path)
 		},
