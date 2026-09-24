@@ -22,6 +22,8 @@ export type RailCounts = {
   memoriesActive: number;
   extensionsOn: number;
   extensionsTotal: number;
+  /** Agents whose latest scored suite run regressed. */
+  qualityRegressions: number;
 };
 
 export type RailPermissions = {
@@ -34,6 +36,8 @@ export type RailPermissions = {
   memory: boolean;
   /** Reading what agents may do on their own is reading agents. */
   safety: boolean;
+  /** How well agents are doing is read under the golden set's right. */
+  quality: boolean;
 };
 
 type Translate = (text: string, ...args: (string | number)[]) => string;
@@ -101,6 +105,19 @@ export function buildRailItems(
 
   if (permissions.safety) {
     items.push({ tab: "safety", status: "", attention: false, children: [] });
+  }
+
+  if (permissions.quality) {
+    const regressed = counts?.qualityRegressions ?? 0;
+    items.push({
+      tab: "quality",
+      status:
+        regressed > 0
+          ? t("{0, plural, one {# agent regressed} other {# agents regressed}}", regressed)
+          : "",
+      attention: regressed > 0,
+      children: [],
+    });
   }
 
   if (permissions.runs) {

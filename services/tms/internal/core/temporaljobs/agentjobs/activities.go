@@ -441,6 +441,9 @@ func (a *Activities) settleRun(ctx context.Context, p settleRunParams) (*FinishR
 	run.ModelIdentifier = p.Outcome.Model
 	run.Summary = stringutils.Ellipsize(strings.TrimSpace(p.Outcome.Reply), maxSummaryChars)
 	run.RecordTaint(p.Outcome.Taint, timeutils.NowUnix())
+	if fingerprint := p.Outcome.ServedFingerprint(); fingerprint != nil {
+		run.Fingerprint = fingerprint
+	}
 	if pending > 0 && !p.Failed {
 		run.Status = agent.RunStatusAwaitingDecision
 	}

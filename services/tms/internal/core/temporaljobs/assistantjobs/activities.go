@@ -258,6 +258,7 @@ func (a *Activities) finish(
 	if err != nil {
 		return nil, nil, fmt.Errorf("save this turn: %w", err)
 	}
+	a.recordFingerprint(ctx, in)
 
 	status := assistantturnservice.StatusFor(result.Refused, cause)
 	switch status {
@@ -274,6 +275,24 @@ func (a *Activities) finish(
 			},
 			Event: temporaltype.StreamItem{Event: serviceports.AssistantEventDone, Data: result},
 		}, nil, nil
+	}
+}
+
+func (a *Activities) recordFingerprint(ctx context.Context, in *FinishTurnInput) {
+	fingerprint := assistantservice.TurnFingerprint(in.Plan, in.Run)
+	if fingerprint == nil || a.turnRepo == nil {
+		return
+	}
+
+	if err := a.turnRepo.RecordFingerprint(ctx, repositories.RecordAssistantTurnFingerprintRequest{
+		ID:          in.Payload.TurnID,
+		TenantInfo:  in.Payload.tenantInfo(),
+		Fingerprint: fingerprint,
+	}); err != nil {
+		a.logger.Warn("could not keep the agent a turn ran as",
+			zap.String("turn", in.Payload.TurnID.String()),
+			zap.Error(err),
+		)
 	}
 }
 

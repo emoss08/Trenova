@@ -1955,6 +1955,41 @@ models:
   AgentEvalCase:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agentquality.EvalCase
+  AgentSuiteRunStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentquality.SuiteRunStatus
+  AgentSuiteRunTrigger:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentquality.SuiteRunTrigger
+  AgentSuiteRun:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentquality.SuiteRun
+    fields:
+      agentName:
+        resolver: true
+      changeSummary:
+        resolver: true
+  AgentQualityControl:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agentquality.Control
+    fields:
+      id:
+        resolver: true
+  AgentQualityPoint:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityPoint
+  AgentQualityOverview:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityOverview
+  AgentWorstRatedAnswer:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentWorstRatedAnswer
+  AgentQuality:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityDetail
+  AgentQualityAgent:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AgentQualityAgent
   AgentAutonomyTier:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AutonomyTier

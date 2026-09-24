@@ -4,9 +4,23 @@ package agentquality
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [Control].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.ControlFieldMap] instead of parsing struct tags via reflection.
+func (e *Control) GetStaticFieldMap() map[string]string {
+	return buncolgen.ControlFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [EvalCase].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.EvalCaseFieldMap] instead of parsing struct tags via reflection.
 func (e *EvalCase) GetStaticFieldMap() map[string]string {
 	return buncolgen.EvalCaseFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [SuiteRun].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.SuiteRunFieldMap] instead of parsing struct tags via reflection.
+func (e *SuiteRun) GetStaticFieldMap() map[string]string {
+	return buncolgen.SuiteRunFieldMap
 }

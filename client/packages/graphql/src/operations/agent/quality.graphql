@@ -1,0 +1,247 @@
+fragment AgentSuiteRunFields on AgentSuiteRun {
+  id
+  agentDefinitionId
+  agentName
+  trigger
+  fingerprintHash
+  fingerprintChanges {
+    field
+    from
+    to
+  }
+  changeSummary
+  suiteRevision
+  status
+  casesTotal
+  casesPassed
+  casesFailed
+  casesSkipped
+  hardFailures
+  deterministicScore
+  judgeScore
+  qualityScore
+  baselineScore
+  baselineRunId
+  regression
+  costUsd
+  startedAt
+  finishedAt
+  comments
+  requestedByUserId
+}
+
+fragment AgentQualityPointFields on AgentQualityPoint {
+  suiteRunId
+  at
+  qualityScore
+  status
+  regression
+}
+
+fragment AgentWorstRatedAnswerFields on AgentWorstRatedAnswer {
+  targetType
+  targetId
+  targetPart
+  positive
+  negative
+  lastRatedAt
+  threadId
+  canOpenThread
+  agentDefinitionId
+  agentName
+  sample {
+    id
+    reasons
+    comment
+    createdAt
+    turnSnapshot {
+      question
+      answer
+      tools {
+        name
+        summary
+        failed
+      }
+      omittedTools
+      redacted
+    }
+  }
+}
+
+fragment AgentQualityControlFields on AgentQualityControl {
+  id
+  enabled
+  runHourLocal
+  timezone
+  maxCasesPerAgent
+  nightlyBudgetUsd
+  monthlyBudgetUsd
+  judgeEnabled
+  judgeSampleRate
+  regressionThreshold
+  minCases
+  forceRerunDays
+  version
+  updatedAt
+}
+
+query AgentQualityOverview($window: Int) {
+  agentQualityOverview(window: $window) {
+    windowDays
+    since
+    ratingsVisible
+    satisfaction
+    ratings
+    qualityScore
+    agentsScored
+    suiteRuns
+    regressions
+    openRegressions
+    evalSpendMonthUsd
+    evalUnpricedCalls
+    monthlyBudgetUsd
+    monthStartedAt
+    sweepEnabled
+    nextSweepHourLocal
+    nextSweepTimezone
+    agentsWithCases
+    judgeEnabled
+    regressionThreshold
+  }
+}
+
+query AgentQualityAgents($input: AgentQualityAgentsInput!, $includeTotalCount: Boolean = false) {
+  agentQualityAgents(input: $input) {
+    edges {
+      cursor
+      node {
+        agentDefinitionId
+        name
+        enabled
+        ratingsVisible
+        satisfaction
+        satisfactionDelta
+        ratings
+        qualityScore
+        openRegression
+        qualityPoints {
+          ...AgentQualityPointFields
+        }
+        lastSuiteRun {
+          ...AgentSuiteRunFields
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentWorstRatedAnswers($input: AgentWorstRatedAnswersInput!) {
+  agentWorstRatedAnswers(input: $input) {
+    edges {
+      cursor
+      node {
+        ...AgentWorstRatedAnswerFields
+      }
+    }
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentQuality($agentDefinitionId: ID!, $window: Int) {
+  agentQuality(agentDefinitionId: $agentDefinitionId, window: $window) {
+    agentDefinitionId
+    agentName
+    enabled
+    windowDays
+    since
+    ratingsVisible
+    satisfaction
+    ratings
+    activeCases
+    satisfactionPoints {
+      day
+      positive
+      negative
+      satisfaction
+    }
+    qualityPoints {
+      ...AgentQualityPointFields
+    }
+    worstRated {
+      ...AgentWorstRatedAnswerFields
+    }
+    lastSuiteRun {
+      ...AgentSuiteRunFields
+    }
+  }
+}
+
+query AgentSuiteRuns($input: AgentSuiteRunsInput!, $includeTotalCount: Boolean = false) {
+  agentSuiteRuns(input: $input) {
+    edges {
+      cursor
+      node {
+        ...AgentSuiteRunFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentSuiteRun($id: ID!) {
+  agentSuiteRun(id: $id) {
+    ...AgentSuiteRunFields
+  }
+}
+
+query AgentSuiteRunCases($input: AgentSuiteRunCasesInput!, $includeTotalCount: Boolean = false) {
+  agentSuiteRunCases(input: $input) {
+    edges {
+      cursor
+      node {
+        id
+        evalCaseId
+        suiteOrdinal
+        status
+        reply
+        checks
+        judge
+        caseScore
+        errorMessage
+        model
+        completedAt
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AgentQualityControl {
+  agentQualityControl {
+    ...AgentQualityControlFields
+  }
+}
+
+mutation UpdateAgentQualityControl($input: UpdateAgentQualityControlInput!) {
+  updateAgentQualityControl(input: $input) {
+    ...AgentQualityControlFields
+  }
+}
+
+mutation RunAgentSuite($agentDefinitionId: ID!) {
+  runAgentSuite(agentDefinitionId: $agentDefinitionId) {
+    ...AgentSuiteRunFields
+  }
+}

@@ -80,7 +80,14 @@ type AIUsageFailure struct {
 	At           int64
 }
 
+type AIUsageEvaluationCostRequest struct {
+	TenantInfo pagination.TenantInfo
+	Since      int64
+	SuiteRunID pulid.ID
+}
+
 type AIUsageRepository interface {
+	EvaluationCost(ctx context.Context, req AIUsageEvaluationCostRequest) (*AIUsageCost, error)
 	Create(ctx context.Context, record *aiusage.AIUsageRecord) error
 	Summary(ctx context.Context, req AIUsageSummaryRequest) (*AIUsageSummary, error)
 	RecentFailures(ctx context.Context, req AIUsageFailuresRequest) ([]AIUsageFailure, error)

@@ -8,6 +8,7 @@ import {
   PlugZapIcon,
   PuzzleIcon,
   ShieldCheckIcon,
+  TargetIcon,
 } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import type { AIControlTab } from "../ai-control-tabs";
@@ -20,6 +21,7 @@ const ICONS: Record<AIControlTab, typeof BotIcon> = {
   extensions: PuzzleIcon,
   memory: BrainIcon,
   safety: ShieldCheckIcon,
+  quality: TargetIcon,
   activity: ActivityIcon,
 };
 
@@ -75,7 +77,7 @@ export function ControlRail({ items, active, activeView, onSelect }: ControlRail
               )}
               <Icon className="relative size-4 shrink-0" aria-hidden />
               <span className="relative flex min-w-0 flex-col">
-                <span className="text-sm font-medium">{t(LABELS[item.tab])}</span>
+                <span className="text-sm font-medium">{t(LABELS[item.tab].label)}</span>
                 {item.status !== "" && (
                   <span
                     className={cn(
@@ -131,12 +133,13 @@ export function ControlRail({ items, active, activeView, onSelect }: ControlRail
   );
 }
 
-const LABELS: Record<AIControlTab, string> = {
-  overview: "Overview",
-  agents: "Agents",
-  providers: "Providers",
-  extensions: "Extensions",
-  memory: "Memory",
-  safety: "Safety",
-  activity: "Activity",
+const LABELS: Record<AIControlTab, { label: string }> = {
+  overview: { label: "Overview" },
+  agents: { label: "Agents" },
+  providers: { label: "Providers" },
+  extensions: { label: "Extensions" },
+  memory: { label: "Memory" },
+  safety: { label: "Safety" },
+  quality: { label: "Quality" },
+  activity: { label: "Activity" },
 };

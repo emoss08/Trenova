@@ -101,7 +101,7 @@ func (a *Activities) openReplay(
 	evaluation.DefinitionVersion = definition.Version
 	evaluation.PromptVersion = promptVersion
 	evaluation.OriginalProposals = len(source.originals)
-	evaluation.Fingerprint = agentquality.FingerprintOf(definition, promptVersion)
+	evaluation.Fingerprint = a.fingerprintOf(definition)
 	if evaluation, err = a.evaluations.Update(ctx, evaluation); err != nil {
 		return nil, fmt.Errorf("mark evaluation running: %w", err)
 	}
@@ -126,6 +126,14 @@ func (a *Activities) openReplay(
 			UsagePurpose: serviceports.AIUsagePurposeEvaluation,
 		},
 	}, nil
+}
+
+func (a *Activities) fingerprintOf(definition *agentdefinition.Definition) *agent.Fingerprint {
+	if a.runtime == nil {
+		return agentquality.FingerprintOf(definition, promptVersion)
+	}
+
+	return a.runtime.Fingerprint(definition, definition.PreferredProviderID, "")
 }
 
 func (a *Activities) runSource(
@@ -383,6 +391,7 @@ func (a *Activities) storeReplay(
 	evaluation.Actions = actions
 	evaluation.Comparison = agent.CompareReplay(originals, actions)
 	evaluation.ToolCallsUsed = outcome.ToolCallsUsed
+	evaluation.Fingerprint = evaluation.Fingerprint.Served(outcome.Model, outcome.ProviderID)
 	if evaluation.ReplaysCase() {
 		if err := a.scoreReplay(ctx, evaluation, outcome, actions); err != nil {
 			return nil, err

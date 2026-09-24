@@ -226,6 +226,7 @@ enum AITask {
   DailyBriefing
   DocumentClassification
   DocumentExtraction
+  EvaluationJudge
   FormulaAssistant
   General
   InboundClassification
@@ -1081,6 +1082,12 @@ type AgentEvaluation {
   status: AgentEvaluationStatus!
   subjectId: ID!
   subjectType: String!
+  """The replay's place in its suite run."""
+  suiteOrdinal: Int
+  """
+  The suite run the replay belongs to; empty for a replay started on its own.
+  """
+  suiteRunId: ID
   toolCallsUsed: Int!
   trigger: AgentRunTrigger!
   updatedAt: Timestamp!
@@ -1211,6 +1218,16 @@ type AgentFeedbackWorstRated {
   targetId: ID!
   targetPart: String!
   targetType: AIFeedbackTargetType!
+}
+
+"""
+One thing that changed about an agent between a suite run and the run it is compared with.
+"""
+type AgentFingerprintChange {
+  """definitionVersion, prompt, tools, model or provider."""
+  field: String!
+  from: String!
+  to: String!
 }
 
 """
@@ -1532,6 +1549,135 @@ enum AgentProposalStatus {
   Superseded
 }
 
+"""One agent's quality over a window."""
+type AgentQuality {
+  activeCases: Int!
+  agentDefinitionId: ID!
+  agentName: String!
+  enabled: Boolean!
+  lastSuiteRun: AgentSuiteRun
+  """Each scored suite run in the window, oldest first."""
+  qualityPoints: [AgentQualityPoint!]!
+  ratings: Int!
+  ratingsVisible: Boolean!
+  satisfaction: Float
+  """Satisfaction by day, in the organization's timezone."""
+  satisfactionPoints: [AgentFeedbackDay!]!
+  since: Timestamp!
+  windowDays: Int!
+  """The five answers people liked least."""
+  worstRated: [AgentWorstRatedAnswer!]!
+}
+
+"""One agent's row in the quality table."""
+type AgentQualityAgent {
+  agentDefinitionId: ID!
+  enabled: Boolean!
+  lastSuiteRun: AgentSuiteRun
+  name: String!
+  openRegression: Boolean!
+  qualityPoints: [AgentQualityPoint!]!
+  qualityScore: Float
+  ratings: Int!
+  ratingsVisible: Boolean!
+  satisfaction: Float
+  """
+  Satisfaction now less satisfaction in the window before; absent without ratings in both.
+  """
+  satisfactionDelta: Float
+}
+
+type AgentQualityAgentConnection {
+  edges: [AgentQualityAgentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentQualityAgentEdge {
+  cursor: String!
+  node: AgentQualityAgent!
+}
+
+input AgentQualityAgentsInput {
+  after: String
+  first: Int
+  """Days of ratings and scores to read, 30 by default, at most 365."""
+  window: Int
+}
+
+"""When and how far the nightly agent quality sweep runs."""
+type AgentQualityControl {
+  enabled: Boolean!
+  """
+  An unchanged agent is run again once its last run is this many days old.
+  """
+  forceRerunDays: Int!
+  """Empty until the organization saves its own controls."""
+  id: ID
+  judgeEnabled: Boolean!
+  """The share of each suite's cases the judge reads, 0 to 1."""
+  judgeSampleRate: Float!
+  maxCasesPerAgent: Int!
+  """The fewest cases a run must score before a fall in its score counts."""
+  minCases: Int!
+  monthlyBudgetUsd: Decimal!
+  nightlyBudgetUsd: Decimal!
+  """
+  How far below the recent median a suite score must fall to count as a regression.
+  """
+  regressionThreshold: Float!
+  """The hour of the night the sweep starts, 0 to 23."""
+  runHourLocal: Int!
+  """The timezone the hour is read in; empty for the organization's own."""
+  timezone: String!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""The organization's AI quality over a window."""
+type AgentQualityOverview {
+  agentsScored: Int!
+  agentsWithCases: Int!
+  """What evaluation has spent since the start of the month, in US dollars."""
+  evalSpendMonthUsd: Decimal!
+  """Evaluation calls this month to providers that carry no price."""
+  evalUnpricedCalls: Int!
+  judgeEnabled: Boolean!
+  monthStartedAt: Timestamp!
+  monthlyBudgetUsd: Decimal!
+  nextSweepHourLocal: Int!
+  nextSweepTimezone: String!
+  """Agents whose latest scored run regressed."""
+  openRegressions: Int!
+  """The mean of each scored agent's latest quality score."""
+  qualityScore: Float
+  ratings: Int!
+  """
+  Whether the caller may read ratings; satisfaction and ratings are empty when not.
+  """
+  ratingsVisible: Boolean!
+  regressionThreshold: Float!
+  """Suite runs in the window that regressed."""
+  regressions: Int!
+  """
+  Share of agents' rated answers that were thumbs up; absent when nobody rated.
+  """
+  satisfaction: Float
+  since: Timestamp!
+  suiteRuns: Int!
+  sweepEnabled: Boolean!
+  windowDays: Int!
+}
+
+"""One scored suite run on an agent's quality line."""
+type AgentQualityPoint {
+  at: Timestamp!
+  qualityScore: Float!
+  regression: Boolean!
+  status: AgentSuiteRunStatus!
+  suiteRunId: ID!
+}
+
 """Who can reach an agent."""
 type AgentReach {
   accessMode: AgentAccessMode!
@@ -1829,6 +1975,108 @@ enum AgentSubjectType {
 }
 
 """
+One agent answering a sample of its active evaluation cases, scored as a whole
+and compared with the runs before it.
+"""
+type AgentSuiteRun {
+  agentDefinitionId: ID!
+  """The agent's name."""
+  agentName: String!
+  baselineRunId: ID
+  """The median quality score of the recent runs it was compared with."""
+  baselineScore: Float
+  businessUnitId: ID!
+  casesFailed: Int!
+  casesPassed: Int!
+  casesSkipped: Int!
+  casesTotal: Int!
+  """What changed, in words."""
+  changeSummary: String!
+  comments: String!
+  """What the run's replays and judgements cost, in US dollars."""
+  costUsd: Decimal!
+  createdAt: Timestamp!
+  deterministicScore: Float
+  """
+  The agent as it was scored: version, prompt hash, tool spec hash, model and provider.
+  """
+  fingerprint: JSON
+  """What changed since the run it is compared with."""
+  fingerprintChanges: [AgentFingerprintChange!]!
+  fingerprintHash: String!
+  finishedAt: Timestamp
+  hardFailures: Int!
+  id: ID!
+  judgeScore: Float
+  organizationId: ID!
+  qualityScore: Float
+  regression: Boolean!
+  requestedByUserId: ID
+  startedAt: Timestamp!
+  status: AgentSuiteRunStatus!
+  suiteRevision: String!
+  trigger: AgentSuiteRunTrigger!
+  updatedAt: Timestamp!
+  version: Int!
+  workflowId: String!
+}
+
+type AgentSuiteRunCaseConnection {
+  edges: [AgentSuiteRunCaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+One case of a suite run: its replay, with the checks, scores and judge's note.
+"""
+type AgentSuiteRunCaseEdge {
+  cursor: String!
+  node: AgentEvaluation!
+}
+
+input AgentSuiteRunCasesInput {
+  after: String
+  first: Int
+  suiteRunId: ID!
+}
+
+type AgentSuiteRunConnection {
+  edges: [AgentSuiteRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AgentSuiteRunEdge {
+  cursor: String!
+  node: AgentSuiteRun!
+}
+
+enum AgentSuiteRunStatus {
+  """
+  The nightly or monthly evaluation budget ran out before every case was asked.
+  """
+  BudgetStopped
+  Completed
+  Failed
+  Running
+  """Nothing about the agent or its cases changed since its last run."""
+  Skipped
+}
+
+enum AgentSuiteRunTrigger {
+  Manual
+  Scheduled
+}
+
+input AgentSuiteRunsInput {
+  after: String
+  agentDefinitionId: ID
+  first: Int
+  statuses: [AgentSuiteRunStatus!]
+}
+
+"""
 One place outside content reached a run from: its source, the tool call that read it, and the record when known.
 """
 type AgentTaintMark {
@@ -2081,6 +2329,42 @@ enum AgentType {
   BillingException
   DispatchAssignment
   General
+}
+
+"""An answer people rated down, with the most recent thumbs down on it."""
+type AgentWorstRatedAnswer {
+  agentDefinitionId: ID
+  agentName: String!
+  """
+  Whether the caller can open the conversation, which is only ever its owner.
+  """
+  canOpenThread: Boolean!
+  lastRatedAt: Timestamp!
+  negative: Int!
+  positive: Int!
+  """What the person saw when they rated it down."""
+  sample: AIFeedback
+  targetId: ID!
+  targetPart: String!
+  targetType: AIFeedbackTargetType!
+  threadId: ID
+}
+
+type AgentWorstRatedAnswerConnection {
+  edges: [AgentWorstRatedAnswerEdge!]!
+  pageInfo: PageInfo!
+}
+
+type AgentWorstRatedAnswerEdge {
+  cursor: String!
+  node: AgentWorstRatedAnswer!
+}
+
+input AgentWorstRatedAnswersInput {
+  after: String
+  agentDefinitionId: ID
+  first: Int
+  window: Int
 }
 
 input AmendWorkerEmploymentEventInput {
@@ -12138,6 +12422,8 @@ type Mutation {
   rollbackDocumentTemplate(notes: String, versionId: ID!): DocumentTemplateVersion!
   """Replaces the webhook token. The old URL stops working at once."""
   rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
+  """Runs one agent's suite now, whatever changed or did not."""
+  runAgentSuite(agentDefinitionId: ID!): AgentSuiteRun!
   runDotRandomDraw(input: RunDOTRandomDrawInput!): DOTRandomDraw!
   runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!
   runReport(input: RunReportInput!): ReportRun!
@@ -12219,6 +12505,7 @@ type Mutation {
   updateAgentControl(input: AgentControlInput!): AgentControl!
   updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
+  updateAgentQualityControl(input: UpdateAgentQualityControlInput!): AgentQualityControl!
   updateBenefitPlan(input: UpdateBenefitPlanInput!): BenefitPlan!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   updateCarrierIntelControl(input: CarrierIntelControlPatchInput!): CarrierIntelControl!
@@ -14047,6 +14334,15 @@ type Query {
   agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
   agentProposal(id: ID!): AgentProposal
   agentProposals(input: DataTableConnectionInput!): AgentProposalConnection!
+  """One agent's quality over the last window days."""
+  agentQuality(agentDefinitionId: ID!, window: Int = 30): AgentQuality!
+  """
+  Every agent with its satisfaction, quality line and last suite run, a page at a time.
+  """
+  agentQualityAgents(input: AgentQualityAgentsInput!): AgentQualityAgentConnection!
+  agentQualityControl: AgentQualityControl!
+  """The organization's AI quality over the last window days."""
+  agentQualityOverview(window: Int = 30): AgentQualityOverview!
   agentRun(id: ID!): AgentRun
   agentRunEvents(input: DataTableConnectionInput!): AgentRunEventConnection!
   agentRuns(input: DataTableConnectionInput!): AgentRunConnection!
@@ -14061,10 +14357,16 @@ type Query {
   agentSafetySummary: AgentSafetySummary!
   """How one agent has been doing."""
   agentScorecard(input: AgentScorecardInput!): AgentScorecard!
+  agentSuiteRun(id: ID!): AgentSuiteRun
+  """A suite run's cases in the order they were asked."""
+  agentSuiteRunCases(input: AgentSuiteRunCasesInput!): AgentSuiteRunCaseConnection!
+  agentSuiteRuns(input: AgentSuiteRunsInput!): AgentSuiteRunConnection!
   """Every tool's safety policy, by name."""
   agentToolPolicies: [AgentToolPolicy!]! @deprecated(reason: "Use agentToolPolicyConnection, which pages and filters on the server.")
   """The tool rules a page at a time, searched and filtered on the server."""
   agentToolPolicyConnection(input: AgentToolPolicyConnectionInput!): AgentToolPolicyConnection!
+  """The answers people liked least, a page at a time."""
+  agentWorstRatedAnswers(input: AgentWorstRatedAnswersInput!): AgentWorstRatedAnswerConnection!
   """Everyone's ratings, for administrators."""
   aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
   aiProvider(id: ID!): AIProvider
@@ -19530,6 +19832,23 @@ input UpdateAgentEvalCaseInput {
   version: Int!
 }
 
+input UpdateAgentQualityControlInput {
+  enabled: Boolean!
+  forceRerunDays: Int!
+  judgeEnabled: Boolean!
+  judgeSampleRate: Float!
+  maxCasesPerAgent: Int!
+  minCases: Int!
+  monthlyBudgetUsd: Decimal!
+  nightlyBudgetUsd: Decimal!
+  regressionThreshold: Float!
+  runHourLocal: Int!
+  """Empty for the organization's own timezone."""
+  timezone: String
+  """The version read; a save over a newer one is refused."""
+  version: Int!
+}
+
 input UpdateBenefitPlanInput {
   carrier: String
   code: String!
@@ -20167,6 +20486,7 @@ enum WatchtowerSourceKind {
   AgentException
   AgentPlan
   AgentProposal
+  AgentQualityRegression
   AgentRunFailed
   BillingException
   CarrierIntelEvent

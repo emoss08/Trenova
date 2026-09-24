@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/intutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -447,4 +448,81 @@ func pgArray(values []string) any {
 	}
 
 	return pgdialect.Array(values)
+}
+
+func (r *repository) ListAgentsWithActiveCases(
+	ctx context.Context,
+	req repositories.ListAgentsWithActiveEvalCasesRequest,
+) ([]pulid.ID, error) {
+	cols := buncolgen.EvalCaseColumns
+
+	ids := make([]pulid.ID, 0, defaultBatchLimit)
+	if err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model((*agentquality.EvalCase)(nil)).
+		ColumnExpr(cols.AgentDefinitionID.Qualified()).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.EvalCaseScopeTenant(sq, req.TenantInfo).
+				Where(cols.Status.Eq(), agentquality.CaseStatusActive)
+		}).
+		GroupExpr(cols.AgentDefinitionID.Qualified()).
+		OrderExpr(cols.AgentDefinitionID.OrderAsc()).
+		Limit(maxListLimit).
+		Scan(ctx, &ids); err != nil {
+		return nil, fmt.Errorf("list agents with active eval cases: %w", err)
+	}
+
+	return ids, nil
+}
+
+func (r *repository) ListSamplingCases(
+	ctx context.Context,
+	req repositories.ListEvalCaseSamplingRequest,
+) ([]agentquality.SamplingCase, error) {
+	cols := buncolgen.EvalCaseColumns
+	evals := buncolgen.EvaluationColumns
+	dba := r.db.DBForContext(ctx)
+
+	lastFailure := dba.NewSelect().
+		Model((*agent.Evaluation)(nil)).
+		ColumnExpr(buncolgen.Expr(
+			"CASE WHEN {0} = ? OR ({1} ->> 'passed') = 'false' THEN COALESCE({2}, {3}) ELSE 0 END",
+			evals.Status,
+			evals.Checks,
+			evals.CompletedAt,
+			evals.UpdatedAt,
+		), agent.EvaluationStatusFailed).
+		Where(evals.EvalCaseID.EqColumn(cols.ID)).
+		Where(evals.OrganizationID.EqColumn(cols.OrganizationID)).
+		Where(evals.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
+		Where(evals.Status.In(), bun.List([]agent.EvaluationStatus{
+			agent.EvaluationStatusCompleted,
+			agent.EvaluationStatusFailed,
+		})).
+		OrderExpr(evals.CreatedAt.OrderDesc()).
+		OrderExpr(evals.ID.OrderDesc()).
+		Limit(1)
+
+	cases := make([]agentquality.SamplingCase, 0, defaultBatchLimit)
+	if err := dba.NewSelect().
+		Model((*agentquality.EvalCase)(nil)).
+		ColumnExpr(cols.ID.As("id")).
+		ColumnExpr(cols.Source.As("source")).
+		ColumnExpr(cols.Version.As("version")).
+		ColumnExpr(cols.Trigger.As("trigger")).
+		ColumnExpr(cols.SubjectType.As("subject_type")).
+		ColumnExpr(cols.SubjectID.As("subject_id")).
+		ColumnExpr("COALESCE((?), 0) AS last_failed_at", lastFailure).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.EvalCaseScopeTenant(sq, req.TenantInfo).
+				Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
+				Where(cols.Status.Eq(), agentquality.CaseStatusActive)
+		}).
+		OrderExpr(cols.ID.OrderAsc()).
+		Limit(maxListLimit).
+		Scan(ctx, &cases); err != nil {
+		return nil, fmt.Errorf("list eval cases to sample: %w", err)
+	}
+
+	return cases, nil
 }

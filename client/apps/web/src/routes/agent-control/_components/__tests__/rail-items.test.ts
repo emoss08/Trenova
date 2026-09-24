@@ -19,6 +19,7 @@ const all: RailPermissions = {
   exceptions: true,
   memory: true,
   safety: true,
+  quality: true,
 };
 
 const counts = {
@@ -31,6 +32,7 @@ const counts = {
   memoriesActive: 3,
   extensionsOn: 1,
   extensionsTotal: 1,
+  qualityRegressions: 0,
 };
 
 describe("buildRailItems", () => {
@@ -44,6 +46,7 @@ describe("buildRailItems", () => {
       "extensions",
       "memory",
       "safety",
+      "quality",
       "activity",
     ]);
     expect(items[1].status).toBe("3 of 4 on");
@@ -51,8 +54,9 @@ describe("buildRailItems", () => {
     expect(items[3].status).toBe("1 of 1 on");
     expect(items[4].status).toBe("3 active");
     expect(items[5].status).toBe("");
-    expect(items[6].status).toBe("12 runs today");
-    expect(items[6].children.map((child) => child.view)).toEqual([
+    expect(items[6].status).toBe("");
+    expect(items[7].status).toBe("12 runs today");
+    expect(items[7].children.map((child) => child.view)).toEqual([
       "runs",
       "proposals",
       "plans",
@@ -66,8 +70,8 @@ describe("buildRailItems", () => {
   it("calls for attention when proposals wait on a person", () => {
     const items = buildRailItems({ ...counts, pendingProposals: 2 }, all, t);
 
-    expect(items[6].status).toBe("2 awaiting decision");
-    expect(items[6].attention).toBe(true);
+    expect(items[7].status).toBe("2 awaiting decision");
+    expect(items[7].attention).toBe(true);
   });
 
   it("calls for attention when no provider is on", () => {
@@ -89,6 +93,7 @@ describe("buildRailItems", () => {
         exceptions: false,
         memory: false,
         safety: false,
+        quality: false,
       },
       t,
     );
@@ -107,7 +112,7 @@ describe("buildRailItems", () => {
   it("lists plans only where proposals may be read", () => {
     const items = buildRailItems(counts, { ...all, proposals: false }, t);
 
-    expect(items[6].children.map((child) => child.view)).toEqual([
+    expect(items[7].children.map((child) => child.view)).toEqual([
       "runs",
       "evaluations",
       "exceptions",
@@ -149,5 +154,30 @@ describe("buildRailItems", () => {
 
     const hidden = buildRailItems(counts, { ...all, extensions: false }, t);
     expect(hidden.some((item) => item.tab === "extensions")).toBe(false);
+  });
+
+  // A regression is something to look at: the section says how many agents
+  // scored worse after they changed, and draws the warning dot.
+  it("calls for attention when an agent's quality regressed", () => {
+    const quiet = buildRailItems(counts, all, t).find((item) => item.tab === "quality");
+    expect(quiet).toEqual({ tab: "quality", status: "", attention: false, children: [] });
+
+    const one = buildRailItems({ ...counts, qualityRegressions: 1 }, all, t).find(
+      (item) => item.tab === "quality",
+    );
+    expect(one?.status).toBe("1 agent regressed");
+    expect(one?.attention).toBe(true);
+
+    const two = buildRailItems({ ...counts, qualityRegressions: 2 }, all, t).find(
+      (item) => item.tab === "quality",
+    );
+    expect(two?.status).toBe("2 agents regressed");
+  });
+
+  it("lists quality only where the golden set may be read", () => {
+    const items = buildRailItems(counts, { ...all, quality: false }, t);
+
+    expect(items.map((item) => item.tab)).not.toContain("quality");
+    expect(items.at(-1)?.tab).toBe("activity");
   });
 });

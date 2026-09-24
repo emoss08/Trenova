@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/briefing"
@@ -41,6 +42,9 @@ type resolvedTarget struct {
 	subject           string
 	toolNames         []string
 	snapshot          *aifeedback.TurnSnapshot
+	promptHash        string
+	toolSpecHash      string
+	atTurn            bool
 }
 
 type feedbackParams struct {
@@ -55,6 +59,9 @@ type feedbackParams struct {
 func (r *resolvedTarget) fingerprintSource() aifeedback.FingerprintSource {
 	if r.agentDefinitionID.IsNil() && r.detectorKey == "" && r.model == "" {
 		return aifeedback.FingerprintNone
+	}
+	if r.atTurn {
+		return aifeedback.FingerprintAtTurn
 	}
 
 	return aifeedback.FingerprintAtRating
@@ -87,6 +94,8 @@ func (r *resolvedTarget) feedback(p feedbackParams) *aifeedback.Feedback {
 		Task:              r.task,
 		Model:             r.model,
 		ProviderID:        optionalID(r.providerID),
+		PromptHash:        r.promptHash,
+		ToolSpecHash:      r.toolSpecHash,
 		FingerprintSource: r.fingerprintSource(),
 		Rating:            p.rating,
 		Reasons:           reasons,
@@ -176,9 +185,30 @@ func (s *Service) resolveMessage(ctx context.Context, p resolveParams) (*resolve
 	if source.Turn != nil {
 		resolved.turnID = source.Turn.ID
 		resolved.runID = source.Turn.RunID
+		if !delegated {
+			resolved.creditTurn(source.Turn.Fingerprint)
+		}
 	}
 
 	return resolved, nil
+}
+
+func (r *resolvedTarget) creditTurn(fingerprint *agent.Fingerprint) {
+	if fingerprint == nil || fingerprint.PromptHash == "" {
+		return
+	}
+
+	version := fingerprint.DefinitionVersion
+	r.definitionVersion = &version
+	r.promptHash = fingerprint.PromptHash
+	r.toolSpecHash = fingerprint.ToolSpecHash
+	if fingerprint.Model != "" {
+		r.model = fingerprint.Model
+	}
+	if fingerprint.ProviderID.IsNotNil() {
+		r.providerID = fingerprint.ProviderID
+	}
+	r.atTurn = true
 }
 
 type exchangeSummary struct {
@@ -523,7 +553,7 @@ func (s *Service) stampDefinitionVersion(
 	tenant pagination.TenantInfo,
 	resolved *resolvedTarget,
 ) {
-	if resolved.agentDefinitionID.IsNil() || s.definitions == nil {
+	if resolved.agentDefinitionID.IsNil() || s.definitions == nil || resolved.atTurn {
 		return
 	}
 

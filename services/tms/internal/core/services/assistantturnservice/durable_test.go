@@ -257,3 +257,10 @@ func TestStop_ReportsACancelThatFailed(t *testing.T) {
 	require.Error(t, err)
 	assert.Empty(t, turns.completed)
 }
+
+func (r *recordingTurns) RecordFingerprint(
+	context.Context,
+	repositories.RecordAssistantTurnFingerprintRequest,
+) error {
+	return nil
+}
