@@ -2,8 +2,8 @@ package agent
 
 import (
 	"context"
-	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -287,12 +287,17 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 				domainvalidation.ValidEnum[MemorySubjectType]("Subject type is invalid"),
 			),
 		),
-		validation.Field(&m.Content,
-			validation.Required.Error("Content is required"),
-			validation.Length(1, MaxMemoryContentChars).
-				Error("Content must be at most "+strconv.Itoa(MaxMemoryContentChars)+" characters"),
-		),
+		validation.Field(&m.Content, validation.Required.Error("Content is required")),
 	))
+
+	if utf8.RuneCountInString(m.Content) > MaxMemoryContentChars {
+		multiErr.Add(
+			"content",
+			errortypes.ErrInvalid,
+			"Content must be at most {0} characters",
+			MaxMemoryContentChars,
+		)
+	}
 
 	hasType := m.SubjectType != ""
 	hasID := m.SubjectID != nil && m.SubjectID.IsNotNil()

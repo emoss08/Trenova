@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { memoryFormDefaults, memoryFormSchema, toMemoryInput } from "../memory-form-schema";
+import {
+  MEMORY_CONTENT_LIMIT,
+  memoryFormDefaults,
+  memoryFormSchema,
+  toMemoryInput,
+} from "../memory-form-schema";
 
 describe("memoryFormSchema", () => {
   it("accepts an organization-wide instruction with nothing else set", () => {
@@ -34,10 +39,21 @@ describe("memoryFormSchema", () => {
   });
 
   it("bounds the content the way the server does", () => {
+    expect(MEMORY_CONTENT_LIMIT).toBe(4000);
     expect(memoryFormSchema.safeParse({ ...memoryFormDefaults, content: "" }).success).toBe(false);
     expect(
-      memoryFormSchema.safeParse({ ...memoryFormDefaults, content: "x".repeat(2001) }).success,
-    ).toBe(false);
+      memoryFormSchema.safeParse({
+        ...memoryFormDefaults,
+        content: "x".repeat(MEMORY_CONTENT_LIMIT),
+      }).success,
+    ).toBe(true);
+
+    const over = memoryFormSchema.safeParse({
+      ...memoryFormDefaults,
+      content: "x".repeat(MEMORY_CONTENT_LIMIT + 1),
+    });
+    expect(over.success).toBe(false);
+    expect(over.error?.issues[0]?.message).toBe("Keep it to 4000 characters");
   });
 });
 

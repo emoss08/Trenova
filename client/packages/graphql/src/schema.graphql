@@ -843,6 +843,11 @@ type AgentDefinition {
   maxConcurrentRuns: Int!
   maxToolCalls: Int!
   """
+  Approximate tokens of recorded memory one prompt of this agent may carry,
+  1000 to 16000. Absent uses the default of 6000.
+  """
+  memoryTokenBudget: Int
+  """
   Cost cap for a calendar month across the agent's runs; absent for none.
   """
   monthlyBudgetUsd: Decimal
@@ -1357,6 +1362,20 @@ enum AgentMemorySubjectType {
   Customer
   Location
   Worker
+}
+
+"""
+How much the organization keeps for its agents, against what it should keep.
+"""
+type AgentMemoryUsage {
+  """Active memories that have not expired: what agents may read."""
+  activeCount: Int!
+  """
+  The number of active memories an organization should keep at most. Past it, fewer of them fit in each prompt.
+  """
+  activeSoftCap: Int!
+  """The count at which AI Control warns that the cap is near."""
+  warnAt: Int!
 }
 
 enum AgentOutputMode {
@@ -14364,6 +14383,8 @@ type Query {
   agentFeedbackSummary(agentDefinitionId: ID!, window: Int = 30): AgentFeedbackSummary!
   agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!
   agentMemory(id: ID!): AgentMemory
+  """How many active memories the organization keeps, against its soft cap."""
+  agentMemoryUsage: AgentMemoryUsage!
   agentPlan(id: ID!): AgentPlan
   agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
   agentProposal(id: ID!): AgentProposal

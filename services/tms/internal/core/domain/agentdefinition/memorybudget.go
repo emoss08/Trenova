@@ -1,10 +1,6 @@
 package agentdefinition
 
-import (
-	"strconv"
-
-	"github.com/emoss08/trenova/pkg/errortypes"
-)
+import "github.com/emoss08/trenova/pkg/errortypes"
 
 const (
 	DefaultMemoryTokenBudget = 6000
@@ -30,9 +26,10 @@ func (d *Definition) validateMemoryBudget(multiErr *errortypes.MultiError) {
 		multiErr.Add(
 			"memoryTokenBudget",
 			errortypes.ErrInvalid,
-			"Memory in the prompt must be between "+strconv.Itoa(MinMemoryTokenBudget)+
-				" and "+strconv.Itoa(MaxMemoryTokenBudget)+" tokens; leave it empty for the default of "+
-				strconv.Itoa(DefaultMemoryTokenBudget),
+			"Memory in the prompt must be between {0} and {1} tokens; leave it empty for the default of {2}",
+			MinMemoryTokenBudget,
+			MaxMemoryTokenBudget,
+			DefaultMemoryTokenBudget,
 		)
 	}
 }

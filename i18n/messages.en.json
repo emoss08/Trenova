@@ -12477,6 +12477,15 @@
       "routes/agent-control"
     ]
   },
+  "Agents may read {0} active memories; an organization should keep at most {1}. Each prompt carries only what fits its budget, so retire what no longer holds.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Agents on": {
     "sites": 1,
     "scope": [
@@ -37976,7 +37985,7 @@
       "routes/admin"
     ]
   },
-  "Content must be at most 2000 characters": {
+  "Content must be at most {0} characters": {
     "sites": 1,
     "scope": [
       "go"
@@ -76342,6 +76351,15 @@
       "domain/documenttemplate"
     ]
   },
+  "How much of what the organization recorded each prompt carries. What the conversation is about comes first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "How much the endpoint guarantees, and how far a single reply may go.": {
     "sites": 1,
     "scope": [
@@ -93206,6 +93224,24 @@
       "routes/agent-control"
     ]
   },
+  "Memory in the prompt": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Memory in the prompt must be between {0} and {1} tokens; leave it empty for the default of {2}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Memory restored": {
     "sites": 1,
     "scope": [
@@ -95661,6 +95697,15 @@
       "domain/worker"
     ]
   },
+  "More memories than agents can use well": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Most billed": {
     "sites": 1,
     "scope": [
@@ -97251,6 +97296,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Nearing the most memories agents can use well": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nebraska (NE)": {
@@ -200018,6 +200072,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} (default)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "{0} (disabled)": {

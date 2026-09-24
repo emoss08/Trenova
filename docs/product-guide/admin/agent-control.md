@@ -204,6 +204,12 @@ its own: that change waits for a person's approval whatever tier the tool has, a
 proposal is marked as having read outside content. A suggested memory drawn from ratings of
 one agent is kept for that agent alone once approved.
 
+A memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's
+**Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is
+recorded about the record the conversation is about. When the organization keeps close to 5,000
+active memories, the Memory section warns that fewer of them reach each prompt; retire what no
+longer holds.
+
 Opening the page needs read access to AI control. Each section in the rail appears only for
 people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions,
 agent memory); a section someone cannot open is left out. **Safety** appears for people who may

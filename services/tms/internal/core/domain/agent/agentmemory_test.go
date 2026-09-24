@@ -36,17 +36,20 @@ func TestMemoryValidate_ContentLimitComesFromTheConstant(t *testing.T) {
 	over.Validate(me)
 	require.True(t, me.HasErrors())
 
-	var message string
+	var content *errortypes.Error
 	for _, err := range me.Errors {
 		if err.Field == "content" {
-			message = err.Message
+			content = err
 		}
 	}
+	require.NotNil(t, content)
+	assert.Equal(t, "Content must be at most {0} characters", content.Message,
+		"the catalog key carries the limit as an argument, never as a literal")
+	assert.Equal(t, []any{agent.MaxMemoryContentChars}, content.Args)
 	assert.Equal(t,
 		"Content must be at most "+strconv.Itoa(agent.MaxMemoryContentChars)+" characters",
-		message,
+		content.Error(),
 	)
-	assert.NotContains(t, message, "2000")
 }
 
 func TestMemoryLimits_AreTheAgreedDefaults(t *testing.T) {

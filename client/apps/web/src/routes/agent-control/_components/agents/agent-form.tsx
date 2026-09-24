@@ -10,12 +10,19 @@ import { TextChipsField } from "@/components/fields/text-chips-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { toneVar } from "@/components/kpi/tone";
 import { queries } from "@/lib/queries";
-import type { AgentTemplate, AutonomyTier, OutputMode, TriggerMode } from "@/types/assistant";
+import {
+  MEMORY_TOKEN_BUDGET,
+  type AgentTemplate,
+  type AutonomyTier,
+  type OutputMode,
+  type TriggerMode,
+} from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
 import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { brandMarkFor } from "@trenova/shared/components/ui/logos/registry";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatTimezoneLabel, listTimezones } from "@trenova/shared/lib/timezones";
 import {
@@ -633,6 +640,21 @@ export function AgentForm({
               min={1}
               max={64}
               description={t("The budget one run may spend looking things up and acting.")}
+            />
+          </FormControl>
+          <FormControl>
+            <NumberField
+              name="memoryTokenBudget"
+              control={control}
+              label={t("Memory in the prompt")}
+              sideText={t("tokens")}
+              min={MEMORY_TOKEN_BUDGET.min}
+              max={MEMORY_TOKEN_BUDGET.max}
+              step={500}
+              placeholder={t("{0} (default)", formatNumber(MEMORY_TOKEN_BUDGET.default))}
+              description={t(
+                "How much of what the organization recorded each prompt carries. What the conversation is about comes first.",
+              )}
             />
           </FormControl>
           <FormControl cols="full">
