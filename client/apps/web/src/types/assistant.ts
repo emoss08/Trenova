@@ -48,6 +48,18 @@ export const threadStatusSchema = z.enum(["Active", "Archived"]);
  */
 export const threadOriginSchema = z.enum(["Panel", "Desk", "Ask", "Watchtower", "Briefing"]);
 
+/**
+ * Why a reader may no longer ask a conversation's agent anything: it was
+ * removed, it was turned off, it now runs on its own rather than in
+ * conversation, or the reader may no longer use it.
+ */
+export const cannotContinueReasonSchema = z.enum([
+  "AgentDeleted",
+  "AgentDisabled",
+  "AgentNotConversational",
+  "NoAccess",
+]);
+
 /** What an artifact is, which decides how the Desk renders it. */
 export const artifactKindSchema = z.enum([
   "report_preview",
@@ -316,6 +328,13 @@ export const saveAgentDefinitionRequestSchema = z.object({
    * list, empty or not, replaces it.
    */
   delegateIds: z.array(z.string()).max(MAX_DELEGATES).optional(),
+  /**
+   * Who may use the agent, set in the same transaction as the save. Both
+   * absent keeps who may use it; both present replaces it. Changing it needs
+   * permission to update roles as well as agents.
+   */
+  accessMode: z.enum(["Everyone", "Roles"]).optional(),
+  accessRoleIds: z.array(z.string()).optional(),
   version: z.number().default(0),
 });
 
@@ -554,6 +573,11 @@ export const assistantThreadSchema = z.object({
    * stays readable.
    */
   canContinue: z.boolean().default(true),
+  /**
+   * Why `canContinue` is false; absent while it is true. A reason this build
+   * does not know reads as absent, so the notice falls back to a plain one.
+   */
+  cannotContinueReason: cannotContinueReasonSchema.optional().catch(undefined),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),
@@ -1039,6 +1063,7 @@ export type ToolSimulation = z.infer<typeof toolSimulationSchema>;
 export type AgentEventDescriptor = z.infer<typeof agentEventDescriptorSchema>;
 export type SaveAgentDefinitionRequest = z.infer<typeof saveAgentDefinitionRequestSchema>;
 export type AssistantThread = z.infer<typeof assistantThreadSchema>;
+export type CannotContinueReason = z.infer<typeof cannotContinueReasonSchema>;
 export type ThreadOrigin = z.infer<typeof threadOriginSchema>;
 export type TurnOrigin = z.infer<typeof turnOriginSchema>;
 export type AssistantLiveTurn = z.infer<typeof assistantLiveTurnSchema>;

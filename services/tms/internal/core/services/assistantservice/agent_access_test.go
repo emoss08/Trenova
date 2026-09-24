@@ -161,6 +161,76 @@ func TestGetThread_StaysReadableAndSaysWhetherItCanContinue(t *testing.T) {
 	assert.False(t, thread.CanContinue, "a disabled agent cannot be asked anything")
 }
 
+/*
+A conversation that cannot continue says why, so a disabled agent is not
+reported as lost access. An agent the reader may not use is refused as that
+before it is said to be off, a removed agent is removed, and one moved to a
+schedule takes no conversations. A conversation that can continue carries no
+reason.
+*/
+func TestGetThread_SaysWhyItCannotContinue(t *testing.T) {
+	t.Parallel()
+
+	f := newContinuableFixture()
+	actor := testActor()
+	req := repositories.GetThreadRequest{
+		ID:         f.thread.ID,
+		UserID:     actor.UserID,
+		TenantInfo: actor.TenantInfo(),
+	}
+	read := func() *conversation.Thread {
+		t.Helper()
+		thread, err := f.svc.GetThread(t.Context(), req)
+		require.NoError(t, err)
+		require.NotNil(t, thread)
+
+		return thread
+	}
+
+	f.agent.Enabled = false
+	thread := read()
+	assert.False(t, thread.CanContinue)
+	assert.Equal(t, conversation.ContinueNoAccess, thread.CannotContinueReason,
+		"an agent the reader may not use is refused as such, off or not")
+
+	f.permissions.granted = []pulid.ID{f.agent.ID}
+	thread = read()
+	assert.False(t, thread.CanContinue)
+	assert.Equal(t, conversation.ContinueAgentDisabled, thread.CannotContinueReason)
+
+	f.agent.Enabled = true
+	f.agent.TriggerMode = agentdefinition.TriggerScheduled
+	thread = read()
+	assert.False(t, thread.CanContinue)
+	assert.Equal(t, conversation.ContinueAgentNotConversational, thread.CannotContinueReason)
+
+	f.agent.TriggerMode = agentdefinition.TriggerChat
+	thread = read()
+	assert.True(t, thread.CanContinue)
+	assert.Empty(t, thread.CannotContinueReason)
+
+	definitions, ok := f.svc.definitions.(*delegateDefinitions)
+	require.True(t, ok)
+	delete(definitions.byID, f.agent.ID)
+	thread = read()
+	assert.False(t, thread.CanContinue)
+	assert.Equal(t, conversation.ContinueAgentDeleted, thread.CannotContinueReason)
+}
+
+func TestContinueRefusal_EveryReasonIsValid(t *testing.T) {
+	t.Parallel()
+
+	for _, reason := range []conversation.ContinueRefusal{
+		conversation.ContinueAgentDeleted,
+		conversation.ContinueAgentDisabled,
+		conversation.ContinueAgentNotConversational,
+		conversation.ContinueNoAccess,
+	} {
+		assert.True(t, reason.IsValid(), reason)
+	}
+	assert.False(t, conversation.ContinueRefusal("").IsValid())
+}
+
 func TestGetThread_CannotContinueWithoutTheAssistant(t *testing.T) {
 	t.Parallel()
 
@@ -177,6 +247,7 @@ func TestGetThread_CannotContinueWithoutTheAssistant(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.False(t, thread.CanContinue)
+	assert.Equal(t, conversation.ContinueNoAccess, thread.CannotContinueReason)
 }
 
 /*

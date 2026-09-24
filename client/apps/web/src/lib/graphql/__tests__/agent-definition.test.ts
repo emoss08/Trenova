@@ -318,4 +318,29 @@ describe("fetchMyAgents", () => {
     });
     expect(agents.map((item) => item.name)).toEqual(["Help"]);
   });
+
+  // The thread's agent carries the delegates the person may use, so an old
+  // hand-off that saved no mark of its own still draws the delegate's.
+  it("keeps each agent's delegates, in the order the server gave them", async () => {
+    const delegates = [
+      { id: "agdef_rb", name: "Report Builder", icon: "receipt", accent: "teal", template: null },
+      {
+        id: "agdef_bill",
+        name: "Billing",
+        icon: "",
+        accent: "amber",
+        template: "BillingAssistant",
+      },
+    ];
+    requestGraphQLMock.mockResolvedValue(
+      myAgents([{ ...agent("agdef_1", "Widgets"), delegates } as ReturnType<typeof agent>], {
+        hasNextPage: false,
+        endCursor: null,
+      }),
+    );
+
+    const [widgets] = await fetchMyAgents();
+
+    expect(widgets.delegates).toEqual(delegates);
+  });
 });

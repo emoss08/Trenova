@@ -1,37 +1,10 @@
 import type { AgentAccess } from "@/lib/graphql/agent-access";
-import type { SaveAgentDefinitionRequest } from "@/types/assistant";
-import { describe, expect, it, vi } from "vitest";
-import { sameAccess, saveEditedAgent, saveNewAgent } from "../agent-access-save";
-import { agentFormDefaults, toSaveRequest } from "../agent-form-schema";
+import { saveAgentDefinitionRequestSchema } from "@/types/assistant";
+import { describe, expect, it } from "vitest";
+import { accessToSave, NEW_AGENT_ACCESS, sameAccess } from "../agent-access-save";
+import { accessOf, agentFormDefaults, toSaveRequest } from "../agent-form-schema";
 
-const EVERYONE: AgentAccess = { mode: "Everyone", roleIds: [] };
 const DISPATCH: AgentAccess = { mode: "Roles", roleIds: ["role_dispatch"] };
-
-type Agent = { id: string; version: number; enabled: boolean };
-
-/** The order the requests went out in, which is the contract under test. */
-function recorder() {
-  const calls: string[] = [];
-  return {
-    calls,
-    record<T>(name: string, result: T) {
-      return vi.fn(async (..._args: unknown[]): Promise<T> => {
-        calls.push(name);
-        return result;
-      });
-    },
-    fail(name: string, error: Error) {
-      return vi.fn(async (..._args: unknown[]): Promise<never> => {
-        calls.push(name);
-        throw error;
-      });
-    },
-  };
-}
-
-function request(overrides: Partial<SaveAgentDefinitionRequest> = {}): SaveAgentDefinitionRequest {
-  return { ...toSaveRequest({ ...agentFormDefaults, name: "Payroll helper" }), ...overrides };
-}
 
 describe("sameAccess", () => {
   it("compares the mode and the set of roles, not their order", () => {
@@ -50,215 +23,75 @@ describe("sameAccess", () => {
   });
 });
 
-describe("saveEditedAgent", () => {
-  const agent: Agent = { id: "agdef_1", version: 4, enabled: true };
-
-  it("sends access before the agent, and only when it changed", async () => {
-    const { calls, record } = recorder();
-    const setAccess = record("access", undefined);
-    const saveAgent = record("agent", agent);
-    const onAccessSaved = vi.fn();
-
-    const result = await saveEditedAgent({
-      access: DISPATCH,
-      savedAccess: EVERYONE,
-      setAccess,
-      saveAgent,
-      onAccessSaved,
+/**
+ * Who may use the agent rides with its save, in one request the server applies
+ * in one transaction. It is sent only when it changed: changing it needs
+ * permission to update roles, and re-sending it unchanged would put back roles
+ * someone else changed since the form was loaded.
+ */
+describe("accessToSave", () => {
+  it("sends access that changed", () => {
+    expect(accessToSave(DISPATCH, NEW_AGENT_ACCESS)).toEqual(DISPATCH);
+    expect(accessToSave({ mode: "Everyone", roleIds: ["role_dispatch"] }, DISPATCH)).toEqual({
+      mode: "Everyone",
+      roleIds: ["role_dispatch"],
     });
-
-    expect(calls).toEqual(["access", "agent"]);
-    expect(setAccess).toHaveBeenCalledWith(DISPATCH);
-    expect(onAccessSaved).toHaveBeenCalledWith(DISPATCH);
-    expect(result).toEqual({ agent, accessChanged: true });
   });
 
-  it("leaves access alone when it is what was saved", async () => {
-    const { calls, record } = recorder();
-
-    const result = await saveEditedAgent({
-      access: { mode: "Roles", roleIds: ["role_dispatch"] },
-      savedAccess: DISPATCH,
-      setAccess: record("access", undefined),
-      saveAgent: record("agent", agent),
-    });
-
-    expect(calls).toEqual(["agent"]);
-    expect(result.accessChanged).toBe(false);
-  });
-
-  // Access does not move the agent's version, so a refused access leaves
-  // nothing saved and the form can be saved again as it stands.
-  it("saves nothing else when access is refused", async () => {
-    const { calls, record, fail } = recorder();
-    const refusal = new Error("Role not found within your organization");
-    const onAccessSaved = vi.fn();
-
-    await expect(
-      saveEditedAgent({
-        access: DISPATCH,
-        savedAccess: EVERYONE,
-        setAccess: fail("access", refusal),
-        saveAgent: record("agent", agent),
-        onAccessSaved,
-      }),
-    ).rejects.toBe(refusal);
-    expect(calls).toEqual(["access"]);
-    expect(onAccessSaved).not.toHaveBeenCalled();
-  });
-
-  // The agent's own error comes back untouched, so its field errors still
-  // land on the fields; the caller has already heard that access was saved.
-  it("reports access saved, then passes the agent's own failure through untouched", async () => {
-    const { calls, record, fail } = recorder();
-    const invalid = new Error("Name is required");
-    const onAccessSaved = vi.fn();
-
-    await expect(
-      saveEditedAgent({
-        access: DISPATCH,
-        savedAccess: EVERYONE,
-        setAccess: record("access", undefined),
-        saveAgent: fail("agent", invalid),
-        onAccessSaved,
-      }),
-    ).rejects.toBe(invalid);
-    expect(calls).toEqual(["access", "agent"]);
-    expect(onAccessSaved).toHaveBeenCalledWith(DISPATCH);
+  it("leaves out access that did not", () => {
+    expect(accessToSave(DISPATCH, { mode: "Roles", roleIds: ["role_dispatch"] })).toBeUndefined();
+    expect(accessToSave(NEW_AGENT_ACCESS, NEW_AGENT_ACCESS)).toBeUndefined();
   });
 });
 
-describe("saveNewAgent", () => {
-  const created: Agent = { id: "agdef_new", version: 1, enabled: false };
+/**
+ * A new agent meant for some roles used to be created disabled, restricted,
+ * then enabled, three requests with a failure between any two. It is now one
+ * create that carries its access, enabled as asked.
+ */
+describe("creating an agent with who may use it", () => {
+  it("creates a restricted agent enabled, in one request that carries its roles", () => {
+    const values = {
+      ...agentFormDefaults,
+      name: "Payroll helper",
+      enabled: true,
+      accessMode: "Roles" as const,
+      accessRoleIds: ["role_payroll", "role_payroll", "role_finance"],
+    };
 
-  it("only creates an agent open to everyone with no roles", async () => {
-    const { calls, record } = recorder();
-    const createAgent = record("create", { ...created, enabled: true });
+    const request = toSaveRequest(values, accessToSave(accessOf(values), NEW_AGENT_ACCESS));
 
-    const result = await saveNewAgent({
-      request: request(),
-      access: EVERYONE,
-      createAgent,
-      updateAgent: record("update", created),
-      setAccess: record("access", undefined),
-    });
-
-    expect(calls).toEqual(["create"]);
-    expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
-    expect(result.problem).toBeNull();
-  });
-
-  // A new agent is born open to everyone. One meant for some roles is created
-  // disabled, restricted, and only then enabled, so it is never open and
-  // enabled at once.
-  it("creates a restricted agent disabled, restricts it, then enables it", async () => {
-    const { calls, record } = recorder();
-    const enabled: Agent = { ...created, version: 2, enabled: true };
-    const createAgent = record("create", created);
-    const setAccess = record("access", undefined);
-    const updateAgent = record("update", enabled);
-
-    const result = await saveNewAgent({
-      request: request({ enabled: true }),
-      access: DISPATCH,
-      createAgent,
-      updateAgent,
-      setAccess,
-    });
-
-    expect(calls).toEqual(["create", "access", "update"]);
-    expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
-    expect(setAccess).toHaveBeenCalledWith("agdef_new", DISPATCH);
-    expect(updateAgent).toHaveBeenCalledWith(
-      "agdef_new",
-      expect.objectContaining({ enabled: true, version: 1, name: "Payroll helper" }),
-    );
-    expect(result).toEqual({ agent: enabled, problem: null });
-  });
-
-  it("does not enable a restricted agent that was asked to be created disabled", async () => {
-    const { calls, record } = recorder();
-
-    const result = await saveNewAgent({
-      request: request({ enabled: false }),
-      access: DISPATCH,
-      createAgent: record("create", created),
-      updateAgent: record("update", created),
-      setAccess: record("access", undefined),
-    });
-
-    expect(calls).toEqual(["create", "access"]);
-    expect(result.problem).toBeNull();
-  });
-
-  it("leaves a restricted agent disabled when its access cannot be saved", async () => {
-    const { calls, record, fail } = recorder();
-    const refusal = new Error("Role not found within your organization");
-
-    const result = await saveNewAgent({
-      request: request({ enabled: true }),
-      access: DISPATCH,
-      createAgent: record("create", created),
-      updateAgent: record("update", created),
-      setAccess: fail("access", refusal),
-    });
-
-    expect(calls).toEqual(["create", "access"]);
-    expect(result).toEqual({
-      agent: created,
-      problem: { kind: "access-not-saved-left-disabled", error: refusal },
+    expect(request.enabled).toBe(true);
+    expect(request.accessMode).toBe("Roles");
+    expect(request.accessRoleIds).toEqual(["role_payroll", "role_finance"]);
+    expect(saveAgentDefinitionRequestSchema.parse(request)).toMatchObject({
+      accessMode: "Roles",
+      accessRoleIds: ["role_payroll", "role_finance"],
     });
   });
 
-  it("says so when access was saved but the agent could not be enabled", async () => {
-    const { record, fail } = recorder();
-    const conflict = new Error("Version mismatch");
+  it("creates an agent open to everyone without saying who may use it", () => {
+    const values = { ...agentFormDefaults, name: "Dispatch" };
 
-    const result = await saveNewAgent({
-      request: request({ enabled: true }),
-      access: DISPATCH,
-      createAgent: record("create", created),
-      updateAgent: fail("update", conflict),
-      setAccess: record("access", undefined),
-    });
+    const request = toSaveRequest(values, accessToSave(accessOf(values), NEW_AGENT_ACCESS));
 
-    expect(result).toEqual({ agent: created, problem: { kind: "not-enabled", error: conflict } });
+    expect(request).not.toHaveProperty("accessMode");
+    expect(request).not.toHaveProperty("accessRoleIds");
   });
 
-  // Open to everyone, the roles only matter once it is restricted again, so
-  // the agent is created as asked and the roles are recorded after it.
-  it("records the roles of an agent open to everyone after creating it as asked", async () => {
-    const { calls, record, fail } = recorder();
-    const kept: AgentAccess = { mode: "Everyone", roleIds: ["role_dispatch"] };
-    const createAgent = record("create", { ...created, enabled: true });
-    const setAccess = fail("access", new Error("Role not found within your organization"));
+  // Roles chosen while open to everyone are kept for when it is restricted
+  // again, so they are access too, and are sent.
+  it("sends roles chosen for an agent open to everyone", () => {
+    const values = {
+      ...agentFormDefaults,
+      name: "Dispatch",
+      accessMode: "Everyone" as const,
+      accessRoleIds: ["role_dispatch"],
+    };
 
-    const result = await saveNewAgent({
-      request: request({ enabled: true }),
-      access: kept,
-      createAgent,
-      updateAgent: record("update", created),
-      setAccess,
-    });
+    const request = toSaveRequest(values, accessToSave(accessOf(values), NEW_AGENT_ACCESS));
 
-    expect(calls).toEqual(["create", "access"]);
-    expect(createAgent).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
-    expect(result.problem?.kind).toBe("access-not-saved");
-  });
-
-  it("creates nothing further when the create itself fails", async () => {
-    const { calls, record, fail } = recorder();
-    const duplicate = new Error("An agent with this name already exists");
-
-    await expect(
-      saveNewAgent({
-        request: request(),
-        access: DISPATCH,
-        createAgent: fail("create", duplicate),
-        updateAgent: record("update", created),
-        setAccess: record("access", undefined),
-      }),
-    ).rejects.toBe(duplicate);
-    expect(calls).toEqual(["create"]);
+    expect(request.accessMode).toBe("Everyone");
+    expect(request.accessRoleIds).toEqual(["role_dispatch"]);
   });
 });

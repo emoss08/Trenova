@@ -8,8 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
+
+const maxPreviewTools = 200
 
 func (s *Service) SuggestAudience(
 	ctx context.Context,
@@ -23,9 +28,74 @@ func (s *Service) SuggestAudience(
 		return nil, err
 	}
 
+	return s.audience(ctx, req.TenantInfo, definition, true)
+}
+
+// PreviewAudience works the suggestion out for the agent a form holds: the
+// saved agent, when one is being edited, with the form's tools and access in
+// place of its own, or a new agent holding only the form's tools. Nothing is
+// written. Tools that are not registered are passed over, as they are for a
+// saved agent.
+func (s *Service) PreviewAudience(
+	ctx context.Context,
+	req *services.PreviewAgentAudienceRequest,
+) (*services.AgentAudienceSuggestion, error) {
+	toolNames, err := previewToolNames(req.ToolNames)
+	if err != nil {
+		return nil, err
+	}
+	if !req.Mode.IsValid() {
+		return nil, errortypes.NewValidationError(
+			"accessMode", errortypes.ErrInvalid, "Access must be Everyone or Roles",
+		)
+	}
+
+	preview := &agentdefinition.Definition{
+		OrganizationID: req.TenantInfo.OrgID,
+		BusinessUnitID: req.TenantInfo.BuID,
+		TriggerMode:    agentdefinition.TriggerChat,
+	}
+	saved := req.AgentID.IsNotNil()
+	if saved {
+		existing, getErr := s.definitions.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+			ID:         req.AgentID,
+			TenantInfo: req.TenantInfo,
+		})
+		if getErr != nil {
+			return nil, getErr
+		}
+		copied := *existing
+		preview = &copied
+	}
+	preview.ToolNames = agentdefinition.WithoutCoreTools(toolNames)
+	preview.AccessMode = req.Mode
+
+	return s.audience(ctx, req.TenantInfo, preview, saved)
+}
+
+func previewToolNames(names []string) ([]string, error) {
+	if len(names) > maxPreviewTools {
+		return nil, errortypes.NewValidationError(
+			"toolNames", errortypes.ErrInvalid, "At most 200 tools can be previewed at once",
+		)
+	}
+
+	return sliceutils.DedupeStrings(names), nil
+}
+
+// audience is every role in the tenant with its coverage of what the agent
+// holds, and, while the agent is open to everyone, the tools it holds that
+// are sensitive. withGrants reads which roles are granted the agent now; an
+// agent not yet saved has none.
+func (s *Service) audience(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	definition *agentdefinition.Definition,
+	withGrants bool,
+) (*services.AgentAudienceSuggestion, error) {
 	held := s.HeldTools(definition)
 	roles, err := s.grants.ListGrantableRoles(ctx, repositories.ListGrantableRolesRequest{
-		TenantInfo: req.TenantInfo,
+		TenantInfo: tenant,
 	})
 	if err != nil {
 		return nil, err
@@ -37,7 +107,7 @@ func (s *Service) SuggestAudience(
 	}
 
 	coverage, err := s.permissions.RoleCoverage(ctx, &services.RoleCoverageRequest{
-		OrganizationID: req.TenantInfo.OrgID,
+		OrganizationID: tenant.OrgID,
 		RoleIDs:        roleIDs,
 		Required:       requiredGrants(held),
 	})
@@ -45,17 +115,21 @@ func (s *Service) SuggestAudience(
 		return nil, err
 	}
 
-	granted, err := s.grants.ListRolesByAgents(ctx, repositories.ListGrantsByAgentsRequest{
-		TenantInfo: req.TenantInfo,
-		AgentIDs:   []pulid.ID{definition.ID},
-	})
-	if err != nil {
-		return nil, err
+	var granted []*permission.Role
+	if withGrants {
+		byAgent, grantErr := s.grants.ListRolesByAgents(ctx, repositories.ListGrantsByAgentsRequest{
+			TenantInfo: tenant,
+			AgentIDs:   []pulid.ID{definition.ID},
+		})
+		if grantErr != nil {
+			return nil, grantErr
+		}
+		granted = byAgent[definition.ID]
 	}
 
 	suggestion := &services.AgentAudienceSuggestion{
 		Agent:          definition,
-		Roles:          audienceRoles(roles, coverage, granted[definition.ID]),
+		Roles:          audienceRoles(roles, coverage, granted),
 		SensitiveTools: []string{},
 	}
 	if definition.OpenToEveryone() {

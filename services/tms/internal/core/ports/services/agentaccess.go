@@ -31,6 +31,34 @@ type SuggestAgentAudienceRequest struct {
 	AgentID    pulid.ID
 }
 
+// PreviewAgentAudienceRequest is an agent as a form holds it, before it is
+// saved: the tools chosen and who the form says may use it. AgentID names
+// the agent being edited, so each role says whether it is granted now; nil
+// for a new one.
+type PreviewAgentAudienceRequest struct {
+	TenantInfo pagination.TenantInfo
+	AgentID    pulid.ID
+	ToolNames  []string
+	Mode       agentdefinition.AccessMode
+}
+
+// AgentAccessWrite is who may use an agent, as a save sets it: everyone who
+// may use the assistant, or only the roles named. The roles are kept
+// whatever the mode.
+type AgentAccessWrite struct {
+	Mode    agentdefinition.AccessMode
+	RoleIDs []pulid.ID
+}
+
+// SaveAgentWithAccessRequest saves an agent and who may use it as one
+// change. Save writes the agent and returns it as saved; it runs inside the
+// transaction the access is set in, so a refusal of either leaves neither.
+type SaveAgentWithAccessRequest struct {
+	TenantInfo pagination.TenantInfo
+	Access     AgentAccessWrite
+	Save       func(ctx context.Context) (*agentdefinition.Definition, error)
+}
+
 // AgentAccess is an agent and the roles granted it.
 type AgentAccess struct {
 	Agent *agentdefinition.Definition
@@ -78,4 +106,20 @@ type AgentAccessService interface {
 		ctx context.Context,
 		req *SuggestAgentAudienceRequest,
 	) (*AgentAudienceSuggestion, error)
+	// PreviewAudience is SuggestAudience for an agent as a form holds it:
+	// worked out from the tools and access given rather than those saved.
+	// It changes nothing.
+	PreviewAudience(
+		ctx context.Context,
+		req *PreviewAgentAudienceRequest,
+	) (*AgentAudienceSuggestion, error)
+	// SaveWithAccess runs req.Save and sets who may use the agent it saved,
+	// in one transaction. Changing who may use it needs permission to update
+	// roles, as SetAgentAccess does; access that is already what was asked
+	// needs nothing more than the save.
+	SaveWithAccess(
+		ctx context.Context,
+		req *SaveAgentWithAccessRequest,
+		actor *RequestActor,
+	) (*agentdefinition.Definition, error)
 }

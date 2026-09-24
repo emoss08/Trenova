@@ -1,17 +1,20 @@
-import type { AgentAudienceSuggestion } from "@/lib/graphql/agent-access";
+import type { AgentAccessPreview, AgentAccessPreviewRequest } from "@/lib/graphql/agent-access";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { FormProvider, useForm, useWatch } from "react-hook-form";
+import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AgentAccessSection, coverageLine, rankAudience } from "../agent-access-section";
 import { agentFormDefaults, type AgentFormValues } from "../agent-form-schema";
 
-const fetchSuggestedAgentAudience = vi.fn<(agentId: string) => Promise<AgentAudienceSuggestion>>();
+const fetchAgentAccessPreview =
+  vi.fn<(request: AgentAccessPreviewRequest) => Promise<AgentAccessPreview>>();
 
-vi.mock("@/lib/graphql/agent-access", () => ({
-  fetchSuggestedAgentAudience: (agentId: string) => fetchSuggestedAgentAudience(agentId),
+vi.mock("@/lib/graphql/agent-access", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/agent-access")>()),
+  fetchAgentAccessPreview: (request: AgentAccessPreviewRequest) => fetchAgentAccessPreview(request),
+  fetchSuggestedAgentAudience: vi.fn(),
   fetchRoleAgents: vi.fn(),
 }));
 
@@ -25,14 +28,13 @@ vi.mock("@/components/autocomplete-fields", () => ({
 
 afterEach(() => {
   cleanup();
-  fetchSuggestedAgentAudience.mockReset();
+  fetchAgentAccessPreview.mockReset();
 });
 
 const role = (id: string, name: string) => ({ id, name, description: "", isSystem: false });
 
-function suggestion(overrides: Partial<AgentAudienceSuggestion> = {}): AgentAudienceSuggestion {
+function suggestion(overrides: Partial<AgentAccessPreview> = {}): AgentAccessPreview {
   return {
-    agentId: "agdef_1",
     accessMode: "Roles",
     sensitiveTools: [],
     roles: [
@@ -57,6 +59,36 @@ function suggestion(overrides: Partial<AgentAudienceSuggestion> = {}): AgentAudi
 function RoleIds() {
   const ids = useWatch<AgentFormValues, "accessRoleIds">({ name: "accessRoleIds" });
   return <output data-testid="role-ids">{ids.join(",")}</output>;
+}
+
+/** Stands in for the tool picker: adds a tool to the form, as ticking one would. */
+function AddTool({ name }: { name: string }) {
+  const { getValues, setValue } = useFormContext<AgentFormValues>();
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        setValue("toolNames", [...getValues("toolNames"), name], { shouldDirty: true })
+      }
+    >
+      Add {name}
+    </button>
+  );
+}
+
+/**
+ * The server's answer to a preview, from the request as sent: sensitive tools
+ * only while the form says everyone may use it, as the contract says.
+ */
+function previewFor(sensitive: readonly string[]) {
+  return async (request: AgentAccessPreviewRequest): Promise<AgentAccessPreview> =>
+    suggestion({
+      accessMode: request.accessMode,
+      sensitiveTools:
+        request.accessMode === "Everyone"
+          ? request.toolNames.filter((name) => sensitive.includes(name))
+          : [],
+    });
 }
 
 function Harness({ values, children }: { values: Partial<AgentFormValues>; children: ReactNode }) {
@@ -85,6 +117,7 @@ function renderSection({
     <QueryClientProvider client={client}>
       <Harness values={values}>
         <AgentAccessSection mode={mode} agentId={agentId} isSystem={isSystem} />
+        <AddTool name="list_worker_pay" />
       </Harness>
     </QueryClientProvider>,
   );
@@ -144,11 +177,11 @@ describe("AgentAccessSection", () => {
     expect(screen.getByRole("radio", { name: /specific roles/i })).toBeDisabled();
     expect(screen.getByText(/a system agent is open to everyone/i)).toBeInTheDocument();
     expect(screen.queryByTestId("role-picker")).toBeNull();
-    expect(fetchSuggestedAgentAudience).not.toHaveBeenCalled();
+    expect(fetchAgentAccessPreview).not.toHaveBeenCalled();
   });
 
   it("offers the role picker only once it is limited to specific roles", async () => {
-    fetchSuggestedAgentAudience.mockResolvedValue(suggestion({ accessMode: "Everyone" }));
+    fetchAgentAccessPreview.mockResolvedValue(suggestion({ accessMode: "Everyone" }));
     renderSection({ values: { accessMode: "Everyone" } });
 
     expect(screen.queryByTestId("role-picker")).toBeNull();
@@ -160,7 +193,7 @@ describe("AgentAccessSection", () => {
   });
 
   it("lists suggested roles with their coverage, and adds one to the chosen roles", async () => {
-    fetchSuggestedAgentAudience.mockResolvedValue(suggestion());
+    fetchAgentAccessPreview.mockResolvedValue(suggestion());
     renderSection({ values: { accessMode: "Roles", accessRoleIds: ["role_admin"] } });
 
     const list = await screen.findByRole("list", { name: /suggested roles/i });
@@ -183,7 +216,7 @@ describe("AgentAccessSection", () => {
   });
 
   it("warns when an agent open to everyone holds tools that reach sensitive data", async () => {
-    fetchSuggestedAgentAudience.mockResolvedValue(
+    fetchAgentAccessPreview.mockResolvedValue(
       suggestion({ accessMode: "Everyone", sensitiveTools: ["list_worker_pay"] }),
     );
     renderSection({ values: { accessMode: "Everyone" } });
@@ -194,7 +227,7 @@ describe("AgentAccessSection", () => {
   });
 
   it("does not warn about sensitive tools once it is limited to roles", async () => {
-    fetchSuggestedAgentAudience.mockResolvedValue(
+    fetchAgentAccessPreview.mockResolvedValue(
       suggestion({ accessMode: "Everyone", sensitiveTools: ["list_worker_pay"] }),
     );
     renderSection({ values: { accessMode: "Roles", accessRoleIds: ["role_admin"] } });
@@ -203,15 +236,72 @@ describe("AgentAccessSection", () => {
     expect(screen.queryByText(/tools that reach sensitive data/i)).toBeNull();
   });
 
-  it("asks for suggestions only once the agent is saved", async () => {
-    renderSection({ mode: "create", agentId: "", values: { accessMode: "Roles" } });
+  // An agent not yet saved has nothing saved to read, so the suggestions are
+  // worked out from the form alone and no agent is named.
+  it("suggests roles for an agent not yet saved, from the tools on the form", async () => {
+    fetchAgentAccessPreview.mockResolvedValue(suggestion());
+    renderSection({
+      mode: "create",
+      agentId: "",
+      values: { accessMode: "Roles", toolNames: ["list_shipments"] },
+    });
 
-    expect(screen.getByText(/suggestions appear once the agent is saved/i)).toBeInTheDocument();
-    expect(fetchSuggestedAgentAudience).not.toHaveBeenCalled();
+    await screen.findByRole("list", { name: /suggested roles/i });
+    expect(fetchAgentAccessPreview).toHaveBeenCalledWith({
+      agentId: "",
+      accessMode: "Roles",
+      toolNames: ["list_shipments"],
+    });
+  });
+
+  // The warning followed the saved agent, so an agent saved restricted and
+  // switched back to everyone on screen said nothing until it was saved.
+  it("warns as soon as a restricted agent is opened to everyone, before it is saved", async () => {
+    fetchAgentAccessPreview.mockImplementation(previewFor(["list_worker_pay"]));
+    renderSection({
+      values: {
+        accessMode: "Roles",
+        accessRoleIds: ["role_admin"],
+        toolNames: ["list_worker_pay"],
+      },
+    });
+    await screen.findByRole("list", { name: /suggested roles/i });
+    expect(screen.queryByText(/tools that reach sensitive data/i)).toBeNull();
+
+    await userEvent.click(
+      screen.getByRole("radio", { name: /everyone who can use the assistant/i }),
+    );
+
+    expect(
+      await screen.findByText(/open to everyone, with tools that reach sensitive data/i),
+    ).toBeInTheDocument();
+    expect(fetchAgentAccessPreview).toHaveBeenLastCalledWith({
+      agentId: "agdef_1",
+      accessMode: "Everyone",
+      toolNames: ["list_worker_pay"],
+    });
+  });
+
+  it("warns about a sensitive tool as soon as it is added on screen", async () => {
+    fetchAgentAccessPreview.mockImplementation(previewFor(["list_worker_pay"]));
+    renderSection({ values: { accessMode: "Everyone", toolNames: ["list_shipments"] } });
+    await waitFor(() => expect(fetchAgentAccessPreview).toHaveBeenCalledTimes(1));
+    expect(screen.queryByText(/tools that reach sensitive data/i)).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: /add list_worker_pay/i }));
+
+    expect(
+      await screen.findByText(/open to everyone, with tools that reach sensitive data/i),
+    ).toBeInTheDocument();
+    expect(fetchAgentAccessPreview).toHaveBeenLastCalledWith({
+      agentId: "agdef_1",
+      accessMode: "Everyone",
+      toolNames: ["list_shipments", "list_worker_pay"],
+    });
   });
 
   it("keeps roles chosen while it is open to everyone, and says so", () => {
-    fetchSuggestedAgentAudience.mockResolvedValue(suggestion({ accessMode: "Everyone" }));
+    fetchAgentAccessPreview.mockResolvedValue(suggestion({ accessMode: "Everyone" }));
     renderSection({
       values: { accessMode: "Everyone", accessRoleIds: ["role_admin", "role_billing"] },
     });

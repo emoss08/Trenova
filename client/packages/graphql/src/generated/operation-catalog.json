@@ -1,5 +1,5 @@
 {
-  "operationCount": 822,
+  "operationCount": 824,
   "fragmentCount": 221,
   "operations": [
     {
@@ -450,6 +450,28 @@
       ],
       "usages": [],
       "sdl": "query AgentAccess($id: ID!) {\n  agentDefinition(id: $id) {\n    ...AgentAccessFields\n  }\n}\n\nfragment AgentAccessFields on AgentDefinition {\n  id\n  name\n  systemKey\n  accessMode\n  accessRoles {\n    ...AgentAccessRoleFields\n  }\n}\n\nfragment AgentAccessRoleFields on Role {\n  id\n  name\n  description\n  isSystem\n}"
+    },
+    {
+      "name": "AgentAccessPreview",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:fff0b7d3ee09999aa9a00d4313e756288a2f222e014f1234beb35d3c0619da65",
+      "rootFields": [
+        "agentAccessPreview"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "AgentAccessPreviewInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentAccessRoleFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentAccessPreview($input: AgentAccessPreviewInput!) {\n  agentAccessPreview(input: $input) {\n    accessMode\n    sensitiveTools\n    roles {\n      role {\n        ...AgentAccessRoleFields\n      }\n      coverage\n      missingResources\n      granted\n    }\n  }\n}\n\nfragment AgentAccessRoleFields on Role {\n  id\n  name\n  description\n  isSystem\n}"
     },
     {
       "name": "AgentChoices",
@@ -5283,6 +5305,31 @@
       "sdl": "mutation DecideLeaveCase($input: DecideLeaveCaseInput!) {\n  decideLeaveCase(input: $input) {\n    id\n    status\n    fmlaDesignated\n    version\n  }\n}"
     },
     {
+      "name": "DecideMyPlan",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/access.graphql",
+      "hash": "sha256:9a89b2fadb3bbade1f0c771624ca6cc51a6f9331c122e4c14d462c629db2e868",
+      "rootFields": [
+        "decideMyPlan"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "AgentPlanDecisionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DecideMyPlan($id: ID!, $input: AgentPlanDecisionInput!) {\n  decideMyPlan(id: $id, input: $input) {\n    id\n    status\n    stepCount\n    completedSteps\n    failedStep\n    failureError\n    decidedByUserId\n    decidedAt\n    version\n    updatedAt\n  }\n}"
+    },
+    {
       "name": "DecideMyProposal",
       "kind": "mutation",
       "domain": "agent",
@@ -9877,7 +9924,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/access.graphql",
-      "hash": "sha256:396c2dbadc8d811918486b2a3cd4778f814c78f547e5af124b2e301be5bbed89",
+      "hash": "sha256:fbba5deefba9da56ab81d72cd1815eed78a2855232af5826e2ec73f3f787cbc5",
       "rootFields": [
         "myAgents"
       ],
@@ -9898,7 +9945,7 @@
         "MyAgentFields"
       ],
       "usages": [],
-      "sdl": "query MyAgents($input: MyAgentsInput!, $includeTotalCount: Boolean = false) {\n  myAgents(input: $input) {\n    edges {\n      node {\n        ...MyAgentFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment MyAgentFields on MyAgent {\n  id\n  name\n  description\n  template\n  icon\n  accent\n  toolNames\n  systemKey\n  starters {\n    label\n    prompt\n  }\n}"
+      "sdl": "query MyAgents($input: MyAgentsInput!, $includeTotalCount: Boolean = false) {\n  myAgents(input: $input) {\n    edges {\n      node {\n        ...MyAgentFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment MyAgentFields on MyAgent {\n  id\n  name\n  description\n  template\n  icon\n  accent\n  toolNames\n  systemKey\n  starters {\n    label\n    prompt\n  }\n  delegates {\n    id\n    name\n    icon\n    accent\n    template\n  }\n}"
     },
     {
       "name": "MyAIFeedback",
@@ -18949,6 +18996,7 @@
       "fragments": [],
       "usedByOperations": [
         "AgentAccess",
+        "AgentAccessPreview",
         "SetAgentAccess",
         "SuggestedAgentAudience"
       ],
@@ -20780,7 +20828,7 @@
         "MyAgents"
       ],
       "usages": [],
-      "sdl": "fragment MyAgentFields on MyAgent {\n  id\n  name\n  description\n  template\n  icon\n  accent\n  toolNames\n  systemKey\n  starters {\n    label\n    prompt\n  }\n}"
+      "sdl": "fragment MyAgentFields on MyAgent {\n  id\n  name\n  description\n  template\n  icon\n  accent\n  toolNames\n  systemKey\n  starters {\n    label\n    prompt\n  }\n  delegates {\n    id\n    name\n    icon\n    accent\n    template\n  }\n}"
     },
     {
       "name": "MyAIFeedbackFields",
@@ -22399,6 +22447,27 @@
         }
       ],
       "sdl": "input AdjustWorkerPTOBalanceInput {\n  amountDays: Decimal!\n  effectiveAt: Timestamp\n  note: String!\n  ptoType: PTOType!\n  workerId: ID!\n}"
+    },
+    "AgentAccessPreviewInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "accessMode",
+          "type": "AgentAccessMode!",
+          "defaultValue": null
+        },
+        {
+          "name": "agentId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "toolNames",
+          "type": "[String!]!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nAn agent as a form holds it, before it is saved, for working out who it suits.\n\"\"\"\ninput AgentAccessPreviewInput {\n  \"\"\"Who the form says may use it. A system agent is always Everyone.\"\"\"\n  accessMode: AgentAccessMode!\n  \"\"\"\n  The agent being edited, so each role says whether it is granted now. Absent for a new one.\n  \"\"\"\n  agentId: ID\n  \"\"\"\n  The tools the form has chosen. Core tools every agent holds need not be listed. At most 200.\n  \"\"\"\n  toolNames: [String!]!\n}"
     },
     "AgentControlInput": {
       "kind": "input",
@@ -33533,6 +33602,14 @@
       ],
       "sdl": "enum PTOType {\n  Bereavement\n  Holiday\n  Maternity\n  Paternity\n  Personal\n  Sick\n  Vacation\n}"
     },
+    "AgentAccessMode": {
+      "kind": "enum",
+      "values": [
+        "Everyone",
+        "Roles"
+      ],
+      "sdl": "\"\"\"Who may use an agent, among the people who may use the assistant.\"\"\"\nenum AgentAccessMode {\n  \"\"\"Everyone who may use the assistant.\"\"\"\n  Everyone\n  \"\"\"\n  Only the roles granted it, and the roles that inherit them. Nobody when no role is.\n  \"\"\"\n  Roles\n}"
+    },
     "AgentResolutionState": {
       "kind": "enum",
       "values": [
@@ -35567,14 +35644,6 @@
         "WORKER_POLICY"
       ],
       "sdl": "enum SelectOptionResource {\n  ACCESSORIAL_CHARGE\n  ACCOUNT_TYPE\n  BENEFIT_PLAN\n  CARRIER\n  COMMODITY\n  CUSTOMER\n  DETENTION_POLICY\n  DISTANCE_PROFILE\n  DOCUMENT_TYPE\n  EDI_COMMUNICATION_PROFILE\n  EDI_CONNECTION\n  EDI_DOCUMENT_TYPE\n  EDI_MAPPING_PROFILE\n  EDI_PARTNER\n  EDI_PARTNER_DOCUMENT_PROFILE\n  EDI_TEMPLATE\n  EDI_TRANSACTION_SET\n  EDI_TRANSFER\n  EMAIL_PROFILE\n  EQUIPMENT_MANUFACTURER\n  EQUIPMENT_TYPE\n  FISCAL_PERIOD\n  FISCAL_YEAR\n  FLEET_CODE\n  FORMULA_TEMPLATE\n  FUEL_CARD\n  FUEL_INDEX\n  FUEL_SURCHARGE_PROGRAM\n  GL_ACCOUNT\n  HAZARDOUS_MATERIAL\n  IFTA_FUEL_TYPE\n  IFTA_JURISDICTION\n  JOB_POSITION\n  LOCATION\n  LOCATION_CATEGORY\n  ORDER\n  ORGANIZATION\n  PAY_CODE\n  PAY_PROFILE\n  PERFORMANCE_REVIEW_TEMPLATE\n  PTO_POLICY\n  RATE_AGREEMENT\n  RATE_MATRIX\n  RATE_ZONE\n  ROLE\n  SERVICE_FAILURE_REASON_CODE\n  SERVICE_TYPE\n  SHIFT_TEMPLATE\n  SHIPMENT\n  SHIPMENT_TYPE\n  TRACTOR\n  TRAILER\n  TRAINING_COURSE\n  USER\n  US_STATE\n  WORKER\n  WORKER_CREDENTIAL_TYPE\n  WORKER_POLICY\n}"
-    },
-    "AgentAccessMode": {
-      "kind": "enum",
-      "values": [
-        "Everyone",
-        "Roles"
-      ],
-      "sdl": "\"\"\"Who may use an agent, among the people who may use the assistant.\"\"\"\nenum AgentAccessMode {\n  \"\"\"Everyone who may use the assistant.\"\"\"\n  Everyone\n  \"\"\"\n  Only the roles granted it, and the roles that inherit them. Nobody when no role is.\n  \"\"\"\n  Roles\n}"
     },
     "AvailabilityPreference": {
       "kind": "enum",

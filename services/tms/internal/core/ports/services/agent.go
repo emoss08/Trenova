@@ -158,6 +158,13 @@ type AgentPlanService interface {
 		req *DecideAgentPlanRequest,
 		actor *RequestActor,
 	) (*agent.AgentPlan, error)
+	// DecideOwn decides a plan raised in one of the actor's own
+	// conversations, by an agent they may use. Someone else's is not found.
+	DecideOwn(
+		ctx context.Context,
+		req *DecideAgentPlanRequest,
+		actor *RequestActor,
+	) (*agent.AgentPlan, error)
 	GetByID(ctx context.Context, req repositories.GetAgentPlanByIDRequest) (*agent.AgentPlan, error)
 	ListConnection(
 		ctx context.Context,

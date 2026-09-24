@@ -8,13 +8,15 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/vektah/gqlparser/v2/ast"
 )
 
 /*
 myAgents is read by everyone who may use the assistant, not by the people who
 administer agents. MyAgent carries only what a picker shows and what a person
 asks with: an agent's instructions, guardrails, tool tiers, budget, provider
-and delegates are an administrator's. A field added here is a field every
+and allowlist are an administrator's. Its delegates are served only as MyAgent
+again, and only those the reader may use. A field added here is a field every
 assistant user can read.
 */
 func TestMyAgent_ExposesOnlyChatFacingFields(t *testing.T) {
@@ -39,7 +41,18 @@ func TestMyAgent_ExposesOnlyChatFacingFields(t *testing.T) {
 		"toolNames",
 		"systemKey",
 		"starters",
+		"delegates",
 	}, fields)
+
+	var delegates *ast.FieldDefinition
+	for _, field := range myAgent.Fields {
+		if field.Name == "delegates" {
+			delegates = field
+		}
+	}
+	require.NotNil(t, delegates)
+	assert.Equal(t, "MyAgent", delegates.Type.Name(),
+		"a delegate is shown as the reader sees an agent, never as an administrator does")
 }
 
 // myAgents takes a closed set of filters, never a free filter over agents: a

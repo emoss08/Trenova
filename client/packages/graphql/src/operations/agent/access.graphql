@@ -11,6 +11,13 @@ fragment MyAgentFields on MyAgent {
     label
     prompt
   }
+  delegates {
+    id
+    name
+    icon
+    accent
+    template
+  }
 }
 
 query MyAgents($input: MyAgentsInput!, $includeTotalCount: Boolean = false) {
@@ -24,6 +31,21 @@ query MyAgents($input: MyAgentsInput!, $includeTotalCount: Boolean = false) {
     pageInfo {
       ...DataTablePageInfoFields
     }
+  }
+}
+
+mutation DecideMyPlan($id: ID!, $input: AgentPlanDecisionInput!) {
+  decideMyPlan(id: $id, input: $input) {
+    id
+    status
+    stepCount
+    completedSteps
+    failedStep
+    failureError
+    decidedByUserId
+    decidedAt
+    version
+    updatedAt
   }
 }
 
@@ -93,6 +115,21 @@ query RoleAgentAccess($id: ID!) {
 mutation SetRoleAgentAccess($roleId: ID!, $agentIds: [ID!]!) {
   setRoleAgentAccess(roleId: $roleId, agentIds: $agentIds) {
     ...RoleAgentAccessFields
+  }
+}
+
+query AgentAccessPreview($input: AgentAccessPreviewInput!) {
+  agentAccessPreview(input: $input) {
+    accessMode
+    sensitiveTools
+    roles {
+      role {
+        ...AgentAccessRoleFields
+      }
+      coverage
+      missingResources
+      granted
+    }
   }
 }
 

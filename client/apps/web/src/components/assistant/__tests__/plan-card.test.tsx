@@ -1,10 +1,23 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { PlanCard } from "../plan-card";
 
-afterEach(cleanup);
+const decideMyPlan = vi.fn(async () => undefined);
+const decideAgentPlan = vi.fn(async () => undefined);
+
+vi.mock("@/lib/graphql/agent-decisions", () => ({
+  decideMyPlan: (...args: unknown[]) => decideMyPlan(...(args as [])),
+  decideAgentPlan: (...args: unknown[]) => decideAgentPlan(...(args as [])),
+}));
+
+afterEach(() => {
+  cleanup();
+  decideMyPlan.mockClear();
+  decideAgentPlan.mockClear();
+});
 
 function plan(overrides: Partial<AssistantPlan> = {}): AssistantPlan {
   return {
@@ -66,6 +79,25 @@ describe("PlanCard", () => {
     expect(items).toHaveLength(2);
     expect(items[0]).toMatch(/^1\./u);
     expect(items[1]).toMatch(/^2\./u);
+  });
+
+  // A plan in the person's own conversation is theirs to answer, with only
+  // the assistant: it goes through the self-scoped mutation, never the
+  // approver's one the decisions queue and AI Control use.
+  it("decides a plan as the person whose conversation raised it", async () => {
+    const user = userEvent.setup();
+    renderCard();
+
+    await user.click(screen.getByRole("button", { name: /approve all/i }));
+    await waitFor(() =>
+      expect(decideMyPlan).toHaveBeenCalledWith("apl_1", { decision: "Accepted", reasonCode: "" }),
+    );
+
+    await user.click(screen.getByRole("button", { name: /reject all/i }));
+    await waitFor(() =>
+      expect(decideMyPlan).toHaveBeenCalledWith("apl_1", { decision: "Rejected", reasonCode: "" }),
+    );
+    expect(decideAgentPlan).not.toHaveBeenCalled();
   });
 
   it("names the switch holding it instead of offering a decision it will refuse", () => {

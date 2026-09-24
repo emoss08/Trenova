@@ -180,6 +180,12 @@ type MyAgent {
   systemKey: String!
   "Up to four opening questions the agent can answer with its tools."
   starters: [AgentStarter!]!
+  """
+  The agents this one may hand a task to that the caller may use themselves:
+  enabled, talked to, and open to them. In the order configured. Only who
+  each is and how it is drawn; never what it is set up to do.
+  """
+  delegates: [MyAgent!]!
 }
 
 type MyAgentEdge {
@@ -245,6 +251,30 @@ type AgentAudienceSuggestion {
   sensitiveTools: [String!]!
 }
 
+"An agent as a form holds it, before it is saved, for working out who it suits."
+input AgentAccessPreviewInput {
+  "The agent being edited, so each role says whether it is granted now. Absent for a new one."
+  agentId: ID
+  "The tools the form has chosen. Core tools every agent holds need not be listed. At most 200."
+  toolNames: [String!]!
+  "Who the form says may use it. A system agent is always Everyone."
+  accessMode: AgentAccessMode!
+}
+
+"Who an agent as a form holds it could be given to, worked out without saving it."
+type AgentAccessPreview {
+  "The access the preview was worked out for; Everyone for a system agent."
+  accessMode: AgentAccessMode!
+  "Every role in the organization, by name. Granted only for an agent already saved."
+  roles: [AgentAudienceRole!]!
+  """
+  While the preview is open to everyone, the chosen tools that reach restricted
+  or confidential data or whose work leaves the organization. Empty while it is
+  restricted to roles.
+  """
+  sensitiveTools: [String!]!
+}
+
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentDefinition(id: ID!): AgentDefinition
@@ -252,6 +282,12 @@ extend type Query {
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   "Each role's coverage of an agent's tools, for choosing who may use it."
   suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion!
+  """
+  Each role's coverage of the tools a form has chosen, and the sensitive ones
+  among them while it is open to everyone. Reads the form, not the saved agent,
+  and changes nothing.
+  """
+  agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
 }
 
 extend type Mutation {

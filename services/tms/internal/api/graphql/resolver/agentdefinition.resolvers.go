@@ -146,6 +146,10 @@ func (r *myAgentResolver) Template(ctx context.Context, obj *agentdefinition.Def
 	return definitionTemplate(obj), nil
 }
 
+func (r *myAgentResolver) Delegates(ctx context.Context, obj *agentdefinition.Definition) ([]*agentdefinition.Definition, error) {
+	return myAgentDelegates(ctx, obj)
+}
+
 func (r *queryResolver) AgentDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AgentDefinitionConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
 	if err != nil {
@@ -267,6 +271,28 @@ func (r *queryResolver) SuggestedAgentAudience(ctx context.Context, agentID stri
 	}
 
 	return audienceSuggestionToModel(suggestion), nil
+}
+
+func (r *queryResolver) AgentAccessPreview(ctx context.Context, input gqlmodel.AgentAccessPreviewInput) (*gqlmodel.AgentAccessPreview, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAgentDefinition, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = r.requirePermission(ctx, permission.ResourceRole, permission.OpRead); err != nil {
+		return nil, err
+	}
+
+	req, err := accessPreviewRequest(tenantInfo(authCtx), &input)
+	if err != nil {
+		return nil, err
+	}
+
+	suggestion, err := r.agentAccessService.PreviewAudience(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return accessPreviewToModel(suggestion), nil
 }
 
 func (r *Resolver) AgentDefinition() generated.AgentDefinitionResolver {

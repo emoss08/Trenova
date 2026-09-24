@@ -64,6 +64,7 @@ type FactoryParams struct {
 	AgentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	AgentRunByID                              *AgentRunByIDLoaderFactory
 	AgentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
+	UsableAgentByID                           *UsableAgentByIDLoaderFactory
 	AccessRolesByAgentID                      *AccessRolesByAgentIDLoaderFactory
 	AgentsByRoleID                            *AgentsByRoleIDLoaderFactory
 	ToolTrustByAgentID                        *ToolTrustByAgentIDLoaderFactory
@@ -117,6 +118,7 @@ type Factory struct {
 	agentDecisionsByProposalID                *AgentDecisionsByProposalIDLoaderFactory
 	agentRunByID                              *AgentRunByIDLoaderFactory
 	agentDefinitionByID                       *AgentDefinitionByIDLoaderFactory
+	usableAgentByID                           *UsableAgentByIDLoaderFactory
 	accessRolesByAgentID                      *AccessRolesByAgentIDLoaderFactory
 	agentsByRoleID                            *AgentsByRoleIDLoaderFactory
 	toolTrustByAgentID                        *ToolTrustByAgentIDLoaderFactory
@@ -170,6 +172,7 @@ type Loaders struct {
 	AgentDecisionsByProposalID                *dataloadgen.Loader[string, []*agent.AgentDecision]
 	AgentRunByID                              *dataloadgen.Loader[string, *agent.AgentRun]
 	AgentDefinitionByID                       *dataloadgen.Loader[string, *agentdefinition.Definition]
+	UsableAgentByID                           *dataloadgen.Loader[string, *agentdefinition.Definition]
 	AccessRolesByAgentID                      *dataloadgen.Loader[string, []*permission.Role]
 	AgentsByRoleID                            *dataloadgen.Loader[string, []*agentdefinition.Definition]
 	ToolTrustByAgentID                        *dataloadgen.Loader[string, []*agent.ToolTrust]
@@ -224,6 +227,7 @@ func NewFactory(p FactoryParams) *Factory {
 		agentDecisionsByProposalID:                p.AgentDecisionsByProposalID,
 		agentRunByID:                              p.AgentRunByID,
 		agentDefinitionByID:                       p.AgentDefinitionByID,
+		usableAgentByID:                           p.UsableAgentByID,
 		accessRolesByAgentID:                      p.AccessRolesByAgentID,
 		agentsByRoleID:                            p.AgentsByRoleID,
 		toolTrustByAgentID:                        p.ToolTrustByAgentID,
@@ -311,6 +315,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		),
 		AgentRunByID:         f.agentRunByID.NewForTenant(tenantInfo),
 		AgentDefinitionByID:  f.agentDefinitionByID.NewForTenant(tenantInfo),
+		UsableAgentByID:      f.usableAgentByID.NewForTenant(tenantInfo),
 		AccessRolesByAgentID: f.accessRolesByAgentID.NewForTenant(tenantInfo),
 		AgentsByRoleID:       f.agentsByRoleID.NewForTenant(tenantInfo),
 		ToolTrustByAgentID:   f.toolTrustByAgentID.NewForTenant(tenantInfo),

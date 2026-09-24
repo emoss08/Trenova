@@ -11,9 +11,12 @@ package agentplanservice
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -54,6 +57,29 @@ type shadowReader interface {
 	) (agentshadow.Verdict, error)
 }
 
+type runReader interface {
+	GetByID(ctx context.Context, req repositories.GetAgentRunByIDRequest) (*agent.AgentRun, error)
+}
+
+type threadReader interface {
+	GetThread(ctx context.Context, req repositories.GetThreadRequest) (*conversation.Thread, error)
+}
+
+type definitionReader interface {
+	GetByID(
+		ctx context.Context,
+		req repositories.GetAgentDefinitionByIDRequest,
+	) (*agentdefinition.Definition, error)
+}
+
+type agentAccessChecker interface {
+	MayUseAgent(
+		ctx context.Context,
+		actor *services.RequestActor,
+		definition *agentdefinition.Definition,
+	) (bool, error)
+}
+
 type actionLogger interface {
 	LogAction(params *services.LogActionParams, opts ...services.LogOption) error
 }
@@ -61,13 +87,19 @@ type actionLogger interface {
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	Plans        repositories.AgentPlanRepository
-	Proposals    repositories.AgentProposalRepository
-	Decisions    services.AgentDecisionService
-	Shadow       *agentshadow.Resolver
-	AuditService services.AuditService
-	Activity     services.AgentActivityPublisher `optional:"true"`
+	Logger      *zap.Logger
+	Plans       repositories.AgentPlanRepository
+	Proposals   repositories.AgentProposalRepository
+	Decisions   services.AgentDecisionService
+	Runs        repositories.AgentRunRepository
+	Definitions repositories.AgentDefinitionRepository
+	Permissions services.PermissionEngine
+	// Conversations says whose conversation raised a plan, for a person
+	// deciding their own.
+	Conversations repositories.ConversationRepository `optional:"true"`
+	Shadow        *agentshadow.Resolver
+	AuditService  services.AuditService
+	Activity      services.AgentActivityPublisher `optional:"true"`
 	// Watchtower takes a decided plan off the feed.
 	Watchtower services.WatchtowerProjector `optional:"true"`
 	// FollowUps has the conversation that raised the plan report its outcome.
@@ -79,6 +111,10 @@ type Service struct {
 	plans      repositories.AgentPlanRepository
 	proposals  repositories.AgentProposalRepository
 	decisions  stepDecider
+	runs       runReader
+	threads    threadReader
+	agents     definitionReader
+	access     agentAccessChecker
 	shadow     shadowReader
 	audit      actionLogger
 	activity   services.AgentActivityPublisher
@@ -89,7 +125,7 @@ type Service struct {
 func New(p Params) services.AgentPlanService {
 	decider, _ := p.Decisions.(stepDecider)
 
-	return &Service{
+	svc := &Service{
 		l:          p.Logger.Named("service.agentplan"),
 		plans:      p.Plans,
 		proposals:  p.Proposals,
@@ -100,6 +136,20 @@ func New(p Params) services.AgentPlanService {
 		watchtower: p.Watchtower,
 		followUps:  p.FollowUps,
 	}
+	if p.Runs != nil {
+		svc.runs = p.Runs
+	}
+	if p.Conversations != nil {
+		svc.threads = p.Conversations
+	}
+	if p.Definitions != nil {
+		svc.agents = p.Definitions
+	}
+	if p.Permissions != nil {
+		svc.access = p.Permissions
+	}
+
+	return svc
 }
 
 func (s *Service) GetByID(
@@ -230,6 +280,119 @@ func (s *Service) Decide(
 	s.followUp(ctx, plan, req.TenantInfo)
 
 	return plan, nil
+}
+
+// DecideOwn decides a plan raised in one of the actor's own conversations,
+// by an agent they may still use. Past those checks it is the same decision
+// as Decide: every step is still decided, and its write still runs only if
+// the actor may make it.
+func (s *Service) DecideOwn(
+	ctx context.Context,
+	req *services.DecideAgentPlanRequest,
+	actor *services.RequestActor,
+) (*agent.AgentPlan, error) {
+	if err := s.assertOwnPlan(ctx, req, actor); err != nil {
+		return nil, err
+	}
+
+	return s.Decide(ctx, req, actor)
+}
+
+// assertOwnPlan refuses a plan not raised in one of the actor's own
+// conversations, and one from an agent they may no longer use. Someone
+// else's plan is not found rather than forbidden, the way someone else's
+// conversation is. The agent checked is the one whose run raised the plan,
+// which for a hand-off is the delegate, not the conversation's own agent.
+func (s *Service) assertOwnPlan(
+	ctx context.Context,
+	req *services.DecideAgentPlanRequest,
+	actor *services.RequestActor,
+) error {
+	notYours := errortypes.NewNotFoundError(
+		"That plan was not raised in one of your conversations",
+	)
+	if s.runs == nil || s.threads == nil || actor == nil || actor.UserID.IsNil() {
+		return notYours
+	}
+
+	plan, err := s.plans.GetByID(ctx, repositories.GetAgentPlanByIDRequest{
+		ID:         req.PlanID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+
+	run, err := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+		ID:         plan.RunID,
+		TenantInfo: &req.TenantInfo,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return notYours
+		}
+
+		return err
+	}
+	if run.SubjectType != agent.SubjectAssistantThread || run.SubjectID.IsNil() {
+		return notYours
+	}
+
+	if _, err = s.threads.GetThread(ctx, repositories.GetThreadRequest{
+		ID:         run.SubjectID,
+		UserID:     actor.UserID,
+		TenantInfo: req.TenantInfo,
+	}); err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return notYours
+		}
+
+		return err
+	}
+
+	return s.assertMayUseAgent(ctx, req, run, actor)
+}
+
+// assertMayUseAgent refuses a plan from an agent the actor may not use. An
+// agent removed since, or a check that cannot be made, is a refusal.
+func (s *Service) assertMayUseAgent(
+	ctx context.Context,
+	req *services.DecideAgentPlanRequest,
+	run *agent.AgentRun,
+	actor *services.RequestActor,
+) error {
+	gone := errortypes.NewBusinessError(
+		"The agent that raised this plan no longer exists, so the plan cannot be decided",
+	)
+	if run.AgentDefinitionID.IsNil() || s.agents == nil || s.access == nil {
+		return gone
+	}
+
+	definition, err := s.agents.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
+		ID:         run.AgentDefinitionID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return gone
+		}
+
+		return err
+	}
+
+	allowed, err := s.access.MayUseAgent(ctx, actor, definition)
+	if err != nil {
+		return fmt.Errorf("check access to agent %s: %w", definition.ID, err)
+	}
+	if !allowed {
+		return errortypes.NewAuthorizationError(
+			"You do not have access to {0}, so you cannot decide its plan. "+
+				"An administrator can give one of your roles access to it.",
+			definition.Name,
+		)
+	}
+
+	return nil
 }
 
 // followUp has the conversation that raised the plan report how it went,

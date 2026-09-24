@@ -92,6 +92,15 @@ func (f *fakeGrants) ListGrantableRoles(
 	_ context.Context,
 	req repositories.ListGrantableRolesRequest,
 ) ([]*permission.Role, error) {
+	if len(req.RoleIDs) == 0 {
+		out := make([]*permission.Role, 0, len(f.roles))
+		for _, role := range f.roles {
+			out = append(out, role)
+		}
+
+		return out, nil
+	}
+
 	out := make([]*permission.Role, 0, len(req.RoleIDs))
 	for _, id := range req.RoleIDs {
 		if role, ok := f.roles[id]; ok {

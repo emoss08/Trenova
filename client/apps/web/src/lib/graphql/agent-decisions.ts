@@ -1,6 +1,7 @@
 import {
   DecideAgentPlanDocument,
   DecideAgentProposalDocument,
+  DecideMyPlanDocument,
   DecideMyProposalDocument,
   ResolveAgentExceptionDocument,
   type AgentExceptionResolveInput,
@@ -38,6 +39,26 @@ export async function decideMyProposal(id: string, input: AgentProposalDecisionI
   return data.decideMyProposal;
 }
 
+/**
+ * Decides a plan raised in one of the person's own conversations, by an agent
+ * they may still use. Like `decideMyProposal` it needs only the assistant;
+ * every step's write still runs only if the person may make it, and a plan
+ * from someone else's conversation is not found.
+ */
+export async function decideMyPlan(id: string, input: AgentPlanDecisionInput) {
+  const data = await requestGraphQL({
+    document: DecideMyPlanDocument,
+    operationName: "DecideMyPlan",
+    variables: { id, input },
+  });
+
+  return data.decideMyPlan;
+}
+
+/**
+ * Decides any plan, as an approver. Needs permission to update agent
+ * proposals, so only AI Control and the decisions queue call it.
+ */
 export async function decideAgentPlan(id: string, input: AgentPlanDecisionInput) {
   const data = await requestGraphQL({
     document: DecideAgentPlanDocument,

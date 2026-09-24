@@ -1,5 +1,6 @@
 import {
   AgentAccessFieldsFragmentDoc,
+  AgentAccessPreviewDocument,
   AgentAccessRoleFieldsFragmentDoc,
   RoleAgentAccessDocument,
   RoleAgentAccessFieldsFragmentDoc,
@@ -7,6 +8,7 @@ import {
   SetRoleAgentAccessDocument,
   SuggestedAgentAudienceDocument,
   type AgentAccessMode,
+  type AgentAccessPreviewQuery,
   type AgentAudienceCoverage,
   type RoleAgentAccessFieldsFragment,
 } from "@trenova/graphql/generated/graphql";
@@ -49,6 +51,80 @@ export type AgentAudienceSuggestion = {
   sensitiveTools: string[];
 };
 
+/** Who an agent as the form holds it could be given to, before it is saved. */
+export type AgentAccessPreview = Omit<AgentAudienceSuggestion, "agentId">;
+
+/**
+ * The agent as the form holds it: the saved agent it edits, if any, the tools
+ * chosen and who may use it. Normalized so the same form state is always the
+ * same request, and so the same cache entry.
+ */
+export type AgentAccessPreviewRequest = {
+  /** The agent being edited; empty for one not yet saved. */
+  agentId: string;
+  toolNames: string[];
+  accessMode: AgentAccessMode;
+};
+
+/** The most tools one preview asks about, as the server allows. */
+export const MAX_PREVIEW_TOOLS = 200;
+
+export function agentAccessPreviewRequest({
+  agentId,
+  toolNames,
+  accessMode,
+}: {
+  agentId: string;
+  toolNames: readonly string[];
+  accessMode: AgentAccessMode;
+}): AgentAccessPreviewRequest {
+  const tools = [...new Set(toolNames.map((name) => name.trim()).filter((name) => name !== ""))];
+  tools.sort();
+
+  return { agentId, toolNames: tools.slice(0, MAX_PREVIEW_TOOLS), accessMode };
+}
+
+function toAudienceRoles(
+  roles: AgentAccessPreviewQuery["agentAccessPreview"]["roles"],
+): AgentAudienceRole[] {
+  return roles.map((entry) => ({
+    role: getFragmentData(AgentAccessRoleFieldsFragmentDoc, entry.role),
+    coverage: entry.coverage,
+    missingResources: [...entry.missingResources],
+    granted: entry.granted,
+  }));
+}
+
+/**
+ * Each role's coverage of the tools the form holds and, while the form says
+ * everyone may use it, the sensitive ones among them. Worked out from the
+ * form, not from the saved agent, and changes nothing.
+ */
+export async function fetchAgentAccessPreview(
+  request: AgentAccessPreviewRequest,
+  options?: RequestOptions,
+): Promise<AgentAccessPreview> {
+  const data = await requestGraphQL({
+    document: AgentAccessPreviewDocument,
+    operationName: "AgentAccessPreview",
+    variables: {
+      input: {
+        ...(request.agentId ? { agentId: request.agentId } : {}),
+        toolNames: request.toolNames,
+        accessMode: request.accessMode,
+      },
+    },
+    signal: options?.signal,
+  });
+  const preview = data.agentAccessPreview;
+
+  return {
+    accessMode: preview.accessMode,
+    sensitiveTools: [...preview.sensitiveTools],
+    roles: toAudienceRoles(preview.roles),
+  };
+}
+
 export type RoleAgent = RoleAgentAccessFieldsFragment["agents"][number];
 
 export type RoleAgents = {
@@ -74,12 +150,7 @@ export async function fetchSuggestedAgentAudience(
     agentId: suggestion.agentId,
     accessMode: suggestion.accessMode,
     sensitiveTools: [...suggestion.sensitiveTools],
-    roles: suggestion.roles.map((entry) => ({
-      role: getFragmentData(AgentAccessRoleFieldsFragmentDoc, entry.role),
-      coverage: entry.coverage,
-      missingResources: [...entry.missingResources],
-      granted: entry.granted,
-    })),
+    roles: toAudienceRoles(suggestion.roles),
   };
 }
 

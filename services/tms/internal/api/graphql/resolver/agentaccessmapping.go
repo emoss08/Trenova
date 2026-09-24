@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const maxMyAgentIDs = 100
@@ -164,9 +165,28 @@ func (r *Resolver) roleAgents(
 func audienceSuggestionToModel(
 	suggestion *services.AgentAudienceSuggestion,
 ) *gqlmodel.AgentAudienceSuggestion {
-	roles := make([]*gqlmodel.AgentAudienceRole, 0, len(suggestion.Roles))
-	for i := range suggestion.Roles {
-		entry := &suggestion.Roles[i]
+	return &gqlmodel.AgentAudienceSuggestion{
+		AgentID:        suggestion.Agent.ID.String(),
+		AccessMode:     suggestion.Agent.EffectiveAccessMode(),
+		Roles:          audienceRolesToModel(suggestion.Roles),
+		SensitiveTools: suggestion.SensitiveTools,
+	}
+}
+
+func accessPreviewToModel(
+	suggestion *services.AgentAudienceSuggestion,
+) *gqlmodel.AgentAccessPreview {
+	return &gqlmodel.AgentAccessPreview{
+		AccessMode:     suggestion.Agent.EffectiveAccessMode(),
+		Roles:          audienceRolesToModel(suggestion.Roles),
+		SensitiveTools: suggestion.SensitiveTools,
+	}
+}
+
+func audienceRolesToModel(entries []services.AgentAudienceRole) []*gqlmodel.AgentAudienceRole {
+	roles := make([]*gqlmodel.AgentAudienceRole, 0, len(entries))
+	for i := range entries {
+		entry := &entries[i]
 		missing := make([]string, 0, len(entry.MissingResources))
 		for _, resource := range entry.MissingResources {
 			missing = append(missing, resource.String())
@@ -179,12 +199,31 @@ func audienceSuggestionToModel(
 		})
 	}
 
-	return &gqlmodel.AgentAudienceSuggestion{
-		AgentID:        suggestion.Agent.ID.String(),
-		AccessMode:     suggestion.Agent.EffectiveAccessMode(),
-		Roles:          roles,
-		SensitiveTools: suggestion.SensitiveTools,
+	return roles
+}
+
+// accessPreviewRequest reads the form's agent from the preview input. The
+// agent being edited is optional; a new one has no id yet.
+func accessPreviewRequest(
+	tenant pagination.TenantInfo,
+	input *gqlmodel.AgentAccessPreviewInput,
+) (*services.PreviewAgentAudienceRequest, error) {
+	req := &services.PreviewAgentAudienceRequest{
+		TenantInfo: tenant,
+		ToolNames:  input.ToolNames,
+		Mode:       input.AccessMode,
 	}
+	if input.AgentID == nil || *input.AgentID == "" {
+		return req, nil
+	}
+
+	agentID, err := pulid.MustParse(*input.AgentID)
+	if err != nil {
+		return nil, err
+	}
+	req.AgentID = agentID
+
+	return req, nil
 }
 
 func myAgentColumns(ctx context.Context, nodePathPrefix string) []string {

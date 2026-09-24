@@ -1,7 +1,6 @@
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
-import { describeApiError } from "@/lib/api-error-message";
-import { setAgentAccess, type AgentAccess } from "@/lib/graphql/agent-access";
+import type { AgentAccess } from "@/lib/graphql/agent-access";
 import { apiService } from "@/services/api";
 import type { AgentDefinition } from "@/types/assistant";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,8 +8,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useRef } from "react";
 import { useForm, type Resolver } from "react-hook-form";
-import { toast } from "sonner";
-import { saveEditedAgent, saveNewAgent, type NewAgentProblem } from "./agent-access-save";
+import { accessToSave, NEW_AGENT_ACCESS } from "./agent-access-save";
 import { AgentForm } from "./agent-form";
 import {
   accessOf,
@@ -38,23 +36,6 @@ export function AgentPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
   // row and never be sent.
   const savedAccess = useRef<{ agentId: string; access: AgentAccess } | null>(null);
 
-  const newAgentProblemTitle = (problem: NewAgentProblem): string => {
-    switch (problem.kind) {
-      case "access-not-saved-left-disabled":
-        return t(
-          "The agent was created but left disabled, because who can use it could not be saved. Open it to try again.",
-        );
-      case "access-not-saved":
-        return t(
-          "The agent was created, but who can use it could not be saved. Open it to try again.",
-        );
-      case "not-enabled":
-        return t(
-          "The agent was created and who can use it was saved, but it could not be enabled. Open it to enable it.",
-        );
-    }
-  };
-
   if (mode === "edit") {
     return (
       <FormEditPanel<AgentFormValues, AgentPanelRow, AgentFormValues, AgentDefinition>
@@ -79,28 +60,15 @@ export function AgentPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
             savedAccess.current?.agentId === current.id
               ? savedAccess.current.access
               : accessOf(current);
-          let accessSaved = false;
-          try {
-            const { agent } = await saveEditedAgent({
-              access: accessOf(values),
-              savedAccess: lastSaved,
-              setAccess: (access) => setAgentAccess(current.id, access),
-              onAccessSaved: (access) => {
-                accessSaved = true;
-                savedAccess.current = { agentId: current.id, access };
-              },
-              saveAgent: () =>
-                apiService.agentDefinitionService.update(current.id, toSaveRequest(values)),
-            });
-            return agent;
-          } catch (error) {
-            if (accessSaved) {
-              toast.warning(t("Who can use this agent was saved, but the rest of it was not."), {
-                description: t("Fix what is shown and save again."),
-              });
-            }
-            throw error;
-          }
+          const access = accessOf(values);
+          // One request, one transaction: the agent and who may use it are
+          // saved together or not at all, so a refusal leaves nothing to undo.
+          const agent = await apiService.agentDefinitionService.update(
+            current.id,
+            toSaveRequest(values, accessToSave(access, lastSaved)),
+          );
+          savedAccess.current = { agentId: current.id, access };
+          return agent;
         }}
         useDock
       />
@@ -119,24 +87,14 @@ export function AgentPanel({ open, onOpenChange, mode, row }: DataTablePanelProp
       )}
       size="lg"
       formComponent={<AgentForm mode="create" />}
-      mutationFn={async (values) => {
-        const { agent, problem } = await saveNewAgent({
-          request: toSaveRequest(values),
-          access: accessOf(values),
-          createAgent: (request) => apiService.agentDefinitionService.create(request),
-          updateAgent: (id, request) => apiService.agentDefinitionService.update(id, request),
-          setAccess: (agentId, access) => setAgentAccess(agentId, access),
-        });
-        // The agent exists, so the panel closes as a create; what is left to
-        // do is said rather than thrown, because saving again would create it
-        // a second time.
-        if (problem) {
-          toast.warning(newAgentProblemTitle(problem), {
-            description: describeApiError(problem.error),
-          });
-        }
-        return agent;
-      }}
+      // Created with who may use it in one request, so an agent meant for
+      // some roles is restricted from the moment it exists, enabled or not,
+      // and a refusal of either leaves no agent behind to clean up.
+      mutationFn={(values) =>
+        apiService.agentDefinitionService.create(
+          toSaveRequest(values, accessToSave(accessOf(values), NEW_AGENT_ACCESS)),
+        )
+      }
       useDock
     />
   );

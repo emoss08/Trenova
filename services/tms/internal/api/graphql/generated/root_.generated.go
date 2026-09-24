@@ -626,6 +626,12 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	AgentAccessPreview struct {
+		AccessMode     func(childComplexity int) int
+		Roles          func(childComplexity int) int
+		SensitiveTools func(childComplexity int) int
+	}
+
 	AgentAudienceRole struct {
 		Coverage         func(childComplexity int) int
 		Granted          func(childComplexity int) int
@@ -6681,6 +6687,7 @@ type ComplexityRoot struct {
 		DecideAgentProposal                   func(childComplexity int, id string, input gqlmodel.AgentProposalDecisionInput) int
 		DecideAgentProposals                  func(childComplexity int, ids []string, input gqlmodel.DecideAgentProposalsInput) int
 		DecideLeaveCase                       func(childComplexity int, input gqlmodel.DecideLeaveCaseInput) int
+		DecideMyPlan                          func(childComplexity int, id string, input gqlmodel.AgentPlanDecisionInput) int
 		DecideMyProposal                      func(childComplexity int, id string, input gqlmodel.AgentProposalDecisionInput) int
 		DecideProfileChange                   func(childComplexity int, input gqlmodel.DecideProfileChangeInput) int
 		DelegateApproval                      func(childComplexity int, input gqlmodel.DelegateApprovalInput) int
@@ -6977,6 +6984,7 @@ type ComplexityRoot struct {
 
 	MyAgent struct {
 		Accent      func(childComplexity int) int
+		Delegates   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Icon        func(childComplexity int) int
@@ -7873,6 +7881,7 @@ type ComplexityRoot struct {
 		ActiveTrainingCourses               func(childComplexity int) int
 		ActiveWorkerChecklistTemplates      func(childComplexity int) int
 		ActiveWorkerCredentialTypes         func(childComplexity int) int
+		AgentAccessPreview                  func(childComplexity int, input gqlmodel.AgentAccessPreviewInput) int
 		AgentControl                        func(childComplexity int) int
 		AgentDefinition                     func(childComplexity int, id string) int
 		AgentDefinitions                    func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
@@ -13965,6 +13974,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountTypeEdge.Node(childComplexity), true
+
+	case "AgentAccessPreview.accessMode":
+		if e.ComplexityRoot.AgentAccessPreview.AccessMode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentAccessPreview.AccessMode(childComplexity), true
+	case "AgentAccessPreview.roles":
+		if e.ComplexityRoot.AgentAccessPreview.Roles == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentAccessPreview.Roles(childComplexity), true
+	case "AgentAccessPreview.sensitiveTools":
+		if e.ComplexityRoot.AgentAccessPreview.SensitiveTools == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentAccessPreview.SensitiveTools(childComplexity), true
 
 	case "AgentAudienceRole.coverage":
 		if e.ComplexityRoot.AgentAudienceRole.Coverage == nil {
@@ -43054,6 +43082,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DecideLeaveCase(childComplexity, args["input"].(gqlmodel.DecideLeaveCaseInput)), true
+	case "Mutation.decideMyPlan":
+		if e.ComplexityRoot.Mutation.DecideMyPlan == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_decideMyPlan_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DecideMyPlan(childComplexity, args["id"].(string), args["input"].(gqlmodel.AgentPlanDecisionInput)), true
 	case "Mutation.decideMyProposal":
 		if e.ComplexityRoot.Mutation.DecideMyProposal == nil {
 			break
@@ -46253,6 +46292,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.MyAgent.Accent(childComplexity), true
+	case "MyAgent.delegates":
+		if e.ComplexityRoot.MyAgent.Delegates == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MyAgent.Delegates(childComplexity), true
 	case "MyAgent.description":
 		if e.ComplexityRoot.MyAgent.Description == nil {
 			break
@@ -50316,6 +50361,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.ActiveWorkerCredentialTypes(childComplexity), true
+	case "Query.agentAccessPreview":
+		if e.ComplexityRoot.Query.AgentAccessPreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentAccessPreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentAccessPreview(childComplexity, args["input"].(gqlmodel.AgentAccessPreviewInput)), true
 	case "Query.agentControl":
 		if e.ComplexityRoot.Query.AgentControl == nil {
 			break
@@ -72927,6 +72983,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAddSettlementAdjustmentInput,
 		ec.unmarshalInputAdjustEscrowAccountInput,
 		ec.unmarshalInputAdjustWorkerPTOBalanceInput,
+		ec.unmarshalInputAgentAccessPreviewInput,
 		ec.unmarshalInputAgentControlInput,
 		ec.unmarshalInputAgentEvalCaseCuratedInput,
 		ec.unmarshalInputAgentEvalCaseFromFeedbackInput,
@@ -74223,6 +74280,12 @@ extend type Mutation {
   approved write still runs only if the caller may make it.
   """
   decideMyProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
+  """
+  Decides a plan raised in one of the caller's own conversations, by an agent
+  they may still use. Each step's write still runs only if the caller may
+  make it, and the first that fails stops the rest.
+  """
+  decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
   "Replays a recorded run against its agent as it is now; every write is simulated."
   replayAgentRun(runId: ID!): AgentEvaluation!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!
@@ -74419,6 +74482,12 @@ type MyAgent {
   systemKey: String!
   "Up to four opening questions the agent can answer with its tools."
   starters: [AgentStarter!]!
+  """
+  The agents this one may hand a task to that the caller may use themselves:
+  enabled, talked to, and open to them. In the order configured. Only who
+  each is and how it is drawn; never what it is set up to do.
+  """
+  delegates: [MyAgent!]!
 }
 
 type MyAgentEdge {
@@ -74484,6 +74553,30 @@ type AgentAudienceSuggestion {
   sensitiveTools: [String!]!
 }
 
+"An agent as a form holds it, before it is saved, for working out who it suits."
+input AgentAccessPreviewInput {
+  "The agent being edited, so each role says whether it is granted now. Absent for a new one."
+  agentId: ID
+  "The tools the form has chosen. Core tools every agent holds need not be listed. At most 200."
+  toolNames: [String!]!
+  "Who the form says may use it. A system agent is always Everyone."
+  accessMode: AgentAccessMode!
+}
+
+"Who an agent as a form holds it could be given to, worked out without saving it."
+type AgentAccessPreview {
+  "The access the preview was worked out for; Everyone for a system agent."
+  accessMode: AgentAccessMode!
+  "Every role in the organization, by name. Granted only for an agent already saved."
+  roles: [AgentAudienceRole!]!
+  """
+  While the preview is open to everyone, the chosen tools that reach restricted
+  or confidential data or whose work leaves the organization. Empty while it is
+  restricted to roles.
+  """
+  sensitiveTools: [String!]!
+}
+
 extend type Query {
   agentDefinitions(input: DataTableConnectionInput!): AgentDefinitionConnection!
   agentDefinition(id: ID!): AgentDefinition
@@ -74491,6 +74584,12 @@ extend type Query {
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   "Each role's coverage of an agent's tools, for choosing who may use it."
   suggestedAgentAudience(agentId: ID!): AgentAudienceSuggestion!
+  """
+  Each role's coverage of the tools a form has chosen, and the sensitive ones
+  among them while it is open to everyone. Reads the form, not the saved agent,
+  and changes nothing.
+  """
+  agentAccessPreview(input: AgentAccessPreviewInput!): AgentAccessPreview!
 }
 
 extend type Mutation {
@@ -96315,6 +96414,18 @@ func (ec *executionContext) childFields_AccountTypeEdge(ctx context.Context, fie
 	return nil, fmt.Errorf("no field named %q was found under type AccountTypeEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentAccessPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "accessMode":
+		return ec.fieldContext_AgentAccessPreview_accessMode(ctx, field)
+	case "roles":
+		return ec.fieldContext_AgentAccessPreview_roles(ctx, field)
+	case "sensitiveTools":
+		return ec.fieldContext_AgentAccessPreview_sensitiveTools(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentAccessPreview", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentAudienceRole(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "role":
@@ -108157,6 +108268,8 @@ func (ec *executionContext) childFields_MyAgent(ctx context.Context, field graph
 		return ec.fieldContext_MyAgent_systemKey(ctx, field)
 	case "starters":
 		return ec.fieldContext_MyAgent_starters(ctx, field)
+	case "delegates":
+		return ec.fieldContext_MyAgent_delegates(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type MyAgent", field.Name)
 }

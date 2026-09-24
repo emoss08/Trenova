@@ -346,7 +346,7 @@ func (s *Service) FinishTurn(
 		s.titleIfUnnamed(ctx, thread, plan.Input)
 	}
 
-	thread.CanContinue = true
+	thread.MarkContinuable()
 	result := &services.SendMessageResult{
 		Thread:   thread,
 		Messages: saved,

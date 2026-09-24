@@ -37,8 +37,8 @@ export const agentFormSchema = saveAgentDefinitionRequestSchema
       .max(MAX_DELEGATES, `An agent can ask at most ${MAX_DELEGATES} other agents`)
       .default([]),
     /**
-     * Who may use it. Saved with its own request rather than with the agent,
-     * so `toSaveRequest` leaves both out.
+     * Who may use it. Saved with the agent, but only when asked:
+     * `toSaveRequest` leaves both out unless it is handed the access to send.
      */
     accessMode: z.enum(["Everyone", "Roles"]).default("Everyone"),
     /** The roles granted it, kept whatever the mode. */
@@ -151,12 +151,18 @@ export function accessOf(
  * What goes over the wire: trigger fields that belong to other modes are
  * cleared so a switched agent does not carry a stale schedule, and tiers for
  * tools that were unselected go with them.
+ *
+ * Who may use the agent rides along only when `access` is given, and then in
+ * the same transaction as the rest. Left out, the server keeps it as it is,
+ * which is what a toggle or a prompt preview wants, and what a save that did
+ * not change it wants too: re-sending it would need permission to update
+ * roles, and would put back roles someone else changed in the meantime.
  */
 export function toSaveRequest(
   values: AgentFormValues & { delegates?: unknown; accessRoles?: unknown },
+  access?: AgentAccess,
 ): SaveAgentDefinitionRequest {
   // The allowlist's names and marks are for drawing it; only the ids are saved.
-  // Who may use the agent has its own request, so none of it rides here.
   const {
     delegates: _drawn,
     accessRoles: _granted,
@@ -192,6 +198,7 @@ export function toSaveRequest(
     // Only an agent people talk to may ask others; the server refuses the
     // list on any other trigger, so a switched agent sends it empty.
     delegateIds: canDelegate(form.triggerMode) ? [...new Set(form.delegateIds)] : [],
+    ...(access ? { accessMode: access.mode, accessRoleIds: [...new Set(access.roleIds)] } : {}),
   };
 }
 

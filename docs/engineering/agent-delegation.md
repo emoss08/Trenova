@@ -54,6 +54,20 @@ reads it as `AgentDefinition.delegateIds` and resolves `AgentDefinition.delegate
 through the request's `AgentDefinitionByID` loader, so a page of agents costs
 one query for all their delegates.
 
+`AgentDefinition` is an administrator's read. The person talking to an agent
+reads `MyAgent.delegates` instead (`myAgents`, needing only `assistant:read`):
+the allowlist in order, as `MyAgent` again (who each is and its mark, never its
+set-up), keeping only delegates that person may use — the rule the turn applies
+(`ContextBuilder.delegates`): in the tenant, enabled, chat-usable, not the agent
+itself, and open to them or granted to one of their roles under
+`assistant:create`. It is read through the request's `UsableAgentByID` loader
+(`loaders/usableagentloader.go`), keyed by delegate id and built from the
+request's tenant and user: one `ListByIDs` and one `PermissionEngine.AgentsUsable`
+per batch, so a page of agents costs one query and one permission read for all
+their delegates. The chat client hands the thread agent's list to
+`AssistantAgentProvider`, so a hand-off saved before the thread served agents'
+marks still draws the delegate's icon and accent.
+
 ## What the primary agent is told
 
 `agentruntime.ContextBuilder` resolves the delegates for a conversation turn
@@ -322,6 +336,19 @@ worked out by the context activity.
 A rolling deploy is the one exposure: a turn opened by a new worker and replayed
 by an old one would dispatch `delegate_task` as a tool. Finish rolling the
 chat-queue workers before an allowlist is configured.
+
+## Access around a conversation
+
+Who may use an agent (`AccessMode`, role grants, `agentaccessservice`) decides
+more than who may start a conversation. These are the places it reaches, and
+each is enforced on the server.
+
+| What | Where |
+|---|---|
+| **Deciding a plan in your own conversation.** `decideMyPlan(id, input)` needs `assistant:update`, a plan whose run's subject is an assistant thread the caller owns (someone else's is *not found*), and access to the agent whose run raised it — for a delegate's plan, the delegate. It then goes through `agentplanservice.Decide`, so every step is decided by the decision service as the caller and each write is permission-checked against them when it runs. The in-thread plan card uses it; AI Control and the decisions queue keep `decideAgentPlan` (`agent_proposal:update`). | `agentplanservice.DecideOwn`, `resolver.DecideMyPlan`, `authzlint` (`TestAgentAccessResolversAreAuthorized`) |
+| **Why a conversation cannot continue.** A thread is served with `canContinue` and, when it is false, `cannotContinueReason`: `AgentDeleted`, `NoAccess` (the reader may not use the agent, or the assistant at all), `AgentDisabled`, or `AgentNotConversational` (it now runs on a schedule, an event or continuously), in that order of precedence, so a reader is never told an agent they could not use anyway was merely turned off. Worked out when served, never stored. | `assistantservice.markContinuable`, `conversation.ContinueRefusal` |
+| **Saving an agent with who may use it.** `POST`/`PUT /agent-definitions/` take `accessMode` and `accessRoleIds` together (both absent keeps access; one without the other is refused). The save and the access are one transaction (`AgentAccessService.SaveWithAccess`), so a restricted agent is created restricted and enabled in one request. Changing access needs `role:update` as well, as `setAgentAccess` does; access that already reads as asked needs nothing more, and the client sends it only when it changed. | `agentdefinitionservice.save`, `agentaccessservice.SaveWithAccess` |
+| **The audience of an unsaved form.** `agentAccessPreview(input)` works each role's coverage and, while the form says Everyone, the sensitive tools out of the tools and access the form holds (for a saved agent, its other settings as saved), writing nothing. The form asks it debounced, keyed by the normalized request. | `agentaccessservice.PreviewAudience` |
 
 ## Limits
 

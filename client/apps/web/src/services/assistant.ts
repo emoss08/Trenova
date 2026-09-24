@@ -29,10 +29,8 @@ import {
   type AssistantEntityRef,
   type AssistantPageContext,
   type ThreadOrigin,
-  type AssistantPlan,
   type AssistantStreamEvent,
   type AssistantThread,
-  type PlanDecision,
   type SaveAgentDefinitionRequest,
 } from "@/types/assistant";
 
@@ -369,16 +367,6 @@ export class AssistantService {
   public async listPlans(threadId: AssistantThread["id"]) {
     const response = await api.get(`/assistant/threads/${threadId}/plans/`);
     return safeParse(assistantPlanListSchema, response, "Assistant Plan");
-  }
-
-  /**
-   * Approving a plan runs every step in the order the agent asked, stopping at
-   * the first that fails; rejecting it rejects them all. Like a single proposal
-   * it is checked and audited as the approver, so it can fail on their
-   * permissions rather than the asker's.
-   */
-  public async decidePlan(planId: AssistantPlan["id"], decision: PlanDecision) {
-    await api.post(`/agent-plans/${planId}/resolve/`, { decision, reasonCode: "" });
   }
 }
 

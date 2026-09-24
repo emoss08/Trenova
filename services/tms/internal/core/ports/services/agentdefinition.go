@@ -48,8 +48,11 @@ type SaveAgentDefinitionRequest struct {
 	// the ones it has, so a save from a form that does not show them cannot
 	// clear them; an empty list clears them.
 	DelegateIDs *[]pulid.ID
-	Version     int64
-	TenantInfo  pagination.TenantInfo
+	// Access sets who may use the agent in the same transaction as the save.
+	// Nil keeps who may use it; a new agent is then open to everyone.
+	Access     *AgentAccessWrite
+	Version    int64
+	TenantInfo pagination.TenantInfo
 }
 
 type AgentTemplateDescriptor struct {
