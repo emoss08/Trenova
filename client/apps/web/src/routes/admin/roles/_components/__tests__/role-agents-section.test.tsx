@@ -72,6 +72,14 @@ function granted(id: string, name: string, overrides: Partial<RoleAgent> = {}): 
   };
 }
 
+// The server keeps what it saved, so the list read after a save is the saved one.
+function savesAs(saved: RoleAgents) {
+  setRoleAgentAccess.mockImplementation(async () => {
+    fetchRoleAgents.mockResolvedValue(saved);
+    return saved;
+  });
+}
+
 function renderSection() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -132,7 +140,7 @@ describe("RoleAgentsSection", () => {
       roleName: "Billing",
       agents: [granted("agdef_s", "Settlements")],
     });
-    setRoleAgentAccess.mockResolvedValue({
+    savesAs({
       roleId: "role_billing",
       roleName: "Billing",
       agents: [granted("agdef_payroll", "Payroll desk"), granted("agdef_s", "Settlements")],
@@ -179,7 +187,7 @@ describe("RoleAgentsSection", () => {
       roleName: "Billing",
       agents: [granted("agdef_s", "Settlements"), granted("agdef_p", "Payroll desk")],
     });
-    setRoleAgentAccess.mockResolvedValue({
+    savesAs({
       roleId: "role_billing",
       roleName: "Billing",
       agents: [granted("agdef_s", "Settlements")],
