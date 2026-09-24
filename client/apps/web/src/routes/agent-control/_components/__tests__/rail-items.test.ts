@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildRailItems, resolveRailView, type RailPermissions } from "../rail-items";
+import type { RetrievalRailState } from "../retrieval/retrieval-model";
 
 const t = (text: string, ...args: (string | number)[]) =>
   text
@@ -18,6 +19,7 @@ const all: RailPermissions = {
   proposals: true,
   exceptions: true,
   memory: true,
+  retrieval: true,
   safety: true,
   quality: true,
   ratings: true,
@@ -34,6 +36,7 @@ const counts = {
   extensionsOn: 1,
   extensionsTotal: 1,
   qualityRegressions: 0,
+  retrieval: null,
 };
 
 describe("buildRailItems", () => {
@@ -46,6 +49,7 @@ describe("buildRailItems", () => {
       "providers",
       "extensions",
       "memory",
+      "retrieval",
       "safety",
       "quality",
       "activity",
@@ -56,8 +60,9 @@ describe("buildRailItems", () => {
     expect(items[4].status).toBe("3 active");
     expect(items[5].status).toBe("");
     expect(items[6].status).toBe("");
-    expect(items[7].status).toBe("12 runs today");
-    expect(items[7].children.map((child) => child.view)).toEqual([
+    expect(items[7].status).toBe("");
+    expect(items[8].status).toBe("12 runs today");
+    expect(items[8].children.map((child) => child.view)).toEqual([
       "runs",
       "proposals",
       "plans",
@@ -71,8 +76,8 @@ describe("buildRailItems", () => {
   it("calls for attention when proposals wait on a person", () => {
     const items = buildRailItems({ ...counts, pendingProposals: 2 }, all, t);
 
-    expect(items[7].status).toBe("2 awaiting decision");
-    expect(items[7].attention).toBe(true);
+    expect(items[8].status).toBe("2 awaiting decision");
+    expect(items[8].attention).toBe(true);
   });
 
   it("calls for attention when no provider is on", () => {
@@ -93,6 +98,7 @@ describe("buildRailItems", () => {
         extensions: false,
         exceptions: false,
         memory: false,
+        retrieval: false,
         safety: false,
         quality: false,
       },
@@ -113,7 +119,7 @@ describe("buildRailItems", () => {
   it("lists plans only where proposals may be read", () => {
     const items = buildRailItems(counts, { ...all, proposals: false }, t);
 
-    expect(items[7].children.map((child) => child.view)).toEqual([
+    expect(items[8].children.map((child) => child.view)).toEqual([
       "runs",
       "evaluations",
       "exceptions",
@@ -196,6 +202,68 @@ describe("buildRailItems", () => {
 
     expect(items.map((item) => item.tab)).not.toContain("quality");
     expect(items.at(-1)?.tab).toBe("activity");
+  });
+
+  // Retrieval sits beside Memory: both are what agents read back, and the
+  // index is built from the memories among other things.
+  it("lists retrieval after memory, under the right to read providers", () => {
+    const tabs = buildRailItems(counts, all, t).map((item) => item.tab);
+    expect(tabs.indexOf("retrieval")).toBe(tabs.indexOf("memory") + 1);
+
+    const hidden = buildRailItems(counts, { ...all, retrieval: false }, t);
+    expect(hidden.map((item) => item.tab)).not.toContain("retrieval");
+  });
+
+  it("says nothing about retrieval until its status arrives", () => {
+    const item = buildRailItems(counts, all, t).find((entry) => entry.tab === "retrieval");
+
+    expect(item).toEqual({ tab: "retrieval", status: "", attention: false, children: [] });
+  });
+
+  it("says how far the index has come while search by meaning works", () => {
+    const retrieval = (failed: number, waiting: number) =>
+      buildRailItems(
+        { ...counts, retrieval: { available: true, reason: null, failed, waiting } },
+        all,
+        t,
+      ).find((item) => item.tab === "retrieval");
+
+    expect(retrieval(0, 0)).toMatchObject({ status: "On", attention: false });
+    expect(retrieval(0, 1)).toMatchObject({ status: "1 to index", attention: false });
+    expect(retrieval(0, 40)).toMatchObject({ status: "40 to index", attention: false });
+    // A failure outranks what is waiting: it is the thing someone has to look at.
+    expect(retrieval(3, 40)).toMatchObject({ status: "3 failed", attention: true });
+  });
+
+  // Keyword-only is where every installation starts, so an organization that
+  // has not set retrieval up is not told something is wrong; one whose index
+  // stopped working is.
+  it("calls for attention only when something set up has stopped", () => {
+    const retrieval = (reason: NonNullable<RetrievalRailState["reason"]>) =>
+      buildRailItems(
+        { ...counts, retrieval: { available: false, reason, failed: 5, waiting: 5 } },
+        all,
+        t,
+      ).find((item) => item.tab === "retrieval");
+
+    expect(retrieval("ExtensionMissing")).toMatchObject({
+      status: "Words only",
+      attention: false,
+    });
+    expect(retrieval("NoProvider")).toMatchObject({ status: "Words only", attention: false });
+    expect(retrieval("NotIndexed")).toMatchObject({ status: "Starting", attention: false });
+    expect(retrieval("Disabled")).toMatchObject({ status: "Paused", attention: false });
+    expect(retrieval("SchemaMissing")).toMatchObject({ status: "Words only", attention: true });
+    expect(retrieval("TooOld")).toMatchObject({ status: "Words only", attention: true });
+    expect(retrieval("BudgetPaused")).toMatchObject({ status: "Budget spent", attention: true });
+    expect(retrieval("QueryTimeout")).toMatchObject({
+      status: "Provider failing",
+      attention: true,
+    });
+    expect(retrieval("ProviderFailed")).toMatchObject({
+      status: "Provider failing",
+      attention: true,
+    });
   });
 });
 

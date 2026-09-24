@@ -1,0 +1,114 @@
+fragment AIRetrievalStatusFields on AIRetrievalStatus {
+  availability {
+    available
+    reason
+    extensionInstalled
+    extensionVersion
+  }
+  settings {
+    memoryEnabled
+    documentsEnabled
+    inboundMessagesEnabled
+    monthlyIndexingBudgetUsd
+    paused
+    pausedReason
+    pausedAt
+    activeModelKey
+    dimensions
+    pendingModelKey
+    pendingDimensions
+    version
+    updatedAt
+  }
+  sources {
+    sourceType
+    enabled
+    total
+    indexed
+    pending
+    failed
+    skipped
+    lastIndexedAt
+    lastAttemptAt
+  }
+  monthStartedAt
+  indexingCostMonthUsd
+  indexingUnpricedCalls
+  retrievalCostMonthUsd
+  retrievalUnpricedCalls
+  lastIndexedAt
+  modelChange {
+    fromModelKey
+    toModelKey
+    dimensions
+    total
+    indexed
+    pending
+    failed
+  }
+  configuredModelKey
+  configuredModelDiffers
+}
+
+fragment AIRetrievalFailedEntryFields on AIRetrievalFailedEntry {
+  id
+  sourceType
+  sourceId
+  modelKey
+  status
+  attempts
+  error
+  lastAttemptAt
+  nextAttemptAt
+}
+
+query AIRetrievalStatus {
+  aiRetrievalStatus {
+    ...AIRetrievalStatusFields
+  }
+}
+
+query AIRetrievalReindexEstimate($sourceType: AIRetrievalSourceType!) {
+  aiRetrievalReindexEstimate(sourceType: $sourceType) {
+    sourceType
+    modelKey
+    sources
+    averageChunks
+    chunksMeasured
+    averageTokensPerChunk
+    estimatedTokens
+    inputCostPerMillionUsd
+    estimatedCostUsd
+    remainingBudgetUsd
+  }
+}
+
+query AIRetrievalFailedEntryTable(
+  $sourceType: AIRetrievalSourceType
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  aiRetrievalFailedEntryConnection(sourceType: $sourceType, input: $input) {
+    edges {
+      node {
+        ...AIRetrievalFailedEntryFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+mutation UpdateAIRetrievalSettings($input: AIRetrievalSettingsPatchInput!) {
+  updateAIRetrievalSettings(input: $input) {
+    ...AIRetrievalStatusFields
+  }
+}
+
+mutation ReindexAIRetrievalSource($sourceType: AIRetrievalSourceType!) {
+  reindexAIRetrievalSource(sourceType: $sourceType) {
+    ...AIRetrievalStatusFields
+  }
+}

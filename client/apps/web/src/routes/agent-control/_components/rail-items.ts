@@ -1,4 +1,5 @@
 import type { AIControlTab, RailView } from "../ai-control-tabs";
+import { retrievalRailStatus, type RetrievalRailState } from "./retrieval/retrieval-model";
 
 export type { ActivityView, QualityView, RailView, SafetyView } from "../ai-control-tabs";
 
@@ -24,6 +25,8 @@ export type RailCounts = {
   extensionsTotal: number;
   /** Agents whose latest scored suite run regressed. */
   qualityRegressions: number;
+  /** Where search by meaning stands; null until it has been read. */
+  retrieval: RetrievalRailState | null;
 };
 
 export type RailPermissions = {
@@ -34,6 +37,8 @@ export type RailPermissions = {
   proposals: boolean;
   exceptions: boolean;
   memory: boolean;
+  /** The index is the providers' work, so it is read under the right to read providers. */
+  retrieval: boolean;
   /** Reading what agents may do on their own is reading agents. */
   safety: boolean;
   /** How well agents are doing is read under the golden set's right. */
@@ -101,6 +106,17 @@ export function buildRailItems(
           : t("{0, plural, one {# active} other {# active}}", counts.memoriesActive)
         : "",
       attention: false,
+      children: [],
+    });
+  }
+
+  if (permissions.retrieval) {
+    const state = counts?.retrieval ?? null;
+    const summary = state ? retrievalRailStatus(state, t) : { status: "", attention: false };
+    items.push({
+      tab: "retrieval",
+      status: summary.status,
+      attention: summary.attention,
       children: [],
     });
   }
