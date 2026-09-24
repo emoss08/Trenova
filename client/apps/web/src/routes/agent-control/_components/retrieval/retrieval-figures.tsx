@@ -1,4 +1,5 @@
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
+import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { formatUsd } from "@/lib/ai-usage-format";
 import type { AIRetrievalStatus } from "@/lib/graphql/ai-retrieval";
 import { formatNumber, formatRelativeTime } from "@trenova/shared/i18n/format";
@@ -20,6 +21,7 @@ const LAST_RUN_FORMAT = {
  */
 export function RetrievalFigures({ status }: { status: AIRetrievalStatus }) {
   const t = useT();
+  const now = useNowSeconds();
   const totals = retrievalTotals(status.sources);
   const unpriced = status.indexingUnpricedCalls + status.retrievalUnpricedCalls;
   const lastIndexedAt = status.lastIndexedAt;
@@ -59,9 +61,7 @@ export function RetrievalFigures({ status }: { status: AIRetrievalStatus }) {
       />
       <KpiStripItem
         label={t("Last run")}
-        value={
-          lastIndexedAt ? formatRelativeTime(lastIndexedAt - Math.floor(Date.now() / 1000)) : "—"
-        }
+        value={lastIndexedAt ? formatRelativeTime(lastIndexedAt - now) : "—"}
         sub={
           lastIndexedAt
             ? formatUnixInUserTimezone(lastIndexedAt, LAST_RUN_FORMAT)
