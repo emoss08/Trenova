@@ -5655,6 +5655,18 @@ type SafetyEventStatusInput struct {
 	Version    *int    `json:"version,omitempty"`
 }
 
+// The organization's own app keys. Leave the secret or verifier token out to keep the saved one.
+type SaveAccountingAppInput struct {
+	IntegrationType integration.Type              `json:"integrationType"`
+	Environment     accountingsync.AppEnvironment `json:"environment"`
+	ClientID        string                        `json:"clientId"`
+	// Required the first time, and whenever the client ID or environment changes.
+	ClientSecret         *string `json:"clientSecret,omitempty"`
+	WebhookVerifierToken *string `json:"webhookVerifierToken,omitempty"`
+	// Removes the saved webhook verifier token.
+	ClearWebhookVerifierToken *bool `json:"clearWebhookVerifierToken,omitempty"`
+}
+
 type SaveHomeLayoutPresetInput struct {
 	Name               string             `json:"name"`
 	Description        *string            `json:"description,omitempty"`

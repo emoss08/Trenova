@@ -19,7 +19,24 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
+
+func (r *accountingAppCredentialResolver) HasWebhookVerifier(ctx context.Context, obj *accountingsync.AccountingAppCredential) (bool, error) {
+	return obj.HasWebhookVerifier(), nil
+}
+
+func (r *accountingAppSettingsResolver) ActiveSource(ctx context.Context, obj *services.AccountingAppSettings) (*accountingsync.AppSource, error) {
+	return stringutils.NilIfEmpty(obj.ActiveSource), nil
+}
+
+func (r *accountingAppSettingsResolver) InstanceEnvironment(ctx context.Context, obj *services.AccountingAppSettings) (*accountingsync.AppEnvironment, error) {
+	return stringutils.NilIfEmpty(obj.InstanceEnvironment), nil
+}
+
+func (r *accountingConnectionResolver) AppEnvironment(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.AppEnvironment, error) {
+	return stringutils.NilIfEmpty(obj.AppEnvironment), nil
+}
 
 func (r *accountingConnectionResolver) LastErrorCategory(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.ErrorCategory, error) {
 	if obj.LastErrorCategory == "" {
@@ -73,6 +90,43 @@ func (r *accountingReferenceObjectResolver) Label(ctx context.Context, obj *acco
 
 func (r *accountingReferenceObjectResolver) Usable(ctx context.Context, obj *accountingsync.AccountingReferenceObject) (bool, error) {
 	return obj.Usable(), nil
+}
+
+func (r *mutationResolver) SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*services.AccountingSyncStatus, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.UserID.IsNil() {
+		return nil, errAccountingNeedsAPerson()
+	}
+
+	return r.accountingConnections.SaveApp(ctx, &services.SaveAccountingAppRequest{
+		TenantInfo:                tenantInfo(authCtx),
+		UserID:                    authCtx.UserID,
+		IntegrationType:           input.IntegrationType,
+		Environment:               input.Environment,
+		ClientID:                  input.ClientID,
+		ClientSecret:              stringutils.FromPtr(input.ClientSecret),
+		WebhookVerifierToken:      stringutils.FromPtr(input.WebhookVerifierToken),
+		ClearWebhookVerifierToken: input.ClearWebhookVerifierToken != nil && *input.ClearWebhookVerifierToken,
+	})
+}
+
+func (r *mutationResolver) RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncStatus, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.UserID.IsNil() {
+		return nil, errAccountingNeedsAPerson()
+	}
+
+	return r.accountingConnections.RemoveApp(ctx, &services.RemoveAccountingAppRequest{
+		TenantInfo:      tenantInfo(authCtx),
+		UserID:          authCtx.UserID,
+		IntegrationType: integrationType,
+	})
 }
 
 func (r *mutationResolver) StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*services.AccountingAuthorizationStart, error) {
@@ -297,6 +351,14 @@ func (r *queryResolver) AccountingReferenceObjects(ctx context.Context, integrat
 	})
 }
 
+func (r *Resolver) AccountingAppCredential() generated.AccountingAppCredentialResolver {
+	return &accountingAppCredentialResolver{r}
+}
+
+func (r *Resolver) AccountingAppSettings() generated.AccountingAppSettingsResolver {
+	return &accountingAppSettingsResolver{r}
+}
+
 func (r *Resolver) AccountingConnection() generated.AccountingConnectionResolver {
 	return &accountingConnectionResolver{r}
 }
@@ -310,6 +372,8 @@ func (r *Resolver) AccountingReferenceObject() generated.AccountingReferenceObje
 }
 
 type (
+	accountingAppCredentialResolver   struct{ *Resolver }
+	accountingAppSettingsResolver     struct{ *Resolver }
 	accountingConnectionResolver      struct{ *Resolver }
 	accountingMappingResolver         struct{ *Resolver }
 	accountingReferenceObjectResolver struct{ *Resolver }

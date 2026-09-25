@@ -21,7 +21,17 @@ import (
 
 // region    ************************** generated!.gotpl **************************
 
+type AccountingAppCredentialResolver interface {
+	HasWebhookVerifier(ctx context.Context, obj *accountingsync.AccountingAppCredential) (bool, error)
+}
+type AccountingAppSettingsResolver interface {
+	ActiveSource(ctx context.Context, obj *services.AccountingAppSettings) (*accountingsync.AppSource, error)
+
+	InstanceEnvironment(ctx context.Context, obj *services.AccountingAppSettings) (*accountingsync.AppEnvironment, error)
+}
 type AccountingConnectionResolver interface {
+	AppEnvironment(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.AppEnvironment, error)
+
 	LastErrorCategory(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.ErrorCategory, error)
 }
 type AccountingMappingResolver interface {
@@ -48,6 +58,314 @@ type AccountingReferenceObjectResolver interface {
 // endregion ***************************** args.gotpl *****************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AccountingAppCredential_id(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingAppCredential) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppCredential_id(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v pulid.ID) graphql.Marshaler {
+			return ec.marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppCredential_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppCredential", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppCredential_integrationType(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingAppCredential) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppCredential_integrationType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.IntegrationType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v integration.Type) graphql.Marshaler {
+			return ec.marshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋintegrationᚐType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppCredential_integrationType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppCredential", field, false, false, errors.New("field of type AccountingSystem does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppCredential_environment(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingAppCredential) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppCredential_environment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Environment, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v accountingsync.AppEnvironment) graphql.Marshaler {
+			return ec.marshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppCredential_environment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppCredential", field, false, false, errors.New("field of type AccountingAppEnvironment does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppCredential_clientId(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingAppCredential) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppCredential_clientId(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ClientID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppCredential_clientId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppCredential", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppCredential_hasWebhookVerifier(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingAppCredential) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppCredential_hasWebhookVerifier(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingAppCredential().HasWebhookVerifier(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppCredential_hasWebhookVerifier(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppCredential", field, true, true, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppCredential_version(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingAppCredential) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppCredential_version(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Version, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppCredential_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppCredential", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppCredential_updatedAt(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingAppCredential) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppCredential_updatedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.UpdatedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNTimestamp2int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppCredential_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppCredential", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppSettings_activeSource(ctx context.Context, field graphql.CollectedField, obj *services.AccountingAppSettings) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppSettings_activeSource(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingAppSettings().ActiveSource(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *accountingsync.AppSource) graphql.Marshaler {
+			return ec.marshalOAccountingAppSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppSource(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppSettings_activeSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppSettings", field, true, true, errors.New("field of type AccountingAppSource does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppSettings_instanceAppAvailable(ctx context.Context, field graphql.CollectedField, obj *services.AccountingAppSettings) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppSettings_instanceAppAvailable(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.InstanceAppAvailable, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppSettings_instanceAppAvailable(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppSettings", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppSettings_instanceEnvironment(ctx context.Context, field graphql.CollectedField, obj *services.AccountingAppSettings) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppSettings_instanceEnvironment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingAppSettings().InstanceEnvironment(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *accountingsync.AppEnvironment) graphql.Marshaler {
+			return ec.marshalOAccountingAppEnvironment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppSettings_instanceEnvironment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppSettings", field, true, true, errors.New("field of type AccountingAppEnvironment does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppSettings_redirectUrl(ctx context.Context, field graphql.CollectedField, obj *services.AccountingAppSettings) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppSettings_redirectUrl(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.RedirectURL, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppSettings_redirectUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppSettings", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppSettings_webhookPath(ctx context.Context, field graphql.CollectedField, obj *services.AccountingAppSettings) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppSettings_webhookPath(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.WebhookPath, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppSettings_webhookPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingAppSettings", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingAppSettings_tenantApp(ctx context.Context, field graphql.CollectedField, obj *services.AccountingAppSettings) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingAppSettings_tenantApp(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.TenantApp, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *accountingsync.AccountingAppCredential) graphql.Marshaler {
+			return ec.marshalOAccountingAppCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAccountingAppCredential(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingAppSettings_tenantApp(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountingAppSettings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingAppCredential(ctx, field)
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _AccountingAuthorizationStart_authorizeUrl(ctx context.Context, field graphql.CollectedField, obj *services.AccountingAuthorizationStart) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
@@ -162,6 +480,52 @@ func (ec *executionContext) _AccountingConnection_status(ctx context.Context, fi
 }
 func (ec *executionContext) fieldContext_AccountingConnection_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type AccountingConnectionStatus does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingConnection_appSource(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingConnection_appSource(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AppSource, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v accountingsync.AppSource) graphql.Marshaler {
+			return ec.marshalNAccountingAppSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppSource(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingConnection_appSource(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type AccountingAppSource does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingConnection_appEnvironment(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingConnection_appEnvironment(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AccountingConnection().AppEnvironment(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *accountingsync.AppEnvironment) graphql.Marshaler {
+			return ec.marshalOAccountingAppEnvironment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingConnection_appEnvironment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingConnection", field, true, true, errors.New("field of type AccountingAppEnvironment does not have child fields"))
 }
 
 func (ec *executionContext) _AccountingConnection_externalCompanyName(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
@@ -2283,6 +2647,38 @@ func (ec *executionContext) fieldContext_AccountingSyncStatus_available(_ contex
 	return graphql.NewScalarFieldContext("AccountingSyncStatus", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _AccountingSyncStatus_app(ctx context.Context, field graphql.CollectedField, obj *services.AccountingSyncStatus) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingSyncStatus_app(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.App, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.AccountingAppSettings) graphql.Marshaler {
+			return ec.marshalNAccountingAppSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingAppSettings(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingSyncStatus_app(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AccountingSyncStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingAppSettings(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AccountingSyncStatus_connection(ctx context.Context, field graphql.CollectedField, obj *services.AccountingSyncStatus) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2495,6 +2891,71 @@ func (ec *executionContext) unmarshalInputCreateAccountingReferenceRecordInput(c
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSaveAccountingAppInput(ctx context.Context, obj any) (gqlmodel.SaveAccountingAppInput, error) {
+	var it gqlmodel.SaveAccountingAppInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"integrationType", "environment", "clientId", "clientSecret", "webhookVerifierToken", "clearWebhookVerifierToken"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "integrationType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("integrationType"))
+			data, err := ec.unmarshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋintegrationᚐType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IntegrationType = data
+		case "environment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("environment"))
+			data, err := ec.unmarshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Environment = data
+		case "clientId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientID = data
+		case "clientSecret":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clientSecret"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClientSecret = data
+		case "webhookVerifierToken":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("webhookVerifierToken"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WebhookVerifierToken = data
+		case "clearWebhookVerifierToken":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearWebhookVerifierToken"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearWebhookVerifierToken = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSetAccountingMappingInput(ctx context.Context, obj any) (gqlmodel.SetAccountingMappingInput, error) {
 	var it gqlmodel.SetAccountingMappingInput
 	if obj == nil {
@@ -2546,6 +3007,236 @@ func (ec *executionContext) unmarshalInputSetAccountingMappingInput(ctx context.
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var accountingAppCredentialImplementors = []string{"AccountingAppCredential"}
+
+func (ec *executionContext) _AccountingAppCredential(ctx context.Context, sel ast.SelectionSet, obj *accountingsync.AccountingAppCredential) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountingAppCredentialImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountingAppCredential")
+		case "id":
+			out.Values[i] = ec._AccountingAppCredential_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "integrationType":
+			out.Values[i] = ec._AccountingAppCredential_integrationType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "environment":
+			out.Values[i] = ec._AccountingAppCredential_environment(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "clientId":
+			out.Values[i] = ec._AccountingAppCredential_clientId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "hasWebhookVerifier":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingAppCredential_hasWebhookVerifier(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "version":
+			out.Values[i] = ec._AccountingAppCredential_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._AccountingAppCredential_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
+var accountingAppSettingsImplementors = []string{"AccountingAppSettings"}
+
+func (ec *executionContext) _AccountingAppSettings(ctx context.Context, sel ast.SelectionSet, obj *services.AccountingAppSettings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, accountingAppSettingsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AccountingAppSettings")
+		case "activeSource":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingAppSettings_activeSource(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "instanceAppAvailable":
+			out.Values[i] = ec._AccountingAppSettings_instanceAppAvailable(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "instanceEnvironment":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingAppSettings_instanceEnvironment(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "redirectUrl":
+			out.Values[i] = ec._AccountingAppSettings_redirectUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "webhookPath":
+			out.Values[i] = ec._AccountingAppSettings_webhookPath(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "tenantApp":
+			out.Values[i] = ec._AccountingAppSettings_tenantApp(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
 
 var accountingAuthorizationStartImplementors = []string{"AccountingAuthorizationStart"}
 
@@ -2617,6 +3308,49 @@ func (ec *executionContext) _AccountingConnection(ctx context.Context, sel ast.S
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "appSource":
+			out.Values[i] = ec._AccountingConnection_appSource(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "appEnvironment":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AccountingConnection_appEnvironment(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "externalCompanyName":
 			out.Values[i] = ec._AccountingConnection_externalCompanyName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3689,6 +4423,11 @@ func (ec *executionContext) _AccountingSyncStatus(ctx context.Context, sel ast.S
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "app":
+			out.Values[i] = ec._AccountingSyncStatus_app(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "connection":
 			out.Values[i] = ec._AccountingSyncStatus_connection(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
@@ -3718,6 +4457,50 @@ func (ec *executionContext) _AccountingSyncStatus(ctx context.Context, sel ast.S
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx context.Context, v any) (accountingsync.AppEnvironment, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.AppEnvironment(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccountingAppEnvironment2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx context.Context, sel ast.SelectionSet, v accountingsync.AppEnvironment) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNAccountingAppSettings2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingAppSettings(ctx context.Context, sel ast.SelectionSet, v *services.AccountingAppSettings) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AccountingAppSettings(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAccountingAppSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppSource(ctx context.Context, v any) (accountingsync.AppSource, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.AppSource(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAccountingAppSource2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppSource(ctx context.Context, sel ast.SelectionSet, v accountingsync.AppSource) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
 
 func (ec *executionContext) marshalNAccountingAuthorizationStart2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingAuthorizationStart(ctx context.Context, sel ast.SelectionSet, v *services.AccountingAuthorizationStart) graphql.Marshaler {
 	if v == nil {
@@ -4050,9 +4833,59 @@ func (ec *executionContext) unmarshalNCreateAccountingReferenceRecordInput2githu
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNSaveAccountingAppInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSaveAccountingAppInput(ctx context.Context, v any) (gqlmodel.SaveAccountingAppInput, error) {
+	res, err := ec.unmarshalInputSaveAccountingAppInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNSetAccountingMappingInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSetAccountingMappingInput(ctx context.Context, v any) (gqlmodel.SetAccountingMappingInput, error) {
 	res, err := ec.unmarshalInputSetAccountingMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAccountingAppCredential2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAccountingAppCredential(ctx context.Context, sel ast.SelectionSet, v *accountingsync.AccountingAppCredential) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AccountingAppCredential(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOAccountingAppEnvironment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx context.Context, v any) (*accountingsync.AppEnvironment, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.AppEnvironment(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAccountingAppEnvironment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppEnvironment(ctx context.Context, sel ast.SelectionSet, v *accountingsync.AppEnvironment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func (ec *executionContext) unmarshalOAccountingAppSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppSource(ctx context.Context, v any) (*accountingsync.AppSource, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.AppSource(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAccountingAppSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAppSource(ctx context.Context, sel ast.SelectionSet, v *accountingsync.AppSource) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(string(*v))
+	return res
 }
 
 func (ec *executionContext) marshalOAccountingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAccountingConnection(ctx context.Context, sel ast.SelectionSet, v *accountingsync.AccountingConnection) graphql.Marshaler {

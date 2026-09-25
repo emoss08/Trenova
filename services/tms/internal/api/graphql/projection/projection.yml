@@ -74,6 +74,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  AccountingAppCredential:
+    - hasWebhookVerifier
   AccountingMapping:
     - required
     - prechecked

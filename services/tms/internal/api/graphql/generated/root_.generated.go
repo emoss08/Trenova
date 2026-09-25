@@ -40,6 +40,8 @@ type ResolverRoot interface {
 	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
 	AccessorialCharge() AccessorialChargeResolver
+	AccountingAppCredential() AccountingAppCredentialResolver
+	AccountingAppSettings() AccountingAppSettingsResolver
 	AccountingConnection() AccountingConnectionResolver
 	AccountingMapping() AccountingMappingResolver
 	AccountingReferenceObject() AccountingReferenceObjectResolver
@@ -749,12 +751,33 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	AccountingAppCredential struct {
+		ClientID           func(childComplexity int) int
+		Environment        func(childComplexity int) int
+		HasWebhookVerifier func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		IntegrationType    func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+	}
+
+	AccountingAppSettings struct {
+		ActiveSource         func(childComplexity int) int
+		InstanceAppAvailable func(childComplexity int) int
+		InstanceEnvironment  func(childComplexity int) int
+		RedirectURL          func(childComplexity int) int
+		TenantApp            func(childComplexity int) int
+		WebhookPath          func(childComplexity int) int
+	}
+
 	AccountingAuthorizationStart struct {
 		AuthorizeURL func(childComplexity int) int
 		ExpiresAt    func(childComplexity int) int
 	}
 
 	AccountingConnection struct {
+		AppEnvironment                func(childComplexity int) int
+		AppSource                     func(childComplexity int) int
 		ConnectedAt                   func(childComplexity int) int
 		ConsecutiveFailures           func(childComplexity int) int
 		DisconnectedAt                func(childComplexity int) int
@@ -871,6 +894,7 @@ type ComplexityRoot struct {
 	}
 
 	AccountingSyncStatus struct {
+		App             func(childComplexity int) int
 		Available       func(childComplexity int) int
 		Connection      func(childComplexity int) int
 		IntegrationType func(childComplexity int) int
@@ -7329,6 +7353,7 @@ type ComplexityRoot struct {
 		RejectInvoiceAdjustment               func(childComplexity int, input gqlmodel.RejectInvoiceAdjustmentInput) int
 		RejectWorkerPTO                       func(childComplexity int, id string, reason string) int
 		ReleaseDriverPayEvent                 func(childComplexity int, payEventID string) int
+		RemoveAccountingApp                   func(childComplexity int, integrationType integration.Type) int
 		RemoveCarrierSettlementAdjustment     func(childComplexity int, input gqlmodel.RemoveCarrierSettlementAdjustmentInput) int
 		RemoveDriverSettlementAdjustment      func(childComplexity int, input gqlmodel.RemoveSettlementAdjustmentInput) int
 		RemoveOrderCharge                     func(childComplexity int, input gqlmodel.RemoveOrderChargeInput) int
@@ -7373,6 +7398,7 @@ type ComplexityRoot struct {
 		RunDOTRandomDraw                      func(childComplexity int, input gqlmodel.RunDOTRandomDrawInput) int
 		RunPTOAccrual                         func(childComplexity int, input gqlmodel.RunPTOAccrualInput) int
 		RunReport                             func(childComplexity int, input gqlmodel.RunReportInput) int
+		SaveAccountingApp                     func(childComplexity int, input gqlmodel.SaveAccountingAppInput) int
 		SaveOshaSummary                       func(childComplexity int, input gqlmodel.SaveOSHASummaryInput) int
 		SaveTelematicsFormMapping             func(childComplexity int, input gqlmodel.SaveTelematicsFormMappingInput) int
 		SendDetentionNotice                   func(childComplexity int, occurrenceID string) int
@@ -15019,6 +15045,86 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AccountTypeEdge.Node(childComplexity), true
 
+	case "AccountingAppCredential.clientId":
+		if e.ComplexityRoot.AccountingAppCredential.ClientID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.ClientID(childComplexity), true
+	case "AccountingAppCredential.environment":
+		if e.ComplexityRoot.AccountingAppCredential.Environment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.Environment(childComplexity), true
+	case "AccountingAppCredential.hasWebhookVerifier":
+		if e.ComplexityRoot.AccountingAppCredential.HasWebhookVerifier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.HasWebhookVerifier(childComplexity), true
+	case "AccountingAppCredential.id":
+		if e.ComplexityRoot.AccountingAppCredential.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.ID(childComplexity), true
+	case "AccountingAppCredential.integrationType":
+		if e.ComplexityRoot.AccountingAppCredential.IntegrationType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.IntegrationType(childComplexity), true
+	case "AccountingAppCredential.updatedAt":
+		if e.ComplexityRoot.AccountingAppCredential.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.UpdatedAt(childComplexity), true
+	case "AccountingAppCredential.version":
+		if e.ComplexityRoot.AccountingAppCredential.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.Version(childComplexity), true
+
+	case "AccountingAppSettings.activeSource":
+		if e.ComplexityRoot.AccountingAppSettings.ActiveSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.ActiveSource(childComplexity), true
+	case "AccountingAppSettings.instanceAppAvailable":
+		if e.ComplexityRoot.AccountingAppSettings.InstanceAppAvailable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.InstanceAppAvailable(childComplexity), true
+	case "AccountingAppSettings.instanceEnvironment":
+		if e.ComplexityRoot.AccountingAppSettings.InstanceEnvironment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.InstanceEnvironment(childComplexity), true
+	case "AccountingAppSettings.redirectUrl":
+		if e.ComplexityRoot.AccountingAppSettings.RedirectURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.RedirectURL(childComplexity), true
+	case "AccountingAppSettings.tenantApp":
+		if e.ComplexityRoot.AccountingAppSettings.TenantApp == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.TenantApp(childComplexity), true
+	case "AccountingAppSettings.webhookPath":
+		if e.ComplexityRoot.AccountingAppSettings.WebhookPath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.WebhookPath(childComplexity), true
+
 	case "AccountingAuthorizationStart.authorizeUrl":
 		if e.ComplexityRoot.AccountingAuthorizationStart.AuthorizeURL == nil {
 			break
@@ -15032,6 +15138,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AccountingAuthorizationStart.ExpiresAt(childComplexity), true
 
+	case "AccountingConnection.appEnvironment":
+		if e.ComplexityRoot.AccountingConnection.AppEnvironment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.AppEnvironment(childComplexity), true
+	case "AccountingConnection.appSource":
+		if e.ComplexityRoot.AccountingConnection.AppSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.AppSource(childComplexity), true
 	case "AccountingConnection.connectedAt":
 		if e.ComplexityRoot.AccountingConnection.ConnectedAt == nil {
 			break
@@ -15575,6 +15693,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AccountingReferenceObject.Usable(childComplexity), true
 
+	case "AccountingSyncStatus.app":
+		if e.ComplexityRoot.AccountingSyncStatus.App == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncStatus.App(childComplexity), true
 	case "AccountingSyncStatus.available":
 		if e.ComplexityRoot.AccountingSyncStatus.Available == nil {
 			break
@@ -47313,6 +47437,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ReleaseDriverPayEvent(childComplexity, args["payEventId"].(string)), true
+	case "Mutation.removeAccountingApp":
+		if e.ComplexityRoot.Mutation.RemoveAccountingApp == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeAccountingApp_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RemoveAccountingApp(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Mutation.removeCarrierSettlementAdjustment":
 		if e.ComplexityRoot.Mutation.RemoveCarrierSettlementAdjustment == nil {
 			break
@@ -47787,6 +47922,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RunReport(childComplexity, args["input"].(gqlmodel.RunReportInput)), true
+	case "Mutation.saveAccountingApp":
+		if e.ComplexityRoot.Mutation.SaveAccountingApp == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_saveAccountingApp_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SaveAccountingApp(childComplexity, args["input"].(gqlmodel.SaveAccountingAppInput)), true
 	case "Mutation.saveOshaSummary":
 		if e.ComplexityRoot.Mutation.SaveOshaSummary == nil {
 			break
@@ -76357,6 +76503,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRunPTOAccrualInput,
 		ec.unmarshalInputRunReportInput,
 		ec.unmarshalInputSafetyEventStatusInput,
+		ec.unmarshalInputSaveAccountingAppInput,
 		ec.unmarshalInputSaveHomeLayoutPresetInput,
 		ec.unmarshalInputSaveOSHASummaryInput,
 		ec.unmarshalInputSaveReportDashboardInput,
@@ -76711,6 +76858,22 @@ enum AccountingMappingSource {
   Agent
 }
 
+"Whose app a connection to the accounting system is authorized through."
+enum AccountingAppSource {
+  "The app this Trenova server is configured with."
+  Instance
+  "An app the organization registered with the accounting system itself."
+  Tenant
+}
+
+"Which of the accounting system's environments an app's keys are for."
+enum AccountingAppEnvironment {
+  "Development keys, which work only with test companies."
+  Sandbox
+  "Production keys, which work with real companies."
+  Production
+}
+
 "Why the last call to the accounting system failed."
 enum AccountingErrorCategory {
   Transient
@@ -76731,6 +76894,10 @@ type AccountingConnection {
   id: ID!
   integrationType: AccountingSystem!
   status: AccountingConnectionStatus!
+  "Whose app the connection was authorized through. Its tokens only work with that app."
+  appSource: AccountingAppSource!
+  "The environment of the app the connection was authorized through. Absent for connections made before this was recorded."
+  appEnvironment: AccountingAppEnvironment
   "The company's name in the accounting system."
   externalCompanyName: String!
   externalLegalName: String!
@@ -76764,14 +76931,60 @@ type AccountingConnection {
   updatedAt: Timestamp!
 }
 
+"""
+App keys an organization saved for connecting through its own app.
+
+The client secret and the webhook verifier token are stored encrypted and never
+returned.
+"""
+type AccountingAppCredential {
+  id: ID!
+  integrationType: AccountingSystem!
+  environment: AccountingAppEnvironment!
+  clientId: String!
+  "Whether a webhook verifier token is saved, so webhooks from this app can be checked."
+  hasWebhookVerifier: Boolean!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+"Which app the organization connects through, and what registering its own app needs."
+type AccountingAppSettings {
+  "The app the next connection will use. The organization's own app wins over the server's. Absent when neither exists."
+  activeSource: AccountingAppSource
+  "Whether this Trenova server is configured with an app of its own."
+  instanceAppAvailable: Boolean!
+  "The environment of the server's app. Absent when the server has none."
+  instanceEnvironment: AccountingAppEnvironment
+  "The address the accounting system sends people back to. Register it on the app exactly as written. Empty when the server has no web address configured."
+  redirectUrl: String!
+  "The path on the API that receives the accounting system's webhooks."
+  webhookPath: String!
+  "The organization's own app, when it saved one."
+  tenantApp: AccountingAppCredential
+}
+
 "What an organization's link to one accounting system looks like."
 type AccountingSyncStatus {
   integrationType: AccountingSystem!
   providerName: String!
-  "Whether this Trenova instance has the accounting system's app credentials configured."
+  "Whether the organization can connect now: there is an app to connect through and a web address to return to."
   available: Boolean!
+  app: AccountingAppSettings!
   "Absent until the organization first connects."
   connection: AccountingConnection
+}
+
+"The organization's own app keys. Leave the secret or verifier token out to keep the saved one."
+input SaveAccountingAppInput {
+  integrationType: AccountingSystem!
+  environment: AccountingAppEnvironment!
+  clientId: String!
+  "Required the first time, and whenever the client ID or environment changes."
+  clientSecret: String
+  webhookVerifierToken: String
+  "Removes the saved webhook verifier token."
+  clearWebhookVerifierToken: Boolean
 }
 
 "A record Trenova has read from the accounting system."
@@ -76954,6 +77167,10 @@ extend type Query {
 }
 
 extend type Mutation {
+  "Saves the organization's own app keys after checking them with the accounting system. While a company is connected, only its app's secret and verifier token can change."
+  saveAccountingApp(input: SaveAccountingAppInput!): AccountingSyncStatus!
+  "Removes the organization's own app keys, so connections use the server's app again. Refused while a company is connected through them."
+  removeAccountingApp(integrationType: AccountingSystem!): AccountingSyncStatus!
   "Starts connecting an accounting system. Returns the provider's page to send the person to."
   startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
   "Finishes connecting with what the provider returned. Only the person who started it can finish it."
@@ -76973,7 +77190,7 @@ extend type Mutation {
   createAccountingReferenceRecord(input: CreateAccountingReferenceRecordInput!): AccountingMapping!
   "Reads the accounting system's records again and refreshes the proposals."
   refreshAccountingReferenceData(integrationType: AccountingSystem!): AccountingConnection!
-  "Finishes setup once every required mapping is confirmed."
+  "Moves setup to the start date step once every required mapping is confirmed."
   completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
 }
 `, BuiltIn: false},
@@ -100903,6 +101120,44 @@ func (ec *executionContext) childFields_AccountTypeEdge(ctx context.Context, fie
 	return nil, fmt.Errorf("no field named %q was found under type AccountTypeEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_AccountingAppCredential(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AccountingAppCredential_id(ctx, field)
+	case "integrationType":
+		return ec.fieldContext_AccountingAppCredential_integrationType(ctx, field)
+	case "environment":
+		return ec.fieldContext_AccountingAppCredential_environment(ctx, field)
+	case "clientId":
+		return ec.fieldContext_AccountingAppCredential_clientId(ctx, field)
+	case "hasWebhookVerifier":
+		return ec.fieldContext_AccountingAppCredential_hasWebhookVerifier(ctx, field)
+	case "version":
+		return ec.fieldContext_AccountingAppCredential_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AccountingAppCredential_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingAppCredential", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingAppSettings(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "activeSource":
+		return ec.fieldContext_AccountingAppSettings_activeSource(ctx, field)
+	case "instanceAppAvailable":
+		return ec.fieldContext_AccountingAppSettings_instanceAppAvailable(ctx, field)
+	case "instanceEnvironment":
+		return ec.fieldContext_AccountingAppSettings_instanceEnvironment(ctx, field)
+	case "redirectUrl":
+		return ec.fieldContext_AccountingAppSettings_redirectUrl(ctx, field)
+	case "webhookPath":
+		return ec.fieldContext_AccountingAppSettings_webhookPath(ctx, field)
+	case "tenantApp":
+		return ec.fieldContext_AccountingAppSettings_tenantApp(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingAppSettings", field.Name)
+}
+
 func (ec *executionContext) childFields_AccountingAuthorizationStart(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "authorizeUrl":
@@ -100921,6 +101176,10 @@ func (ec *executionContext) childFields_AccountingConnection(ctx context.Context
 		return ec.fieldContext_AccountingConnection_integrationType(ctx, field)
 	case "status":
 		return ec.fieldContext_AccountingConnection_status(ctx, field)
+	case "appSource":
+		return ec.fieldContext_AccountingConnection_appSource(ctx, field)
+	case "appEnvironment":
+		return ec.fieldContext_AccountingConnection_appEnvironment(ctx, field)
 	case "externalCompanyName":
 		return ec.fieldContext_AccountingConnection_externalCompanyName(ctx, field)
 	case "externalLegalName":
@@ -101153,6 +101412,8 @@ func (ec *executionContext) childFields_AccountingSyncStatus(ctx context.Context
 		return ec.fieldContext_AccountingSyncStatus_providerName(ctx, field)
 	case "available":
 		return ec.fieldContext_AccountingSyncStatus_available(ctx, field)
+	case "app":
+		return ec.fieldContext_AccountingSyncStatus_app(ctx, field)
 	case "connection":
 		return ec.fieldContext_AccountingSyncStatus_connection(ctx, field)
 	}

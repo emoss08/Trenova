@@ -12,6 +12,8 @@ var AccessorialChargeSpec TypeSpec
 
 var AccountTypeSpec TypeSpec
 
+var AccountingAppCredentialSpec TypeSpec
+
 var AccountingConnectionSpec TypeSpec
 
 var AccountingMappingSpec TypeSpec
@@ -932,6 +934,45 @@ func init() {
 		},
 	}
 
+	AccountingAppCredentialSpec = TypeSpec{
+		TypeName: "AccountingAppCredential",
+		FieldMap: buncolgen.AccountingAppCredentialFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "integrationType",
+				FieldMapKey: "integrationType",
+			},
+			{
+				Name:        "environment",
+				FieldMapKey: "environment",
+			},
+			{
+				Name:        "clientId",
+				FieldMapKey: "clientId",
+			},
+			{
+				Name:    "hasWebhookVerifier",
+				Special: "hasWebhookVerifier",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	AccountingConnectionSpec = TypeSpec{
 		TypeName: "AccountingConnection",
 		FieldMap: buncolgen.AccountingConnectionFieldMap,
@@ -951,6 +992,14 @@ func init() {
 			{
 				Name:        "status",
 				FieldMapKey: "status",
+			},
+			{
+				Name:        "appSource",
+				FieldMapKey: "appSource",
+			},
+			{
+				Name:        "appEnvironment",
+				FieldMapKey: "appEnvironment",
 			},
 			{
 				Name:        "externalCompanyName",

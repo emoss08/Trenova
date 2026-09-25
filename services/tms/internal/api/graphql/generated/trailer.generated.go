@@ -111,6 +111,8 @@ type MutationResolver interface {
 	PatchTrailer(ctx context.Context, id string, input gqlmodel.TrailerPatchInput) (*trailer.Trailer, error)
 	BulkUpdateTrailerStatus(ctx context.Context, input gqlmodel.BulkUpdateTrailerStatusInput) ([]*trailer.Trailer, error)
 	LocateTrailer(ctx context.Context, input gqlmodel.LocateTrailerInput) (*equipmentcontinuity.EquipmentContinuity, error)
+	SaveAccountingApp(ctx context.Context, input gqlmodel.SaveAccountingAppInput) (*services.AccountingSyncStatus, error)
+	RemoveAccountingApp(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncStatus, error)
 	StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*services.AccountingAuthorizationStart, error)
 	CompleteAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsync.AccountingConnection, error)
 	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
@@ -5496,6 +5498,20 @@ func (ec *executionContext) field_Mutation_releaseDriverPayEvent_args(ctx contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_removeAccountingApp_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "integrationType",
+		func(ctx context.Context, v any) (integration.Type, error) {
+			return ec.unmarshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋintegrationᚐType(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["integrationType"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_removeCarrierSettlementAdjustment_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -6196,6 +6212,20 @@ func (ec *executionContext) field_Mutation_runReport_args(ctx context.Context, r
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.RunReportInput, error) {
 			return ec.unmarshalNRunReportInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRunReportInput(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_saveAccountingApp_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SaveAccountingAppInput, error) {
+			return ec.unmarshalNSaveAccountingAppInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSaveAccountingAppInput(ctx, v)
 		})
 	if err != nil {
 		return nil, err
@@ -15754,6 +15784,94 @@ func (ec *executionContext) fieldContext_Mutation_locateTrailer(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_locateTrailer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_saveAccountingApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_saveAccountingApp(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().SaveAccountingApp(ctx, fc.Args["input"].(gqlmodel.SaveAccountingAppInput))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.AccountingSyncStatus) graphql.Marshaler {
+			return ec.marshalNAccountingSyncStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingSyncStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_saveAccountingApp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingSyncStatus(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_saveAccountingApp_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removeAccountingApp(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_removeAccountingApp(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RemoveAccountingApp(ctx, fc.Args["integrationType"].(integration.Type))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.AccountingSyncStatus) graphql.Marshaler {
+			return ec.marshalNAccountingSyncStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐAccountingSyncStatus(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_removeAccountingApp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingSyncStatus(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeAccountingApp_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -58352,6 +58470,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "locateTrailer":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_locateTrailer(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "saveAccountingApp":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_saveAccountingApp(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "removeAccountingApp":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removeAccountingApp(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

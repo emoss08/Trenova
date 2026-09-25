@@ -3792,9 +3792,33 @@ models:
     fields:
       lastErrorCategory:
         resolver: true
+      appEnvironment:
+        resolver: true
   AccountingSyncStatus:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AccountingSyncStatus
+  AccountingAppSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AppSource
+  AccountingAppEnvironment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AppEnvironment
+  AccountingAppCredential:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingAppCredential
+    fields:
+      hasWebhookVerifier:
+        resolver: true
+  AccountingAppSettings:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingAppSettings
+    fields:
+      activeSource:
+        resolver: true
+      instanceEnvironment:
+        resolver: true
+      redirectUrl:
+        fieldName: RedirectURL
   AccountingSetupStep:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.SetupStep

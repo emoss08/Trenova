@@ -74,6 +74,22 @@ enum AccountingMappingSource {
   Agent
 }
 
+"Whose app a connection to the accounting system is authorized through."
+enum AccountingAppSource {
+  "The app this Trenova server is configured with."
+  Instance
+  "An app the organization registered with the accounting system itself."
+  Tenant
+}
+
+"Which of the accounting system's environments an app's keys are for."
+enum AccountingAppEnvironment {
+  "Development keys, which work only with test companies."
+  Sandbox
+  "Production keys, which work with real companies."
+  Production
+}
+
 "Why the last call to the accounting system failed."
 enum AccountingErrorCategory {
   Transient
@@ -94,6 +110,10 @@ type AccountingConnection {
   id: ID!
   integrationType: AccountingSystem!
   status: AccountingConnectionStatus!
+  "Whose app the connection was authorized through. Its tokens only work with that app."
+  appSource: AccountingAppSource!
+  "The environment of the app the connection was authorized through. Absent for connections made before this was recorded."
+  appEnvironment: AccountingAppEnvironment
   "The company's name in the accounting system."
   externalCompanyName: String!
   externalLegalName: String!
@@ -127,14 +147,60 @@ type AccountingConnection {
   updatedAt: Timestamp!
 }
 
+"""
+App keys an organization saved for connecting through its own app.
+
+The client secret and the webhook verifier token are stored encrypted and never
+returned.
+"""
+type AccountingAppCredential {
+  id: ID!
+  integrationType: AccountingSystem!
+  environment: AccountingAppEnvironment!
+  clientId: String!
+  "Whether a webhook verifier token is saved, so webhooks from this app can be checked."
+  hasWebhookVerifier: Boolean!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+"Which app the organization connects through, and what registering its own app needs."
+type AccountingAppSettings {
+  "The app the next connection will use. The organization's own app wins over the server's. Absent when neither exists."
+  activeSource: AccountingAppSource
+  "Whether this Trenova server is configured with an app of its own."
+  instanceAppAvailable: Boolean!
+  "The environment of the server's app. Absent when the server has none."
+  instanceEnvironment: AccountingAppEnvironment
+  "The address the accounting system sends people back to. Register it on the app exactly as written. Empty when the server has no web address configured."
+  redirectUrl: String!
+  "The path on the API that receives the accounting system's webhooks."
+  webhookPath: String!
+  "The organization's own app, when it saved one."
+  tenantApp: AccountingAppCredential
+}
+
 "What an organization's link to one accounting system looks like."
 type AccountingSyncStatus {
   integrationType: AccountingSystem!
   providerName: String!
-  "Whether this Trenova instance has the accounting system's app credentials configured."
+  "Whether the organization can connect now: there is an app to connect through and a web address to return to."
   available: Boolean!
+  app: AccountingAppSettings!
   "Absent until the organization first connects."
   connection: AccountingConnection
+}
+
+"The organization's own app keys. Leave the secret or verifier token out to keep the saved one."
+input SaveAccountingAppInput {
+  integrationType: AccountingSystem!
+  environment: AccountingAppEnvironment!
+  clientId: String!
+  "Required the first time, and whenever the client ID or environment changes."
+  clientSecret: String
+  webhookVerifierToken: String
+  "Removes the saved webhook verifier token."
+  clearWebhookVerifierToken: Boolean
 }
 
 "A record Trenova has read from the accounting system."
@@ -317,6 +383,10 @@ extend type Query {
 }
 
 extend type Mutation {
+  "Saves the organization's own app keys after checking them with the accounting system. While a company is connected, only its app's secret and verifier token can change."
+  saveAccountingApp(input: SaveAccountingAppInput!): AccountingSyncStatus!
+  "Removes the organization's own app keys, so connections use the server's app again. Refused while a company is connected through them."
+  removeAccountingApp(integrationType: AccountingSystem!): AccountingSyncStatus!
   "Starts connecting an accounting system. Returns the provider's page to send the person to."
   startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
   "Finishes connecting with what the provider returned. Only the person who started it can finish it."
