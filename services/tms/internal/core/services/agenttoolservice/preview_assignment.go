@@ -63,7 +63,7 @@ type assignedMoveView struct {
 	CoverageType string `json:"coverageType"`
 }
 
-type assignedShipmentView struct {
+type shipmentStatusView struct {
 	Status string `json:"status"`
 }
 
@@ -171,8 +171,8 @@ func (t *assignMoveTool) assignmentChanges(
 			ID:       plan.ShipmentBefore.ID,
 			Label:    shipmentLabel,
 			Version:  previewVersion(plan.ShipmentBefore.Version),
-		}, &assignedShipmentView{Status: string(plan.ShipmentBefore.Status)},
-			&assignedShipmentView{Status: string(plan.ShipmentAfter.Status)},
+		}, &shipmentStatusView{Status: string(plan.ShipmentBefore.Status)},
+			&shipmentStatusView{Status: string(plan.ShipmentAfter.Status)},
 		)
 		if sErr != nil {
 			return nil, sErr

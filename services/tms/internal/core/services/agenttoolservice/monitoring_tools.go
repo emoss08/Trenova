@@ -44,6 +44,10 @@ type serviceFailureDecider interface {
 		req *serviceports.ServiceFailureLifecycleRequest,
 		actor *serviceports.RequestActor,
 	) (*servicefailure.ServiceFailure, error)
+	PreviewEvaluateShipment(
+		ctx context.Context,
+		req *serviceports.EvaluateShipmentServiceFailuresRequest,
+	) (*serviceports.ServiceFailureDetectionPlan, error)
 }
 
 type evaluateServiceFailuresTool struct {
@@ -117,18 +121,29 @@ func (t *evaluateServiceFailuresTool) Execute(
 		return err
 	}
 
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.failures.EvaluateShipment(ctx, &serviceports.EvaluateShipmentServiceFailuresRequest{
+	_, err = t.failures.EvaluateShipment(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *evaluateServiceFailuresTool) request(
+	params serviceports.ToolExecuteParams,
+) (*serviceports.EvaluateShipmentServiceFailuresRequest, error) {
+	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	if err != nil {
+		return nil, err
+	}
+
+	return &serviceports.EvaluateShipmentServiceFailuresRequest{
 		TenantInfo: tenantFrom(params),
 		ShipmentID: shipmentID,
 		Force:      optionalBool(params.Params, "force"),
-	}, params.Actor)
-
-	return err
+	}, nil
 }
 
 type resolveServiceFailureTool struct {

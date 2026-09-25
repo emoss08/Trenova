@@ -67,6 +67,13 @@ func (f *fakeFailureDecider) Resolve(
 	return f.existing, nil
 }
 
+func (f *fakeFailureDecider) PreviewEvaluateShipment(
+	context.Context,
+	*serviceports.EvaluateShipmentServiceFailuresRequest,
+) (*serviceports.ServiceFailureDetectionPlan, error) {
+	return &serviceports.ServiceFailureDetectionPlan{}, nil
+}
+
 func openFailure() *servicefailure.ServiceFailure {
 	return &servicefailure.ServiceFailure{
 		ID:         pulid.MustNew("sf_"),

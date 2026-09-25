@@ -109,6 +109,18 @@ type ServiceFailureEvaluatedStopSummary struct {
 
 type ServiceFailureSkippedStop = ServiceFailureEvaluatedStopSummary
 
+type DetectedServiceFailure struct {
+	Failure  *servicefailure.ServiceFailure
+	Existing *servicefailure.ServiceFailure
+}
+
+type ServiceFailureDetectionPlan struct {
+	Shipment     *shipment.Shipment
+	Detected     []DetectedServiceFailure
+	SkippedStops []ServiceFailureSkippedStop
+	MarksDelayed bool
+}
+
 type ServiceFailureEDIPayloadResult struct {
 	Payload     edi.DocumentPayload `json:"payload"`
 	Diagnostics []edix12.Diagnostic `json:"diagnostics"`
@@ -350,6 +362,10 @@ type ServiceFailureService interface {
 		req *BulkEvaluateServiceFailuresRequest,
 		actor *RequestActor,
 	) (*ServiceFailureEvaluationResult, error)
+	PreviewEvaluateShipment(
+		ctx context.Context,
+		req *EvaluateShipmentServiceFailuresRequest,
+	) (*ServiceFailureDetectionPlan, error)
 	Update(
 		ctx context.Context,
 		req *UpdateServiceFailureRequest,
