@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -84,12 +85,21 @@ func (s *Service) runChat(
 		}
 
 		provider := queue[idx]
+		failover := provider.ID != queue[0].ID
+		attemptCtx, span := s.startAttempt(ctx, attemptSpec{
+			operation:   aitrace.OperationChat,
+			provider:    provider,
+			attempt:     idx + 1,
+			failover:    failover,
+			maxTokens:   req.MaxTokens,
+			attribution: req.Attribution,
+		})
 		started := time.Now()
-		result, streamed, attemptErr := s.attemptChat(ctx, provider, req, sink)
+		result, streamed, attemptErr := s.attemptChat(attemptCtx, provider, req, sink)
 		latency := time.Since(started)
 		attemptErr = stopped(ctx, attemptErr)
 		s.observe(ctx, provider, attemptErr)
-		s.record(ctx, usageAttempt{
+		s.settleAttempt(attemptCtx, span, usageAttempt{
 			provider:    provider,
 			task:        aiprovider.TaskAssistantChat,
 			surface:     surfaceFor(aiusage.SurfaceChat, req.Attribution),
@@ -99,6 +109,9 @@ func (s *Service) runChat(
 			streamed:    sink != nil,
 			outcome:     chatOutcome(provider, result, streamed, attemptErr),
 			err:         attemptErr,
+			operation:   aitrace.OperationChat,
+			attempt:     idx + 1,
+			failover:    failover,
 		})
 		if attemptErr == nil {
 			result.LatencyMs = latency.Milliseconds()
@@ -126,6 +139,7 @@ func (s *Service) runChat(
 		if emitted := streamed.text; emitted != "" {
 			if midReplyRetries < maxMidReplyRetries {
 				midReplyRetries++
+				aitrace.TallyFrom(ctx).Restarted()
 				if idx == len(queue)-1 && modeladapter.IsRetryable(attemptErr) {
 					queue = append(queue, provider)
 				}
@@ -181,7 +195,10 @@ type chatStream struct {
 	// text is the reply that reached the sink.
 	text string
 	// reasoningRunes is how much thinking the provider streamed.
-	reasoningRunes int
+	reasoningRunes   int
+	cacheReadTokens  int
+	cacheWriteTokens int
+	finishReason     string
 }
 
 // attemptChat runs the turn on one provider. The returned stream says what
@@ -276,6 +293,10 @@ func (s *Service) attemptChat(
 		return nil, streamed, errors.New("provider returned neither content nor a tool call")
 	}
 
+	streamed.cacheReadTokens = resp.CacheReadTokens
+	streamed.cacheWriteTokens = resp.CacheWriteTokens
+	streamed.finishReason = finishReason(resp)
+
 	return &serviceports.ChatCompletionResult{
 		Text:            resp.Text,
 		ToolCalls:       resp.ToolCalls,
@@ -351,8 +372,11 @@ func (s *Service) executeStreamWithRetry(
 			zap.Duration("wait", wait),
 			zap.Error(err),
 		)
-		if busy != nil && unavailability(err) {
-			busy(attempt+1, wait, err)
+		if unavailability(err) {
+			recordBusyWait(ctx, wait)
+			if busy != nil {
+				busy(attempt+1, wait, err)
+			}
 		}
 		if waitErr := s.wait(ctx, wait); waitErr != nil {
 			return nil, emittedText(), waitErr
@@ -401,8 +425,11 @@ func (s *Service) retrying(ctx context.Context, attemptOnce func() error, busy b
 		if !again {
 			return err
 		}
-		if busy != nil && unavailability(err) {
-			busy(attempt+1, wait, err)
+		if unavailability(err) {
+			recordBusyWait(ctx, wait)
+			if busy != nil {
+				busy(attempt+1, wait, err)
+			}
 		}
 		if waitErr := s.wait(ctx, wait); waitErr != nil {
 			return waitErr
@@ -472,9 +499,13 @@ func chatOutcome(
 	}
 
 	return &runOutcome{
-		Model:           result.ModelIdentifier,
-		InputTokens:     result.InputTokens,
-		OutputTokens:    result.OutputTokens,
-		ReasoningTokens: result.ReasoningTokens,
+		Model:            result.ModelIdentifier,
+		InputTokens:      result.InputTokens,
+		OutputTokens:     result.OutputTokens,
+		ReasoningTokens:  result.ReasoningTokens,
+		CacheReadTokens:  streamed.cacheReadTokens,
+		CacheWriteTokens: streamed.cacheWriteTokens,
+		FinishReason:     streamed.finishReason,
+		Truncated:        result.Truncated,
 	}
 }

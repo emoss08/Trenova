@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/llmtokens"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -26,6 +28,9 @@ type usageAttempt struct {
 	tenant      pagination.TenantInfo
 	latency     time.Duration
 	streamed    bool
+	operation   string
+	attempt     int
+	failover    bool
 	// outcome is nil when the attempt failed before the provider wrote
 	// anything; tokens then stay zero. An attempt that failed or was stopped
 	// partway carries what was counted from its stream.
@@ -78,6 +83,19 @@ func (s *Service) record(ctx context.Context, attempt usageAttempt) {
 		ErrorMessage:      failureMessage(attempt.err),
 		Streamed:          attempt.streamed,
 		LatencyMs:         attempt.latency.Milliseconds(),
+		OwnerKind:         agent.RunOwnerKind(attempt.attribution.OwnerKind),
+		OwnerID:           attempt.attribution.OwnerID,
+		DelegateCallID:    attempt.attribution.DelegateCallID,
+		Attempt:           attempt.attempt,
+		Failover:          attempt.failover,
+	}
+	if version := attempt.attribution.DefinitionVersion; version != nil {
+		pinned := *version
+		row.AgentDefinitionVersion = &pinned
+	}
+	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
+		row.TraceID = sc.TraceID().String()
+		row.SpanID = sc.SpanID().String()
 	}
 	if subject := attempt.attribution.Subject; subject.Recordable() {
 		row.SubjectType = subject.Type
@@ -88,6 +106,8 @@ func (s *Service) record(ctx context.Context, attempt usageAttempt) {
 		row.InputTokens = attempt.outcome.InputTokens
 		row.OutputTokens = attempt.outcome.OutputTokens
 		row.ReasoningTokens = attempt.outcome.ReasoningTokens
+		row.CacheReadTokens = attempt.outcome.CacheReadTokens
+		row.CacheWriteTokens = attempt.outcome.CacheWriteTokens
 		row.CostUSD = attempt.provider.CostForTask(attempt.task, row.InputTokens, row.OutputTokens)
 	}
 

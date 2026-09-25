@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
@@ -221,6 +222,8 @@ func (s *Service) recordBackground(
 		attribution: req.Attribution,
 		tenant:      req.TenantInfo,
 		latency:     backgroundLatency(req.SubmittedAt, time.Now()),
+		operation:   aitrace.OperationChat,
+		attempt:     1,
 	}
 	if result.Response != nil {
 		attempt.outcome = &runOutcome{
@@ -228,9 +231,13 @@ func (s *Service) recordBackground(
 				result.Response.ModelIdentifier,
 				result.ModelIdentifier,
 			),
-			InputTokens:     result.Response.InputTokens,
-			OutputTokens:    result.Response.OutputTokens,
-			ReasoningTokens: result.Response.ReasoningTokens,
+			InputTokens:      result.Response.InputTokens,
+			OutputTokens:     result.Response.OutputTokens,
+			ReasoningTokens:  result.Response.ReasoningTokens,
+			CacheReadTokens:  result.Response.CacheReadTokens,
+			CacheWriteTokens: result.Response.CacheWriteTokens,
+			FinishReason:     finishReason(result.Response),
+			Truncated:        result.Response.Truncated,
 		}
 	}
 	if result.State == modeladapter.BackgroundFailed {
