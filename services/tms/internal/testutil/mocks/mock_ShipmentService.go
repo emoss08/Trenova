@@ -2238,3 +2238,77 @@ func (_c *MockShipmentService_Update_Call) RunAndReturn(run func(ctx context.Con
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewCreate provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) PreviewCreate(ctx context.Context, entity *shipment.Shipment, actor *services.RequestActor) (*services.ShipmentCreatePlan, error) {
+	ret := _mock.Called(ctx, entity, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewCreate")
+	}
+
+	var r0 *services.ShipmentCreatePlan
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment, *services.RequestActor) (*services.ShipmentCreatePlan, error)); ok {
+		return returnFunc(ctx, entity, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *shipment.Shipment, *services.RequestActor) *services.ShipmentCreatePlan); ok {
+		r0 = returnFunc(ctx, entity, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentCreatePlan)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *shipment.Shipment, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, entity, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_PreviewCreate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewCreate'
+type MockShipmentService_PreviewCreate_Call struct {
+	*mock.Call
+}
+
+// PreviewCreate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entity *shipment.Shipment
+//   - actor *services.RequestActor
+func (_e *MockShipmentService_Expecter) PreviewCreate(ctx any, entity any, actor any) *MockShipmentService_PreviewCreate_Call {
+	return &MockShipmentService_PreviewCreate_Call{Call: _e.mock.On("PreviewCreate", ctx, entity, actor)}
+}
+
+func (_c *MockShipmentService_PreviewCreate_Call) Run(run func(ctx context.Context, entity *shipment.Shipment, actor *services.RequestActor)) *MockShipmentService_PreviewCreate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *shipment.Shipment
+		if args[1] != nil {
+			arg1 = args[1].(*shipment.Shipment)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewCreate_Call) Return(result *services.ShipmentCreatePlan, err error) *MockShipmentService_PreviewCreate_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewCreate_Call) RunAndReturn(run func(ctx context.Context, entity *shipment.Shipment, actor *services.RequestActor) (*services.ShipmentCreatePlan, error)) *MockShipmentService_PreviewCreate_Call {
+	_c.Call.Return(run)
+	return _c
+}

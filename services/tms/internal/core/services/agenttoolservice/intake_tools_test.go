@@ -46,6 +46,14 @@ func (f *fakeShipmentWriter) Create(
 	return entity, nil
 }
 
+func (f *fakeShipmentWriter) PreviewCreate(
+	_ context.Context,
+	entity *shipment.Shipment,
+	_ *serviceports.RequestActor,
+) (*serviceports.ShipmentCreatePlan, error) {
+	return &serviceports.ShipmentCreatePlan{Shipment: entity}, nil
+}
+
 func (f *fakeShipmentWriter) Update(
 	_ context.Context,
 	entity *shipment.Shipment,

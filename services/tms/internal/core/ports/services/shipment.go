@@ -346,6 +346,19 @@ type ContractRateAccessorial struct {
 	Unit                int16                    `json:"unit"`
 }
 
+type ShipmentRatingOutcome struct {
+	Adopted       bool
+	Amount        decimal.Decimal
+	Currency      string
+	AgreementName string
+	Explanation   string
+}
+
+type ShipmentCreatePlan struct {
+	Shipment *shipment.Shipment
+	Rating   *ShipmentRatingOutcome
+}
+
 type ShipmentService interface {
 	List(
 		ctx context.Context,
@@ -403,6 +416,11 @@ type ShipmentService interface {
 		entity *shipment.Shipment,
 		actor *RequestActor,
 	) (*ContractRateApplication, error)
+	PreviewCreate(
+		ctx context.Context,
+		entity *shipment.Shipment,
+		actor *RequestActor,
+	) (*ShipmentCreatePlan, error)
 	// AutoRate prices a saved shipment from its contract again, overwriting its
 	// rating method, base rate and contract accessorials.
 	AutoRate(
