@@ -54,10 +54,15 @@ type GetAccountingReferenceObjectsRequest struct {
 	ExternalIDs  []string
 }
 
+type AccountingMappingConfirmation struct {
+	ID         pulid.ID
+	ExternalID string
+}
+
 type ConfirmAccountingMappingsRequest struct {
 	TenantInfo pagination.TenantInfo
 	UserID     pulid.ID
-	IDs        []pulid.ID
+	Items      []AccountingMappingConfirmation
 	Source     accountingsync.MappingSource
 }
 

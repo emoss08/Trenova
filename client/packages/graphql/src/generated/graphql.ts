@@ -1502,6 +1502,13 @@ export type ConfigurationVisibility =
   | 'Public'
   | 'Shared';
 
+/** A proposal to confirm, with the record it proposed when it was shown. */
+export type ConfirmAccountingMappingInput = {
+  /** The proposed record's ID in the accounting system, as shown. */
+  externalId: string;
+  id: string | number;
+};
+
 export type CostBehavior =
   | 'Fixed'
   | 'Variable';
@@ -6568,7 +6575,7 @@ export type AccountingReferenceObjectsQueryVariables = Exact<{
 export type AccountingReferenceObjectsQuery = { accountingReferenceObjects: Array<{ ' $fragmentRefs'?: { 'AccountingReferenceObjectFieldsFragment': AccountingReferenceObjectFieldsFragment } }> };
 
 export type ConfirmAccountingMappingsMutationVariables = Exact<{
-  ids: Array<string | number> | string | number;
+  input: Array<ConfirmAccountingMappingInput> | ConfirmAccountingMappingInput;
 }>;
 
 
@@ -20975,7 +20982,7 @@ export const AccountingSyncStatusDocument = {"__meta__":{"kind":"query","name":"
 export const AccountingMappingSummaryDocument = {"__meta__":{"kind":"query","name":"AccountingMappingSummary","hash":"sha256:86376103c7d6a75333ab51a8a17331b6d5e983221b3b636a774bc49e99e3a16c"}} as unknown as TypedDocumentString<AccountingMappingSummaryQuery, AccountingMappingSummaryQueryVariables>;
 export const AccountingMappingsDocument = {"__meta__":{"kind":"query","name":"AccountingMappings","hash":"sha256:ec5c15fcda7c5480585a4bceed9ee0a06b51a918213489948873b69815602e21"}} as unknown as TypedDocumentString<AccountingMappingsQuery, AccountingMappingsQueryVariables>;
 export const AccountingReferenceObjectsDocument = {"__meta__":{"kind":"query","name":"AccountingReferenceObjects","hash":"sha256:c17d6f7e89eb758f813e16f3f368e0e9ff1fa4675322e6635e0b404634c26497"}} as unknown as TypedDocumentString<AccountingReferenceObjectsQuery, AccountingReferenceObjectsQueryVariables>;
-export const ConfirmAccountingMappingsDocument = {"__meta__":{"kind":"mutation","name":"ConfirmAccountingMappings","hash":"sha256:b50e7fbf064430720f94e3622b41a5a4f1277a1fcc559244f9e5194c63654f98"}} as unknown as TypedDocumentString<ConfirmAccountingMappingsMutation, ConfirmAccountingMappingsMutationVariables>;
+export const ConfirmAccountingMappingsDocument = {"__meta__":{"kind":"mutation","name":"ConfirmAccountingMappings","hash":"sha256:972c4c1295fdfd7686c0941ce7f6d05b5ef38e472d509a40063c660ed8af807b"}} as unknown as TypedDocumentString<ConfirmAccountingMappingsMutation, ConfirmAccountingMappingsMutationVariables>;
 export const RejectAccountingMappingDocument = {"__meta__":{"kind":"mutation","name":"RejectAccountingMapping","hash":"sha256:e5e8aa7a30a3f0d0b7474f6f3121a3311f76277e9e8a2a846e6f7e4e8b3f94af"}} as unknown as TypedDocumentString<RejectAccountingMappingMutation, RejectAccountingMappingMutationVariables>;
 export const SetAccountingMappingDocument = {"__meta__":{"kind":"mutation","name":"SetAccountingMapping","hash":"sha256:62076000a35af1ae7f74db441e343d561ba833bbaa2db69a78d2b43f16ff66e6"}} as unknown as TypedDocumentString<SetAccountingMappingMutation, SetAccountingMappingMutationVariables>;
 export const ClearAccountingMappingDocument = {"__meta__":{"kind":"mutation","name":"ClearAccountingMapping","hash":"sha256:3a4c31af7f87007aa586714692ca62e827f49dca04f7581b88cbda6642fbc629"}} as unknown as TypedDocumentString<ClearAccountingMappingMutation, ClearAccountingMappingMutationVariables>;

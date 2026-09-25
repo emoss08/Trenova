@@ -346,9 +346,9 @@ func (t *clearAccountingMappingTool) Name() string { return "clear_accounting_ma
 
 func (t *clearAccountingMappingTool) Description() string {
 	return "Remove the accounting system record a Trenova record or setting is mapped to, " +
-		"so it is unmatched again. Use it when a person says a mapping is wrong and no " +
-		"right record exists yet; to replace it with another record, use " +
-		"set_accounting_mapping instead."
+		"so it is unmatched again and that record is never proposed for it again. Use it " +
+		"when a person says a mapping is wrong and no right record exists yet; to replace it " +
+		"with another record, use set_accounting_mapping instead."
 }
 
 func (t *clearAccountingMappingTool) SearchTerms() []string {

@@ -321,6 +321,24 @@ func (r *mappingRepository) ApplyScoring(
 	return applied, nil
 }
 
+func (r *mappingRepository) UpdateLabels(
+	ctx context.Context,
+	entities []*accountingsync.AccountingMapping,
+) error {
+	cols := buncolgen.AccountingMappingColumns
+	for _, entity := range entities {
+		if _, err := r.db.DBForContext(ctx).
+			NewUpdate().
+			Model(entity).
+			Column(cols.TargetLabel.String(), cols.SearchLabel.String()).
+			WherePK().
+			Exec(ctx); err != nil {
+			return fmt.Errorf("update accounting mapping labels: %w", err)
+		}
+	}
+	return nil
+}
+
 func (r *mappingRepository) Update(
 	ctx context.Context,
 	entity *accountingsync.AccountingMapping,

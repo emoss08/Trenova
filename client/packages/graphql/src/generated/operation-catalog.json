@@ -4595,14 +4595,14 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:b50e7fbf064430720f94e3622b41a5a4f1277a1fcc559244f9e5194c63654f98",
+      "hash": "sha256:972c4c1295fdfd7686c0941ce7f6d05b5ef38e472d509a40063c660ed8af807b",
       "rootFields": [
         "confirmAccountingMappings"
       ],
       "variables": [
         {
-          "name": "ids",
-          "type": "[ID!]!",
+          "name": "input",
+          "type": "[ConfirmAccountingMappingInput!]!",
           "defaultValue": null
         }
       ],
@@ -4610,7 +4610,7 @@
         "AccountingMappingFields"
       ],
       "usages": [],
-      "sdl": "mutation ConfirmAccountingMappings($ids: [ID!]!) {\n  confirmAccountingMappings(ids: $ids) {\n    ...AccountingMappingFields\n  }\n}\n\nfragment AccountingMappingFields on AccountingMapping {\n  id\n  targetType\n  trenovaObjectId\n  trenovaKey\n  targetLabel\n  providerKind\n  externalId\n  externalName\n  state\n  source\n  confidence\n  reason\n  required\n  prechecked\n  candidates {\n    externalId\n    name\n    score\n    reason\n  }\n  confirmedBy {\n    id\n    name\n  }\n  confirmedAt\n  version\n  updatedAt\n}"
+      "sdl": "mutation ConfirmAccountingMappings($input: [ConfirmAccountingMappingInput!]!) {\n  confirmAccountingMappings(input: $input) {\n    ...AccountingMappingFields\n  }\n}\n\nfragment AccountingMappingFields on AccountingMapping {\n  id\n  targetType\n  trenovaObjectId\n  trenovaKey\n  targetLabel\n  providerKind\n  externalId\n  externalName\n  state\n  source\n  confidence\n  reason\n  required\n  prechecked\n  candidates {\n    externalId\n    name\n    score\n    reason\n  }\n  confirmedBy {\n    id\n    name\n  }\n  confirmedAt\n  version\n  updatedAt\n}"
     },
     {
       "name": "CostingControlPage",
@@ -24944,6 +24944,22 @@
         "Shared"
       ],
       "sdl": "enum ConfigurationVisibility {\n  Private\n  Public\n  Shared\n}"
+    },
+    "ConfirmAccountingMappingInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "externalId",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"A proposal to confirm, with the record it proposed when it was shown.\"\"\"\ninput ConfirmAccountingMappingInput {\n  \"\"\"The proposed record's ID in the accounting system, as shown.\"\"\"\n  externalId: String!\n  id: ID!\n}"
     },
     "CostCategoryUpdateInput": {
       "kind": "input",

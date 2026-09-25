@@ -2,7 +2,6 @@ package accountingmappingservice
 
 import (
 	"context"
-	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
@@ -353,10 +352,10 @@ func (s *Service) Confirm(
 	ctx context.Context,
 	req *services.ConfirmAccountingMappingsRequest,
 ) ([]*accountingsync.AccountingMapping, error) {
-	if len(req.IDs) == 0 {
+	if len(req.Items) == 0 {
 		return []*accountingsync.AccountingMapping{}, nil
 	}
-	if len(req.IDs) > maxConfirmBatch {
+	if len(req.Items) > maxConfirmBatch {
 		return nil, errortypes.NewValidationError(
 			"ids",
 			errortypes.ErrInvalid,
@@ -365,15 +364,31 @@ func (s *Service) Confirm(
 		)
 	}
 
+	expected := make(map[pulid.ID]string, len(req.Items))
+	for _, item := range req.Items {
+		expected[item.ID] = item.ExternalID
+	}
+	ids := make([]pulid.ID, 0, len(expected))
+	for id := range expected {
+		ids = append(ids, id)
+	}
 	rows, err := s.mappings.GetByIDs(ctx, repositories.GetAccountingMappingsByIDsRequest{
 		TenantInfo: req.TenantInfo,
-		IDs:        req.IDs,
+		IDs:        ids,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if len(rows) != len(slices.Compact(slices.Sorted(slices.Values(req.IDs)))) {
+	if len(rows) != len(ids) {
 		return nil, errortypes.NewNotFoundError("One or more mappings were not found")
+	}
+	for _, row := range rows {
+		if row.ExternalID != expected[row.ID] {
+			return nil, errortypes.NewBusinessError(
+				"The proposal for {0} changed since it was shown; review it again",
+				row.TargetLabel,
+			)
+		}
 	}
 
 	now := timeutils.NowUnix()

@@ -137,18 +137,26 @@ func (s *Service) Rescore(
 	}
 
 	changed := make([]*accountingsync.AccountingMapping, 0, len(rows))
+	relabeled := make([]*accountingsync.AccountingMapping, 0)
 	for _, row := range rows {
 		t, ok := byIdentity[mappingIdentity(row)]
 		if !ok {
 			continue
 		}
-		if refs.rescore(row, t) {
+		switch refs.rescore(row, t) {
+		case rescoreChanged:
 			changed = append(changed, row)
+		case rescoreRelabeled:
+			relabeled = append(relabeled, row)
+		case rescoreUnchanged:
 		}
 		tallyRow(result, row)
 	}
 
 	if result.Updated, err = s.mappings.ApplyScoring(ctx, changed); err != nil {
+		return nil, err
+	}
+	if err = s.mappings.UpdateLabels(ctx, relabeled); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -158,8 +166,7 @@ func tallyRow(result *services.AccountingRescoreResult, row *accountingsync.Acco
 	if row.State == accountingsync.MappingStateProposed {
 		result.Proposed++
 	}
-	if row.Rescorable() && row.State == accountingsync.MappingStateUnmatched &&
-		len(row.Signals.Candidates) > 0 && len(result.NeedsModel) < maxModelTargets {
+	if row.NeedsModelReview() && len(result.NeedsModel) < maxModelTargets {
 		result.NeedsModel = append(result.NeedsModel, row.ID)
 	}
 }
@@ -199,14 +206,33 @@ func (s *Service) loadReferences(
 	return set, nil
 }
 
-func (r *referenceSet) rescore(row *accountingsync.AccountingMapping, t *target) bool {
+type rescoreOutcome int
+
+const (
+	rescoreUnchanged rescoreOutcome = iota
+	rescoreChanged
+	rescoreRelabeled
+)
+
+func (r *referenceSet) rescore(row *accountingsync.AccountingMapping, t *target) rescoreOutcome {
 	labelChanged := row.TargetLabel != t.Label
 	row.TargetLabel = t.Label
-	if !row.Rescorable() {
-		return labelChanged
+	proposalChanged := false
+	if row.Rescorable() {
+		kind := row.TargetType.ProviderKind()
+		proposal := score(t, r.byKind[kind], r.indexes[kind])
+		if !row.KeepsModelPick(proposal) {
+			proposalChanged = row.ApplyProposal(proposal)
+		}
 	}
-	kind := row.TargetType.ProviderKind()
-	return row.ApplyProposal(score(t, r.byKind[kind], r.indexes[kind])) || labelChanged
+	switch {
+	case proposalChanged || (labelChanged && row.State != accountingsync.MappingStateConfirmed):
+		return rescoreChanged
+	case labelChanged:
+		return rescoreRelabeled
+	default:
+		return rescoreUnchanged
+	}
 }
 
 func (s *Service) MarkRefreshStarted(

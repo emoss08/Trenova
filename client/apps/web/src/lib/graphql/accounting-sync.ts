@@ -26,11 +26,13 @@ import {
   type AccountingReferenceObjectFieldsFragment,
   type AccountingSystem,
   type CompleteAccountingAuthorizationInput,
+  type ConfirmAccountingMappingInput,
   type CreateAccountingReferenceRecordInput,
   type SetAccountingMappingInput,
   type StartAccountingAuthorizationMutation,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { chunk } from "@trenova/shared/lib/utils";
 
 export type AccountingConnection = AccountingConnectionFieldsFragment;
 export type AccountingMapping = AccountingMappingFieldsFragment;
@@ -214,15 +216,25 @@ export async function searchAccountingReferenceObjects(
   );
 }
 
-export async function confirmAccountingMappings(ids: string[]): Promise<AccountingMapping[]> {
-  const data = await requestGraphQL({
-    document: ConfirmAccountingMappingsDocument,
-    operationName: "ConfirmAccountingMappings",
-    variables: { ids },
-  });
-  return data.confirmAccountingMappings.map((row) =>
-    getFragmentData(AccountingMappingFieldsFragmentDoc, row),
-  );
+export const MAX_CONFIRM_BATCH = 200;
+
+export async function confirmAccountingMappings(
+  items: ConfirmAccountingMappingInput[],
+): Promise<AccountingMapping[]> {
+  const confirmed: AccountingMapping[] = [];
+  for (const batch of chunk(items, MAX_CONFIRM_BATCH)) {
+    const data = await requestGraphQL({
+      document: ConfirmAccountingMappingsDocument,
+      operationName: "ConfirmAccountingMappings",
+      variables: { input: batch },
+    });
+    confirmed.push(
+      ...data.confirmAccountingMappings.map((row) =>
+        getFragmentData(AccountingMappingFieldsFragmentDoc, row),
+      ),
+    );
+  }
+  return confirmed;
 }
 
 export async function rejectAccountingMapping(id: string): Promise<AccountingMapping> {

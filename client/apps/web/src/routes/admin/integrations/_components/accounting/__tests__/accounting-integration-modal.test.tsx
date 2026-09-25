@@ -392,6 +392,7 @@ describe("QuickBooksIntegrationModal", () => {
           source: "Suggested",
           prechecked: true,
           targetLabel: "Freight charges",
+          externalId: "90",
           externalName: "Freight",
           required: false,
         }),
@@ -401,6 +402,7 @@ describe("QuickBooksIntegrationModal", () => {
           source: "Model",
           prechecked: false,
           targetLabel: "Acme Logistics",
+          externalId: "50",
           externalName: "Acme Logistics, Inc.",
           required: false,
         }),
@@ -415,7 +417,10 @@ describe("QuickBooksIntegrationModal", () => {
     await user.click(await screen.findByRole("button", { name: "Confirm 2 checked" }));
 
     await waitFor(() =>
-      expect(mocks.confirmAccountingMappings).toHaveBeenCalledWith(["acctm_sure", "acctm_unsure"]),
+      expect(mocks.confirmAccountingMappings).toHaveBeenCalledWith([
+        { id: "acctm_sure", externalId: "90" },
+        { id: "acctm_unsure", externalId: "50" },
+      ]),
     );
     expect(confirm).toBeInTheDocument();
   });

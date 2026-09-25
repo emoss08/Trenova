@@ -168,6 +168,47 @@ func TestClearReturnsARowToUnmatched(t *testing.T) {
 	assert.Empty(t, m.ExternalID)
 	assert.Nil(t, m.ConfirmedAt)
 	assert.True(t, m.Rescorable())
+	assert.True(t, m.WasRejected("84"), "a record a person cleared is not proposed again")
+
+	assert.False(t, m.ApplyProposal(proposal("84", 0.99)) && m.ExternalID == "84")
+	assert.Empty(t, m.ExternalID)
+}
+
+func TestModelReviewIsAskedOncePerCandidateSet(t *testing.T) {
+	t.Parallel()
+
+	m := roleMapping(accountingsync.AccountRoleRevenue)
+	m.ApplyProposal(proposal("", 0))
+	require.NotEmpty(t, m.Signals.Candidates)
+	assert.True(t, m.NeedsModelReview())
+
+	m.MarkModelReviewed()
+	assert.False(t, m.NeedsModelReview(), "the same candidates are not sent to the model twice")
+
+	m.Signals.Candidates = append(m.Signals.Candidates, accountingsync.MappingCandidate{ExternalID: "99", Name: "Sales"})
+	assert.True(t, m.NeedsModelReview(), "a new candidate is worth another look")
+}
+
+func TestAModelPickSurvivesARescoreWhileItsRecordIsStillACandidate(t *testing.T) {
+	t.Parallel()
+
+	m := roleMapping(accountingsync.AccountRoleRevenue)
+	model := proposal("79", 0.88)
+	model.Source = accountingsync.MappingSourceModel
+	m.ApplyProposal(model)
+	require.Equal(t, accountingsync.MappingStateProposed, m.State)
+
+	unsure := &accountingsync.Proposal{Candidates: []accountingsync.MappingCandidate{
+		{ExternalID: "79", Name: "Freight Income", Score: 0.6},
+		{ExternalID: "90", Name: "Other", Score: 0.4},
+	}}
+	assert.True(t, m.KeepsModelPick(unsure))
+
+	gone := &accountingsync.Proposal{Candidates: unsure.Candidates[1:]}
+	assert.False(t, m.KeepsModelPick(gone), "the pick goes once its record is no longer a candidate")
+
+	sure := proposal("80", 0.97)
+	assert.False(t, m.KeepsModelPick(sure), "a sure deterministic match replaces the model's pick")
 }
 
 func TestRequiredTargetsAreTheReceivablesMinimum(t *testing.T) {

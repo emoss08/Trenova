@@ -10,7 +10,9 @@ import {
   accountingMappingRecordPath,
   accountingSetupPath,
   needsAccountingMappings,
-  precheckedMappingIds,
+  checkedMappingConfirmations,
+  mappingCheckKey,
+  REFERENCE_REFRESH_STALE_SECONDS,
   referenceRefreshRunning,
   hasLiveAccountingConnection,
   isTrustedAuthorizeUrl,
@@ -183,13 +185,24 @@ describe("accountingMappingPhase", () => {
 });
 
 describe("referenceRefreshRunning", () => {
-  it("is running while a start is recorded", () => {
-    expect(referenceRefreshRunning({ referenceRefreshStartedAt: 100 })).toBe(true);
+  const now = 1_780_000_000;
+
+  it("is running while a recent start is recorded", () => {
+    expect(referenceRefreshRunning({ referenceRefreshStartedAt: now - 60 }, now)).toBe(true);
   });
 
   it("is not running once the server cleared the start", () => {
-    expect(referenceRefreshRunning({ referenceRefreshStartedAt: null })).toBe(false);
-    expect(referenceRefreshRunning(null)).toBe(false);
+    expect(referenceRefreshRunning({ referenceRefreshStartedAt: null }, now)).toBe(false);
+    expect(referenceRefreshRunning(null, now)).toBe(false);
+  });
+
+  it("gives up on a start too old to still be running, so reading again is offered", () => {
+    expect(
+      referenceRefreshRunning(
+        { referenceRefreshStartedAt: now - REFERENCE_REFRESH_STALE_SECONDS - 1 },
+        now,
+      ),
+    ).toBe(false);
   });
 });
 
@@ -206,16 +219,30 @@ describe("needsAccountingMappings", () => {
   });
 });
 
-describe("precheckedMappingIds", () => {
-  it("ticks only the proposals the server marked sure enough", () => {
+describe("checkedMappingConfirmations", () => {
+  const rows = [
+    { id: "a", externalId: "10", state: "Proposed" as const, prechecked: true },
+    { id: "b", externalId: "20", state: "Proposed" as const, prechecked: false },
+    { id: "c", externalId: "30", state: "Confirmed" as const, prechecked: false },
+    { id: "d", externalId: "", state: "Unmatched" as const, prechecked: false },
+  ];
+
+  it("ticks the proposals the server marked sure enough and names the record each shows", () => {
+    expect(checkedMappingConfirmations(rows, {})).toEqual([{ id: "a", externalId: "10" }]);
+  });
+
+  it("follows what a person ticked or unticked", () => {
     expect(
-      precheckedMappingIds([
-        { id: "a", state: "Proposed", prechecked: true },
-        { id: "b", state: "Proposed", prechecked: false },
-        { id: "c", state: "Confirmed", prechecked: false },
-        { id: "d", state: "Unmatched", prechecked: false },
-      ]),
-    ).toEqual(["a"]);
+      checkedMappingConfirmations(rows, {
+        [mappingCheckKey(rows[0])]: false,
+        [mappingCheckKey(rows[1])]: true,
+      }),
+    ).toEqual([{ id: "b", externalId: "20" }]);
+  });
+
+  it("forgets a choice once the proposal behind it changed", () => {
+    const changed = [{ ...rows[1], externalId: "21" }];
+    expect(checkedMappingConfirmations(changed, { [mappingCheckKey(rows[1])]: true })).toEqual([]);
   });
 });
 

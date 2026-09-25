@@ -102,7 +102,9 @@ export function MappingEditor({ system, providerName, mapping, canUpdate }: Mapp
                 size="sm"
                 isLoading={actions.confirm.isPending}
                 disabled={busy}
-                onClick={() => actions.confirm.mutate([mapping.id])}
+                onClick={() =>
+                  actions.confirm.mutate([{ id: mapping.id, externalId: mapping.externalId }])
+                }
               >
                 {t("Confirm")}
               </Button>

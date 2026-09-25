@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -75,8 +76,7 @@ func (s *Service) ModelPass(
 
 	pending := make([]*accountingsync.AccountingMapping, 0, len(rows))
 	for _, row := range rows {
-		if row.ConnectionID == connectionID && row.Rescorable() &&
-			row.State == accountingsync.MappingStateUnmatched && len(row.Signals.Candidates) > 0 {
+		if row.ConnectionID == connectionID && row.NeedsModelReview() {
 			pending = append(pending, row)
 		}
 	}
@@ -84,21 +84,24 @@ func (s *Service) ModelPass(
 	applied := 0
 	for start := 0; start < len(pending); start += modelBatchSize {
 		batch := newModelBatch(pending[start:min(start+modelBatchSize, len(pending))])
-		changed, batchErr := s.runModelBatch(ctx, tenantInfo, connectionID, batch)
+		changed, reviewed, batchErr := s.runModelBatch(ctx, tenantInfo, connectionID, batch)
 		if batchErr != nil {
 			if errors.Is(batchErr, services.ErrNoProviderConfigured) {
 				return applied, nil
 			}
 			return applied, batchErr
 		}
-		if len(changed) == 0 {
-			continue
-		}
 		count, applyErr := s.mappings.ApplyScoring(ctx, changed)
 		if applyErr != nil {
 			return applied, applyErr
 		}
 		applied += int(count)
+		if !reviewed {
+			continue
+		}
+		if _, applyErr = s.mappings.ApplyScoring(ctx, batch.declined(changed)); applyErr != nil {
+			return applied, applyErr
+		}
 	}
 
 	return applied, nil
@@ -158,7 +161,7 @@ func (s *Service) runModelBatch(
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
 	batch *modelBatch,
-) ([]*accountingsync.AccountingMapping, error) {
+) ([]*accountingsync.AccountingMapping, bool, error) {
 	result, err := s.completion.CompleteStructured(ctx, &services.StructuredCompletionRequest{
 		TenantInfo:   tenantInfo,
 		Task:         aiprovider.TaskAccountingMapping,
@@ -176,16 +179,31 @@ func (s *Service) runModelBatch(
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	var reply modelReply
 	if err = sonic.UnmarshalString(result.Text, &reply); err != nil {
 		s.l.Warn("the mapping model's reply could not be read", zap.Error(err))
-		return nil, nil
+		return nil, false, nil
 	}
 
-	return batch.apply(reply.Answers), nil
+	for _, row := range batch.rows {
+		row.MarkModelReviewed()
+	}
+	return batch.apply(reply.Answers), true, nil
+}
+
+func (b *modelBatch) declined(
+	proposed []*accountingsync.AccountingMapping,
+) []*accountingsync.AccountingMapping {
+	out := make([]*accountingsync.AccountingMapping, 0, len(b.rows))
+	for _, row := range b.rows {
+		if !slices.Contains(proposed, row) {
+			out = append(out, row)
+		}
+	}
+	return out
 }
 
 func (b *modelBatch) apply(answers []modelAnswer) []*accountingsync.AccountingMapping {

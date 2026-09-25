@@ -41,6 +41,15 @@ func tokenColumns() []string {
 	return []string{cols.AccessTokenCiphertext.String(), cols.RefreshTokenCiphertext.String()}
 }
 
+func refreshColumns() []string {
+	cols := buncolgen.AccountingConnectionColumns
+	return []string{
+		cols.ReferenceRefreshStartedAt.String(),
+		cols.ReferenceRefreshedAt.String(),
+		cols.ReferenceRefreshError.String(),
+	}
+}
+
 func activeStatuses() []accountingsync.ConnectionStatus {
 	return []accountingsync.ConnectionStatus{
 		accountingsync.ConnectionStatusConnected,
@@ -231,7 +240,7 @@ func (r *connectionRepository) Update(
 	results, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
-		ExcludeColumn(tokenColumns()...).
+		ExcludeColumn(append(tokenColumns(), refreshColumns()...)...).
 		WherePK().
 		Where(cols.Version.Eq(), ov).
 		Exec(ctx)

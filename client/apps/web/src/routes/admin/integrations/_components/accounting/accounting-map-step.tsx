@@ -3,7 +3,11 @@ import { MappingRow } from "@/components/accounting-mapping/mapping-row";
 import { ReferenceRefreshStatus } from "@/components/accounting-mapping/reference-refresh-status";
 import { useAccountingMappingActions } from "@/hooks/use-accounting-mapping-actions";
 import { useAccountingMappingList } from "@/hooks/use-accounting-mapping-list";
-import { ACCOUNTING_MAPPINGS_PATH } from "@/lib/accounting-sync";
+import {
+  ACCOUNTING_MAPPINGS_PATH,
+  checkedMappingConfirmations,
+  mappingCheckKey,
+} from "@/lib/accounting-sync";
 import type { AccountingMappingSummary } from "@/lib/graphql/accounting-sync";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -43,11 +47,8 @@ export function AccountingMapStep({
     const seen = new Set(required.mappings.map((mapping) => mapping.id));
     return [...required.mappings, ...proposals.mappings.filter((mapping) => !seen.has(mapping.id))];
   }, [required.mappings, proposals.mappings]);
-  const checkedIds = rows
-    .filter(
-      (mapping) => mapping.state === "Proposed" && (overrides[mapping.id] ?? mapping.prechecked),
-    )
-    .map((mapping) => mapping.id);
+  const checked = checkedMappingConfirmations(rows, overrides);
+  const checkedIds = new Set(checked.map((item) => item.id));
   const selected = rows.find((mapping) => mapping.id === selectedId) ?? null;
   const connection = summary.connection;
 
@@ -100,11 +101,11 @@ export function AccountingMapStep({
               key={mapping.id}
               mapping={mapping}
               selected={mapping.id === selectedId}
-              checked={checkedIds.includes(mapping.id)}
+              checked={checkedIds.has(mapping.id)}
               canCheck={canUpdate}
               onSelect={() => setSelectedId(mapping.id === selectedId ? null : mapping.id)}
-              onCheckedChange={(checked) =>
-                setOverrides((current) => ({ ...current, [mapping.id]: checked }))
+              onCheckedChange={(value) =>
+                setOverrides((current) => ({ ...current, [mappingCheckKey(mapping)]: value }))
               }
             />
           ))}
@@ -144,12 +145,10 @@ export function AccountingMapStep({
               type="button"
               variant="outline"
               isLoading={actions.confirm.isPending}
-              disabled={checkedIds.length === 0}
-              onClick={() =>
-                actions.confirm.mutate(checkedIds, { onSuccess: () => setOverrides({}) })
-              }
+              disabled={checked.length === 0}
+              onClick={() => actions.confirm.mutate(checked, { onSuccess: () => setOverrides({}) })}
             >
-              {t("Confirm {0} checked", checkedIds.length)}
+              {t("Confirm {0} checked", checked.length)}
             </Button>
             <Button
               type="button"

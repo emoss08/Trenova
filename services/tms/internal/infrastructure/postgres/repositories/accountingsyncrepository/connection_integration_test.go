@@ -268,7 +268,11 @@ func TestConnectionRepository_ReferenceRefreshRunsUntilItFinishesEitherWay(t *te
 
 	finished := now + 20
 	mark(repositories.MarkAccountingReferenceRefreshRequest{RefreshedAt: &finished})
+	running.SetupStep = accountingsync.SetupStepComplete
+	_, err = repo.Update(ctx, running)
+	require.NoError(t, err, "a copy read while the refresh ran still saves")
 	done := get()
+	assert.Equal(t, accountingsync.SetupStepComplete, done.SetupStep)
 	assert.Nil(t, done.ReferenceRefreshStartedAt)
 	require.NotNil(t, done.ReferenceRefreshedAt)
 	assert.Equal(t, finished, *done.ReferenceRefreshedAt)

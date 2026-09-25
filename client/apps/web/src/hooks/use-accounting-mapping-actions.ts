@@ -29,7 +29,7 @@ export function useAccountingMappingActions(system: AccountingSystem, providerNa
   );
 
   const confirm = useApiMutation({
-    mutationFn: (ids: string[]) => confirmAccountingMappings(ids),
+    mutationFn: (items: { id: string; externalId: string }[]) => confirmAccountingMappings(items),
     resourceName: t("Mapping"),
     onSuccess: async (rows) => {
       await refresh();

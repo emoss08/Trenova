@@ -171071,6 +171071,15 @@
       "routes/desk"
     ]
   },
+  "The proposal for {0} changed since it was shown; review it again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "The provider data is wrong. A note explaining why is required.": {
     "sites": 1,
     "scope": [
@@ -208239,6 +208248,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "{0} was created, but {1} was mapped to {2} meanwhile; map it again if that is wrong": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "{0} was not connected": {

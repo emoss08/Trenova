@@ -329,6 +329,20 @@ func (f *fakeMappings) ApplyScoring(
 	return updated, nil
 }
 
+func (f *fakeMappings) UpdateLabels(
+	_ context.Context,
+	entities []*accountingsync.AccountingMapping,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, entity := range entities {
+		if idx := f.find(entity.ID); idx >= 0 {
+			f.rows[idx].TargetLabel = entity.TargetLabel
+		}
+	}
+	return nil
+}
+
 func (f *fakeMappings) Update(
 	_ context.Context,
 	entity *accountingsync.AccountingMapping,
@@ -340,7 +354,7 @@ func (f *fakeMappings) Update(
 		return nil, errortypes.NewNotFoundError("Accounting mapping not found")
 	}
 	if f.rows[idx].Version != entity.Version {
-		return nil, errortypes.NewBusinessError("Version mismatch")
+		return nil, errortypes.NewValidationError("version", errortypes.ErrVersionMismatch, "Version mismatch")
 	}
 	row := cloneMapping(entity)
 	row.Version++
@@ -390,6 +404,7 @@ type fakeConnector struct {
 	duplicate  bool
 	created    []*services.AccountingCreateReferenceRequest
 	createdObj *accountingsync.AccountingReferenceObject
+	onCreate   func()
 }
 
 func (f *fakeConnector) IntegrationType() integration.Type { return integration.TypeQuickBooksOnline }
@@ -422,6 +437,9 @@ func (f *fakeConnector) CreateReference(
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.created = append(f.created, req)
+	if f.onCreate != nil {
+		f.onCreate()
+	}
 	if f.createErr != nil {
 		return nil, f.createErr
 	}

@@ -2,6 +2,7 @@ package resolver
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
@@ -68,4 +69,24 @@ func accountingMappingConnectionToModel(
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
 	}, nil
+}
+
+func accountingMappingConfirmations(
+	input []*gqlmodel.ConfirmAccountingMappingInput,
+) ([]services.AccountingMappingConfirmation, error) {
+	items := make([]services.AccountingMappingConfirmation, 0, len(input))
+	for _, item := range input {
+		if item == nil {
+			continue
+		}
+		id, err := pulid.MustParse(item.ID)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, services.AccountingMappingConfirmation{
+			ID:         id,
+			ExternalID: strings.TrimSpace(item.ExternalID),
+		})
+	}
+	return items, nil
 }

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:dc75a86eae23ea1a25499871139f9eeaca32f4be9aa7a96b34f7f93020ed7ddc",
+  "version": "sha256:b81723efd0f7d754497b4092d671d0c3b78efd28b0feeaf3cc31d05ed9920827",
   "modules": [
     {
       "id": "home",
@@ -1670,7 +1670,7 @@
           "steps": [
             "Open [Mappings](/accounting/sync/mappings) and select the mapping.",
             "Select **Turn down** to reject a proposal; Trenova will not propose that record for it again.",
-            "Select **Clear** to remove the chosen record so the mapping is unmatched again."
+            "Select **Clear** to remove the chosen record so the mapping is unmatched again; Trenova will not propose that record for it again either."
           ]
         },
         {

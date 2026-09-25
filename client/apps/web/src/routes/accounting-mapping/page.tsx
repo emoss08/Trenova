@@ -14,7 +14,9 @@ import { usePermission } from "@/hooks/use-permission";
 import {
   ACCOUNTING_MAPPING_TARGET_TYPES,
   accountingSetupPath,
+  checkedMappingConfirmations,
   hasLiveAccountingConnection,
+  mappingCheckKey,
 } from "@/lib/accounting-sync";
 import type {
   AccountingMappingFilterInput,
@@ -89,11 +91,8 @@ export function AccountingMappingsPage() {
     onLoadMore: () => void fetchNextPage(),
   });
 
-  const checkedIds = list.mappings
-    .filter(
-      (mapping) => mapping.state === "Proposed" && (overrides[mapping.id] ?? mapping.prechecked),
-    )
-    .map((mapping) => mapping.id);
+  const checked = checkedMappingConfirmations(list.mappings, overrides);
+  const checkedIds = new Set(checked.map((item) => item.id));
   const selected = list.mappings.find((mapping) => mapping.id === selectedId) ?? null;
   const filtered = Boolean(targetType || state || requiredOnly || debouncedSearch);
   const totals = (summary.data?.groups ?? []).reduce(
@@ -274,12 +273,12 @@ export function AccountingMappingsPage() {
                 size="sm"
                 variant="outline"
                 isLoading={actions.confirm.isPending}
-                disabled={checkedIds.length === 0}
+                disabled={checked.length === 0}
                 onClick={() =>
-                  actions.confirm.mutate(checkedIds, { onSuccess: () => setOverrides({}) })
+                  actions.confirm.mutate(checked, { onSuccess: () => setOverrides({}) })
                 }
               >
-                {t("Confirm {0} checked", checkedIds.length)}
+                {t("Confirm {0} checked", checked.length)}
               </Button>
             ) : null}
           </div>
@@ -311,11 +310,11 @@ export function AccountingMappingsPage() {
                     key={mapping.id}
                     mapping={mapping}
                     selected={mapping.id === selectedId}
-                    checked={checkedIds.includes(mapping.id)}
+                    checked={checkedIds.has(mapping.id)}
                     canCheck={canUpdate}
                     onSelect={() => setSelectedId(mapping.id)}
-                    onCheckedChange={(checked) =>
-                      setOverrides((current) => ({ ...current, [mapping.id]: checked }))
+                    onCheckedChange={(value) =>
+                      setOverrides((current) => ({ ...current, [mappingCheckKey(mapping)]: value }))
                     }
                   />
                 ))}

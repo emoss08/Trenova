@@ -230,11 +230,10 @@ func RefreshAllAccountingReferenceWorkflow(
 	for idx := range page.Connections {
 		conn := &page.Connections[idx]
 		childCtx := workflow.WithChildOptions(ctx, workflow.ChildWorkflowOptions{
-			WorkflowID:               ReferenceWorkflowID(conn.ConnectionID),
-			TaskQueue:                temporaltype.IntegrationTaskQueue,
-			WorkflowIDReusePolicy:    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
-			ParentClosePolicy:        enums.PARENT_CLOSE_POLICY_ABANDON,
-			WorkflowExecutionTimeout: time.Hour,
+			WorkflowID:            ReferenceWorkflowID(conn.ConnectionID),
+			TaskQueue:             temporaltype.IntegrationTaskQueue,
+			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
+			ParentClosePolicy:     enums.PARENT_CLOSE_POLICY_ABANDON,
 		})
 		child := workflow.ExecuteChildWorkflow(childCtx, RefreshAccountingReferenceWorkflow, conn)
 		if err := child.GetChildWorkflowExecution().Get(childCtx, nil); err != nil {

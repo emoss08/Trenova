@@ -106,7 +106,7 @@ func (s *Service) CreateReferenceRecord(
 		source = accountingsync.MappingSourceAgent
 	}
 	before := jsonutils.MustToJSON(row)
-	row.Confirm(&accountingsync.Choice{
+	updated, err := s.confirmCreated(ctx, req.TenantInfo, row, &accountingsync.Choice{
 		ExternalID:   created.ExternalID,
 		ExternalName: created.Label(),
 		Source:       source,
@@ -116,7 +116,6 @@ func (s *Service) CreateReferenceRecord(
 		ActorID: req.UserID,
 		At:      timeutils.NowUnix(),
 	})
-	updated, err := s.mappings.Update(ctx, row)
 	if err != nil {
 		return nil, err
 	}
@@ -137,6 +136,34 @@ func (s *Service) CreateReferenceRecord(
 }
 
 const maxReasonRunes = 300
+
+func (s *Service) confirmCreated(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	row *accountingsync.AccountingMapping,
+	choice *accountingsync.Choice,
+) (*accountingsync.AccountingMapping, error) {
+	row.Confirm(choice)
+	updated, err := s.mappings.Update(ctx, row)
+	if err == nil || !errortypes.IsVersionMismatchError(err) {
+		return updated, err
+	}
+
+	current, getErr := s.GetMapping(ctx, tenantInfo, row.ID)
+	if getErr != nil {
+		return nil, getErr
+	}
+	if current.State == accountingsync.MappingStateConfirmed {
+		return nil, errortypes.NewBusinessError(
+			"{0} was created, but {1} was mapped to {2} meanwhile; map it again if that is wrong",
+			choice.ExternalName,
+			current.TargetLabel,
+			current.ExternalName,
+		).WithInternal(err)
+	}
+	current.Confirm(choice)
+	return s.mappings.Update(ctx, current)
+}
 
 func (s *Service) buildDraft(
 	ctx context.Context,

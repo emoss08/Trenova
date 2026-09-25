@@ -12,6 +12,8 @@ import type { StatusPhase } from "@trenova/shared/lib/status-phase";
 
 export const ACCOUNTING_MAPPINGS_PATH = "/accounting/sync/mappings";
 
+export const REFERENCE_REFRESH_STALE_SECONDS = 2 * 60 * 60;
+
 export const ACCOUNTING_MAPPING_TARGET_TYPES: readonly AccountingMappingTargetType[] = [
   "AccountRole",
   "LineType",
@@ -123,8 +125,10 @@ export function accountingMappingPhase(state: AccountingMappingState): StatusPha
 
 export function referenceRefreshRunning(
   connection: { referenceRefreshStartedAt?: number | null } | null | undefined,
+  nowSeconds = Math.floor(Date.now() / 1000),
 ): boolean {
-  return connection?.referenceRefreshStartedAt != null;
+  const startedAt = connection?.referenceRefreshStartedAt;
+  return startedAt != null && nowSeconds - startedAt <= REFERENCE_REFRESH_STALE_SECONDS;
 }
 
 export function needsAccountingMappings(
@@ -136,12 +140,25 @@ export function needsAccountingMappings(
   return hasLiveAccountingConnection(connection) && connection?.setupStep === "Mappings";
 }
 
-export function precheckedMappingIds(
-  mappings: ReadonlyArray<{ id: string; state: AccountingMappingState; prechecked: boolean }>,
-): string[] {
+export function mappingCheckKey(mapping: { id: string; externalId: string }): string {
+  return `${mapping.id}:${mapping.externalId}`;
+}
+
+export function checkedMappingConfirmations(
+  mappings: ReadonlyArray<{
+    id: string;
+    externalId: string;
+    state: AccountingMappingState;
+    prechecked: boolean;
+  }>,
+  overrides: Readonly<Record<string, boolean>>,
+): { id: string; externalId: string }[] {
   return mappings
-    .filter((mapping) => mapping.state === "Proposed" && mapping.prechecked)
-    .map((mapping) => mapping.id);
+    .filter(
+      (mapping) =>
+        mapping.state === "Proposed" && (overrides[mappingCheckKey(mapping)] ?? mapping.prechecked),
+    )
+    .map((mapping) => ({ id: mapping.id, externalId: mapping.externalId }));
 }
 
 export function accountingMappingRecordPath(mapping: {

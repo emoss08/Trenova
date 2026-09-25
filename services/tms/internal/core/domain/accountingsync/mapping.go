@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -49,6 +50,16 @@ type MappingSignals struct {
 	Matchers            []MatcherSignal    `json:"matchers,omitempty"`
 	Candidates          []MappingCandidate `json:"candidates,omitempty"`
 	RejectedExternalIDs []string           `json:"rejectedExternalIds,omitempty"`
+	ModelReviewed       string             `json:"modelReviewed,omitempty"`
+}
+
+func (s *MappingSignals) CandidateFingerprint() string {
+	ids := make([]string, 0, len(s.Candidates))
+	for idx := range s.Candidates {
+		ids = append(ids, s.Candidates[idx].ExternalID)
+	}
+	slices.Sort(ids)
+	return strings.Join(ids, ",")
 }
 
 type AccountingMapping struct {
@@ -337,6 +348,13 @@ func (m *AccountingMapping) Clear() error {
 	if m.State == MappingStateUnmatched {
 		return ErrMappingNotSet
 	}
+	if m.ExternalID != "" && !m.WasRejected(m.ExternalID) {
+		m.Signals.RejectedExternalIDs = append(m.Signals.RejectedExternalIDs, m.ExternalID)
+	}
+	m.Signals.Candidates = slices.DeleteFunc(
+		m.Signals.Candidates,
+		func(c MappingCandidate) bool { return c.ExternalID == m.ExternalID },
+	)
 	m.State = MappingStateUnmatched
 	m.ExternalID = ""
 	m.ExternalName = ""
@@ -346,6 +364,26 @@ func (m *AccountingMapping) Clear() error {
 	m.ConfirmedByID = pulid.Nil
 	m.ConfirmedAt = nil
 	return nil
+}
+
+func (m *AccountingMapping) NeedsModelReview() bool {
+	return m.Rescorable() &&
+		m.State == MappingStateUnmatched &&
+		len(m.Signals.Candidates) > 0 &&
+		m.Signals.ModelReviewed != m.Signals.CandidateFingerprint()
+}
+
+func (m *AccountingMapping) MarkModelReviewed() {
+	m.Signals.ModelReviewed = m.Signals.CandidateFingerprint()
+}
+
+func (m *AccountingMapping) KeepsModelPick(p *Proposal) bool {
+	if m.Source != MappingSourceModel || m.State != MappingStateProposed || p.ExternalID != "" {
+		return false
+	}
+	return slices.ContainsFunc(p.Candidates, func(c MappingCandidate) bool {
+		return c.ExternalID == m.ExternalID
+	})
 }
 
 func (m *AccountingMapping) Prechecked() bool {

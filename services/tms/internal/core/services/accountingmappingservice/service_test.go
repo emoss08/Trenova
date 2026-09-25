@@ -36,6 +36,7 @@ type harness struct {
 	completion  *fakeCompletion
 	refresher   *fakeRefresher
 	customerID  pulid.ID
+	customer    *customer.Customer
 	carrierID   pulid.ID
 	chargeID    pulid.ID
 }
@@ -125,6 +126,7 @@ func newHarness(t *testing.T) *harness {
 		}, nil).Maybe()
 
 	cus := &customer.Customer{ID: h.customerID, Name: "Acme Logistics", Code: "ACME"}
+	h.customer = cus
 	customers := mocks.NewMockCustomerRepository(t)
 	customers.EXPECT().List(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*customer.Customer]{Items: []*customer.Customer{cus}, Total: 1}, nil).
@@ -188,6 +190,30 @@ func (h *harness) object(
 	return h.mappings.get(row.ID)
 }
 
+func shown(rows ...*accountingsync.AccountingMapping) []services.AccountingMappingConfirmation {
+	items := make([]services.AccountingMappingConfirmation, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, services.AccountingMappingConfirmation{ID: row.ID, ExternalID: row.ExternalID})
+	}
+	return items
+}
+
+func TestConfirmRefusesAProposalThatChangedSinceItWasShown(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	h.rescore(t)
+
+	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
+	require.Equal(t, "50", cus.ExternalID)
+	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
+		TenantInfo: h.tenant,
+		Items:      []services.AccountingMappingConfirmation{{ID: cus.ID, ExternalID: "49"}},
+	})
+	require.Error(t, err)
+	assert.True(t, errortypes.IsBusinessError(err))
+	assert.Equal(t, accountingsync.MappingStateProposed, h.object(t, accountingsync.TargetCustomer, h.customerID).State)
+}
+
 func TestRescoreCreatesEveryTargetAndProposesMatches(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
@@ -234,7 +260,7 @@ func TestRescoreIsIdempotentAndNeverTouchesConfirmedRows(t *testing.T) {
 	confirmed, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.tenant.UserID,
-		IDs:        []pulid.ID{ar.ID},
+		Items:      shown(ar),
 	})
 	require.NoError(t, err)
 	require.Len(t, confirmed, 1)
@@ -283,7 +309,7 @@ func TestConfirmRejectsRowsWithoutAProposal(t *testing.T) {
 
 	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
-		IDs:        []pulid.ID{ap.ID},
+		Items:      shown(ap),
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
@@ -303,7 +329,7 @@ func TestConfirmRefusesAReferenceThatWentInactive(t *testing.T) {
 
 	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
-		IDs:        []pulid.ID{cus.ID},
+		Items:      shown(cus),
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
@@ -314,13 +340,13 @@ func TestConfirmLimitsTheBatch(t *testing.T) {
 	t.Parallel()
 	h := newHarness(t)
 
-	ids := make([]pulid.ID, maxConfirmBatch+1)
-	for idx := range ids {
-		ids[idx] = pulid.MustNew("acctm_")
+	items := make([]services.AccountingMappingConfirmation, maxConfirmBatch+1)
+	for idx := range items {
+		items[idx] = services.AccountingMappingConfirmation{ID: pulid.MustNew("acctm_")}
 	}
 	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
-		IDs:        ids,
+		Items:      items,
 	})
 	require.Error(t, err)
 	assert.True(t, errortypes.IsError(err))
@@ -335,7 +361,7 @@ func TestConfirmRecordsTheActorAndAudits(t *testing.T) {
 	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.tenant.UserID,
-		IDs:        []pulid.ID{ar.ID},
+		Items:      shown(ar),
 		Source:     accountingsync.MappingSourceAgent,
 	})
 	require.NoError(t, err)
@@ -419,19 +445,19 @@ func TestClearReturnsARowToUnmatched(t *testing.T) {
 
 func confirmRequired(t *testing.T, h *harness) {
 	t.Helper()
-	ids := make([]pulid.ID, 0, 4)
+	rows := make([]*accountingsync.AccountingMapping, 0, 4)
 	for _, role := range []string{
 		accountingsync.AccountRoleAR,
 		accountingsync.AccountRoleRevenue,
 		accountingsync.AccountRoleDeposit,
 	} {
-		ids = append(ids, h.keyed(t, accountingsync.TargetAccountRole, role).ID)
+		rows = append(rows, h.keyed(t, accountingsync.TargetAccountRole, role))
 	}
-	ids = append(ids, h.keyed(t, accountingsync.TargetLineType, "Freight").ID)
+	rows = append(rows, h.keyed(t, accountingsync.TargetLineType, "Freight"))
 	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
 		TenantInfo: h.tenant,
 		UserID:     h.tenant.UserID,
-		IDs:        ids,
+		Items:      shown(rows...),
 	})
 	require.NoError(t, err)
 }
@@ -742,4 +768,96 @@ func TestModelPassIgnoresAnUnreadableReply(t *testing.T) {
 	applied, err := h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
 	require.NoError(t, err)
 	assert.Zero(t, applied)
+}
+
+func TestRescoreRelabelsAConfirmedMappingWithoutTouchingIt(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	h.rescore(t)
+
+	cus := h.object(t, accountingsync.TargetCustomer, h.customerID)
+	_, err := h.svc.Confirm(t.Context(), &services.ConfirmAccountingMappingsRequest{
+		TenantInfo: h.tenant,
+		Items:      shown(cus),
+	})
+	require.NoError(t, err)
+	confirmed := h.object(t, accountingsync.TargetCustomer, h.customerID)
+
+	h.customer.Name = "Acme Logistics West"
+	h.rescore(t)
+
+	after := h.object(t, accountingsync.TargetCustomer, h.customerID)
+	assert.Equal(t, "Acme Logistics West (ACME)", after.TargetLabel)
+	assert.Equal(t, accountingsync.MappingStateConfirmed, after.State)
+	assert.Equal(t, confirmed.ExternalID, after.ExternalID)
+	assert.Equal(t, confirmed.Version, after.Version, "a new label does not invalidate a form a person has open")
+}
+
+func TestAModelPickSurvivesTheNextRefreshAndIsNotAskedForAgain(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	h.references.rows = append(h.references.rows,
+		account("5", "Carrier Settlements Due", "Accounts Payable"),
+		account("6", "Owner Operator Clearing", "Accounts Payable"),
+	)
+	first := h.rescore(t)
+	ap := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAP)
+	require.Equal(t, accountingsync.MappingStateUnmatched, ap.State)
+	require.NotEmpty(t, ap.Signals.Candidates)
+	require.Contains(t, first.NeedsModel, ap.ID)
+
+	pick := ap.Signals.Candidates[0].ExternalID
+	h.completion.reply = `{"answers":[{"target":"T1","candidate":"C1","confidence":0.8,"reason":"Carrier bills are payables"}]}`
+	applied, err := h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{ap.ID})
+	require.NoError(t, err)
+	require.Equal(t, 1, applied)
+
+	second := h.rescore(t)
+	after := h.keyed(t, accountingsync.TargetAccountRole, accountingsync.AccountRoleAP)
+	assert.Equal(t, accountingsync.MappingStateProposed, after.State)
+	assert.Equal(t, accountingsync.MappingSourceModel, after.Source)
+	assert.Equal(t, pick, after.ExternalID)
+	assert.NotContains(t, second.NeedsModel, ap.ID)
+}
+
+func TestTheModelIsNotAskedAgainAboutCandidatesItDeclined(t *testing.T) {
+	t.Parallel()
+	h, row := modelHarness(t)
+	h.completion.reply = `{"answers":[]}`
+
+	_, err := h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
+	require.NoError(t, err)
+	_, err = h.svc.ModelPass(t.Context(), h.tenant, h.conn.ID, []pulid.ID{row.ID})
+	require.NoError(t, err)
+
+	assert.Len(t, h.completion.requests, 1)
+	assert.False(t, h.mappings.get(row.ID).NeedsModelReview())
+}
+
+func TestCreateReferenceRecordStillMapsWhenARescoreRacedIt(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	h.rescore(t)
+	h.connector.createdObj = &accountingsync.AccountingReferenceObject{
+		Kind:       accountingsync.ReferenceKindVendor,
+		ExternalID: "71",
+		Name:       "Roadrunner Freight",
+		Active:     true,
+	}
+	carr := h.object(t, accountingsync.TargetCarrier, h.carrierID)
+	h.connector.onCreate = func() {
+		raced := h.mappings.get(carr.ID)
+		raced.Reason = "rescored meanwhile"
+		_, _ = h.mappings.ApplyScoring(t.Context(), []*accountingsync.AccountingMapping{raced})
+	}
+
+	updated, err := h.svc.CreateReferenceRecord(t.Context(), &services.CreateAccountingReferenceRecordRequest{
+		TenantInfo: h.tenant,
+		MappingID:  carr.ID,
+		Name:       "Roadrunner Freight",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, accountingsync.MappingStateConfirmed, updated.State)
+	assert.Equal(t, "71", updated.ExternalID)
+	assert.Len(t, h.connector.created, 1, "the record is created once")
 }

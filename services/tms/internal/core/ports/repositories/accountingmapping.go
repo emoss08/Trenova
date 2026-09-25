@@ -129,6 +129,7 @@ type AccountingMappingRepository interface {
 	) (*accountingsync.AccountingMapping, error)
 	CreateMissing(ctx context.Context, entities []*accountingsync.AccountingMapping) (int64, error)
 	ApplyScoring(ctx context.Context, entities []*accountingsync.AccountingMapping) (int64, error)
+	UpdateLabels(ctx context.Context, entities []*accountingsync.AccountingMapping) error
 	Update(
 		ctx context.Context,
 		entity *accountingsync.AccountingMapping,

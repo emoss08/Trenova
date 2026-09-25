@@ -2421,6 +2421,43 @@ func (ec *executionContext) unmarshalInputCompleteAccountingAuthorizationInput(c
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputConfirmAccountingMappingInput(ctx context.Context, obj any) (gqlmodel.ConfirmAccountingMappingInput, error) {
+	var it gqlmodel.ConfirmAccountingMappingInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "externalId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "externalId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("externalId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExternalID = data
+		}
+	}
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateAccountingReferenceRecordInput(ctx context.Context, obj any) (gqlmodel.CreateAccountingReferenceRecordInput, error) {
 	var it gqlmodel.CreateAccountingReferenceRecordInput
 	if obj == nil {
@@ -3987,6 +4024,25 @@ func (ec *executionContext) marshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtr
 func (ec *executionContext) unmarshalNCompleteAccountingAuthorizationInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCompleteAccountingAuthorizationInput(ctx context.Context, v any) (gqlmodel.CompleteAccountingAuthorizationInput, error) {
 	res, err := ec.unmarshalInputCompleteAccountingAuthorizationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNConfirmAccountingMappingInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐConfirmAccountingMappingInputᚄ(ctx context.Context, v any) ([]*gqlmodel.ConfirmAccountingMappingInput, error) {
+	vSlice := graphql.CoerceList(v)
+	var err error
+	res := make([]*gqlmodel.ConfirmAccountingMappingInput, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNConfirmAccountingMappingInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐConfirmAccountingMappingInput(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNConfirmAccountingMappingInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐConfirmAccountingMappingInput(ctx context.Context, v any) (*gqlmodel.ConfirmAccountingMappingInput, error) {
+	res, err := ec.unmarshalInputConfirmAccountingMappingInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNCreateAccountingReferenceRecordInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCreateAccountingReferenceRecordInput(ctx context.Context, v any) (gqlmodel.CreateAccountingReferenceRecordInput, error) {

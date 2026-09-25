@@ -5442,6 +5442,13 @@ enum ConfigurationVisibility {
   Shared
 }
 
+"""A proposal to confirm, with the record it proposed when it was shown."""
+input ConfirmAccountingMappingInput {
+  """The proposed record's ID in the accounting system, as shown."""
+  externalId: String!
+  id: ID!
+}
+
 enum CostBehavior {
   Fixed
   Variable
@@ -12692,7 +12699,9 @@ type Mutation {
   checkAccountingConnection(integrationType: AccountingSystem!): AccountingConnection!
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
-  """Removes the chosen record so the mapping is unmatched again."""
+  """
+  Removes the chosen record so the mapping is unmatched again. Trenova will not propose that record for it again.
+  """
   clearAccountingMapping(id: ID!): AccountingMapping!
   """Removes the caller's rating of a target; false when there was none."""
   clearMyAIFeedback(input: AIFeedbackTargetInput!): Boolean!
@@ -12717,8 +12726,10 @@ type Mutation {
   completeClearinghouseQuery(input: CompleteClearinghouseQueryInput!): WorkerClearinghouseQuery!
   completeWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   completeWorkerTraining(input: CompleteWorkerTrainingInput!): WorkerTrainingRecord!
-  """Confirms Trenova's proposals as they stand. At most 200 at a time."""
-  confirmAccountingMappings(ids: [ID!]!): [AccountingMapping!]!
+  """
+  Confirms Trenova's proposals as they were shown. A proposal that changed since is refused. At most 200 at a time.
+  """
+  confirmAccountingMappings(input: [ConfirmAccountingMappingInput!]!): [AccountingMapping!]!
   """
   Creates an item, customer or vendor in the accounting system for the mapping and confirms it.
   """

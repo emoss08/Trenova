@@ -37,7 +37,8 @@ Keywords: change mapping, wrong account, remap customer, pick QuickBooks record
 Keywords: reject proposal, unmap, remove mapping
 1. Open [Mappings](/accounting/sync/mappings) and select the mapping.
 2. Select **Turn down** to reject a proposal; Trenova will not propose that record for it again.
-3. Select **Clear** to remove the chosen record so the mapping is unmatched again.
+3. Select **Clear** to remove the chosen record so the mapping is unmatched again; Trenova will
+   not propose that record for it again either.
 
 ### Create a missing item, customer or vendor in QuickBooks
 Keywords: add item to QuickBooks, create vendor, create customer in QuickBooks

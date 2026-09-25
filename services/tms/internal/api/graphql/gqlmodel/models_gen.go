@@ -1401,6 +1401,13 @@ type CompleteWorkerTrainingInput struct {
 	Version     *int    `json:"version,omitempty"`
 }
 
+// A proposal to confirm, with the record it proposed when it was shown.
+type ConfirmAccountingMappingInput struct {
+	ID string `json:"id"`
+	// The proposed record's ID in the accounting system, as shown.
+	ExternalID string `json:"externalId"`
+}
+
 type CostCategory struct {
 	ID                   string                       `json:"id"`
 	Category             CostCategoryType             `json:"category"`

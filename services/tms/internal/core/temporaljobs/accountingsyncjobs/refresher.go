@@ -3,7 +3,6 @@ package accountingsyncjobs
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -14,8 +13,6 @@ import (
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 )
-
-const refreshExecutionTimeout = time.Hour
 
 type RefresherParams struct {
 	fx.In
@@ -43,7 +40,6 @@ func (r *ReferenceRefresher) RequestReferenceRefresh(
 		TaskQueue:                temporaltype.IntegrationTaskQueue,
 		WorkflowIDReusePolicy:    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 		WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_USE_EXISTING,
-		WorkflowExecutionTimeout: refreshExecutionTimeout,
 	}, RefreshAccountingReferenceWorkflowName, &RefreshReferencePayload{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,

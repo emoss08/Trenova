@@ -144,12 +144,12 @@ func (r *mutationResolver) CheckAccountingConnection(ctx context.Context, integr
 	return r.accountingConnections.CheckHealth(ctx, tenant, status.Connection.ID)
 }
 
-func (r *mutationResolver) ConfirmAccountingMappings(ctx context.Context, ids []string) ([]*accountingsync.AccountingMapping, error) {
+func (r *mutationResolver) ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingsync.AccountingMapping, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
 	if err != nil {
 		return nil, err
 	}
-	mappingIDs, err := parseIDs(ids)
+	items, err := accountingMappingConfirmations(input)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (r *mutationResolver) ConfirmAccountingMappings(ctx context.Context, ids []
 	return r.accountingMappings.Confirm(ctx, &services.ConfirmAccountingMappingsRequest{
 		TenantInfo: tenantInfo(authCtx),
 		UserID:     authCtx.UserID,
-		IDs:        mappingIDs,
+		Items:      items,
 	})
 }
 

@@ -7138,7 +7138,7 @@ type ComplexityRoot struct {
 		CompleteClearinghouseQuery            func(childComplexity int, input gqlmodel.CompleteClearinghouseQueryInput) int
 		CompleteWorkerChecklistItem           func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		CompleteWorkerTraining                func(childComplexity int, input gqlmodel.CompleteWorkerTrainingInput) int
-		ConfirmAccountingMappings             func(childComplexity int, ids []string) int
+		ConfirmAccountingMappings             func(childComplexity int, input []*gqlmodel.ConfirmAccountingMappingInput) int
 		CreateAccountingReferenceRecord       func(childComplexity int, input gqlmodel.CreateAccountingReferenceRecordInput) int
 		CreateAgentEvalCase                   func(childComplexity int, input gqlmodel.CreateAgentEvalCaseInput) int
 		CreateAgentMemory                     func(childComplexity int, input gqlmodel.AgentMemoryInput) int
@@ -45232,7 +45232,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Mutation.ConfirmAccountingMappings(childComplexity, args["ids"].([]string)), true
+		return e.ComplexityRoot.Mutation.ConfirmAccountingMappings(childComplexity, args["input"].([]*gqlmodel.ConfirmAccountingMappingInput)), true
 	case "Mutation.createAccountingReferenceRecord":
 		if e.ComplexityRoot.Mutation.CreateAccountingReferenceRecord == nil {
 			break
@@ -76166,6 +76166,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCompleteAccountingAuthorizationInput,
 		ec.unmarshalInputCompleteClearinghouseQueryInput,
 		ec.unmarshalInputCompleteWorkerTrainingInput,
+		ec.unmarshalInputConfirmAccountingMappingInput,
 		ec.unmarshalInputCostCategoryUpdateInput,
 		ec.unmarshalInputCostingControlInput,
 		ec.unmarshalInputCreateAccountingReferenceRecordInput,
@@ -76895,6 +76896,13 @@ input AccountingMappingFilterInput {
   search: String
 }
 
+"A proposal to confirm, with the record it proposed when it was shown."
+input ConfirmAccountingMappingInput {
+  id: ID!
+  "The proposed record's ID in the accounting system, as shown."
+  externalId: String!
+}
+
 "Chooses an accounting system record for a mapping and confirms it."
 input SetAccountingMappingInput {
   mappingId: ID!
@@ -76954,12 +76962,12 @@ extend type Mutation {
   disconnectAccountingSystem(integrationType: AccountingSystem!): AccountingConnection!
   "Checks the connection now instead of waiting for the next scheduled check."
   checkAccountingConnection(integrationType: AccountingSystem!): AccountingConnection!
-  "Confirms Trenova's proposals as they stand. At most 200 at a time."
-  confirmAccountingMappings(ids: [ID!]!): [AccountingMapping!]!
+  "Confirms Trenova's proposals as they were shown. A proposal that changed since is refused. At most 200 at a time."
+  confirmAccountingMappings(input: [ConfirmAccountingMappingInput!]!): [AccountingMapping!]!
   "Turns down a proposal. Trenova will not propose that record for it again."
   rejectAccountingMapping(id: ID!): AccountingMapping!
   setAccountingMapping(input: SetAccountingMappingInput!): AccountingMapping!
-  "Removes the chosen record so the mapping is unmatched again."
+  "Removes the chosen record so the mapping is unmatched again. Trenova will not propose that record for it again."
   clearAccountingMapping(id: ID!): AccountingMapping!
   "Creates an item, customer or vendor in the accounting system for the mapping and confirms it."
   createAccountingReferenceRecord(input: CreateAccountingReferenceRecordInput!): AccountingMapping!

@@ -146,8 +146,8 @@ query AccountingReferenceObjects(
   }
 }
 
-mutation ConfirmAccountingMappings($ids: [ID!]!) {
-  confirmAccountingMappings(ids: $ids) {
+mutation ConfirmAccountingMappings($input: [ConfirmAccountingMappingInput!]!) {
+  confirmAccountingMappings(input: $input) {
     ...AccountingMappingFields
   }
 }

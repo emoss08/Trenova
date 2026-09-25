@@ -291,6 +291,18 @@ func TestMappingRepository_ApplyScoringNeverOverwritesAConfirmedOrChangedRow(t *
 	assert.Equal(t, accountingsync.MappingStateConfirmed, ar.State)
 	assert.Equal(t, "84", ar.ExternalID)
 
+	confirmedVersion := ar.Version
+	ar.TargetLabel = "Trade receivables"
+	require.NoError(t, f.mappings.UpdateLabels(f.ctx, []*accountingsync.AccountingMapping{ar}))
+	relabeled, err := f.mappings.GetByID(f.ctx, repositories.GetAccountingMappingRequest{
+		TenantInfo: f.tenant,
+		ID:         ar.ID,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Trade receivables", relabeled.TargetLabel)
+	assert.Equal(t, accountingsync.MappingStateConfirmed, relabeled.State)
+	assert.Equal(t, confirmedVersion, relabeled.Version, "a new label leaves the version alone")
+
 	revenue, err := f.mappings.GetByTarget(f.ctx, &repositories.GetAccountingMappingByTargetRequest{
 		TenantInfo:   f.tenant,
 		ConnectionID: f.connection.ID,

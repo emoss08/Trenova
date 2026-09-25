@@ -115,7 +115,7 @@ type MutationResolver interface {
 	CompleteAccountingAuthorization(ctx context.Context, input gqlmodel.CompleteAccountingAuthorizationInput) (*accountingsync.AccountingConnection, error)
 	DisconnectAccountingSystem(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
 	CheckAccountingConnection(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error)
-	ConfirmAccountingMappings(ctx context.Context, ids []string) ([]*accountingsync.AccountingMapping, error)
+	ConfirmAccountingMappings(ctx context.Context, input []*gqlmodel.ConfirmAccountingMappingInput) ([]*accountingsync.AccountingMapping, error)
 	RejectAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error)
 	SetAccountingMapping(ctx context.Context, input gqlmodel.SetAccountingMappingInput) (*accountingsync.AccountingMapping, error)
 	ClearAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error)
@@ -2549,14 +2549,14 @@ func (ec *executionContext) field_Mutation_completeWorkerTraining_args(ctx conte
 func (ec *executionContext) field_Mutation_confirmAccountingMappings_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ids",
-		func(ctx context.Context, v any) ([]string, error) {
-			return ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) ([]*gqlmodel.ConfirmAccountingMappingInput, error) {
+			return ec.unmarshalNConfirmAccountingMappingInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐConfirmAccountingMappingInputᚄ(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["ids"] = arg0
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -15946,7 +15946,7 @@ func (ec *executionContext) _Mutation_confirmAccountingMappings(ctx context.Cont
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Mutation().ConfirmAccountingMappings(ctx, fc.Args["ids"].([]string))
+			return ec.Resolvers.Mutation().ConfirmAccountingMappings(ctx, fc.Args["input"].([]*gqlmodel.ConfirmAccountingMappingInput))
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v []*accountingsync.AccountingMapping) graphql.Marshaler {
