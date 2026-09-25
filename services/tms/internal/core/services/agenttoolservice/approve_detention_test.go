@@ -19,6 +19,21 @@ import (
 type stubApprover struct {
 	occurrence *detention.DetentionOccurrence
 	approved   *detentionservice.ApproveParams
+	previewed  *detentionservice.ApproveParams
+}
+
+func (s *stubApprover) PreviewApprove(
+	_ context.Context,
+	p *detentionservice.ApproveParams,
+) (*detentionservice.OccurrenceChange, error) {
+	s.previewed = p
+	before := *s.occurrence
+	after := before
+	if err := after.Approve(p.UserID, 1_767_230_000); err != nil {
+		return nil, err
+	}
+
+	return &detentionservice.OccurrenceChange{Before: &before, After: &after}, nil
 }
 
 func (s *stubApprover) Approve(
@@ -74,18 +89,17 @@ func TestApproveDetention_ApprovesAsThePersonWhoApprovedTheProposal(t *testing.T
 
 	require.NoError(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
 
-	simulated, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), params)
+	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
 	require.NoError(t, err)
-	assert.Contains(t, simulated.Summary, "425.00 USD")
-	assert.Contains(t, simulated.Summary, "collectability 88, Strong; 2 evidence records")
-	assert.Contains(t, simulated.Summary, "notice sent 09:55")
-	assert.Equal(t, []agent.FieldChange{
-		{Field: "status", From: "Pending", To: "Approved"},
-		{Field: "requiresApproval", From: "true", To: "false"},
-	}, simulated.Changes)
+	require.Nil(t, stub.approved, "a preview must not approve")
+	assert.Contains(t, preview.Summary, "425.00 USD")
+	assert.Contains(t, preview.Summary, "collectability 88, Strong; 2 evidence records")
+	assert.Contains(t, preview.Summary, "notice sent 09:55")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, stub.approved)
+	assert.Equal(t, *stub.previewed, *stub.approved,
+		"the preview and the write must make the same approval")
 	assert.Equal(t, stub.occurrence.ID, stub.approved.OccurrenceID)
 	assert.Equal(t, params.Actor.UserID, stub.approved.UserID)
 	assert.Equal(t, params.OrganizationID, stub.approved.TenantInfo.OrgID)

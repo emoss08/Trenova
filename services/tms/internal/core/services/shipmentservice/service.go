@@ -1059,14 +1059,9 @@ func (s *service) Cancel(
 	req *repositories.CancelShipmentRequest,
 	actor *services.RequestActor,
 ) (*shipment.Shipment, error) {
-	if req == nil {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add("request", errortypes.ErrRequired, "Cancel request is required")
-		return nil, multiErr
-	}
-
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
+	original, err := s.planCancel(ctx, req, actor)
+	if err != nil {
+		return nil, err
 	}
 
 	auditActor := actor.AuditActor()
@@ -1076,25 +1071,6 @@ func (s *service) Cancel(
 		zap.String("principalID", auditActor.PrincipalID.String()),
 		zap.String("shipmentID", req.ShipmentID.String()),
 	)
-
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID: req.ShipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: req.TenantInfo.OrgID,
-			BuID:  req.TenantInfo.BuID,
-		},
-	})
-	if err != nil {
-		log.Error("failed to get original shipment", zap.Error(err))
-		return nil, err
-	}
-
-	if original.IsCanceled() {
-		return nil, errortypes.NewBusinessError("shipment is already canceled")
-	}
-
-	req.CanceledByID = auditActor.UserID
-	req.CanceledAt = timeutils.NowUnix()
 
 	updatedEntity, err := s.repo.Cancel(ctx, req)
 	if err != nil {

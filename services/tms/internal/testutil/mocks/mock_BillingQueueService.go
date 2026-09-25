@@ -688,3 +688,77 @@ func (_c *MockBillingQueueService_UpdateStatus_Call) RunAndReturn(run func(ctx c
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewUpdateCharges provides a mock function for the type MockBillingQueueService
+func (_mock *MockBillingQueueService) PreviewUpdateCharges(ctx context.Context, req *services.UpdateChargesRequest, actor *services.RequestActor) (*services.ChargeUpdatePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewUpdateCharges")
+	}
+
+	var r0 *services.ChargeUpdatePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UpdateChargesRequest, *services.RequestActor) (*services.ChargeUpdatePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.UpdateChargesRequest, *services.RequestActor) *services.ChargeUpdatePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ChargeUpdatePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.UpdateChargesRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueService_PreviewUpdateCharges_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewUpdateCharges'
+type MockBillingQueueService_PreviewUpdateCharges_Call struct {
+	*mock.Call
+}
+
+// PreviewUpdateCharges is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.UpdateChargesRequest
+//   - actor *services.RequestActor
+func (_e *MockBillingQueueService_Expecter) PreviewUpdateCharges(ctx any, req any, actor any) *MockBillingQueueService_PreviewUpdateCharges_Call {
+	return &MockBillingQueueService_PreviewUpdateCharges_Call{Call: _e.mock.On("PreviewUpdateCharges", ctx, req, actor)}
+}
+
+func (_c *MockBillingQueueService_PreviewUpdateCharges_Call) Run(run func(ctx context.Context, req *services.UpdateChargesRequest, actor *services.RequestActor)) *MockBillingQueueService_PreviewUpdateCharges_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.UpdateChargesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.UpdateChargesRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueService_PreviewUpdateCharges_Call) Return(result *services.ChargeUpdatePreview, err error) *MockBillingQueueService_PreviewUpdateCharges_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockBillingQueueService_PreviewUpdateCharges_Call) RunAndReturn(run func(ctx context.Context, req *services.UpdateChargesRequest, actor *services.RequestActor) (*services.ChargeUpdatePreview, error)) *MockBillingQueueService_PreviewUpdateCharges_Call {
+	_c.Call.Return(run)
+	return _c
+}

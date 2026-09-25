@@ -86,40 +86,6 @@ func (t *updateTrailerStatusTool) Simulate(
 	}, nil
 }
 
-func (t *cancelShipmentTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
-	if err != nil {
-		return nil, err
-	}
-	reason, err := requireString(params.Params, "cancelReason")
-	if err != nil {
-		return nil, err
-	}
-
-	entity, err := t.shipments.Get(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         shipmentID,
-		TenantInfo: tenantFrom(params),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would cancel shipment %s, releasing its assignments and stopping it being billed. Reason: %s",
-			entity.ProNumber,
-			reason,
-		),
-		Changes: []agent.FieldChange{
-			{Field: "status", From: string(entity.Status), To: "Canceled"},
-			{Field: "cancelReason", To: reason},
-		},
-	}, nil
-}
-
 func (t *assignMoveTool) Simulate(
 	_ context.Context,
 	params serviceports.ToolExecuteParams,

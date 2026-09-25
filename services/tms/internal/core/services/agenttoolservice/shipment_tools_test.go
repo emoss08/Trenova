@@ -256,7 +256,7 @@ func TestCancelShipment_RequiresAReason(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentService{}
-	tool := newCancelShipmentTool(shipments)
+	tool := newCancelShipmentTool(shipments, nil, nil)
 
 	err := tool.Execute(t.Context(), executeParams(map[string]any{
 		"shipmentId": pulid.MustNew("shp_").String(),
@@ -269,7 +269,7 @@ func TestCancelShipment_RecordsWhoCanceledIt(t *testing.T) {
 	t.Parallel()
 
 	shipments := &fakeShipmentService{}
-	tool := newCancelShipmentTool(shipments)
+	tool := newCancelShipmentTool(shipments, nil, nil)
 
 	params := executeParams(map[string]any{
 		"shipmentId":   pulid.MustNew("shp_").String(),
@@ -286,7 +286,7 @@ func TestCancelShipment_RecordsWhoCanceledIt(t *testing.T) {
 func TestCancelShipment_IsIrreversibleAndOnlyProposes(t *testing.T) {
 	t.Parallel()
 
-	tool := newCancelShipmentTool(&fakeShipmentService{})
+	tool := newCancelShipmentTool(&fakeShipmentService{}, nil, nil)
 
 	assert.False(t, tool.Policy().Reversible)
 	assert.Equal(t, agent.TierPropose, tool.Policy().DefaultTier)
@@ -311,7 +311,7 @@ func TestShipmentWriteTools_SurfaceServiceFailures(t *testing.T) {
 
 	shipments := &fakeShipmentService{err: failure}
 	require.ErrorIs(t,
-		newCancelShipmentTool(shipments).Execute(t.Context(), executeParams(map[string]any{
+		newCancelShipmentTool(shipments, nil, nil).Execute(t.Context(), executeParams(map[string]any{
 			"shipmentId":   pulid.MustNew("shp_").String(),
 			"cancelReason": "duplicate booking",
 		})),
@@ -333,7 +333,7 @@ func TestShipmentWriteTools_AuthorizeAgainstWhatTheyWrite(t *testing.T) {
 		{newAddShipmentCommentTool(nil), permission.ResourceShipmentComment, permission.OpCreate},
 		{newPlaceShipmentHoldTool(nil), permission.ResourceShipmentHold, permission.OpCreate},
 		{newReleaseShipmentHoldTool(nil), permission.ResourceShipmentHold, permission.OpUpdate},
-		{newCancelShipmentTool(nil), permission.ResourceShipment, permission.OpCancel},
+		{newCancelShipmentTool(nil, nil, nil), permission.ResourceShipment, permission.OpCancel},
 	} {
 		assert.Equal(t, tc.resource, tc.tool.Policy().Resource, tc.tool.Name())
 		assert.Equal(t, tc.operation, tc.tool.Policy().Operation, tc.tool.Name())

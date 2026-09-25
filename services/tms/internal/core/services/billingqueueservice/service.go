@@ -23,7 +23,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -884,85 +883,11 @@ func (s *service) UpdateCharges(
 	req *services.UpdateChargesRequest,
 	actor *services.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Update charges request is required",
-		)
-	}
-
-	item, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
-		ItemID:     req.ItemID,
-		TenantInfo: req.TenantInfo,
-	})
+	plan, err := s.planChargeUpdate(ctx, req, actor, true)
 	if err != nil {
 		return nil, err
 	}
-
-	if item.Status != billingqueue.StatusInReview {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Charges can only be edited when the item is in InReview status",
-		)
-	}
-
-	if err = s.guardSiblingPayersUnposted(ctx, item, req.TenantInfo); err != nil {
-		return nil, err
-	}
-
-	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         item.ShipmentID,
-		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if req.FormulaTemplateID != nil && !req.FormulaTemplateID.IsNil() {
-		shp.FormulaTemplateID = *req.FormulaTemplateID
-
-		if err = s.rerateShipment(ctx, shp, req.TenantInfo, actor.UserID); err != nil {
-			return nil, errortypes.NewValidationError(
-				"formulaTemplateId",
-				errortypes.ErrInvalid,
-				"Failed to recalculate charges with the selected formula template",
-			)
-		}
-	} else if req.BaseRate != nil {
-		shp.BaseRate = decimal.NewNullDecimal(*req.BaseRate)
-
-		if err = s.rerateShipment(ctx, shp, req.TenantInfo, actor.UserID); err != nil {
-			return nil, errortypes.NewValidationError(
-				"baseRate",
-				errortypes.ErrInvalid,
-				"Failed to recalculate charges with updated base rate",
-			)
-		}
-	}
-
-	chargeNames := accessorialNames(shp.AdditionalCharges)
-	if req.AdditionalCharges != nil {
-		shipment.RestoreSystemOwnedCharges(shp.AdditionalCharges, req.AdditionalCharges)
-		shp.AdditionalCharges = req.AdditionalCharges
-	}
-
-	freight := shp.FreightChargeAmount.Decimal
-	otherTotal := shipment.AdditionalChargesTotal(shp.AdditionalCharges, freight)
-	shp.OtherChargeAmount = decimal.NewNullDecimal(otherTotal)
-	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(otherTotal))
-
-	convertedSplits := 0
-	if stale := shipment.FindStaleAmountSplits(shp, shp.ChargeAllocations); len(stale) > 0 {
-		if !req.ConvertAmountSplitsToPercent {
-			return nil, staleAmountSplitError(stale, chargeNames)
-		}
-		convertedSplits = shipment.ConvertAmountSplitsToPercent(shp, shp.ChargeAllocations)
-	}
+	item, shp := plan.Item, plan.After
 
 	if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
 		return nil, err
@@ -979,7 +904,7 @@ func (s *service) UpdateCharges(
 		permission.OpUpdate,
 		nil,
 		nil,
-		chargesUpdatedComment(convertedSplits),
+		chargesUpdatedComment(plan.ConvertedSplits),
 	)
 	s.publishInvalidation(ctx, item, auditActor, "updated", item)
 

@@ -4635,6 +4635,15 @@
       "service/ratematrixservice"
     ]
   },
+  "A rate or formula change reprices the shipment and cannot be previewed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
+    ]
+  },
   "A rated quote must name the agreement that priced it": {
     "sites": 1,
     "scope": [
@@ -17554,12 +17563,14 @@
     ]
   },
   "Applied to invoices": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/invoice"
+      "routes/invoice",
+      "service/agenttoolservice"
     ]
   },
   "Applied to new escrow accounts unless overridden per account.": {
@@ -45903,6 +45914,15 @@
       "apps/web/lib"
     ]
   },
+  "Customer's EDI trading partner": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Customer, rating method, and charge amounts": {
     "sites": 1,
     "scope": [
@@ -57680,6 +57700,15 @@
     ],
     "areas": [
       "routes/service-failure"
+    ]
+  },
+  "EDI 214 service failure resolved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "EDI Inbound File Retention (days)": {
@@ -73258,7 +73287,7 @@
     ]
   },
   "Freight": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -73270,6 +73299,7 @@
       "routes/invoice",
       "routes/order",
       "routes/shipment",
+      "service/agenttoolservice",
       "template/invoice.pdf"
     ]
   },
@@ -91021,6 +91051,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Load tender offer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Load tender request is required": {
@@ -114313,13 +114352,15 @@
     ]
   },
   "Open balance": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/customer-ledger",
-      "routes/invoice"
+      "routes/invoice",
+      "service/agenttoolservice"
     ]
   },
   "Open batch": {
@@ -139869,7 +139910,7 @@
     ]
   },
   "Request is required": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "go"
     ],
@@ -156464,6 +156505,15 @@
       "service/orderservice"
     ]
   },
+  "Shipment comment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Shipment comment actions require a user actor": {
     "sites": 1,
     "scope": [
@@ -167044,6 +167094,15 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Tender offer withdrawn": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Tender processing failed. Review the failure reason for details.": {
@@ -186725,6 +186784,15 @@
       "routes/customer-payments"
     ]
   },
+  "Unapplied cash on account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Unapplied credit": {
     "sites": 1,
     "scope": [
@@ -188010,6 +188078,15 @@
     ],
     "areas": [
       "service/accountingcontrolservice"
+    ]
+  },
+  "Unreconciled cash": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Unresolved": {

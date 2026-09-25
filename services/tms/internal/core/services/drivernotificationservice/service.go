@@ -83,24 +83,18 @@ func (s *Service) NotifyWithCorrelation(
 		return
 	}
 
-	wrk, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
-		ID:         req.WorkerID,
-		TenantInfo: req.TenantInfo,
-	})
+	wrk, err := s.recipient(ctx, req)
 	if err != nil {
 		s.l.Warn("failed to load worker for driver notification",
 			zap.String("workerId", req.WorkerID.String()),
 			zap.Error(err))
 		return
 	}
-	if wrk.UserID.IsNil() {
+	if !reachable(wrk) {
 		return
 	}
 
-	priority := req.Priority
-	if priority == "" {
-		priority = notification.PriorityMedium
-	}
+	priority := notificationPriority(req)
 
 	title, message, ok := s.render(ctx, req, wrk)
 	if !ok {
@@ -152,21 +146,7 @@ func (s *Service) render(
 	req *DriverNotification,
 	wrk *worker.Worker,
 ) (title, message string, ok bool) {
-	if s.templates == nil {
-		s.l.Warn("template rendering is not configured; dropping driver notification",
-			zap.String("eventType", req.EventType))
-		return "", "", false
-	}
-
-	data := fillRecipient(req.Context, wrk)
-
-	rendered, err := s.templates.RenderMessage(ctx, &services.RenderMessageRequest{
-		TenantInfo:        req.TenantInfo,
-		Kind:              notificationKind(req.EventType),
-		Data:              data,
-		ReferenceID:       req.WorkerID,
-		FallbackToBuiltIn: true,
-	})
+	title, message, err := s.renderNotification(ctx, req, wrk)
 	if err != nil {
 		s.l.Warn("failed to render driver notification",
 			zap.String("eventType", req.EventType),
@@ -175,7 +155,7 @@ func (s *Service) render(
 		return "", "", false
 	}
 
-	return rendered.Subject, rendered.Text, true
+	return title, message, true
 }
 
 // fillRecipient returns the context with the driver's name in it, accepting

@@ -272,23 +272,18 @@ func (s *Service) Send(
 	if err != nil {
 		return nil, err
 	}
-	for _, recipient := range req.To {
-		suppressed, err := s.repo.HasSuppression(ctx, req.TenantInfo, recipient)
-		if err != nil {
-			return nil, err
-		}
-		if suppressed {
-			return nil, errortypes.NewBusinessError("recipient is suppressed: {0}", recipient)
-		}
+	suppressed, err := s.suppressedRecipients(ctx, req.TenantInfo, req.To, true)
+	if err != nil {
+		return nil, err
+	}
+	if len(suppressed) > 0 {
+		return nil, errortypes.NewBusinessError("recipient is suppressed: {0}", suppressed[0])
 	}
 
 	if req.IdempotencyKey == "" {
 		req.IdempotencyKey = newIdempotencyKey()
 	}
-	fromEmail := strings.TrimSpace(req.FromEmail)
-	if fromEmail == "" {
-		fromEmail = profile.SenderEmail
-	}
+	fromEmail := senderEmail(req, profile)
 	msg := &email.Message{
 		BusinessUnitID: req.TenantInfo.BuID,
 		OrganizationID: req.TenantInfo.OrgID,

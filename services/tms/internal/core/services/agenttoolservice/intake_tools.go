@@ -245,7 +245,10 @@ func (t *createShipmentTool) Execute(
 	entity.Status = shipment.StatusNew
 	scopeShipmentChildren(entity, tenantInfo)
 
-	if sourceDocumentID := optionalString(params.Params, "sourceDocumentId"); sourceDocumentID != "" {
+	if sourceDocumentID := optionalString(
+		params.Params,
+		"sourceDocumentId",
+	); sourceDocumentID != "" {
 		if _, err := pulid.Parse(sourceDocumentID); err != nil {
 			return errortypes.NewValidationError(
 				"sourceDocumentId",
@@ -262,7 +265,11 @@ func (t *createShipmentTool) Execute(
 	}
 
 	if entity.SourceDocumentID != "" && t.imports != nil {
-		if completeErr := t.imports.CompleteHistory(ctx, entity.SourceDocumentID, tenantInfo); completeErr != nil {
+		if completeErr := t.imports.CompleteHistory(
+			ctx,
+			entity.SourceDocumentID,
+			tenantInfo,
+		); completeErr != nil {
 			t.logger.Warn("shipment created but the import conversation could not be closed",
 				zap.String("sourceDocumentId", entity.SourceDocumentID),
 				zap.String("shipmentId", created.ID.String()),
@@ -314,10 +321,14 @@ func scopeShipmentChildren(entity *shipment.Shipment, tenantInfo pagination.Tena
 // a way around both.
 type updateShipmentTool struct {
 	shipments shipmentWriter
+	partners  shipmentPartnerNotices
 }
 
-func newUpdateShipmentTool(shipments shipmentWriter) serviceports.AgentTool {
-	return &updateShipmentTool{shipments: shipments}
+func newUpdateShipmentTool(
+	shipments shipmentWriter,
+	partners shipmentPartnerNotices,
+) serviceports.AgentTool {
+	return &updateShipmentTool{shipments: shipments, partners: partners}
 }
 
 func (t *updateShipmentTool) Name() string { return "update_shipment" }
@@ -418,46 +429,60 @@ func (t *updateShipmentTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	_, entity, err := t.plan(ctx, &params)
 	if err != nil {
-		return err
-	}
-
-	var patch shipmentPatch
-	if err = jsonutils.Convert(params.Params, &patch); err != nil {
-		return fmt.Errorf("update_shipment parameters: %w", err)
-	}
-	if patch.empty() {
-		return errortypes.NewValidationError(
-			"shipmentId",
-			errortypes.ErrInvalid,
-			"Nothing to change: send at least one field besides the shipment id",
-		)
-	}
-
-	tenantInfo := tenantFrom(params)
-	entity, err := t.shipments.Get(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         shipmentID,
-		TenantInfo: tenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	if err = applyShipmentPatch(entity, patch); err != nil {
 		return err
 	}
 
 	_, err = t.shipments.Update(ctx, entity, params.Actor)
 
 	return err
+}
+
+// plan loads the shipment and applies the patch to it: the shipment as it is,
+// and as the write would save it.
+func (t *updateShipmentTool) plan(
+	ctx context.Context,
+	params *serviceports.ToolExecuteParams,
+) (before, after *shipment.Shipment, err error) {
+	if err = guardExecute(t, *params); err != nil {
+		return nil, nil, err
+	}
+
+	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var patch shipmentPatch
+	if err = jsonutils.Convert(params.Params, &patch); err != nil {
+		return nil, nil, fmt.Errorf("update_shipment parameters: %w", err)
+	}
+	if patch.empty() {
+		return nil, nil, errortypes.NewValidationError(
+			"shipmentId",
+			errortypes.ErrInvalid,
+			"Nothing to change: send at least one field besides the shipment id",
+		)
+	}
+
+	entity, err := t.shipments.Get(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         shipmentID,
+		TenantInfo: tenantFrom(*params),
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	patched := *entity
+	if err = applyShipmentPatch(&patched, patch); err != nil {
+		return nil, nil, err
+	}
+
+	return entity, &patched, nil
 }
 
 func applyShipmentPatch(entity *shipment.Shipment, patch shipmentPatch) error {
