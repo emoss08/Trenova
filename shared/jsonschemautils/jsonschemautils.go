@@ -13,9 +13,9 @@ const (
 	keyMinimum              = "minimum"
 	keyMaximum              = "maximum"
 
-	typeObject = "object"
-	typeString = "string"
-	typeArray  = "array"
+	typeObject  = "object"
+	typeString  = "string"
+	typeArray   = "array"
 	typeNumber  = "number"
 	typeBoolean = "boolean"
 	typeInteger = "integer"
@@ -67,6 +67,13 @@ func Array(items map[string]any, maxItems int) map[string]any {
 	if maxItems > 0 {
 		schema[keyMaxItems] = maxItems
 	}
+
+	return schema
+}
+
+func DescribedArray(description string, items map[string]any, maxItems int) map[string]any {
+	schema := Array(items, maxItems)
+	schema[keyDescription] = description
 
 	return schema
 }

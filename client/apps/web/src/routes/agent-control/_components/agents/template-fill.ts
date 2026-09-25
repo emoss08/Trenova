@@ -15,6 +15,7 @@ export type TemplatePatch = Partial<
     | "dailyRunLimit"
     | "outputMode"
     | "contextProviders"
+    | "shadowMode"
   >
 >;
 
@@ -23,7 +24,8 @@ export type TemplatePatch = Partial<
  * The ceiling, data access and output mode are set outright, since a
  * template's whole point is to suggest how much it should do, what it should
  * see and what it should produce. A daily run cap fills only an agent with
- * none, so a cap the person chose is never loosened.
+ * none, so a cap the person chose is never loosened. A starter that asks for
+ * shadow mode turns it on; picking another template never turns it off.
  */
 export function applyTemplateStarter(
   current: AgentFormValues,
@@ -55,6 +57,9 @@ export function applyTemplateStarter(
   patch.outputMode = template.starterOutput;
   if (current.dailyRunLimit === 0 && template.starterDailyRunLimit > 0) {
     patch.dailyRunLimit = template.starterDailyRunLimit;
+  }
+  if (template.starterShadow && !current.shadowMode) {
+    patch.shadowMode = true;
   }
   if (current.contextProviders.length === 0 && template.contextProviders.length > 0) {
     patch.contextProviders = [...template.contextProviders];

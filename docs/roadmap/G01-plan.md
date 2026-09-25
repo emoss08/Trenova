@@ -452,6 +452,120 @@ One workflow per connection (`accounting-reference:<connectionID>`) deduplicates
 
 **Deferred to M3, with the records they depend on.** Usage counts and the remap guard (`acknowledgeHistory`) need `accounting_sync_records`. So do the sync start date and backfill.
 
+### 9.3 M3 design, pinned to the code
+
+QuickBooks Online is the first adapter, not the design. Everything below the connector port speaks provider-neutral documents, stores provider-neutral states and shows the connection's provider name. Xero, Business Central and NetSuite add an adapter and nothing else.
+
+**What the survey found.** Four facts reshape §4.4:
+- **Credit memos from adjustments do not pass through `Post`.** `invoiceadjustmentservice.createCreditMemoInvoice` inserts the memo already `Posted`. It has its own enqueue point, inside `executeApprovedAdjustment`'s transaction.
+- **An adjustment credit memo is not applied to its invoice.** It stands open with its own negative balance. `customerpaymentservice.ApplyCreditMemo` settles it later, and `UnapplyCreditMemoApplication` undoes that. So credit applications are a document of their own (`CreditApplication`, `Create` and `Void`), not a side effect of the memo.
+- **`SubmitDraft` runs an adjustment without a transaction.** M3 wraps its execution in one, so the memo and its outbox row commit together.
+- **`ports.AfterCommit` is the after-commit hook.** It queues on the outermost `WithTx` and runs once that commits. The dispatcher kick uses it; the outbox row itself is written with the transaction's context.
+
+**The provider-neutral port.** `AccountingDocumentWriter` is an optional capability, found by type assertion like the M2 reference ports:
+- `UpsertCustomer(party)`, `CreateSalesDocument(doc)`, `VoidSalesDocument(ref)`, `CreatePayment(payment)`, `VoidPayment(ref)`, `CreateCreditApplication(app)`, `VoidCreditApplication(ref)`.
+- `DocumentLimits()` says what the provider accepts: the longest document number, whether it has debit memos, whether a credit memo can be voided in place.
+- `DocumentURL(kind, externalID)` builds the link back.
+- `ClassifyDocumentError(err)` returns a `SyncErrorCategory` with the provider's code and text.
+
+Documents carry external ids already resolved from confirmed mappings, amounts as decimals, dates as calendar dates and the request id. Mapping rules live once, in the payload builders. Each adapter chooses how to express what its provider lacks:
+- QuickBooks has no debit memo, so a debit memo is sent as an invoice whose private note names the memo and its reference invoice.
+- A short pay becomes a credit memo to the short-pay write-off item, linked in the same payment.
+- A credit application becomes a zero-total payment that links the invoice and the credit memo.
+
+**Multi-step writes.** When one Trenova document needs several provider requests, each request carries its own request id derived from the record's (`<request id>-1`, `-2`), and the adapter reports every external id it received. A retry therefore replays the steps already done and finishes the rest. The short-pay credit memo and then the payment is one example.
+
+**Outbox.** `accounting_sync_records` and `accounting_sync_attempts` are as in §3.4 and §3.5. Changes:
+- **Object types for M3:** `Customer`, `Invoice`, `CreditMemo`, `DebitMemo`, `CustomerPayment`, `CreditApplication`. M4 adds the payables types by widening the CHECK.
+- **Idempotency key:** `<objectType>:<objectID>:<operation>:<revision>`. The revision is 1 for a creation and the document's version for an update. A payment re-applied by `ApplyUnapplied` is an `Update` at its new version.
+- **Request id:** `trn-` plus 40 hex characters of SHA-256 over the connection and the idempotency key. It is stable across leases and retries.
+- **`mapping_ids`:** the confirmed mappings a synced payload used. This is the M2 deferral: a mapping's usage count is how many `Synced` records name it. Changing or clearing a used mapping needs `acknowledgeHistory`, and the change is audited.
+- **One record per connection.** The enqueuer writes a record for every connection that is syncing. A tenant normally has one; a second accounting provider gets its own records.
+
+**Which connections sync.** A connection enqueues when it is active, its setup is `Complete` and it has a `sync_start_date`. Setup now has a `StartDate` step between `Mappings` and `Complete`. It takes:
+- the start date;
+- whether posted documents sync on their own (`auto_sync`) or wait as `AwaitingApproval` for a person to release them;
+- whether to backfill.
+
+Finishing it stamps `sync_enabled_at`. Documents dated before the start date are never enqueued. Pausing (`paused_at`, `paused_by_id`, `paused_reason`) keeps enqueueing but holds the dispatcher.
+
+**Enqueue points.**
+
+| Where | Record |
+|---|---|
+| `invoiceservice.Post`, after the journal posting and inside its transaction (memo auto-post nests into the memo's transaction) | `Invoice`, `CreditMemo` or `DebitMemo` / `Create` |
+| `invoiceadjustmentservice.createCreditMemoInvoice` (every adjustment kind; a write-off memo carries one line to the `ShortPayWriteOff` item) | `CreditMemo` / `Create` |
+| `customerpaymentservice.PostAndApply` | `CustomerPayment` / `Create` |
+| `customerpaymentservice.ApplyUnapplied` | `CustomerPayment` / `Update` |
+| `customerpaymentservice.Reverse` | `CustomerPayment` / `Void` |
+| `customerpaymentservice.ApplyCreditMemo` / `UnapplyCreditMemoApplication` | `CreditApplication` / `Create`, `Void` |
+| `customerservice.Update`, when the customer is mapped (the service gains a transaction so the row commits with the change) | `Customer` / `Update` |
+
+A draft voided never synced. A posted invoice is reversed by a credit memo, which is already an enqueue point. `TestEveryPostingPathEnqueues` reads these packages and fails when a journal posting or a `Posted` status write appears in a function the table does not name.
+
+**Dependencies.** Resolved when a record is pushed, not when it is queued:
+- **Customer.** A document whose customer is unmapped queues a `Customer` / `Create` record (source `DependencyOf`) and waits for it. That record creates the customer through the M2 create path and confirms the mapping. A duplicate name blocks it as `Mapping` and names the existing record to map to instead.
+- **Items and accounts.** An unmapped line (freight, memo, an accessorial charge), payment method or deposit account blocks the record as `Mapping`. The message names the exact mapping, for example "Map charge code DET to a QuickBooks Online item".
+- **Payments and credit applications.** These wait for the documents they link, and are blocked if one of those documents is itself blocked.
+- **Mapping changes.** Confirming or creating a mapping re-queues the connection's `Mapping`-blocked records.
+
+**Checks before a push.**
+- **Currency.** A document whose currency differs from the provider's home currency is `Blocked(Currency)`, unless the provider has multicurrency. In that case the currency is sent and the provider's rate applies, since Trenova keeps no document rate.
+- **Closed books.** A document dated on or before `external_books_closed_through` is `Blocked(ClosedPeriod)`.
+- **Document number.** A number longer than the provider allows is left for the provider to assign, and Trenova's number is written into the private note.
+- **Dates.** Invoices use the invoice date. Payments use their accounting date, so the provider's books agree with Trenova's GL.
+
+**Dispatcher.** `DrainAccountingOutboxWorkflow`, one per connection (`accounting-sync:<connectionID>`):
+- **Claiming.** It claims due records (`Queued` whose `next_attempt_at` has passed) with `FOR UPDATE SKIP LOCKED` and a lease, in dependency order: customers, then sales documents, then payments and credit applications.
+- **Pushing.** It pushes each claimed record in one activity that heartbeats, and records an attempt row per push.
+- **Idle and restart.** It waits for a signal or 60 seconds, and continues as new after 50 batches.
+- **Starting it.**
+  - `Kick` starts it with `SignalWithStartWorkflow` after commit.
+  - A one-minute schedule starts it for every connection that has due records. A lost kick therefore costs at most a minute.
+  - An expired lease returns the record to the queue, and the stable request id makes the re-push a replay.
+
+**Retries.**
+
+| Error | What happens |
+|---|---|
+| `Transient` or `RateLimited` | Retried, backing off exponentially from 30 seconds to 6 hours. After 8 attempts the record is `DeadLettered` and `accounting.sync_failed` is raised. |
+| `Auth` | Reported to the connection's health (M1). The record waits 15 minutes without spending an attempt. |
+| `Validation`, `Mapping`, `ClosedPeriod`, `Currency`, `Duplicate`, `NotFound`, `Conflict` | The record goes straight to `Blocked` with a plain-language `resolution`, and `accounting.sync_blocked` is raised. |
+
+A person or the retry tool re-queues a blocked record, and skipping one marks it `Skipped` with a reason.
+
+**Safety net and backfill.**
+- **Safety net.** It runs hourly. It enqueues any document posted since `sync_enabled_at` that has no record (source `SafetyNet`). A document it finds means an enqueue point was missed, so the count is a Watchtower item.
+- **Backfill.** It covers documents dated from the start date up to `sync_enabled_at`, which never passed a live enqueue point. It is an `accounting_backfills` row driven by `BackfillAccountingWorkflow`. That workflow pages each object type by `(posted_at, id)`, saves the cursor after every page, checks the row's status between pages to pause or cancel, and counts what it enqueued. It can be asked for from the `StartDate` step or later, and one runs per connection at a time.
+
+**Retention.** Daily, the `payload` of records `Synced` more than 90 days ago is cleared (the hash stays), and attempts older than 90 days are deleted.
+
+**Agent surface.**
+- **Events.** `accounting.sync_failed` and `accounting.sync_blocked`, on subject type `AccountingSyncRecord` (prefix `acctsr_`).
+- **Watchtower.** Items are grouped by cause, so 400 records blocked by one missing item are one item that names it. There are also items for a safety-net count above zero, and for a connection paused longer than a day.
+- **Template.** `BooksKeeper` listens for `sync_failed`, `sync_blocked` and `connection_degraded`, plus a weekly schedule. It starts in shadow mode.
+- **Tools.**
+  - `get_accounting_sync_status` gains queue depth by status.
+  - New tools:
+    - `list_accounting_sync_records`
+    - `get_accounting_sync_record`
+    - `get_record_accounting_sync_state`
+    - `retry_accounting_sync`
+    - `skip_accounting_sync`
+    - `pause_accounting_sync`
+    - `resume_accounting_sync`
+    - `request_accounting_backfill`
+
+  They carry the tiers in §6.2, and `accounting_sync` read and update join the agent's allowed permissions.
+- **Reporting.** Report catalog entity `accounting_sync_record`, and the canned report **Sync exceptions by week**.
+
+**UI.**
+- **Sync ledger page.** `/accounting/sync` has a KPI strip, a ledger table, a row sheet with the attempts and the one action that fixes the row, and header actions (pause or resume, retry failed, release held, backfill).
+- **Setup wizard.** The `StartDate` step is added.
+- **Status line.** An `AccountingSyncStateLine` goes on the invoice, customer payment and customer views. It is fed by a per-request loader and hidden when nothing is syncing.
+
+**Deferred to M4 and M5.** Payables records, inbound changes and drift, as §9 lists.
+
 
 ---
 

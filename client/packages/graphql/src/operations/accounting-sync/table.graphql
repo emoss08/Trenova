@@ -1,0 +1,45 @@
+query AccountingSyncRecordTable(
+  $integrationType: AccountingSystem!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  accountingSyncRecordTable(integrationType: $integrationType, input: $input) {
+    edges {
+      node {
+        id
+        objectType
+        objectId
+        objectNumber
+        operation
+        sourceEvent
+        revision
+        documentDate
+        dependsOnRecordId
+        status
+        attemptCount
+        nextAttemptAt
+        externalId
+        externalDocNumber
+        externalUrl
+        errorCategory
+        errorCode
+        errorMessage
+        resolution
+        queuedAt
+        startedAt
+        syncedAt
+        skippedBy {
+          id
+          name
+        }
+        skippedReason
+        version
+        updatedAt
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

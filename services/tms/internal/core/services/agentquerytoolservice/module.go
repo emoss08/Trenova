@@ -48,6 +48,9 @@ func ToolProviders() []any {
 func coreToolProviders() []any {
 	return []any{
 		provideGetAccountingSyncStatusTool,
+		provideListAccountingSyncRecordsTool,
+		provideGetAccountingSyncRecordTool,
+		provideGetRecordAccountingSyncStateTool,
 		provideListAccountingMappingGapsTool,
 		provideGetAccountingMappingTool,
 		newGetShipmentTool,

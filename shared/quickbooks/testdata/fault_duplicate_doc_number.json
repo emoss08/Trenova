@@ -1,0 +1,14 @@
+{
+  "Fault": {
+    "Error": [
+      {
+        "Message": "Duplicate Document Number Error",
+        "Detail": "Duplicate Document Number Error : You must specify a different number. This number has already been used. DocNumber=INV-1001 is assigned to TxnType=Invoice with TxnId=145",
+        "code": "6140",
+        "element": ""
+      }
+    ],
+    "type": "ValidationFault"
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

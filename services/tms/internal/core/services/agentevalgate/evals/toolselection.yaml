@@ -162,6 +162,24 @@ cases:
     expect: [create_accounting_reference_record, get_accounting_mapping]
   - request: I just added new accounts in quickbooks, pull them in
     expect: [refresh_accounting_reference_data]
+  - request: which invoices failed to sync to quickbooks
+    expect: [list_accounting_sync_records]
+  - request: how many documents are queued to go to quickbooks
+    expect: [get_accounting_sync_status, list_accounting_sync_records]
+  - request: why did this sync record fail and how many tries did it take
+    expect: [get_accounting_sync_record, list_accounting_sync_records]
+  - request: did invoice 1042 reach quickbooks
+    expect: [get_record_accounting_sync_state, list_accounting_sync_records]
+  - request: retry the failed quickbooks sync now that the outage is over
+    expect: [retry_accounting_sync]
+  - request: skip that invoice, we entered it in quickbooks by hand
+    expect: [skip_accounting_sync]
+  - request: pause sending to quickbooks during the outage
+    expect: [pause_accounting_sync]
+  - request: resume sending documents to quickbooks
+    expect: [resume_accounting_sync]
+  - request: backfill last year's invoices into quickbooks
+    expect: [request_accounting_backfill]
   - request: show the accounts receivable aging by customer
     expect: [get_ar_aging]
   - request: which customers owe us money over 90 days

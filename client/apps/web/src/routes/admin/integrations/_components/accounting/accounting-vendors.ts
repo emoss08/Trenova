@@ -6,6 +6,9 @@ export type AccountingVendor = {
   logoLight: string;
   logoDark: string;
   docsUrl: string;
+  appName: string;
+  developerPortalUrl: string;
+  appKeysHelpUrl: string;
 };
 
 export const quickBooksVendor: AccountingVendor = {
@@ -14,4 +17,8 @@ export const quickBooksVendor: AccountingVendor = {
   logoLight: "/integrations/logos/quickbooks-light.svg",
   logoDark: "/integrations/logos/quickbooks-dark.svg",
   docsUrl: "https://quickbooks.intuit.com/learn-support/",
+  appName: "Intuit app",
+  developerPortalUrl: "https://developer.intuit.com/app/developer/dashboard",
+  appKeysHelpUrl:
+    "https://developer.intuit.com/app/developer/qbo/docs/get-started/get-client-id-and-client-secret",
 };

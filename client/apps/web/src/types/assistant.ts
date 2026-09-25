@@ -24,6 +24,7 @@ export const agentTemplateKindSchema = z.enum([
   "InsightAnalyst",
   "EDIDesk",
   "FormulaAssistant",
+  "BooksKeeper",
 ]);
 
 export const autonomyTierSchema = z.enum(["Propose", "ActWithApproval", "AutoExecute"]);
@@ -247,6 +248,8 @@ export const agentTemplateSchema = z.object({
   starterOutput: outputModeSchema,
   /** Runs a day the starter suggests; 0 is no cap. */
   starterDailyRunLimit: z.number().int().nonnegative().default(0),
+  /** The starter asks to begin in shadow mode: its runs are recorded, not acted on. */
+  starterShadow: z.boolean().default(false),
   systemKey: z.string().optional().default(""),
   contextProviders: nullableList(contextProviderSchema),
 });

@@ -1,5 +1,6 @@
-import { getFragmentData } from "@trenova/graphql/fragment-data";
+import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-data";
 import {
+  AccountingAppSettingsFieldsFragmentDoc,
   AccountingConnectionFieldsFragmentDoc,
   AccountingMappingFieldsFragmentDoc,
   AccountingMappingSummaryDocument,
@@ -7,6 +8,7 @@ import {
   AccountingReferenceObjectFieldsFragmentDoc,
   AccountingReferenceObjectsDocument,
   AccountingSyncStatusDocument,
+  AccountingSyncStatusFieldsFragmentDoc,
   CheckAccountingConnectionDocument,
   ClearAccountingMappingDocument,
   CompleteAccountingAuthorizationDocument,
@@ -16,8 +18,11 @@ import {
   DisconnectAccountingSystemDocument,
   RefreshAccountingReferenceDataDocument,
   RejectAccountingMappingDocument,
+  RemoveAccountingAppDocument,
+  SaveAccountingAppDocument,
   SetAccountingMappingDocument,
   StartAccountingAuthorizationDocument,
+  type AccountingAppSettingsFieldsFragment,
   type AccountingConnectionFieldsFragment,
   type AccountingMappingFieldsFragment,
   type AccountingMappingFilterInput,
@@ -28,6 +33,7 @@ import {
   type CompleteAccountingAuthorizationInput,
   type ConfirmAccountingMappingInput,
   type CreateAccountingReferenceRecordInput,
+  type SaveAccountingAppInput,
   type SetAccountingMappingInput,
   type StartAccountingAuthorizationMutation,
 } from "@trenova/graphql/generated/graphql";
@@ -64,14 +70,32 @@ export type AccountingReferenceSearch = {
 };
 export type AccountingAuthorizationStart =
   StartAccountingAuthorizationMutation["startAccountingAuthorization"];
+export type AccountingAppSettings = AccountingAppSettingsFieldsFragment;
+export type AccountingAppCredential = NonNullable<AccountingAppSettings["tenantApp"]>;
 export type AccountingSyncStatus = {
   integrationType: AccountingSystem;
   providerName: string;
   available: boolean;
+  app: AccountingAppSettings;
   connection: AccountingConnection | null;
 };
 
 type RequestOptions = { signal?: AbortSignal };
+
+function toAccountingSyncStatus(
+  ref: FragmentType<typeof AccountingSyncStatusFieldsFragmentDoc>,
+): AccountingSyncStatus {
+  const status = getFragmentData(AccountingSyncStatusFieldsFragmentDoc, ref);
+  return {
+    integrationType: status.integrationType,
+    providerName: status.providerName,
+    available: status.available,
+    app: getFragmentData(AccountingAppSettingsFieldsFragmentDoc, status.app),
+    connection: status.connection
+      ? getFragmentData(AccountingConnectionFieldsFragmentDoc, status.connection)
+      : null,
+  };
+}
 
 export async function fetchAccountingSyncStatus(
   integrationType: AccountingSystem,
@@ -83,15 +107,29 @@ export async function fetchAccountingSyncStatus(
     variables: { integrationType },
     signal: options?.signal,
   });
-  const status = data.accountingSyncStatus;
-  return {
-    integrationType: status.integrationType,
-    providerName: status.providerName,
-    available: status.available,
-    connection: status.connection
-      ? getFragmentData(AccountingConnectionFieldsFragmentDoc, status.connection)
-      : null,
-  };
+  return toAccountingSyncStatus(data.accountingSyncStatus);
+}
+
+export async function saveAccountingApp(
+  input: SaveAccountingAppInput,
+): Promise<AccountingSyncStatus> {
+  const data = await requestGraphQL({
+    document: SaveAccountingAppDocument,
+    operationName: "SaveAccountingApp",
+    variables: { input },
+  });
+  return toAccountingSyncStatus(data.saveAccountingApp);
+}
+
+export async function removeAccountingApp(
+  integrationType: AccountingSystem,
+): Promise<AccountingSyncStatus> {
+  const data = await requestGraphQL({
+    document: RemoveAccountingAppDocument,
+    operationName: "RemoveAccountingApp",
+    variables: { integrationType },
+  });
+  return toAccountingSyncStatus(data.removeAccountingApp);
 }
 
 export async function startAccountingAuthorization(

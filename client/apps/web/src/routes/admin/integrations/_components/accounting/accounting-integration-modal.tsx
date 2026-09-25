@@ -2,7 +2,11 @@ import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { usePermission } from "@/hooks/use-permission";
 import { useAccountingMappingSummary } from "@/hooks/use-accounting-mapping-summary";
-import { hasLiveAccountingConnection, needsAccountingMappings } from "@/lib/accounting-sync";
+import {
+  hasLiveAccountingConnection,
+  needsAccountingMappings,
+  needsAccountingStartDate,
+} from "@/lib/accounting-sync";
 import type { IntegrationSetupStep } from "@/lib/integration-setup";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
@@ -24,6 +28,7 @@ import { AccountingCompanyFacts } from "./accounting-company-facts";
 import { AccountingConnectStep } from "./accounting-connect-step";
 import { AccountingConnectionPanel } from "./accounting-connection-panel";
 import { AccountingMapStep } from "./accounting-map-step";
+import { AccountingStartDateStep } from "./accounting-start-date-step";
 import { quickBooksVendor, type AccountingVendor } from "./accounting-vendors";
 import { useAccountingConnectionActions } from "./use-accounting-connection";
 
@@ -114,6 +119,7 @@ function AccountingIntegrationBody({
     { id: "connect", label: t("Connect"), detail: t("Sign in to {0}", vendor.name) },
     { id: "review", label: t("Review company"), detail: t("Confirm what was connected") },
     { id: "map", label: t("Match records"), detail: t("Confirm what each record is sent as") },
+    { id: "start", label: t("Start date"), detail: t("Choose the first day sent") },
   ];
 
   if (permissionsLoading || (canRead && statusQuery.isLoading)) {
@@ -165,6 +171,8 @@ function AccountingIntegrationBody({
         <AccountingConnectStep
           vendor={vendor}
           available={status.available}
+          app={status.app}
+          connection={connection ?? null}
           canManage={canManage}
           previousCompanyName={connection?.externalCompanyName ?? ""}
           isConnecting={connect.isPending || connect.isSuccess}
@@ -196,7 +204,9 @@ function AccountingIntegrationBody({
         <AccountingCompanyFacts connection={connection} />
         <div className="flex justify-end gap-2 border-t pt-4">
           <Button type="button" onClick={onReviewed}>
-            {needsAccountingMappings(connection) ? t("Continue") : t("Done")}
+            {needsAccountingMappings(connection) || needsAccountingStartDate(connection)
+              ? t("Continue")
+              : t("Done")}
           </Button>
         </div>
       </IntegrationSetupWizard>
@@ -232,9 +242,22 @@ function AccountingIntegrationBody({
     );
   }
 
+  if (needsAccountingStartDate(connection)) {
+    return (
+      <IntegrationSetupWizard
+        steps={steps}
+        activeStepId="start"
+        label={t("{0} setup", vendor.name)}
+      >
+        <AccountingStartDateStep vendor={vendor} connection={connection} canManage={canManage} />
+      </IntegrationSetupWizard>
+    );
+  }
+
   return (
     <AccountingConnectionPanel
       vendor={vendor}
+      app={status.app}
       connection={connection}
       canUpdate={canUpdate}
       canManage={canManage}

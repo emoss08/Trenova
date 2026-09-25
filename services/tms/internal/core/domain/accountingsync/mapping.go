@@ -29,7 +29,7 @@ const (
 
 var (
 	ErrMappingNotProposed = errors.New("only a proposed mapping can be rejected")
-	ErrMappingNotSet      = errors.New("the mapping has no QuickBooks record to clear")
+	ErrMappingNotSet      = errors.New("the mapping has no accounting record to clear")
 )
 
 var _ bun.BeforeAppendModelHook = (*AccountingMapping)(nil)
@@ -161,7 +161,7 @@ func (m *AccountingMapping) Validate(multiErr *errortypes.MultiError) {
 			if (m.State == MappingStateUnmatched) != (m.ExternalID == "") {
 				return validation.NewError(
 					"invalid",
-					"A mapping names a QuickBooks record exactly when it is proposed or confirmed",
+					"A mapping names an accounting record exactly when it is proposed or confirmed",
 				)
 			}
 			return nil

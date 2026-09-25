@@ -1123,11 +1123,106 @@ type AccountTypeEdge {
 }
 
 """
+App keys an organization saved for connecting through its own app.
+
+The client secret and the webhook verifier token are stored encrypted and never
+returned.
+"""
+type AccountingAppCredential {
+  clientId: String!
+  environment: AccountingAppEnvironment!
+  """
+  Whether a webhook verifier token is saved, so webhooks from this app can be checked.
+  """
+  hasWebhookVerifier: Boolean!
+  id: ID!
+  integrationType: AccountingSystem!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""Which of the accounting system's environments an app's keys are for."""
+enum AccountingAppEnvironment {
+  """Production keys, which work with real companies."""
+  Production
+  """Development keys, which work only with test companies."""
+  Sandbox
+}
+
+"""
+Which app the organization connects through, and what registering its own app needs.
+"""
+type AccountingAppSettings {
+  """
+  The app the next connection will use. The organization's own app wins over the server's. Absent when neither exists.
+  """
+  activeSource: AccountingAppSource
+  """Whether this Trenova server is configured with an app of its own."""
+  instanceAppAvailable: Boolean!
+  """The environment of the server's app. Absent when the server has none."""
+  instanceEnvironment: AccountingAppEnvironment
+  """
+  The address the accounting system sends people back to. Register it on the app exactly as written. Empty when the server has no web address configured.
+  """
+  redirectUrl: String!
+  """The organization's own app, when it saved one."""
+  tenantApp: AccountingAppCredential
+  """The path on the API that receives the accounting system's webhooks."""
+  webhookPath: String!
+}
+
+"""Whose app a connection to the accounting system is authorized through."""
+enum AccountingAppSource {
+  """The app this Trenova server is configured with."""
+  Instance
+  """An app the organization registered with the accounting system itself."""
+  Tenant
+}
+
+"""
 Where to send the person to authorize Trenova, and until when that link works.
 """
 type AccountingAuthorizationStart {
   authorizeUrl: String!
   expiresAt: Timestamp!
+}
+
+"""
+A run that queues documents dated between the start date and when sync was turned on.
+"""
+type AccountingBackfill {
+  """Documents it found already queued, which it left alone."""
+  alreadyQueuedCount: Int!
+  completedAt: Timestamp
+  createdAt: Timestamp!
+  """Documents this backfill queued."""
+  enqueuedCount: Int!
+  id: ID!
+  lastError: String!
+  objectTypes: [AccountingSyncObjectType!]!
+  rangeEnd: Timestamp!
+  rangeStart: Timestamp!
+  startedAt: Timestamp
+  status: AccountingBackfillStatus!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""What to do with a running backfill."""
+enum AccountingBackfillAction {
+  Cancel
+  Pause
+  Resume
+}
+
+"""Where a backfill stands."""
+enum AccountingBackfillStatus {
+  Cancelled
+  Completed
+  Failed
+  Paused
+  Queued
+  Running
 }
 
 """
@@ -1137,6 +1232,18 @@ The authorization itself is never returned. It is stored encrypted, bound to
 this connection, and only the server that refreshes it can read it.
 """
 type AccountingConnection {
+  """
+  The environment of the app the connection was authorized through. Absent for connections made before this was recorded.
+  """
+  appEnvironment: AccountingAppEnvironment
+  """
+  Whose app the connection was authorized through. Its tokens only work with that app.
+  """
+  appSource: AccountingAppSource!
+  """
+  Whether posted documents are sent on their own, or wait for a person to release them.
+  """
+  autoSync: Boolean!
   connectedAt: Timestamp!
   consecutiveFailures: Int!
   disconnectedAt: Timestamp
@@ -1162,6 +1269,12 @@ type AccountingConnection {
   lastFailureAt: Timestamp
   lastSuccessAt: Timestamp
   lastWebhookAt: Timestamp
+  """
+  When sending was paused. Records keep queueing while it is. Absent when it is running.
+  """
+  pausedAt: Timestamp
+  pausedBy: User
+  pausedReason: String!
   """Why the last reference data refresh failed. Empty when it succeeded."""
   referenceRefreshError: String!
   """
@@ -1177,6 +1290,12 @@ type AccountingConnection {
   """How far setup has got. Syncing waits until it is Complete."""
   setupStep: AccountingSetupStep!
   status: AccountingConnectionStatus!
+  """When sending was turned on."""
+  syncEnabledAt: Timestamp
+  """
+  Documents dated before this day are never sent. Absent until the start date step is finished.
+  """
+  syncStartDate: Timestamp
   updatedAt: Timestamp!
   version: Int!
 }
@@ -1390,20 +1509,238 @@ type AccountingReferenceObject {
 How far the organization has got through setting up the accounting sync.
 """
 enum AccountingSetupStep {
-  """The required matches are confirmed and setup is finished."""
+  """Setup is finished and documents dated from the start date are sent."""
   Complete
   """Trenova records are being matched to the accounting system's records."""
   Mappings
+  """
+  The matches are confirmed; a start date has to be chosen before anything is sent.
+  """
+  StartDate
+}
+
+"""How many records an action changed."""
+type AccountingSyncActionResult {
+  affected: Int!
+}
+
+"""One try at sending a sync record."""
+type AccountingSyncAttempt {
+  attemptNumber: Int!
+  durationMs: Int!
+  errorCategory: AccountingSyncErrorCategory
+  errorCode: String!
+  errorMessage: String!
+  finishedAt: Timestamp!
+  id: ID!
+  outcome: AccountingSyncAttemptOutcome!
+  startedAt: Timestamp!
+}
+
+"""How one try at sending a record ended."""
+enum AccountingSyncAttemptOutcome {
+  Blocked
+  DeadLettered
+  Retrying
+  Synced
+  """
+  It waited on something else, such as the customer it depends on, without spending an attempt.
+  """
+  Waiting
+}
+
+"""Records stuck for the same reason, so one fix clears them all."""
+type AccountingSyncAttentionGroup {
+  count: Int!
+  errorCategory: AccountingSyncErrorCategory
+  oldestQueuedAt: Timestamp!
+  resolution: String!
+  """One of the records, to open as an example."""
+  sampleRecordId: ID!
+  status: AccountingSyncRecordStatus!
+}
+
+"""Why a sync record failed."""
+enum AccountingSyncErrorCategory {
+  Auth
+  ClosedPeriod
+  Configuration
+  Conflict
+  Currency
+  Duplicate
+  Mapping
+  NotFound
+  RateLimited
+  Transient
+  Validation
+}
+
+"""Where one Trenova document stands in the accounting system."""
+type AccountingSyncObjectState {
+  objectId: ID!
+  objectType: AccountingSyncObjectType!
+  providerName: String!
+  """The document's latest sync record."""
+  record: AccountingSyncRecord!
+}
+
+"""A kind of Trenova document sent to the accounting system."""
+enum AccountingSyncObjectType {
+  """A credit memo applied to an invoice."""
+  CreditApplication
+  CreditMemo
+  Customer
+  CustomerPayment
+  DebitMemo
+  Invoice
+}
+
+"""What a sync record does to the document in the accounting system."""
+enum AccountingSyncOperation {
+  Create
+  Update
+  Void
+}
+
+"""
+One Trenova document on its way to the accounting system, at one revision.
+
+The payload that was sent is kept on the server and not returned here.
+"""
+type AccountingSyncRecord {
+  attemptCount: Int!
+  """The record this one waits for, such as the customer an invoice is for."""
+  dependsOnRecordId: ID
+  """The date the document carries, which the start date is compared with."""
+  documentDate: Timestamp
+  errorCategory: AccountingSyncErrorCategory
+  errorCode: String!
+  """What the accounting system said, as it said it."""
+  errorMessage: String!
+  externalDocNumber: String!
+  """The document's ID in the accounting system. Empty until it is synced."""
+  externalId: String!
+  """
+  A link to the document in the accounting system. Empty until it is synced.
+  """
+  externalUrl: String!
+  id: ID!
+  """When the next try is due. Absent when none is scheduled."""
+  nextAttemptAt: Timestamp
+  """The Trenova document's ID."""
+  objectId: ID!
+  """The Trenova document's number, or the customer's name."""
+  objectNumber: String!
+  objectType: AccountingSyncObjectType!
+  operation: AccountingSyncOperation!
+  queuedAt: Timestamp!
+  """What to do about it, in plain language."""
+  resolution: String!
+  revision: Int!
+  skippedBy: User
+  skippedReason: String!
+  sourceEvent: AccountingSyncSourceEvent!
+  startedAt: Timestamp
+  status: AccountingSyncRecordStatus!
+  syncedAt: Timestamp
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+type AccountingSyncRecordConnection {
+  edges: [AccountingSyncRecordEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AccountingSyncRecordEdge {
+  cursor: String!
+  node: AccountingSyncRecord!
+}
+
+input AccountingSyncRecordFilterInput {
+  errorCategories: [AccountingSyncErrorCategory!]
+  """Only the records for one Trenova document."""
+  objectId: ID
+  objectTypes: [AccountingSyncObjectType!]
+  """Matches the document number."""
+  search: String
+  statuses: [AccountingSyncRecordStatus!]
+}
+
+"""Where a sync record stands."""
+enum AccountingSyncRecordStatus {
+  """Held until a person releases it, because automatic sync is off."""
+  AwaitingApproval
+  """Cannot be sent until someone fixes what the resolution names."""
+  Blocked
+  """Failed too many times in a row; a person has to retry it."""
+  DeadLettered
+  """Being sent now."""
+  InFlight
+  """Waiting its turn."""
+  Queued
+  """
+  The last try failed in a way that may pass; Trenova tries again on its own.
+  """
+  Retrying
+  """A person chose not to send it."""
+  Skipped
+  """A newer revision of the same document replaced it."""
+  Superseded
+  Synced
+}
+
+"""What queued a sync record."""
+enum AccountingSyncSourceEvent {
+  AdjustmentCreditMemo
+  """A backfill of documents dated before sync was turned on."""
+  Backfill
+  CreditMemoApplied
+  CreditMemoPosted
+  CreditMemoUnapplied
+  CustomerPaymentApplied
+  CustomerPaymentPosted
+  CustomerPaymentReversed
+  CustomerUpdated
+  DebitMemoPosted
+  """
+  Another record needed this one first, such as a customer an invoice is for.
+  """
+  DependencyOf
+  InvoicePosted
+  """The hourly check found a posted document no enqueue point had queued."""
+  SafetyNet
 }
 
 """What an organization's link to one accounting system looks like."""
 type AccountingSyncStatus {
+  app: AccountingAppSettings!
   """
-  Whether this Trenova instance has the accounting system's app credentials configured.
+  Whether the organization can connect now: there is an app to connect through and a web address to return to.
   """
   available: Boolean!
   """Absent until the organization first connects."""
   connection: AccountingConnection
+  integrationType: AccountingSystem!
+  providerName: String!
+}
+
+"""How many records are in one status."""
+type AccountingSyncStatusCount {
+  count: Int!
+  status: AccountingSyncRecordStatus!
+}
+
+"""
+The state of the accounting sync for one organization and accounting system.
+"""
+type AccountingSyncSummary {
+  activeBackfill: AccountingBackfill
+  attention: [AccountingSyncAttentionGroup!]!
+  """Absent until the organization first connects."""
+  connection: AccountingConnection
+  counts: [AccountingSyncStatusCount!]!
   integrationType: AccountingSystem!
   providerName: String!
 }
@@ -2856,6 +3193,7 @@ type AgentStarter {
 
 enum AgentSubjectType {
   AccountingConnection
+  AccountingSyncRecord
   AssistantThread
   BankReceipt
   BillingQueueItem
@@ -3017,6 +3355,7 @@ enum AgentTaintSource {
 enum AgentTemplate {
   BillingAssistant
   BillingException
+  BooksKeeper
   CarrierRiskDesk
   CashApplication
   ComplianceAssistant
@@ -5592,6 +5931,11 @@ type CategoryCostLine {
   effectiveSource: EffectiveRateSource!
   name: String!
   ratePerMile: Decimal!
+}
+
+input ChangeAccountingBackfillInput {
+  action: AccountingBackfillAction!
+  id: ID!
 }
 
 """
@@ -9152,6 +9496,21 @@ enum EmploymentVerificationStatus {
   Pending
   Received
   Requested
+}
+
+"""Finishes setup: from which day documents are sent, and how."""
+input EnableAccountingSyncInput {
+  """
+  Send posted documents on their own. When off, each waits for a person to release it.
+  """
+  autoSync: Boolean!
+  """
+  Also queue documents dated from the start date up to now, which were posted before sync was on.
+  """
+  backfill: Boolean!
+  integrationType: AccountingSystem!
+  """Documents dated before this day are never sent."""
+  startDate: Timestamp!
 }
 
 input EndBenefitEnrollmentInput {
@@ -12999,6 +13358,7 @@ type Mutation {
   cancelWorkerPTO(id: ID!, reason: String): WorkerPTO!
   cancelWorkerTraining(input: CancelWorkerTrainingInput!): WorkerTrainingRecord!
   certifyOshaSummary(year: Int!): OSHAAnnualSummary!
+  changeAccountingBackfill(input: ChangeAccountingBackfillInput!): AccountingBackfill!
   """
   Checks the connection now instead of waiting for the next scheduled check.
   """
@@ -13027,7 +13387,9 @@ type Mutation {
   Finishes connecting with what the provider returned. Only the person who started it can finish it.
   """
   completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection!
-  """Finishes setup once every required mapping is confirmed."""
+  """
+  Moves setup to the start date step once every required mapping is confirmed.
+  """
   completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
   completeClearinghouseQuery(input: CompleteClearinghouseQueryInput!): WorkerClearinghouseQuery!
   completeWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
@@ -13188,6 +13550,8 @@ type Mutation {
   dispatchUnassignMoves(moveIds: [ID!]!): DispatchBulkAssignResult!
   disputeDetentionOccurrence(input: DetentionDisputeInput!): DetentionOccurrence!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
+  """Finishes setup with a start date and turns sending on."""
+  enableAccountingSync(input: EnableAccountingSyncInput!): AccountingConnection!
   endBenefitEnrollment(input: EndBenefitEnrollmentInput!): WorkerBenefitEnrollment!
   endWorkerPayAssignment(input: EndWorkerPayAssignmentInput!): WorkerPayAssignment!
   endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment!
@@ -13267,6 +13631,8 @@ type Mutation {
   patchTractor(id: ID!, input: TractorPatchInput!): Tractor!
   patchTrailer(id: ID!, input: TrailerPatchInput!): Trailer!
   patchWorker(id: ID!, input: WorkerPatchInput!): Worker!
+  """Holds sending. Posted documents keep queueing and go out on resume."""
+  pauseAccountingSync(input: PauseAccountingSyncInput!): AccountingConnection!
   """
   Pays a driver immediately: builds an off-cycle settlement from the selected
   accrued events (or everything accrued), then approves, posts, and marks it
@@ -13337,8 +13703,14 @@ type Mutation {
   """Rejects a pending adjustment; the invoice stays as posted."""
   rejectInvoiceAdjustment(input: RejectInvoiceAdjustmentInput!): InvoiceAdjustment!
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
+  """Lets records waiting for approval be sent."""
+  releaseAccountingSync(input: ReleaseAccountingSyncInput!): AccountingSyncActionResult!
   """Release a held pay event back into the settlement pool."""
   releaseDriverPayEvent(payEventId: ID!): DriverPayEvent!
+  """
+  Removes the organization's own app keys, so connections use the server's app again. Refused while a company is connected through them.
+  """
+  removeAccountingApp(integrationType: AccountingSystem!): AccountingSyncStatus!
   removeCarrierSettlementAdjustment(input: RemoveCarrierSettlementAdjustmentInput!): CarrierSettlement!
   removeDriverSettlementAdjustment(input: RemoveSettlementAdjustmentInput!): DriverSettlement!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
@@ -13358,6 +13730,10 @@ type Mutation {
   """
   replayAgentRun(runId: ID!): AgentEvaluation!
   requestAIAuditExport(input: RequestAIAuditExportInput!): AIAuditExport!
+  """
+  Queues documents posted before sync was turned on. One backfill runs at a time.
+  """
+  requestAccountingBackfill(input: RequestAccountingBackfillInput!): AccountingBackfill!
   requestLeaveCertification(caseId: ID!, dueAt: Timestamp): WorkerLeaveCase!
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
   rescindDisciplinaryAction(input: RescindDisciplinaryActionInput!): WorkerDisciplinaryAction!
@@ -13393,7 +13769,10 @@ type Mutation {
   restoreTrainingCourse(id: ID!, version: Int): TrainingCourse!
   restoreWorkerChecklistTemplate(id: ID!, version: Int): WorkerChecklistTemplate!
   restoreWorkerCredentialType(id: ID!, version: Int): WorkerCredentialType!
+  resumeAccountingSync(integrationType: AccountingSystem!): AccountingConnection!
   resumeCarrierIntelMonitoring: Boolean!
+  """Queues failed records to be tried again."""
+  retryAccountingSync(input: RetryAccountingSyncInput!): AccountingSyncActionResult!
   """
   Starts a fresh transfer over the shipments a second attempt could still move.
   """
@@ -13426,6 +13805,10 @@ type Mutation {
   runDotRandomDraw(input: RunDOTRandomDrawInput!): DOTRandomDraw!
   runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!
   runReport(input: RunReportInput!): ReportRun!
+  """
+  Saves the organization's own app keys after checking them with the accounting system. While a company is connected, only its app's secret and verifier token can change.
+  """
+  saveAccountingApp(input: SaveAccountingAppInput!): AccountingSyncStatus!
   saveOshaSummary(input: SaveOSHASummaryInput!): OSHAAnnualSummary!
   saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
   sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
@@ -13464,6 +13847,8 @@ type Mutation {
   """Replaces the agents a role is granted."""
   setRoleAgentAccess(agentIds: [ID!]!, roleId: ID!): Role!
   setWorkerAvailabilityPreference(input: SetAvailabilityPreferenceInput!): WorkerAvailabilityPreference!
+  """Marks a record as not to be sent."""
+  skipAccountingSync(input: SkipAccountingSyncInput!): AccountingSyncRecord!
   skipWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   """
   Reads the uploaded statement and resolves every row without committing
@@ -14317,6 +14702,11 @@ enum PackingGroup {
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
+}
+
+input PauseAccountingSyncInput {
+  integrationType: AccountingSystem!
+  reason: String
 }
 
 """
@@ -15307,15 +15697,33 @@ type Query {
   accessorialCharges(input: DataTableConnectionInput!): AccessorialChargeConnection!
   accountType(id: ID!): AccountType
   accountTypes(input: DataTableConnectionInput!): AccountTypeConnection!
+  accountingBackfills(integrationType: AccountingSystem!): [AccountingBackfill!]!
   """How many mappings are in each state, and whether setup can finish."""
   accountingMappingSummary(integrationType: AccountingSystem!): AccountingMappingSummary!
   accountingMappings(after: String, filter: AccountingMappingFilterInput, first: Int, integrationType: AccountingSystem!): AccountingMappingConnection!
   """Searches the accounting system records Trenova has read."""
   accountingReferenceObjects(integrationType: AccountingSystem!, kind: AccountingReferenceKind!, limit: Int, query: String, usableOnly: Boolean): [AccountingReferenceObject!]!
+  """Every try at sending a record, newest first."""
+  accountingSyncAttempts(recordId: ID!): [AccountingSyncAttempt!]!
+  """
+  Where each document stands in the accounting system. Documents never queued are left out. At most 200 at a time.
+  """
+  accountingSyncObjectStates(objectIds: [ID!]!): [AccountingSyncObjectState!]!
+  accountingSyncRecord(id: ID!): AccountingSyncRecord!
+  """
+  The sync ledger as a data table: filters, sorting and search over the records.
+  """
+  accountingSyncRecordTable(input: DataTableConnectionInput!, integrationType: AccountingSystem!): AccountingSyncRecordConnection!
+  """The sync ledger, newest first."""
+  accountingSyncRecords(after: String, filter: AccountingSyncRecordFilterInput, first: Int, integrationType: AccountingSystem!): AccountingSyncRecordConnection!
   """
   The organization's link to an accounting system, and whether this instance can connect to it at all.
   """
   accountingSyncStatus(integrationType: AccountingSystem!): AccountingSyncStatus!
+  """
+  Record counts by status, the groups needing attention and the running backfill.
+  """
+  accountingSyncSummary(integrationType: AccountingSystem!): AccountingSyncSummary!
   activePerformanceReviewTemplates: [PerformanceReviewTemplate!]!
   activeTrainingCourses: [TrainingCourse!]!
   activeWorkerChecklistTemplates: [WorkerChecklistTemplate!]!
@@ -16665,6 +17073,14 @@ input RejectInvoiceAdjustmentInput {
   reason: String
 }
 
+"""
+Releases the named records waiting for approval, or all of them when none are named.
+"""
+input ReleaseAccountingSyncInput {
+  ids: [ID!]
+  integrationType: AccountingSystem!
+}
+
 input RemoveCarrierSettlementAdjustmentInput {
   lineId: ID!
   settlementId: ID!
@@ -17125,6 +17541,16 @@ input RequestAIAuditExportInput {
   to: Timestamp!
 }
 
+input RequestAccountingBackfillInput {
+  integrationType: AccountingSystem!
+  """Defaults to every kind of document."""
+  objectTypes: [AccountingSyncObjectType!]
+  """Defaults to when sync was turned on."""
+  rangeEnd: Timestamp
+  """Defaults to the start date."""
+  rangeStart: Timestamp
+}
+
 input RequestMyPtoInput {
   endDate: Timestamp!
   reason: String!
@@ -17195,6 +17621,15 @@ input RespondToMyShiftSwapInput {
   id: ID!
   note: String
   response: MyShiftSwapResponse!
+}
+
+"""
+Retries the named records, or every failed record in the named categories.
+"""
+input RetryAccountingSyncInput {
+  errorCategories: [AccountingSyncErrorCategory!]
+  ids: [ID!]
+  integrationType: AccountingSystem!
 }
 
 enum ReturnToDutyStatus {
@@ -17547,6 +17982,22 @@ enum SafetySeverity {
   Major
   Minor
   Moderate
+}
+
+"""
+The organization's own app keys. Leave the secret or verifier token out to keep the saved one.
+"""
+input SaveAccountingAppInput {
+  """Removes the saved webhook verifier token."""
+  clearWebhookVerifierToken: Boolean
+  clientId: String!
+  """
+  Required the first time, and whenever the client ID or environment changes.
+  """
+  clientSecret: String
+  environment: AccountingAppEnvironment!
+  integrationType: AccountingSystem!
+  webhookVerifierToken: String
 }
 
 input SaveHomeLayoutPresetInput {
@@ -20010,6 +20461,12 @@ type SidebarSectionPreference {
 input SidebarSectionPreferenceInput {
   hidden: Boolean!
   key: String!
+}
+
+input SkipAccountingSyncInput {
+  id: ID!
+  """Why the document is not sent. Required."""
+  reason: String!
 }
 
 input SortFieldInput {

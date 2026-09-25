@@ -36,3 +36,11 @@ func TestFormatInstantUTC(t *testing.T) {
 	assert.Equal(t, "2026-09-24T17:00:00Z", FormatInstantUTC(1790269200))
 	assert.Equal(t, "1970-01-01T00:00:00Z", FormatInstantUTC(0))
 }
+
+func TestFormatCalendarDateUsesTheZone(t *testing.T) {
+	t.Parallel()
+
+	ts := time.Date(2026, 9, 25, 2, 30, 0, 0, time.UTC).Unix()
+	assert.Equal(t, "2026-09-25", FormatCalendarDate(ts, nil))
+	assert.Equal(t, "2026-09-24", FormatCalendarDate(ts, LoadLocation("America/Chicago")))
+}

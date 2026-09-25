@@ -13,6 +13,10 @@ var Module = fx.Module("accounting-sync-jobs",
 		NewReferenceRefresher,
 		fx.As(new(services.AccountingReferenceRefresher)),
 	)),
+	fx.Provide(fx.Annotate(
+		NewSyncDispatcher,
+		fx.As(new(services.AccountingSyncDispatcher)),
+	)),
 	fx.Provide(schedule.AsProvider(NewScheduleProvider)),
 	fx.Provide(
 		fx.Annotate(

@@ -16,6 +16,7 @@ const starter: AgentTemplate = {
   starterDataAccess: "Internal",
   starterOutput: "Report",
   starterDailyRunLimit: 0,
+  starterShadow: false,
   systemKey: "",
   contextProviders: ["Organization", "Clock", "Tools"],
 };
@@ -76,6 +77,16 @@ describe("applyTemplateStarter", () => {
       applyTemplateStarter({ ...agentFormDefaults, dailyRunLimit: 5 }, analyst).dailyRunLimit,
     ).toBeUndefined();
     expect(applyTemplateStarter(agentFormDefaults, starter).dailyRunLimit).toBeUndefined();
+  });
+
+  it("starts an agent in shadow mode when its starter asks, and never turns shadow mode off", () => {
+    const keeper = { ...starter, template: "BooksKeeper" as const, starterShadow: true };
+
+    expect(applyTemplateStarter(agentFormDefaults, keeper).shadowMode).toBe(true);
+    expect(applyTemplateStarter(agentFormDefaults, starter).shadowMode).toBeUndefined();
+    expect(
+      applyTemplateStarter({ ...agentFormDefaults, shadowMode: true }, starter).shadowMode,
+    ).toBeUndefined();
   });
 
   it("only sets the template when cleared", () => {

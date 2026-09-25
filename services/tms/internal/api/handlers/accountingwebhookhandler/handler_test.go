@@ -29,15 +29,15 @@ func (s *recordingService) ReceiveWebhook(
 	return s.err
 }
 
-type headerConnector struct{ services.AccountingConnector }
+type headerProvider struct{ services.AccountingProvider }
 
-func (headerConnector) WebhookSignatureHeader() string { return "intuit-signature" }
+func (headerProvider) WebhookSignatureHeader() string { return "intuit-signature" }
 
 type registry struct{}
 
-func (registry) For(typ integration.Type) (services.AccountingConnector, bool) {
+func (registry) For(typ integration.Type) (services.AccountingProvider, bool) {
 	if typ == integration.TypeQuickBooksOnline {
-		return headerConnector{}, true
+		return headerProvider{}, true
 	}
 	return nil, false
 }

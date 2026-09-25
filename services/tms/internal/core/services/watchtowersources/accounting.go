@@ -16,13 +16,15 @@ import (
 const accountingReconnectSuffix = ":reconnect"
 
 type AccountingSyncSource struct {
-	repo repositories.AccountingConnectionRepository
+	repo    repositories.AccountingConnectionRepository
+	records repositories.AccountingSyncRecordRepository
 }
 
 func NewAccountingSyncSource(
 	repo repositories.AccountingConnectionRepository,
+	records repositories.AccountingSyncRecordRepository,
 ) services.WatchtowerSource {
-	return &AccountingSyncSource{repo: repo}
+	return &AccountingSyncSource{repo: repo, records: records}
 }
 
 func (s *AccountingSyncSource) Kind() watchtower.SourceKind {
@@ -46,6 +48,27 @@ func (s *AccountingSyncSource) Snapshot(
 		}
 		if item, open := DescribeAccountingReconnect(conn, now); open {
 			items = append(items, item)
+		}
+		if !conn.IsSyncing() {
+			continue
+		}
+		if item, open := DescribeAccountingSyncPaused(conn, now); open {
+			items = append(items, item)
+		}
+		groups, listErr := s.records.ListAttention(
+			ctx,
+			repositories.ListAccountingSyncAttentionRequest{
+				TenantInfo:   tenant,
+				ConnectionID: conn.ID,
+			},
+		)
+		if listErr != nil {
+			return nil, listErr
+		}
+		for key, keyed := range GroupAccountingSyncAttention(groups) {
+			if item, open := DescribeAccountingSyncAttention(conn, key, keyed); open {
+				items = append(items, item)
+			}
 		}
 	}
 

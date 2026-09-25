@@ -16,11 +16,19 @@ var AccessorialChargeSpec TypeSpec
 
 var AccountTypeSpec TypeSpec
 
+var AccountingAppCredentialSpec TypeSpec
+
+var AccountingBackfillSpec TypeSpec
+
 var AccountingConnectionSpec TypeSpec
 
 var AccountingMappingSpec TypeSpec
 
 var AccountingReferenceObjectSpec TypeSpec
+
+var AccountingSyncAttemptSpec TypeSpec
+
+var AccountingSyncRecordSpec TypeSpec
 
 var AgentControlSpec TypeSpec
 
@@ -1370,6 +1378,108 @@ func init() {
 		},
 	}
 
+	AccountingAppCredentialSpec = TypeSpec{
+		TypeName: "AccountingAppCredential",
+		FieldMap: buncolgen.AccountingAppCredentialFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "integrationType",
+				FieldMapKey: "integrationType",
+			},
+			{
+				Name:        "environment",
+				FieldMapKey: "environment",
+			},
+			{
+				Name:        "clientId",
+				FieldMapKey: "clientId",
+			},
+			{
+				Name:    "hasWebhookVerifier",
+				Special: "hasWebhookVerifier",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AccountingBackfillSpec = TypeSpec{
+		TypeName: "AccountingBackfill",
+		FieldMap: buncolgen.AccountingBackfillFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "rangeStart",
+				FieldMapKey: "rangeStart",
+			},
+			{
+				Name:        "rangeEnd",
+				FieldMapKey: "rangeEnd",
+			},
+			{
+				Name:        "objectTypes",
+				FieldMapKey: "objectTypes",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "enqueuedCount",
+				FieldMapKey: "enqueuedCount",
+			},
+			{
+				Name:        "alreadyQueuedCount",
+				FieldMapKey: "alreadyQueuedCount",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "lastError",
+				FieldMapKey: "lastError",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	AccountingConnectionSpec = TypeSpec{
 		TypeName: "AccountingConnection",
 		FieldMap: buncolgen.AccountingConnectionFieldMap,
@@ -1389,6 +1499,14 @@ func init() {
 			{
 				Name:        "status",
 				FieldMapKey: "status",
+			},
+			{
+				Name:        "appSource",
+				FieldMapKey: "appSource",
+			},
+			{
+				Name:        "appEnvironment",
+				FieldMapKey: "appEnvironment",
 			},
 			{
 				Name:        "externalCompanyName",
@@ -1457,6 +1575,33 @@ func init() {
 			{
 				Name:        "setupStep",
 				FieldMapKey: "setupStep",
+			},
+			{
+				Name:        "syncStartDate",
+				FieldMapKey: "syncStartDate",
+			},
+			{
+				Name:        "syncEnabledAt",
+				FieldMapKey: "syncEnabledAt",
+			},
+			{
+				Name:        "autoSync",
+				FieldMapKey: "autoSync",
+			},
+			{
+				Name:        "pausedAt",
+				FieldMapKey: "pausedAt",
+			},
+			{
+				Name:        "pausedBy",
+				FieldMapKey: "pausedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "pausedReason",
+				FieldMapKey: "pausedReason",
 			},
 			{
 				Name:        "referenceRefreshStartedAt",
@@ -1670,6 +1815,171 @@ func init() {
 			{
 				Name:    "usable",
 				Special: "usable",
+			},
+		},
+	}
+
+	AccountingSyncAttemptSpec = TypeSpec{
+		TypeName: "AccountingSyncAttempt",
+		FieldMap: buncolgen.AccountingSyncAttemptFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "attemptNumber",
+				FieldMapKey: "attemptNumber",
+			},
+			{
+				Name:        "outcome",
+				FieldMapKey: "outcome",
+			},
+			{
+				Name:        "errorCategory",
+				FieldMapKey: "errorCategory",
+			},
+			{
+				Name:        "errorCode",
+				FieldMapKey: "errorCode",
+			},
+			{
+				Name:        "errorMessage",
+				FieldMapKey: "errorMessage",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "finishedAt",
+				FieldMapKey: "finishedAt",
+			},
+			{
+				Name:        "durationMs",
+				FieldMapKey: "durationMs",
+			},
+		},
+	}
+
+	AccountingSyncRecordSpec = TypeSpec{
+		TypeName: "AccountingSyncRecord",
+		FieldMap: buncolgen.AccountingSyncRecordFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "objectType",
+				FieldMapKey: "objectType",
+			},
+			{
+				Name:        "objectId",
+				FieldMapKey: "objectId",
+			},
+			{
+				Name:        "objectNumber",
+				FieldMapKey: "objectNumber",
+			},
+			{
+				Name:        "operation",
+				FieldMapKey: "operation",
+			},
+			{
+				Name:        "sourceEvent",
+				FieldMapKey: "sourceEvent",
+			},
+			{
+				Name:        "revision",
+				FieldMapKey: "revision",
+			},
+			{
+				Name:        "documentDate",
+				FieldMapKey: "documentDate",
+			},
+			{
+				Name:        "dependsOnRecordId",
+				FieldMapKey: "dependsOnRecordId",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "attemptCount",
+				FieldMapKey: "attemptCount",
+			},
+			{
+				Name:        "nextAttemptAt",
+				FieldMapKey: "nextAttemptAt",
+			},
+			{
+				Name:        "externalId",
+				FieldMapKey: "externalId",
+			},
+			{
+				Name:        "externalDocNumber",
+				FieldMapKey: "externalDocNumber",
+			},
+			{
+				Name:        "externalUrl",
+				FieldMapKey: "externalUrl",
+			},
+			{
+				Name:        "errorCategory",
+				FieldMapKey: "errorCategory",
+			},
+			{
+				Name:        "errorCode",
+				FieldMapKey: "errorCode",
+			},
+			{
+				Name:        "errorMessage",
+				FieldMapKey: "errorMessage",
+			},
+			{
+				Name:        "resolution",
+				FieldMapKey: "resolution",
+			},
+			{
+				Name:        "queuedAt",
+				FieldMapKey: "queuedAt",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "syncedAt",
+				FieldMapKey: "syncedAt",
+			},
+			{
+				Name:        "skippedBy",
+				FieldMapKey: "skippedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "skippedReason",
+				FieldMapKey: "skippedReason",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

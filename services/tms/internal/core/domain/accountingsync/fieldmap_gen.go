@@ -4,6 +4,20 @@ package accountingsync
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingAppCredential].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AccountingAppCredentialFieldMap] instead of parsing struct tags via reflection.
+func (e *AccountingAppCredential) GetStaticFieldMap() map[string]string {
+	return buncolgen.AccountingAppCredentialFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingBackfill].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AccountingBackfillFieldMap] instead of parsing struct tags via reflection.
+func (e *AccountingBackfill) GetStaticFieldMap() map[string]string {
+	return buncolgen.AccountingBackfillFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingConnection].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.AccountingConnectionFieldMap] instead of parsing struct tags via reflection.
@@ -23,4 +37,18 @@ func (e *AccountingMapping) GetStaticFieldMap() map[string]string {
 // the generated [buncolgen.AccountingReferenceObjectFieldMap] instead of parsing struct tags via reflection.
 func (e *AccountingReferenceObject) GetStaticFieldMap() map[string]string {
 	return buncolgen.AccountingReferenceObjectFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingSyncAttempt].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AccountingSyncAttemptFieldMap] instead of parsing struct tags via reflection.
+func (e *AccountingSyncAttempt) GetStaticFieldMap() map[string]string {
+	return buncolgen.AccountingSyncAttemptFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingSyncRecord].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AccountingSyncRecordFieldMap] instead of parsing struct tags via reflection.
+func (e *AccountingSyncRecord) GetStaticFieldMap() map[string]string {
+	return buncolgen.AccountingSyncRecordFieldMap
 }

@@ -20,6 +20,11 @@ func connected(t *testing.T) *accountingsync.AccountingConnection {
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ExternalRealmID: "9341452431742015",
 	}
+	conn.BindApp(accountingsync.AppIdentity{
+		Source:      accountingsync.AppSourceInstance,
+		Environment: accountingsync.AppEnvironmentSandbox,
+		Fingerprint: accountingsync.AppFingerprint(accountingsync.AppEnvironmentSandbox, "client"),
+	})
 	conn.Connect(pulid.MustNew("usr_"), accountingsync.TokenGrant{
 		AccessTokenCiphertext:  "access",
 		AccessTokenExpiresAt:   now + 3600,
@@ -135,4 +140,82 @@ func TestValidateRejectsNonAccountingType(t *testing.T) {
 	multiErr := errortypes.NewMultiError()
 	conn.Validate(multiErr)
 	require.True(t, multiErr.HasErrors())
+}
+
+func TestSyncingNeedsSetupCompleteAndAStartDate(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	conn.SetupStep = accountingsync.SetupStepStartDate
+	assert.False(t, conn.IsSyncing())
+	assert.False(t, conn.CanDispatch())
+
+	start := now - 30*24*3600
+	conn.EnableSync(start, true, now)
+	assert.Equal(t, accountingsync.SetupStepComplete, conn.SetupStep)
+	require.NotNil(t, conn.SyncEnabledAt)
+	assert.Equal(t, now, *conn.SyncEnabledAt)
+	assert.True(t, conn.AutoSync)
+	assert.True(t, conn.IsSyncing())
+	assert.True(t, conn.CanDispatch())
+
+	conn.EnableSync(start+10, false, now+500)
+	assert.Equal(t, now, *conn.SyncEnabledAt, "the first enable time bounds the backfill")
+	assert.Equal(t, start+10, *conn.SyncStartDate)
+	assert.False(t, conn.AutoSync)
+
+	conn.RecordFailure(accountingsync.ErrorCategoryRevoked, "revoked", now+600)
+	assert.False(t, conn.IsSyncing())
+}
+
+func TestPauseStopsDispatchUntilResumed(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	conn.EnableSync(now, true, now)
+	user := pulid.MustNew("usr_")
+
+	conn.Pause(user, "  Month-end close  ", now+1)
+	assert.True(t, conn.IsPaused())
+	assert.True(t, conn.IsSyncing())
+	assert.False(t, conn.CanDispatch())
+	assert.Equal(t, user, conn.PausedByID)
+	assert.Equal(t, "Month-end close", conn.PausedReason)
+
+	conn.Resume()
+	assert.False(t, conn.IsPaused())
+	assert.True(t, conn.CanDispatch())
+	assert.Empty(t, conn.PausedReason)
+	assert.True(t, conn.PausedByID.IsNil())
+}
+
+func TestCoversAndBooksClosedOn(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	assert.False(t, conn.Covers(now))
+	conn.EnableSync(now, true, now)
+	assert.True(t, conn.Covers(now))
+	assert.False(t, conn.Covers(now-1))
+
+	assert.False(t, conn.BooksClosedOn(now))
+	closed := now + 100
+	conn.ExternalBooksClosedThrough = &closed
+	assert.True(t, conn.BooksClosedOn(closed))
+	assert.False(t, conn.BooksClosedOn(closed+1))
+}
+
+func TestValidateRequiresAStartDateOnceComplete(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	conn.SetupStep = accountingsync.SetupStepComplete
+	multiErr := errortypes.NewMultiError()
+	conn.Validate(multiErr)
+	require.True(t, multiErr.HasErrors())
+
+	conn.EnableSync(now, true, now)
+	multiErr = errortypes.NewMultiError()
+	conn.Validate(multiErr)
+	assert.False(t, multiErr.HasErrors(), multiErr.Error())
 }

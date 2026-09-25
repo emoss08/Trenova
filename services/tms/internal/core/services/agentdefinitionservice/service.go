@@ -254,6 +254,7 @@ func (s *Service) Templates() []services.AgentTemplateDescriptor {
 			StarterDataAccess:    template.StarterDataAccess(),
 			StarterOutput:        starterOutput(template),
 			StarterDailyRunLimit: template.StarterDailyRunLimit(),
+			StarterShadow:        template.StarterShadow(),
 			ContextProviders:     agentdefinition.AllContextProviders(),
 		})
 	}

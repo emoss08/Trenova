@@ -14,6 +14,8 @@ const (
 	entityJournalEntryLine  = "journal_entry_line"
 	entityCustomerLedger    = "customer_ledger_entry"
 	entityDriverSettlement  = "driver_settlement"
+	entityAccountingSync    = "accounting_sync_record"
+	syncStatusParam         = "syncStatuses"
 	glAccountEdge           = "glAccount"
 	accountTypeEdge         = "accountType"
 	fiscalPeriodEdge        = "fiscalPeriod"
@@ -179,6 +181,47 @@ func settlementRegister() *Entry {
 			Filters:    andFilters(windowFilter("payDate")),
 			Sort:       []report.SortSpec{desc("net_pay")},
 			Parameters: []report.ParameterDef{windowParam(90)},
+		},
+	}
+}
+
+// syncExceptionsByWeek counts the documents that did not reach the accounting
+// system cleanly, by the week they were queued and the reason. It reads each
+// record's current state: a record held last week and synced after a fix is
+// no longer an exception, so the report shows what is still outstanding, not
+// every hiccup along the way.
+func syncExceptionsByWeek() *Entry {
+	return &Entry{
+		Key:     "accounting-sync-exceptions-by-week",
+		Version: initialVersion,
+		Name:    "Sync Exceptions by Week",
+		Description: "Documents held, failed or skipped on their way to the accounting " +
+			"system, by the week they were queued, the reason and the kind of document",
+		Category:      categoryAccounting,
+		Tags:          []string{tagAccounting, "accounting-sync", "exceptions"},
+		DefaultFormat: report.FormatXLSX,
+		Definition: &report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    entityAccountingSync,
+			Columns: []report.ColumnSpec{
+				bucketDim("week", "Week Queued", "queuedAt", report.DateBucketWeek),
+				dimCol("status", "Status", "status"),
+				dimCol("error_category", "Error Category", "errorCategory"),
+				dimCol("document_type", "Document Type", "objectType"),
+				countMeasure("documents", "Documents"),
+			},
+			Filters: andFilters(
+				inParam("status", syncStatusParam),
+				windowFilter("queuedAt"),
+			),
+			Sort: []report.SortSpec{desc("week"), desc("documents")},
+			Parameters: []report.ParameterDef{
+				enumParam(syncStatusParam, "Statuses",
+					[]any{"Blocked", "DeadLettered", "Skipped"},
+					[]string{"Blocked", "DeadLettered", "Skipped", "Retrying"},
+				),
+				windowParam(90),
+			},
 		},
 	}
 }

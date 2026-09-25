@@ -11,7 +11,7 @@ var Module = fx.Module("accounting-connectors",
 	fx.Provide(
 		fx.Annotate(outboundlimit.New, fx.ResultTags(`name:"accountingLimiter"`)),
 		qboconnector.New,
-		func(qbo *qboconnector.Connector) services.AccountingConnectorRegistry {
+		func(qbo *qboconnector.Provider) services.AccountingConnectorRegistry {
 			return NewRegistry(qbo)
 		},
 	),

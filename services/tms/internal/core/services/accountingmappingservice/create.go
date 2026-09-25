@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -132,6 +133,7 @@ func (s *Service) CreateReferenceRecord(
 		req.UserID,
 		[]*accountingsync.AccountingMapping{updated},
 	)
+	s.requeueMappingBlocked(ctx, req.TenantInfo, updated.ConnectionID)
 	return updated, nil
 }
 
@@ -263,24 +265,40 @@ func (s *Service) customerDraft(
 	creator services.AccountingReferenceCreator,
 	createReq *services.AccountingCreateReferenceRequest,
 ) (string, error) {
-	found, err := s.customers.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
-		TenantInfo:            req.TenantInfo,
-		CustomerIDs:           []pulid.ID{row.TrenovaObjectID},
-		CustomerFilterOptions: repositories.CustomerFilterOptions{IncludeState: true},
-	})
+	cus, err := s.customerWithState(ctx, req.TenantInfo, row.TrenovaObjectID)
 	if err != nil {
 		return "", err
 	}
-	if len(found) == 0 {
-		return "", errortypes.NewNotFoundError("The customer for this mapping no longer exists")
-	}
-	cus := found[0]
 
 	name, err := chosenName(creator, accountingsync.ReferenceKindCustomer, req.Name, cus.Name)
 	if err != nil {
 		return "", err
 	}
-	createReq.Party = &services.AccountingPartyDraft{
+	createReq.Party = customerParty(cus, name)
+	return name, nil
+}
+
+func (s *Service) customerWithState(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	customerID pulid.ID,
+) (*customer.Customer, error) {
+	found, err := s.customers.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+		TenantInfo:            tenantInfo,
+		CustomerIDs:           []pulid.ID{customerID},
+		CustomerFilterOptions: repositories.CustomerFilterOptions{IncludeState: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(found) == 0 {
+		return nil, errortypes.NewNotFoundError("The customer for this mapping no longer exists")
+	}
+	return found[0], nil
+}
+
+func customerParty(cus *customer.Customer, name string) *services.AccountingPartyDraft {
+	return &services.AccountingPartyDraft{
 		DisplayName:  name,
 		CompanyName:  cus.Name,
 		AddressLine1: cus.AddressLine1,
@@ -289,7 +307,18 @@ func (s *Service) customerDraft(
 		PostalCode:   cus.PostalCode,
 		Country:      stateCountry(cus.State),
 	}
-	return name, nil
+}
+
+func (s *Service) CustomerParty(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	customerID pulid.ID,
+) (*services.AccountingPartyDraft, error) {
+	cus, err := s.customerWithState(ctx, tenantInfo, customerID)
+	if err != nil {
+		return nil, err
+	}
+	return customerParty(cus, cus.Name), nil
 }
 
 func (s *Service) vendorDraft(

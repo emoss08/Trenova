@@ -31,6 +31,7 @@ const testRealm = "9341452431742015"
 type harness struct {
 	svc          *Service
 	connections  *fakeConnections
+	apps         *fakeApps
 	states       *fakeStates
 	integrations *fakeIntegrations
 	connector    *fakeConnector
@@ -47,6 +48,7 @@ func newHarness(t *testing.T) *harness {
 	t.Helper()
 	h := &harness{
 		connections:  newFakeConnections(),
+		apps:         newFakeApps(),
 		states:       newFakeStates(),
 		integrations: newFakeIntegrations(),
 		connector:    newFakeConnector(),
@@ -66,6 +68,7 @@ func newHarness(t *testing.T) *harness {
 		Logger:       zap.NewNop(),
 		DB:           dbtest.NopConnection{},
 		Connections:  h.connections,
+		Apps:         h.apps,
 		States:       h.states,
 		Integrations: h.integrations,
 		Connectors:   fakeRegistry{connector: h.connector},

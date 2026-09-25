@@ -250,7 +250,7 @@ func score(
 	}
 
 	if len(scored) == 0 {
-		proposal.Reason = "No usable QuickBooks record of this kind"
+		proposal.Reason = "No usable record of this kind in the accounting system"
 		return proposal
 	}
 	best := scored[0]
@@ -350,7 +350,7 @@ func scoreParty(
 		digits := stringutils.DigitsOnly(identifier)
 		if len(digits) >= minIdentifierDigits && slices.Contains(runs, digits) {
 			consider(scoreIdentifier, matcherIdentifier,
-				fmt.Sprintf("QuickBooks account number carries %s", identifier))
+				fmt.Sprintf("The account number in the accounting system carries %s", identifier))
 		}
 	}
 

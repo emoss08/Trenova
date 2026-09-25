@@ -151,6 +151,7 @@ components:
                 - Dashboard
                 - AccountingConnection
                 - FormulaTemplate
+                - AccountingSyncRecord
             type: string
             x-enum-varnames:
                 - SubjectBillingQueueItem
@@ -170,6 +171,7 @@ components:
                 - SubjectDashboard
                 - SubjectAccountingConnection
                 - SubjectFormulaTemplate
+                - SubjectAccountingSyncRecord
         agent.TaintMark:
             properties:
                 at:
@@ -237,6 +239,7 @@ components:
                 - InsightAnalyst
                 - EDIDesk
                 - FormulaAssistant
+                - BooksKeeper
             type: string
             x-enum-varnames:
                 - TemplateDispatchAssistant
@@ -260,6 +263,7 @@ components:
                 - TemplateInsightAnalyst
                 - TemplateEDIDesk
                 - TemplateFormulaAssistant
+                - TemplateBooksKeeper
         apikeyservice.AllowedResourceCategory:
             properties:
                 category:

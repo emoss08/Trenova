@@ -45,3 +45,10 @@ func IsCalendarDate(value string) bool {
 func FormatInstantUTC(ts int64) string {
 	return time.Unix(ts, 0).UTC().Format(time.RFC3339)
 }
+
+func FormatCalendarDate(ts int64, loc *time.Location) string {
+	if loc == nil {
+		loc = time.UTC
+	}
+	return time.Unix(ts, 0).In(loc).Format(ISODateLayout)
+}

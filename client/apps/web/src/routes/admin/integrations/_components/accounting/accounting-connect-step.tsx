@@ -2,11 +2,15 @@ import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ExternalLinkIcon, InfoIcon, LockIcon } from "lucide-react";
+import type { AccountingAppSettings, AccountingConnection } from "@/lib/graphql/accounting-sync";
+import { AccountingAppKeys } from "./accounting-app-keys";
 import type { AccountingVendor } from "./accounting-vendors";
 
 type AccountingConnectStepProps = {
   vendor: AccountingVendor;
   available: boolean;
+  app: AccountingAppSettings;
+  connection: AccountingConnection | null;
   canManage: boolean;
   previousCompanyName: string;
   isConnecting: boolean;
@@ -17,6 +21,8 @@ type AccountingConnectStepProps = {
 export function AccountingConnectStep({
   vendor,
   available,
+  app,
+  connection,
   canManage,
   previousCompanyName,
   isConnecting,
@@ -65,16 +71,7 @@ export function AccountingConnectStep({
           </AlertDescription>
         </Alert>
       ) : null}
-      {!available ? (
-        <Alert size="sm" variant="warning">
-          <AlertDescription>
-            {t(
-              "{0} is not set up on this Trenova server yet. The server's administrator has to add the {0} app credentials before anyone can connect.",
-              vendor.name,
-            )}
-          </AlertDescription>
-        </Alert>
-      ) : null}
+      <AccountingAppKeys vendor={vendor} app={app} connection={connection} canManage={canManage} />
       {available && !canManage ? (
         <Alert size="sm" variant="warning">
           <AlertDescription>

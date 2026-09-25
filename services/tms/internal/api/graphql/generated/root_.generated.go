@@ -43,9 +43,14 @@ type ResolverRoot interface {
 	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
 	AccessorialCharge() AccessorialChargeResolver
+	AccountingAppCredential() AccountingAppCredentialResolver
+	AccountingAppSettings() AccountingAppSettingsResolver
 	AccountingConnection() AccountingConnectionResolver
 	AccountingMapping() AccountingMappingResolver
 	AccountingReferenceObject() AccountingReferenceObjectResolver
+	AccountingSyncAttempt() AccountingSyncAttemptResolver
+	AccountingSyncAttentionGroup() AccountingSyncAttentionGroupResolver
+	AccountingSyncRecord() AccountingSyncRecordResolver
 	AgentDecision() AgentDecisionResolver
 	AgentDefinition() AgentDefinitionResolver
 	AgentEvalCase() AgentEvalCaseResolver
@@ -906,12 +911,50 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	AccountingAppCredential struct {
+		ClientID           func(childComplexity int) int
+		Environment        func(childComplexity int) int
+		HasWebhookVerifier func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		IntegrationType    func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+	}
+
+	AccountingAppSettings struct {
+		ActiveSource         func(childComplexity int) int
+		InstanceAppAvailable func(childComplexity int) int
+		InstanceEnvironment  func(childComplexity int) int
+		RedirectURL          func(childComplexity int) int
+		TenantApp            func(childComplexity int) int
+		WebhookPath          func(childComplexity int) int
+	}
+
 	AccountingAuthorizationStart struct {
 		AuthorizeURL func(childComplexity int) int
 		ExpiresAt    func(childComplexity int) int
 	}
 
+	AccountingBackfill struct {
+		AlreadyQueuedCount func(childComplexity int) int
+		CompletedAt        func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		EnqueuedCount      func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		LastError          func(childComplexity int) int
+		ObjectTypes        func(childComplexity int) int
+		RangeEnd           func(childComplexity int) int
+		RangeStart         func(childComplexity int) int
+		StartedAt          func(childComplexity int) int
+		Status             func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+		Version            func(childComplexity int) int
+	}
+
 	AccountingConnection struct {
+		AppEnvironment                func(childComplexity int) int
+		AppSource                     func(childComplexity int) int
+		AutoSync                      func(childComplexity int) int
 		ConnectedAt                   func(childComplexity int) int
 		ConsecutiveFailures           func(childComplexity int) int
 		DisconnectedAt                func(childComplexity int) int
@@ -929,12 +972,17 @@ type ComplexityRoot struct {
 		LastFailureAt                 func(childComplexity int) int
 		LastSuccessAt                 func(childComplexity int) int
 		LastWebhookAt                 func(childComplexity int) int
+		PausedAt                      func(childComplexity int) int
+		PausedBy                      func(childComplexity int) int
+		PausedReason                  func(childComplexity int) int
 		ReferenceRefreshError         func(childComplexity int) int
 		ReferenceRefreshStartedAt     func(childComplexity int) int
 		ReferenceRefreshedAt          func(childComplexity int) int
 		RefreshTokenAbsoluteExpiresAt func(childComplexity int) int
 		SetupStep                     func(childComplexity int) int
 		Status                        func(childComplexity int) int
+		SyncEnabledAt                 func(childComplexity int) int
+		SyncStartDate                 func(childComplexity int) int
 		UpdatedAt                     func(childComplexity int) int
 		Version                       func(childComplexity int) int
 	}
@@ -1027,9 +1075,96 @@ type ComplexityRoot struct {
 		Usable             func(childComplexity int) int
 	}
 
+	AccountingSyncActionResult struct {
+		Affected func(childComplexity int) int
+	}
+
+	AccountingSyncAttempt struct {
+		AttemptNumber func(childComplexity int) int
+		DurationMs    func(childComplexity int) int
+		ErrorCategory func(childComplexity int) int
+		ErrorCode     func(childComplexity int) int
+		ErrorMessage  func(childComplexity int) int
+		FinishedAt    func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Outcome       func(childComplexity int) int
+		StartedAt     func(childComplexity int) int
+	}
+
+	AccountingSyncAttentionGroup struct {
+		Count          func(childComplexity int) int
+		ErrorCategory  func(childComplexity int) int
+		OldestQueuedAt func(childComplexity int) int
+		Resolution     func(childComplexity int) int
+		SampleRecordID func(childComplexity int) int
+		Status         func(childComplexity int) int
+	}
+
+	AccountingSyncObjectState struct {
+		ObjectID     func(childComplexity int) int
+		ObjectType   func(childComplexity int) int
+		ProviderName func(childComplexity int) int
+		Record       func(childComplexity int) int
+	}
+
+	AccountingSyncRecord struct {
+		AttemptCount      func(childComplexity int) int
+		DependsOnRecordID func(childComplexity int) int
+		DocumentDate      func(childComplexity int) int
+		ErrorCategory     func(childComplexity int) int
+		ErrorCode         func(childComplexity int) int
+		ErrorMessage      func(childComplexity int) int
+		ExternalDocNumber func(childComplexity int) int
+		ExternalID        func(childComplexity int) int
+		ExternalURL       func(childComplexity int) int
+		ID                func(childComplexity int) int
+		NextAttemptAt     func(childComplexity int) int
+		ObjectID          func(childComplexity int) int
+		ObjectNumber      func(childComplexity int) int
+		ObjectType        func(childComplexity int) int
+		Operation         func(childComplexity int) int
+		QueuedAt          func(childComplexity int) int
+		Resolution        func(childComplexity int) int
+		Revision          func(childComplexity int) int
+		SkippedBy         func(childComplexity int) int
+		SkippedReason     func(childComplexity int) int
+		SourceEvent       func(childComplexity int) int
+		StartedAt         func(childComplexity int) int
+		Status            func(childComplexity int) int
+		SyncedAt          func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+		Version           func(childComplexity int) int
+	}
+
+	AccountingSyncRecordConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AccountingSyncRecordEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	AccountingSyncStatus struct {
+		App             func(childComplexity int) int
 		Available       func(childComplexity int) int
 		Connection      func(childComplexity int) int
+		IntegrationType func(childComplexity int) int
+		ProviderName    func(childComplexity int) int
+	}
+
+	AccountingSyncStatusCount struct {
+		Count  func(childComplexity int) int
+		Status func(childComplexity int) int
+	}
+
+	AccountingSyncSummary struct {
+		ActiveBackfill  func(childComplexity int) int
+		Attention       func(childComplexity int) int
+		Connection      func(childComplexity int) int
+		Counts          func(childComplexity int) int
 		IntegrationType func(childComplexity int) int
 		ProviderName    func(childComplexity int) int
 	}
@@ -7284,6 +7419,7 @@ type ComplexityRoot struct {
 		CancelWorkerPTO                       func(childComplexity int, id string, reason *string) int
 		CancelWorkerTraining                  func(childComplexity int, input gqlmodel.CancelWorkerTrainingInput) int
 		CertifyOshaSummary                    func(childComplexity int, year int) int
+		ChangeAccountingBackfill              func(childComplexity int, input gqlmodel.ChangeAccountingBackfillInput) int
 		CheckAccountingConnection             func(childComplexity int, integrationType integration.Type) int
 		CheckShipmentDuplicateBOL             func(childComplexity int, input gqlmodel.ShipmentDuplicateBOLInput) int
 		CheckShipmentHazmatSegregation        func(childComplexity int, input gqlmodel.ShipmentHazmatInput) int
@@ -7407,6 +7543,7 @@ type ComplexityRoot struct {
 		DispatchUnassignMoves                 func(childComplexity int, moveIds []string) int
 		DisputeDetentionOccurrence            func(childComplexity int, input gqlmodel.DetentionDisputeInput) int
 		DuplicateShipment                     func(childComplexity int, input gqlmodel.ShipmentDuplicateInput) int
+		EnableAccountingSync                  func(childComplexity int, input gqlmodel.EnableAccountingSyncInput) int
 		EndBenefitEnrollment                  func(childComplexity int, input gqlmodel.EndBenefitEnrollmentInput) int
 		EndWorkerPTOPolicyAssignment          func(childComplexity int, input gqlmodel.EndWorkerPTOPolicyAssignmentInput) int
 		EndWorkerPayAssignment                func(childComplexity int, input gqlmodel.EndWorkerPayAssignmentInput) int
@@ -7456,6 +7593,7 @@ type ComplexityRoot struct {
 		PatchTractor                          func(childComplexity int, id string, input gqlmodel.TractorPatchInput) int
 		PatchTrailer                          func(childComplexity int, id string, input gqlmodel.TrailerPatchInput) int
 		PatchWorker                           func(childComplexity int, id string, input gqlmodel.WorkerPatchInput) int
+		PauseAccountingSync                   func(childComplexity int, input gqlmodel.PauseAccountingSyncInput) int
 		PayWorkerNow                          func(childComplexity int, input gqlmodel.PayWorkerNowInput) int
 		PinShipmentComment                    func(childComplexity int, shipmentID string, commentID string) int
 		PostAndApplyCustomerPayment           func(childComplexity int, input gqlmodel.PostCustomerPaymentInput) int
@@ -7492,7 +7630,9 @@ type ComplexityRoot struct {
 		RejectDriverSettlement                func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
 		RejectInvoiceAdjustment               func(childComplexity int, input gqlmodel.RejectInvoiceAdjustmentInput) int
 		RejectWorkerPTO                       func(childComplexity int, id string, reason string) int
+		ReleaseAccountingSync                 func(childComplexity int, input gqlmodel.ReleaseAccountingSyncInput) int
 		ReleaseDriverPayEvent                 func(childComplexity int, payEventID string) int
+		RemoveAccountingApp                   func(childComplexity int, integrationType integration.Type) int
 		RemoveCarrierSettlementAdjustment     func(childComplexity int, input gqlmodel.RemoveCarrierSettlementAdjustmentInput) int
 		RemoveDriverSettlementAdjustment      func(childComplexity int, input gqlmodel.RemoveSettlementAdjustmentInput) int
 		RemoveOrderCharge                     func(childComplexity int, input gqlmodel.RemoveOrderChargeInput) int
@@ -7503,6 +7643,7 @@ type ComplexityRoot struct {
 		ReplayAgentEvalCase                   func(childComplexity int, id string) int
 		ReplayAgentRun                        func(childComplexity int, runID string) int
 		RequestAIAuditExport                  func(childComplexity int, input gqlmodel.RequestAIAuditExportInput) int
+		RequestAccountingBackfill             func(childComplexity int, input gqlmodel.RequestAccountingBackfillInput) int
 		RequestLeaveCertification             func(childComplexity int, caseID string, dueAt *int) int
 		RequestMyPTO                          func(childComplexity int, input gqlmodel.RequestMyPTOInput) int
 		RescindDisciplinaryAction             func(childComplexity int, input gqlmodel.RescindDisciplinaryActionInput) int
@@ -7523,7 +7664,9 @@ type ComplexityRoot struct {
 		RestoreTrainingCourse                 func(childComplexity int, id string, version *int) int
 		RestoreWorkerChecklistTemplate        func(childComplexity int, id string, version *int) int
 		RestoreWorkerCredentialType           func(childComplexity int, id string, version *int) int
+		ResumeAccountingSync                  func(childComplexity int, integrationType integration.Type) int
 		ResumeCarrierIntelMonitoring          func(childComplexity int) int
+		RetryAccountingSync                   func(childComplexity int, input gqlmodel.RetryAccountingSyncInput) int
 		RetryBillingTransferRun               func(childComplexity int, id string) int
 		ReverseCustomerPayment                func(childComplexity int, input gqlmodel.ReverseCustomerPaymentInput) int
 		ReviewDriverExpense                   func(childComplexity int, input gqlmodel.ReviewDriverExpenseInput) int
@@ -7538,6 +7681,7 @@ type ComplexityRoot struct {
 		RunDOTRandomDraw                      func(childComplexity int, input gqlmodel.RunDOTRandomDrawInput) int
 		RunPTOAccrual                         func(childComplexity int, input gqlmodel.RunPTOAccrualInput) int
 		RunReport                             func(childComplexity int, input gqlmodel.RunReportInput) int
+		SaveAccountingApp                     func(childComplexity int, input gqlmodel.SaveAccountingAppInput) int
 		SaveOshaSummary                       func(childComplexity int, input gqlmodel.SaveOSHASummaryInput) int
 		SaveTelematicsFormMapping             func(childComplexity int, input gqlmodel.SaveTelematicsFormMappingInput) int
 		SendDetentionNotice                   func(childComplexity int, occurrenceID string) int
@@ -7556,6 +7700,7 @@ type ComplexityRoot struct {
 		SetOrgDefaultTableConfiguration       func(childComplexity int, id string, enabled bool) int
 		SetRoleAgentAccess                    func(childComplexity int, roleID string, agentIds []string) int
 		SetWorkerAvailabilityPreference       func(childComplexity int, input gqlmodel.SetAvailabilityPreferenceInput) int
+		SkipAccountingSync                    func(childComplexity int, input gqlmodel.SkipAccountingSyncInput) int
 		SkipWorkerChecklistItem               func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		StageFuelPurchaseImport               func(childComplexity int, input gqlmodel.StageFuelPurchaseImportInput) int
 		StartAccountingAuthorization          func(childComplexity int, integrationType integration.Type) int
@@ -8561,10 +8706,17 @@ type ComplexityRoot struct {
 		AccessorialCharges                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AccountType                         func(childComplexity int, id string) int
 		AccountTypes                        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AccountingBackfills                 func(childComplexity int, integrationType integration.Type) int
 		AccountingMappingSummary            func(childComplexity int, integrationType integration.Type) int
 		AccountingMappings                  func(childComplexity int, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingMappingFilterInput) int
 		AccountingReferenceObjects          func(childComplexity int, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) int
+		AccountingSyncAttempts              func(childComplexity int, recordID string) int
+		AccountingSyncObjectStates          func(childComplexity int, objectIds []string) int
+		AccountingSyncRecord                func(childComplexity int, id string) int
+		AccountingSyncRecordTable           func(childComplexity int, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) int
+		AccountingSyncRecords               func(childComplexity int, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingSyncRecordFilterInput) int
 		AccountingSyncStatus                func(childComplexity int, integrationType integration.Type) int
+		AccountingSyncSummary               func(childComplexity int, integrationType integration.Type) int
 		ActivePerformanceReviewTemplates    func(childComplexity int) int
 		ActiveTrainingCourses               func(childComplexity int) int
 		ActiveWorkerChecklistTemplates      func(childComplexity int) int
@@ -15972,6 +16124,86 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AccountTypeEdge.Node(childComplexity), true
 
+	case "AccountingAppCredential.clientId":
+		if e.ComplexityRoot.AccountingAppCredential.ClientID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.ClientID(childComplexity), true
+	case "AccountingAppCredential.environment":
+		if e.ComplexityRoot.AccountingAppCredential.Environment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.Environment(childComplexity), true
+	case "AccountingAppCredential.hasWebhookVerifier":
+		if e.ComplexityRoot.AccountingAppCredential.HasWebhookVerifier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.HasWebhookVerifier(childComplexity), true
+	case "AccountingAppCredential.id":
+		if e.ComplexityRoot.AccountingAppCredential.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.ID(childComplexity), true
+	case "AccountingAppCredential.integrationType":
+		if e.ComplexityRoot.AccountingAppCredential.IntegrationType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.IntegrationType(childComplexity), true
+	case "AccountingAppCredential.updatedAt":
+		if e.ComplexityRoot.AccountingAppCredential.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.UpdatedAt(childComplexity), true
+	case "AccountingAppCredential.version":
+		if e.ComplexityRoot.AccountingAppCredential.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppCredential.Version(childComplexity), true
+
+	case "AccountingAppSettings.activeSource":
+		if e.ComplexityRoot.AccountingAppSettings.ActiveSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.ActiveSource(childComplexity), true
+	case "AccountingAppSettings.instanceAppAvailable":
+		if e.ComplexityRoot.AccountingAppSettings.InstanceAppAvailable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.InstanceAppAvailable(childComplexity), true
+	case "AccountingAppSettings.instanceEnvironment":
+		if e.ComplexityRoot.AccountingAppSettings.InstanceEnvironment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.InstanceEnvironment(childComplexity), true
+	case "AccountingAppSettings.redirectUrl":
+		if e.ComplexityRoot.AccountingAppSettings.RedirectURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.RedirectURL(childComplexity), true
+	case "AccountingAppSettings.tenantApp":
+		if e.ComplexityRoot.AccountingAppSettings.TenantApp == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.TenantApp(childComplexity), true
+	case "AccountingAppSettings.webhookPath":
+		if e.ComplexityRoot.AccountingAppSettings.WebhookPath == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAppSettings.WebhookPath(childComplexity), true
+
 	case "AccountingAuthorizationStart.authorizeUrl":
 		if e.ComplexityRoot.AccountingAuthorizationStart.AuthorizeURL == nil {
 			break
@@ -15985,6 +16217,103 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AccountingAuthorizationStart.ExpiresAt(childComplexity), true
 
+	case "AccountingBackfill.alreadyQueuedCount":
+		if e.ComplexityRoot.AccountingBackfill.AlreadyQueuedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.AlreadyQueuedCount(childComplexity), true
+	case "AccountingBackfill.completedAt":
+		if e.ComplexityRoot.AccountingBackfill.CompletedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.CompletedAt(childComplexity), true
+	case "AccountingBackfill.createdAt":
+		if e.ComplexityRoot.AccountingBackfill.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.CreatedAt(childComplexity), true
+	case "AccountingBackfill.enqueuedCount":
+		if e.ComplexityRoot.AccountingBackfill.EnqueuedCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.EnqueuedCount(childComplexity), true
+	case "AccountingBackfill.id":
+		if e.ComplexityRoot.AccountingBackfill.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.ID(childComplexity), true
+	case "AccountingBackfill.lastError":
+		if e.ComplexityRoot.AccountingBackfill.LastError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.LastError(childComplexity), true
+	case "AccountingBackfill.objectTypes":
+		if e.ComplexityRoot.AccountingBackfill.ObjectTypes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.ObjectTypes(childComplexity), true
+	case "AccountingBackfill.rangeEnd":
+		if e.ComplexityRoot.AccountingBackfill.RangeEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.RangeEnd(childComplexity), true
+	case "AccountingBackfill.rangeStart":
+		if e.ComplexityRoot.AccountingBackfill.RangeStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.RangeStart(childComplexity), true
+	case "AccountingBackfill.startedAt":
+		if e.ComplexityRoot.AccountingBackfill.StartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.StartedAt(childComplexity), true
+	case "AccountingBackfill.status":
+		if e.ComplexityRoot.AccountingBackfill.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.Status(childComplexity), true
+	case "AccountingBackfill.updatedAt":
+		if e.ComplexityRoot.AccountingBackfill.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.UpdatedAt(childComplexity), true
+	case "AccountingBackfill.version":
+		if e.ComplexityRoot.AccountingBackfill.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingBackfill.Version(childComplexity), true
+
+	case "AccountingConnection.appEnvironment":
+		if e.ComplexityRoot.AccountingConnection.AppEnvironment == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.AppEnvironment(childComplexity), true
+	case "AccountingConnection.appSource":
+		if e.ComplexityRoot.AccountingConnection.AppSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.AppSource(childComplexity), true
+	case "AccountingConnection.autoSync":
+		if e.ComplexityRoot.AccountingConnection.AutoSync == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.AutoSync(childComplexity), true
 	case "AccountingConnection.connectedAt":
 		if e.ComplexityRoot.AccountingConnection.ConnectedAt == nil {
 			break
@@ -16087,6 +16416,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingConnection.LastWebhookAt(childComplexity), true
+	case "AccountingConnection.pausedAt":
+		if e.ComplexityRoot.AccountingConnection.PausedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.PausedAt(childComplexity), true
+	case "AccountingConnection.pausedBy":
+		if e.ComplexityRoot.AccountingConnection.PausedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.PausedBy(childComplexity), true
+	case "AccountingConnection.pausedReason":
+		if e.ComplexityRoot.AccountingConnection.PausedReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.PausedReason(childComplexity), true
 	case "AccountingConnection.referenceRefreshError":
 		if e.ComplexityRoot.AccountingConnection.ReferenceRefreshError == nil {
 			break
@@ -16123,6 +16470,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingConnection.Status(childComplexity), true
+	case "AccountingConnection.syncEnabledAt":
+		if e.ComplexityRoot.AccountingConnection.SyncEnabledAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.SyncEnabledAt(childComplexity), true
+	case "AccountingConnection.syncStartDate":
+		if e.ComplexityRoot.AccountingConnection.SyncStartDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.SyncStartDate(childComplexity), true
 	case "AccountingConnection.updatedAt":
 		if e.ComplexityRoot.AccountingConnection.UpdatedAt == nil {
 			break
@@ -16528,6 +16887,325 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AccountingReferenceObject.Usable(childComplexity), true
 
+	case "AccountingSyncActionResult.affected":
+		if e.ComplexityRoot.AccountingSyncActionResult.Affected == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncActionResult.Affected(childComplexity), true
+
+	case "AccountingSyncAttempt.attemptNumber":
+		if e.ComplexityRoot.AccountingSyncAttempt.AttemptNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttempt.AttemptNumber(childComplexity), true
+	case "AccountingSyncAttempt.durationMs":
+		if e.ComplexityRoot.AccountingSyncAttempt.DurationMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttempt.DurationMs(childComplexity), true
+	case "AccountingSyncAttempt.errorCategory":
+		if e.ComplexityRoot.AccountingSyncAttempt.ErrorCategory == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttempt.ErrorCategory(childComplexity), true
+	case "AccountingSyncAttempt.errorCode":
+		if e.ComplexityRoot.AccountingSyncAttempt.ErrorCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttempt.ErrorCode(childComplexity), true
+	case "AccountingSyncAttempt.errorMessage":
+		if e.ComplexityRoot.AccountingSyncAttempt.ErrorMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttempt.ErrorMessage(childComplexity), true
+	case "AccountingSyncAttempt.finishedAt":
+		if e.ComplexityRoot.AccountingSyncAttempt.FinishedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttempt.FinishedAt(childComplexity), true
+	case "AccountingSyncAttempt.id":
+		if e.ComplexityRoot.AccountingSyncAttempt.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttempt.ID(childComplexity), true
+	case "AccountingSyncAttempt.outcome":
+		if e.ComplexityRoot.AccountingSyncAttempt.Outcome == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttempt.Outcome(childComplexity), true
+	case "AccountingSyncAttempt.startedAt":
+		if e.ComplexityRoot.AccountingSyncAttempt.StartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttempt.StartedAt(childComplexity), true
+
+	case "AccountingSyncAttentionGroup.count":
+		if e.ComplexityRoot.AccountingSyncAttentionGroup.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttentionGroup.Count(childComplexity), true
+	case "AccountingSyncAttentionGroup.errorCategory":
+		if e.ComplexityRoot.AccountingSyncAttentionGroup.ErrorCategory == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttentionGroup.ErrorCategory(childComplexity), true
+	case "AccountingSyncAttentionGroup.oldestQueuedAt":
+		if e.ComplexityRoot.AccountingSyncAttentionGroup.OldestQueuedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttentionGroup.OldestQueuedAt(childComplexity), true
+	case "AccountingSyncAttentionGroup.resolution":
+		if e.ComplexityRoot.AccountingSyncAttentionGroup.Resolution == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttentionGroup.Resolution(childComplexity), true
+	case "AccountingSyncAttentionGroup.sampleRecordId":
+		if e.ComplexityRoot.AccountingSyncAttentionGroup.SampleRecordID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttentionGroup.SampleRecordID(childComplexity), true
+	case "AccountingSyncAttentionGroup.status":
+		if e.ComplexityRoot.AccountingSyncAttentionGroup.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncAttentionGroup.Status(childComplexity), true
+
+	case "AccountingSyncObjectState.objectId":
+		if e.ComplexityRoot.AccountingSyncObjectState.ObjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncObjectState.ObjectID(childComplexity), true
+	case "AccountingSyncObjectState.objectType":
+		if e.ComplexityRoot.AccountingSyncObjectState.ObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncObjectState.ObjectType(childComplexity), true
+	case "AccountingSyncObjectState.providerName":
+		if e.ComplexityRoot.AccountingSyncObjectState.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncObjectState.ProviderName(childComplexity), true
+	case "AccountingSyncObjectState.record":
+		if e.ComplexityRoot.AccountingSyncObjectState.Record == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncObjectState.Record(childComplexity), true
+
+	case "AccountingSyncRecord.attemptCount":
+		if e.ComplexityRoot.AccountingSyncRecord.AttemptCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.AttemptCount(childComplexity), true
+	case "AccountingSyncRecord.dependsOnRecordId":
+		if e.ComplexityRoot.AccountingSyncRecord.DependsOnRecordID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.DependsOnRecordID(childComplexity), true
+	case "AccountingSyncRecord.documentDate":
+		if e.ComplexityRoot.AccountingSyncRecord.DocumentDate == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.DocumentDate(childComplexity), true
+	case "AccountingSyncRecord.errorCategory":
+		if e.ComplexityRoot.AccountingSyncRecord.ErrorCategory == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.ErrorCategory(childComplexity), true
+	case "AccountingSyncRecord.errorCode":
+		if e.ComplexityRoot.AccountingSyncRecord.ErrorCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.ErrorCode(childComplexity), true
+	case "AccountingSyncRecord.errorMessage":
+		if e.ComplexityRoot.AccountingSyncRecord.ErrorMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.ErrorMessage(childComplexity), true
+	case "AccountingSyncRecord.externalDocNumber":
+		if e.ComplexityRoot.AccountingSyncRecord.ExternalDocNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.ExternalDocNumber(childComplexity), true
+	case "AccountingSyncRecord.externalId":
+		if e.ComplexityRoot.AccountingSyncRecord.ExternalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.ExternalID(childComplexity), true
+	case "AccountingSyncRecord.externalUrl":
+		if e.ComplexityRoot.AccountingSyncRecord.ExternalURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.ExternalURL(childComplexity), true
+	case "AccountingSyncRecord.id":
+		if e.ComplexityRoot.AccountingSyncRecord.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.ID(childComplexity), true
+	case "AccountingSyncRecord.nextAttemptAt":
+		if e.ComplexityRoot.AccountingSyncRecord.NextAttemptAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.NextAttemptAt(childComplexity), true
+	case "AccountingSyncRecord.objectId":
+		if e.ComplexityRoot.AccountingSyncRecord.ObjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.ObjectID(childComplexity), true
+	case "AccountingSyncRecord.objectNumber":
+		if e.ComplexityRoot.AccountingSyncRecord.ObjectNumber == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.ObjectNumber(childComplexity), true
+	case "AccountingSyncRecord.objectType":
+		if e.ComplexityRoot.AccountingSyncRecord.ObjectType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.ObjectType(childComplexity), true
+	case "AccountingSyncRecord.operation":
+		if e.ComplexityRoot.AccountingSyncRecord.Operation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.Operation(childComplexity), true
+	case "AccountingSyncRecord.queuedAt":
+		if e.ComplexityRoot.AccountingSyncRecord.QueuedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.QueuedAt(childComplexity), true
+	case "AccountingSyncRecord.resolution":
+		if e.ComplexityRoot.AccountingSyncRecord.Resolution == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.Resolution(childComplexity), true
+	case "AccountingSyncRecord.revision":
+		if e.ComplexityRoot.AccountingSyncRecord.Revision == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.Revision(childComplexity), true
+	case "AccountingSyncRecord.skippedBy":
+		if e.ComplexityRoot.AccountingSyncRecord.SkippedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.SkippedBy(childComplexity), true
+	case "AccountingSyncRecord.skippedReason":
+		if e.ComplexityRoot.AccountingSyncRecord.SkippedReason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.SkippedReason(childComplexity), true
+	case "AccountingSyncRecord.sourceEvent":
+		if e.ComplexityRoot.AccountingSyncRecord.SourceEvent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.SourceEvent(childComplexity), true
+	case "AccountingSyncRecord.startedAt":
+		if e.ComplexityRoot.AccountingSyncRecord.StartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.StartedAt(childComplexity), true
+	case "AccountingSyncRecord.status":
+		if e.ComplexityRoot.AccountingSyncRecord.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.Status(childComplexity), true
+	case "AccountingSyncRecord.syncedAt":
+		if e.ComplexityRoot.AccountingSyncRecord.SyncedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.SyncedAt(childComplexity), true
+	case "AccountingSyncRecord.updatedAt":
+		if e.ComplexityRoot.AccountingSyncRecord.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.UpdatedAt(childComplexity), true
+	case "AccountingSyncRecord.version":
+		if e.ComplexityRoot.AccountingSyncRecord.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.Version(childComplexity), true
+
+	case "AccountingSyncRecordConnection.edges":
+		if e.ComplexityRoot.AccountingSyncRecordConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecordConnection.Edges(childComplexity), true
+	case "AccountingSyncRecordConnection.pageInfo":
+		if e.ComplexityRoot.AccountingSyncRecordConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecordConnection.PageInfo(childComplexity), true
+	case "AccountingSyncRecordConnection.totalCount":
+		if e.ComplexityRoot.AccountingSyncRecordConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecordConnection.TotalCount(childComplexity), true
+
+	case "AccountingSyncRecordEdge.cursor":
+		if e.ComplexityRoot.AccountingSyncRecordEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecordEdge.Cursor(childComplexity), true
+	case "AccountingSyncRecordEdge.node":
+		if e.ComplexityRoot.AccountingSyncRecordEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecordEdge.Node(childComplexity), true
+
+	case "AccountingSyncStatus.app":
+		if e.ComplexityRoot.AccountingSyncStatus.App == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncStatus.App(childComplexity), true
 	case "AccountingSyncStatus.available":
 		if e.ComplexityRoot.AccountingSyncStatus.Available == nil {
 			break
@@ -16552,6 +17230,56 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingSyncStatus.ProviderName(childComplexity), true
+
+	case "AccountingSyncStatusCount.count":
+		if e.ComplexityRoot.AccountingSyncStatusCount.Count == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncStatusCount.Count(childComplexity), true
+	case "AccountingSyncStatusCount.status":
+		if e.ComplexityRoot.AccountingSyncStatusCount.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncStatusCount.Status(childComplexity), true
+
+	case "AccountingSyncSummary.activeBackfill":
+		if e.ComplexityRoot.AccountingSyncSummary.ActiveBackfill == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncSummary.ActiveBackfill(childComplexity), true
+	case "AccountingSyncSummary.attention":
+		if e.ComplexityRoot.AccountingSyncSummary.Attention == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncSummary.Attention(childComplexity), true
+	case "AccountingSyncSummary.connection":
+		if e.ComplexityRoot.AccountingSyncSummary.Connection == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncSummary.Connection(childComplexity), true
+	case "AccountingSyncSummary.counts":
+		if e.ComplexityRoot.AccountingSyncSummary.Counts == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncSummary.Counts(childComplexity), true
+	case "AccountingSyncSummary.integrationType":
+		if e.ComplexityRoot.AccountingSyncSummary.IntegrationType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncSummary.IntegrationType(childComplexity), true
+	case "AccountingSyncSummary.providerName":
+		if e.ComplexityRoot.AccountingSyncSummary.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncSummary.ProviderName(childComplexity), true
 
 	case "AgentAccessPreview.accessMode":
 		if e.ComplexityRoot.AgentAccessPreview.AccessMode == nil {
@@ -46024,6 +46752,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CertifyOshaSummary(childComplexity, args["year"].(int)), true
+	case "Mutation.changeAccountingBackfill":
+		if e.ComplexityRoot.Mutation.ChangeAccountingBackfill == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_changeAccountingBackfill_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ChangeAccountingBackfill(childComplexity, args["input"].(gqlmodel.ChangeAccountingBackfillInput)), true
 	case "Mutation.checkAccountingConnection":
 		if e.ComplexityRoot.Mutation.CheckAccountingConnection == nil {
 			break
@@ -47377,6 +48116,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DuplicateShipment(childComplexity, args["input"].(gqlmodel.ShipmentDuplicateInput)), true
+	case "Mutation.enableAccountingSync":
+		if e.ComplexityRoot.Mutation.EnableAccountingSync == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_enableAccountingSync_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.EnableAccountingSync(childComplexity, args["input"].(gqlmodel.EnableAccountingSyncInput)), true
 	case "Mutation.endBenefitEnrollment":
 		if e.ComplexityRoot.Mutation.EndBenefitEnrollment == nil {
 			break
@@ -47906,6 +48656,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.PatchWorker(childComplexity, args["id"].(string), args["input"].(gqlmodel.WorkerPatchInput)), true
+	case "Mutation.pauseAccountingSync":
+		if e.ComplexityRoot.Mutation.PauseAccountingSync == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_pauseAccountingSync_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.PauseAccountingSync(childComplexity, args["input"].(gqlmodel.PauseAccountingSyncInput)), true
 	case "Mutation.payWorkerNow":
 		if e.ComplexityRoot.Mutation.PayWorkerNow == nil {
 			break
@@ -48302,6 +49063,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RejectWorkerPTO(childComplexity, args["id"].(string), args["reason"].(string)), true
+	case "Mutation.releaseAccountingSync":
+		if e.ComplexityRoot.Mutation.ReleaseAccountingSync == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_releaseAccountingSync_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ReleaseAccountingSync(childComplexity, args["input"].(gqlmodel.ReleaseAccountingSyncInput)), true
 	case "Mutation.releaseDriverPayEvent":
 		if e.ComplexityRoot.Mutation.ReleaseDriverPayEvent == nil {
 			break
@@ -48313,6 +49085,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ReleaseDriverPayEvent(childComplexity, args["payEventId"].(string)), true
+	case "Mutation.removeAccountingApp":
+		if e.ComplexityRoot.Mutation.RemoveAccountingApp == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeAccountingApp_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RemoveAccountingApp(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Mutation.removeCarrierSettlementAdjustment":
 		if e.ComplexityRoot.Mutation.RemoveCarrierSettlementAdjustment == nil {
 			break
@@ -48423,6 +49206,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RequestAIAuditExport(childComplexity, args["input"].(gqlmodel.RequestAIAuditExportInput)), true
+	case "Mutation.requestAccountingBackfill":
+		if e.ComplexityRoot.Mutation.RequestAccountingBackfill == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_requestAccountingBackfill_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RequestAccountingBackfill(childComplexity, args["input"].(gqlmodel.RequestAccountingBackfillInput)), true
 	case "Mutation.requestLeaveCertification":
 		if e.ComplexityRoot.Mutation.RequestLeaveCertification == nil {
 			break
@@ -48638,12 +49432,34 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RestoreWorkerCredentialType(childComplexity, args["id"].(string), args["version"].(*int)), true
+	case "Mutation.resumeAccountingSync":
+		if e.ComplexityRoot.Mutation.ResumeAccountingSync == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_resumeAccountingSync_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ResumeAccountingSync(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Mutation.resumeCarrierIntelMonitoring":
 		if e.ComplexityRoot.Mutation.ResumeCarrierIntelMonitoring == nil {
 			break
 		}
 
 		return e.ComplexityRoot.Mutation.ResumeCarrierIntelMonitoring(childComplexity), true
+	case "Mutation.retryAccountingSync":
+		if e.ComplexityRoot.Mutation.RetryAccountingSync == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_retryAccountingSync_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RetryAccountingSync(childComplexity, args["input"].(gqlmodel.RetryAccountingSyncInput)), true
 	case "Mutation.retryBillingTransferRun":
 		if e.ComplexityRoot.Mutation.RetryBillingTransferRun == nil {
 			break
@@ -48798,6 +49614,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RunReport(childComplexity, args["input"].(gqlmodel.RunReportInput)), true
+	case "Mutation.saveAccountingApp":
+		if e.ComplexityRoot.Mutation.SaveAccountingApp == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_saveAccountingApp_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SaveAccountingApp(childComplexity, args["input"].(gqlmodel.SaveAccountingAppInput)), true
 	case "Mutation.saveOshaSummary":
 		if e.ComplexityRoot.Mutation.SaveOshaSummary == nil {
 			break
@@ -48996,6 +49823,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SetWorkerAvailabilityPreference(childComplexity, args["input"].(gqlmodel.SetAvailabilityPreferenceInput)), true
+	case "Mutation.skipAccountingSync":
+		if e.ComplexityRoot.Mutation.SkipAccountingSync == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_skipAccountingSync_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SkipAccountingSync(childComplexity, args["input"].(gqlmodel.SkipAccountingSyncInput)), true
 	case "Mutation.skipWorkerChecklistItem":
 		if e.ComplexityRoot.Mutation.SkipWorkerChecklistItem == nil {
 			break
@@ -54231,6 +55069,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AccountTypes(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.accountingBackfills":
+		if e.ComplexityRoot.Query.AccountingBackfills == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingBackfills_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingBackfills(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Query.accountingMappingSummary":
 		if e.ComplexityRoot.Query.AccountingMappingSummary == nil {
 			break
@@ -54264,6 +55113,61 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AccountingReferenceObjects(childComplexity, args["integrationType"].(integration.Type), args["kind"].(accountingsync.ReferenceKind), args["query"].(*string), args["usableOnly"].(*bool), args["limit"].(*int)), true
+	case "Query.accountingSyncAttempts":
+		if e.ComplexityRoot.Query.AccountingSyncAttempts == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingSyncAttempts_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingSyncAttempts(childComplexity, args["recordId"].(string)), true
+	case "Query.accountingSyncObjectStates":
+		if e.ComplexityRoot.Query.AccountingSyncObjectStates == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingSyncObjectStates_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingSyncObjectStates(childComplexity, args["objectIds"].([]string)), true
+	case "Query.accountingSyncRecord":
+		if e.ComplexityRoot.Query.AccountingSyncRecord == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingSyncRecord_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingSyncRecord(childComplexity, args["id"].(string)), true
+	case "Query.accountingSyncRecordTable":
+		if e.ComplexityRoot.Query.AccountingSyncRecordTable == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingSyncRecordTable_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingSyncRecordTable(childComplexity, args["integrationType"].(integration.Type), args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.accountingSyncRecords":
+		if e.ComplexityRoot.Query.AccountingSyncRecords == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingSyncRecords_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingSyncRecords(childComplexity, args["integrationType"].(integration.Type), args["first"].(*int), args["after"].(*string), args["filter"].(*gqlmodel.AccountingSyncRecordFilterInput)), true
 	case "Query.accountingSyncStatus":
 		if e.ComplexityRoot.Query.AccountingSyncStatus == nil {
 			break
@@ -54275,6 +55179,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AccountingSyncStatus(childComplexity, args["integrationType"].(integration.Type)), true
+	case "Query.accountingSyncSummary":
+		if e.ComplexityRoot.Query.AccountingSyncSummary == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingSyncSummary_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingSyncSummary(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Query.activePerformanceReviewTemplates":
 		if e.ComplexityRoot.Query.ActivePerformanceReviewTemplates == nil {
 			break
@@ -77168,6 +78083,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAIFeedbackTargetInput,
 		ec.unmarshalInputAIRetrievalSettingsPatchInput,
 		ec.unmarshalInputAccountingMappingFilterInput,
+		ec.unmarshalInputAccountingSyncRecordFilterInput,
 		ec.unmarshalInputAcknowledgeMyPolicyInput,
 		ec.unmarshalInputAddCarrierSettlementAdjustmentInput,
 		ec.unmarshalInputAddSettlementAdjustmentInput,
@@ -77228,6 +78144,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCarrierMonitoringEnrollmentFilterInput,
 		ec.unmarshalInputCarrierSettlementActionInput,
 		ec.unmarshalInputCarrierSourcingSearchInput,
+		ec.unmarshalInputChangeAccountingBackfillInput,
 		ec.unmarshalInputChargeAllocationInput,
 		ec.unmarshalInputClockInput,
 		ec.unmarshalInputCompleteAccountingAuthorizationInput,
@@ -77284,6 +78201,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDocumentTemplatePreviewInput,
 		ec.unmarshalInputDocumentTemplateVersionInput,
 		ec.unmarshalInputDriverSettlementActionInput,
+		ec.unmarshalInputEnableAccountingSyncInput,
 		ec.unmarshalInputEndBenefitEnrollmentInput,
 		ec.unmarshalInputEndWorkerPTOPolicyAssignmentInput,
 		ec.unmarshalInputEndWorkerPayAssignmentInput,
@@ -77356,6 +78274,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPTOPoliciesInput,
 		ec.unmarshalInputPTOPolicyInput,
 		ec.unmarshalInputPTOPolicyRuleInput,
+		ec.unmarshalInputPauseAccountingSyncInput,
 		ec.unmarshalInputPayMileageBandInput,
 		ec.unmarshalInputPayProfileComponentInput,
 		ec.unmarshalInputPayRateOverrideInput,
@@ -77381,6 +78300,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRecordWorkerEmploymentEventInput,
 		ec.unmarshalInputRecordWorkerInjuryInput,
 		ec.unmarshalInputRejectInvoiceAdjustmentInput,
+		ec.unmarshalInputReleaseAccountingSyncInput,
 		ec.unmarshalInputRemoveCarrierSettlementAdjustmentInput,
 		ec.unmarshalInputRemoveOrderChargeInput,
 		ec.unmarshalInputRemoveSettlementAdjustmentInput,
@@ -77407,6 +78327,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputReportSortInput,
 		ec.unmarshalInputReportTransformInput,
 		ec.unmarshalInputRequestAIAuditExportInput,
+		ec.unmarshalInputRequestAccountingBackfillInput,
 		ec.unmarshalInputRequestMyPtoInput,
 		ec.unmarshalInputRescindDisciplinaryActionInput,
 		ec.unmarshalInputResolveCarrierIntelEventInput,
@@ -77414,6 +78335,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputResolveSettlementDisputeInput,
 		ec.unmarshalInputRespondToMyAssignmentInput,
 		ec.unmarshalInputRespondToMyShiftSwapInput,
+		ec.unmarshalInputRetryAccountingSyncInput,
 		ec.unmarshalInputReverseCustomerPaymentInput,
 		ec.unmarshalInputReviewDriverExpenseInput,
 		ec.unmarshalInputReviewGoalInput,
@@ -77425,6 +78347,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRunPTOAccrualInput,
 		ec.unmarshalInputRunReportInput,
 		ec.unmarshalInputSafetyEventStatusInput,
+		ec.unmarshalInputSaveAccountingAppInput,
 		ec.unmarshalInputSaveHomeLayoutPresetInput,
 		ec.unmarshalInputSaveOSHASummaryInput,
 		ec.unmarshalInputSaveReportDashboardInput,
@@ -77465,6 +78388,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSidebarActivityPreferenceInput,
 		ec.unmarshalInputSidebarPreferencesInput,
 		ec.unmarshalInputSidebarSectionPreferenceInput,
+		ec.unmarshalInputSkipAccountingSyncInput,
 		ec.unmarshalInputSortFieldInput,
 		ec.unmarshalInputStageFuelPurchaseImportInput,
 		ec.unmarshalInputStartBillingTransferRunInput,
@@ -77726,8 +78650,111 @@ enum AccountingConnectionStatus {
 enum AccountingSetupStep {
   "Trenova records are being matched to the accounting system's records."
   Mappings
-  "The required matches are confirmed and setup is finished."
+  "The matches are confirmed; a start date has to be chosen before anything is sent."
+  StartDate
+  "Setup is finished and documents dated from the start date are sent."
   Complete
+}
+
+"A kind of Trenova document sent to the accounting system."
+enum AccountingSyncObjectType {
+  Customer
+  Invoice
+  CreditMemo
+  DebitMemo
+  CustomerPayment
+  "A credit memo applied to an invoice."
+  CreditApplication
+}
+
+"What a sync record does to the document in the accounting system."
+enum AccountingSyncOperation {
+  Create
+  Update
+  Void
+}
+
+"What queued a sync record."
+enum AccountingSyncSourceEvent {
+  InvoicePosted
+  CreditMemoPosted
+  DebitMemoPosted
+  AdjustmentCreditMemo
+  CustomerPaymentPosted
+  CustomerPaymentApplied
+  CustomerPaymentReversed
+  CreditMemoApplied
+  CreditMemoUnapplied
+  CustomerUpdated
+  "Another record needed this one first, such as a customer an invoice is for."
+  DependencyOf
+  "The hourly check found a posted document no enqueue point had queued."
+  SafetyNet
+  "A backfill of documents dated before sync was turned on."
+  Backfill
+}
+
+"Where a sync record stands."
+enum AccountingSyncRecordStatus {
+  "Waiting its turn."
+  Queued
+  "Held until a person releases it, because automatic sync is off."
+  AwaitingApproval
+  "Being sent now."
+  InFlight
+  "The last try failed in a way that may pass; Trenova tries again on its own."
+  Retrying
+  Synced
+  "Cannot be sent until someone fixes what the resolution names."
+  Blocked
+  "Failed too many times in a row; a person has to retry it."
+  DeadLettered
+  "A person chose not to send it."
+  Skipped
+  "A newer revision of the same document replaced it."
+  Superseded
+}
+
+"Why a sync record failed."
+enum AccountingSyncErrorCategory {
+  Transient
+  RateLimited
+  Auth
+  Validation
+  Mapping
+  ClosedPeriod
+  Currency
+  Duplicate
+  NotFound
+  Conflict
+  Configuration
+}
+
+"How one try at sending a record ended."
+enum AccountingSyncAttemptOutcome {
+  Synced
+  Retrying
+  Blocked
+  DeadLettered
+  "It waited on something else, such as the customer it depends on, without spending an attempt."
+  Waiting
+}
+
+"Where a backfill stands."
+enum AccountingBackfillStatus {
+  Queued
+  Running
+  Paused
+  Completed
+  Failed
+  Cancelled
+}
+
+"What to do with a running backfill."
+enum AccountingBackfillAction {
+  Pause
+  Resume
+  Cancel
 }
 
 "A kind of record kept in the accounting system."
@@ -77779,6 +78806,22 @@ enum AccountingMappingSource {
   Agent
 }
 
+"Whose app a connection to the accounting system is authorized through."
+enum AccountingAppSource {
+  "The app this Trenova server is configured with."
+  Instance
+  "An app the organization registered with the accounting system itself."
+  Tenant
+}
+
+"Which of the accounting system's environments an app's keys are for."
+enum AccountingAppEnvironment {
+  "Development keys, which work only with test companies."
+  Sandbox
+  "Production keys, which work with real companies."
+  Production
+}
+
 "Why the last call to the accounting system failed."
 enum AccountingErrorCategory {
   Transient
@@ -77799,6 +78842,10 @@ type AccountingConnection {
   id: ID!
   integrationType: AccountingSystem!
   status: AccountingConnectionStatus!
+  "Whose app the connection was authorized through. Its tokens only work with that app."
+  appSource: AccountingAppSource!
+  "The environment of the app the connection was authorized through. Absent for connections made before this was recorded."
+  appEnvironment: AccountingAppEnvironment
   "The company's name in the accounting system."
   externalCompanyName: String!
   externalLegalName: String!
@@ -77822,6 +78869,16 @@ type AccountingConnection {
   disconnectedAt: Timestamp
   "How far setup has got. Syncing waits until it is Complete."
   setupStep: AccountingSetupStep!
+  "Documents dated before this day are never sent. Absent until the start date step is finished."
+  syncStartDate: Timestamp
+  "When sending was turned on."
+  syncEnabledAt: Timestamp
+  "Whether posted documents are sent on their own, or wait for a person to release them."
+  autoSync: Boolean!
+  "When sending was paused. Records keep queueing while it is. Absent when it is running."
+  pausedAt: Timestamp
+  pausedBy: User
+  pausedReason: String!
   "When the running reference data refresh started. Absent when none has started."
   referenceRefreshStartedAt: Timestamp
   "When the reference data was last pulled in full."
@@ -77832,14 +78889,248 @@ type AccountingConnection {
   updatedAt: Timestamp!
 }
 
+"""
+App keys an organization saved for connecting through its own app.
+
+The client secret and the webhook verifier token are stored encrypted and never
+returned.
+"""
+type AccountingAppCredential {
+  id: ID!
+  integrationType: AccountingSystem!
+  environment: AccountingAppEnvironment!
+  clientId: String!
+  "Whether a webhook verifier token is saved, so webhooks from this app can be checked."
+  hasWebhookVerifier: Boolean!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+"Which app the organization connects through, and what registering its own app needs."
+type AccountingAppSettings {
+  "The app the next connection will use. The organization's own app wins over the server's. Absent when neither exists."
+  activeSource: AccountingAppSource
+  "Whether this Trenova server is configured with an app of its own."
+  instanceAppAvailable: Boolean!
+  "The environment of the server's app. Absent when the server has none."
+  instanceEnvironment: AccountingAppEnvironment
+  "The address the accounting system sends people back to. Register it on the app exactly as written. Empty when the server has no web address configured."
+  redirectUrl: String!
+  "The path on the API that receives the accounting system's webhooks."
+  webhookPath: String!
+  "The organization's own app, when it saved one."
+  tenantApp: AccountingAppCredential
+}
+
 "What an organization's link to one accounting system looks like."
 type AccountingSyncStatus {
   integrationType: AccountingSystem!
   providerName: String!
-  "Whether this Trenova instance has the accounting system's app credentials configured."
+  "Whether the organization can connect now: there is an app to connect through and a web address to return to."
   available: Boolean!
+  app: AccountingAppSettings!
   "Absent until the organization first connects."
   connection: AccountingConnection
+}
+
+"""
+One Trenova document on its way to the accounting system, at one revision.
+
+The payload that was sent is kept on the server and not returned here.
+"""
+type AccountingSyncRecord {
+  id: ID!
+  objectType: AccountingSyncObjectType!
+  "The Trenova document's ID."
+  objectId: ID!
+  "The Trenova document's number, or the customer's name."
+  objectNumber: String!
+  operation: AccountingSyncOperation!
+  sourceEvent: AccountingSyncSourceEvent!
+  revision: Int!
+  "The date the document carries, which the start date is compared with."
+  documentDate: Timestamp
+  "The record this one waits for, such as the customer an invoice is for."
+  dependsOnRecordId: ID
+  status: AccountingSyncRecordStatus!
+  attemptCount: Int!
+  "When the next try is due. Absent when none is scheduled."
+  nextAttemptAt: Timestamp
+  "The document's ID in the accounting system. Empty until it is synced."
+  externalId: String!
+  externalDocNumber: String!
+  "A link to the document in the accounting system. Empty until it is synced."
+  externalUrl: String!
+  errorCategory: AccountingSyncErrorCategory
+  errorCode: String!
+  "What the accounting system said, as it said it."
+  errorMessage: String!
+  "What to do about it, in plain language."
+  resolution: String!
+  queuedAt: Timestamp!
+  startedAt: Timestamp
+  syncedAt: Timestamp
+  skippedBy: User
+  skippedReason: String!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+type AccountingSyncRecordEdge {
+  node: AccountingSyncRecord!
+  cursor: String!
+}
+
+type AccountingSyncRecordConnection {
+  edges: [AccountingSyncRecordEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"One try at sending a sync record."
+type AccountingSyncAttempt {
+  id: ID!
+  attemptNumber: Int!
+  outcome: AccountingSyncAttemptOutcome!
+  errorCategory: AccountingSyncErrorCategory
+  errorCode: String!
+  errorMessage: String!
+  startedAt: Timestamp!
+  finishedAt: Timestamp!
+  durationMs: Int!
+}
+
+"A run that queues documents dated between the start date and when sync was turned on."
+type AccountingBackfill {
+  id: ID!
+  rangeStart: Timestamp!
+  rangeEnd: Timestamp!
+  objectTypes: [AccountingSyncObjectType!]!
+  status: AccountingBackfillStatus!
+  "Documents this backfill queued."
+  enqueuedCount: Int!
+  "Documents it found already queued, which it left alone."
+  alreadyQueuedCount: Int!
+  startedAt: Timestamp
+  completedAt: Timestamp
+  lastError: String!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"How many records are in one status."
+type AccountingSyncStatusCount {
+  status: AccountingSyncRecordStatus!
+  count: Int!
+}
+
+"Records stuck for the same reason, so one fix clears them all."
+type AccountingSyncAttentionGroup {
+  status: AccountingSyncRecordStatus!
+  errorCategory: AccountingSyncErrorCategory
+  resolution: String!
+  count: Int!
+  oldestQueuedAt: Timestamp!
+  "One of the records, to open as an example."
+  sampleRecordId: ID!
+}
+
+"The state of the accounting sync for one organization and accounting system."
+type AccountingSyncSummary {
+  integrationType: AccountingSystem!
+  providerName: String!
+  "Absent until the organization first connects."
+  connection: AccountingConnection
+  counts: [AccountingSyncStatusCount!]!
+  attention: [AccountingSyncAttentionGroup!]!
+  activeBackfill: AccountingBackfill
+}
+
+"Where one Trenova document stands in the accounting system."
+type AccountingSyncObjectState {
+  objectType: AccountingSyncObjectType!
+  objectId: ID!
+  providerName: String!
+  "The document's latest sync record."
+  record: AccountingSyncRecord!
+}
+
+"How many records an action changed."
+type AccountingSyncActionResult {
+  affected: Int!
+}
+
+input AccountingSyncRecordFilterInput {
+  statuses: [AccountingSyncRecordStatus!]
+  objectTypes: [AccountingSyncObjectType!]
+  errorCategories: [AccountingSyncErrorCategory!]
+  "Only the records for one Trenova document."
+  objectId: ID
+  "Matches the document number."
+  search: String
+}
+
+"Finishes setup: from which day documents are sent, and how."
+input EnableAccountingSyncInput {
+  integrationType: AccountingSystem!
+  "Documents dated before this day are never sent."
+  startDate: Timestamp!
+  "Send posted documents on their own. When off, each waits for a person to release it."
+  autoSync: Boolean!
+  "Also queue documents dated from the start date up to now, which were posted before sync was on."
+  backfill: Boolean!
+}
+
+input PauseAccountingSyncInput {
+  integrationType: AccountingSystem!
+  reason: String
+}
+
+"Retries the named records, or every failed record in the named categories."
+input RetryAccountingSyncInput {
+  integrationType: AccountingSystem!
+  ids: [ID!]
+  errorCategories: [AccountingSyncErrorCategory!]
+}
+
+"Releases the named records waiting for approval, or all of them when none are named."
+input ReleaseAccountingSyncInput {
+  integrationType: AccountingSystem!
+  ids: [ID!]
+}
+
+input SkipAccountingSyncInput {
+  id: ID!
+  "Why the document is not sent. Required."
+  reason: String!
+}
+
+input RequestAccountingBackfillInput {
+  integrationType: AccountingSystem!
+  "Defaults to the start date."
+  rangeStart: Timestamp
+  "Defaults to when sync was turned on."
+  rangeEnd: Timestamp
+  "Defaults to every kind of document."
+  objectTypes: [AccountingSyncObjectType!]
+}
+
+input ChangeAccountingBackfillInput {
+  id: ID!
+  action: AccountingBackfillAction!
+}
+
+"The organization's own app keys. Leave the secret or verifier token out to keep the saved one."
+input SaveAccountingAppInput {
+  integrationType: AccountingSystem!
+  environment: AccountingAppEnvironment!
+  clientId: String!
+  "Required the first time, and whenever the client ID or environment changes."
+  clientSecret: String
+  webhookVerifierToken: String
+  "Removes the saved webhook verifier token."
+  clearWebhookVerifierToken: Boolean
 }
 
 "A record Trenova has read from the accounting system."
@@ -78011,6 +79302,26 @@ extend type Query {
     after: String
     filter: AccountingMappingFilterInput
   ): AccountingMappingConnection!
+  "Record counts by status, the groups needing attention and the running backfill."
+  accountingSyncSummary(integrationType: AccountingSystem!): AccountingSyncSummary!
+  "The sync ledger, newest first."
+  accountingSyncRecords(
+    integrationType: AccountingSystem!
+    first: Int
+    after: String
+    filter: AccountingSyncRecordFilterInput
+  ): AccountingSyncRecordConnection!
+  "The sync ledger as a data table: filters, sorting and search over the records."
+  accountingSyncRecordTable(
+    integrationType: AccountingSystem!
+    input: DataTableConnectionInput!
+  ): AccountingSyncRecordConnection!
+  accountingSyncRecord(id: ID!): AccountingSyncRecord!
+  "Every try at sending a record, newest first."
+  accountingSyncAttempts(recordId: ID!): [AccountingSyncAttempt!]!
+  "Where each document stands in the accounting system. Documents never queued are left out. At most 200 at a time."
+  accountingSyncObjectStates(objectIds: [ID!]!): [AccountingSyncObjectState!]!
+  accountingBackfills(integrationType: AccountingSystem!): [AccountingBackfill!]!
   "Searches the accounting system records Trenova has read."
   accountingReferenceObjects(
     integrationType: AccountingSystem!
@@ -78022,6 +79333,10 @@ extend type Query {
 }
 
 extend type Mutation {
+  "Saves the organization's own app keys after checking them with the accounting system. While a company is connected, only its app's secret and verifier token can change."
+  saveAccountingApp(input: SaveAccountingAppInput!): AccountingSyncStatus!
+  "Removes the organization's own app keys, so connections use the server's app again. Refused while a company is connected through them."
+  removeAccountingApp(integrationType: AccountingSystem!): AccountingSyncStatus!
   "Starts connecting an accounting system. Returns the provider's page to send the person to."
   startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
   "Finishes connecting with what the provider returned. Only the person who started it can finish it."
@@ -78041,8 +79356,22 @@ extend type Mutation {
   createAccountingReferenceRecord(input: CreateAccountingReferenceRecordInput!): AccountingMapping!
   "Reads the accounting system's records again and refreshes the proposals."
   refreshAccountingReferenceData(integrationType: AccountingSystem!): AccountingConnection!
-  "Finishes setup once every required mapping is confirmed."
+  "Moves setup to the start date step once every required mapping is confirmed."
   completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
+  "Finishes setup with a start date and turns sending on."
+  enableAccountingSync(input: EnableAccountingSyncInput!): AccountingConnection!
+  "Holds sending. Posted documents keep queueing and go out on resume."
+  pauseAccountingSync(input: PauseAccountingSyncInput!): AccountingConnection!
+  resumeAccountingSync(integrationType: AccountingSystem!): AccountingConnection!
+  "Queues failed records to be tried again."
+  retryAccountingSync(input: RetryAccountingSyncInput!): AccountingSyncActionResult!
+  "Lets records waiting for approval be sent."
+  releaseAccountingSync(input: ReleaseAccountingSyncInput!): AccountingSyncActionResult!
+  "Marks a record as not to be sent."
+  skipAccountingSync(input: SkipAccountingSyncInput!): AccountingSyncRecord!
+  "Queues documents posted before sync was turned on. One backfill runs at a time."
+  requestAccountingBackfill(input: RequestAccountingBackfillInput!): AccountingBackfill!
+  changeAccountingBackfill(input: ChangeAccountingBackfillInput!): AccountingBackfill!
 }
 `, BuiltIn: false},
 	{Name: "../schema/accounts_receivable.graphqls", Input: `type ARAgingBucketTotals {
@@ -78297,6 +79626,7 @@ enum AgentSubjectType {
   Report
   Dashboard
   AccountingConnection
+  AccountingSyncRecord
   FormulaTemplate
 }
 
@@ -78944,6 +80274,7 @@ extend type Mutation {
   InsightAnalyst
   EDIDesk
   FormulaAssistant
+  BooksKeeper
 }
 
 enum AgentTriggerMode {
@@ -102602,6 +103933,44 @@ func (ec *executionContext) childFields_AccountTypeEdge(ctx context.Context, fie
 	return nil, fmt.Errorf("no field named %q was found under type AccountTypeEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_AccountingAppCredential(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AccountingAppCredential_id(ctx, field)
+	case "integrationType":
+		return ec.fieldContext_AccountingAppCredential_integrationType(ctx, field)
+	case "environment":
+		return ec.fieldContext_AccountingAppCredential_environment(ctx, field)
+	case "clientId":
+		return ec.fieldContext_AccountingAppCredential_clientId(ctx, field)
+	case "hasWebhookVerifier":
+		return ec.fieldContext_AccountingAppCredential_hasWebhookVerifier(ctx, field)
+	case "version":
+		return ec.fieldContext_AccountingAppCredential_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AccountingAppCredential_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingAppCredential", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingAppSettings(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "activeSource":
+		return ec.fieldContext_AccountingAppSettings_activeSource(ctx, field)
+	case "instanceAppAvailable":
+		return ec.fieldContext_AccountingAppSettings_instanceAppAvailable(ctx, field)
+	case "instanceEnvironment":
+		return ec.fieldContext_AccountingAppSettings_instanceEnvironment(ctx, field)
+	case "redirectUrl":
+		return ec.fieldContext_AccountingAppSettings_redirectUrl(ctx, field)
+	case "webhookPath":
+		return ec.fieldContext_AccountingAppSettings_webhookPath(ctx, field)
+	case "tenantApp":
+		return ec.fieldContext_AccountingAppSettings_tenantApp(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingAppSettings", field.Name)
+}
+
 func (ec *executionContext) childFields_AccountingAuthorizationStart(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "authorizeUrl":
@@ -102612,6 +103981,38 @@ func (ec *executionContext) childFields_AccountingAuthorizationStart(ctx context
 	return nil, fmt.Errorf("no field named %q was found under type AccountingAuthorizationStart", field.Name)
 }
 
+func (ec *executionContext) childFields_AccountingBackfill(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AccountingBackfill_id(ctx, field)
+	case "rangeStart":
+		return ec.fieldContext_AccountingBackfill_rangeStart(ctx, field)
+	case "rangeEnd":
+		return ec.fieldContext_AccountingBackfill_rangeEnd(ctx, field)
+	case "objectTypes":
+		return ec.fieldContext_AccountingBackfill_objectTypes(ctx, field)
+	case "status":
+		return ec.fieldContext_AccountingBackfill_status(ctx, field)
+	case "enqueuedCount":
+		return ec.fieldContext_AccountingBackfill_enqueuedCount(ctx, field)
+	case "alreadyQueuedCount":
+		return ec.fieldContext_AccountingBackfill_alreadyQueuedCount(ctx, field)
+	case "startedAt":
+		return ec.fieldContext_AccountingBackfill_startedAt(ctx, field)
+	case "completedAt":
+		return ec.fieldContext_AccountingBackfill_completedAt(ctx, field)
+	case "lastError":
+		return ec.fieldContext_AccountingBackfill_lastError(ctx, field)
+	case "version":
+		return ec.fieldContext_AccountingBackfill_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AccountingBackfill_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AccountingBackfill_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingBackfill", field.Name)
+}
+
 func (ec *executionContext) childFields_AccountingConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -102620,6 +104021,10 @@ func (ec *executionContext) childFields_AccountingConnection(ctx context.Context
 		return ec.fieldContext_AccountingConnection_integrationType(ctx, field)
 	case "status":
 		return ec.fieldContext_AccountingConnection_status(ctx, field)
+	case "appSource":
+		return ec.fieldContext_AccountingConnection_appSource(ctx, field)
+	case "appEnvironment":
+		return ec.fieldContext_AccountingConnection_appEnvironment(ctx, field)
 	case "externalCompanyName":
 		return ec.fieldContext_AccountingConnection_externalCompanyName(ctx, field)
 	case "externalLegalName":
@@ -102654,6 +104059,18 @@ func (ec *executionContext) childFields_AccountingConnection(ctx context.Context
 		return ec.fieldContext_AccountingConnection_disconnectedAt(ctx, field)
 	case "setupStep":
 		return ec.fieldContext_AccountingConnection_setupStep(ctx, field)
+	case "syncStartDate":
+		return ec.fieldContext_AccountingConnection_syncStartDate(ctx, field)
+	case "syncEnabledAt":
+		return ec.fieldContext_AccountingConnection_syncEnabledAt(ctx, field)
+	case "autoSync":
+		return ec.fieldContext_AccountingConnection_autoSync(ctx, field)
+	case "pausedAt":
+		return ec.fieldContext_AccountingConnection_pausedAt(ctx, field)
+	case "pausedBy":
+		return ec.fieldContext_AccountingConnection_pausedBy(ctx, field)
+	case "pausedReason":
+		return ec.fieldContext_AccountingConnection_pausedReason(ctx, field)
 	case "referenceRefreshStartedAt":
 		return ec.fieldContext_AccountingConnection_referenceRefreshStartedAt(ctx, field)
 	case "referenceRefreshedAt":
@@ -102844,6 +104261,150 @@ func (ec *executionContext) childFields_AccountingReferenceObject(ctx context.Co
 	return nil, fmt.Errorf("no field named %q was found under type AccountingReferenceObject", field.Name)
 }
 
+func (ec *executionContext) childFields_AccountingSyncActionResult(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "affected":
+		return ec.fieldContext_AccountingSyncActionResult_affected(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingSyncActionResult", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingSyncAttempt(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AccountingSyncAttempt_id(ctx, field)
+	case "attemptNumber":
+		return ec.fieldContext_AccountingSyncAttempt_attemptNumber(ctx, field)
+	case "outcome":
+		return ec.fieldContext_AccountingSyncAttempt_outcome(ctx, field)
+	case "errorCategory":
+		return ec.fieldContext_AccountingSyncAttempt_errorCategory(ctx, field)
+	case "errorCode":
+		return ec.fieldContext_AccountingSyncAttempt_errorCode(ctx, field)
+	case "errorMessage":
+		return ec.fieldContext_AccountingSyncAttempt_errorMessage(ctx, field)
+	case "startedAt":
+		return ec.fieldContext_AccountingSyncAttempt_startedAt(ctx, field)
+	case "finishedAt":
+		return ec.fieldContext_AccountingSyncAttempt_finishedAt(ctx, field)
+	case "durationMs":
+		return ec.fieldContext_AccountingSyncAttempt_durationMs(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingSyncAttempt", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingSyncAttentionGroup(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "status":
+		return ec.fieldContext_AccountingSyncAttentionGroup_status(ctx, field)
+	case "errorCategory":
+		return ec.fieldContext_AccountingSyncAttentionGroup_errorCategory(ctx, field)
+	case "resolution":
+		return ec.fieldContext_AccountingSyncAttentionGroup_resolution(ctx, field)
+	case "count":
+		return ec.fieldContext_AccountingSyncAttentionGroup_count(ctx, field)
+	case "oldestQueuedAt":
+		return ec.fieldContext_AccountingSyncAttentionGroup_oldestQueuedAt(ctx, field)
+	case "sampleRecordId":
+		return ec.fieldContext_AccountingSyncAttentionGroup_sampleRecordId(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingSyncAttentionGroup", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingSyncObjectState(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "objectType":
+		return ec.fieldContext_AccountingSyncObjectState_objectType(ctx, field)
+	case "objectId":
+		return ec.fieldContext_AccountingSyncObjectState_objectId(ctx, field)
+	case "providerName":
+		return ec.fieldContext_AccountingSyncObjectState_providerName(ctx, field)
+	case "record":
+		return ec.fieldContext_AccountingSyncObjectState_record(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingSyncObjectState", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingSyncRecord(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AccountingSyncRecord_id(ctx, field)
+	case "objectType":
+		return ec.fieldContext_AccountingSyncRecord_objectType(ctx, field)
+	case "objectId":
+		return ec.fieldContext_AccountingSyncRecord_objectId(ctx, field)
+	case "objectNumber":
+		return ec.fieldContext_AccountingSyncRecord_objectNumber(ctx, field)
+	case "operation":
+		return ec.fieldContext_AccountingSyncRecord_operation(ctx, field)
+	case "sourceEvent":
+		return ec.fieldContext_AccountingSyncRecord_sourceEvent(ctx, field)
+	case "revision":
+		return ec.fieldContext_AccountingSyncRecord_revision(ctx, field)
+	case "documentDate":
+		return ec.fieldContext_AccountingSyncRecord_documentDate(ctx, field)
+	case "dependsOnRecordId":
+		return ec.fieldContext_AccountingSyncRecord_dependsOnRecordId(ctx, field)
+	case "status":
+		return ec.fieldContext_AccountingSyncRecord_status(ctx, field)
+	case "attemptCount":
+		return ec.fieldContext_AccountingSyncRecord_attemptCount(ctx, field)
+	case "nextAttemptAt":
+		return ec.fieldContext_AccountingSyncRecord_nextAttemptAt(ctx, field)
+	case "externalId":
+		return ec.fieldContext_AccountingSyncRecord_externalId(ctx, field)
+	case "externalDocNumber":
+		return ec.fieldContext_AccountingSyncRecord_externalDocNumber(ctx, field)
+	case "externalUrl":
+		return ec.fieldContext_AccountingSyncRecord_externalUrl(ctx, field)
+	case "errorCategory":
+		return ec.fieldContext_AccountingSyncRecord_errorCategory(ctx, field)
+	case "errorCode":
+		return ec.fieldContext_AccountingSyncRecord_errorCode(ctx, field)
+	case "errorMessage":
+		return ec.fieldContext_AccountingSyncRecord_errorMessage(ctx, field)
+	case "resolution":
+		return ec.fieldContext_AccountingSyncRecord_resolution(ctx, field)
+	case "queuedAt":
+		return ec.fieldContext_AccountingSyncRecord_queuedAt(ctx, field)
+	case "startedAt":
+		return ec.fieldContext_AccountingSyncRecord_startedAt(ctx, field)
+	case "syncedAt":
+		return ec.fieldContext_AccountingSyncRecord_syncedAt(ctx, field)
+	case "skippedBy":
+		return ec.fieldContext_AccountingSyncRecord_skippedBy(ctx, field)
+	case "skippedReason":
+		return ec.fieldContext_AccountingSyncRecord_skippedReason(ctx, field)
+	case "version":
+		return ec.fieldContext_AccountingSyncRecord_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AccountingSyncRecord_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingSyncRecord", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingSyncRecordConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AccountingSyncRecordConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AccountingSyncRecordConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AccountingSyncRecordConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingSyncRecordConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingSyncRecordEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AccountingSyncRecordEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AccountingSyncRecordEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingSyncRecordEdge", field.Name)
+}
+
 func (ec *executionContext) childFields_AccountingSyncStatus(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "integrationType":
@@ -102852,10 +104413,40 @@ func (ec *executionContext) childFields_AccountingSyncStatus(ctx context.Context
 		return ec.fieldContext_AccountingSyncStatus_providerName(ctx, field)
 	case "available":
 		return ec.fieldContext_AccountingSyncStatus_available(ctx, field)
+	case "app":
+		return ec.fieldContext_AccountingSyncStatus_app(ctx, field)
 	case "connection":
 		return ec.fieldContext_AccountingSyncStatus_connection(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AccountingSyncStatus", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingSyncStatusCount(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "status":
+		return ec.fieldContext_AccountingSyncStatusCount_status(ctx, field)
+	case "count":
+		return ec.fieldContext_AccountingSyncStatusCount_count(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingSyncStatusCount", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingSyncSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "integrationType":
+		return ec.fieldContext_AccountingSyncSummary_integrationType(ctx, field)
+	case "providerName":
+		return ec.fieldContext_AccountingSyncSummary_providerName(ctx, field)
+	case "connection":
+		return ec.fieldContext_AccountingSyncSummary_connection(ctx, field)
+	case "counts":
+		return ec.fieldContext_AccountingSyncSummary_counts(ctx, field)
+	case "attention":
+		return ec.fieldContext_AccountingSyncSummary_attention(ctx, field)
+	case "activeBackfill":
+		return ec.fieldContext_AccountingSyncSummary_activeBackfill(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingSyncSummary", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentAccessPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
