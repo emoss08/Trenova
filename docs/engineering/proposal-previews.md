@@ -213,7 +213,7 @@ unstable digest shows itself.
 | Labels, baselines | `internal/infrastructure/postgres/repositories/{recordlabelrepository,agentproposalbaselinerepository}/` |
 | Filing | `internal/core/services/agentruntime/baseline.go` |
 | Decisions | `agentdecisionservice/preview.go`, `agentplanservice/preview.go`, `proposalexecutor` |
-| Migration | `20261231006760_agent_proposal_previews` (Postgres and the SQLite mirror) |
+| Migration | `20261231006790_agent_proposal_previews` (Postgres and the SQLite mirror) |
 
 ## Known limits
 

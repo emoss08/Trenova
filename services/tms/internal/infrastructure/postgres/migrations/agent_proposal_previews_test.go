@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	agentProposalPreviewsUp   = "20261231006760_agent_proposal_previews.tx.up.sql"
-	agentProposalPreviewsDown = "20261231006760_agent_proposal_previews.tx.down.sql"
+	agentProposalPreviewsUp   = "20261231006790_agent_proposal_previews.tx.up.sql"
+	agentProposalPreviewsDown = "20261231006790_agent_proposal_previews.tx.down.sql"
 )
 
 func TestAgentProposalPreviewsMigration_KeysBaselinesByProposalAndTenant(t *testing.T) {
