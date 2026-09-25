@@ -7,14 +7,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
-	"github.com/shopspring/decimal"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
@@ -26,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/httpsafe"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -273,7 +273,7 @@ func (s *Service) runAmong(
 			return nil, err
 		}
 
-		attemptCtx, span := s.startAttempt(ctx, attemptSpec{
+		attemptCtx, span := s.startAttempt(ctx, &attemptSpec{
 			operation:   aitrace.OperationChat,
 			provider:    provider,
 			attempt:     idx + 1,
@@ -286,7 +286,7 @@ func (s *Service) runAmong(
 		latency := time.Since(started)
 		attemptErr = stopped(ctx, attemptErr)
 		s.observe(ctx, provider, attemptErr)
-		s.settleAttempt(attemptCtx, span, usageAttempt{
+		s.settleAttempt(attemptCtx, span, &usageAttempt{
 			provider:    provider,
 			task:        req.Task,
 			surface:     surfaceFor(aiusage.SurfaceStructured, req.Attribution),

@@ -368,7 +368,10 @@ func (s *Service) OpenTurn(ctx context.Context, req *serviceports.RunRequest) *T
 	// to. A delegate that navigated would pull them away mid-answer to a
 	// page they never asked for.
 	if req.Delegation != nil {
-		held = slices.DeleteFunc(held, func(name string) bool { return name == agentdefinition.CoreToolOpenPage })
+		held = slices.DeleteFunc(
+			held,
+			func(name string) bool { return name == agentdefinition.CoreToolOpenPage },
+		)
 	}
 	// Only the agent a person is talking to delegates, and only to agents
 	// they may use; the tool is held on that turn and on no other, so a
@@ -707,7 +710,7 @@ func (s *Service) DispatchStep(
 	req *serviceports.RunRequest,
 	call DispatchCall,
 ) ToolOutcome {
-	outcome := s.guardedDispatch(ctx, guardedDispatchParams{
+	outcome := s.guardedDispatch(ctx, &guardedDispatchParams{
 		req:            req,
 		call:           call.Call,
 		completionText: call.CompletionText,

@@ -249,7 +249,7 @@ func (s *Service) write(ctx context.Context, req *RecordRequest) (*RecordResult,
 		}
 		applyTaint(proposal, action, req.Taint)
 		applyExecution(proposal, action, now)
-		applyExecutor(proposal, action, req.Actor)
+		applyExecutor(proposal, &action, req.Actor)
 		if plan != nil && proposal.Status == agent.ProposalStatusPending {
 			step++
 			planID := plan.ID
@@ -467,7 +467,7 @@ func applyExecution(proposal *agent.AgentProposal, action serviceports.PendingAc
 
 func applyExecutor(
 	proposal *agent.AgentProposal,
-	action serviceports.PendingAction,
+	action *serviceports.PendingAction,
 	actor *serviceports.RequestActor,
 ) {
 	if !action.Executed && !action.Simulated {

@@ -314,7 +314,7 @@ func testExports(
 	notifier := &fakeNotifier{}
 	audited := &fakeAudit{}
 
-	return NewExports(ExportsParams{
+	return NewExports(&ExportsParams{
 		Ledger:    ledger,
 		Exports:   repo,
 		Source:    &fakeSource{users: map[pulid.ID]string{}},

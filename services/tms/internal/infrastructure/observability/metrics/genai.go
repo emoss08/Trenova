@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	genAIMeterName             = "github.com/emoss08/trenova/genai"
+	genAIMeterName = "github.com/emoss08/trenova/genai"
+	//nolint:gosec // G101: an OpenTelemetry metric name, not a credential
 	genAITokenUsageName        = "gen_ai.client.token.usage"
 	genAIOperationDurationName = "gen_ai.client.operation.duration"
 	genAITokenTypeInput        = "input"

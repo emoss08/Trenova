@@ -75,7 +75,7 @@ type ProjectorParams struct {
 	Logger    *zap.Logger
 }
 
-func NewProjector(p ProjectorParams) *Projector {
+func NewProjector(p *ProjectorParams) *Projector {
 	now := p.Now
 	if now == nil {
 		now = time.Now

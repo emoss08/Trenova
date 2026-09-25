@@ -562,7 +562,7 @@ func (f *fakeSource) TurnsByRunIDs(
 
 func (f *fakeSource) TurnsInWindow(
 	_ context.Context,
-	req repositories.AIAuditTurnWindow,
+	req *repositories.AIAuditTurnWindow,
 ) ([]*conversation.AssistantTurn, error) {
 	return byIDs(f.turns, func(r *conversation.AssistantTurn) pulid.ID { return r.ThreadID },
 		req.ThreadIDs), nil

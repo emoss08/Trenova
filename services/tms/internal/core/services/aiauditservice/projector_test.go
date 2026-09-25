@@ -217,7 +217,7 @@ func testKeyring(signed bool) *Keyring {
 }
 
 func testProjector(ledger *fakeLedger, source *fakeSource, keyring *Keyring) *Projector {
-	return NewProjector(ProjectorParams{
+	return NewProjector(&ProjectorParams{
 		Ledger:    ledger,
 		Source:    source,
 		Keyring:   keyring,

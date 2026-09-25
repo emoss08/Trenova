@@ -34,6 +34,8 @@ const (
 	exportNoticeSource  = "aiauditservice.Exports"
 	exportErrorLimit    = 1000
 	exportWorkflowIDTag = "ai-audit-export/"
+	noticeKeyKind       = "kind"
+	noticeKeyStatus     = "status"
 )
 
 // Notifier creates one person's notification.
@@ -79,7 +81,7 @@ type ExportsParams struct {
 	Logger      *zap.Logger
 }
 
-func NewExports(p ExportsParams) *Exports {
+func NewExports(p *ExportsParams) *Exports {
 	now := p.Now
 	if now == nil {
 		now = time.Now
@@ -503,11 +505,11 @@ func (x *Exports) notify(ctx context.Context, export *aiaudit.AIAuditExport) {
 	userID := export.RequestedByUserID
 	correlation := export.ID.String() + ":" + string(export.Status)
 	data := map[string]any{
-		"kind":     eventType,
-		"exportId": export.ID.String(),
-		"status":   string(export.Status),
-		"format":   string(export.Format),
-		"rowCount": export.RowCount,
+		noticeKeyKind:   eventType,
+		"exportId":      export.ID.String(),
+		noticeKeyStatus: string(export.Status),
+		"format":        string(export.Format),
+		"rowCount":      export.RowCount,
 	}
 	if path, ok := productguide.RecordPath(
 		serviceports.AIAuditExportRecordEntity,

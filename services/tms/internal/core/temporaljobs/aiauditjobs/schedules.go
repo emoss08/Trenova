@@ -16,6 +16,9 @@ const (
 	PruneScheduleID     = "ai-audit-retention-purge"
 	CleanupScheduleID   = "ai-audit-export-cleanup"
 	exportCleanupEvery  = time.Hour
+	memoKeyPurpose      = "purpose"
+	memoKeyTarget       = "target"
+	memoTargetEvents    = "ai_audit_events"
 )
 
 type ScheduleProvider struct {
@@ -36,8 +39,8 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			TaskQueue:     temporaltype.AuditTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
-				"purpose": "ai-audit-projection",
-				"target":  "ai_audit_events",
+				memoKeyPurpose: "ai-audit-projection",
+				memoKeyTarget:  memoTargetEvents,
 			},
 		},
 		{
@@ -49,8 +52,8 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			Args:          []any{&serviceports.AIAuditVerifyPayload{}},
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
-				"purpose": "ai-audit-verification",
-				"target":  "ai_audit_events",
+				memoKeyPurpose: "ai-audit-verification",
+				memoKeyTarget:  memoTargetEvents,
 			},
 		},
 		{
@@ -61,8 +64,8 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			TaskQueue:     temporaltype.AuditTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
-				"purpose": "ai-audit-retention-purge",
-				"target":  "ai_audit_events",
+				memoKeyPurpose: "ai-audit-retention-purge",
+				memoKeyTarget:  memoTargetEvents,
 			},
 		},
 		{
@@ -73,8 +76,8 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			TaskQueue:     temporaltype.AuditTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
-				"purpose": "ai-audit-export-cleanup",
-				"target":  "ai_audit_exports",
+				memoKeyPurpose: "ai-audit-export-cleanup",
+				memoKeyTarget:  "ai_audit_exports",
 			},
 		},
 	}

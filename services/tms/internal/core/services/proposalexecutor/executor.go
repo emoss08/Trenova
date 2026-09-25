@@ -208,63 +208,18 @@ func (s *Service) execute(
 		return ErrTenantMismatch
 	}
 
-	tool, ok := s.tools.Get(proposal.ToolName)
-	if !ok {
-		err := fmt.Errorf("%w: %s", ErrToolMissing, proposal.ToolName)
+	tool, params, err := s.admit(ctx, proposal, modifications, actor)
+	if err != nil {
 		s.recordFailureBy(ctx, proposal, err, actor)
 
 		return err
 	}
 
-	if err := s.assertActorMayRun(ctx, tool, actor); err != nil {
-		s.recordFailureBy(ctx, proposal, err, actor)
-
-		return err
-	}
-
-	if err := s.assertTargetUnchanged(ctx, proposal); err != nil {
-		s.recordFailureBy(ctx, proposal, err, actor)
-
-		return err
-	}
-
-	if err := refuseOwnerChange(modifications); err != nil {
-		s.recordFailureBy(ctx, proposal, err, actor)
-
-		return err
-	}
-
-	params := mergeParams(proposal.ToolParams, modifications)
-	if len(modifications) > 0 {
-		// What the approver changed is checked against the tool's own
-		// schema once more here, where it runs: the decision that carried
-		// it was checked when it was made, and the tool may have changed.
-		if err := validateParams(tool, params); err != nil {
-			s.recordFailureBy(ctx, proposal, err, actor)
-
-			return err
-		}
-	}
-
-	// The proposal id is the idempotency key. It is stable across retries of the
-	// same approval and distinct between proposals, which is exactly what a tool
-	// guarding against double execution needs.
-	execParams := services.ToolExecuteParams{
-		OrganizationID: proposal.OrganizationID,
-		BusinessUnitID: proposal.BusinessUnitID,
-		Actor:          actor,
-		IdempotencyKey: proposal.ID.String(),
-		RunID:          proposal.RunID,
-		Params:         params,
-		ProposalID:     proposal.ID,
-	}
 	policy := tool.Policy()
-	if policy.CarriesTaint {
-		execParams.Taint = proposalTaint(proposal)
-	}
+	execParams := executionParams(proposal, &policy, params, actor)
 
 	egress := policy.Classified(execParams).Egress
-	if err := assertTaintDecidedByPerson(proposal, egress, actor); err != nil {
+	if err = assertTaintDecidedByPerson(proposal, egress, actor); err != nil {
 		s.recordFailureAs(ctx, proposal, err, egress, actor)
 
 		return err
@@ -278,11 +233,19 @@ func (s *Service) execute(
 		return err
 	}
 
+	approved := &approvedRun{
+		tool:     tool,
+		proposal: proposal,
+		actor:    actor,
+		policy:   &policy,
+		params:   &execParams,
+	}
+
 	// An agent in simulation gets a preview in place of the write, however
 	// the proposal was decided: the approval is real and recorded, the
 	// change is not.
 	if definition != nil && definition.SimulationMode {
-		return s.simulate(ctx, tool, proposal, execParams, actor)
+		return s.simulate(ctx, approved)
 	}
 
 	if err = s.assertWithinBudget(ctx, definition, tool.Name()); err != nil {
@@ -291,10 +254,84 @@ func (s *Service) execute(
 		return err
 	}
 
-	toolCtx, toolSpan := startTool(ctx, proposal, policy)
+	return s.run(ctx, approved)
+}
+
+func (s *Service) admit(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	modifications map[string]any,
+	actor *services.RequestActor,
+) (services.AgentTool, map[string]any, error) {
+	tool, ok := s.tools.Get(proposal.ToolName)
+	if !ok {
+		return nil, nil, fmt.Errorf("%w: %s", ErrToolMissing, proposal.ToolName)
+	}
+
+	if err := s.assertActorMayRun(ctx, tool, actor); err != nil {
+		return nil, nil, err
+	}
+
+	if err := s.assertTargetUnchanged(ctx, proposal); err != nil {
+		return nil, nil, err
+	}
+
+	if err := refuseOwnerChange(modifications); err != nil {
+		return nil, nil, err
+	}
+
+	params := mergeParams(proposal.ToolParams, modifications)
+	if len(modifications) > 0 {
+		// What the approver changed is checked against the tool's own
+		// schema once more here, where it runs: the decision that carried
+		// it was checked when it was made, and the tool may have changed.
+		if err := validateParams(tool, params); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return tool, params, nil
+}
+
+func executionParams(
+	proposal *agent.AgentProposal,
+	policy *services.ToolPolicy,
+	params map[string]any,
+	actor *services.RequestActor,
+) services.ToolExecuteParams {
+	// The proposal id is the idempotency key. It is stable across retries of the
+	// same approval and distinct between proposals, which is exactly what a tool
+	// guarding against double execution needs.
+	execParams := services.ToolExecuteParams{
+		OrganizationID: proposal.OrganizationID,
+		BusinessUnitID: proposal.BusinessUnitID,
+		Actor:          actor,
+		IdempotencyKey: proposal.ID.String(),
+		RunID:          proposal.RunID,
+		Params:         params,
+		ProposalID:     proposal.ID,
+	}
+	if policy.CarriesTaint {
+		execParams.Taint = proposalTaint(proposal)
+	}
+
+	return execParams
+}
+
+type approvedRun struct {
+	tool     services.AgentTool
+	proposal *agent.AgentProposal
+	actor    *services.RequestActor
+	policy   *services.ToolPolicy
+	params   *services.ToolExecuteParams
+}
+
+func (s *Service) run(ctx context.Context, r *approvedRun) error {
+	proposal := r.proposal
+	toolCtx, toolSpan := startTool(ctx, proposal, r.policy)
 	defer toolSpan.End()
 	writeCtx, write := startWrite(toolCtx, proposal, false)
-	result, err := services.ExecuteTool(writeCtx, tool, execParams)
+	result, err := services.ExecuteTool(writeCtx, r.tool, *r.params)
 	if err != nil {
 		aitrace.MarkFailed(write, aitrace.OutcomeFailed)
 		write.End()
@@ -304,7 +341,7 @@ func (s *Service) execute(
 			zap.String("tool", proposal.ToolName),
 			zap.Error(err),
 		)
-		s.recordFailureBy(ctx, proposal, err, actor)
+		s.recordFailureBy(ctx, proposal, err, r.actor)
 
 		return err
 	}
@@ -317,8 +354,8 @@ func (s *Service) execute(
 
 	s.recordSuccess(ctx, executionSuccess{
 		proposal:      proposal,
-		actor:         actor,
-		params:        params,
+		actor:         r.actor,
+		params:        r.params.Params,
 		result:        result,
 		targetVersion: after,
 	})
@@ -438,28 +475,27 @@ func (s *Service) assertWithinBudget(
 	return nil
 }
 
-func (s *Service) simulate(
-	ctx context.Context,
-	tool services.AgentTool,
-	proposal *agent.AgentProposal,
-	params services.ToolExecuteParams,
-	actor *services.RequestActor,
-) error {
-	toolCtx, toolSpan := startTool(ctx, proposal, tool.Policy())
+func (s *Service) simulate(ctx context.Context, r *approvedRun) error {
+	proposal := r.proposal
+	actor := r.actor
+	toolCtx, toolSpan := startTool(ctx, proposal, r.policy)
 	writeCtx, write := startWrite(toolCtx, proposal, true)
-	preview := toolsimulation.Simulate(writeCtx, tool, params)
+	preview := toolsimulation.Simulate(writeCtx, r.tool, *r.params)
 	write.End()
 	finishTool(toolSpan, aitrace.OutcomeSimulated)
 	toolSpan.End()
 	now := timeutils.NowUnix()
 
-	if _, err := s.proposalRepo.RecordSimulation(ctx, repositories.RecordAgentProposalSimulationRequest{
-		ID:               proposal.ID,
-		TenantInfo:       tenantOf(proposal),
-		SimulatedAt:      now,
-		Simulation:       preview,
-		ExecutedByUserID: executorOf(actor),
-	}); err != nil {
+	if _, err := s.proposalRepo.RecordSimulation(
+		ctx,
+		repositories.RecordAgentProposalSimulationRequest{
+			ID:               proposal.ID,
+			TenantInfo:       tenantOf(proposal),
+			SimulatedAt:      now,
+			Simulation:       preview,
+			ExecutedByUserID: executorOf(actor),
+		},
+	); err != nil {
 		s.l.Error("failed to record proposal simulation",
 			zap.String("proposal", proposal.ID.String()), zap.Error(err))
 
@@ -476,8 +512,8 @@ func (s *Service) simulate(
 		PrincipalID:   auditActor.PrincipalID,
 		APIKeyID:      auditActor.APIKeyID,
 		CurrentState: jsonutils.MustToJSON(map[string]any{
-			"tool":       tool.Name(),
-			"params":     params.Params,
+			"tool":       r.tool.Name(),
+			"params":     r.params.Params,
 			"simulation": preview,
 		}),
 		OrganizationID: proposal.OrganizationID,

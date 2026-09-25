@@ -32,7 +32,11 @@ func (r *exportRepository) Create(
 	ctx context.Context,
 	export *aiaudit.AIAuditExport,
 ) (*aiaudit.AIAuditExport, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(export).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(export).
+		Returning("*").
+		Exec(ctx); err != nil {
 		r.l.Error("failed to create AI audit export", zap.Error(err))
 
 		return nil, fmt.Errorf("create AI audit export: %w", err)

@@ -238,7 +238,10 @@ type AIAuditSourceRepository interface {
 		tenantInfo pagination.TenantInfo,
 		runIDs []pulid.ID,
 	) ([]*conversation.AssistantTurn, error)
-	TurnsInWindow(ctx context.Context, req AIAuditTurnWindow) ([]*conversation.AssistantTurn, error)
+	TurnsInWindow(
+		ctx context.Context,
+		req *AIAuditTurnWindow,
+	) ([]*conversation.AssistantTurn, error)
 	ThreadsByIDs(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

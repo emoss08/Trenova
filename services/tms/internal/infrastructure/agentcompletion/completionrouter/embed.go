@@ -259,7 +259,7 @@ func (s *Service) embedBatch(
 			return nil, err
 		}
 
-		attemptCtx, span := s.startAttempt(ctx, attemptSpec{
+		attemptCtx, span := s.startAttempt(ctx, &attemptSpec{
 			operation:   aitrace.OperationEmbeddings,
 			provider:    provider,
 			attempt:     idx + 1,
@@ -276,7 +276,7 @@ func (s *Service) embedBatch(
 		if served != nil {
 			outcome = &runOutcome{Model: served.model, InputTokens: served.tokens}
 		}
-		s.settleAttempt(attemptCtx, span, usageAttempt{
+		s.settleAttempt(attemptCtx, span, &usageAttempt{
 			provider:    provider,
 			task:        aiprovider.TaskEmbedding,
 			surface:     surfaceFor(req.ResolvedSurface(), req.Attribution),

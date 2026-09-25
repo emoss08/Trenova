@@ -21,11 +21,11 @@ func TestCompletionTally_SumsTheAttemptsOfOneCall(t *testing.T) {
 
 	first := decimal.RequireFromString("0.010")
 	second := decimal.RequireFromString("0.002")
-	TallyFrom(ctx).Attempt(AttemptTally{
+	TallyFrom(ctx).Attempt(&AttemptTally{
 		ProviderID: "aip_1", ProviderName: "anthropic", Model: "model-a", CostUSD: &first,
 	})
 	TallyFrom(ctx).Restarted()
-	TallyFrom(ctx).Attempt(AttemptTally{
+	TallyFrom(ctx).Attempt(&AttemptTally{
 		ProviderID: "aip_2", ProviderName: "openai", Model: "model-b", Failover: true,
 		CostUSD: &second,
 	})
@@ -54,7 +54,7 @@ func TestCompletionTally_IsSafeWithoutOne(t *testing.T) {
 
 	var missing *CompletionTally
 	assert.Nil(t, TallyFrom(t.Context()))
-	missing.Attempt(AttemptTally{})
+	missing.Attempt(&AttemptTally{})
 	missing.Restarted()
 	missing.Record(trace.SpanFromContext(t.Context()))
 	assert.Zero(t, missing.Attempts())

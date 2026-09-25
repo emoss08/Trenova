@@ -39,7 +39,7 @@ func sourceKey(parts ...string) string {
 	return strings.Join(parts, ":")
 }
 
-func (d *deriver) base(o owner) *aiaudit.AIAuditEvent {
+func (d *deriver) base(o *owner) *aiaudit.AIAuditEvent {
 	event := &aiaudit.AIAuditEvent{
 		PrincipalType:          o.principalType,
 		PrincipalID:            o.principalID,
@@ -83,7 +83,7 @@ func (d *deriver) runEvents(l *lookups, run *agent.AgentRun) []*aiaudit.AIAuditE
 	o := l.ownerOf(string(agent.RunOwnerAgentRun), run.ID)
 	events := make([]*aiaudit.AIAuditEvent, 0, 2)
 
-	started := d.base(o)
+	started := d.base(&o)
 	started.SourceKey = sourceKey("run", run.ID.String(), "started")
 	started.Kind = aiaudit.KindRunStarted
 	started.Outcome = aiaudit.OutcomeStarted
@@ -98,7 +98,7 @@ func (d *deriver) runEvents(l *lookups, run *agent.AgentRun) []*aiaudit.AIAuditE
 		return events
 	}
 
-	ended := d.base(o)
+	ended := d.base(&o)
 	ended.SourceKey = sourceKey("run", run.ID.String(), "ended")
 	ended.Kind = aiaudit.KindRunEnded
 	ended.Outcome = runOutcome(run.Status)
@@ -135,7 +135,7 @@ func (d *deriver) turnEvents(
 	o := l.ownerOf(string(agent.RunOwnerAssistantTurn), turn.ID)
 	events := make([]*aiaudit.AIAuditEvent, 0, 2)
 
-	started := d.base(o)
+	started := d.base(&o)
 	started.SourceKey = sourceKey("turn", turn.ID.String(), "started")
 	started.Kind = aiaudit.KindRunStarted
 	started.Outcome = aiaudit.OutcomeStarted
@@ -148,7 +148,7 @@ func (d *deriver) turnEvents(
 		return events
 	}
 
-	ended := d.base(o)
+	ended := d.base(&o)
 	ended.SourceKey = sourceKey("turn", turn.ID.String(), "ended")
 	ended.Kind = aiaudit.KindRunEnded
 	ended.Outcome = turnOutcome(turn.Status)
@@ -185,7 +185,7 @@ func turnOutcome(status conversation.AssistantTurnStatus) aiaudit.Outcome {
 func (d *deriver) usageEvent(l *lookups, record *aiusage.AIUsageRecord) *aiaudit.AIAuditEvent {
 	o, reconstructed := d.usageOwner(l, record)
 
-	event := d.base(o)
+	event := d.base(&o)
 	event.SourceKey = sourceKey("usage", record.ID.String())
 	event.Kind = aiaudit.KindModelCall
 	event.Outcome = aiaudit.OutcomeSucceeded
@@ -199,6 +199,17 @@ func (d *deriver) usageEvent(l *lookups, record *aiusage.AIUsageRecord) *aiaudit
 	event.OccurredAt = record.CreatedAt
 	event.Reconstructed = reconstructed
 
+	applyUsageAttribution(event, record, o.id)
+	applyUsageCall(event, record)
+
+	return event
+}
+
+func applyUsageAttribution(
+	event *aiaudit.AIAuditEvent,
+	record *aiusage.AIUsageRecord,
+	ownerID pulid.ID,
+) {
 	if record.UserID.IsNotNil() {
 		event.OnBehalfOfUserID = record.UserID
 	}
@@ -221,13 +232,15 @@ func (d *deriver) usageEvent(l *lookups, record *aiusage.AIUsageRecord) *aiaudit
 		event.TraceID = record.TraceID
 	}
 	event.SpanID = record.SpanID
-	if o.id.IsNil() {
+	if ownerID.IsNil() {
 		event.PrincipalType, event.PrincipalID = usagePrincipal(record)
 	}
 	if record.Surface == aiusage.SurfaceEvaluation {
 		event.Purpose = aiaudit.PurposeEvaluation
 	}
+}
 
+func applyUsageCall(event *aiaudit.AIAuditEvent, record *aiusage.AIUsageRecord) {
 	event.ProviderID = record.ProviderID
 	event.ProviderKind = string(record.ProviderKind)
 	event.Model = record.Model
@@ -252,8 +265,6 @@ func (d *deriver) usageEvent(l *lookups, record *aiusage.AIUsageRecord) *aiaudit
 	}
 	event.WindowStart = record.CreatedAt - (record.LatencyMs+999)/1000
 	event.WindowEnd = record.CreatedAt
-
-	return event
 }
 
 // usageOwner is the run or turn a usage row was for: named on the row once
@@ -353,7 +364,7 @@ func (d *deriver) unknownStepEvent(
 func (d *deriver) stepBase(l *lookups, step *agent.AgentRunStep) (*aiaudit.AIAuditEvent, error) {
 	o := l.ownerOf(step.OwnerKind, step.OwnerID)
 
-	event := d.base(o)
+	event := d.base(&o)
 	event.SourceKey = sourceKey("step", step.OwnerID.String(), step.StepKey)
 	event.Kind = aiaudit.KindToolCall
 	event.OccurredAt = step.CreatedAt
@@ -513,7 +524,7 @@ func (d *deriver) runEventEvent(l *lookups, row *agent.AgentRunEvent) *aiaudit.A
 		at = row.OccurredAt
 	}
 
-	event := d.base(o)
+	event := d.base(&o)
 	event.SourceKey = sourceKey("event", row.ID.String())
 	event.OccurredAt = at
 	event.CallID = firstNonEmpty(row.CallID, stringOf(payload[delegateOrCallKey(row.Kind)]))
@@ -612,7 +623,7 @@ func (d *deriver) proposalEvents(
 	o := l.ownerOf(string(agent.RunOwnerAgentRun), proposal.RunID)
 	events := make([]*aiaudit.AIAuditEvent, 0, 2)
 
-	filed, err := d.proposalBase(o, proposal)
+	filed, err := d.proposalBase(&o, proposal)
 	if err != nil {
 		return nil, err
 	}
@@ -626,7 +637,7 @@ func (d *deriver) proposalEvents(
 	filed.Simulated = false
 	events = append(events, filed)
 
-	if executed, ok := d.proposalExecution(o, proposal); ok {
+	if executed, ok := d.proposalExecution(&o, proposal); ok {
 		executed.Arguments = filed.Arguments
 		executed.ArgumentSensitivity = filed.ArgumentSensitivity
 		executed.RedactedPaths = filed.RedactedPaths
@@ -635,7 +646,7 @@ func (d *deriver) proposalEvents(
 	}
 
 	if proposal.Status == agent.ProposalStatusExpired {
-		expired, baseErr := d.proposalBase(o, proposal)
+		expired, baseErr := d.proposalBase(&o, proposal)
 		if baseErr != nil {
 			return nil, baseErr
 		}
@@ -659,7 +670,7 @@ func (d *deriver) proposalEvents(
 }
 
 func (d *deriver) proposalBase(
-	o owner,
+	o *owner,
 	proposal *agent.AgentProposal,
 ) (*aiaudit.AIAuditEvent, error) {
 	event := d.base(o)
@@ -699,7 +710,7 @@ func (d *deriver) proposalBase(
 // proposalExecution is what became of a proposal's write, once there is
 // something to say: it ran, it failed, or it was previewed in simulation.
 func (d *deriver) proposalExecution(
-	o owner,
+	o *owner,
 	proposal *agent.AgentProposal,
 ) (*aiaudit.AIAuditEvent, bool) {
 	var kind aiaudit.Kind
@@ -806,7 +817,7 @@ func (d *deriver) decisionEvent(
 		o = l.ownerOf(string(agent.RunOwnerAgentRun), proposal.RunID)
 	}
 
-	event := d.base(o)
+	event := d.base(&o)
 	event.SourceKey = sourceKey("decision", decision.ID.String())
 	event.Kind = aiaudit.KindProposalDecided
 	event.Outcome = decisionOutcome(decision.Decision)
