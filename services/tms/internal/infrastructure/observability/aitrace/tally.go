@@ -11,7 +11,7 @@ import (
 
 type completionTallyKey struct{}
 
-type activityAttemptKey struct{}
+type callOriginKey struct{}
 
 type CompletionTally struct {
 	mu               sync.Mutex
@@ -116,16 +116,21 @@ func (t *CompletionTally) Record(span trace.Span) {
 	span.SetAttributes(attrs...)
 }
 
-func WithActivityAttempt(ctx context.Context, attempt int) context.Context {
-	return context.WithValue(ctx, activityAttemptKey{}, attempt)
+type CallOrigin struct {
+	ActivityAttempt int
+	Stream          bool
 }
 
-func ActivityAttempt(ctx context.Context) int {
+func WithCallOrigin(ctx context.Context, origin CallOrigin) context.Context {
+	return context.WithValue(ctx, callOriginKey{}, origin)
+}
+
+func CallOriginFrom(ctx context.Context) CallOrigin {
 	if ctx == nil {
-		return 0
+		return CallOrigin{}
 	}
 
-	attempt, _ := ctx.Value(activityAttemptKey{}).(int)
+	origin, _ := ctx.Value(callOriginKey{}).(CallOrigin)
 
-	return attempt
+	return origin
 }

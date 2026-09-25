@@ -60,11 +60,12 @@ func TestCompletionTally_IsSafeWithoutOne(t *testing.T) {
 	assert.Zero(t, missing.Attempts())
 }
 
-func TestActivityAttempt_RidesTheContext(t *testing.T) {
+func TestCallOrigin_RidesTheContext(t *testing.T) {
 	t.Parallel()
 
-	assert.Zero(t, ActivityAttempt(t.Context()))
-	assert.Equal(t, 3, ActivityAttempt(WithActivityAttempt(t.Context(), 3)))
+	assert.Equal(t, CallOrigin{}, CallOriginFrom(t.Context()))
+	origin := CallOrigin{ActivityAttempt: 3, Stream: true}
+	assert.Equal(t, origin, CallOriginFrom(WithCallOrigin(t.Context(), origin)))
 }
 
 func TestEmitInvokeAgent_IsTheAnchoredRootWithTheRunsTotals(t *testing.T) {

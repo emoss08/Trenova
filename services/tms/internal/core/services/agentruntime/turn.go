@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"context"
+	"errors"
 	"maps"
 	"slices"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -439,15 +441,31 @@ func (t *Turn) completionRequest() *serviceports.ChatCompletionRequest {
 		Tools:               t.tools.specs,
 		PreferredProviderID: preferredProvider(req, definition),
 		PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
-		Attribution: serviceports.AIUsageAttribution{
-			UserID:            req.Actor.UserID,
-			AgentDefinitionID: definition.ID,
-			ThreadID:          req.ThreadID,
-			RunID:             req.RunID,
-			Purpose:           req.AttributedPurpose(),
-			Feature:           aiusage.FeatureAgentTurn,
-		},
+		Attribution:         turnAttribution(req),
 	}
+}
+
+func turnAttribution(req *serviceports.RunRequest) serviceports.AIUsageAttribution {
+	definition := req.Definition
+	version := definition.Version
+	attribution := serviceports.AIUsageAttribution{
+		UserID:            req.Actor.UserID,
+		AgentDefinitionID: definition.ID,
+		ThreadID:          req.ThreadID,
+		RunID:             req.RunID,
+		Purpose:           req.AttributedPurpose(),
+		Feature:           aiusage.FeatureAgentTurn,
+		DefinitionVersion: &version,
+	}
+	if req.StepOwner.ID.IsNotNil() {
+		attribution.OwnerKind = req.StepOwner.Kind
+		attribution.OwnerID = req.StepOwner.ID
+	}
+	if req.Delegation != nil {
+		attribution.DelegateCallID = req.Delegation.CallID
+	}
+
+	return attribution
 }
 
 // localEffects runs every effect in process, as a turn always did before it
@@ -483,6 +501,17 @@ func (s *Service) StreamCompletion(
 	req *serviceports.ChatCompletionRequest,
 	emit serviceports.AssistantStreamEmitter,
 ) (ModelReply, error) {
+	origin := aitrace.CallOriginFrom(ctx)
+	ctx, span := aitrace.StartModelCall(ctx, &aitrace.ModelCallSpec{
+		Anchor:          aitrace.ForAttribution(&req.Attribution),
+		Feature:         string(req.Attribution.Feature),
+		ActivityAttempt: origin.ActivityAttempt,
+		Stream:          origin.Stream,
+	})
+	defer span.End()
+	ctx, tally := aitrace.WithCompletionTally(ctx)
+	defer tally.Record(span)
+
 	streamCtx, cancelStream := context.WithCancel(ctx)
 	defer cancelStream()
 
@@ -512,14 +541,35 @@ func (s *Service) StreamCompletion(
 		if completion == nil {
 			completion = &serviceports.ChatCompletionResult{}
 		}
+		span.SetAttributes(aitrace.AILooped.Bool(true))
 
 		return ModelReply{Completion: completion, Looped: true, InReasoning: thinking.tripped}, nil
 	}
 	if err != nil {
+		aitrace.MarkFailed(span, completionErrorType(ctx, err))
+
 		return ModelReply{Completion: completion}, err
 	}
 
-	return ModelReply{Completion: completion, Looped: guard.looped(completion.Text)}, nil
+	looped := guard.looped(completion.Text)
+	span.SetAttributes(aitrace.AILooped.Bool(looped))
+
+	return ModelReply{Completion: completion, Looped: looped}, nil
+}
+
+func completionErrorType(ctx context.Context, err error) string {
+	switch {
+	case errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled):
+		return "cancelled"
+	case errors.Is(err, context.DeadlineExceeded):
+		return "timeout"
+	case errors.Is(err, serviceports.ErrNoProviderConfigured):
+		return "no_provider"
+	case errors.Is(err, serviceports.ErrProvidersResting):
+		return "providers_resting"
+	default:
+		return "provider_error"
+	}
 }
 
 // KnowsTool reports whether name is a registered tool, read or write.

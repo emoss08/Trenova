@@ -34,6 +34,7 @@ type Decision struct {
 	Tier   agent.AutonomyTier
 	Egress agent.EgressClass
 	HeldBy []string
+	Source agent.TierSource
 }
 
 func HeldWhenTainted(class agent.EgressClass) bool {
@@ -42,7 +43,10 @@ func HeldWhenTainted(class agent.EgressClass) bool {
 
 func Decide(ctx context.Context, in DecideInput) Decision {
 	policy := in.Policy
-	decision := Decision{Tier: toolTier(in.Definition, policy)}
+	decision := Decision{
+		Tier:   toolTier(in.Definition, policy),
+		Source: toolTierSource(in),
+	}
 	if decision.Tier != agent.TierAutoExecute {
 		decision.hold(HeldByToolTier)
 	}
@@ -62,6 +66,7 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 
 	if runsUnasked(in, call) {
 		decision.Tier = agent.TierAutoExecute
+		decision.Source = agent.TierSourcePersonalExemption
 		decision.HeldBy = []string{HeldByPersonalExemption}
 		decision.lower(maxTier(policy), HeldByToolMax)
 	}
@@ -133,7 +138,19 @@ func (d *Decision) lower(limit agent.AutonomyTier, key string) {
 		return
 	}
 	d.Tier = limit
+	d.Source = agent.TierSourcePolicyDefault
 	d.hold(key)
+}
+
+func toolTierSource(in DecideInput) agent.TierSource {
+	if in.Definition == nil || !in.Definition.SetsToolTier(in.Policy.Name) {
+		return agent.TierSourcePolicyDefault
+	}
+	if in.TierSetByPerson {
+		return agent.TierSourcePersonSetting
+	}
+
+	return agent.TierSourceTrustEarned
 }
 
 func (d *Decision) hold(key string) {

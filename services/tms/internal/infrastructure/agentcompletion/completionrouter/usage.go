@@ -13,6 +13,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/llmtokens"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"go.opentelemetry.io/otel/trace"
@@ -88,10 +89,9 @@ func (s *Service) record(ctx context.Context, attempt usageAttempt) {
 		DelegateCallID:    attempt.attribution.DelegateCallID,
 		Attempt:           attempt.attempt,
 		Failover:          attempt.failover,
-	}
-	if version := attempt.attribution.DefinitionVersion; version != nil {
-		pinned := *version
-		row.AgentDefinitionVersion = &pinned
+		AgentDefinitionVersion: intutils.ClonePointer(
+			attempt.attribution.DefinitionVersion,
+		),
 	}
 	if sc := trace.SpanContextFromContext(ctx); sc.IsValid() {
 		row.TraceID = sc.TraceID().String()

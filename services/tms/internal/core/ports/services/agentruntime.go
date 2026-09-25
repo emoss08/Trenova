@@ -55,6 +55,8 @@ type PendingAction struct {
 	// ExecutedVersion is the target record's version after an automatic
 	// write, when the tool reports it.
 	ExecutedVersion *int64 `json:"executedVersion,omitempty"`
+	StepKey         string `json:"stepKey,omitempty"`
+	ExecutedAt      int64  `json:"executedAt,omitempty"`
 }
 
 // ProposalTarget is a record and its version at the moment a change to it was
