@@ -55,10 +55,13 @@ func (s *AccountingSyncSource) Snapshot(
 		if item, open := DescribeAccountingSyncPaused(conn, now); open {
 			items = append(items, item)
 		}
-		groups, listErr := s.records.ListAttention(ctx, repositories.ListAccountingSyncAttentionRequest{
-			TenantInfo:   tenant,
-			ConnectionID: conn.ID,
-		})
+		groups, listErr := s.records.ListAttention(
+			ctx,
+			repositories.ListAccountingSyncAttentionRequest{
+				TenantInfo:   tenant,
+				ConnectionID: conn.ID,
+			},
+		)
 		if listErr != nil {
 			return nil, listErr
 		}

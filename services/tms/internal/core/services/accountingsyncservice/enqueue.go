@@ -36,7 +36,6 @@ type Enqueuer struct {
 
 var _ services.AccountingSyncEnqueuer = (*Enqueuer)(nil)
 
-//nolint:gocritic // dependency injection
 func NewEnqueuer(p EnqueuerParams) *Enqueuer {
 	return &Enqueuer{
 		l:           p.Logger.Named("service.accounting-sync-enqueuer"),
@@ -96,14 +95,17 @@ func (e *Enqueuer) Enqueue(ctx context.Context, req *services.AccountingSyncEnqu
 	}
 	if req.Operation == accountingsync.SyncOperationUpdate {
 		for _, record := range result.Inserted {
-			if _, err = e.records.SupersedeOlder(ctx, &repositories.SupersedeAccountingSyncRecordsRequest{
-				TenantInfo:     req.TenantInfo,
-				ConnectionID:   record.ConnectionID,
-				ObjectType:     record.ObjectType,
-				ObjectID:       record.ObjectID,
-				Operation:      record.Operation,
-				BeforeRevision: record.Revision,
-			}); err != nil {
+			if _, err = e.records.SupersedeOlder(
+				ctx,
+				&repositories.SupersedeAccountingSyncRecordsRequest{
+					TenantInfo:     req.TenantInfo,
+					ConnectionID:   record.ConnectionID,
+					ObjectType:     record.ObjectType,
+					ObjectID:       record.ObjectID,
+					Operation:      record.Operation,
+					BeforeRevision: record.Revision,
+				},
+			); err != nil {
 				return err
 			}
 		}

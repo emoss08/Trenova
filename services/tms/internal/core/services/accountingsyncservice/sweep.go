@@ -25,16 +25,34 @@ type candidateKind struct {
 
 func safetyNetKinds() []candidateKind {
 	return []candidateKind{
-		{objectType: accountingsync.SyncObjectInvoice, operation: accountingsync.SyncOperationCreate},
-		{objectType: accountingsync.SyncObjectDebitMemo, operation: accountingsync.SyncOperationCreate},
-		{objectType: accountingsync.SyncObjectCreditMemo, operation: accountingsync.SyncOperationCreate},
-		{objectType: accountingsync.SyncObjectCustomerPayment, operation: accountingsync.SyncOperationCreate},
-		{objectType: accountingsync.SyncObjectCustomerPayment, operation: accountingsync.SyncOperationVoid},
+		{
+			objectType: accountingsync.SyncObjectInvoice,
+			operation:  accountingsync.SyncOperationCreate,
+		},
+		{
+			objectType: accountingsync.SyncObjectDebitMemo,
+			operation:  accountingsync.SyncOperationCreate,
+		},
+		{
+			objectType: accountingsync.SyncObjectCreditMemo,
+			operation:  accountingsync.SyncOperationCreate,
+		},
+		{
+			objectType: accountingsync.SyncObjectCustomerPayment,
+			operation:  accountingsync.SyncOperationCreate,
+		},
+		{
+			objectType: accountingsync.SyncObjectCustomerPayment,
+			operation:  accountingsync.SyncOperationVoid,
+		},
 		{
 			objectType: accountingsync.SyncObjectCreditApplication,
 			operation:  accountingsync.SyncOperationCreate,
 		},
-		{objectType: accountingsync.SyncObjectCreditApplication, operation: accountingsync.SyncOperationVoid},
+		{
+			objectType: accountingsync.SyncObjectCreditApplication,
+			operation:  accountingsync.SyncOperationVoid,
+		},
 	}
 }
 
@@ -64,7 +82,10 @@ func (s *Service) enqueueCandidates(
 	now := timeutils.NowUnix()
 	records := make([]*accountingsync.AccountingSyncRecord, 0, len(candidates))
 	for idx := range candidates {
-		records = append(records, NewRecordFor(conn, candidateRequest(conn, &candidates[idx], source), now))
+		records = append(
+			records,
+			NewRecordFor(conn, candidateRequest(conn, &candidates[idx], source), now),
+		)
 	}
 	return s.records.Enqueue(ctx, records)
 }
@@ -86,17 +107,20 @@ func (s *Service) SafetyNet(
 	for _, kind := range safetyNetKinds() {
 		afterAt, afterID := int64(0), pulid.Nil
 		for range safetyNetMaxPages {
-			candidates, listErr := s.records.ListCandidates(ctx, &repositories.ListAccountingSyncCandidatesRequest{
-				TenantInfo:   ref.TenantInfo,
-				ConnectionID: conn.ID,
-				ObjectType:   kind.objectType,
-				Operation:    kind.operation,
-				PostedFrom:   conn.SyncEnabledAt,
-				DatedFrom:    *conn.SyncStartDate,
-				AfterAt:      afterAt,
-				AfterID:      afterID,
-				Limit:        safetyNetPage,
-			})
+			candidates, listErr := s.records.ListCandidates(
+				ctx,
+				&repositories.ListAccountingSyncCandidatesRequest{
+					TenantInfo:   ref.TenantInfo,
+					ConnectionID: conn.ID,
+					ObjectType:   kind.objectType,
+					Operation:    kind.operation,
+					PostedFrom:   conn.SyncEnabledAt,
+					DatedFrom:    *conn.SyncStartDate,
+					AfterAt:      afterAt,
+					AfterID:      afterID,
+					Limit:        safetyNetPage,
+				},
+			)
 			if listErr != nil {
 				return result, listErr
 			}
@@ -166,18 +190,21 @@ func (s *Service) BackfillStep(
 	backfill.Start(now)
 
 	undoneBefore := backfill.RangeEnd
-	candidates, err := s.records.ListCandidates(ctx, &repositories.ListAccountingSyncCandidatesRequest{
-		TenantInfo:   tenantInfo,
-		ConnectionID: conn.ID,
-		ObjectType:   backfill.Cursor.ObjectType,
-		Operation:    accountingsync.SyncOperationCreate,
-		PostedBefore: &backfill.RangeEnd,
-		DatedFrom:    backfill.RangeStart,
-		UndoneBefore: &undoneBefore,
-		AfterAt:      backfill.Cursor.AfterAt,
-		AfterID:      backfill.Cursor.AfterID,
-		Limit:        backfillPage,
-	})
+	candidates, err := s.records.ListCandidates(
+		ctx,
+		&repositories.ListAccountingSyncCandidatesRequest{
+			TenantInfo:   tenantInfo,
+			ConnectionID: conn.ID,
+			ObjectType:   backfill.Cursor.ObjectType,
+			Operation:    accountingsync.SyncOperationCreate,
+			PostedBefore: &backfill.RangeEnd,
+			DatedFrom:    backfill.RangeStart,
+			UndoneBefore: &undoneBefore,
+			AfterAt:      backfill.Cursor.AfterAt,
+			AfterID:      backfill.Cursor.AfterID,
+			Limit:        backfillPage,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}

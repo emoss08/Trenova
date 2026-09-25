@@ -120,7 +120,7 @@ func (s *Service) salesRef(
 	if err != nil {
 		return "", err
 	}
-	if created := latestOf(existing, accountingsync.SyncOperationCreate, nil); created != nil {
+	if created := latestOf(existing, accountingsync.SyncOperationCreate); created != nil {
 		switch {
 		case isSynced(created):
 			return created.ExternalID, nil
@@ -128,14 +128,18 @@ func (s *Service) salesRef(
 			return "", waitingOn(created, label)
 		}
 	} else if sess.conn.Covers(inv.InvoiceDate) && inv.PostedAt != nil {
-		dependency, enqueueErr := s.enqueueDependency(ctx, sess, &services.AccountingSyncEnqueueRequest{
-			ObjectType:   objectType,
-			ObjectID:     inv.ID,
-			ObjectNumber: inv.Number,
-			Operation:    accountingsync.SyncOperationCreate,
-			Revision:     1,
-			DocumentDate: inv.InvoiceDate,
-		})
+		dependency, enqueueErr := s.enqueueDependency(
+			ctx,
+			sess,
+			&services.AccountingSyncEnqueueRequest{
+				ObjectType:   objectType,
+				ObjectID:     inv.ID,
+				ObjectNumber: inv.Number,
+				Operation:    accountingsync.SyncOperationCreate,
+				Revision:     1,
+				DocumentDate: inv.InvoiceDate,
+			},
+		)
 		if enqueueErr != nil {
 			return "", enqueueErr
 		}
@@ -240,7 +244,8 @@ func customerCreateError(
 			"Map "+row.TargetLabel+" to the existing "+sess.providerName+" customer, then retry",
 		)
 	}
-	if classified != nil && (classified.Category.Retries() || classified.Category.WaitsOnConnection()) {
+	if classified != nil &&
+		(classified.Category.Retries() || classified.Category.WaitsOnConnection()) {
 		return err
 	}
 	if errortypes.IsBusinessError(err) || errortypes.IsError(err) {
@@ -470,7 +475,7 @@ func (s *Service) pushSalesVoid(
 	if err != nil {
 		return nil, err
 	}
-	created := latestOf(existing, accountingsync.SyncOperationCreate, nil)
+	created := latestOf(existing, accountingsync.SyncOperationCreate)
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
 	}
@@ -506,17 +511,22 @@ func (s *Service) settleUnsent(
 				return true, err
 			}
 		}
-		if _, err := s.records.SupersedeOlder(ctx, &repositories.SupersedeAccountingSyncRecordsRequest{
-			TenantInfo:     record.TenantInfo(),
-			ConnectionID:   record.ConnectionID,
-			ObjectType:     record.ObjectType,
-			ObjectID:       record.ObjectID,
-			Operation:      accountingsync.SyncOperationUpdate,
-			BeforeRevision: maxRevision,
-		}); err != nil {
+		if _, err := s.records.SupersedeOlder(
+			ctx,
+			&repositories.SupersedeAccountingSyncRecordsRequest{
+				TenantInfo:     record.TenantInfo(),
+				ConnectionID:   record.ConnectionID,
+				ObjectType:     record.ObjectType,
+				ObjectID:       record.ObjectID,
+				Operation:      accountingsync.SyncOperationUpdate,
+				BeforeRevision: maxRevision,
+			},
+		); err != nil {
 			return true, err
 		}
-		return true, &noopError{reason: "It never reached the books, so the queued send was withdrawn"}
+		return true, &noopError{
+			reason: "It never reached the books, so the queued send was withdrawn",
+		}
 	}
 }
 
@@ -553,16 +563,20 @@ func (s *Service) pushPayment(
 	}
 	externalID := ""
 	if record.Operation == accountingsync.SyncOperationUpdate {
-		created := latestOf(existing, accountingsync.SyncOperationCreate, nil)
+		created := latestOf(existing, accountingsync.SyncOperationCreate)
 		if created == nil {
-			dependency, enqueueErr := s.enqueueDependency(ctx, sess, &services.AccountingSyncEnqueueRequest{
-				ObjectType:   record.ObjectType,
-				ObjectID:     record.ObjectID,
-				ObjectNumber: record.ObjectNumber,
-				Operation:    accountingsync.SyncOperationCreate,
-				Revision:     1,
-				DocumentDate: payment.AccountingDate,
-			})
+			dependency, enqueueErr := s.enqueueDependency(
+				ctx,
+				sess,
+				&services.AccountingSyncEnqueueRequest{
+					ObjectType:   record.ObjectType,
+					ObjectID:     record.ObjectID,
+					ObjectNumber: record.ObjectNumber,
+					Operation:    accountingsync.SyncOperationCreate,
+					Revision:     1,
+					DocumentDate: payment.AccountingDate,
+				},
+			)
 			if enqueueErr != nil {
 				return nil, enqueueErr
 			}
@@ -570,7 +584,9 @@ func (s *Service) pushPayment(
 		}
 		switch {
 		case created == nil:
-			return nil, &noopError{reason: "The payment was never sent, so there is nothing to update"}
+			return nil, &noopError{
+				reason: "The payment was never sent, so there is nothing to update",
+			}
 		case isSynced(created):
 			externalID = created.ExternalID
 		case created.Status.IsFinal():
@@ -582,23 +598,7 @@ func (s *Service) pushPayment(
 	}
 
 	res := newResolver(s, sess)
-	customerID, err := s.customerRef(ctx, sess, res, payment.CustomerID)
-	if err != nil {
-		return nil, err
-	}
-	deposit, err := res.require(ctx, mappingTarget{
-		TargetType: accountingsync.TargetAccountRole,
-		Key:        accountingsync.AccountRoleDeposit,
-		Label:      "The deposit account",
-	})
-	if err != nil {
-		return nil, err
-	}
-	method, err := res.require(ctx, mappingTarget{
-		TargetType: accountingsync.TargetPaymentMethod,
-		Key:        string(payment.PaymentMethod),
-		Label:      paymentMethodLabel(payment.PaymentMethod),
-	})
+	refs, err := s.paymentRefs(ctx, sess, res, payment)
 	if err != nil {
 		return nil, err
 	}
@@ -607,16 +607,20 @@ func (s *Service) pushPayment(
 		Auth:                     sess.auth,
 		RequestID:                record.RequestID,
 		ExternalID:               externalID,
-		CustomerExternalID:       customerID,
+		CustomerExternalID:       refs.customer,
 		TxnDate:                  timeutils.FormatCalendarDate(payment.AccountingDate, sess.loc),
 		CurrencyCode:             payment.CurrencyCode,
-		PaymentMethodExternalID:  method,
-		DepositAccountExternalID: deposit,
+		PaymentMethodExternalID:  refs.method,
+		DepositAccountExternalID: refs.deposit,
 		ReferenceNumber:          payment.ReferenceNumber,
 		PrivateNote:              paymentNote(payment),
 		TotalAmount:              money.DecimalFromMinor(payment.AmountMinor),
-		Applications:             make([]services.AccountingPaymentApplication, 0, len(payment.Applications)),
-		Refs:                     record.ExternalRefs,
+		Applications: make(
+			[]services.AccountingPaymentApplication,
+			0,
+			len(payment.Applications),
+		),
+		Refs: record.ExternalRefs,
 	}
 	if err = s.paymentApplications(ctx, sess, res, payment, existing, doc); err != nil {
 		return nil, err
@@ -627,6 +631,41 @@ func (s *Service) pushPayment(
 		return partial(written), err
 	}
 	return finishedResult(sess, record, written, doc, res.mappingIDs())
+}
+
+type paymentExternalRefs struct {
+	customer string
+	deposit  string
+	method   string
+}
+
+func (s *Service) paymentRefs(
+	ctx context.Context,
+	sess *pushSession,
+	res *resolver,
+	payment *customerpayment.Payment,
+) (paymentExternalRefs, error) {
+	customerID, err := s.customerRef(ctx, sess, res, payment.CustomerID)
+	if err != nil {
+		return paymentExternalRefs{}, err
+	}
+	deposit, err := res.require(ctx, mappingTarget{
+		TargetType: accountingsync.TargetAccountRole,
+		Key:        accountingsync.AccountRoleDeposit,
+		Label:      "The deposit account",
+	})
+	if err != nil {
+		return paymentExternalRefs{}, err
+	}
+	method, err := res.require(ctx, mappingTarget{
+		TargetType: accountingsync.TargetPaymentMethod,
+		Key:        string(payment.PaymentMethod),
+		Label:      paymentMethodLabel(payment.PaymentMethod),
+	})
+	if err != nil {
+		return paymentExternalRefs{}, err
+	}
+	return paymentExternalRefs{customer: customerID, deposit: deposit, method: method}, nil
 }
 
 func paymentNote(payment *customerpayment.Payment) string {
@@ -714,7 +753,7 @@ func (s *Service) pushPaymentVoid(
 	if err != nil {
 		return nil, err
 	}
-	created := latestOf(existing, accountingsync.SyncOperationCreate, nil)
+	created := latestOf(existing, accountingsync.SyncOperationCreate)
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
 	}
@@ -754,10 +793,13 @@ func (s *Service) pushCreditApplication(
 	sess *pushSession,
 	record *accountingsync.AccountingSyncRecord,
 ) (*pushResult, error) {
-	app, err := s.payments.GetCreditMemoApplicationByID(ctx, repositories.GetCreditMemoApplicationRequest{
-		ID:         record.ObjectID,
-		TenantInfo: sess.tenant,
-	})
+	app, err := s.payments.GetCreditMemoApplicationByID(
+		ctx,
+		repositories.GetCreditMemoApplicationRequest{
+			ID:         record.ObjectID,
+			TenantInfo: sess.tenant,
+		},
+	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return nil, blocked(accountingsync.SyncErrorNotFound,
@@ -831,7 +873,7 @@ func (s *Service) pushCreditApplicationVoid(
 	if err != nil {
 		return nil, err
 	}
-	created := latestOf(existing, accountingsync.SyncOperationCreate, nil)
+	created := latestOf(existing, accountingsync.SyncOperationCreate)
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
 	}

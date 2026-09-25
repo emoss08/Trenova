@@ -16,7 +16,9 @@ type AccountingTokenGrant struct {
 	RefreshTokenTTL time.Duration
 }
 
-var ErrAccountingAppRejected = errors.New("the accounting system did not accept the app's client id or secret")
+var ErrAccountingAppRejected = errors.New(
+	"the accounting system did not accept the app's client id or secret",
+)
 
 type AccountingApp struct {
 	Source               accountingsync.AppSource

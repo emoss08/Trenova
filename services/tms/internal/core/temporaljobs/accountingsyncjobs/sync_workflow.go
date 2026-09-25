@@ -80,11 +80,15 @@ func DrainAccountingOutboxWorkflow(
 	for {
 		drainSignals(signals)
 		if result.Batches >= drainBatchesPerRun {
-			return result, workflow.NewContinueAsNewError(ctx, DrainAccountingOutboxWorkflow, &DrainPayload{
-				OrganizationID: payload.OrganizationID,
-				BusinessUnitID: payload.BusinessUnitID,
-				ConnectionID:   payload.ConnectionID,
-			})
+			return result, workflow.NewContinueAsNewError(
+				ctx,
+				DrainAccountingOutboxWorkflow,
+				&DrainPayload{
+					OrganizationID: payload.OrganizationID,
+					BusinessUnitID: payload.BusinessUnitID,
+					ConnectionID:   payload.ConnectionID,
+				},
+			)
 		}
 
 		var batch DrainBatchResult
@@ -170,12 +174,16 @@ func BackfillAccountingWorkflow(
 
 	for {
 		if result.Steps-payload.Steps >= backfillStepsPerRun {
-			return result, workflow.NewContinueAsNewError(ctx, BackfillAccountingWorkflow, &BackfillPayload{
-				OrganizationID: payload.OrganizationID,
-				BusinessUnitID: payload.BusinessUnitID,
-				BackfillID:     payload.BackfillID,
-				Steps:          result.Steps,
-			})
+			return result, workflow.NewContinueAsNewError(
+				ctx,
+				BackfillAccountingWorkflow,
+				&BackfillPayload{
+					OrganizationID: payload.OrganizationID,
+					BusinessUnitID: payload.BusinessUnitID,
+					BackfillID:     payload.BackfillID,
+					Steps:          result.Steps,
+				},
+			)
 		}
 
 		var step BackfillStepResult

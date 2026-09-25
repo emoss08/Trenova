@@ -8,9 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
@@ -37,7 +37,11 @@ func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.Acc
 
 	byKey := watchtowersources.GroupAccountingSyncAttention(groups)
 	for _, key := range watchtowersources.AccountingSyncAttentionKeys() {
-		if item, open := watchtowersources.DescribeAccountingSyncAttention(conn, key, byKey[key]); open {
+		if item, open := watchtowersources.DescribeAccountingSyncAttention(
+			conn,
+			key,
+			byKey[key],
+		); open {
 			s.watchtower.Upsert(ctx, item)
 			continue
 		}
@@ -54,7 +58,10 @@ func (s *Service) refreshPaused(ctx context.Context, conn *accountingsync.Accoun
 	if s.watchtower == nil {
 		return
 	}
-	if item, open := watchtowersources.DescribeAccountingSyncPaused(conn, timeutils.NowUnix()); open {
+	if item, open := watchtowersources.DescribeAccountingSyncPaused(
+		conn,
+		timeutils.NowUnix(),
+	); open {
 		s.watchtower.Upsert(ctx, item)
 		return
 	}

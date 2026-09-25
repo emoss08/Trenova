@@ -339,7 +339,7 @@ func partial(written *services.AccountingDocumentResult) *pushResult {
 	return &pushResult{refs: written.Refs}
 }
 
-func payloadOf(document any) (map[string]any, string, error) {
+func payloadOf(document any) (payload map[string]any, hash string, err error) {
 	if document == nil {
 		return nil, "", nil
 	}
@@ -347,7 +347,6 @@ func payloadOf(document any) (map[string]any, string, error) {
 	if err != nil {
 		return nil, "", fmt.Errorf("accounting sync: encode payload: %w", err)
 	}
-	var payload map[string]any
 	if err = sonic.Unmarshal(raw, &payload); err != nil {
 		return nil, "", fmt.Errorf("accounting sync: decode payload: %w", err)
 	}
@@ -378,11 +377,10 @@ func (s *Service) objectRecords(
 func latestOf(
 	records []*accountingsync.AccountingSyncRecord,
 	operation accountingsync.SyncOperation,
-	keep func(*accountingsync.AccountingSyncRecord) bool,
 ) *accountingsync.AccountingSyncRecord {
 	var found *accountingsync.AccountingSyncRecord
 	for _, record := range records {
-		if record.Operation != operation || (keep != nil && !keep(record)) {
+		if record.Operation != operation {
 			continue
 		}
 		found = record
@@ -413,14 +411,17 @@ func (s *Service) enqueueDependency(
 	req.TenantInfo = sess.tenant
 	req.SourceEvent = accountingsync.SyncSourceDependencyOf
 	record := NewRecordFor(sess.conn, req, timeutils.NowUnix())
-	if _, err := s.records.Enqueue(ctx, []*accountingsync.AccountingSyncRecord{record}); err != nil {
+	if _, err := s.records.Enqueue(
+		ctx,
+		[]*accountingsync.AccountingSyncRecord{record},
+	); err != nil {
 		return nil, err
 	}
 	existing, err := s.objectRecords(ctx, sess, req.ObjectType, req.ObjectID)
 	if err != nil {
 		return nil, err
 	}
-	return latestOf(existing, req.Operation, nil), nil
+	return latestOf(existing, req.Operation), nil
 }
 
 func waitingOn(dependency *accountingsync.AccountingSyncRecord, label string) error {

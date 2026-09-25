@@ -23,13 +23,13 @@ import (
 )
 
 type auditEntry struct {
-	resource       permission.Resource
-	resourceID     pulid.ID
-	userID         pulid.ID
-	tenant         pagination.TenantInfo
-	current        any
-	previous       map[string]any
-	comment        string
+	resource   permission.Resource
+	resourceID pulid.ID
+	userID     pulid.ID
+	tenant     pagination.TenantInfo
+	current    any
+	previous   map[string]any
+	comment    string
 }
 
 func (s *Service) logAudit(entry *auditEntry) {
@@ -67,16 +67,22 @@ func (s *Service) Summary(
 		return nil, err
 	}
 	summary.Connection = conn
-	ref := repositories.AccountingSyncConnectionRequest{TenantInfo: tenantInfo, ConnectionID: conn.ID}
+	ref := repositories.AccountingSyncConnectionRequest{
+		TenantInfo:   tenantInfo,
+		ConnectionID: conn.ID,
+	}
 
 	if summary.Counts, err = s.records.CountByStatus(ctx, ref); err != nil {
 		return nil, err
 	}
-	if summary.Attention, err = s.records.ListAttention(ctx, repositories.ListAccountingSyncAttentionRequest{
-		TenantInfo:   tenantInfo,
-		ConnectionID: conn.ID,
-		Limit:        attentionGroups,
-	}); err != nil {
+	if summary.Attention, err = s.records.ListAttention(
+		ctx,
+		repositories.ListAccountingSyncAttentionRequest{
+			TenantInfo:   tenantInfo,
+			ConnectionID: conn.ID,
+			Limit:        attentionGroups,
+		},
+	); err != nil {
 		return nil, err
 	}
 	active, err := s.backfills.GetActive(ctx, ref)
@@ -184,10 +190,13 @@ func (s *Service) ObjectStates(
 		return states, nil
 	}
 
-	records, err := s.records.ListByObjects(ctx, &repositories.ListAccountingSyncRecordsByObjectsRequest{
-		TenantInfo: tenantInfo,
-		ObjectIDs:  objectIDs,
-	})
+	records, err := s.records.ListByObjects(
+		ctx,
+		&repositories.ListAccountingSyncRecordsByObjectsRequest{
+			TenantInfo: tenantInfo,
+			ObjectIDs:  objectIDs,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -398,7 +407,10 @@ func validateIDs(ids []pulid.ID) error {
 	return nil
 }
 
-func (s *Service) Retry(ctx context.Context, req *services.RetryAccountingSyncRequest) (int64, error) {
+func (s *Service) Retry(
+	ctx context.Context,
+	req *services.RetryAccountingSyncRequest,
+) (int64, error) {
 	if err := validateIDs(req.IDs); err != nil {
 		return 0, err
 	}
@@ -521,9 +533,16 @@ func (s *Service) Skip(
 		tenant:     req.TenantInfo,
 		current:    updated,
 		previous:   before,
-		comment:    "Skipped " + documentLabel(updated.ObjectType, updated.ObjectNumber) + ": " + updated.SkippedReason,
+		comment: "Skipped " + documentLabel(
+			updated.ObjectType,
+			updated.ObjectNumber,
+		) + ": " + updated.SkippedReason,
 	})
-	if conn, connErr := s.connectionByID(ctx, req.TenantInfo, updated.ConnectionID); connErr == nil {
+	if conn, connErr := s.connectionByID(
+		ctx,
+		req.TenantInfo,
+		updated.ConnectionID,
+	); connErr == nil {
 		s.refreshAttention(ctx, conn)
 	}
 	s.publishInvalidation(ctx, req.TenantInfo, req.UserID, updated.ID)
@@ -571,14 +590,17 @@ func (s *Service) RequestBackfill(
 		return nil, err
 	}
 
-	backfill, err := s.backfills.Create(ctx, accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
-		TenantInfo:    req.TenantInfo,
-		ConnectionID:  conn.ID,
-		RangeStart:    rangeStart,
-		RangeEnd:      rangeEnd,
-		ObjectTypes:   types,
-		RequestedByID: req.UserID,
-	}))
+	backfill, err := s.backfills.Create(
+		ctx,
+		accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
+			TenantInfo:    req.TenantInfo,
+			ConnectionID:  conn.ID,
+			RangeStart:    rangeStart,
+			RangeEnd:      rangeEnd,
+			ObjectTypes:   types,
+			RequestedByID: req.UserID,
+		}),
+	)
 	if err != nil {
 		if errors.Is(err, repositories.ErrAccountingBackfillActive) {
 			return nil, errortypes.NewBusinessError(
@@ -603,7 +625,9 @@ func (s *Service) RequestBackfill(
 	return backfill, nil
 }
 
-func backfillTypes(requested []accountingsync.SyncObjectType) ([]accountingsync.SyncObjectType, error) {
+func backfillTypes(
+	requested []accountingsync.SyncObjectType,
+) ([]accountingsync.SyncObjectType, error) {
 	allowed := accountingsync.BackfillObjectTypes()
 	if len(requested) == 0 {
 		return allowed, nil

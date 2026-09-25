@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -71,7 +71,10 @@ func PaymentSyncRequest(
 		revision = max(payment.Version, 1)
 	}
 	return &AccountingSyncEnqueueRequest{
-		TenantInfo:   pagination.TenantInfo{OrgID: payment.OrganizationID, BuID: payment.BusinessUnitID},
+		TenantInfo: pagination.TenantInfo{
+			OrgID: payment.OrganizationID,
+			BuID:  payment.BusinessUnitID,
+		},
 		ObjectType:   accountingsync.SyncObjectCustomerPayment,
 		ObjectID:     payment.ID,
 		ObjectNumber: payment.ReferenceNumber,

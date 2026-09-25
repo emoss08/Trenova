@@ -498,7 +498,12 @@ func (s *Service) Set(
 
 	used := 0
 	if row.ExternalID != ref.ExternalID {
-		if used, err = s.guardHistory(ctx, req.TenantInfo, row, req.AcknowledgeHistory); err != nil {
+		if used, err = s.guardHistory(
+			ctx,
+			req.TenantInfo,
+			row,
+			req.AcknowledgeHistory,
+		); err != nil {
 			return nil, err
 		}
 	}

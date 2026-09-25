@@ -70,10 +70,13 @@ func (a *Activities) AccountingSafetyNetActivity(
 	result := new(SafetyNetSweepResult)
 	afterID := pulid.Nil
 	for {
-		conns, err := a.connRepo.ListActive(ctx, repositories.ListActiveAccountingConnectionsRequest{
-			AfterID: afterID,
-			Limit:   safetyNetConnectionsPage,
-		})
+		conns, err := a.connRepo.ListActive(
+			ctx,
+			repositories.ListActiveAccountingConnectionsRequest{
+				AfterID: afterID,
+				Limit:   safetyNetConnectionsPage,
+			},
+		)
 		if err != nil {
 			return result, err
 		}
@@ -84,7 +87,10 @@ func (a *Activities) AccountingSafetyNetActivity(
 			}
 			result.Connections++
 			found, netErr := a.sync.SafetyNet(ctx, services.AccountingSyncConnectionRef{
-				TenantInfo:   pagination.TenantInfo{OrgID: conn.OrganizationID, BuID: conn.BusinessUnitID},
+				TenantInfo: pagination.TenantInfo{
+					OrgID: conn.OrganizationID,
+					BuID:  conn.BusinessUnitID,
+				},
 				ConnectionID: conn.ID,
 			})
 			activity.RecordHeartbeat(ctx, result.Connections)

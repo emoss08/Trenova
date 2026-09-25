@@ -263,6 +263,7 @@ func (c *Connector) CompanyFacts(
 	return facts, nil
 }
 
+//nolint:gosec // G101: a placeholder refresh token the endpoint rejects, not a credential
 const credentialProbeToken = "trenova-credential-check"
 
 func (c *Connector) VerifyApp(ctx context.Context) error {

@@ -75,12 +75,17 @@ func (s *Service) requeueMappingBlocked(
 		}
 		seen[connectionID] = struct{}{}
 
-		requeued, err := s.syncRecords.Requeue(ctx, &repositories.RequeueAccountingSyncRecordsRequest{
-			TenantInfo:      tenantInfo,
-			ConnectionID:    connectionID,
-			ErrorCategories: []accountingsync.SyncErrorCategory{accountingsync.SyncErrorMapping},
-			At:              timeutils.NowUnix(),
-		})
+		requeued, err := s.syncRecords.Requeue(
+			ctx,
+			&repositories.RequeueAccountingSyncRecordsRequest{
+				TenantInfo:   tenantInfo,
+				ConnectionID: connectionID,
+				ErrorCategories: []accountingsync.SyncErrorCategory{
+					accountingsync.SyncErrorMapping,
+				},
+				At: timeutils.NowUnix(),
+			},
+		)
 		if err != nil {
 			s.l.Warn("failed to requeue records blocked on a mapping",
 				zap.String("connectionId", connectionID.String()), zap.Error(err))
@@ -177,7 +182,9 @@ func (s *Service) targetFor(
 			Label:      keyLabel(req.TargetType, req.Key),
 		}, nil
 	case accountingsync.TargetCarrier:
-		return nil, errortypes.NewBusinessError("Carrier mappings are created by the reference refresh")
+		return nil, errortypes.NewBusinessError(
+			"Carrier mappings are created by the reference refresh",
+		)
 	default:
 		return nil, errortypes.NewValidationError(
 			"targetType",
