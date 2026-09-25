@@ -44,6 +44,10 @@ type Params struct {
 	Memories       serviceports.AgentMemoryService `optional:"true"`
 	Vectorizer     serviceports.QueryVectorizer    `optional:"true"`
 	CatalogVectors serviceports.CatalogVectorIndex `optional:"true"`
+	// Previews is optional. With it a held write's target is pinned, and
+	// what it would do kept as its baseline, in one read-only snapshot;
+	// without it the target is pinned alone.
+	Previews serviceports.ProposalPreviewService `optional:"true"`
 }
 
 type Service struct {
@@ -60,6 +64,7 @@ type Service struct {
 	memories    serviceports.AgentMemoryService
 	vectorizer  serviceports.QueryVectorizer
 	vectors     serviceports.CatalogVectorIndex
+	previews    serviceports.ProposalPreviewService
 }
 
 func New(p Params) *Service {
@@ -77,6 +82,7 @@ func New(p Params) *Service {
 		memories:    p.Memories,
 		vectorizer:  p.Vectorizer,
 		vectors:     p.CatalogVectors,
+		previews:    p.Previews,
 	}
 }
 

@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 func (r *agentDecisionResolver) TraceURL(ctx context.Context, obj *agent.AgentDecision) (*string, error) {
@@ -96,7 +97,7 @@ func (r *agentProposalResolver) ParameterFields(ctx context.Context, obj *agent.
 		return []*toolschema.Field{}, nil
 	}
 
-	fields := toolschema.Fields(tool.ParamSchema())
+	fields := services.ProposalFields(tool, obj.ToolParams)
 	out := make([]*toolschema.Field, 0, len(fields))
 	for i := range fields {
 		out = append(out, &fields[i])
@@ -157,6 +158,7 @@ func (r *mutationResolver) DecideAgentProposal(ctx context.Context, id string, i
 		Modifications: input.Modifications,
 		ReasonCode:    input.ReasonCode,
 		TenantInfo:    tenantInfo(authCtx),
+		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -172,10 +174,11 @@ func (r *mutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 	}
 
 	return r.agentPlanService.Decide(ctx, &services.DecideAgentPlanRequest{
-		PlanID:     planID,
-		Decision:   input.Decision,
-		ReasonCode: input.ReasonCode,
-		TenantInfo: tenantInfo(authCtx),
+		PlanID:        planID,
+		Decision:      input.Decision,
+		ReasonCode:    input.ReasonCode,
+		TenantInfo:    tenantInfo(authCtx),
+		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -196,6 +199,7 @@ func (r *mutationResolver) DecideMyProposal(ctx context.Context, id string, inpu
 		Modifications: input.Modifications,
 		ReasonCode:    input.ReasonCode,
 		TenantInfo:    tenantInfo(authCtx),
+		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -211,10 +215,11 @@ func (r *mutationResolver) DecideMyPlan(ctx context.Context, id string, input gq
 	}
 
 	return r.agentPlanService.DecideOwn(ctx, &services.DecideAgentPlanRequest{
-		PlanID:     planID,
-		Decision:   input.Decision,
-		ReasonCode: input.ReasonCode,
-		TenantInfo: tenantInfo(authCtx),
+		PlanID:        planID,
+		Decision:      input.Decision,
+		ReasonCode:    input.ReasonCode,
+		TenantInfo:    tenantInfo(authCtx),
+		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
 }
 

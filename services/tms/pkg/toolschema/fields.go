@@ -36,6 +36,9 @@ type Field struct {
 	Minimum     *float64 `json:"minimum,omitempty"`
 	Maximum     *float64 `json:"maximum,omitempty"`
 	MaxLength   int      `json:"maxLength,omitempty"`
+	// ReadOnly is a parameter shown but not editable: the one naming the
+	// record the call acts on, which an approver may not point elsewhere.
+	ReadOnly bool `json:"readOnly"`
 }
 
 // multilineThreshold is the declared length past which a string is prose.

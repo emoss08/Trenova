@@ -218,7 +218,13 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			}
 		}
 
-		action.Target = s.snapshotTarget(ctx, req, tool, call)
+		action.Target, _ = s.fileBaseline(ctx, &baselineCall{
+			req:        req,
+			tool:       tool,
+			call:       call,
+			proposalID: action.ProposalID,
+			persist:    req.AttributedPurpose() != serviceports.AIUsagePurposeEvaluation,
+		})
 
 		content := fmt.Sprintf(
 			"Recorded a proposal to run %q. It is awaiting a person's review at the %s tier and has not run.",
@@ -332,9 +338,19 @@ func (s *Service) simulateAction(ctx context.Context, a actionParams) toolOutcom
 	action := a.action
 
 	action.Simulated = true
-	action.Target = s.snapshotTarget(ctx, a.req, a.tool, call)
+	target, preview := s.fileBaseline(ctx, &baselineCall{
+		req:        a.req,
+		tool:       a.tool,
+		call:       call,
+		proposalID: action.ProposalID,
+	})
+	action.Target = target
 	writeCtx, write := s.startWrite(ctx, &a, true)
-	action.Simulation = toolsimulation.Simulate(writeCtx, a.tool, a.executeParams())
+	if preview != nil {
+		action.Simulation = preview.Simulation()
+	} else {
+		action.Simulation = toolsimulation.Simulate(writeCtx, a.tool, a.executeParams())
+	}
 	write.End()
 
 	return toolOutcome{

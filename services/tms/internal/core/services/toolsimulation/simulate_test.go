@@ -92,10 +92,62 @@ func TestSimulate_DescribesAToolWithoutAPreview(t *testing.T) {
 	require.Len(t, preview.Changes, 3)
 	assert.Equal(
 		t,
-		agent.FieldChange{Field: "cancelReason", To: "Customer pulled the load"},
+		agent.FieldChange{Field: "Cancel reason", To: "Customer pulled the load"},
 		preview.Changes[0],
 	)
-	assert.Equal(t, agent.FieldChange{Field: "count", To: "2"}, preview.Changes[1])
+	assert.Equal(t, agent.FieldChange{Field: "Count", To: "2"}, preview.Changes[1])
+}
+
+type recordPreviewingTool struct {
+	previewingTool
+	record *agent.ToolPreview
+	failed error
+}
+
+func (t recordPreviewingTool) Preview(
+	context.Context,
+	serviceports.ToolExecuteParams,
+) (*agent.ToolPreview, error) {
+	return t.record, t.failed
+}
+
+// A tool that previews record by record is read that way, whether or not it
+// still simulates: the preview is what the approver sees, and a simulation
+// must say the same.
+func TestSimulate_PrefersTheRecordPreview(t *testing.T) {
+	t.Parallel()
+
+	tool := recordPreviewingTool{
+		previewingTool: previewingTool{
+			plainTool: plainTool{name: "cancel_shipment"},
+			preview:   &agent.ToolSimulation{Summary: "the old simulation"},
+		},
+		record: &agent.ToolPreview{
+			Summary: "Would cancel PRO-100.",
+			Changes: []agent.RecordChange{{
+				Operation: agent.PreviewOperationUpdate,
+				Label:     "PRO-100",
+				Fields: []agent.PreviewFieldChange{
+					{Path: "status", Label: "Status", Before: "New", After: "Canceled"},
+				},
+			}},
+		},
+	}
+
+	preview := Simulate(t.Context(), tool, serviceports.ToolExecuteParams{})
+
+	assert.True(t, preview.Previewed)
+	assert.Equal(t, "Would cancel PRO-100.", preview.Summary)
+	assert.Contains(t, preview.Describe(), "- Status: New → Canceled")
+
+	tool.failed = errors.New("shipment not found")
+	failed := Simulate(t.Context(), tool, serviceports.ToolExecuteParams{
+		Params: map[string]any{"shipmentId": "shp_1", "_owner": "usr_1"},
+	})
+	assert.False(t, failed.Previewed)
+	assert.Contains(t, failed.Summary, "shipment not found")
+	require.Len(t, failed.Changes, 1, "the owner the runtime writes is not shown")
+	assert.Equal(t, "shp_1", failed.Changes[0].To)
 }
 
 func TestSimulate_KeepsTheRequestWhenAPreviewFails(t *testing.T) {

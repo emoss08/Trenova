@@ -90,6 +90,14 @@ const (
 	AIReasonCode           = attribute.Key("trenova.ai.reason_code")
 	AIModificationCount    = attribute.Key("trenova.ai.modification_count")
 	AIJobFeature           = attribute.Key("trenova.ai.job.feature")
+	AIPreviewCoverage      = attribute.Key("trenova.ai.preview.coverage")
+	AIPreviewStale         = attribute.Key("trenova.ai.preview.stale")
+	AIPreviewRecords       = attribute.Key("trenova.ai.preview.records")
+	AIPreviewWithheld      = attribute.Key("trenova.ai.preview.withheld")
+	AIPreviewRecorded      = attribute.Key("trenova.ai.preview.recorded")
+	AIPreviewPurpose       = attribute.Key("trenova.ai.preview.purpose")
+	AIPreviewDigest        = attribute.Key("trenova.ai.preview.digest")
+	AIPreviewReviewed      = attribute.Key("trenova.ai.preview.reviewed")
 	TenantOrganizationID   = attribute.Key("trenova.tenant.organization_id")
 	TenantBusinessUnitID   = attribute.Key("trenova.tenant.business_unit_id")
 )
@@ -128,6 +136,7 @@ const (
 	SpanWrite        = "trenova.ai.write"
 	SpanDelegateOpen = "trenova.ai.delegate.open"
 	SpanJob          = "trenova.ai.job"
+	SpanPreview      = "trenova.ai.preview"
 )
 
 const (

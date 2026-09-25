@@ -473,6 +473,8 @@ type AgentPlanDecisionInput struct {
 	// Accepted runs every step in order; Rejected rejects them all.
 	Decision   agent.DecisionType `json:"decision"`
 	ReasonCode string             `json:"reasonCode"`
+	// The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded.
+	PreviewDigest *string `json:"previewDigest,omitempty"`
 }
 
 type AgentPlanEdge struct {
@@ -490,6 +492,8 @@ type AgentProposalDecisionInput struct {
 	Decision      agent.DecisionType `json:"decision"`
 	Modifications map[string]any     `json:"modifications,omitempty"`
 	ReasonCode    string             `json:"reasonCode"`
+	// The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed.
+	PreviewDigest *string `json:"previewDigest,omitempty"`
 }
 
 // What became of one proposal in a batch decision.
@@ -505,6 +509,12 @@ type AgentProposalDecisionResult struct {
 type AgentProposalEdge struct {
 	Node   *agent.AgentProposal `json:"node"`
 	Cursor string               `json:"cursor"`
+}
+
+// The digest of the preview a person was shown for one proposal of a batch.
+type AgentProposalPreviewDigestInput struct {
+	ProposalID string `json:"proposalId"`
+	Digest     string `json:"digest"`
 }
 
 type AgentQualityAgentConnection struct {
@@ -1792,6 +1802,8 @@ type DecideAgentProposalsInput struct {
 	// Accepted or Rejected. A change applies to one proposal, from its own card.
 	Decision   agent.DecisionType `json:"decision"`
 	ReasonCode *string            `json:"reasonCode,omitempty"`
+	// The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed.
+	PreviewDigests []*AgentProposalPreviewDigestInput `json:"previewDigests,omitempty"`
 }
 
 type DecideLeaveCaseInput struct {

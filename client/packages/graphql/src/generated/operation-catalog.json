@@ -24387,12 +24387,17 @@
           "defaultValue": null
         },
         {
+          "name": "previewDigest",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
           "name": "reasonCode",
           "type": "String!",
           "defaultValue": null
         }
       ],
-      "sdl": "input AgentPlanDecisionInput {\n  \"\"\"Accepted runs every step in order; Rejected rejects them all.\"\"\"\n  decision: AgentDecisionType!\n  reasonCode: String!\n}"
+      "sdl": "input AgentPlanDecisionInput {\n  \"\"\"Accepted runs every step in order; Rejected rejects them all.\"\"\"\n  decision: AgentDecisionType!\n  \"\"\"\n  The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded.\n  \"\"\"\n  previewDigest: String\n  reasonCode: String!\n}"
     },
     "AgentProposalDecisionInput": {
       "kind": "input",
@@ -24408,12 +24413,17 @@
           "defaultValue": null
         },
         {
+          "name": "previewDigest",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
           "name": "reasonCode",
           "type": "String!",
           "defaultValue": null
         }
       ],
-      "sdl": "input AgentProposalDecisionInput {\n  decision: AgentDecisionType!\n  modifications: JSON\n  reasonCode: String!\n}"
+      "sdl": "input AgentProposalDecisionInput {\n  decision: AgentDecisionType!\n  modifications: JSON\n  \"\"\"\n  The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed.\n  \"\"\"\n  previewDigest: String\n  reasonCode: String!\n}"
     },
     "AgentScorecardInput": {
       "kind": "input",
@@ -26447,12 +26457,17 @@
           "defaultValue": null
         },
         {
+          "name": "previewDigests",
+          "type": "[AgentProposalPreviewDigestInput!]",
+          "defaultValue": null
+        },
+        {
           "name": "reasonCode",
           "type": "String",
           "defaultValue": null
         }
       ],
-      "sdl": "input DecideAgentProposalsInput {\n  \"\"\"\n  Accepted or Rejected. A change applies to one proposal, from its own card.\n  \"\"\"\n  decision: AgentDecisionType!\n  reasonCode: String\n}"
+      "sdl": "input DecideAgentProposalsInput {\n  \"\"\"\n  Accepted or Rejected. A change applies to one proposal, from its own card.\n  \"\"\"\n  decision: AgentDecisionType!\n  \"\"\"\n  The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed.\n  \"\"\"\n  previewDigests: [AgentProposalPreviewDigestInput!]\n  reasonCode: String\n}"
     },
     "DecideLeaveCaseInput": {
       "kind": "input",
@@ -36648,6 +36663,22 @@
         }
       ],
       "sdl": "input SortFieldInput {\n  direction: String!\n  field: String!\n}"
+    },
+    "AgentProposalPreviewDigestInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "digest",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "proposalId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nThe digest of the preview a person was shown for one proposal of a batch.\n\"\"\"\ninput AgentProposalPreviewDigestInput {\n  digest: String!\n  proposalId: ID!\n}"
     },
     "ApprovalScope": {
       "kind": "enum",

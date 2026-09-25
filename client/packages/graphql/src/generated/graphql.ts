@@ -738,6 +738,8 @@ export type AgentOutputMode =
 export type AgentPlanDecisionInput = {
   /** Accepted runs every step in order; Rejected rejects them all. */
   decision: AgentDecisionType;
+  /** The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded. */
+  previewDigest?: string | null | undefined;
   reasonCode: string;
 };
 
@@ -752,6 +754,8 @@ export type AgentPlanStatus =
 export type AgentProposalDecisionInput = {
   decision: AgentDecisionType;
   modifications?: unknown;
+  /** The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed. */
+  previewDigest?: string | null | undefined;
   reasonCode: string;
 };
 
@@ -765,6 +769,12 @@ export type AgentProposalFieldKind =
   | 'Multiline'
   | 'Number'
   | 'Text';
+
+/** The digest of the preview a person was shown for one proposal of a batch. */
+export type AgentProposalPreviewDigestInput = {
+  digest: string;
+  proposalId: string | number;
+};
 
 export type AgentProposalStatus =
   | 'Accepted'
@@ -2111,6 +2121,8 @@ export type DataTableConnectionInput = {
 export type DecideAgentProposalsInput = {
   /** Accepted or Rejected. A change applies to one proposal, from its own card. */
   decision: AgentDecisionType;
+  /** The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed. */
+  previewDigests?: Array<AgentProposalPreviewDigestInput> | null | undefined;
   reasonCode?: string | null | undefined;
 };
 

@@ -2111,6 +2111,18 @@ func init() {
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
 			},
+			{
+				Name:        "preview",
+				FieldMapKey: "preview",
+			},
+			{
+				Name:        "previewDigest",
+				FieldMapKey: "previewDigest",
+			},
+			{
+				Name:        "previewReviewed",
+				FieldMapKey: "previewReviewed",
+			},
 		},
 	}
 

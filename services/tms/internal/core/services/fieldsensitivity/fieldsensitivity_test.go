@@ -110,3 +110,47 @@ func TestCeilings_AskTheEngineOncePerResource(t *testing.T) {
 	ceilings.For(t.Context(), permission.ResourceWorker)
 	assert.Equal(t, before, engine.calls.Load(), "a remembered ceiling is not asked again")
 }
+
+type fakeChecker struct {
+	allowed map[string]bool
+	fail    bool
+	calls   atomic.Int32
+}
+
+func (f *fakeChecker) Check(
+	_ context.Context,
+	req *serviceports.PermissionCheckRequest,
+) (*serviceports.PermissionCheckResult, error) {
+	f.calls.Add(1)
+	if f.fail {
+		return nil, errors.New("engine unavailable")
+	}
+
+	return &serviceports.PermissionCheckResult{Allowed: f.allowed[req.Resource]}, nil
+}
+
+func TestReadAccess_AsksOncePerResourceAndRefusesWhatItCannotCheck(t *testing.T) {
+	t.Parallel()
+
+	actor := &serviceports.RequestActor{
+		PrincipalType:  serviceports.PrincipalTypeUser,
+		PrincipalID:    pulid.MustNew("usr_"),
+		UserID:         pulid.MustNew("usr_"),
+		OrganizationID: pulid.MustNew("org_"),
+		BusinessUnitID: pulid.MustNew("bu_"),
+	}
+	checker := &fakeChecker{allowed: map[string]bool{permission.ResourceShipment.String(): true}}
+	access := NewReadAccess(checker, actor)
+
+	assert.True(t, access.MayRead(t.Context(), permission.ResourceShipment))
+	assert.True(t, access.MayRead(t.Context(), permission.ResourceShipment))
+	assert.False(t, access.MayRead(t.Context(), permission.ResourceInvoice))
+	assert.Equal(t, int32(2), checker.calls.Load())
+
+	failing := NewReadAccess(&fakeChecker{fail: true}, actor)
+	assert.False(t, failing.MayRead(t.Context(), permission.ResourceShipment))
+	assert.False(t, NewReadAccess(checker, nil).MayRead(t.Context(), permission.ResourceShipment))
+
+	var none *ReadAccess
+	assert.False(t, none.MayRead(t.Context(), permission.ResourceShipment))
+}

@@ -54,6 +54,33 @@ type WriteSpec struct {
 	Attrs         []attribute.KeyValue
 }
 
+// PreviewSpec is one preview of a proposed write: a person reading it, a
+// decision checking it, or the baseline taken when it was filed.
+type PreviewSpec struct {
+	ToolName       string
+	ProposalID     pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	Purpose        string
+	Attrs          []attribute.KeyValue
+}
+
+// PreviewResult is what a preview span records of what was found. It carries
+// no value the preview showed.
+type PreviewResult struct {
+	Coverage string
+	Stale    bool
+	Records  int
+	Withheld int
+	Recorded bool
+}
+
+const (
+	PreviewPurposeRead     = "read"
+	PreviewPurposeDecide   = "decide"
+	PreviewPurposeBaseline = "baseline"
+)
+
 const decideSpanPrefix = "trenova.ai.proposal."
 
 type DecideOperation string
@@ -208,6 +235,55 @@ func StartDecide(ctx context.Context, spec *DecideSpec) (context.Context, trace.
 		attrs,
 		links,
 	)
+}
+
+func StartPreview(ctx context.Context, spec *PreviewSpec) (context.Context, trace.Span) {
+	attrs := make([]attribute.KeyValue, 0, len(spec.Attrs)+5)
+	attrs = appendString(attrs, GenAIToolName, spec.ToolName)
+	attrs = appendString(attrs, AIProposalID, spec.ProposalID.String())
+	attrs = appendString(attrs, TenantOrganizationID, spec.OrganizationID.String())
+	attrs = appendString(attrs, TenantBusinessUnitID, spec.BusinessUnitID.String())
+	attrs = appendString(attrs, AIPreviewPurpose, spec.Purpose)
+	attrs = append(attrs, spec.Attrs...)
+
+	return start(
+		ctx,
+		Anchor{},
+		spanName(SpanPreview, spec.ToolName),
+		trace.SpanKindInternal,
+		attrs,
+		nil,
+	)
+}
+
+// FinishPreview records what a preview found on its span.
+func FinishPreview(span trace.Span, result *PreviewResult) {
+	if result == nil || !span.IsRecording() {
+		return
+	}
+
+	attrs := make([]attribute.KeyValue, 0, 5)
+	attrs = appendString(attrs, AIPreviewCoverage, result.Coverage)
+	attrs = append(attrs,
+		AIPreviewStale.Bool(result.Stale),
+		AIPreviewRecords.Int(result.Records),
+		AIPreviewWithheld.Int(result.Withheld),
+		AIPreviewRecorded.Bool(result.Recorded),
+	)
+	span.SetAttributes(attrs...)
+}
+
+// RecordDecidedPreview puts the digest a decision recorded, and whether the
+// decider reviewed it, on the decide span.
+func RecordDecidedPreview(span trace.Span, digest string, reviewed bool) {
+	if !span.IsRecording() {
+		return
+	}
+
+	attrs := make([]attribute.KeyValue, 0, 2)
+	attrs = appendString(attrs, AIPreviewDigest, digest)
+	attrs = append(attrs, AIPreviewReviewed.Bool(reviewed))
+	span.SetAttributes(attrs...)
 }
 
 func RecordUsage(span trace.Span, usage *Usage) {

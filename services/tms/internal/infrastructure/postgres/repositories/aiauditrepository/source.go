@@ -163,6 +163,7 @@ func (r *sourceRepository) ListDecisions(
 
 	q := r.db.DBForContext(ctx).NewSelect().
 		Model(&rows).
+		ExcludeColumn(cols.Preview.String()).
 		Where(cols.ProposalID.IsNotNull())
 	if err := keyset(q, &cols.CreatedAt, &cols.ID, page).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("read agent decisions for the AI audit trail: %w", err)

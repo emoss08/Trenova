@@ -4426,6 +4426,15 @@
       "routes/agent-control"
     ]
   },
+  "A proposal's digest is listed twice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "A published version cannot be edited. Create a new draft from it instead, so the bytes a customer already received stay reproducible.": {
     "sites": 1,
     "scope": [
@@ -5024,6 +5033,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "A reviewed preview must name the digest that was reviewed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A revoked connection must record when it was revoked": {
@@ -5729,6 +5747,15 @@
     ],
     "areas": [
       "domain/customer"
+    ]
+  },
+  "A step of this plan changes a record that has changed since the plan was proposed, so it cannot be approved as it stands. Reject it, or ask the agent again for a current plan": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
     ]
   },
   "A stop was reached late, or missed, and a service failure was opened on the shipment.": {
@@ -12670,12 +12697,13 @@
     ]
   },
   "Agent plan not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/agentplanservice"
+      "service/agentplanservice",
+      "service/proposalpreviewservice"
     ]
   },
   "Agent principals cannot reassign billing charges": {
@@ -27230,6 +27258,15 @@
       "service/shipmenteventservice"
     ]
   },
+  "Business unit id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Business unit is required": {
     "sites": 118,
     "scope": [
@@ -31754,6 +31791,15 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "Changes to a proposal cannot be checked right now. Try again shortly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
     ]
   },
   "Changes to the items below only affect checklists started after you save. Checklists already in progress keep the items they were started with.": {
@@ -105518,6 +105564,15 @@
       "apps/web/components"
     ]
   },
+  "No preview was recorded when this was decided; the parameters it was proposed with are shown.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
+    ]
+  },
   "No previous employer has been recorded. Until one is, the three-year investigation has not been made.": {
     "sites": 1,
     "scope": [
@@ -116561,6 +116616,15 @@
       "service/capabilityguard"
     ]
   },
+  "Organization id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Organization is required": {
     "sites": 117,
     "scope": [
@@ -119467,6 +119531,15 @@
     ],
     "areas": [
       "domain/invoice"
+    ]
+  },
+  "Part of this change is hidden by your data access.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
     ]
   },
   "Part size cannot be negative": {
@@ -126510,6 +126583,24 @@
       "service/documentoperationsservice"
     ]
   },
+  "Preview is larger than a baseline keeps": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Preview is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Preview not available for this document": {
     "sites": 2,
     "scope": [
@@ -126600,6 +126691,15 @@
       "domain/document"
     ]
   },
+  "Preview target version cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Preview unavailable": {
     "sites": 4,
     "scope": [
@@ -126645,6 +126745,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Previews of proposed changes are not available": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Previous": {
@@ -128153,6 +128262,24 @@
       "routes/agent-control"
     ]
   },
+  "Proposal id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Proposal identifier is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Proposal listed twice": {
     "sites": 1,
     "scope": [
@@ -128163,12 +128290,13 @@
     ]
   },
   "Proposal not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/agentdecisionqueueservice"
+      "service/agentdecisionqueueservice",
+      "service/proposalpreviewservice"
     ]
   },
   "Proposal simulated": {
@@ -165477,6 +165605,15 @@
       "routes/reports"
     ]
   },
+  "Target version cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Target {0}% · 7-day {1}%": {
     "sites": 1,
     "scope": [
@@ -167545,6 +167682,15 @@
     ],
     "areas": [
       "service/assistantservice"
+    ]
+  },
+  "That proposal is not one you can preview": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
     ]
   },
   "That proposal is not part of this conversation": {
@@ -173610,6 +173756,15 @@
       "routes/worker"
     ]
   },
+  "The plan's steps cannot be read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
+    ]
+  },
   "The planned delivery window.": {
     "sites": 1,
     "scope": [
@@ -174319,6 +174474,33 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The record this change is for has changed since it was proposed, so it cannot be approved as it stands. Reject it, or ask the agent again for a current one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdecisionservice"
+    ]
+  },
+  "The record this change is for is set when it is proposed and cannot be changed. Reject it and ask the agent again for the record you mean": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalexecutor"
+    ]
+  },
+  "The record this change is for was not pinned when it was proposed, so whether it has changed since cannot be told.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
     ]
   },
   "The records behind this": {
@@ -182513,7 +182695,7 @@
     ]
   },
   "Tool name is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -195068,6 +195250,15 @@
       "routes/rate-matrix"
     ]
   },
+  "What this change would do has changed since you reviewed it. Review it again, then decide": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdecisionservice"
+    ]
+  },
   "What this contract is written in, converted at the rating date when it differs from yours": {
     "sites": 1,
     "scope": [
@@ -195111,6 +195302,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "What this plan would do has changed since you reviewed it. Review it again, then decide": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
     ]
   },
   "What this recurring lane is called and which shipment it copies": {

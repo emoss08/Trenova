@@ -328,10 +328,11 @@ func (s *Service) DecideMany(
 		outcome, decideErr := s.decisions.DecideWithOutcome(
 			ctx,
 			&services.DecideAgentProposalRequest{
-				ProposalID: id,
-				Decision:   req.Decision,
-				ReasonCode: req.ReasonCode,
-				TenantInfo: req.TenantInfo,
+				ProposalID:    id,
+				Decision:      req.Decision,
+				ReasonCode:    req.ReasonCode,
+				TenantInfo:    req.TenantInfo,
+				PreviewDigest: req.PreviewDigests[id],
 			},
 			actor,
 		)
@@ -400,7 +401,8 @@ func validateBatch(req *services.DecideAgentProposalsRequest) error {
 func decisionErrorMessage(err error) string {
 	if errortypes.IsBusinessError(err) || errortypes.IsMultiError(err) ||
 		errortypes.IsNotFoundError(err) || errortypes.IsError(err) ||
-		errortypes.IsAuthorizationError(err) || errortypes.IsVersionMismatchError(err) {
+		errortypes.IsAuthorizationError(err) || errortypes.IsVersionMismatchError(err) ||
+		errortypes.IsConflictError(err) {
 		return err.Error()
 	}
 

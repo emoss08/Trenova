@@ -71,11 +71,17 @@ func (r *mutationResolver) DecideAgentProposals(ctx context.Context, ids []strin
 		reason = *input.ReasonCode
 	}
 
+	digests, err := previewDigestsByProposal(input.PreviewDigests)
+	if err != nil {
+		return nil, err
+	}
+
 	results, err := r.agentDecisionQueueService.DecideMany(ctx, &services.DecideAgentProposalsRequest{
-		ProposalIDs: proposalIDs,
-		Decision:    input.Decision,
-		ReasonCode:  reason,
-		TenantInfo:  tenantInfo(authCtx),
+		ProposalIDs:    proposalIDs,
+		Decision:       input.Decision,
+		ReasonCode:     reason,
+		TenantInfo:     tenantInfo(authCtx),
+		PreviewDigests: digests,
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err

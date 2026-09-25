@@ -859,8 +859,29 @@ func (d *deriver) decisionEvent(
 	if err := d.recordArguments(event, toolName, decision.Modifications); err != nil {
 		return nil, err
 	}
+	event.ResultSummary = previewSummary(decision)
+	if decision.PreviewTargetVersion != nil {
+		version := *decision.PreviewTargetVersion
+		event.VersionBefore = &version
+	}
 
 	return event, nil
+}
+
+// previewSummary says what the decider was shown, by the digest the decision
+// recorded: that they approved the preview they reviewed, or that the
+// decision named no preview and the one it ran against is recorded instead.
+// It rides the event's result summary, a field the hashed row already has, so
+// recording it changes no hash version.
+func previewSummary(decision *agent.AgentDecision) string {
+	if decision.PreviewDigest == "" {
+		return ""
+	}
+	if decision.PreviewReviewed {
+		return "Reviewed preview sha256:" + decision.PreviewDigest
+	}
+
+	return "Preview not reviewed; sha256:" + decision.PreviewDigest
 }
 
 func decisionOutcome(decision agent.DecisionType) aiaudit.Outcome {

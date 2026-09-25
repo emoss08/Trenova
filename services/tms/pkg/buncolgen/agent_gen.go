@@ -49,33 +49,41 @@ var AgentDecisionTable = TableInfo{
 //	q.Where(AgentDecisionColumns.ID.Eq(), id)           // WHERE ad.id = ?
 //	q.Order(AgentDecisionColumns.CreatedAt.OrderDesc())  // ORDER BY ad.created_at DESC
 var AgentDecisionColumns = struct {
-	ID              Column // "id" → qualified: "ad.id"
-	BusinessUnitID  Column // "business_unit_id" → qualified: "ad.business_unit_id"
-	OrganizationID  Column // "organization_id" → qualified: "ad.organization_id"
-	ProposalID      Column // "proposal_id" → qualified: "ad.proposal_id"
-	ExceptionID     Column // "exception_id" → qualified: "ad.exception_id"
-	DecidedByUserID Column // "decided_by_user_id" → qualified: "ad.decided_by_user_id"
-	Decision        Column // "decision" → qualified: "ad.decision"
-	Modifications   Column // "modifications" → qualified: "ad.modifications"
-	ReasonCode      Column // "reason_code" → qualified: "ad.reason_code"
-	TraceID         Column // "trace_id" → qualified: "ad.trace_id"
-	Version         Column // "version" → qualified: "ad.version"
-	CreatedAt       Column // "created_at" → qualified: "ad.created_at"
-	UpdatedAt       Column // "updated_at" → qualified: "ad.updated_at"
+	ID                   Column // "id" → qualified: "ad.id"
+	BusinessUnitID       Column // "business_unit_id" → qualified: "ad.business_unit_id"
+	OrganizationID       Column // "organization_id" → qualified: "ad.organization_id"
+	ProposalID           Column // "proposal_id" → qualified: "ad.proposal_id"
+	ExceptionID          Column // "exception_id" → qualified: "ad.exception_id"
+	DecidedByUserID      Column // "decided_by_user_id" → qualified: "ad.decided_by_user_id"
+	Decision             Column // "decision" → qualified: "ad.decision"
+	Modifications        Column // "modifications" → qualified: "ad.modifications"
+	ReasonCode           Column // "reason_code" → qualified: "ad.reason_code"
+	TraceID              Column // "trace_id" → qualified: "ad.trace_id"
+	Preview              Column // "preview" → qualified: "ad.preview"
+	PreviewDigest        Column // "preview_digest" → qualified: "ad.preview_digest"
+	PreviewReviewed      Column // "preview_reviewed" → qualified: "ad.preview_reviewed"
+	PreviewTargetVersion Column // "preview_target_version" → qualified: "ad.preview_target_version"
+	Version              Column // "version" → qualified: "ad.version"
+	CreatedAt            Column // "created_at" → qualified: "ad.created_at"
+	UpdatedAt            Column // "updated_at" → qualified: "ad.updated_at"
 }{
-	ID:              NewColumn("id", "ad"),
-	BusinessUnitID:  NewColumn("business_unit_id", "ad"),
-	OrganizationID:  NewColumn("organization_id", "ad"),
-	ProposalID:      NewColumn("proposal_id", "ad"),
-	ExceptionID:     NewColumn("exception_id", "ad"),
-	DecidedByUserID: NewColumn("decided_by_user_id", "ad"),
-	Decision:        NewColumn("decision", "ad"),
-	Modifications:   NewColumn("modifications", "ad"),
-	ReasonCode:      NewColumn("reason_code", "ad"),
-	TraceID:         NewColumn("trace_id", "ad"),
-	Version:         NewColumn("version", "ad"),
-	CreatedAt:       NewColumn("created_at", "ad"),
-	UpdatedAt:       NewColumn("updated_at", "ad"),
+	ID:                   NewColumn("id", "ad"),
+	BusinessUnitID:       NewColumn("business_unit_id", "ad"),
+	OrganizationID:       NewColumn("organization_id", "ad"),
+	ProposalID:           NewColumn("proposal_id", "ad"),
+	ExceptionID:          NewColumn("exception_id", "ad"),
+	DecidedByUserID:      NewColumn("decided_by_user_id", "ad"),
+	Decision:             NewColumn("decision", "ad"),
+	Modifications:        NewColumn("modifications", "ad"),
+	ReasonCode:           NewColumn("reason_code", "ad"),
+	TraceID:              NewColumn("trace_id", "ad"),
+	Preview:              NewColumn("preview", "ad"),
+	PreviewDigest:        NewColumn("preview_digest", "ad"),
+	PreviewReviewed:      NewColumn("preview_reviewed", "ad"),
+	PreviewTargetVersion: NewColumn("preview_target_version", "ad"),
+	Version:              NewColumn("version", "ad"),
+	CreatedAt:            NewColumn("created_at", "ad"),
+	UpdatedAt:            NewColumn("updated_at", "ad"),
 }
 
 // AgentDecisionFieldMap maps JSON API field names to database column names.
@@ -83,19 +91,23 @@ var AgentDecisionColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AgentDecision.GetStaticFieldMap().
 var AgentDecisionFieldMap = map[string]string{
-	"id":              "id",
-	"businessUnitId":  "business_unit_id",
-	"organizationId":  "organization_id",
-	"proposalId":      "proposal_id",
-	"exceptionId":     "exception_id",
-	"decidedByUserId": "decided_by_user_id",
-	"decision":        "decision",
-	"modifications":   "modifications",
-	"reasonCode":      "reason_code",
-	"traceId":         "trace_id",
-	"version":         "version",
-	"createdAt":       "created_at",
-	"updatedAt":       "updated_at",
+	"id":                   "id",
+	"businessUnitId":       "business_unit_id",
+	"organizationId":       "organization_id",
+	"proposalId":           "proposal_id",
+	"exceptionId":          "exception_id",
+	"decidedByUserId":      "decided_by_user_id",
+	"decision":             "decision",
+	"modifications":        "modifications",
+	"reasonCode":           "reason_code",
+	"traceId":              "trace_id",
+	"preview":              "preview",
+	"previewDigest":        "preview_digest",
+	"previewReviewed":      "preview_reviewed",
+	"previewTargetVersion": "preview_target_version",
+	"version":              "version",
+	"createdAt":            "created_at",
+	"updatedAt":            "updated_at",
 }
 
 // AgentDecisionInsertableColumns lists column names suitable for INSERT statements on the "agent_decisions" table.
@@ -111,6 +123,10 @@ var AgentDecisionInsertableColumns = []string{
 	"modifications",
 	"reason_code",
 	"trace_id",
+	"preview",
+	"preview_digest",
+	"preview_reviewed",
+	"preview_target_version",
 	"version",
 	"created_at",
 	"updated_at",
@@ -181,19 +197,23 @@ func AgentDecisionApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *
 //	AgentDecisionFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AgentDecisionFilter = struct {
-	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	ProposalID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "proposalId" → DB: "proposal_id"
-	ExceptionID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionId" → DB: "exception_id"
-	DecidedByUserID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedByUserId" → DB: "decided_by_user_id"
-	Decision        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decision" → DB: "decision"
-	Modifications   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modifications" → DB: "modifications"
-	ReasonCode      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasonCode" → DB: "reason_code"
-	TraceID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
-	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ProposalID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "proposalId" → DB: "proposal_id"
+	ExceptionID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptionId" → DB: "exception_id"
+	DecidedByUserID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decidedByUserId" → DB: "decided_by_user_id"
+	Decision             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decision" → DB: "decision"
+	Modifications        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modifications" → DB: "modifications"
+	ReasonCode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasonCode" → DB: "reason_code"
+	TraceID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
+	Preview              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preview" → DB: "preview"
+	PreviewDigest        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewDigest" → DB: "preview_digest"
+	PreviewReviewed      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewReviewed" → DB: "preview_reviewed"
+	PreviewTargetVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewTargetVersion" → DB: "preview_target_version"
+	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -224,6 +244,18 @@ var AgentDecisionFilter = struct {
 	},
 	TraceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("traceId", op, value)
+	},
+	Preview: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("preview", op, value)
+	},
+	PreviewDigest: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("previewDigest", op, value)
+	},
+	PreviewReviewed: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("previewReviewed", op, value)
+	},
+	PreviewTargetVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("previewTargetVersion", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -2657,6 +2689,156 @@ var MemoryFilter = struct {
 	},
 	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// ProposalBaseline — table "agent_proposal_baselines", alias "apb"
+// ---------------------------------------------------------------------------
+
+// ProposalBaselineTable holds the table name, alias, and primary key columns
+// for the "agent_proposal_baselines" table. The alias "apb" is used in all generated
+// SQL fragments (e.g. "apb.id = ?").
+var ProposalBaselineTable = TableInfo{
+	Name:       "agent_proposal_baselines",
+	Alias:      "apb",
+	PrimaryKey: []string{"proposal_id", "organization_id", "business_unit_id"},
+}
+
+// ProposalBaselineColumns provides type-safe column references for the "agent_proposal_baselines" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(ProposalBaselineColumns.ID.String())
+//	// SELECT apb.id FROM agent_proposal_baselines AS apb
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(ProposalBaselineColumns.ID.Eq(), id)           // WHERE apb.id = ?
+//	q.Order(ProposalBaselineColumns.CreatedAt.OrderDesc())  // ORDER BY apb.created_at DESC
+var ProposalBaselineColumns = struct {
+	ProposalID     Column // "proposal_id" → qualified: "apb.proposal_id"
+	OrganizationID Column // "organization_id" → qualified: "apb.organization_id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "apb.business_unit_id"
+	ToolName       Column // "tool_name" → qualified: "apb.tool_name"
+	Preview        Column // "preview" → qualified: "apb.preview"
+	TargetVersion  Column // "target_version" → qualified: "apb.target_version"
+	CreatedAt      Column // "created_at" → qualified: "apb.created_at"
+}{
+	ProposalID:     NewColumn("proposal_id", "apb"),
+	OrganizationID: NewColumn("organization_id", "apb"),
+	BusinessUnitID: NewColumn("business_unit_id", "apb"),
+	ToolName:       NewColumn("tool_name", "apb"),
+	Preview:        NewColumn("preview", "apb"),
+	TargetVersion:  NewColumn("target_version", "apb"),
+	CreatedAt:      NewColumn("created_at", "apb"),
+}
+
+// ProposalBaselineFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by ProposalBaseline.GetStaticFieldMap().
+var ProposalBaselineFieldMap = map[string]string{
+	"proposalId":     "proposal_id",
+	"organizationId": "organization_id",
+	"businessUnitId": "business_unit_id",
+	"toolName":       "tool_name",
+	"preview":        "preview",
+	"targetVersion":  "target_version",
+	"createdAt":      "created_at",
+}
+
+// ProposalBaselineInsertableColumns lists column names suitable for INSERT statements on the "agent_proposal_baselines" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var ProposalBaselineInsertableColumns = []string{
+	"proposal_id",
+	"organization_id",
+	"business_unit_id",
+	"tool_name",
+	"preview",
+	"target_version",
+	"created_at",
+}
+
+// ProposalBaselineScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE apb.organization_id = ? AND apb.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.ProposalBaselineScopeTenant(sq, ti).
+//		Where(buncolgen.ProposalBaselineColumns.ID.Eq(), id)
+func ProposalBaselineScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, ProposalBaselineColumns.OrganizationID, ProposalBaselineColumns.BusinessUnitID, ti)
+}
+
+// ProposalBaselineScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.ProposalBaselineScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.ProposalBaselineColumns.ID.In(), bun.List(ids))
+//	})
+func ProposalBaselineScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, ProposalBaselineColumns.OrganizationID, ProposalBaselineColumns.BusinessUnitID, ti)
+}
+
+// ProposalBaselineScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.ProposalBaselineScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.ProposalBaselineColumns.ID.Eq(), id)
+//	})
+func ProposalBaselineScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, ProposalBaselineColumns.OrganizationID, ProposalBaselineColumns.BusinessUnitID, ti)
+}
+
+// ProposalBaselineApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.ProposalBaselineApplyTenant(tenantInfo))
+func ProposalBaselineApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(ProposalBaselineColumns.OrganizationID, ProposalBaselineColumns.BusinessUnitID, ti)
+}
+
+// ProposalBaselineFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "agent_proposal_baselines" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	ProposalBaselineFilter.ProposalID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "proposalId", Operator: "eq", Value: value}
+var ProposalBaselineFilter = struct {
+	ProposalID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "proposalId" → DB: "proposal_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	ToolName       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
+	Preview        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preview" → DB: "preview"
+	TargetVersion  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetVersion" → DB: "target_version"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ProposalID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("proposalId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	ToolName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("toolName", op, value)
+	},
+	Preview: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("preview", op, value)
+	},
+	TargetVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("targetVersion", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
 	},
 }
 
