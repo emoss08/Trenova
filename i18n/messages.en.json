@@ -4345,6 +4345,15 @@
       "routes/agent-control"
     ]
   },
+  "A proposal's digest is listed twice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "A published version cannot be edited. Create a new draft from it instead, so the bytes a customer already received stay reproducible.": {
     "sites": 1,
     "scope": [
@@ -4525,6 +4534,15 @@
     ],
     "areas": [
       "service/ratematrixservice"
+    ]
+  },
+  "A rate or formula change reprices the shipment and cannot be previewed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
     ]
   },
   "A rated quote must name the agreement that priced it": {
@@ -4943,6 +4961,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "A reviewed preview must name the digest that was reviewed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A revoked connection must record when it was revoked": {
@@ -17309,12 +17336,14 @@
     ]
   },
   "Applied to invoices": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/invoice"
+      "routes/invoice",
+      "service/agenttoolservice"
     ]
   },
   "Applied to new escrow accounts unless overridden per account.": {
@@ -26990,6 +27019,15 @@
       "service/invoiceadjustmentservice",
       "service/sequenceconfigservice",
       "service/shipmenteventservice"
+    ]
+  },
+  "Business unit id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Business unit is required": {
@@ -45258,6 +45296,15 @@
       "apps/web/lib"
     ]
   },
+  "Customer's EDI trading partner": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Customer, rating method, and charge amounts": {
     "sites": 1,
     "scope": [
@@ -56946,6 +56993,15 @@
     ],
     "areas": [
       "routes/service-failure"
+    ]
+  },
+  "EDI 214 service failure resolved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "EDI Inbound File Retention (days)": {
@@ -72422,7 +72478,7 @@
     ]
   },
   "Freight": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -72434,6 +72490,7 @@
       "routes/invoice",
       "routes/order",
       "routes/shipment",
+      "service/agenttoolservice",
       "template/invoice.pdf"
     ]
   },
@@ -90139,6 +90196,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Load tender offer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Load tender request is required": {
@@ -113275,13 +113341,15 @@
     ]
   },
   "Open balance": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/customer-ledger",
-      "routes/invoice"
+      "routes/invoice",
+      "service/agenttoolservice"
     ]
   },
   "Open batch": {
@@ -115708,6 +115776,15 @@
     ],
     "areas": [
       "service/capabilityguard"
+    ]
+  },
+  "Organization id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Organization is required": {
@@ -125502,6 +125579,24 @@
       "service/documentoperationsservice"
     ]
   },
+  "Preview is larger than a baseline keeps": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Preview is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Preview not available for this document": {
     "sites": 2,
     "scope": [
@@ -125592,6 +125687,15 @@
       "domain/document"
     ]
   },
+  "Preview target version cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Preview unavailable": {
     "sites": 4,
     "scope": [
@@ -125637,6 +125741,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Previews of proposed changes are not available": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Previous": {
@@ -127133,6 +127246,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Proposal id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Proposal identifier is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Proposal listed twice": {
@@ -138413,7 +138544,7 @@
     ]
   },
   "Request is required": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "go"
     ],
@@ -154778,6 +154909,15 @@
       "service/orderservice"
     ]
   },
+  "Shipment comment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Shipment comment actions require a user actor": {
     "sites": 1,
     "scope": [
@@ -163970,6 +164110,15 @@
       "routes/reports"
     ]
   },
+  "Target version cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Target {0}% · 7-day {1}%": {
     "sites": 1,
     "scope": [
@@ -165158,6 +165307,15 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Tender offer withdrawn": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Tender processing failed. Review the failure reason for details.": {
@@ -180805,7 +180963,7 @@
     ]
   },
   "Tool name is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -184385,6 +184543,15 @@
       "routes/customer-payments"
     ]
   },
+  "Unapplied cash on account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Unapplied credit": {
     "sites": 1,
     "scope": [
@@ -185660,6 +185827,15 @@
     ],
     "areas": [
       "service/accountingcontrolservice"
+    ]
+  },
+  "Unreconciled cash": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Unresolved": {
