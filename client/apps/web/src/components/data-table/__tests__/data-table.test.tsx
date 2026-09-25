@@ -358,6 +358,100 @@ describe("DataTable cursor total count", () => {
   });
 });
 
+// ── Scope filters and the generic export ──────────────────────────────
+
+/*
+A table whose surroundings narrow it (a date range and an agent chosen beside
+the table, not in its filter builder) hands those filters in as scopeFilters.
+They are ANDed with whatever the person builds in the table, reach every
+query the table makes, and are part of what a remembered cursor belongs to.
+*/
+describe("DataTable scope filters", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("sends the scope's filters ahead of the table's own", () => {
+    const scopeFilters = [
+      { field: "occurredAt", operator: "lastndays" as const, value: 7 },
+      { field: "purpose", operator: "eq" as const, value: "Live" },
+    ];
+    const queryClient = createQueryClient();
+    render(
+      <QueryClientProvider client={queryClient}>
+        <NuqsTestingAdapter
+          hasMemory
+          searchParams={{
+            fieldFilters: JSON.stringify([{ field: "name", operator: "eq", value: "Alice" }]),
+          }}
+        >
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            scopeFilters={scopeFilters}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>,
+    );
+
+    const options = (useDataTableQueryMock.mock.calls as unknown[][]).at(-1)?.[3] as {
+      fieldFilters: unknown[];
+    };
+    expect(options.fieldFilters).toEqual([
+      ...scopeFilters,
+      { field: "name", operator: "eq", value: "Alice" },
+    ]);
+  });
+
+  it("forgets the remembered total when the scope changes", async () => {
+    mockCursorPages({ "": firstPage, "cursor-page-2": secondPageWithoutTotal });
+    const queryClient = createQueryClient();
+    const tree = (days: number) => (
+      <QueryClientProvider client={queryClient}>
+        <NuqsTestingAdapter hasMemory>
+          <DataTable<TestRow>
+            columns={testColumns}
+            name="test-table"
+            queryKey="test"
+            graphql={testGraphQLConfig}
+            scopeFilters={[{ field: "occurredAt", operator: "lastndays", value: days }]}
+          />
+        </NuqsTestingAdapter>
+      </QueryClientProvider>
+    );
+
+    const { container, rerender } = render(tree(7));
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Go to next page"));
+    });
+    expect(await screen.findAllByText("Carol")).not.toHaveLength(0);
+
+    mockCursorPages({
+      "": { results: [{ id: "9", name: "Zed" }], totalCount: null, endCursor: null },
+      "cursor-page-2": secondPageWithoutTotal,
+    });
+    rerender(tree(30));
+
+    expect(await screen.findAllByText("Zed")).not.toHaveLength(0);
+    expect(container).not.toHaveTextContent("of 30");
+    useDataTableQueryMock.mockImplementation(() => defaultQueryResult);
+  });
+
+  it("offers the generic CSV export to someone who may export", () => {
+    renderDataTable({ resource: "test_resource" });
+
+    expect(screen.getByLabelText("Export to CSV")).toBeInTheDocument();
+  });
+
+  it("hides the generic CSV export when the table exports another way", () => {
+    renderDataTable({ resource: "test_resource", enableExport: false });
+
+    expect(screen.queryByLabelText("Export to CSV")).not.toBeInTheDocument();
+  });
+});
+
 // ── DataTableProvider context memoization tests ────────────────────────
 
 describe("DataTableProvider memoization", () => {

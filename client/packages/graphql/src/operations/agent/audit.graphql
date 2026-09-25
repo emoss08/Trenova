@@ -23,6 +23,7 @@ fragment AIAuditEventRowFields on AIAuditEvent {
   proposalId
   toolName
   tier
+  heldBy
   model
   providerKind
   inputTokens
@@ -37,6 +38,8 @@ fragment AIAuditEventRowFields on AIAuditEvent {
   externalContent
   simulated
   reconstructed
+  traceId
+  traceUrl
 }
 
 fragment AIAuditEventDetailFields on AIAuditEvent {
@@ -68,9 +71,7 @@ fragment AIAuditEventDetailFields on AIAuditEvent {
   callId
   delegateCallId
   parentOwnerId
-  traceId
   spanId
-  traceUrl
   providerId
   attempt
   failover
@@ -80,7 +81,6 @@ fragment AIAuditEventDetailFields on AIAuditEvent {
   toolEffect
   egressClass
   tierSource
-  heldBy
   arguments
   argumentSensitivity
   argumentsTruncated

@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, AI safety, tool rules, agent autonomy, AI quality, agent evaluation, golden set, eval cases, agent regression]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, AI safety, tool rules, agent autonomy, AI quality, agent evaluation, golden set, eval cases, agent regression, AI audit trail, AI audit log, agent audit, AI compliance, AI decisions log, hash chain, tamper evidence, AI export, traces, tracing, trace id]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -10,15 +10,17 @@ related:
 
 ## What it's for
 AI control is the one place for everything AI in the organization. A rail down the left side
-holds nine sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**,
-**Retrieval**, **Safety**, **Quality** and **Activity**. Providers say where AI work goes (the
+holds ten sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**,
+**Retrieval**, **Safety**, **Quality**, **Activity** and **Audit trail**. Providers say where AI work goes (the
 model endpoints Trenova calls and which AI tasks each one handles), agents say what AI may do
 (their instructions, tools, autonomy and trigger), extensions add abilities that work only for
 agents, such as searching the web, using the organization's own account with the vendor, memory
 holds the standing instructions and facts agents read, retrieval shows whether agents find
 memories, documents and inbound email by meaning and what indexing them costs, safety shows what
-each tool and agent can do without a person, quality says how well each agent does its work, and activity shows what agents did:
-their runs, the changes they proposed, multi-step plans, replays and exceptions.
+each tool and agent can do without a person, quality says how well each agent does its work, activity shows what agents did:
+their runs, the changes they proposed, multi-step plans, replays and exceptions, and the audit
+trail keeps a signed record of every run, model call, tool call and decision for compliance to
+read, check and export.
 
 **Overview** shows whether AI can work at all (a banner warns when no provider is connected or a
 task has no provider), a strip of figures for providers and agents that are on, proposals
@@ -241,6 +243,57 @@ Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden
    **Regression threshold (points)**, and whether to **Have a judge read a sample**. Then select
    **Save settings**.
 
+### Read what agents did on the audit trail
+Keywords: AI audit trail, agent audit log, who approved, what did the agent do, AI compliance, tool calls, model calls, AI decisions, evaluations
+1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail, then **Trail**.
+2. Read the figures at the top: **Chain** says whether the trail is **Signed** with a key held
+   outside the database or **Unsigned**, **Sealed through** is the last row the trail has sealed,
+   and **Last verified** is what the last check found.
+3. Choose the range at the left of the bar above the table: **Last 24 hours**, **Last 7 days**
+   (where it starts), **Last 30 days**, **Last 90 days**, or pick days on the calendar and select
+   **Apply**. Select **Every agent** to narrow to one agent, pick a person in **Anyone** to see the
+   work done for them or decided by them, and turn on **Include evaluations** to show replays
+   beside live work.
+4. The table lists each event with **When**, **Agent**, **What** (the event and the tool),
+   **Outcome**, **Person**, **Record**, **Tier**, **Model**, **Cost**, **Tainted** and **Trace**.
+   Select **Filter** to narrow by **What**, **Tool**, **Outcome**, **Record**, **Record type**,
+   **Tier**, **Model**, **Tainted** or **Trace**.
+5. Select a row to read the event in full: **Who**, **What**, **Why** (the tier, what set it and
+   what held it back), **Changed** (the record, its versions, and the audit log entries
+   **Matched by time**), **Provenance**, **Model**, **Arguments**, **Trace** and **Chain**.
+
+### Check that the audit trail has not been changed
+Keywords: verify audit trail, hash chain, tamper evidence, audit integrity, signing key
+1. Open [AI control](/admin/agent-control) and select **Audit trail** in the rail.
+2. Select **Verify now**. The check runs in the background and the button shows **Verifying…**
+   until its result is stored.
+3. Read **Last verified**: **Verified** means every row still matches its chain, **Mismatch**
+   means a row was changed or removed and says at which row, and **Key missing** means a row names
+   a signing key that is no longer configured.
+
+### Export the AI audit trail
+Keywords: download audit trail, AI audit export, CSV, JSON, auditor, compliance export, SHA-256
+1. Open [AI control](/admin/agent-control), select **Audit trail** in the rail and narrow the
+   trail if you want to export part of it.
+2. Select **Export trail…**.
+3. Choose the **Format**, CSV or JSON, set **From** and **To**, and leave **Use current filters** on to
+   carry the agent, person, evaluations and table filters into the file, or turn it off to export
+   every row in the range.
+4. Select **Export**. A small export downloads at once and shows its rows, size and SHA-256;
+   **Download again** fetches it again. A large one is written in the background: you are
+   notified when it is ready, and **Open exports** shows it.
+5. Select **Exports** in the rail to see every export with its status, **Rows**, **Size**,
+   **SHA-256**, **Chain** (**Complete** or **Filtered**) and when it **Expires**. Select
+   **Download** on your own export to download it.
+
+### Find the trace of an agent's work
+Keywords: trace id, tracing, OpenTelemetry, Tempo, Jaeger, span
+1. Open [AI control](/admin/agent-control) and select **Activity** in the rail, then **Runs** or
+   **Proposals**; or open **Audit trail**.
+2. The **Trace** column shows the start of the trace id. Select the copy button beside it to copy
+   the whole id; where a tracing backend is configured, the id is a link that opens the trace.
+3. To find every row of one trace, select **Filter**, choose **Trace** and paste the id.
+
 ### Record something every agent should know
 Keywords: agent memory, standing instruction, fact, correction, retire memory
 1. Open [AI control](/admin/agent-control) and select **Memory** in the rail.
@@ -329,6 +382,17 @@ when the nightly or monthly budget is spent, and says so. When an agent's score 
 median of its recent runs by more than the threshold, the run is marked **Regressed**, a
 Watchtower item is raised (critical when a case failed a hard check), and the people who can
 update AI control are told once, with what changed.
+
+The **Audit trail** section appears for people with read access to the AI audit trail; reading
+agent runs does not grant it. **Verify now** needs the same read access. **Export trail…** and
+**Download** need export access to the AI audit trail, and only the person who asked for an export
+can download it; the file can be downloaded until it expires, seven days after it was written
+unless the organization's configuration says otherwise. Requesting and downloading an export are
+written to the audit log. The audit log entries shown with an event appear only for people who may
+read the audit log. Arguments show only what the reader may see on that record; anything above it
+reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a
+minute of happening. How long they are kept is set on
+[Data retention](/organization/data-retention).
 
 Removing a provider stops any task routed only to it until another provider is assigned.
 Removing an agent keeps its existing conversations but they cannot be continued, and its schedule

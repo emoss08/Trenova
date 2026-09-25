@@ -46,6 +46,7 @@ import { dataTableFeatures } from "@trenova/shared/lib/table-features";
 import { cn, toSentenceFragment } from "@trenova/shared/lib/utils";
 import type {
   DataTableProps,
+  FieldFilter,
   FilterItem,
   PanelMode,
   Row,
@@ -78,6 +79,7 @@ type CursorState = {
 const EMPTY_CURSOR_STATE: CursorState = { scopeKey: "", cursors: { 0: null }, totalCount: null };
 const EMPTY_PINNING = { left: [] as string[], right: [] as string[] };
 const NO_ROW_ACTIONS: never[] = [];
+const NO_SCOPE_FILTERS: FieldFilter[] = [];
 
 export function DataTable<TData extends Record<string, any>>({
   columns,
@@ -98,6 +100,8 @@ export function DataTable<TData extends Record<string, any>>({
   refetchIntervalMs,
   onCellEditCommit,
   renderEmptyState,
+  scopeFilters = NO_SCOPE_FILTERS,
+  enableExport = true,
 }: DataTableProps<TData>) {
   "use no memo";
   const t = useT();
@@ -108,7 +112,7 @@ export function DataTable<TData extends Record<string, any>>({
   const permissions = usePermissions(resource ?? "");
   const canCreate = resource ? permissions.canCreate : true;
   const canUpdate = resource ? permissions.canUpdate : true;
-  const canExport = resource ? permissions.canExport : true;
+  const canExport = enableExport && (resource ? permissions.canExport : true);
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { pageIndex, pageSize, query, fieldFilters, filterGroups, sort, panelType, panelEntityId } =
     searchParams;
@@ -273,6 +277,7 @@ export function DataTable<TData extends Record<string, any>>({
       stableStringify({
         pageSize,
         query,
+        scopeFilters,
         fieldFilters,
         filterGroups,
         sort: effectiveSort,
@@ -291,6 +296,7 @@ export function DataTable<TData extends Record<string, any>>({
       graphql.operationName,
       pageSize,
       query,
+      scopeFilters,
     ],
   );
   const scopedCursorState =
@@ -301,11 +307,11 @@ export function DataTable<TData extends Record<string, any>>({
   const baseQueryOptions = useMemo(
     () => ({
       query,
-      fieldFilters,
+      fieldFilters: scopeFilters.length > 0 ? [...scopeFilters, ...fieldFilters] : fieldFilters,
       filterGroups,
       sort: effectiveSort,
     }),
-    [query, fieldFilters, filterGroups, effectiveSort],
+    [query, scopeFilters, fieldFilters, filterGroups, effectiveSort],
   );
 
   const queryOptions = useMemo(
@@ -675,7 +681,7 @@ export function DataTable<TData extends Record<string, any>>({
   usePageViewRegistration({
     resource: resource ?? name,
     query,
-    fieldFilters,
+    fieldFilters: baseQueryOptions.fieldFilters,
     filterGroups,
     sort: effectiveSort,
     rowSelection,

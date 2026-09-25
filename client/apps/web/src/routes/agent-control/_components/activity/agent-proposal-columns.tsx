@@ -10,6 +10,7 @@ import {
   proposalStatusChoices,
   TierBadge,
 } from "./agent-badges";
+import { traceColumn } from "../trace-link";
 
 export function getProposalColumns(t: TranslateFn): ColumnDef<AgentProposalRow>[] {
   return [
@@ -117,5 +118,6 @@ export function getProposalColumns(t: TranslateFn): ColumnDef<AgentProposalRow>[
         filterType: "date",
       },
     },
+    traceColumn<AgentProposalRow>(t),
   ];
 }

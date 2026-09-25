@@ -179,3 +179,20 @@ func TestDefaultLoads(t *testing.T) {
 		assert.NotEmpty(t, path)
 	}
 }
+
+func TestAIAuditExportRecordOpensItsExport(t *testing.T) {
+	t.Parallel()
+
+	path, ok := Default.RecordPath("ai_audit_export", "aiax_1", nil)
+	require.True(t, ok)
+	parsed, err := url.Parse(path)
+	require.NoError(t, err)
+	assert.Equal(t, "/admin/agent-control", parsed.Path)
+	assert.Equal(t, "audit", parsed.Query().Get("tab"))
+	assert.Equal(t, "exports", parsed.Query().Get("audit"))
+	assert.JSONEq(
+		t,
+		`[{"field":"id","operator":"eq","value":"aiax_1"}]`,
+		parsed.Query().Get("fieldFilters"),
+	)
+}

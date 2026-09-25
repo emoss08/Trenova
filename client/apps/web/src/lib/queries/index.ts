@@ -3,6 +3,7 @@ import { accountingControl } from "./accounting-control";
 import { agentQuality } from "./agent-quality";
 import { agentSafety } from "./agent-safety";
 import { agentScorecard } from "./agent-scorecard";
+import { aiAudit } from "./ai-audit";
 import { attention } from "./attention";
 import { inbox } from "./inbox";
 import { watchtower } from "./watchtower";
@@ -138,6 +139,7 @@ const workspaceQueries = mergeQueryKeys(
   agentQuality,
   agentSafety,
   agentScorecard,
+  aiAudit,
   attention,
   audit,
   briefing,

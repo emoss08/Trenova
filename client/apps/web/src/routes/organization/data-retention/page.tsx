@@ -13,29 +13,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { z } from "zod";
-
-const AI_FEEDBACK_RETENTION_MIN_DAYS = 30;
-const AI_FEEDBACK_RETENTION_DEFAULT_DAYS = 730;
-
-const dataRetentionFormSchema = z.object({
-  auditRetentionPeriod: z.number().int().min(1, "Audit retention must be at least 1 day"),
-  ediInboundFileRetentionPeriod: z
-    .number()
-    .int()
-    .min(0, "EDI inbound file retention cannot be negative"),
-  ediMessageRetentionPeriod: z.number().int().min(0, "EDI message retention cannot be negative"),
-  aiFeedbackRetentionPeriod: z
-    .number()
-    .int()
-    .min(AI_FEEDBACK_RETENTION_MIN_DAYS, "AI feedback retention must be at least 30 days"),
-  agentEvalCaseRetentionPeriod: z
-    .number()
-    .int()
-    .min(0, "Agent evaluation case retention cannot be negative"),
-});
-
-type DataRetentionFormValues = z.infer<typeof dataRetentionFormSchema>;
+import {
+  DATA_RETENTION_FORM_DEFAULTS,
+  dataRetentionFormSchema,
+  dataRetentionFormValues,
+  type DataRetentionFormValues,
+} from "./data-retention-form";
 
 export function DataRetentionPage() {
   const t = useT();
@@ -51,29 +34,14 @@ export function DataRetentionPage() {
 
   const form = useForm<DataRetentionFormValues>({
     resolver: zodResolver(dataRetentionFormSchema),
-    defaultValues: {
-      auditRetentionPeriod: 120,
-      ediInboundFileRetentionPeriod: 0,
-      ediMessageRetentionPeriod: 0,
-      aiFeedbackRetentionPeriod: AI_FEEDBACK_RETENTION_DEFAULT_DAYS,
-      agentEvalCaseRetentionPeriod: 365,
-    },
+    defaultValues: DATA_RETENTION_FORM_DEFAULTS,
     mode: "onChange",
   });
   const { control, handleSubmit, reset } = form;
 
   useEffect(() => {
     if (!data) return;
-    reset({
-      auditRetentionPeriod: data.auditRetentionPeriod,
-      ediInboundFileRetentionPeriod: data.ediInboundFileRetentionPeriod,
-      ediMessageRetentionPeriod: data.ediMessageRetentionPeriod,
-      aiFeedbackRetentionPeriod:
-        data.aiFeedbackRetentionPeriod > 0
-          ? data.aiFeedbackRetentionPeriod
-          : AI_FEEDBACK_RETENTION_DEFAULT_DAYS,
-      agentEvalCaseRetentionPeriod: data.agentEvalCaseRetentionPeriod,
-    });
+    reset(dataRetentionFormValues(data));
   }, [data, reset]);
 
   const mutation = useApiMutation({
@@ -91,7 +59,7 @@ export function DataRetentionPage() {
       pageHeaderProps={{
         title: t("Data retention"),
         description: t(
-          "Configure how long audit entries and raw EDI payloads are kept before the nightly purge jobs remove them.",
+          "Configure how long audit entries, the AI audit trail and raw EDI payloads are kept before the nightly purge jobs remove them.",
         ),
       }}
     >
@@ -159,6 +127,17 @@ export function DataRetentionPage() {
                   label={t("Agent evaluation case retention (days)")}
                   description={t(
                     "Evaluation cases captured longer ago than this are purged with their replays, since they keep a redacted copy of what the agent was given. 0 keeps cases until they expire or their conversation is deleted.",
+                  )}
+                />
+              </FormControl>
+              <FormControl>
+                <NumberField
+                  control={control}
+                  name="aiAuditRetentionPeriod"
+                  label={t("AI audit trail retention (days)")}
+                  rules={{ required: true }}
+                  description={t(
+                    "Events on the signed AI audit trail older than this are deleted by the nightly sweep, which only cuts where the chain was sealed. At least 365 days; the default of 2555 days is seven years, which is what most audits of AI decisions ask for.",
                   )}
                 />
               </FormControl>

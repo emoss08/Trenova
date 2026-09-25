@@ -2,9 +2,11 @@ import { searchParamsParser } from "@/hooks/data-table/use-data-table-state";
 import type { FieldFilter } from "@trenova/shared/types/data-table";
 import { useQueryStates } from "nuqs";
 import { useCallback } from "react";
+import { AUDIT_SCOPE_PARAM, auditScopeParser } from "./_components/audit/audit-model";
 import {
   ACTIVITY_VIEW_PARAM,
   AI_CONTROL_TAB_PARAM,
+  AUDIT_VIEW_PARAM,
   CLEARED_TABLE_STATE,
   QUALITY_AGENT_PARAM,
   QUALITY_SUITE_RUN_PARAM,
@@ -14,6 +16,8 @@ import {
   activityViewParser,
   activityViews,
   aiControlTabParser,
+  auditViewParser,
+  auditViews,
   qualityAgentParser,
   qualitySuiteRunParser,
   qualityViewParser,
@@ -23,6 +27,7 @@ import {
   safetyViews,
   type ActivityView,
   type AIControlTab,
+  type AuditView,
   type QualityView,
   type RailView,
   type RetrievalSource,
@@ -38,6 +43,8 @@ const navigationParsers = {
   [QUALITY_AGENT_PARAM]: qualityAgentParser,
   [QUALITY_SUITE_RUN_PARAM]: qualitySuiteRunParser,
   [RETRIEVAL_SOURCE_PARAM]: retrievalSourceParser,
+  [AUDIT_VIEW_PARAM]: auditViewParser,
+  [AUDIT_SCOPE_PARAM]: auditScopeParser,
 };
 
 export type AIControlDestination = {
@@ -59,6 +66,8 @@ const isSafetyView = (view: RailView): view is SafetyView =>
   (safetyViews as readonly string[]).includes(view);
 const isQualityView = (view: RailView): view is QualityView =>
   (qualityViews as readonly string[]).includes(view);
+const isAuditView = (view: RailView): view is AuditView =>
+  (auditViews as readonly string[]).includes(view);
 
 /**
  * Moves between the page's sections and the tables under them in one write
@@ -88,6 +97,9 @@ export function useAIControlNavigation() {
           [QUALITY_SUITE_RUN_PARAM]: destination.suiteRun ?? null,
           [RETRIEVAL_SOURCE_PARAM]:
             destination.tab === "retrieval" ? (destination.retrievalSource ?? null) : null,
+          [AUDIT_VIEW_PARAM]:
+            destination.tab === "audit" && view && isAuditView(view) ? view : null,
+          [AUDIT_SCOPE_PARAM]: null,
         },
         { history: "push" },
       );

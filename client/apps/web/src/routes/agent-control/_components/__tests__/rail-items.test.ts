@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildRailItems, resolveRailView, type RailPermissions } from "../rail-items";
+import {
+  buildRailItems,
+  resolveRailView,
+  type RailCounts,
+  type RailPermissions,
+} from "../rail-items";
 import type { RetrievalRailState } from "../retrieval/retrieval-model";
 
 const t = (text: string | null | undefined, ...args: unknown[]) =>
@@ -23,6 +28,7 @@ const all: RailPermissions = {
   safety: true,
   quality: true,
   ratings: true,
+  audit: true,
 };
 
 const counts = {
@@ -37,6 +43,7 @@ const counts = {
   extensionsTotal: 1,
   qualityRegressions: 0,
   retrieval: null,
+  auditVerification: null,
 };
 
 describe("buildRailItems", () => {
@@ -53,6 +60,7 @@ describe("buildRailItems", () => {
       "safety",
       "quality",
       "activity",
+      "audit",
     ]);
     expect(items[1].status).toBe("3 of 4 on");
     expect(items[2].status).toBe("1 of 2 on");
@@ -101,6 +109,7 @@ describe("buildRailItems", () => {
         retrieval: false,
         safety: false,
         quality: false,
+        audit: false,
       },
       t,
     );
@@ -201,7 +210,44 @@ describe("buildRailItems", () => {
     const items = buildRailItems(counts, { ...all, quality: false }, t);
 
     expect(items.map((item) => item.tab)).not.toContain("quality");
-    expect(items.at(-1)?.tab).toBe("activity");
+    expect(items.at(-2)?.tab).toBe("activity");
+  });
+
+  // What agents did is read, filtered and exported under the trail's own
+  // right: reading runs does not grant it, so the section comes and goes on
+  // that right alone.
+  it("lists the audit trail last, under its own right, with its two views", () => {
+    const item = buildRailItems(counts, all, t).at(-1);
+
+    expect(item).toEqual({
+      tab: "audit",
+      status: "",
+      attention: false,
+      children: [
+        { view: "trail", label: "Trail" },
+        { view: "exports", label: "Exports" },
+      ],
+    });
+    expect(
+      buildRailItems(counts, { ...all, audit: false }, t).map((entry) => entry.tab),
+    ).not.toContain("audit");
+    expect(
+      buildRailItems(counts, { ...all, runs: false, proposals: false }, t).map(
+        (entry) => entry.tab,
+      ),
+    ).toContain("audit");
+  });
+
+  // A chain that no longer verifies is the one thing on the trail somebody
+  // has to act on; a verified or never-checked chain says nothing.
+  it("calls for attention when the trail failed its last verification", () => {
+    const audit = (auditVerification: RailCounts["auditVerification"]) =>
+      buildRailItems({ ...counts, auditVerification }, all, t).find((item) => item.tab === "audit");
+
+    expect(audit(null)).toMatchObject({ status: "", attention: false });
+    expect(audit("Verified")).toMatchObject({ status: "", attention: false });
+    expect(audit("Mismatch")).toMatchObject({ status: "Failed verification", attention: true });
+    expect(audit("KeyMissing")).toMatchObject({ status: "Signing key missing", attention: true });
   });
 
   // Retrieval sits beside Memory: both are what agents read back, and the
@@ -272,6 +318,7 @@ describe("resolveRailView", () => {
   const item = (tab: string) => items.find((entry) => entry.tab === tab);
 
   it("opens the view asked for when the row offers it", () => {
+    expect(resolveRailView(item("audit"), "exports")).toBe("exports");
     expect(resolveRailView(item("safety"), "agents")).toBe("agents");
     expect(resolveRailView(item("quality"), "runs")).toBe("runs");
   });
