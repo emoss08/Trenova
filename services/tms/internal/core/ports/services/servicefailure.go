@@ -318,6 +318,15 @@ type ServiceFailureEvaluator interface {
 	) (*ServiceFailureEvaluationResult, error)
 }
 
+// ServiceFailureLifecyclePreview is a service failure before and after a
+// lifecycle change, and the EDI 214 the change would send the customer's
+// trading partner. EDI is nil when no 214 applies.
+type ServiceFailureLifecyclePreview struct {
+	Before *servicefailure.ServiceFailure
+	After  *servicefailure.ServiceFailure
+	EDI    *ServiceFailure214LifecycleResult
+}
+
 type ServiceFailureService interface {
 	ServiceFailureEvaluator
 	List(
@@ -365,6 +374,14 @@ type ServiceFailureService interface {
 		req *ServiceFailureLifecycleRequest,
 		actor *RequestActor,
 	) (*servicefailure.ServiceFailure, error)
+	// PreviewResolve checks a resolution as Resolve does and returns the
+	// failure as it would leave it and the EDI 214 it would generate,
+	// writing nothing.
+	PreviewResolve(
+		ctx context.Context,
+		req *ServiceFailureLifecycleRequest,
+		actor *RequestActor,
+	) (*ServiceFailureLifecyclePreview, error)
 	Void(
 		ctx context.Context,
 		req *ServiceFailureLifecycleRequest,

@@ -130,10 +130,10 @@ func (t *evaluateServiceFailuresTool) Execute(
 }
 
 type resolveServiceFailureTool struct {
-	failures serviceFailureDecider
+	failures serviceFailureResolver
 }
 
-func newResolveServiceFailureTool(failures serviceFailureDecider) serviceports.AgentTool {
+func newResolveServiceFailureTool(failures serviceFailureResolver) serviceports.AgentTool {
 	return &resolveServiceFailureTool{failures: failures}
 }
 
@@ -195,17 +195,34 @@ func (t *resolveServiceFailureTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	request, _, err := t.request(ctx, params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.failures.Resolve(ctx, request, params.Actor)
+
+	return err
+}
+
+// request is the resolution the preview shows and the write makes: an open
+// failure, closed at the version read, with the reason code the call sends
+// or the one already on file.
+func (t *resolveServiceFailureTool) request(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) (*serviceports.ServiceFailureLifecycleRequest, *servicefailure.ServiceFailure, error) {
+	if err := guardExecute(t, params); err != nil {
+		return nil, nil, err
 	}
 
 	failureID, err := requirePulid(params.Params, "serviceFailureId")
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	notes, err := requireString(params.Params, "notes")
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	tenant := tenantFrom(params)
@@ -214,10 +231,10 @@ func (t *resolveServiceFailureTool) Execute(
 		TenantInfo: tenant,
 	})
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	if existing.IsTerminal() {
-		return fmt.Errorf(
+		return nil, nil, fmt.Errorf(
 			"service failure %s is already %s and cannot be resolved again",
 			existing.Number, existing.Status,
 		)
@@ -233,19 +250,19 @@ func (t *resolveServiceFailureTool) Execute(
 	if raw := optionalString(params.Params, "reasonCodeId"); raw != "" {
 		reasonID, parseErr := pulid.Parse(raw)
 		if parseErr != nil {
-			return fmt.Errorf("parameter \"reasonCodeId\" is not a valid id: %w", parseErr)
+			return nil, nil, fmt.Errorf(
+				"parameter \"reasonCodeId\" is not a valid id: %w", parseErr,
+			)
 		}
 		request.ReasonCodeID = reasonID
 	} else if existing.ReasonCodeID == nil || existing.ReasonCodeID.IsNil() {
-		return errors.New(
+		return nil, nil, errors.New(
 			"this failure has no reason code yet; pick one from " +
 				"list_service_failure_reason_codes and send it as reasonCodeId",
 		)
 	}
 
-	_, err = t.failures.Resolve(ctx, request, params.Actor)
-
-	return err
+	return request, existing, nil
 }
 
 // driverNotifier is the driver portal's notification path. The wording

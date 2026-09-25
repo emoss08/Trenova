@@ -20,33 +20,36 @@ type serviceFailure214Params struct {
 	actor    *services.RequestActor
 }
 
+// preflightServiceFailure214 is the 214 a lifecycle change would generate,
+// checked before the change is saved: a mandatory 214 that would be blocked
+// refuses the change.
 func (s *service) preflightServiceFailure214(
 	ctx context.Context,
 	params serviceFailure214Params,
-) error {
+) (*services.ServiceFailure214LifecycleResult, error) {
 	req := serviceFailure214Request(params)
 	if req == nil || s.ediService == nil {
-		return nil
+		return nil, nil
 	}
 	result, err := s.ediService.PreviewServiceFailure214ForLifecycle(ctx, req)
 	if err != nil {
-		return errortypes.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"edi",
 			errortypes.ErrInvalidOperation,
 			"Service failure EDI 214 preflight failed: {0}", err.Error(),
 		)
 	}
 	if result.Action != services.ServiceFailureEDIActionBlocked || !result.Mandatory {
-		return nil
+		return result, nil
 	}
 	if len(result.Diagnostics) == 0 {
-		return errortypes.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"edi",
 			errortypes.ErrInvalidOperation,
 			strings.TrimSpace(result.SkippedReason),
 		)
 	}
-	return serviceFailure214DiagnosticsError(result.Diagnostics)
+	return nil, serviceFailure214DiagnosticsError(result.Diagnostics)
 }
 
 func (s *service) generateServiceFailure214(
