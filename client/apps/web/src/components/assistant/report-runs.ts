@@ -80,24 +80,27 @@ function parseRunResult(content: string): ThreadReportRun | null {
 }
 
 /**
- * The same runs, read out of a turn that is still streaming, so a report the
- * assistant just started begins reporting its progress immediately rather than
- * after the turn has been saved and refetched.
+ * Each run with the step that first named it, so a live turn can show the
+ * run's card under that step, where the saved thread shows it. A run checked
+ * again by a later step stays under the first.
  */
-export function reportRunsFromSteps(
-  steps: readonly { name: string; content: string }[],
-): ThreadReportRun[] {
-  const runs = new Map<string, ThreadReportRun>();
+export function reportRunOrigins(
+  steps: readonly { id: string; name: string; content: string }[],
+): Map<string, ThreadReportRun[]> {
+  const seen = new Set<string>();
+  const byStep = new Map<string, ThreadReportRun[]>();
 
   for (const step of steps) {
     if (!RUN_BEARING_TOOLS.has(step.name) || step.content === "") {
       continue;
     }
     const parsed = parseRunResult(step.content);
-    if (parsed !== null && !runs.has(parsed.runId)) {
-      runs.set(parsed.runId, parsed);
+    if (parsed === null || seen.has(parsed.runId)) {
+      continue;
     }
+    seen.add(parsed.runId);
+    byStep.set(step.id, [...(byStep.get(step.id) ?? []), parsed]);
   }
 
-  return [...runs.values()];
+  return byStep;
 }
