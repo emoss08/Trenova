@@ -425,6 +425,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	emailservice.New,
 	func(s *emailservice.Service) services.EmailService { return s },
+	func(s *emailservice.Service) services.EmailSenderResolver { return s },
 	commodityservice.New,
 	fx.Annotate(
 		customerpaymentservice.New,

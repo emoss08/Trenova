@@ -199,16 +199,7 @@ func (s *Service) ScheduleNotice(
 	}
 
 	occ := p.Occurrence
-	loc := s.tenantLocation(ctx, occ.OrganizationID)
-
-	content, err := s.BuildNotice(ctx, &BuildNoticeParams{
-		Occurrence:   occ,
-		Kind:         p.Kind,
-		FacilityName: p.FacilityName,
-		ShipmentRef:  p.ShipmentRef,
-		Location:     loc,
-		AttachPDF:    p.AttachPDF,
-	})
+	content, err := s.renderScheduledNotice(ctx, &p)
 	if err != nil {
 		return nil, err
 	}
@@ -371,16 +362,7 @@ func (s *Service) applyNoticeToOccurrence(
 	occurrence *detention.DetentionOccurrence,
 	now int64,
 ) error {
-	switch {
-	case notice.DeliveryStatus.IsFailure():
-		occurrence.NotificationStatus = detention.NotificationStatusFailed
-	case notice.SatisfiesRequirement:
-		occurrence.NotificationStatus = detention.NotificationStatusSent
-		occurrence.NoticeSentAt = notice.SentAt
-	default:
-		occurrence.NotificationStatus = detention.NotificationStatusLate
-		occurrence.NoticeSentAt = notice.SentAt
-	}
+	applyNoticeOutcome(occurrence, notice)
 
 	if _, err := s.occurrenceRepo.Update(ctx, occurrence); err != nil {
 		return err
@@ -426,47 +408,15 @@ func (s *Service) SendOccurrenceNotice(
 	ctx context.Context,
 	p SendOccurrenceNoticeParams,
 ) (*detention.DetentionOccurrence, error) {
-	occurrence, err := s.occurrenceRepo.GetByID(
-		ctx,
-		&repositories.GetDetentionOccurrenceByIDRequest{
-			OccurrenceID: p.OccurrenceID,
-			TenantInfo:   p.TenantInfo,
-		},
-	)
+	plan, err := s.planOccurrenceNotice(ctx, p)
 	if err != nil {
 		return nil, err
 	}
 
-	if occurrence.NotificationStatus == detention.NotificationStatusNotRequired {
-		return nil, errortypes.NewValidationError(
-			"occurrenceId", errortypes.ErrInvalidOperation,
-			"The governing policy does not require a customer notice for this stop")
-	}
-
-	recipients, err := s.noticeRecipients(ctx, occurrence, p.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	now := s.now()
+	occurrence := plan.schedule.Occurrence
 	original := *occurrence
 
-	var sentBy *pulid.ID
-	if !p.Automatic && !p.UserID.IsNil() {
-		sentBy = &p.UserID
-	}
-
-	scheduled, err := s.ScheduleNotice(ctx, ScheduleNoticeParams{
-		Occurrence:   occurrence,
-		Kind:         noticeKindFor(occurrence, now),
-		ScheduledFor: now,
-		Recipients:   recipients,
-		Automatic:    p.Automatic,
-		SentByID:     sentBy,
-		FacilityName: occurrence.LocationName,
-		ShipmentRef:  occurrence.ShipmentProNumber,
-		AttachPDF:    s.attachesNoticePDF(ctx, occurrence, p.TenantInfo, p.Policy),
-	})
+	scheduled, err := s.ScheduleNotice(ctx, plan.schedule)
 	if err != nil {
 		return nil, err
 	}

@@ -233,6 +233,10 @@ type detentionApprover interface {
 		ctx context.Context,
 		params detentionservice.ApproveParams,
 	) (*detention.DetentionOccurrence, error)
+	PreviewApprove(
+		ctx context.Context,
+		params detentionservice.ApproveParams,
+	) (*detentionservice.OccurrenceChange, error)
 	GetOccurrenceDetail(
 		ctx context.Context,
 		req *repositories.GetDetentionOccurrenceByIDRequest,
@@ -365,73 +369,48 @@ func (t *approveDetentionTool) Validate(
 	return err
 }
 
-func (t *approveDetentionTool) Simulate(
+// request is the approval both the preview and the write make: a pending
+// charge, approved as the person who approved the proposal, with the evidence
+// as its note.
+func (t *approveDetentionTool) request(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
+) (detentionservice.ApproveParams, *detentionservice.OccurrenceDetail, error) {
 	occurrenceID, evidence, err := t.arguments(params)
 	if err != nil {
-		return nil, err
+		return detentionservice.ApproveParams{}, nil, err
 	}
 
 	detail, err := t.pending(ctx, occurrenceID, params)
 	if err != nil {
-		return nil, err
+		return detentionservice.ApproveParams{}, nil, err
 	}
 
-	occurrence := detail.Occurrence
-	changes := []agent.FieldChange{
-		{
-			Field: "status",
-			From:  string(detention.OccurrenceStatusPending),
-			To:    string(detention.OccurrenceStatusApproved),
-		},
-	}
-	if occurrence.RequiresApproval {
-		changes = append(changes, agent.FieldChange{
-			Field: "requiresApproval", From: "true", To: "false",
-		})
-	}
-
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would approve detention occurrence %s for billing at %s %s "+
-				"(collectability %d, %s; %d evidence records): %s",
-			occurrenceID,
-			occurrence.BillableAmount.StringFixed(2),
-			occurrence.Currency,
-			detail.Collectability.Score,
-			detail.Collectability.Band,
-			len(detail.Evidence),
-			evidence,
-		),
-		Changes:   changes,
-		Previewed: true,
-	}, nil
+	return detentionservice.ApproveParams{
+		OccurrenceID: occurrenceID,
+		TenantInfo:   tenantFrom(params),
+		UserID:       params.Actor.UserID,
+		Note:         evidence,
+	}, detail, nil
 }
 
 func (t *approveDetentionTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	occurrenceID, evidence, err := t.arguments(params)
-	if err != nil {
+	if _, _, err := t.arguments(params); err != nil {
 		return err
 	}
 	if !params.ApprovedFromProposal() {
 		return ErrApprovalNeedsAPerson
 	}
 
-	if _, err = t.pending(ctx, occurrenceID, params); err != nil {
+	request, _, err := t.request(ctx, params)
+	if err != nil {
 		return err
 	}
 
-	_, err = t.detention.Approve(ctx, detentionservice.ApproveParams{
-		OccurrenceID: occurrenceID,
-		TenantInfo:   tenantFrom(params),
-		UserID:       params.Actor.UserID,
-		Note:         evidence,
-	})
+	_, err = t.detention.Approve(ctx, request)
 
 	return err
 }

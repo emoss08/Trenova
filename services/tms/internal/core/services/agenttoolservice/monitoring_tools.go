@@ -662,6 +662,14 @@ type detentionActor interface {
 		ctx context.Context,
 		params detentionservice.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
+	PreviewOccurrenceNotice(
+		ctx context.Context,
+		params detentionservice.SendOccurrenceNoticeParams,
+	) (*detentionservice.NoticePreview, error)
+	PreviewWaive(
+		ctx context.Context,
+		params detentionservice.WaiveParams,
+	) (*detentionservice.OccurrenceChange, error)
 }
 
 type sendDetentionNoticeTool struct {
@@ -717,22 +725,33 @@ func (t *sendDetentionNoticeTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	occurrenceID, err := requirePulid(params.Params, "occurrenceId")
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.detention.SendOccurrenceNotice(ctx, detentionservice.SendOccurrenceNoticeParams{
+	_, err = t.detention.SendOccurrenceNotice(ctx, request)
+
+	return err
+}
+
+func (t *sendDetentionNoticeTool) request(
+	params serviceports.ToolExecuteParams,
+) (detentionservice.SendOccurrenceNoticeParams, error) {
+	if err := guardExecute(t, params); err != nil {
+		return detentionservice.SendOccurrenceNoticeParams{}, err
+	}
+
+	occurrenceID, err := requirePulid(params.Params, "occurrenceId")
+	if err != nil {
+		return detentionservice.SendOccurrenceNoticeParams{}, err
+	}
+
+	return detentionservice.SendOccurrenceNoticeParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   tenantFrom(params),
 		UserID:       params.Actor.UserID,
-	})
-
-	return err
+	}, nil
 }
 
 type waiveDetentionTool struct {
@@ -806,30 +825,47 @@ func (t *waiveDetentionTool) Execute(
 		return ErrApprovalNeedsAPerson
 	}
 
-	occurrenceID, err := requirePulid(params.Params, "occurrenceId")
-	if err != nil {
-		return err
-	}
-	rawReason, err := requireString(params.Params, "reason")
-	if err != nil {
-		return err
-	}
-	reason, err := detention.WaiverReasonFromString(rawReason)
-	if err != nil {
-		return fmt.Errorf("parameter \"reason\" is not a waiver reason: %w", err)
-	}
-	note, err := requireString(params.Params, "note")
+	request, err := t.request(params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.detention.Waive(ctx, detentionservice.WaiveParams{
+	_, err = t.detention.Waive(ctx, request)
+
+	return err
+}
+
+func (t *waiveDetentionTool) request(
+	params serviceports.ToolExecuteParams,
+) (detentionservice.WaiveParams, error) {
+	if err := guardExecute(t, params); err != nil {
+		return detentionservice.WaiveParams{}, err
+	}
+
+	occurrenceID, err := requirePulid(params.Params, "occurrenceId")
+	if err != nil {
+		return detentionservice.WaiveParams{}, err
+	}
+	rawReason, err := requireString(params.Params, "reason")
+	if err != nil {
+		return detentionservice.WaiveParams{}, err
+	}
+	reason, err := detention.WaiverReasonFromString(rawReason)
+	if err != nil {
+		return detentionservice.WaiveParams{}, fmt.Errorf(
+			"parameter \"reason\" is not a waiver reason: %w", err,
+		)
+	}
+	note, err := requireString(params.Params, "note")
+	if err != nil {
+		return detentionservice.WaiveParams{}, err
+	}
+
+	return detentionservice.WaiveParams{
 		OccurrenceID: occurrenceID,
 		TenantInfo:   tenantFrom(params),
 		Reason:       reason,
 		Note:         strings.TrimSpace(note),
 		UserID:       params.Actor.UserID,
-	})
-
-	return err
+	}, nil
 }

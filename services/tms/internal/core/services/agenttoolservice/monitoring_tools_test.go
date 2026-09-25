@@ -491,6 +491,11 @@ func (failingCommentWriter) CreateSystem(
 type fakeDetention struct {
 	noticed *detentionservice.SendOccurrenceNoticeParams
 	waived  *detentionservice.WaiveParams
+
+	previewedNotice *detentionservice.SendOccurrenceNoticeParams
+	previewedWaive  *detentionservice.WaiveParams
+	notice          *detentionservice.NoticePreview
+	change          *detentionservice.OccurrenceChange
 }
 
 func (f *fakeDetention) SendOccurrenceNotice(
@@ -509,6 +514,24 @@ func (f *fakeDetention) Waive(
 	f.waived = &params
 
 	return &detention.DetentionOccurrence{}, nil
+}
+
+func (f *fakeDetention) PreviewOccurrenceNotice(
+	_ context.Context,
+	params detentionservice.SendOccurrenceNoticeParams,
+) (*detentionservice.NoticePreview, error) {
+	f.previewedNotice = &params
+
+	return f.notice, nil
+}
+
+func (f *fakeDetention) PreviewWaive(
+	_ context.Context,
+	params detentionservice.WaiveParams,
+) (*detentionservice.OccurrenceChange, error) {
+	f.previewedWaive = &params
+
+	return f.change, nil
 }
 
 func TestSendDetentionNotice_SendsAsTheActorNotTheSweep(t *testing.T) {
