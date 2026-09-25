@@ -61,7 +61,7 @@ const recordTimeout = 5 * time.Second
 // happens after the reply is on its way, so a slow or failing usage table
 // never slows an answer or turns a success into an error. Its failure is
 // logged and nothing else: the row is telemetry, not the transaction.
-func (s *Service) record(ctx context.Context, attempt usageAttempt) {
+func (s *Service) record(ctx context.Context, attempt *usageAttempt) {
 	if s.usage == nil || attempt.provider == nil {
 		return
 	}
@@ -111,12 +111,13 @@ func (s *Service) record(ctx context.Context, attempt usageAttempt) {
 		row.CostUSD = attempt.provider.CostForTask(attempt.task, row.InputTokens, row.OutputTokens)
 	}
 
+	providerName := attempt.provider.Name
 	detached, cancel := context.WithTimeout(context.WithoutCancel(ctx), recordTimeout)
 	go func() {
 		defer cancel()
 		if err := s.usage.Create(detached, row); err != nil {
 			s.logger.Warn("ai usage record dropped",
-				zap.String("provider", attempt.provider.Name),
+				zap.String("provider", providerName),
 				zap.Error(err),
 			)
 		}

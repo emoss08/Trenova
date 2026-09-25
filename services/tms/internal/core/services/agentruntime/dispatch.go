@@ -333,7 +333,7 @@ func (s *Service) simulateAction(ctx context.Context, a actionParams) toolOutcom
 
 	action.Simulated = true
 	action.Target = s.snapshotTarget(ctx, a.req, a.tool, call)
-	writeCtx, write := s.startWrite(ctx, a, true)
+	writeCtx, write := s.startWrite(ctx, &a, true)
 	action.Simulation = toolsimulation.Simulate(writeCtx, a.tool, a.executeParams())
 	write.End()
 
@@ -446,7 +446,7 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 	action.Executed = true
 	action.Target = s.snapshotTarget(ctx, a.req, a.tool, call)
 
-	writeCtx, write := s.startWrite(ctx, a, false)
+	writeCtx, write := s.startWrite(ctx, &a, false)
 	action.ExecutedAt = timeutils.NowUnix()
 	result, err := serviceports.ExecuteTool(writeCtx, a.tool, a.executeParams())
 	if err != nil {
@@ -479,7 +479,7 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 
 func (s *Service) startWrite(
 	ctx context.Context,
-	a actionParams,
+	a *actionParams,
 	simulated bool,
 ) (context.Context, trace.Span) {
 	spec := &aitrace.WriteSpec{

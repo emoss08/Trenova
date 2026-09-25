@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"strings"
 	"time"
 	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
@@ -86,7 +86,7 @@ func (s *Service) runChat(
 
 		provider := queue[idx]
 		failover := provider.ID != queue[0].ID
-		attemptCtx, span := s.startAttempt(ctx, attemptSpec{
+		attemptCtx, span := s.startAttempt(ctx, &attemptSpec{
 			operation:   aitrace.OperationChat,
 			provider:    provider,
 			attempt:     idx + 1,
@@ -99,7 +99,7 @@ func (s *Service) runChat(
 		latency := time.Since(started)
 		attemptErr = stopped(ctx, attemptErr)
 		s.observe(ctx, provider, attemptErr)
-		s.settleAttempt(attemptCtx, span, usageAttempt{
+		s.settleAttempt(attemptCtx, span, &usageAttempt{
 			provider:    provider,
 			task:        aiprovider.TaskAssistantChat,
 			surface:     surfaceFor(aiusage.SurfaceChat, req.Attribution),

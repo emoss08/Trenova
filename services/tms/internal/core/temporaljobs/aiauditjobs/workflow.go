@@ -102,7 +102,8 @@ func ProjectAIAuditWorkflow(ctx workflow.Context) (*ProjectResult, error) {
 
 	var a *Activities
 	var result *ProjectResult
-	if err := workflow.ExecuteActivity(ctx, a.ProjectAIAuditActivity).Get(ctx, &result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.ProjectAIAuditActivity).
+		Get(ctx, &result); err != nil {
 		return nil, err
 	}
 

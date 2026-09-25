@@ -244,7 +244,7 @@ func (s *Service) recordBackground(
 		attempt.err = backgroundFailure(result)
 	}
 
-	s.record(ctx, attempt)
+	s.record(ctx, &attempt)
 }
 
 func backgroundLatency(submittedAt int64, now time.Time) time.Duration {

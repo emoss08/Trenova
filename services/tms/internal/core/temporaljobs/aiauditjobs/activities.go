@@ -71,7 +71,6 @@ type Activities struct {
 	exports   *aiauditservice.Exports
 }
 
-//nolint:gocritic // fx.In parameter structs are passed by value
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		projector: p.Projector,
@@ -145,7 +144,6 @@ type ExportActivities struct {
 	exports *aiauditservice.Exports
 }
 
-//nolint:gocritic // fx.In parameter structs are passed by value
 func NewExportActivities(p ExportActivitiesParams) *ExportActivities {
 	return &ExportActivities{exports: p.Exports}
 }

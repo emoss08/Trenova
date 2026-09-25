@@ -33,7 +33,7 @@ type attemptSpec struct {
 
 func (s *Service) startAttempt(
 	ctx context.Context,
-	spec attemptSpec,
+	spec *attemptSpec,
 ) (context.Context, trace.Span) {
 	return aitrace.StartAttempt(ctx, &aitrace.AttemptSpec{
 		Anchor:        aitrace.ForAttribution(&spec.attribution),
@@ -49,7 +49,7 @@ func (s *Service) startAttempt(
 	})
 }
 
-func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt usageAttempt) {
+func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt *usageAttempt) {
 	defer span.End()
 
 	provider := attempt.provider
@@ -69,7 +69,7 @@ func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt us
 		aitrace.MarkFailed(span, errorType)
 	}
 
-	aitrace.TallyFrom(ctx).Attempt(aitrace.AttemptTally{
+	aitrace.TallyFrom(ctx).Attempt(&aitrace.AttemptTally{
 		ProviderID:       provider.ID.String(),
 		ProviderName:     aitrace.ProviderName(provider.Kind),
 		Model:            usage.ResponseModel,
@@ -94,7 +94,7 @@ func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt us
 	})
 }
 
-func attemptCost(attempt usageAttempt) *decimal.Decimal {
+func attemptCost(attempt *usageAttempt) *decimal.Decimal {
 	if attempt.outcome == nil || attempt.provider == nil {
 		return nil
 	}
@@ -106,7 +106,7 @@ func attemptCost(attempt usageAttempt) *decimal.Decimal {
 	)
 }
 
-func attemptUsage(attempt usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
+func attemptUsage(attempt *usageAttempt, cost *decimal.Decimal) *aitrace.Usage {
 	usage := &aitrace.Usage{CostUSD: cost}
 	outcome := attempt.outcome
 	if outcome == nil {

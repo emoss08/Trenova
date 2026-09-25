@@ -69,7 +69,7 @@ type VerifierParams struct {
 	Logger   *zap.Logger
 }
 
-func NewVerifier(p VerifierParams) *Verifier {
+func NewVerifier(p *VerifierParams) *Verifier {
 	now := p.Now
 	if now == nil {
 		now = time.Now
@@ -386,10 +386,10 @@ func (v *Verifier) alarm(ctx context.Context, result *VerifyResult) {
 			BusinessUnitID: tenantInfo.BuID,
 			Critical:       true,
 			CurrentState: map[string]any{
-				"event":     "chain_verification_failed",
-				"status":    string(result.Status),
-				"failedSeq": failedSeq,
-				"detail":    result.Detail,
+				"event":         "chain_verification_failed",
+				noticeKeyStatus: string(result.Status),
+				"failedSeq":     failedSeq,
+				"detail":        result.Detail,
 			},
 		}, auditservice.WithComment("The AI audit trail failed verification")); err != nil {
 			v.l.Error("failed to audit an AI audit chain mismatch", zap.Error(err))
@@ -419,9 +419,9 @@ func (v *Verifier) alarm(ctx context.Context, result *VerifyResult) {
 			Source:        mismatchNoticeSource,
 			CorrelationID: &correlation,
 			Data: map[string]any{
-				"kind":      serviceports.AIAuditChainMismatchEvent,
-				"status":    string(result.Status),
-				"failedSeq": failedSeq,
+				noticeKeyKind:   serviceports.AIAuditChainMismatchEvent,
+				noticeKeyStatus: string(result.Status),
+				"failedSeq":     failedSeq,
 			},
 		},
 	}); err != nil {

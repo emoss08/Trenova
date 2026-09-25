@@ -68,8 +68,8 @@ type AIAuditExport struct {
 	// SnapshotSeq is the end of the tenant's chain when the export was asked
 	// for. The file holds nothing recorded after it, so a count taken first
 	// and the rows written later agree.
-	SnapshotSeq int64        `json:"snapshotSeq"       bun:"snapshot_seq,type:BIGINT,notnull,default:0"`
-	Status      ExportStatus `json:"status"            bun:"status,type:VARCHAR(20),notnull,default:'Pending'"`
+	SnapshotSeq int64        `json:"snapshotSeq" bun:"snapshot_seq,type:BIGINT,notnull,default:0"`
+	Status      ExportStatus `json:"status"      bun:"status,type:VARCHAR(20),notnull,default:'Pending'"`
 
 	RowCount          int64  `json:"rowCount"          bun:"row_count,type:BIGINT,notnull,default:0"`
 	ByteSize          int64  `json:"byteSize"          bun:"byte_size,type:BIGINT,notnull,default:0"`

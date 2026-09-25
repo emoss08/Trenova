@@ -25,6 +25,10 @@ const (
 	failureSchema     = "schema_invalid"
 	failureOther      = "failed"
 	failureHTTPPrefix = "http_"
+
+	delegateFieldCallID    = "delegateCallId"
+	delegateFieldStatus    = "status"
+	delegateFieldToolCalls = "toolCallsUsed"
 )
 
 type RootParams struct {
@@ -159,7 +163,7 @@ func DelegateSpans(events []temporaltype.StreamItem) map[string]DelegateSpan {
 			continue
 		}
 		fields := eventFields(event.Data)
-		callID, _ := fields["delegateCallId"].(string)
+		callID, _ := fields[delegateFieldCallID].(string)
 		if callID == "" {
 			continue
 		}
@@ -173,8 +177,8 @@ func DelegateSpans(events []temporaltype.StreamItem) map[string]DelegateSpan {
 			span.Start = at
 		} else {
 			span.End = at
-			span.Status, _ = fields["status"].(string)
-			span.ToolCalls = intutils.IntValue(fields["toolCallsUsed"])
+			span.Status, _ = fields[delegateFieldStatus].(string)
+			span.ToolCalls = intutils.IntValue(fields[delegateFieldToolCalls])
 		}
 		spans[callID] = span
 	}
@@ -187,9 +191,9 @@ func eventFields(data any) map[string]any {
 	case map[string]any:
 		return typed
 	case serviceports.AssistantDelegateStartedEvent:
-		return map[string]any{"delegateCallId": typed.DelegateCallID}
+		return map[string]any{delegateFieldCallID: typed.DelegateCallID}
 	case *serviceports.AssistantDelegateStartedEvent:
-		return map[string]any{"delegateCallId": typed.DelegateCallID}
+		return map[string]any{delegateFieldCallID: typed.DelegateCallID}
 	case serviceports.AssistantDelegateFinishedEvent:
 		return delegateFinishedFields(&typed)
 	case *serviceports.AssistantDelegateFinishedEvent:
@@ -201,8 +205,8 @@ func eventFields(data any) map[string]any {
 
 func delegateFinishedFields(event *serviceports.AssistantDelegateFinishedEvent) map[string]any {
 	return map[string]any{
-		"delegateCallId": event.DelegateCallID,
-		"status":         string(event.Status),
-		"toolCallsUsed":  event.ToolCallsUsed,
+		delegateFieldCallID:    event.DelegateCallID,
+		delegateFieldStatus:    string(event.Status),
+		delegateFieldToolCalls: event.ToolCallsUsed,
 	}
 }

@@ -76,7 +76,7 @@ func testVerifier(ledger *fakeLedger, keyring *Keyring, notifier *fakeNotifier) 
 		params.Notifier = notifier
 	}
 
-	return NewVerifier(params)
+	return NewVerifier(&params)
 }
 
 func TestVerifier_AnUntouchedChainVerifies(t *testing.T) {

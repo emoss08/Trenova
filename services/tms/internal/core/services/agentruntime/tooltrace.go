@@ -14,7 +14,7 @@ import (
 func (s *Service) startToolSpan(
 	ctx context.Context,
 	req *serviceports.RunRequest,
-	call serviceports.ToolCall,
+	call *serviceports.ToolCall,
 	key string,
 ) (context.Context, trace.Span) {
 	spec := &aitrace.ToolSpec{

@@ -63,7 +63,7 @@ type guardedDispatchParams struct {
 // idempotency key. That is exactly what every run did before this existed.
 func (s *Service) guardedDispatch(
 	ctx context.Context,
-	p guardedDispatchParams,
+	p *guardedDispatchParams,
 ) toolOutcome {
 	req := p.req
 	key := ""
@@ -77,7 +77,7 @@ func (s *Service) guardedDispatch(
 		})
 	}
 
-	ctx, span := s.startToolSpan(ctx, req, p.call, key)
+	ctx, span := s.startToolSpan(ctx, req, &p.call, key)
 	defer span.End()
 
 	if key == "" {
@@ -115,7 +115,7 @@ func (s *Service) guardedDispatch(
 		step.DelegateCallID = req.Delegation.CallID
 	}
 
-	outcome := s.claimAndDispatch(ctx, p, step)
+	outcome := s.claimAndDispatch(ctx, p, &step)
 	finishToolSpan(span, &outcome, p.afterExternal)
 
 	return outcome
@@ -123,14 +123,14 @@ func (s *Service) guardedDispatch(
 
 func (s *Service) claimAndDispatch(
 	ctx context.Context,
-	p guardedDispatchParams,
-	step serviceports.RunStep,
+	p *guardedDispatchParams,
+	step *serviceports.RunStep,
 ) toolOutcome {
 	req := p.req
 	key := step.Key
 	span := trace.SpanFromContext(ctx)
 
-	verdict, err := req.Steps.Claim(ctx, req.Actor.TenantInfo(), step)
+	verdict, err := req.Steps.Claim(ctx, req.Actor.TenantInfo(), *step)
 	if err != nil {
 		// A ledger that cannot be written cannot protect a write, so the call
 		// is refused rather than run unguarded. The alternative — running it
@@ -190,7 +190,11 @@ func (s *Service) claimAndDispatch(
 	// all cancel the turn's context, and a settle that honoured the
 	// cancellation would leave the step Started: the next attempt would then
 	// report a write it cannot account for when we know exactly how it went.
-	if err = req.Steps.Settle(context.WithoutCancel(ctx), req.Actor.TenantInfo(), step); err != nil {
+	if err = req.Steps.Settle(
+		context.WithoutCancel(ctx),
+		req.Actor.TenantInfo(),
+		*step,
+	); err != nil {
 		s.logger.Error("a tool call ran and its outcome could not be recorded",
 			zap.String("tool", p.call.Name),
 			zap.String("owner", req.StepOwner.ID.String()),

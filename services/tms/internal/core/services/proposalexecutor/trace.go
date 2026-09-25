@@ -41,7 +41,7 @@ func startExecute(
 func startTool(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
-	policy services.ToolPolicy,
+	policy *services.ToolPolicy,
 ) (context.Context, trace.Span) {
 	attrs := make([]attribute.KeyValue, 0, 6)
 	attrs = append(attrs,

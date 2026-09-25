@@ -62,7 +62,7 @@ func New(p Params) Components {
 	masker := auditservice.NewSensitiveDataManager(p.Config.Security.Encryption)
 	redactor := NewRedactor(p.Registry, p.Policies, masker)
 
-	projector := NewProjector(ProjectorParams{
+	projector := NewProjector(&ProjectorParams{
 		Ledger:    p.Ledger,
 		Source:    p.Source,
 		Keyring:   keyring,
@@ -71,7 +71,7 @@ func New(p Params) Components {
 		BatchSize: p.Config.AIAudit.Projector.GetBatchSize(),
 		Logger:    p.Logger,
 	})
-	verifier := NewVerifier(VerifierParams{
+	verifier := NewVerifier(&VerifierParams{
 		Ledger:   p.Ledger,
 		Keyring:  keyring,
 		Notifier: p.Notifications,
@@ -80,7 +80,7 @@ func New(p Params) Components {
 		Metrics:  registryMetrics,
 		Logger:   p.Logger,
 	})
-	exports := NewExports(ExportsParams{
+	exports := NewExports(&ExportsParams{
 		Ledger:      p.Ledger,
 		Exports:     p.ExportRepo,
 		Source:      p.Source,
