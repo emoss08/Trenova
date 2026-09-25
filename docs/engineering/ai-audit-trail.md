@@ -134,6 +134,12 @@ row. It does not detect someone who can write the database and recomputes every 
 the change. When a key is configured later, new rows are signed and the older unsigned rows
 still verify.
 
+Signing only ever moves forward. Once a retained row is signed, verification fails on any
+later row that is not, so someone who can write the database cannot rewrite the signed part
+of a chain as a recomputed unsigned one. The guard starts at the oldest retained signed row:
+a prune that removes every signed row leaves nothing to hold the rest to, which is one more
+reason retention cuts only at seals and keeps them.
+
 ### Verification
 
 `VerifyAIAuditChainWorkflow` (the `ai-audit-verify` schedule, daily at 03:37 UTC, or

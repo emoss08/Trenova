@@ -122,6 +122,72 @@ func TestVerifier_AnEditedRowFailsAtItsSeq(t *testing.T) {
 	assert.True(t, audited[0].Critical)
 }
 
+func TestVerifier_ASignedChainRewrittenAsUnsignedFails(t *testing.T) {
+	t.Parallel()
+
+	s, ledger, _ := projected(t, true)
+	rows := ledger.all(s.tenant)
+	require.Greater(t, len(rows), 5)
+
+	prev := rows[3].Hash
+	for _, row := range rows[4:] {
+		row.Outcome = aiaudit.OutcomeFailed
+		require.NoError(t, aiaudit.Seal(row, prev, nil))
+		prev = row.Hash
+	}
+	ledger.mu.Lock()
+	for _, seal := range ledger.seals[s.tenant] {
+		for _, row := range rows {
+			if row.Seq == seal.ToSeq {
+				seal.HeadHash = row.Hash
+			}
+		}
+	}
+	ledger.heads[s.tenant].LastHash = prev
+	ledger.mu.Unlock()
+
+	verifier := testVerifier(ledger, testKeyring(true), &fakeNotifier{})
+	result, err := verifier.VerifyTenant(t.Context(), s.tenant, nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, aiaudit.VerificationMismatch, result.Status)
+	require.NotNil(t, result.FailedSeq)
+	assert.Equal(t, rows[4].Seq, *result.FailedSeq)
+}
+
+func TestVerifier_AnUnsignedHistoryFollowedBySignedRowsVerifies(t *testing.T) {
+	t.Parallel()
+
+	s, ledger, _ := projected(t, false)
+	rows := ledger.all(s.tenant)
+	require.Greater(t, len(rows), 5)
+
+	keyring := testKeyring(true)
+	key, ok := keyring.Key(keyring.ActiveKeyID())
+	require.True(t, ok)
+	prev := rows[3].Hash
+	for _, row := range rows[4:] {
+		require.NoError(t, aiaudit.Seal(row, prev, key))
+		prev = row.Hash
+	}
+	ledger.mu.Lock()
+	for _, seal := range ledger.seals[s.tenant] {
+		for _, row := range rows {
+			if row.Seq == seal.ToSeq {
+				seal.HeadHash = row.Hash
+			}
+		}
+	}
+	ledger.heads[s.tenant].LastHash = prev
+	ledger.mu.Unlock()
+
+	verifier := testVerifier(ledger, keyring, &fakeNotifier{})
+	result, err := verifier.VerifyTenant(t.Context(), s.tenant, nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, aiaudit.VerificationVerified, result.Status)
+}
+
 func TestVerifier_ARemovedRowFailsTheChain(t *testing.T) {
 	t.Parallel()
 

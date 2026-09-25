@@ -167,6 +167,7 @@ func (v *Verifier) walk(
 
 	expectedSeq := first
 	after := first - 1
+	signedFrom := int64(0)
 	for after < head.LastSeq {
 		if err = ctx.Err(); err != nil {
 			return nil, err
@@ -197,6 +198,10 @@ func (v *Verifier) walk(
 				return fail(result, expectedSeq, "row "+strconv.FormatInt(expectedSeq, 10)+
 					" is missing from the chain"), nil
 			}
+			if signedFrom != 0 && row.HashVersion != aiaudit.HashVersionSigned {
+				return fail(result, row.Seq, "the row is unsigned though row "+
+					strconv.FormatInt(signedFrom, 10)+" before it was signed"), nil
+			}
 			if detail := v.checkRow(row, expectedPrev); detail != "" {
 				if detail == keyMissingDetail {
 					result.Status = aiaudit.VerificationKeyMissing
@@ -219,6 +224,9 @@ func (v *Verifier) walk(
 				), nil
 			}
 
+			if signedFrom == 0 && row.HashVersion == aiaudit.HashVersionSigned {
+				signedFrom = row.Seq
+			}
 			expectedPrev = row.Hash
 			expectedSeq = row.Seq + 1
 			result.VerifiedSeq = row.Seq
