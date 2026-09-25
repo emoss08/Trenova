@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:096af1c3460dd41cce86487a5ecf2e6c227bf9ae6f5cea66bc1b8322247a837f"
+const Version = "sha256:9d0c7b67cdacf43bd5a722d816b68a767cb81aedc106af0df5c42ef95a7ec2cf"
 
 var Default = indexed(defaultCatalog)
 
@@ -9195,6 +9195,16 @@ var defaultCatalog = Catalog{
 					Key:          "chargeAllocationId",
 					Column:       buncolgen.NewColumn("charge_allocation_id", "invl"),
 					Label:        "Charge Allocation ID",
+					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "additionalChargeId",
+					Column:       buncolgen.NewColumn("additional_charge_id", "invl"),
+					Label:        "Additional Charge ID",
 					Type:         FieldRef,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
