@@ -143,6 +143,12 @@ const TOOL_TITLES: Record<string, string> = {
   cancel_worker_pto: "Cancel time off",
   get_accounting_sync_status: "Check accounting connection",
   check_accounting_connection: "Test accounting connection",
+  list_accounting_mapping_gaps: "List accounting mapping gaps",
+  get_accounting_mapping: "Look up accounting mapping",
+  set_accounting_mapping: "Set accounting mapping",
+  clear_accounting_mapping: "Clear accounting mapping",
+  create_accounting_reference_record: "Create accounting record",
+  refresh_accounting_reference_data: "Refresh accounting records",
 };
 
 /** Argument keys that name the record a tool was about, most specific first. */

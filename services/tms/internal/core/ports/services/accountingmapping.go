@@ -2,9 +2,11 @@ package services
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -77,6 +79,41 @@ type SetAccountingMappingRequest struct {
 	ExternalID      string
 	Source          accountingsync.MappingSource
 	Reason          string
+}
+
+func (r *SetAccountingMappingRequest) ValidateTarget() error {
+	if !r.MappingID.IsNil() {
+		return nil
+	}
+	if !r.TargetType.IsValid() {
+		return errortypes.NewValidationError(
+			"targetType",
+			errortypes.ErrInvalid,
+			"Name the mapping by its id, or by its target type with a record or key",
+		)
+	}
+	if r.TargetType.KeyedByObject() {
+		if r.TrenovaObjectID.IsNil() || r.TrenovaKey != "" {
+			return errortypes.NewValidationError(
+				"recordId",
+				errortypes.ErrRequired,
+				"A {0} mapping is named by the Trenova record's id",
+				string(r.TargetType),
+			)
+		}
+		return nil
+	}
+	if !r.TrenovaObjectID.IsNil() || !r.TargetType.AcceptsKey(r.TrenovaKey) {
+		return errortypes.NewValidationError(
+			"key",
+			errortypes.ErrInvalid,
+			"{0} is not a {1} key; use one of {2}",
+			r.TrenovaKey,
+			string(r.TargetType),
+			strings.Join(r.TargetType.Keys(), ", "),
+		)
+	}
+	return nil
 }
 
 type CreateAccountingReferenceRecordRequest struct {

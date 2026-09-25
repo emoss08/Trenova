@@ -58,3 +58,11 @@ func TestArrayBoundsItsItemsOnlyWhenAsked(t *testing.T) {
 	assert.Equal(t, map[string]any{"type": "array", "items": items, "maxItems": 5}, Array(items, 5))
 	assert.Equal(t, map[string]any{"type": "array", "items": items}, Array(items, 0))
 }
+
+func TestDescribedScalarsCarryTheirTypeAndDescription(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, map[string]any{"type": "string", "description": "a"}, Text("a"))
+	assert.Equal(t, map[string]any{"type": "boolean", "description": "b"}, Boolean("b"))
+	assert.Equal(t, map[string]any{"type": "integer", "description": "c"}, Integer("c"))
+}

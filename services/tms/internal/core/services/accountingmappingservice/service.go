@@ -246,6 +246,9 @@ func (s *Service) FindMapping(
 	ctx context.Context,
 	req *services.SetAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
+	if err := req.ValidateTarget(); err != nil {
+		return nil, err
+	}
 	if !req.MappingID.IsNil() {
 		return s.GetMapping(ctx, req.TenantInfo, req.MappingID)
 	}

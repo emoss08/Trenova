@@ -16,7 +16,9 @@ const (
 	typeObject = "object"
 	typeString = "string"
 	typeArray  = "array"
-	typeNumber = "number"
+	typeNumber  = "number"
+	typeBoolean = "boolean"
+	typeInteger = "integer"
 )
 
 func Object(properties map[string]any, required ...string) map[string]any {
@@ -67,4 +69,23 @@ func Array(items map[string]any, maxItems int) map[string]any {
 	}
 
 	return schema
+}
+
+func Text(description string) map[string]any {
+	return described(typeString, description)
+}
+
+func Boolean(description string) map[string]any {
+	return described(typeBoolean, description)
+}
+
+func Integer(description string) map[string]any {
+	return described(typeInteger, description)
+}
+
+func described(kind, description string) map[string]any {
+	return map[string]any{
+		keyType:        kind,
+		keyDescription: description,
+	}
 }
