@@ -793,6 +793,35 @@ func TestObjectStatesPicksTheMostRelevantRecord(t *testing.T) {
 	assert.NotContains(t, states, idleObject, "a connection that is not syncing shows nothing")
 }
 
+func TestObjectStatesShowsTheLatestStepOfASettlement(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	settlementID := pulid.MustNew("carstl_")
+	put := func(objectType accountingsync.SyncObjectType, queuedAt int64) *accountingsync.AccountingSyncRecord {
+		record := NewRecordFor(h.conn, &services.AccountingSyncEnqueueRequest{
+			TenantInfo:  h.tenant,
+			ObjectType:  objectType,
+			ObjectID:    settlementID,
+			Operation:   accountingsync.SyncOperationCreate,
+			Revision:    1,
+			SourceEvent: accountingsync.SyncSourceCarrierSettlementPosted,
+		}, queuedAt)
+		record.Status = accountingsync.SyncStatusSynced
+		h.records.put(record)
+		return record
+	}
+	now := time.Now().Unix()
+	payment := put(accountingsync.SyncObjectCarrierBillPay, now+60)
+	put(accountingsync.SyncObjectCarrierBill, now)
+
+	states, err := h.svc.ObjectStates(t.Context(), h.tenant, []pulid.ID{settlementID})
+	require.NoError(t, err)
+
+	assert.Equal(t, payment.ID, states[settlementID].Record.ID,
+		"the bill payment is the latest step once both reached the books")
+}
+
 func TestObjectStatesIsBounded(t *testing.T) {
 	t.Parallel()
 

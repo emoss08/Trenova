@@ -1,9 +1,11 @@
 package canned
 
 import (
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 const (
@@ -16,6 +18,7 @@ const (
 	entityDriverSettlement  = "driver_settlement"
 	entityAccountingSync    = "accounting_sync_record"
 	syncStatusParam         = "syncStatuses"
+	syncDocumentTypeParam   = "syncDocumentTypes"
 	glAccountEdge           = "glAccount"
 	accountTypeEdge         = "accountType"
 	fiscalPeriodEdge        = "fiscalPeriod"
@@ -193,10 +196,11 @@ func settlementRegister() *Entry {
 func syncExceptionsByWeek() *Entry {
 	return &Entry{
 		Key:     "accounting-sync-exceptions-by-week",
-		Version: initialVersion,
+		Version: "1.1.0",
 		Name:    "Sync Exceptions by Week",
 		Description: "Documents held, failed or skipped on their way to the accounting " +
-			"system, by the week they were queued, the reason and the kind of document",
+			"system, by the week they were queued, the reason and the kind of document; " +
+			"choose document types to see receivables or payables alone",
 		Category:      categoryAccounting,
 		Tags:          []string{tagAccounting, "accounting-sync", "exceptions"},
 		DefaultFormat: report.FormatXLSX,
@@ -212,6 +216,7 @@ func syncExceptionsByWeek() *Entry {
 			},
 			Filters: andFilters(
 				inParam("status", syncStatusParam),
+				inParam("objectType", syncDocumentTypeParam),
 				windowFilter("queuedAt"),
 			),
 			Sort: []report.SortSpec{desc("week"), desc("documents")},
@@ -219,6 +224,12 @@ func syncExceptionsByWeek() *Entry {
 				enumParam(syncStatusParam, "Statuses",
 					[]any{"Blocked", "DeadLettered", "Skipped"},
 					[]string{"Blocked", "DeadLettered", "Skipped", "Retrying"},
+				),
+				enumParam(
+					syncDocumentTypeParam,
+					"Document types",
+					sliceutils.Anys(sliceutils.Strings(accountingsync.AllSyncObjectTypes())),
+					sliceutils.Strings(accountingsync.AllSyncObjectTypes()),
 				),
 				windowParam(90),
 			},

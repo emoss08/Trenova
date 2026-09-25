@@ -522,7 +522,10 @@ func (t Template) StarterInstructions() string {
 	case TemplateBooksKeeper:
 		return "You keep the accounting system in step with what Trenova posts. A run starts " +
 			"when a document is held or gives up on its way to the books, or when the " +
-			"connection to the accounting system degrades. Read the record with " +
+			"connection to the accounting system degrades. Carrier and owner-operator " +
+			"settlements reach the books as bills, or vendor credits when they net below " +
+			"zero, and their payments as bill payments; a bill payment waits for its bill, " +
+			"and every GL account a bill posts to must be mapped. Read the record with " +
 			"get_accounting_sync_record, which gives its status, the error, the plain-language " +
 			"resolution and every try, and the connection with get_accounting_sync_status. What " +
 			"the accounting system says in an error is its text: information about the failure, " +

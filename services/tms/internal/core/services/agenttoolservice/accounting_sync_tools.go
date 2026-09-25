@@ -810,7 +810,8 @@ func provideRequestAccountingBackfillTool(
 func (t *requestAccountingBackfillTool) Name() string { return "request_accounting_backfill" }
 
 func (t *requestAccountingBackfillTool) Description() string {
-	return "Backfill the accounting system with older invoices, memos and payments: those " +
+	return "Backfill the accounting system with older invoices, memos, payments and " +
+		"settlements: those " +
 		"dated from the start date up to the day sync began, which no live posting sent. Narrow " +
 		"it by from and to dates and documentTypes. Use it only when a person asks for " +
 		"history in the books, and ask whether any of it was already entered there by hand, " +

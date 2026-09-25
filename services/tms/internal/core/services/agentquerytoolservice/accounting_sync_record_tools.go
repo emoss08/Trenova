@@ -29,7 +29,8 @@ const (
 	absentNotSynced    = "not synced"
 	absentNotScheduled = "not scheduled"
 
-	syncDocumentIDSources = "list_invoices, get_invoice or list_customer_payments"
+	syncDocumentIDSources = "list_invoices, get_invoice, list_customer_payments, " +
+		"list_carrier_settlements or list_driver_settlements"
 )
 
 type accountingSyncLedgerReader interface {
@@ -456,8 +457,11 @@ func (t *getRecordAccountingSyncStateTool) Name() string {
 }
 
 func (t *getRecordAccountingSyncStateTool) Description() string {
-	return "Get whether Trenova invoices, credit and debit memos, customer payments or " +
-		"customers reached the accounting system, by their Trenova ids. Each answer says " +
+	return "Get whether Trenova invoices, credit and debit memos, customer payments, " +
+		"customers, carrier and owner-operator settlements, carriers or drivers reached the " +
+		"accounting system, by their Trenova ids. A settlement is sent as a bill and its " +
+		"payment as a bill payment; the answer shows whichever needs attention, else the " +
+		"latest. Each answer says " +
 		"whether the document is tracked, its current sync record with status and " +
 		"resolution, and what that means. Use it when asked whether a particular document " +
 		"synced; a document with no record was never sent, usually because sending had not " +

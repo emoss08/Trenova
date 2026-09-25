@@ -858,6 +858,8 @@
               "ItemRole",
               "Customer",
               "Carrier",
+              "Driver",
+              "GLAccount",
               "PaymentTerm",
               "PaymentMethod"
             ],
@@ -1112,6 +1114,8 @@
               "ItemRole",
               "Customer",
               "Carrier",
+              "Driver",
+              "GLAccount",
               "PaymentTerm",
               "PaymentMethod"
             ],
@@ -2654,6 +2658,8 @@
               "ItemRole",
               "Customer",
               "Carrier",
+              "Driver",
+              "GLAccount",
               "PaymentTerm",
               "PaymentMethod"
             ],
@@ -3836,12 +3842,12 @@
     },
     {
       "name": "get_record_accounting_sync_state",
-      "description": "Get whether Trenova invoices, credit and debit memos, customer payments or customers reached the accounting system, by their Trenova ids. Each answer says whether the document is tracked, its current sync record with status and resolution, and what that means. Use it when asked whether a particular document synced; a document with no record was never sent, usually because sending had not started or it is dated before the start date.",
+      "description": "Get whether Trenova invoices, credit and debit memos, customer payments, customers, carrier and owner-operator settlements, carriers or drivers reached the accounting system, by their Trenova ids. A settlement is sent as a bill and its payment as a bill payment; the answer shows whichever needs attention, else the latest. Each answer says whether the document is tracked, its current sync record with status and resolution, and what that means. Use it when asked whether a particular document synced; a document with no record was never sent, usually because sending had not started or it is dated before the start date.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "documentIds": {
-            "description": "Up to 50 Trenova document ids, from list_invoices, get_invoice or list_customer_payments, or the record on screen.",
+            "description": "Up to 50 Trenova document ids, from list_invoices, get_invoice, list_customer_payments, list_carrier_settlements or list_driver_settlements, or the record on screen.",
             "items": {
               "type": "string"
             },
@@ -4548,6 +4554,8 @@
               "ItemRole",
               "Customer",
               "Carrier",
+              "Driver",
+              "GLAccount",
               "PaymentTerm",
               "PaymentMethod"
             ],
@@ -4599,7 +4607,7 @@
             "type": "string"
           },
           "documentId": {
-            "description": "Only the records of one Trenova document, by its id from list_invoices, get_invoice or list_customer_payments.",
+            "description": "Only the records of one Trenova document, by its id from list_invoices, get_invoice, list_customer_payments, list_carrier_settlements or list_driver_settlements.",
             "type": "string"
           },
           "documentType": {
@@ -4612,11 +4620,17 @@
                 "CreditMemo",
                 "DebitMemo",
                 "CustomerPayment",
-                "CreditApplication"
+                "CreditApplication",
+                "CarrierVendor",
+                "DriverVendor",
+                "CarrierBill",
+                "CarrierBillPayment",
+                "DriverBill",
+                "DriverBillPayment"
               ],
               "type": "string"
             },
-            "maxItems": 6,
+            "maxItems": 12,
             "type": "array"
           },
           "errorCategory": {
@@ -10701,7 +10715,7 @@
     },
     {
       "name": "request_accounting_backfill",
-      "description": "Backfill the accounting system with older invoices, memos and payments: those dated from the start date up to the day sync began, which no live posting sent. Narrow it by from and to dates and documentTypes. Use it only when a person asks for history in the books, and ask whether any of it was already entered there by hand, because those would arrive twice. One backfill runs at a time.",
+      "description": "Backfill the accounting system with older invoices, memos, payments and settlements: those dated from the start date up to the day sync began, which no live posting sent. Narrow it by from and to dates and documentTypes. Use it only when a person asks for history in the books, and ask whether any of it was already entered there by hand, because those would arrive twice. One backfill runs at a time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -10714,11 +10728,15 @@
                 "DebitMemo",
                 "CreditMemo",
                 "CustomerPayment",
-                "CreditApplication"
+                "CreditApplication",
+                "CarrierBill",
+                "CarrierBillPayment",
+                "DriverBill",
+                "DriverBillPayment"
               ],
               "type": "string"
             },
-            "maxItems": 5,
+            "maxItems": 9,
             "type": "array"
           },
           "from": {
@@ -11686,6 +11704,8 @@
               "ItemRole",
               "Customer",
               "Carrier",
+              "Driver",
+              "GLAccount",
               "PaymentTerm",
               "PaymentMethod"
             ],

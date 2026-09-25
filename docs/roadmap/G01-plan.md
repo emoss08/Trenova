@@ -654,7 +654,7 @@ This keeps the M2 wizard's role mappings working for the common case, and never 
 - **BooksKeeper.** Its instructions name bills and bill payments.
 - **Watchtower.** Grouping by cause covers the new mapping gaps, so 60 bills blocked on one escrow account show as one item.
 
-**Reporting.** The `accounting_sync_record` catalog entity already carries object type. **Sync exceptions by week** gains a payables/receivables split.
+**Reporting.** The `accounting_sync_record` catalog entity already carries object type, so bills and bill payments are their own document types. **Sync exceptions by week** (version 1.1.0) gains a document types parameter, so it runs for receivables or payables alone.
 
 **UI.**
 - **Setup wizard.** The `StartDate` step gains the driver-settlement switch, off, with a line explaining that company drivers are never sent.

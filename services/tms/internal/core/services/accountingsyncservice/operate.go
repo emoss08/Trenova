@@ -163,6 +163,14 @@ func stateRank(record *accountingsync.AccountingSyncRecord) int {
 	}
 }
 
+func outranks(record, current *accountingsync.AccountingSyncRecord) bool {
+	rank, currentRank := stateRank(record), stateRank(current)
+	if rank != currentRank {
+		return rank > currentRank
+	}
+	return record.QueuedAt > current.QueuedAt
+}
+
 func (s *Service) ObjectStates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -206,7 +214,7 @@ func (s *Service) ObjectStates(
 			continue
 		}
 		current, seen := states[record.ObjectID]
-		if seen && stateRank(current.Record) > stateRank(record) {
+		if seen && !outranks(record, current.Record) {
 			continue
 		}
 		states[record.ObjectID] = &services.AccountingSyncObjectState{
