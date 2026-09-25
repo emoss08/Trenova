@@ -33,6 +33,7 @@ type Registry struct {
 	Permission *Permission
 	RateLimit  *RateLimit
 	Realtime   *Realtime
+	AIAudit    *AIAudit
 }
 
 func graphQLOptions(cfg *config.Config) GraphQLOptions {
@@ -66,6 +67,7 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 			Permission: NewPermission(nil, logger, false),
 			RateLimit:  NewRateLimit(nil, logger, false),
 			Realtime:   NewRealtime(nil, logger, false),
+			AIAudit:    NewAIAudit(nil, logger, false),
 		}, nil
 	}
 
@@ -91,6 +93,7 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 		Permission: NewPermission(registry, logger, true),
 		RateLimit:  NewRateLimit(registry, logger, true),
 		Realtime:   NewRealtime(registry, logger, true),
+		AIAudit:    NewAIAudit(registry, logger, true),
 	}
 
 	dberror.SetConcurrencyObserver(m.Database.RecordConcurrencyEvent)

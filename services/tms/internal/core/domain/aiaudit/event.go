@@ -136,7 +136,7 @@ type AIAuditEvent struct {
 	// Reconstructed marks a row whose provenance was worked out from what the
 	// source rows held before their link columns were written, rather than
 	// read from those columns.
-	Reconstructed bool `json:"reconstructed" bun:"reconstructed,type:BOOLEAN,notnull,default:false"`
+	Reconstructed bool `json:"reconstructed"   bun:"reconstructed,type:BOOLEAN,notnull,default:false"`
 
 	PrevHash    string `json:"prevHash"    bun:"prev_hash,type:VARCHAR(64),notnull"`
 	Hash        string `json:"hash"        bun:"hash,type:VARCHAR(64),notnull"`

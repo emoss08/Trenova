@@ -28,11 +28,11 @@ type AIAuditChainHead struct {
 	LastHash  string `json:"lastHash"  bun:"last_hash,type:VARCHAR(64),notnull,default:''"`
 	HashKeyID string `json:"hashKeyId" bun:"hash_key_id,type:VARCHAR(40),nullzero"`
 
-	LastVerifiedSeq           int64              `json:"lastVerifiedSeq"          bun:"last_verified_seq,type:BIGINT,notnull,default:0"`
-	LastVerifiedAt            *int64             `json:"lastVerifiedAt"           bun:"last_verified_at,type:BIGINT,nullzero"`
-	LastVerificationStatus    VerificationStatus `json:"lastVerificationStatus"   bun:"last_verification_status,type:VARCHAR(20),nullzero"`
+	LastVerifiedSeq           int64              `json:"lastVerifiedSeq"           bun:"last_verified_seq,type:BIGINT,notnull,default:0"`
+	LastVerifiedAt            *int64             `json:"lastVerifiedAt"            bun:"last_verified_at,type:BIGINT,nullzero"`
+	LastVerificationStatus    VerificationStatus `json:"lastVerificationStatus"    bun:"last_verification_status,type:VARCHAR(20),nullzero"`
 	LastVerificationFailedSeq *int64             `json:"lastVerificationFailedSeq" bun:"last_verification_failed_seq,type:BIGINT,nullzero"`
-	LastVerificationDetail    string             `json:"lastVerificationDetail"   bun:"last_verification_detail,type:TEXT,nullzero"`
+	LastVerificationDetail    string             `json:"lastVerificationDetail"    bun:"last_verification_detail,type:TEXT,nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

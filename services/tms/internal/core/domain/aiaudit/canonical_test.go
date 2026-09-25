@@ -44,10 +44,14 @@ func sampleEvent() *AIAuditEvent {
 		},
 		ArgumentSensitivity: &ArgumentSensitivity{
 			Resource: permission.ResourceShipment,
-			Levels:   map[string]permission.FieldSensitivity{"weight": permission.SensitivityRestricted},
+			Levels: map[string]permission.FieldSensitivity{
+				"weight": permission.SensitivityRestricted,
+			},
 		},
 		Taint: &agent.RunTaint{Marks: []agent.TaintMark{{
-			Source: agent.TaintSource("web"), ToolName: "web_search", CallID: "c1", At: 1_760_000_000,
+			Source: agent.TaintSource(
+				"web",
+			), ToolName: "web_search", CallID: "c1", At: 1_760_000_000,
 		}}},
 		Purpose: PurposeLive,
 	}
@@ -86,7 +90,11 @@ func TestCanonicalBytes_SortsKeysAndWritesExactNumbers(t *testing.T) {
 	require.NoError(t, err)
 
 	text := string(content)
-	assert.Contains(t, text, `"arguments":{"count":3,"nested":{"big":1000000000000000000000,"list":[1,"a",true,null]},"shipmentId":"shp_1","weight":1.5}`)
+	assert.Contains(
+		t,
+		text,
+		`"arguments":{"count":3,"nested":{"big":1000000000000000000000,"list":[1,"a",true,null]},"shipmentId":"shp_1","weight":1.5}`,
+	)
 	assert.Contains(t, text, `"costUsd":"0.012300"`)
 	assert.Contains(t, text, `"heldBy":["tainted"]`)
 	assert.Contains(t, text, `"redactedPaths":[]`)

@@ -66,7 +66,10 @@ func TestPersonCeiling_AnUnresolvedAuthorizationReadsAtInternal(t *testing.T) {
 func TestVisible_ConfidentialIsNeverShown(t *testing.T) {
 	t.Parallel()
 
-	assert.False(t, VisibleAt(permission.SensitivityConfidential, permission.SensitivityConfidential))
+	assert.False(
+		t,
+		VisibleAt(permission.SensitivityConfidential, permission.SensitivityConfidential),
+	)
 	assert.True(t, VisibleAt(permission.SensitivityRestricted, permission.SensitivityRestricted))
 	assert.False(t, VisibleAt(permission.SensitivityRestricted, permission.SensitivityInternal))
 	assert.True(t, VisibleAt(permission.SensitivityInternal, permission.SensitivityInternal))
