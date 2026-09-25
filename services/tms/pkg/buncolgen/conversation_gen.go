@@ -63,6 +63,7 @@ var AssistantTurnColumns = struct {
 	StartedAt      Column // "started_at" → qualified: "atrn.started_at"
 	CompletedAt    Column // "completed_at" → qualified: "atrn.completed_at"
 	Fingerprint    Column // "fingerprint" → qualified: "atrn.fingerprint"
+	TraceID        Column // "trace_id" → qualified: "atrn.trace_id"
 	Version        Column // "version" → qualified: "atrn.version"
 	CreatedAt      Column // "created_at" → qualified: "atrn.created_at"
 	UpdatedAt      Column // "updated_at" → qualified: "atrn.updated_at"
@@ -81,6 +82,7 @@ var AssistantTurnColumns = struct {
 	StartedAt:      NewColumn("started_at", "atrn"),
 	CompletedAt:    NewColumn("completed_at", "atrn"),
 	Fingerprint:    NewColumn("fingerprint", "atrn"),
+	TraceID:        NewColumn("trace_id", "atrn"),
 	Version:        NewColumn("version", "atrn"),
 	CreatedAt:      NewColumn("created_at", "atrn"),
 	UpdatedAt:      NewColumn("updated_at", "atrn"),
@@ -105,6 +107,7 @@ var AssistantTurnFieldMap = map[string]string{
 	"startedAt":      "started_at",
 	"completedAt":    "completed_at",
 	"fingerprint":    "fingerprint",
+	"traceId":        "trace_id",
 	"version":        "version",
 	"createdAt":      "created_at",
 	"updatedAt":      "updated_at",
@@ -127,6 +130,7 @@ var AssistantTurnInsertableColumns = []string{
 	"started_at",
 	"completed_at",
 	"fingerprint",
+	"trace_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -209,6 +213,7 @@ var AssistantTurnFilter = struct {
 	StartedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
 	CompletedAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "completedAt" → DB: "completed_at"
 	Fingerprint    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fingerprint" → DB: "fingerprint"
+	TraceID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
 	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -254,6 +259,9 @@ var AssistantTurnFilter = struct {
 	},
 	Fingerprint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("fingerprint", op, value)
+	},
+	TraceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("traceId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

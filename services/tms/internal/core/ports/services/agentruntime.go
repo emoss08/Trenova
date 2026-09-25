@@ -41,6 +41,20 @@ type PendingAction struct {
 	// Tainted says the turn had read outside content when the call was
 	// decided.
 	Tainted bool `json:"tainted,omitempty"`
+	// ProposalID is the proposal this action is recorded as, minted when the
+	// call is decided so the step, the proposal and the trace name the same
+	// record. Empty for an action recorded before it was kept, which the
+	// recorder mints as it always has.
+	ProposalID pulid.ID `json:"proposalId,omitempty"`
+	// TraceID and SpanID are the tool span the call was decided in, so a
+	// decision made hours later can link back to it.
+	TraceID string `json:"traceId,omitempty"`
+	SpanID  string `json:"spanId,omitempty"`
+	// TierSource says what set the tier the call ran or was held at.
+	TierSource agent.TierSource `json:"tierSource,omitempty"`
+	// ExecutedVersion is the target record's version after an automatic
+	// write, when the tool reports it.
+	ExecutedVersion *int64 `json:"executedVersion,omitempty"`
 }
 
 // ProposalTarget is a record and its version at the moment a change to it was

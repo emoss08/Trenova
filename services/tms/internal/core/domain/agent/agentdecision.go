@@ -35,6 +35,8 @@ type AgentDecision struct {
 	Decision        DecisionType   `json:"decision"        bun:"decision,type:agent_decision_type_enum,notnull"`
 	Modifications   map[string]any `json:"modifications"   bun:"modifications,type:JSONB,nullzero"`
 	ReasonCode      string         `json:"reasonCode"      bun:"reason_code,type:VARCHAR(100),notnull"`
+	// TraceID is the trace the decision was made in.
+	TraceID string `json:"traceId" bun:"trace_id,type:VARCHAR(32),nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -56,6 +58,7 @@ func (d *AgentDecision) Validate(multiErr *errortypes.MultiError) {
 			domainvalidation.ValidEnum[DecisionType]("Invalid decision"),
 		),
 		validation.Field(&d.ReasonCode, validation.Required.Error("Reason code is required")),
+		validation.Field(&d.TraceID, domainvalidation.TraceID("Trace id is invalid")),
 	))
 
 	if d.subjectCount() != 1 {

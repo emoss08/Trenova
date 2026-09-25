@@ -1720,6 +1720,7 @@ var DataRetentionColumns = struct {
 	DriverQualificationRetentionPeriod Column // "driver_qualification_retention_period" → qualified: "dr.driver_qualification_retention_period"
 	AgentEvalCaseRetentionPeriod       Column // "agent_eval_case_retention_period" → qualified: "dr.agent_eval_case_retention_period"
 	AIFeedbackRetentionPeriod          Column // "ai_feedback_retention_period" → qualified: "dr.ai_feedback_retention_period"
+	AIAuditRetentionPeriod             Column // "ai_audit_retention_period" → qualified: "dr.ai_audit_retention_period"
 	Version                            Column // "version" → qualified: "dr.version"
 	CreatedAt                          Column // "created_at" → qualified: "dr.created_at"
 	UpdatedAt                          Column // "updated_at" → qualified: "dr.updated_at"
@@ -1733,6 +1734,7 @@ var DataRetentionColumns = struct {
 	DriverQualificationRetentionPeriod: NewColumn("driver_qualification_retention_period", "dr"),
 	AgentEvalCaseRetentionPeriod:       NewColumn("agent_eval_case_retention_period", "dr"),
 	AIFeedbackRetentionPeriod:          NewColumn("ai_feedback_retention_period", "dr"),
+	AIAuditRetentionPeriod:             NewColumn("ai_audit_retention_period", "dr"),
 	Version:                            NewColumn("version", "dr"),
 	CreatedAt:                          NewColumn("created_at", "dr"),
 	UpdatedAt:                          NewColumn("updated_at", "dr"),
@@ -1752,6 +1754,7 @@ var DataRetentionFieldMap = map[string]string{
 	"driverQualificationRetentionPeriod": "driver_qualification_retention_period",
 	"agentEvalCaseRetentionPeriod":       "agent_eval_case_retention_period",
 	"aiFeedbackRetentionPeriod":          "ai_feedback_retention_period",
+	"aiAuditRetentionPeriod":             "ai_audit_retention_period",
 	"version":                            "version",
 	"createdAt":                          "created_at",
 	"updatedAt":                          "updated_at",
@@ -1769,6 +1772,7 @@ var DataRetentionInsertableColumns = []string{
 	"driver_qualification_retention_period",
 	"agent_eval_case_retention_period",
 	"ai_feedback_retention_period",
+	"ai_audit_retention_period",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1846,6 +1850,7 @@ var DataRetentionFilter = struct {
 	DriverQualificationRetentionPeriod func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverQualificationRetentionPeriod" → DB: "driver_qualification_retention_period"
 	AgentEvalCaseRetentionPeriod       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentEvalCaseRetentionPeriod" → DB: "agent_eval_case_retention_period"
 	AIFeedbackRetentionPeriod          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiFeedbackRetentionPeriod" → DB: "ai_feedback_retention_period"
+	AIAuditRetentionPeriod             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiAuditRetentionPeriod" → DB: "ai_audit_retention_period"
 	Version                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1876,6 +1881,9 @@ var DataRetentionFilter = struct {
 	},
 	AIFeedbackRetentionPeriod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("aiFeedbackRetentionPeriod", op, value)
+	},
+	AIAuditRetentionPeriod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("aiAuditRetentionPeriod", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

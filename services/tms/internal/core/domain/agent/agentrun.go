@@ -50,6 +50,16 @@ type AgentRun struct {
 	TaintedAt         *int64       `json:"taintedAt"         bun:"tainted_at,type:BIGINT,nullzero"`
 	Fingerprint       *Fingerprint `json:"fingerprint"       bun:"fingerprint,type:JSONB,nullzero"`
 
+	// TraceID is the run's trace. TurnID is the conversation turn a run was
+	// opened for. ParentOwnerKind, ParentOwnerID and DelegateCallID are set on
+	// a delegate's run: the run or turn that handed it the task, and the call
+	// that did.
+	TraceID         string       `json:"traceId"         bun:"trace_id,type:VARCHAR(32),nullzero"`
+	TurnID          pulid.ID     `json:"turnId"          bun:"turn_id,type:VARCHAR(100),nullzero"`
+	ParentOwnerKind RunOwnerKind `json:"parentOwnerKind" bun:"parent_owner_kind,type:VARCHAR(20),nullzero"`
+	ParentOwnerID   pulid.ID     `json:"parentOwnerId"   bun:"parent_owner_id,type:VARCHAR(100),nullzero"`
+	DelegateCallID  string       `json:"delegateCallId"  bun:"delegate_call_id,type:VARCHAR(200),nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -84,7 +94,31 @@ func (r *AgentRun) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&r.InputContextHash,
 			validation.Required.Error("Input context hash is required"),
 		),
+		validation.Field(&r.TraceID, domainvalidation.TraceID("Trace id is invalid")),
+		validation.Field(&r.ParentOwnerKind,
+			domainvalidation.ValidEnum[RunOwnerKind]("Invalid parent owner kind"),
+		),
 	))
+
+	r.validateParentOwner(multiErr)
+}
+
+func (r *AgentRun) validateParentOwner(multiErr *errortypes.MultiError) {
+	if (r.ParentOwnerKind == "") != r.ParentOwnerID.IsNil() {
+		multiErr.Add(
+			"parentOwnerId",
+			errortypes.ErrInvalid,
+			"Parent owner kind and parent owner id must be set together",
+		)
+	}
+
+	if r.DelegateCallID != "" && r.ParentOwnerID.IsNil() {
+		multiErr.Add(
+			"delegateCallId",
+			errortypes.ErrInvalid,
+			"A delegate call requires the run or turn that made it",
+		)
+	}
 }
 
 func (r *AgentRun) GetID() pulid.ID {
@@ -162,6 +196,7 @@ func (r *AgentRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
 			r.Trigger = RunTriggerManual
 		}
 		r.CreatedAt = now
+		r.UpdatedAt = now
 	case *bun.UpdateQuery:
 		r.UpdatedAt = now
 	}

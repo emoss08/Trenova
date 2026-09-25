@@ -58,6 +58,7 @@ var AgentDecisionColumns = struct {
 	Decision        Column // "decision" → qualified: "ad.decision"
 	Modifications   Column // "modifications" → qualified: "ad.modifications"
 	ReasonCode      Column // "reason_code" → qualified: "ad.reason_code"
+	TraceID         Column // "trace_id" → qualified: "ad.trace_id"
 	Version         Column // "version" → qualified: "ad.version"
 	CreatedAt       Column // "created_at" → qualified: "ad.created_at"
 	UpdatedAt       Column // "updated_at" → qualified: "ad.updated_at"
@@ -71,6 +72,7 @@ var AgentDecisionColumns = struct {
 	Decision:        NewColumn("decision", "ad"),
 	Modifications:   NewColumn("modifications", "ad"),
 	ReasonCode:      NewColumn("reason_code", "ad"),
+	TraceID:         NewColumn("trace_id", "ad"),
 	Version:         NewColumn("version", "ad"),
 	CreatedAt:       NewColumn("created_at", "ad"),
 	UpdatedAt:       NewColumn("updated_at", "ad"),
@@ -90,6 +92,7 @@ var AgentDecisionFieldMap = map[string]string{
 	"decision":        "decision",
 	"modifications":   "modifications",
 	"reasonCode":      "reason_code",
+	"traceId":         "trace_id",
 	"version":         "version",
 	"createdAt":       "created_at",
 	"updatedAt":       "updated_at",
@@ -107,6 +110,7 @@ var AgentDecisionInsertableColumns = []string{
 	"decision",
 	"modifications",
 	"reason_code",
+	"trace_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -186,6 +190,7 @@ var AgentDecisionFilter = struct {
 	Decision        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "decision" → DB: "decision"
 	Modifications   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "modifications" → DB: "modifications"
 	ReasonCode      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasonCode" → DB: "reason_code"
+	TraceID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
 	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -216,6 +221,9 @@ var AgentDecisionFilter = struct {
 	},
 	ReasonCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("reasonCode", op, value)
+	},
+	TraceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("traceId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -736,69 +744,79 @@ var AgentProposalTable = TableInfo{
 //	q.Where(AgentProposalColumns.ID.Eq(), id)           // WHERE ap.id = ?
 //	q.Order(AgentProposalColumns.CreatedAt.OrderDesc())  // ORDER BY ap.created_at DESC
 var AgentProposalColumns = struct {
-	ID              Column // "id" → qualified: "ap.id"
-	BusinessUnitID  Column // "business_unit_id" → qualified: "ap.business_unit_id"
-	OrganizationID  Column // "organization_id" → qualified: "ap.organization_id"
-	RunID           Column // "run_id" → qualified: "ap.run_id"
-	ToolName        Column // "tool_name" → qualified: "ap.tool_name"
-	ToolParams      Column // "tool_params" → qualified: "ap.tool_params"
-	Confidence      Column // "confidence" → qualified: "ap.confidence"
-	Rationale       Column // "rationale" → qualified: "ap.rationale"
-	Evidence        Column // "evidence" → qualified: "ap.evidence"
-	AutonomyTier    Column // "autonomy_tier" → qualified: "ap.autonomy_tier"
-	Status          Column // "status" → qualified: "ap.status"
-	ExecutedAt      Column // "executed_at" → qualified: "ap.executed_at"
-	ExecutionError  Column // "execution_error" → qualified: "ap.execution_error"
-	ExecutionResult Column // "execution_result" → qualified: "ap.execution_result"
-	SourceMessageID Column // "source_message_id" → qualified: "ap.source_message_id"
-	ExpiresAt       Column // "expires_at" → qualified: "ap.expires_at"
-	SimulatedAt     Column // "simulated_at" → qualified: "ap.simulated_at"
-	Simulation      Column // "simulation" → qualified: "ap.simulation"
-	PlanID          Column // "plan_id" → qualified: "ap.plan_id"
-	PlanStep        Column // "plan_step" → qualified: "ap.plan_step"
-	RemindedAt      Column // "reminded_at" → qualified: "ap.reminded_at"
-	TargetResource  Column // "target_resource" → qualified: "ap.target_resource"
-	TargetID        Column // "target_id" → qualified: "ap.target_id"
-	TargetVersion   Column // "target_version" → qualified: "ap.target_version"
-	Tainted         Column // "tainted" → qualified: "ap.tainted"
-	Taint           Column // "taint" → qualified: "ap.taint"
-	EgressClass     Column // "egress_class" → qualified: "ap.egress_class"
-	HeldBy          Column // "held_by" → qualified: "ap.held_by"
-	Version         Column // "version" → qualified: "ap.version"
-	CreatedAt       Column // "created_at" → qualified: "ap.created_at"
-	UpdatedAt       Column // "updated_at" → qualified: "ap.updated_at"
+	ID                    Column // "id" → qualified: "ap.id"
+	BusinessUnitID        Column // "business_unit_id" → qualified: "ap.business_unit_id"
+	OrganizationID        Column // "organization_id" → qualified: "ap.organization_id"
+	RunID                 Column // "run_id" → qualified: "ap.run_id"
+	ToolName              Column // "tool_name" → qualified: "ap.tool_name"
+	ToolParams            Column // "tool_params" → qualified: "ap.tool_params"
+	Confidence            Column // "confidence" → qualified: "ap.confidence"
+	Rationale             Column // "rationale" → qualified: "ap.rationale"
+	Evidence              Column // "evidence" → qualified: "ap.evidence"
+	AutonomyTier          Column // "autonomy_tier" → qualified: "ap.autonomy_tier"
+	Status                Column // "status" → qualified: "ap.status"
+	ExecutedAt            Column // "executed_at" → qualified: "ap.executed_at"
+	ExecutionError        Column // "execution_error" → qualified: "ap.execution_error"
+	ExecutionResult       Column // "execution_result" → qualified: "ap.execution_result"
+	SourceMessageID       Column // "source_message_id" → qualified: "ap.source_message_id"
+	ExpiresAt             Column // "expires_at" → qualified: "ap.expires_at"
+	SimulatedAt           Column // "simulated_at" → qualified: "ap.simulated_at"
+	Simulation            Column // "simulation" → qualified: "ap.simulation"
+	PlanID                Column // "plan_id" → qualified: "ap.plan_id"
+	PlanStep              Column // "plan_step" → qualified: "ap.plan_step"
+	RemindedAt            Column // "reminded_at" → qualified: "ap.reminded_at"
+	TargetResource        Column // "target_resource" → qualified: "ap.target_resource"
+	TargetID              Column // "target_id" → qualified: "ap.target_id"
+	TargetVersion         Column // "target_version" → qualified: "ap.target_version"
+	Tainted               Column // "tainted" → qualified: "ap.tainted"
+	Taint                 Column // "taint" → qualified: "ap.taint"
+	EgressClass           Column // "egress_class" → qualified: "ap.egress_class"
+	HeldBy                Column // "held_by" → qualified: "ap.held_by"
+	TraceID               Column // "trace_id" → qualified: "ap.trace_id"
+	SpanID                Column // "span_id" → qualified: "ap.span_id"
+	StepKey               Column // "step_key" → qualified: "ap.step_key"
+	ExecutedByUserID      Column // "executed_by_user_id" → qualified: "ap.executed_by_user_id"
+	ExecutedTargetVersion Column // "executed_target_version" → qualified: "ap.executed_target_version"
+	Version               Column // "version" → qualified: "ap.version"
+	CreatedAt             Column // "created_at" → qualified: "ap.created_at"
+	UpdatedAt             Column // "updated_at" → qualified: "ap.updated_at"
 }{
-	ID:              NewColumn("id", "ap"),
-	BusinessUnitID:  NewColumn("business_unit_id", "ap"),
-	OrganizationID:  NewColumn("organization_id", "ap"),
-	RunID:           NewColumn("run_id", "ap"),
-	ToolName:        NewColumn("tool_name", "ap"),
-	ToolParams:      NewColumn("tool_params", "ap"),
-	Confidence:      NewColumn("confidence", "ap"),
-	Rationale:       NewColumn("rationale", "ap"),
-	Evidence:        NewColumn("evidence", "ap"),
-	AutonomyTier:    NewColumn("autonomy_tier", "ap"),
-	Status:          NewColumn("status", "ap"),
-	ExecutedAt:      NewColumn("executed_at", "ap"),
-	ExecutionError:  NewColumn("execution_error", "ap"),
-	ExecutionResult: NewColumn("execution_result", "ap"),
-	SourceMessageID: NewColumn("source_message_id", "ap"),
-	ExpiresAt:       NewColumn("expires_at", "ap"),
-	SimulatedAt:     NewColumn("simulated_at", "ap"),
-	Simulation:      NewColumn("simulation", "ap"),
-	PlanID:          NewColumn("plan_id", "ap"),
-	PlanStep:        NewColumn("plan_step", "ap"),
-	RemindedAt:      NewColumn("reminded_at", "ap"),
-	TargetResource:  NewColumn("target_resource", "ap"),
-	TargetID:        NewColumn("target_id", "ap"),
-	TargetVersion:   NewColumn("target_version", "ap"),
-	Tainted:         NewColumn("tainted", "ap"),
-	Taint:           NewColumn("taint", "ap"),
-	EgressClass:     NewColumn("egress_class", "ap"),
-	HeldBy:          NewColumn("held_by", "ap"),
-	Version:         NewColumn("version", "ap"),
-	CreatedAt:       NewColumn("created_at", "ap"),
-	UpdatedAt:       NewColumn("updated_at", "ap"),
+	ID:                    NewColumn("id", "ap"),
+	BusinessUnitID:        NewColumn("business_unit_id", "ap"),
+	OrganizationID:        NewColumn("organization_id", "ap"),
+	RunID:                 NewColumn("run_id", "ap"),
+	ToolName:              NewColumn("tool_name", "ap"),
+	ToolParams:            NewColumn("tool_params", "ap"),
+	Confidence:            NewColumn("confidence", "ap"),
+	Rationale:             NewColumn("rationale", "ap"),
+	Evidence:              NewColumn("evidence", "ap"),
+	AutonomyTier:          NewColumn("autonomy_tier", "ap"),
+	Status:                NewColumn("status", "ap"),
+	ExecutedAt:            NewColumn("executed_at", "ap"),
+	ExecutionError:        NewColumn("execution_error", "ap"),
+	ExecutionResult:       NewColumn("execution_result", "ap"),
+	SourceMessageID:       NewColumn("source_message_id", "ap"),
+	ExpiresAt:             NewColumn("expires_at", "ap"),
+	SimulatedAt:           NewColumn("simulated_at", "ap"),
+	Simulation:            NewColumn("simulation", "ap"),
+	PlanID:                NewColumn("plan_id", "ap"),
+	PlanStep:              NewColumn("plan_step", "ap"),
+	RemindedAt:            NewColumn("reminded_at", "ap"),
+	TargetResource:        NewColumn("target_resource", "ap"),
+	TargetID:              NewColumn("target_id", "ap"),
+	TargetVersion:         NewColumn("target_version", "ap"),
+	Tainted:               NewColumn("tainted", "ap"),
+	Taint:                 NewColumn("taint", "ap"),
+	EgressClass:           NewColumn("egress_class", "ap"),
+	HeldBy:                NewColumn("held_by", "ap"),
+	TraceID:               NewColumn("trace_id", "ap"),
+	SpanID:                NewColumn("span_id", "ap"),
+	StepKey:               NewColumn("step_key", "ap"),
+	ExecutedByUserID:      NewColumn("executed_by_user_id", "ap"),
+	ExecutedTargetVersion: NewColumn("executed_target_version", "ap"),
+	Version:               NewColumn("version", "ap"),
+	CreatedAt:             NewColumn("created_at", "ap"),
+	UpdatedAt:             NewColumn("updated_at", "ap"),
 }
 
 // AgentProposalFieldMap maps JSON API field names to database column names.
@@ -806,37 +824,42 @@ var AgentProposalColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AgentProposal.GetStaticFieldMap().
 var AgentProposalFieldMap = map[string]string{
-	"id":              "id",
-	"businessUnitId":  "business_unit_id",
-	"organizationId":  "organization_id",
-	"runId":           "run_id",
-	"toolName":        "tool_name",
-	"toolParams":      "tool_params",
-	"confidence":      "confidence",
-	"rationale":       "rationale",
-	"evidence":        "evidence",
-	"autonomyTier":    "autonomy_tier",
-	"status":          "status",
-	"executedAt":      "executed_at",
-	"executionError":  "execution_error",
-	"executionResult": "execution_result",
-	"sourceMessageId": "source_message_id",
-	"expiresAt":       "expires_at",
-	"simulatedAt":     "simulated_at",
-	"simulation":      "simulation",
-	"planId":          "plan_id",
-	"planStep":        "plan_step",
-	"remindedAt":      "reminded_at",
-	"targetResource":  "target_resource",
-	"targetId":        "target_id",
-	"targetVersion":   "target_version",
-	"tainted":         "tainted",
-	"taint":           "taint",
-	"egressClass":     "egress_class",
-	"heldBy":          "held_by",
-	"version":         "version",
-	"createdAt":       "created_at",
-	"updatedAt":       "updated_at",
+	"id":                    "id",
+	"businessUnitId":        "business_unit_id",
+	"organizationId":        "organization_id",
+	"runId":                 "run_id",
+	"toolName":              "tool_name",
+	"toolParams":            "tool_params",
+	"confidence":            "confidence",
+	"rationale":             "rationale",
+	"evidence":              "evidence",
+	"autonomyTier":          "autonomy_tier",
+	"status":                "status",
+	"executedAt":            "executed_at",
+	"executionError":        "execution_error",
+	"executionResult":       "execution_result",
+	"sourceMessageId":       "source_message_id",
+	"expiresAt":             "expires_at",
+	"simulatedAt":           "simulated_at",
+	"simulation":            "simulation",
+	"planId":                "plan_id",
+	"planStep":              "plan_step",
+	"remindedAt":            "reminded_at",
+	"targetResource":        "target_resource",
+	"targetId":              "target_id",
+	"targetVersion":         "target_version",
+	"tainted":               "tainted",
+	"taint":                 "taint",
+	"egressClass":           "egress_class",
+	"heldBy":                "held_by",
+	"traceId":               "trace_id",
+	"spanId":                "span_id",
+	"stepKey":               "step_key",
+	"executedByUserId":      "executed_by_user_id",
+	"executedTargetVersion": "executed_target_version",
+	"version":               "version",
+	"createdAt":             "created_at",
+	"updatedAt":             "updated_at",
 }
 
 // AgentProposalInsertableColumns lists column names suitable for INSERT statements on the "agent_proposals" table.
@@ -870,6 +893,11 @@ var AgentProposalInsertableColumns = []string{
 	"taint",
 	"egress_class",
 	"held_by",
+	"trace_id",
+	"span_id",
+	"step_key",
+	"executed_by_user_id",
+	"executed_target_version",
 	"version",
 	"created_at",
 	"updated_at",
@@ -940,37 +968,42 @@ func AgentProposalApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *
 //	AgentProposalFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AgentProposalFilter = struct {
-	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	RunID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
-	ToolName        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
-	ToolParams      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolParams" → DB: "tool_params"
-	Confidence      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confidence" → DB: "confidence"
-	Rationale       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rationale" → DB: "rationale"
-	Evidence        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "evidence" → DB: "evidence"
-	AutonomyTier    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autonomyTier" → DB: "autonomy_tier"
-	Status          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	ExecutedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executedAt" → DB: "executed_at"
-	ExecutionError  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executionError" → DB: "execution_error"
-	ExecutionResult func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executionResult" → DB: "execution_result"
-	SourceMessageID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceMessageId" → DB: "source_message_id"
-	ExpiresAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
-	SimulatedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "simulatedAt" → DB: "simulated_at"
-	Simulation      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "simulation" → DB: "simulation"
-	PlanID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "planId" → DB: "plan_id"
-	PlanStep        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "planStep" → DB: "plan_step"
-	RemindedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remindedAt" → DB: "reminded_at"
-	TargetResource  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetResource" → DB: "target_resource"
-	TargetID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetId" → DB: "target_id"
-	TargetVersion   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetVersion" → DB: "target_version"
-	Tainted         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tainted" → DB: "tainted"
-	Taint           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
-	EgressClass     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "egressClass" → DB: "egress_class"
-	HeldBy          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "heldBy" → DB: "held_by"
-	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	RunID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	ToolName              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
+	ToolParams            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolParams" → DB: "tool_params"
+	Confidence            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "confidence" → DB: "confidence"
+	Rationale             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rationale" → DB: "rationale"
+	Evidence              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "evidence" → DB: "evidence"
+	AutonomyTier          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autonomyTier" → DB: "autonomy_tier"
+	Status                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	ExecutedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executedAt" → DB: "executed_at"
+	ExecutionError        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executionError" → DB: "execution_error"
+	ExecutionResult       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executionResult" → DB: "execution_result"
+	SourceMessageID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceMessageId" → DB: "source_message_id"
+	ExpiresAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expiresAt" → DB: "expires_at"
+	SimulatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "simulatedAt" → DB: "simulated_at"
+	Simulation            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "simulation" → DB: "simulation"
+	PlanID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "planId" → DB: "plan_id"
+	PlanStep              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "planStep" → DB: "plan_step"
+	RemindedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "remindedAt" → DB: "reminded_at"
+	TargetResource        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetResource" → DB: "target_resource"
+	TargetID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetId" → DB: "target_id"
+	TargetVersion         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "targetVersion" → DB: "target_version"
+	Tainted               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tainted" → DB: "tainted"
+	Taint                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
+	EgressClass           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "egressClass" → DB: "egress_class"
+	HeldBy                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "heldBy" → DB: "held_by"
+	TraceID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
+	SpanID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "spanId" → DB: "span_id"
+	StepKey               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stepKey" → DB: "step_key"
+	ExecutedByUserID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executedByUserId" → DB: "executed_by_user_id"
+	ExecutedTargetVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "executedTargetVersion" → DB: "executed_target_version"
+	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -1056,6 +1089,21 @@ var AgentProposalFilter = struct {
 	HeldBy: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("heldBy", op, value)
 	},
+	TraceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("traceId", op, value)
+	},
+	SpanID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("spanId", op, value)
+	},
+	StepKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("stepKey", op, value)
+	},
+	ExecutedByUserID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("executedByUserId", op, value)
+	},
+	ExecutedTargetVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("executedTargetVersion", op, value)
+	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
 	},
@@ -1114,6 +1162,11 @@ var AgentRunColumns = struct {
 	Taint             Column // "taint" → qualified: "ar.taint"
 	TaintedAt         Column // "tainted_at" → qualified: "ar.tainted_at"
 	Fingerprint       Column // "fingerprint" → qualified: "ar.fingerprint"
+	TraceID           Column // "trace_id" → qualified: "ar.trace_id"
+	TurnID            Column // "turn_id" → qualified: "ar.turn_id"
+	ParentOwnerKind   Column // "parent_owner_kind" → qualified: "ar.parent_owner_kind"
+	ParentOwnerID     Column // "parent_owner_id" → qualified: "ar.parent_owner_id"
+	DelegateCallID    Column // "delegate_call_id" → qualified: "ar.delegate_call_id"
 	Version           Column // "version" → qualified: "ar.version"
 	CreatedAt         Column // "created_at" → qualified: "ar.created_at"
 	UpdatedAt         Column // "updated_at" → qualified: "ar.updated_at"
@@ -1139,6 +1192,11 @@ var AgentRunColumns = struct {
 	Taint:             NewColumn("taint", "ar"),
 	TaintedAt:         NewColumn("tainted_at", "ar"),
 	Fingerprint:       NewColumn("fingerprint", "ar"),
+	TraceID:           NewColumn("trace_id", "ar"),
+	TurnID:            NewColumn("turn_id", "ar"),
+	ParentOwnerKind:   NewColumn("parent_owner_kind", "ar"),
+	ParentOwnerID:     NewColumn("parent_owner_id", "ar"),
+	DelegateCallID:    NewColumn("delegate_call_id", "ar"),
 	Version:           NewColumn("version", "ar"),
 	CreatedAt:         NewColumn("created_at", "ar"),
 	UpdatedAt:         NewColumn("updated_at", "ar"),
@@ -1170,6 +1228,11 @@ var AgentRunFieldMap = map[string]string{
 	"taint":             "taint",
 	"taintedAt":         "tainted_at",
 	"fingerprint":       "fingerprint",
+	"traceId":           "trace_id",
+	"turnId":            "turn_id",
+	"parentOwnerKind":   "parent_owner_kind",
+	"parentOwnerId":     "parent_owner_id",
+	"delegateCallId":    "delegate_call_id",
 	"version":           "version",
 	"createdAt":         "created_at",
 	"updatedAt":         "updated_at",
@@ -1199,6 +1262,11 @@ var AgentRunInsertableColumns = []string{
 	"taint",
 	"tainted_at",
 	"fingerprint",
+	"trace_id",
+	"turn_id",
+	"parent_owner_kind",
+	"parent_owner_id",
+	"delegate_call_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1288,6 +1356,11 @@ var AgentRunFilter = struct {
 	Taint             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taint" → DB: "taint"
 	TaintedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "taintedAt" → DB: "tainted_at"
 	Fingerprint       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fingerprint" → DB: "fingerprint"
+	TraceID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
+	TurnID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "turnId" → DB: "turn_id"
+	ParentOwnerKind   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parentOwnerKind" → DB: "parent_owner_kind"
+	ParentOwnerID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "parentOwnerId" → DB: "parent_owner_id"
+	DelegateCallID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateCallId" → DB: "delegate_call_id"
 	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1354,6 +1427,21 @@ var AgentRunFilter = struct {
 	},
 	Fingerprint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("fingerprint", op, value)
+	},
+	TraceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("traceId", op, value)
+	},
+	TurnID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("turnId", op, value)
+	},
+	ParentOwnerKind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("parentOwnerKind", op, value)
+	},
+	ParentOwnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("parentOwnerId", op, value)
+	},
+	DelegateCallID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("delegateCallId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -1619,39 +1707,49 @@ var AgentRunStepTable = TableInfo{
 //	q.Where(AgentRunStepColumns.ID.Eq(), id)           // WHERE ars.id = ?
 //	q.Order(AgentRunStepColumns.CreatedAt.OrderDesc())  // ORDER BY ars.created_at DESC
 var AgentRunStepColumns = struct {
-	ID             Column // "id" → qualified: "ars.id"
-	BusinessUnitID Column // "business_unit_id" → qualified: "ars.business_unit_id"
-	OrganizationID Column // "organization_id" → qualified: "ars.organization_id"
-	OwnerKind      Column // "owner_kind" → qualified: "ars.owner_kind"
-	OwnerID        Column // "owner_id" → qualified: "ars.owner_id"
-	Attempt        Column // "attempt" → qualified: "ars.attempt"
-	Kind           Column // "kind" → qualified: "ars.kind"
-	Status         Column // "status" → qualified: "ars.status"
-	StepKey        Column // "step_key" → qualified: "ars.step_key"
-	ToolName       Column // "tool_name" → qualified: "ars.tool_name"
-	CallID         Column // "call_id" → qualified: "ars.call_id"
-	Arguments      Column // "arguments" → qualified: "ars.arguments"
-	Outcome        Column // "outcome" → qualified: "ars.outcome"
-	Version        Column // "version" → qualified: "ars.version"
-	CreatedAt      Column // "created_at" → qualified: "ars.created_at"
-	UpdatedAt      Column // "updated_at" → qualified: "ars.updated_at"
+	ID                     Column // "id" → qualified: "ars.id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "ars.business_unit_id"
+	OrganizationID         Column // "organization_id" → qualified: "ars.organization_id"
+	OwnerKind              Column // "owner_kind" → qualified: "ars.owner_kind"
+	OwnerID                Column // "owner_id" → qualified: "ars.owner_id"
+	Attempt                Column // "attempt" → qualified: "ars.attempt"
+	Kind                   Column // "kind" → qualified: "ars.kind"
+	Status                 Column // "status" → qualified: "ars.status"
+	StepKey                Column // "step_key" → qualified: "ars.step_key"
+	ToolName               Column // "tool_name" → qualified: "ars.tool_name"
+	CallID                 Column // "call_id" → qualified: "ars.call_id"
+	Arguments              Column // "arguments" → qualified: "ars.arguments"
+	Outcome                Column // "outcome" → qualified: "ars.outcome"
+	TraceID                Column // "trace_id" → qualified: "ars.trace_id"
+	SpanID                 Column // "span_id" → qualified: "ars.span_id"
+	AgentDefinitionID      Column // "agent_definition_id" → qualified: "ars.agent_definition_id"
+	AgentDefinitionVersion Column // "agent_definition_version" → qualified: "ars.agent_definition_version"
+	DelegateCallID         Column // "delegate_call_id" → qualified: "ars.delegate_call_id"
+	Version                Column // "version" → qualified: "ars.version"
+	CreatedAt              Column // "created_at" → qualified: "ars.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "ars.updated_at"
 }{
-	ID:             NewColumn("id", "ars"),
-	BusinessUnitID: NewColumn("business_unit_id", "ars"),
-	OrganizationID: NewColumn("organization_id", "ars"),
-	OwnerKind:      NewColumn("owner_kind", "ars"),
-	OwnerID:        NewColumn("owner_id", "ars"),
-	Attempt:        NewColumn("attempt", "ars"),
-	Kind:           NewColumn("kind", "ars"),
-	Status:         NewColumn("status", "ars"),
-	StepKey:        NewColumn("step_key", "ars"),
-	ToolName:       NewColumn("tool_name", "ars"),
-	CallID:         NewColumn("call_id", "ars"),
-	Arguments:      NewColumn("arguments", "ars"),
-	Outcome:        NewColumn("outcome", "ars"),
-	Version:        NewColumn("version", "ars"),
-	CreatedAt:      NewColumn("created_at", "ars"),
-	UpdatedAt:      NewColumn("updated_at", "ars"),
+	ID:                     NewColumn("id", "ars"),
+	BusinessUnitID:         NewColumn("business_unit_id", "ars"),
+	OrganizationID:         NewColumn("organization_id", "ars"),
+	OwnerKind:              NewColumn("owner_kind", "ars"),
+	OwnerID:                NewColumn("owner_id", "ars"),
+	Attempt:                NewColumn("attempt", "ars"),
+	Kind:                   NewColumn("kind", "ars"),
+	Status:                 NewColumn("status", "ars"),
+	StepKey:                NewColumn("step_key", "ars"),
+	ToolName:               NewColumn("tool_name", "ars"),
+	CallID:                 NewColumn("call_id", "ars"),
+	Arguments:              NewColumn("arguments", "ars"),
+	Outcome:                NewColumn("outcome", "ars"),
+	TraceID:                NewColumn("trace_id", "ars"),
+	SpanID:                 NewColumn("span_id", "ars"),
+	AgentDefinitionID:      NewColumn("agent_definition_id", "ars"),
+	AgentDefinitionVersion: NewColumn("agent_definition_version", "ars"),
+	DelegateCallID:         NewColumn("delegate_call_id", "ars"),
+	Version:                NewColumn("version", "ars"),
+	CreatedAt:              NewColumn("created_at", "ars"),
+	UpdatedAt:              NewColumn("updated_at", "ars"),
 }
 
 // AgentRunStepFieldMap maps JSON API field names to database column names.
@@ -1659,22 +1757,27 @@ var AgentRunStepColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AgentRunStep.GetStaticFieldMap().
 var AgentRunStepFieldMap = map[string]string{
-	"id":             "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"ownerKind":      "owner_kind",
-	"ownerId":        "owner_id",
-	"attempt":        "attempt",
-	"kind":           "kind",
-	"status":         "status",
-	"stepKey":        "step_key",
-	"toolName":       "tool_name",
-	"callId":         "call_id",
-	"arguments":      "arguments",
-	"outcome":        "outcome",
-	"version":        "version",
-	"createdAt":      "created_at",
-	"updatedAt":      "updated_at",
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"ownerKind":              "owner_kind",
+	"ownerId":                "owner_id",
+	"attempt":                "attempt",
+	"kind":                   "kind",
+	"status":                 "status",
+	"stepKey":                "step_key",
+	"toolName":               "tool_name",
+	"callId":                 "call_id",
+	"arguments":              "arguments",
+	"outcome":                "outcome",
+	"traceId":                "trace_id",
+	"spanId":                 "span_id",
+	"agentDefinitionId":      "agent_definition_id",
+	"agentDefinitionVersion": "agent_definition_version",
+	"delegateCallId":         "delegate_call_id",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // AgentRunStepInsertableColumns lists column names suitable for INSERT statements on the "agent_run_steps" table.
@@ -1693,6 +1796,11 @@ var AgentRunStepInsertableColumns = []string{
 	"call_id",
 	"arguments",
 	"outcome",
+	"trace_id",
+	"span_id",
+	"agent_definition_id",
+	"agent_definition_version",
+	"delegate_call_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1761,22 +1869,27 @@ func AgentRunStepApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *b
 //	AgentRunStepFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AgentRunStepFilter = struct {
-	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	OwnerKind      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerKind" → DB: "owner_kind"
-	OwnerID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerId" → DB: "owner_id"
-	Attempt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attempt" → DB: "attempt"
-	Kind           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
-	Status         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	StepKey        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stepKey" → DB: "step_key"
-	ToolName       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
-	CallID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "callId" → DB: "call_id"
-	Arguments      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "arguments" → DB: "arguments"
-	Outcome        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outcome" → DB: "outcome"
-	Version        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	OwnerKind              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerKind" → DB: "owner_kind"
+	OwnerID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerId" → DB: "owner_id"
+	Attempt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attempt" → DB: "attempt"
+	Kind                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
+	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	StepKey                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "stepKey" → DB: "step_key"
+	ToolName               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "toolName" → DB: "tool_name"
+	CallID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "callId" → DB: "call_id"
+	Arguments              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "arguments" → DB: "arguments"
+	Outcome                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outcome" → DB: "outcome"
+	TraceID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
+	SpanID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "spanId" → DB: "span_id"
+	AgentDefinitionID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	AgentDefinitionVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionVersion" → DB: "agent_definition_version"
+	DelegateCallID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateCallId" → DB: "delegate_call_id"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -1816,6 +1929,21 @@ var AgentRunStepFilter = struct {
 	},
 	Outcome: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("outcome", op, value)
+	},
+	TraceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("traceId", op, value)
+	},
+	SpanID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("spanId", op, value)
+	},
+	AgentDefinitionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentDefinitionId", op, value)
+	},
+	AgentDefinitionVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentDefinitionVersion", op, value)
+	},
+	DelegateCallID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("delegateCallId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
