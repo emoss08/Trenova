@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
@@ -15,9 +16,26 @@ type AccountingTokenGrant struct {
 	RefreshTokenTTL time.Duration
 }
 
+var ErrAccountingAppRejected = errors.New("the accounting system did not accept the app's client id or secret")
+
+type AccountingApp struct {
+	Source               accountingsync.AppSource
+	Environment          accountingsync.AppEnvironment
+	ClientID             string
+	ClientSecret         string
+	WebhookVerifierToken string
+}
+
+func (a *AccountingApp) Identity() accountingsync.AppIdentity {
+	return accountingsync.AppIdentity{
+		Source:      a.Source,
+		Environment: a.Environment,
+		Fingerprint: accountingsync.AppFingerprint(a.Environment, a.ClientID),
+	}
+}
+
 type AccountingConnector interface {
 	IntegrationType() integration.Type
-	Available() bool
 	AuthorizeURL(state string) (string, error)
 	ExchangeCode(ctx context.Context, code string) (*AccountingTokenGrant, error)
 	Refresh(ctx context.Context, refreshToken string) (*AccountingTokenGrant, error)
@@ -26,14 +44,23 @@ type AccountingConnector interface {
 		ctx context.Context,
 		realmID, accessToken string,
 	) (*accountingsync.CompanyFacts, error)
+	VerifyApp(ctx context.Context) error
 	VerifyWebhook(signature string, body []byte) error
+	ClassifyError(err error) accountingsync.ErrorCategory
+}
+
+type AccountingProvider interface {
+	IntegrationType() integration.Type
+	InstanceApp() (*AccountingApp, bool)
+	RedirectURL() string
+	Bind(app *AccountingApp) (AccountingConnector, error)
 	WebhookRealmIDs(body []byte) ([]string, error)
 	WebhookSignatureHeader() string
 	ClassifyError(err error) accountingsync.ErrorCategory
 }
 
 type AccountingConnectorRegistry interface {
-	For(typ integration.Type) (AccountingConnector, bool)
+	For(typ integration.Type) (AccountingProvider, bool)
 }
 
 type AccountingReferencePageRequest struct {

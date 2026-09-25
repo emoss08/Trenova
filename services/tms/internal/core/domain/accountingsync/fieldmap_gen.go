@@ -4,6 +4,13 @@ package accountingsync
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingAppCredential].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AccountingAppCredentialFieldMap] instead of parsing struct tags via reflection.
+func (e *AccountingAppCredential) GetStaticFieldMap() map[string]string {
+	return buncolgen.AccountingAppCredentialFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingBackfill].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.AccountingBackfillFieldMap] instead of parsing struct tags via reflection.

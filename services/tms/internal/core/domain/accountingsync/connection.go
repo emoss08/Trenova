@@ -34,6 +34,9 @@ type AccountingConnection struct {
 	IntegrationType               integration.Type `json:"integrationType"               bun:"integration_type,type:VARCHAR(50),notnull"`
 	Status                        ConnectionStatus `json:"status"                        bun:"status,type:VARCHAR(20),notnull"`
 	ExternalRealmID               string           `json:"externalRealmId"               bun:"external_realm_id,type:VARCHAR(100),notnull"`
+	AppSource                     AppSource        `json:"appSource"                     bun:"app_source,type:VARCHAR(20),nullzero,notnull,default:'Instance'"`
+	AppEnvironment                AppEnvironment   `json:"appEnvironment"                bun:"app_environment,type:VARCHAR(20),nullzero"`
+	AppFingerprint                string           `json:"-"                             bun:"app_fingerprint,type:VARCHAR(64),nullzero"`
 	ExternalCompanyName           string           `json:"externalCompanyName"           bun:"external_company_name,type:VARCHAR(255),nullzero"`
 	ExternalLegalName             string           `json:"externalLegalName"             bun:"external_legal_name,type:VARCHAR(255),nullzero"`
 	ExternalCountry               string           `json:"externalCountry"               bun:"external_country,type:VARCHAR(10),nullzero"`
@@ -116,6 +119,13 @@ func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Company id is required"),
 			validation.Length(1, 100),
 		),
+		validation.Field(&c.AppSource,
+			validation.Required.Error("App source is required"),
+			domainvalidation.ValidEnum[AppSource]("App source is not recognized"),
+		),
+		validation.Field(&c.AppEnvironment,
+			domainvalidation.ValidEnum[AppEnvironment]("App environment is not recognized"),
+		),
 		validation.Field(&c.ExternalHomeCurrency, validation.Length(0, 3)),
 		validation.Field(&c.LastErrorCategory,
 			domainvalidation.ValidEnum[ErrorCategory]("Error category is not recognized"),
@@ -183,6 +193,28 @@ func (c *AccountingConnection) AccessTokenExpiresWithin(now, window int64) bool 
 func (c *AccountingConnection) RefreshTokenNearAbsoluteExpiry(now int64) bool {
 	return c.RefreshTokenAbsoluteExpiresAt > 0 &&
 		c.RefreshTokenAbsoluteExpiresAt-now <= RefreshTokenWarningWindow
+}
+
+type AppIdentity struct {
+	Source      AppSource
+	Environment AppEnvironment
+	Fingerprint string
+}
+
+func (c *AccountingConnection) BindApp(app AppIdentity) {
+	c.AppSource = app.Source
+	c.AppEnvironment = app.Environment
+	c.AppFingerprint = app.Fingerprint
+}
+
+func (c *AccountingConnection) ConnectedThrough(app AppIdentity) bool {
+	if c.AppSource != app.Source {
+		return false
+	}
+	if c.AppFingerprint == "" {
+		return app.Source == AppSourceInstance
+	}
+	return c.AppFingerprint == app.Fingerprint
 }
 
 func (c *AccountingConnection) Connect(userID pulid.ID, grant TokenGrant, now int64) {

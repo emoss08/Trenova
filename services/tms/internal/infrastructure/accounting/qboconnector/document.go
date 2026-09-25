@@ -56,9 +56,6 @@ func (c *Connector) DocumentURL(kind accountingsync.SyncObjectType, externalID s
 }
 
 func (c *Connector) client(auth services.AccountingDocumentAuth) (*quickbooks.Client, error) {
-	if !c.Available() {
-		return nil, ErrNotConfigured
-	}
 	return quickbooks.New(c.env, auth.RealmID, auth.AccessToken, c.apiOpts...)
 }
 

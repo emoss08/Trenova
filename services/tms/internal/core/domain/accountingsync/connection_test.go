@@ -20,6 +20,11 @@ func connected(t *testing.T) *accountingsync.AccountingConnection {
 		IntegrationType: integration.TypeQuickBooksOnline,
 		ExternalRealmID: "9341452431742015",
 	}
+	conn.BindApp(accountingsync.AppIdentity{
+		Source:      accountingsync.AppSourceInstance,
+		Environment: accountingsync.AppEnvironmentSandbox,
+		Fingerprint: accountingsync.AppFingerprint(accountingsync.AppEnvironmentSandbox, "client"),
+	})
 	conn.Connect(pulid.MustNew("usr_"), accountingsync.TokenGrant{
 		AccessTokenCiphertext:  "access",
 		AccessTokenExpiresAt:   now + 3600,

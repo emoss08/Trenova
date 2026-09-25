@@ -24,6 +24,209 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// AccountingAppCredential — table "accounting_app_credentials", alias "acctapp"
+// ---------------------------------------------------------------------------
+
+// AccountingAppCredentialTable holds the table name, alias, and primary key columns
+// for the "accounting_app_credentials" table. The alias "acctapp" is used in all generated
+// SQL fragments (e.g. "acctapp.id = ?").
+var AccountingAppCredentialTable = TableInfo{
+	Name:       "accounting_app_credentials",
+	Alias:      "acctapp",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AccountingAppCredentialColumns provides type-safe column references for the "accounting_app_credentials" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AccountingAppCredentialColumns.ID.String())
+//	// SELECT acctapp.id FROM accounting_app_credentials AS acctapp
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AccountingAppCredentialColumns.ID.Eq(), id)           // WHERE acctapp.id = ?
+//	q.Order(AccountingAppCredentialColumns.CreatedAt.OrderDesc())  // ORDER BY acctapp.created_at DESC
+var AccountingAppCredentialColumns = struct {
+	ID                        Column // "id" → qualified: "acctapp.id"
+	BusinessUnitID            Column // "business_unit_id" → qualified: "acctapp.business_unit_id"
+	OrganizationID            Column // "organization_id" → qualified: "acctapp.organization_id"
+	IntegrationType           Column // "integration_type" → qualified: "acctapp.integration_type"
+	Environment               Column // "environment" → qualified: "acctapp.environment"
+	ClientID                  Column // "client_id" → qualified: "acctapp.client_id"
+	ClientSecretCiphertext    Column // "client_secret_ciphertext" → qualified: "acctapp.client_secret_ciphertext"
+	WebhookVerifierCiphertext Column // "webhook_verifier_ciphertext" → qualified: "acctapp.webhook_verifier_ciphertext"
+	Fingerprint               Column // "fingerprint" → qualified: "acctapp.fingerprint"
+	UpdatedByID               Column // "updated_by_id" → qualified: "acctapp.updated_by_id"
+	Version                   Column // "version" → qualified: "acctapp.version"
+	CreatedAt                 Column // "created_at" → qualified: "acctapp.created_at"
+	UpdatedAt                 Column // "updated_at" → qualified: "acctapp.updated_at"
+}{
+	ID:                        NewColumn("id", "acctapp"),
+	BusinessUnitID:            NewColumn("business_unit_id", "acctapp"),
+	OrganizationID:            NewColumn("organization_id", "acctapp"),
+	IntegrationType:           NewColumn("integration_type", "acctapp"),
+	Environment:               NewColumn("environment", "acctapp"),
+	ClientID:                  NewColumn("client_id", "acctapp"),
+	ClientSecretCiphertext:    NewColumn("client_secret_ciphertext", "acctapp"),
+	WebhookVerifierCiphertext: NewColumn("webhook_verifier_ciphertext", "acctapp"),
+	Fingerprint:               NewColumn("fingerprint", "acctapp"),
+	UpdatedByID:               NewColumn("updated_by_id", "acctapp"),
+	Version:                   NewColumn("version", "acctapp"),
+	CreatedAt:                 NewColumn("created_at", "acctapp"),
+	UpdatedAt:                 NewColumn("updated_at", "acctapp"),
+}
+
+// AccountingAppCredentialFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AccountingAppCredential.GetStaticFieldMap().
+var AccountingAppCredentialFieldMap = map[string]string{
+	"id":              "id",
+	"businessUnitId":  "business_unit_id",
+	"organizationId":  "organization_id",
+	"integrationType": "integration_type",
+	"environment":     "environment",
+	"clientId":        "client_id",
+	"fingerprint":     "fingerprint",
+	"updatedById":     "updated_by_id",
+	"version":         "version",
+	"createdAt":       "created_at",
+	"updatedAt":       "updated_at",
+}
+
+// AccountingAppCredentialInsertableColumns lists column names suitable for INSERT statements on the "accounting_app_credentials" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AccountingAppCredentialInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"integration_type",
+	"environment",
+	"client_id",
+	"client_secret_ciphertext",
+	"webhook_verifier_ciphertext",
+	"fingerprint",
+	"updated_by_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AccountingAppCredentialRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AccountingAppCredentialRelations.Organization)
+//	// Bun eager-loads the Organization association via a separate query
+var AccountingAppCredentialRelations = struct {
+	Organization string
+	BusinessUnit string
+	UpdatedBy    string
+}{
+	Organization: "Organization",
+	BusinessUnit: "BusinessUnit",
+	UpdatedBy:    "UpdatedBy",
+}
+
+// AccountingAppCredentialScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE acctapp.organization_id = ? AND acctapp.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AccountingAppCredentialScopeTenant(sq, ti).
+//		Where(buncolgen.AccountingAppCredentialColumns.ID.Eq(), id)
+func AccountingAppCredentialScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AccountingAppCredentialColumns.OrganizationID, AccountingAppCredentialColumns.BusinessUnitID, ti)
+}
+
+// AccountingAppCredentialScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AccountingAppCredentialScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AccountingAppCredentialColumns.ID.In(), bun.List(ids))
+//	})
+func AccountingAppCredentialScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AccountingAppCredentialColumns.OrganizationID, AccountingAppCredentialColumns.BusinessUnitID, ti)
+}
+
+// AccountingAppCredentialScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AccountingAppCredentialScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AccountingAppCredentialColumns.ID.Eq(), id)
+//	})
+func AccountingAppCredentialScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AccountingAppCredentialColumns.OrganizationID, AccountingAppCredentialColumns.BusinessUnitID, ti)
+}
+
+// AccountingAppCredentialApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AccountingAppCredentialApplyTenant(tenantInfo))
+func AccountingAppCredentialApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AccountingAppCredentialColumns.OrganizationID, AccountingAppCredentialColumns.BusinessUnitID, ti)
+}
+
+// AccountingAppCredentialFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "accounting_app_credentials" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AccountingAppCredentialFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AccountingAppCredentialFilter = struct {
+	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	IntegrationType func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "integrationType" → DB: "integration_type"
+	Environment     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "environment" → DB: "environment"
+	ClientID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "clientId" → DB: "client_id"
+	Fingerprint     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fingerprint" → DB: "fingerprint"
+	UpdatedByID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedById" → DB: "updated_by_id"
+	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	IntegrationType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("integrationType", op, value)
+	},
+	Environment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("environment", op, value)
+	},
+	ClientID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("clientId", op, value)
+	},
+	Fingerprint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fingerprint", op, value)
+	},
+	UpdatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedById", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // AccountingBackfill — table "accounting_backfills", alias "acctbf"
 // ---------------------------------------------------------------------------
 
@@ -293,6 +496,9 @@ var AccountingConnectionColumns = struct {
 	IntegrationType               Column // "integration_type" → qualified: "acctc.integration_type"
 	Status                        Column // "status" → qualified: "acctc.status"
 	ExternalRealmID               Column // "external_realm_id" → qualified: "acctc.external_realm_id"
+	AppSource                     Column // "app_source" → qualified: "acctc.app_source"
+	AppEnvironment                Column // "app_environment" → qualified: "acctc.app_environment"
+	AppFingerprint                Column // "app_fingerprint" → qualified: "acctc.app_fingerprint"
 	ExternalCompanyName           Column // "external_company_name" → qualified: "acctc.external_company_name"
 	ExternalLegalName             Column // "external_legal_name" → qualified: "acctc.external_legal_name"
 	ExternalCountry               Column // "external_country" → qualified: "acctc.external_country"
@@ -336,6 +542,9 @@ var AccountingConnectionColumns = struct {
 	IntegrationType:               NewColumn("integration_type", "acctc"),
 	Status:                        NewColumn("status", "acctc"),
 	ExternalRealmID:               NewColumn("external_realm_id", "acctc"),
+	AppSource:                     NewColumn("app_source", "acctc"),
+	AppEnvironment:                NewColumn("app_environment", "acctc"),
+	AppFingerprint:                NewColumn("app_fingerprint", "acctc"),
 	ExternalCompanyName:           NewColumn("external_company_name", "acctc"),
 	ExternalLegalName:             NewColumn("external_legal_name", "acctc"),
 	ExternalCountry:               NewColumn("external_country", "acctc"),
@@ -385,6 +594,8 @@ var AccountingConnectionFieldMap = map[string]string{
 	"integrationType":               "integration_type",
 	"status":                        "status",
 	"externalRealmId":               "external_realm_id",
+	"appSource":                     "app_source",
+	"appEnvironment":                "app_environment",
 	"externalCompanyName":           "external_company_name",
 	"externalLegalName":             "external_legal_name",
 	"externalCountry":               "external_country",
@@ -430,6 +641,9 @@ var AccountingConnectionInsertableColumns = []string{
 	"integration_type",
 	"status",
 	"external_realm_id",
+	"app_source",
+	"app_environment",
+	"app_fingerprint",
 	"external_company_name",
 	"external_legal_name",
 	"external_country",
@@ -543,6 +757,8 @@ var AccountingConnectionFilter = struct {
 	IntegrationType               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "integrationType" → DB: "integration_type"
 	Status                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	ExternalRealmID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalRealmId" → DB: "external_realm_id"
+	AppSource                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appSource" → DB: "app_source"
+	AppEnvironment                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appEnvironment" → DB: "app_environment"
 	ExternalCompanyName           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalCompanyName" → DB: "external_company_name"
 	ExternalLegalName             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalLegalName" → DB: "external_legal_name"
 	ExternalCountry               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalCountry" → DB: "external_country"
@@ -595,6 +811,12 @@ var AccountingConnectionFilter = struct {
 	},
 	ExternalRealmID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("externalRealmId", op, value)
+	},
+	AppSource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("appSource", op, value)
+	},
+	AppEnvironment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("appEnvironment", op, value)
 	},
 	ExternalCompanyName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("externalCompanyName", op, value)
