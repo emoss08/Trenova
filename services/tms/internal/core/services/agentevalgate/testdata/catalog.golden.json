@@ -3842,7 +3842,7 @@
     },
     {
       "name": "get_record_accounting_sync_state",
-      "description": "Get whether Trenova invoices, credit and debit memos, customer payments, customers, carrier and owner-operator settlements, carriers or drivers reached the accounting system, by their Trenova ids. A settlement is sent as a bill and its payment as a bill payment; the answer shows whichever needs attention, else the latest. Each answer says whether the document is tracked, its current sync record with status and resolution, and what that means. Use it when asked whether a particular document synced; a document with no record was never sent, usually because sending had not started or it is dated before the start date.",
+      "description": "Get whether Trenova documents or parties reached the accounting system, by their Trenova ids. It covers invoices, credit and debit memos, customer payments, customers, carrier and owner-operator settlements, carriers and drivers. A settlement is sent as a bill and its payment as a bill payment; the answer shows whichever needs attention, else the latest. Each answer says whether the document is tracked, its current sync record with status and resolution, and what that means. Use it when asked whether a particular document synced; a document with no record was never sent, usually because sending had not started or it is dated before the start date.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -10717,7 +10717,7 @@
     },
     {
       "name": "request_accounting_backfill",
-      "description": "Backfill the accounting system with older invoices, memos, payments and settlements: those dated from the start date up to the day sync began, which no live posting sent. Narrow it by from and to dates and documentTypes. Use it only when a person asks for history in the books, and ask whether any of it was already entered there by hand, because those would arrive twice. One backfill runs at a time.",
+      "description": "Backfill the accounting system with older invoices, memos, payments and settlements. It sends those dated from the start date up to the day sync began, which no live posting sent. Narrow it by from and to dates and documentTypes. Use it only when a person asks for history in the books, and ask whether any of it was already entered there by hand, because those would arrive twice. One backfill runs at a time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {

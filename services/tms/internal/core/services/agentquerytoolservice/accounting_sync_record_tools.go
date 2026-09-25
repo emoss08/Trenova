@@ -457,9 +457,10 @@ func (t *getRecordAccountingSyncStateTool) Name() string {
 }
 
 func (t *getRecordAccountingSyncStateTool) Description() string {
-	return "Get whether Trenova invoices, credit and debit memos, customer payments, " +
-		"customers, carrier and owner-operator settlements, carriers or drivers reached the " +
-		"accounting system, by their Trenova ids. A settlement is sent as a bill and its " +
+	return "Get whether Trenova documents or parties reached the accounting system, by " +
+		"their Trenova ids. It covers invoices, credit and debit memos, customer payments, " +
+		"customers, carrier and owner-operator settlements, carriers and drivers. A " +
+		"settlement is sent as a bill and its " +
 		"payment as a bill payment; the answer shows whichever needs attention, else the " +
 		"latest. Each answer says " +
 		"whether the document is tracked, its current sync record with status and " +
