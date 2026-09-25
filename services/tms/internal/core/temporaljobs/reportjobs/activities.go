@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
@@ -21,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/reporting/render"
+	"github.com/emoss08/trenova/internal/infrastructure/storage/uploadpipe"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -512,31 +512,33 @@ func (a *Activities) renderToStorage(
 		"run-id":          prepared.RunID.String(),
 	}
 
-	artifact := a.openUploadPipe(ctx, uploadPipeParams{
+	artifact := uploadpipe.Open(ctx, a.storage, uploadpipe.Params{
 		Key:         artifactKey,
 		ContentType: prepared.Format.ContentType(),
 		Metadata:    objectMetadata,
+		MaxBytes:    a.cfg.GetMaxArtifactBytes(),
 	})
 
 	// The sidecar rides the same pass over the rows. It cannot be a second
 	// render: the dataset is a forward-only cursor, and re-running the query
 	// would give two results free to disagree.
 	rowsKey := artifactKey + rowsSidecarSuffix
-	rowsUpload := a.openUploadPipe(ctx, uploadPipeParams{
+	rowsUpload := uploadpipe.Open(ctx, a.storage, uploadpipe.Params{
 		Key:         rowsKey,
 		ContentType: report.FormatJSON.ContentType(),
 		Metadata:    objectMetadata,
+		MaxBytes:    a.cfg.GetMaxArtifactBytes(),
 	})
-	sidecar := render.NewRowsSidecar(dataset, rowsUpload.sink, meta)
+	sidecar := render.NewRowsSidecar(dataset, rowsUpload.Writer(), meta)
 
 	stats, renderErr := renderer.Render(ctx, &services.ReportRenderRequest{
 		Dataset: sidecar,
-		Sink:    artifact.sink,
+		Sink:    artifact.Writer(),
 		Meta:    meta,
 	})
 	if renderErr != nil {
-		rowsUpload.abort(renderErr)
-		artifact.abort(renderErr)
+		rowsUpload.Abort(renderErr)
+		artifact.Abort(renderErr)
 
 		if errors.Is(renderErr, errArtifactTooLarge) {
 			return nil, temporal.NewNonRetryableApplicationError(
@@ -553,7 +555,7 @@ func (a *Activities) renderToStorage(
 
 	rowsKey = a.closeRowsSidecar(ctx, sidecar, rowsUpload, rowsKey)
 
-	uploadedBytes, err := artifact.close()
+	uploadedBytes, err := artifact.Close()
 	if err != nil {
 		return nil, fmt.Errorf("upload report artifact: %w", err)
 	}
@@ -576,14 +578,14 @@ func (a *Activities) renderToStorage(
 func (a *Activities) closeRowsSidecar(
 	ctx context.Context,
 	sidecar *render.RowsSidecar,
-	upload *uploadPipe,
+	upload *uploadpipe.Pipe,
 	rowsKey string,
 ) string {
 	err := sidecar.Finish(ctx)
 	if err == nil {
-		_, err = upload.close()
+		_, err = upload.Close()
 	} else {
-		upload.abort(err)
+		upload.Abort(err)
 	}
 	if err == nil {
 		return rowsKey
@@ -598,75 +600,6 @@ func (a *Activities) closeRowsSidecar(
 	}
 
 	return ""
-}
-
-type uploadPipeParams struct {
-	Key         string
-	ContentType string
-	Metadata    map[string]string
-}
-
-// uploadPipe streams what is written to sink straight into object storage. A
-// report is rendered row by row precisely so it never has to fit in memory,
-// and buffering it here to learn its length first would undo that.
-type uploadPipe struct {
-	sink   io.Writer
-	writer *io.PipeWriter
-	done   chan error
-	bytes  int64
-}
-
-func (a *Activities) openUploadPipe(
-	ctx context.Context,
-	params uploadPipeParams,
-) *uploadPipe {
-	pipeReader, pipeWriter := io.Pipe()
-	pipe := &uploadPipe{
-		sink:   &limitWriter{inner: pipeWriter, remaining: a.cfg.GetMaxArtifactBytes()},
-		writer: pipeWriter,
-		done:   make(chan error, 1),
-	}
-
-	go func() {
-		info, err := a.storage.Upload(ctx, &storage.UploadParams{
-			Key:         params.Key,
-			ContentType: params.ContentType,
-			Size:        -1,
-			Body:        pipeReader,
-			Metadata:    params.Metadata,
-		})
-		if err != nil {
-			pipeReader.CloseWithError(err)
-			pipe.done <- err
-
-			return
-		}
-		pipe.bytes = info.Size
-		pipe.done <- nil
-	}()
-
-	return pipe
-}
-
-// close ends the stream and waits for the upload, returning the stored size.
-func (p *uploadPipe) close() (int64, error) {
-	if err := p.writer.Close(); err != nil {
-		<-p.done
-
-		return 0, err
-	}
-	if err := <-p.done; err != nil {
-		return 0, err
-	}
-
-	return p.bytes, nil
-}
-
-// abort tears the stream down and waits for the upload goroutine, so a failed
-// render never leaves one running past the activity.
-func (p *uploadPipe) abort(cause error) {
-	_ = p.writer.CloseWithError(cause)
-	<-p.done
 }
 
 func (a *Activities) FinalizeRunActivity(
@@ -937,21 +870,7 @@ func (a *Activities) ReconcileZombieRunsActivity(
 	return result, nil
 }
 
-var errArtifactTooLarge = errors.New("report artifact exceeds the maximum size")
-
-type limitWriter struct {
-	inner     io.Writer
-	remaining int64
-}
-
-func (w *limitWriter) Write(p []byte) (int, error) {
-	if int64(len(p)) > w.remaining {
-		return 0, errArtifactTooLarge
-	}
-	n, err := w.inner.Write(p)
-	w.remaining -= int64(n)
-	return n, err
-}
+var errArtifactTooLarge = uploadpipe.ErrTooLarge
 
 // wrapReader layers the activity's concerns over the raw dataset: heartbeats so
 // a long render is not killed, and — only when a schedule renders an inline
@@ -961,42 +880,15 @@ func wrapReader(
 	reader services.ReportDatasetReader,
 	prepared *PreparedRun,
 ) (services.ReportDatasetReader, *digestReader) {
-	var source services.ReportDatasetReader = &heartbeatingReader{inner: reader, ctx: ctx}
+	var source services.ReportDatasetReader = uploadpipe.NewHeartbeatingReader(
+		ctx, reader, heartbeatEveryRows, activity.RecordHeartbeat,
+	)
 	if !prepared.WantDigest {
 		return source, nil
 	}
 	digesting := newDigestReader(source, services.MaxDigestRows)
 	return digesting, digesting
 }
-
-type heartbeatingReader struct {
-	inner services.ReportDatasetReader
-	ctx   context.Context
-	rows  int64
-}
-
-func (r *heartbeatingReader) Schema() []services.ReportResultColumn { return r.inner.Schema() }
-
-func (r *heartbeatingReader) Next(ctx context.Context) (services.ReportRow, error) {
-	row, err := r.inner.Next(ctx)
-	if err == nil {
-		r.rows++
-		if r.rows%heartbeatEveryRows == 0 {
-			activity.RecordHeartbeat(r.ctx, r.rows)
-		}
-	}
-	return row, err
-}
-
-func (r *heartbeatingReader) Totals(ctx context.Context) (services.ReportRow, error) {
-	return r.inner.Totals(ctx)
-}
-
-func (r *heartbeatingReader) RowCount() int64 { return r.inner.RowCount() }
-
-func (r *heartbeatingReader) Truncated() bool { return r.inner.Truncated() }
-
-func (r *heartbeatingReader) Close() error { return r.inner.Close() }
 
 // digestReader captures a bounded prefix of the rows on their way to the
 // renderer, so an inline email digest costs one pass over data the run is
