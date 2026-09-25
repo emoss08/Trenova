@@ -10,6 +10,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 type accountingStatusReader interface {
@@ -20,49 +21,121 @@ type accountingStatusReader interface {
 	) (*serviceports.AccountingSyncStatus, error)
 }
 
+type accountingSyncSummaryReader interface {
+	Summary(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		integrationType integration.Type,
+	) (*serviceports.AccountingSyncSummary, error)
+}
+
+const (
+	sendingNotStarted = "NotStarted"
+	sendingPaused     = "Paused"
+	sendingAutomatic  = "Automatic"
+	sendingOnRelease  = "OnRelease"
+
+	absentNotChosen = "not chosen"
+	absentNotPaused = "not paused"
+
+	queueWithheldReason = "Queue depth needs permission to read the accounting sync ledger."
+)
+
+type accountingSyncStatusCountRow struct {
+	Status string `json:"status"`
+	Count  int    `json:"count"`
+}
+
+type accountingSyncCauseRow struct {
+	Status         string       `json:"status"`
+	ErrorCategory  string       `json:"errorCategory,omitempty"`
+	Resolution     string       `json:"resolution,omitempty"`
+	Count          int          `json:"count"`
+	OldestQueuedOn optionalDate `json:"oldestQueuedOn"`
+	SampleRecordID string       `json:"sampleRecordId,omitempty"`
+}
+
+type accountingBackfillRow struct {
+	ID            string       `json:"id"`
+	Status        string       `json:"status"`
+	From          optionalDate `json:"from"`
+	To            optionalDate `json:"to"`
+	DocumentTypes []string     `json:"documentTypes"`
+	Enqueued      int          `json:"enqueued"`
+	AlreadyQueued int          `json:"alreadyQueued"`
+}
+
+type accountingSyncQueueRow struct {
+	ByStatus       []accountingSyncStatusCountRow `json:"byStatus"`
+	NeedsAttention []accountingSyncCauseRow       `json:"needsAttention"`
+	ActiveBackfill *accountingBackfillRow         `json:"activeBackfill,omitempty"`
+}
+
 type accountingSyncStatusRow struct {
-	ID                  string       `json:"id,omitempty"`
-	System              string       `json:"system"`
-	Provider            string       `json:"provider"`
-	AvailableOnInstance bool         `json:"availableOnInstance"`
-	Connected           bool         `json:"connected"`
-	Status              string       `json:"status"`
-	Company             string       `json:"company,omitempty"`
-	HomeCurrency        string       `json:"homeCurrency,omitempty"`
-	MultiCurrency       bool         `json:"multiCurrency"`
-	BooksClosedThrough  optionalDate `json:"booksClosedThrough"`
-	LastCheckedOn       optionalDate `json:"lastCheckedOn"`
-	LastSuccessOn       optionalDate `json:"lastSuccessOn"`
-	ConsecutiveFailures int          `json:"consecutiveFailures"`
-	LastErrorCategory   string       `json:"lastErrorCategory,omitempty"`
-	LastError           string       `json:"lastError,omitempty"`
-	ReconnectBy         optionalDate `json:"reconnectBy"`
-	LastWebhookOn       optionalDate `json:"lastWebhookOn"`
-	SetupPath           string       `json:"setupPath"`
-	WhatThisMeans       string       `json:"whatThisMeans"`
+	ID                  string                  `json:"id,omitempty"`
+	System              string                  `json:"system"`
+	Provider            string                  `json:"provider"`
+	AvailableOnInstance bool                    `json:"availableOnInstance"`
+	Connected           bool                    `json:"connected"`
+	Status              string                  `json:"status"`
+	Company             string                  `json:"company,omitempty"`
+	HomeCurrency        string                  `json:"homeCurrency,omitempty"`
+	MultiCurrency       bool                    `json:"multiCurrency"`
+	BooksClosedThrough  optionalDate            `json:"booksClosedThrough"`
+	LastCheckedOn       optionalDate            `json:"lastCheckedOn"`
+	LastSuccessOn       optionalDate            `json:"lastSuccessOn"`
+	ConsecutiveFailures int                     `json:"consecutiveFailures"`
+	LastErrorCategory   string                  `json:"lastErrorCategory,omitempty"`
+	LastError           string                  `json:"lastError,omitempty"`
+	ReconnectBy         optionalDate            `json:"reconnectBy"`
+	LastWebhookOn       optionalDate            `json:"lastWebhookOn"`
+	Sending             string                  `json:"sending"`
+	StartDate           optionalDate            `json:"startDate"`
+	AutomaticSending    bool                    `json:"automaticSending"`
+	PausedOn            optionalDate            `json:"pausedOn"`
+	PausedReason        string                  `json:"pausedReason,omitempty"`
+	SetupPath           string                  `json:"setupPath"`
+	WhatThisMeans       string                  `json:"whatThisMeans"`
+	Queue               *accountingSyncQueueRow `json:"queue,omitempty"`
+	QueueWithheld       string                  `json:"queueWithheld,omitempty"`
 }
 
 type getAccountingSyncStatusTool struct {
 	accounting accountingStatusReader
+	sync       accountingSyncSummaryReader
+	access     fieldAccess
 }
 
-func newGetAccountingSyncStatusTool(accounting accountingStatusReader) serviceports.AgentQueryTool {
-	return &getAccountingSyncStatusTool{accounting: accounting}
+func newGetAccountingSyncStatusTool(
+	accounting accountingStatusReader,
+	sync accountingSyncSummaryReader,
+	permissions serviceports.PermissionEngine,
+) serviceports.AgentQueryTool {
+	return &getAccountingSyncStatusTool{
+		accounting: accounting,
+		sync:       sync,
+		access:     newFieldAccess(permissions),
+	}
 }
 
 func provideGetAccountingSyncStatusTool(
 	accounting serviceports.AccountingConnectionService,
+	sync serviceports.AccountingSyncService,
+	permissions serviceports.PermissionEngine,
 ) serviceports.AgentQueryTool {
-	return newGetAccountingSyncStatusTool(accounting)
+	return newGetAccountingSyncStatusTool(accounting, sync, permissions)
 }
 
 func (t *getAccountingSyncStatusTool) Name() string { return "get_accounting_sync_status" }
 
 func (t *getAccountingSyncStatusTool) Description() string {
 	return "Get whether the accounting system is connected, to which company, and why it last failed. " +
-		"It also says when it last answered and when the authorization must be renewed. Use it " +
-		"before explaining why something did not reach the books, or when asked whether " +
-		"QuickBooks is connected. It returns status and dates, never credentials."
+		"It also says when it last answered, when the authorization must be renewed, and " +
+		"whether documents are being sent: sending is NotStarted, Paused, Automatic, or " +
+		"OnRelease when each document waits for a person to release it, with the start " +
+		"date. Once sending has started, queue counts how many documents are in each sync " +
+		"status and groups those needing attention by cause. Use it before explaining why " +
+		"something did not reach the books. It returns status and dates, never credentials."
 }
 
 func (t *getAccountingSyncStatusTool) ParamSchema() map[string]any {
@@ -91,12 +164,77 @@ func (t *getAccountingSyncStatusTool) Query(
 		return nil, fmt.Errorf("system must be %q", integration.TypeQuickBooksOnline)
 	}
 
-	status, err := t.accounting.Status(ctx, tenantOf(params), system)
+	tenant := tenantOf(params)
+	status, err := t.accounting.Status(ctx, tenant, system)
 	if err != nil {
 		return nil, err
 	}
 
-	return accountingSyncStatusRowFrom(status), nil
+	row := accountingSyncStatusRowFrom(status)
+	if status.Connection == nil || !status.Connection.IsSyncing() {
+		return row, nil
+	}
+	if !t.access.mayRead(ctx, params, permission.ResourceAccountingSync) {
+		row.QueueWithheld = queueWithheldReason
+		return row, nil
+	}
+
+	summary, err := t.sync.Summary(ctx, tenant, system)
+	if err != nil {
+		return nil, err
+	}
+	row.Queue = accountingSyncQueueFrom(summary)
+
+	return row, nil
+}
+
+func accountingSyncQueueFrom(summary *serviceports.AccountingSyncSummary) *accountingSyncQueueRow {
+	queue := &accountingSyncQueueRow{
+		ByStatus:       make([]accountingSyncStatusCountRow, 0, len(summary.Counts)),
+		NeedsAttention: make([]accountingSyncCauseRow, 0, len(summary.Attention)),
+	}
+	for _, count := range summary.Counts {
+		queue.ByStatus = append(queue.ByStatus, accountingSyncStatusCountRow{
+			Status: string(count.Status),
+			Count:  count.Count,
+		})
+	}
+	for _, group := range summary.Attention {
+		queue.NeedsAttention = append(queue.NeedsAttention, accountingSyncCauseRow{
+			Status:         string(group.Status),
+			ErrorCategory:  string(group.ErrorCategory),
+			Resolution:     group.Resolution,
+			Count:          group.Count,
+			OldestQueuedOn: recordedDate(group.OldestQueuedAt),
+			SampleRecordID: pulidString(group.SampleRecordID),
+		})
+	}
+	if backfill := summary.ActiveBackfill; backfill != nil {
+		queue.ActiveBackfill = &accountingBackfillRow{
+			ID:            backfill.ID.String(),
+			Status:        string(backfill.Status),
+			From:          recordedDate(backfill.RangeStart),
+			To:            recordedDate(backfill.RangeEnd),
+			DocumentTypes: sliceutils.Strings(backfill.ObjectTypes),
+			Enqueued:      backfill.EnqueuedCount,
+			AlreadyQueued: backfill.AlreadyQueuedCount,
+		}
+	}
+
+	return queue
+}
+
+func accountingSending(conn *accountingsync.AccountingConnection) string {
+	switch {
+	case !conn.IsSyncing():
+		return sendingNotStarted
+	case conn.IsPaused():
+		return sendingPaused
+	case conn.AutoSync:
+		return sendingAutomatic
+	default:
+		return sendingOnRelease
+	}
 }
 
 func accountingSyncStatusRowFrom(
@@ -112,6 +250,9 @@ func accountingSyncStatusRowFrom(
 	conn := status.Connection
 	if conn == nil {
 		row.Status = "NeverConnected"
+		row.Sending = sendingNotStarted
+		row.StartDate = expectedDate(0, absentNotChosen)
+		row.PausedOn = expectedDate(0, absentNotPaused)
 		row.WhatThisMeans = accountingStatusMeaning(status, "")
 		return row
 	}
@@ -130,6 +271,11 @@ func accountingSyncStatusRowFrom(
 	row.LastError = conn.AgentErrorSummary()
 	row.ReconnectBy = recordedDate(conn.RefreshTokenAbsoluteExpiresAt)
 	row.LastWebhookOn = pointerDate(conn.LastWebhookAt)
+	row.Sending = accountingSending(conn)
+	row.StartDate = expectedDate(derefInt64(conn.SyncStartDate), absentNotChosen)
+	row.AutomaticSending = conn.IsSyncing() && conn.AutoSync
+	row.PausedOn = expectedDate(derefInt64(conn.PausedAt), absentNotPaused)
+	row.PausedReason = conn.PausedReason
 	row.WhatThisMeans = accountingStatusMeaning(status, conn.Status)
 
 	return row

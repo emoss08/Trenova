@@ -90,6 +90,7 @@ var templateIcons = map[Template]string{
 	TemplateInsightAnalyst:      IconCompass,
 	TemplateEDIDesk:             IconFile,
 	TemplateFormulaAssistant:    IconSparkle,
+	TemplateBooksKeeper:         IconReceipt,
 }
 
 func KnownIcons() []string {

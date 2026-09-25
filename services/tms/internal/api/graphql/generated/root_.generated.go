@@ -79194,6 +79194,7 @@ extend type Mutation {
   InsightAnalyst
   EDIDesk
   FormulaAssistant
+  BooksKeeper
 }
 
 enum AgentTriggerMode {

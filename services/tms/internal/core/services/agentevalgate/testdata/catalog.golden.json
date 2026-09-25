@@ -2697,8 +2697,51 @@
       }
     },
     {
+      "name": "get_accounting_sync_record",
+      "description": "Get one accounting sync record with its status, why it last failed and every try. It names the document it sends, gives the plain-language resolution, and the accounting system's document number and link once synced. Use it to explain why a document did not reach the books before retrying or skipping it. It never returns what was sent or any credential.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "syncRecordId": {
+            "description": "The sync record's id, from list_accounting_sync_records, get_record_accounting_sync_state, or the run's subject.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "syncRecordId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "attempts",
+        "tries",
+        "sync error"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "accounting_sync",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "get_accounting_sync_status",
-      "description": "Get whether the accounting system is connected, to which company, and why it last failed. It also says when it last answered and when the authorization must be renewed. Use it before explaining why something did not reach the books, or when asked whether QuickBooks is connected. It returns status and dates, never credentials.",
+      "description": "Get whether the accounting system is connected, to which company, and why it last failed. It also says when it last answered, when the authorization must be renewed, and whether documents are being sent: sending is NotStarted, Paused, Automatic, or OnRelease when each document waits for a person to release it, with the start date. Once sending has started, queue counts how many documents are in each sync status and groups those needing attention by cause. Use it before explaining why something did not reach the books. It returns status and dates, never credentials.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -3792,6 +3835,53 @@
       }
     },
     {
+      "name": "get_record_accounting_sync_state",
+      "description": "Get whether Trenova invoices, credit and debit memos, customer payments or customers reached the accounting system, by their Trenova ids. Each answer says whether the document is tracked, its current sync record with status and resolution, and what that means. Use it when asked whether a particular document synced; a document with no record was never sent, usually because sending had not started or it is dated before the start date.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "documentIds": {
+            "description": "Up to 50 Trenova document ids, from list_invoices, get_invoice or list_customer_payments, or the record on screen.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "required": [
+          "documentIds"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "reach",
+        "synced",
+        "did it sync"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "accounting_sync",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "get_report_run",
       "description": "Check on a report started by run_report, when the person asks a question about the run that its own progress display does not answer. Returns whether it has finished, how many rows it produced with a sample of the first, and why it failed if it did. The conversation already shows progress and offers the download, so do not call this on a loop to wait for a result. A run that is still queued or running has no rows yet — say so rather than guessing at figures.",
       "parameters": {
@@ -4499,8 +4589,130 @@
       }
     },
     {
+      "name": "list_accounting_sync_records",
+      "description": "List the documents Trenova sends to the accounting system and where each stands, newest first. Filter by status, such as Blocked and DeadLettered for what did not reach the books, by document type, by error category, by one Trenova document, or search document numbers. Each row has its status, the error category, the plain-language resolution, how many tries it took and the accounting system's document number once synced. Pass a row's id to get_accounting_sync_record for its tries, or to retry_accounting_sync once the cause is fixed.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "type": "string"
+          },
+          "documentId": {
+            "description": "Only the records of one Trenova document, by its id from list_invoices, get_invoice or list_customer_payments.",
+            "type": "string"
+          },
+          "documentType": {
+            "description": "Only these kinds of document.",
+            "items": {
+              "description": "A document type.",
+              "enum": [
+                "Customer",
+                "Invoice",
+                "CreditMemo",
+                "DebitMemo",
+                "CustomerPayment",
+                "CreditApplication"
+              ],
+              "type": "string"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "errorCategory": {
+            "description": "Only records that last failed for these reasons.",
+            "items": {
+              "description": "An error category.",
+              "enum": [
+                "Transient",
+                "RateLimited",
+                "Auth",
+                "Validation",
+                "Mapping",
+                "ClosedPeriod",
+                "Currency",
+                "Duplicate",
+                "NotFound",
+                "Conflict",
+                "Configuration"
+              ],
+              "type": "string"
+            },
+            "maxItems": 11,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many records to return, at most 50. Defaults to 25.",
+            "type": "integer"
+          },
+          "search": {
+            "description": "Words to find in Trenova or accounting system document numbers.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only records in these statuses. Blocked and DeadLettered need a person; AwaitingApproval waits to be released.",
+            "items": {
+              "description": "A sync status.",
+              "enum": [
+                "Queued",
+                "AwaitingApproval",
+                "InFlight",
+                "Retrying",
+                "Synced",
+                "Blocked",
+                "DeadLettered",
+                "Skipped",
+                "Superseded"
+              ],
+              "type": "string"
+            },
+            "maxItems": 9,
+            "type": "array"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "failed",
+        "blocked",
+        "ledger",
+        "not synced"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "accounting_sync",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_agent_runs",
-      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is still running. get_agent_run reads one in full. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (BillingQueueItem|ShipmentMove|AssistantThread|Shipment|Document|Organization|Insight|BankReceipt|DetentionOccurrence|Worker|CarrierIntelEvent|EDIInboundFile|InboundMessage|Report|Dashboard|AccountingConnection|FormulaTemplate): the kind of record the run worked on; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
+      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is still running. get_agent_run reads one in full. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (BillingQueueItem|ShipmentMove|AssistantThread|Shipment|Document|Organization|Insight|BankReceipt|DetentionOccurrence|Worker|CarrierIntelEvent|EDIInboundFile|InboundMessage|Report|Dashboard|AccountingConnection|FormulaTemplate|AccountingSyncRecord): the kind of record the run worked on; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -8978,6 +9190,7 @@
           "entity": {
             "description": "The kind of record to open, with recordId, instead of a page.",
             "enum": [
+              "accounting_sync_record",
               "agent_run",
               "assistant_thread",
               "billing_queue_item",
@@ -9038,6 +9251,60 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Opens a page in the caller's own browser; nothing changes and nothing is sent."
+      }
+    },
+    {
+      "name": "pause_accounting_sync",
+      "description": "Stop sending documents to the accounting system until someone resumes it. Use it during an accounting system outage, or when a person asks to hold sending, such as while the books are being closed. Nothing is lost: documents keep queueing and go out when resume_accounting_sync runs. Give the reason so others know when to resume.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "description": "Why sending is paused and what would let it resume, in one sentence.",
+            "type": "string"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "pause",
+        "hold sending",
+        "outage"
+      ],
+      "prerequisites": [
+        "get_accounting_sync_status"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_sync",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Holds what is waiting to go to the books; nothing is sent, changed or lost, and resuming sends it on."
       }
     },
     {
@@ -9910,7 +10177,8 @@
               "Report",
               "Dashboard",
               "AccountingConnection",
-              "FormulaTemplate"
+              "FormulaTemplate",
+              "AccountingSyncRecord"
             ],
             "type": "string"
           }
@@ -10430,6 +10698,79 @@
       }
     },
     {
+      "name": "request_accounting_backfill",
+      "description": "Backfill the accounting system with older invoices, memos and payments: those dated from the start date up to the day sync began, which no live posting sent. Narrow it by from and to dates and documentTypes. Use it only when a person asks for history in the books, and ask whether any of it was already entered there by hand, because those would arrive twice. One backfill runs at a time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "documentTypes": {
+            "description": "Only these kinds of document. Defaults to all of them.",
+            "items": {
+              "description": "A document type.",
+              "enum": [
+                "Invoice",
+                "DebitMemo",
+                "CreditMemo",
+                "CustomerPayment",
+                "CreditApplication"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "from": {
+            "description": "The first document date to send, as YYYY-MM-DD. Defaults to the start date.",
+            "type": "string"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          },
+          "to": {
+            "description": "The last document date to send, as YYYY-MM-DD. Defaults to the day sending began.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "backfill",
+        "historical",
+        "history"
+      ],
+      "prerequisites": [
+        "get_accounting_sync_status"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_integration",
+        "operation": "manage",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Sends historical documents to the organization's books, some of which may already be there by hand, and cannot be called back; a person who manages the integration approves it."
+      }
+    },
+    {
       "name": "request_credential_renewal",
       "description": "Ask a driver to renew the papers that are coming due, in one message covering every credential rather than one per certificate. Name each credential and its expiry date. This only asks; it does not record a renewal or change what is on file.",
       "parameters": {
@@ -10703,6 +11044,135 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Resolving a failure generates an EDI 214 to the customer's trading partner carrying the reason chosen."
+      }
+    },
+    {
+      "name": "resume_accounting_sync",
+      "description": "Start sending documents to the accounting system again after it was paused. Everything queued while paused goes out at once, so resume only when a person says the reason for the pause is over, or the outage it was paused for has passed and get_accounting_sync_status shows the connection answering.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "resume",
+        "unpause",
+        "restart sending"
+      ],
+      "prerequisites": [
+        "get_accounting_sync_status"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_sync",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Releases everything held to the organization's books at once, and a person paused it for a reason, so a person approves it; what is sent cannot be called back."
+      }
+    },
+    {
+      "name": "retry_accounting_sync",
+      "description": "Send documents that did not reach the accounting system again. Name the records by syncRecordIds, or retry every record that last failed for the given errorCategories, such as Transient and RateLimited after an outage. Only Blocked, DeadLettered and Retrying records are retried; a document waiting for a person to release it stays waiting. Retry only once the cause in the record's resolution is fixed or the failure was temporary: a record whose cause still stands is refused again. The accounting system recognizes a repeat, so nothing is entered twice.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "errorCategories": {
+            "description": "Retry every retryable record that last failed for one of these reasons.",
+            "items": {
+              "description": "An error category.",
+              "enum": [
+                "Transient",
+                "RateLimited",
+                "Auth",
+                "Validation",
+                "Mapping",
+                "ClosedPeriod",
+                "Currency",
+                "Duplicate",
+                "NotFound",
+                "Conflict",
+                "Configuration"
+              ],
+              "type": "string"
+            },
+            "maxItems": 11,
+            "type": "array"
+          },
+          "syncRecordIds": {
+            "description": "Up to 50 sync record ids, from list_accounting_sync_records or get_record_accounting_sync_state.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "resend",
+        "retry",
+        "push again"
+      ],
+      "prerequisites": [
+        "list_accounting_sync_records",
+        "get_accounting_sync_record"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_sync",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Sends again, to the organization's own books, documents Trenova already decided to send; the accounting system recognizes a repeat by its request id, so nothing is entered twice, and a document held for release stays held."
       }
     },
     {
@@ -11536,6 +12006,57 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "skip_accounting_sync",
+      "description": "Mark one document as intentionally not sent to the accounting system, with the reason. Use it only when a person says the document must stay out of the books, for example because they already entered it by hand. A skipped document is never sent again, so the books will not have it unless someone enters it there. It cannot skip a document already sent or being sent.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "description": "Why the document stays out of the books, in one sentence a bookkeeper would accept.",
+            "type": "string"
+          },
+          "syncRecordId": {
+            "description": "The sync record's id, from list_accounting_sync_records or get_accounting_sync_record.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "syncRecordId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "skip",
+        "exclude",
+        "entered by hand"
+      ],
+      "prerequisites": [
+        "get_accounting_sync_record"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_sync",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Leaves a document out of the organization's books for good; nothing sends it again, so a person approves it."
       }
     },
     {

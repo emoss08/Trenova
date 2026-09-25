@@ -187,6 +187,11 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 			agent.EgressInternal,
 		},
 		"refresh_accounting_reference_data": {agent.EgressInternal},
+		"retry_accounting_sync":             {agent.EgressInternal},
+		"skip_accounting_sync":              {agent.EgressInternal},
+		"pause_accounting_sync":             {agent.EgressInternal},
+		"resume_accounting_sync":            {agent.EgressInternal},
+		"request_accounting_backfill":       {agent.EgressInternal},
 		"add_shipment_comment": {
 			agent.EgressInternal,
 			agent.EgressCustomerVisible,

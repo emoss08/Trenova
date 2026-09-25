@@ -1404,6 +1404,15 @@
       "domain/iam"
     ]
   },
+  "A backfill cannot reach before the start date, {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A backfill cannot reach before the start date; move the start date first": {
     "sites": 1,
     "scope": [
@@ -1411,6 +1420,15 @@
     ],
     "areas": [
       "service/accountingsyncservice"
+    ]
+  },
+  "A backfill covers documents dated from {0} to {1}, the day sending began": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "A backfill covers documents posted between the start date and when sync began": {
@@ -1429,6 +1447,24 @@
     ],
     "areas": [
       "service/accountingsyncservice"
+    ]
+  },
+  "A backfill is already {0} for {1}; it must finish or be cancelled first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "A backfill is started by a person who manages the accounting integration": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "A background handle is required": {
@@ -26216,6 +26252,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Books keeper": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
     ]
   },
   "Boolean": {
@@ -54682,6 +54727,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Documents held, failed or skipped on their way to the accounting system, by the week they were queued, the reason and the kind of document": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/reporting"
     ]
   },
   "Documents must include an expiration date": {
@@ -99445,6 +99499,15 @@
     "areas": [
       "domain/aifeedback",
       "service/aifeedbackservice"
+    ]
+  },
+  "Name the records to retry, or the error categories whose records to retry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Name the report to run": {
@@ -152236,6 +152299,24 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Sending to {0} is already paused: {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "Sending to {0} is not paused": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Sending to {0} is on": {
@@ -207974,6 +208055,15 @@
       "service/documenttemplateservice"
     ]
   },
+  "{0} is not sending documents yet; a person finishes its setup first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} is not sending documents yet; finish its setup first": {
     "sites": 1,
     "scope": [
@@ -208165,6 +208255,15 @@
       "apps/web/hooks"
     ]
   },
+  "{0} is {1} and cannot be skipped": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} is {1} and holds the opening balances carried out of {2}. Reopen {3} first.": {
     "sites": 1,
     "scope": [
@@ -208181,6 +208280,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} is {1}; only Blocked, DeadLettered and Retrying records are retried": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} issued": {
@@ -208546,6 +208654,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} must be a date as YYYY-MM-DD": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} must be a number": {

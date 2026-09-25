@@ -66,3 +66,15 @@ func TestDescribedScalarsCarryTheirTypeAndDescription(t *testing.T) {
 	assert.Equal(t, map[string]any{"type": "boolean", "description": "b"}, Boolean("b"))
 	assert.Equal(t, map[string]any{"type": "integer", "description": "c"}, Integer("c"))
 }
+
+func TestDescribedArrayCarriesItsDescription(t *testing.T) {
+	t.Parallel()
+
+	items := String(0)
+	assert.Equal(t, map[string]any{
+		"type":        "array",
+		"items":       items,
+		"maxItems":    3,
+		"description": "Some ids.",
+	}, DescribedArray("Some ids.", items, 3))
+}

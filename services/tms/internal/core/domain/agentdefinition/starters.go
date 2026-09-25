@@ -413,6 +413,28 @@ var templateStarters = map[Template][]starterQuestion{
 			"list_edi_transfers",
 		),
 	},
+	TemplateBooksKeeper: {
+		ask(
+			"What did not reach the books?",
+			"Which documents did not reach the accounting system, and why?",
+			"list_accounting_sync_records",
+		),
+		ask(
+			"Did this invoice sync?",
+			"Did this invoice reach the accounting system, and if not, what is holding it?",
+			"get_record_accounting_sync_state",
+		),
+		ask(
+			"Which mappings are missing?",
+			"Which mappings are still missing, and which documents are waiting on them?",
+			"list_accounting_mapping_gaps",
+		),
+		ask(
+			"Is the accounting connection healthy?",
+			"Is the accounting system connected and answering, and how many documents are queued?",
+			"get_accounting_sync_status",
+		),
+	},
 	TemplateFormulaAssistant: {
 		ask(
 			"Write a formula",

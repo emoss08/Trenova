@@ -209,6 +209,23 @@ func (r *CursorListResult[T]) CursorValuesAt(index int) ([]any, bool) {
 	return r.CursorValues[index], true
 }
 
+func (r *CursorListResult[T]) NextCursor() (string, error) {
+	if !r.HasNextPage || len(r.Items) == 0 {
+		return "", nil
+	}
+
+	last := len(r.Items) - 1
+	item := r.Items[last]
+	if len(r.CursorSort) == 0 {
+		return EncodeCursorFromEntity(item)
+	}
+	if values, ok := r.CursorValuesAt(last); ok {
+		return EncodeCursorFromEntityWithValues(item, r.CursorSort, values)
+	}
+
+	return EncodeCursorFromEntityWithSort(item, r.CursorSort)
+}
+
 func EncodeCursorFromEntity[T any](item T) (string, error) {
 	id, err := cursorEntityID(item)
 	if err != nil {

@@ -3,6 +3,7 @@ import { SelectField } from "@/components/fields/select-field";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import type { AgentTemplate, AgentTemplateKind } from "@/types/assistant";
 import {
+  BookCheckIcon,
   BellIcon,
   BotIcon,
   ClipboardCheckIcon,
@@ -52,6 +53,7 @@ export const TEMPLATE_ICONS: Record<AgentTemplateKind, LucideIcon> = {
   InsightAnalyst: CompassIcon,
   EDIDesk: FileWarningIcon,
   FormulaAssistant: SigmaIcon,
+  BooksKeeper: BookCheckIcon,
 };
 
 type TemplatePickerProps = {

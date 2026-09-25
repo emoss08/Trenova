@@ -3050,6 +3050,7 @@ enum AgentTaintSource {
 enum AgentTemplate {
   BillingAssistant
   BillingException
+  BooksKeeper
   CarrierRiskDesk
   CashApplication
   ComplianceAssistant

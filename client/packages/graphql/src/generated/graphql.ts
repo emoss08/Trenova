@@ -787,6 +787,7 @@ export type AgentTaintSource =
 export type AgentTemplate =
   | 'BillingAssistant'
   | 'BillingException'
+  | 'BooksKeeper'
   | 'CarrierRiskDesk'
   | 'CashApplication'
   | 'ComplianceAssistant'
