@@ -1,6 +1,6 @@
 {
-  "operationCount": 866,
-  "fragmentCount": 236,
+  "operationCount": 870,
+  "fragmentCount": 238,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -951,6 +951,29 @@
       "sdl": "query AgentPlanDetail($id: ID!) {\n  agentPlan(id: $id) {\n    ...AgentPlanTableRowFields\n  }\n}\n\nfragment AgentPlanTableRowFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentPlanPreview",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "hash": "sha256:96a86d17e65b779fc5373755a99a2b8e934c0dba1fb89d4cab052205fd4a58d5",
+      "rootFields": [
+        "agentPlanPreview"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentPlanPreviewFields",
+        "AgentProposalPreviewFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentPlanPreview($id: ID!) {\n  agentPlanPreview(id: $id) {\n    ...AgentPlanPreviewFields\n  }\n}\n\nfragment AgentPlanPreviewFields on AgentPlanPreview {\n  planId\n  steps {\n    proposalId\n    step\n    preview {\n      ...AgentProposalPreviewFields\n    }\n  }\n  digest\n  stale\n  withheldCount\n  computedAt\n}\n\nfragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
+    },
+    {
       "name": "AgentPlanTable",
       "kind": "query",
       "domain": "agent",
@@ -1021,6 +1044,33 @@
       ],
       "usages": [],
       "sdl": "query AgentProposalDetail($id: ID!) {\n  agentProposal(id: $id) {\n    ...AgentProposalDetailFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentProposalPreview",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "hash": "sha256:cc8c911a73bd53b7f470b05bd8168f72c08120cc0170c4fe436c93fcd7e95116",
+      "rootFields": [
+        "agentProposalPreview"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "modifications",
+          "type": "JSON",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentProposalPreviewFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentProposalPreview($id: ID!, $modifications: JSON) {\n  agentProposalPreview(id: $id, modifications: $modifications) {\n    ...AgentProposalPreviewFields\n  }\n}\n\nfragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
     },
     {
       "name": "AgentProposalTable",
@@ -6020,7 +6070,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/proposals.graphql",
-      "hash": "sha256:ba06fd0f5bb9168980d5d967514bf0bcbd80382200e836955aa5704c4c9f1836",
+      "hash": "sha256:d5dd2d9f5f76ec53c9208554a9161365633dc1fa2cb1823a1431098cddcf71bf",
       "rootFields": [
         "decideAgentProposal"
       ],
@@ -6038,14 +6088,14 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "mutation DecideAgentProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideAgentProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    version\n    createdAt\n  }\n}"
+      "sdl": "mutation DecideAgentProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideAgentProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    previewDigest\n    previewReviewed\n    version\n    createdAt\n  }\n}"
     },
     {
       "name": "DecideAgentProposals",
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/decisions.graphql",
-      "hash": "sha256:59304c594ac96561580ae98bff8ecf6ac041a40f45487c9319485de537cef971",
+      "hash": "sha256:307e160ab24ebe206297811b6ef210e7fda7d5f4412f9d5018d00bdce35f4d91",
       "rootFields": [
         "decideAgentProposals"
       ],
@@ -6063,7 +6113,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "mutation DecideAgentProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {\n  decideAgentProposals(ids: $ids, input: $input) {\n    proposalId\n    executed\n    error\n    decision {\n      id\n      decision\n      reasonCode\n      createdAt\n    }\n  }\n}"
+      "sdl": "mutation DecideAgentProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {\n  decideAgentProposals(ids: $ids, input: $input) {\n    proposalId\n    executed\n    error\n    decision {\n      id\n      decision\n      reasonCode\n      previewDigest\n      previewReviewed\n      createdAt\n    }\n  }\n}"
     },
     {
       "name": "DecideLeaveCase",
@@ -6115,7 +6165,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/access.graphql",
-      "hash": "sha256:64dea8adddc7bea71fcfb7abc268678df95b4aa90847396b783656abc92f0180",
+      "hash": "sha256:cf3c4ea53d12c1f61f37b2fdefda3a45507f197dcfc721e514db2a83c876a993",
       "rootFields": [
         "decideMyProposal"
       ],
@@ -6133,7 +6183,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideMyProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    version\n    createdAt\n  }\n}"
+      "sdl": "mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideMyProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    previewDigest\n    previewReviewed\n    version\n    createdAt\n  }\n}"
     },
     {
       "name": "DecideProfileChange",
@@ -11102,6 +11152,29 @@
       "sdl": "query MyPeriodSummary {\n  myPeriodSummary {\n    periodStart\n    periodEnd\n    payDate\n    accruedGrossMinor\n    eventCount\n  }\n}"
     },
     {
+      "name": "MyPlanPreview",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "hash": "sha256:bdeb1162f88da7b25a4f705e845dca4c3d943257b88905d885af2ccb30023342",
+      "rootFields": [
+        "myPlanPreview"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentPlanPreviewFields",
+        "AgentProposalPreviewFields"
+      ],
+      "usages": [],
+      "sdl": "query MyPlanPreview($id: ID!) {\n  myPlanPreview(id: $id) {\n    ...AgentPlanPreviewFields\n  }\n}\n\nfragment AgentPlanPreviewFields on AgentPlanPreview {\n  planId\n  steps {\n    proposalId\n    step\n    preview {\n      ...AgentProposalPreviewFields\n    }\n  }\n  digest\n  stale\n  withheldCount\n  computedAt\n}\n\nfragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
+    },
+    {
       "name": "MyPolicies",
       "kind": "query",
       "domain": "driver-portal",
@@ -11176,6 +11249,33 @@
       "fragments": [],
       "usages": [],
       "sdl": "query MyProfileChangeRequests {\n  myProfileChangeRequests {\n    id\n    status\n    note\n    submittedAt\n    decidedAt\n    decisionNote\n    changes {\n      field\n      label\n      from\n      to\n    }\n  }\n}"
+    },
+    {
+      "name": "MyProposalPreview",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "hash": "sha256:b5f2a2de45a60b828581481d2aa42377afde5a9a9bf09d84bd778d11d967e55c",
+      "rootFields": [
+        "myProposalPreview"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "modifications",
+          "type": "JSON",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentProposalPreviewFields"
+      ],
+      "usages": [],
+      "sdl": "query MyProposalPreview($id: ID!, $modifications: JSON) {\n  myProposalPreview(id: $id, modifications: $modifications) {\n    ...AgentProposalPreviewFields\n  }\n}\n\nfragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
     },
     {
       "name": "MyPto",
@@ -20208,6 +20308,21 @@
       "sdl": "fragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentPlanPreviewFields",
+      "typeCondition": "AgentPlanPreview",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "fragments": [
+        "AgentProposalPreviewFields"
+      ],
+      "usedByOperations": [
+        "AgentPlanPreview",
+        "MyPlanPreview"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentPlanPreviewFields on AgentPlanPreview {\n  planId\n  steps {\n    proposalId\n    step\n    preview {\n      ...AgentProposalPreviewFields\n    }\n  }\n  digest\n  stale\n  withheldCount\n  computedAt\n}\n\nfragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
+    },
+    {
       "name": "AgentPlanTableRowFields",
       "typeCondition": "AgentPlan",
       "domain": "agent",
@@ -20235,6 +20350,21 @@
       ],
       "usages": [],
       "sdl": "fragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentProposalPreviewFields",
+      "typeCondition": "AgentProposalPreview",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentPlanPreview",
+        "AgentProposalPreview",
+        "MyPlanPreview",
+        "MyProposalPreview"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
     },
     {
       "name": "AgentProposalTableRowFields",
