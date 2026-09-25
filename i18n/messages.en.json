@@ -2568,6 +2568,15 @@
       "service/carriersettlementservice"
     ]
   },
+  "A delegate call requires the run or turn that made it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A delegation cannot end before it begins": {
     "sites": 2,
     "scope": [
@@ -6748,6 +6757,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "AI audit trail retention period is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/tenant"
+    ]
+  },
+  "AI audit trail retention period must be at least 365 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/tenant"
     ]
   },
   "AI candidate": {
@@ -12302,6 +12329,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Agent definition version cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Agent disabled": {
@@ -64151,6 +64187,15 @@
       "routes/invoice"
     ]
   },
+  "Executed target version cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Executing…": {
     "sites": 1,
     "scope": [
@@ -65753,6 +65798,15 @@
     ]
   },
   "Export testing data for an audit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Export the AI audit trail and download exports": {
     "sites": 1,
     "scope": [
       "go"
@@ -117681,6 +117735,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "Parent owner kind and parent owner id must be set together": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Paris (CET)": {
@@ -173084,6 +173147,15 @@
       "routes/hazardous-material"
     ]
   },
+  "The tamper-evident record of what agents did, for whom, and who decided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "The target must be a finite number": {
     "sites": 1,
     "scope": [
@@ -188691,6 +188763,15 @@
     ]
   },
   "View test records, violations and Clearinghouse queries": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "View the AI audit trail and verify its chain": {
     "sites": 1,
     "scope": [
       "go"
