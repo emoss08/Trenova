@@ -12,10 +12,14 @@ import (
 
 type assignMoveTool struct {
 	assignments serviceports.AssignmentService
+	console     assignmentChecker
 }
 
-func newAssignMoveTool(assignments serviceports.AssignmentService) serviceports.AgentTool {
-	return &assignMoveTool{assignments: assignments}
+func newAssignMoveTool(
+	assignments serviceports.AssignmentService,
+	console serviceports.DispatchConsoleService,
+) serviceports.AgentTool {
+	return &assignMoveTool{assignments: assignments, console: console}
 }
 
 func (t *assignMoveTool) Name() string { return "assign_move" }
@@ -88,17 +92,30 @@ func (t *assignMoveTool) Execute(
 		return err
 	}
 
-	moveID, err := requirePulid(params.Params, "shipmentMoveId")
+	req, err := t.request(params)
 	if err != nil {
 		return err
+	}
+
+	_, err = t.assignments.AssignToMove(ctx, req)
+
+	return err
+}
+
+func (t *assignMoveTool) request(
+	params serviceports.ToolExecuteParams,
+) (*repositories.AssignShipmentMoveRequest, error) {
+	moveID, err := requirePulid(params.Params, "shipmentMoveId")
+	if err != nil {
+		return nil, err
 	}
 	workerID, err := requirePulid(params.Params, "primaryWorkerId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	tractorID, err := requirePulid(params.Params, "tractorId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req := &repositories.AssignShipmentMoveRequest{
@@ -109,19 +126,17 @@ func (t *assignMoveTool) Execute(
 	}
 
 	if trailerID, ok, pErr := optionalPulid(params.Params, "trailerId"); pErr != nil {
-		return pErr
+		return nil, pErr
 	} else if ok {
 		req.TrailerID = &trailerID
 	}
 	if secondID, ok, pErr := optionalPulid(params.Params, "secondaryWorkerId"); pErr != nil {
-		return pErr
+		return nil, pErr
 	} else if ok {
 		req.SecondaryWorkerID = &secondID
 	}
 
-	_, err = t.assignments.AssignToMove(ctx, req)
-
-	return err
+	return req, nil
 }
 
 func optionalPulid(params map[string]any, key string) (pulid.ID, bool, error) {

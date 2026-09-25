@@ -84,19 +84,32 @@ func (t *recordStopActualTool) Execute(
 		return err
 	}
 
-	moveID, err := requirePulid(params.Params, "moveId")
+	request, err := t.request(params)
 	if err != nil {
 		return err
+	}
+
+	_, err = t.moves.RecordStopActual(ctx, request)
+
+	return err
+}
+
+func (t *recordStopActualTool) request(
+	params serviceports.ToolExecuteParams,
+) (*repositories.RecordStopActualRequest, error) {
+	moveID, err := requirePulid(params.Params, "moveId")
+	if err != nil {
+		return nil, err
 	}
 
 	stopID, err := requirePulid(params.Params, "stopId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	action, err := stopActualAction(optionalString(params.Params, "action"))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	request := &repositories.RecordStopActualRequest{
@@ -113,9 +126,7 @@ func (t *recordStopActualTool) Execute(
 		request.OccurredAt = &occurredAt
 	}
 
-	_, err = t.moves.RecordStopActual(ctx, request)
-
-	return err
+	return request, nil
 }
 
 // stopActualAction refuses anything it does not recognise. "Arrived" is not

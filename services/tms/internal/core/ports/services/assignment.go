@@ -8,6 +8,12 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
+type AssignmentPlan struct {
+	Assignment     *shipment.Assignment
+	ShipmentBefore *shipment.Shipment
+	ShipmentAfter  *shipment.Shipment
+}
+
 type AssignmentService interface {
 	List(
 		ctx context.Context,
@@ -21,6 +27,10 @@ type AssignmentService interface {
 		ctx context.Context,
 		req *repositories.AssignShipmentMoveRequest,
 	) (*shipment.Assignment, error)
+	PreviewAssignToMove(
+		ctx context.Context,
+		req *repositories.AssignShipmentMoveRequest,
+	) (*AssignmentPlan, error)
 	Reassign(
 		ctx context.Context,
 		req *repositories.ReassignShipmentMoveRequest,
