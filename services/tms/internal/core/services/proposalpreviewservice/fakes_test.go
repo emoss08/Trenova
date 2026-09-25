@@ -181,20 +181,6 @@ func (t *previewingTool) Preview(
 	return toolpreview.Build("Would set PRO "+t.state.ProNumber+" to "+status+".", change), nil
 }
 
-type simulatingTool struct {
-	baseTool
-}
-
-func (t *simulatingTool) Simulate(
-	context.Context,
-	services.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	return &agent.ToolSimulation{
-		Summary: "Would put the shipment on hold.",
-		Changes: []agent.FieldChange{{Field: "status", From: "New", To: "Hold"}},
-	}, nil
-}
-
 type validatingTool struct {
 	baseTool
 

@@ -51,6 +51,7 @@ func (s *Service) Baseline(
 		s.l.Warn("could not take a proposal's baseline",
 			zap.String("tool", req.Tool.Name()), zap.Error(err))
 		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
+		result.PreviewErr = err
 
 		return result
 	}
@@ -63,6 +64,7 @@ func (s *Service) Baseline(
 		}
 	}
 	if found.previewErr != nil {
+		result.PreviewErr = found.previewErr
 		s.l.Info("a proposal was filed without a baseline: its preview failed",
 			zap.String("tool", req.Tool.Name()), zap.Error(found.previewErr))
 	}
@@ -73,7 +75,7 @@ func (s *Service) Baseline(
 	coverage := agent.PreviewCoverageUnavailable
 	if result.Preview != nil {
 		coverage = agent.PreviewCoverageFull
-		if result.Preview.Partial || found.simulated {
+		if result.Preview.Partial {
 			coverage = agent.PreviewCoveragePartial
 		}
 	}

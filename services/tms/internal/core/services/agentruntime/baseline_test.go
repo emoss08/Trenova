@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"sync"
 	"testing"
@@ -179,4 +180,71 @@ func TestRun_AnEvaluationKeepsNoBaseline(t *testing.T) {
 
 	require.Len(t, previews.asked, 1)
 	assert.False(t, previews.asked[0].Persist)
+}
+
+type failingPreviews struct {
+	serviceports.ProposalPreviewService
+}
+
+func (failingPreviews) Baseline(
+	context.Context,
+	*serviceports.ProposalBaselineRequest,
+) *serviceports.ProposalBaselineResult {
+	return &serviceports.ProposalBaselineResult{
+		PreviewErr: errors.New("cannot execute UPDATE in a read-only transaction"),
+	}
+}
+
+type countingPreviewTool struct {
+	*targetedStubTool
+	previews int
+}
+
+func (t *countingPreviewTool) Preview(
+	context.Context,
+	serviceports.ToolExecuteParams,
+) (*agent.ToolPreview, error) {
+	t.previews++
+
+	return &agent.ToolPreview{Summary: "previewed where its write would land"}, nil
+}
+
+// A preview the snapshot refused is reported as failed. Asking the tool again
+// outside the snapshot would give a write the snapshot stopped a second
+// chance to land.
+func TestRun_ASimulatedWriteNeverPreviewsAgainOutsideTheSnapshot(t *testing.T) {
+	t.Parallel()
+
+	tool := &countingPreviewTool{
+		targetedStubTool: &targetedStubTool{
+			actionTool("place_shipment_hold", agent.TierAutoExecute, nil),
+		},
+	}
+	completion := &scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{
+		toolTurn("place_shipment_hold", map[string]any{"shipmentId": pulid.MustNew("shp_").String()}),
+		textTurn("held"),
+	}}
+	rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
+		Tools: []serviceports.AgentTool{tool},
+	}, nil)
+	rt.previews = failingPreviews{}
+	definition := testDefinition("place_shipment_hold")
+	definition.AutonomyCeiling = agent.TierAutoExecute
+	definition.SimulationMode = true
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: definition,
+		Actor:      testActor(),
+		Input:      "hold it",
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Actions, 1)
+	action := result.Actions[0]
+	require.True(t, action.Simulated)
+	require.NotNil(t, action.Simulation)
+	assert.Zero(t, tool.previews, "the tool was not asked again outside the snapshot")
+	assert.Zero(t, tool.Calls, "nothing ran")
+	assert.False(t, action.Simulation.Previewed)
+	assert.Contains(t, action.Simulation.Summary, "read-only transaction")
 }

@@ -3,7 +3,6 @@ package agentruntime
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/agent"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -27,7 +26,7 @@ type baselineCall struct {
 func (s *Service) fileBaseline(
 	ctx context.Context,
 	b *baselineCall,
-) (*serviceports.ProposalTarget, *agent.ToolPreview) {
+) (*serviceports.ProposalTarget, *serviceports.ProposalBaselineResult) {
 	if s.previews == nil {
 		return s.snapshotTarget(ctx, b.req, b.tool, b.call), nil
 	}
@@ -49,5 +48,5 @@ func (s *Service) fileBaseline(
 		return s.snapshotTarget(ctx, b.req, b.tool, b.call), nil
 	}
 
-	return result.Target, result.Preview
+	return result.Target, result
 }

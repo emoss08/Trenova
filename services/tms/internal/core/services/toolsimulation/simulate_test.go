@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,33 +41,33 @@ func (t plainTool) Execute(context.Context, serviceports.ToolExecuteParams) erro
 
 type previewingTool struct {
 	plainTool
-	preview *agent.ToolSimulation
-	err     error
+	record   *agent.ToolPreview
+	failed   error
+	readOnly *bool
 }
 
-func (t previewingTool) Simulate(
-	context.Context,
-	serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	return t.preview, t.err
-}
-
-func TestSimulate_UsesTheToolsOwnPreview(t *testing.T) {
-	t.Parallel()
-
-	tool := previewingTool{
-		plainTool: plainTool{name: "update_tractor_status"},
-		preview: &agent.ToolSimulation{
-			Summary: "Tractor 101 would go from Available to OutOfService.",
-			Changes: []agent.FieldChange{{Field: "status", From: "Available", To: "OutOfService"}},
-		},
+func (t previewingTool) Preview(
+	ctx context.Context,
+	_ serviceports.ToolExecuteParams,
+) (*agent.ToolPreview, error) {
+	if t.readOnly != nil {
+		*t.readOnly = ports.IsReadOnly(ctx)
 	}
 
-	preview := Simulate(t.Context(), tool, serviceports.ToolExecuteParams{})
+	return t.record, t.failed
+}
 
-	assert.True(t, preview.Previewed)
-	assert.Equal(t, "Tractor 101 would go from Available to OutOfService.", preview.Summary)
-	assert.Contains(t, preview.Describe(), "- status: Available → OutOfService")
+func cancelPreview() *agent.ToolPreview {
+	return &agent.ToolPreview{
+		Summary: "Would cancel PRO-100.",
+		Changes: []agent.RecordChange{{
+			Operation: agent.PreviewOperationUpdate,
+			Label:     "PRO-100",
+			Fields: []agent.PreviewFieldChange{
+				{Path: "status", Label: "Status", Before: "New", After: "Canceled"},
+			},
+		}},
+	}
 }
 
 // A tool with no preview is still described: a person reading the run has to
@@ -77,7 +78,7 @@ func TestSimulate_DescribesAToolWithoutAPreview(t *testing.T) {
 	preview := Simulate(
 		t.Context(),
 		plainTool{name: "cancel_shipment"},
-		serviceports.ToolExecuteParams{
+		&serviceports.ToolExecuteParams{
 			Params: map[string]any{
 				"shipmentId":   "shp_1",
 				"cancelReason": "Customer pulled the load",
@@ -98,50 +99,20 @@ func TestSimulate_DescribesAToolWithoutAPreview(t *testing.T) {
 	assert.Equal(t, agent.FieldChange{Field: "Count", To: "2"}, preview.Changes[1])
 }
 
-type recordPreviewingTool struct {
-	previewingTool
-	record *agent.ToolPreview
-	failed error
-}
-
-func (t recordPreviewingTool) Preview(
-	context.Context,
-	serviceports.ToolExecuteParams,
-) (*agent.ToolPreview, error) {
-	return t.record, t.failed
-}
-
-// A tool that previews record by record is read that way, whether or not it
-// still simulates: the preview is what the approver sees, and a simulation
-// must say the same.
-func TestSimulate_PrefersTheRecordPreview(t *testing.T) {
+func TestSimulate_ReadsTheRecordPreview(t *testing.T) {
 	t.Parallel()
 
-	tool := recordPreviewingTool{
-		previewingTool: previewingTool{
-			plainTool: plainTool{name: "cancel_shipment"},
-			preview:   &agent.ToolSimulation{Summary: "the old simulation"},
-		},
-		record: &agent.ToolPreview{
-			Summary: "Would cancel PRO-100.",
-			Changes: []agent.RecordChange{{
-				Operation: agent.PreviewOperationUpdate,
-				Label:     "PRO-100",
-				Fields: []agent.PreviewFieldChange{
-					{Path: "status", Label: "Status", Before: "New", After: "Canceled"},
-				},
-			}},
-		},
-	}
+	tool := previewingTool{plainTool: plainTool{name: "cancel_shipment"}, record: cancelPreview()}
 
-	preview := Simulate(t.Context(), tool, serviceports.ToolExecuteParams{})
+	preview := Simulate(t.Context(), tool, &serviceports.ToolExecuteParams{})
 
 	assert.True(t, preview.Previewed)
 	assert.Equal(t, "Would cancel PRO-100.", preview.Summary)
 	assert.Contains(t, preview.Describe(), "- Status: New → Canceled")
 
 	tool.failed = errors.New("shipment not found")
-	failed := Simulate(t.Context(), tool, serviceports.ToolExecuteParams{
+	tool.record = nil
+	failed := Simulate(t.Context(), tool, &serviceports.ToolExecuteParams{
 		Params: map[string]any{"shipmentId": "shp_1", "_owner": "usr_1"},
 	})
 	assert.False(t, failed.Previewed)
@@ -150,19 +121,60 @@ func TestSimulate_PrefersTheRecordPreview(t *testing.T) {
 	assert.Equal(t, "shp_1", failed.Changes[0].To)
 }
 
-func TestSimulate_KeepsTheRequestWhenAPreviewFails(t *testing.T) {
+// Work a preview hands off outside its transaction, such as a counter bumped
+// in the background, reads the mark and stays undone.
+func TestSimulate_PreviewsInAReadOnlyContext(t *testing.T) {
 	t.Parallel()
 
+	readOnly := false
 	tool := previewingTool{
-		plainTool: plainTool{name: "assign_move"},
-		err:       errors.New("move not found"),
+		plainTool: plainTool{name: "cancel_shipment"},
+		record:    cancelPreview(),
+		readOnly:  &readOnly,
 	}
 
-	preview := Simulate(t.Context(), tool, serviceports.ToolExecuteParams{
-		Params: map[string]any{"shipmentMoveId": "smv_1"},
+	Simulate(t.Context(), tool, &serviceports.ToolExecuteParams{})
+
+	assert.True(t, readOnly)
+}
+
+func TestFromBaseline_ReadsTheSnapshotsPreview(t *testing.T) {
+	t.Parallel()
+
+	simulation := FromBaseline("cancel_shipment", nil, &serviceports.ProposalBaselineResult{
+		Preview: cancelPreview(),
 	})
 
-	assert.False(t, preview.Previewed)
-	assert.Contains(t, preview.Summary, "move not found")
-	assert.Equal(t, "smv_1", preview.Changes[0].To)
+	assert.True(t, simulation.Previewed)
+	assert.Contains(t, simulation.Describe(), "- Status: New → Canceled")
+}
+
+// A preview the snapshot refused, because it tried to write, is reported as
+// failed rather than asked again where its write would land.
+func TestFromBaseline_ReportsAFailedPreviewWithoutRunningItAgain(t *testing.T) {
+	t.Parallel()
+
+	simulation := FromBaseline(
+		"cancel_shipment",
+		map[string]any{"shipmentId": "shp_1"},
+		&serviceports.ProposalBaselineResult{
+			PreviewErr: errors.New("cannot execute UPDATE in a read-only transaction"),
+		},
+	)
+
+	assert.False(t, simulation.Previewed)
+	assert.Contains(t, simulation.Summary, "read-only transaction")
+	require.Len(t, simulation.Changes, 1)
+	assert.Equal(t, "shp_1", simulation.Changes[0].To)
+}
+
+func TestFromBaseline_DescribesWhenNothingWasPreviewed(t *testing.T) {
+	t.Parallel()
+
+	for _, baseline := range []*serviceports.ProposalBaselineResult{nil, {}} {
+		simulation := FromBaseline("cancel_shipment", map[string]any{"shipmentId": "shp_1"}, baseline)
+
+		assert.False(t, simulation.Previewed)
+		assert.Contains(t, simulation.Summary, "Would run cancel_shipment")
+	}
 }

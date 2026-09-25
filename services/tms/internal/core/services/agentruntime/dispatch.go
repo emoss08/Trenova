@@ -338,7 +338,7 @@ func (s *Service) simulateAction(ctx context.Context, a actionParams) toolOutcom
 	action := a.action
 
 	action.Simulated = true
-	target, preview := s.fileBaseline(ctx, &baselineCall{
+	target, baseline := s.fileBaseline(ctx, &baselineCall{
 		req:        a.req,
 		tool:       a.tool,
 		call:       call,
@@ -346,10 +346,11 @@ func (s *Service) simulateAction(ctx context.Context, a actionParams) toolOutcom
 	})
 	action.Target = target
 	writeCtx, write := s.startWrite(ctx, &a, true)
-	if preview != nil {
-		action.Simulation = preview.Simulation()
+	if s.previews != nil {
+		action.Simulation = toolsimulation.FromBaseline(call.Name, call.Arguments, baseline)
 	} else {
-		action.Simulation = toolsimulation.Simulate(writeCtx, a.tool, a.executeParams())
+		params := a.executeParams()
+		action.Simulation = toolsimulation.Simulate(writeCtx, a.tool, &params)
 	}
 	write.End()
 

@@ -2,16 +2,20 @@ package proposalexecutor
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 )
 
 type fixedDefinition struct{ definition *agentdefinition.Definition }
@@ -137,4 +141,64 @@ func TestExecute_RunsWhenThereIsNoCapAndNoSimulation(t *testing.T) {
 
 	assert.Equal(t, 1, tool.calls)
 	assert.Empty(t, repo.simulated)
+}
+
+type recordingTxConnection struct {
+	dbtest.NopConnection
+	opts []ports.TxOptions
+}
+
+func (c *recordingTxConnection) WithTx(
+	ctx context.Context,
+	opts ports.TxOptions,
+	fn func(context.Context, bun.Tx) error,
+) error {
+	c.opts = append(c.opts, opts)
+
+	return fn(ports.WithReadOnly(ctx), bun.Tx{})
+}
+
+type snapshotPreviewTool struct {
+	*recordingTool
+	readOnly bool
+}
+
+func (t *snapshotPreviewTool) Preview(
+	ctx context.Context,
+	_ services.ToolExecuteParams,
+) (*agent.ToolPreview, error) {
+	t.readOnly = ports.IsReadOnly(ctx)
+
+	return &agent.ToolPreview{Summary: "Would cancel PRO-100."}, nil
+}
+
+// An approved write for an agent in simulation is previewed inside a
+// read-only snapshot, so a preview that tried to write fails there instead
+// of changing the record the approver was told stays untouched.
+func TestExecute_SimulatesInsideAReadOnlySnapshot(t *testing.T) {
+	t.Parallel()
+
+	tool := &snapshotPreviewTool{recordingTool: &recordingTool{
+		name:      "cancel_shipment",
+		resource:  permission.ResourceShipment,
+		operation: permission.OpCancel,
+	}}
+	repo := &fakeProposalRepo{}
+	svc := newExecutor(tool, repo, &fakePermissions{allowed: true})
+	svc.definitions = fixedDefinition{
+		definition: &agentdefinition.Definition{Name: "Night desk", SimulationMode: true},
+	}
+	conn := &recordingTxConnection{}
+	svc.db = conn
+
+	proposal := testProposal("cancel_shipment", map[string]any{"shipmentId": "shp_1"})
+	require.NoError(t, svc.Execute(t.Context(), proposal, nil, approver(proposal)))
+
+	require.Len(t, conn.opts, 1)
+	assert.True(t, conn.opts[0].ReadOnly)
+	assert.Equal(t, sql.LevelRepeatableRead, conn.opts[0].Isolation)
+	assert.True(t, tool.readOnly)
+	assert.Zero(t, tool.calls)
+	require.Len(t, repo.simulated, 1)
+	assert.Equal(t, "Would cancel PRO-100.", repo.simulated[0].Simulation.Summary)
 }
