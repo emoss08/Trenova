@@ -58,6 +58,10 @@ the ceiling or the private-write rule would allow, and the model is told why.
 - A delegate starts from the delegating turn's flag (`DelegateCall.AfterExternalContent`) and
   hands its own back (`DelegateRun.ExternalContent`).
 - It adds only optional data and no command, so it took no `GetVersion` gate.
+- The call's `execute_tool` span carries `trenova.ai.after_external_content`, and a write the
+  flag held records `PolicyDefault` as its tier source and `tainted` among what held it, so the
+  trace and the audit trail say the rule chose the tier, not a person or earned trust. See
+  [ai-tracing.md](ai-tracing.md#execute_tool-tool-internal).
 - The web tools declare `ReadsExternal: always` with the `web` taint source in their
   `ToolPolicy`, so a successful call also adds a `web` mark to the run's taint (see
   [agent-runtime.md](agent-runtime.md#taint-runs-that-have-read-outside-content)). While a turn
