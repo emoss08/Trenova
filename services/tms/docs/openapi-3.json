@@ -205,6 +205,7 @@
                     "InboundMessage",
                     "Report",
                     "Dashboard",
+                    "AccountingConnection",
                     "FormulaTemplate"
                 ],
                 "type": "string",
@@ -224,6 +225,7 @@
                     "SubjectInboundMessage",
                     "SubjectReport",
                     "SubjectDashboard",
+                    "SubjectAccountingConnection",
                     "SubjectFormulaTemplate"
                 ]
             },

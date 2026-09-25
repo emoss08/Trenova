@@ -149,6 +149,7 @@ components:
                 - InboundMessage
                 - Report
                 - Dashboard
+                - AccountingConnection
                 - FormulaTemplate
             type: string
             x-enum-varnames:
@@ -167,6 +168,7 @@ components:
                 - SubjectInboundMessage
                 - SubjectReport
                 - SubjectDashboard
+                - SubjectAccountingConnection
                 - SubjectFormulaTemplate
         agent.TaintMark:
             properties:
