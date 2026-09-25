@@ -1575,6 +1575,7 @@ type ComplexityRoot struct {
 		Minimum     func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Options     func(childComplexity int) int
+		ReadOnly    func(childComplexity int) int
 		Required    func(childComplexity int) int
 	}
 
@@ -19102,6 +19103,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposalField.Options(childComplexity), true
+	case "AgentProposalField.readOnly":
+		if e.ComplexityRoot.AgentProposalField.ReadOnly == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.ReadOnly(childComplexity), true
 	case "AgentProposalField.required":
 		if e.ComplexityRoot.AgentProposalField.Required == nil {
 			break
@@ -79208,6 +79215,8 @@ type AgentProposalField {
   minimum: Float
   maximum: Float
   maxLength: Int
+  "The parameter names the record the change is for, which an approver may not change."
+  readOnly: Boolean!
 }
 
 "The control a parameter takes when edited: the schema's type, read for a form."
@@ -104876,6 +104885,8 @@ func (ec *executionContext) childFields_AgentProposalField(ctx context.Context, 
 		return ec.fieldContext_AgentProposalField_maximum(ctx, field)
 	case "maxLength":
 		return ec.fieldContext_AgentProposalField_maxLength(ctx, field)
+	case "readOnly":
+		return ec.fieldContext_AgentProposalField_readOnly(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentProposalField", field.Name)
 }

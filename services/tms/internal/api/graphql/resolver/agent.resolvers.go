@@ -97,7 +97,7 @@ func (r *agentProposalResolver) ParameterFields(ctx context.Context, obj *agent.
 		return []*toolschema.Field{}, nil
 	}
 
-	fields := toolschema.Fields(tool.ParamSchema())
+	fields := services.ProposalFields(tool, obj.ToolParams)
 	out := make([]*toolschema.Field, 0, len(fields))
 	for i := range fields {
 		out = append(out, &fields[i])

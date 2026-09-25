@@ -121,7 +121,7 @@ func pendingUnion(req repositories.ListPendingDecisionsRequest) *unionQuery {
 		"COALESCE("+definitions.Name.Qualified()+", '') AS agent_name, "+
 		"? AS tool_name"+
 		" FROM "+buncolgen.AgentPlanTable.Name+" AS "+buncolgen.AgentPlanTable.Alias,
-		string(repositories.PendingDecisionPlan), planToolName)
+		string(repositories.PendingDecisionPlan), agent.PlanToolName)
 	joinRunAndDefinition(
 		plans.OrganizationID.Qualified(),
 		plans.BusinessUnitID.Qualified(),
@@ -162,10 +162,6 @@ func writeAudience(u *unionQuery, audience *repositories.AgentAudience) {
 	}
 	u.write(")")
 }
-
-// planToolName is how a plan reads in a by-tool count: several writes
-// decided as one, not any single tool's.
-const planToolName = "plan"
 
 func (r *repository) ListPending(
 	ctx context.Context,

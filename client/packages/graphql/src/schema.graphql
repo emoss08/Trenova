@@ -2623,6 +2623,10 @@ type AgentProposalField {
   The choices for a Choice field, or the allowed items of a List; empty otherwise.
   """
   options: [String!]!
+  """
+  The parameter names the record the change is for, which an approver may not change.
+  """
+  readOnly: Boolean!
   required: Boolean!
 }
 

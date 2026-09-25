@@ -335,8 +335,9 @@ func runsOf(stored []*agent.AgentProposal) []pulid.ID {
 }
 
 // editableFields is what a person may change on a pending proposal, from
-// the tool's own schema. A decided proposal has nothing left to edit and a
-// tool the registry no longer has cannot be edited into running.
+// the tool's own schema, with the parameter naming its record read-only. A
+// decided proposal has nothing left to edit and a tool the registry no longer
+// has cannot be edited into running.
 func (s *Service) editableFields(proposal *agent.AgentProposal) []toolschema.Field {
 	if s.tools == nil || proposal.Status != agent.ProposalStatusPending {
 		return []toolschema.Field{}
@@ -347,7 +348,7 @@ func (s *Service) editableFields(proposal *agent.AgentProposal) []toolschema.Fie
 		return []toolschema.Field{}
 	}
 
-	return toolschema.Fields(tool.ParamSchema())
+	return services.ProposalFields(tool, proposal.ToolParams)
 }
 
 // modificationsFor reads what approvers changed on the decided proposals,
