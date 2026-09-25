@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
+	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
@@ -200,6 +201,42 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_agent_runs_parent_owner_kind",
 			values: stringsOf(agent.AllRunOwnerKinds()),
+		},
+		{
+			name:   "ck_ai_audit_events_kind",
+			values: stringsOf(aiaudit.AllKinds()),
+		},
+		{
+			name:   "ck_ai_audit_events_outcome",
+			values: stringsOf(aiaudit.AllOutcomes()),
+		},
+		{
+			name:   "ck_ai_audit_events_principal_type",
+			values: stringsOf(aiaudit.AllPrincipalTypes()),
+		},
+		{
+			name:   "ck_ai_audit_events_purpose",
+			values: stringsOf(aiaudit.AllPurposes()),
+		},
+		{
+			name:   "ck_ai_audit_events_owner_kind",
+			values: stringsOf(agent.AllRunOwnerKinds()),
+		},
+		{
+			name:   "ck_ai_audit_chain_heads_last_verification_status",
+			values: stringsOf(aiaudit.AllVerificationStatuses()),
+		},
+		{
+			name:   "ck_ai_audit_exports_format",
+			values: stringsOf(aiaudit.AllExportFormats()),
+		},
+		{
+			name:   "ck_ai_audit_exports_status",
+			values: stringsOf(aiaudit.AllExportStatuses()),
+		},
+		{
+			name:   "ck_ai_audit_projector_state_source",
+			values: stringsOf(aiaudit.AllSources()),
 		},
 	}
 
