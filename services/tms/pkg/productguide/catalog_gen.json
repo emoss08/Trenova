@@ -1,5 +1,5 @@
 {
-  "version": "sha256:b88cc26441efe11c545ee970829f603473515c9b0f2bbd540526a56e7cb2c8f6",
+  "version": "sha256:dc75a86eae23ea1a25499871139f9eeaca32f4be9aa7a96b34f7f93020ed7ddc",
   "modules": [
     {
       "id": "home",
@@ -1599,6 +1599,120 @@
         "/accounting/reports/income-statement",
         "/accounting/reports/balance-sheet",
         "/accounting/manual-journals"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/accounting/sync/mappings",
+      "name": "Mappings",
+      "module": "accounting",
+      "breadcrumb": [
+        "Accounting management",
+        "Accounting sync",
+        "Mappings"
+      ],
+      "description": "Accounting mappings say which QuickBooks Online account, item, customer and vendor each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods.",
+      "summary": "Accounting mappings say which QuickBooks Online account, item, customer and vendor each Trenova record is sent as: the account roles (accounts receivable, revenue, deposit account, write-off, accounts payable and purchased transportation), invoice line types, accessorial charges, the short-pay write-off item, customers, carriers, payment terms and payment methods.\n\nTrenova reads the QuickBooks company's records and proposes a match where it is sure enough. A proposal is only a suggestion: nothing is used when syncing until a person confirms it. The strip at the top counts **Required confirmed**, **Proposed**, **Unmatched** and **Confirmed** mappings; selecting a figure filters the list to it.",
+      "requires": [
+        {
+          "resource": "accounting_integration",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "QuickBooks mappings",
+        "chart of accounts mapping",
+        "account mapping",
+        "map accounts",
+        "QuickBooks items",
+        "map customers to QuickBooks",
+        "map carriers to vendors",
+        "accounting sync setup"
+      ],
+      "tasks": [
+        {
+          "title": "Confirm Trenova's proposals",
+          "keywords": [
+            "accept suggested matches",
+            "approve mappings",
+            "bulk confirm"
+          ],
+          "steps": [
+            "Open [Mappings](/accounting/sync/mappings).",
+            "Select **Proposed** in the strip to list the proposals. The ones Trenova is sure of are already ticked; tick or untick the rest.",
+            "Select the confirm button above the list; it names how many are ticked."
+          ]
+        },
+        {
+          "title": "Choose a different record",
+          "keywords": [
+            "change mapping",
+            "wrong account",
+            "remap customer",
+            "pick QuickBooks record"
+          ],
+          "steps": [
+            "Open [Mappings](/accounting/sync/mappings) and select the mapping on the left. Use **Search mappings** or **Every kind** to narrow the list.",
+            "Under **Other records Trenova considered**, select **Use** beside the right record, or search the QuickBooks Online records below it and select **Use**.",
+            "The mapping is confirmed with the record you chose."
+          ]
+        },
+        {
+          "title": "Turn down or clear a mapping",
+          "keywords": [
+            "reject proposal",
+            "unmap",
+            "remove mapping"
+          ],
+          "steps": [
+            "Open [Mappings](/accounting/sync/mappings) and select the mapping.",
+            "Select **Turn down** to reject a proposal; Trenova will not propose that record for it again.",
+            "Select **Clear** to remove the chosen record so the mapping is unmatched again."
+          ]
+        },
+        {
+          "title": "Create a missing item, customer or vendor in QuickBooks",
+          "keywords": [
+            "add item to QuickBooks",
+            "create vendor",
+            "create customer in QuickBooks"
+          ],
+          "steps": [
+            "Open [Mappings](/accounting/sync/mappings) and select an accessorial charge, line type, customer or carrier mapping that has no match.",
+            "At the bottom of the mapping, check the name Trenova will create it under, then select the create button.",
+            "Trenova creates the record and confirms the mapping. Items are created with the confirmed revenue account as their income account, so confirm that account first."
+          ]
+        },
+        {
+          "title": "Read QuickBooks again",
+          "keywords": [
+            "refresh chart of accounts",
+            "pull new accounts",
+            "reload QuickBooks records"
+          ],
+          "steps": [
+            "Open [Mappings](/accounting/sync/mappings).",
+            "Select the button that reads QuickBooks Online again, beside when it was last read. The proposals update when the read finishes."
+          ]
+        },
+        {
+          "title": "Finish setup",
+          "keywords": [
+            "complete accounting setup",
+            "done mapping"
+          ],
+          "steps": [
+            "Confirm every required mapping: **Required confirmed** shows how many are left.",
+            "Select **Finish setup**."
+          ]
+        }
+      ],
+      "notes": "Viewing mappings needs read access to the accounting integration; confirming, choosing, clearing, creating records and reading QuickBooks again need update access. Accounts, terms and payment methods are the bookkeeper's and are never created from Trenova. QuickBooks is read again every day on its own. A mapping Trenova proposed from a model's suggestion is never ticked by default.",
+      "related": [
+        "/admin/integrations"
       ],
       "covers": [],
       "createAction": null,
@@ -4015,8 +4129,10 @@
           "steps": [
             "Open [Integrations](/admin/integrations) and open the QuickBooks Online card.",
             "Select the connect button. Trenova sends you to Intuit's own page; sign in there and choose the company to connect. Trenova never sees the QuickBooks password.",
-            "Intuit sends you back to Trenova, which finishes the connection and shows the company it connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books closed through**. Check it is the right company, then select **Done**.",
-            "Nothing is sent to QuickBooks yet. Trenova only reads the company's settings and checks the connection every fifteen minutes."
+            "Intuit sends you back to Trenova, which finishes the connection and shows the company it connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books closed through**. Check it is the right company, then select **Continue**.",
+            "On **Match records**, Trenova reads the company's accounts, items, customers and vendors and proposes a match for each Trenova record. Tick the proposals that are right and select the confirm button, which names how many are ticked, or select a row to choose another record.",
+            "When every required mapping is confirmed, select **Finish setup**. The rest can be done later on [Mappings](/accounting/sync/mappings) (**Open all mappings**).",
+            "Nothing is sent to QuickBooks yet. Trenova reads the company's settings and records and checks the connection every fifteen minutes."
           ]
         },
         {
@@ -4041,7 +4157,8 @@
         "/admin/api-keys",
         "/dispatch/carrier-monitoring",
         "/fuel/feed-runs",
-        "/fuel/configuration-files/surcharge"
+        "/fuel/configuration-files/surcharge",
+        "/accounting/sync/mappings"
       ],
       "covers": [
         "/admin/integrations/quickbooks/callback"

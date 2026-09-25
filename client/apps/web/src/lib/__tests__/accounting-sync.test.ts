@@ -1,8 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  ACCOUNTING_MAPPINGS_PATH,
   ACCOUNTING_RECONNECT_WARNING_SECONDS,
   accountingConnectionPhase,
+  accountingReferenceDetail,
+  accountingMappingCreatable,
+  accountingMappingFilterKey,
+  accountingMappingPhase,
+  accountingMappingRecordPath,
   accountingSetupPath,
+  needsAccountingMappings,
+  precheckedMappingIds,
+  referenceRefreshRunning,
   hasLiveAccountingConnection,
   isTrustedAuthorizeUrl,
   readAccountingCallback,
@@ -156,5 +165,143 @@ describe("accountingSetupPath", () => {
     expect(accountingSetupPath("QuickBooksOnline")).toBe(
       "/admin/integrations?type=QuickBooksOnline",
     );
+  });
+});
+
+describe("accountingMappingPhase", () => {
+  it("reads an unmatched mapping as needing attention", () => {
+    expect(accountingMappingPhase("Unmatched")).toBe("attention");
+  });
+
+  it("reads a proposal as waiting on a person", () => {
+    expect(accountingMappingPhase("Proposed")).toBe("awaiting");
+  });
+
+  it("reads a confirmed mapping as complete", () => {
+    expect(accountingMappingPhase("Confirmed")).toBe("complete");
+  });
+});
+
+describe("referenceRefreshRunning", () => {
+  it("is running while a start is recorded", () => {
+    expect(referenceRefreshRunning({ referenceRefreshStartedAt: 100 })).toBe(true);
+  });
+
+  it("is not running once the server cleared the start", () => {
+    expect(referenceRefreshRunning({ referenceRefreshStartedAt: null })).toBe(false);
+    expect(referenceRefreshRunning(null)).toBe(false);
+  });
+});
+
+describe("needsAccountingMappings", () => {
+  it("keeps a live connection in setup until the mappings step is finished", () => {
+    expect(needsAccountingMappings({ status: "Connected", setupStep: "Mappings" })).toBe(true);
+    expect(needsAccountingMappings({ status: "Degraded", setupStep: "Mappings" })).toBe(true);
+  });
+
+  it("leaves a finished or disconnected connection alone", () => {
+    expect(needsAccountingMappings({ status: "Connected", setupStep: "Complete" })).toBe(false);
+    expect(needsAccountingMappings({ status: "Disconnected", setupStep: "Mappings" })).toBe(false);
+    expect(needsAccountingMappings(null)).toBe(false);
+  });
+});
+
+describe("precheckedMappingIds", () => {
+  it("ticks only the proposals the server marked sure enough", () => {
+    expect(
+      precheckedMappingIds([
+        { id: "a", state: "Proposed", prechecked: true },
+        { id: "b", state: "Proposed", prechecked: false },
+        { id: "c", state: "Confirmed", prechecked: false },
+        { id: "d", state: "Unmatched", prechecked: false },
+      ]),
+    ).toEqual(["a"]);
+  });
+});
+
+describe("accountingMappingRecordPath", () => {
+  it("opens the Trenova customer or carrier behind a mapping", () => {
+    expect(accountingMappingRecordPath({ targetType: "Customer", trenovaObjectId: "cus_1" })).toBe(
+      "/billing/configuration-files/customers?panelType=edit&panelEntityId=cus_1",
+    );
+    expect(accountingMappingRecordPath({ targetType: "Carrier", trenovaObjectId: "car_1" })).toBe(
+      "/dispatch/carriers?panelType=edit&panelEntityId=car_1",
+    );
+  });
+
+  it("has nothing to open for a setting", () => {
+    expect(accountingMappingRecordPath({ targetType: "AccountRole", trenovaObjectId: null })).toBe(
+      null,
+    );
+    expect(
+      accountingMappingRecordPath({ targetType: "AccessorialCharge", trenovaObjectId: "acc_1" }),
+    ).toBe(null);
+  });
+});
+
+describe("accountingMappingFilterKey", () => {
+  it("names the same filter the same way whatever order it was built in", () => {
+    expect(
+      accountingMappingFilterKey({ states: ["Proposed", "Unmatched"], targetTypes: ["Customer"] }),
+    ).toBe(
+      accountingMappingFilterKey({ targetTypes: ["Customer"], states: ["Unmatched", "Proposed"] }),
+    );
+  });
+
+  it("tells different filters apart", () => {
+    expect(accountingMappingFilterKey({ search: "acme" })).not.toBe(
+      accountingMappingFilterKey({ search: "acm" }),
+    );
+  });
+});
+
+describe("ACCOUNTING_MAPPINGS_PATH", () => {
+  it("lives under the accounting module", () => {
+    expect(ACCOUNTING_MAPPINGS_PATH).toBe("/accounting/sync/mappings");
+  });
+});
+
+describe("accountingMappingCreatable", () => {
+  it("offers to create items, customers and vendors that are not confirmed yet", () => {
+    expect(accountingMappingCreatable({ providerKind: "Item", state: "Unmatched" })).toBe(true);
+    expect(accountingMappingCreatable({ providerKind: "Vendor", state: "Proposed" })).toBe(true);
+    expect(accountingMappingCreatable({ providerKind: "Customer", state: "Unmatched" })).toBe(true);
+  });
+
+  it("never offers to create the bookkeeper's records or a second record", () => {
+    expect(accountingMappingCreatable({ providerKind: "Account", state: "Unmatched" })).toBe(false);
+    expect(accountingMappingCreatable({ providerKind: "Term", state: "Unmatched" })).toBe(false);
+    expect(accountingMappingCreatable({ providerKind: "PaymentMethod", state: "Unmatched" })).toBe(
+      false,
+    );
+    expect(accountingMappingCreatable({ providerKind: "Item", state: "Confirmed" })).toBe(false);
+  });
+});
+
+describe("accountingReferenceDetail", () => {
+  it("describes an account by its type and number", () => {
+    expect(
+      accountingReferenceDetail({
+        accountType: "Income",
+        itemType: "",
+        number: "4000",
+        companyName: "",
+        city: "",
+        state: "",
+      }),
+    ).toBe("Income · 4000");
+  });
+
+  it("describes a vendor by where it is", () => {
+    expect(
+      accountingReferenceDetail({
+        accountType: "",
+        itemType: "",
+        number: "",
+        companyName: "Roadrunner Freight LLC",
+        city: "Dallas",
+        state: "TX",
+      }),
+    ).toBe("Roadrunner Freight LLC · Dallas · TX");
   });
 });

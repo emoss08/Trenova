@@ -1,8 +1,14 @@
-import type { AccountingConnection, AccountingSyncStatus } from "@/lib/graphql/accounting-sync";
+import type {
+  AccountingConnection,
+  AccountingMapping,
+  AccountingMappingSummary,
+  AccountingSyncStatus,
+} from "@/lib/graphql/accounting-sync";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QuickBooksIntegrationModal } from "../accounting-integration-modal";
 
@@ -12,6 +18,12 @@ const mocks = vi.hoisted(() => ({
   checkAccountingConnection: vi.fn(),
   disconnectAccountingSystem: vi.fn(),
   completeAccountingAuthorization: vi.fn(),
+  fetchAccountingMappingSummary: vi.fn(),
+  fetchAccountingMappings: vi.fn(),
+  searchAccountingReferenceObjects: vi.fn(),
+  confirmAccountingMappings: vi.fn(),
+  completeAccountingSetup: vi.fn(),
+  refreshAccountingReferenceData: vi.fn(),
   granted: new Set<string>(),
   assign: vi.fn(),
 }));
@@ -22,6 +34,16 @@ vi.mock("@/lib/graphql/accounting-sync", () => ({
   checkAccountingConnection: mocks.checkAccountingConnection,
   disconnectAccountingSystem: mocks.disconnectAccountingSystem,
   completeAccountingAuthorization: mocks.completeAccountingAuthorization,
+  fetchAccountingMappingSummary: mocks.fetchAccountingMappingSummary,
+  fetchAccountingMappings: mocks.fetchAccountingMappings,
+  searchAccountingReferenceObjects: mocks.searchAccountingReferenceObjects,
+  confirmAccountingMappings: mocks.confirmAccountingMappings,
+  completeAccountingSetup: mocks.completeAccountingSetup,
+  refreshAccountingReferenceData: mocks.refreshAccountingReferenceData,
+  rejectAccountingMapping: vi.fn(),
+  setAccountingMapping: vi.fn(),
+  clearAccountingMapping: vi.fn(),
+  createAccountingReferenceRecord: vi.fn(),
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -67,9 +89,64 @@ const connected: AccountingConnection = {
   refreshTokenAbsoluteExpiresAt: 4_102_444_800,
   connectedAt: 1_780_000_000,
   disconnectedAt: null,
+  setupStep: "Complete",
+  referenceRefreshStartedAt: null,
+  referenceRefreshedAt: 1_780_000_100,
+  referenceRefreshError: "",
   version: 1,
   updatedAt: 1_780_000_000,
 };
+
+const mapping = { ...connected, setupStep: "Mappings" as const };
+
+function mappingRow(overrides: Partial<AccountingMapping>): AccountingMapping {
+  return {
+    id: "acctm_1",
+    targetType: "AccountRole",
+    trenovaObjectId: null,
+    trenovaKey: "ARAccount",
+    targetLabel: "Accounts receivable",
+    providerKind: "Account",
+    externalId: "",
+    externalName: "",
+    state: "Unmatched",
+    source: null,
+    confidence: null,
+    reason: "",
+    required: true,
+    prechecked: false,
+    candidates: [],
+    confirmedBy: null,
+    confirmedAt: null,
+    version: 1,
+    updatedAt: 1_780_000_000,
+    ...overrides,
+  };
+}
+
+function summary(overrides: Partial<AccountingMappingSummary> = {}): AccountingMappingSummary {
+  return {
+    integrationType: "QuickBooksOnline",
+    providerName: "QuickBooks Online",
+    connection: mapping,
+    groups: [],
+    requiredTotal: 4,
+    requiredConfirmed: 1,
+    canCompleteSetup: false,
+    ...overrides,
+  };
+}
+
+function mappingPages(required: AccountingMapping[], proposed: AccountingMapping[]) {
+  mocks.fetchAccountingMappings.mockImplementation(
+    ({ filter }: { filter: { requiredOnly?: boolean } }) =>
+      Promise.resolve({
+        mappings: filter.requiredOnly ? required : proposed,
+        hasNextPage: false,
+        endCursor: null,
+      }),
+  );
+}
 
 function status(overrides: Partial<AccountingSyncStatus> = {}): AccountingSyncStatus {
   return {
@@ -82,18 +159,24 @@ function status(overrides: Partial<AccountingSyncStatus> = {}): AccountingSyncSt
 }
 
 function renderModal(props: { justConnected?: boolean } = {}) {
+  return renderWithRouter(props);
+}
+
+function renderWithRouter(props: { justConnected?: boolean }) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   return render(
-    <QueryClientProvider client={client}>
-      <QuickBooksIntegrationModal
-        open
-        onOpenChange={() => undefined}
-        justConnected={props.justConnected ?? false}
-        onReviewed={() => undefined}
-      />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={client}>
+        <QuickBooksIntegrationModal
+          open
+          onOpenChange={() => undefined}
+          justConnected={props.justConnected ?? false}
+          onReviewed={() => undefined}
+        />
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
 }
 
@@ -270,5 +353,118 @@ describe("QuickBooksIntegrationModal", () => {
       await screen.findByText("You do not have permission to view the accounting integration."),
     ).toBeInTheDocument();
     expect(mocks.fetchAccountingSyncStatus).not.toHaveBeenCalled();
+  });
+
+  it("resumes at the match step while the required mappings are not finished", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: mapping }));
+    mocks.fetchAccountingMappingSummary.mockResolvedValue(summary());
+    mappingPages(
+      [
+        mappingRow({
+          id: "acctm_ar",
+          state: "Confirmed",
+          externalName: "Accounts Receivable (A/R)",
+        }),
+        mappingRow({ id: "acctm_rev", targetLabel: "Revenue", trenovaKey: "RevenueAccount" }),
+      ],
+      [],
+    );
+
+    renderModal();
+
+    expect(await screen.findByText("Match your records")).toBeInTheDocument();
+    expect(screen.getByText("1 of 4 required mappings confirmed")).toBeInTheDocument();
+    expect(await screen.findByText("Revenue")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Finish setup" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Check now" })).not.toBeInTheDocument();
+  });
+
+  it("confirms the proposals that are ticked, starting from the ones Trenova is sure of", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: mapping }));
+    mocks.fetchAccountingMappingSummary.mockResolvedValue(summary());
+    mocks.confirmAccountingMappings.mockResolvedValue([]);
+    mappingPages(
+      [],
+      [
+        mappingRow({
+          id: "acctm_sure",
+          state: "Proposed",
+          source: "Suggested",
+          prechecked: true,
+          targetLabel: "Freight charges",
+          externalName: "Freight",
+          required: false,
+        }),
+        mappingRow({
+          id: "acctm_unsure",
+          state: "Proposed",
+          source: "Model",
+          prechecked: false,
+          targetLabel: "Acme Logistics",
+          externalName: "Acme Logistics, Inc.",
+          required: false,
+        }),
+      ],
+    );
+    const user = userEvent.setup();
+
+    renderModal();
+
+    const confirm = await screen.findByRole("button", { name: "Confirm 1 checked" });
+    await user.click(screen.getByRole("checkbox", { name: "Confirm Acme Logistics" }));
+    await user.click(await screen.findByRole("button", { name: "Confirm 2 checked" }));
+
+    await waitFor(() =>
+      expect(mocks.confirmAccountingMappings).toHaveBeenCalledWith(["acctm_sure", "acctm_unsure"]),
+    );
+    expect(confirm).toBeInTheDocument();
+  });
+
+  it("finishes setup once every required mapping is confirmed", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: mapping }));
+    mocks.fetchAccountingMappingSummary.mockResolvedValue(
+      summary({ requiredConfirmed: 4, canCompleteSetup: true }),
+    );
+    mocks.completeAccountingSetup.mockResolvedValue({ ...connected });
+    mappingPages([], []);
+    const user = userEvent.setup();
+
+    renderModal();
+
+    await user.click(await screen.findByRole("button", { name: "Finish setup" }));
+    await waitFor(() =>
+      expect(mocks.completeAccountingSetup).toHaveBeenCalledWith("QuickBooksOnline"),
+    );
+  });
+
+  it("says when the last read of QuickBooks failed and offers to read it again", async () => {
+    const failed = { ...mapping, referenceRefreshError: "QuickBooks did not answer" };
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: failed }));
+    mocks.fetchAccountingMappingSummary.mockResolvedValue(summary({ connection: failed }));
+    mocks.refreshAccountingReferenceData.mockResolvedValue(failed);
+    mappingPages([], []);
+    const user = userEvent.setup();
+
+    renderModal();
+
+    expect(
+      await screen.findByText(
+        "The last read of QuickBooks Online failed: QuickBooks did not answer",
+      ),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Read QuickBooks Online again/ }));
+    await waitFor(() =>
+      expect(mocks.refreshAccountingReferenceData).toHaveBeenCalledWith("QuickBooksOnline"),
+    );
+  });
+
+  it("continues from the company review to the match step", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: mapping }));
+    mocks.fetchAccountingMappingSummary.mockResolvedValue(summary());
+    mappingPages([], []);
+
+    renderModal({ justConnected: true });
+
+    expect(await screen.findByRole("button", { name: "Continue" })).toBeInTheDocument();
   });
 });

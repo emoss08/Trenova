@@ -45,7 +45,7 @@ func (s *Service) CreateReferenceRecord(
 	}
 	if !row.ProviderKind.Creatable() {
 		return nil, errortypes.NewBusinessError(
-			"{0} records are kept by your bookkeeper and are not created from Trenova",
+			"{0} records are kept by the bookkeeper and are not created from Trenova",
 			string(row.ProviderKind),
 		)
 	}

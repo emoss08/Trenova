@@ -316,14 +316,20 @@ func (r *connectionRepository) MarkReferenceRefresh(
 			return buncolgen.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
 				Where(cols.ID.Eq(), req.ID)
 		})
-	if req.StartedAt != nil {
-		query = query.Set(cols.ReferenceRefreshStartedAt.Set(), *req.StartedAt)
-	}
-	if req.RefreshedAt != nil {
-		query = query.Set(cols.ReferenceRefreshedAt.Set(), *req.RefreshedAt)
-	}
-	if req.RefreshedAt != nil || req.Error != "" {
-		query = setOrNull(query, cols.ReferenceRefreshError, req.Error)
+	switch {
+	case req.StartedAt != nil:
+		query = query.
+			Set(cols.ReferenceRefreshStartedAt.Set(), *req.StartedAt).
+			Set(cols.ReferenceRefreshError.SetNull())
+	default:
+		query = setOrNull(
+			query.Set(cols.ReferenceRefreshStartedAt.SetNull()),
+			cols.ReferenceRefreshError,
+			req.Error,
+		)
+		if req.RefreshedAt != nil {
+			query = query.Set(cols.ReferenceRefreshedAt.Set(), *req.RefreshedAt)
+		}
 	}
 
 	results, err := query.Exec(ctx)

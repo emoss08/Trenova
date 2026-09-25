@@ -3795,6 +3795,15 @@
       "domain/documentupload"
     ]
   },
+  "A name is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "A negative change is a decrease. Weight breaks move with their lane.": {
     "sites": 1,
     "scope": [
@@ -4571,6 +4580,15 @@
     ],
     "areas": [
       "service/iftaservice"
+    ]
+  },
+  "A record named {0} already exists in the accounting system. Refresh the reference data and map to it, or choose another name.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "A recurring shipment already covers this lane": {
@@ -6490,6 +6508,15 @@
       "template/notification.dash.disciplinary_issued"
     ]
   },
+  "A {0} mapping is named by the Trenova record's id": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A {0} order cannot be canceled": {
     "sites": 1,
     "scope": [
@@ -7854,12 +7881,13 @@
     ]
   },
   "Accessorial charges": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "apps/web/hooks",
       "routes/accessorial-charge"
     ]
   },
@@ -7968,13 +7996,14 @@
     ]
   },
   "Account": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "domain/documenttemplate",
       "routes/journal-entry",
       "routes/trial-balance"
@@ -8070,6 +8099,15 @@
     "areas": [
       "apps/web/components",
       "routes/trial-balance"
+    ]
+  },
+  "Account roles": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Account type": {
@@ -8242,6 +8280,24 @@
       "apps/web/config"
     ]
   },
+  "Accounting mapping": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Accounting mappings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
+    ]
+  },
   "Accounting policy and posting control configuration": {
     "sites": 1,
     "scope": [
@@ -8252,12 +8308,13 @@
     ]
   },
   "Accounting sync": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "domain/watchtower",
       "routes/admin"
     ]
@@ -23084,6 +23141,15 @@
       "service/distancecalculationservice"
     ]
   },
+  "Background work is not available on this server, so the reference data cannot be refreshed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Background work is not available, so the source cannot be re-indexed.": {
     "sites": 1,
     "scope": [
@@ -29795,12 +29861,13 @@
     ]
   },
   "Carriers": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "apps/web/hooks",
       "routes/carrier",
       "routes/carrier-sourcing",
       "routes/routing-guide"
@@ -32157,6 +32224,15 @@
       "routes/reports"
     ]
   },
+  "Choose a mapping": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
+    ]
+  },
   "Choose a measure": {
     "sites": 2,
     "scope": [
@@ -32302,6 +32378,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Choose a {0} record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Choose an agent": {
@@ -32873,6 +32958,15 @@
       "routes/formula-template"
     ]
   },
+  "Choose which accounting-system record matches a Trenova record when the name rules are unsure.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Choose which carriers are enrolled for continuous monitoring.": {
     "sites": 1,
     "scope": [
@@ -32965,6 +33059,33 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Chosen by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Chosen by a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Chosen by an agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Chosen for this agent": {
@@ -33840,7 +33961,7 @@
     ]
   },
   "Clear": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -37016,7 +37137,7 @@
     ]
   },
   "Confidence": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -37490,11 +37611,12 @@
     ]
   },
   "Confirm": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin"
     ]
   },
@@ -37514,6 +37636,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Confirm at most {0} mappings at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "Confirm blocking changes": {
@@ -37638,6 +37769,24 @@
       "routes/shipment"
     ]
   },
+  "Confirm the required mappings first: {0} of {1} are confirmed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
+  "Confirm the revenue account first: a new item needs an income account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "Confirm the unit at the dock is registered to the assigned carrier.": {
     "sites": 1,
     "scope": [
@@ -37665,6 +37814,15 @@
       "routes/jurisdiction-rule"
     ]
   },
+  "Confirm what each record is sent as": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Confirm what was connected": {
     "sites": 1,
     "scope": [
@@ -37674,16 +37832,46 @@
       "routes/admin"
     ]
   },
+  "Confirm {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Confirm {0} checked": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping",
+      "routes/admin"
+    ]
+  },
   "Confirmed": {
-    "sites": 9,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components",
+      "routes/accounting-mapping",
       "routes/carrier-monitoring"
+    ]
+  },
+  "Confirmed 1 mapping": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Confirmed by (name at the carrier)": {
@@ -37693,6 +37881,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Confirmed {0} mappings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Confirming...": {
@@ -37884,6 +38081,15 @@
     "areas": [
       "apps/web/components",
       "routes/desk"
+    ]
+  },
+  "Connect it from the integrations page. Trenova reads its records and proposes the matches here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
     ]
   },
   "Connect or disconnect the accounting system": {
@@ -38173,6 +38379,15 @@
     ],
     "areas": [
       "service/realtimeservice"
+    ]
+  },
+  "Connection is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
     ]
   },
   "Connection test failed": {
@@ -38796,12 +39011,13 @@
     ]
   },
   "Continue": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/auth"
     ]
   },
@@ -42164,6 +42380,15 @@
       "domain/permission"
     ]
   },
+  "Create in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Create index": {
     "sites": 1,
     "scope": [
@@ -42724,6 +42949,15 @@
       "routes/admin"
     ]
   },
+  "Created from Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Created this resource": {
     "sites": 1,
     "scope": [
@@ -42741,6 +42975,15 @@
     "areas": [
       "apps/web/components",
       "routes/admin"
+    ]
+  },
+  "Created {0} in {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Creates a draft settlement for every carrier with pending cost events in the current period.": {
@@ -44225,7 +44468,7 @@
     ]
   },
   "Customer": {
-    "sites": 43,
+    "sites": 44,
     "scope": [
       "go",
       "ts"
@@ -44233,6 +44476,7 @@
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/lib",
       "packages/shared/types",
@@ -44692,13 +44936,14 @@
     ]
   },
   "Customers": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "apps/web/hooks",
       "apps/web/types",
       "routes/customer"
     ]
@@ -62679,6 +62924,15 @@
       "routes/agent-control"
     ]
   },
+  "Every kind": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
+    ]
+  },
   "Every line was rebuilt from the miles, fuel and rates on file now.": {
     "sites": 1,
     "scope": [
@@ -69717,6 +69971,16 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "Finish setup": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping",
+      "routes/admin"
     ]
   },
   "Finish the current shipment upload before starting another.": {
@@ -84003,11 +84267,12 @@
     ]
   },
   "Item": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/agent-control"
     ]
   },
@@ -84056,6 +84321,15 @@
     ],
     "areas": [
       "routes/invoice-adjustment-batch"
+    ]
+  },
+  "Item roles": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Item {0}": {
@@ -85415,11 +85689,13 @@
     ]
   },
   "Kind": {
-    "sites": 14,
+    "sites": 16,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
+      "routes/accounting-mapping",
       "routes/agent-control",
       "routes/desk",
       "routes/holiday",
@@ -88284,6 +88560,15 @@
     ],
     "areas": [
       "domain/ifta"
+    ]
+  },
+  "Line types": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Line {0}": {
@@ -92300,11 +92585,12 @@
     ]
   },
   "Mapping": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/edi"
     ]
   },
@@ -92399,13 +92685,32 @@
       "routes/edi"
     ]
   },
-  "Mappings": {
-    "sites": 6,
+  "Mapping totals": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-mapping"
+    ]
+  },
+  "Mappings": {
+    "sites": 7,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
       "routes/edi"
+    ]
+  },
+  "Mappings appear once {0}'s records have been read.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
     ]
   },
   "Maps are unavailable — no Google Maps key is configured.": {
@@ -93114,6 +93419,15 @@
       "routes/reconciliation-summary"
     ]
   },
+  "Match records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Match rejected": {
     "sites": 1,
     "scope": [
@@ -93177,6 +93491,15 @@
       "apps/web/components"
     ]
   },
+  "Match your records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Matched": {
     "sites": 10,
     "scope": [
@@ -93207,6 +93530,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Matched by Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Matched from this move's lane. Offers go out to each carrier in rank order until one accepts.": {
@@ -97039,6 +97371,15 @@
       "routes/agent-control"
     ]
   },
+  "More proposals are waiting on the mappings page.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Most billed": {
     "sites": 1,
     "scope": [
@@ -98148,6 +98489,15 @@
       "domain/dataentrycontrol"
     ]
   },
+  "Name in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Name is required": {
     "sites": 104,
     "scope": [
@@ -98439,6 +98789,15 @@
     "areas": [
       "packages/shared/types",
       "service/invoicedisputeservice"
+    ]
+  },
+  "Name the mapping by its id, or by its target type with a record or key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Name the part of the target rated": {
@@ -102997,6 +103356,15 @@
       "routes/edi"
     ]
   },
+  "No mappings match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
+    ]
+  },
   "No mappings saved for {0}.": {
     "sites": 1,
     "scope": [
@@ -104018,6 +104386,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "No record chosen": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "No records": {
@@ -105043,6 +105420,15 @@
       "apps/web/components"
     ]
   },
+  "No usable {0} record matches that.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "No version has been published yet. Create and publish a version from the Versions tab to start parsing documents with this rule set.": {
     "sites": 1,
     "scope": [
@@ -106000,6 +106386,15 @@
     "areas": [
       "routes/admin",
       "routes/formula-template"
+    ]
+  },
+  "Not in {0} yet?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Not included": {
@@ -107559,6 +107954,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "Nothing to map yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
     ]
   },
   "Nothing to plan": {
@@ -109698,6 +110102,15 @@
       "routes/customer-payments"
     ]
   },
+  "One or more mappings were not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "One or more shipments changed while attaching; retry the request": {
     "sites": 1,
     "scope": [
@@ -110311,6 +110724,15 @@
     ],
     "areas": [
       "service/agentevalcaseservice"
+    ]
+  },
+  "Only a proposed mapping can be rejected": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "Only a rated reply in a conversation can become an evaluation case": {
@@ -112061,6 +112483,15 @@
       "routes/home"
     ]
   },
+  "Open all mappings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Open approvals": {
     "sites": 1,
     "scope": [
@@ -112401,11 +112832,12 @@
     ]
   },
   "Open integrations": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-mapping",
       "routes/carrier",
       "routes/carrier-monitoring",
       "routes/carrier-sourcing",
@@ -115145,6 +115577,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Other records Trenova considered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Other workers": {
@@ -118998,12 +119439,13 @@
     ]
   },
   "Payment method": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "routes/carrier",
       "routes/carrier-settlement",
       "routes/customer-payments",
@@ -119038,6 +119480,15 @@
     ],
     "areas": [
       "service/driversettlementservice"
+    ]
+  },
+  "Payment methods": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Payment posted": {
@@ -119113,13 +119564,14 @@
     ]
   },
   "Payment terms": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "routes/carrier",
       "routes/carrier-settlement",
       "routes/customer",
@@ -121302,6 +121754,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Pick one on the left to see what Trenova proposed, the records it considered, and to choose another.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
     ]
   },
   "Pick the filing date": {
@@ -125811,6 +126272,15 @@
       "service/agentdecisionqueueservice"
     ]
   },
+  "Proposal turned down": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Proposals": {
     "sites": 2,
     "scope": [
@@ -125865,6 +126335,15 @@
       "service/agentdecisionservice"
     ]
   },
+  "Proposals update when it finishes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Propose": {
     "sites": 2,
     "scope": [
@@ -125895,11 +126374,13 @@
     ]
   },
   "Proposed": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
+      "routes/accounting-mapping",
       "routes/agent-control",
       "routes/detention-policy"
     ]
@@ -126857,6 +127338,24 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "Pull an accounting system's reference data and re-score the mappings that are still open": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Pull every active accounting connection's reference data and re-score open mappings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Pull full profile": {
@@ -130136,6 +130635,15 @@
       "apps/web/components"
     ]
   },
+  "Read {0} again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Read {0}.": {
     "sites": 1,
     "scope": [
@@ -130274,6 +130782,24 @@
   },
   "Reading what came back…": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Reading {0} again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Reading {0}'s accounts, items, customers and vendors. Proposals update when it finishes.": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -132482,6 +133008,15 @@
       "routes/worker"
     ]
   },
+  "Record kind is not recognized": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "Record manual carrier responses": {
     "sites": 1,
     "scope": [
@@ -133608,6 +134143,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Reference data refresh is not available on this server": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "Reference identification": {
@@ -137638,7 +138182,7 @@
     ]
   },
   "Required": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "ts"
     ],
@@ -137672,6 +138216,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Required confirmed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
     ]
   },
   "Required courses appear as slots on every matching worker; an overdue, failed or lapsed one leaves the worker unqualified.": {
@@ -139409,12 +139962,13 @@
     ]
   },
   "Retry": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/accounting-mapping",
       "routes/admin",
       "routes/carrier-monitoring",
       "routes/edi",
@@ -146653,6 +147207,15 @@
       "routes/inbox"
     ]
   },
+  "Search mappings": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
+    ]
+  },
   "Search metrics": {
     "sites": 1,
     "scope": [
@@ -147048,6 +147611,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Search {0} records": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Search...": {
@@ -152473,6 +153045,15 @@
     ],
     "areas": [
       "routes/home.tsx"
+    ]
+  },
+  "Setup step is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
     ]
   },
   "Severity": {
@@ -158361,6 +158942,15 @@
       "routes/ifta-return"
     ]
   },
+  "Start the daily reference data refresh for every active accounting connection": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Start the renewal before it lapses.": {
     "sites": 1,
     "scope": [
@@ -158730,13 +159320,14 @@
     ]
   },
   "State is required": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/types",
+      "domain/accountingsync",
       "domain/customer",
       "domain/jurisdictionrule",
       "domain/location",
@@ -160744,6 +161335,15 @@
       "domain/dedicatedlane"
     ]
   },
+  "Suggested by the model": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Suggested from feedback": {
     "sites": 1,
     "scope": [
@@ -162314,11 +162914,12 @@
     ]
   },
   "Target type is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/accountingsync",
       "domain/aifeedback"
     ]
   },
@@ -162356,6 +162957,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Targets and their candidates": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "Tariff": {
@@ -162714,6 +163324,15 @@
     ],
     "areas": [
       "domain/platformcatalog"
+    ]
+  },
+  "Tell Trenova which {0} account, item, customer and vendor each Trenova record is sent as. Trenova proposes a match where it is sure enough; nothing is used until a person confirms it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Tell dispatch why so they can replan — hours, home time, equipment, anything.": {
@@ -163705,11 +164324,12 @@
     ]
   },
   "Term": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/rate-agreement"
     ]
   },
@@ -164389,6 +165009,15 @@
     ],
     "areas": [
       "service/agentdecisionservice"
+    ]
+  },
+  "That record is not in the accounting system's data Trenova has. Refresh it and try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "That reporting line loops back on itself": {
@@ -165610,6 +166239,15 @@
       "packages/shared/components"
     ]
   },
+  "The carrier for this mapping no longer exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "The carrier has been assigned but has not confirmed the rate yet.": {
     "sites": 1,
     "scope": [
@@ -166634,6 +167272,15 @@
     ],
     "areas": [
       "service/shipmentservice"
+    ]
+  },
+  "The customer for this mapping no longer exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "The customer has no notice recipients configured — add a customer email profile first": {
@@ -168798,6 +169445,15 @@
       "domain/fuelpurchase"
     ]
   },
+  "The last read of {0} failed: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The latest acceptable arrival time, leave blank for exact appointments": {
     "sites": 1,
     "scope": [
@@ -169057,6 +169713,16 @@
     ],
     "areas": [
       "routes/trailer"
+    ]
+  },
+  "The mappings could not be loaded.": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping",
+      "routes/admin"
     ]
   },
   "The market area this end covers": {
@@ -173203,6 +173869,15 @@
       "routes/ifta-tax-rate"
     ]
   },
+  "The {0} records could not be searched.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The {0} return has been filed; amend it instead of generating a new one": {
     "sites": 1,
     "scope": [
@@ -173571,6 +174246,15 @@
     ],
     "areas": [
       "service/passwordresetservice"
+    ]
+  },
+  "This accounting system cannot create records from Trenova": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "This action cannot be undone. This will permanently delete this comment and its attachments.": {
@@ -175249,6 +175933,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "This kind of record is not created from Trenova": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "This lane is written exactly as narrowly as another one, so which of the two applies is decided by a tie-break rather than by you.": {
@@ -180839,6 +181532,15 @@
       "packages/shared/components"
     ]
   },
+  "Trenova creates the {0} in {1} and maps {2} to it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Trenova finishes the connection QuickBooks Online just approved.": {
     "sites": 1,
     "scope": [
@@ -181297,6 +181999,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "Try another kind or search.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
+    ]
+  },
   "Try fewer words, or end with a question mark to ask the assistant.": {
     "sites": 1,
     "scope": [
@@ -181362,11 +182073,12 @@
     ]
   },
   "Turn down": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/worker"
     ]
   },
@@ -183337,6 +184049,16 @@
       "routes/fiscal-year"
     ]
   },
+  "Unmatched": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/accounting-mapping"
+    ]
+  },
   "Unnamed carrier": {
     "sites": 1,
     "scope": [
@@ -184782,7 +185504,7 @@
     ]
   },
   "Use": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -186261,12 +186983,13 @@
     ]
   },
   "Vendor": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "go/other",
       "routes/fuel-purchase"
     ]
@@ -192529,6 +193252,15 @@
       "routes/hazardous-material"
     ]
   },
+  "Which accounting system account, item, customer and vendor each Trenova record is sent as. Only confirmed mappings are used when syncing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
+    ]
+  },
   "Which cases": {
     "sites": 1,
     "scope": [
@@ -193089,11 +193821,12 @@
     ]
   },
   "Why": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control",
       "routes/desk",
       "routes/org-structure",
@@ -203861,6 +204594,15 @@
       "routes/dispatch-console"
     ]
   },
+  "{0} already exists in the accounting system; map {1} to it instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "{0} alternatives": {
     "sites": 1,
     "scope": [
@@ -204075,6 +204817,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "{0} by {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} calls in a row have failed": {
@@ -204384,6 +205135,15 @@
       "routes/edi"
     ]
   },
+  "{0} did not accept Trenova's authorization: {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "{0} did not accept the authorization. Try connecting again.": {
     "sites": 1,
     "scope": [
@@ -204400,6 +205160,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} did not create the record: {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "{0} didn't go through": {
@@ -204830,6 +205599,15 @@
       "template/notification.dash.review_submitted"
     ]
   },
+  "{0} has no proposed match to confirm; choose a record for it instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "{0} has no record for USDOT {1}, so there is no profile to show.": {
     "sites": 1,
     "scope": [
@@ -204866,13 +205644,23 @@
       "go/other"
     ]
   },
-  "{0} has not been connected yet": {
+  "{0} has no usable records of this kind yet.": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} has not been connected yet": {
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
-      "api/graphql"
+      "api/graphql",
+      "service/accountingmappingservice"
     ]
   },
   "{0} has set up a Dash account for you. Dash is where you will see your assigned loads, submit expenses, and check your pay.": {
@@ -205094,6 +205882,33 @@
       "service/agentdefinitionservice"
     ]
   },
+  "{0} is a {1} account, which cannot be used for this role": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
+  "{0} is already mapped to {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is already mapped to {1}; clear it first to create a new record": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "{0} is already the primary carrier intelligence provider. Disable it, or switch the primary provider from Carrier Monitoring, before enabling {1} as primary": {
     "sites": 1,
     "scope": [
@@ -205157,6 +205972,15 @@
       "service/iftaservice"
     ]
   },
+  "{0} is inactive or cannot be used on documents": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "{0} is invalid": {
     "sites": 1,
     "scope": [
@@ -205164,6 +205988,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "{0} is mapped to {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "{0} is not a supported telematics provider": {
@@ -205175,6 +206008,15 @@
       "go/other"
     ]
   },
+  "{0} is not a usable {1} in the accounting system; pick one from the candidates or search options": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} is not a valid option for {1}": {
     "sites": 2,
     "scope": [
@@ -205184,13 +206026,23 @@
       "service/customfieldservice"
     ]
   },
-  "{0} is not an accounting system Trenova can sync with": {
+  "{0} is not a {1} key; use one of {2}": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/accountingconnectionservice"
+      "go/other"
+    ]
+  },
+  "{0} is not an accounting system Trenova can sync with": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice",
+      "service/accountingmappingservice"
     ]
   },
   "{0} is not an active jurisdiction": {
@@ -205229,6 +206081,15 @@
       "go/other"
     ]
   },
+  "{0} is not connected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-mapping"
+    ]
+  },
   "{0} is not connected for this organization": {
     "sites": 1,
     "scope": [
@@ -205239,11 +206100,23 @@
     ]
   },
   "{0} is not connected. A person must connect it from the integrations page.": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/accountingconnectionservice",
+      "service/accountingmappingservice",
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is not mapped": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice",
       "service/agenttoolservice"
     ]
   },
@@ -205447,6 +206320,15 @@
       "service/assistantservice"
     ]
   },
+  "{0} is unmatched": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "{0} is {1} and holds the opening balances carried out of {2}. Reopen {3} first.": {
     "sites": 1,
     "scope": [
@@ -205599,6 +206481,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0} match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} matrix-priced lanes are untouched — their rates live in the matrix cells.": {
@@ -206015,11 +206906,12 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-mapping",
       "routes/admin",
       "routes/agent-control",
       "routes/dispatch-console",
@@ -206143,6 +207035,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} of {1} required mappings confirmed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} of {1} results": {
@@ -206569,6 +207470,34 @@
       "routes/agent-control"
     ]
   },
+  "{0} record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} records are kept by the bookkeeper and are not created from Trenova": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice",
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} records read {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} regressed": {
     "sites": 1,
     "scope": [
@@ -206930,12 +207859,21 @@
     ]
   },
   "{0} setup": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} setup is finished": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "{0} shared invoice {1} for {2} with you.": {
@@ -207990,6 +208928,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "{0}'s records have not been read yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0}, estimated from their text": {
