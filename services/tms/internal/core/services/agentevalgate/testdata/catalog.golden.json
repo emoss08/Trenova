@@ -8979,6 +8979,8 @@
             "description": "The kind of record to open, with recordId, instead of a page.",
             "enum": [
               "agent_run",
+              "ai_audit_event",
+              "ai_audit_export",
               "assistant_thread",
               "billing_queue_item",
               "carrier",
