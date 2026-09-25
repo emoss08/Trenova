@@ -9,11 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/stringutils"
 )
 
 const (
 	previewRefusalStale    = "preview_stale"
 	previewRefusalConflict = "preview_conflict"
+	sha256HexLength        = 64
 )
 
 // shownPreview is what a decision records of the preview its decider saw.
@@ -44,7 +46,13 @@ func (s *Service) settlePreview(
 	req *services.DecideAgentProposalRequest,
 	actor *services.RequestActor,
 ) (*shownPreview, error) {
+	// A person can always reject, whatever the preview has become since they
+	// read it: the digest they saw is kept when it is one, and never checked.
 	if req.Decision != agent.DecisionAccepted && req.Decision != agent.DecisionModified {
+		if !stringutils.IsLowerHexOfLength(req.PreviewDigest, sha256HexLength) {
+			return &shownPreview{}, nil
+		}
+
 		return &shownPreview{digest: req.PreviewDigest}, nil
 	}
 

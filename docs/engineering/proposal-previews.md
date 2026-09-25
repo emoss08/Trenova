@@ -104,9 +104,10 @@ Until a tool previews itself, `toolsimulation.Simulate` and the preview service 
    guard: a record of a resource the reader may not read is withheld whole with its label; a
    value above their ceiling is withheld; a referenced record's label is withheld when they
    may not read its resource; an amount above their ceiling is withheld. Everything withheld
-   is counted (`WithheldCount`, `withheld` warning). The ceiling and read checks are the
-   request's own caches (`fieldsensitivity.Ceilings`, `fieldsensitivity.ReadAccess`, the
-   GraphQL permission memo).
+   is counted (`WithheldCount`, `withheld` warning). The ceiling and read checks are
+   per-request caches (`fieldsensitivity.Ceilings`, `fieldsensitivity.ReadAccess`), made
+   for the reader as an actor in the GraphQL layer and in a decision alike, so the digest a
+   person is shown is the one their approval is checked against.
 8. The digest: SHA-256 of the canonical JSON (`shared/jsonutils/canonical.go`: sorted keys,
    numbers as exact decimals) of the proposal id, tool, parameters as they would run,
    coverage, withheld count, target version and the filtered changes without volatile
@@ -150,7 +151,10 @@ before anything is written, for `Accepted` and `Modified`:
 - otherwise the decision records `preview`, `preview_digest`, `preview_target_version` and
   `preview_reviewed` (the decision named the digest).
 
-A rejection records only a digest it was sent. A batch (`decideAgentProposals`) takes one
+A rejection is never refused over its preview — a person can always say no — and records
+only the digest it was sent, when it is one. A digest mismatch on an approval (of a
+proposal or a plan) is the only `ConflictError` the decide path returns; a preview whose
+changes fail validation is a validation error. A batch (`decideAgentProposals`) takes one
 digest per proposal: a mismatch fails that proposal alone, and a proposal without one is
 approved unreviewed. Withheld parts do not block an approval; the count is recorded in the
 decision's preview.

@@ -8,42 +8,32 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-// previewViewer is the reader a preview is filtered for, with the request's
-// own caches: the ceiling per resource from the loaders and every read check
-// through the request's permission memo, so a page asks the engine once per
-// resource.
+// previewViewer is the reader a preview is filtered for. The ceiling per
+// resource comes from the request's loaders, and read access is checked for
+// the reader as an actor, exactly as a decision checks it, so the digest a
+// person is shown is the digest their approval is checked against.
 func (r *Resolver) previewViewer(
 	ctx context.Context,
 	authCtx *authctx.AuthContext,
 ) *services.PreviewViewer {
+	actor := actorutil.FromAuthContext(authCtx)
 	viewer := &services.PreviewViewer{
-		Actor: actorutil.FromAuthContext(authCtx),
-		Reads: requestReadAccess{resolver: r, authCtx: authCtx},
+		Actor: actor,
+		Reads: fieldsensitivity.NewReadAccess(r.permissionEngine, actor),
 	}
 	if l, ok := loaders.FromContext(ctx); ok && l != nil {
 		viewer.Ceilings = l.FieldCeilings
 	}
 
 	return viewer
-}
-
-// requestReadAccess answers read checks through the request's memoised
-// permission check.
-type requestReadAccess struct {
-	resolver *Resolver
-	authCtx  *authctx.AuthContext
-}
-
-func (a requestReadAccess) MayRead(ctx context.Context, resource permission.Resource) bool {
-	return a.resolver.hasPermission(ctx, a.authCtx, resource, permission.OpRead)
 }
 
 func (r *Resolver) previewService() (services.ProposalPreviewService, error) {

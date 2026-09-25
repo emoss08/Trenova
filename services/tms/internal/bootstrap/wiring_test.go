@@ -81,6 +81,11 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						services.MemoryVectorSearcher,
 						services.MemoryRanker,
 						services.WorkflowSignalStarter,
+						// Previews are optional to the runtime, the decision
+						// services and the resolvers; without them nothing is
+						// previewed, no baseline is kept and no digest checked.
+						services.ProposalPreviewService,
+						services.RecordLabeler,
 					) {
 					},
 				),

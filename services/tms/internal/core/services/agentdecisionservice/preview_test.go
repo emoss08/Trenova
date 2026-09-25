@@ -166,6 +166,21 @@ func TestDecide_AnApprovalWithoutADigestIsRecordedUnreviewed(t *testing.T) {
 	assert.False(t, created.PreviewReviewed)
 }
 
+// A rejection is never refused over its preview: a person must always be
+// able to say no, whatever the change has become since they read it.
+func TestDecide_ARejectionIsNeverRefusedOverItsDigest(t *testing.T) {
+	t.Parallel()
+
+	h, _ := previewHarness(t, &fakePreviews{digest: strings.Repeat("a", 64)})
+
+	_, err := decideWith(t, h, agent.DecisionRejected, "not-a-digest-the-client-could-send")
+	require.NoError(t, err)
+
+	require.NotNil(t, h.decisions.created)
+	assert.Empty(t, h.decisions.created.PreviewDigest, "a malformed digest is not kept")
+	assert.False(t, h.decisions.created.PreviewReviewed)
+}
+
 func TestDecide_ARejectionRecordsOnlyTheDigestItWasSent(t *testing.T) {
 	t.Parallel()
 
