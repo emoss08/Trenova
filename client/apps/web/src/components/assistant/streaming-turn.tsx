@@ -6,8 +6,9 @@ import { EASE_SETTLE } from "@/lib/motion";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { CircleAlertIcon } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import {
+  ArtifactChips,
   AssistantProse,
   AssistantTurn,
   DecisionNote,
@@ -16,12 +17,13 @@ import {
   UserTurn,
 } from "./message-items";
 import { currentActivity, segmentStep, stepsFromSegments, type ToolStep } from "./activity";
-import { askRequestsFromSteps } from "./ask-requests";
+import { askRequestsFromSteps, type ThreadAskRequest } from "./ask-requests";
 import { ChoicePrompt } from "./choice-prompt";
 import { ReportRunCard } from "./report-run-card";
-import { reportRunsFromSteps } from "./report-runs";
+import { reportRunOrigins, type ThreadReportRun } from "./report-runs";
 import { ToolActivity } from "./tool-activity";
 import { isTurnActive, type TurnState } from "./turn-stream";
+import type { AssistantArtifactEvent } from "@/types/assistant";
 import { SourcesFooter } from "./web-citations";
 import { webSourcesOf } from "./web-sources";
 import { thinkingPose } from "./voice/desk-pose";
@@ -40,12 +42,15 @@ export function StreamingTurn({
   onRetry,
   onDismiss,
   onAnswer,
+  onOpenArtifact,
 }: {
   /**
    * Answering a question the live turn asked, before the turn is saved.
    * Absent where the conversation can no longer continue.
    */
   onAnswer?: (value: string) => void;
+  /** Opens an artifact the turn produced; absent where there is no pane to open it in. */
+  onOpenArtifact?: (id: string) => void;
   turn: TurnState;
   onRetry?: () => void;
   onDismiss: () => void;
@@ -53,8 +58,10 @@ export function StreamingTurn({
   const t = useT();
 
   const steps = useMemo(() => stepsFromSegments(turn.segments), [turn.segments]);
-  const asks = askRequestsFromSteps(steps);
-  const reportRuns = reportRunsFromSteps(steps);
+  const outputs = useMemo(
+    () => outputsByStep(steps, onOpenArtifact ? turn.artifacts : []),
+    [steps, onOpenArtifact, turn.artifacts],
+  );
   const active = isTurnActive(turn);
   const answer = useMemo(
     () => turn.segments.map((segment) => (segment.kind === "text" ? segment.text : "")).join("\n"),
@@ -107,15 +114,23 @@ export function StreamingTurn({
                 </div>
               );
             }
-            return <ToolActivity key={`tools-${group.steps[0].id}`} steps={group.steps} live />;
+            return (
+              <Fragment key={`tools-${group.steps[0].id}`}>
+                <ToolActivity steps={group.steps} live />
+                <StepOutputs
+                  outputs={outputs.forSteps(group.steps)}
+                  onAnswer={onAnswer}
+                  onOpenArtifact={onOpenArtifact}
+                />
+              </Fragment>
+            );
           })}
           {!active && answer !== "" && <SourcesFooter sources={sources} />}
-          {reportRuns.map((run) => (
-            <ReportRunCard key={run.runId} run={run} />
-          ))}
-          {asks.map((ask) => (
-            <ChoicePrompt key={ask.callId} request={ask} answered={false} onAnswer={onAnswer} />
-          ))}
+          <StepOutputs
+            outputs={outputs.unplaced}
+            onAnswer={onAnswer}
+            onOpenArtifact={onOpenArtifact}
+          />
           <WorkingLine turn={turn} steps={steps} active={active} />
         </AssistantTurn>
       )}
@@ -142,6 +157,85 @@ export function StreamingTurn({
         </AssistantTurn>
       )}
     </div>
+  );
+}
+
+type StepOutput = {
+  artifacts: AssistantArtifactEvent[];
+  runs: ThreadReportRun[];
+  asks: ThreadAskRequest[];
+};
+
+const NO_OUTPUT: StepOutput = { artifacts: [], runs: [], asks: [] };
+
+/**
+ * What each step produced besides its result: the artifacts it published,
+ * the report runs it started and the questions it asked. The saved thread
+ * shows these under the step that made them, before the words written after
+ * it; the live turn places them the same way, so nothing moves when the reply
+ * is saved. An artifact whose step this reader never saw is kept apart and
+ * shown after the steps rather than dropped.
+ */
+function outputsByStep(
+  steps: readonly ToolStep[],
+  artifacts: readonly AssistantArtifactEvent[],
+): { forSteps: (group: readonly ToolStep[]) => StepOutput; unplaced: StepOutput } {
+  const known = new Set(steps.map((step) => step.id));
+  const runs = reportRunOrigins(steps);
+  const asks = new Map(askRequestsFromSteps(steps).map((ask) => [ask.callId, ask]));
+  const artifactsByStep = new Map<string, AssistantArtifactEvent[]>();
+  const unplaced: AssistantArtifactEvent[] = [];
+
+  for (const artifact of artifacts) {
+    if (artifact.sourceToolCallId !== "" && known.has(artifact.sourceToolCallId)) {
+      artifactsByStep.set(artifact.sourceToolCallId, [
+        ...(artifactsByStep.get(artifact.sourceToolCallId) ?? []),
+        artifact,
+      ]);
+    } else {
+      unplaced.push(artifact);
+    }
+  }
+
+  return {
+    forSteps: (group) => {
+      const output: StepOutput = { artifacts: [], runs: [], asks: [] };
+      for (const step of group) {
+        output.artifacts.push(...(artifactsByStep.get(step.id) ?? []));
+        output.runs.push(...(runs.get(step.id) ?? []));
+        const ask = asks.get(step.id);
+        if (ask) {
+          output.asks.push(ask);
+        }
+      }
+      return output;
+    },
+    unplaced: unplaced.length > 0 ? { ...NO_OUTPUT, artifacts: unplaced } : NO_OUTPUT,
+  };
+}
+
+/** A step's artifacts, report runs and questions, in the order the saved thread shows them. */
+function StepOutputs({
+  outputs,
+  onAnswer,
+  onOpenArtifact,
+}: {
+  outputs: StepOutput;
+  onAnswer?: (value: string) => void;
+  onOpenArtifact?: (id: string) => void;
+}) {
+  return (
+    <>
+      {outputs.artifacts.length > 0 && onOpenArtifact && (
+        <ArtifactChips artifacts={outputs.artifacts} onOpen={onOpenArtifact} />
+      )}
+      {outputs.runs.map((run) => (
+        <ReportRunCard key={run.runId} run={run} />
+      ))}
+      {outputs.asks.map((ask) => (
+        <ChoicePrompt key={ask.callId} request={ask} answered={false} onAnswer={onAnswer} />
+      ))}
+    </>
   );
 }
 

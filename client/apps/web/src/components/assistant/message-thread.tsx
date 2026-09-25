@@ -554,6 +554,7 @@ export function MessageThread({
               onRetry={readOnly ? undefined : retry}
               onDismiss={dismiss}
               onAnswer={answer}
+              onOpenArtifact={onOpenArtifact}
             />
           </div>
         ),
