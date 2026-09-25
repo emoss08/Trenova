@@ -244,6 +244,28 @@ func (f *fakeConnections) MarkWebhookReceived(
 	return count, nil
 }
 
+func (f *fakeConnections) SaveChangeFeed(
+	_ context.Context,
+	req *repositories.SaveAccountingChangeFeedRequest,
+) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	row, ok := f.rows[req.ID]
+	if !ok || (req.OnlyIfEmpty && row.ChangeCursor != "") {
+		return false, nil
+	}
+	if req.Cursor != "" {
+		row.ChangeCursor = req.Cursor
+	}
+	if req.ReadAt != nil {
+		at := *req.ReadAt
+		row.ChangesReadAt = &at
+	}
+	row.ChangesErrorCategory = req.ErrorCategory
+	row.ChangesErrorMessage = req.ErrorMessage
+	return true, nil
+}
+
 func (f *fakeConnections) MarkReferenceRefresh(
 	_ context.Context,
 	req repositories.MarkAccountingReferenceRefreshRequest,

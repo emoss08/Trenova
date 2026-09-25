@@ -74,6 +74,13 @@ func (f *fakeConnections) Update(
 	return &out, nil
 }
 
+func (f *fakeConnections) SaveChangeFeed(
+	context.Context,
+	*repositories.SaveAccountingChangeFeedRequest,
+) (bool, error) {
+	return false, nil
+}
+
 func (f *fakeConnections) MarkReferenceRefresh(
 	_ context.Context,
 	req repositories.MarkAccountingReferenceRefreshRequest,
