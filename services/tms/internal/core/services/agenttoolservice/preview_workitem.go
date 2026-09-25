@@ -17,7 +17,7 @@ import (
 
 var _ serviceports.ToolPreviewer = (*resolveBankReceiptWorkItemTool)(nil)
 
-var closedWorkItemFields = []string{"status", "resolutionType", "resolutionNote", "resolvedAt"}
+var closedWorkItemFields = []string{fieldStatus, "resolutionType", "resolutionNote", "resolvedAt"}
 
 func (a resolveWorkItemArgs) close(
 	item *bankreceiptworkitem.WorkItem,
@@ -34,7 +34,7 @@ func (a resolveWorkItemArgs) close(
 
 func (t *resolveBankReceiptWorkItemTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	args, err := t.arguments(params)
 	if err != nil {

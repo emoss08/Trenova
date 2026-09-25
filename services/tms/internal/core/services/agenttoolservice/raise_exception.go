@@ -114,7 +114,7 @@ func (t *raiseExceptionTool) Execute(
 		return err
 	}
 
-	request, err := t.request(ctx, params)
+	request, err := t.request(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -126,13 +126,13 @@ func (t *raiseExceptionTool) Execute(
 
 func (t *raiseExceptionTool) request(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*serviceports.FlagAgentExceptionRequest, error) {
 	if params.RunID.IsNil() {
 		return nil, ErrMissingRun
 	}
 
-	subjectType, subjectID, err := t.subject(ctx, params)
+	subjectType, subjectID, err := t.subject(ctx, *params)
 	if err != nil {
 		return nil, err
 	}

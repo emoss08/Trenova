@@ -665,7 +665,7 @@ func (t *forkReportTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	request, _, err := t.request(params)
+	request, _, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}

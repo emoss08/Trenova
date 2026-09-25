@@ -20,7 +20,7 @@ var alertViewLabels = map[string]string{
 	"watchedColumns": "Only when these change",
 	"conditions":     "When",
 	"match":          "Conditions that must hold",
-	"message":        "Message",
+	fieldMessage:     "Message",
 }
 
 type alertView struct {
@@ -60,13 +60,13 @@ func alertViewOf(subscription *tablechangealert.TCASubscription) *alertView {
 
 func (t *createTableChangeAlertTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	subscription := alertSubscription(params)
+	subscription := alertSubscription(&params)
 	change, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceTableChangeAlert,
 		Label:    subscription.Name,

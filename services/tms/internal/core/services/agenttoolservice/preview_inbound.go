@@ -21,26 +21,26 @@ var (
 )
 
 var inboundLinkRefs = map[string]permission.Resource{
-	"matchedShipmentId": permission.ResourceShipment,
-	"matchedCustomerId": permission.ResourceCustomer,
-	"matchedCarrierId":  permission.ResourceCarrier,
+	fieldMatchedShipmentID: permission.ResourceShipment,
+	fieldMatchedCustomerID: permission.ResourceCustomer,
+	fieldMatchedCarrierID:  permission.ResourceCarrier,
 }
 
 var inboundLinkLabels = map[string]string{
-	"matchedShipmentId": "Shipment",
-	"matchedCustomerId": "Customer",
-	"matchedCarrierId":  "Carrier",
-	"matchReason":       "Why",
+	fieldMatchedShipmentID: labelShipment,
+	fieldMatchedCustomerID: labelCustomer,
+	fieldMatchedCarrierID:  "Carrier",
+	"matchReason":          "Why",
 }
 
 var inboundLinkFields = []string{
-	"matchedShipmentId",
-	"matchedCustomerId",
-	"matchedCarrierId",
+	fieldMatchedShipmentID,
+	fieldMatchedCustomerID,
+	fieldMatchedCarrierID,
 	"matchReason",
 }
 
-var inboundReviewFields = []string{"status", "reviewNote", "reviewedAt"}
+var inboundReviewFields = []string{fieldStatus, "reviewNote", "reviewedAt"}
 
 func inboundMessageRecord(message *inboundmessage.InboundMessage) toolpreview.Record {
 	return toolpreview.Record{
@@ -61,9 +61,9 @@ func inboundLinkOptions() []toolpreview.Option {
 
 func (t *linkInboundMessageTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -104,9 +104,9 @@ func (t *linkInboundMessageTool) Preview(
 
 func (t *markInboundMessageTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -119,7 +119,7 @@ func (t *markInboundMessageTool) Preview(
 		return nil, err
 	}
 
-	review := reviewRequest(params, message, status, note)
+	review := reviewRequest(&params, message, status, note)
 	now := timeutils.NowUnix()
 	plan, err := planArchive(
 		inboundMessageRecord(message),

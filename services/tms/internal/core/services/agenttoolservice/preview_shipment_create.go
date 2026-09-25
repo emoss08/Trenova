@@ -18,51 +18,51 @@ import (
 var _ serviceports.ToolPreviewer = (*createShipmentTool)(nil)
 
 var enteredShipmentFields = []string{
-	"customerId",
-	"billToCustomerId",
-	"serviceTypeId",
-	"shipmentTypeId",
-	"formulaTemplateId",
-	"status",
-	"bol",
+	fieldCustomerID,
+	fieldBillToCustomerID,
+	fieldServiceTypeID,
+	fieldShipmentTypeID,
+	fieldFormulaTemplateID,
+	fieldStatus,
+	fieldBol,
 	"freightTerms",
-	"pieces",
-	"weight",
-	"temperatureMin",
-	"temperatureMax",
+	fieldPieces,
+	fieldWeight,
+	fieldTemperatureMin,
+	fieldTemperatureMax,
 }
 
 var enteredShipmentRefs = map[string]permission.Resource{
-	"customerId":        permission.ResourceCustomer,
-	"billToCustomerId":  permission.ResourceCustomer,
-	"serviceTypeId":     permission.ResourceServiceType,
-	"shipmentTypeId":    permission.ResourceShipmentType,
-	"formulaTemplateId": permission.ResourceFormulaTemplate,
+	fieldCustomerID:        permission.ResourceCustomer,
+	fieldBillToCustomerID:  permission.ResourceCustomer,
+	fieldServiceTypeID:     permission.ResourceServiceType,
+	fieldShipmentTypeID:    permission.ResourceShipmentType,
+	fieldFormulaTemplateID: permission.ResourceFormulaTemplate,
 }
 
 var enteredShipmentLabels = map[string]string{
-	"customerId":        "Customer",
-	"billToCustomerId":  "Bill to",
-	"serviceTypeId":     "Service type",
-	"shipmentTypeId":    "Shipment type",
-	"formulaTemplateId": "Rating method",
-	"bol":               "BOL",
+	fieldCustomerID:        labelCustomer,
+	fieldBillToCustomerID:  "Bill to",
+	fieldServiceTypeID:     "Service type",
+	fieldShipmentTypeID:    "Shipment type",
+	fieldFormulaTemplateID: "Rating method",
+	fieldBol:               "BOL",
 }
 
 var enteredStopFields = []string{
-	"type",
-	"locationId",
+	fieldType,
+	fieldLocationID,
 	"scheduleType",
-	"scheduledWindowStart",
-	"scheduledWindowEnd",
-	"pieces",
-	"weight",
+	fieldScheduledWindowStart,
+	fieldScheduledWindowEnd,
+	fieldPieces,
+	fieldWeight,
 }
 
 var enteredStopLabels = map[string]string{
-	"locationId":           "Location",
-	"scheduledWindowStart": "Window opens",
-	"scheduledWindowEnd":   "Window closes",
+	fieldLocationID:           "Location",
+	fieldScheduledWindowStart: "Window opens",
+	fieldScheduledWindowEnd:   "Window closes",
 }
 
 var shipmentChargeFields = []string{"freightChargeAmount", "otherChargeAmount"}
@@ -79,7 +79,7 @@ func enteredStopOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(enteredStopFields...),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			"locationId": permission.ResourceLocation,
+			fieldLocationID: permission.ResourceLocation,
 		}),
 		toolpreview.Labels(enteredStopLabels),
 	}
@@ -87,13 +87,13 @@ func enteredStopOptions() []toolpreview.Option {
 
 func (t *createShipmentTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	entity, err := t.draft(params)
+	entity, err := t.draft(&params)
 	if err != nil {
 		if isRefusal(err) {
 			return warnWouldFail(toolpreview.Build("Would enter a new shipment."), err), nil
@@ -216,7 +216,10 @@ func enteredShipmentSummary(
 			rating.Currency,
 		)
 	}
-	if explanation := strings.TrimRight(strings.TrimSpace(rating.Explanation), "."); explanation != "" {
+	if explanation := strings.TrimRight(
+		strings.TrimSpace(rating.Explanation),
+		".",
+	); explanation != "" {
 		summary += " " + explanation + "."
 	}
 

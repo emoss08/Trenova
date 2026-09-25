@@ -109,9 +109,9 @@ func (k equipmentKind[T]) preview(
 
 func (t *updateTractorStatusTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
@@ -133,9 +133,9 @@ func (t *updateTractorStatusTool) Preview(
 
 func (t *updateTrailerStatusTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 

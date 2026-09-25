@@ -43,13 +43,13 @@ func locationViewOf(
 
 func (t *createLocationTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	plan, err := t.plan(ctx, params)
+	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		if isRefusal(err) {
 			return warnWouldFail(toolpreview.Build("Would create a location."), err), nil

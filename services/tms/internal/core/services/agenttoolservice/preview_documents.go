@@ -15,8 +15,8 @@ import (
 var _ serviceports.ToolPreviewer = (*attachDocumentTool)(nil)
 
 var documentHomeLabels = map[string]string{
-	"resourceType": "Filed under",
-	"shipmentId":   "Shipment",
+	"resourceType":  "Filed under",
+	fieldShipmentID: labelShipment,
 }
 
 type documentHome struct {
@@ -36,7 +36,7 @@ func documentHomeOf(entity *document.Document) *documentHome {
 func documentHomeOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.WithRefs(map[string]permission.Resource{
-			"shipmentId": permission.ResourceShipment,
+			fieldShipmentID: permission.ResourceShipment,
 		}),
 		toolpreview.Labels(documentHomeLabels),
 	}
@@ -44,13 +44,13 @@ func documentHomeOptions() []toolpreview.Option {
 
 func (t *attachDocumentTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}

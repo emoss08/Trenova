@@ -28,7 +28,7 @@ var (
 )
 
 func guardExecute(tool serviceports.AgentTool, params serviceports.ToolExecuteParams) error {
-	if err := guardPreview(tool, params); err != nil {
+	if err := guardPreview(tool, &params); err != nil {
 		return err
 	}
 
@@ -39,7 +39,7 @@ func guardExecute(tool serviceports.AgentTool, params serviceports.ToolExecutePa
 	return nil
 }
 
-func guardPreview(tool serviceports.AgentTool, params serviceports.ToolExecuteParams) error {
+func guardPreview(tool serviceports.AgentTool, params *serviceports.ToolExecuteParams) error {
 	if params.Actor == nil {
 		return ErrMissingActor
 	}

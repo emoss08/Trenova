@@ -96,7 +96,7 @@ func (t *transitionToInReviewTool) Execute(
 		return err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (t *transitionToInReviewTool) Execute(
 }
 
 func (t *transitionToInReviewTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*serviceports.UpdateBillingQueueStatusRequest, error) {
 	itemID, err := requirePulid(params.Params, "billingQueueItemId")
 	if err != nil {

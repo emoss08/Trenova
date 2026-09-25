@@ -23,7 +23,7 @@ type ptoApprover interface {
 	) (*serviceports.PTOApprovalPlan, error)
 }
 
-var approvedPTOFields = []string{"status", "balanceAfterDays"}
+var approvedPTOFields = []string{fieldStatus, "balanceAfterDays"}
 
 var approvedPTOLabels = map[string]string{"balanceAfterDays": "Balance after (days)"}
 
@@ -34,16 +34,16 @@ func approvedPTOOptions() []toolpreview.Option {
 	}
 }
 
-func ptoLabel(pto *worker.WorkerPTO) string {
+func approvedPTOLabel(pto *worker.WorkerPTO) string {
 	return fmt.Sprintf("%s, %s days", pto.Type, pto.Days.String())
 }
 
 func (t *approveWorkerPTOTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	summary := "Would approve a time-off request."
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		if errors.Is(err, ErrAgentCannotApprove) {
 			return warnWouldFail(toolpreview.Build(summary), err), nil
 		}
@@ -68,7 +68,7 @@ func (t *approveWorkerPTOTool) Preview(
 	change, err := toolpreview.Changed(toolpreview.Record{
 		Resource: permission.ResourceWorkerPTO,
 		ID:       plan.Current.ID,
-		Label:    ptoLabel(plan.Current),
+		Label:    approvedPTOLabel(plan.Current),
 		Version:  previewVersion(plan.Current.Version),
 	}, plan.Current, plan.Approved, approvedPTOOptions()...)
 	if err != nil {

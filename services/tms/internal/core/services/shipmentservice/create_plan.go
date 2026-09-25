@@ -98,7 +98,11 @@ func (s *service) prepareCreate(
 		return nil, multiErr
 	}
 
-	if err = s.checkDuplicateBOLsWithControl(ctx, control, duplicateBOLCheckRequest(entity)); err != nil {
+	if err = s.checkDuplicateBOLsWithControl(
+		ctx,
+		control,
+		duplicateBOLCheckRequest(entity),
+	); err != nil {
 		return nil, err
 	}
 
@@ -126,5 +130,9 @@ func ratingOutcome(rating *shipmentcommercial.ContractRating) *services.Shipment
 }
 
 func quoteCurrency(quote *ratequote.RateQuote) string {
-	return stringutils.FirstNonEmpty(quote.BillingCurrency, quote.Currency, money.DefaultCurrencyCode)
+	return stringutils.FirstNonEmpty(
+		quote.BillingCurrency,
+		quote.Currency,
+		money.DefaultCurrencyCode,
+	)
 }

@@ -202,7 +202,7 @@ func (t *createLocationTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	plan, err := t.plan(ctx, params)
+	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -231,14 +231,14 @@ type locationPlan struct {
 
 func (t *createLocationTool) plan(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*locationPlan, error) {
 	draft, err := readLocationDraft(params.Params)
 	if err != nil {
 		return nil, err
 	}
 
-	return t.build(ctx, draft, tenantFrom(params))
+	return t.build(ctx, draft, tenantFrom(*params))
 }
 
 func (t *createLocationTool) build(
@@ -292,7 +292,7 @@ func (t *createLocationTool) Validate(
 		return ErrMissingActor
 	}
 
-	_, err := t.plan(ctx, params)
+	_, err := t.plan(ctx, &params)
 
 	return err
 }

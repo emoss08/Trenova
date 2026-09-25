@@ -13,7 +13,7 @@ import (
 
 var _ serviceports.ToolPreviewer = (*saveTableViewTool)(nil)
 
-var savedViewFields = []string{"name", "resource", "visibility"}
+var savedViewFields = []string{fieldName, "resource", fieldVisibility}
 
 var savedViewLabels = map[string]string{"resource": "Table"}
 
@@ -34,13 +34,13 @@ func savedViewAudience(visibility tableconfiguration.Visibility) string {
 
 func (t *saveTableViewTool) Preview(
 	_ context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	draft, err := t.draft(params)
+	draft, err := t.draft(&params)
 	if err != nil {
 		return warnWouldFail(toolpreview.Build("Would save a table view."), err), nil
 	}
@@ -48,7 +48,7 @@ func (t *saveTableViewTool) Preview(
 	change, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceTableConfiguration,
 		Label:    draft.name,
-	}, draft.configuration(params, nil), savedViewOptions()...)
+	}, draft.configuration(&params, nil), savedViewOptions()...)
 	if err != nil {
 		return nil, err
 	}

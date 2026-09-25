@@ -120,7 +120,7 @@ func (t *attachDocumentTool) Execute(
 		return err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func (t *attachDocumentTool) Execute(
 }
 
 func (t *attachDocumentTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*documentservice.AttachLineageRequest, error) {
 	documentID, err := requirePulid(params.Params, "documentId")
 	if err != nil {

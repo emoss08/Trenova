@@ -22,12 +22,12 @@ var (
 )
 
 var reportViewLabels = map[string]string{
-	"source":        "Reports on",
-	"columns":       "Columns",
-	"filters":       "Filter conditions",
-	"charts":        "Charts",
-	"rowLimit":      "Row limit",
-	"defaultFormat": "Download format",
+	fieldSource:        "Reports on",
+	"columns":          "Columns",
+	"filters":          "Filter conditions",
+	"charts":           "Charts",
+	"rowLimit":         "Row limit",
+	fieldDefaultFormat: "Download format",
 }
 
 type reportDefinitionView struct {
@@ -73,7 +73,10 @@ func reportViewOf(entity *report.ReportDefinition) *reportDefinitionView {
 	view.Charts = make([]string, 0, len(definition.Charts))
 	for idx := range definition.Charts {
 		chart := &definition.Charts[idx]
-		view.Charts = append(view.Charts, stringutils.FirstNonEmpty(chart.Title, string(chart.Type)))
+		view.Charts = append(
+			view.Charts,
+			stringutils.FirstNonEmpty(chart.Title, string(chart.Type)),
+		)
 	}
 	view.Filters = countFilters(definition.Filters) + countFilters(definition.Having)
 
@@ -112,7 +115,7 @@ func reportAudience(visibility report.Visibility) string {
 
 func (t *createReportTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	save, err := t.prepare(params)
 	if err != nil {
@@ -152,7 +155,7 @@ func warnUnsaveableReport(
 
 func (t *updateReportTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	save, existing, err := t.prepare(ctx, params)
 	if err != nil {
@@ -181,7 +184,7 @@ func (t *updateReportTool) Preview(
 }
 
 func (t *forkReportTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*reporting.ForkCannedRequest, *canned.Entry, error) {
 	key, err := requireString(params.Params, "reportKey")
 	if err != nil {
@@ -198,7 +201,7 @@ func (t *forkReportTool) request(
 	}
 
 	return &reporting.ForkCannedRequest{
-		Request:   reportingRequestFrom(params),
+		Request:   reportingRequestFrom(*params),
 		CannedKey: key,
 		Name:      strings.TrimSpace(optionalString(params.Params, "name")),
 	}, entry, nil
@@ -206,13 +209,13 @@ func (t *forkReportTool) request(
 
 func (t *forkReportTool) Preview(
 	_ context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	request, entry, err := t.request(params)
+	request, entry, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}

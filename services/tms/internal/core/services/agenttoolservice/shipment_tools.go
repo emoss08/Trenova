@@ -270,7 +270,7 @@ func (t *placeShipmentHoldTool) Execute(
 		return err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -281,7 +281,7 @@ func (t *placeShipmentHoldTool) Execute(
 }
 
 func (t *placeShipmentHoldTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*repositories.CreateShipmentHoldRequest, error) {
 	shipmentID, err := requirePulid(params.Params, "shipmentId")
 	if err != nil {
@@ -297,7 +297,7 @@ func (t *placeShipmentHoldTool) request(
 	// from the hold reason, which is policy the organization already decided.
 	// An agent choosing them would be quietly overriding that.
 	return &repositories.CreateShipmentHoldRequest{
-		TenantInfo:   tenantFrom(params),
+		TenantInfo:   tenantFrom(*params),
 		ShipmentID:   shipmentID,
 		HoldReasonID: reasonID,
 		Notes:        optionalString(params.Params, "notes"),
@@ -367,7 +367,7 @@ func (t *releaseShipmentHoldTool) Execute(
 		return err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -378,7 +378,7 @@ func (t *releaseShipmentHoldTool) Execute(
 }
 
 func (t *releaseShipmentHoldTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*repositories.ReleaseShipmentHoldRequest, error) {
 	shipmentID, err := requirePulid(params.Params, "shipmentId")
 	if err != nil {
@@ -391,7 +391,7 @@ func (t *releaseShipmentHoldTool) request(
 	}
 
 	return &repositories.ReleaseShipmentHoldRequest{
-		TenantInfo: tenantFrom(params),
+		TenantInfo: tenantFrom(*params),
 		ShipmentID: shipmentID,
 		HoldID:     holdID,
 	}, nil

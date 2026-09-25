@@ -119,7 +119,7 @@ func rememberKind(params map[string]any) agent.MemoryKind {
 }
 
 func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -130,9 +130,9 @@ func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExec
 }
 
 func (t *rememberTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*serviceports.RememberRequest, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
@@ -157,7 +157,7 @@ func (t *rememberTool) request(
 	}
 
 	return &serviceports.RememberRequest{
-		TenantInfo:  tenantFrom(params),
+		TenantInfo:  tenantFrom(*params),
 		Kind:        kind,
 		Content:     content,
 		SubjectType: subjectType,
@@ -224,7 +224,7 @@ func (t *forgetMemoryTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -235,9 +235,9 @@ func (t *forgetMemoryTool) Execute(
 }
 
 func (t *forgetMemoryTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (serviceports.SetAgentMemoryStatusRequest, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return serviceports.SetAgentMemoryStatusRequest{}, err
 	}
 
@@ -248,7 +248,7 @@ func (t *forgetMemoryTool) request(
 
 	return serviceports.SetAgentMemoryStatusRequest{
 		ID:         memoryID,
-		TenantInfo: tenantFrom(params),
+		TenantInfo: tenantFrom(*params),
 		Status:     agent.MemoryStatusRetired,
 	}, nil
 }

@@ -243,7 +243,7 @@ func (t *createShipmentTool) Execute(
 		return err
 	}
 
-	entity, err := t.draft(params)
+	entity, err := t.draft(&params)
 	if err != nil {
 		return err
 	}
@@ -254,7 +254,11 @@ func (t *createShipmentTool) Execute(
 	}
 
 	if entity.SourceDocumentID != "" && t.imports != nil {
-		if completeErr := t.imports.CompleteHistory(ctx, entity.SourceDocumentID, tenantFrom(params)); completeErr != nil {
+		if completeErr := t.imports.CompleteHistory(
+			ctx,
+			entity.SourceDocumentID,
+			tenantFrom(params),
+		); completeErr != nil {
 			t.logger.Warn("shipment created but the import conversation could not be closed",
 				zap.String("sourceDocumentId", entity.SourceDocumentID),
 				zap.String("shipmentId", created.ID.String()),
@@ -267,7 +271,7 @@ func (t *createShipmentTool) Execute(
 }
 
 func (t *createShipmentTool) draft(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*shipment.Shipment, error) {
 	entity := new(shipment.Shipment)
 	if err := decodeParam(params.Params, "shipment", entity); err != nil {
@@ -276,7 +280,7 @@ func (t *createShipmentTool) draft(
 
 	// The tenant is the actor's, whatever the model wrote; a model cannot
 	// enter a shipment for another organization by naming it.
-	tenantInfo := tenantFrom(params)
+	tenantInfo := tenantFrom(*params)
 	entity.ID = pulid.Nil
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
@@ -284,7 +288,10 @@ func (t *createShipmentTool) draft(
 	entity.Status = shipment.StatusNew
 	scopeShipmentChildren(entity, tenantInfo)
 
-	if sourceDocumentID := optionalString(params.Params, "sourceDocumentId"); sourceDocumentID != "" {
+	if sourceDocumentID := optionalString(
+		params.Params,
+		"sourceDocumentId",
+	); sourceDocumentID != "" {
 		if _, err := pulid.Parse(sourceDocumentID); err != nil {
 			return nil, errortypes.NewValidationError(
 				"sourceDocumentId",

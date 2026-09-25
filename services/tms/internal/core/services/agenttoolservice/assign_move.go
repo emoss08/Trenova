@@ -92,7 +92,7 @@ func (t *assignMoveTool) Execute(
 		return err
 	}
 
-	req, err := t.request(params)
+	req, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (t *assignMoveTool) Execute(
 }
 
 func (t *assignMoveTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*repositories.AssignShipmentMoveRequest, error) {
 	moveID, err := requirePulid(params.Params, "shipmentMoveId")
 	if err != nil {
@@ -119,7 +119,7 @@ func (t *assignMoveTool) request(
 	}
 
 	req := &repositories.AssignShipmentMoveRequest{
-		TenantInfo:      tenantFrom(params),
+		TenantInfo:      tenantFrom(*params),
 		ShipmentMoveID:  moveID,
 		PrimaryWorkerID: workerID,
 		TractorID:       tractorID,

@@ -392,20 +392,20 @@ func (t *markInboundMessageTool) Execute(
 		return err
 	}
 
-	_, err = t.inbox.Review(ctx, reviewRequest(params, message, status, note))
+	_, err = t.inbox.Review(ctx, reviewRequest(&params, message, status, note))
 
 	return err
 }
 
 func reviewRequest(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 	message *inboundmessage.InboundMessage,
 	status inboundmessage.Status,
 	note string,
 ) inboundmessageservice.ReviewRequest {
 	return inboundmessageservice.ReviewRequest{
 		MessageID:  message.ID,
-		TenantInfo: tenantFrom(params),
+		TenantInfo: tenantFrom(*params),
 		ReviewerID: params.Actor.UserID,
 		Status:     status,
 		Note:       note,

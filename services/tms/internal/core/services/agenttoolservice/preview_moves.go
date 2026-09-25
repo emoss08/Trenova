@@ -20,7 +20,7 @@ var stopActualLabels = map[string]string{
 	"stopStatus": "Stop status",
 }
 
-var stopActualTimes = []string{"actualArrival", "actualDeparture"}
+var stopActualTimes = []string{fieldActualArrival, "actualDeparture"}
 
 type stopActualView struct {
 	MoveStatus      string `json:"moveStatus"`
@@ -72,13 +72,13 @@ func stopActualOptions(request *repositories.RecordStopActualRequest) []toolprev
 
 func (t *recordStopActualTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}

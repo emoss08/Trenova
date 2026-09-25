@@ -155,7 +155,7 @@ func (t *saveTableViewTool) Execute(
 		return err
 	}
 
-	draft, err := t.draft(params)
+	draft, err := t.draft(&params)
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func (t *saveTableViewTool) Execute(
 		)
 	}
 
-	_, err = t.configs.Create(ctx, draft.configuration(params, composed))
+	_, err = t.configs.Create(ctx, draft.configuration(&params, composed))
 
 	return err
 }
@@ -192,7 +192,7 @@ type tableViewDraft struct {
 	visibility tableconfiguration.Visibility
 }
 
-func (t *saveTableViewTool) draft(params serviceports.ToolExecuteParams) (*tableViewDraft, error) {
+func (t *saveTableViewTool) draft(params *serviceports.ToolExecuteParams) (*tableViewDraft, error) {
 	entity := optionalString(params.Params, "entity")
 	resource, ok := t.catalog.ByEntity(entity)
 	if !ok {
@@ -213,7 +213,7 @@ func (t *saveTableViewTool) draft(params serviceports.ToolExecuteParams) (*table
 }
 
 func (d *tableViewDraft) configuration(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 	composed *tablequeryservice.ComposeResult,
 ) *tableconfiguration.TableConfiguration {
 	configuration := &tableconfiguration.TableConfiguration{

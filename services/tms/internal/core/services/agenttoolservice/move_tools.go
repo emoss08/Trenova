@@ -84,7 +84,7 @@ func (t *recordStopActualTool) Execute(
 		return err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (t *recordStopActualTool) Execute(
 }
 
 func (t *recordStopActualTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*repositories.RecordStopActualRequest, error) {
 	moveID, err := requirePulid(params.Params, "moveId")
 	if err != nil {
@@ -113,7 +113,7 @@ func (t *recordStopActualTool) request(
 	}
 
 	request := &repositories.RecordStopActualRequest{
-		TenantInfo: tenantFrom(params),
+		TenantInfo: tenantFrom(*params),
 		MoveID:     moveID,
 		StopID:     stopID,
 		Action:     action,

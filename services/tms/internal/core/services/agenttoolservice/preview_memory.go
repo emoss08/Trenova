@@ -22,10 +22,10 @@ var (
 const memoryLabelRunes = 80
 
 var rememberedFields = []string{
-	"kind",
-	"subjectType",
+	fieldKind,
+	fieldSubjectType,
 	"subjectLabel",
-	"content",
+	fieldContent,
 	"expiresAt",
 	"tainted",
 }
@@ -36,7 +36,7 @@ var rememberedTypes = map[string]assistantartifact.DisplayType{
 	"expiresAt": assistantartifact.DisplayDate,
 }
 
-var retiredMemoryFields = []string{"status", "retiredAt"}
+var retiredMemoryFields = []string{fieldStatus, "retiredAt"}
 
 func memoryRecord(memory *agent.Memory) toolpreview.Record {
 	return toolpreview.Record{
@@ -49,9 +49,9 @@ func memoryRecord(memory *agent.Memory) toolpreview.Record {
 
 func (t *rememberTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +87,9 @@ func (t *rememberTool) Preview(
 
 func (t *forgetMemoryTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}

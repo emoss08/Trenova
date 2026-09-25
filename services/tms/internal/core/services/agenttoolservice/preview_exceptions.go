@@ -18,19 +18,19 @@ var (
 )
 
 var raisedExceptionFields = []string{
-	"category",
-	"severity",
-	"subjectType",
-	"subjectId",
-	"attemptSummary",
-	"blastRadius",
+	fieldCategory,
+	fieldSeverity,
+	fieldSubjectType,
+	fieldSubjectID,
+	fieldAttemptSummary,
+	fieldBlastRadius,
 	"resolutionState",
 }
 
 var raisedExceptionLabels = map[string]string{
-	"subjectId":      "About",
-	"attemptSummary": "What was tried",
-	"blastRadius":    "Records affected",
+	fieldSubjectID:      "About",
+	fieldAttemptSummary: "What was tried",
+	fieldBlastRadius:    "Records affected",
 }
 
 func raisedExceptionOptions(subjectType agent.SubjectType) []toolpreview.Option {
@@ -40,7 +40,7 @@ func raisedExceptionOptions(subjectType agent.SubjectType) []toolpreview.Option 
 	}
 	if resource, ok := subjectType.Resource(); ok {
 		opts = append(opts, toolpreview.WithRefs(map[string]permission.Resource{
-			"subjectId": resource,
+			fieldSubjectID: resource,
 		}))
 	}
 
@@ -74,13 +74,13 @@ func previewRaisedException(
 
 func (t *raiseExceptionTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	request, err := t.request(ctx, params)
+	request, err := t.request(ctx, &params)
 	if err != nil {
 		if errors.Is(err, ErrMissingRun) || errors.Is(err, ErrSubjectUncheckable) {
 			return warnWouldFail(toolpreview.Build("Would raise an exception."), err), nil
@@ -94,13 +94,13 @@ func (t *raiseExceptionTool) Preview(
 
 func (t *flagManualReviewTool) Preview(
 	_ context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}

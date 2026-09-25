@@ -19,11 +19,11 @@ var (
 )
 
 var placedHoldFields = []string{
-	"shipmentId",
-	"type",
-	"severity",
+	fieldShipmentID,
+	fieldType,
+	fieldSeverity,
 	"reasonCode",
-	"notes",
+	fieldNotes,
 	"blocksDispatch",
 	"blocksDelivery",
 	"blocksBilling",
@@ -31,7 +31,7 @@ var placedHoldFields = []string{
 	"startedAt",
 }
 
-var placedHoldLabels = map[string]string{"shipmentId": "Shipment", "reasonCode": "Reason"}
+var placedHoldLabels = map[string]string{fieldShipmentID: labelShipment, "reasonCode": "Reason"}
 
 var releasedHoldFields = []string{"releasedAt"}
 
@@ -39,7 +39,7 @@ func placedHoldOptions() []toolpreview.Option {
 	return []toolpreview.Option{
 		toolpreview.Only(placedHoldFields...),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			"shipmentId": permission.ResourceShipment,
+			fieldShipmentID: permission.ResourceShipment,
 		}),
 		toolpreview.Labels(placedHoldLabels),
 		toolpreview.Volatile("startedAt"),
@@ -70,13 +70,13 @@ func holdBlocks(hold *shipment.ShipmentHold) string {
 
 func (t *placeShipmentHoldTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -107,13 +107,13 @@ func (t *placeShipmentHoldTool) Preview(
 
 func (t *releaseShipmentHoldTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}

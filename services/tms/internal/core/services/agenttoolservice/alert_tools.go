@@ -424,12 +424,12 @@ func (t *createTableChangeAlertTool) Execute(
 		return err
 	}
 
-	_, err := t.alerts.CreateSubscription(ctx, alertSubscription(params))
+	_, err := t.alerts.CreateSubscription(ctx, alertSubscription(&params))
 
 	return err
 }
 
-func alertSubscription(params serviceports.ToolExecuteParams) *tablechangealert.TCASubscription {
+func alertSubscription(params *serviceports.ToolExecuteParams) *tablechangealert.TCASubscription {
 	match := optionalString(params.Params, "conditionMatch")
 	if match == "" {
 		match = "all"

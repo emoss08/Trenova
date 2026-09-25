@@ -25,7 +25,7 @@ var (
 var accountingCheckVolatileFields = []string{"lastCheckedAt", "lastSuccessAt"}
 
 var accountingCheckFields = []string{
-	"status",
+	fieldStatus,
 	"lastCheckedAt",
 	"lastSuccessAt",
 	"consecutiveFailures",
@@ -33,7 +33,7 @@ var accountingCheckFields = []string{
 	"lastErrorMessage",
 }
 
-var mappingFields = []string{"state", "externalName", "source", "reason", "confirmedAt"}
+var mappingFields = []string{fieldState, "externalName", "source", fieldReason, "confirmedAt"}
 
 var mappingLabels = map[string]string{"externalName": "Mapped to"}
 
@@ -69,7 +69,7 @@ func mappingOptions() []toolpreview.Option {
 
 func (t *checkAccountingConnectionTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	conn, err := t.connection(ctx, &params)
 	if err != nil {
@@ -114,7 +114,7 @@ func (t *checkAccountingConnectionTool) Preview(
 
 func (t *setAccountingMappingTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	req, row, ref, err := t.request(ctx, &params)
 	if err != nil {
@@ -152,7 +152,7 @@ func (t *setAccountingMappingTool) Preview(
 
 func (t *clearAccountingMappingTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	row, err := t.mapping(ctx, &params)
 	if err != nil {
@@ -191,7 +191,7 @@ type accountingRecordDraft struct {
 
 func (t *createAccountingReferenceRecordTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	row, err := t.mapping(ctx, &params)
 	if err != nil {
@@ -210,7 +210,7 @@ func (t *createAccountingReferenceRecordTool) Preview(
 		return nil, err
 	}
 
-	name := t.requestedName(params, row)
+	name := t.requestedName(&params, row)
 	created, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceAccountingIntegration,
 		Label:    name,
@@ -256,7 +256,7 @@ func (t *createAccountingReferenceRecordTool) Preview(
 }
 
 func (t *createAccountingReferenceRecordTool) requestedName(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 	row *accountingsync.AccountingMapping,
 ) string {
 	if name := strings.TrimSpace(optionalString(params.Params, "name")); name != "" {
@@ -268,7 +268,7 @@ func (t *createAccountingReferenceRecordTool) requestedName(
 
 func (t *refreshAccountingReferenceDataTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	_, summary, err := t.setup(ctx, &params)
 	if err != nil {

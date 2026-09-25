@@ -16,19 +16,19 @@ import (
 
 var _ serviceports.ToolPreviewer = (*transitionToInReviewTool)(nil)
 
-var inReviewFields = []string{"status", "reviewStartedAt", "reviewCompletedAt"}
+var inReviewFields = []string{fieldStatus, "reviewStartedAt", "reviewCompletedAt"}
 
 var inReviewVolatileFields = []string{"reviewStartedAt"}
 
 func (t *transitionToInReviewTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}

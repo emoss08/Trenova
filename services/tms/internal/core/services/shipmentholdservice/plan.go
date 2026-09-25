@@ -90,7 +90,7 @@ func (s *service) planRelease(
 	ctx context.Context,
 	req *repositories.ReleaseShipmentHoldRequest,
 	actor *services.RequestActor,
-) (*shipment.ShipmentHold, *shipment.ShipmentHold, error) {
+) (original, released *shipment.ShipmentHold, err error) {
 	if req == nil {
 		return nil, nil, errShipmentHoldRequestRequired()
 	}
@@ -103,7 +103,7 @@ func (s *service) planRelease(
 		return nil, nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentHoldByIDRequest{
+	original, err = s.repo.GetByID(ctx, &repositories.GetShipmentHoldByIDRequest{
 		HoldID:     req.HoldID,
 		ShipmentID: req.ShipmentID,
 		TenantInfo: req.TenantInfo,
@@ -120,8 +120,9 @@ func (s *service) planRelease(
 	toRelease := *original
 	toRelease.ReleasedAt = &releasedAt
 	toRelease.ReleasedByID = idPtr(userID)
+	released = &toRelease
 
-	return original, &toRelease, nil
+	return original, released, nil
 }
 
 func errShipmentHoldRequestRequired() error {

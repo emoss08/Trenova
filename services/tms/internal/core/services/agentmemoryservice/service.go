@@ -319,7 +319,11 @@ func (s *Service) SetStatus(
 		return nil, err
 	}
 
-	change := StatusChange{Status: req.Status, ByUserID: StatusActor(actor), At: timeutils.NowUnix()}
+	change := StatusChange{
+		Status:   req.Status,
+		ByUserID: StatusActor(actor),
+		At:       timeutils.NowUnix(),
+	}
 	planned := *current
 	if err = PlanStatus(&planned, change); err != nil {
 		return nil, err

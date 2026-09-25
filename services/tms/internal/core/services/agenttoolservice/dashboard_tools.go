@@ -271,7 +271,7 @@ func (t *createDashboardTool) Execute(
 		return err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -282,7 +282,7 @@ func (t *createDashboardTool) Execute(
 }
 
 func (t *createDashboardTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*reporting.SaveDashboardRequest, error) {
 	visibility := report.VisibilityPrivate
 	if optionalBool(params.Params, "shared") {
@@ -295,7 +295,7 @@ func (t *createDashboardTool) request(
 	}
 
 	return &reporting.SaveDashboardRequest{
-		Request:     reporting.Request{TenantInfo: tenantFrom(params)},
+		Request:     reporting.Request{TenantInfo: tenantFrom(*params)},
 		Name:        optionalString(params.Params, "name"),
 		Description: optionalString(params.Params, "description"),
 		Category:    optionalString(params.Params, "category"),
@@ -422,7 +422,7 @@ func (t *addDashboardTileTool) Execute(
 		return err
 	}
 
-	request, _, err := t.request(ctx, params)
+	request, _, err := t.request(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -434,14 +434,14 @@ func (t *addDashboardTileTool) Execute(
 
 func (t *addDashboardTileTool) request(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*reporting.SaveDashboardRequest, *report.Dashboard, error) {
 	dashboardID, err := requirePulid(params.Params, "dashboardId")
 	if err != nil {
 		return nil, nil, err
 	}
 
-	tenant := tenantFrom(params)
+	tenant := tenantFrom(*params)
 	existing, err := t.dashboards.GetDashboard(ctx, &reporting.GetDashboardRequest{
 		Request:     reporting.Request{TenantInfo: tenant},
 		DashboardID: dashboardID,
@@ -470,7 +470,8 @@ func (t *addDashboardTileTool) request(
 	if err != nil {
 		return nil, existing, err
 	}
-	layout.Tiles = append(tiles, added...)
+	tiles = append(tiles, added...)
+	layout.Tiles = tiles
 
 	return &reporting.SaveDashboardRequest{
 		Request:     reporting.Request{TenantInfo: tenant},

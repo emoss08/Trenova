@@ -18,7 +18,7 @@ var (
 	_ serviceports.ToolPreviewer = (*addDashboardTileTool)(nil)
 )
 
-var dashboardViewLabels = map[string]string{"tiles": "Tiles, in order"}
+var dashboardViewLabels = map[string]string{fieldTiles: "Tiles, in order"}
 
 type dashboardView struct {
 	Name        string   `json:"name"`
@@ -62,13 +62,13 @@ func dashboardAudience(visibility report.Visibility) string {
 
 func (t *createDashboardTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -94,13 +94,13 @@ func (t *createDashboardTool) Preview(
 
 func (t *addDashboardTileTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	request, existing, err := t.request(ctx, params)
+	request, existing, err := t.request(ctx, &params)
 	if err != nil {
 		if isRefusal(err) {
 			return warnWouldFail(toolpreview.Build("Would add a tile to a dashboard."), err), nil

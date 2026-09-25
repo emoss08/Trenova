@@ -14,11 +14,11 @@ import (
 
 var _ serviceports.ToolPreviewer = (*dismissInsightTool)(nil)
 
-var dismissedInsightFields = []string{"status", "dismissReason", "dismissedAt"}
+var dismissedInsightFields = []string{fieldStatus, "dismissReason", "dismissedAt"}
 
 func (t *dismissInsightTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(params)
 	if err != nil {

@@ -95,14 +95,11 @@ func planned[T any](
 
 		return refused
 	}, opts...)
-	if refused != nil {
-		return plannedChange{refused: refused}, nil
-	}
-	if err != nil {
+	if refused == nil && err != nil {
 		return plannedChange{}, err
 	}
 
-	return plannedChange{change: change}, nil
+	return plannedChange{change: change, refused: refused}, nil
 }
 
 func (p plannedChange) preview(

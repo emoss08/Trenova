@@ -27,25 +27,25 @@ type assignmentChecker interface {
 }
 
 var assignmentFields = []string{
-	"primaryWorkerId",
-	"secondaryWorkerId",
-	"tractorId",
-	"trailerId",
-	"status",
+	fieldPrimaryWorkerID,
+	fieldSecondaryWorkerID,
+	fieldTractorID,
+	fieldTrailerID,
+	fieldStatus,
 }
 
 var assignmentRefs = map[string]permission.Resource{
-	"primaryWorkerId":   permission.ResourceWorker,
-	"secondaryWorkerId": permission.ResourceWorker,
-	"tractorId":         permission.ResourceTractor,
-	"trailerId":         permission.ResourceTrailer,
+	fieldPrimaryWorkerID:   permission.ResourceWorker,
+	fieldSecondaryWorkerID: permission.ResourceWorker,
+	fieldTractorID:         permission.ResourceTractor,
+	fieldTrailerID:         permission.ResourceTrailer,
 }
 
 var assignmentLabels = map[string]string{
-	"primaryWorkerId":   "Driver",
-	"secondaryWorkerId": "Second driver",
-	"tractorId":         "Tractor",
-	"trailerId":         "Trailer",
+	fieldPrimaryWorkerID:   "Driver",
+	fieldSecondaryWorkerID: "Second driver",
+	fieldTractorID:         "Tractor",
+	fieldTrailerID:         "Trailer",
 }
 
 var assignedStatusLabels = map[string]string{"coverageType": "Covered by"}
@@ -78,13 +78,13 @@ func assignedMoveOf(entity *shipment.Shipment, moveID pulid.ID) *assignedMoveVie
 
 func (t *assignMoveTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, params); err != nil {
+	if err := guardPreview(t, &params); err != nil {
 		return nil, err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (t *assignMoveTool) Preview(
 			check.Score.WorkerName,
 			shipmentLabel,
 		)
-		labelRefs(changes[0], map[string]string{"primaryWorkerId": check.Score.WorkerName})
+		labelRefs(changes[0], map[string]string{fieldPrimaryWorkerID: check.Score.WorkerName})
 	}
 	summary += ". The driver sees the assignment." + findingsSentence(check) + note
 

@@ -122,7 +122,7 @@ func TestRecordStopActual_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Equal(t, "InTransit", fieldByPath(t, change, "moveStatus").After)
 	assert.Contains(t, preview.Summary, "from Assigned to InTransit")
 
-	request, err := tool.request(params)
+	request, err := tool.request(&params)
 	require.NoError(t, err)
 	require.NoError(t, tool.Execute(t.Context(), params))
 	stopID := move.Stops[0].ID

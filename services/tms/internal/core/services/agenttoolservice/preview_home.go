@@ -67,10 +67,10 @@ func (p *homePlan) summary() string {
 
 func (e homeEditor) preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 	edit homeEdit,
 ) (*agent.ToolPreview, error) {
-	plan, err := e.plan(ctx, params, edit)
+	plan, err := e.plan(ctx, *params, edit)
 	if err != nil {
 		if isRefusal(err) {
 			return warnWouldFail(toolpreview.Build("Would change your home page."), err), nil
@@ -89,21 +89,21 @@ func (e homeEditor) preview(
 
 func (t *addHomeWidgetTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	return t.editor.preview(ctx, params, t.edit(params))
+	return t.editor.preview(ctx, &params, t.edit(params))
 }
 
 func (t *removeHomeWidgetTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	return t.editor.preview(ctx, params, t.edit(params))
+	return t.editor.preview(ctx, &params, t.edit(params))
 }
 
 func (t *arrangeHomeLayoutTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	return t.editor.preview(ctx, params, t.edit(params))
+	return t.editor.preview(ctx, &params, t.edit(params))
 }

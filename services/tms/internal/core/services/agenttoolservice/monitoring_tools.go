@@ -121,7 +121,7 @@ func (t *evaluateServiceFailuresTool) Execute(
 		return err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (t *evaluateServiceFailuresTool) Execute(
 }
 
 func (t *evaluateServiceFailuresTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*serviceports.EvaluateShipmentServiceFailuresRequest, error) {
 	shipmentID, err := requirePulid(params.Params, "shipmentId")
 	if err != nil {
@@ -140,7 +140,7 @@ func (t *evaluateServiceFailuresTool) request(
 	}
 
 	return &serviceports.EvaluateShipmentServiceFailuresRequest{
-		TenantInfo: tenantFrom(params),
+		TenantInfo: tenantFrom(*params),
 		ShipmentID: shipmentID,
 		Force:      optionalBool(params.Params, "force"),
 	}, nil

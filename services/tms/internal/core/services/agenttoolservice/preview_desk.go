@@ -27,7 +27,7 @@ var (
 
 var detentionEscalationFields = []string{"requiresApproval", "notificationStatus"}
 
-var detentionEvidenceFields = []string{"kind", "source", "summary"}
+var detentionEvidenceFields = []string{fieldKind, "source", "summary"}
 
 func detentionOccurrenceRecord(occurrence *detention.DetentionOccurrence) toolpreview.Record {
 	return toolpreview.Record{
@@ -40,7 +40,7 @@ func detentionOccurrenceRecord(occurrence *detention.DetentionOccurrence) toolpr
 
 func (t *escalateDetentionTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	occurrenceID, reason, err := t.arguments(params)
 	if err != nil {
@@ -70,10 +70,6 @@ func (t *escalateDetentionTool) Preview(
 		occurrence.BillableMinutes,
 		reason,
 	)
-	if plan.refused != nil {
-		return plan.preview(summary), nil
-	}
-
 	evidence, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceDetentionPolicy,
 		Label:    "Detention evidence",
@@ -89,7 +85,7 @@ func (t *escalateDetentionTool) Preview(
 
 func (t *placeWorkerDispatchHoldTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.arguments(params)
 	if err != nil {
@@ -136,7 +132,7 @@ func carrierIntelRecord(event *carrierintel.CarrierIntelEvent) toolpreview.Recor
 
 func (t *carrierIntelEventTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.arguments(params)
 	if err != nil {

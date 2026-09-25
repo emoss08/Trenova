@@ -103,7 +103,7 @@ func (t *flagManualReviewTool) Execute(
 		return err
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func (t *flagManualReviewTool) Execute(
 }
 
 func (t *flagManualReviewTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*serviceports.FlagAgentExceptionRequest, error) {
 	runID, err := requirePulid(params.Params, "runId")
 	if err != nil {

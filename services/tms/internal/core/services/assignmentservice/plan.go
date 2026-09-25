@@ -87,7 +87,12 @@ func (s *service) planAssignment(
 	if err = move.EnsureAssignable(); err != nil {
 		return nil, err
 	}
-	if err = capabilityguard.EnsureDriverAssignable(ctx, s.orgRepo, tenantInfo, moveID); err != nil {
+	if err = capabilityguard.EnsureDriverAssignable(
+		ctx,
+		s.orgRepo,
+		tenantInfo,
+		moveID,
+	); err != nil {
 		return nil, err
 	}
 	if err = dispatchguard.EnsureNoDispatchHold(
