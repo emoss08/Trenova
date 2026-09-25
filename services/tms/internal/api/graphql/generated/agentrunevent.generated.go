@@ -793,4 +793,20 @@ func (ec *executionContext) marshalNAgentRunEventOwnerKind2githubᚗcomᚋemoss0
 	return v
 }
 
+func (ec *executionContext) unmarshalOAgentRunEventOwnerKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentRunEventOwnerKind(ctx context.Context, v any) (*gqlmodel.AgentRunEventOwnerKind, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(gqlmodel.AgentRunEventOwnerKind)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAgentRunEventOwnerKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentRunEventOwnerKind(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.AgentRunEventOwnerKind) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 // endregion ***************************** type.gotpl *****************************

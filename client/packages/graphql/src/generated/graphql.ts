@@ -4,6 +4,70 @@ type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
+/** What an AI audit event records. */
+export type AiAuditEventKind =
+  | 'DelegationEnded'
+  | 'DelegationStarted'
+  | 'ModelCall'
+  | 'ProposalDecided'
+  | 'ProposalExecuted'
+  | 'ProposalExecutionFailed'
+  | 'ProposalExpired'
+  | 'ProposalFiled'
+  | 'ProposalSimulated'
+  | 'RunEnded'
+  | 'RunStarted'
+  | 'ToolCall'
+  | 'ToolRefused';
+
+/** How the thing an AI audit event records turned out. */
+export type AiAuditEventOutcome =
+  | 'Accepted'
+  | 'Completed'
+  | 'Declined'
+  | 'Denied'
+  | 'Exhausted'
+  | 'Expired'
+  | 'Failed'
+  | 'Filed'
+  | 'Modified'
+  | 'Proposed'
+  | 'Ran'
+  | 'Refused'
+  | 'Rejected'
+  | 'Simulated'
+  | 'Started'
+  | 'Stopped'
+  | 'Succeeded'
+  | 'Unknown';
+
+export type AiAuditExportFormat =
+  | 'CSV'
+  | 'JSON';
+
+export type AiAuditExportStatus =
+  | 'Expired'
+  | 'Failed'
+  | 'Pending'
+  | 'Running'
+  | 'Succeeded';
+
+/** Who an AI audit event's action was taken as. */
+export type AiAuditPrincipalType =
+  | 'Agent'
+  | 'System'
+  | 'User';
+
+/** Live work, or an evaluation replaying a run against the agent as it is now. */
+export type AiAuditPurpose =
+  | 'Evaluation'
+  | 'Live';
+
+export type AiAuditVerificationStatus =
+  | 'KeyMissing'
+  | 'Mismatch'
+  | 'Verified';
+
 /**
  * How an embedding endpoint is told whether a text is a stored document or a
  * search query. None sends both the same way; VoyageInputType sends Voyage's
@@ -583,6 +647,10 @@ export type AgentResolutionState =
   | 'InReview'
   | 'Open'
   | 'Resolved';
+
+export type AgentRunEventOwnerKind =
+  | 'AgentRun'
+  | 'AssistantTurn';
 
 export type AgentRunStatus =
   | 'AwaitingDecision'
@@ -4606,6 +4674,16 @@ export type ReportTransformInput = {
   precision?: number | null | undefined;
 };
 
+export type RequestAiAuditExportInput = {
+  fieldFilters?: Array<FieldFilterInput> | null | undefined;
+  filterGroups?: Array<FilterGroupInput> | null | undefined;
+  format: AiAuditExportFormat;
+  from: number;
+  query?: string | null | undefined;
+  sort?: Array<SortFieldInput> | null | undefined;
+  to: number;
+};
+
 export type RequestMyPtoInput = {
   endDate: number;
   reason: string;
@@ -6842,6 +6920,71 @@ export type SuggestedAgentAudienceQueryVariables = Exact<{
 
 
 export type SuggestedAgentAudienceQuery = { suggestedAgentAudience: { agentId: string, accessMode: AgentAccessMode, sensitiveTools: Array<string>, roles: Array<{ coverage: AgentAudienceCoverage, missingResources: Array<string>, granted: boolean, role: { ' $fragmentRefs'?: { 'AgentAccessRoleFieldsFragment': AgentAccessRoleFieldsFragment } } }> } };
+
+export type AiAuditEventRowFieldsFragment = { id: string, seq: number, occurredAt: number, recordedAt: number, kind: AiAuditEventKind, outcome: AiAuditEventOutcome, purpose: AiAuditPurpose, principalType: AiAuditPrincipalType, principalId: string | null, onBehalfOfUserId: string | null, onBehalfOfUserName: string | null, decidedByUserId: string | null, decidedByUserName: string | null, agentDefinitionId: string | null, agentDefinitionVersion: number | null, agentName: string | null, ownerKind: AgentRunEventOwnerKind | null, ownerId: string | null, runId: string | null, turnId: string | null, threadId: string | null, proposalId: string | null, toolName: string | null, tier: string | null, model: string | null, providerKind: string | null, inputTokens: number, outputTokens: number, costUsd: string | null, latencyMs: number | null, entityType: string | null, entityId: string | null, reason: string | null, resultSummary: string | null, tainted: boolean, externalContent: boolean, simulated: boolean, reconstructed: boolean } & { ' $fragmentName'?: 'AiAuditEventRowFieldsFragment' };
+
+export type AiAuditEventDetailFieldsFragment = (
+  { organizationId: string, businessUnitId: string, sourceKey: string, planId: string | null, decisionId: string | null, stepKey: string | null, callId: string | null, delegateCallId: string | null, parentOwnerId: string | null, traceId: string | null, spanId: string | null, traceUrl: string | null, providerId: string | null, attempt: number | null, failover: boolean, reasoningTokens: number, cacheReadTokens: number, cacheWriteTokens: number, toolEffect: string | null, egressClass: string | null, tierSource: string | null, heldBy: Array<string>, arguments: unknown, argumentSensitivity: unknown, argumentsTruncated: boolean, redactedPaths: Array<string>, versionBefore: number | null, versionAfter: number | null, windowStart: number | null, windowEnd: number | null, taint: unknown, prevHash: string, hash: string, hashKeyId: string | null, hashVersion: number, createdAt: number, onBehalfOf: { id: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string } | null, decidedBy: { id: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string } | null, agent: { id: string, name: string } | null, auditEntries: Array<{ ' $fragmentRefs'?: { 'AuditLogTableRowFieldsFragment': AuditLogTableRowFieldsFragment } }> }
+  & { ' $fragmentRefs'?: { 'AiAuditEventRowFieldsFragment': AiAuditEventRowFieldsFragment } }
+) & { ' $fragmentName'?: 'AiAuditEventDetailFieldsFragment' };
+
+export type AiAuditChainStatusFieldsFragment = { signed: boolean, activeKeyId: string | null, firstSeq: number, lastSeq: number, lastHash: string, sealedThroughSeq: number, lastVerifiedSeq: number, lastVerifiedAt: number | null, lastVerificationStatus: AiAuditVerificationStatus | null, failedSeq: number | null, detail: string | null, verifying: boolean } & { ' $fragmentName'?: 'AiAuditChainStatusFieldsFragment' };
+
+export type AiAuditExportFieldsFragment = { id: string, requestedByUserId: string, format: AiAuditExportFormat, filters: unknown, rangeFrom: number, rangeTo: number, snapshotSeq: number, status: AiAuditExportStatus, rowCount: number, byteSize: number, sha256: string | null, artifactExpiresAt: number | null, chainKeyId: string | null, chainFirstSeq: number | null, chainLastSeq: number | null, chainComplete: boolean, errorMessage: string | null, startedAt: number | null, completedAt: number | null, downloadable: boolean, createdAt: number, updatedAt: number, requestedBy: { id: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string } | null } & { ' $fragmentName'?: 'AiAuditExportFieldsFragment' };
+
+export type AiAuditEventTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AiAuditEventTableQuery = { aiAuditEvents: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiAuditEventRowFieldsFragment': AiAuditEventRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AiAuditEventDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AiAuditEventDetailQuery = { aiAuditEvent: { ' $fragmentRefs'?: { 'AiAuditEventDetailFieldsFragment': AiAuditEventDetailFieldsFragment } } | null };
+
+export type AiAuditChainStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AiAuditChainStatusQuery = { aiAuditChainStatus: { ' $fragmentRefs'?: { 'AiAuditChainStatusFieldsFragment': AiAuditChainStatusFieldsFragment } } };
+
+export type AiAuditExportTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AiAuditExportTableQuery = { aiAuditExports: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiAuditExportFieldsFragment': AiAuditExportFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AiAuditExportDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AiAuditExportDetailQuery = { aiAuditExport: { ' $fragmentRefs'?: { 'AiAuditExportFieldsFragment': AiAuditExportFieldsFragment } } | null };
+
+export type RequestAiAuditExportMutationVariables = Exact<{
+  input: RequestAiAuditExportInput;
+}>;
+
+
+export type RequestAiAuditExportMutation = { requestAIAuditExport: { ' $fragmentRefs'?: { 'AiAuditExportFieldsFragment': AiAuditExportFieldsFragment } } };
+
+export type AiAuditExportDownloadMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AiAuditExportDownloadMutation = { aiAuditExportDownload: { url: string, fileName: string, expiresAt: number, sha256: string } };
+
+export type VerifyAiAuditChainMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type VerifyAiAuditChainMutation = { verifyAIAuditChain: { ' $fragmentRefs'?: { 'AiAuditChainStatusFieldsFragment': AiAuditChainStatusFieldsFragment } } };
 
 export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
 
@@ -13531,6 +13674,258 @@ export const RoleAgentAccessFieldsFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"RoleAgentAccessFields"}) as unknown as TypedDocumentString<RoleAgentAccessFieldsFragment, unknown>;
+export const AiAuditEventRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AIAuditEventRowFields on AIAuditEvent {
+  id
+  seq
+  occurredAt
+  recordedAt
+  kind
+  outcome
+  purpose
+  principalType
+  principalId
+  onBehalfOfUserId
+  onBehalfOfUserName
+  decidedByUserId
+  decidedByUserName
+  agentDefinitionId
+  agentDefinitionVersion
+  agentName
+  ownerKind
+  ownerId
+  runId
+  turnId
+  threadId
+  proposalId
+  toolName
+  tier
+  model
+  providerKind
+  inputTokens
+  outputTokens
+  costUsd
+  latencyMs
+  entityType
+  entityId
+  reason
+  resultSummary
+  tainted
+  externalContent
+  simulated
+  reconstructed
+}
+    `, {"fragmentName":"AIAuditEventRowFields"}) as unknown as TypedDocumentString<AiAuditEventRowFieldsFragment, unknown>;
+export const AuditLogTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AuditLogTableRowFields on AuditEntry {
+  id
+  userId
+  businessUnitId
+  organizationId
+  timestamp
+  changes
+  previousState
+  currentState
+  metadata
+  resource
+  operation
+  resourceId
+  correlationId
+  userAgent
+  comment
+  ipAddress
+  category
+  sensitiveData
+  critical
+  user {
+    id
+    name
+    username
+    emailAddress
+    profilePicUrl
+    thumbnailUrl
+  }
+}
+    `, {"fragmentName":"AuditLogTableRowFields"}) as unknown as TypedDocumentString<AuditLogTableRowFieldsFragment, unknown>;
+export const AiAuditEventDetailFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AIAuditEventDetailFields on AIAuditEvent {
+  ...AIAuditEventRowFields
+  organizationId
+  businessUnitId
+  sourceKey
+  onBehalfOf {
+    id
+    name
+    username
+    profilePicUrl
+    thumbnailUrl
+  }
+  decidedBy {
+    id
+    name
+    username
+    profilePicUrl
+    thumbnailUrl
+  }
+  agent {
+    id
+    name
+  }
+  planId
+  decisionId
+  stepKey
+  callId
+  delegateCallId
+  parentOwnerId
+  traceId
+  spanId
+  traceUrl
+  providerId
+  attempt
+  failover
+  reasoningTokens
+  cacheReadTokens
+  cacheWriteTokens
+  toolEffect
+  egressClass
+  tierSource
+  heldBy
+  arguments
+  argumentSensitivity
+  argumentsTruncated
+  redactedPaths
+  versionBefore
+  versionAfter
+  windowStart
+  windowEnd
+  taint
+  auditEntries {
+    ...AuditLogTableRowFields
+  }
+  prevHash
+  hash
+  hashKeyId
+  hashVersion
+  createdAt
+}
+    fragment AIAuditEventRowFields on AIAuditEvent {
+  id
+  seq
+  occurredAt
+  recordedAt
+  kind
+  outcome
+  purpose
+  principalType
+  principalId
+  onBehalfOfUserId
+  onBehalfOfUserName
+  decidedByUserId
+  decidedByUserName
+  agentDefinitionId
+  agentDefinitionVersion
+  agentName
+  ownerKind
+  ownerId
+  runId
+  turnId
+  threadId
+  proposalId
+  toolName
+  tier
+  model
+  providerKind
+  inputTokens
+  outputTokens
+  costUsd
+  latencyMs
+  entityType
+  entityId
+  reason
+  resultSummary
+  tainted
+  externalContent
+  simulated
+  reconstructed
+}
+fragment AuditLogTableRowFields on AuditEntry {
+  id
+  userId
+  businessUnitId
+  organizationId
+  timestamp
+  changes
+  previousState
+  currentState
+  metadata
+  resource
+  operation
+  resourceId
+  correlationId
+  userAgent
+  comment
+  ipAddress
+  category
+  sensitiveData
+  critical
+  user {
+    id
+    name
+    username
+    emailAddress
+    profilePicUrl
+    thumbnailUrl
+  }
+}`, {"fragmentName":"AIAuditEventDetailFields"}) as unknown as TypedDocumentString<AiAuditEventDetailFieldsFragment, unknown>;
+export const AiAuditChainStatusFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AIAuditChainStatusFields on AIAuditChainStatus {
+  signed
+  activeKeyId
+  firstSeq
+  lastSeq
+  lastHash
+  sealedThroughSeq
+  lastVerifiedSeq
+  lastVerifiedAt
+  lastVerificationStatus
+  failedSeq
+  detail
+  verifying
+}
+    `, {"fragmentName":"AIAuditChainStatusFields"}) as unknown as TypedDocumentString<AiAuditChainStatusFieldsFragment, unknown>;
+export const AiAuditExportFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AIAuditExportFields on AIAuditExport {
+  id
+  requestedByUserId
+  requestedBy {
+    id
+    name
+    username
+    profilePicUrl
+    thumbnailUrl
+  }
+  format
+  filters
+  rangeFrom
+  rangeTo
+  snapshotSeq
+  status
+  rowCount
+  byteSize
+  sha256
+  artifactExpiresAt
+  chainKeyId
+  chainFirstSeq
+  chainLastSeq
+  chainComplete
+  errorMessage
+  startedAt
+  completedAt
+  downloadable
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AIAuditExportFields"}) as unknown as TypedDocumentString<AiAuditExportFieldsFragment, unknown>;
 export const AgentControlFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentControlFields on AgentControl {
   id
@@ -14406,37 +14801,6 @@ export const ApiKeyTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"ApiKeyTableRowFields"}) as unknown as TypedDocumentString<ApiKeyTableRowFieldsFragment, unknown>;
-export const AuditLogTableRowFieldsFragmentDoc = new TypedDocumentString(`
-    fragment AuditLogTableRowFields on AuditEntry {
-  id
-  userId
-  businessUnitId
-  organizationId
-  timestamp
-  changes
-  previousState
-  currentState
-  metadata
-  resource
-  operation
-  resourceId
-  correlationId
-  userAgent
-  comment
-  ipAddress
-  category
-  sensitiveData
-  critical
-  user {
-    id
-    name
-    username
-    emailAddress
-    profilePicUrl
-    thumbnailUrl
-  }
-}
-    `, {"fragmentName":"AuditLogTableRowFields"}) as unknown as TypedDocumentString<AuditLogTableRowFieldsFragment, unknown>;
 export const BillingQueueActionFieldsFragmentDoc = new TypedDocumentString(`
     fragment BillingQueueActionFields on BillingQueueItem {
   id
@@ -21018,6 +21382,14 @@ export const RoleAgentAccessDocument = {"__meta__":{"kind":"query","name":"RoleA
 export const SetRoleAgentAccessDocument = {"__meta__":{"kind":"mutation","name":"SetRoleAgentAccess","hash":"sha256:dd0999e8751bca239fb25ebad5054c71404e98c83deea9439010bd3b5d3b410b"}} as unknown as TypedDocumentString<SetRoleAgentAccessMutation, SetRoleAgentAccessMutationVariables>;
 export const AgentAccessPreviewDocument = {"__meta__":{"kind":"query","name":"AgentAccessPreview","hash":"sha256:fff0b7d3ee09999aa9a00d4313e756288a2f222e014f1234beb35d3c0619da65"}} as unknown as TypedDocumentString<AgentAccessPreviewQuery, AgentAccessPreviewQueryVariables>;
 export const SuggestedAgentAudienceDocument = {"__meta__":{"kind":"query","name":"SuggestedAgentAudience","hash":"sha256:79bdbda787008c4d10159a18a778009b985209e55670b365e0bc0675e361a021"}} as unknown as TypedDocumentString<SuggestedAgentAudienceQuery, SuggestedAgentAudienceQueryVariables>;
+export const AiAuditEventTableDocument = {"__meta__":{"kind":"query","name":"AIAuditEventTable","hash":"sha256:040e3ec336d4da2e88749faa123509e9531e8a4e4be1af3c28de1e5022e99a4a"}} as unknown as TypedDocumentString<AiAuditEventTableQuery, AiAuditEventTableQueryVariables>;
+export const AiAuditEventDetailDocument = {"__meta__":{"kind":"query","name":"AIAuditEventDetail","hash":"sha256:01893046ff19987f4cf1ce8e8b533abef0841202f7beed308049a105e26547b6"}} as unknown as TypedDocumentString<AiAuditEventDetailQuery, AiAuditEventDetailQueryVariables>;
+export const AiAuditChainStatusDocument = {"__meta__":{"kind":"query","name":"AIAuditChainStatus","hash":"sha256:189c7a9b735b0b8ec6b15f9d4a9ce6bc3cd25c26cd30f99b7dda9538c48b6820"}} as unknown as TypedDocumentString<AiAuditChainStatusQuery, AiAuditChainStatusQueryVariables>;
+export const AiAuditExportTableDocument = {"__meta__":{"kind":"query","name":"AIAuditExportTable","hash":"sha256:6310f09eac70ab9eb3e60fbe4a7b11c039943748fd8b1c7f7ab5848ec1c11f14"}} as unknown as TypedDocumentString<AiAuditExportTableQuery, AiAuditExportTableQueryVariables>;
+export const AiAuditExportDetailDocument = {"__meta__":{"kind":"query","name":"AIAuditExportDetail","hash":"sha256:1207b0bb7ed325dbc1fe9b0afd092c0855cd5030ac489ff9a219eeeeb22c4f0c"}} as unknown as TypedDocumentString<AiAuditExportDetailQuery, AiAuditExportDetailQueryVariables>;
+export const RequestAiAuditExportDocument = {"__meta__":{"kind":"mutation","name":"RequestAIAuditExport","hash":"sha256:58b7441c924c34ef725b97617378507ee9fbc255c4807fa0a1c6728b3a686e3f"}} as unknown as TypedDocumentString<RequestAiAuditExportMutation, RequestAiAuditExportMutationVariables>;
+export const AiAuditExportDownloadDocument = {"__meta__":{"kind":"mutation","name":"AIAuditExportDownload","hash":"sha256:c2de785dfd66b796b3fe28d2540c3661146c4fb1ec351a765baa567758c6a80f"}} as unknown as TypedDocumentString<AiAuditExportDownloadMutation, AiAuditExportDownloadMutationVariables>;
+export const VerifyAiAuditChainDocument = {"__meta__":{"kind":"mutation","name":"VerifyAIAuditChain","hash":"sha256:ef094f57f0060f6885edbec0665b81e27e2b8e09b047819be47dae0e6b423ad5"}} as unknown as TypedDocumentString<VerifyAiAuditChainMutation, VerifyAiAuditChainMutationVariables>;
 export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:a44ebbd4e0c314668190068941ad623cefb3b405b0fb345a4dfe58072465cf70"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
 export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:5f38f15ae16abb622bccc80b578ce30e1743ab4b89440782ac1b96232f48a2c3"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
 export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"PendingDecisions","hash":"sha256:830984fb64f11f16fc179642cec7259c4e9c4274405f3cf81a86367a8bc77a91"}} as unknown as TypedDocumentString<PendingDecisionsQuery, PendingDecisionsQueryVariables>;

@@ -232,6 +232,7 @@ type Params struct {
 	InboundMessageService        *inboundmessageservice.Service
 	AgentScorecardService        services.AgentScorecardService
 	AgentRunEventRepo            repositories.AgentRunEventRepository
+	AIAuditService               services.AIAuditService
 	BriefingService              services.BriefingService
 	AgentTools                   services.AgentToolRegistry
 	AgentControlService          services.AgentControlService
@@ -396,6 +397,7 @@ type Resolver struct {
 	inboundMessageService        *inboundmessageservice.Service
 	agentScorecardService        services.AgentScorecardService
 	agentRunEventRepo            repositories.AgentRunEventRepository
+	aiAuditService               services.AIAuditService
 	briefingService              services.BriefingService
 	agentTools                   services.AgentToolRegistry
 	agentControlService          services.AgentControlService
@@ -561,6 +563,7 @@ func New(p Params) *Resolver {
 		inboundMessageService:        p.InboundMessageService,
 		agentScorecardService:        p.AgentScorecardService,
 		agentRunEventRepo:            p.AgentRunEventRepo,
+		aiAuditService:               p.AIAuditService,
 		briefingService:              p.BriefingService,
 		agentTools:                   p.AgentTools,
 		agentControlService:          p.AgentControlService,

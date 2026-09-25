@@ -4,6 +4,10 @@ package projection
 
 import "github.com/emoss08/trenova/pkg/buncolgen"
 
+var AIAuditEventSpec TypeSpec
+
+var AIAuditExportSpec TypeSpec
+
 var AIFeedbackSpec TypeSpec
 
 var AIProviderSpec TypeSpec
@@ -544,6 +548,440 @@ var WorkerTrainingRecordSpec TypeSpec
 // package-level initialisers. Assigning inside init lets the zero-valued vars
 // exist first and be filled in afterwards.
 func init() {
+	AIAuditEventSpec = TypeSpec{
+		TypeName: "AIAuditEvent",
+		FieldMap: buncolgen.AIAuditEventFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "seq",
+				FieldMapKey: "seq",
+			},
+			{
+				Name:        "sourceKey",
+				FieldMapKey: "sourceKey",
+			},
+			{
+				Name:        "occurredAt",
+				FieldMapKey: "occurredAt",
+			},
+			{
+				Name:        "recordedAt",
+				FieldMapKey: "recordedAt",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "outcome",
+				FieldMapKey: "outcome",
+			},
+			{
+				Name:        "purpose",
+				FieldMapKey: "purpose",
+			},
+			{
+				Name:        "principalType",
+				FieldMapKey: "principalType",
+			},
+			{
+				Name:        "principalId",
+				FieldMapKey: "principalId",
+			},
+			{
+				Name:        "onBehalfOfUserId",
+				FieldMapKey: "onBehalfOfUserId",
+			},
+			{
+				Name:        "onBehalfOfUserName",
+				FieldMapKey: "onBehalfOfUserName",
+			},
+			{
+				Name:    "onBehalfOf",
+				Special: "onBehalfOf",
+			},
+			{
+				Name:        "decidedByUserId",
+				FieldMapKey: "decidedByUserId",
+			},
+			{
+				Name:        "decidedByUserName",
+				FieldMapKey: "decidedByUserName",
+			},
+			{
+				Name:    "decidedBy",
+				Special: "decidedBy",
+			},
+			{
+				Name:        "agentDefinitionId",
+				FieldMapKey: "agentDefinitionId",
+			},
+			{
+				Name:        "agentDefinitionVersion",
+				FieldMapKey: "agentDefinitionVersion",
+			},
+			{
+				Name:        "agentName",
+				FieldMapKey: "agentName",
+			},
+			{
+				Name:    "agent",
+				Special: "agent",
+			},
+			{
+				Name:        "ownerKind",
+				FieldMapKey: "ownerKind",
+			},
+			{
+				Name:        "ownerId",
+				FieldMapKey: "ownerId",
+			},
+			{
+				Name:        "runId",
+				FieldMapKey: "runId",
+			},
+			{
+				Name:        "turnId",
+				FieldMapKey: "turnId",
+			},
+			{
+				Name:        "threadId",
+				FieldMapKey: "threadId",
+			},
+			{
+				Name:        "proposalId",
+				FieldMapKey: "proposalId",
+			},
+			{
+				Name:        "planId",
+				FieldMapKey: "planId",
+			},
+			{
+				Name:        "decisionId",
+				FieldMapKey: "decisionId",
+			},
+			{
+				Name:        "stepKey",
+				FieldMapKey: "stepKey",
+			},
+			{
+				Name:        "callId",
+				FieldMapKey: "callId",
+			},
+			{
+				Name:        "delegateCallId",
+				FieldMapKey: "delegateCallId",
+			},
+			{
+				Name:        "parentOwnerId",
+				FieldMapKey: "parentOwnerId",
+			},
+			{
+				Name:        "traceId",
+				FieldMapKey: "traceId",
+			},
+			{
+				Name:        "spanId",
+				FieldMapKey: "spanId",
+			},
+			{
+				Name:    "traceUrl",
+				Special: "traceUrl",
+			},
+			{
+				Name:        "providerId",
+				FieldMapKey: "providerId",
+			},
+			{
+				Name:        "providerKind",
+				FieldMapKey: "providerKind",
+			},
+			{
+				Name:        "model",
+				FieldMapKey: "model",
+			},
+			{
+				Name:        "attempt",
+				FieldMapKey: "attempt",
+			},
+			{
+				Name:        "failover",
+				FieldMapKey: "failover",
+			},
+			{
+				Name:        "inputTokens",
+				FieldMapKey: "inputTokens",
+			},
+			{
+				Name:        "outputTokens",
+				FieldMapKey: "outputTokens",
+			},
+			{
+				Name:        "reasoningTokens",
+				FieldMapKey: "reasoningTokens",
+			},
+			{
+				Name:        "cacheReadTokens",
+				FieldMapKey: "cacheReadTokens",
+			},
+			{
+				Name:        "cacheWriteTokens",
+				FieldMapKey: "cacheWriteTokens",
+			},
+			{
+				Name:        "costUsd",
+				FieldMapKey: "costUsd",
+			},
+			{
+				Name:        "latencyMs",
+				FieldMapKey: "latencyMs",
+			},
+			{
+				Name:        "toolName",
+				FieldMapKey: "toolName",
+			},
+			{
+				Name:        "toolEffect",
+				FieldMapKey: "toolEffect",
+			},
+			{
+				Name:        "egressClass",
+				FieldMapKey: "egressClass",
+			},
+			{
+				Name:        "tier",
+				FieldMapKey: "tier",
+			},
+			{
+				Name:        "tierSource",
+				FieldMapKey: "tierSource",
+			},
+			{
+				Name:        "heldBy",
+				FieldMapKey: "heldBy",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:    "arguments",
+				Special: "arguments",
+			},
+			{
+				Name:        "argumentSensitivity",
+				FieldMapKey: "argumentSensitivity",
+			},
+			{
+				Name:        "argumentsTruncated",
+				FieldMapKey: "argumentsTruncated",
+			},
+			{
+				Name:        "redactedPaths",
+				FieldMapKey: "redactedPaths",
+			},
+			{
+				Name:        "resultSummary",
+				FieldMapKey: "resultSummary",
+			},
+			{
+				Name:        "entityType",
+				FieldMapKey: "entityType",
+			},
+			{
+				Name:        "entityId",
+				FieldMapKey: "entityId",
+			},
+			{
+				Name:        "versionBefore",
+				FieldMapKey: "versionBefore",
+			},
+			{
+				Name:        "versionAfter",
+				FieldMapKey: "versionAfter",
+			},
+			{
+				Name:        "windowStart",
+				FieldMapKey: "windowStart",
+			},
+			{
+				Name:        "windowEnd",
+				FieldMapKey: "windowEnd",
+			},
+			{
+				Name:    "auditEntries",
+				Special: "auditEntries",
+			},
+			{
+				Name:        "tainted",
+				FieldMapKey: "tainted",
+			},
+			{
+				Name:        "taint",
+				FieldMapKey: "taint",
+			},
+			{
+				Name:        "externalContent",
+				FieldMapKey: "externalContent",
+			},
+			{
+				Name:        "simulated",
+				FieldMapKey: "simulated",
+			},
+			{
+				Name:        "reconstructed",
+				FieldMapKey: "reconstructed",
+			},
+			{
+				Name:        "prevHash",
+				FieldMapKey: "prevHash",
+			},
+			{
+				Name:        "hash",
+				FieldMapKey: "hash",
+			},
+			{
+				Name:        "hashKeyId",
+				FieldMapKey: "hashKeyId",
+			},
+			{
+				Name:        "hashVersion",
+				FieldMapKey: "hashVersion",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	AIAuditExportSpec = TypeSpec{
+		TypeName: "AIAuditExport",
+		FieldMap: buncolgen.AIAuditExportFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "requestedByUserId",
+				FieldMapKey: "requestedByUserId",
+			},
+			{
+				Name:    "requestedBy",
+				Special: "requestedBy",
+			},
+			{
+				Name:        "format",
+				FieldMapKey: "format",
+			},
+			{
+				Name:        "filters",
+				FieldMapKey: "filters",
+			},
+			{
+				Name:        "rangeFrom",
+				FieldMapKey: "rangeFrom",
+			},
+			{
+				Name:        "rangeTo",
+				FieldMapKey: "rangeTo",
+			},
+			{
+				Name:        "snapshotSeq",
+				FieldMapKey: "snapshotSeq",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "rowCount",
+				FieldMapKey: "rowCount",
+			},
+			{
+				Name:        "byteSize",
+				FieldMapKey: "byteSize",
+			},
+			{
+				Name:        "sha256",
+				FieldMapKey: "sha256",
+			},
+			{
+				Name:        "artifactExpiresAt",
+				FieldMapKey: "artifactExpiresAt",
+			},
+			{
+				Name:        "chainKeyId",
+				FieldMapKey: "chainKeyId",
+			},
+			{
+				Name:        "chainFirstSeq",
+				FieldMapKey: "chainFirstSeq",
+			},
+			{
+				Name:        "chainLastSeq",
+				FieldMapKey: "chainLastSeq",
+			},
+			{
+				Name:        "chainComplete",
+				FieldMapKey: "chainComplete",
+			},
+			{
+				Name:        "errorMessage",
+				FieldMapKey: "errorMessage",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:    "downloadable",
+				Special: "downloadable",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
 	AIFeedbackSpec = TypeSpec{
 		TypeName: "AIFeedback",
 		FieldMap: buncolgen.FeedbackFieldMap,

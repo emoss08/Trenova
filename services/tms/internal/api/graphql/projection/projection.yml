@@ -252,6 +252,20 @@ virtuals:
     - secretState
   AuditEntry:
     - entityRef
+  # Computed by resolvers from columns the trail's column selection adds when
+  # the field is asked for: a person or agent by its id, the trace link from
+  # the trace id, the reader's view of the arguments from the arguments and
+  # their sensitivity, and the matched audit entries from the event's id.
+  AIAuditEvent:
+    - onBehalfOf
+    - decidedBy
+    - agent
+    - traceUrl
+    - arguments
+    - auditEntries
+  AIAuditExport:
+    - requestedBy
+    - downloadable
   # Computed by comparing the version's recorded starter hash against the
   # built-in as it stands today. There is no column to select for it.
   DocumentTemplateVersion:

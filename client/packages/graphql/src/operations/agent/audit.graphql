@@ -1,0 +1,215 @@
+fragment AIAuditEventRowFields on AIAuditEvent {
+  id
+  seq
+  occurredAt
+  recordedAt
+  kind
+  outcome
+  purpose
+  principalType
+  principalId
+  onBehalfOfUserId
+  onBehalfOfUserName
+  decidedByUserId
+  decidedByUserName
+  agentDefinitionId
+  agentDefinitionVersion
+  agentName
+  ownerKind
+  ownerId
+  runId
+  turnId
+  threadId
+  proposalId
+  toolName
+  tier
+  model
+  providerKind
+  inputTokens
+  outputTokens
+  costUsd
+  latencyMs
+  entityType
+  entityId
+  reason
+  resultSummary
+  tainted
+  externalContent
+  simulated
+  reconstructed
+}
+
+fragment AIAuditEventDetailFields on AIAuditEvent {
+  ...AIAuditEventRowFields
+  organizationId
+  businessUnitId
+  sourceKey
+  onBehalfOf {
+    id
+    name
+    username
+    profilePicUrl
+    thumbnailUrl
+  }
+  decidedBy {
+    id
+    name
+    username
+    profilePicUrl
+    thumbnailUrl
+  }
+  agent {
+    id
+    name
+  }
+  planId
+  decisionId
+  stepKey
+  callId
+  delegateCallId
+  parentOwnerId
+  traceId
+  spanId
+  traceUrl
+  providerId
+  attempt
+  failover
+  reasoningTokens
+  cacheReadTokens
+  cacheWriteTokens
+  toolEffect
+  egressClass
+  tierSource
+  heldBy
+  arguments
+  argumentSensitivity
+  argumentsTruncated
+  redactedPaths
+  versionBefore
+  versionAfter
+  windowStart
+  windowEnd
+  taint
+  auditEntries {
+    ...AuditLogTableRowFields
+  }
+  prevHash
+  hash
+  hashKeyId
+  hashVersion
+  createdAt
+}
+
+fragment AIAuditChainStatusFields on AIAuditChainStatus {
+  signed
+  activeKeyId
+  firstSeq
+  lastSeq
+  lastHash
+  sealedThroughSeq
+  lastVerifiedSeq
+  lastVerifiedAt
+  lastVerificationStatus
+  failedSeq
+  detail
+  verifying
+}
+
+fragment AIAuditExportFields on AIAuditExport {
+  id
+  requestedByUserId
+  requestedBy {
+    id
+    name
+    username
+    profilePicUrl
+    thumbnailUrl
+  }
+  format
+  filters
+  rangeFrom
+  rangeTo
+  snapshotSeq
+  status
+  rowCount
+  byteSize
+  sha256
+  artifactExpiresAt
+  chainKeyId
+  chainFirstSeq
+  chainLastSeq
+  chainComplete
+  errorMessage
+  startedAt
+  completedAt
+  downloadable
+  createdAt
+  updatedAt
+}
+
+query AIAuditEventTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  aiAuditEvents(input: $input) {
+    edges {
+      node {
+        ...AIAuditEventRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AIAuditEventDetail($id: ID!) {
+  aiAuditEvent(id: $id) {
+    ...AIAuditEventDetailFields
+  }
+}
+
+query AIAuditChainStatus {
+  aiAuditChainStatus {
+    ...AIAuditChainStatusFields
+  }
+}
+
+query AIAuditExportTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  aiAuditExports(input: $input) {
+    edges {
+      node {
+        ...AIAuditExportFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AIAuditExportDetail($id: ID!) {
+  aiAuditExport(id: $id) {
+    ...AIAuditExportFields
+  }
+}
+
+mutation RequestAIAuditExport($input: RequestAIAuditExportInput!) {
+  requestAIAuditExport(input: $input) {
+    ...AIAuditExportFields
+  }
+}
+
+mutation AIAuditExportDownload($id: ID!) {
+  aiAuditExportDownload(id: $id) {
+    url
+    fileName
+    expiresAt
+    sha256
+  }
+}
+
+mutation VerifyAIAuditChain {
+  verifyAIAuditChain {
+    ...AIAuditChainStatusFields
+  }
+}

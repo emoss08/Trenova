@@ -1113,6 +1113,22 @@ func (ec *executionContext) marshalNAuditCategory2githubᚗcomᚋemoss08ᚋtreno
 	return res
 }
 
+func (ec *executionContext) marshalNAuditEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*audit.Entry) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐEntry(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋauditᚐEntry(ctx context.Context, sel ast.SelectionSet, v *audit.Entry) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {

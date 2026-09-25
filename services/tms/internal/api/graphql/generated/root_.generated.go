@@ -37,6 +37,9 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 type Config = graphql.Config[ResolverRoot, DirectiveRoot, ComplexityRoot]
 
 type ResolverRoot interface {
+	AIAuditChainStatus() AIAuditChainStatusResolver
+	AIAuditEvent() AIAuditEventResolver
+	AIAuditExport() AIAuditExportResolver
 	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
 	AccessorialCharge() AccessorialChargeResolver
@@ -226,6 +229,159 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AIAuditChainStatus struct {
+		ActiveKeyID            func(childComplexity int) int
+		Detail                 func(childComplexity int) int
+		FailedSeq              func(childComplexity int) int
+		FirstSeq               func(childComplexity int) int
+		LastHash               func(childComplexity int) int
+		LastSeq                func(childComplexity int) int
+		LastVerificationStatus func(childComplexity int) int
+		LastVerifiedAt         func(childComplexity int) int
+		LastVerifiedSeq        func(childComplexity int) int
+		SealedThroughSeq       func(childComplexity int) int
+		Signed                 func(childComplexity int) int
+		Verifying              func(childComplexity int) int
+	}
+
+	AIAuditDownload struct {
+		ExpiresAt func(childComplexity int) int
+		FileName  func(childComplexity int) int
+		SHA256    func(childComplexity int) int
+		URL       func(childComplexity int) int
+	}
+
+	AIAuditEvent struct {
+		Agent                  func(childComplexity int) int
+		AgentDefinitionID      func(childComplexity int) int
+		AgentDefinitionVersion func(childComplexity int) int
+		AgentName              func(childComplexity int) int
+		ArgumentSensitivity    func(childComplexity int) int
+		Arguments              func(childComplexity int) int
+		ArgumentsTruncated     func(childComplexity int) int
+		Attempt                func(childComplexity int) int
+		AuditEntries           func(childComplexity int) int
+		BusinessUnitID         func(childComplexity int) int
+		CacheReadTokens        func(childComplexity int) int
+		CacheWriteTokens       func(childComplexity int) int
+		CallID                 func(childComplexity int) int
+		CostUsd                func(childComplexity int) int
+		CreatedAt              func(childComplexity int) int
+		DecidedBy              func(childComplexity int) int
+		DecidedByUserID        func(childComplexity int) int
+		DecidedByUserName      func(childComplexity int) int
+		DecisionID             func(childComplexity int) int
+		DelegateCallID         func(childComplexity int) int
+		EgressClass            func(childComplexity int) int
+		EntityID               func(childComplexity int) int
+		EntityType             func(childComplexity int) int
+		ExternalContent        func(childComplexity int) int
+		Failover               func(childComplexity int) int
+		Hash                   func(childComplexity int) int
+		HashKeyID              func(childComplexity int) int
+		HashVersion            func(childComplexity int) int
+		HeldBy                 func(childComplexity int) int
+		ID                     func(childComplexity int) int
+		InputTokens            func(childComplexity int) int
+		Kind                   func(childComplexity int) int
+		LatencyMs              func(childComplexity int) int
+		Model                  func(childComplexity int) int
+		OccurredAt             func(childComplexity int) int
+		OnBehalfOf             func(childComplexity int) int
+		OnBehalfOfUserID       func(childComplexity int) int
+		OnBehalfOfUserName     func(childComplexity int) int
+		OrganizationID         func(childComplexity int) int
+		Outcome                func(childComplexity int) int
+		OutputTokens           func(childComplexity int) int
+		OwnerID                func(childComplexity int) int
+		OwnerKind              func(childComplexity int) int
+		ParentOwnerID          func(childComplexity int) int
+		PlanID                 func(childComplexity int) int
+		PrevHash               func(childComplexity int) int
+		PrincipalID            func(childComplexity int) int
+		PrincipalType          func(childComplexity int) int
+		ProposalID             func(childComplexity int) int
+		ProviderID             func(childComplexity int) int
+		ProviderKind           func(childComplexity int) int
+		Purpose                func(childComplexity int) int
+		Reason                 func(childComplexity int) int
+		ReasoningTokens        func(childComplexity int) int
+		Reconstructed          func(childComplexity int) int
+		RecordedAt             func(childComplexity int) int
+		RedactedPaths          func(childComplexity int) int
+		ResultSummary          func(childComplexity int) int
+		RunID                  func(childComplexity int) int
+		Seq                    func(childComplexity int) int
+		Simulated              func(childComplexity int) int
+		SourceKey              func(childComplexity int) int
+		SpanID                 func(childComplexity int) int
+		StepKey                func(childComplexity int) int
+		Taint                  func(childComplexity int) int
+		Tainted                func(childComplexity int) int
+		ThreadID               func(childComplexity int) int
+		Tier                   func(childComplexity int) int
+		TierSource             func(childComplexity int) int
+		ToolEffect             func(childComplexity int) int
+		ToolName               func(childComplexity int) int
+		TraceID                func(childComplexity int) int
+		TraceURL               func(childComplexity int) int
+		TurnID                 func(childComplexity int) int
+		VersionAfter           func(childComplexity int) int
+		VersionBefore          func(childComplexity int) int
+		WindowEnd              func(childComplexity int) int
+		WindowStart            func(childComplexity int) int
+	}
+
+	AIAuditEventConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AIAuditEventEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AIAuditExport struct {
+		ArtifactExpiresAt func(childComplexity int) int
+		BusinessUnitID    func(childComplexity int) int
+		ByteSize          func(childComplexity int) int
+		ChainComplete     func(childComplexity int) int
+		ChainFirstSeq     func(childComplexity int) int
+		ChainKeyID        func(childComplexity int) int
+		ChainLastSeq      func(childComplexity int) int
+		CompletedAt       func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		Downloadable      func(childComplexity int) int
+		ErrorMessage      func(childComplexity int) int
+		Filters           func(childComplexity int) int
+		Format            func(childComplexity int) int
+		ID                func(childComplexity int) int
+		OrganizationID    func(childComplexity int) int
+		RangeFrom         func(childComplexity int) int
+		RangeTo           func(childComplexity int) int
+		RequestedBy       func(childComplexity int) int
+		RequestedByUserID func(childComplexity int) int
+		RowCount          func(childComplexity int) int
+		SHA256            func(childComplexity int) int
+		SnapshotSeq       func(childComplexity int) int
+		StartedAt         func(childComplexity int) int
+		Status            func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+	}
+
+	AIAuditExportConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AIAuditExportEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	AIFeedback struct {
 		AgentDefinitionID func(childComplexity int) int
 		BusinessUnitID    func(childComplexity int) int
@@ -7068,6 +7224,7 @@ type ComplexityRoot struct {
 		AddOrderCharge                        func(childComplexity int, orderID string, description string, amount string, allocations []*gqlmodel.ChargeAllocationInput) int
 		AdjustEscrowAccount                   func(childComplexity int, input gqlmodel.AdjustEscrowAccountInput) int
 		AdjustWorkerPTOBalance                func(childComplexity int, input gqlmodel.AdjustWorkerPTOBalanceInput) int
+		AiAuditExportDownload                 func(childComplexity int, id string) int
 		AmendIFTAReturn                       func(childComplexity int, id string, reason string) int
 		AmendWorkerEmploymentEvent            func(childComplexity int, input gqlmodel.AmendWorkerEmploymentEventInput) int
 		ApplyCarrierIntelSuggestions          func(childComplexity int, input gqlmodel.ApplyCarrierIntelSuggestionsInput) int
@@ -7345,6 +7502,7 @@ type ComplexityRoot struct {
 		ReopenWorkerSafetyEvent               func(childComplexity int, input gqlmodel.SafetyEventStatusInput) int
 		ReplayAgentEvalCase                   func(childComplexity int, id string) int
 		ReplayAgentRun                        func(childComplexity int, runID string) int
+		RequestAIAuditExport                  func(childComplexity int, input gqlmodel.RequestAIAuditExportInput) int
 		RequestLeaveCertification             func(childComplexity int, caseID string, dueAt *int) int
 		RequestMyPTO                          func(childComplexity int, input gqlmodel.RequestMyPTOInput) int
 		RescindDisciplinaryAction             func(childComplexity int, input gqlmodel.RescindDisciplinaryActionInput) int
@@ -7491,6 +7649,7 @@ type ComplexityRoot struct {
 		UpdateWorkerPolicy                    func(childComplexity int, id string, input gqlmodel.WorkerPolicyInput) int
 		UpdateWorkerSafetyEvent               func(childComplexity int, input gqlmodel.UpdateWorkerSafetyEventInput) int
 		UpsertIFTATaxRates                    func(childComplexity int, input []*gqlmodel.IFTATaxRateInput) int
+		VerifyAIAuditChain                    func(childComplexity int) int
 		VerifyCarrierEquipment                func(childComplexity int, input gqlmodel.VerifyCarrierEquipmentInput) int
 		VerifyWorkerCredential                func(childComplexity int, id string, version *int) int
 		VetCarrier                            func(childComplexity int, carrierID string, depth *carrierintel.LookupDepth, force *bool) int
@@ -8450,6 +8609,11 @@ type ComplexityRoot struct {
 		AgentToolSafetyConnection           func(childComplexity int, agentIds []string, input gqlmodel.DataTableConnectionInput) int
 		AgentWorstRatedAnswerConnection     func(childComplexity int, agentDefinitionID *string, window *int, input gqlmodel.DataTableConnectionInput) int
 		AgentWorstRatedAnswers              func(childComplexity int, input gqlmodel.AgentWorstRatedAnswersInput) int
+		AiAuditChainStatus                  func(childComplexity int) int
+		AiAuditEvent                        func(childComplexity int, id string) int
+		AiAuditEvents                       func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AiAuditExport                       func(childComplexity int, id string) int
+		AiAuditExports                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AiFeedback                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AiProvider                          func(childComplexity int, id string) int
 		AiProviders                         func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
@@ -12697,6 +12861,788 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := newExecutionContext(nil, e, nil)
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AIAuditChainStatus.activeKeyId":
+		if e.ComplexityRoot.AIAuditChainStatus.ActiveKeyID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.ActiveKeyID(childComplexity), true
+	case "AIAuditChainStatus.detail":
+		if e.ComplexityRoot.AIAuditChainStatus.Detail == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.Detail(childComplexity), true
+	case "AIAuditChainStatus.failedSeq":
+		if e.ComplexityRoot.AIAuditChainStatus.FailedSeq == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.FailedSeq(childComplexity), true
+	case "AIAuditChainStatus.firstSeq":
+		if e.ComplexityRoot.AIAuditChainStatus.FirstSeq == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.FirstSeq(childComplexity), true
+	case "AIAuditChainStatus.lastHash":
+		if e.ComplexityRoot.AIAuditChainStatus.LastHash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.LastHash(childComplexity), true
+	case "AIAuditChainStatus.lastSeq":
+		if e.ComplexityRoot.AIAuditChainStatus.LastSeq == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.LastSeq(childComplexity), true
+	case "AIAuditChainStatus.lastVerificationStatus":
+		if e.ComplexityRoot.AIAuditChainStatus.LastVerificationStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.LastVerificationStatus(childComplexity), true
+	case "AIAuditChainStatus.lastVerifiedAt":
+		if e.ComplexityRoot.AIAuditChainStatus.LastVerifiedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.LastVerifiedAt(childComplexity), true
+	case "AIAuditChainStatus.lastVerifiedSeq":
+		if e.ComplexityRoot.AIAuditChainStatus.LastVerifiedSeq == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.LastVerifiedSeq(childComplexity), true
+	case "AIAuditChainStatus.sealedThroughSeq":
+		if e.ComplexityRoot.AIAuditChainStatus.SealedThroughSeq == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.SealedThroughSeq(childComplexity), true
+	case "AIAuditChainStatus.signed":
+		if e.ComplexityRoot.AIAuditChainStatus.Signed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.Signed(childComplexity), true
+	case "AIAuditChainStatus.verifying":
+		if e.ComplexityRoot.AIAuditChainStatus.Verifying == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditChainStatus.Verifying(childComplexity), true
+
+	case "AIAuditDownload.expiresAt":
+		if e.ComplexityRoot.AIAuditDownload.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditDownload.ExpiresAt(childComplexity), true
+	case "AIAuditDownload.fileName":
+		if e.ComplexityRoot.AIAuditDownload.FileName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditDownload.FileName(childComplexity), true
+	case "AIAuditDownload.sha256":
+		if e.ComplexityRoot.AIAuditDownload.SHA256 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditDownload.SHA256(childComplexity), true
+	case "AIAuditDownload.url":
+		if e.ComplexityRoot.AIAuditDownload.URL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditDownload.URL(childComplexity), true
+
+	case "AIAuditEvent.agent":
+		if e.ComplexityRoot.AIAuditEvent.Agent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Agent(childComplexity), true
+	case "AIAuditEvent.agentDefinitionId":
+		if e.ComplexityRoot.AIAuditEvent.AgentDefinitionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.AgentDefinitionID(childComplexity), true
+	case "AIAuditEvent.agentDefinitionVersion":
+		if e.ComplexityRoot.AIAuditEvent.AgentDefinitionVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.AgentDefinitionVersion(childComplexity), true
+	case "AIAuditEvent.agentName":
+		if e.ComplexityRoot.AIAuditEvent.AgentName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.AgentName(childComplexity), true
+	case "AIAuditEvent.argumentSensitivity":
+		if e.ComplexityRoot.AIAuditEvent.ArgumentSensitivity == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ArgumentSensitivity(childComplexity), true
+	case "AIAuditEvent.arguments":
+		if e.ComplexityRoot.AIAuditEvent.Arguments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Arguments(childComplexity), true
+	case "AIAuditEvent.argumentsTruncated":
+		if e.ComplexityRoot.AIAuditEvent.ArgumentsTruncated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ArgumentsTruncated(childComplexity), true
+	case "AIAuditEvent.attempt":
+		if e.ComplexityRoot.AIAuditEvent.Attempt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Attempt(childComplexity), true
+	case "AIAuditEvent.auditEntries":
+		if e.ComplexityRoot.AIAuditEvent.AuditEntries == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.AuditEntries(childComplexity), true
+	case "AIAuditEvent.businessUnitId":
+		if e.ComplexityRoot.AIAuditEvent.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.BusinessUnitID(childComplexity), true
+	case "AIAuditEvent.cacheReadTokens":
+		if e.ComplexityRoot.AIAuditEvent.CacheReadTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.CacheReadTokens(childComplexity), true
+	case "AIAuditEvent.cacheWriteTokens":
+		if e.ComplexityRoot.AIAuditEvent.CacheWriteTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.CacheWriteTokens(childComplexity), true
+	case "AIAuditEvent.callId":
+		if e.ComplexityRoot.AIAuditEvent.CallID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.CallID(childComplexity), true
+	case "AIAuditEvent.costUsd":
+		if e.ComplexityRoot.AIAuditEvent.CostUsd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.CostUsd(childComplexity), true
+	case "AIAuditEvent.createdAt":
+		if e.ComplexityRoot.AIAuditEvent.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.CreatedAt(childComplexity), true
+	case "AIAuditEvent.decidedBy":
+		if e.ComplexityRoot.AIAuditEvent.DecidedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.DecidedBy(childComplexity), true
+	case "AIAuditEvent.decidedByUserId":
+		if e.ComplexityRoot.AIAuditEvent.DecidedByUserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.DecidedByUserID(childComplexity), true
+	case "AIAuditEvent.decidedByUserName":
+		if e.ComplexityRoot.AIAuditEvent.DecidedByUserName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.DecidedByUserName(childComplexity), true
+	case "AIAuditEvent.decisionId":
+		if e.ComplexityRoot.AIAuditEvent.DecisionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.DecisionID(childComplexity), true
+	case "AIAuditEvent.delegateCallId":
+		if e.ComplexityRoot.AIAuditEvent.DelegateCallID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.DelegateCallID(childComplexity), true
+	case "AIAuditEvent.egressClass":
+		if e.ComplexityRoot.AIAuditEvent.EgressClass == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.EgressClass(childComplexity), true
+	case "AIAuditEvent.entityId":
+		if e.ComplexityRoot.AIAuditEvent.EntityID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.EntityID(childComplexity), true
+	case "AIAuditEvent.entityType":
+		if e.ComplexityRoot.AIAuditEvent.EntityType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.EntityType(childComplexity), true
+	case "AIAuditEvent.externalContent":
+		if e.ComplexityRoot.AIAuditEvent.ExternalContent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ExternalContent(childComplexity), true
+	case "AIAuditEvent.failover":
+		if e.ComplexityRoot.AIAuditEvent.Failover == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Failover(childComplexity), true
+	case "AIAuditEvent.hash":
+		if e.ComplexityRoot.AIAuditEvent.Hash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Hash(childComplexity), true
+	case "AIAuditEvent.hashKeyId":
+		if e.ComplexityRoot.AIAuditEvent.HashKeyID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.HashKeyID(childComplexity), true
+	case "AIAuditEvent.hashVersion":
+		if e.ComplexityRoot.AIAuditEvent.HashVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.HashVersion(childComplexity), true
+	case "AIAuditEvent.heldBy":
+		if e.ComplexityRoot.AIAuditEvent.HeldBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.HeldBy(childComplexity), true
+	case "AIAuditEvent.id":
+		if e.ComplexityRoot.AIAuditEvent.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ID(childComplexity), true
+	case "AIAuditEvent.inputTokens":
+		if e.ComplexityRoot.AIAuditEvent.InputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.InputTokens(childComplexity), true
+	case "AIAuditEvent.kind":
+		if e.ComplexityRoot.AIAuditEvent.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Kind(childComplexity), true
+	case "AIAuditEvent.latencyMs":
+		if e.ComplexityRoot.AIAuditEvent.LatencyMs == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.LatencyMs(childComplexity), true
+	case "AIAuditEvent.model":
+		if e.ComplexityRoot.AIAuditEvent.Model == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Model(childComplexity), true
+	case "AIAuditEvent.occurredAt":
+		if e.ComplexityRoot.AIAuditEvent.OccurredAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.OccurredAt(childComplexity), true
+	case "AIAuditEvent.onBehalfOf":
+		if e.ComplexityRoot.AIAuditEvent.OnBehalfOf == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.OnBehalfOf(childComplexity), true
+	case "AIAuditEvent.onBehalfOfUserId":
+		if e.ComplexityRoot.AIAuditEvent.OnBehalfOfUserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.OnBehalfOfUserID(childComplexity), true
+	case "AIAuditEvent.onBehalfOfUserName":
+		if e.ComplexityRoot.AIAuditEvent.OnBehalfOfUserName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.OnBehalfOfUserName(childComplexity), true
+	case "AIAuditEvent.organizationId":
+		if e.ComplexityRoot.AIAuditEvent.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.OrganizationID(childComplexity), true
+	case "AIAuditEvent.outcome":
+		if e.ComplexityRoot.AIAuditEvent.Outcome == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Outcome(childComplexity), true
+	case "AIAuditEvent.outputTokens":
+		if e.ComplexityRoot.AIAuditEvent.OutputTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.OutputTokens(childComplexity), true
+	case "AIAuditEvent.ownerId":
+		if e.ComplexityRoot.AIAuditEvent.OwnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.OwnerID(childComplexity), true
+	case "AIAuditEvent.ownerKind":
+		if e.ComplexityRoot.AIAuditEvent.OwnerKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.OwnerKind(childComplexity), true
+	case "AIAuditEvent.parentOwnerId":
+		if e.ComplexityRoot.AIAuditEvent.ParentOwnerID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ParentOwnerID(childComplexity), true
+	case "AIAuditEvent.planId":
+		if e.ComplexityRoot.AIAuditEvent.PlanID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.PlanID(childComplexity), true
+	case "AIAuditEvent.prevHash":
+		if e.ComplexityRoot.AIAuditEvent.PrevHash == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.PrevHash(childComplexity), true
+	case "AIAuditEvent.principalId":
+		if e.ComplexityRoot.AIAuditEvent.PrincipalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.PrincipalID(childComplexity), true
+	case "AIAuditEvent.principalType":
+		if e.ComplexityRoot.AIAuditEvent.PrincipalType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.PrincipalType(childComplexity), true
+	case "AIAuditEvent.proposalId":
+		if e.ComplexityRoot.AIAuditEvent.ProposalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ProposalID(childComplexity), true
+	case "AIAuditEvent.providerId":
+		if e.ComplexityRoot.AIAuditEvent.ProviderID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ProviderID(childComplexity), true
+	case "AIAuditEvent.providerKind":
+		if e.ComplexityRoot.AIAuditEvent.ProviderKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ProviderKind(childComplexity), true
+	case "AIAuditEvent.purpose":
+		if e.ComplexityRoot.AIAuditEvent.Purpose == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Purpose(childComplexity), true
+	case "AIAuditEvent.reason":
+		if e.ComplexityRoot.AIAuditEvent.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Reason(childComplexity), true
+	case "AIAuditEvent.reasoningTokens":
+		if e.ComplexityRoot.AIAuditEvent.ReasoningTokens == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ReasoningTokens(childComplexity), true
+	case "AIAuditEvent.reconstructed":
+		if e.ComplexityRoot.AIAuditEvent.Reconstructed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Reconstructed(childComplexity), true
+	case "AIAuditEvent.recordedAt":
+		if e.ComplexityRoot.AIAuditEvent.RecordedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.RecordedAt(childComplexity), true
+	case "AIAuditEvent.redactedPaths":
+		if e.ComplexityRoot.AIAuditEvent.RedactedPaths == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.RedactedPaths(childComplexity), true
+	case "AIAuditEvent.resultSummary":
+		if e.ComplexityRoot.AIAuditEvent.ResultSummary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ResultSummary(childComplexity), true
+	case "AIAuditEvent.runId":
+		if e.ComplexityRoot.AIAuditEvent.RunID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.RunID(childComplexity), true
+	case "AIAuditEvent.seq":
+		if e.ComplexityRoot.AIAuditEvent.Seq == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Seq(childComplexity), true
+	case "AIAuditEvent.simulated":
+		if e.ComplexityRoot.AIAuditEvent.Simulated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Simulated(childComplexity), true
+	case "AIAuditEvent.sourceKey":
+		if e.ComplexityRoot.AIAuditEvent.SourceKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.SourceKey(childComplexity), true
+	case "AIAuditEvent.spanId":
+		if e.ComplexityRoot.AIAuditEvent.SpanID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.SpanID(childComplexity), true
+	case "AIAuditEvent.stepKey":
+		if e.ComplexityRoot.AIAuditEvent.StepKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.StepKey(childComplexity), true
+	case "AIAuditEvent.taint":
+		if e.ComplexityRoot.AIAuditEvent.Taint == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Taint(childComplexity), true
+	case "AIAuditEvent.tainted":
+		if e.ComplexityRoot.AIAuditEvent.Tainted == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Tainted(childComplexity), true
+	case "AIAuditEvent.threadId":
+		if e.ComplexityRoot.AIAuditEvent.ThreadID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ThreadID(childComplexity), true
+	case "AIAuditEvent.tier":
+		if e.ComplexityRoot.AIAuditEvent.Tier == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.Tier(childComplexity), true
+	case "AIAuditEvent.tierSource":
+		if e.ComplexityRoot.AIAuditEvent.TierSource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.TierSource(childComplexity), true
+	case "AIAuditEvent.toolEffect":
+		if e.ComplexityRoot.AIAuditEvent.ToolEffect == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ToolEffect(childComplexity), true
+	case "AIAuditEvent.toolName":
+		if e.ComplexityRoot.AIAuditEvent.ToolName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.ToolName(childComplexity), true
+	case "AIAuditEvent.traceId":
+		if e.ComplexityRoot.AIAuditEvent.TraceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.TraceID(childComplexity), true
+	case "AIAuditEvent.traceUrl":
+		if e.ComplexityRoot.AIAuditEvent.TraceURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.TraceURL(childComplexity), true
+	case "AIAuditEvent.turnId":
+		if e.ComplexityRoot.AIAuditEvent.TurnID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.TurnID(childComplexity), true
+	case "AIAuditEvent.versionAfter":
+		if e.ComplexityRoot.AIAuditEvent.VersionAfter == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.VersionAfter(childComplexity), true
+	case "AIAuditEvent.versionBefore":
+		if e.ComplexityRoot.AIAuditEvent.VersionBefore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.VersionBefore(childComplexity), true
+	case "AIAuditEvent.windowEnd":
+		if e.ComplexityRoot.AIAuditEvent.WindowEnd == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.WindowEnd(childComplexity), true
+	case "AIAuditEvent.windowStart":
+		if e.ComplexityRoot.AIAuditEvent.WindowStart == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEvent.WindowStart(childComplexity), true
+
+	case "AIAuditEventConnection.edges":
+		if e.ComplexityRoot.AIAuditEventConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEventConnection.Edges(childComplexity), true
+	case "AIAuditEventConnection.pageInfo":
+		if e.ComplexityRoot.AIAuditEventConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEventConnection.PageInfo(childComplexity), true
+	case "AIAuditEventConnection.totalCount":
+		if e.ComplexityRoot.AIAuditEventConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEventConnection.TotalCount(childComplexity), true
+
+	case "AIAuditEventEdge.cursor":
+		if e.ComplexityRoot.AIAuditEventEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEventEdge.Cursor(childComplexity), true
+	case "AIAuditEventEdge.node":
+		if e.ComplexityRoot.AIAuditEventEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditEventEdge.Node(childComplexity), true
+
+	case "AIAuditExport.artifactExpiresAt":
+		if e.ComplexityRoot.AIAuditExport.ArtifactExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.ArtifactExpiresAt(childComplexity), true
+	case "AIAuditExport.businessUnitId":
+		if e.ComplexityRoot.AIAuditExport.BusinessUnitID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.BusinessUnitID(childComplexity), true
+	case "AIAuditExport.byteSize":
+		if e.ComplexityRoot.AIAuditExport.ByteSize == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.ByteSize(childComplexity), true
+	case "AIAuditExport.chainComplete":
+		if e.ComplexityRoot.AIAuditExport.ChainComplete == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.ChainComplete(childComplexity), true
+	case "AIAuditExport.chainFirstSeq":
+		if e.ComplexityRoot.AIAuditExport.ChainFirstSeq == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.ChainFirstSeq(childComplexity), true
+	case "AIAuditExport.chainKeyId":
+		if e.ComplexityRoot.AIAuditExport.ChainKeyID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.ChainKeyID(childComplexity), true
+	case "AIAuditExport.chainLastSeq":
+		if e.ComplexityRoot.AIAuditExport.ChainLastSeq == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.ChainLastSeq(childComplexity), true
+	case "AIAuditExport.completedAt":
+		if e.ComplexityRoot.AIAuditExport.CompletedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.CompletedAt(childComplexity), true
+	case "AIAuditExport.createdAt":
+		if e.ComplexityRoot.AIAuditExport.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.CreatedAt(childComplexity), true
+	case "AIAuditExport.downloadable":
+		if e.ComplexityRoot.AIAuditExport.Downloadable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.Downloadable(childComplexity), true
+	case "AIAuditExport.errorMessage":
+		if e.ComplexityRoot.AIAuditExport.ErrorMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.ErrorMessage(childComplexity), true
+	case "AIAuditExport.filters":
+		if e.ComplexityRoot.AIAuditExport.Filters == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.Filters(childComplexity), true
+	case "AIAuditExport.format":
+		if e.ComplexityRoot.AIAuditExport.Format == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.Format(childComplexity), true
+	case "AIAuditExport.id":
+		if e.ComplexityRoot.AIAuditExport.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.ID(childComplexity), true
+	case "AIAuditExport.organizationId":
+		if e.ComplexityRoot.AIAuditExport.OrganizationID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.OrganizationID(childComplexity), true
+	case "AIAuditExport.rangeFrom":
+		if e.ComplexityRoot.AIAuditExport.RangeFrom == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.RangeFrom(childComplexity), true
+	case "AIAuditExport.rangeTo":
+		if e.ComplexityRoot.AIAuditExport.RangeTo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.RangeTo(childComplexity), true
+	case "AIAuditExport.requestedBy":
+		if e.ComplexityRoot.AIAuditExport.RequestedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.RequestedBy(childComplexity), true
+	case "AIAuditExport.requestedByUserId":
+		if e.ComplexityRoot.AIAuditExport.RequestedByUserID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.RequestedByUserID(childComplexity), true
+	case "AIAuditExport.rowCount":
+		if e.ComplexityRoot.AIAuditExport.RowCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.RowCount(childComplexity), true
+	case "AIAuditExport.sha256":
+		if e.ComplexityRoot.AIAuditExport.SHA256 == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.SHA256(childComplexity), true
+	case "AIAuditExport.snapshotSeq":
+		if e.ComplexityRoot.AIAuditExport.SnapshotSeq == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.SnapshotSeq(childComplexity), true
+	case "AIAuditExport.startedAt":
+		if e.ComplexityRoot.AIAuditExport.StartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.StartedAt(childComplexity), true
+	case "AIAuditExport.status":
+		if e.ComplexityRoot.AIAuditExport.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.Status(childComplexity), true
+	case "AIAuditExport.updatedAt":
+		if e.ComplexityRoot.AIAuditExport.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExport.UpdatedAt(childComplexity), true
+
+	case "AIAuditExportConnection.edges":
+		if e.ComplexityRoot.AIAuditExportConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExportConnection.Edges(childComplexity), true
+	case "AIAuditExportConnection.pageInfo":
+		if e.ComplexityRoot.AIAuditExportConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExportConnection.PageInfo(childComplexity), true
+	case "AIAuditExportConnection.totalCount":
+		if e.ComplexityRoot.AIAuditExportConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExportConnection.TotalCount(childComplexity), true
+
+	case "AIAuditExportEdge.cursor":
+		if e.ComplexityRoot.AIAuditExportEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExportEdge.Cursor(childComplexity), true
+	case "AIAuditExportEdge.node":
+		if e.ComplexityRoot.AIAuditExportEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AIAuditExportEdge.Node(childComplexity), true
 
 	case "AIFeedback.agentDefinitionId":
 		if e.ComplexityRoot.AIFeedback.AgentDefinitionID == nil {
@@ -44418,6 +45364,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.AdjustWorkerPTOBalance(childComplexity, args["input"].(gqlmodel.AdjustWorkerPTOBalanceInput)), true
+	case "Mutation.aiAuditExportDownload":
+		if e.ComplexityRoot.Mutation.AiAuditExportDownload == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_aiAuditExportDownload_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.AiAuditExportDownload(childComplexity, args["id"].(string)), true
 	case "Mutation.amendIftaReturn":
 		if e.ComplexityRoot.Mutation.AmendIFTAReturn == nil {
 			break
@@ -47455,6 +48412,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ReplayAgentRun(childComplexity, args["runId"].(string)), true
+	case "Mutation.requestAIAuditExport":
+		if e.ComplexityRoot.Mutation.RequestAIAuditExport == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_requestAIAuditExport_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RequestAIAuditExport(childComplexity, args["input"].(gqlmodel.RequestAIAuditExportInput)), true
 	case "Mutation.requestLeaveCertification":
 		if e.ComplexityRoot.Mutation.RequestLeaveCertification == nil {
 			break
@@ -49051,6 +50019,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpsertIFTATaxRates(childComplexity, args["input"].([]*gqlmodel.IFTATaxRateInput)), true
+	case "Mutation.verifyAIAuditChain":
+		if e.ComplexityRoot.Mutation.VerifyAIAuditChain == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Mutation.VerifyAIAuditChain(childComplexity), true
 	case "Mutation.verifyCarrierEquipment":
 		if e.ComplexityRoot.Mutation.VerifyCarrierEquipment == nil {
 			break
@@ -53740,6 +54714,56 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentWorstRatedAnswers(childComplexity, args["input"].(gqlmodel.AgentWorstRatedAnswersInput)), true
+	case "Query.aiAuditChainStatus":
+		if e.ComplexityRoot.Query.AiAuditChainStatus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.AiAuditChainStatus(childComplexity), true
+	case "Query.aiAuditEvent":
+		if e.ComplexityRoot.Query.AiAuditEvent == nil {
+			break
+		}
+
+		args, err := ec.field_Query_aiAuditEvent_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AiAuditEvent(childComplexity, args["id"].(string)), true
+	case "Query.aiAuditEvents":
+		if e.ComplexityRoot.Query.AiAuditEvents == nil {
+			break
+		}
+
+		args, err := ec.field_Query_aiAuditEvents_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AiAuditEvents(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.aiAuditExport":
+		if e.ComplexityRoot.Query.AiAuditExport == nil {
+			break
+		}
+
+		args, err := ec.field_Query_aiAuditExport_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AiAuditExport(childComplexity, args["id"].(string)), true
+	case "Query.aiAuditExports":
+		if e.ComplexityRoot.Query.AiAuditExports == nil {
+			break
+		}
+
+		args, err := ec.field_Query_aiAuditExports_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AiAuditExports(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.aiFeedback":
 		if e.ComplexityRoot.Query.AiFeedback == nil {
 			break
@@ -76382,6 +77406,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputReportScheduleAlertInput,
 		ec.unmarshalInputReportSortInput,
 		ec.unmarshalInputReportTransformInput,
+		ec.unmarshalInputRequestAIAuditExportInput,
 		ec.unmarshalInputRequestMyPtoInput,
 		ec.unmarshalInputRescindDisciplinaryActionInput,
 		ec.unmarshalInputResolveCarrierIntelEventInput,
@@ -79158,6 +80183,319 @@ input AgentScorecardInput {
 extend type Query {
   "How one agent has been doing."
   agentScorecard(input: AgentScorecardInput!): AgentScorecard!
+}
+`, BuiltIn: false},
+	{Name: "../schema/aiaudit.graphqls", Input: `"""
+What an AI audit event records.
+"""
+enum AIAuditEventKind {
+  RunStarted
+  RunEnded
+  ModelCall
+  ToolCall
+  ToolRefused
+  ProposalFiled
+  ProposalDecided
+  ProposalExecuted
+  ProposalExecutionFailed
+  ProposalSimulated
+  ProposalExpired
+  DelegationStarted
+  DelegationEnded
+}
+
+"""
+How the thing an AI audit event records turned out.
+"""
+enum AIAuditEventOutcome {
+  Started
+  Completed
+  Failed
+  Refused
+  Stopped
+  Succeeded
+  Ran
+  Proposed
+  Simulated
+  Denied
+  Unknown
+  Filed
+  Accepted
+  Modified
+  Rejected
+  Expired
+  Exhausted
+  Declined
+}
+
+"""
+Who an AI audit event's action was taken as.
+"""
+enum AIAuditPrincipalType {
+  User
+  Agent
+  System
+}
+
+"""
+Live work, or an evaluation replaying a run against the agent as it is now.
+"""
+enum AIAuditPurpose {
+  Live
+  Evaluation
+}
+
+enum AIAuditExportFormat {
+  CSV
+  JSON
+}
+
+enum AIAuditExportStatus {
+  Pending
+  Running
+  Succeeded
+  Failed
+  Expired
+}
+
+enum AIAuditVerificationStatus {
+  Verified
+  Mismatch
+  KeyMissing
+}
+
+"""
+One thing an agent did, decided or had decided for it: a run or turn
+beginning or ending, a model call, a tool call, a refusal, a proposal filed,
+decided, executed or expired, or a task handed to another agent.
+
+Rows are written once, by the audit projector, from what the runtime already
+records, and never changed. Each tenant's rows form a hash chain in seq
+order, signed with a key held outside the database, so a changed or removed
+row is found when the chain is verified.
+"""
+type AIAuditEvent {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+
+  "The row's place in its tenant's chain."
+  seq: Int!
+
+  "The source row and moment the event was projected from."
+  sourceKey: String!
+  occurredAt: Timestamp!
+  "When the event was written to the trail, usually within a minute of occurredAt."
+  recordedAt: Timestamp!
+  kind: AIAuditEventKind!
+  outcome: AIAuditEventOutcome!
+  purpose: AIAuditPurpose!
+
+  principalType: AIAuditPrincipalType!
+  principalId: String
+  "The person the work was for, as their name was when the event was written."
+  onBehalfOfUserId: ID
+  onBehalfOfUserName: String
+  onBehalfOf: User
+  "The person who decided a proposal, as their name was when the event was written."
+  decidedByUserId: ID
+  decidedByUserName: String
+  decidedBy: User
+
+  agentDefinitionId: ID
+  agentDefinitionVersion: Int
+  agentName: String
+  agent: AgentDefinition
+
+  ownerKind: AgentRunEventOwnerKind
+  ownerId: ID
+  runId: ID
+  turnId: ID
+  threadId: ID
+  proposalId: ID
+  planId: ID
+  decisionId: ID
+  stepKey: String
+  callId: String
+  delegateCallId: String
+  parentOwnerId: ID
+  traceId: String
+  spanId: String
+  "Where the trace opens in the tracing backend, when one is configured."
+  traceUrl: String
+
+  providerId: ID
+  providerKind: String
+  model: String
+  attempt: Int
+  failover: Boolean!
+  inputTokens: Int!
+  outputTokens: Int!
+  reasoningTokens: Int!
+  cacheReadTokens: Int!
+  cacheWriteTokens: Int!
+  costUsd: Decimal
+  latencyMs: Int
+
+  toolName: String
+  toolEffect: String
+  egressClass: String
+  tier: String
+  tierSource: String
+  heldBy: [String!]!
+  reason: String
+
+  """
+  The call's arguments as recorded, with every value above the reader's
+  sensitivity on the tool's resource withheld. Confidential values were never
+  recorded.
+  """
+  arguments: JSON
+  """
+  The resource the tool acts on and the sensitivity of each argument path,
+  as recorded: why a value is withheld from a reader.
+  """
+  argumentSensitivity: JSON
+  argumentsTruncated: Boolean!
+  redactedPaths: [String!]!
+  resultSummary: String
+
+  entityType: String
+  entityId: String
+  versionBefore: Int
+  versionAfter: Int
+  windowStart: Timestamp
+  windowEnd: Timestamp
+
+  """
+  The audit log rows written for the same record, by the same principal,
+  inside the event's time window. Matched by time rather than by a shared
+  key, and empty for a reader who may not read the audit log.
+  """
+  auditEntries: [AuditEntry!]!
+
+  tainted: Boolean!
+  taint: JSON
+  externalContent: Boolean!
+  simulated: Boolean!
+  "Provenance was worked out from rows written before the runtime recorded it directly."
+  reconstructed: Boolean!
+
+  prevHash: String!
+  hash: String!
+  hashKeyId: String
+  hashVersion: Int!
+  createdAt: Timestamp!
+}
+
+type AIAuditEventEdge {
+  node: AIAuditEvent!
+  cursor: String!
+}
+
+type AIAuditEventConnection {
+  edges: [AIAuditEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+A tenant's AI audit chain: where it runs, how far it is sealed, and what its
+last verification found.
+"""
+type AIAuditChainStatus {
+  "False when no chain key is configured and rows are linked with plain SHA-256."
+  signed: Boolean!
+  activeKeyId: String
+  firstSeq: Int!
+  lastSeq: Int!
+  lastHash: String!
+  sealedThroughSeq: Int!
+  lastVerifiedSeq: Int!
+  lastVerifiedAt: Timestamp
+  lastVerificationStatus: AIAuditVerificationStatus
+  failedSeq: Int
+  detail: String
+  "Set when a verification was just started."
+  verifying: Boolean!
+}
+
+"""
+A request to write the trail to a file, and the file.
+"""
+type AIAuditExport {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  requestedByUserId: ID!
+  requestedBy: User
+  format: AIAuditExportFormat!
+  filters: JSON
+  rangeFrom: Timestamp!
+  rangeTo: Timestamp!
+  snapshotSeq: Int!
+  status: AIAuditExportStatus!
+  rowCount: Int!
+  byteSize: Int!
+  sha256: String
+  artifactExpiresAt: Timestamp
+  chainKeyId: String
+  chainFirstSeq: Int
+  chainLastSeq: Int
+  "Nothing was filtered out and every seq between the first and last row is in the file."
+  chainComplete: Boolean!
+  errorMessage: String
+  startedAt: Timestamp
+  completedAt: Timestamp
+  "Whether the reader may download the file now: it is theirs and has not expired."
+  downloadable: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AIAuditExportEdge {
+  node: AIAuditExport!
+  cursor: String!
+}
+
+type AIAuditExportConnection {
+  edges: [AIAuditExportEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"""
+A link to an export's file, good for a minute.
+"""
+type AIAuditDownload {
+  url: String!
+  fileName: String!
+  expiresAt: Timestamp!
+  sha256: String!
+}
+
+input RequestAIAuditExportInput {
+  format: AIAuditExportFormat!
+  from: Timestamp!
+  to: Timestamp!
+  query: String
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  sort: [SortFieldInput!]
+}
+
+extend type Query {
+  aiAuditEvents(input: DataTableConnectionInput!): AIAuditEventConnection!
+  aiAuditEvent(id: ID!): AIAuditEvent
+  aiAuditChainStatus: AIAuditChainStatus!
+  aiAuditExports(input: DataTableConnectionInput!): AIAuditExportConnection!
+  aiAuditExport(id: ID!): AIAuditExport
+}
+
+extend type Mutation {
+  requestAIAuditExport(input: RequestAIAuditExportInput!): AIAuditExport!
+  aiAuditExportDownload(id: ID!): AIAuditDownload!
+  verifyAIAuditChain: AIAuditChainStatus!
 }
 `, BuiltIn: false},
 	{Name: "../schema/aifeedback.graphqls", Input: `"The kind of AI output a rating is about."
@@ -99909,6 +101247,312 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // childFields_* functions provide shared child field context lookups.
 // Each function is generated once per unique object type, deduplicating the
 // switch statements that were previously inlined in every fieldContext_* function.
+
+func (ec *executionContext) childFields_AIAuditChainStatus(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "signed":
+		return ec.fieldContext_AIAuditChainStatus_signed(ctx, field)
+	case "activeKeyId":
+		return ec.fieldContext_AIAuditChainStatus_activeKeyId(ctx, field)
+	case "firstSeq":
+		return ec.fieldContext_AIAuditChainStatus_firstSeq(ctx, field)
+	case "lastSeq":
+		return ec.fieldContext_AIAuditChainStatus_lastSeq(ctx, field)
+	case "lastHash":
+		return ec.fieldContext_AIAuditChainStatus_lastHash(ctx, field)
+	case "sealedThroughSeq":
+		return ec.fieldContext_AIAuditChainStatus_sealedThroughSeq(ctx, field)
+	case "lastVerifiedSeq":
+		return ec.fieldContext_AIAuditChainStatus_lastVerifiedSeq(ctx, field)
+	case "lastVerifiedAt":
+		return ec.fieldContext_AIAuditChainStatus_lastVerifiedAt(ctx, field)
+	case "lastVerificationStatus":
+		return ec.fieldContext_AIAuditChainStatus_lastVerificationStatus(ctx, field)
+	case "failedSeq":
+		return ec.fieldContext_AIAuditChainStatus_failedSeq(ctx, field)
+	case "detail":
+		return ec.fieldContext_AIAuditChainStatus_detail(ctx, field)
+	case "verifying":
+		return ec.fieldContext_AIAuditChainStatus_verifying(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIAuditChainStatus", field.Name)
+}
+
+func (ec *executionContext) childFields_AIAuditDownload(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "url":
+		return ec.fieldContext_AIAuditDownload_url(ctx, field)
+	case "fileName":
+		return ec.fieldContext_AIAuditDownload_fileName(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_AIAuditDownload_expiresAt(ctx, field)
+	case "sha256":
+		return ec.fieldContext_AIAuditDownload_sha256(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIAuditDownload", field.Name)
+}
+
+func (ec *executionContext) childFields_AIAuditEvent(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AIAuditEvent_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_AIAuditEvent_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_AIAuditEvent_businessUnitId(ctx, field)
+	case "seq":
+		return ec.fieldContext_AIAuditEvent_seq(ctx, field)
+	case "sourceKey":
+		return ec.fieldContext_AIAuditEvent_sourceKey(ctx, field)
+	case "occurredAt":
+		return ec.fieldContext_AIAuditEvent_occurredAt(ctx, field)
+	case "recordedAt":
+		return ec.fieldContext_AIAuditEvent_recordedAt(ctx, field)
+	case "kind":
+		return ec.fieldContext_AIAuditEvent_kind(ctx, field)
+	case "outcome":
+		return ec.fieldContext_AIAuditEvent_outcome(ctx, field)
+	case "purpose":
+		return ec.fieldContext_AIAuditEvent_purpose(ctx, field)
+	case "principalType":
+		return ec.fieldContext_AIAuditEvent_principalType(ctx, field)
+	case "principalId":
+		return ec.fieldContext_AIAuditEvent_principalId(ctx, field)
+	case "onBehalfOfUserId":
+		return ec.fieldContext_AIAuditEvent_onBehalfOfUserId(ctx, field)
+	case "onBehalfOfUserName":
+		return ec.fieldContext_AIAuditEvent_onBehalfOfUserName(ctx, field)
+	case "onBehalfOf":
+		return ec.fieldContext_AIAuditEvent_onBehalfOf(ctx, field)
+	case "decidedByUserId":
+		return ec.fieldContext_AIAuditEvent_decidedByUserId(ctx, field)
+	case "decidedByUserName":
+		return ec.fieldContext_AIAuditEvent_decidedByUserName(ctx, field)
+	case "decidedBy":
+		return ec.fieldContext_AIAuditEvent_decidedBy(ctx, field)
+	case "agentDefinitionId":
+		return ec.fieldContext_AIAuditEvent_agentDefinitionId(ctx, field)
+	case "agentDefinitionVersion":
+		return ec.fieldContext_AIAuditEvent_agentDefinitionVersion(ctx, field)
+	case "agentName":
+		return ec.fieldContext_AIAuditEvent_agentName(ctx, field)
+	case "agent":
+		return ec.fieldContext_AIAuditEvent_agent(ctx, field)
+	case "ownerKind":
+		return ec.fieldContext_AIAuditEvent_ownerKind(ctx, field)
+	case "ownerId":
+		return ec.fieldContext_AIAuditEvent_ownerId(ctx, field)
+	case "runId":
+		return ec.fieldContext_AIAuditEvent_runId(ctx, field)
+	case "turnId":
+		return ec.fieldContext_AIAuditEvent_turnId(ctx, field)
+	case "threadId":
+		return ec.fieldContext_AIAuditEvent_threadId(ctx, field)
+	case "proposalId":
+		return ec.fieldContext_AIAuditEvent_proposalId(ctx, field)
+	case "planId":
+		return ec.fieldContext_AIAuditEvent_planId(ctx, field)
+	case "decisionId":
+		return ec.fieldContext_AIAuditEvent_decisionId(ctx, field)
+	case "stepKey":
+		return ec.fieldContext_AIAuditEvent_stepKey(ctx, field)
+	case "callId":
+		return ec.fieldContext_AIAuditEvent_callId(ctx, field)
+	case "delegateCallId":
+		return ec.fieldContext_AIAuditEvent_delegateCallId(ctx, field)
+	case "parentOwnerId":
+		return ec.fieldContext_AIAuditEvent_parentOwnerId(ctx, field)
+	case "traceId":
+		return ec.fieldContext_AIAuditEvent_traceId(ctx, field)
+	case "spanId":
+		return ec.fieldContext_AIAuditEvent_spanId(ctx, field)
+	case "traceUrl":
+		return ec.fieldContext_AIAuditEvent_traceUrl(ctx, field)
+	case "providerId":
+		return ec.fieldContext_AIAuditEvent_providerId(ctx, field)
+	case "providerKind":
+		return ec.fieldContext_AIAuditEvent_providerKind(ctx, field)
+	case "model":
+		return ec.fieldContext_AIAuditEvent_model(ctx, field)
+	case "attempt":
+		return ec.fieldContext_AIAuditEvent_attempt(ctx, field)
+	case "failover":
+		return ec.fieldContext_AIAuditEvent_failover(ctx, field)
+	case "inputTokens":
+		return ec.fieldContext_AIAuditEvent_inputTokens(ctx, field)
+	case "outputTokens":
+		return ec.fieldContext_AIAuditEvent_outputTokens(ctx, field)
+	case "reasoningTokens":
+		return ec.fieldContext_AIAuditEvent_reasoningTokens(ctx, field)
+	case "cacheReadTokens":
+		return ec.fieldContext_AIAuditEvent_cacheReadTokens(ctx, field)
+	case "cacheWriteTokens":
+		return ec.fieldContext_AIAuditEvent_cacheWriteTokens(ctx, field)
+	case "costUsd":
+		return ec.fieldContext_AIAuditEvent_costUsd(ctx, field)
+	case "latencyMs":
+		return ec.fieldContext_AIAuditEvent_latencyMs(ctx, field)
+	case "toolName":
+		return ec.fieldContext_AIAuditEvent_toolName(ctx, field)
+	case "toolEffect":
+		return ec.fieldContext_AIAuditEvent_toolEffect(ctx, field)
+	case "egressClass":
+		return ec.fieldContext_AIAuditEvent_egressClass(ctx, field)
+	case "tier":
+		return ec.fieldContext_AIAuditEvent_tier(ctx, field)
+	case "tierSource":
+		return ec.fieldContext_AIAuditEvent_tierSource(ctx, field)
+	case "heldBy":
+		return ec.fieldContext_AIAuditEvent_heldBy(ctx, field)
+	case "reason":
+		return ec.fieldContext_AIAuditEvent_reason(ctx, field)
+	case "arguments":
+		return ec.fieldContext_AIAuditEvent_arguments(ctx, field)
+	case "argumentSensitivity":
+		return ec.fieldContext_AIAuditEvent_argumentSensitivity(ctx, field)
+	case "argumentsTruncated":
+		return ec.fieldContext_AIAuditEvent_argumentsTruncated(ctx, field)
+	case "redactedPaths":
+		return ec.fieldContext_AIAuditEvent_redactedPaths(ctx, field)
+	case "resultSummary":
+		return ec.fieldContext_AIAuditEvent_resultSummary(ctx, field)
+	case "entityType":
+		return ec.fieldContext_AIAuditEvent_entityType(ctx, field)
+	case "entityId":
+		return ec.fieldContext_AIAuditEvent_entityId(ctx, field)
+	case "versionBefore":
+		return ec.fieldContext_AIAuditEvent_versionBefore(ctx, field)
+	case "versionAfter":
+		return ec.fieldContext_AIAuditEvent_versionAfter(ctx, field)
+	case "windowStart":
+		return ec.fieldContext_AIAuditEvent_windowStart(ctx, field)
+	case "windowEnd":
+		return ec.fieldContext_AIAuditEvent_windowEnd(ctx, field)
+	case "auditEntries":
+		return ec.fieldContext_AIAuditEvent_auditEntries(ctx, field)
+	case "tainted":
+		return ec.fieldContext_AIAuditEvent_tainted(ctx, field)
+	case "taint":
+		return ec.fieldContext_AIAuditEvent_taint(ctx, field)
+	case "externalContent":
+		return ec.fieldContext_AIAuditEvent_externalContent(ctx, field)
+	case "simulated":
+		return ec.fieldContext_AIAuditEvent_simulated(ctx, field)
+	case "reconstructed":
+		return ec.fieldContext_AIAuditEvent_reconstructed(ctx, field)
+	case "prevHash":
+		return ec.fieldContext_AIAuditEvent_prevHash(ctx, field)
+	case "hash":
+		return ec.fieldContext_AIAuditEvent_hash(ctx, field)
+	case "hashKeyId":
+		return ec.fieldContext_AIAuditEvent_hashKeyId(ctx, field)
+	case "hashVersion":
+		return ec.fieldContext_AIAuditEvent_hashVersion(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AIAuditEvent_createdAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIAuditEvent", field.Name)
+}
+
+func (ec *executionContext) childFields_AIAuditEventConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AIAuditEventConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AIAuditEventConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AIAuditEventConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIAuditEventConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AIAuditEventEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AIAuditEventEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AIAuditEventEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIAuditEventEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AIAuditExport(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AIAuditExport_id(ctx, field)
+	case "organizationId":
+		return ec.fieldContext_AIAuditExport_organizationId(ctx, field)
+	case "businessUnitId":
+		return ec.fieldContext_AIAuditExport_businessUnitId(ctx, field)
+	case "requestedByUserId":
+		return ec.fieldContext_AIAuditExport_requestedByUserId(ctx, field)
+	case "requestedBy":
+		return ec.fieldContext_AIAuditExport_requestedBy(ctx, field)
+	case "format":
+		return ec.fieldContext_AIAuditExport_format(ctx, field)
+	case "filters":
+		return ec.fieldContext_AIAuditExport_filters(ctx, field)
+	case "rangeFrom":
+		return ec.fieldContext_AIAuditExport_rangeFrom(ctx, field)
+	case "rangeTo":
+		return ec.fieldContext_AIAuditExport_rangeTo(ctx, field)
+	case "snapshotSeq":
+		return ec.fieldContext_AIAuditExport_snapshotSeq(ctx, field)
+	case "status":
+		return ec.fieldContext_AIAuditExport_status(ctx, field)
+	case "rowCount":
+		return ec.fieldContext_AIAuditExport_rowCount(ctx, field)
+	case "byteSize":
+		return ec.fieldContext_AIAuditExport_byteSize(ctx, field)
+	case "sha256":
+		return ec.fieldContext_AIAuditExport_sha256(ctx, field)
+	case "artifactExpiresAt":
+		return ec.fieldContext_AIAuditExport_artifactExpiresAt(ctx, field)
+	case "chainKeyId":
+		return ec.fieldContext_AIAuditExport_chainKeyId(ctx, field)
+	case "chainFirstSeq":
+		return ec.fieldContext_AIAuditExport_chainFirstSeq(ctx, field)
+	case "chainLastSeq":
+		return ec.fieldContext_AIAuditExport_chainLastSeq(ctx, field)
+	case "chainComplete":
+		return ec.fieldContext_AIAuditExport_chainComplete(ctx, field)
+	case "errorMessage":
+		return ec.fieldContext_AIAuditExport_errorMessage(ctx, field)
+	case "startedAt":
+		return ec.fieldContext_AIAuditExport_startedAt(ctx, field)
+	case "completedAt":
+		return ec.fieldContext_AIAuditExport_completedAt(ctx, field)
+	case "downloadable":
+		return ec.fieldContext_AIAuditExport_downloadable(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AIAuditExport_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AIAuditExport_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIAuditExport", field.Name)
+}
+
+func (ec *executionContext) childFields_AIAuditExportConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AIAuditExportConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AIAuditExportConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AIAuditExportConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIAuditExportConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AIAuditExportEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AIAuditExportEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AIAuditExportEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AIAuditExportEdge", field.Name)
+}
 
 func (ec *executionContext) childFields_AIFeedback(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {

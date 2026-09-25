@@ -3054,6 +3054,15 @@
       "apps/web/components"
     ]
   },
+  "A filter is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
   "A filter may bind either a literal value or a parameter, not both": {
     "sites": 1,
     "scope": [
@@ -4988,6 +4997,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "A row of the AI audit trail no longer matches its chain. Open the audit trail in AI Control to see where.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
     ]
   },
   "A row-count threshold cannot be negative": {
@@ -15675,6 +15693,42 @@
       "go/other"
     ]
   },
+  "An export can cover at most seven years": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiaudit"
+    ]
+  },
+  "An export must be requested by a person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiaudit"
+    ]
+  },
+  "An export of the AI audit trail must be requested by a person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
+  "An export takes at most 20 filters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiaudit"
+    ]
+  },
   "An expression in the same language the rating formulas use. Leave empty to apply to every shipment.": {
     "sites": 1,
     "scope": [
@@ -21413,13 +21467,14 @@
     ]
   },
   "Authentication required": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
     "areas": [
       "api/graphql",
-      "api/middleware"
+      "api/middleware",
+      "service/aiauditservice"
     ]
   },
   "Authentication risk decisions": {
@@ -39102,6 +39157,15 @@
       "routes/auth"
     ]
   },
+  "Continue verifying the AI audit trail's hash chain for the tenants left": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Continue with {0}": {
     "sites": 1,
     "scope": [
@@ -48996,6 +49060,15 @@
       "routes/organization",
       "routes/reports",
       "routes/shipment"
+    ]
+  },
+  "Delete AI audit export files past their download window": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Delete SCIM directory": {
@@ -71467,11 +71540,12 @@
     ]
   },
   "Format is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aiaudit",
       "domain/report"
     ]
   },
@@ -112187,6 +112261,15 @@
       "service/proposalexecutor"
     ]
   },
+  "Only the person who asked for an export may download it": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
   "Only the person who started a transfer can stop it": {
     "sites": 1,
     "scope": [
@@ -135559,6 +135642,15 @@
       "routes/shipment",
       "routes/time-attendance",
       "routes/worker"
+    ]
+  },
+  "Remove AI audit trail rows past each organization's retention period": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Remove AI provider": {
@@ -165248,6 +165340,15 @@
       "routes/driver-settlement"
     ]
   },
+  "The AI audit trail failed verification": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
   "The AI provider neither deferred the extraction nor returned a result": {
     "sites": 1,
     "scope": [
@@ -168376,6 +168477,24 @@
       "packages/shared/types"
     ]
   },
+  "The end of the range is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiaudit"
+    ]
+  },
+  "The end of the range must not be before its start": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiaudit"
+    ]
+  },
   "The end of the sample must be after its start": {
     "sites": 1,
     "scope": [
@@ -168617,6 +168736,24 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The export could not be prepared for download — try again shortly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
+  "The export could not be queued — try again shortly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
     ]
   },
   "The export format — xlsx, csv, pdf. Pipe it through upper if you want it shouted.": {
@@ -172832,6 +172969,15 @@
       "routes/formula-template"
     ]
   },
+  "The start of the range is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiaudit"
+    ]
+  },
   "The start time is not a time of day": {
     "sites": 1,
     "scope": [
@@ -173641,6 +173787,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The verification could not be started — try again shortly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
     ]
   },
   "The version signed is required": {
@@ -175510,6 +175665,33 @@
     "areas": [
       "routes/home",
       "routes/insights"
+    ]
+  },
+  "This export has expired — export the trail again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
+  "This export has no file to download yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
+  "This export would hold {0} rows; one export can hold at most {1}. Narrow the range or the filters.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
     ]
   },
   "This extension was set up by someone else while you were editing. Reload and try again.": {
@@ -187299,6 +187481,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Verify every tenant's AI audit trail hash chain": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Verify jurisdiction rule": {
     "sites": 1,
     "scope": [
@@ -187306,6 +187497,15 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
+    ]
+  },
+  "Verify the AI audit trail's hash chain for one tenant or every tenant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Verifying credentials": {
@@ -195543,6 +195743,15 @@
       "go/other"
     ]
   },
+  "Write a large AI audit trail export to object storage": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Write a summary the worker will read": {
     "sites": 1,
     "scope": [
@@ -195559,6 +195768,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "Write new agent activity to the AI audit trail": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Write off": {
