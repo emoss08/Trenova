@@ -11948,8 +11948,8 @@
         "operation": "update",
         "scope": "tenant",
         "defaultTier": "Propose",
-        "maxTier": "AutoExecute",
-        "promotableTo": "AutoExecute",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
         "egress": [
           "money"
         ],
@@ -11961,7 +11961,7 @@
         "idempotent": false,
         "readsExternal": "never",
         "carriesTaint": false,
-        "rationale": "Gives up detention revenue the organization would otherwise bill."
+        "rationale": "Gives up detention revenue the organization would otherwise bill; only a person approves it."
       }
     },
     {
