@@ -292,12 +292,8 @@ func (s *Service) Reject(
 	ctx context.Context,
 	req *repositories.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
-	if strings.TrimSpace(req.Reason) == "" {
-		return nil, errortypes.NewValidationError(
-			"reason",
-			errortypes.ErrRequired,
-			"A reason is required to reject a PTO request",
-		)
+	if err := requireRejectionReason(req); err != nil {
+		return nil, err
 	}
 
 	return s.transition(ctx, transitionParams{
@@ -425,42 +421,13 @@ func (s *Service) transition(
 		zap.String("target", string(params.target)),
 	)
 
-	current := params.current
-	if current == nil {
-		var err error
-		current, err = s.repo.GetByID(ctx, &repositories.GetPTOByIDRequest{
-			ID:         req.ID,
-			TenantInfo: req.TenantInfo,
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if !current.Status.CanTransitionTo(params.target) {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"PTO is {0} and cannot be {1}",
-			strings.ToLower(string(current.Status)),
-			strings.ToLower(string(params.target)),
-		)
-	}
-
-	req.Status = params.target
-	req.Reason = strings.TrimSpace(req.Reason)
-	if req.ExpectedVersion == 0 {
-		req.ExpectedVersion = current.Version
-	}
-
-	if params.target == worker.PTOStatusApproved {
-		if err := s.requireAvailability(ctx, current, current.ID); err != nil {
-			return nil, err
-		}
+	current, err := s.planTransition(ctx, params)
+	if err != nil {
+		return nil, err
 	}
 
 	var updated *worker.WorkerPTO
-	err := s.inTx(ctx, func(txCtx context.Context) error {
+	err = s.inTx(ctx, func(txCtx context.Context) error {
 		result, txErr := s.repo.UpdateStatus(txCtx, req)
 		if txErr != nil {
 			return txErr
@@ -549,22 +516,8 @@ func (s *Service) notifyTransition(
 	target worker.PTOStatus,
 	log *zap.Logger,
 ) {
-	switch target { //nolint:exhaustive // Requested is never a transition target
-	case worker.PTOStatusApproved:
-		s.notifyDriverPTO(ctx, req.TenantInfo, updated, driverPTONotice{
-			eventType: "dash.pto_reviewed",
-			approved:  true,
-		})
-	case worker.PTOStatusRejected:
-		s.notifyDriverPTO(ctx, req.TenantInfo, updated, driverPTONotice{
-			eventType: "dash.pto_reviewed",
-			reason:    req.Reason,
-		})
-	case worker.PTOStatusCancelled:
-		s.notifyDriverPTO(ctx, req.TenantInfo, updated, driverPTONotice{
-			eventType: "dash.pto_cancelled",
-			reason:    req.Reason,
-		})
+	if notice, ok := transitionNotice(target, req.Reason); ok {
+		s.notifyDriverPTO(ctx, req.TenantInfo, updated, notice)
 	}
 
 	s.sendTransitionSMS(ctx, req, updated, target, log)
@@ -577,43 +530,23 @@ func (s *Service) sendTransitionSMS(
 	target worker.PTOStatus,
 	log *zap.Logger,
 ) {
-	if s.workflowStarter == nil || !s.workflowStarter.Enabled() {
+	if !s.sendsSMS() {
 		log.Warn("workflow starter disabled; skipping PTO SMS")
 		return
 	}
 
-	user, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  req.TenantInfo.OrgID,
-			BuID:   req.TenantInfo.BuID,
-			UserID: req.UserID,
-		},
-	})
+	sms, err := s.transitionSMS(ctx, req, updated, target)
 	if err != nil {
-		log.Error("failed to get acting user for PTO SMS", zap.Error(err))
+		log.Error("failed to prepare PTO SMS", zap.Error(err))
 		return
 	}
-
-	wrk, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
-		ID:         updated.WorkerID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		log.Error("failed to get worker for PTO SMS", zap.Error(err))
-		return
-	}
-	if wrk.PhoneNumber == "" {
-		return
-	}
-
-	message, ok := transitionSMSMessage(user.Name, updated, target, req.Reason)
-	if !ok {
+	if sms == nil {
 		return
 	}
 
 	payload := &smsjobs.SendSMSPayload{
-		PhoneNumber:    wrk.PhoneNumber,
-		Message:        message,
+		PhoneNumber:    sms.PhoneNumber,
+		Message:        sms.Message,
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 	}
@@ -795,7 +728,15 @@ func (s *Service) notifyDriverPTO(
 	if s.driverNotify == nil || pto == nil {
 		return
 	}
-	s.driverNotify.Notify(ctx, &drivernotificationservice.DriverNotification{
+	s.driverNotify.Notify(ctx, ptoDriverNotification(tenantInfo, pto, notice))
+}
+
+func ptoDriverNotification(
+	tenantInfo pagination.TenantInfo,
+	pto *worker.WorkerPTO,
+	notice driverPTONotice,
+) *drivernotificationservice.DriverNotification {
+	return &drivernotificationservice.DriverNotification{
 		TenantInfo: tenantInfo,
 		WorkerID:   pto.WorkerID,
 		EventType:  notice.eventType,
@@ -808,7 +749,7 @@ func (s *Service) notifyDriverPTO(
 		RelatedEntities: map[string]any{
 			"ptoId": pto.ID.String(),
 		},
-	})
+	}
 }
 
 func tenantOf(pto *worker.WorkerPTO) pagination.TenantInfo {

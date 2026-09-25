@@ -255,6 +255,10 @@ func (t *resolveServiceFailureTool) Execute(
 // the title and the text, and the template decides how they are dressed.
 type driverNotifier interface {
 	Notify(ctx context.Context, req *drivernotificationservice.DriverNotification)
+	Preview(
+		ctx context.Context,
+		req *drivernotificationservice.DriverNotification,
+	) (*serviceports.DriverNotificationPreview, error)
 }
 
 const (
@@ -335,24 +339,39 @@ func (t *notifyDriverTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	request, err := t.request(params)
+	if err != nil {
 		return err
+	}
+
+	t.drivers.Notify(ctx, request)
+
+	return nil
+}
+
+// request is the message the preview renders and the write sends: the
+// dispatch template, the model's title and text, and the shipment it opens.
+func (t *notifyDriverTool) request(
+	params serviceports.ToolExecuteParams,
+) (*drivernotificationservice.DriverNotification, error) {
+	if err := guardExecute(t, params); err != nil {
+		return nil, err
 	}
 
 	workerID, err := requirePulid(params.Params, "workerId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	title, err := requireString(params.Params, "title")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	message, err := requireString(params.Params, "message")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(message) > maxDriverMessageChars {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"parameter \"message\" is %d characters; keep it under %d so it reads on a phone",
 			len(message), maxDriverMessageChars,
 		)
@@ -365,7 +384,7 @@ func (t *notifyDriverTool) Execute(
 	case "":
 		priority = notification.PriorityMedium
 	default:
-		return errors.New("parameter \"priority\" must be low, medium, high or critical")
+		return nil, errors.New("parameter \"priority\" must be low, medium, high or critical")
 	}
 
 	request := &drivernotificationservice.DriverNotification{
@@ -381,15 +400,13 @@ func (t *notifyDriverTool) Execute(
 	if raw := optionalString(params.Params, "shipmentId"); raw != "" {
 		shipmentID, parseErr := pulid.Parse(raw)
 		if parseErr != nil {
-			return fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", parseErr)
+			return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", parseErr)
 		}
 		request.RelatedEntities = map[string]any{"shipmentId": shipmentID.String()}
 		request.Link = "/loads/" + shipmentID.String()
 	}
 
-	t.drivers.Notify(ctx, request)
-
-	return nil
+	return request, nil
 }
 
 // customerMailer is what email_customer needs: the shipment for its customer

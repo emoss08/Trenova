@@ -423,6 +423,10 @@ func (t *approveDetentionTool) Target(params map[string]any) (serviceports.ToolT
 
 type credentialActor interface {
 	RequestRenewal(ctx context.Context, req workercredentialservice.RenewalRequest) error
+	PreviewRenewal(
+		ctx context.Context,
+		req workercredentialservice.RenewalRequest,
+	) (*workercredentialservice.RenewalPreview, error)
 }
 
 type requestCredentialRenewalTool struct {
@@ -542,27 +546,6 @@ func (t *requestCredentialRenewalTool) Validate(
 	_, err := t.arguments(params)
 
 	return err
-}
-
-func (t *requestCredentialRenewalTool) Simulate(
-	_ context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	request, err := t.arguments(params)
-	if err != nil {
-		return nil, err
-	}
-
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would ask driver %s to renew %d credential(s).",
-			request.WorkerID, len(request.CredentialIDs),
-		),
-		Changes: []agent.FieldChange{
-			{Field: "renewalRequestedAt", From: "", To: "now"},
-		},
-		Previewed: true,
-	}, nil
 }
 
 func (t *requestCredentialRenewalTool) Execute(

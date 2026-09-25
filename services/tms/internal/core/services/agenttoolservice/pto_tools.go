@@ -101,10 +101,10 @@ func (t *approveWorkerPTOTool) Execute(
 }
 
 type rejectWorkerPTOTool struct {
-	pto ptoDecider
+	pto ptoRejecter
 }
 
-func newRejectWorkerPTOTool(pto ptoDecider) serviceports.AgentTool {
+func newRejectWorkerPTOTool(pto ptoRejecter) serviceports.AgentTool {
 	return &rejectWorkerPTOTool{pto: pto}
 }
 
@@ -152,18 +152,8 @@ func (t *rejectWorkerPTOTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	request, err := ptoStatusRequest(params)
+	request, err := t.request(params)
 	if err != nil {
-		return err
-	}
-
-	// The service rejects an empty reason too. Failing here names the parameter
-	// the model left out, which is the correction it can act on.
-	if _, err = requireString(params.Params, "reason"); err != nil {
 		return err
 	}
 
@@ -172,11 +162,17 @@ func (t *rejectWorkerPTOTool) Execute(
 	return err
 }
 
-type cancelWorkerPTOTool struct {
-	pto ptoDecider
+func (t *rejectWorkerPTOTool) request(
+	params serviceports.ToolExecuteParams,
+) (*repositories.UpdatePTOStatusRequest, error) {
+	return ptoDecisionRequest(t, params)
 }
 
-func newCancelWorkerPTOTool(pto ptoDecider) serviceports.AgentTool {
+type cancelWorkerPTOTool struct {
+	pto ptoRejecter
+}
+
+func newCancelWorkerPTOTool(pto ptoRejecter) serviceports.AgentTool {
 	return &cancelWorkerPTOTool{pto: pto}
 }
 
@@ -224,22 +220,43 @@ func (t *cancelWorkerPTOTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	request, err := ptoStatusRequest(params)
+	request, err := t.request(params)
 	if err != nil {
-		return err
-	}
-
-	if _, err = requireString(params.Params, "reason"); err != nil {
 		return err
 	}
 
 	_, err = t.pto.Cancel(ctx, request)
 
 	return err
+}
+
+func (t *cancelWorkerPTOTool) request(
+	params serviceports.ToolExecuteParams,
+) (*repositories.UpdatePTOStatusRequest, error) {
+	return ptoDecisionRequest(t, params)
+}
+
+// ptoDecisionRequest is a decision the driver is told the reason for. The
+// service refuses an empty reason too; failing here names the parameter the
+// model left out, which is the correction it can act on.
+func ptoDecisionRequest(
+	tool serviceports.AgentTool,
+	params serviceports.ToolExecuteParams,
+) (*repositories.UpdatePTOStatusRequest, error) {
+	if err := guardExecute(tool, params); err != nil {
+		return nil, err
+	}
+
+	request, err := ptoStatusRequest(params)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = requireString(params.Params, "reason"); err != nil {
+		return nil, err
+	}
+
+	return request, nil
 }
 
 // ptoStatusRequest builds the decision envelope the three transitions share.

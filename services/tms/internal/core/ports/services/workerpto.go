@@ -59,6 +59,18 @@ type PTOBulkActionPayload struct {
 	FailureCount int                    `json:"failureCount"`
 }
 
+// WorkerPTOTransitionPreview is a time-off request before and after a
+// decision, whether the decision returns booked days to the balance, and
+// what the driver would be told in Dash and by text. Driver is nil when no
+// Dash notifier is configured, SMS when no text would be sent.
+type WorkerPTOTransitionPreview struct {
+	Before        *worker.WorkerPTO
+	After         *worker.WorkerPTO
+	ReturnsLedger bool
+	Driver        *DriverNotificationPreview
+	SMS           *DriverSMSPreview
+}
+
 type WorkerPTOService interface {
 	List(
 		ctx context.Context,
@@ -85,6 +97,16 @@ type WorkerPTOService interface {
 	) (*worker.WorkerPTO, error)
 	Reject(ctx context.Context, req *repositories.UpdatePTOStatusRequest) (*worker.WorkerPTO, error)
 	Cancel(ctx context.Context, req *repositories.UpdatePTOStatusRequest) (*worker.WorkerPTO, error)
+	// PreviewReject and PreviewCancel check the decision as Reject and Cancel
+	// do and return what it would change and send, writing nothing.
+	PreviewReject(
+		ctx context.Context,
+		req *repositories.UpdatePTOStatusRequest,
+	) (*WorkerPTOTransitionPreview, error)
+	PreviewCancel(
+		ctx context.Context,
+		req *repositories.UpdatePTOStatusRequest,
+	) (*WorkerPTOTransitionPreview, error)
 	CancelRequested(
 		ctx context.Context,
 		req *repositories.UpdatePTOStatusRequest,

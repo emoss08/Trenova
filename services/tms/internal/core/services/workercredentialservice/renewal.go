@@ -49,12 +49,29 @@ read as compliance the carrier does not have. What it does is put the ask on
 the record, so the desk can tell an unanswered ask from one never made.
 */
 func (s *Service) RequestRenewal(ctx context.Context, req RenewalRequest) error {
+	named, err := s.planRenewal(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	s.notifyRenewal(ctx, req, named)
+	s.auditRenewal(req, named)
+
+	return nil
+}
+
+// planRenewal resolves the ask against the driver's own papers, within the
+// bounds of one ask.
+func (s *Service) planRenewal(
+	ctx context.Context,
+	req RenewalRequest,
+) ([]*worker.WorkerCredential, error) {
 	if len(req.CredentialIDs) == 0 {
-		return errortypes.NewValidationError("credentialIds", errortypes.ErrRequired,
+		return nil, errortypes.NewValidationError("credentialIds", errortypes.ErrRequired,
 			"Name at least one credential to renew")
 	}
 	if len(req.CredentialIDs) > maxRenewalCredentials {
-		return errortypes.NewValidationError("credentialIds", errortypes.ErrInvalid,
+		return nil, errortypes.NewValidationError("credentialIds", errortypes.ErrInvalid,
 			fmt.Sprintf("Ask for at most %d credentials at a time", maxRenewalCredentials))
 	}
 
@@ -64,18 +81,10 @@ func (s *Service) RequestRenewal(ctx context.Context, req RenewalRequest) error 
 		IncludeType: true,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	named, err := s.namedCredentials(held, req.CredentialIDs)
-	if err != nil {
-		return err
-	}
-
-	s.notifyRenewal(ctx, req, named)
-	s.auditRenewal(req, named)
-
-	return nil
+	return s.namedCredentials(held, req.CredentialIDs)
 }
 
 // namedCredentials resolves the ask's ids against the driver's own papers,
@@ -114,6 +123,18 @@ func (s *Service) notifyRenewal(
 		return
 	}
 
+	notice, correlation := renewalNotification(req, named, timeutils.NowUnix())
+	s.driverNotify.NotifyWithCorrelation(ctx, notice, correlation)
+}
+
+// renewalNotification is the ask as the driver receives it: the papers by
+// name, the soonest expiry, and the note, keyed so a retried ask is not sent
+// twice.
+func renewalNotification(
+	req RenewalRequest,
+	named []*worker.WorkerCredential,
+	now int64,
+) (*drivernotificationservice.DriverNotification, string) {
 	soonest := named[0]
 	for _, credential := range named {
 		if credential.ExpiresAt == nil {
@@ -124,11 +145,10 @@ func (s *Service) notifyRenewal(
 		}
 	}
 
-	name := renewalSubject(named)
 	daysLeft := 0
 	expires := ""
 	if soonest.ExpiresAt != nil {
-		daysLeft = int(worker.DaysUntil(*soonest.ExpiresAt, timeutils.NowUnix()))
+		daysLeft = int(worker.DaysUntil(*soonest.ExpiresAt, now))
 		expires = timeutils.FormatUnixDateIn(*soonest.ExpiresAt, "")
 	}
 
@@ -137,19 +157,19 @@ func (s *Service) notifyRenewal(
 		correlation = "cred-renewal-" + req.WorkerID.String()
 	}
 
-	s.driverNotify.NotifyWithCorrelation(ctx, &drivernotificationservice.DriverNotification{
+	return &drivernotificationservice.DriverNotification{
 		TenantInfo: req.TenantInfo,
 		WorkerID:   req.WorkerID,
 		EventType:  eventCredentialRenewal,
 		Priority:   notification.PriorityHigh,
 		Context: documenttemplate.DriverNotificationContext{
-			CredentialName: name,
+			CredentialName: renewalSubject(named),
 			ExpiresInDays:  daysLeft,
 			ExpiresAt:      expires,
 			Reason:         req.Note,
 		},
 		Link: "/dash/profile",
-	}, correlation)
+	}, correlation
 }
 
 // renewalSubject names what is being asked for: the one paper when there is
