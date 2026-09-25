@@ -231,7 +231,12 @@ func (t Template) StarterInstructions() string {
 			"reason: read the notes for what it is waiting on, and propose moving it into review only " +
 			"when the record shows that thing has arrived. A missing document gets " +
 			"request_missing_docs; anything else still outstanding gets an exception saying what it " +
-			"is. Never take an item off hold just because nothing looks wrong."
+			"is. Never take an item off hold just because nothing looks wrong. When the run's subject " +
+			"is the accounting connection rather than a billing item, invoices are not reaching the " +
+			"books: run check_accounting_connection once to see whether it answers now, read " +
+			"get_accounting_sync_status for what has failed to post, and if it is still not " +
+			"working raise an exception saying what a person has to do, such as reconnecting or " +
+			"re-authorizing it."
 	case TemplateDispatchAssignment:
 		return "You review moves that have no driver. A run starts either when a move inside the " +
 			"coverage window still has nobody on it or when a move loses its driver; the move is the " +
@@ -690,6 +695,8 @@ func (t Template) StarterTools() []string {
 			"correct_charge_code",
 			"request_missing_docs",
 			"attach_document_to_shipment",
+			"get_accounting_sync_status",
+			"check_accounting_connection",
 		}
 	case TemplateDispatchAssignment:
 		return []string{
@@ -832,6 +839,7 @@ func (t Template) StarterEvents() []agent.EventKind {
 		return []agent.EventKind{
 			agent.EventBillingQueueItemException,
 			agent.EventBillingQueueItemOnHold,
+			agent.EventAccountingConnectionDegraded,
 		}
 	case TemplateShipmentIntake:
 		return []agent.EventKind{agent.EventDocumentExtracted}

@@ -140,6 +140,7 @@ func TestTemplates_TheNewDesksWaitOnTheirOwnEvents(t *testing.T) {
 		agentdefinition.TemplateBillingException: {
 			agent.EventBillingQueueItemException,
 			agent.EventBillingQueueItemOnHold,
+			agent.EventAccountingConnectionDegraded,
 		},
 		agentdefinition.TemplateLoadEntryCheck: {
 			agent.EventShipmentCreated,
