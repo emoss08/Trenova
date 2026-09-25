@@ -50,7 +50,7 @@ func (d *Dispatcher) CompleteStructured(
 	req *serviceports.StructuredCompletionRequest,
 ) (*serviceports.StructuredCompletionResult, error) {
 	var result serviceports.StructuredCompletionResult
-	if err := d.await(ctx, call{
+	if err := d.await(ctx, &call{
 		id:           "structured-completion/" + pulid.MustNew("scmp_").String(),
 		workflow:     StructuredCompletionWorkflowName,
 		summary:      "Ask the model: " + string(req.Task),
@@ -72,7 +72,7 @@ func (d *Dispatcher) Test(
 	req repositories.GetAIProviderByIDRequest,
 ) (*serviceports.TestAIProviderResult, error) {
 	var result serviceports.TestAIProviderResult
-	if err := d.await(ctx, call{
+	if err := d.await(ctx, &call{
 		id:           "ai-provider-test/" + req.ID.String(),
 		workflow:     TestAIProviderWorkflowName,
 		summary:      "Test an AI provider",
@@ -93,7 +93,7 @@ func (d *Dispatcher) WriteForDay(
 	req serviceports.WriteBriefingRequest,
 ) (*serviceports.WriteBriefingResult, error) {
 	var result serviceports.WriteBriefingResult
-	if err := d.await(ctx, call{
+	if err := d.await(ctx, &call{
 		id:           briefingWriteID(req),
 		workflow:     WriteBriefingWorkflowName,
 		summary:      "Write the briefing",
@@ -141,7 +141,7 @@ type call struct {
 	payload   any
 }
 
-func (d *Dispatcher) await(ctx context.Context, c call, result any) (err error) {
+func (d *Dispatcher) await(ctx context.Context, c *call, result any) (err error) {
 	ctx, span := aitrace.StartJob(ctx, &aitrace.JobSpec{
 		Feature:        c.feature,
 		WorkflowID:     c.id,

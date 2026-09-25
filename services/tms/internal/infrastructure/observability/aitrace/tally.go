@@ -66,8 +66,8 @@ func TallyFrom(ctx context.Context) *CompletionTally {
 	return tally
 }
 
-func (t *CompletionTally) Attempt(a AttemptTally) {
-	if t == nil {
+func (t *CompletionTally) Attempt(a *AttemptTally) {
+	if t == nil || a == nil {
 		return
 	}
 

@@ -45,7 +45,7 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 	policy := in.Policy
 	decision := Decision{
 		Tier:   toolTier(in.Definition, policy),
-		Source: toolTierSource(in),
+		Source: toolTierSource(&in),
 	}
 	if decision.Tier != agent.TierAutoExecute {
 		decision.hold(HeldByToolTier)
@@ -142,7 +142,7 @@ func (d *Decision) lower(limit agent.AutonomyTier, key string) {
 	d.hold(key)
 }
 
-func toolTierSource(in DecideInput) agent.TierSource {
+func toolTierSource(in *DecideInput) agent.TierSource {
 	if in.Definition == nil || !in.Definition.SetsToolTier(in.Policy.Name) {
 		return agent.TierSourcePolicyDefault
 	}

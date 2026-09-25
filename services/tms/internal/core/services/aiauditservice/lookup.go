@@ -36,7 +36,7 @@ type owner struct {
 }
 
 // startedAt is when the owner began, when it is known.
-func (o owner) startedAt() (int64, bool) {
+func (o *owner) startedAt() (int64, bool) {
 	return o.startAt, o.startAt > 0
 }
 
@@ -230,7 +230,7 @@ func loadUsageTurns(
 		return nil
 	}
 
-	turns, err := source.TurnsInWindow(ctx, repositories.AIAuditTurnWindow{
+	turns, err := source.TurnsInWindow(ctx, &repositories.AIAuditTurnWindow{
 		TenantInfo: tenantInfo,
 		ThreadIDs:  idsOf(need.usageTurns),
 		From:       need.windowFrom - usageTurnSlackSeconds,

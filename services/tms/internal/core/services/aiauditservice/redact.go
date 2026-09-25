@@ -84,7 +84,7 @@ func (r *Redactor) Arguments(toolName string, args map[string]any) (*RedactedArg
 
 	values := make(map[string]any, len(args))
 	for key, value := range args {
-		if dropsParameter(policy, known, key) {
+		if dropsParameter(&policy, known, key) {
 			continue
 		}
 		values[key] = walk.value(key, key, value)
@@ -117,7 +117,7 @@ func (r *Redactor) Arguments(toolName string, args map[string]any) (*RedactedArg
 // dropsParameter reports a parameter the runtime writes for itself rather
 // than the model: the owner a self-scoped call is about. An unknown tool's
 // is dropped too, since nothing can say it was the model's.
-func dropsParameter(policy serviceports.ToolPolicy, known bool, key string) bool {
+func dropsParameter(policy *serviceports.ToolPolicy, known bool, key string) bool {
 	if key != serviceports.SelfScopeOwnerParam {
 		return false
 	}

@@ -42,11 +42,11 @@ func NewSource(p Params) repositories.AIAuditSourceRepository {
 
 func keyset(
 	q *bun.SelectQuery,
-	ts, id buncolgen.Column,
+	ts, id *buncolgen.Column,
 	page repositories.AIAuditSourcePage,
 ) *bun.SelectQuery {
 	return q.
-		Where(buncolgen.Expr("({0}, {1}) > (?, ?)", ts, id), page.AfterTS, page.AfterID).
+		Where(buncolgen.Expr("({0}, {1}) > (?, ?)", *ts, *id), page.AfterTS, page.AfterID).
 		Where(ts.Lte(), page.UntilTS).
 		Order(ts.OrderAsc(), id.OrderAsc()).
 		Limit(page.Limit)
@@ -61,7 +61,7 @@ func (r *sourceRepository) ListRuns(
 
 	if err := keyset(
 		r.db.DBForContext(ctx).NewSelect().Model(&rows),
-		cols.UpdatedAt, cols.ID, page,
+		&cols.UpdatedAt, &cols.ID, page,
 	).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("read agent runs for the AI audit trail: %w", err)
 	}
@@ -78,7 +78,7 @@ func (r *sourceRepository) ListTurns(
 
 	if err := keyset(
 		r.db.DBForContext(ctx).NewSelect().Model(&rows),
-		cols.UpdatedAt, cols.ID, page,
+		&cols.UpdatedAt, &cols.ID, page,
 	).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("read assistant turns for the AI audit trail: %w", err)
 	}
@@ -95,7 +95,7 @@ func (r *sourceRepository) ListUsage(
 
 	if err := keyset(
 		r.db.DBForContext(ctx).NewSelect().Model(&rows),
-		cols.CreatedAt, cols.ID, page,
+		&cols.CreatedAt, &cols.ID, page,
 	).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("read AI usage for the AI audit trail: %w", err)
 	}
@@ -113,7 +113,7 @@ func (r *sourceRepository) ListSteps(
 	q := r.db.DBForContext(ctx).NewSelect().
 		Model(&rows).
 		Where(cols.Kind.Eq(), string(serviceports.RunStepTool))
-	if err := keyset(q, cols.UpdatedAt, cols.ID, page).Scan(ctx); err != nil {
+	if err := keyset(q, &cols.UpdatedAt, &cols.ID, page).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("read agent run steps for the AI audit trail: %w", err)
 	}
 
@@ -130,7 +130,7 @@ func (r *sourceRepository) ListEvents(
 	q := r.db.DBForContext(ctx).NewSelect().
 		Model(&rows).
 		Where(cols.Kind.In(), bun.List(projectedEventKinds))
-	if err := keyset(q, cols.CreatedAt, cols.ID, page).Scan(ctx); err != nil {
+	if err := keyset(q, &cols.CreatedAt, &cols.ID, page).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("read agent run events for the AI audit trail: %w", err)
 	}
 
@@ -146,7 +146,7 @@ func (r *sourceRepository) ListProposals(
 
 	if err := keyset(
 		r.db.DBForContext(ctx).NewSelect().Model(&rows),
-		cols.UpdatedAt, cols.ID, page,
+		&cols.UpdatedAt, &cols.ID, page,
 	).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("read agent proposals for the AI audit trail: %w", err)
 	}
@@ -164,7 +164,7 @@ func (r *sourceRepository) ListDecisions(
 	q := r.db.DBForContext(ctx).NewSelect().
 		Model(&rows).
 		Where(cols.ProposalID.IsNotNull())
-	if err := keyset(q, cols.CreatedAt, cols.ID, page).Scan(ctx); err != nil {
+	if err := keyset(q, &cols.CreatedAt, &cols.ID, page).Scan(ctx); err != nil {
 		return nil, fmt.Errorf("read agent decisions for the AI audit trail: %w", err)
 	}
 
@@ -236,13 +236,13 @@ func (r *sourceRepository) TurnsByRunIDs(
 
 func (r *sourceRepository) TurnsInWindow(
 	ctx context.Context,
-	req repositories.AIAuditTurnWindow,
+	req *repositories.AIAuditTurnWindow,
 ) ([]*conversation.AssistantTurn, error) {
-	rows := make([]*conversation.AssistantTurn, 0, len(req.ThreadIDs))
-	if len(req.ThreadIDs) == 0 {
-		return rows, nil
+	if req == nil || len(req.ThreadIDs) == 0 {
+		return make([]*conversation.AssistantTurn, 0), nil
 	}
 
+	rows := make([]*conversation.AssistantTurn, 0, len(req.ThreadIDs))
 	cols := buncolgen.AssistantTurnColumns
 	if err := r.db.DBForContext(ctx).NewSelect().
 		Model(&rows).
