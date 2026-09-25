@@ -56,6 +56,8 @@ mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {
     decision
     reasonCode
     decidedByUserId
+    previewDigest
+    previewReviewed
     version
     createdAt
   }

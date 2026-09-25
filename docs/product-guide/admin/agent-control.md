@@ -167,12 +167,21 @@ Keywords: disable agent, enable agent, start run, delete agent
    be removed.
 
 ### Approve or reject what an agent proposed
-Keywords: agent decisions, pending proposals, review agent changes, approve plan
+Keywords: agent decisions, pending proposals, review agent changes, approve plan, preview agent change
 1. Open [AI control](/admin/agent-control), select **Activity** in the rail and then
    **Proposals**.
 2. Right-click a pending proposal and choose **Approve**, **Approve with changes** or **Reject**.
-3. Give a **Reason** (required when rejecting) and confirm with **Approve and run** or **Reject**.
-4. For a multi-step plan, select **Plans** instead and use **Approve all** or **Reject all**.
+3. Read **What changes** in the dialog: each record the change would touch and its values before
+   and after, worked out from the records as they are now. Anything you may not see reads
+   **Hidden by your data access**. **Approve and run** stays off until it has loaded, and for a
+   change whose record was edited since it was proposed (**Changed since it was proposed**).
+4. Give a **Reason** (required when rejecting) and confirm with **Approve and run** or **Reject**.
+   If the change moved while the dialog was open, nothing is recorded and the dialog shows it
+   again; read it and confirm.
+5. With **Approve with changes**, the record the change is about cannot be edited, and what your
+   values would do is shown as you type.
+6. For a multi-step plan, select **Plans** instead and use **Approve all** or **Reject all**; the
+   dialog shows every step's changes in order.
 
 ### Pause every agent at once
 Keywords: kill switch, stop AI, shadow mode, earned autonomy

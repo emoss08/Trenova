@@ -57,10 +57,12 @@ export default function AgentProposalTable() {
       reasonLabel: t("Reason"),
       requireReason: !accepting,
       destructive: !accepting,
-      onConfirm: async (reason) => {
+      preview: { kind: "proposal", scope: "approver", id: proposal.id, approving: accepting },
+      onConfirm: async (reason, previewDigest) => {
         await decideAgentProposal(proposal.id, {
           decision,
           reasonCode: reason || (accepting ? "approved_from_activity" : "rejected_from_activity"),
+          previewDigest,
         });
         await afterDecision(accepting ? t("Change approved") : t("Change rejected"));
       },
@@ -81,11 +83,13 @@ export default function AgentProposalTable() {
       fields: proposal.parameterFields,
       arguments: args,
       withReason: { label: t("Reason"), required: false },
-      onConfirm: async (modifications, reason) => {
+      preview: { scope: "approver", proposalId: proposal.id },
+      onConfirm: async (modifications, reason, previewDigest) => {
         await decideAgentProposal(proposal.id, {
           decision: "Modified",
           modifications,
           reasonCode: reason || "modified_from_activity",
+          previewDigest,
         });
         await afterDecision(t("Change approved with your values"));
       },

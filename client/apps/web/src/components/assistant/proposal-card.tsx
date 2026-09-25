@@ -1,11 +1,11 @@
 import { Button } from "@trenova/shared/components/ui/button";
 import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useApiMutation } from "@/hooks/use-api-mutation";
+import { handleMutationError } from "@/hooks/use-api-mutation";
 import { decideMyProposal } from "@/lib/graphql/agent-decisions";
 import { invalidateProposalViews, markProposalDecided } from "@/lib/proposal-cache";
 import type { AssistantProposal, ProposalDecision } from "@/types/assistant";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,
   PauseCircleIcon,
@@ -18,6 +18,13 @@ import { useState } from "react";
 import { DecisionFrame, DecisionReceipt, ProposedBy, useWatchedChange } from "./decision-chrome";
 import { useDecisionFollowUp } from "./decision-follow-up";
 import { ProposalEditor, type ProposalEditorRequest } from "./proposal-editor";
+import { canApprove, gateDigest } from "./proposal-preview/preview-gate";
+import {
+  ChangedNotice,
+  PreviewLoadState,
+  ProposalPreview,
+} from "./proposal-preview/proposal-preview";
+import { useApprovalGate, useProposalPreview } from "./proposal-preview/use-proposal-preview";
 import { presentProposal } from "./proposal-presenters";
 import { classifyProposal, ranWithoutApproval, type ProposalPresentation } from "./proposal-state";
 
@@ -34,27 +41,45 @@ import { classifyProposal, ranWithoutApproval, type ProposalPresentation } from 
  * Once decided — or when it never needed deciding, because the write was one
  * the agent may make on its own — the card becomes a receipt of what came of
  * it, and changes into it in place.
+ *
+ * While it waits, the card shows what the write would do — the tool's own
+ * answer, computed for this reader now — and Approve waits for it: the
+ * approval carries the preview's digest, so a person only ever approves what
+ * they were shown. A record that changed since the proposal turns Approve off
+ * and leaves Reject; a preview that moved under the click is shown again.
  */
 export function ProposalCard({
   proposal,
   threadId,
+  showPreview = true,
 }: {
   proposal: AssistantProposal;
   threadId: string;
+  /**
+   * False when the surface around the card already draws the preview in full
+   * (the email draft), so it is not said twice. The card still reads it: its
+   * digest is what Approve sends.
+   */
+  showPreview?: boolean;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
   const state = classifyProposal(proposal);
   const view = presentProposal(proposal);
 
+  const awaiting = state === "awaiting";
+  const undecided = awaiting || state === "held";
+  const previewQuery = useProposalPreview({ scope: "mine", id: proposal.id, enabled: undecided });
+  const approval = useApprovalGate(previewQuery);
+
   const followUp = useDecisionFollowUp();
   // Decided as the person whose conversation raised it, which needs only the
   // assistant: someone who may ask an agent may answer what it asks them,
   // without the approver's permission the decisions queue needs.
-  const decideMutation = useApiMutation({
-    mutationFn: (decision: ProposalDecision) =>
-      decideMyProposal(proposal.id, { decision, reasonCode: "" }),
-    onSuccess: async (_result, decision) => {
+  const decideMutation = useMutation({
+    mutationFn: ({ decision, previewDigest }: ProposalDecisionRequest) =>
+      decideMyProposal(proposal.id, { decision, reasonCode: "", previewDigest }),
+    onSuccess: async (_result, { decision }) => {
       markProposalDecided(queryClient, proposal.id, decision);
       await invalidateProposalViews(queryClient, threadId);
       // The agent says what came of it. An approval used to end the
@@ -62,20 +87,31 @@ export function ProposalCard({
       // the change existed or where to find it.
       followUp?.(proposal.id);
     },
-    // A decision the server refuses almost always means this card is showing
-    // a proposal somebody already resolved — in another tab, or by a click
-    // this one did not hear about. Refetching turns that into the card
-    // catching up rather than a dead end the reader has to reload out of.
-    onError: () => void invalidateProposalViews(queryClient, threadId),
-    resourceName: "Proposal",
+    onError: (error) => {
+      // A digest that no longer matches is not a failure to report: the
+      // write would now do something else, so the card reads the preview
+      // again and says so, and the person decides on what is there now.
+      if (!approval.handleDecisionError(error)) {
+        handleMutationError({ error, resourceName: "Proposal" });
+      }
+      // Any other refusal almost always means this card is showing a
+      // proposal somebody already resolved — in another tab, or by a click
+      // this one did not hear about. Refetching turns that into the card
+      // catching up rather than a dead end the reader has to reload out of.
+      void invalidateProposalViews(queryClient, threadId);
+    },
   });
+  const decide = (decision: ProposalDecision) => {
+    approval.acknowledge();
+    decideMutation.mutate({ decision, previewDigest: gateDigest(approval.gate) });
+  };
   const [editor, setEditor] = useState<ProposalEditorRequest | null>(null);
 
-  const awaiting = state === "awaiting";
   // Decided while this card was on screen: the receipt that replaces the
   // question rises into its place rather than swapping in.
-  const decidedHere = useWatchedChange(awaiting || state === "held");
+  const decidedHere = useWatchedChange(undecided);
   const fields = proposal.fields ?? [];
+  const approvable = canApprove(approval.gate);
   const editable = awaiting && fields.length > 0;
   const byline = <ProposedBy agentId={proposal.agentId} agentName={proposal.agentName} />;
 
@@ -86,11 +122,13 @@ export function ProposalCard({
       summary: view.summary,
       fields,
       arguments: proposal.arguments,
-      onConfirm: async (modifications) => {
+      preview: { scope: "mine", proposalId: proposal.id },
+      onConfirm: async (modifications, _reason, previewDigest) => {
         await decideMyProposal(proposal.id, {
           decision: "Modified",
           modifications,
           reasonCode: "",
+          previewDigest,
         });
         markProposalDecided(queryClient, proposal.id, "Modified");
         await invalidateProposalViews(queryClient, threadId);
@@ -123,9 +161,11 @@ export function ProposalCard({
           <div className="border-border-subtle flex flex-wrap items-center gap-2 border-t px-3 py-2.5">
             <Button
               size="sm"
-              onClick={() => decideMutation.mutate("Accepted")}
-              disabled={decideMutation.isPending}
-              isLoading={decideMutation.isPending && decideMutation.variables === "Accepted"}
+              onClick={() => decide("Accepted")}
+              disabled={decideMutation.isPending || !approvable}
+              isLoading={
+                decideMutation.isPending && decideMutation.variables?.decision === "Accepted"
+              }
             >
               <CheckIcon className="size-3.5" />
               {t("Approve")}
@@ -133,9 +173,11 @@ export function ProposalCard({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => decideMutation.mutate("Rejected")}
+              onClick={() => decide("Rejected")}
               disabled={decideMutation.isPending}
-              isLoading={decideMutation.isPending && decideMutation.variables === "Rejected"}
+              isLoading={
+                decideMutation.isPending && decideMutation.variables?.decision === "Rejected"
+              }
             >
               <XIcon className="size-3.5" />
               {t("Reject")}
@@ -145,7 +187,7 @@ export function ProposalCard({
                 size="sm"
                 variant="ghost"
                 onClick={openEditor}
-                disabled={decideMutation.isPending}
+                disabled={decideMutation.isPending || approval.gate.state === "stale"}
               >
                 <PencilIcon className="size-3.5" />
                 {t("Modify")}
@@ -175,12 +217,17 @@ export function ProposalCard({
 
       <p className="text-sm leading-snug">{view.summary}</p>
 
-      {view.highlights.length > 0 && (
-        <dl className="flex flex-col gap-1.5 text-xs">
-          {view.highlights.map((entry) => (
-            <HighlightRow key={entry.label} label={entry.label} value={entry.value} />
-          ))}
-        </dl>
+      {showPreview ? (
+        <PreviewLoadState
+          query={previewQuery}
+          changed={approval.changed}
+          density="compact"
+          fallback={<Highlights highlights={view.highlights} />}
+        >
+          {(preview) => <ProposalPreview preview={preview} density="compact" />}
+        </PreviewLoadState>
+      ) : (
+        approval.changed && <ChangedNotice />
       )}
 
       {proposal.rationale !== "" && (
@@ -247,6 +294,26 @@ export function HoldLine({ hold }: { hold: AssistantProposal["hold"] }) {
           : t("On hold: all agents are paused in AI Control.")}
       </span>
     </p>
+  );
+}
+
+type ProposalDecisionRequest = { decision: ProposalDecision; previewDigest?: string };
+
+/**
+ * What the presenters read out of the raw arguments: what the card can still
+ * say when the preview itself could not be read.
+ */
+function Highlights({ highlights }: { highlights: { label: string; value: string }[] }) {
+  if (highlights.length === 0) {
+    return null;
+  }
+
+  return (
+    <dl className="flex flex-col gap-1.5 text-xs">
+      {highlights.map((entry) => (
+        <HighlightRow key={entry.label} label={entry.label} value={entry.value} />
+      ))}
+    </dl>
   );
 }
 

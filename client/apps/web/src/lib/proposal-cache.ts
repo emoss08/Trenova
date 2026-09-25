@@ -40,6 +40,10 @@ export async function invalidateProposalViews(queryClient: QueryClient, threadId
     ["attention"],
     // A decision can change the person's own home page.
     [...queries.homeLayout.effective().queryKey],
+    // What a write would do is read from the world as it is now, and a
+    // decision changes it: the one decided now reads as recorded, and a later
+    // step or a proposal on the same record starts from what this one left.
+    scopeOf(queries.agentPreview),
   ];
 
   const threadScoped = [

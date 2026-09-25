@@ -1,0 +1,136 @@
+fragment AgentProposalPreviewFields on AgentProposalPreview {
+  proposalId
+  tool
+  summary
+  coverage
+  changes {
+    resource
+    record {
+      entityType
+      id
+    }
+    entityId
+    label
+    operation
+    version
+    withheld
+    dependsOnStep
+    fields {
+      path
+      label
+      valueType
+      before
+      after
+      beforeRef {
+        resource
+        id
+        label
+        record {
+          entityType
+          id
+        }
+        withheld
+      }
+      afterRef {
+        resource
+        id
+        label
+        record {
+          entityType
+          id
+        }
+        withheld
+      }
+      withheld
+      volatile
+      truncated
+      changedSinceProposed
+      proposedBefore
+      projectedFromStep
+    }
+    omittedFields
+    message {
+      channel
+      from
+      to
+      cc
+      bcc
+      attachments
+      subject
+      body
+      bodyTruncated
+      visibility
+      cadence
+      templateVersionId
+    }
+    money {
+      currency
+      lines {
+        label
+        before
+        after
+      }
+      totalBefore
+      totalAfter
+      delta
+      withheld
+    }
+  }
+  warnings {
+    code
+    args
+    message
+  }
+  stale
+  staleness {
+    pinned
+    proposedVersion
+    currentVersion
+    missing
+  }
+  targetVersion
+  withheldCount
+  omittedRecords
+  recorded
+  computedAt
+  digest
+}
+
+fragment AgentPlanPreviewFields on AgentPlanPreview {
+  planId
+  steps {
+    proposalId
+    step
+    preview {
+      ...AgentProposalPreviewFields
+    }
+  }
+  digest
+  stale
+  withheldCount
+  computedAt
+}
+
+query AgentProposalPreview($id: ID!, $modifications: JSON) {
+  agentProposalPreview(id: $id, modifications: $modifications) {
+    ...AgentProposalPreviewFields
+  }
+}
+
+query MyProposalPreview($id: ID!, $modifications: JSON) {
+  myProposalPreview(id: $id, modifications: $modifications) {
+    ...AgentProposalPreviewFields
+  }
+}
+
+query AgentPlanPreview($id: ID!) {
+  agentPlanPreview(id: $id) {
+    ...AgentPlanPreviewFields
+  }
+}
+
+query MyPlanPreview($id: ID!) {
+  myPlanPreview(id: $id) {
+    ...AgentPlanPreviewFields
+  }
+}

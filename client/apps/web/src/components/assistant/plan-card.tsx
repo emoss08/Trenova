@@ -2,11 +2,16 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { generateDateTimeStringFromUnixTimestamp } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useApiMutation } from "@/hooks/use-api-mutation";
+import { handleMutationError } from "@/hooks/use-api-mutation";
 import { decideMyPlan } from "@/lib/graphql/agent-decisions";
+import type {
+  PlanPreview,
+  ProposalPreview as ProposalPreviewData,
+} from "@/lib/graphql/agent-preview";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import type { AssistantPlan, AssistantProposal, PlanDecision } from "@/types/assistant";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 import {
   CheckIcon,
   CircleAlertIcon,
@@ -25,6 +30,14 @@ import {
   type PlanStepState,
 } from "./plan-state";
 import { HoldLine } from "./proposal-card";
+import { StepDependencyNote } from "./proposal-preview/plan-preview";
+import { canApprove, gateDigest } from "./proposal-preview/preview-gate";
+import {
+  PreviewLoadState,
+  ProposalPreview,
+  StaleNotice,
+} from "./proposal-preview/proposal-preview";
+import { useApprovalGate, usePlanPreview } from "./proposal-preview/use-proposal-preview";
 import { presentProposal } from "./proposal-presenters";
 import { WorkingDot } from "./voice/working-dot";
 
@@ -51,20 +64,38 @@ export function PlanCard({
   const queryClient = useQueryClient();
   const state = classifyPlan(plan);
 
+  const awaiting = state === "awaiting";
+  const undecided = awaiting || state === "held";
+  // Every pending step previewed in order, each starting from what the steps
+  // before it leave. One digest covers them all and goes with the approval.
+  const previewQuery = usePlanPreview({ scope: "mine", id: plan.id, enabled: undecided });
+  const approval = useApprovalGate(previewQuery);
+  const previews = useMemo(() => previewsByStep(previewQuery.data), [previewQuery.data]);
+
   // Decided as the person whose conversation raised it, which needs only the
   // assistant, the way a single proposal in the thread is. Approving still
   // runs each step as them, so a step they may not make fails on its own.
-  const decideMutation = useApiMutation({
-    mutationFn: (decision: PlanDecision) => decideMyPlan(plan.id, { decision, reasonCode: "" }),
+  const decideMutation = useMutation({
+    mutationFn: ({ decision, previewDigest }: { decision: PlanDecision; previewDigest?: string }) =>
+      decideMyPlan(plan.id, { decision, reasonCode: "", previewDigest }),
     onSuccess: () => invalidateProposalViews(queryClient, threadId),
-    // A refusal usually means the plan was decided elsewhere; catching up
-    // beats a card stuck on a question nobody can answer any more.
-    onError: () => void invalidateProposalViews(queryClient, threadId),
-    resourceName: "Plan",
+    onError: (error) => {
+      // A digest that no longer matches: a step would now do something else.
+      // The plan is read again and the card says so, rather than an error.
+      if (!approval.handleDecisionError(error)) {
+        handleMutationError({ error, resourceName: "Plan" });
+      }
+      // Any other refusal usually means the plan was decided elsewhere;
+      // catching up beats a card stuck on a question nobody can answer.
+      void invalidateProposalViews(queryClient, threadId);
+    },
   });
+  const decide = (decision: PlanDecision) => {
+    approval.acknowledge();
+    decideMutation.mutate({ decision, previewDigest: gateDigest(approval.gate) });
+  };
 
-  const awaiting = state === "awaiting";
-  const decidedHere = useWatchedChange(awaiting || state === "held");
+  const decidedHere = useWatchedChange(undecided);
   const permanent = steps.some((step) => !presentProposal(step).reversible);
   const byline = <ProposedBy agentId={plan.agentId} agentName={plan.agentName} />;
 
@@ -95,9 +126,11 @@ export function PlanCard({
           <div className="border-border-subtle flex flex-wrap items-center gap-2 border-t px-3 py-2.5">
             <Button
               size="sm"
-              onClick={() => decideMutation.mutate("Accepted")}
-              disabled={decideMutation.isPending}
-              isLoading={decideMutation.isPending && decideMutation.variables === "Accepted"}
+              onClick={() => decide("Accepted")}
+              disabled={decideMutation.isPending || !canApprove(approval.gate)}
+              isLoading={
+                decideMutation.isPending && decideMutation.variables?.decision === "Accepted"
+              }
             >
               <CheckIcon className="size-3.5" />
               {t("Approve all")}
@@ -105,9 +138,11 @@ export function PlanCard({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => decideMutation.mutate("Rejected")}
+              onClick={() => decide("Rejected")}
               disabled={decideMutation.isPending}
-              isLoading={decideMutation.isPending && decideMutation.variables === "Rejected"}
+              isLoading={
+                decideMutation.isPending && decideMutation.variables?.decision === "Rejected"
+              }
             >
               <XIcon className="size-3.5" />
               {t("Reject all")}
@@ -132,27 +167,59 @@ export function PlanCard({
         </p>
       )}
 
-      {steps.length > 0 && <StepList steps={steps} settled={false} />}
+      {steps.length > 0 && <StepList steps={steps} settled={false} previews={previews} />}
+
+      <PreviewLoadState query={previewQuery} changed={approval.changed} density="compact">
+        {(preview) =>
+          preview.stale && !preview.steps.some((step) => step.preview.stale) ? (
+            <StaleNotice missing={false} />
+          ) : null
+        }
+      </PreviewLoadState>
     </DecisionFrame>
   );
 }
 
+/** Each pending step's preview, by the proposal it belongs to. */
+function previewsByStep(
+  preview: PlanPreview | undefined,
+): ReadonlyMap<string, ProposalPreviewData> {
+  return new Map((preview?.steps ?? []).map((step) => [step.proposalId, step.preview]));
+}
+
 /**
  * The steps in the order they run. Before a decision each is the sentence
- * the proposal card would show; after one, each also says what became of it,
- * so a plan that stopped shows exactly where.
+ * the proposal card would show with what it would change beneath; after one,
+ * each also says what became of it, so a plan that stopped shows exactly
+ * where.
  */
-function StepList({ steps, settled }: { steps: AssistantProposal[]; settled: boolean }) {
+function StepList({
+  steps,
+  settled,
+  previews,
+}: {
+  steps: AssistantProposal[];
+  settled: boolean;
+  previews?: ReadonlyMap<string, ProposalPreviewData>;
+}) {
   return (
-    <ol className={cn("flex flex-col gap-1.5 text-xs", settled && "pl-8.5")}>
+    <ol className={cn("flex flex-col gap-1.5 text-xs", settled && "pl-8.5", previews && "gap-3")}>
       {steps.map((step) => (
-        <PlanStep key={step.id} step={step} settled={settled} />
+        <PlanStep key={step.id} step={step} settled={settled} preview={previews?.get(step.id)} />
       ))}
     </ol>
   );
 }
 
-function PlanStep({ step, settled }: { step: AssistantProposal; settled: boolean }) {
+function PlanStep({
+  step,
+  settled,
+  preview,
+}: {
+  step: AssistantProposal;
+  settled: boolean;
+  preview?: ProposalPreviewData;
+}) {
   const view = presentProposal(step);
   const stepState = planStepState(step);
 
@@ -165,19 +232,25 @@ function PlanStep({ step, settled }: { step: AssistantProposal; settled: boolean
           {step.planStep}.
         </span>
       )}
-      <span className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1">
         <span
           className={cn("block", stepState === "skipped" && "text-foreground-subtle line-through")}
         >
           {view.summary}
         </span>
+        {!settled && preview && (
+          <div className="mt-1.5 flex flex-col gap-2">
+            <StepDependencyNote preview={preview} />
+            <ProposalPreview preview={preview} density="compact" inPlan />
+          </div>
+        )}
         {settled && stepState === "failed" && step.executionError !== "" && (
           <span className="text-danger block">{step.executionError}</span>
         )}
         {settled && stepState === "simulated" && step.simulation?.summary && (
           <span className="text-foreground-muted block">{step.simulation.summary}</span>
         )}
-      </span>
+      </div>
     </li>
   );
 }
