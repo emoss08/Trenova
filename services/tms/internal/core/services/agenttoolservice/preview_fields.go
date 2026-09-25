@@ -43,6 +43,7 @@ const (
 	fieldType                 = "type"
 	fieldVisibility           = "visibility"
 	fieldWeight               = "weight"
+	labelCarrier              = "Carrier"
 	labelCustomer             = "Customer"
 	labelShipment             = "Shipment"
 )

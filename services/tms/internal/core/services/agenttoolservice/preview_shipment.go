@@ -338,7 +338,7 @@ func carrierNameOfOffer(offer *tender.TenderOffer) string {
 		return offer.Carrier.Name
 	}
 
-	return "Carrier"
+	return labelCarrier
 }
 
 func shipmentRecord(entity *shipment.Shipment) toolpreview.Record {

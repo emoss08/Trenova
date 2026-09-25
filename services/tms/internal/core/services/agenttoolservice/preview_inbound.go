@@ -29,7 +29,7 @@ var inboundLinkRefs = map[string]permission.Resource{
 var inboundLinkLabels = map[string]string{
 	fieldMatchedShipmentID: labelShipment,
 	fieldMatchedCustomerID: labelCustomer,
-	fieldMatchedCarrierID:  "Carrier",
+	fieldMatchedCarrierID:  labelCarrier,
 	"matchReason":          "Why",
 }
 

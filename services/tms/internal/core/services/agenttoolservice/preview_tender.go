@@ -173,7 +173,7 @@ func offerCarrierName(planned *tenderservice.TenderPreview, offer *tender.Tender
 		return name
 	}
 
-	return "Carrier"
+	return labelCarrier
 }
 
 func tenderLabel(planned *tenderservice.TenderPreview) string {
