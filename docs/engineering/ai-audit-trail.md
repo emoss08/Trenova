@@ -278,3 +278,15 @@ operations are in `client/packages/graphql/src/operations/agent/audit.graphql`:
 | Workflows and schedules | `internal/core/temporaljobs/aiauditjobs/` |
 | GraphQL | `internal/api/graphql/schema/aiaudit.graphqls`, `resolver/aiaudit.resolvers.go`, `loaders/aiauditentriesloader.go` |
 | Field sensitivity | `internal/core/services/fieldsensitivity/` |
+
+## In the app
+
+AI Control's **Audit trail** section (`tab=audit`, views `trail` and `exports`) is in
+`client/apps/web/src/routes/agent-control/_components/audit/`. The trail view reads the chain
+status into a `KpiStrip` with **Verify now**, keeps its range, agent, person and evaluations
+switch in the address (`trailScope`) and hands them to the standard `DataTable` as
+`scopeFilters`, and turns the table's browser CSV export off (`enableExport={false}`): the only
+export is the signed server file. The Trace column the trail, Runs and Proposals share is
+`_components/trace-link.tsx`. Exports and chain checks refresh through the realtime resources
+`ai-audit-export` and `ai-audit-chain`; the ready and failed notices link through the
+`ai_audit_export` record link, and the toast downloads a ready file directly.

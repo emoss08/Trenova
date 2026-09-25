@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f42d54a66fba1fe9943d406c95ec08c6653cb74884e7493e4358305e3de5bdcd",
+  "version": "sha256:d0701ecb4c7f779d21eb6a22780bf9a725203bc6fc1830cd3bfa933e88556b78",
   "modules": [
     {
       "id": "home",
@@ -1841,8 +1841,8 @@
         "AI & Automation",
         "AI control"
       ],
-      "description": "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, quality says how well they do it, and activity shows what it did.",
-      "summary": "AI control is the one place for everything AI in the organization. A rail down the left side holds nine sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**, **Retrieval**, **Safety**, **Quality** and **Activity**. Providers say where AI work goes (the model endpoints Trenova calls and which AI tasks each one handles), agents say what AI may do (their instructions, tools, autonomy and trigger), extensions add abilities that work only for agents, such as searching the web, using the organization's own account with the vendor, memory holds the standing instructions and facts agents read, retrieval shows whether agents find memories, documents and inbound email by meaning and what indexing them costs, safety shows what each tool and agent can do without a person, quality says how well each agent does its work, and activity shows what agents did: their runs, the changes they proposed, multi-step plans, replays and exceptions.\n\n**Overview** shows whether AI can work at all (a banner warns when no provider is connected or a task has no provider), a strip of figures for providers and agents that are on, proposals awaiting a decision, runs in the last 24 hours, model calls, spend, response time and tokens, the **Organization-wide** switches, and every agent at a glance. Administrators use this page to set up providers and agents; reviewers use **Activity** to approve or reject what agents propose.",
+      "description": "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, quality says how well they do it, activity shows what it did, and the audit trail keeps a signed record of it.",
+      "summary": "AI control is the one place for everything AI in the organization. A rail down the left side holds ten sections: **Overview**, **Agents**, **Providers**, **Extensions**, **Memory**, **Retrieval**, **Safety**, **Quality**, **Activity** and **Audit trail**. Providers say where AI work goes (the model endpoints Trenova calls and which AI tasks each one handles), agents say what AI may do (their instructions, tools, autonomy and trigger), extensions add abilities that work only for agents, such as searching the web, using the organization's own account with the vendor, memory holds the standing instructions and facts agents read, retrieval shows whether agents find memories, documents and inbound email by meaning and what indexing them costs, safety shows what each tool and agent can do without a person, quality says how well each agent does its work, activity shows what agents did: their runs, the changes they proposed, multi-step plans, replays and exceptions, and the audit trail keeps a signed record of every run, model call, tool call and decision for compliance to read, check and export.\n\n**Overview** shows whether AI can work at all (a banner warns when no provider is connected or a task has no provider), a strip of figures for providers and agents that are on, proposals awaiting a decision, runs in the last 24 hours, model calls, spend, response time and tokens, the **Organization-wide** switches, and every agent at a glance. Administrators use this page to set up providers and agents; reviewers use **Activity** to approve or reject what agents propose.",
       "requires": [
         {
           "resource": "agent_control",
@@ -1881,7 +1881,18 @@
         "agent evaluation",
         "golden set",
         "eval cases",
-        "agent regression"
+        "agent regression",
+        "AI audit trail",
+        "AI audit log",
+        "agent audit",
+        "AI compliance",
+        "AI decisions log",
+        "hash chain",
+        "tamper evidence",
+        "AI export",
+        "traces",
+        "tracing",
+        "trace id"
       ],
       "tasks": [
         {
@@ -2152,6 +2163,77 @@
           ]
         },
         {
+          "title": "Read what agents did on the audit trail",
+          "keywords": [
+            "AI audit trail",
+            "agent audit log",
+            "who approved",
+            "what did the agent do",
+            "AI compliance",
+            "tool calls",
+            "model calls",
+            "AI decisions",
+            "evaluations"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Audit trail** in the rail, then **Trail**.",
+            "Read the figures at the top: **Chain** says whether the trail is **Signed** with a key held outside the database or **Unsigned**, **Sealed through** is the last row the trail has sealed, and **Last verified** is what the last check found.",
+            "Choose the range at the left of the bar above the table: **Last 24 hours**, **Last 7 days** (where it starts), **Last 30 days**, **Last 90 days**, or pick days on the calendar and select **Apply**. Select **Every agent** to narrow to one agent, pick a person in **Anyone** to see the work done for them or decided by them, and turn on **Include evaluations** to show replays beside live work.",
+            "The table lists each event with **When**, **Agent**, **What** (the event and the tool), **Outcome**, **Person**, **Record**, **Tier**, **Model**, **Cost**, **Tainted** and **Trace**. Select **Filter** to narrow by **What**, **Tool**, **Outcome**, **Record**, **Record type**, **Tier**, **Model**, **Tainted** or **Trace**.",
+            "Select a row to read the event in full: **Who**, **What**, **Why** (the tier, what set it and what held it back), **Changed** (the record, its versions, and the audit log entries **Matched by time**), **Provenance**, **Model**, **Arguments**, **Trace** and **Chain**."
+          ]
+        },
+        {
+          "title": "Check that the audit trail has not been changed",
+          "keywords": [
+            "verify audit trail",
+            "hash chain",
+            "tamper evidence",
+            "audit integrity",
+            "signing key"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Audit trail** in the rail.",
+            "Select **Verify now**. The check runs in the background and the button shows **Verifying…** until its result is stored.",
+            "Read **Last verified**: **Verified** means every row still matches its chain, **Mismatch** means a row was changed or removed and says at which row, and **Key missing** means a row names a signing key that is no longer configured."
+          ]
+        },
+        {
+          "title": "Export the AI audit trail",
+          "keywords": [
+            "download audit trail",
+            "AI audit export",
+            "CSV",
+            "JSON",
+            "auditor",
+            "compliance export",
+            "SHA-256"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control), select **Audit trail** in the rail and narrow the trail if you want to export part of it.",
+            "Select **Export trail…**.",
+            "Choose the **Format**, CSV or JSON, set **From** and **To**, and leave **Use current filters** on to carry the agent, person, evaluations and table filters into the file, or turn it off to export every row in the range.",
+            "Select **Export**. A small export downloads at once and shows its rows, size and SHA-256; **Download again** fetches it again. A large one is written in the background: you are notified when it is ready, and **Open exports** shows it.",
+            "Select **Exports** in the rail to see every export with its status, **Rows**, **Size**, **SHA-256**, **Chain** (**Complete** or **Filtered**) and when it **Expires**. Select **Download** on your own export to download it."
+          ]
+        },
+        {
+          "title": "Find the trace of an agent's work",
+          "keywords": [
+            "trace id",
+            "tracing",
+            "OpenTelemetry",
+            "Tempo",
+            "Jaeger",
+            "span"
+          ],
+          "steps": [
+            "Open [AI control](/admin/agent-control) and select **Activity** in the rail, then **Runs** or **Proposals**; or open **Audit trail**.",
+            "The **Trace** column shows the start of the trace id. Select the copy button beside it to copy the whole id; where a tracing backend is configured, the id is a link that opens the trace.",
+            "To find every row of one trace, select **Filter**, choose **Trace** and paste the id."
+          ]
+        },
+        {
           "title": "Record something every agent should know",
           "keywords": [
             "agent memory",
@@ -2169,7 +2251,7 @@
           ]
         }
       ],
-      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nOpening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst-rated answers** and satisfaction need read access to agent feedback, **Run suite now** needs create access to the evaluation suite, and changing **Settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nEvery night, at the hour chosen in **Settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
+      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nOpening the page needs read access to AI control. Each section in the rail appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a section someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst-rated answers** and satisfaction need read access to agent feedback, **Run suite now** needs create access to the evaluation suite, and changing **Settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nEvery night, at the hour chosen in **Settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nThe **Audit trail** section appears for people with read access to the AI audit trail; reading agent runs does not grant it. **Verify now** needs the same read access. **Export trail…** and **Download** need export access to the AI audit trail, and only the person who asked for an export can download it; the file can be downloaded until it expires, seven days after it was written unless the organization's configuration says otherwise. Requesting and downloading an export are written to the audit log. The audit log entries shown with an event appear only for people who may read the audit log. Arguments show only what the reader may see on that record; anything above it reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a minute of happening. How long they are kept is set on [Data retention](/organization/data-retention).\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
       "related": [
         "/admin/document-intelligence",
         "/admin/inbound-mailboxes",
@@ -12015,8 +12097,8 @@
         "Data & Integrations",
         "Data retention"
       ],
-      "description": "Configure how long audit entries and raw EDI payloads are kept before the nightly purge jobs remove them.",
-      "summary": "Data retention sets how long the organization keeps audit entries and raw EDI payloads before the nightly purge jobs remove them. The page is one form, **Retention windows**, with three values in days: **Audit Retention (days)**, **EDI Inbound File Retention (days)** and **EDI Message Retention (days)**.\n\nAdministrators use it to balance storage and privacy against how far back people need to look at audit history or replay EDI traffic.",
+      "description": "Configure how long audit entries, the AI audit trail and raw EDI payloads are kept before the nightly purge jobs remove them.",
+      "summary": "Data retention sets how long the organization keeps audit entries, the AI audit trail and raw EDI payloads before the nightly purge jobs remove them. The page is one form, **Retention windows**, with values in days: **Audit Retention (days)**, **EDI Inbound File Retention (days)**, **EDI Message Retention (days)**, **AI feedback retention (days)**, **Agent evaluation case retention (days)** and **AI audit trail retention (days)**.\n\nAdministrators use it to balance storage and privacy against how far back people need to look at audit history or replay EDI traffic.",
       "requires": [
         {
           "resource": "organization",
@@ -12029,7 +12111,9 @@
         "purge settings",
         "audit log retention",
         "EDI payload retention",
-        "data purge"
+        "data purge",
+        "AI audit trail retention",
+        "AI feedback retention"
       ],
       "tasks": [
         {
@@ -12042,6 +12126,20 @@
           "steps": [
             "Open [Data retention](/organization/data-retention).",
             "Enter the number of days in **Audit Retention (days)**. It must be at least 1.",
+            "Select **Save settings**."
+          ]
+        },
+        {
+          "title": "Change how long the AI audit trail is kept",
+          "keywords": [
+            "AI audit retention",
+            "keep AI decisions",
+            "seven years",
+            "audit trail purge"
+          ],
+          "steps": [
+            "Open [Data retention](/organization/data-retention).",
+            "Enter the number of days in **AI audit trail retention (days)**. It must be at least 365; the default of 2555 days is seven years, which is what most audits of AI decisions ask for.",
             "Select **Save settings**."
           ]
         },
@@ -12061,9 +12159,10 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to the organization; **Save settings** appears only for people with update access to the organization.\n\nAudit entries older than the audit window are deleted by the nightly purge. For EDI, the purge blanks the raw contents but keeps the file and message records and their metadata. A purged EDI message can no longer be replayed from [EDI messages](/edi/messages).",
+      "notes": "Opening the page needs read access to the organization; **Save settings** appears only for people with update access to the organization.\n\nAudit entries older than the audit window are deleted by the nightly purge. Events on the [AI audit trail](/admin/agent-control) older than its window are deleted by their own nightly sweep, which cuts only where the trail's chain was sealed, so what is left still verifies. For EDI, the purge blanks the raw contents but keeps the file and message records and their metadata. A purged EDI message can no longer be replayed from [EDI messages](/edi/messages).",
       "related": [
         "/admin/audit-logs",
+        "/admin/agent-control",
         "/edi/messages",
         "/edi/inbound-files"
       ],
@@ -14449,6 +14548,27 @@
       "params": {
         "tab": "activity",
         "activity": "runs",
+        "fieldFilters": "[{\"field\":\"id\",\"operator\":\"eq\",\"value\":\"{id}\"}]"
+      }
+    },
+    {
+      "entity": "ai_audit_event",
+      "label": "AI audit event",
+      "path": "/admin/agent-control",
+      "params": {
+        "tab": "audit",
+        "audit": "trail",
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
+      "entity": "ai_audit_export",
+      "label": "AI audit trail export",
+      "path": "/admin/agent-control",
+      "params": {
+        "tab": "audit",
+        "audit": "exports",
         "fieldFilters": "[{\"field\":\"id\",\"operator\":\"eq\",\"value\":\"{id}\"}]"
       }
     },
