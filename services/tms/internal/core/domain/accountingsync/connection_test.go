@@ -151,7 +151,7 @@ func TestSyncingNeedsSetupCompleteAndAStartDate(t *testing.T) {
 	assert.False(t, conn.CanDispatch())
 
 	start := now - 30*24*3600
-	conn.EnableSync(start, true, now)
+	conn.EnableSync(accountingsync.SyncSettings{StartDate: start, AutoSync: true}, now)
 	assert.Equal(t, accountingsync.SetupStepComplete, conn.SetupStep)
 	require.NotNil(t, conn.SyncEnabledAt)
 	assert.Equal(t, now, *conn.SyncEnabledAt)
@@ -159,7 +159,7 @@ func TestSyncingNeedsSetupCompleteAndAStartDate(t *testing.T) {
 	assert.True(t, conn.IsSyncing())
 	assert.True(t, conn.CanDispatch())
 
-	conn.EnableSync(start+10, false, now+500)
+	conn.EnableSync(accountingsync.SyncSettings{StartDate: start + 10, AutoSync: false}, now+500)
 	assert.Equal(t, now, *conn.SyncEnabledAt, "the first enable time bounds the backfill")
 	assert.Equal(t, start+10, *conn.SyncStartDate)
 	assert.False(t, conn.AutoSync)
@@ -172,7 +172,7 @@ func TestPauseStopsDispatchUntilResumed(t *testing.T) {
 	t.Parallel()
 
 	conn := connected(t)
-	conn.EnableSync(now, true, now)
+	conn.EnableSync(accountingsync.SyncSettings{StartDate: now, AutoSync: true}, now)
 	user := pulid.MustNew("usr_")
 
 	conn.Pause(user, "  Month-end close  ", now+1)
@@ -194,7 +194,7 @@ func TestCoversAndBooksClosedOn(t *testing.T) {
 
 	conn := connected(t)
 	assert.False(t, conn.Covers(now))
-	conn.EnableSync(now, true, now)
+	conn.EnableSync(accountingsync.SyncSettings{StartDate: now, AutoSync: true}, now)
 	assert.True(t, conn.Covers(now))
 	assert.False(t, conn.Covers(now-1))
 
@@ -214,7 +214,7 @@ func TestValidateRequiresAStartDateOnceComplete(t *testing.T) {
 	conn.Validate(multiErr)
 	require.True(t, multiErr.HasErrors())
 
-	conn.EnableSync(now, true, now)
+	conn.EnableSync(accountingsync.SyncSettings{StartDate: now, AutoSync: true}, now)
 	multiErr = errortypes.NewMultiError()
 	conn.Validate(multiErr)
 	assert.False(t, multiErr.HasErrors(), multiErr.Error())

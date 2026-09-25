@@ -63,6 +63,7 @@ type AccountingConnection struct {
 	SyncStartDate                 *int64           `json:"syncStartDate"                 bun:"sync_start_date,type:BIGINT,nullzero"`
 	SyncEnabledAt                 *int64           `json:"syncEnabledAt"                 bun:"sync_enabled_at,type:BIGINT,nullzero"`
 	AutoSync                      bool             `json:"autoSync"                      bun:"auto_sync,type:BOOLEAN,notnull"`
+	DriverSettlementsEnabledAt    *int64           `json:"driverSettlementsEnabledAt"    bun:"driver_settlements_enabled_at,type:BIGINT,nullzero"`
 	PausedAt                      *int64           `json:"pausedAt"                      bun:"paused_at,type:BIGINT,nullzero"`
 	PausedByID                    pulid.ID         `json:"pausedById"                    bun:"paused_by_id,type:VARCHAR(100),nullzero"`
 	PausedReason                  string           `json:"pausedReason"                  bun:"paused_reason,type:TEXT,nullzero"`
@@ -327,13 +328,34 @@ func (c *AccountingConnection) FinishMappings() bool {
 	return true
 }
 
-func (c *AccountingConnection) EnableSync(startDate int64, autoSync bool, now int64) {
+type SyncSettings struct {
+	StartDate         int64
+	AutoSync          bool
+	DriverSettlements bool
+}
+
+func (c *AccountingConnection) EnableSync(settings SyncSettings, now int64) {
+	startDate := settings.StartDate
 	c.SyncStartDate = &startDate
-	c.AutoSync = autoSync
+	c.AutoSync = settings.AutoSync
+	c.SetDriverSettlements(settings.DriverSettlements, now)
 	if c.SyncEnabledAt == nil {
 		c.SyncEnabledAt = &now
 	}
 	c.SetupStep = SetupStepComplete
+}
+
+func (c *AccountingConnection) SyncsDriverSettlements() bool {
+	return c.DriverSettlementsEnabledAt != nil
+}
+
+func (c *AccountingConnection) SetDriverSettlements(enabled bool, now int64) {
+	switch {
+	case !enabled:
+		c.DriverSettlementsEnabledAt = nil
+	case c.DriverSettlementsEnabledAt == nil:
+		c.DriverSettlementsEnabledAt = &now
+	}
 }
 
 func (c *AccountingConnection) Pause(userID pulid.ID, reason string, now int64) {

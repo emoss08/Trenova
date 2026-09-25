@@ -1,5 +1,5 @@
 {
-  "version": "sha256:80cccd717a0ef762492787fa817db9159fbcd6b638d95a9d3153613f71f4a8b1",
+  "version": "sha256:e2ecf28fca5059067d5b5debd5614b051b7a9df960a7941bd9bcb947016c6d14",
   "modules": [
     {
       "id": "home",
@@ -1614,7 +1614,7 @@
         "Sync ledger"
       ],
       "description": "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.",
-      "summary": "The sync ledger lists every document Trenova sends to QuickBooks Online (invoices, credit and debit memos, customer payments, credit applications and customer changes) and what happened to each one. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.",
+      "summary": "The sync ledger lists every document Trenova sends to QuickBooks Online and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer changes, and on the payables side carrier settlements, owner-operator settlements, their payments, and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.\n\nA posted carrier settlement is sent as a bill to the carrier's vendor, or as a vendor credit when it nets below zero; its lines follow the settlement's journal entry, one per GL account. Marking it paid sends a bill payment from the cash account. Voiding a posted settlement removes its bill. Owner-operator settlements work the same way once **Send owner-operator settlements** is on for the connection, each driver becoming a 1099 vendor; company driver pay is never sent.",
       "requires": [
         {
           "resource": "accounting_sync",
@@ -1631,7 +1631,11 @@
         "QuickBooks not updating",
         "invoice not in QuickBooks",
         "accounting sync ledger",
-        "outbox"
+        "outbox",
+        "settlement not in QuickBooks",
+        "carrier bill",
+        "bill payment",
+        "vendor credit"
       ],
       "tasks": [
         {
@@ -1647,6 +1651,20 @@
             "Open [Sync ledger](/accounting/sync) and select **Needs attention** in the strip.",
             "Open the record. Its reason says what to do, such as mapping a charge code to a QuickBooks item on the [Mappings](/accounting/sync/mappings) page.",
             "Fix what the reason names, then select **Retry now**. To retry every record held for the same reason, select **Retry these** beside the reason under **Needs attention**."
+          ]
+        },
+        {
+          "title": "Fix a settlement that did not reach QuickBooks",
+          "keywords": [
+            "carrier bill held",
+            "settlement not synced",
+            "map GL account",
+            "vendor missing"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and open the settlement's record.",
+            "When its reason names a GL account, map that account to a QuickBooks account on the [Mappings](/accounting/sync/mappings) page (filter by **GL accounts**). When it names a carrier or an owner-operator, map them to the existing QuickBooks vendor, or let Trenova create one.",
+            "Select **Retry now**. A settlement's payment waits for its bill and follows once the bill is in QuickBooks."
           ]
         },
         {
@@ -1698,7 +1716,7 @@
           ]
         }
       ],
-      "notes": "Viewing the ledger needs read access to accounting sync; retrying, releasing, skipping, pausing and resuming need update access; a backfill needs manage access to the accounting integration. A document that fails for a temporary reason is retried on its own, backing off from 30 seconds to 6 hours, and is marked failed after 8 tries. Invoices, customer payments and customers show where they stand in QuickBooks Online on their own pages, with a link back to this ledger.",
+      "notes": "Viewing the ledger needs read access to accounting sync; retrying, releasing, skipping, pausing and resuming need update access; a backfill needs manage access to the accounting integration. A document that fails for a temporary reason is retried on its own, backing off from 30 seconds to 6 hours, and is marked failed after 8 tries. Invoices, customer payments, customers, carrier and driver settlements, carriers and workers show where they stand in QuickBooks Online on their own pages, with a link back to this ledger.",
       "related": [
         "/accounting/sync/mappings",
         "/admin/integrations"
@@ -4317,8 +4335,24 @@
             "Intuit sends you back to Trenova, which finishes the connection and shows the company it connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books closed through**. Check it is the right company, then select **Continue**.",
             "On **Match records**, Trenova reads the company's accounts, items, customers and vendors and proposes a match for each Trenova record. Tick the proposals that are right and select the confirm button, which names how many are ticked, or select a row to choose another record.",
             "When every required mapping is confirmed, select **Finish setup**. The rest can be done later on [Mappings](/accounting/sync/mappings) (**Open all mappings**).",
-            "Choose the **Start date**: documents dated before it are never sent. Leave **Send posted documents automatically** on to send each document as it is posted, or turn it off to hold each one in the [Sync ledger](/accounting/sync) until someone releases it. When the start date is in the past, tick **Also send documents already posted since the start date** to queue those too.",
-            "Select **Start sending**. From then on Trenova sends invoices, credit and debit memos, customer payments and credit applications as they are posted, and checks the connection every fifteen minutes."
+            "Choose the **Start date**: documents dated before it are never sent. Leave **Send posted documents automatically** on to send each document as it is posted, or turn it off to hold each one in the [Sync ledger](/accounting/sync) until someone releases it. When the start date is in the past, tick **Also send documents already posted since the start date** to queue those too. Turn on **Send owner-operator settlements** to also send owner-operator settlements as bills; it is off unless you turn it on, and company driver pay is never sent.",
+            "Select **Start sending**. From then on Trenova sends invoices, credit and debit memos, customer payments, credit applications, carrier settlements and their payments as they are posted, and checks the connection every fifteen minutes."
+          ]
+        },
+        {
+          "title": "Change how documents are sent",
+          "keywords": [
+            "automatic sync",
+            "hold documents",
+            "owner-operator settlements",
+            "1099 drivers",
+            "driver bills"
+          ],
+          "steps": [
+            "Open [Integrations](/admin/integrations) and open the QuickBooks Online card.",
+            "Under **Sync settings**, turn **Send posted documents automatically** on or off. When it is off, each new document waits in the [Sync ledger](/accounting/sync) until someone releases it; documents already held stay held.",
+            "Turn **Send owner-operator settlements** on to send owner-operator settlements to QuickBooks as bills, with a 1099 vendor for each driver. Settlements posted from then on are sent; request a backfill from the [Sync ledger](/accounting/sync) to send earlier ones.",
+            "Select **Save**."
           ]
         },
         {
@@ -4355,7 +4389,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys and choosing the start date. A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
+      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys, choosing the start date and changing the sync settings. A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
       "related": [
         "/accounting/sync",
         "/admin/inbound-mailboxes",
@@ -14728,6 +14762,15 @@
       }
     },
     {
+      "entity": "carrier_settlement",
+      "label": "Carrier settlement",
+      "path": "/carrier-settlements/settlements",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
       "entity": "customer",
       "label": "Customer",
       "path": "/billing/configuration-files/customers",
@@ -14748,6 +14791,15 @@
       "path": "/detention/desk",
       "params": {
         "stop": "{id}"
+      }
+    },
+    {
+      "entity": "driver_settlement",
+      "label": "Driver settlement",
+      "path": "/payroll/settlements",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
       }
     },
     {

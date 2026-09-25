@@ -13,9 +13,10 @@ type AccountingDocumentAuth struct {
 }
 
 type AccountingDocumentLimits struct {
-	MaxDocNumberLength int
-	SupportsDebitMemo  bool
-	CanVoidCreditMemo  bool
+	MaxDocNumberLength      int
+	SupportsDebitMemo       bool
+	CanVoidCreditMemo       bool
+	CanVoidPurchaseDocument bool
 }
 
 type AccountingDocumentLine struct {
@@ -89,6 +90,48 @@ type AccountingCustomerDocument struct {
 	Party      AccountingPartyDraft
 }
 
+type AccountingVendorDocument struct {
+	Auth       AccountingDocumentAuth
+	RequestID  string
+	ExternalID string
+	Party      AccountingPartyDraft
+}
+
+type AccountingPurchaseLine struct {
+	Description       string
+	AccountExternalID string
+	Amount            decimal.Decimal
+}
+
+type AccountingPurchaseDocument struct {
+	Auth                AccountingDocumentAuth
+	RequestID           string
+	Kind                accountingsync.SyncObjectType
+	VendorCredit        bool
+	VendorExternalID    string
+	APAccountExternalID string
+	DocNumber           string
+	TxnDate             string
+	DueDate             string
+	CurrencyCode        string
+	PrivateNote         string
+	Lines               []AccountingPurchaseLine
+}
+
+type AccountingBillPaymentDocument struct {
+	Auth                  AccountingDocumentAuth
+	RequestID             string
+	Kind                  accountingsync.SyncObjectType
+	VendorExternalID      string
+	BankAccountExternalID string
+	BillExternalID        string
+	DocNumber             string
+	TxnDate               string
+	CurrencyCode          string
+	PrivateNote           string
+	Amount                decimal.Decimal
+}
+
 type AccountingDocumentRef struct {
 	Auth       AccountingDocumentAuth
 	RequestID  string
@@ -136,6 +179,22 @@ type AccountingDocumentWriter interface {
 	CreateCreditApplication(
 		ctx context.Context,
 		doc *AccountingCreditApplicationDocument,
+	) (*AccountingDocumentResult, error)
+	UpsertVendor(
+		ctx context.Context,
+		doc *AccountingVendorDocument,
+	) (*AccountingDocumentResult, error)
+	CreatePurchaseDocument(
+		ctx context.Context,
+		doc *AccountingPurchaseDocument,
+	) (*AccountingDocumentResult, error)
+	VoidPurchaseDocument(
+		ctx context.Context,
+		ref *AccountingDocumentRef,
+	) (*AccountingDocumentResult, error)
+	CreateBillPayment(
+		ctx context.Context,
+		doc *AccountingBillPaymentDocument,
 	) (*AccountingDocumentResult, error)
 	VoidCreditApplication(
 		ctx context.Context,

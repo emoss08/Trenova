@@ -150,7 +150,11 @@ func (e *Enqueuer) covers(
 	if !conn.IsSyncing() {
 		return false, nil
 	}
-	if req.ObjectType != accountingsync.SyncObjectCustomer {
+	if req.ObjectType.NeedsDriverSettlements() && !conn.SyncsDriverSettlements() {
+		return false, nil
+	}
+	target, isParty := req.ObjectType.PartyTarget()
+	if !isParty {
 		return conn.Covers(req.DocumentDate), nil
 	}
 	if req.SourceEvent == accountingsync.SyncSourceDependencyOf {
@@ -160,7 +164,7 @@ func (e *Enqueuer) covers(
 	mapping, err := e.mappings.GetByTarget(ctx, &repositories.GetAccountingMappingByTargetRequest{
 		TenantInfo:      req.TenantInfo,
 		ConnectionID:    conn.ID,
-		TargetType:      accountingsync.TargetCustomer,
+		TargetType:      target,
 		TrenovaObjectID: req.ObjectID,
 	})
 	if err != nil {

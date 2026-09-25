@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:5bbca34298f88b65fbe901ebc312ffa00e4667e8a9d7be2c841b4262fe73e9df"
+const Version = "sha256:d03ff1a5dfb9026339080c62e0ecb20571f2f6c75d13acb57ee6b9553f9dc6e4"
 
 var Default = indexed(defaultCatalog)
 
@@ -357,6 +357,12 @@ var defaultCatalog = Catalog{
 						{Value: "DebitMemo", Label: "Debit Memo"},
 						{Value: "CustomerPayment", Label: "Customer Payment"},
 						{Value: "CreditApplication", Label: "Credit Application"},
+						{Value: "CarrierVendor", Label: "Carrier Vendor"},
+						{Value: "DriverVendor", Label: "Driver Vendor"},
+						{Value: "CarrierBill", Label: "Carrier Bill"},
+						{Value: "CarrierBillPayment", Label: "Carrier Bill Payment"},
+						{Value: "DriverBill", Label: "Driver Bill"},
+						{Value: "DriverBillPayment", Label: "Driver Bill Payment"},
 					},
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,
@@ -411,6 +417,14 @@ var defaultCatalog = Catalog{
 						{Value: "CreditMemoApplied", Label: "Credit Memo Applied"},
 						{Value: "CreditMemoUnapplied", Label: "Credit Memo Unapplied"},
 						{Value: "CustomerUpdated", Label: "Customer Updated"},
+						{Value: "CarrierSettlementPosted", Label: "Carrier Settlement Posted"},
+						{Value: "CarrierSettlementVoided", Label: "Carrier Settlement Voided"},
+						{Value: "CarrierSettlementPaid", Label: "Carrier Settlement Paid"},
+						{Value: "DriverSettlementPosted", Label: "Driver Settlement Posted"},
+						{Value: "DriverSettlementVoided", Label: "Driver Settlement Voided"},
+						{Value: "DriverSettlementPaid", Label: "Driver Settlement Paid"},
+						{Value: "CarrierUpdated", Label: "Carrier Updated"},
+						{Value: "DriverUpdated", Label: "Driver Updated"},
 						{Value: "DependencyOf", Label: "Dependency Of"},
 						{Value: "SafetyNet", Label: "Safety Net"},
 						{Value: "Backfill", Label: "Backfill"},
@@ -3811,6 +3825,16 @@ var defaultCatalog = Catalog{
 					Key:          "postedJournalBatchId",
 					Column:       buncolgen.NewColumn("posted_journal_batch_id", "dstl"),
 					Label:        "Posted Journal Batch ID",
+					Type:         FieldRef,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "postedPayableAccountId",
+					Column:       buncolgen.NewColumn("posted_payable_account_id", "dstl"),
+					Label:        "Posted Payable Account ID",
 					Type:         FieldRef,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},

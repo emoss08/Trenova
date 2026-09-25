@@ -36,6 +36,7 @@ type FormEditPanelProps<
   fieldKey?: keyof TData;
   size?: PanelSize;
   titleComponent?: (currentRecord: TData) => React.ReactNode;
+  subtitle?: (currentRecord: TData) => React.ReactNode;
   headerActions?: React.ReactNode;
   useDock?: boolean;
   mutationFn?: (values: TSubmitValues, row: TData) => Promise<TMutationData>;
@@ -63,6 +64,7 @@ export function FormEditPanel<
   form,
   fieldKey,
   titleComponent,
+  subtitle,
   headerActions,
   useDock = false,
   mutationFn,
@@ -171,6 +173,7 @@ export function FormEditPanel<
 
   const resolvedTitle = fieldKey && row ? String(row[fieldKey]) : title;
   const resolvedTitleComponent = titleComponent && row ? titleComponent(row) : undefined;
+  const resolvedSubtitle = subtitle && row ? subtitle(row) : undefined;
 
   const panelDescription = row?.updatedAt
     ? `Last updated on ${formatToUserTimezone(
@@ -195,6 +198,7 @@ export function FormEditPanel<
       onOpenChange={onOpenChange}
       title={resolvedTitle}
       titleComponent={resolvedTitleComponent}
+      subtitle={resolvedSubtitle}
       description={panelDescription}
       headerActions={headerActions}
       size={size}

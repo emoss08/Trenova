@@ -2,6 +2,7 @@ package accountingmappingservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"slices"
 	"strings"
 	"sync"
@@ -182,8 +183,9 @@ func (f *fakeReferences) GetByExternalIDs(
 }
 
 type fakeMappings struct {
-	mu   sync.Mutex
-	rows []*accountingsync.AccountingMapping
+	ownerOperators []*worker.Worker
+	mu             sync.Mutex
+	rows           []*accountingsync.AccountingMapping
 }
 
 func cloneMapping(row *accountingsync.AccountingMapping) *accountingsync.AccountingMapping {
@@ -360,6 +362,15 @@ func (f *fakeMappings) Update(
 	row.Version++
 	f.rows[idx] = row
 	return cloneMapping(row), nil
+}
+
+func (f *fakeMappings) ListOwnerOperators(
+	_ context.Context,
+	_ pagination.TenantInfo,
+) ([]*worker.Worker, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.ownerOperators), nil
 }
 
 func (f *fakeMappings) CountByState(

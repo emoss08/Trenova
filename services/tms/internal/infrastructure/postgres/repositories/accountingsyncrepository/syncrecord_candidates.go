@@ -60,6 +60,8 @@ func candidateSourceFor(
 		return paymentSource(operation)
 	case objectType == accountingsync.SyncObjectCreditApplication:
 		return creditApplicationSource(operation)
+	case objectType.IsBill(), objectType.IsBillPayment():
+		return settlementSource(objectType, operation)
 	default:
 		return nil, fmt.Errorf(
 			"no posted documents back %s %s records",

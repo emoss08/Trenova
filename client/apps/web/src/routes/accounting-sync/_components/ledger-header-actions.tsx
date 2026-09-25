@@ -33,7 +33,7 @@ import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { bucketCount } from "./ledger-filters";
 import {
-  ACCOUNTING_SYNC_OBJECT_TYPES,
+  backfillObjectTypes,
   backfillSchema,
   pauseSchema,
   type BackfillValues,
@@ -263,10 +263,12 @@ function BackfillDialog({
                 name="objectTypes"
                 control={form.control}
                 label={t("Documents (leave all unticked for every kind)")}
-                options={ACCOUNTING_SYNC_OBJECT_TYPES.map((value) => ({
-                  value,
-                  label: labels.objectType[value],
-                }))}
+                options={backfillObjectTypes(connection?.syncsDriverSettlements ?? false).map(
+                  (value) => ({
+                    value,
+                    label: labels.objectType[value],
+                  }),
+                )}
               />
             </FormControl>
           </FormGroup>

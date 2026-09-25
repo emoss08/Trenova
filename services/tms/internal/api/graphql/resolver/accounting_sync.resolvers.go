@@ -330,12 +330,31 @@ func (r *mutationResolver) EnableAccountingSync(ctx context.Context, input gqlmo
 	}
 
 	return r.accountingSync.EnableSync(ctx, &services.EnableAccountingSyncRequest{
-		TenantInfo:      tenantInfo(authCtx),
-		UserID:          authCtx.UserID,
-		IntegrationType: input.IntegrationType,
-		StartDate:       int64(input.StartDate),
-		AutoSync:        input.AutoSync,
-		Backfill:        input.Backfill,
+		TenantInfo:        tenantInfo(authCtx),
+		UserID:            authCtx.UserID,
+		IntegrationType:   input.IntegrationType,
+		StartDate:         int64(input.StartDate),
+		AutoSync:          input.AutoSync,
+		DriverSettlements: input.DriverSettlements != nil && *input.DriverSettlements,
+		Backfill:          input.Backfill,
+	})
+}
+
+func (r *mutationResolver) UpdateAccountingSyncSettings(ctx context.Context, input gqlmodel.UpdateAccountingSyncSettingsInput) (*accountingsync.AccountingConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.UserID.IsNil() {
+		return nil, errAccountingNeedsAPerson()
+	}
+
+	return r.accountingSync.UpdateSettings(ctx, &services.UpdateAccountingSyncSettingsRequest{
+		TenantInfo:        tenantInfo(authCtx),
+		UserID:            authCtx.UserID,
+		IntegrationType:   input.IntegrationType,
+		AutoSync:          input.AutoSync,
+		DriverSettlements: input.DriverSettlements,
 	})
 }
 

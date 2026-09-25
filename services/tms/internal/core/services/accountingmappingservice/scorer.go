@@ -284,7 +284,7 @@ func scoreCandidate(t *target, ref *accountingsync.AccountingReferenceObject) ca
 	}
 
 	switch t.TargetType {
-	case accountingsync.TargetAccountRole:
+	case accountingsync.TargetAccountRole, accountingsync.TargetGLAccount:
 		if t.Code != "" &&
 			strings.EqualFold(strings.TrimSpace(ref.Number), strings.TrimSpace(t.Code)) {
 			consider(scoreNumber, matcherNumber, fmt.Sprintf("Account number %s matches", t.Code))
@@ -320,7 +320,7 @@ func scoreCandidate(t *target, ref *accountingsync.AccountingReferenceObject) ca
 			stringutils.NameSimilarity,
 			consider,
 		)
-	case accountingsync.TargetCustomer, accountingsync.TargetCarrier:
+	case accountingsync.TargetCustomer, accountingsync.TargetCarrier, accountingsync.TargetDriver:
 		scoreParty(t, ref, consider, &result)
 	case accountingsync.TargetPaymentTerm:
 		if t.DueDays != nil && ref.DueDays != nil && *t.DueDays == *ref.DueDays {

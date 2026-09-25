@@ -115,3 +115,10 @@ func TestStrings(t *testing.T) {
 	assert.Equal(t, []string{"Queued", "Blocked"}, sliceutils.Strings([]status{"Queued", "Blocked"}))
 	assert.Equal(t, []string{}, sliceutils.Strings([]status(nil)))
 }
+
+func TestAnys(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, []any{"a", "b"}, sliceutils.Anys([]string{"a", "b"}))
+	assert.Empty(t, sliceutils.Anys([]int{}))
+}

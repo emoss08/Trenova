@@ -16,6 +16,7 @@ Every fact here was read in the code, not taken from the brief. The ones that ch
 |---|---|---|---|
 | F1 | In `JournalPostingMode = Manual` (the default), subledger journals are written as `Pending` or `Approved` and **nothing ever moves them to `Posted`**. The journal repositories expose only `CreatePosting` and `MarkReversed`; balances are updated only when `IsPosted` is true. | `invoiceservice/accounting_helpers.go` `invoicePostingWorkflow`; `journalentryrepository` `MarkReversed`; `journalpostingrepository.CreatePosting` | Ledger mode (push journals) would push nothing for a Manual-mode tenant. Document mode must not depend on journals at all. |
 | F2 | Credit memos created by invoice adjustments (void of a posted invoice, CreditOnly, CreditAndRebill, FullReversal) are inserted directly as `Posted` with no journal and no `journal_sources` row. Only write-offs journal. | `invoiceadjustmentservice/service.go` `createCreditMemoInvoice` | `journal_sources` cannot be the sync trigger; it misses real documents. |
+| F3 | Driver settlement `MarkPaid` writes no payment journal and runs outside a transaction, so settlements payable is never relieved in Trenova's GL. Carrier settlements do write one. | `driversettlementservice/lifecycle.go` `MarkPaid` | Document mode still sends the bill payment, so the provider's AP is right while Trenova's GL keeps the payable. M4 adds the transaction; the journal is a fix outside G01. |
 | F3 | `journal_sources` rows exist only when a journal was created (`journal_batch_id NOT NULL`), keyed by an idempotency key unique per org and business unit. | migration `20260410203000_add_journal_sources_and_balances` | Useful as a cross-reference in ledger mode, not as the outbox. |
 | F4 | Invoices post two header lines to the tenant default AR and revenue accounts. Invoice lines carry `Type` (Freight, Accessorial, Memo) and `ChargeCode` but no GL account. The billing profile's `RevenueAccountID`/`ARAccountID` are never read. `accessorial_charges` has no GL account. There is no revenue-code model. | `accounting_helpers.go:89-120`; `invoice/invoice.go` `InvoiceLine` | Document mode maps line type and charge code to QuickBooks **Items**, which carry the income account. This gives QuickBooks line detail that Trenova's own GL does not have. |
 | F5 | Posting services run in `db.WithTx`; the transaction rides the context and nested calls reuse it. There is **no after-commit hook**. Invoice posting enqueues EDI best-effort *after* `WithTx` returns. | `infrastructure/postgres/connection.go` `WithTx`; `invoiceservice/edi.go` `enqueueEDIAfterPost` | Best-effort after-commit enqueue loses work if the process dies between commit and enqueue. G01 writes its outbox row **inside** the posting transaction. |
@@ -565,6 +566,104 @@ A person or the retry tool re-queues a blocked record, and skipping one marks it
 - **Status line.** An `AccountingSyncStateLine` goes on the invoice, customer payment and customer views. It is fed by a per-request loader and hidden when nothing is syncing.
 
 **Deferred to M4 and M5.** Payables records, inbound changes and drift, as §9 lists.
+
+### 9.4 M4 design, pinned to the code
+
+M4 sends payables to the books: carrier settlements, and owner-operator driver settlements when the connection opts in. It reuses the M3 outbox, dispatcher, retries, safety net, backfill, ledger and tools. Every rule below sits above the provider-neutral port, and QuickBooks Online is the first adapter again.
+
+**What the survey found.** Six facts shape the design:
+- **A paid settlement cannot be voided.** `Paid` and `Voided` are terminal for both carrier and driver settlements. A void therefore only ever reverses a posted, unpaid bill, and no bill payment has to be undone first.
+- **QuickBooks Online has no void for a bill or a vendor credit.** The API deletes them. The adapter reports this in `DocumentLimits` (`CanVoidPurchaseDocument: false`), the same way credit memos work in M3. A bill payment can be voided.
+- **Settlement lines post to many accounts.** A carrier line can override the purchased-transportation account. A driver settlement posts earnings, reimbursements, pay-code accounts, escrow withheld, advance recovery and carry-forwards to their own accounts. Re-deriving that would duplicate `BuildCarrierSettlementPostingLegs` and `BuildSettlementPostingLegs`. So a bill is built **from the settlement's journal entry**, which is the GL truth. The entry's lines exist whatever its posting status, so a Manual-mode tenant (F1) still gets bills.
+- **A driver settlement does not record its payable account.** Carrier settlements stamp `posted_ap_account_id`; driver settlements read the control each time. M4 adds `posted_payable_account_id` to driver settlements, stamped at `Post`. Settlements posted before the migration fall back to the control's current settlements payable account.
+- **Driver `MarkPaid` runs outside a transaction and posts no payment journal.** M4 wraps it in a transaction so the outbox row commits with the status change. The missing payment journal is filed as **F3**, outside G01, beside F1 and F2: Trenova's settlements payable is never relieved, while the provider's AP is.
+- **Owner-operators are marked on the settlement.** `Classification` is `OwnerOperator` or `CompanyDriver`, copied from the pay profile when the settlement is built. Decision D5 keys on it, not on the worker's employment type.
+
+**Object types.** The `accounting_sync_records` CHECK widens:
+
+| Object type | Trenova object | Provider document |
+|---|---|---|
+| `CarrierVendor` | carrier (`car_`) | vendor |
+| `DriverVendor` | worker (`wrk_`) | vendor, marked as a 1099 vendor |
+| `CarrierBill` | carrier settlement (`carstl_`) | bill, or vendor credit when the net is negative |
+| `CarrierBillPayment` | carrier settlement | bill payment |
+| `DriverBill` | driver settlement (`dstl_`) | bill, or vendor credit when the net is negative |
+| `DriverBillPayment` | driver settlement | bill payment |
+
+A bill and its payment share the settlement's id and differ by object type, so the idempotency key stays `<objectType>:<objectID>:<operation>:<revision>`. Dispatch rank: vendors with customers (0), bills with sales documents (1), bill payments with payments (2).
+
+**The driver settlement setting.** A new connection column `driver_settlements_enabled_at` (nullable) is the D5 toggle, **off by default**. Setting it stamps the time; clearing it sets it to null. It is set in the `StartDate` step and changed later by `updateAccountingSyncSettings`, which also changes `auto_sync`. Driver records are enqueued only while it is set. The safety net looks for driver settlements posted since that time, and a backfill reaches driver settlements only when the setting is on. Company-driver settlements are never enqueued.
+
+**Enqueue points.**
+
+| Where | Record |
+|---|---|
+| `carriersettlementservice.Post`, after the journal posting, inside its transaction | `CarrierBill` / `Create` |
+| `carriersettlementservice.Void`, when the settlement was `Posted` | `CarrierBill` / `Void` |
+| `carriersettlementservice.MarkPaid` | `CarrierBillPayment` / `Create` (nothing when the net is zero) |
+| `driversettlementservice.Post`, owner-operators only | `DriverBill` / `Create` |
+| `driversettlementservice.Void`, when the settlement was `Posted` | `DriverBill` / `Void` |
+| `driversettlementservice.MarkPaid` (now transactional), owner-operators only | `DriverBillPayment` / `Create` (nothing when the net is zero) |
+| `carrierservice.Update`, when the carrier is mapped (the service gains a transaction) | `CarrierVendor` / `Update` |
+| `workerservice.Update`, when the worker is mapped as a driver vendor (the service gains a transaction) | `DriverVendor` / `Update` |
+
+A settlement voided before it was posted never synced. `TestEveryPostingPathEnqueues` gains these packages, and it now also watches writes of `StatusPaid` for settlements.
+
+**Mappings.** Two target types are added:
+- **`Driver`**, keyed by worker, maps to a provider vendor. It is listed only for workers who have had an owner-operator settlement. A driver with no mapping gets a `DriverVendor` / `Create` dependency, the same way unmapped customers work in M3. The vendor is created as a 1099 vendor, from the worker's legal name and address.
+- **`GLAccount`**, keyed by a Trenova GL account, maps to a provider account.
+
+Each Trenova account a bill touches is resolved in this order:
+1. its confirmed `GLAccount` mapping;
+2. if it is the default account behind a role (accounts payable, purchased transportation, or the deposit account for cash), that role's mapping;
+3. otherwise the record is blocked as `Mapping`, naming the account, for example "Map GL account 2150 Escrow liability to a QuickBooks Online account".
+
+This keeps the M2 wizard's role mappings working for the common case, and never files an override account under a role silently. The mappings page lists a `GLAccount` row for every account a payables document posts to: the carrier settlement control's defaults, the driver pay defaults, and pay-code accounts. It gains filters for the new target types. The `GLAccount` mappings are also the first step toward M6, which maps every account with activity.
+
+**Bills.**
+- **Vendor.** The carrier or driver vendor, created on demand as above.
+- **Lines.** One account-based expense line per journal line of the posted entry, except the payable line. The amount is the line's debit minus its credit, so an escrow deduction or advance recovery becomes a negative line. The description is the GL account's name.
+- **Accounts payable.** The payable line's account: `posted_ap_account_id` for carriers, `posted_payable_account_id` for drivers.
+- **Dates.** The bill date is the journal's accounting date, and the due date is the settlement's pay date.
+- **Number.** When all the carrier invoice matches on the settlement that are `Matched` or `Resolved` share one invoice number, it becomes the bill number, because that is how the carrier's own invoice is found in the books. Otherwise the settlement number is used. A number longer than the provider allows goes in the private note, and the provider assigns one.
+- **Private note.** "Trenova carrier settlement CS-1042", then the pay period, the shipment count, and every matched invoice number.
+- **Negative total.** When the lines sent total below zero, the document is a vendor credit with the same lines, with signs flipped so the credit total is positive. The decision follows the lines, not the settlement's net field, so the document total can never be negative.
+- **Negative lines.** QuickBooks Online accepts negative lines on a bill whose total is not negative. That is Intuit's documented product behavior, and it is confirmed against the sandbox before merge, the way the §1.3 facts were.
+- **Zero net.** A zero net still creates the bill, because the expense and the deductions it offsets are real. No payment follows.
+- **Currency and closed books.** The M3 checks apply unchanged.
+
+**Bill payments.**
+- **Link.** The payment is paid against the bill created for the settlement, and waits for it the way a customer payment waits for its invoices. If the bill was never sent (skipped, withdrawn, or dated before the start date), the payment finishes without sending anything and says why.
+- **Account.** Payment is by bank from the account the Trenova payment journal credited (the accounting control's cash account), resolved through the rules above. That account normally maps through the deposit role.
+- **Date, number and note.** The date is the paid date. The number is the payment reference, cut to the provider's limit by the service, so every adapter gets the same rule. The private note gives the payment method and the full reference.
+- **Negative net.** A settlement with a negative net never gets a bill payment. A refund from the vendor against the vendor credit is recorded by a person in the provider. The record finishes without sending anything, and its resolution says so, the same way M3 records that need nothing sent finish.
+
+**Voids.** A `Void` record waits for its `Create` record, as in M3. The adapter then deletes the bill or vendor credit, because the provider has no void. If the `Create` record was never synced, the void is skipped instead, and the `Create` record is skipped with it when still queued, so nothing reaches the books.
+
+**Provider-neutral port.** `AccountingDocumentWriter` gains four methods:
+- `UpsertVendor(doc)` creates or updates a vendor.
+- `CreatePurchaseDocument(doc)` creates a bill or vendor credit, chosen by the document's `Kind`.
+- `VoidPurchaseDocument(ref)` voids or deletes one, depending on `DocumentLimits`.
+- `CreateBillPayment(doc)` creates a bill payment.
+
+`DocumentURL` covers the new kinds. `shared/quickbooks` gains bill, vendor credit and bill payment writes, and a sparse vendor update. The request id, the multi-step `-1`/`-2` convention and the fault classifier are unchanged.
+
+**Agent surface.**
+- **Tools and events.** Every sync tool, and the `sync_failed`/`sync_blocked` events, already take any object type. Their descriptions and the tool catalog list the new ones.
+- **Record state.** `get_record_accounting_sync_state` accepts carrier and driver settlements, carriers and workers.
+- **BooksKeeper.** Its instructions name bills and bill payments.
+- **Watchtower.** Grouping by cause covers the new mapping gaps, so 60 bills blocked on one escrow account show as one item.
+
+**Reporting.** The `accounting_sync_record` catalog entity already carries object type, so bills and bill payments are their own document types. **Sync exceptions by week** (version 1.1.0) gains a document types parameter, so it runs for receivables or payables alone.
+
+**UI.**
+- **Setup wizard.** The `StartDate` step gains the driver-settlement switch, off, with a line explaining that company drivers are never sent.
+- **QuickBooks card.** A new **Sync settings** section edits automatic sync and the driver switch after setup.
+- **Status lines.** The `AccountingSyncStateLine` goes on the carrier settlement and driver settlement views, and on the carrier and worker records.
+- **Ledger and mappings page.** The ledger's object filter gains the new types. The mappings page gains the `Driver` and `GL account` groups.
+- **Docs.** The product guide's sync-ledger and integrations pages cover payables.
+
+**Deferred.** Inbound bill payments made in the provider, and drift on payables, are part of M5, as §9 lists.
 
 
 ---

@@ -3014,6 +3014,8 @@ type EnableAccountingSyncInput struct {
 	StartDate int `json:"startDate"`
 	// Send posted documents on their own. When off, each waits for a person to release it.
 	AutoSync bool `json:"autoSync"`
+	// Also send owner-operator settlements as bills. Company driver pay is never sent.
+	DriverSettlements *bool `json:"driverSettlements,omitempty"`
 	// Also queue documents dated from the start date up to now, which were posted before sync was on.
 	Backfill bool `json:"backfill"`
 }
@@ -8092,6 +8094,14 @@ type UpcomingWorkerPTOInput struct {
 	WorkerID    *string           `json:"workerId,omitempty"`
 	FleetCodeID *string           `json:"fleetCodeId,omitempty"`
 	Timezone    *string           `json:"timezone,omitempty"`
+}
+
+type UpdateAccountingSyncSettingsInput struct {
+	IntegrationType integration.Type `json:"integrationType"`
+	// Send posted documents on their own. When off, each waits for a person to release it; records already held stay held.
+	AutoSync bool `json:"autoSync"`
+	// Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones.
+	DriverSettlements bool `json:"driverSettlements"`
 }
 
 type UpdateAgentEvalCaseInput struct {

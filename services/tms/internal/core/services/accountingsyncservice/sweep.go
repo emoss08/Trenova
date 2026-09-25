@@ -53,7 +53,48 @@ func safetyNetKinds() []candidateKind {
 			objectType: accountingsync.SyncObjectCreditApplication,
 			operation:  accountingsync.SyncOperationVoid,
 		},
+		{
+			objectType: accountingsync.SyncObjectCarrierBill,
+			operation:  accountingsync.SyncOperationCreate,
+		},
+		{
+			objectType: accountingsync.SyncObjectCarrierBill,
+			operation:  accountingsync.SyncOperationVoid,
+		},
+		{
+			objectType: accountingsync.SyncObjectCarrierBillPay,
+			operation:  accountingsync.SyncOperationCreate,
+		},
+		{
+			objectType: accountingsync.SyncObjectDriverBill,
+			operation:  accountingsync.SyncOperationCreate,
+		},
+		{
+			objectType: accountingsync.SyncObjectDriverBill,
+			operation:  accountingsync.SyncOperationVoid,
+		},
+		{
+			objectType: accountingsync.SyncObjectDriverBillPay,
+			operation:  accountingsync.SyncOperationCreate,
+		},
 	}
+}
+
+func sweptSince(
+	conn *accountingsync.AccountingConnection,
+	objectType accountingsync.SyncObjectType,
+) (*int64, bool) {
+	if !objectType.NeedsDriverSettlements() {
+		return conn.SyncEnabledAt, true
+	}
+	if !conn.SyncsDriverSettlements() {
+		return nil, false
+	}
+	since := *conn.DriverSettlementsEnabledAt
+	if conn.SyncEnabledAt != nil && *conn.SyncEnabledAt > since {
+		since = *conn.SyncEnabledAt
+	}
+	return &since, true
 }
 
 func candidateRequest(
@@ -105,6 +146,10 @@ func (s *Service) SafetyNet(
 	}
 
 	for _, kind := range safetyNetKinds() {
+		postedFrom, swept := sweptSince(conn, kind.objectType)
+		if !swept {
+			continue
+		}
 		afterAt, afterID := int64(0), pulid.Nil
 		for range safetyNetMaxPages {
 			candidates, listErr := s.records.ListCandidates(
@@ -114,7 +159,7 @@ func (s *Service) SafetyNet(
 					ConnectionID: conn.ID,
 					ObjectType:   kind.objectType,
 					Operation:    kind.operation,
-					PostedFrom:   conn.SyncEnabledAt,
+					PostedFrom:   postedFrom,
 					DatedFrom:    *conn.SyncStartDate,
 					AfterAt:      afterAt,
 					AfterID:      afterID,
@@ -188,6 +233,10 @@ func (s *Service) BackfillStep(
 		return result, nil
 	}
 	backfill.Start(now)
+
+	if backfill.Cursor.ObjectType.NeedsDriverSettlements() && !conn.SyncsDriverSettlements() {
+		return s.skipBackfillType(ctx, backfill, result, now)
+	}
 
 	undoneBefore := backfill.RangeEnd
 	candidates, err := s.records.ListCandidates(
@@ -278,4 +327,24 @@ func (s *Service) ListDueConnections(
 		Now:   timeutils.NowUnix(),
 		Limit: limit,
 	})
+}
+
+func (s *Service) skipBackfillType(
+	ctx context.Context,
+	backfill *accountingsync.AccountingBackfill,
+	result *services.AccountingBackfillStepResult,
+	now int64,
+) (*services.AccountingBackfillStepResult, error) {
+	if !backfill.NextObjectType() {
+		backfill.Complete(now)
+		result.Done = true
+	}
+	if _, err := s.backfills.Update(ctx, backfill); err != nil {
+		if errortypes.IsVersionMismatchError(err) {
+			result.Stopped = true
+			return result, nil
+		}
+		return nil, err
+	}
+	return result, nil
 }

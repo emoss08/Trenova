@@ -3,6 +3,11 @@ package workerservice
 import (
 	"context"
 	"errors"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/uptrace/bun"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
@@ -36,6 +41,8 @@ type Params struct {
 	CustomFieldsValuesService *customfieldservice.ValuesService
 	PTOPolicyService          *ptopolicyservice.Service        `optional:"true"`
 	CredentialService         *workercredentialservice.Service `optional:"true"`
+	DB                        ports.DBConnection               `optional:"true"`
+	Sync                      services.AccountingSyncEnqueuer  `optional:"true"`
 }
 
 type Service struct {
@@ -51,6 +58,8 @@ type Service struct {
 	ptoPolicyService          *ptopolicyservice.Service
 	credentialService         *workercredentialservice.Service
 	employmentRecorder        services.EmploymentEventRecorder
+	db                        ports.DBConnection
+	sync                      services.AccountingSyncEnqueuer
 }
 
 //nolint:gocritic // dependency injection
@@ -67,7 +76,41 @@ func New(p Params) *Service {
 		ptoPolicyService:          p.PTOPolicyService,
 		credentialService:         p.CredentialService,
 		validator:                 p.Validator,
+		db:                        p.DB,
+		sync:                      p.Sync,
 	}
+}
+
+func (s *Service) updateAndQueueSync(
+	ctx context.Context,
+	entity *worker.Worker,
+	original *worker.Worker,
+) (*worker.Worker, error) {
+	if s.db == nil || s.sync == nil {
+		return s.repo.Update(ctx, entity)
+	}
+
+	var updated *worker.Worker
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		if updated, txErr = s.repo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		if updated.SamePartyDetails(original) {
+			return nil
+		}
+		return services.EnqueueAccountingSync(txCtx, s.sync, services.VendorSyncRequest(
+			pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
+			accountingsync.SyncObjectDriverVendor,
+			updated.ID,
+			strings.TrimSpace(updated.FirstName+" "+updated.LastName),
+			updated.Version,
+		))
+	})
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 // SetEmploymentRecorder breaks the construction cycle between the worker
@@ -324,7 +367,7 @@ func (s *Service) update(
 	}
 	entity.UserID = original.UserID
 
-	updatedEntity, err := s.repo.Update(ctx, entity)
+	updatedEntity, err := s.updateAndQueueSync(ctx, entity, original)
 	if err != nil {
 		log.Error("failed to update worker", zap.Error(err))
 		return nil, err

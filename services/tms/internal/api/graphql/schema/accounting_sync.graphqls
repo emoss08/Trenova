@@ -36,6 +36,18 @@ enum AccountingSyncObjectType {
   CustomerPayment
   "A credit memo applied to an invoice."
   CreditApplication
+  "A carrier, sent as a vendor."
+  CarrierVendor
+  "An owner-operator driver, sent as a 1099 vendor."
+  DriverVendor
+  "A carrier settlement, sent as a bill, or as a vendor credit when the net is negative."
+  CarrierBill
+  "The payment of a carrier settlement, sent as a bill payment."
+  CarrierBillPayment
+  "An owner-operator settlement, sent as a bill, or as a vendor credit when the net is negative."
+  DriverBill
+  "The payment of an owner-operator settlement, sent as a bill payment."
+  DriverBillPayment
 }
 
 "What a sync record does to the document in the accounting system."
@@ -57,6 +69,14 @@ enum AccountingSyncSourceEvent {
   CreditMemoApplied
   CreditMemoUnapplied
   CustomerUpdated
+  CarrierSettlementPosted
+  CarrierSettlementVoided
+  CarrierSettlementPaid
+  DriverSettlementPosted
+  DriverSettlementVoided
+  DriverSettlementPaid
+  CarrierUpdated
+  DriverUpdated
   "Another record needed this one first, such as a customer an invoice is for."
   DependencyOf
   "The hourly check found a posted document no enqueue point had queued."
@@ -149,6 +169,10 @@ enum AccountingMappingTargetType {
   ItemRole
   Customer
   Carrier
+  "An owner-operator driver, mapped to a vendor."
+  Driver
+  "A Trenova GL account that bills post to, mapped to an account."
+  GLAccount
   PaymentTerm
   PaymentMethod
 }
@@ -246,6 +270,10 @@ type AccountingConnection {
   syncEnabledAt: Timestamp
   "Whether posted documents are sent on their own, or wait for a person to release them."
   autoSync: Boolean!
+  "When owner-operator settlements began to be sent. Absent while they are not sent; company driver pay never is."
+  driverSettlementsEnabledAt: Timestamp
+  "Whether owner-operator settlements are sent as bills."
+  syncsDriverSettlements: Boolean!
   "When sending was paused. Records keep queueing while it is. Absent when it is running."
   pausedAt: Timestamp
   pausedBy: User
@@ -449,8 +477,18 @@ input EnableAccountingSyncInput {
   startDate: Timestamp!
   "Send posted documents on their own. When off, each waits for a person to release it."
   autoSync: Boolean!
+  "Also send owner-operator settlements as bills. Company driver pay is never sent."
+  driverSettlements: Boolean = false
   "Also queue documents dated from the start date up to now, which were posted before sync was on."
   backfill: Boolean!
+}
+
+input UpdateAccountingSyncSettingsInput {
+  integrationType: AccountingSystem!
+  "Send posted documents on their own. When off, each waits for a person to release it; records already held stay held."
+  autoSync: Boolean!
+  "Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones."
+  driverSettlements: Boolean!
 }
 
 input PauseAccountingSyncInput {
@@ -731,6 +769,8 @@ extend type Mutation {
   completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
   "Finishes setup with a start date and turns sending on."
   enableAccountingSync(input: EnableAccountingSyncInput!): AccountingConnection!
+  "Change how documents are sent once setup is complete."
+  updateAccountingSyncSettings(input: UpdateAccountingSyncSettingsInput!): AccountingConnection!
   "Holds sending. Posted documents keep queueing and go out on resume."
   pauseAccountingSync(input: PauseAccountingSyncInput!): AccountingConnection!
   resumeAccountingSync(integrationType: AccountingSystem!): AccountingConnection!

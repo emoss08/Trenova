@@ -69,6 +69,8 @@ const connection: AccountingConnection = {
   syncStartDate: 1_780_000_000,
   syncEnabledAt: 1_780_000_000,
   autoSync: true,
+  driverSettlementsEnabledAt: null,
+  syncsDriverSettlements: false,
   pausedAt: null,
   pausedBy: null,
   pausedReason: "",

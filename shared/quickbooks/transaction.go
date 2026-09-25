@@ -14,9 +14,12 @@ import (
 type TxnKind string
 
 const (
-	TxnInvoice    = TxnKind("Invoice")
-	TxnCreditMemo = TxnKind("CreditMemo")
-	TxnPayment    = TxnKind("Payment")
+	TxnInvoice      = TxnKind("Invoice")
+	TxnCreditMemo   = TxnKind("CreditMemo")
+	TxnPayment      = TxnKind("Payment")
+	TxnBill         = TxnKind("Bill")
+	TxnVendorCredit = TxnKind("VendorCredit")
+	TxnBillPayment  = TxnKind("BillPayment")
 )
 
 const (
@@ -36,7 +39,7 @@ var (
 	ErrUnknownTxnKind   = errors.New("quickbooks: unknown transaction kind")
 	ErrTxnIDRequired    = errors.New("quickbooks: a transaction id is required")
 	ErrCustomerRequired = errors.New("quickbooks: a transaction needs a customer")
-	ErrLinesRequired    = errors.New("quickbooks: a sales transaction needs at least one line")
+	ErrLinesRequired    = errors.New("quickbooks: a transaction needs at least one line")
 	ErrItemRequired     = errors.New("quickbooks: every sales line needs an item")
 	ErrDocNumberTooLong = errors.New(
 		"quickbooks: a document number is at most 21 characters",
@@ -46,7 +49,7 @@ var (
 
 func (k TxnKind) IsValid() bool {
 	switch k {
-	case TxnInvoice, TxnCreditMemo, TxnPayment:
+	case TxnInvoice, TxnCreditMemo, TxnPayment, TxnBill, TxnVendorCredit, TxnBillPayment:
 		return true
 	default:
 		return false
@@ -65,13 +68,34 @@ func (k TxnKind) AppPath() string {
 		return "/app/creditmemo?txnId="
 	case TxnPayment:
 		return "/app/recvpayment?txnId="
+	case TxnBill:
+		return "/app/bill?txnId="
+	case TxnVendorCredit:
+		return "/app/vendorcredit?txnId="
+	case TxnBillPayment:
+		return "/app/billpayment?txnId="
 	default:
 		return ""
 	}
 }
 
+func (k TxnKind) numbered() bool {
+	switch k {
+	case TxnInvoice, TxnCreditMemo, TxnBill, TxnVendorCredit:
+		return true
+	case TxnPayment, TxnBillPayment:
+		return false
+	default:
+		return false
+	}
+}
+
 func CustomerAppPath() string {
 	return "/app/customerdetail?nameId="
+}
+
+func VendorAppPath() string {
+	return "/app/vendordetail?nameId="
 }
 
 type SalesLine struct {
@@ -208,17 +232,22 @@ type wireTxn struct {
 }
 
 type txnEnvelope struct {
-	Invoice    *wireTxn    `json:"Invoice"`
-	CreditMemo *wireTxn    `json:"CreditMemo"`
-	Payment    *wireTxn    `json:"Payment"`
-	Customer   *wireEntity `json:"Customer"`
+	Invoice      *wireTxn    `json:"Invoice"`
+	CreditMemo   *wireTxn    `json:"CreditMemo"`
+	Payment      *wireTxn    `json:"Payment"`
+	Bill         *wireTxn    `json:"Bill"`
+	VendorCredit *wireTxn    `json:"VendorCredit"`
+	BillPayment  *wireTxn    `json:"BillPayment"`
+	Customer     *wireEntity `json:"Customer"`
+	Vendor       *wireEntity `json:"Vendor"`
 }
 
 type txnQueryEnvelope struct {
 	QueryResponse struct {
-		Invoice    []wireTxn `json:"Invoice"`
-		CreditMemo []wireTxn `json:"CreditMemo"`
-		Payment    []wireTxn `json:"Payment"`
+		Invoice      []wireTxn `json:"Invoice"`
+		CreditMemo   []wireTxn `json:"CreditMemo"`
+		Bill         []wireTxn `json:"Bill"`
+		VendorCredit []wireTxn `json:"VendorCredit"`
 	} `json:"QueryResponse"`
 }
 
@@ -230,6 +259,42 @@ func (e *txnEnvelope) txn(kind TxnKind) *wireTxn {
 		return e.CreditMemo
 	case TxnPayment:
 		return e.Payment
+	case TxnBill:
+		return e.Bill
+	case TxnVendorCredit:
+		return e.VendorCredit
+	case TxnBillPayment:
+		return e.BillPayment
+	default:
+		return nil
+	}
+}
+
+func (e *txnEnvelope) party(kind ReferenceKind) *wireEntity {
+	switch kind {
+	case KindCustomer:
+		return e.Customer
+	case KindVendor:
+		return e.Vendor
+	case KindAccount, KindItem, KindTerm, KindPaymentMethod:
+		return nil
+	default:
+		return nil
+	}
+}
+
+func (e *txnQueryEnvelope) matches(kind TxnKind) []wireTxn {
+	switch kind {
+	case TxnInvoice:
+		return e.QueryResponse.Invoice
+	case TxnCreditMemo:
+		return e.QueryResponse.CreditMemo
+	case TxnBill:
+		return e.QueryResponse.Bill
+	case TxnVendorCredit:
+		return e.QueryResponse.VendorCredit
+	case TxnPayment, TxnBillPayment:
+		return nil
 	default:
 		return nil
 	}
@@ -492,7 +557,7 @@ func (c *Client) FindTransactionByDocNumber(
 	kind TxnKind,
 	docNumber string,
 ) (*TxnResult, bool, error) {
-	if kind != TxnInvoice && kind != TxnCreditMemo {
+	if !kind.numbered() {
 		return nil, false, ErrUnknownTxnKind
 	}
 	number := strings.TrimSpace(docNumber)
@@ -518,10 +583,7 @@ func (c *Client) FindTransactionByDocNumber(
 		return nil, false, err
 	}
 
-	matches := out.QueryResponse.Invoice
-	if kind == TxnCreditMemo {
-		matches = out.QueryResponse.CreditMemo
-	}
+	matches := out.matches(kind)
 	if len(matches) != 1 {
 		return nil, false, nil
 	}
@@ -533,42 +595,75 @@ func (c *Client) UpdateCustomer(
 	requestID, id string,
 	draft *PartyDraft,
 ) (*ReferenceObject, error) {
-	body, err := partyBodyOf(requestID, draft, false)
+	return c.updateParty(ctx, &partyUpdate{
+		requestID: requestID,
+		id:        id,
+		kind:      KindCustomer,
+		resource:  "customer",
+		draft:     draft,
+	})
+}
+
+func (c *Client) UpdateVendor(
+	ctx context.Context,
+	requestID, id string,
+	draft *PartyDraft,
+) (*ReferenceObject, error) {
+	return c.updateParty(ctx, &partyUpdate{
+		requestID: requestID,
+		id:        id,
+		kind:      KindVendor,
+		resource:  "vendor",
+		draft:     draft,
+	})
+}
+
+type partyUpdate struct {
+	requestID string
+	id        string
+	kind      ReferenceKind
+	resource  string
+	draft     *PartyDraft
+}
+
+func (c *Client) updateParty(ctx context.Context, update *partyUpdate) (*ReferenceObject, error) {
+	body, err := partyBodyOf(update.requestID, update.draft, update.kind == KindVendor)
 	if err != nil {
 		return nil, err
 	}
-	trimmed := strings.TrimSpace(id)
+	trimmed := strings.TrimSpace(update.id)
 	if trimmed == "" {
 		return nil, ErrTxnIDRequired
 	}
 
 	var current txnEnvelope
 	if _, err = c.transport.Do(ctx, &restx.Request{
-		Endpoint: "read-customer",
+		Endpoint: "read-" + update.resource,
 		Method:   http.MethodGet,
-		Path:     c.companyPath("customer", trimmed),
+		Path:     c.companyPath(update.resource, trimmed),
 		Query:    c.query(),
 		Out:      &current,
 	}); err != nil {
 		return nil, err
 	}
-	if current.Customer == nil {
+	existing := current.party(update.kind)
+	if existing == nil {
 		return nil, ErrUnexpectedPayload
 	}
 
 	sparse := true
 	query := c.query()
-	query.Set("requestid", requestID)
+	query.Set("requestid", update.requestID)
 	var out txnEnvelope
 	if _, err = c.transport.Do(ctx, &restx.Request{
-		Endpoint: "update-customer",
+		Endpoint: "update-" + update.resource,
 		Method:   http.MethodPost,
-		Path:     c.companyPath("customer"),
+		Path:     c.companyPath(update.resource),
 		Query:    query,
 		Body: sparsePartyBody{
 			entityRef: entityRef{
-				ID:        current.Customer.ID,
-				SyncToken: current.Customer.SyncToken,
+				ID:        existing.ID,
+				SyncToken: existing.SyncToken,
 				Sparse:    &sparse,
 			},
 			partyBody: body,
@@ -577,10 +672,11 @@ func (c *Client) UpdateCustomer(
 	}); err != nil {
 		return nil, err
 	}
-	if out.Customer == nil {
+	saved := out.party(update.kind)
+	if saved == nil {
 		return nil, ErrUnexpectedPayload
 	}
-	updated := out.Customer.toReference(KindCustomer)
+	updated := saved.toReference(update.kind)
 	return &updated, nil
 }
 

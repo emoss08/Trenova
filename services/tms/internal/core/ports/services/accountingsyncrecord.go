@@ -123,6 +123,54 @@ func CustomerSyncRequest(
 	}
 }
 
+type SettlementSyncRequest struct {
+	TenantInfo  pagination.TenantInfo
+	ObjectType  accountingsync.SyncObjectType
+	ObjectID    pulid.ID
+	Number      string
+	Operation   accountingsync.SyncOperation
+	SourceEvent accountingsync.SyncSourceEvent
+	PostedAt    *int64
+}
+
+func SettlementSync(req *SettlementSyncRequest) *AccountingSyncEnqueueRequest {
+	if req == nil || req.PostedAt == nil {
+		return nil
+	}
+	return &AccountingSyncEnqueueRequest{
+		TenantInfo:   req.TenantInfo,
+		ObjectType:   req.ObjectType,
+		ObjectID:     req.ObjectID,
+		ObjectNumber: req.Number,
+		Operation:    req.Operation,
+		Revision:     1,
+		SourceEvent:  req.SourceEvent,
+		DocumentDate: *req.PostedAt,
+	}
+}
+
+func VendorSyncRequest(
+	tenantInfo pagination.TenantInfo,
+	objectType accountingsync.SyncObjectType,
+	objectID pulid.ID,
+	name string,
+	version int64,
+) *AccountingSyncEnqueueRequest {
+	source := accountingsync.SyncSourceCarrierUpdated
+	if objectType == accountingsync.SyncObjectDriverVendor {
+		source = accountingsync.SyncSourceDriverUpdated
+	}
+	return &AccountingSyncEnqueueRequest{
+		TenantInfo:   tenantInfo,
+		ObjectType:   objectType,
+		ObjectID:     objectID,
+		ObjectNumber: name,
+		Operation:    accountingsync.SyncOperationUpdate,
+		Revision:     max(version, 1),
+		SourceEvent:  source,
+	}
+}
+
 type AccountingSyncDispatcher interface {
 	Kick(ctx context.Context, tenantInfo pagination.TenantInfo, connectionID pulid.ID) error
 	StartBackfill(ctx context.Context, backfill *accountingsync.AccountingBackfill) error
@@ -166,12 +214,21 @@ type AccountingBackfillStepResult struct {
 }
 
 type EnableAccountingSyncRequest struct {
-	TenantInfo      pagination.TenantInfo
-	UserID          pulid.ID
-	IntegrationType integration.Type
-	StartDate       int64
-	AutoSync        bool
-	Backfill        bool
+	TenantInfo        pagination.TenantInfo
+	UserID            pulid.ID
+	IntegrationType   integration.Type
+	StartDate         int64
+	AutoSync          bool
+	DriverSettlements bool
+	Backfill          bool
+}
+
+type UpdateAccountingSyncSettingsRequest struct {
+	TenantInfo        pagination.TenantInfo
+	UserID            pulid.ID
+	IntegrationType   integration.Type
+	AutoSync          bool
+	DriverSettlements bool
 }
 
 type PauseAccountingSyncRequest struct {
@@ -288,6 +345,10 @@ type AccountingSyncService interface {
 	EnableSync(
 		ctx context.Context,
 		req *EnableAccountingSyncRequest,
+	) (*accountingsync.AccountingConnection, error)
+	UpdateSettings(
+		ctx context.Context,
+		req *UpdateAccountingSyncSettingsRequest,
 	) (*accountingsync.AccountingConnection, error)
 	Pause(
 		ctx context.Context,

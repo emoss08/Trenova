@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { activeBucket, bucketCount, bucketFilter } from "../_components/ledger-filters";
-import { backfillSchema, pauseSchema, skipSchema } from "../_components/ledger-schemas";
+import {
+  backfillObjectTypes,
+  backfillSchema,
+  pauseSchema,
+  skipSchema,
+} from "../_components/ledger-schemas";
 
 describe("ledger buckets", () => {
   it("round-trips each bucket through its filter", () => {
@@ -61,5 +66,28 @@ describe("ledger schemas", () => {
     expect(
       schema.safeParse({ rangeStart: 10, rangeEnd: 20, objectTypes: ["Timesheet"] }).success,
     ).toBe(false);
+  });
+});
+
+describe("backfillObjectTypes", () => {
+  it("never offers customers or vendors, which are not backfilled", () => {
+    expect(backfillObjectTypes(true)).not.toContain("Customer");
+    expect(backfillObjectTypes(true)).not.toContain("CarrierVendor");
+    expect(backfillObjectTypes(true)).not.toContain("DriverVendor");
+  });
+
+  it("offers owner-operator settlements only while they are sent", () => {
+    expect(backfillObjectTypes(false)).toEqual([
+      "Invoice",
+      "DebitMemo",
+      "CreditMemo",
+      "CustomerPayment",
+      "CreditApplication",
+      "CarrierBill",
+      "CarrierBillPayment",
+    ]);
+    expect(backfillObjectTypes(true)).toEqual(
+      expect.arrayContaining(["DriverBill", "DriverBillPayment"]),
+    );
   });
 });

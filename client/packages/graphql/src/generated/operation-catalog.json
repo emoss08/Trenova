@@ -1,5 +1,5 @@
 {
-  "operationCount": 883,
+  "operationCount": 884,
   "fragmentCount": 240,
   "operations": [
     {
@@ -134,7 +134,7 @@
       "kind": "query",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:23db9301407396d4dae5e92c5dbbce06be8ffa6a88a1e10c8ef39ef7ef42fdf9",
+      "hash": "sha256:eeb7c4f23d4f18601d058a077f411ea5b09c64ba58ccee1e9bc780207e258298",
       "rootFields": [
         "accountingMappingSummary"
       ],
@@ -149,7 +149,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "query AccountingMappingSummary($integrationType: AccountingSystem!) {\n  accountingMappingSummary(integrationType: $integrationType) {\n    integrationType\n    providerName\n    connection {\n      ...AccountingConnectionFields\n    }\n    groups {\n      targetType\n      unmatched\n      proposed\n      confirmed\n    }\n    requiredTotal\n    requiredConfirmed\n    canCompleteSetup\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "query AccountingMappingSummary($integrationType: AccountingSystem!) {\n  accountingMappingSummary(integrationType: $integrationType) {\n    integrationType\n    providerName\n    connection {\n      ...AccountingConnectionFields\n    }\n    groups {\n      targetType\n      unmatched\n      proposed\n      confirmed\n    }\n    requiredTotal\n    requiredConfirmed\n    canCompleteSetup\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountingReferenceObjects",
@@ -331,7 +331,7 @@
       "kind": "query",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:41a428bdac8ba0b198f89286248e018abceae22593ccd9dd8e7a6542925bcbf7",
+      "hash": "sha256:e16e7cd9f706060a6c86ef5cb54f12ae78b3ef05ce98cec0df533405392c9640",
       "rootFields": [
         "accountingSyncStatus"
       ],
@@ -348,14 +348,14 @@
         "AccountingSyncStatusFields"
       ],
       "usages": [],
-      "sdl": "query AccountingSyncStatus($integrationType: AccountingSystem!) {\n  accountingSyncStatus(integrationType: $integrationType) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
+      "sdl": "query AccountingSyncStatus($integrationType: AccountingSystem!) {\n  accountingSyncStatus(integrationType: $integrationType) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
     },
     {
       "name": "AccountingSyncSummary",
       "kind": "query",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:1ade358faa40e38d46acfaa1d290f46b0b11c35b7b1e0c9147a65e7d39fce610",
+      "hash": "sha256:ed68a2cf908c2c99cf32c4bd82449af383fde7ad67a137a1249f5b4c72aa2251",
       "rootFields": [
         "accountingSyncSummary"
       ],
@@ -371,7 +371,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "query AccountingSyncSummary($integrationType: AccountingSystem!) {\n  accountingSyncSummary(integrationType: $integrationType) {\n    integrationType\n    providerName\n    connection {\n      ...AccountingConnectionFields\n    }\n    counts {\n      status\n      count\n    }\n    attention {\n      status\n      errorCategory\n      resolution\n      count\n      oldestQueuedAt\n      sampleRecordId\n    }\n    activeBackfill {\n      ...AccountingBackfillFields\n    }\n  }\n}\n\nfragment AccountingBackfillFields on AccountingBackfill {\n  id\n  rangeStart\n  rangeEnd\n  objectTypes\n  status\n  enqueuedCount\n  alreadyQueuedCount\n  startedAt\n  completedAt\n  lastError\n  version\n  createdAt\n  updatedAt\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "query AccountingSyncSummary($integrationType: AccountingSystem!) {\n  accountingSyncSummary(integrationType: $integrationType) {\n    integrationType\n    providerName\n    connection {\n      ...AccountingConnectionFields\n    }\n    counts {\n      status\n      count\n    }\n    attention {\n      status\n      errorCategory\n      resolution\n      count\n      oldestQueuedAt\n      sampleRecordId\n    }\n    activeBackfill {\n      ...AccountingBackfillFields\n    }\n  }\n}\n\nfragment AccountingBackfillFields on AccountingBackfill {\n  id\n  rangeStart\n  rangeEnd\n  objectTypes\n  status\n  enqueuedCount\n  alreadyQueuedCount\n  startedAt\n  completedAt\n  lastError\n  version\n  createdAt\n  updatedAt\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountTypeTable",
@@ -4500,7 +4500,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:08bae1bffcbe4307b5db44beb593b1ab560f5e5170d8cb901843fd191e5df8aa",
+      "hash": "sha256:49b9aaf645d78b2e29c4043109cbf1f1cc72f63827b3bca493ae2db34e63191a",
       "rootFields": [
         "checkAccountingConnection"
       ],
@@ -4515,7 +4515,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation CheckAccountingConnection($integrationType: AccountingSystem!) {\n  checkAccountingConnection(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation CheckAccountingConnection($integrationType: AccountingSystem!) {\n  checkAccountingConnection(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "CheckShipmentDuplicateBol",
@@ -4825,7 +4825,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:216dbb07686f5c5aeaa3b1b7e602dc630fe812b8c72c98a874126fa3dd5e06fb",
+      "hash": "sha256:d70e0c4e5de9a50ade90eecafb660ac13f984b48d75362ed62f60e5b88766517",
       "rootFields": [
         "completeAccountingAuthorization"
       ],
@@ -4840,14 +4840,14 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation CompleteAccountingAuthorization($input: CompleteAccountingAuthorizationInput!) {\n  completeAccountingAuthorization(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation CompleteAccountingAuthorization($input: CompleteAccountingAuthorizationInput!) {\n  completeAccountingAuthorization(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "CompleteAccountingSetup",
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:244ca406e6fe951a66128c3c85af1faff9ef85f6421d3a9e24bff8663b858fbb",
+      "hash": "sha256:f5eb426e439f0d92bd525b820988aead49cc811d794620b98ec0a88fc7b9a36c",
       "rootFields": [
         "completeAccountingSetup"
       ],
@@ -4862,7 +4862,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation CompleteAccountingSetup($integrationType: AccountingSystem!) {\n  completeAccountingSetup(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation CompleteAccountingSetup($integrationType: AccountingSystem!) {\n  completeAccountingSetup(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "CompleteClearinghouseQuery",
@@ -7266,7 +7266,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:269b77cc224ab541cafd82540275291ec5b9347ef8ff61d567b0d454e1e806c8",
+      "hash": "sha256:2c575fb840455bb3ceb9f231c3bcd7e2428b3bd9fcbe9285c4ce9f239c52b7ce",
       "rootFields": [
         "disconnectAccountingSystem"
       ],
@@ -7281,7 +7281,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation DisconnectAccountingSystem($integrationType: AccountingSystem!) {\n  disconnectAccountingSystem(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation DisconnectAccountingSystem($integrationType: AccountingSystem!) {\n  disconnectAccountingSystem(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "DismissAgentMemorySuggestion",
@@ -8390,7 +8390,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:87b42276a48082c7e44b8e425af6d2015420edb2e89f65f93f8bb60451fba60b",
+      "hash": "sha256:4d59412b58e538deed12f3b4a8031a6179b3e5fef3784b3274ea38f33f1597e9",
       "rootFields": [
         "enableAccountingSync"
       ],
@@ -8405,7 +8405,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation EnableAccountingSync($input: EnableAccountingSyncInput!) {\n  enableAccountingSync(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation EnableAccountingSync($input: EnableAccountingSyncInput!) {\n  enableAccountingSync(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "EndBenefitEnrollment",
@@ -12061,7 +12061,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:39173ac6990253f51e31619e0a9683bc87647c082508e5f626cf796fb44e5ecb",
+      "hash": "sha256:c21618c88de51d5d71b1b39e23054f30070cf0befea1670e0f118aa71083a636",
       "rootFields": [
         "pauseAccountingSync"
       ],
@@ -12076,7 +12076,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation PauseAccountingSync($input: PauseAccountingSyncInput!) {\n  pauseAccountingSync(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation PauseAccountingSync($input: PauseAccountingSyncInput!) {\n  pauseAccountingSync(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "PayAdvanceTable",
@@ -13292,7 +13292,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:801e6b22995d4058da576000890a56869755826299db8c4f74239ee6a639a5c7",
+      "hash": "sha256:9dd16cbefc7626732a87394513d20eaad5e64e985556a01191a731863ac872a9",
       "rootFields": [
         "refreshAccountingReferenceData"
       ],
@@ -13307,7 +13307,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation RefreshAccountingReferenceData($integrationType: AccountingSystem!) {\n  refreshAccountingReferenceData(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation RefreshAccountingReferenceData($integrationType: AccountingSystem!) {\n  refreshAccountingReferenceData(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "RegenerateBriefing",
@@ -13529,7 +13529,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:28ad8391de5aecfd4d7bf49fbfdb629db7c6a2346118b7a71550030f4e45f33b",
+      "hash": "sha256:f852854f7e9078476c8d29033afd4a772796708ad7603f4d2dae8df21ffd7d20",
       "rootFields": [
         "removeAccountingApp"
       ],
@@ -13546,7 +13546,7 @@
         "AccountingSyncStatusFields"
       ],
       "usages": [],
-      "sdl": "mutation RemoveAccountingApp($integrationType: AccountingSystem!) {\n  removeAccountingApp(integrationType: $integrationType) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
+      "sdl": "mutation RemoveAccountingApp($integrationType: AccountingSystem!) {\n  removeAccountingApp(integrationType: $integrationType) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
     },
     {
       "name": "RemoveCarrierSettlementAdjustment",
@@ -14545,7 +14545,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:738530ba83b172606c45e6669cc255762c035a87ee61879cd70a6e1b31b25bc6",
+      "hash": "sha256:a468cf9f1c8759b3d37b74997a7445ef2d5de2b9d873b89b1522e5bd76f04ce1",
       "rootFields": [
         "resumeAccountingSync"
       ],
@@ -14560,7 +14560,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation ResumeAccountingSync($integrationType: AccountingSystem!) {\n  resumeAccountingSync(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation ResumeAccountingSync($integrationType: AccountingSystem!) {\n  resumeAccountingSync(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "ResumeCarrierIntelMonitoring",
@@ -15012,7 +15012,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:5050d870ba977523b988eaf772bbbf3c376176e232f5de81900d5b28dd112215",
+      "hash": "sha256:733dc6e12ce68fcbcd7aa7d624d8cbaa4edf6d6ed8d12b5dcb46c2be9c7e982f",
       "rootFields": [
         "saveAccountingApp"
       ],
@@ -15029,7 +15029,7 @@
         "AccountingSyncStatusFields"
       ],
       "usages": [],
-      "sdl": "mutation SaveAccountingApp($input: SaveAccountingAppInput!) {\n  saveAccountingApp(input: $input) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
+      "sdl": "mutation SaveAccountingApp($input: SaveAccountingAppInput!) {\n  saveAccountingApp(input: $input) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
     },
     {
       "name": "SaveOshaSummary",
@@ -17347,6 +17347,28 @@
       ],
       "usages": [],
       "sdl": "query UpcomingWorkerPto($input: UpcomingWorkerPTOInput!) {\n  upcomingWorkerPTO(input: $input) {\n    edges {\n      node {\n        ...WorkerPtoRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...WorkerDataTablePageInfoFields\n    }\n  }\n}\n\nfragment WorkerDataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment WorkerPtoActorFields on User {\n  id\n  name\n}\n\nfragment WorkerPtoRowFields on WorkerPTO {\n  id\n  workerId\n  organizationId\n  businessUnitId\n  approverId\n  rejectorId\n  cancelledById\n  status\n  type\n  startDate\n  endDate\n  reason\n  rejectionReason\n  cancellationReason\n  days\n  balanceAfterDays\n  autoApproved\n  version\n  createdAt\n  updatedAt\n  worker {\n    ...WorkerPtoWorkerFields\n  }\n  approver {\n    ...WorkerPtoActorFields\n  }\n  rejector {\n    ...WorkerPtoActorFields\n  }\n  cancelledBy {\n    ...WorkerPtoActorFields\n  }\n}\n\nfragment WorkerPtoWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
+    },
+    {
+      "name": "UpdateAccountingSyncSettings",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:286bc6ad30ae8900234d76bbe8a4120fbc498d48f70c1be005e148edf6f53578",
+      "rootFields": [
+        "updateAccountingSyncSettings"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateAccountingSyncSettingsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateAccountingSyncSettings($input: UpdateAccountingSyncSettingsInput!) {\n  updateAccountingSyncSettings(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "UpdateAgentControl",
@@ -20424,10 +20446,11 @@
         "RefreshAccountingReferenceData",
         "RemoveAccountingApp",
         "ResumeAccountingSync",
-        "SaveAccountingApp"
+        "SaveAccountingApp",
+        "UpdateAccountingSyncSettings"
       ],
       "usages": [],
-      "sdl": "fragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "fragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountingMappingFields",
@@ -20488,7 +20511,7 @@
         "SaveAccountingApp"
       ],
       "usages": [],
-      "sdl": "fragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "fragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountTypeTableRowFields",
@@ -27381,6 +27404,12 @@
           "defaultValue": null
         },
         {
+          "name": "driverSettlements",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
           "name": "integrationType",
           "type": "AccountingSystem!",
           "defaultValue": null
@@ -27391,7 +27420,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "\"\"\"Finishes setup: from which day documents are sent, and how.\"\"\"\ninput EnableAccountingSyncInput {\n  \"\"\"\n  Send posted documents on their own. When off, each waits for a person to release it.\n  \"\"\"\n  autoSync: Boolean!\n  \"\"\"\n  Also queue documents dated from the start date up to now, which were posted before sync was on.\n  \"\"\"\n  backfill: Boolean!\n  integrationType: AccountingSystem!\n  \"\"\"Documents dated before this day are never sent.\"\"\"\n  startDate: Timestamp!\n}"
+      "sdl": "\"\"\"Finishes setup: from which day documents are sent, and how.\"\"\"\ninput EnableAccountingSyncInput {\n  \"\"\"\n  Send posted documents on their own. When off, each waits for a person to release it.\n  \"\"\"\n  autoSync: Boolean!\n  \"\"\"\n  Also queue documents dated from the start date up to now, which were posted before sync was on.\n  \"\"\"\n  backfill: Boolean!\n  \"\"\"\n  Also send owner-operator settlements as bills. Company driver pay is never sent.\n  \"\"\"\n  driverSettlements: Boolean = false\n  integrationType: AccountingSystem!\n  \"\"\"Documents dated before this day are never sent.\"\"\"\n  startDate: Timestamp!\n}"
     },
     "EndBenefitEnrollmentInput": {
       "kind": "input",
@@ -33100,6 +33129,27 @@
       ],
       "sdl": "input UpcomingWorkerPTOInput {\n  after: String\n  endDate: Timestamp\n  first: Int = 20\n  fleetCodeId: ID\n  startDate: Timestamp\n  status: PTOStatus\n  timezone: String\n  type: PTOType\n  workerId: ID\n}"
     },
+    "UpdateAccountingSyncSettingsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "autoSync",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "driverSettlements",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateAccountingSyncSettingsInput {\n  \"\"\"\n  Send posted documents on their own. When off, each waits for a person to release it; records already held stay held.\n  \"\"\"\n  autoSync: Boolean!\n  \"\"\"\n  Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones.\n  \"\"\"\n  driverSettlements: Boolean!\n  integrationType: AccountingSystem!\n}"
+    },
     "UpdateAgentEvalCaseInput": {
       "kind": "input",
       "fields": [
@@ -35787,12 +35837,14 @@
         "AccountRole",
         "Carrier",
         "Customer",
+        "Driver",
+        "GLAccount",
         "ItemRole",
         "LineType",
         "PaymentMethod",
         "PaymentTerm"
       ],
-      "sdl": "\"\"\"The kind of Trenova record or setting a mapping is for.\"\"\"\nenum AccountingMappingTargetType {\n  AccessorialCharge\n  \"\"\"A role an account plays, such as accounts receivable or revenue.\"\"\"\n  AccountRole\n  Carrier\n  Customer\n  \"\"\"A role an item plays, such as the short-pay write-off.\"\"\"\n  ItemRole\n  \"\"\"An invoice line type.\"\"\"\n  LineType\n  PaymentMethod\n  PaymentTerm\n}"
+      "sdl": "\"\"\"The kind of Trenova record or setting a mapping is for.\"\"\"\nenum AccountingMappingTargetType {\n  AccessorialCharge\n  \"\"\"A role an account plays, such as accounts receivable or revenue.\"\"\"\n  AccountRole\n  Carrier\n  Customer\n  \"\"\"An owner-operator driver, mapped to a vendor.\"\"\"\n  Driver\n  \"\"\"A Trenova GL account that bills post to, mapped to an account.\"\"\"\n  GLAccount\n  \"\"\"A role an item plays, such as the short-pay write-off.\"\"\"\n  ItemRole\n  \"\"\"An invoice line type.\"\"\"\n  LineType\n  PaymentMethod\n  PaymentTerm\n}"
     },
     "AccountingSyncErrorCategory": {
       "kind": "enum",
@@ -35814,14 +35866,20 @@
     "AccountingSyncObjectType": {
       "kind": "enum",
       "values": [
+        "CarrierBill",
+        "CarrierBillPayment",
+        "CarrierVendor",
         "CreditApplication",
         "CreditMemo",
         "Customer",
         "CustomerPayment",
         "DebitMemo",
+        "DriverBill",
+        "DriverBillPayment",
+        "DriverVendor",
         "Invoice"
       ],
-      "sdl": "\"\"\"A kind of Trenova document sent to the accounting system.\"\"\"\nenum AccountingSyncObjectType {\n  \"\"\"A credit memo applied to an invoice.\"\"\"\n  CreditApplication\n  CreditMemo\n  Customer\n  CustomerPayment\n  DebitMemo\n  Invoice\n}"
+      "sdl": "\"\"\"A kind of Trenova document sent to the accounting system.\"\"\"\nenum AccountingSyncObjectType {\n  \"\"\"\n  A carrier settlement, sent as a bill, or as a vendor credit when the net is negative.\n  \"\"\"\n  CarrierBill\n  \"\"\"The payment of a carrier settlement, sent as a bill payment.\"\"\"\n  CarrierBillPayment\n  \"\"\"A carrier, sent as a vendor.\"\"\"\n  CarrierVendor\n  \"\"\"A credit memo applied to an invoice.\"\"\"\n  CreditApplication\n  CreditMemo\n  Customer\n  CustomerPayment\n  DebitMemo\n  \"\"\"\n  An owner-operator settlement, sent as a bill, or as a vendor credit when the net is negative.\n  \"\"\"\n  DriverBill\n  \"\"\"The payment of an owner-operator settlement, sent as a bill payment.\"\"\"\n  DriverBillPayment\n  \"\"\"An owner-operator driver, sent as a 1099 vendor.\"\"\"\n  DriverVendor\n  Invoice\n}"
     },
     "AccountingSyncRecordStatus": {
       "kind": "enum",

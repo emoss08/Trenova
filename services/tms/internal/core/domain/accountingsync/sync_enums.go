@@ -11,6 +11,12 @@ const (
 	SyncObjectDebitMemo         = SyncObjectType("DebitMemo")
 	SyncObjectCustomerPayment   = SyncObjectType("CustomerPayment")
 	SyncObjectCreditApplication = SyncObjectType("CreditApplication")
+	SyncObjectCarrierVendor     = SyncObjectType("CarrierVendor")
+	SyncObjectDriverVendor      = SyncObjectType("DriverVendor")
+	SyncObjectCarrierBill       = SyncObjectType("CarrierBill")
+	SyncObjectCarrierBillPay    = SyncObjectType("CarrierBillPayment")
+	SyncObjectDriverBill        = SyncObjectType("DriverBill")
+	SyncObjectDriverBillPay     = SyncObjectType("DriverBillPayment")
 )
 
 func (t SyncObjectType) String() string { return string(t) }
@@ -22,7 +28,13 @@ func (t SyncObjectType) IsValid() bool {
 		SyncObjectCreditMemo,
 		SyncObjectDebitMemo,
 		SyncObjectCustomerPayment,
-		SyncObjectCreditApplication:
+		SyncObjectCreditApplication,
+		SyncObjectCarrierVendor,
+		SyncObjectDriverVendor,
+		SyncObjectCarrierBill,
+		SyncObjectCarrierBillPay,
+		SyncObjectDriverBill,
+		SyncObjectDriverBillPay:
 		return true
 	default:
 		return false
@@ -33,13 +45,79 @@ func (t SyncObjectType) IsSalesDocument() bool {
 	return t == SyncObjectInvoice || t == SyncObjectCreditMemo || t == SyncObjectDebitMemo
 }
 
-func (t SyncObjectType) DispatchRank() int {
+func (t SyncObjectType) IsVendor() bool {
+	return t == SyncObjectCarrierVendor || t == SyncObjectDriverVendor
+}
+
+func (t SyncObjectType) IsBill() bool {
+	return t == SyncObjectCarrierBill || t == SyncObjectDriverBill
+}
+
+func (t SyncObjectType) IsBillPayment() bool {
+	return t == SyncObjectCarrierBillPay || t == SyncObjectDriverBillPay
+}
+
+func (t SyncObjectType) IsDriverSettlement() bool {
+	return t == SyncObjectDriverBill || t == SyncObjectDriverBillPay
+}
+
+func (t SyncObjectType) IsPayable() bool {
+	return t.IsVendor() || t.IsBill() || t.IsBillPayment()
+}
+
+func (t SyncObjectType) BillOf() SyncObjectType {
+	switch t {
+	case SyncObjectCarrierBillPay:
+		return SyncObjectCarrierBill
+	case SyncObjectDriverBillPay:
+		return SyncObjectDriverBill
+	default:
+		return ""
+	}
+}
+
+func (t SyncObjectType) VendorOf() SyncObjectType {
+	switch t {
+	case SyncObjectCarrierBill, SyncObjectCarrierBillPay:
+		return SyncObjectCarrierVendor
+	case SyncObjectDriverBill, SyncObjectDriverBillPay:
+		return SyncObjectDriverVendor
+	default:
+		return ""
+	}
+}
+
+func (t SyncObjectType) PartyTarget() (MappingTargetType, bool) {
 	switch t {
 	case SyncObjectCustomer:
+		return TargetCustomer, true
+	case SyncObjectCarrierVendor:
+		return TargetCarrier, true
+	case SyncObjectDriverVendor:
+		return TargetDriver, true
+	default:
+		return "", false
+	}
+}
+
+func (t SyncObjectType) NeedsDriverSettlements() bool {
+	return t == SyncObjectDriverVendor || t.IsDriverSettlement()
+}
+
+func (t SyncObjectType) DispatchRank() int {
+	switch t {
+	case SyncObjectCustomer, SyncObjectCarrierVendor, SyncObjectDriverVendor:
 		return 0
-	case SyncObjectInvoice, SyncObjectCreditMemo, SyncObjectDebitMemo:
+	case SyncObjectInvoice,
+		SyncObjectCreditMemo,
+		SyncObjectDebitMemo,
+		SyncObjectCarrierBill,
+		SyncObjectDriverBill:
 		return 1
-	case SyncObjectCustomerPayment, SyncObjectCreditApplication:
+	case SyncObjectCustomerPayment,
+		SyncObjectCreditApplication,
+		SyncObjectCarrierBillPay,
+		SyncObjectDriverBillPay:
 		return 2
 	default:
 		return 3
@@ -54,6 +132,12 @@ func AllSyncObjectTypes() []SyncObjectType {
 		SyncObjectDebitMemo,
 		SyncObjectCustomerPayment,
 		SyncObjectCreditApplication,
+		SyncObjectCarrierVendor,
+		SyncObjectDriverVendor,
+		SyncObjectCarrierBill,
+		SyncObjectCarrierBillPay,
+		SyncObjectDriverBill,
+		SyncObjectDriverBillPay,
 	}
 }
 
@@ -93,6 +177,14 @@ const (
 	SyncSourceCreditMemoApplied       = SyncSourceEvent("CreditMemoApplied")
 	SyncSourceCreditMemoUnapplied     = SyncSourceEvent("CreditMemoUnapplied")
 	SyncSourceCustomerUpdated         = SyncSourceEvent("CustomerUpdated")
+	SyncSourceCarrierSettlementPosted = SyncSourceEvent("CarrierSettlementPosted")
+	SyncSourceCarrierSettlementVoided = SyncSourceEvent("CarrierSettlementVoided")
+	SyncSourceCarrierSettlementPaid   = SyncSourceEvent("CarrierSettlementPaid")
+	SyncSourceDriverSettlementPosted  = SyncSourceEvent("DriverSettlementPosted")
+	SyncSourceDriverSettlementVoided  = SyncSourceEvent("DriverSettlementVoided")
+	SyncSourceDriverSettlementPaid    = SyncSourceEvent("DriverSettlementPaid")
+	SyncSourceCarrierUpdated          = SyncSourceEvent("CarrierUpdated")
+	SyncSourceDriverUpdated           = SyncSourceEvent("DriverUpdated")
 	SyncSourceDependencyOf            = SyncSourceEvent("DependencyOf")
 	SyncSourceSafetyNet               = SyncSourceEvent("SafetyNet")
 	SyncSourceBackfill                = SyncSourceEvent("Backfill")
@@ -112,6 +204,14 @@ func (e SyncSourceEvent) IsValid() bool {
 		SyncSourceCreditMemoApplied,
 		SyncSourceCreditMemoUnapplied,
 		SyncSourceCustomerUpdated,
+		SyncSourceCarrierSettlementPosted,
+		SyncSourceCarrierSettlementVoided,
+		SyncSourceCarrierSettlementPaid,
+		SyncSourceDriverSettlementPosted,
+		SyncSourceDriverSettlementVoided,
+		SyncSourceDriverSettlementPaid,
+		SyncSourceCarrierUpdated,
+		SyncSourceDriverUpdated,
 		SyncSourceDependencyOf,
 		SyncSourceSafetyNet,
 		SyncSourceBackfill:
@@ -133,6 +233,14 @@ func AllSyncSourceEvents() []SyncSourceEvent {
 		SyncSourceCreditMemoApplied,
 		SyncSourceCreditMemoUnapplied,
 		SyncSourceCustomerUpdated,
+		SyncSourceCarrierSettlementPosted,
+		SyncSourceCarrierSettlementVoided,
+		SyncSourceCarrierSettlementPaid,
+		SyncSourceDriverSettlementPosted,
+		SyncSourceDriverSettlementVoided,
+		SyncSourceDriverSettlementPaid,
+		SyncSourceCarrierUpdated,
+		SyncSourceDriverUpdated,
 		SyncSourceDependencyOf,
 		SyncSourceSafetyNet,
 		SyncSourceBackfill,
@@ -361,7 +469,15 @@ func (t SyncObjectType) BillType() (billingqueue.BillType, bool) {
 		return billingqueue.BillTypeCreditMemo, true
 	case SyncObjectDebitMemo:
 		return billingqueue.BillTypeDebitMemo, true
-	case SyncObjectCustomer, SyncObjectCustomerPayment, SyncObjectCreditApplication:
+	case SyncObjectCustomer,
+		SyncObjectCustomerPayment,
+		SyncObjectCreditApplication,
+		SyncObjectCarrierVendor,
+		SyncObjectDriverVendor,
+		SyncObjectCarrierBill,
+		SyncObjectCarrierBillPay,
+		SyncObjectDriverBill,
+		SyncObjectDriverBillPay:
 		return "", false
 	default:
 		return "", false

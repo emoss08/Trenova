@@ -163,6 +163,14 @@ func stateRank(record *accountingsync.AccountingSyncRecord) int {
 	}
 }
 
+func outranks(record, current *accountingsync.AccountingSyncRecord) bool {
+	rank, currentRank := stateRank(record), stateRank(current)
+	if rank != currentRank {
+		return rank > currentRank
+	}
+	return record.QueuedAt > current.QueuedAt
+}
+
 func (s *Service) ObjectStates(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -206,7 +214,7 @@ func (s *Service) ObjectStates(
 			continue
 		}
 		current, seen := states[record.ObjectID]
-		if seen && stateRank(current.Record) > stateRank(record) {
+		if seen && !outranks(record, current.Record) {
 			continue
 		}
 		states[record.ObjectID] = &services.AccountingSyncObjectState{
@@ -233,6 +241,55 @@ func (s *Service) ListBackfills(
 		ConnectionID: conn.ID,
 		Limit:        maxBackfillsListed,
 	})
+}
+
+func (s *Service) UpdateSettings(
+	ctx context.Context,
+	req *services.UpdateAccountingSyncSettingsRequest,
+) (*accountingsync.AccountingConnection, error) {
+	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
+	if err != nil {
+		return nil, err
+	}
+	if conn.SetupStep != accountingsync.SetupStepComplete {
+		return nil, errortypes.NewBusinessError(
+			"Finish setting up {0} before changing how documents are sent",
+			accountingsync.ProviderName(conn.IntegrationType),
+		)
+	}
+
+	before := jsonutils.MustToJSON(conn)
+	wasSendingDrivers := conn.SyncsDriverSettlements()
+	conn.AutoSync = req.AutoSync
+	conn.SetDriverSettlements(req.DriverSettlements, timeutils.NowUnix())
+	updated, err := s.connections.Update(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logAudit(&auditEntry{
+		resource:   permission.ResourceAccountingIntegration,
+		resourceID: updated.ID,
+		userID:     req.UserID,
+		tenant:     req.TenantInfo,
+		current:    updated,
+		previous:   before,
+		comment:    settingsComment(wasSendingDrivers, updated),
+	})
+	s.publishInvalidation(ctx, req.TenantInfo, req.UserID, updated.ID)
+	return updated, nil
+}
+
+func settingsComment(wasSendingDrivers bool, conn *accountingsync.AccountingConnection) string {
+	provider := accountingsync.ProviderName(conn.IntegrationType)
+	switch {
+	case !wasSendingDrivers && conn.SyncsDriverSettlements():
+		return "Started sending owner-operator settlements to " + provider
+	case wasSendingDrivers && !conn.SyncsDriverSettlements():
+		return "Stopped sending owner-operator settlements to " + provider
+	default:
+		return "Changed how documents are sent to " + provider
+	}
 }
 
 func (s *Service) EnableSync(
@@ -270,7 +327,11 @@ func (s *Service) EnableSync(
 	}
 
 	before := jsonutils.MustToJSON(conn)
-	conn.EnableSync(req.StartDate, req.AutoSync, now)
+	conn.EnableSync(accountingsync.SyncSettings{
+		StartDate:         req.StartDate,
+		AutoSync:          req.AutoSync,
+		DriverSettlements: req.DriverSettlements,
+	}, now)
 	multiErr := errortypes.NewMultiError()
 	conn.Validate(multiErr)
 	if multiErr.HasErrors() {
@@ -585,7 +646,7 @@ func (s *Service) RequestBackfill(
 			"A backfill covers documents posted between the start date and when sync began",
 		)
 	}
-	types, err := backfillTypes(req.ObjectTypes)
+	types, err := backfillTypes(conn, req.ObjectTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -626,9 +687,24 @@ func (s *Service) RequestBackfill(
 }
 
 func backfillTypes(
+	conn *accountingsync.AccountingConnection,
 	requested []accountingsync.SyncObjectType,
 ) ([]accountingsync.SyncObjectType, error) {
-	allowed := accountingsync.BackfillObjectTypes()
+	allowed := make([]accountingsync.SyncObjectType, 0, len(accountingsync.BackfillObjectTypes()))
+	for _, typ := range accountingsync.BackfillObjectTypes() {
+		if typ.NeedsDriverSettlements() && !conn.SyncsDriverSettlements() {
+			if slices.Contains(requested, typ) {
+				return nil, errortypes.NewValidationError(
+					"objectTypes",
+					errortypes.ErrInvalid,
+					"Owner-operator settlements are not sent to {0}; turn them on first",
+					accountingsync.ProviderName(conn.IntegrationType),
+				)
+			}
+			continue
+		}
+		allowed = append(allowed, typ)
+	}
 	if len(requested) == 0 {
 		return allowed, nil
 	}

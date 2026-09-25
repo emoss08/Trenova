@@ -36,6 +36,8 @@ const (
 	ExternalRefDocument       = "document"
 	ExternalRefApplication    = "application"
 	ExternalRefShortPayPrefix = "shortPay:"
+	ExternalRefDocumentType   = "documentType"
+	ExternalRefURL            = "url"
 )
 
 var (
@@ -545,6 +547,10 @@ func BackfillObjectTypes() []SyncObjectType {
 		SyncObjectCreditMemo,
 		SyncObjectCustomerPayment,
 		SyncObjectCreditApplication,
+		SyncObjectCarrierBill,
+		SyncObjectCarrierBillPay,
+		SyncObjectDriverBill,
+		SyncObjectDriverBillPay,
 	}
 }
 

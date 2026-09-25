@@ -76,6 +76,16 @@ export const RECORD_LINKS = {
     path: "/billing/queue",
     params: { item: "{id}" },
   },
+  carrier_settlement: {
+    label: "Carrier settlement",
+    path: "/carrier-settlements/settlements",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
+  driver_settlement: {
+    label: "Driver settlement",
+    path: "/payroll/settlements",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
   invoice: {
     label: "Invoice",
     path: "/billing/invoices",

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/url"
 	"slices"
 	"strings"
 
@@ -28,31 +29,42 @@ var errDocumentKind = errors.New("quickbooks: this record type is not a document
 
 func (c *Connector) DocumentLimits() services.AccountingDocumentLimits {
 	return services.AccountingDocumentLimits{
-		MaxDocNumberLength: quickbooks.MaxDocNumberLength,
-		SupportsDebitMemo:  false,
-		CanVoidCreditMemo:  false,
+		MaxDocNumberLength:      quickbooks.MaxDocNumberLength,
+		SupportsDebitMemo:       false,
+		CanVoidCreditMemo:       false,
+		CanVoidPurchaseDocument: false,
 	}
 }
 
 func (c *Connector) DocumentURL(kind accountingsync.SyncObjectType, externalID string) string {
-	id := strings.TrimSpace(externalID)
-	if id == "" {
-		return ""
-	}
 	var path string
 	switch kind {
 	case accountingsync.SyncObjectCustomer:
 		path = quickbooks.CustomerAppPath()
+	case accountingsync.SyncObjectCarrierVendor, accountingsync.SyncObjectDriverVendor:
+		path = quickbooks.VendorAppPath()
 	case accountingsync.SyncObjectInvoice, accountingsync.SyncObjectDebitMemo:
 		path = quickbooks.TxnInvoice.AppPath()
 	case accountingsync.SyncObjectCreditMemo:
 		path = quickbooks.TxnCreditMemo.AppPath()
 	case accountingsync.SyncObjectCustomerPayment, accountingsync.SyncObjectCreditApplication:
 		path = quickbooks.TxnPayment.AppPath()
+	case accountingsync.SyncObjectCarrierBill, accountingsync.SyncObjectDriverBill:
+		path = quickbooks.TxnBill.AppPath()
+	case accountingsync.SyncObjectCarrierBillPay, accountingsync.SyncObjectDriverBillPay:
+		path = quickbooks.TxnBillPayment.AppPath()
 	default:
 		return ""
 	}
-	return c.env.AppBaseURL() + path + id
+	return c.appURL(path, externalID)
+}
+
+func (c *Connector) appURL(path, externalID string) string {
+	id := strings.TrimSpace(externalID)
+	if id == "" || path == "" {
+		return ""
+	}
+	return c.env.AppBaseURL() + path + url.QueryEscape(id)
 }
 
 func (c *Connector) client(auth services.AccountingDocumentAuth) (*quickbooks.Client, error) {
@@ -104,7 +116,13 @@ func (c *Connector) CreateSalesDocument(
 			created, err = client.CreateCreditMemo(ctx, doc.RequestID, txn)
 		case accountingsync.SyncObjectCustomer,
 			accountingsync.SyncObjectCustomerPayment,
-			accountingsync.SyncObjectCreditApplication:
+			accountingsync.SyncObjectCreditApplication,
+			accountingsync.SyncObjectCarrierVendor,
+			accountingsync.SyncObjectDriverVendor,
+			accountingsync.SyncObjectCarrierBill,
+			accountingsync.SyncObjectCarrierBillPay,
+			accountingsync.SyncObjectDriverBill,
+			accountingsync.SyncObjectDriverBillPay:
 			return nil, errDocumentKind
 		default:
 			return nil, errDocumentKind
@@ -223,7 +241,13 @@ func (c *Connector) VoidSalesDocument(
 		return result, nil
 	case accountingsync.SyncObjectCustomer,
 		accountingsync.SyncObjectCustomerPayment,
-		accountingsync.SyncObjectCreditApplication:
+		accountingsync.SyncObjectCreditApplication,
+		accountingsync.SyncObjectCarrierVendor,
+		accountingsync.SyncObjectDriverVendor,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncObjectDriverBill,
+		accountingsync.SyncObjectDriverBillPay:
 		return nil, errDocumentKind
 	default:
 		return nil, errDocumentKind
@@ -437,7 +461,13 @@ func (c *Connector) FindSalesDocument(
 		kind = quickbooks.TxnCreditMemo
 	case accountingsync.SyncObjectCustomer,
 		accountingsync.SyncObjectCustomerPayment,
-		accountingsync.SyncObjectCreditApplication:
+		accountingsync.SyncObjectCreditApplication,
+		accountingsync.SyncObjectCarrierVendor,
+		accountingsync.SyncObjectDriverVendor,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncObjectCarrierBillPay,
+		accountingsync.SyncObjectDriverBill,
+		accountingsync.SyncObjectDriverBillPay:
 		return nil, false, errDocumentKind
 	default:
 		return nil, false, errDocumentKind
@@ -501,8 +531,8 @@ func (c *Connector) ClassifyDocumentError(err error) *accountingsync.SyncError {
 				". Skip this record if it is the same document, or renumber the one in "+providerName)
 	case quickbooks.IsDuplicateName(err):
 		return classified(accountingsync.SyncErrorDuplicate,
-			"A customer with this name already exists in "+providerName+
-				". Map the customer to it instead")
+			"A customer, vendor or employee with this name already exists in "+providerName+
+				". Map the record to it instead, or rename one of them")
 	case quickbooks.IsClosedPeriod(err):
 		return classified(accountingsync.SyncErrorClosedPeriod,
 			"The books are closed for this date in "+providerName+
@@ -533,7 +563,13 @@ func isLocalValidation(err error) bool {
 		quickbooks.ErrUnknownTxnKind,
 		quickbooks.ErrInvalidName,
 		quickbooks.ErrRequestIDRequired,
+		quickbooks.ErrVendorRequired,
+		quickbooks.ErrAccountRequired,
+		quickbooks.ErrBankAccountRequired,
+		quickbooks.ErrBillRequired,
+		quickbooks.ErrNonPositiveAmount,
 		errDocumentKind,
+		errPurchaseDocumentType,
 	} {
 		if errors.Is(err, target) {
 			return true

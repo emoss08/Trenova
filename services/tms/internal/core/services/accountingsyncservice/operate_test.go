@@ -188,7 +188,15 @@ func TestEnableSyncWithBackfillStartsOne(t *testing.T) {
 	assert.Equal(t, syncStartDate, started[0].RangeStart)
 	assert.Equal(t, *conn.SyncEnabledAt, started[0].RangeEnd,
 		"a backfill covers documents dated from the start date up to when sync began")
-	assert.Equal(t, accountingsync.BackfillObjectTypes(), started[0].ObjectTypes)
+	assert.Equal(t, []accountingsync.SyncObjectType{
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncObjectDebitMemo,
+		accountingsync.SyncObjectCreditMemo,
+		accountingsync.SyncObjectCustomerPayment,
+		accountingsync.SyncObjectCreditApplication,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncObjectCarrierBillPay,
+	}, started[0].ObjectTypes, "owner-operator settlements are left out while they are not sent")
 	assert.Equal(t, accountingsync.BackfillStatusQueued, started[0].Status)
 }
 
@@ -783,6 +791,35 @@ func TestObjectStatesPicksTheMostRelevantRecord(t *testing.T) {
 	assert.Equal(t, synced.ID, states[syncedObject].Record.ID, "synced outranks skipped")
 	assert.NotContains(t, states, supersededObject, "a superseded record is never the state")
 	assert.NotContains(t, states, idleObject, "a connection that is not syncing shows nothing")
+}
+
+func TestObjectStatesShowsTheLatestStepOfASettlement(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	settlementID := pulid.MustNew("carstl_")
+	put := func(objectType accountingsync.SyncObjectType, queuedAt int64) *accountingsync.AccountingSyncRecord {
+		record := NewRecordFor(h.conn, &services.AccountingSyncEnqueueRequest{
+			TenantInfo:  h.tenant,
+			ObjectType:  objectType,
+			ObjectID:    settlementID,
+			Operation:   accountingsync.SyncOperationCreate,
+			Revision:    1,
+			SourceEvent: accountingsync.SyncSourceCarrierSettlementPosted,
+		}, queuedAt)
+		record.Status = accountingsync.SyncStatusSynced
+		h.records.put(record)
+		return record
+	}
+	now := time.Now().Unix()
+	payment := put(accountingsync.SyncObjectCarrierBillPay, now+60)
+	put(accountingsync.SyncObjectCarrierBill, now)
+
+	states, err := h.svc.ObjectStates(t.Context(), h.tenant, []pulid.ID{settlementID})
+	require.NoError(t, err)
+
+	assert.Equal(t, payment.ID, states[settlementID].Record.ID,
+		"the bill payment is the latest step once both reached the books")
 }
 
 func TestObjectStatesIsBounded(t *testing.T) {

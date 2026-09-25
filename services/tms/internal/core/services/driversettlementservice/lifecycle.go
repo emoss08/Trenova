@@ -3,6 +3,8 @@ package driversettlementservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
@@ -202,13 +204,6 @@ func (s *Service) MarkPaid(
 	if err := requireActor(actor, "Settlement payment"); err != nil {
 		return nil, err
 	}
-	entity, err := s.getForUpdate(ctx, tenantInfo, settlementID)
-	if err != nil {
-		return nil, err
-	}
-	if entity.Status != driversettlement.StatusPosted {
-		return nil, transitionError(entity.Status, driversettlement.StatusPaid)
-	}
 	if paymentMethod == "" {
 		return nil, errortypes.NewValidationError(
 			"paymentMethod",
@@ -217,15 +212,37 @@ func (s *Service) MarkPaid(
 		)
 	}
 
-	previous := *entity
-	now := timeutils.NowUnix()
-	entity.Status = driversettlement.StatusPaid
-	entity.PaidAt = &now
-	entity.PaidByID = actor.UserID
-	entity.PaymentMethod = paymentMethod
-	entity.PaymentReference = paymentReference
-
-	updated, err := s.settlementRepo.Update(ctx, entity)
+	var updated *driversettlement.Settlement
+	var previous driversettlement.Settlement
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
+		if txErr != nil {
+			return txErr
+		}
+		if entity.Status != driversettlement.StatusPosted {
+			return transitionError(entity.Status, driversettlement.StatusPaid)
+		}
+		previous = *entity
+		now := timeutils.NowUnix()
+		entity.Status = driversettlement.StatusPaid
+		entity.PaidAt = &now
+		entity.PaidByID = actor.UserID
+		entity.PaymentMethod = paymentMethod
+		entity.PaymentReference = paymentReference
+		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		if updated.NetPayMinor == 0 {
+			return nil
+		}
+		return s.queueSync(
+			txCtx,
+			updated,
+			accountingsync.SyncObjectDriverBillPay,
+			accountingsync.SyncOperationCreate,
+			accountingsync.SyncSourceDriverSettlementPaid,
+		)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +311,8 @@ func (s *Service) Void(
 				return txErr
 			}
 		}
-		if entity.Status == driversettlement.StatusPosted {
+		wasPosted := entity.Status == driversettlement.StatusPosted
+		if wasPosted {
 			if txErr = s.postVoidReversal(txCtx, entity, actor); txErr != nil {
 				return txErr
 			}
@@ -309,8 +327,19 @@ func (s *Service) Void(
 		entity.VoidedByID = actor.UserID
 		entity.VoidedAt = &now
 		entity.VoidReason = reason
-		updated, txErr = s.settlementRepo.Update(txCtx, entity)
-		return txErr
+		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		if !wasPosted {
+			return nil
+		}
+		return s.queueSync(
+			txCtx,
+			updated,
+			accountingsync.SyncObjectDriverBill,
+			accountingsync.SyncOperationVoid,
+			accountingsync.SyncSourceDriverSettlementVoided,
+		)
 	})
 	if err != nil {
 		return nil, err

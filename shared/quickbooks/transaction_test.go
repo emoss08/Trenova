@@ -1,6 +1,7 @@
 package quickbooks_test
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -291,5 +292,487 @@ func TestTxnKindAppPaths(t *testing.T) {
 	assert.Equal(t, "/app/invoice?txnId=", quickbooks.TxnInvoice.AppPath())
 	assert.Equal(t, "/app/creditmemo?txnId=", quickbooks.TxnCreditMemo.AppPath())
 	assert.Equal(t, "/app/recvpayment?txnId=", quickbooks.TxnPayment.AppPath())
+	assert.Equal(t, "/app/bill?txnId=", quickbooks.TxnBill.AppPath())
+	assert.Equal(t, "/app/vendorcredit?txnId=", quickbooks.TxnVendorCredit.AppPath())
+	assert.Equal(t, "/app/billpayment?txnId=", quickbooks.TxnBillPayment.AppPath())
 	assert.Equal(t, "/app/customerdetail?nameId=", quickbooks.CustomerAppPath())
+	assert.Equal(t, "/app/vendordetail?nameId=", quickbooks.VendorAppPath())
+	assert.Empty(t, quickbooks.TxnKind("Estimate").AppPath())
+	assert.True(t, quickbooks.TxnBillPayment.IsValid())
+	assert.False(t, quickbooks.TxnKind("Estimate").IsValid())
+}
+
+func carrierBill() *quickbooks.PurchaseTxn {
+	return &quickbooks.PurchaseTxn{
+		VendorID:     "91",
+		APAccountID:  "33",
+		DocNumber:    "CINV-778",
+		TxnDate:      "2026-09-20",
+		DueDate:      "2026-10-05",
+		CurrencyCode: "usd",
+		PrivateNote:  "Trenova carrier settlement CS-1042",
+		Lines: []quickbooks.PurchaseLine{
+			{
+				Description: "Purchased transportation",
+				AccountID:   "61",
+				Amount:      decimal.RequireFromString("1500"),
+			},
+			{
+				Description: "Escrow withheld",
+				AccountID:   "72",
+				Amount:      decimal.RequireFromString("-150"),
+			},
+		},
+	}
+}
+
+func TestCreateBillSendsAccountLinesWithDeductions(t *testing.T) {
+	t.Parallel()
+
+	var body map[string]any
+	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPost, r.Method)
+		assert.Equal(t, "/v3/company/"+testRealm+"/bill", r.URL.Path)
+		assert.Equal(t, testRequestID, r.URL.Query().Get("requestid"))
+		assert.Empty(t, r.URL.Query().Get("operation"))
+		body = readJSON(t, r)
+		_, _ = w.Write(fixture(t, "create_bill.json"))
+	})
+
+	result, err := client.CreateBill(t.Context(), testRequestID, carrierBill())
+	require.NoError(t, err)
+	assert.Equal(t, quickbooks.TxnBill, result.Kind)
+	assert.Equal(t, "210", result.ID)
+	assert.Equal(t, "CINV-778", result.DocNumber)
+	assert.True(t, decimal.NewFromInt(1350).Equal(result.TotalAmount))
+
+	assert.Equal(t, map[string]any{"value": "91"}, body["VendorRef"])
+	assert.Equal(t, map[string]any{"value": "33"}, body["APAccountRef"])
+	assert.Equal(t, map[string]any{"value": "USD"}, body["CurrencyRef"])
+	assert.Equal(t, "CINV-778", body["DocNumber"])
+	assert.Equal(t, "2026-09-20", body["TxnDate"])
+	assert.Equal(t, "2026-10-05", body["DueDate"])
+	assert.Equal(t, "Trenova carrier settlement CS-1042", body["PrivateNote"])
+	assert.Equal(t, []any{
+		map[string]any{
+			"DetailType":  "AccountBasedExpenseLineDetail",
+			"Amount":      float64(1500),
+			"Description": "Purchased transportation",
+			"AccountBasedExpenseLineDetail": map[string]any{
+				"AccountRef": map[string]any{"value": "61"},
+			},
+		},
+		map[string]any{
+			"DetailType":  "AccountBasedExpenseLineDetail",
+			"Amount":      float64(-150),
+			"Description": "Escrow withheld",
+			"AccountBasedExpenseLineDetail": map[string]any{
+				"AccountRef": map[string]any{"value": "72"},
+			},
+		},
+	}, body["Line"])
+}
+
+func TestCreateVendorCreditHasNoDueDateAndOmitsEmptyRefs(t *testing.T) {
+	t.Parallel()
+
+	var body map[string]any
+	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/v3/company/"+testRealm+"/vendorcredit", r.URL.Path)
+		assert.Equal(t, testRequestID, r.URL.Query().Get("requestid"))
+		body = readJSON(t, r)
+		_, _ = w.Write(fixture(t, "create_vendor_credit.json"))
+	})
+
+	credit := carrierBill()
+	credit.APAccountID = " "
+	credit.CurrencyCode = ""
+	credit.DocNumber = ""
+	credit.PrivateNote = strings.Repeat("n", quickbooks.MaxPrivateNoteLength+10)
+	credit.Lines = []quickbooks.PurchaseLine{
+		{AccountID: "61", Amount: decimal.RequireFromString("150")},
+	}
+	result, err := client.CreateVendorCredit(t.Context(), testRequestID, credit)
+	require.NoError(t, err)
+	assert.Equal(t, quickbooks.TxnVendorCredit, result.Kind)
+	assert.Equal(t, "211", result.ID)
+
+	assert.NotContains(t, body, "DueDate", "a vendor credit has no due date")
+	assert.NotContains(t, body, "APAccountRef")
+	assert.NotContains(t, body, "CurrencyRef")
+	assert.NotContains(t, body, "DocNumber")
+	assert.Len(t, body["PrivateNote"], quickbooks.MaxPrivateNoteLength)
+	line := body["Line"].([]any)[0].(map[string]any)
+	assert.NotContains(t, line, "Description")
+}
+
+func TestCreatePurchaseRejectsWhatQuickBooksWould(t *testing.T) {
+	t.Parallel()
+
+	client := newAPIClient(t, func(http.ResponseWriter, *http.Request) {
+		t.Fatal("no request should be sent")
+	})
+
+	tests := []struct {
+		name   string
+		mutate func(txn *quickbooks.PurchaseTxn)
+		want   error
+	}{
+		{
+			name:   "negative total",
+			mutate: func(txn *quickbooks.PurchaseTxn) { txn.Lines[1].Amount = decimal.NewFromInt(-1501) },
+			want:   quickbooks.ErrNegativeAmount,
+		},
+		{
+			name:   "missing account",
+			mutate: func(txn *quickbooks.PurchaseTxn) { txn.Lines[1].AccountID = " " },
+			want:   quickbooks.ErrAccountRequired,
+		},
+		{
+			name:   "doc number too long",
+			mutate: func(txn *quickbooks.PurchaseTxn) { txn.DocNumber = strings.Repeat("9", 22) },
+			want:   quickbooks.ErrDocNumberTooLong,
+		},
+		{
+			name:   "no vendor",
+			mutate: func(txn *quickbooks.PurchaseTxn) { txn.VendorID = "" },
+			want:   quickbooks.ErrVendorRequired,
+		},
+		{
+			name:   "no lines",
+			mutate: func(txn *quickbooks.PurchaseTxn) { txn.Lines = nil },
+			want:   quickbooks.ErrLinesRequired,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			txn := carrierBill()
+			tt.mutate(txn)
+			_, err := client.CreateBill(t.Context(), testRequestID, txn)
+			require.ErrorIs(t, err, tt.want)
+			_, err = client.CreateVendorCredit(t.Context(), testRequestID, txn)
+			require.ErrorIs(t, err, tt.want)
+		})
+	}
+
+	_, err := client.CreateBill(t.Context(), testRequestID, nil)
+	require.ErrorIs(t, err, quickbooks.ErrVendorRequired)
+	_, err = client.CreateBill(t.Context(), "", carrierBill())
+	require.ErrorIs(t, err, quickbooks.ErrRequestIDRequired)
+
+	zero := carrierBill()
+	zero.Lines[1].Amount = decimal.NewFromInt(-1500)
+	zeroClient := newAPIClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write(fixture(t, "create_bill.json"))
+	})
+	_, err = zeroClient.CreateBill(t.Context(), testRequestID, zero)
+	require.NoError(t, err, "a zero-total bill is still sent")
+}
+
+func settlementPayment() *quickbooks.BillPaymentTxn {
+	return &quickbooks.BillPaymentTxn{
+		VendorID:      "91",
+		BankAccountID: "35",
+		BillID:        "210",
+		DocNumber:     "ACH-20260925-0001-REFERENCE",
+		TxnDate:       "2026-09-25",
+		CurrencyCode:  "usd",
+		PrivateNote:   "Paid by ACH",
+		Amount:        decimal.NewFromInt(1350),
+	}
+}
+
+func TestCreateBillPaymentPaysTheBillByCheck(t *testing.T) {
+	t.Parallel()
+
+	var body map[string]any
+	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodPost, r.Method)
+		assert.Equal(t, "/v3/company/"+testRealm+"/billpayment", r.URL.Path)
+		assert.Equal(t, testRequestID, r.URL.Query().Get("requestid"))
+		body = readJSON(t, r)
+		_, _ = w.Write(fixture(t, "create_bill_payment.json"))
+	})
+
+	result, err := client.CreateBillPayment(t.Context(), testRequestID, settlementPayment())
+	require.NoError(t, err)
+	assert.Equal(t, quickbooks.TxnBillPayment, result.Kind)
+	assert.Equal(t, "212", result.ID)
+
+	assert.Equal(t, map[string]any{
+		"VendorRef":    map[string]any{"value": "91"},
+		"PayType":      "Check",
+		"CheckPayment": map[string]any{"BankAccountRef": map[string]any{"value": "35"}},
+		"TotalAmt":     float64(1350),
+		"TxnDate":      "2026-09-25",
+		"DocNumber":    "ACH-20260925-0001-REF",
+		"PrivateNote":  "Paid by ACH",
+		"CurrencyRef":  map[string]any{"value": "USD"},
+		"Line": []any{map[string]any{
+			"Amount":    float64(1350),
+			"LinkedTxn": []any{map[string]any{"TxnId": "210", "TxnType": "Bill"}},
+		}},
+	}, body)
+}
+
+func TestCreateBillPaymentRejectsWhatQuickBooksWould(t *testing.T) {
+	t.Parallel()
+
+	client := newAPIClient(t, func(http.ResponseWriter, *http.Request) {
+		t.Fatal("no request should be sent")
+	})
+
+	tests := []struct {
+		name   string
+		mutate func(txn *quickbooks.BillPaymentTxn)
+		want   error
+	}{
+		{
+			name:   "zero amount",
+			mutate: func(txn *quickbooks.BillPaymentTxn) { txn.Amount = decimal.Zero },
+			want:   quickbooks.ErrNonPositiveAmount,
+		},
+		{
+			name:   "negative amount",
+			mutate: func(txn *quickbooks.BillPaymentTxn) { txn.Amount = decimal.NewFromInt(-5) },
+			want:   quickbooks.ErrNonPositiveAmount,
+		},
+		{
+			name:   "no bank account",
+			mutate: func(txn *quickbooks.BillPaymentTxn) { txn.BankAccountID = "" },
+			want:   quickbooks.ErrBankAccountRequired,
+		},
+		{
+			name:   "no bill",
+			mutate: func(txn *quickbooks.BillPaymentTxn) { txn.BillID = " " },
+			want:   quickbooks.ErrBillRequired,
+		},
+		{
+			name:   "no vendor",
+			mutate: func(txn *quickbooks.BillPaymentTxn) { txn.VendorID = "" },
+			want:   quickbooks.ErrVendorRequired,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			txn := settlementPayment()
+			tt.mutate(txn)
+			_, err := client.CreateBillPayment(t.Context(), testRequestID, txn)
+			require.ErrorIs(t, err, tt.want)
+		})
+	}
+}
+
+func TestPayablesRetireReadsTheSyncTokenFirst(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		resource  string
+		read      string
+		reply     string
+		operation string
+		include   string
+		sparse    bool
+		retire    func(ctx context.Context, c *quickbooks.Client, id string) (*quickbooks.TxnResult, error)
+		status    string
+	}{
+		{
+			name:      "delete bill",
+			resource:  "bill",
+			read:      "create_bill.json",
+			reply:     "delete_bill.json",
+			operation: "delete",
+			retire: func(ctx context.Context, c *quickbooks.Client, id string) (*quickbooks.TxnResult, error) {
+				return c.DeleteBill(ctx, testRequestID, id)
+			},
+			status: "Deleted",
+		},
+		{
+			name:      "delete vendor credit",
+			resource:  "vendorcredit",
+			read:      "create_vendor_credit.json",
+			reply:     "delete_vendor_credit.json",
+			operation: "delete",
+			retire: func(ctx context.Context, c *quickbooks.Client, id string) (*quickbooks.TxnResult, error) {
+				return c.DeleteVendorCredit(ctx, testRequestID, id)
+			},
+			status: "Deleted",
+		},
+		{
+			name:      "void bill payment",
+			resource:  "billpayment",
+			read:      "create_bill_payment.json",
+			reply:     "void_bill_payment.json",
+			operation: "update",
+			include:   "void",
+			sparse:    true,
+			retire: func(ctx context.Context, c *quickbooks.Client, id string) (*quickbooks.TxnResult, error) {
+				return c.VoidBillPayment(ctx, testRequestID, id)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var body map[string]any
+			var query map[string][]string
+			client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodGet {
+					assert.Equal(t, "/v3/company/"+testRealm+"/"+tt.resource+"/42", r.URL.Path)
+					_, _ = w.Write(fixture(t, tt.read))
+					return
+				}
+				assert.Equal(t, "/v3/company/"+testRealm+"/"+tt.resource, r.URL.Path)
+				query = r.URL.Query()
+				body = readJSON(t, r)
+				_, _ = w.Write(fixture(t, tt.reply))
+			})
+
+			result, err := tt.retire(t.Context(), client, " 42 ")
+			require.NoError(t, err)
+			assert.Equal(t, tt.status, result.Status)
+			assert.Equal(t, []string{testRequestID}, query["requestid"])
+			assert.Equal(t, []string{tt.operation}, query["operation"])
+			if tt.include != "" {
+				assert.Equal(t, []string{tt.include}, query["include"])
+			} else {
+				assert.NotContains(t, query, "include")
+			}
+			assert.Equal(t, "0", body["SyncToken"])
+			if tt.sparse {
+				assert.Equal(t, true, body["sparse"])
+			} else {
+				assert.NotContains(t, body, "sparse")
+			}
+		})
+	}
+}
+
+func TestDeleteBillReportsAMissingBill(t *testing.T) {
+	t.Parallel()
+
+	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, http.MethodGet, r.Method, "nothing is written when the read fails")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(
+			`{"Fault":{"type":"ValidationFault","Error":[{"Message":"Object Not Found","code":"610"}]}}`,
+		))
+	})
+
+	_, err := client.DeleteBill(t.Context(), testRequestID, "210")
+	require.Error(t, err)
+	assert.True(t, quickbooks.IsObjectNotFound(err))
+}
+
+func TestReadAndFindPayablesTransactions(t *testing.T) {
+	t.Parallel()
+
+	var query string
+	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/billpayment/212") {
+			_, _ = w.Write(fixture(t, "create_bill_payment.json"))
+			return
+		}
+		query = r.URL.Query().Get("query")
+		_, _ = w.Write(fixture(t, "query_bill_by_number.json"))
+	})
+
+	read, err := client.ReadTransaction(t.Context(), quickbooks.TxnBillPayment, "212")
+	require.NoError(t, err)
+	assert.Equal(t, "212", read.ID)
+
+	found, ok, err := client.FindTransactionByDocNumber(t.Context(), quickbooks.TxnBill, "CINV-700")
+	require.NoError(t, err)
+	require.True(t, ok)
+	assert.Equal(t, "205", found.ID)
+	assert.Equal(t, quickbooks.TxnBill, found.Kind)
+	assert.Equal(t, `select * from Bill where DocNumber = 'CINV-700'`, query)
+
+	_, ok, err = client.FindTransactionByDocNumber(t.Context(), quickbooks.TxnVendorCredit, "CS-1")
+	require.NoError(t, err)
+	assert.False(t, ok, "a reply for another kind is not a match")
+
+	_, _, err = client.FindTransactionByDocNumber(t.Context(), quickbooks.TxnBillPayment, "1")
+	require.ErrorIs(t, err, quickbooks.ErrUnknownTxnKind)
+}
+
+func TestUpdateVendorSendsASparseUpdate(t *testing.T) {
+	t.Parallel()
+
+	var body map[string]any
+	var requestID string
+	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			assert.Equal(t, "/v3/company/"+testRealm+"/vendor/91", r.URL.Path)
+			_, _ = w.Write(fixture(t, "read_vendor.json"))
+			return
+		}
+		assert.Equal(t, "/v3/company/"+testRealm+"/vendor", r.URL.Path)
+		requestID = r.URL.Query().Get("requestid")
+		body = readJSON(t, r)
+		_, _ = w.Write(fixture(t, "update_vendor.json"))
+	})
+
+	updated, err := client.UpdateVendor(t.Context(), testRequestID, "91", &quickbooks.PartyDraft{
+		DisplayName: "Swift Haul LLC",
+		CompanyName: "Swift Haul LLC",
+		Is1099:      true,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, quickbooks.KindVendor, updated.Kind)
+	assert.Equal(t, "Swift Haul LLC", updated.Name)
+	assert.True(t, updated.Is1099)
+	assert.Equal(t, testRequestID, requestID)
+	assert.Equal(t, map[string]any{
+		"Id":          "91",
+		"SyncToken":   "4",
+		"sparse":      true,
+		"DisplayName": "Swift Haul LLC",
+		"CompanyName": "Swift Haul LLC",
+		"Vendor1099":  true,
+	}, body)
+}
+
+func TestUpdateVendorLeaves1099AloneWhenNotSet(t *testing.T) {
+	t.Parallel()
+
+	var body map[string]any
+	client := newAPIClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			_, _ = w.Write(fixture(t, "read_vendor.json"))
+			return
+		}
+		body = readJSON(t, r)
+		_, _ = w.Write(fixture(t, "update_vendor.json"))
+	})
+
+	_, err := client.UpdateVendor(t.Context(), testRequestID, "91", &quickbooks.PartyDraft{
+		DisplayName: "Swift Haul LLC",
+	})
+	require.NoError(t, err)
+	assert.NotContains(t, body, "Vendor1099")
+
+	_, err = client.UpdateVendor(t.Context(), testRequestID, " ", &quickbooks.PartyDraft{
+		DisplayName: "Swift Haul LLC",
+	})
+	require.ErrorIs(t, err, quickbooks.ErrTxnIDRequired)
+}
+
+func TestUpdateVendorRejectsACustomerReply(t *testing.T) {
+	t.Parallel()
+
+	client := newAPIClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write(fixture(t, "read_customer.json"))
+	})
+
+	_, err := client.UpdateVendor(t.Context(), testRequestID, "91", &quickbooks.PartyDraft{
+		DisplayName: "Swift Haul LLC",
+	})
+	require.ErrorIs(t, err, quickbooks.ErrUnexpectedPayload)
 }

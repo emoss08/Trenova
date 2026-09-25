@@ -291,3 +291,20 @@ func (c *Carrier) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (c *Carrier) SamePartyDetails(other *Carrier) bool {
+	if c == nil || other == nil {
+		return c == other
+	}
+	return c.Name == other.Name &&
+		c.Email == other.Email &&
+		c.Is1099Eligible == other.Is1099Eligible &&
+		c.AddressLine1 == other.AddressLine1 &&
+		c.City == other.City &&
+		pulid.ConvertFromPtr(c.StateID) == pulid.ConvertFromPtr(other.StateID) &&
+		c.PostalCode == other.PostalCode &&
+		c.RemitAddressLine1 == other.RemitAddressLine1 &&
+		c.RemitCity == other.RemitCity &&
+		pulid.ConvertFromPtr(c.RemitStateID) == pulid.ConvertFromPtr(other.RemitStateID) &&
+		c.RemitPostalCode == other.RemitPostalCode
+}

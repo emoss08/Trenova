@@ -1,4 +1,6 @@
 aliases:
+  AccountingConnection:
+    syncsDriverSettlements: driverSettlementsEnabledAt
   AgentDefinition:
     delegates: delegateIds
   MyAgent:

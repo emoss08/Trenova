@@ -1248,6 +1248,10 @@ type AccountingConnection {
   consecutiveFailures: Int!
   disconnectedAt: Timestamp
   """
+  When owner-operator settlements began to be sent. Absent while they are not sent; company driver pay never is.
+  """
+  driverSettlementsEnabledAt: Timestamp
+  """
   The last day the accounting system accepts postings for, end of day UTC. Absent when the books are open.
   """
   externalBooksClosedThrough: Timestamp
@@ -1296,6 +1300,8 @@ type AccountingConnection {
   Documents dated before this day are never sent. Absent until the start date step is finished.
   """
   syncStartDate: Timestamp
+  """Whether owner-operator settlements are sent as bills."""
+  syncsDriverSettlements: Boolean!
   updatedAt: Timestamp!
   version: Int!
 }
@@ -1453,6 +1459,10 @@ enum AccountingMappingTargetType {
   AccountRole
   Carrier
   Customer
+  """An owner-operator driver, mapped to a vendor."""
+  Driver
+  """A Trenova GL account that bills post to, mapped to an account."""
+  GLAccount
   """A role an item plays, such as the short-pay write-off."""
   ItemRole
   """An invoice line type."""
@@ -1586,12 +1596,28 @@ type AccountingSyncObjectState {
 
 """A kind of Trenova document sent to the accounting system."""
 enum AccountingSyncObjectType {
+  """
+  A carrier settlement, sent as a bill, or as a vendor credit when the net is negative.
+  """
+  CarrierBill
+  """The payment of a carrier settlement, sent as a bill payment."""
+  CarrierBillPayment
+  """A carrier, sent as a vendor."""
+  CarrierVendor
   """A credit memo applied to an invoice."""
   CreditApplication
   CreditMemo
   Customer
   CustomerPayment
   DebitMemo
+  """
+  An owner-operator settlement, sent as a bill, or as a vendor credit when the net is negative.
+  """
+  DriverBill
+  """The payment of an owner-operator settlement, sent as a bill payment."""
+  DriverBillPayment
+  """An owner-operator driver, sent as a 1099 vendor."""
+  DriverVendor
   Invoice
 }
 
@@ -1696,6 +1722,10 @@ enum AccountingSyncSourceEvent {
   AdjustmentCreditMemo
   """A backfill of documents dated before sync was turned on."""
   Backfill
+  CarrierSettlementPaid
+  CarrierSettlementPosted
+  CarrierSettlementVoided
+  CarrierUpdated
   CreditMemoApplied
   CreditMemoPosted
   CreditMemoUnapplied
@@ -1708,6 +1738,10 @@ enum AccountingSyncSourceEvent {
   Another record needed this one first, such as a customer an invoice is for.
   """
   DependencyOf
+  DriverSettlementPaid
+  DriverSettlementPosted
+  DriverSettlementVoided
+  DriverUpdated
   InvoicePosted
   """The hourly check found a posted document no enqueue point had queued."""
   SafetyNet
@@ -9508,6 +9542,10 @@ input EnableAccountingSyncInput {
   Also queue documents dated from the start date up to now, which were posted before sync was on.
   """
   backfill: Boolean!
+  """
+  Also send owner-operator settlements as bills. Company driver pay is never sent.
+  """
+  driverSettlements: Boolean = false
   integrationType: AccountingSystem!
   """Documents dated before this day are never sent."""
   startDate: Timestamp!
@@ -13892,6 +13930,8 @@ type Mutation {
   unpinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   unresolveShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
   updateAIRetrievalSettings(input: AIRetrievalSettingsPatchInput!): AIRetrievalStatus!
+  """Change how documents are sent once setup is complete."""
+  updateAccountingSyncSettings(input: UpdateAccountingSyncSettingsInput!): AccountingConnection!
   updateAgentControl(input: AgentControlInput!): AgentControl!
   updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
@@ -21364,6 +21404,18 @@ input UpcomingWorkerPTOInput {
   timezone: String
   type: PTOType
   workerId: ID
+}
+
+input UpdateAccountingSyncSettingsInput {
+  """
+  Send posted documents on their own. When off, each waits for a person to release it; records already held stay held.
+  """
+  autoSync: Boolean!
+  """
+  Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones.
+  """
+  driverSettlements: Boolean!
+  integrationType: AccountingSystem!
 }
 
 input UpdateAgentEvalCaseInput {

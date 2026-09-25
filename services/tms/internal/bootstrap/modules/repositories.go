@@ -29,10 +29,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentscorecardrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentsubjectrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agenttooltrustrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiauditrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aifeedbackrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiproviderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/airetrievalrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiauditrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiusagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
@@ -457,6 +457,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	accountingsyncrepository.NewMappingRepository,
 	accountingsyncrepository.NewSyncRecordRepository,
 	accountingsyncrepository.NewBackfillRepository,
+	accountingsyncrepository.NewPayablesRepository,
 	accountsreceivablerepository.New,
 	accountsreceivablerepository.NewAnalytics,
 	accounttyperepository.New,

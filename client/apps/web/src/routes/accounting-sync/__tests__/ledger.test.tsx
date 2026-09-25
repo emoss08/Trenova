@@ -84,6 +84,8 @@ const connection: AccountingConnection = {
   syncStartDate: 1_779_000_000,
   syncEnabledAt: 1_780_000_000,
   autoSync: true,
+  driverSettlementsEnabledAt: null,
+  syncsDriverSettlements: false,
   pausedAt: null,
   pausedBy: null,
   pausedReason: "",
@@ -463,6 +465,32 @@ describe("LedgerRecordPanel", () => {
     expect(screen.getByRole("link", { name: "INV-1042" })).toHaveAttribute(
       "href",
       expect.stringContaining("inv_1"),
+    );
+  });
+
+  it("links a settlement's bill and payment records to the settlement", async () => {
+    renderPanel(
+      record({
+        objectType: "CarrierBillPayment",
+        objectId: "carstl_1",
+        objectNumber: "CS-1042",
+      }),
+    );
+
+    expect(await screen.findByRole("link", { name: "CS-1042" })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/carrier-settlements\/settlements\?.*carstl_1/),
+    );
+  });
+
+  it("links an owner-operator vendor record to the driver", async () => {
+    renderPanel(
+      record({ objectType: "DriverVendor", objectId: "wrk_1", objectNumber: "Dana Ruiz" }),
+    );
+
+    expect(await screen.findByRole("link", { name: "Dana Ruiz" })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/hr\/workers\?.*wrk_1/),
     );
   });
 

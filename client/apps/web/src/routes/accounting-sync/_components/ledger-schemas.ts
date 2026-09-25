@@ -8,7 +8,38 @@ export const ACCOUNTING_SYNC_OBJECT_TYPES = [
   "DebitMemo",
   "CustomerPayment",
   "CreditApplication",
+  "CarrierVendor",
+  "DriverVendor",
+  "CarrierBill",
+  "CarrierBillPayment",
+  "DriverBill",
+  "DriverBillPayment",
 ] as const satisfies readonly AccountingSyncObjectType[];
+
+export const ACCOUNTING_BACKFILL_OBJECT_TYPES = [
+  "Invoice",
+  "DebitMemo",
+  "CreditMemo",
+  "CustomerPayment",
+  "CreditApplication",
+  "CarrierBill",
+  "CarrierBillPayment",
+  "DriverBill",
+  "DriverBillPayment",
+] as const satisfies readonly AccountingSyncObjectType[];
+
+const DRIVER_BACKFILL_OBJECT_TYPES: readonly AccountingSyncObjectType[] = [
+  "DriverBill",
+  "DriverBillPayment",
+];
+
+export function backfillObjectTypes(
+  sendsDriverSettlements: boolean,
+): (typeof ACCOUNTING_BACKFILL_OBJECT_TYPES)[number][] {
+  return ACCOUNTING_BACKFILL_OBJECT_TYPES.filter(
+    (type) => sendsDriverSettlements || !DRIVER_BACKFILL_OBJECT_TYPES.includes(type),
+  );
+}
 
 const MAX_REASON_LENGTH = 500;
 
@@ -39,7 +70,7 @@ export function backfillSchema(latestAllowed: number) {
         .int()
         .positive()
         .max(latestAllowed, { error: "The range cannot end in the future" }),
-      objectTypes: z.array(z.enum(ACCOUNTING_SYNC_OBJECT_TYPES)),
+      objectTypes: z.array(z.enum(ACCOUNTING_BACKFILL_OBJECT_TYPES)),
     })
     .refine((value) => value.rangeStart <= value.rangeEnd, {
       error: "The range must end on or after the day it starts",

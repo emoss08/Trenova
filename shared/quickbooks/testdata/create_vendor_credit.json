@@ -1,0 +1,10 @@
+{
+  "VendorCredit": {
+    "Id": "211",
+    "DocNumber": "CS-1042",
+    "SyncToken": "0",
+    "TotalAmt": 150,
+    "VendorRef": { "value": "91" }
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

@@ -3,6 +3,8 @@ package carriersettlementservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -40,6 +42,7 @@ type Params struct {
 	Generator         seqgen.Generator
 	AuditService      serviceports.AuditService
 	Realtime          serviceports.RealtimeService
+	Sync              serviceports.AccountingSyncEnqueuer `optional:"true"`
 }
 
 type Service struct {
@@ -61,6 +64,7 @@ type Service struct {
 	generator         seqgen.Generator
 	auditService      serviceports.AuditService
 	realtime          serviceports.RealtimeService
+	sync              serviceports.AccountingSyncEnqueuer
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -83,7 +87,33 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		generator:         p.Generator,
 		auditService:      p.AuditService,
 		realtime:          p.Realtime,
+		sync:              p.Sync,
 	}
+}
+
+func (s *Service) queueSync(
+	ctx context.Context,
+	entity *carriersettlement.CarrierSettlement,
+	objectType accountingsync.SyncObjectType,
+	operation accountingsync.SyncOperation,
+	source accountingsync.SyncSourceEvent,
+) error {
+	return serviceports.EnqueueAccountingSync(
+		ctx,
+		s.sync,
+		serviceports.SettlementSync(&serviceports.SettlementSyncRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			ObjectType:  objectType,
+			ObjectID:    entity.ID,
+			Number:      entity.SettlementNumber,
+			Operation:   operation,
+			SourceEvent: source,
+			PostedAt:    entity.PostedAt,
+		}),
+	)
 }
 
 func requireActor(actor *serviceports.RequestActor, operation string) error {

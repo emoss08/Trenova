@@ -3,6 +3,8 @@ package carriersettlementservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -240,8 +242,19 @@ func (s *Service) MarkPaid(
 		entity.PaymentMethod = paymentMethod
 		entity.PaymentReference = paymentReference
 		entity.PaidJournalBatchID = batchID
-		updated, txErr = s.settlementRepo.Update(txCtx, entity)
-		return txErr
+		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		if updated.NetPayableMinor == 0 {
+			return nil
+		}
+		return s.queueSync(
+			txCtx,
+			updated,
+			accountingsync.SyncObjectCarrierBillPay,
+			accountingsync.SyncOperationCreate,
+			accountingsync.SyncSourceCarrierSettlementPaid,
+		)
 	})
 	if err != nil {
 		return nil, err
@@ -284,7 +297,8 @@ func (s *Service) Void(
 		}
 		previous = *entity
 
-		if entity.Status == carriersettlement.StatusPosted {
+		wasPosted := entity.Status == carriersettlement.StatusPosted
+		if wasPosted {
 			if txErr = s.postVoidReversal(txCtx, entity, actor); txErr != nil {
 				return txErr
 			}
@@ -299,8 +313,19 @@ func (s *Service) Void(
 		entity.VoidedByID = actor.UserID
 		entity.VoidedAt = &now
 		entity.VoidReason = reason
-		updated, txErr = s.settlementRepo.Update(txCtx, entity)
-		return txErr
+		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		if !wasPosted {
+			return nil
+		}
+		return s.queueSync(
+			txCtx,
+			updated,
+			accountingsync.SyncObjectCarrierBill,
+			accountingsync.SyncOperationVoid,
+			accountingsync.SyncSourceCarrierSettlementVoided,
+		)
 	})
 	if err != nil {
 		return nil, err
