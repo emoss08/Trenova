@@ -6,6 +6,287 @@ schema {
 directive @goField(autoBindGetterHaser: Boolean, batch: Boolean, forceGenerate: Boolean, forceResolver: Boolean, name: String, omittable: Boolean, type: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
 """
+A tenant's AI audit chain: where it runs, how far it is sealed, and what its
+last verification found.
+"""
+type AIAuditChainStatus {
+  activeKeyId: String
+  detail: String
+  failedSeq: Int
+  firstSeq: Int!
+  lastHash: String!
+  lastSeq: Int!
+  lastVerificationStatus: AIAuditVerificationStatus
+  lastVerifiedAt: Timestamp
+  lastVerifiedSeq: Int!
+  sealedThroughSeq: Int!
+  """
+  False when no chain key is configured and rows are linked with plain SHA-256.
+  """
+  signed: Boolean!
+  """Set when a verification was just started."""
+  verifying: Boolean!
+}
+
+"""A link to an export's file, good for a minute."""
+type AIAuditDownload {
+  expiresAt: Timestamp!
+  fileName: String!
+  sha256: String!
+  url: String!
+}
+
+"""
+One thing an agent did, decided or had decided for it: a run or turn
+beginning or ending, a model call, a tool call, a refusal, a proposal filed,
+decided, executed or expired, or a task handed to another agent.
+
+Rows are written once, by the audit projector, from what the runtime already
+records, and never changed. Each tenant's rows form a hash chain in seq
+order, signed with a key held outside the database, so a changed or removed
+row is found when the chain is verified.
+"""
+type AIAuditEvent {
+  agent: AgentDefinition
+  agentDefinitionId: ID
+  agentDefinitionVersion: Int
+  agentName: String
+  """
+  The resource the tool acts on and the sensitivity of each argument path,
+  as recorded: why a value is withheld from a reader.
+  """
+  argumentSensitivity: JSON
+  """
+  The call's arguments as recorded, with every value above the reader's
+  sensitivity on the tool's resource withheld. Confidential values were never
+  recorded.
+  """
+  arguments: JSON
+  argumentsTruncated: Boolean!
+  attempt: Int
+  """
+  The audit log rows written for the same record, by the same principal,
+  inside the event's time window. Matched by time rather than by a shared
+  key, and empty for a reader who may not read the audit log.
+  """
+  auditEntries: [AuditEntry!]!
+  businessUnitId: ID!
+  cacheReadTokens: Int!
+  cacheWriteTokens: Int!
+  callId: String
+  costUsd: Decimal
+  createdAt: Timestamp!
+  decidedBy: User
+  """
+  The person who decided a proposal, as their name was when the event was written.
+  """
+  decidedByUserId: ID
+  decidedByUserName: String
+  decisionId: ID
+  delegateCallId: String
+  egressClass: String
+  entityId: String
+  entityType: String
+  externalContent: Boolean!
+  failover: Boolean!
+  hash: String!
+  hashKeyId: String
+  hashVersion: Int!
+  heldBy: [String!]!
+  id: ID!
+  inputTokens: Int!
+  kind: AIAuditEventKind!
+  latencyMs: Int
+  model: String
+  occurredAt: Timestamp!
+  onBehalfOf: User
+  """
+  The person the work was for, as their name was when the event was written.
+  """
+  onBehalfOfUserId: ID
+  onBehalfOfUserName: String
+  organizationId: ID!
+  outcome: AIAuditEventOutcome!
+  outputTokens: Int!
+  ownerId: ID
+  ownerKind: AgentRunEventOwnerKind
+  parentOwnerId: ID
+  planId: ID
+  prevHash: String!
+  principalId: String
+  principalType: AIAuditPrincipalType!
+  proposalId: ID
+  providerId: ID
+  providerKind: String
+  purpose: AIAuditPurpose!
+  reason: String
+  reasoningTokens: Int!
+  """
+  Provenance was worked out from rows written before the runtime recorded it directly.
+  """
+  reconstructed: Boolean!
+  """
+  When the event was written to the trail, usually within a minute of occurredAt.
+  """
+  recordedAt: Timestamp!
+  redactedPaths: [String!]!
+  resultSummary: String
+  runId: ID
+  """The row's place in its tenant's chain."""
+  seq: Int!
+  simulated: Boolean!
+  """The source row and moment the event was projected from."""
+  sourceKey: String!
+  spanId: String
+  stepKey: String
+  taint: JSON
+  tainted: Boolean!
+  threadId: ID
+  tier: String
+  tierSource: String
+  toolEffect: String
+  toolName: String
+  traceId: String
+  """Where the trace opens in the tracing backend, when one is configured."""
+  traceUrl: String
+  turnId: ID
+  versionAfter: Int
+  versionBefore: Int
+  windowEnd: Timestamp
+  windowStart: Timestamp
+}
+
+type AIAuditEventConnection {
+  edges: [AIAuditEventEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AIAuditEventEdge {
+  cursor: String!
+  node: AIAuditEvent!
+}
+
+"""What an AI audit event records."""
+enum AIAuditEventKind {
+  DelegationEnded
+  DelegationStarted
+  ModelCall
+  ProposalDecided
+  ProposalExecuted
+  ProposalExecutionFailed
+  ProposalExpired
+  ProposalFiled
+  ProposalSimulated
+  RunEnded
+  RunStarted
+  ToolCall
+  ToolRefused
+}
+
+"""How the thing an AI audit event records turned out."""
+enum AIAuditEventOutcome {
+  Accepted
+  Completed
+  Declined
+  Denied
+  Exhausted
+  Expired
+  Failed
+  Filed
+  Modified
+  Proposed
+  Ran
+  Refused
+  Rejected
+  Simulated
+  Started
+  Stopped
+  Succeeded
+  Unknown
+}
+
+"""A request to write the trail to a file, and the file."""
+type AIAuditExport {
+  artifactExpiresAt: Timestamp
+  businessUnitId: ID!
+  byteSize: Int!
+  """
+  Nothing was filtered out and every seq between the first and last row is in the file.
+  """
+  chainComplete: Boolean!
+  chainFirstSeq: Int
+  chainKeyId: String
+  chainLastSeq: Int
+  completedAt: Timestamp
+  createdAt: Timestamp!
+  """
+  Whether the reader may download the file now: it is theirs and has not expired.
+  """
+  downloadable: Boolean!
+  errorMessage: String
+  filters: JSON
+  format: AIAuditExportFormat!
+  id: ID!
+  organizationId: ID!
+  rangeFrom: Timestamp!
+  rangeTo: Timestamp!
+  requestedBy: User
+  requestedByUserId: ID!
+  rowCount: Int!
+  sha256: String
+  snapshotSeq: Int!
+  startedAt: Timestamp
+  status: AIAuditExportStatus!
+  updatedAt: Timestamp!
+}
+
+type AIAuditExportConnection {
+  edges: [AIAuditExportEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AIAuditExportEdge {
+  cursor: String!
+  node: AIAuditExport!
+}
+
+enum AIAuditExportFormat {
+  CSV
+  JSON
+}
+
+enum AIAuditExportStatus {
+  Expired
+  Failed
+  Pending
+  Running
+  Succeeded
+}
+
+"""Who an AI audit event's action was taken as."""
+enum AIAuditPrincipalType {
+  Agent
+  System
+  User
+}
+
+"""
+Live work, or an evaluation replaying a run against the agent as it is now.
+"""
+enum AIAuditPurpose {
+  Evaluation
+  Live
+}
+
+enum AIAuditVerificationStatus {
+  KeyMissing
+  Mismatch
+  Verified
+}
+
+"""
 How an embedding endpoint is told whether a text is a stored document or a
 search query. None sends both the same way; VoyageInputType sends Voyage's
 input_type field; NomicPrefix adds the search_document and search_query
@@ -12594,6 +12875,7 @@ type Mutation {
   addOrderCharge(allocations: [ChargeAllocationInput!], amount: Decimal!, description: String!, orderId: ID!): Order!
   adjustEscrowAccount(input: AdjustEscrowAccountInput!): EscrowAccount!
   adjustWorkerPtoBalance(input: AdjustWorkerPTOBalanceInput!): WorkerPTOLedgerEntry!
+  aiAuditExportDownload(id: ID!): AIAuditDownload!
   """
   Opens a new Draft for the same quarter from a Filed return, with the amendment
   number incremented. The filed return is left untouched.
@@ -13051,6 +13333,7 @@ type Mutation {
   Replays a recorded run against its agent as it is now; every write is simulated.
   """
   replayAgentRun(runId: ID!): AgentEvaluation!
+  requestAIAuditExport(input: RequestAIAuditExportInput!): AIAuditExport!
   requestLeaveCertification(caseId: ID!, dueAt: Timestamp): WorkerLeaveCase!
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
   rescindDisciplinaryAction(input: RescindDisciplinaryActionInput!): WorkerDisciplinaryAction!
@@ -13280,6 +13563,7 @@ type Mutation {
   Rates are global, so this changes what every organization's return owes.
   """
   upsertIftaTaxRates(input: [IFTATaxRateInput!]!): [IFTATaxRate!]!
+  verifyAIAuditChain: AIAuditChainStatus!
   verifyCarrierEquipment(input: VerifyCarrierEquipmentInput!): CarrierEquipmentVerification!
   verifyWorkerCredential(id: ID!, version: Int): WorkerCredential!
   vetCarrier(carrierId: ID!, depth: CarrierIntelDepth, force: Boolean): CarrierIntelFetchResult!
@@ -15111,6 +15395,11 @@ type Query {
   agentWorstRatedAnswerConnection(agentDefinitionId: ID, input: DataTableConnectionInput!, window: Int = 30): AgentWorstRatedAnswerConnection!
   """The answers people liked least, a page at a time."""
   agentWorstRatedAnswers(input: AgentWorstRatedAnswersInput!): AgentWorstRatedAnswerConnection! @deprecated(reason: "Use agentWorstRatedAnswerConnection, which takes the data table's filters and sort.")
+  aiAuditChainStatus: AIAuditChainStatus!
+  aiAuditEvent(id: ID!): AIAuditEvent
+  aiAuditEvents(input: DataTableConnectionInput!): AIAuditEventConnection!
+  aiAuditExport(id: ID!): AIAuditExport
+  aiAuditExports(input: DataTableConnectionInput!): AIAuditExportConnection!
   """Everyone's ratings, for administrators."""
   aiFeedback(input: DataTableConnectionInput!): AIFeedbackConnection!
   aiProvider(id: ID!): AIProvider
@@ -16800,6 +17089,16 @@ type ReportView {
   shared: Boolean!
   updatedAt: Timestamp!
   version: Int!
+}
+
+input RequestAIAuditExportInput {
+  fieldFilters: [FieldFilterInput!]
+  filterGroups: [FilterGroupInput!]
+  format: AIAuditExportFormat!
+  from: Timestamp!
+  query: String
+  sort: [SortFieldInput!]
+  to: Timestamp!
 }
 
 input RequestMyPtoInput {
