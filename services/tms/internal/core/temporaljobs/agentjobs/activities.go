@@ -397,6 +397,7 @@ func (a *Activities) recordTrajectory(
 		serviceports.RecordTrajectory(writer, ctx, serviceports.StreamEvent{
 			Event: event.Event,
 			Data:  event.Data,
+			At:    event.At,
 		})
 	}
 	serviceports.FlushTrajectory(writer, ctx)
