@@ -43,6 +43,10 @@ type scheduleWriter interface {
 		ctx context.Context,
 		req *reporting.GetDefinitionRequest,
 	) (*report.ReportDefinition, error)
+	PreviewSchedule(
+		ctx context.Context,
+		req *reporting.SaveScheduleRequest,
+	) (*reporting.SchedulePreview, error)
 }
 
 type scheduleReportTool struct {
@@ -193,13 +197,27 @@ func (t *scheduleReportTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	request, err := t.request(params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.schedules.CreateSchedule(ctx, request)
+
+	return err
+}
+
+// request is the schedule the preview shows and the write creates.
+func (t *scheduleReportTool) request(
+	params serviceports.ToolExecuteParams,
+) (*reporting.SaveScheduleRequest, error) {
+	if err := guardExecute(t, params); err != nil {
+		return nil, err
 	}
 
 	definitionID, err := requirePulid(params.Params, "definitionId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	attach := true
@@ -207,7 +225,7 @@ func (t *scheduleReportTool) Execute(
 		attach = raw
 	}
 
-	_, err = t.schedules.CreateSchedule(ctx, &reporting.SaveScheduleRequest{
+	return &reporting.SaveScheduleRequest{
 		Request:         reporting.Request{TenantInfo: tenantFrom(params)},
 		DefinitionID:    definitionID,
 		CronExpression:  optionalString(params.Params, "cronExpression"),
@@ -216,9 +234,7 @@ func (t *scheduleReportTool) Execute(
 		EmailRecipients: stringSliceParam(params.Params, "emailRecipients"),
 		EmailAttach:     attach,
 		Enabled:         true,
-	})
-
-	return err
+	}, nil
 }
 
 func (t *scheduleReportTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
