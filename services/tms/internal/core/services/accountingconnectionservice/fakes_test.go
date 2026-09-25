@@ -573,3 +573,20 @@ func (f *fakeWatchtower) get(sourceID string) (projection, bool) {
 	item, ok := f.items[sourceID]
 	return item, ok
 }
+
+type fakeRefresher struct {
+	mu        sync.Mutex
+	requested []pulid.ID
+	err       error
+}
+
+func (f *fakeRefresher) RequestReferenceRefresh(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	connectionID pulid.ID,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.requested = append(f.requested, connectionID)
+	return f.err
+}

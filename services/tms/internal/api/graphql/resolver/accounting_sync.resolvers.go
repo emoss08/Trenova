@@ -7,14 +7,18 @@ package resolver
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 func (r *accountingConnectionResolver) LastErrorCategory(ctx context.Context, obj *accountingsync.AccountingConnection) (*accountingsync.ErrorCategory, error) {
@@ -24,6 +28,51 @@ func (r *accountingConnectionResolver) LastErrorCategory(ctx context.Context, ob
 	category := obj.LastErrorCategory
 
 	return &category, nil
+}
+
+func (r *accountingMappingResolver) TrenovaObjectID(ctx context.Context, obj *accountingsync.AccountingMapping) (*string, error) {
+	return idPtr(obj.TrenovaObjectID), nil
+}
+
+func (r *accountingMappingResolver) Source(ctx context.Context, obj *accountingsync.AccountingMapping) (*accountingsync.MappingSource, error) {
+	if obj.Source == "" {
+		return nil, nil
+	}
+	source := obj.Source
+
+	return &source, nil
+}
+
+func (r *accountingMappingResolver) Required(ctx context.Context, obj *accountingsync.AccountingMapping) (bool, error) {
+	return obj.IsRequired(), nil
+}
+
+func (r *accountingMappingResolver) Prechecked(ctx context.Context, obj *accountingsync.AccountingMapping) (bool, error) {
+	return obj.Prechecked(), nil
+}
+
+func (r *accountingMappingResolver) Candidates(ctx context.Context, obj *accountingsync.AccountingMapping) ([]*accountingsync.MappingCandidate, error) {
+	return sliceutils.Pointers(obj.Signals.Candidates), nil
+}
+
+func (r *accountingMappingResolver) Matchers(ctx context.Context, obj *accountingsync.AccountingMapping) ([]*accountingsync.MatcherSignal, error) {
+	return sliceutils.Pointers(obj.Signals.Matchers), nil
+}
+
+func (r *accountingMappingResolver) ConfirmedBy(ctx context.Context, obj *accountingsync.AccountingMapping) (*tenant.User, error) {
+	if obj.ConfirmedBy != nil {
+		return obj.ConfirmedBy, nil
+	}
+
+	return loadUser(ctx, obj.ConfirmedByID)
+}
+
+func (r *accountingReferenceObjectResolver) Label(ctx context.Context, obj *accountingsync.AccountingReferenceObject) (string, error) {
+	return obj.Label(), nil
+}
+
+func (r *accountingReferenceObjectResolver) Usable(ctx context.Context, obj *accountingsync.AccountingReferenceObject) (bool, error) {
+	return obj.Usable(), nil
 }
 
 func (r *mutationResolver) StartAccountingAuthorization(ctx context.Context, integrationType integration.Type) (*services.AccountingAuthorizationStart, error) {
@@ -95,6 +144,95 @@ func (r *mutationResolver) CheckAccountingConnection(ctx context.Context, integr
 	return r.accountingConnections.CheckHealth(ctx, tenant, status.Connection.ID)
 }
 
+func (r *mutationResolver) ConfirmAccountingMappings(ctx context.Context, ids []string) ([]*accountingsync.AccountingMapping, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	mappingIDs, err := parseIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingMappings.Confirm(ctx, &services.ConfirmAccountingMappingsRequest{
+		TenantInfo: tenantInfo(authCtx),
+		UserID:     authCtx.UserID,
+		IDs:        mappingIDs,
+	})
+}
+
+func (r *mutationResolver) RejectAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error) {
+	return r.accountingMappingAction(ctx, id, r.accountingMappings.Reject)
+}
+
+func (r *mutationResolver) SetAccountingMapping(ctx context.Context, input gqlmodel.SetAccountingMappingInput) (*accountingsync.AccountingMapping, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	mappingID, err := pulid.MustParse(input.MappingID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingMappings.Set(ctx, &services.SetAccountingMappingRequest{
+		TenantInfo: tenantInfo(authCtx),
+		UserID:     authCtx.UserID,
+		MappingID:  mappingID,
+		ExternalID: strings.TrimSpace(input.ExternalID),
+		Source:     accountingsync.MappingSourceManual,
+		Reason:     strings.TrimSpace(stringValue(input.Reason)),
+	})
+}
+
+func (r *mutationResolver) ClearAccountingMapping(ctx context.Context, id string) (*accountingsync.AccountingMapping, error) {
+	return r.accountingMappingAction(ctx, id, r.accountingMappings.Clear)
+}
+
+func (r *mutationResolver) CreateAccountingReferenceRecord(ctx context.Context, input gqlmodel.CreateAccountingReferenceRecordInput) (*accountingsync.AccountingMapping, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	mappingID, err := pulid.MustParse(input.MappingID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingMappings.CreateReferenceRecord(ctx, &services.CreateAccountingReferenceRecordRequest{
+		TenantInfo: tenantInfo(authCtx),
+		UserID:     authCtx.UserID,
+		MappingID:  mappingID,
+		Name:       strings.TrimSpace(stringValue(input.Name)),
+	})
+}
+
+func (r *mutationResolver) RefreshAccountingReferenceData(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingMappings.RequestRefresh(ctx, &services.AccountingSetupRequest{
+		TenantInfo:      tenantInfo(authCtx),
+		UserID:          authCtx.UserID,
+		IntegrationType: integrationType,
+	})
+}
+
+func (r *mutationResolver) CompleteAccountingSetup(ctx context.Context, integrationType integration.Type) (*accountingsync.AccountingConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingMappings.CompleteSetup(ctx, &services.AccountingSetupRequest{
+		TenantInfo:      tenantInfo(authCtx),
+		UserID:          authCtx.UserID,
+		IntegrationType: integrationType,
+	})
+}
+
 func (r *queryResolver) AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncStatus, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpRead)
 	if err != nil {
@@ -104,8 +242,75 @@ func (r *queryResolver) AccountingSyncStatus(ctx context.Context, integrationTyp
 	return r.accountingConnections.Status(ctx, tenantInfo(authCtx), integrationType)
 }
 
+func (r *queryResolver) AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*services.AccountingMappingSummary, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingMappings.Summary(ctx, tenantInfo(authCtx), integrationType)
+}
+
+func (r *queryResolver) AccountingMappings(ctx context.Context, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingMappingFilterInput) (*gqlmodel.AccountingMappingConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	page, err := entityCursorPageFromGraphQL(ctx, gqlCursorPageInput{First: first, After: after})
+	if err != nil {
+		return nil, err
+	}
+
+	req := &services.ListAccountingMappingsRequest{
+		TenantInfo:      tenantInfo(authCtx),
+		IntegrationType: integrationType,
+		Cursor:          page.Cursor,
+	}
+	if filter != nil {
+		req.TargetTypes = filter.TargetTypes
+		req.States = filter.States
+		req.RequiredOnly = boolValue(filter.RequiredOnly)
+		req.Search = strings.TrimSpace(stringValue(filter.Search))
+	}
+
+	result, err := r.accountingMappings.ListMappings(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return accountingMappingConnectionToModel(result)
+}
+
+func (r *queryResolver) AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingsync.AccountingReferenceObject, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingMappings.SearchReference(ctx, &services.SearchAccountingReferenceRequest{
+		TenantInfo:      tenantInfo(authCtx),
+		IntegrationType: integrationType,
+		Kind:            kind,
+		Query:           strings.TrimSpace(stringValue(query)),
+		UsableOnly:      boolValue(usableOnly),
+		Limit:           intValue(limit),
+	})
+}
+
 func (r *Resolver) AccountingConnection() generated.AccountingConnectionResolver {
 	return &accountingConnectionResolver{r}
 }
 
-type accountingConnectionResolver struct{ *Resolver }
+func (r *Resolver) AccountingMapping() generated.AccountingMappingResolver {
+	return &accountingMappingResolver{r}
+}
+
+func (r *Resolver) AccountingReferenceObject() generated.AccountingReferenceObjectResolver {
+	return &accountingReferenceObjectResolver{r}
+}
+
+type (
+	accountingConnectionResolver      struct{ *Resolver }
+	accountingMappingResolver         struct{ *Resolver }
+	accountingReferenceObjectResolver struct{ *Resolver }
+)

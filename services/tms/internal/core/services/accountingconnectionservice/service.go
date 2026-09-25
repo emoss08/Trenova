@@ -53,9 +53,10 @@ type Params struct {
 	Connectors   services.AccountingConnectorRegistry
 	Encryption   *encryptionservice.Service
 	AuditService services.AuditService
-	Realtime     services.RealtimeService     `optional:"true"`
-	Watchtower   services.WatchtowerProjector `optional:"true"`
-	Publisher    services.AgentEventPublisher `optional:"true"`
+	Realtime     services.RealtimeService              `optional:"true"`
+	Watchtower   services.WatchtowerProjector          `optional:"true"`
+	Publisher    services.AgentEventPublisher          `optional:"true"`
+	Refresher    services.AccountingReferenceRefresher `optional:"true"`
 }
 
 type Service struct {
@@ -70,6 +71,7 @@ type Service struct {
 	realtime     services.RealtimeService
 	watchtower   services.WatchtowerProjector
 	publisher    services.AgentEventPublisher
+	refresher    services.AccountingReferenceRefresher
 }
 
 var _ services.AccountingConnectionService = (*Service)(nil)
@@ -88,6 +90,7 @@ func New(p Params) *Service {
 		realtime:     p.Realtime,
 		watchtower:   p.Watchtower,
 		publisher:    p.Publisher,
+		refresher:    p.Refresher,
 	}
 }
 
@@ -258,8 +261,25 @@ func (s *Service) CompleteAuthorization(
 	)
 	s.afterHealthChange(ctx, accountingsync.ConnectionStatusDisconnected, conn, now)
 	s.publishInvalidation(ctx, conn, req.UserID)
+	s.requestReferenceRefresh(ctx, conn)
 
 	return conn, nil
+}
+
+func (s *Service) requestReferenceRefresh(
+	ctx context.Context,
+	conn *accountingsync.AccountingConnection,
+) {
+	if s.refresher == nil {
+		return
+	}
+	if err := s.refresher.RequestReferenceRefresh(ctx, pagination.TenantInfo{
+		OrgID: conn.OrganizationID,
+		BuID:  conn.BusinessUnitID,
+	}, conn.ID); err != nil {
+		s.l.Warn("could not start the reference data refresh after connecting",
+			zap.String("connectionId", conn.ID.String()), zap.Error(err))
+	}
 }
 
 func (s *Service) takeState(
@@ -647,6 +667,108 @@ func (s *Service) CheckHealth(
 
 	s.afterHealthChange(ctx, outcome.before, conn, now)
 	return conn, nil
+}
+
+func (s *Service) Session(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	connectionID pulid.ID,
+) (*services.AccountingSession, error) {
+	current, err := s.connections.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{
+		TenantInfo: tenantInfo,
+		ID:         connectionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	connector, err := s.connector(current.IntegrationType)
+	if err != nil {
+		return nil, err
+	}
+	provider := accountingsync.ProviderName(current.IntegrationType)
+	if !current.IsActive() {
+		return nil, errNotConnected(provider)
+	}
+
+	now := timeutils.NowUnix()
+	outcome, err := s.freshAccessToken(ctx, connector, tenantInfo, connectionID, now)
+	if err != nil {
+		return nil, err
+	}
+	if outcome.failure != nil || !outcome.conn.IsActive() {
+		s.afterHealthChange(ctx, outcome.before, outcome.conn, now)
+		return nil, errortypes.NewBusinessError(
+			"{0} did not accept Trenova's authorization: {1}",
+			provider,
+			outcome.conn.AgentErrorSummary(),
+		).WithInternal(outcome.failure)
+	}
+
+	return &services.AccountingSession{
+		Connection:  outcome.conn,
+		AccessToken: outcome.accessToken,
+		Connector:   connector,
+	}, nil
+}
+
+func (s *Service) ReportCallFailure(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	connectionID pulid.ID,
+	cause error,
+) accountingsync.ErrorCategory {
+	current, err := s.connections.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{
+		TenantInfo: tenantInfo,
+		ID:         connectionID,
+	})
+	if err != nil {
+		s.l.Warn("could not load the connection to record a failed call", zap.Error(err))
+		return accountingsync.ErrorCategoryUnknown
+	}
+	connector, err := s.connector(current.IntegrationType)
+	if err != nil {
+		return accountingsync.ErrorCategoryConfiguration
+	}
+
+	category := connector.ClassifyError(cause)
+	if category != accountingsync.ErrorCategoryUnauthorized &&
+		category != accountingsync.ErrorCategoryRevoked {
+		return category
+	}
+
+	now := timeutils.NowUnix()
+	var conn *accountingsync.AccountingConnection
+	txErr := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		locked, lockErr := s.connections.LockWithTokens(
+			txCtx,
+			repositories.GetAccountingConnectionByIDRequest{
+				TenantInfo: tenantInfo,
+				ID:         connectionID,
+			},
+		)
+		if lockErr != nil {
+			return lockErr
+		}
+		conn = locked
+		if !locked.IsActive() {
+			return nil
+		}
+		return s.recordFailure(txCtx, locked, category, cause, now)
+	})
+	if txErr != nil {
+		s.l.Warn("could not record a failed call on the connection", zap.Error(txErr))
+		return category
+	}
+
+	s.afterHealthChange(ctx, current.Status, conn, now)
+	return category
+}
+
+func errNotConnected(provider string) error {
+	return errortypes.NewBusinessError(
+		"{0} is not connected. A person must connect it from the integrations page.",
+		provider,
+	)
 }
 
 func (s *Service) CheckDue(

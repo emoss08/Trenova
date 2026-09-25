@@ -10,6 +10,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
@@ -40,6 +41,8 @@ type ResolverRoot interface {
 	AIProvider() AIProviderResolver
 	AccessorialCharge() AccessorialChargeResolver
 	AccountingConnection() AccountingConnectionResolver
+	AccountingMapping() AccountingMappingResolver
+	AccountingReferenceObject() AccountingReferenceObjectResolver
 	AgentDefinition() AgentDefinitionResolver
 	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
@@ -769,10 +772,102 @@ type ComplexityRoot struct {
 		LastFailureAt                 func(childComplexity int) int
 		LastSuccessAt                 func(childComplexity int) int
 		LastWebhookAt                 func(childComplexity int) int
+		ReferenceRefreshError         func(childComplexity int) int
+		ReferenceRefreshStartedAt     func(childComplexity int) int
+		ReferenceRefreshedAt          func(childComplexity int) int
 		RefreshTokenAbsoluteExpiresAt func(childComplexity int) int
+		SetupStep                     func(childComplexity int) int
 		Status                        func(childComplexity int) int
 		UpdatedAt                     func(childComplexity int) int
 		Version                       func(childComplexity int) int
+	}
+
+	AccountingMapping struct {
+		Candidates      func(childComplexity int) int
+		Confidence      func(childComplexity int) int
+		ConfirmedAt     func(childComplexity int) int
+		ConfirmedBy     func(childComplexity int) int
+		CreatedAt       func(childComplexity int) int
+		ExternalID      func(childComplexity int) int
+		ExternalName    func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Matchers        func(childComplexity int) int
+		Prechecked      func(childComplexity int) int
+		ProviderKind    func(childComplexity int) int
+		Reason          func(childComplexity int) int
+		Required        func(childComplexity int) int
+		Source          func(childComplexity int) int
+		State           func(childComplexity int) int
+		TargetLabel     func(childComplexity int) int
+		TargetType      func(childComplexity int) int
+		TrenovaKey      func(childComplexity int) int
+		TrenovaObjectID func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+		Version         func(childComplexity int) int
+	}
+
+	AccountingMappingCandidate struct {
+		ExternalID func(childComplexity int) int
+		Name       func(childComplexity int) int
+		Reason     func(childComplexity int) int
+		Score      func(childComplexity int) int
+	}
+
+	AccountingMappingConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	AccountingMappingEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AccountingMappingGroup struct {
+		Confirmed  func(childComplexity int) int
+		Proposed   func(childComplexity int) int
+		TargetType func(childComplexity int) int
+		Unmatched  func(childComplexity int) int
+	}
+
+	AccountingMappingMatcher struct {
+		Matcher func(childComplexity int) int
+		Score   func(childComplexity int) int
+	}
+
+	AccountingMappingSummary struct {
+		CanCompleteSetup  func(childComplexity int) int
+		Connection        func(childComplexity int) int
+		Groups            func(childComplexity int) int
+		IntegrationType   func(childComplexity int) int
+		ProviderName      func(childComplexity int) int
+		RequiredConfirmed func(childComplexity int) int
+		RequiredTotal     func(childComplexity int) int
+	}
+
+	AccountingReferenceObject struct {
+		AccountSubType     func(childComplexity int) int
+		AccountType        func(childComplexity int) int
+		Active             func(childComplexity int) int
+		City               func(childComplexity int) int
+		CompanyName        func(childComplexity int) int
+		CurrencyCode       func(childComplexity int) int
+		Description        func(childComplexity int) int
+		DueDays            func(childComplexity int) int
+		Email              func(childComplexity int) int
+		ExternalID         func(childComplexity int) int
+		FullyQualifiedName func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		ItemType           func(childComplexity int) int
+		Kind               func(childComplexity int) int
+		Label              func(childComplexity int) int
+		Name               func(childComplexity int) int
+		Number             func(childComplexity int) int
+		PostalCode         func(childComplexity int) int
+		RemovedAt          func(childComplexity int) int
+		State              func(childComplexity int) int
+		Usable             func(childComplexity int) int
 	}
 
 	AccountingSyncStatus struct {
@@ -7028,6 +7123,7 @@ type ComplexityRoot struct {
 		CheckAccountingConnection             func(childComplexity int, integrationType integration.Type) int
 		CheckShipmentDuplicateBOL             func(childComplexity int, input gqlmodel.ShipmentDuplicateBOLInput) int
 		CheckShipmentHazmatSegregation        func(childComplexity int, input gqlmodel.ShipmentHazmatInput) int
+		ClearAccountingMapping                func(childComplexity int, id string) int
 		ClearMyAIFeedback                     func(childComplexity int, input gqlmodel.AIFeedbackTargetInput) int
 		ClockIn                               func(childComplexity int, input gqlmodel.ClockInput) int
 		ClockOut                              func(childComplexity int, input gqlmodel.ClockInput) int
@@ -7038,9 +7134,12 @@ type ComplexityRoot struct {
 		CloseWorkerSafetyEvent                func(childComplexity int, input gqlmodel.SafetyEventStatusInput) int
 		CommitFuelPurchaseImport              func(childComplexity int, id string, version int) int
 		CompleteAccountingAuthorization       func(childComplexity int, input gqlmodel.CompleteAccountingAuthorizationInput) int
+		CompleteAccountingSetup               func(childComplexity int, integrationType integration.Type) int
 		CompleteClearinghouseQuery            func(childComplexity int, input gqlmodel.CompleteClearinghouseQueryInput) int
 		CompleteWorkerChecklistItem           func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		CompleteWorkerTraining                func(childComplexity int, input gqlmodel.CompleteWorkerTrainingInput) int
+		ConfirmAccountingMappings             func(childComplexity int, ids []string) int
+		CreateAccountingReferenceRecord       func(childComplexity int, input gqlmodel.CreateAccountingReferenceRecordInput) int
 		CreateAgentEvalCase                   func(childComplexity int, input gqlmodel.CreateAgentEvalCaseInput) int
 		CreateAgentMemory                     func(childComplexity int, input gqlmodel.AgentMemoryInput) int
 		CreateBenefitPlan                     func(childComplexity int, input gqlmodel.BenefitPlanInput) int
@@ -7220,8 +7319,10 @@ type ComplexityRoot struct {
 		RecordTimeEntry                       func(childComplexity int, input gqlmodel.RecordTimeEntryInput) int
 		RecordWorkerEmploymentEvent           func(childComplexity int, input gqlmodel.RecordWorkerEmploymentEventInput) int
 		RecordWorkerInjury                    func(childComplexity int, input gqlmodel.RecordWorkerInjuryInput) int
+		RefreshAccountingReferenceData        func(childComplexity int, integrationType integration.Type) int
 		RegenerateBriefing                    func(childComplexity int, input gqlmodel.TodaysBriefingInput) int
 		ReindexAIRetrievalSource              func(childComplexity int, sourceType airetrieval.SourceType) int
+		RejectAccountingMapping               func(childComplexity int, id string) int
 		RejectCarrierInvoiceMatch             func(childComplexity int, input gqlmodel.CarrierInvoiceMatchActionInput) int
 		RejectCarrierSettlement               func(childComplexity int, input gqlmodel.CarrierSettlementActionInput) int
 		RejectDriverSettlement                func(childComplexity int, input gqlmodel.DriverSettlementActionInput) int
@@ -7277,6 +7378,7 @@ type ComplexityRoot struct {
 		SendDetentionNotice                   func(childComplexity int, occurrenceID string) int
 		SendInvoiceEDI                        func(childComplexity int, invoiceID string, force *bool) int
 		SendTestMessageTemplate               func(childComplexity int, input gqlmodel.SendTestMessageTemplateInput) int
+		SetAccountingMapping                  func(childComplexity int, input gqlmodel.SetAccountingMappingInput) int
 		SetAgentAccess                        func(childComplexity int, agentID string, input gqlmodel.SetAgentAccessInput) int
 		SetAgentEvalCaseStatus                func(childComplexity int, id string, status agentquality.CaseStatus) int
 		SetAgentMemoryStatus                  func(childComplexity int, id string, status agent.MemoryStatus) int
@@ -8293,6 +8395,9 @@ type ComplexityRoot struct {
 		AccessorialCharges                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AccountType                         func(childComplexity int, id string) int
 		AccountTypes                        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AccountingMappingSummary            func(childComplexity int, integrationType integration.Type) int
+		AccountingMappings                  func(childComplexity int, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingMappingFilterInput) int
+		AccountingReferenceObjects          func(childComplexity int, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) int
 		AccountingSyncStatus                func(childComplexity int, integrationType integration.Type) int
 		ActivePerformanceReviewTemplates    func(childComplexity int) int
 		ActiveTrainingCourses               func(childComplexity int) int
@@ -15029,12 +15134,36 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingConnection.LastWebhookAt(childComplexity), true
+	case "AccountingConnection.referenceRefreshError":
+		if e.ComplexityRoot.AccountingConnection.ReferenceRefreshError == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ReferenceRefreshError(childComplexity), true
+	case "AccountingConnection.referenceRefreshStartedAt":
+		if e.ComplexityRoot.AccountingConnection.ReferenceRefreshStartedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ReferenceRefreshStartedAt(childComplexity), true
+	case "AccountingConnection.referenceRefreshedAt":
+		if e.ComplexityRoot.AccountingConnection.ReferenceRefreshedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ReferenceRefreshedAt(childComplexity), true
 	case "AccountingConnection.refreshTokenAbsoluteExpiresAt":
 		if e.ComplexityRoot.AccountingConnection.RefreshTokenAbsoluteExpiresAt == nil {
 			break
 		}
 
 		return e.ComplexityRoot.AccountingConnection.RefreshTokenAbsoluteExpiresAt(childComplexity), true
+	case "AccountingConnection.setupStep":
+		if e.ComplexityRoot.AccountingConnection.SetupStep == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.SetupStep(childComplexity), true
 	case "AccountingConnection.status":
 		if e.ComplexityRoot.AccountingConnection.Status == nil {
 			break
@@ -15053,6 +15182,398 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingConnection.Version(childComplexity), true
+
+	case "AccountingMapping.candidates":
+		if e.ComplexityRoot.AccountingMapping.Candidates == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.Candidates(childComplexity), true
+	case "AccountingMapping.confidence":
+		if e.ComplexityRoot.AccountingMapping.Confidence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.Confidence(childComplexity), true
+	case "AccountingMapping.confirmedAt":
+		if e.ComplexityRoot.AccountingMapping.ConfirmedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.ConfirmedAt(childComplexity), true
+	case "AccountingMapping.confirmedBy":
+		if e.ComplexityRoot.AccountingMapping.ConfirmedBy == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.ConfirmedBy(childComplexity), true
+	case "AccountingMapping.createdAt":
+		if e.ComplexityRoot.AccountingMapping.CreatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.CreatedAt(childComplexity), true
+	case "AccountingMapping.externalId":
+		if e.ComplexityRoot.AccountingMapping.ExternalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.ExternalID(childComplexity), true
+	case "AccountingMapping.externalName":
+		if e.ComplexityRoot.AccountingMapping.ExternalName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.ExternalName(childComplexity), true
+	case "AccountingMapping.id":
+		if e.ComplexityRoot.AccountingMapping.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.ID(childComplexity), true
+	case "AccountingMapping.matchers":
+		if e.ComplexityRoot.AccountingMapping.Matchers == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.Matchers(childComplexity), true
+	case "AccountingMapping.prechecked":
+		if e.ComplexityRoot.AccountingMapping.Prechecked == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.Prechecked(childComplexity), true
+	case "AccountingMapping.providerKind":
+		if e.ComplexityRoot.AccountingMapping.ProviderKind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.ProviderKind(childComplexity), true
+	case "AccountingMapping.reason":
+		if e.ComplexityRoot.AccountingMapping.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.Reason(childComplexity), true
+	case "AccountingMapping.required":
+		if e.ComplexityRoot.AccountingMapping.Required == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.Required(childComplexity), true
+	case "AccountingMapping.source":
+		if e.ComplexityRoot.AccountingMapping.Source == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.Source(childComplexity), true
+	case "AccountingMapping.state":
+		if e.ComplexityRoot.AccountingMapping.State == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.State(childComplexity), true
+	case "AccountingMapping.targetLabel":
+		if e.ComplexityRoot.AccountingMapping.TargetLabel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.TargetLabel(childComplexity), true
+	case "AccountingMapping.targetType":
+		if e.ComplexityRoot.AccountingMapping.TargetType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.TargetType(childComplexity), true
+	case "AccountingMapping.trenovaKey":
+		if e.ComplexityRoot.AccountingMapping.TrenovaKey == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.TrenovaKey(childComplexity), true
+	case "AccountingMapping.trenovaObjectId":
+		if e.ComplexityRoot.AccountingMapping.TrenovaObjectID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.TrenovaObjectID(childComplexity), true
+	case "AccountingMapping.updatedAt":
+		if e.ComplexityRoot.AccountingMapping.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.UpdatedAt(childComplexity), true
+	case "AccountingMapping.version":
+		if e.ComplexityRoot.AccountingMapping.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMapping.Version(childComplexity), true
+
+	case "AccountingMappingCandidate.externalId":
+		if e.ComplexityRoot.AccountingMappingCandidate.ExternalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingCandidate.ExternalID(childComplexity), true
+	case "AccountingMappingCandidate.name":
+		if e.ComplexityRoot.AccountingMappingCandidate.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingCandidate.Name(childComplexity), true
+	case "AccountingMappingCandidate.reason":
+		if e.ComplexityRoot.AccountingMappingCandidate.Reason == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingCandidate.Reason(childComplexity), true
+	case "AccountingMappingCandidate.score":
+		if e.ComplexityRoot.AccountingMappingCandidate.Score == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingCandidate.Score(childComplexity), true
+
+	case "AccountingMappingConnection.edges":
+		if e.ComplexityRoot.AccountingMappingConnection.Edges == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingConnection.Edges(childComplexity), true
+	case "AccountingMappingConnection.pageInfo":
+		if e.ComplexityRoot.AccountingMappingConnection.PageInfo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingConnection.PageInfo(childComplexity), true
+	case "AccountingMappingConnection.totalCount":
+		if e.ComplexityRoot.AccountingMappingConnection.TotalCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingConnection.TotalCount(childComplexity), true
+
+	case "AccountingMappingEdge.cursor":
+		if e.ComplexityRoot.AccountingMappingEdge.Cursor == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingEdge.Cursor(childComplexity), true
+	case "AccountingMappingEdge.node":
+		if e.ComplexityRoot.AccountingMappingEdge.Node == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingEdge.Node(childComplexity), true
+
+	case "AccountingMappingGroup.confirmed":
+		if e.ComplexityRoot.AccountingMappingGroup.Confirmed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingGroup.Confirmed(childComplexity), true
+	case "AccountingMappingGroup.proposed":
+		if e.ComplexityRoot.AccountingMappingGroup.Proposed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingGroup.Proposed(childComplexity), true
+	case "AccountingMappingGroup.targetType":
+		if e.ComplexityRoot.AccountingMappingGroup.TargetType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingGroup.TargetType(childComplexity), true
+	case "AccountingMappingGroup.unmatched":
+		if e.ComplexityRoot.AccountingMappingGroup.Unmatched == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingGroup.Unmatched(childComplexity), true
+
+	case "AccountingMappingMatcher.matcher":
+		if e.ComplexityRoot.AccountingMappingMatcher.Matcher == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingMatcher.Matcher(childComplexity), true
+	case "AccountingMappingMatcher.score":
+		if e.ComplexityRoot.AccountingMappingMatcher.Score == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingMatcher.Score(childComplexity), true
+
+	case "AccountingMappingSummary.canCompleteSetup":
+		if e.ComplexityRoot.AccountingMappingSummary.CanCompleteSetup == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingSummary.CanCompleteSetup(childComplexity), true
+	case "AccountingMappingSummary.connection":
+		if e.ComplexityRoot.AccountingMappingSummary.Connection == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingSummary.Connection(childComplexity), true
+	case "AccountingMappingSummary.groups":
+		if e.ComplexityRoot.AccountingMappingSummary.Groups == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingSummary.Groups(childComplexity), true
+	case "AccountingMappingSummary.integrationType":
+		if e.ComplexityRoot.AccountingMappingSummary.IntegrationType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingSummary.IntegrationType(childComplexity), true
+	case "AccountingMappingSummary.providerName":
+		if e.ComplexityRoot.AccountingMappingSummary.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingSummary.ProviderName(childComplexity), true
+	case "AccountingMappingSummary.requiredConfirmed":
+		if e.ComplexityRoot.AccountingMappingSummary.RequiredConfirmed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingSummary.RequiredConfirmed(childComplexity), true
+	case "AccountingMappingSummary.requiredTotal":
+		if e.ComplexityRoot.AccountingMappingSummary.RequiredTotal == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingMappingSummary.RequiredTotal(childComplexity), true
+
+	case "AccountingReferenceObject.accountSubType":
+		if e.ComplexityRoot.AccountingReferenceObject.AccountSubType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.AccountSubType(childComplexity), true
+	case "AccountingReferenceObject.accountType":
+		if e.ComplexityRoot.AccountingReferenceObject.AccountType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.AccountType(childComplexity), true
+	case "AccountingReferenceObject.active":
+		if e.ComplexityRoot.AccountingReferenceObject.Active == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.Active(childComplexity), true
+	case "AccountingReferenceObject.city":
+		if e.ComplexityRoot.AccountingReferenceObject.City == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.City(childComplexity), true
+	case "AccountingReferenceObject.companyName":
+		if e.ComplexityRoot.AccountingReferenceObject.CompanyName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.CompanyName(childComplexity), true
+	case "AccountingReferenceObject.currencyCode":
+		if e.ComplexityRoot.AccountingReferenceObject.CurrencyCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.CurrencyCode(childComplexity), true
+	case "AccountingReferenceObject.description":
+		if e.ComplexityRoot.AccountingReferenceObject.Description == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.Description(childComplexity), true
+	case "AccountingReferenceObject.dueDays":
+		if e.ComplexityRoot.AccountingReferenceObject.DueDays == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.DueDays(childComplexity), true
+	case "AccountingReferenceObject.email":
+		if e.ComplexityRoot.AccountingReferenceObject.Email == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.Email(childComplexity), true
+	case "AccountingReferenceObject.externalId":
+		if e.ComplexityRoot.AccountingReferenceObject.ExternalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.ExternalID(childComplexity), true
+	case "AccountingReferenceObject.fullyQualifiedName":
+		if e.ComplexityRoot.AccountingReferenceObject.FullyQualifiedName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.FullyQualifiedName(childComplexity), true
+	case "AccountingReferenceObject.id":
+		if e.ComplexityRoot.AccountingReferenceObject.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.ID(childComplexity), true
+	case "AccountingReferenceObject.itemType":
+		if e.ComplexityRoot.AccountingReferenceObject.ItemType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.ItemType(childComplexity), true
+	case "AccountingReferenceObject.kind":
+		if e.ComplexityRoot.AccountingReferenceObject.Kind == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.Kind(childComplexity), true
+	case "AccountingReferenceObject.label":
+		if e.ComplexityRoot.AccountingReferenceObject.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.Label(childComplexity), true
+	case "AccountingReferenceObject.name":
+		if e.ComplexityRoot.AccountingReferenceObject.Name == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.Name(childComplexity), true
+	case "AccountingReferenceObject.number":
+		if e.ComplexityRoot.AccountingReferenceObject.Number == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.Number(childComplexity), true
+	case "AccountingReferenceObject.postalCode":
+		if e.ComplexityRoot.AccountingReferenceObject.PostalCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.PostalCode(childComplexity), true
+	case "AccountingReferenceObject.removedAt":
+		if e.ComplexityRoot.AccountingReferenceObject.RemovedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.RemovedAt(childComplexity), true
+	case "AccountingReferenceObject.state":
+		if e.ComplexityRoot.AccountingReferenceObject.State == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.State(childComplexity), true
+	case "AccountingReferenceObject.usable":
+		if e.ComplexityRoot.AccountingReferenceObject.Usable == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingReferenceObject.Usable(childComplexity), true
 
 	case "AccountingSyncStatus.available":
 		if e.ComplexityRoot.AccountingSyncStatus.Available == nil {
@@ -44536,6 +45057,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CheckShipmentHazmatSegregation(childComplexity, args["input"].(gqlmodel.ShipmentHazmatInput)), true
+	case "Mutation.clearAccountingMapping":
+		if e.ComplexityRoot.Mutation.ClearAccountingMapping == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_clearAccountingMapping_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ClearAccountingMapping(childComplexity, args["id"].(string)), true
 	case "Mutation.clearMyAIFeedback":
 		if e.ComplexityRoot.Mutation.ClearMyAIFeedback == nil {
 			break
@@ -44646,6 +45178,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CompleteAccountingAuthorization(childComplexity, args["input"].(gqlmodel.CompleteAccountingAuthorizationInput)), true
+	case "Mutation.completeAccountingSetup":
+		if e.ComplexityRoot.Mutation.CompleteAccountingSetup == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_completeAccountingSetup_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CompleteAccountingSetup(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Mutation.completeClearinghouseQuery":
 		if e.ComplexityRoot.Mutation.CompleteClearinghouseQuery == nil {
 			break
@@ -44679,6 +45222,28 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CompleteWorkerTraining(childComplexity, args["input"].(gqlmodel.CompleteWorkerTrainingInput)), true
+	case "Mutation.confirmAccountingMappings":
+		if e.ComplexityRoot.Mutation.ConfirmAccountingMappings == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_confirmAccountingMappings_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.ConfirmAccountingMappings(childComplexity, args["ids"].([]string)), true
+	case "Mutation.createAccountingReferenceRecord":
+		if e.ComplexityRoot.Mutation.CreateAccountingReferenceRecord == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createAccountingReferenceRecord_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CreateAccountingReferenceRecord(childComplexity, args["input"].(gqlmodel.CreateAccountingReferenceRecordInput)), true
 	case "Mutation.createAgentEvalCase":
 		if e.ComplexityRoot.Mutation.CreateAgentEvalCase == nil {
 			break
@@ -46638,6 +47203,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RecordWorkerInjury(childComplexity, args["input"].(gqlmodel.RecordWorkerInjuryInput)), true
+	case "Mutation.refreshAccountingReferenceData":
+		if e.ComplexityRoot.Mutation.RefreshAccountingReferenceData == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_refreshAccountingReferenceData_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RefreshAccountingReferenceData(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Mutation.regenerateBriefing":
 		if e.ComplexityRoot.Mutation.RegenerateBriefing == nil {
 			break
@@ -46660,6 +47236,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.ReindexAIRetrievalSource(childComplexity, args["sourceType"].(airetrieval.SourceType)), true
+	case "Mutation.rejectAccountingMapping":
+		if e.ComplexityRoot.Mutation.RejectAccountingMapping == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_rejectAccountingMapping_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RejectAccountingMapping(childComplexity, args["id"].(string)), true
 	case "Mutation.rejectCarrierInvoiceMatch":
 		if e.ComplexityRoot.Mutation.RejectCarrierInvoiceMatch == nil {
 			break
@@ -47255,6 +47842,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.SendTestMessageTemplate(childComplexity, args["input"].(gqlmodel.SendTestMessageTemplateInput)), true
+	case "Mutation.setAccountingMapping":
+		if e.ComplexityRoot.Mutation.SetAccountingMapping == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setAccountingMapping_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.SetAccountingMapping(childComplexity, args["input"].(gqlmodel.SetAccountingMappingInput)), true
 	case "Mutation.setAgentAccess":
 		if e.ComplexityRoot.Mutation.SetAgentAccess == nil {
 			break
@@ -52616,6 +53214,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AccountTypes(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.accountingMappingSummary":
+		if e.ComplexityRoot.Query.AccountingMappingSummary == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingMappingSummary_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingMappingSummary(childComplexity, args["integrationType"].(integration.Type)), true
+	case "Query.accountingMappings":
+		if e.ComplexityRoot.Query.AccountingMappings == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingMappings_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingMappings(childComplexity, args["integrationType"].(integration.Type), args["first"].(*int), args["after"].(*string), args["filter"].(*gqlmodel.AccountingMappingFilterInput)), true
+	case "Query.accountingReferenceObjects":
+		if e.ComplexityRoot.Query.AccountingReferenceObjects == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingReferenceObjects_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingReferenceObjects(childComplexity, args["integrationType"].(integration.Type), args["kind"].(accountingsync.ReferenceKind), args["query"].(*string), args["usableOnly"].(*bool), args["limit"].(*int)), true
 	case "Query.accountingSyncStatus":
 		if e.ComplexityRoot.Query.AccountingSyncStatus == nil {
 			break
@@ -75469,6 +76100,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAIFeedbackTargetInput,
 		ec.unmarshalInputAIRetrievalSettingsPatchInput,
+		ec.unmarshalInputAccountingMappingFilterInput,
 		ec.unmarshalInputAcknowledgeMyPolicyInput,
 		ec.unmarshalInputAddCarrierSettlementAdjustmentInput,
 		ec.unmarshalInputAddSettlementAdjustmentInput,
@@ -75536,6 +76168,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCompleteWorkerTrainingInput,
 		ec.unmarshalInputCostCategoryUpdateInput,
 		ec.unmarshalInputCostingControlInput,
+		ec.unmarshalInputCreateAccountingReferenceRecordInput,
 		ec.unmarshalInputCreateAgentEvalCaseInput,
 		ec.unmarshalInputCreateCarrierInvoiceMatchInput,
 		ec.unmarshalInputCreateDocumentTemplateVersionInput,
@@ -75730,6 +76363,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSaveTelematicsFormMappingInput,
 		ec.unmarshalInputSelectOptionsInput,
 		ec.unmarshalInputSendTestMessageTemplateInput,
+		ec.unmarshalInputSetAccountingMappingInput,
 		ec.unmarshalInputSetAgentAccessInput,
 		ec.unmarshalInputSetAvailabilityPreferenceInput,
 		ec.unmarshalInputSetMyAIFeedbackInput,
@@ -76019,6 +76653,63 @@ enum AccountingConnectionStatus {
   Disconnected
 }
 
+"How far the organization has got through setting up the accounting sync."
+enum AccountingSetupStep {
+  "Trenova records are being matched to the accounting system's records."
+  Mappings
+  "The required matches are confirmed and setup is finished."
+  Complete
+}
+
+"A kind of record kept in the accounting system."
+enum AccountingReferenceKind {
+  Account
+  Item
+  Customer
+  Vendor
+  Term
+  PaymentMethod
+}
+
+"The kind of Trenova record or setting a mapping is for."
+enum AccountingMappingTargetType {
+  "A role an account plays, such as accounts receivable or revenue."
+  AccountRole
+  "An invoice line type."
+  LineType
+  AccessorialCharge
+  "A role an item plays, such as the short-pay write-off."
+  ItemRole
+  Customer
+  Carrier
+  PaymentTerm
+  PaymentMethod
+}
+
+"Where a mapping stands."
+enum AccountingMappingState {
+  "Nothing is chosen yet."
+  Unmatched
+  "Trenova suggests a record, which a person has not confirmed yet."
+  Proposed
+  "A person confirmed the record. Only confirmed mappings are used when syncing."
+  Confirmed
+}
+
+"Who chose the record a mapping points at."
+enum AccountingMappingSource {
+  "Trenova matched it on numbers, names or identifiers."
+  Suggested
+  "A model picked it from the listed candidates."
+  Model
+  "A person chose it."
+  Manual
+  "Trenova created the record in the accounting system for it."
+  CreatedInProvider
+  "An agent chose it."
+  Agent
+}
+
 "Why the last call to the accounting system failed."
 enum AccountingErrorCategory {
   Transient
@@ -76060,6 +76751,14 @@ type AccountingConnection {
   refreshTokenAbsoluteExpiresAt: Timestamp!
   connectedAt: Timestamp!
   disconnectedAt: Timestamp
+  "How far setup has got. Syncing waits until it is Complete."
+  setupStep: AccountingSetupStep!
+  "When the running reference data refresh started. Absent when none has started."
+  referenceRefreshStartedAt: Timestamp
+  "When the reference data was last pulled in full."
+  referenceRefreshedAt: Timestamp
+  "Why the last reference data refresh failed. Empty when it succeeded."
+  referenceRefreshError: String!
   version: Int!
   updatedAt: Timestamp!
 }
@@ -76072,6 +76771,143 @@ type AccountingSyncStatus {
   available: Boolean!
   "Absent until the organization first connects."
   connection: AccountingConnection
+}
+
+"A record Trenova has read from the accounting system."
+type AccountingReferenceObject {
+  id: ID!
+  kind: AccountingReferenceKind!
+  "The record's ID in the accounting system."
+  externalId: String!
+  name: String!
+  "The name with its parents, such as \"Income:Freight Income\"."
+  fullyQualifiedName: String!
+  "The name to show a person."
+  label: String!
+  "The account number or item SKU."
+  number: String!
+  description: String!
+  accountType: String!
+  accountSubType: String!
+  itemType: String!
+  companyName: String!
+  email: String!
+  city: String!
+  state: String!
+  postalCode: String!
+  currencyCode: String!
+  "Days until an invoice under this term is due."
+  dueDays: Int
+  active: Boolean!
+  "When a full refresh stopped returning the record."
+  removedAt: Timestamp
+  "Whether the record can be chosen: active, not removed, and not a category or group item."
+  usable: Boolean!
+}
+
+"A record the scorer or the model considered for a mapping."
+type AccountingMappingCandidate {
+  externalId: String!
+  name: String!
+  "How well it matches, from 0 to 1."
+  score: Float!
+  reason: String!
+}
+
+"A rule that matched when the proposal was made."
+type AccountingMappingMatcher {
+  matcher: String!
+  score: Float!
+}
+
+"""
+Which accounting system record a Trenova record or setting is sent as.
+
+Only confirmed mappings are used when syncing. A proposal is Trenova's
+suggestion and waits for a person.
+"""
+type AccountingMapping {
+  id: ID!
+  targetType: AccountingMappingTargetType!
+  "The Trenova record, for accessorial charges, customers and carriers."
+  trenovaObjectId: ID
+  "The Trenova setting, for account roles, line types, item roles, terms and payment methods."
+  trenovaKey: String!
+  targetLabel: String!
+  "The kind of accounting system record it maps to."
+  providerKind: AccountingReferenceKind!
+  externalId: String!
+  externalName: String!
+  state: AccountingMappingState!
+  source: AccountingMappingSource
+  "How sure Trenova is of a proposal, from 0 to 1."
+  confidence: Float
+  reason: String!
+  "Whether setup cannot finish until this mapping is confirmed."
+  required: Boolean!
+  "Whether the proposal is sure enough to be ticked for confirmation by default."
+  prechecked: Boolean!
+  candidates: [AccountingMappingCandidate!]!
+  matchers: [AccountingMappingMatcher!]!
+  confirmedBy: User
+  confirmedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AccountingMappingEdge {
+  node: AccountingMapping!
+  cursor: String!
+}
+
+type AccountingMappingConnection {
+  edges: [AccountingMappingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"How many mappings of one kind are in each state."
+type AccountingMappingGroup {
+  targetType: AccountingMappingTargetType!
+  unmatched: Int!
+  proposed: Int!
+  confirmed: Int!
+}
+
+"Where the organization's mappings stand for one accounting system."
+type AccountingMappingSummary {
+  integrationType: AccountingSystem!
+  providerName: String!
+  "Absent until the organization first connects."
+  connection: AccountingConnection
+  groups: [AccountingMappingGroup!]!
+  requiredTotal: Int!
+  requiredConfirmed: Int!
+  canCompleteSetup: Boolean!
+}
+
+input AccountingMappingFilterInput {
+  targetTypes: [AccountingMappingTargetType!]
+  states: [AccountingMappingState!]
+  requiredOnly: Boolean
+  "Matches the Trenova label or the chosen record's name."
+  search: String
+}
+
+"Chooses an accounting system record for a mapping and confirms it."
+input SetAccountingMappingInput {
+  mappingId: ID!
+  "The record's ID in the accounting system."
+  externalId: String!
+  reason: String
+}
+
+"Creates the record in the accounting system and maps to it."
+input CreateAccountingReferenceRecordInput {
+  mappingId: ID!
+  "The name to create it under. Defaults to the Trenova record's name."
+  name: String
 }
 
 "Where to send the person to authorize Trenova, and until when that link works."
@@ -76091,6 +76927,22 @@ input CompleteAccountingAuthorizationInput {
 extend type Query {
   "The organization's link to an accounting system, and whether this instance can connect to it at all."
   accountingSyncStatus(integrationType: AccountingSystem!): AccountingSyncStatus!
+  "How many mappings are in each state, and whether setup can finish."
+  accountingMappingSummary(integrationType: AccountingSystem!): AccountingMappingSummary!
+  accountingMappings(
+    integrationType: AccountingSystem!
+    first: Int
+    after: String
+    filter: AccountingMappingFilterInput
+  ): AccountingMappingConnection!
+  "Searches the accounting system records Trenova has read."
+  accountingReferenceObjects(
+    integrationType: AccountingSystem!
+    kind: AccountingReferenceKind!
+    query: String
+    usableOnly: Boolean
+    limit: Int
+  ): [AccountingReferenceObject!]!
 }
 
 extend type Mutation {
@@ -76102,6 +76954,19 @@ extend type Mutation {
   disconnectAccountingSystem(integrationType: AccountingSystem!): AccountingConnection!
   "Checks the connection now instead of waiting for the next scheduled check."
   checkAccountingConnection(integrationType: AccountingSystem!): AccountingConnection!
+  "Confirms Trenova's proposals as they stand. At most 200 at a time."
+  confirmAccountingMappings(ids: [ID!]!): [AccountingMapping!]!
+  "Turns down a proposal. Trenova will not propose that record for it again."
+  rejectAccountingMapping(id: ID!): AccountingMapping!
+  setAccountingMapping(input: SetAccountingMappingInput!): AccountingMapping!
+  "Removes the chosen record so the mapping is unmatched again."
+  clearAccountingMapping(id: ID!): AccountingMapping!
+  "Creates an item, customer or vendor in the accounting system for the mapping and confirms it."
+  createAccountingReferenceRecord(input: CreateAccountingReferenceRecordInput!): AccountingMapping!
+  "Reads the accounting system's records again and refreshes the proposals."
+  refreshAccountingReferenceData(integrationType: AccountingSystem!): AccountingConnection!
+  "Finishes setup once every required mapping is confirmed."
+  completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
 }
 `, BuiltIn: false},
 	{Name: "../schema/accounts_receivable.graphqls", Input: `type ARAgingBucketTotals {
@@ -78464,6 +79329,7 @@ enum AITask {
   DailyBriefing
   QueryCompose
   InboundClassification
+  AccountingMapping
   EvaluationJudge
   Embedding
   AssistantChat
@@ -100079,12 +100945,196 @@ func (ec *executionContext) childFields_AccountingConnection(ctx context.Context
 		return ec.fieldContext_AccountingConnection_connectedAt(ctx, field)
 	case "disconnectedAt":
 		return ec.fieldContext_AccountingConnection_disconnectedAt(ctx, field)
+	case "setupStep":
+		return ec.fieldContext_AccountingConnection_setupStep(ctx, field)
+	case "referenceRefreshStartedAt":
+		return ec.fieldContext_AccountingConnection_referenceRefreshStartedAt(ctx, field)
+	case "referenceRefreshedAt":
+		return ec.fieldContext_AccountingConnection_referenceRefreshedAt(ctx, field)
+	case "referenceRefreshError":
+		return ec.fieldContext_AccountingConnection_referenceRefreshError(ctx, field)
 	case "version":
 		return ec.fieldContext_AccountingConnection_version(ctx, field)
 	case "updatedAt":
 		return ec.fieldContext_AccountingConnection_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AccountingConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingMapping(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AccountingMapping_id(ctx, field)
+	case "targetType":
+		return ec.fieldContext_AccountingMapping_targetType(ctx, field)
+	case "trenovaObjectId":
+		return ec.fieldContext_AccountingMapping_trenovaObjectId(ctx, field)
+	case "trenovaKey":
+		return ec.fieldContext_AccountingMapping_trenovaKey(ctx, field)
+	case "targetLabel":
+		return ec.fieldContext_AccountingMapping_targetLabel(ctx, field)
+	case "providerKind":
+		return ec.fieldContext_AccountingMapping_providerKind(ctx, field)
+	case "externalId":
+		return ec.fieldContext_AccountingMapping_externalId(ctx, field)
+	case "externalName":
+		return ec.fieldContext_AccountingMapping_externalName(ctx, field)
+	case "state":
+		return ec.fieldContext_AccountingMapping_state(ctx, field)
+	case "source":
+		return ec.fieldContext_AccountingMapping_source(ctx, field)
+	case "confidence":
+		return ec.fieldContext_AccountingMapping_confidence(ctx, field)
+	case "reason":
+		return ec.fieldContext_AccountingMapping_reason(ctx, field)
+	case "required":
+		return ec.fieldContext_AccountingMapping_required(ctx, field)
+	case "prechecked":
+		return ec.fieldContext_AccountingMapping_prechecked(ctx, field)
+	case "candidates":
+		return ec.fieldContext_AccountingMapping_candidates(ctx, field)
+	case "matchers":
+		return ec.fieldContext_AccountingMapping_matchers(ctx, field)
+	case "confirmedBy":
+		return ec.fieldContext_AccountingMapping_confirmedBy(ctx, field)
+	case "confirmedAt":
+		return ec.fieldContext_AccountingMapping_confirmedAt(ctx, field)
+	case "version":
+		return ec.fieldContext_AccountingMapping_version(ctx, field)
+	case "createdAt":
+		return ec.fieldContext_AccountingMapping_createdAt(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AccountingMapping_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingMapping", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingMappingCandidate(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "externalId":
+		return ec.fieldContext_AccountingMappingCandidate_externalId(ctx, field)
+	case "name":
+		return ec.fieldContext_AccountingMappingCandidate_name(ctx, field)
+	case "score":
+		return ec.fieldContext_AccountingMappingCandidate_score(ctx, field)
+	case "reason":
+		return ec.fieldContext_AccountingMappingCandidate_reason(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingMappingCandidate", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingMappingConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "edges":
+		return ec.fieldContext_AccountingMappingConnection_edges(ctx, field)
+	case "pageInfo":
+		return ec.fieldContext_AccountingMappingConnection_pageInfo(ctx, field)
+	case "totalCount":
+		return ec.fieldContext_AccountingMappingConnection_totalCount(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingMappingConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingMappingEdge(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "node":
+		return ec.fieldContext_AccountingMappingEdge_node(ctx, field)
+	case "cursor":
+		return ec.fieldContext_AccountingMappingEdge_cursor(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingMappingEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingMappingGroup(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "targetType":
+		return ec.fieldContext_AccountingMappingGroup_targetType(ctx, field)
+	case "unmatched":
+		return ec.fieldContext_AccountingMappingGroup_unmatched(ctx, field)
+	case "proposed":
+		return ec.fieldContext_AccountingMappingGroup_proposed(ctx, field)
+	case "confirmed":
+		return ec.fieldContext_AccountingMappingGroup_confirmed(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingMappingGroup", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingMappingMatcher(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "matcher":
+		return ec.fieldContext_AccountingMappingMatcher_matcher(ctx, field)
+	case "score":
+		return ec.fieldContext_AccountingMappingMatcher_score(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingMappingMatcher", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingMappingSummary(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "integrationType":
+		return ec.fieldContext_AccountingMappingSummary_integrationType(ctx, field)
+	case "providerName":
+		return ec.fieldContext_AccountingMappingSummary_providerName(ctx, field)
+	case "connection":
+		return ec.fieldContext_AccountingMappingSummary_connection(ctx, field)
+	case "groups":
+		return ec.fieldContext_AccountingMappingSummary_groups(ctx, field)
+	case "requiredTotal":
+		return ec.fieldContext_AccountingMappingSummary_requiredTotal(ctx, field)
+	case "requiredConfirmed":
+		return ec.fieldContext_AccountingMappingSummary_requiredConfirmed(ctx, field)
+	case "canCompleteSetup":
+		return ec.fieldContext_AccountingMappingSummary_canCompleteSetup(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingMappingSummary", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingReferenceObject(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AccountingReferenceObject_id(ctx, field)
+	case "kind":
+		return ec.fieldContext_AccountingReferenceObject_kind(ctx, field)
+	case "externalId":
+		return ec.fieldContext_AccountingReferenceObject_externalId(ctx, field)
+	case "name":
+		return ec.fieldContext_AccountingReferenceObject_name(ctx, field)
+	case "fullyQualifiedName":
+		return ec.fieldContext_AccountingReferenceObject_fullyQualifiedName(ctx, field)
+	case "label":
+		return ec.fieldContext_AccountingReferenceObject_label(ctx, field)
+	case "number":
+		return ec.fieldContext_AccountingReferenceObject_number(ctx, field)
+	case "description":
+		return ec.fieldContext_AccountingReferenceObject_description(ctx, field)
+	case "accountType":
+		return ec.fieldContext_AccountingReferenceObject_accountType(ctx, field)
+	case "accountSubType":
+		return ec.fieldContext_AccountingReferenceObject_accountSubType(ctx, field)
+	case "itemType":
+		return ec.fieldContext_AccountingReferenceObject_itemType(ctx, field)
+	case "companyName":
+		return ec.fieldContext_AccountingReferenceObject_companyName(ctx, field)
+	case "email":
+		return ec.fieldContext_AccountingReferenceObject_email(ctx, field)
+	case "city":
+		return ec.fieldContext_AccountingReferenceObject_city(ctx, field)
+	case "state":
+		return ec.fieldContext_AccountingReferenceObject_state(ctx, field)
+	case "postalCode":
+		return ec.fieldContext_AccountingReferenceObject_postalCode(ctx, field)
+	case "currencyCode":
+		return ec.fieldContext_AccountingReferenceObject_currencyCode(ctx, field)
+	case "dueDays":
+		return ec.fieldContext_AccountingReferenceObject_dueDays(ctx, field)
+	case "active":
+		return ec.fieldContext_AccountingReferenceObject_active(ctx, field)
+	case "removedAt":
+		return ec.fieldContext_AccountingReferenceObject_removedAt(ctx, field)
+	case "usable":
+		return ec.fieldContext_AccountingReferenceObject_usable(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingReferenceObject", field.Name)
 }
 
 func (ec *executionContext) childFields_AccountingSyncStatus(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

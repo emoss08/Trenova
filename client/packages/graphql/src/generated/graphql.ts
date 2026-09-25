@@ -141,6 +141,7 @@ export type AiStructuredOutputMode =
   | 'Prompted';
 
 export type AiTask =
+  | 'AccountingMapping'
   | 'AssistantChat'
   | 'BillingDiagnosis'
   | 'DailyBriefing'

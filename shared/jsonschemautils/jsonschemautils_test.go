@@ -37,3 +37,24 @@ func TestEnumKeepsEveryValueInOrder(t *testing.T) {
 		"description": "Pick one.",
 	}, Enum("Pick one.", "b", "a"))
 }
+
+func TestStringBoundsItsLengthOnlyWhenAsked(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, map[string]any{"type": "string", "maxLength": 40}, String(40))
+	assert.Equal(t, map[string]any{"type": "string"}, String(0))
+}
+
+func TestNumberCarriesItsRange(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, map[string]any{"type": "number", "minimum": 0.0, "maximum": 1.0}, Number(0, 1))
+}
+
+func TestArrayBoundsItsItemsOnlyWhenAsked(t *testing.T) {
+	t.Parallel()
+
+	items := String(0)
+	assert.Equal(t, map[string]any{"type": "array", "items": items, "maxItems": 5}, Array(items, 5))
+	assert.Equal(t, map[string]any{"type": "array", "items": items}, Array(items, 0))
+}
