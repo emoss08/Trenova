@@ -267,6 +267,11 @@ var templateStarters = map[Template][]starterQuestion{
 			"Which detention cases should be escalated, and why?",
 			"escalate_detention",
 		),
+		ask(
+			"Which charges need approval?",
+			"Which detention charges are waiting on approval, and does the evidence support billing them?",
+			"approve_detention",
+		),
 	},
 	TemplateCredentialDesk: {
 		ask(

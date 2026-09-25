@@ -446,6 +446,30 @@ describe("presentProposal for monitoring tools", () => {
     ]);
   });
 
+  it("puts the evidence in front of the person approving a held detention charge", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "approve_detention",
+        arguments: {
+          occurrenceId: "dto_01M3034Q2N7JD99RA1D8DGH1ZF",
+          evidence: "Arrival and departure on the ELD; notice sent inside the window.",
+        },
+      }),
+    );
+
+    expect(view.title).toBe("Approve detention charge");
+    expect(view.summary).toBe(
+      "Approve this detention charge as calculated, so its shipment can be invoiced.",
+    );
+    expect(view.highlights).toEqual([
+      {
+        label: "Evidence",
+        value: "Arrival and departure on the ELD; notice sent inside the window.",
+      },
+    ]);
+    expect(view.reversible).toBe(false);
+  });
+
   it("describes a failure resolution and a failure check", () => {
     const resolve = presentProposal(
       proposal({

@@ -74,6 +74,8 @@ cases:
     expect: [get_customer, list_customers]
   - request: waive the detention charge
     expect: [waive_detention]
+  - request: approve the held detention charge so the shipment can be invoiced
+    expect: [approve_detention]
   - request: send the customer a detention notice
     expect: [send_detention_notice]
   - request: which stops are accruing detention

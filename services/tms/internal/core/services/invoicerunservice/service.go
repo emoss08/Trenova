@@ -33,6 +33,7 @@ type Params struct {
 	ConsolidatedMaker *invoiceservice.Service
 	SequenceGenerator seqgen.Generator
 	AuditService      servicesports.AuditService
+	DetentionBilling  servicesports.DetentionBillingService
 	Validator         *Validator
 }
 
@@ -45,6 +46,7 @@ type Service struct {
 	consolidatedMaker *invoiceservice.Service
 	sequenceGenerator seqgen.Generator
 	auditService      servicesports.AuditService
+	detentionBilling  servicesports.DetentionBillingService
 	validator         *Validator
 }
 
@@ -58,6 +60,7 @@ func New(p Params) *Service {
 		consolidatedMaker: p.ConsolidatedMaker,
 		sequenceGenerator: p.SequenceGenerator,
 		auditService:      p.AuditService,
+		detentionBilling:  p.DetentionBilling,
 		validator:         p.Validator,
 	}
 }

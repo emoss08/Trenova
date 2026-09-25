@@ -274,6 +274,16 @@ func OccurrenceStatusFromString(v string) (OccurrenceStatus, error) {
 	}
 }
 
+type BillingHoldReason string
+
+const (
+	BillingHoldReasonOverApprovalThreshold = BillingHoldReason("OverApprovalThreshold")
+	BillingHoldReasonNoticeNotSent         = BillingHoldReason("NoticeNotSent")
+	BillingHoldReasonEscalated             = BillingHoldReason("Escalated")
+)
+
+func (r BillingHoldReason) String() string { return string(r) }
+
 type NotificationStatus string
 
 const (

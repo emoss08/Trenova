@@ -191,6 +191,57 @@ func (o *DetentionOccurrence) Approve(userID pulid.ID, now int64) error {
 	return nil
 }
 
+// HoldsBilling reports whether the charge must stay off every invoice until a
+// person decides it. A pending charge that merely was not auto-approved keeps
+// billing; only one the policy or a person put in front of an approver holds.
+func (o *DetentionOccurrence) HoldsBilling() bool {
+	return o.Status == OccurrenceStatusPending && o.RequiresApproval
+}
+
+// BillingHoldReason says why a held charge is waiting on a person.
+func (o *DetentionOccurrence) BillingHoldReason() BillingHoldReason {
+	if snap := o.PolicySnapshot; snap != nil {
+		if snap.RequireApprovalOverAmount.Valid &&
+			o.BillableAmount.GreaterThan(snap.RequireApprovalOverAmount.Decimal) {
+			return BillingHoldReasonOverApprovalThreshold
+		}
+		if snap.NotificationRequirement == NotificationRequirementRequired &&
+			snap.UnnotifiedBehavior == UnnotifiedBehaviorFlag &&
+			!o.NotificationStatus.SatisfiesRequirement() {
+			return BillingHoldReasonNoticeNotSent
+		}
+	}
+
+	return BillingHoldReasonEscalated
+}
+
+// MarkBilled freezes a billable charge once an invoice carries it.
+func (o *DetentionOccurrence) MarkBilled() error {
+	if o.Status == OccurrenceStatusBilled {
+		return errors.New("occurrence is already billed")
+	}
+	if o.Status != OccurrenceStatusPending && o.Status != OccurrenceStatusApproved {
+		return errors.New("only a pending or approved occurrence can be billed")
+	}
+
+	o.Status = OccurrenceStatusBilled
+
+	return nil
+}
+
+// ReleaseBilling returns a billed charge to approved once no invoice carries
+// it any more. It was billable when it was billed, so it stays approved rather
+// than going back in front of an approver.
+func (o *DetentionOccurrence) ReleaseBilling() error {
+	if o.Status != OccurrenceStatusBilled {
+		return errors.New("only a billed occurrence can be released")
+	}
+
+	o.Status = OccurrenceStatusApproved
+
+	return nil
+}
+
 // Dispute records a customer rejection so the claim can be worked without
 // losing the original computation.
 func (o *DetentionOccurrence) Dispute(note string, now int64) error {

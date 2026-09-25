@@ -522,7 +522,8 @@ func TestListServiceFailureReasonCodes_ListsActiveCodesForTheStopKind(t *testing
 }
 
 type fakeDesk struct {
-	entries []*detentionservice.DeskEntry
+	entries  []*detentionservice.DeskEntry
+	awaiting []*detentionservice.DeskEntry
 }
 
 func (f *fakeDesk) ListDesk(
@@ -530,6 +531,63 @@ func (f *fakeDesk) ListDesk(
 	_ pagination.TenantInfo,
 ) ([]*detentionservice.DeskEntry, error) {
 	return f.entries, nil
+}
+
+func (f *fakeDesk) ListAwaitingApproval(
+	_ context.Context,
+	_ pagination.TenantInfo,
+) ([]*detentionservice.DeskEntry, error) {
+	return f.awaiting, nil
+}
+
+func TestListDetentionDesk_CarriesTheChargesWaitingOnApproval(t *testing.T) {
+	t.Parallel()
+
+	held := &detentionservice.DeskEntry{
+		Occurrence: &detention.DetentionOccurrence{
+			ID:               pulid.MustNew("dto_"),
+			ShipmentID:       pulid.MustNew("shp_"),
+			Status:           detention.OccurrenceStatusPending,
+			RequiresApproval: true,
+			Currency:         "USD",
+		},
+		AmountAtRisk: decimal.NewFromInt(420),
+		Urgency:      detentionservice.UrgencyAwaitingApproval,
+	}
+	desk := &fakeDesk{
+		entries: []*detentionservice.DeskEntry{{
+			Occurrence: &detention.DetentionOccurrence{
+				ID:     pulid.MustNew("dto_"),
+				Status: detention.OccurrenceStatusAccruing,
+			},
+			Urgency: "Normal",
+		}},
+		awaiting: []*detentionservice.DeskEntry{held},
+	}
+	tool := newListDetentionDeskTool(desk)
+
+	rowsFor := func(params map[string]any) []detentionDeskRow {
+		t.Helper()
+		result, err := tool.Query(t.Context(), testParams(params))
+		require.NoError(t, err)
+		outcome, ok := result.(searchOutcome)
+		require.True(t, ok)
+		rows, ok := outcome.Items.([]detentionDeskRow)
+		require.True(t, ok)
+		return rows
+	}
+
+	all := rowsFor(map[string]any{})
+	require.Len(t, all, 2)
+	assert.Equal(t, "AwaitingApproval", all[1].Urgency)
+	assert.Equal(t, "420.00", all[1].AmountAtRisk)
+
+	onlyHeld := rowsFor(map[string]any{"urgency": "AwaitingApproval"})
+	require.Len(t, onlyHeld, 1)
+	assert.Equal(t, held.Occurrence.ID.String(), onlyHeld[0].OccurrenceID)
+	assert.True(t, onlyHeld[0].RequiresApproval)
+
+	assert.Empty(t, rowsFor(map[string]any{"urgency": "NoticeOverdue"}))
 }
 
 func TestListDetentionDesk_RendersTheOpenOccurrencesByUrgency(t *testing.T) {

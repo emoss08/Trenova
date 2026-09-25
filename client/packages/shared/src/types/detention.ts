@@ -60,6 +60,14 @@ export const occurrenceStatusSchema = z.enum([
 ]);
 export type OccurrenceStatus = z.infer<typeof occurrenceStatusSchema>;
 
+/** Why a pending charge is waiting on an approver, and so holding its shipment off an invoice. */
+export const billingHoldReasonSchema = z.enum([
+  "OverApprovalThreshold",
+  "NoticeNotSent",
+  "Escalated",
+]);
+export type BillingHoldReason = z.infer<typeof billingHoldReasonSchema>;
+
 export const detentionNotificationStatusSchema = z.enum([
   "NotRequired",
   "Pending",

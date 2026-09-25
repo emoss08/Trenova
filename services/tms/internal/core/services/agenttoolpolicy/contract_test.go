@@ -203,6 +203,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"post_customer_payment":        {agent.EgressMoney},
 		"match_bank_receipt":           {agent.EgressMoney},
 		"waive_detention":              {agent.EgressMoney},
+		"approve_detention":            {agent.EgressMoney},
 		"correct_charge_code":          {agent.EgressMoney},
 	}
 

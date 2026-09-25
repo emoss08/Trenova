@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -721,6 +722,142 @@ func (_c *MockInvoiceRepository_ListAttachments_Call) Return(attachments []*invo
 }
 
 func (_c *MockInvoiceRepository_ListAttachments_Call) RunAndReturn(run func(ctx context.Context, req repositories.ListInvoiceEmailAttemptsRequest) ([]*invoice.Attachment, error)) *MockInvoiceRepository_ListAttachments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListLineCharges provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) ListLineCharges(ctx context.Context, req *repositories.ListInvoiceLineChargesRequest) ([]repositories.InvoiceLineCharge, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListLineCharges")
+	}
+
+	var r0 []repositories.InvoiceLineCharge
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListInvoiceLineChargesRequest) ([]repositories.InvoiceLineCharge, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListInvoiceLineChargesRequest) []repositories.InvoiceLineCharge); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]repositories.InvoiceLineCharge)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListInvoiceLineChargesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_ListLineCharges_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListLineCharges'
+type MockInvoiceRepository_ListLineCharges_Call struct {
+	*mock.Call
+}
+
+// ListLineCharges is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ListInvoiceLineChargesRequest
+func (_e *MockInvoiceRepository_Expecter) ListLineCharges(ctx any, req any) *MockInvoiceRepository_ListLineCharges_Call {
+	return &MockInvoiceRepository_ListLineCharges_Call{Call: _e.mock.On("ListLineCharges", ctx, req)}
+}
+
+func (_c *MockInvoiceRepository_ListLineCharges_Call) Run(run func(ctx context.Context, req *repositories.ListInvoiceLineChargesRequest)) *MockInvoiceRepository_ListLineCharges_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ListInvoiceLineChargesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ListInvoiceLineChargesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_ListLineCharges_Call) Return(v0 []repositories.InvoiceLineCharge, err error) *MockInvoiceRepository_ListLineCharges_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_ListLineCharges_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListInvoiceLineChargesRequest) ([]repositories.InvoiceLineCharge, error)) *MockInvoiceRepository_ListLineCharges_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// NetBilledByCharge provides a mock function for the type MockInvoiceRepository
+func (_mock *MockInvoiceRepository) NetBilledByCharge(ctx context.Context, req *repositories.NetBilledByChargeRequest) (map[pulid.ID]decimal.Decimal, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for NetBilledByCharge")
+	}
+
+	var r0 map[pulid.ID]decimal.Decimal
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.NetBilledByChargeRequest) (map[pulid.ID]decimal.Decimal, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.NetBilledByChargeRequest) map[pulid.ID]decimal.Decimal); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[pulid.ID]decimal.Decimal)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.NetBilledByChargeRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockInvoiceRepository_NetBilledByCharge_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NetBilledByCharge'
+type MockInvoiceRepository_NetBilledByCharge_Call struct {
+	*mock.Call
+}
+
+// NetBilledByCharge is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.NetBilledByChargeRequest
+func (_e *MockInvoiceRepository_Expecter) NetBilledByCharge(ctx any, req any) *MockInvoiceRepository_NetBilledByCharge_Call {
+	return &MockInvoiceRepository_NetBilledByCharge_Call{Call: _e.mock.On("NetBilledByCharge", ctx, req)}
+}
+
+func (_c *MockInvoiceRepository_NetBilledByCharge_Call) Run(run func(ctx context.Context, req *repositories.NetBilledByChargeRequest)) *MockInvoiceRepository_NetBilledByCharge_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.NetBilledByChargeRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.NetBilledByChargeRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockInvoiceRepository_NetBilledByCharge_Call) Return(v0 map[pulid.ID]decimal.Decimal, err error) *MockInvoiceRepository_NetBilledByCharge_Call {
+	_c.Call.Return(v0, err)
+	return _c
+}
+
+func (_c *MockInvoiceRepository_NetBilledByCharge_Call) RunAndReturn(run func(ctx context.Context, req *repositories.NetBilledByChargeRequest) (map[pulid.ID]decimal.Decimal, error)) *MockInvoiceRepository_NetBilledByCharge_Call {
 	_c.Call.Return(run)
 	return _c
 }

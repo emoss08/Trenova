@@ -356,6 +356,14 @@ const PRESENTERS: Record<string, Presenter> = {
     reversible: false,
   }),
 
+  approve_detention: (args) => ({
+    title: "Approve detention charge",
+    summary: "Approve this detention charge as calculated, so its shipment can be invoiced.",
+    highlights: facts(fact("Evidence", text(args.evidence))),
+    covered: ["occurrenceId", "evidence"],
+    reversible: false,
+  }),
+
   waive_detention: (args) => ({
     title: "Waive detention",
     summary: `Waive this detention charge as ${midSentence(humanizeEnum(text(args.reason)))}.`,

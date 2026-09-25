@@ -119,6 +119,7 @@ const TOOL_TITLES: Record<string, string> = {
   email_customer: "Email customer",
   send_detention_notice: "Send detention notice",
   waive_detention: "Waive detention",
+  approve_detention: "Approve detention",
   list_email_profiles: "List email profiles",
   flag_for_manual_review: "Flag for manual review",
   request_missing_docs: "Request missing documents",

@@ -81,6 +81,11 @@ export const RECORD_LINKS = {
     path: "/billing/invoices",
     params: { item: "{id}" },
   },
+  detention_occurrence: {
+    label: "Detention charge",
+    path: "/detention/desk",
+    params: { stop: "{id}" },
+  },
   edi_inbound_file: {
     label: "EDI inbound file",
     path: "/edi/inbound-files",

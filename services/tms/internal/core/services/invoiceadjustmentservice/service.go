@@ -68,6 +68,7 @@ type Params struct {
 	OrderRepo          repositories.OrderRepository            `optional:"true"`
 	ChargeAllocRepo    repositories.ChargeAllocationRepository `optional:"true"`
 	OrderDerivation    servicesports.OrderDerivationService    `optional:"true"`
+	DetentionBilling   servicesports.DetentionBillingService
 	Validator          *Validator
 	AuditService       servicesports.AuditService
 	WorkflowStarter    servicesports.WorkflowStarter
@@ -95,6 +96,7 @@ type Service struct {
 	orderRepo          repositories.OrderRepository
 	chargeAllocRepo    repositories.ChargeAllocationRepository
 	orderDerivation    servicesports.OrderDerivationService
+	detentionBilling   servicesports.DetentionBillingService
 	validator          *Validator
 	auditService       servicesports.AuditService
 	workflowStarter    servicesports.WorkflowStarter
@@ -150,6 +152,7 @@ func New(p Params) servicesports.InvoiceAdjustmentService { //nolint:gocritic //
 		orderRepo:          p.OrderRepo,
 		chargeAllocRepo:    p.ChargeAllocRepo,
 		orderDerivation:    p.OrderDerivation,
+		detentionBilling:   p.DetentionBilling,
 		validator:          p.Validator,
 		auditService:       p.AuditService,
 		workflowStarter:    p.WorkflowStarter,
@@ -1126,6 +1129,11 @@ func (s *Service) computePreview( //nolint:cyclop,funlen // legacy workflow
 			preview.RerateVariancePercent = rerateVariance
 		}
 	}
+	if req.Kind == invoiceadjustment.KindCreditRebill {
+		if err = s.guardDetentionRebill(ctx, preview, req.TenantInfo, entity); err != nil {
+			return nil, err
+		}
+	}
 
 	preview.NetDeltaAmount = preview.RebillTotalAmount.Sub(preview.CreditTotalAmount)
 	preview.WouldCreateUnappliedCredit = preview.CreditTotalAmount.GreaterThan(
@@ -2020,6 +2028,14 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		if err = s.voidReversedInvoice(ctx, adjustment, lockedInvoice, actor, now); err != nil {
 			return nil, err
 		}
+	} else if err = s.syncDetentionBilling(
+		ctx,
+		lockedInvoice,
+		actor,
+		creditMemoInvoice,
+		replacementInvoice,
+	); err != nil {
+		return nil, err
 	}
 
 	adjustment.Status = invoiceadjustment.StatusExecuted
@@ -2480,6 +2496,7 @@ func (s *Service) voidReversedInvoice(
 		ShipmentRepo:         s.shipmentRepo,
 		InvoiceRepo:          s.invoiceRepo,
 		OrderDerivation:      s.orderDerivation,
+		DetentionBilling:     s.detentionBilling,
 		Renumber: func(ctx context.Context, billType billingqueue.BillType) (string, error) {
 			return s.renumberReleasedItem(ctx, adjustment, billType)
 		},

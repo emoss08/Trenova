@@ -49,6 +49,9 @@ type Params struct {
 	// Publisher wakes whichever agent covers detention when a clock starts
 	// and when a notice is left for a person to send.
 	Publisher services.AgentEventPublisher `optional:"true"`
+	// Realtime refreshes the billing queue when a charge starts or stops
+	// holding its shipment off an invoice.
+	Realtime services.RealtimeService `optional:"true"`
 }
 
 type Service struct {
@@ -74,6 +77,7 @@ type Service struct {
 	auditService      services.AuditService
 	watchtower        services.WatchtowerProjector
 	publisher         services.AgentEventPublisher
+	realtime          services.RealtimeService
 	now               func() int64
 }
 
@@ -102,6 +106,7 @@ func New(p Params) *Service {
 		contextBuilder:    p.ContextBuilder,
 		watchtower:        p.Watchtower,
 		publisher:         p.Publisher,
+		realtime:          p.Realtime,
 		auditService:      p.AuditService,
 		now:               timeutils.NowUnix,
 	}
@@ -333,6 +338,7 @@ func (s *Service) computeStop(
 	}
 
 	s.recordRecalculation(ctx, saved, p.existing)
+	s.publishBillingHoldChange(ctx, p.existing, saved, pulid.Nil)
 	s.recordChargeComment(ctx, chargeCommentParams{
 		occurrence: saved,
 		previous:   p.existing,

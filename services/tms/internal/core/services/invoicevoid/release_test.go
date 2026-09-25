@@ -2,6 +2,7 @@ package invoicevoid_test
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	servicesports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/invoicevoid"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -281,4 +283,55 @@ func TestReleaseCancelReasonIsPrefixedAndCapped(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, strings.HasPrefix(got, "Invoice voided: "))
 	assert.Len(t, got, 100)
+}
+
+func TestReleaseSettlesTheDetentionChargesTheVoidedInvoiceBilled(t *testing.T) {
+	t.Parallel()
+
+	f := newReleaseFixture(t)
+	f.expectCommonReleases(false)
+	detention := mocks.NewMockDetentionBillingService(t)
+	detention.EXPECT().
+		SyncInvoiceBilling(mock.Anything, &servicesports.SyncDetentionInvoiceBillingRequest{
+			TenantInfo:    f.tenantInfo,
+			InvoiceIDs:    []pulid.ID{f.inv.ID},
+			InvoiceNumber: f.inv.Number,
+			Event:         servicesports.DetentionBillingInvoiceVoided,
+			ActorUserID:   f.userID,
+		}).
+		Return(nil).
+		Once()
+	deps := f.deps()
+	deps.DetentionBilling = detention
+
+	_, err := invoicevoid.Release(
+		t.Context(),
+		deps,
+		f.params(invoice.VoidDispositionDoNotRebill, false),
+	)
+
+	require.NoError(t, err)
+}
+
+func TestReleaseFailsWhenTheDetentionChargesCannotBeSettled(t *testing.T) {
+	t.Parallel()
+
+	f := newReleaseFixture(t)
+	f.expectCommonReleases(true)
+	detention := mocks.NewMockDetentionBillingService(t)
+	detention.EXPECT().
+		SyncInvoiceBilling(mock.Anything, mock.Anything).
+		Return(errors.New("occurrence changed underneath")).
+		Once()
+	deps := f.deps()
+	deps.DetentionBilling = detention
+
+	_, err := invoicevoid.Release(
+		t.Context(),
+		deps,
+		f.params(invoice.VoidDispositionRebill, true),
+	)
+
+	require.Error(t, err)
+	f.shipmentRepo.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything)
 }

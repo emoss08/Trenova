@@ -20,7 +20,14 @@ Keywords: approve billing, start review, billing check, ready to invoice
 2. Select an item in the list (the j and k keys move down and up the list).
 3. Select **Start review** to take the item yourself, or **Assign biller** to give it to someone else.
 4. Check the **Charges** and **Documents** tabs.
-5. Select **Approve**. If required documents are missing, **Approve** stays disabled and its tooltip says what is missing. After approval the next open item is selected automatically.
+5. Select **Approve**. If required documents are missing, or a detention charge on the shipment still needs approval, **Approve** stays disabled and its tooltip says why. After approval the next open item is selected automatically.
+
+### Clear a detention charge that is holding an item
+Keywords: held detention, detention needs approval, detention blocking approval, approve detention charge
+1. Open [Billing queue](/billing/queue) and select the item. A notice above the tabs lists each detention charge on the shipment that still needs approval, with its amount and why it is held: over the policy's approval threshold, a required notice not sent in time, or escalated for review.
+2. Select a charge in the notice to open it on the [Detention desk](/detention/desk).
+3. Check the evidence, then select **Approve charge** if it supports the charge, or **Waive** with a coded **Reason** and a **Note** if it does not.
+4. Go back to the item. Once no charge is held, the notice goes away and **Approve** is available again.
 
 ### Put an item on hold, send it back or flag an exception
 Keywords: hold billing, send back to ops, billing exception, dispute charges
@@ -60,4 +67,6 @@ Keywords: consolidated invoice, statement cycle, bill period, bill early
 ## Notes
 Opening the page needs read access to the billing queue. **Transfer to billing** only appears for people who can update shipments.
 
-Approving an item creates its invoice, which then appears on [Invoices](/billing/invoices). For a customer billed on a statement, the approved shipment waits on the customer's statement until the period is billed from the **Statements** view. Invoices under the customer's minimum are skipped and their shipments roll into the next period.
+A detention charge that went over its policy's approval threshold, missed a notice the policy requires, or was escalated keeps its shipment off every invoice until someone approves or waives it. While one is held the item cannot be approved, a transfer that would approve it on its own leaves it for review instead, and a statement run skips the customer's invoice until the charge is decided. A pending charge that simply was not approved automatically holds nothing. The detention desk agent can propose approving a held charge the evidence supports, but a person always decides.
+
+Approving an item creates its invoice, which then appears on [Invoices](/billing/invoices). Every detention charge on that invoice is marked billed; voiding or crediting the invoice so that nothing bills the charge any more returns it to approved. For a customer billed on a statement, the approved shipment waits on the customer's statement until the period is billed from the **Statements** view. Invoices under the customer's minimum are skipped and their shipments roll into the next period.
