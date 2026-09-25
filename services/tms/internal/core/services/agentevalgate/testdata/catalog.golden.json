@@ -9192,6 +9192,8 @@
             "enum": [
               "accounting_sync_record",
               "agent_run",
+              "ai_audit_event",
+              "ai_audit_export",
               "assistant_thread",
               "billing_queue_item",
               "carrier",
