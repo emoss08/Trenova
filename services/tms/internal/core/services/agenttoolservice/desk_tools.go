@@ -146,46 +146,6 @@ func (t *escalateDetentionTool) Validate(
 	return occurrence.Escalate(timeutils.NowUnix())
 }
 
-func (t *escalateDetentionTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	occurrenceID, reason, err := t.arguments(params)
-	if err != nil {
-		return nil, err
-	}
-
-	occurrence, err := t.occurrence(ctx, occurrenceID, params)
-	if err != nil {
-		return nil, err
-	}
-
-	before := *occurrence
-	if eErr := occurrence.Escalate(timeutils.NowUnix()); eErr != nil {
-		return nil, eErr
-	}
-
-	changes := []agent.FieldChange{
-		{Field: "requiresApproval", From: "false", To: "true"},
-	}
-	if occurrence.NotificationStatus != before.NotificationStatus {
-		changes = append(changes, agent.FieldChange{
-			Field: "notificationStatus",
-			From:  string(before.NotificationStatus),
-			To:    string(occurrence.NotificationStatus),
-		})
-	}
-
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would put detention occurrence %s (%d billable minutes) in front of a person: %s",
-			occurrenceID, before.BillableMinutes, reason,
-		),
-		Changes:   changes,
-		Previewed: true,
-	}, nil
-}
-
 func (t *escalateDetentionTool) occurrence(
 	ctx context.Context,
 	occurrenceID pulid.ID,
@@ -714,30 +674,6 @@ func (t *placeWorkerDispatchHoldTool) Validate(
 	return nil
 }
 
-func (t *placeWorkerDispatchHoldTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	request, err := t.arguments(params)
-	if err != nil {
-		return nil, err
-	}
-	if vErr := t.Validate(ctx, params); vErr != nil {
-		return nil, vErr
-	}
-
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would stop driver %s being given new freight: %s",
-			request.WorkerID, request.Reason,
-		),
-		Changes: []agent.FieldChange{
-			{Field: "canBeAssigned", From: "true", To: "false"},
-		},
-		Previewed: true,
-	}, nil
-}
-
 func (t *placeWorkerDispatchHoldTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
@@ -949,42 +885,6 @@ func (t *carrierIntelEventTool) Validate(
 	}
 
 	return nil
-}
-
-func (t *carrierIntelEventTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	request, err := t.arguments(params)
-	if err != nil {
-		return nil, err
-	}
-
-	event, err := t.intel.GetEvent(ctx, request.TenantInfo, request.EventID)
-	if err != nil {
-		return nil, err
-	}
-	if event.Status.IsClosed() {
-		return nil, fmt.Errorf("carrier finding %s is already %s", request.EventID, event.Status)
-	}
-
-	to := carrierintel.EventStatusAcknowledged
-	outcome := ""
-	if t.resolves {
-		to = carrierintel.EventStatusResolved
-		outcome = " as " + string(request.Resolution)
-	}
-
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would close carrier finding %s (%s, %s) to %s%s: %s",
-			request.EventID, event.Category, event.Severity, to, outcome, request.Note,
-		),
-		Changes: []agent.FieldChange{
-			{Field: "status", From: string(event.Status), To: string(to)},
-		},
-		Previewed: true,
-	}, nil
 }
 
 func (t *carrierIntelEventTool) Execute(

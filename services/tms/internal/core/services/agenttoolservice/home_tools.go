@@ -88,13 +88,13 @@ func homeRequestFor(params serviceports.ToolExecuteParams) *homelayoutservice.Re
 }
 
 // plan reads the person's home page, applies an edit, and returns the save
-// that would make it. Validate and Execute both go through it, so what a
-// person approves is what runs.
+// that would make it. Validate, Preview and Execute all go through it, so
+// what a person approves is what runs.
 func (e homeEditor) plan(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 	edit homeEdit,
-) (*homelayoutservice.UpdateRequest, error) {
+) (*homePlan, error) {
 	if params.Actor == nil || params.Actor.PrincipalType != serviceports.PrincipalTypeUser {
 		return nil, errortypes.NewAuthorizationError("Only a person has a home page to change")
 	}
@@ -147,10 +147,13 @@ func (e homeEditor) plan(
 		return nil, multiErr
 	}
 
-	return &homelayoutservice.UpdateRequest{
-		Request:  *request,
-		Document: document,
-		Version:  effective.Version,
+	return &homePlan{
+		current: effective,
+		update: &homelayoutservice.UpdateRequest{
+			Request:  *request,
+			Document: document,
+			Version:  effective.Version,
+		},
 	}, nil
 }
 
@@ -159,37 +162,14 @@ func (e homeEditor) execute(
 	params serviceports.ToolExecuteParams,
 	edit homeEdit,
 ) error {
-	update, err := e.plan(ctx, params, edit)
+	plan, err := e.plan(ctx, params, edit)
 	if err != nil {
 		return err
 	}
 
-	_, err = e.layouts.Update(ctx, update)
+	_, err = e.layouts.Update(ctx, plan.update)
 
 	return err
-}
-
-// simulate says what the home page would show after the edit.
-func (e homeEditor) simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-	edit homeEdit,
-) (*agent.ToolSimulation, error) {
-	update, err := e.plan(ctx, params, edit)
-	if err != nil {
-		return nil, err
-	}
-
-	labels := make([]string, 0, len(update.Document.Layout.Widgets))
-	for idx := range update.Document.Layout.Widgets {
-		widget := &update.Document.Layout.Widgets[idx]
-		labels = append(labels, widgetLabel(widget))
-	}
-
-	return &agent.ToolSimulation{
-		Summary:   "The home page would show, in order: " + strings.Join(labels, ", ") + ".",
-		Previewed: true,
-	}, nil
 }
 
 func widgetLabel(widget *homelayout.Widget) string {
@@ -406,13 +386,6 @@ func (t *addHomeWidgetTool) Validate(
 ) error {
 	_, err := t.editor.plan(ctx, params, t.edit(params))
 	return err
-}
-
-func (t *addHomeWidgetTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	return t.editor.simulate(ctx, params, t.edit(params))
 }
 
 func (t *addHomeWidgetTool) Execute(
@@ -652,13 +625,6 @@ func (t *removeHomeWidgetTool) Validate(
 	return err
 }
 
-func (t *removeHomeWidgetTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	return t.editor.simulate(ctx, params, t.edit(params))
-}
-
 func (t *removeHomeWidgetTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
@@ -772,13 +738,6 @@ func (t *arrangeHomeLayoutTool) Validate(
 ) error {
 	_, err := t.editor.plan(ctx, params, t.edit(params))
 	return err
-}
-
-func (t *arrangeHomeLayoutTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	return t.editor.simulate(ctx, params, t.edit(params))
 }
 
 func (t *arrangeHomeLayoutTool) Execute(

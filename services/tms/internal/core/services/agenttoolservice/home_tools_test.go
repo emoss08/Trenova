@@ -20,6 +20,7 @@ type fakeHomeLayouts struct {
 	effective *homelayoutservice.EffectiveLayout
 	catalog   *homelayoutservice.WidgetCatalog
 	updated   *homelayoutservice.UpdateRequest
+	guard     writeGuard
 }
 
 func (f *fakeHomeLayouts) GetEffective(
@@ -40,6 +41,9 @@ func (f *fakeHomeLayouts) Update(
 	_ context.Context,
 	req *homelayoutservice.UpdateRequest,
 ) (*homelayoutservice.EffectiveLayout, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.updated = req
 	return f.effective, nil
 }
@@ -267,18 +271,3 @@ func TestArrangeHomeLayout(t *testing.T) {
 	assert.Equal(t, []string{"widget_2", "widget_1"}, []string{widgets[0].ID, widgets[1].ID})
 }
 
-func TestHomeEdit_SaysWhatThePageWouldShow(t *testing.T) {
-	t.Parallel()
-
-	_, editor := homeFixture(t)
-	tool := &removeHomeWidgetTool{homeToolBase{editor: editor}}
-
-	simulation, err := tool.Simulate(t.Context(), homeParams(map[string]any{
-		"version": float64(3), "widgetId": "widget_1",
-	}))
-	require.NoError(t, err)
-
-	assert.True(t, simulation.Previewed)
-	assert.Contains(t, simulation.Summary, widgetDefinition(t, homelayout.WidgetAnnouncement).Label)
-	assert.NotContains(t, simulation.Summary, widgetDefinition(t, homelayout.WidgetAttention).Label)
-}

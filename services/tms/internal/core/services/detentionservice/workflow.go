@@ -380,7 +380,7 @@ func (s *Service) Escalate(
 
 	s.appendEvidence(ctx, saved, detention.EvidenceKindStatusChange,
 		detention.EvidenceSourceManual,
-		"Escalated to a person: "+p.Reason, now)
+		EscalationSummary(p.Reason), now)
 
 	s.audit(&original, saved, p.UserID, "Detention escalated: "+p.Reason)
 	s.publishBillingHoldChange(ctx, &original, saved, p.UserID)
