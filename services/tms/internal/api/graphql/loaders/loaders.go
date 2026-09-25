@@ -2,8 +2,11 @@ package loaders
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
 
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -91,6 +94,8 @@ type FactoryParams struct {
 	InboundAttachmentCount                    *InboundAttachmentCountLoaderFactory
 	ShipmentSummaryByID                       *ShipmentSummaryByIDLoaderFactory
 	CarrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
+	AuditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
+	PermissionEngine                          services.PermissionEngine
 }
 
 type Factory struct {
@@ -145,6 +150,8 @@ type Factory struct {
 	inboundAttachmentCount                    *InboundAttachmentCountLoaderFactory
 	shipmentSummaryByID                       *ShipmentSummaryByIDLoaderFactory
 	carrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
+	auditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
+	permissionEngine                          services.PermissionEngine
 }
 
 type Loaders struct {
@@ -199,6 +206,10 @@ type Loaders struct {
 	InboundAttachmentCount                    *dataloadgen.Loader[string, int]
 	ShipmentSummaryByID                       *dataloadgen.Loader[string, *repositories.ShipmentSummary]
 	CarrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment]
+	AuditEntriesByAIAuditEventID              *dataloadgen.Loader[string, []*audit.Entry]
+	// FieldCeilings is the reader's sensitivity ceiling per resource, asked
+	// of the permission engine once per resource per request.
+	FieldCeilings services.FieldCeilings
 }
 
 func NewFactory(p FactoryParams) *Factory {
@@ -254,6 +265,8 @@ func NewFactory(p FactoryParams) *Factory {
 		inboundAttachmentCount:                    p.InboundAttachmentCount,
 		shipmentSummaryByID:                       p.ShipmentSummaryByID,
 		carrierMonitoringEnrollmentByCarrierID:    p.CarrierMonitoringEnrollmentByCarrierID,
+		auditEntriesByAIAuditEventID:              p.AuditEntriesByAIAuditEventID,
+		permissionEngine:                          p.PermissionEngine,
 	}
 }
 
@@ -369,6 +382,12 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 		ShipmentSummaryByID: f.shipmentSummaryByID.NewForTenant(tenantInfo),
 		CarrierMonitoringEnrollmentByCarrierID: f.carrierMonitoringEnrollmentByCarrierID.NewForTenant(
 			tenantInfo,
+		),
+		AuditEntriesByAIAuditEventID: f.auditEntriesByAIAuditEventID.NewForTenant(tenantInfo),
+		FieldCeilings: fieldsensitivity.NewCeilings(
+			f.permissionEngine,
+			tenantInfo.UserID,
+			tenantInfo.OrgID,
 		),
 	}
 }

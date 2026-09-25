@@ -74,11 +74,19 @@ type matchKey struct {
 	match   repositories.AuditEntryMatch
 }
 
+// CorrelationSource reads the audit log rows a set of matches names.
+type CorrelationSource interface {
+	ListCorrelatedAuditEntries(
+		ctx context.Context,
+		req *repositories.ListCorrelatedAuditEntriesRequest,
+	) ([]*audit.Entry, error)
+}
+
 // Correlate finds the audit log rows matched by time to each of a page of
 // events, in one query.
 func Correlate(
 	ctx context.Context,
-	ledger repositories.AIAuditRepository,
+	ledger CorrelationSource,
 	tenantInfo pagination.TenantInfo,
 	events []*aiaudit.AIAuditEvent,
 ) (map[pulid.ID][]*audit.Entry, error) {

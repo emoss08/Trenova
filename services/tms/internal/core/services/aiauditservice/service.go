@@ -28,6 +28,7 @@ type Service struct {
 	verifier  *Verifier
 	exports   *Exports
 	workflows serviceports.WorkflowStarter
+	traceURL  func(string) string
 	l         *zap.Logger
 }
 
@@ -39,6 +40,7 @@ type ServiceParams struct {
 	Verifier  *Verifier
 	Exports   *Exports
 	Workflows serviceports.WorkflowStarter
+	TraceURL  func(string) string
 	Logger    *zap.Logger
 }
 
@@ -49,6 +51,7 @@ func NewService(p ServiceParams) *Service {
 		verifier:  p.Verifier,
 		exports:   p.Exports,
 		workflows: p.Workflows,
+		traceURL:  p.TraceURL,
 		l:         p.Logger.Named("aiaudit.service"),
 	}
 }
@@ -199,6 +202,14 @@ func (s *Service) ExportDownload(
 	req *serviceports.GetAIAuditExportDownloadRequest,
 ) (*serviceports.AIAuditExportDownload, error) {
 	return s.exports.Download(ctx, req)
+}
+
+func (s *Service) TraceURL(traceID string) string {
+	if s.traceURL == nil || traceID == "" {
+		return ""
+	}
+
+	return s.traceURL(traceID)
 }
 
 func (s *Service) SourcePruneHorizon(ctx context.Context, source aiaudit.Source) (int64, error) {

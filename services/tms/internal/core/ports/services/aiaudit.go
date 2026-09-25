@@ -138,6 +138,9 @@ type AIAuditService interface {
 		ctx context.Context,
 		req *GetAIAuditExportDownloadRequest,
 	) (*AIAuditExportDownload, error)
+	// TraceURL is where a trace opens in the tracing backend, or empty when
+	// none is configured.
+	TraceURL(traceID string) string
 	// SourcePruneHorizon is the newest timestamp a source's own retention
 	// sweep may delete before: rows after it may not be in the trail yet.
 	SourcePruneHorizon(ctx context.Context, source aiaudit.Source) (int64, error)

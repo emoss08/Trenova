@@ -103,6 +103,7 @@ func New(p Params) Components {
 			Verifier:  verifier,
 			Exports:   exports,
 			Workflows: p.Workflows,
+			TraceURL:  p.Config.Monitoring.Tracing.TraceURL,
 			Logger:    p.Logger,
 		}),
 		Projector: projector,
