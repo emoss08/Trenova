@@ -226,6 +226,7 @@ type ChangeAccountingBackfillRequest struct {
 
 type ListAccountingSyncRecordsRequest struct {
 	TenantInfo      pagination.TenantInfo
+	Filter          *pagination.QueryOptions
 	IntegrationType integration.Type
 	Statuses        []accountingsync.SyncStatus
 	ObjectTypes     []accountingsync.SyncObjectType

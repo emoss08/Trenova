@@ -97,8 +97,13 @@ func (s *Service) ListRecords(
 	if err != nil {
 		return nil, err
 	}
+	filter := req.Filter
+	if filter == nil {
+		filter = &pagination.QueryOptions{}
+	}
+	filter.TenantInfo = req.TenantInfo
 	return s.records.ListConnection(ctx, &repositories.ListAccountingSyncRecordsConnectionRequest{
-		Filter:          &pagination.QueryOptions{TenantInfo: req.TenantInfo},
+		Filter:          filter,
 		Cursor:          req.Cursor,
 		ConnectionID:    conn.ID,
 		Statuses:        req.Statuses,

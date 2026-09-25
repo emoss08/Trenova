@@ -234,7 +234,10 @@ func (s *Service) pushRecord(
 		outcome = accountingsync.SyncAttemptWaiting
 		recordAttempt = false
 	default:
-		classified := sess.writer.ClassifyDocumentError(pushErr)
+		var classified *accountingsync.SyncError
+		if !errors.As(pushErr, &classified) {
+			classified = sess.writer.ClassifyDocumentError(pushErr)
+		}
 		if classified == nil {
 			classified = blocked(accountingsync.SyncErrorTransient, pushErr.Error(), "")
 		}
@@ -350,7 +353,11 @@ func payloadOf(document any) (map[string]any, string, error) {
 	}
 	delete(payload, "Auth")
 	delete(payload, "Refs")
-	sum := sha256.Sum256(raw)
+	stored, err := sonic.ConfigStd.Marshal(payload)
+	if err != nil {
+		return nil, "", fmt.Errorf("accounting sync: encode payload: %w", err)
+	}
+	sum := sha256.Sum256(stored)
 	return payload, hex.EncodeToString(sum[:]), nil
 }
 

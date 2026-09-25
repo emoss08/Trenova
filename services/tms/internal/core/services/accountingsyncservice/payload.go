@@ -235,7 +235,7 @@ func customerCreateError(
 	classified := sess.writer.ClassifyDocumentError(err)
 	if classified != nil && classified.Category == accountingsync.SyncErrorDuplicate {
 		return blocked(
-			accountingsync.SyncErrorDuplicate,
+			accountingsync.SyncErrorMapping,
 			err.Error(),
 			"Map "+row.TargetLabel+" to the existing "+sess.providerName+" customer, then retry",
 		)

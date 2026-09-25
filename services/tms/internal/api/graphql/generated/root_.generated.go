@@ -8547,6 +8547,7 @@ type ComplexityRoot struct {
 		AccountingSyncAttempts              func(childComplexity int, recordID string) int
 		AccountingSyncObjectStates          func(childComplexity int, objectIds []string) int
 		AccountingSyncRecord                func(childComplexity int, id string) int
+		AccountingSyncRecordTable           func(childComplexity int, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) int
 		AccountingSyncRecords               func(childComplexity int, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingSyncRecordFilterInput) int
 		AccountingSyncStatus                func(childComplexity int, integrationType integration.Type) int
 		AccountingSyncSummary               func(childComplexity int, integrationType integration.Type) int
@@ -54128,6 +54129,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AccountingSyncRecord(childComplexity, args["id"].(string)), true
+	case "Query.accountingSyncRecordTable":
+		if e.ComplexityRoot.Query.AccountingSyncRecordTable == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingSyncRecordTable_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingSyncRecordTable(childComplexity, args["integrationType"].(integration.Type), args["input"].(gqlmodel.DataTableConnectionInput)), true
 	case "Query.accountingSyncRecords":
 		if e.ComplexityRoot.Query.AccountingSyncRecords == nil {
 			break
@@ -78230,6 +78242,11 @@ extend type Query {
     first: Int
     after: String
     filter: AccountingSyncRecordFilterInput
+  ): AccountingSyncRecordConnection!
+  "The sync ledger as a data table: filters, sorting and search over the records."
+  accountingSyncRecordTable(
+    integrationType: AccountingSystem!
+    input: DataTableConnectionInput!
   ): AccountingSyncRecordConnection!
   accountingSyncRecord(id: ID!): AccountingSyncRecord!
   "Every try at sending a record, newest first."

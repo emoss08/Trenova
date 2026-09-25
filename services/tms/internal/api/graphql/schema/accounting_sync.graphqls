@@ -682,6 +682,11 @@ extend type Query {
     after: String
     filter: AccountingSyncRecordFilterInput
   ): AccountingSyncRecordConnection!
+  "The sync ledger as a data table: filters, sorting and search over the records."
+  accountingSyncRecordTable(
+    integrationType: AccountingSystem!
+    input: DataTableConnectionInput!
+  ): AccountingSyncRecordConnection!
   accountingSyncRecord(id: ID!): AccountingSyncRecord!
   "Every try at sending a record, newest first."
   accountingSyncAttempts(recordId: ID!): [AccountingSyncAttempt!]!

@@ -560,6 +560,29 @@ func (r *queryResolver) AccountingSyncRecords(ctx context.Context, integrationTy
 	return accountingSyncRecordConnectionToModel(result)
 }
 
+func (r *queryResolver) AccountingSyncRecordTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingSyncRecordConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := dataTableConnectionFromGraphQL(ctx, &input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.accountingSync.ListRecords(ctx, &services.ListAccountingSyncRecordsRequest{
+		TenantInfo:      tenantInfo(authCtx),
+		IntegrationType: integrationType,
+		Filter:          tableInput.Filter,
+		Cursor:          tableInput.Cursor,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return accountingSyncRecordConnectionToModel(result)
+}
+
 func (r *queryResolver) AccountingSyncRecord(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
 	if err != nil {
