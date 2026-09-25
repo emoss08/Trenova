@@ -3,7 +3,7 @@
 -- depending on how the row was saved, and has no array operators. A row is
 -- moved back only when its text is the default this migration wrote in one of
 -- those spellings, and keeps that spelling.
--- Source: 20261231006620_billing_exception_accounting_event.tx.down.sql
+-- Source: 20261231006640_billing_exception_accounting_event.tx.down.sql
 
 UPDATE "agent_definitions"
 SET "event_kinds" = CASE "event_kinds"

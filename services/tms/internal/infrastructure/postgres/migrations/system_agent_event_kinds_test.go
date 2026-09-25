@@ -44,7 +44,7 @@ func systemAgentEventKindMoves() []eventKindsMove {
 			},
 		},
 		{
-			migration: "20261231006620_billing_exception_accounting_event.tx",
+			migration: "20261231006640_billing_exception_accounting_event.tx",
 			systemKey: "billing_exception",
 			from: []agent.EventKind{
 				agent.EventBillingQueueItemException,
