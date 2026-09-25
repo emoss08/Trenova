@@ -377,11 +377,12 @@ function AccountingAppRegistration({
     <div className="space-y-3 rounded-md border p-3">
       <ol className="text-foreground-muted list-decimal space-y-1 pl-4 text-sm">
         <li>
-          {t("Create an app on the")}{" "}
+          {t(
+            "Create an app on the Intuit developer portal with the com.intuit.quickbooks.accounting scope.",
+          )}{" "}
           <ExternalLink href={vendor.developerPortalUrl} className="text-sm">
-            {t("Intuit developer portal")}
-          </ExternalLink>{" "}
-          {t("with the com.intuit.quickbooks.accounting scope.")}
+            {t("Open the Intuit developer portal")}
+          </ExternalLink>
         </li>
         <li>
           {t(

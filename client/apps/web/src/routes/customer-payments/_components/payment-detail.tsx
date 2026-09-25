@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@trenova/shared/components/ui/table";
+import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { getTodayDate } from "@trenova/shared/lib/date";
@@ -96,11 +97,10 @@ function PaymentDetailView({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className={KPI_VALUE_LG_CLASS}>
-              {formatCurrency(payment.amountMinor / 100)}
-            </span>
+            <span className={KPI_VALUE_LG_CLASS}>{formatCurrency(payment.amountMinor / 100)}</span>
             <PlainCustomerPaymentStatusBadge status={payment.status as CustomerPaymentStatus} />
           </div>
+          <AccountingSyncStateLine objectId={payment.id} className="mt-1" />
           <Link
             to={`/accounting/ar/customer-ledger?customerId=${payment.customerId}`}
             className="text-muted-foreground hover:text-foreground mt-1 inline-flex items-center gap-1 text-xs hover:underline"
@@ -195,16 +195,10 @@ function CashAllocationBar({
     <div>
       <div className="bg-muted flex h-2.5 w-full gap-px overflow-hidden rounded-full">
         {appliedMinor > 0 ? (
-          <div
-            className="h-full bg-success"
-            style={{ width: `${appliedShare}%` }}
-          />
+          <div className="h-full bg-success" style={{ width: `${appliedShare}%` }} />
         ) : null}
         {unappliedMinor > 0 ? (
-          <div
-            className="h-full bg-accent-sky"
-            style={{ width: `${unappliedShare}%` }}
-          />
+          <div className="h-full bg-accent-sky" style={{ width: `${unappliedShare}%` }} />
         ) : null}
       </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">

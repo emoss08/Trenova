@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f42d54a66fba1fe9943d406c95ec08c6653cb74884e7493e4358305e3de5bdcd",
+  "version": "sha256:b71aa91fa26486482dac17fad7d8975501c98ab97c8cdea67bf163a75727eb10",
   "modules": [
     {
       "id": "home",
@@ -1599,6 +1599,109 @@
         "/accounting/reports/income-statement",
         "/accounting/reports/balance-sheet",
         "/accounting/manual-journals"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/accounting/sync",
+      "name": "Sync ledger",
+      "module": "accounting",
+      "breadcrumb": [
+        "Accounting management",
+        "Accounting sync",
+        "Sync ledger"
+      ],
+      "description": "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.",
+      "summary": "The sync ledger lists every document Trenova sends to QuickBooks Online (invoices, credit and debit memos, customer payments, credit applications and customer changes) and what happened to each one. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.",
+      "requires": [
+        {
+          "resource": "accounting_sync",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "QuickBooks sync",
+        "sync log",
+        "sync errors",
+        "sync history",
+        "failed to sync",
+        "QuickBooks not updating",
+        "invoice not in QuickBooks",
+        "accounting sync ledger",
+        "outbox"
+      ],
+      "tasks": [
+        {
+          "title": "Fix a document that did not reach QuickBooks",
+          "keywords": [
+            "sync failed",
+            "held document",
+            "blocked invoice",
+            "missing mapping",
+            "closed period"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and select **Needs attention** in the strip.",
+            "Open the record. Its reason says what to do, such as mapping a charge code to a QuickBooks item on the [Mappings](/accounting/sync/mappings) page.",
+            "Fix what the reason names, then select **Retry now**. To retry every record held for the same reason, select **Retry these** beside the reason under **Needs attention**."
+          ]
+        },
+        {
+          "title": "Release documents waiting for approval",
+          "keywords": [
+            "approve sync",
+            "send held documents",
+            "manual sync"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and select **Waiting for release** in the strip.",
+            "Open a record and select **Release** to send it, or use the release button in the page header to send all of them."
+          ]
+        },
+        {
+          "title": "Skip a document",
+          "keywords": [
+            "do not send",
+            "already entered by hand",
+            "ignore sync error"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and open the record.",
+            "Select **Skip**, say why it is not sent, then select **Skip document**."
+          ]
+        },
+        {
+          "title": "Pause or resume sending",
+          "keywords": [
+            "stop syncing",
+            "month-end close",
+            "hold QuickBooks sync"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and select **Pause sending**. Add a reason if you like, then select **Pause sending** again to confirm.",
+            "Posted documents keep queueing while sending is paused. Select **Resume sending** to send them in order."
+          ]
+        },
+        {
+          "title": "Send documents posted before sync was turned on",
+          "keywords": [
+            "backfill",
+            "historical invoices",
+            "send old documents"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and select **Backfill**.",
+            "Choose the range and, optionally, the kinds of documents, then select **Start backfill**. Documents already queued are left alone, and one backfill runs at a time."
+          ]
+        }
+      ],
+      "notes": "Viewing the ledger needs read access to accounting sync; retrying, releasing, skipping, pausing and resuming need update access; a backfill needs manage access to the accounting integration. A document that fails for a temporary reason is retried on its own, backing off from 30 seconds to 6 hours, and is marked failed after 8 tries. Invoices, customer payments and customers show where they stand in QuickBooks Online on their own pages, with a link back to this ledger.",
+      "related": [
+        "/accounting/sync/mappings",
+        "/admin/integrations"
       ],
       "covers": [],
       "createAction": null,
@@ -4132,7 +4235,26 @@
             "Intuit sends you back to Trenova, which finishes the connection and shows the company it connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books closed through**. Check it is the right company, then select **Continue**.",
             "On **Match records**, Trenova reads the company's accounts, items, customers and vendors and proposes a match for each Trenova record. Tick the proposals that are right and select the confirm button, which names how many are ticked, or select a row to choose another record.",
             "When every required mapping is confirmed, select **Finish setup**. The rest can be done later on [Mappings](/accounting/sync/mappings) (**Open all mappings**).",
-            "Nothing is sent to QuickBooks yet. Trenova reads the company's settings and records and checks the connection every fifteen minutes."
+            "Choose the **Start date**: documents dated before it are never sent. Leave **Send posted documents automatically** on to send each document as it is posted, or turn it off to hold each one in the [Sync ledger](/accounting/sync) until someone releases it. When the start date is in the past, tick **Also send documents already posted since the start date** to queue those too.",
+            "Select **Start sending**. From then on Trenova sends invoices, credit and debit memos, customer payments and credit applications as they are posted, and checks the connection every fifteen minutes."
+          ]
+        },
+        {
+          "title": "Use your own Intuit app",
+          "keywords": [
+            "Intuit app keys",
+            "client ID",
+            "client secret",
+            "redirect URI",
+            "QuickBooks developer app",
+            "self-hosted QuickBooks"
+          ],
+          "steps": [
+            "On the Intuit developer portal, create an app with the com.intuit.quickbooks.accounting scope.",
+            "Open [Integrations](/admin/integrations) and open the QuickBooks Online card. When this server has no Intuit app of its own the keys form is already open; otherwise select **Use your own app**.",
+            "Copy the **Redirect URI** into the app's redirect URIs on the Intuit developer portal exactly as written. Development keys accept http://localhost; production keys need https.",
+            "Choose the **Environment**, enter the **Client ID** and **Client secret** from the same environment, and optionally the webhook verifier token, then select **Save keys**. Trenova checks the keys with Intuit before saving them.",
+            "To change the keys later select **Change keys**; to go back to the server's app select **Remove**. While a company is connected, only the client secret and verifier token can change."
           ]
         },
         {
@@ -4151,8 +4273,9 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person. A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
+      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys and choosing the start date. A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
       "related": [
+        "/accounting/sync",
         "/admin/inbound-mailboxes",
         "/admin/api-keys",
         "/dispatch/carrier-monitoring",
@@ -14442,6 +14565,15 @@
     }
   ],
   "records": [
+    {
+      "entity": "accounting_sync_record",
+      "label": "Sync record",
+      "path": "/accounting/sync",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
     {
       "entity": "agent_run",
       "label": "Agent run",

@@ -844,6 +844,17 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/accounting/sync",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountingSync),
+            ),
+            async lazy() {
+              const { AccountingSyncLedgerPage } = await import("@/routes/accounting-sync/page");
+              return { Component: AccountingSyncLedgerPage };
+            },
+          },
+          {
             path: "/accounting/sync/mappings",
             loader: combineLoaders(
               protectedLoader,

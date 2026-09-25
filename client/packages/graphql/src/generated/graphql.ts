@@ -6956,6 +6956,15 @@ export type ChangeAccountingBackfillMutationVariables = Exact<{
 
 export type ChangeAccountingBackfillMutation = { changeAccountingBackfill: { ' $fragmentRefs'?: { 'AccountingBackfillFieldsFragment': AccountingBackfillFieldsFragment } } };
 
+export type AccountingSyncRecordTableQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AccountingSyncRecordTableQuery = { accountingSyncRecordTable: { totalCount?: number | null, edges: Array<{ node: { id: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, operation: AccountingSyncOperation, sourceEvent: AccountingSyncSourceEvent, revision: number, documentDate: number | null, dependsOnRecordId: string | null, status: AccountingSyncRecordStatus, attemptCount: number, nextAttemptAt: number | null, externalId: string, externalDocNumber: string, externalUrl: string, errorCategory: AccountingSyncErrorCategory | null, errorCode: string, errorMessage: string, resolution: string, queuedAt: number, startedAt: number | null, syncedAt: number | null, skippedReason: string, version: number, updatedAt: number, skippedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
 export type LateChargeAssessmentResultFieldsFragment = { asOfDate: number, preview: boolean, mode: LateChargeAssessmentMode, memosCreated: number, memosPosted: number, customersSkipped: number, totalChargeMinor: number, customers: Array<{ customerId: string, customerName: string, currencyCode: string, totalChargeMinor: number, debitMemoId: string | null, debitMemoNumber: string, posted: boolean, skipped: boolean, skipReason: string, lines: Array<{ invoiceId: string, invoiceNumber: string, periodIndex: number, periodStart: number, periodEnd: number, basisOpenBalanceMinor: number, ratePercent: string, chargeMinor: number }> }> } & { ' $fragmentName'?: 'LateChargeAssessmentResultFieldsFragment' };
 
 export type LateChargePreviewQueryVariables = Exact<{
@@ -21459,6 +21468,7 @@ export const ReleaseAccountingSyncDocument = {"__meta__":{"kind":"mutation","nam
 export const SkipAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"SkipAccountingSync","hash":"sha256:952b395783216172a3ef671af3d707ef257507d24a4cfd055641d0f9938d6168"}} as unknown as TypedDocumentString<SkipAccountingSyncMutation, SkipAccountingSyncMutationVariables>;
 export const RequestAccountingBackfillDocument = {"__meta__":{"kind":"mutation","name":"RequestAccountingBackfill","hash":"sha256:8f2d2eb0a1b533f8f6840beeb2d1acb4521cde2fb60fb4d388f3a09487d18106"}} as unknown as TypedDocumentString<RequestAccountingBackfillMutation, RequestAccountingBackfillMutationVariables>;
 export const ChangeAccountingBackfillDocument = {"__meta__":{"kind":"mutation","name":"ChangeAccountingBackfill","hash":"sha256:25c2e40a5030190dba087fe94b6f9078acff46f0065f77611f3b35f1931a9523"}} as unknown as TypedDocumentString<ChangeAccountingBackfillMutation, ChangeAccountingBackfillMutationVariables>;
+export const AccountingSyncRecordTableDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecordTable","hash":"sha256:044e65c16d681d57e28f63b395f5308354481365cb818e35c44a610e9e4728be"}} as unknown as TypedDocumentString<AccountingSyncRecordTableQuery, AccountingSyncRecordTableQueryVariables>;
 export const LateChargePreviewDocument = {"__meta__":{"kind":"query","name":"LateChargePreview","hash":"sha256:44fccb916e6be6056ca7ed3b6854c5dd9f7421889b8e5ce421b347391a22d5fb"}} as unknown as TypedDocumentString<LateChargePreviewQuery, LateChargePreviewQueryVariables>;
 export const AssessLateChargesDocument = {"__meta__":{"kind":"mutation","name":"AssessLateCharges","hash":"sha256:c63c2c03e469f92f955ba04285415d029b2fb6bf3b9f79432e0afb9a967ab66c"}} as unknown as TypedDocumentString<AssessLateChargesMutation, AssessLateChargesMutationVariables>;
 export const ArAgingSummaryDocument = {"__meta__":{"kind":"query","name":"ArAgingSummary","hash":"sha256:6e0cbca355dfb7e59c403efe34be542aee4f26ff779d480e08e077574626daf9"}} as unknown as TypedDocumentString<ArAgingSummaryQuery, ArAgingSummaryQueryVariables>;

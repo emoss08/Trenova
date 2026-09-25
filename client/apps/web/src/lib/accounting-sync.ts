@@ -2,6 +2,7 @@ import { recordPath, type RecordEntityType } from "@/config/record-links";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import type {
   AccountingConnectionStatus,
+  AccountingSyncRecordStatus,
   AccountingMappingFilterInput,
   AccountingMappingState,
   AccountingMappingTargetType,
@@ -12,6 +13,28 @@ import type {
 import type { StatusPhase } from "@trenova/shared/lib/status-phase";
 
 export const ACCOUNTING_MAPPINGS_PATH = "/accounting/sync/mappings";
+
+export const ACCOUNTING_SYNC_PATH = "/accounting/sync";
+
+const SYNC_RECORD_PHASES: Record<AccountingSyncRecordStatus, StatusPhase> = {
+  Queued: "queued",
+  AwaitingApproval: "awaiting",
+  InFlight: "active",
+  Retrying: "active",
+  Synced: "complete",
+  Blocked: "attention",
+  DeadLettered: "failed",
+  Skipped: "closed",
+  Superseded: "closed",
+};
+
+export function accountingSyncRecordPhase(status: AccountingSyncRecordStatus): StatusPhase {
+  return SYNC_RECORD_PHASES[status];
+}
+
+export function accountingSyncNeedsAction(status: AccountingSyncRecordStatus): boolean {
+  return status === "Blocked" || status === "DeadLettered" || status === "AwaitingApproval";
+}
 
 export const REFERENCE_REFRESH_STALE_SECONDS = 2 * 60 * 60;
 

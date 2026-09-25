@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KPI_VALUE_LG_CLASS } from "@/components/kpi/kpi-strip";
 import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/ui/alert";
+import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import AuditTab from "@/components/audit-tab";
 import { BillingDetailUnselected } from "@/components/billing/billing-empty";
 import { EmptyState } from "@/components/empty-state";
@@ -181,6 +182,8 @@ export default function InvoiceDetailPane({
         </div>
 
         {isVoided ? <VoidedNotice invoice={invoice} /> : null}
+
+        {invoice.status === "Draft" ? null : <AccountingSyncStateLine objectId={invoice.id} />}
 
         <div className="flex items-baseline gap-3">
           <span className={KPI_VALUE_LG_CLASS}>

@@ -15401,6 +15401,10 @@ type Query {
   """
   accountingSyncObjectStates(objectIds: [ID!]!): [AccountingSyncObjectState!]!
   accountingSyncRecord(id: ID!): AccountingSyncRecord!
+  """
+  The sync ledger as a data table: filters, sorting and search over the records.
+  """
+  accountingSyncRecordTable(input: DataTableConnectionInput!, integrationType: AccountingSystem!): AccountingSyncRecordConnection!
   """The sync ledger, newest first."""
   accountingSyncRecords(after: String, filter: AccountingSyncRecordFilterInput, first: Int, integrationType: AccountingSystem!): AccountingSyncRecordConnection!
   """
