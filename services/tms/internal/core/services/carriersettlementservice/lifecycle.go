@@ -191,14 +191,13 @@ func (s *Service) Reject(
 // the carrier ledger so AP credited at posting time actually clears.
 func (s *Service) MarkPaid(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	settlementID pulid.ID,
-	paymentMethod, paymentReference string,
+	req *serviceports.MarkSettlementPaidRequest,
 	actor *serviceports.RequestActor,
 ) (*carriersettlement.CarrierSettlement, error) {
 	if err := requireActor(actor, "Carrier settlement payment"); err != nil {
 		return nil, err
 	}
+	paymentMethod := req.PaymentMethod
 	if paymentMethod == "" {
 		return nil, errortypes.NewValidationError(
 			"paymentMethod",
@@ -210,7 +209,7 @@ func (s *Service) MarkPaid(
 	var updated *carriersettlement.CarrierSettlement
 	var previous carriersettlement.CarrierSettlement
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
+		entity, txErr := s.getForUpdate(txCtx, req.TenantInfo, req.SettlementID)
 		if txErr != nil {
 			return txErr
 		}
@@ -219,28 +218,31 @@ func (s *Service) MarkPaid(
 		}
 		previous = *entity
 
-		batchID, txErr := s.postPaymentJournal(txCtx, entity, actor)
+		paidAt := req.PaidAt
+		if paidAt == 0 {
+			paidAt = timeutils.NowUnix()
+		}
+		batchID, txErr := s.postPaymentJournal(txCtx, entity, actor, paidAt)
 		if txErr != nil {
 			return txErr
 		}
 
-		now := timeutils.NowUnix()
 		if txErr = s.appendLedgerEntry(txCtx, entity, &ledgerEntryParams{
 			EntryType:       carriersettlement.LedgerEntryTypePayment,
 			SourceEvent:     tenant.JournalSourceEventCarrierSettlementPaid,
 			JournalBatchID:  batchID,
 			AmountMinor:     -entity.NetPayableMinor,
-			TransactionDate: now,
+			TransactionDate: paidAt,
 			Actor:           actor,
 		}); txErr != nil {
 			return txErr
 		}
 
 		entity.Status = carriersettlement.StatusPaid
-		entity.PaidAt = &now
+		entity.PaidAt = &paidAt
 		entity.PaidByID = actor.UserID
 		entity.PaymentMethod = paymentMethod
-		entity.PaymentReference = paymentReference
+		entity.PaymentReference = req.PaymentReference
 		entity.PaidJournalBatchID = batchID
 		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
 			return txErr

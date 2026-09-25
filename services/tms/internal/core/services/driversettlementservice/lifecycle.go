@@ -196,14 +196,14 @@ func (s *Service) Reject(
 
 func (s *Service) MarkPaid(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	settlementID pulid.ID,
-	paymentMethod, paymentReference string,
+	req *serviceports.MarkSettlementPaidRequest,
 	actor *serviceports.RequestActor,
 ) (*driversettlement.Settlement, error) {
 	if err := requireActor(actor, "Settlement payment"); err != nil {
 		return nil, err
 	}
+	tenantInfo := req.TenantInfo
+	paymentMethod := req.PaymentMethod
 	if paymentMethod == "" {
 		return nil, errortypes.NewValidationError(
 			"paymentMethod",
@@ -215,7 +215,7 @@ func (s *Service) MarkPaid(
 	var updated *driversettlement.Settlement
 	var previous driversettlement.Settlement
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		entity, txErr := s.getForUpdate(txCtx, tenantInfo, settlementID)
+		entity, txErr := s.getForUpdate(txCtx, tenantInfo, req.SettlementID)
 		if txErr != nil {
 			return txErr
 		}
@@ -223,12 +223,15 @@ func (s *Service) MarkPaid(
 			return transitionError(entity.Status, driversettlement.StatusPaid)
 		}
 		previous = *entity
-		now := timeutils.NowUnix()
+		paidAt := req.PaidAt
+		if paidAt == 0 {
+			paidAt = timeutils.NowUnix()
+		}
 		entity.Status = driversettlement.StatusPaid
-		entity.PaidAt = &now
+		entity.PaidAt = &paidAt
 		entity.PaidByID = actor.UserID
 		entity.PaymentMethod = paymentMethod
-		entity.PaymentReference = paymentReference
+		entity.PaymentReference = req.PaymentReference
 		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
 			return txErr
 		}
