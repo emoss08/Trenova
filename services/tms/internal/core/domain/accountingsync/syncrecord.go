@@ -19,22 +19,23 @@ import (
 )
 
 const (
-	SyncRequestIDPrefix     = "trn-"
-	syncRequestIDHashChars  = 40
-	MaxSyncAttempts         = 8
-	SyncRetryBase           = 30 * time.Second
-	SyncRetryCeiling        = 6 * time.Hour
-	SyncAuthWait            = 15 * time.Minute
-	maxSyncErrorMessage     = 2000
-	maxSyncResolution       = 1000
-	maxSyncSkipReason       = 500
-	SyncPayloadRetention    = 90 * 24 * time.Hour
-	SyncAttemptRetention    = 90 * 24 * time.Hour
-	syncRecordIDPrefix      = "acctsr_"
-	syncAttemptIDPrefix     = "acctsa_"
-	backfillIDPrefix        = "acctbf_"
-	ExternalRefShortPayMemo = "shortPayCreditMemo"
-	ExternalRefSyncToken    = "syncToken"
+	SyncRequestIDPrefix       = "trn-"
+	syncRequestIDHashChars    = 40
+	MaxSyncAttempts           = 8
+	SyncRetryBase             = 30 * time.Second
+	SyncRetryCeiling          = 6 * time.Hour
+	SyncAuthWait              = 15 * time.Minute
+	maxSyncErrorMessage       = 2000
+	maxSyncResolution         = 1000
+	maxSyncSkipReason         = 500
+	SyncPayloadRetention      = 90 * 24 * time.Hour
+	SyncAttemptRetention      = 90 * 24 * time.Hour
+	syncRecordIDPrefix        = "acctsr_"
+	syncAttemptIDPrefix       = "acctsa_"
+	backfillIDPrefix          = "acctbf_"
+	ExternalRefDocument       = "document"
+	ExternalRefApplication    = "application"
+	ExternalRefShortPayPrefix = "shortPay:"
 )
 
 var (

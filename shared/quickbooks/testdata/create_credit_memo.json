@@ -1,0 +1,10 @@
+{
+  "CreditMemo": {
+    "Id": "146",
+    "DocNumber": "CM-1001",
+    "SyncToken": "0",
+    "TotalAmt": 25,
+    "CustomerRef": { "value": "58" }
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

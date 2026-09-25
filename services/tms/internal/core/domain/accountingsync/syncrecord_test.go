@@ -207,13 +207,13 @@ func TestMarkSyncedClearsTheErrorAndKeepsTheLink(t *testing.T) {
 		Category: accountingsync.SyncErrorTransient,
 		Message:  "timeout",
 	}, now)
-	record.SetExternalRef(accountingsync.ExternalRefSyncToken, "0")
+	record.SetExternalRef(accountingsync.ExternalRefApplication, "0")
 
 	record.MarkSynced(&accountingsync.SyncResult{
 		ExternalID:        "145",
 		ExternalDocNumber: "INV-1001",
 		ExternalURL:       "https://app.qbo.intuit.com/app/invoice?txnId=145",
-		ExternalRefs:      map[string]string{accountingsync.ExternalRefShortPayMemo: "146"},
+		ExternalRefs:      map[string]string{accountingsync.ExternalRefDocument: "146"},
 		PayloadHash:       "abc",
 		MappingIDs:        []string{"acctm_1"},
 	}, now+10)
@@ -225,8 +225,8 @@ func TestMarkSyncedClearsTheErrorAndKeepsTheLink(t *testing.T) {
 	assert.Empty(t, record.ErrorCategory)
 	assert.Empty(t, record.ErrorMessage)
 	assert.Equal(t, map[string]string{
-		accountingsync.ExternalRefSyncToken:    "0",
-		accountingsync.ExternalRefShortPayMemo: "146",
+		accountingsync.ExternalRefApplication:    "0",
+		accountingsync.ExternalRefDocument: "146",
 	}, record.ExternalRefs)
 	assert.Equal(t, []string{"acctm_1"}, record.MappingIDs)
 	assert.False(t, record.NeverSent())
@@ -237,10 +237,10 @@ func TestPartialWriteIsNotNeverSent(t *testing.T) {
 	t.Parallel()
 
 	record := queuedRecord(t, false)
-	record.SetExternalRef(accountingsync.ExternalRefShortPayMemo, "146")
+	record.SetExternalRef(accountingsync.ExternalRefDocument, "146")
 	assert.False(t, record.NeverSent())
 
-	record.SetExternalRef(accountingsync.ExternalRefShortPayMemo, "")
+	record.SetExternalRef(accountingsync.ExternalRefDocument, "")
 	assert.True(t, record.NeverSent())
 }
 

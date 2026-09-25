@@ -1,0 +1,10 @@
+{
+  "Customer": {
+    "Id": "58",
+    "DisplayName": "Acme Foods Inc",
+    "CompanyName": "Acme Foods Inc",
+    "SyncToken": "7",
+    "Active": true
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}
