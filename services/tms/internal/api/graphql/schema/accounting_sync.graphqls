@@ -336,6 +336,6 @@ extend type Mutation {
   createAccountingReferenceRecord(input: CreateAccountingReferenceRecordInput!): AccountingMapping!
   "Reads the accounting system's records again and refreshes the proposals."
   refreshAccountingReferenceData(integrationType: AccountingSystem!): AccountingConnection!
-  "Finishes setup once every required mapping is confirmed."
+  "Moves setup to the start date step once every required mapping is confirmed."
   completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
 }

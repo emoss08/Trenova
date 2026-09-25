@@ -64,7 +64,7 @@ var sweepActivityOptions = workflow.ActivityOptions{
 }
 
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
-	return []temporaltype.WorkflowDefinition{
+	return append([]temporaltype.WorkflowDefinition{
 		{
 			Name:        CheckAccountingConnectionsWorkflowName,
 			Fn:          CheckAccountingConnectionsWorkflow,
@@ -83,7 +83,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.IntegrationTaskQueue,
 			Description: "Start the daily reference data refresh for every active accounting connection",
 		},
-	}
+	}, syncWorkflows()...)
 }
 
 func CheckAccountingConnectionsWorkflow(ctx workflow.Context) (*HealthSweepResult, error) {

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+
 	"github.com/emoss08/trenova/internal/core/services/formula/contextvariablecache"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -75,6 +77,7 @@ type Params struct {
 	Commercial         *shipmentcommercial.Calculator
 	Generator          servicesports.InvoiceAdjustGenerator
 	SequenceGenerator  seqgen.Generator
+	AccountingSync     servicesports.AccountingSyncEnqueuer `optional:"true"`
 }
 
 type Service struct {
@@ -103,6 +106,7 @@ type Service struct {
 	commercial         *shipmentcommercial.Calculator
 	generator          servicesports.InvoiceAdjustGenerator
 	sequenceGenerator  seqgen.Generator
+	accountingSync     servicesports.AccountingSyncEnqueuer
 }
 
 type previewComputation struct {
@@ -159,6 +163,7 @@ func New(p Params) servicesports.InvoiceAdjustmentService { //nolint:gocritic //
 		commercial:         p.Commercial,
 		generator:          p.Generator,
 		sequenceGenerator:  p.SequenceGenerator,
+		accountingSync:     p.AccountingSync,
 	}
 }
 
@@ -394,20 +399,32 @@ func (s *Service) SubmitDraft(
 		CreatedByID:    actor.UserID,
 	}}
 
-	if _, err = s.repo.UpdateAdjustment(ctx, entity); err != nil {
-		return nil, err
-	}
-	if err = s.repo.CreateAdjustmentArtifacts(ctx, repositories.CreateAdjustmentArtifactsParams{
-		Snapshots: snapshots,
-	}); err != nil {
+	var executed *invoiceadjustment.InvoiceAdjustment
+	err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if _, txErr := s.repo.UpdateAdjustment(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		if txErr := s.repo.CreateAdjustmentArtifacts(
+			txCtx,
+			repositories.CreateAdjustmentArtifactsParams{Snapshots: snapshots},
+		); txErr != nil {
+			return txErr
+		}
+		if entity.Status == invoiceadjustment.StatusPendingApproval {
+			return nil
+		}
+		var txErr error
+		executed, txErr = s.executeApprovedAdjustment(txCtx, entity.ID, draftReq, actor)
+		return txErr
+	})
+	if err != nil {
 		return nil, err
 	}
 
 	if entity.Status == invoiceadjustment.StatusPendingApproval {
 		return s.GetDetail(ctx, req)
 	}
-
-	return s.executeApprovedAdjustment(ctx, entity.ID, draftReq, actor)
+	return executed, nil
 }
 
 func (s *Service) Preview(
@@ -1933,6 +1950,16 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		return nil, err
 	}
 	adjustment.CreditMemoInvoiceID = creditMemoInvoice.ID
+	if err = servicesports.EnqueueAccountingSync(
+		ctx,
+		s.accountingSync,
+		servicesports.InvoiceSyncRequest(
+			creditMemoInvoice,
+			accountingsync.SyncSourceAdjustmentCreditMemo,
+		),
+	); err != nil {
+		return nil, err
+	}
 
 	var rebillQueueItem *billingqueue.BillingQueueItem
 	var replacementInvoice *invoice.Invoice

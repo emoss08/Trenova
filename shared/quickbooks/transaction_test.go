@@ -111,11 +111,6 @@ func TestCreateSalesRejectsWhatQuickBooksWould(t *testing.T) {
 	_, err = client.CreateCreditMemo(t.Context(), testRequestID, noItem)
 	require.ErrorIs(t, err, quickbooks.ErrItemRequired)
 
-	negative := freightInvoice()
-	negative.Lines[1].Amount = decimal.NewFromInt(-5)
-	_, err = client.CreateCreditMemo(t.Context(), testRequestID, negative)
-	require.ErrorIs(t, err, quickbooks.ErrNegativeAmount)
-
 	_, err = client.CreateInvoice(t.Context(), "", freightInvoice())
 	require.ErrorIs(t, err, quickbooks.ErrRequestIDRequired)
 }

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+
 	"github.com/emoss08/trenova/internal/core/domain/customerledger"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
@@ -39,6 +41,7 @@ type Params struct {
 	Generator          seqgen.Generator
 	Validator          *Validator
 	AuditService       serviceports.AuditService
+	AccountingSync     serviceports.AccountingSyncEnqueuer `optional:"true"`
 }
 
 type Service struct {
@@ -52,6 +55,7 @@ type Service struct {
 	generator          seqgen.Generator
 	validator          *Validator
 	auditService       serviceports.AuditService
+	accountingSync     serviceports.AccountingSyncEnqueuer
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -66,6 +70,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		generator:          p.Generator,
 		validator:          p.Validator,
 		auditService:       p.AuditService,
+		accountingSync:     p.AccountingSync,
 	}
 }
 
@@ -374,8 +379,18 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 
 		created.PostedBatchID = batchID
 		created.UpdatedByID = actor.UserID
-		created, txErr = s.repo.Update(txCtx, created)
-		return txErr
+		if created, txErr = s.repo.Update(txCtx, created); txErr != nil {
+			return txErr
+		}
+		return serviceports.EnqueueAccountingSync(
+			txCtx,
+			s.accountingSync,
+			serviceports.PaymentSyncRequest(
+				created,
+				accountingsync.SyncOperationCreate,
+				accountingsync.SyncSourceCustomerPaymentPosted,
+			),
+		)
 	})
 	if err != nil {
 		return nil, err
@@ -652,7 +667,15 @@ func (s *Service) ApplyUnapplied( //nolint:funlen,gocognit // legacy workflow
 				return txErr
 			}
 		}
-		return nil
+		return serviceports.EnqueueAccountingSync(
+			txCtx,
+			s.accountingSync,
+			serviceports.PaymentSyncRequest(
+				payment,
+				accountingsync.SyncOperationUpdate,
+				accountingsync.SyncSourceCustomerPaymentApplied,
+			),
+		)
 	})
 	if err != nil {
 		return nil, err
@@ -894,7 +917,15 @@ func (s *Service) Reverse( //nolint:funlen,gocognit // legacy workflow
 			return txErr
 		}
 		payment = updatedPayment
-		return nil
+		return serviceports.EnqueueAccountingSync(
+			txCtx,
+			s.accountingSync,
+			serviceports.PaymentSyncRequest(
+				payment,
+				accountingsync.SyncOperationVoid,
+				accountingsync.SyncSourceCustomerPaymentReversed,
+			),
+		)
 	})
 	if err != nil {
 		return nil, err

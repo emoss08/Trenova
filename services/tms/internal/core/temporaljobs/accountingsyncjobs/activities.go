@@ -22,6 +22,8 @@ type ActivitiesParams struct {
 	Connections           services.AccountingConnectionService
 	ConnectionsRepository repositories.AccountingConnectionRepository
 	Mappings              services.AccountingMappingService
+	Sync                  services.AccountingSyncService
+	Dispatcher            services.AccountingSyncDispatcher
 	Logger                *zap.Logger
 }
 
@@ -29,6 +31,8 @@ type Activities struct {
 	connections services.AccountingConnectionService
 	connRepo    repositories.AccountingConnectionRepository
 	mappings    services.AccountingMappingService
+	sync        services.AccountingSyncService
+	dispatcher  services.AccountingSyncDispatcher
 	l           *zap.Logger
 }
 
@@ -37,6 +41,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 		connections: p.Connections,
 		connRepo:    p.ConnectionsRepository,
 		mappings:    p.Mappings,
+		sync:        p.Sync,
+		dispatcher:  p.Dispatcher,
 		l:           p.Logger.Named("job.accounting-sync"),
 	}
 }

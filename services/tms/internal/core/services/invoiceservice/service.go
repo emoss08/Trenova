@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -80,6 +82,7 @@ type Params struct {
 	EDIDocumentProfileRepo      repositories.EDIPartnerDocumentProfileRepository `optional:"true"`
 	EDICommunicationProfileRepo repositories.EDICommunicationProfileRepository   `optional:"true"`
 	LateChargeRepo              repositories.LateChargeRepository                `optional:"true"`
+	AccountingSync              servicesports.AccountingSyncEnqueuer             `optional:"true"`
 }
 
 type Service struct {
@@ -121,6 +124,7 @@ type Service struct {
 	ediDocumentProfileRepo      repositories.EDIPartnerDocumentProfileRepository
 	ediCommunicationProfileRepo repositories.EDICommunicationProfileRepository
 	lateChargeRepo              repositories.LateChargeRepository
+	accountingSync              servicesports.AccountingSyncEnqueuer
 }
 
 type existingInvoiceLookupResult struct {
@@ -193,6 +197,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		ediDocumentProfileRepo:      p.EDIDocumentProfileRepo,
 		ediCommunicationProfileRepo: p.EDICommunicationProfileRepo,
 		lateChargeRepo:              p.LateChargeRepo,
+		accountingSync:              p.AccountingSync,
 	}
 }
 
@@ -482,6 +487,17 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 
 		if postErr := s.createInvoiceJournalPosting(txCtx, updated, actor); postErr != nil {
 			return postErr
+		}
+
+		if syncErr := servicesports.EnqueueAccountingSync(
+			txCtx,
+			s.accountingSync,
+			servicesports.InvoiceSyncRequest(
+				updated,
+				accountingsync.PostedSourceEvent(updated.BillType),
+			),
+		); syncErr != nil {
+			return syncErr
 		}
 
 		posted = updated
@@ -817,7 +833,12 @@ func (s *Service) getInvoiceDependencies(
 	if err != nil {
 		return nil, err
 	}
-	if err = invoicelines.HydrateAccessorials(ctx, s.accessorialRepo, req.TenantInfo, shp); err != nil {
+	if err = invoicelines.HydrateAccessorials(
+		ctx,
+		s.accessorialRepo,
+		req.TenantInfo,
+		shp,
+	); err != nil {
 		return nil, err
 	}
 

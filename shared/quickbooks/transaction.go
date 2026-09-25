@@ -313,9 +313,6 @@ func salesBodyOf(requestID string, txn *SalesTxn) (*salesBody, error) {
 		if strings.TrimSpace(line.ItemID) == "" {
 			return nil, ErrItemRequired
 		}
-		if line.Amount.IsNegative() {
-			return nil, ErrNegativeAmount
-		}
 		wire := wireSalesLine{
 			DetailType:  lineDetailSalesItem,
 			Amount:      money(line.Amount),

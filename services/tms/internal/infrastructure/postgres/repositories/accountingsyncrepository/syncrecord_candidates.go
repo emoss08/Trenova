@@ -54,7 +54,8 @@ func candidateSourceFor(
 ) (*candidateSource, error) {
 	switch {
 	case objectType.IsSalesDocument() && operation == accountingsync.SyncOperationCreate:
-		return salesDocumentSource(billTypeFor(objectType)), nil
+		billType, _ := objectType.BillType()
+		return salesDocumentSource(billType), nil
 	case objectType == accountingsync.SyncObjectCustomerPayment:
 		return paymentSource(operation)
 	case objectType == accountingsync.SyncObjectCreditApplication:
@@ -65,22 +66,6 @@ func candidateSourceFor(
 			objectType,
 			operation,
 		)
-	}
-}
-
-func billTypeFor(objectType accountingsync.SyncObjectType) billingqueue.BillType {
-	switch objectType {
-	case accountingsync.SyncObjectCreditMemo:
-		return billingqueue.BillTypeCreditMemo
-	case accountingsync.SyncObjectDebitMemo:
-		return billingqueue.BillTypeDebitMemo
-	case accountingsync.SyncObjectInvoice,
-		accountingsync.SyncObjectCustomer,
-		accountingsync.SyncObjectCustomerPayment,
-		accountingsync.SyncObjectCreditApplication:
-		return billingqueue.BillTypeInvoice
-	default:
-		return billingqueue.BillTypeInvoice
 	}
 }
 

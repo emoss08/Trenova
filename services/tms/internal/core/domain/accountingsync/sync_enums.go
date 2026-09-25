@@ -1,5 +1,7 @@
 package accountingsync
 
+import "github.com/emoss08/trenova/internal/core/domain/billingqueue"
+
 type SyncObjectType string
 
 const (
@@ -335,5 +337,46 @@ func AllBackfillStatuses() []BackfillStatus {
 		BackfillStatusCompleted,
 		BackfillStatusFailed,
 		BackfillStatusCancelled,
+	}
+}
+
+func SyncObjectTypeForBill(billType billingqueue.BillType) SyncObjectType {
+	switch billType {
+	case billingqueue.BillTypeCreditMemo:
+		return SyncObjectCreditMemo
+	case billingqueue.BillTypeDebitMemo:
+		return SyncObjectDebitMemo
+	case billingqueue.BillTypeInvoice:
+		return SyncObjectInvoice
+	default:
+		return SyncObjectInvoice
+	}
+}
+
+func (t SyncObjectType) BillType() (billingqueue.BillType, bool) {
+	switch t {
+	case SyncObjectInvoice:
+		return billingqueue.BillTypeInvoice, true
+	case SyncObjectCreditMemo:
+		return billingqueue.BillTypeCreditMemo, true
+	case SyncObjectDebitMemo:
+		return billingqueue.BillTypeDebitMemo, true
+	case SyncObjectCustomer, SyncObjectCustomerPayment, SyncObjectCreditApplication:
+		return "", false
+	default:
+		return "", false
+	}
+}
+
+func PostedSourceEvent(billType billingqueue.BillType) SyncSourceEvent {
+	switch billType {
+	case billingqueue.BillTypeCreditMemo:
+		return SyncSourceCreditMemoPosted
+	case billingqueue.BillTypeDebitMemo:
+		return SyncSourceDebitMemoPosted
+	case billingqueue.BillTypeInvoice:
+		return SyncSourceInvoicePosted
+	default:
+		return SyncSourceInvoicePosted
 	}
 }
