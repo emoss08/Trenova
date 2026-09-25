@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,6 +20,7 @@ type fakeAccountingChecker struct {
 	status  *serviceports.AccountingSyncStatus
 	checked []pulid.ID
 	tenant  pagination.TenantInfo
+	guard   writeGuard
 }
 
 func (f *fakeAccountingChecker) Status(
@@ -35,7 +37,11 @@ func (f *fakeAccountingChecker) CheckHealth(
 	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (*accountingsync.AccountingConnection, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.checked = append(f.checked, id)
+	f.status.Connection.RecordSuccess(timeutils.NowUnix())
 	return f.status.Connection, nil
 }
 
@@ -83,24 +89,6 @@ func TestCheckAccountingConnection_RefusesAConnectionThatNeedsAPerson(t *testing
 		require.Error(t, tool.Execute(t.Context(), params))
 		assert.Empty(t, checker.checked)
 	}
-}
-
-func TestCheckAccountingConnection_SimulatesWithoutCalling(t *testing.T) {
-	t.Parallel()
-
-	checker := &fakeAccountingChecker{status: connectedStatus(accountingsync.ConnectionStatusConnected)}
-	tool := newCheckAccountingConnectionTool(checker)
-
-	sim, err := tool.(serviceports.ToolSimulator).Simulate(
-		t.Context(),
-		executeParams(map[string]any{"system": "QuickBooksOnline"}),
-	)
-	require.NoError(t, err)
-	assert.Contains(t, sim.Summary, "Acme Freight")
-	assert.True(t, sim.Previewed)
-	require.Len(t, sim.Changes, 1)
-	assert.Equal(t, "never", sim.Changes[0].From)
-	assert.Empty(t, checker.checked)
 }
 
 func TestCheckAccountingConnection_PolicyStaysInside(t *testing.T) {

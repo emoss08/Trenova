@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type accountingConnectionChecker interface {
@@ -104,30 +103,6 @@ func (t *checkAccountingConnectionTool) Execute(
 	return err
 }
 
-func (t *checkAccountingConnectionTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	conn, err := t.connection(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-
-	provider := accountingsync.ProviderName(conn.IntegrationType)
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would check %s for %s now and record whether it answers. It is %s at the moment.",
-			provider,
-			conn.ExternalCompanyName,
-			conn.Status,
-		),
-		Previewed: true,
-		Changes: []agent.FieldChange{
-			{Field: "lastCheckedAt", From: lastCheckedLabel(conn), To: "now"},
-		},
-	}, nil
-}
-
 func (t *checkAccountingConnectionTool) connection(
 	ctx context.Context,
 	params *serviceports.ToolExecuteParams,
@@ -157,11 +132,4 @@ func (t *checkAccountingConnectionTool) connection(
 	}
 
 	return status.Connection, nil
-}
-
-func lastCheckedLabel(conn *accountingsync.AccountingConnection) string {
-	if conn.LastCheckedAt == nil {
-		return "never"
-	}
-	return timeutils.FormatInstantUTC(*conn.LastCheckedAt)
 }

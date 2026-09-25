@@ -9,8 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -107,4 +107,3 @@ func TestDismissInsight_IsAnApprovedUpdateOnTheInsight(t *testing.T) {
 	_, ok = targeted.Target(map[string]any{})
 	assert.False(t, ok)
 }
-

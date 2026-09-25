@@ -111,7 +111,7 @@ func (t *updateTractorStatusTool) Preview(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) (*agent.ToolPreview, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardPreview(t, params); err != nil {
 		return nil, err
 	}
 
@@ -135,7 +135,7 @@ func (t *updateTrailerStatusTool) Preview(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) (*agent.ToolPreview, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardPreview(t, params); err != nil {
 		return nil, err
 	}
 

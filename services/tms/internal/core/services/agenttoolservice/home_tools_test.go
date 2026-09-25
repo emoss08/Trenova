@@ -270,4 +270,3 @@ func TestArrangeHomeLayout(t *testing.T) {
 	widgets := layouts.updated.Document.Layout.Widgets
 	assert.Equal(t, []string{"widget_2", "widget_1"}, []string{widgets[0].ID, widgets[1].ID})
 }
-

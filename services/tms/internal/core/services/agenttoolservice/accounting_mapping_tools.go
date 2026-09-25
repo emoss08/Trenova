@@ -24,8 +24,6 @@ const (
 	paramMappingID           = "mappingId"
 	paramTargetType          = "targetType"
 	toolGetAccountingMapping = "get_accounting_mapping"
-	fieldMappedTo            = "mappedTo"
-	fieldMappingState        = "state"
 )
 
 type accountingMappingWriter interface {
@@ -302,32 +300,6 @@ func (t *setAccountingMappingTool) Execute(
 	return err
 }
 
-func (t *setAccountingMappingTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	_, row, ref, err := t.request(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would send %s as %s in the accounting system and confirm it.",
-			row.TargetLabel,
-			ref.Label(),
-		),
-		Previewed: true,
-		Changes: []agent.FieldChange{
-			{Field: fieldMappedTo, From: mappedLabel(row), To: ref.Label()},
-			{
-				Field: fieldMappingState,
-				From:  string(row.State),
-				To:    string(accountingsync.MappingStateConfirmed),
-			},
-		},
-	}, nil
-}
-
 type clearAccountingMappingTool struct {
 	mappings accountingMappingWriter
 }
@@ -406,28 +378,6 @@ func (t *clearAccountingMappingTool) Execute(
 		Source:     accountingsync.MappingSourceAgent,
 	})
 	return err
-}
-
-func (t *clearAccountingMappingTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	row, err := t.mapping(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-	return &agent.ToolSimulation{
-		Summary:   fmt.Sprintf("Would unmatch %s from %s.", row.TargetLabel, mappedLabel(row)),
-		Previewed: true,
-		Changes: []agent.FieldChange{
-			{Field: fieldMappedTo, From: mappedLabel(row), To: "nothing"},
-			{
-				Field: fieldMappingState,
-				From:  string(row.State),
-				To:    string(accountingsync.MappingStateUnmatched),
-			},
-		},
-	}, nil
 }
 
 type createAccountingReferenceRecordTool struct {
@@ -531,37 +481,6 @@ func (t *createAccountingReferenceRecordTool) Execute(
 		},
 	)
 	return err
-}
-
-func (t *createAccountingReferenceRecordTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	row, err := t.mapping(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-	name := strings.TrimSpace(optionalString(params.Params, "name"))
-	if name == "" {
-		name = row.TargetLabel
-	}
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would create the %s %q in the accounting system and map %s to it.",
-			strings.ToLower(string(row.ProviderKind)),
-			name,
-			row.TargetLabel,
-		),
-		Previewed: true,
-		Changes: []agent.FieldChange{
-			{Field: fieldMappedTo, From: mappedLabel(row), To: name},
-			{
-				Field: fieldMappingState,
-				From:  string(row.State),
-				To:    string(accountingsync.MappingStateConfirmed),
-			},
-		},
-	}, nil
 }
 
 type refreshAccountingReferenceDataTool struct {
@@ -668,22 +587,4 @@ func (t *refreshAccountingReferenceDataTool) Execute(
 	}
 	_, err = t.mappings.RequestRefresh(ctx, req)
 	return err
-}
-
-func (t *refreshAccountingReferenceDataTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	_, summary, err := t.setup(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would read %s's records for %s again and refresh the open proposals.",
-			summary.ProviderName,
-			summary.Connection.ExternalCompanyName,
-		),
-		Previewed: true,
-	}, nil
 }
