@@ -47,6 +47,7 @@ func ToolProviders() []any {
 
 func coreToolProviders() []any {
 	return []any{
+		provideGetAccountingSyncStatusTool,
 		newGetShipmentTool,
 		newSearchShipmentsTool,
 		provideGetWorkerTool,

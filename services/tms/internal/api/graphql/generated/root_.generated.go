@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/services/driverportalservice"
@@ -38,6 +39,7 @@ type ResolverRoot interface {
 	AIFeedback() AIFeedbackResolver
 	AIProvider() AIProviderResolver
 	AccessorialCharge() AccessorialChargeResolver
+	AccountingConnection() AccountingConnectionResolver
 	AgentDefinition() AgentDefinitionResolver
 	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
@@ -742,6 +744,42 @@ type ComplexityRoot struct {
 	AccountTypeEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	AccountingAuthorizationStart struct {
+		AuthorizeURL func(childComplexity int) int
+		ExpiresAt    func(childComplexity int) int
+	}
+
+	AccountingConnection struct {
+		ConnectedAt                   func(childComplexity int) int
+		ConsecutiveFailures           func(childComplexity int) int
+		DisconnectedAt                func(childComplexity int) int
+		ExternalBooksClosedThrough    func(childComplexity int) int
+		ExternalCompanyName           func(childComplexity int) int
+		ExternalCountry               func(childComplexity int) int
+		ExternalHomeCurrency          func(childComplexity int) int
+		ExternalLegalName             func(childComplexity int) int
+		ExternalMultiCurrencyEnabled  func(childComplexity int) int
+		ID                            func(childComplexity int) int
+		IntegrationType               func(childComplexity int) int
+		LastCheckedAt                 func(childComplexity int) int
+		LastErrorCategory             func(childComplexity int) int
+		LastErrorMessage              func(childComplexity int) int
+		LastFailureAt                 func(childComplexity int) int
+		LastSuccessAt                 func(childComplexity int) int
+		LastWebhookAt                 func(childComplexity int) int
+		RefreshTokenAbsoluteExpiresAt func(childComplexity int) int
+		Status                        func(childComplexity int) int
+		UpdatedAt                     func(childComplexity int) int
+		Version                       func(childComplexity int) int
+	}
+
+	AccountingSyncStatus struct {
+		Available       func(childComplexity int) int
+		Connection      func(childComplexity int) int
+		IntegrationType func(childComplexity int) int
+		ProviderName    func(childComplexity int) int
 	}
 
 	AgentAccessPreview struct {
@@ -6987,6 +7025,7 @@ type ComplexityRoot struct {
 		CancelWorkerPTO                       func(childComplexity int, id string, reason *string) int
 		CancelWorkerTraining                  func(childComplexity int, input gqlmodel.CancelWorkerTrainingInput) int
 		CertifyOshaSummary                    func(childComplexity int, year int) int
+		CheckAccountingConnection             func(childComplexity int, integrationType integration.Type) int
 		CheckShipmentDuplicateBOL             func(childComplexity int, input gqlmodel.ShipmentDuplicateBOLInput) int
 		CheckShipmentHazmatSegregation        func(childComplexity int, input gqlmodel.ShipmentHazmatInput) int
 		ClearMyAIFeedback                     func(childComplexity int, input gqlmodel.AIFeedbackTargetInput) int
@@ -6998,6 +7037,7 @@ type ComplexityRoot struct {
 		ClosePerformanceReview                func(childComplexity int, input gqlmodel.PerformanceReviewStatusInput) int
 		CloseWorkerSafetyEvent                func(childComplexity int, input gqlmodel.SafetyEventStatusInput) int
 		CommitFuelPurchaseImport              func(childComplexity int, id string, version int) int
+		CompleteAccountingAuthorization       func(childComplexity int, input gqlmodel.CompleteAccountingAuthorizationInput) int
 		CompleteClearinghouseQuery            func(childComplexity int, input gqlmodel.CompleteClearinghouseQueryInput) int
 		CompleteWorkerChecklistItem           func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		CompleteWorkerTraining                func(childComplexity int, input gqlmodel.CompleteWorkerTrainingInput) int
@@ -7092,6 +7132,7 @@ type ComplexityRoot struct {
 		DetachPayEventFromSettlement          func(childComplexity int, input gqlmodel.DetachPayEventInput) int
 		DetentionBacktest                     func(childComplexity int, input gqlmodel.DetentionBacktestInput) int
 		DiscardFuelPurchaseImport             func(childComplexity int, id string, version int, reason *string) int
+		DisconnectAccountingSystem            func(childComplexity int, integrationType integration.Type) int
 		DismissAgentMemorySuggestion          func(childComplexity int, id string, version int) int
 		DismissMyNotifications                func(childComplexity int, ids []string) int
 		DismissNotifications                  func(childComplexity int, ids []string) int
@@ -7250,6 +7291,7 @@ type ComplexityRoot struct {
 		SetWorkerAvailabilityPreference       func(childComplexity int, input gqlmodel.SetAvailabilityPreferenceInput) int
 		SkipWorkerChecklistItem               func(childComplexity int, input gqlmodel.WorkerChecklistItemActionInput) int
 		StageFuelPurchaseImport               func(childComplexity int, input gqlmodel.StageFuelPurchaseImportInput) int
+		StartAccountingAuthorization          func(childComplexity int, integrationType integration.Type) int
 		StartBillingTransferRun               func(childComplexity int, input gqlmodel.StartBillingTransferRunInput) int
 		StartMyTraining                       func(childComplexity int, id string) int
 		StartSettlementDisputeReview          func(childComplexity int, id string) int
@@ -8251,6 +8293,7 @@ type ComplexityRoot struct {
 		AccessorialCharges                  func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AccountType                         func(childComplexity int, id string) int
 		AccountTypes                        func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
+		AccountingSyncStatus                func(childComplexity int, integrationType integration.Type) int
 		ActivePerformanceReviewTemplates    func(childComplexity int) int
 		ActiveTrainingCourses               func(childComplexity int) int
 		ActiveWorkerChecklistTemplates      func(childComplexity int) int
@@ -14870,6 +14913,171 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountTypeEdge.Node(childComplexity), true
+
+	case "AccountingAuthorizationStart.authorizeUrl":
+		if e.ComplexityRoot.AccountingAuthorizationStart.AuthorizeURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAuthorizationStart.AuthorizeURL(childComplexity), true
+	case "AccountingAuthorizationStart.expiresAt":
+		if e.ComplexityRoot.AccountingAuthorizationStart.ExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingAuthorizationStart.ExpiresAt(childComplexity), true
+
+	case "AccountingConnection.connectedAt":
+		if e.ComplexityRoot.AccountingConnection.ConnectedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ConnectedAt(childComplexity), true
+	case "AccountingConnection.consecutiveFailures":
+		if e.ComplexityRoot.AccountingConnection.ConsecutiveFailures == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ConsecutiveFailures(childComplexity), true
+	case "AccountingConnection.disconnectedAt":
+		if e.ComplexityRoot.AccountingConnection.DisconnectedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.DisconnectedAt(childComplexity), true
+	case "AccountingConnection.externalBooksClosedThrough":
+		if e.ComplexityRoot.AccountingConnection.ExternalBooksClosedThrough == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ExternalBooksClosedThrough(childComplexity), true
+	case "AccountingConnection.externalCompanyName":
+		if e.ComplexityRoot.AccountingConnection.ExternalCompanyName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ExternalCompanyName(childComplexity), true
+	case "AccountingConnection.externalCountry":
+		if e.ComplexityRoot.AccountingConnection.ExternalCountry == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ExternalCountry(childComplexity), true
+	case "AccountingConnection.externalHomeCurrency":
+		if e.ComplexityRoot.AccountingConnection.ExternalHomeCurrency == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ExternalHomeCurrency(childComplexity), true
+	case "AccountingConnection.externalLegalName":
+		if e.ComplexityRoot.AccountingConnection.ExternalLegalName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ExternalLegalName(childComplexity), true
+	case "AccountingConnection.externalMultiCurrencyEnabled":
+		if e.ComplexityRoot.AccountingConnection.ExternalMultiCurrencyEnabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ExternalMultiCurrencyEnabled(childComplexity), true
+	case "AccountingConnection.id":
+		if e.ComplexityRoot.AccountingConnection.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.ID(childComplexity), true
+	case "AccountingConnection.integrationType":
+		if e.ComplexityRoot.AccountingConnection.IntegrationType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.IntegrationType(childComplexity), true
+	case "AccountingConnection.lastCheckedAt":
+		if e.ComplexityRoot.AccountingConnection.LastCheckedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.LastCheckedAt(childComplexity), true
+	case "AccountingConnection.lastErrorCategory":
+		if e.ComplexityRoot.AccountingConnection.LastErrorCategory == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.LastErrorCategory(childComplexity), true
+	case "AccountingConnection.lastErrorMessage":
+		if e.ComplexityRoot.AccountingConnection.LastErrorMessage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.LastErrorMessage(childComplexity), true
+	case "AccountingConnection.lastFailureAt":
+		if e.ComplexityRoot.AccountingConnection.LastFailureAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.LastFailureAt(childComplexity), true
+	case "AccountingConnection.lastSuccessAt":
+		if e.ComplexityRoot.AccountingConnection.LastSuccessAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.LastSuccessAt(childComplexity), true
+	case "AccountingConnection.lastWebhookAt":
+		if e.ComplexityRoot.AccountingConnection.LastWebhookAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.LastWebhookAt(childComplexity), true
+	case "AccountingConnection.refreshTokenAbsoluteExpiresAt":
+		if e.ComplexityRoot.AccountingConnection.RefreshTokenAbsoluteExpiresAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.RefreshTokenAbsoluteExpiresAt(childComplexity), true
+	case "AccountingConnection.status":
+		if e.ComplexityRoot.AccountingConnection.Status == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.Status(childComplexity), true
+	case "AccountingConnection.updatedAt":
+		if e.ComplexityRoot.AccountingConnection.UpdatedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.UpdatedAt(childComplexity), true
+	case "AccountingConnection.version":
+		if e.ComplexityRoot.AccountingConnection.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.Version(childComplexity), true
+
+	case "AccountingSyncStatus.available":
+		if e.ComplexityRoot.AccountingSyncStatus.Available == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncStatus.Available(childComplexity), true
+	case "AccountingSyncStatus.connection":
+		if e.ComplexityRoot.AccountingSyncStatus.Connection == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncStatus.Connection(childComplexity), true
+	case "AccountingSyncStatus.integrationType":
+		if e.ComplexityRoot.AccountingSyncStatus.IntegrationType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncStatus.IntegrationType(childComplexity), true
+	case "AccountingSyncStatus.providerName":
+		if e.ComplexityRoot.AccountingSyncStatus.ProviderName == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncStatus.ProviderName(childComplexity), true
 
 	case "AgentAccessPreview.accessMode":
 		if e.ComplexityRoot.AgentAccessPreview.AccessMode == nil {
@@ -44295,6 +44503,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CertifyOshaSummary(childComplexity, args["year"].(int)), true
+	case "Mutation.checkAccountingConnection":
+		if e.ComplexityRoot.Mutation.CheckAccountingConnection == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_checkAccountingConnection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CheckAccountingConnection(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Mutation.checkShipmentDuplicateBol":
 		if e.ComplexityRoot.Mutation.CheckShipmentDuplicateBOL == nil {
 			break
@@ -44416,6 +44635,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.CommitFuelPurchaseImport(childComplexity, args["id"].(string), args["version"].(int)), true
+	case "Mutation.completeAccountingAuthorization":
+		if e.ComplexityRoot.Mutation.CompleteAccountingAuthorization == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_completeAccountingAuthorization_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.CompleteAccountingAuthorization(childComplexity, args["input"].(gqlmodel.CompleteAccountingAuthorizationInput)), true
 	case "Mutation.completeClearinghouseQuery":
 		if e.ComplexityRoot.Mutation.CompleteClearinghouseQuery == nil {
 			break
@@ -45450,6 +45680,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.DiscardFuelPurchaseImport(childComplexity, args["id"].(string), args["version"].(int), args["reason"].(*string)), true
+	case "Mutation.disconnectAccountingSystem":
+		if e.ComplexityRoot.Mutation.DisconnectAccountingSystem == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_disconnectAccountingSystem_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.DisconnectAccountingSystem(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Mutation.dismissAgentMemorySuggestion":
 		if e.ComplexityRoot.Mutation.DismissAgentMemorySuggestion == nil {
 			break
@@ -47168,6 +47409,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.StageFuelPurchaseImport(childComplexity, args["input"].(gqlmodel.StageFuelPurchaseImportInput)), true
+	case "Mutation.startAccountingAuthorization":
+		if e.ComplexityRoot.Mutation.StartAccountingAuthorization == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_startAccountingAuthorization_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.StartAccountingAuthorization(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Mutation.startBillingTransferRun":
 		if e.ComplexityRoot.Mutation.StartBillingTransferRun == nil {
 			break
@@ -52364,6 +52616,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AccountTypes(childComplexity, args["input"].(gqlmodel.DataTableConnectionInput)), true
+	case "Query.accountingSyncStatus":
+		if e.ComplexityRoot.Query.AccountingSyncStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accountingSyncStatus_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AccountingSyncStatus(childComplexity, args["integrationType"].(integration.Type)), true
 	case "Query.activePerformanceReviewTemplates":
 		if e.ComplexityRoot.Query.ActivePerformanceReviewTemplates == nil {
 			break
@@ -75268,6 +75531,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCarrierSourcingSearchInput,
 		ec.unmarshalInputChargeAllocationInput,
 		ec.unmarshalInputClockInput,
+		ec.unmarshalInputCompleteAccountingAuthorizationInput,
 		ec.unmarshalInputCompleteClearinghouseQueryInput,
 		ec.unmarshalInputCompleteWorkerTrainingInput,
 		ec.unmarshalInputCostCategoryUpdateInput,
@@ -75736,6 +76000,110 @@ extend type Query {
   accountType(id: ID!): AccountType
 }
 `, BuiltIn: false},
+	{Name: "../schema/accounting_sync.graphqls", Input: `"An accounting system Trenova keeps its books in step with."
+enum AccountingSystem {
+  QuickBooksOnline
+}
+
+"How the link to the accounting system is doing right now."
+enum AccountingConnectionStatus {
+  "Calls succeed."
+  Connected
+  "The last call failed; Trenova keeps retrying."
+  Degraded
+  "Several calls in a row failed; nothing reaches the books until it recovers."
+  Failing
+  "The authorization was revoked or expired; someone has to reconnect."
+  Revoked
+  "Someone disconnected it on purpose."
+  Disconnected
+}
+
+"Why the last call to the accounting system failed."
+enum AccountingErrorCategory {
+  Transient
+  RateLimited
+  Unauthorized
+  Revoked
+  Configuration
+  Unknown
+}
+
+"""
+A tenant's link to its accounting system.
+
+The authorization itself is never returned. It is stored encrypted, bound to
+this connection, and only the server that refreshes it can read it.
+"""
+type AccountingConnection {
+  id: ID!
+  integrationType: AccountingSystem!
+  status: AccountingConnectionStatus!
+  "The company's name in the accounting system."
+  externalCompanyName: String!
+  externalLegalName: String!
+  externalCountry: String!
+  "ISO 4217 code of the company's home currency."
+  externalHomeCurrency: String!
+  externalMultiCurrencyEnabled: Boolean!
+  "The last day the accounting system accepts postings for, end of day UTC. Absent when the books are open."
+  externalBooksClosedThrough: Timestamp
+  lastCheckedAt: Timestamp
+  lastSuccessAt: Timestamp
+  lastFailureAt: Timestamp
+  consecutiveFailures: Int!
+  lastErrorCategory: AccountingErrorCategory
+  "The last failure in plain language. Empty when the last check succeeded."
+  lastErrorMessage: String!
+  lastWebhookAt: Timestamp
+  "When the authorization's five-year limit runs out and someone must reconnect."
+  refreshTokenAbsoluteExpiresAt: Timestamp!
+  connectedAt: Timestamp!
+  disconnectedAt: Timestamp
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+"What an organization's link to one accounting system looks like."
+type AccountingSyncStatus {
+  integrationType: AccountingSystem!
+  providerName: String!
+  "Whether this Trenova instance has the accounting system's app credentials configured."
+  available: Boolean!
+  "Absent until the organization first connects."
+  connection: AccountingConnection
+}
+
+"Where to send the person to authorize Trenova, and until when that link works."
+type AccountingAuthorizationStart {
+  authorizeUrl: String!
+  expiresAt: Timestamp!
+}
+
+"What the accounting system returned to the callback page after the person approved access."
+input CompleteAccountingAuthorizationInput {
+  integrationType: AccountingSystem!
+  state: String!
+  code: String!
+  realmId: String!
+}
+
+extend type Query {
+  "The organization's link to an accounting system, and whether this instance can connect to it at all."
+  accountingSyncStatus(integrationType: AccountingSystem!): AccountingSyncStatus!
+}
+
+extend type Mutation {
+  "Starts connecting an accounting system. Returns the provider's page to send the person to."
+  startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
+  "Finishes connecting with what the provider returned. Only the person who started it can finish it."
+  completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection!
+  "Disconnects the accounting system and revokes Trenova's access to it."
+  disconnectAccountingSystem(integrationType: AccountingSystem!): AccountingConnection!
+  "Checks the connection now instead of waiting for the next scheduled check."
+  checkAccountingConnection(integrationType: AccountingSystem!): AccountingConnection!
+}
+`, BuiltIn: false},
 	{Name: "../schema/accounts_receivable.graphqls", Input: `type ARAgingBucketTotals {
   currentMinor: Int!
   days1To30Minor: Int!
@@ -75987,6 +76355,7 @@ enum AgentSubjectType {
   InboundMessage
   Report
   Dashboard
+  AccountingConnection
   FormulaTemplate
 }
 
@@ -95627,6 +95996,7 @@ enum WatchtowerSourceKind {
   WorkerCredential
   MoveCoverage
   AgentQualityRegression
+  AccountingSync
 }
 
 "How loudly an item asks to be looked at."
@@ -99657,6 +100027,78 @@ func (ec *executionContext) childFields_AccountTypeEdge(ctx context.Context, fie
 		return ec.fieldContext_AccountTypeEdge_cursor(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AccountTypeEdge", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingAuthorizationStart(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "authorizeUrl":
+		return ec.fieldContext_AccountingAuthorizationStart_authorizeUrl(ctx, field)
+	case "expiresAt":
+		return ec.fieldContext_AccountingAuthorizationStart_expiresAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingAuthorizationStart", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingConnection(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AccountingConnection_id(ctx, field)
+	case "integrationType":
+		return ec.fieldContext_AccountingConnection_integrationType(ctx, field)
+	case "status":
+		return ec.fieldContext_AccountingConnection_status(ctx, field)
+	case "externalCompanyName":
+		return ec.fieldContext_AccountingConnection_externalCompanyName(ctx, field)
+	case "externalLegalName":
+		return ec.fieldContext_AccountingConnection_externalLegalName(ctx, field)
+	case "externalCountry":
+		return ec.fieldContext_AccountingConnection_externalCountry(ctx, field)
+	case "externalHomeCurrency":
+		return ec.fieldContext_AccountingConnection_externalHomeCurrency(ctx, field)
+	case "externalMultiCurrencyEnabled":
+		return ec.fieldContext_AccountingConnection_externalMultiCurrencyEnabled(ctx, field)
+	case "externalBooksClosedThrough":
+		return ec.fieldContext_AccountingConnection_externalBooksClosedThrough(ctx, field)
+	case "lastCheckedAt":
+		return ec.fieldContext_AccountingConnection_lastCheckedAt(ctx, field)
+	case "lastSuccessAt":
+		return ec.fieldContext_AccountingConnection_lastSuccessAt(ctx, field)
+	case "lastFailureAt":
+		return ec.fieldContext_AccountingConnection_lastFailureAt(ctx, field)
+	case "consecutiveFailures":
+		return ec.fieldContext_AccountingConnection_consecutiveFailures(ctx, field)
+	case "lastErrorCategory":
+		return ec.fieldContext_AccountingConnection_lastErrorCategory(ctx, field)
+	case "lastErrorMessage":
+		return ec.fieldContext_AccountingConnection_lastErrorMessage(ctx, field)
+	case "lastWebhookAt":
+		return ec.fieldContext_AccountingConnection_lastWebhookAt(ctx, field)
+	case "refreshTokenAbsoluteExpiresAt":
+		return ec.fieldContext_AccountingConnection_refreshTokenAbsoluteExpiresAt(ctx, field)
+	case "connectedAt":
+		return ec.fieldContext_AccountingConnection_connectedAt(ctx, field)
+	case "disconnectedAt":
+		return ec.fieldContext_AccountingConnection_disconnectedAt(ctx, field)
+	case "version":
+		return ec.fieldContext_AccountingConnection_version(ctx, field)
+	case "updatedAt":
+		return ec.fieldContext_AccountingConnection_updatedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingConnection", field.Name)
+}
+
+func (ec *executionContext) childFields_AccountingSyncStatus(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "integrationType":
+		return ec.fieldContext_AccountingSyncStatus_integrationType(ctx, field)
+	case "providerName":
+		return ec.fieldContext_AccountingSyncStatus_providerName(ctx, field)
+	case "available":
+		return ec.fieldContext_AccountingSyncStatus_available(ctx, field)
+	case "connection":
+		return ec.fieldContext_AccountingSyncStatus_connection(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AccountingSyncStatus", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentAccessPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

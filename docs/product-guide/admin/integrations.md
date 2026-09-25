@@ -1,23 +1,25 @@
 ---
 path: /admin/integrations
-aliases: [connected apps, marketplace, third-party connections, API keys for services, Samsara, PC*Miler, Google Maps, telematics setup, email provider, fuel card feed, CarrierOk, FMCSA]
+aliases: [connected apps, marketplace, third-party connections, API keys for services, Samsara, PC*Miler, Google Maps, telematics setup, email provider, fuel card feed, CarrierOk, FMCSA, QuickBooks, QuickBooks Online, accounting sync, Intuit]
 related:
   - /admin/inbound-mailboxes
   - /admin/api-keys
   - /dispatch/carrier-monitoring
   - /fuel/feed-runs
   - /fuel/configuration-files/surcharge
+covers:
+  - /admin/integrations/quickbooks/callback
 ---
 
 ## What it's for
 Integrations is where administrators connect the outside services Trenova works with. Each
 service is a card grouped by category (such as Email, Telematics, Mapping & Routing, Weather,
-Financial Data, Fuel Cards and Carrier Compliance) with its description, links to its docs, a
-button to open its settings and a switch showing whether it is connected. Services include
-Resend and Postmark (email), Samsara (telematics), Google Maps and PC*Miler (mileage and routing),
-OpenWeatherMap, OANDA Exchange Rates, EIA Fuel Prices, the WEX, Comdata and Ramp fuel card feeds,
-and CarrierOk and FMCSA QCMobile (carrier intelligence). Some cards describe planned providers
-that cannot be configured yet.
+Financial Data, Fuel Cards, Carrier Compliance and Accounting) with its description, links to
+its docs, a button to open its settings and a switch showing whether it is connected. Services
+include Resend and Postmark (email), Samsara (telematics), Google Maps and PC*Miler (mileage and
+routing), OpenWeatherMap, OANDA Exchange Rates, EIA Fuel Prices, the WEX, Comdata and Ramp fuel
+card feeds, CarrierOk and FMCSA QCMobile (carrier intelligence), and QuickBooks Online
+(accounting). Some cards describe planned providers that cannot be configured yet.
 
 ## Tasks
 
@@ -62,7 +64,35 @@ Keywords: carrier vetting, CarrierOk, FMCSA QCMobile, carrier monitoring rules, 
 5. On **Spend**, set a **Monthly spend cap** and how long raw data is kept, then select **Save
    changes**.
 
+### Connect QuickBooks Online
+Keywords: QuickBooks setup, connect accounting, Intuit sign in, accounting sync
+1. Open [Integrations](/admin/integrations) and open the QuickBooks Online card.
+2. Select the connect button. Trenova sends you to Intuit's own page; sign in there and choose
+   the company to connect. Trenova never sees the QuickBooks password.
+3. Intuit sends you back to Trenova, which finishes the connection and shows the company it
+   connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books
+   closed through**. Check it is the right company, then select **Done**.
+4. Nothing is sent to QuickBooks yet. Trenova only reads the company's settings and checks the
+   connection every fifteen minutes.
+
+### Check or disconnect QuickBooks Online
+Keywords: QuickBooks not syncing, QuickBooks connection failing, reconnect QuickBooks, revoke QuickBooks
+1. Open [Integrations](/admin/integrations) and open the QuickBooks Online card to see the
+   connection's status, when it was **Last checked**, its **Last successful call** and the date
+   to **Reconnect by**.
+2. Select **Check now** to test the connection immediately instead of waiting for the next check.
+3. When QuickBooks no longer accepts Trenova's access, or the reconnect date is near, select
+   **Reconnect** and approve the same company on Intuit's page.
+4. To stop, select **Disconnect** and confirm. Trenova revokes its access; nothing already in
+   QuickBooks is changed.
+
 ## Notes
 Viewing the page needs read access to integrations; saving or testing a connection needs update
 access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier
 intelligence tabs need read access to carrier intelligence, and changing them needs manage access.
+
+Seeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs
+update access, and connecting, reconnecting or disconnecting needs manage access and must be done
+by a signed-in person. A QuickBooks company can be connected to only one Trenova organization at a
+time. When the connection fails or its authorization is about to run out, Watchtower raises an
+item that links back here.

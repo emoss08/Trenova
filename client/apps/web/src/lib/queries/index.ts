@@ -27,6 +27,7 @@ import { documentParsingRule } from "./document-parsing-rule";
 import { detention } from "./detention";
 import { dispatchControl } from "./dispatch-control";
 import { edi } from "./edi";
+import { accountingSync } from "./accounting-sync";
 import { email } from "./email";
 import { formulaTemplate } from "./formula-template";
 import { googleMaps } from "./google-maps";
@@ -127,6 +128,7 @@ const workspaceQueries = mergeQueryKeys(
   worker,
   organization,
   integration,
+  accountingSync,
   aiProvider,
   aiRetrieval,
   agentExtension,

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -122,6 +124,11 @@ var subjectTables = map[agent.SubjectType]subjectTable{
 		model:  func() any { return (*report.Dashboard)(nil) },
 		tenant: buncolgen.DashboardApplyTenant,
 		id:     buncolgen.DashboardColumns.ID,
+	},
+	agent.SubjectAccountingConnection: {
+		model:  func() any { return (*accountingsync.AccountingConnection)(nil) },
+		tenant: buncolgen.AccountingConnectionApplyTenant,
+		id:     buncolgen.AccountingConnectionColumns.ID,
 	},
 	agent.SubjectFormulaTemplate: {
 		model:  func() any { return (*formulatemplate.FormulaTemplate)(nil) },

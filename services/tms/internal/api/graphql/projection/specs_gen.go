@@ -12,6 +12,8 @@ var AccessorialChargeSpec TypeSpec
 
 var AccountTypeSpec TypeSpec
 
+var AccountingConnectionSpec TypeSpec
+
 var AgentControlSpec TypeSpec
 
 var AgentDecisionSpec TypeSpec
@@ -922,6 +924,101 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
+			},
+		},
+	}
+
+	AccountingConnectionSpec = TypeSpec{
+		TypeName: "AccountingConnection",
+		FieldMap: buncolgen.AccountingConnectionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "integrationType",
+				FieldMapKey: "integrationType",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "externalCompanyName",
+				FieldMapKey: "externalCompanyName",
+			},
+			{
+				Name:        "externalLegalName",
+				FieldMapKey: "externalLegalName",
+			},
+			{
+				Name:        "externalCountry",
+				FieldMapKey: "externalCountry",
+			},
+			{
+				Name:        "externalHomeCurrency",
+				FieldMapKey: "externalHomeCurrency",
+			},
+			{
+				Name:        "externalMultiCurrencyEnabled",
+				FieldMapKey: "externalMultiCurrencyEnabled",
+			},
+			{
+				Name:        "externalBooksClosedThrough",
+				FieldMapKey: "externalBooksClosedThrough",
+			},
+			{
+				Name:        "lastCheckedAt",
+				FieldMapKey: "lastCheckedAt",
+			},
+			{
+				Name:        "lastSuccessAt",
+				FieldMapKey: "lastSuccessAt",
+			},
+			{
+				Name:        "lastFailureAt",
+				FieldMapKey: "lastFailureAt",
+			},
+			{
+				Name:        "consecutiveFailures",
+				FieldMapKey: "consecutiveFailures",
+			},
+			{
+				Name:        "lastErrorCategory",
+				FieldMapKey: "lastErrorCategory",
+			},
+			{
+				Name:        "lastErrorMessage",
+				FieldMapKey: "lastErrorMessage",
+			},
+			{
+				Name:        "lastWebhookAt",
+				FieldMapKey: "lastWebhookAt",
+			},
+			{
+				Name:        "refreshTokenAbsoluteExpiresAt",
+				FieldMapKey: "refreshTokenAbsoluteExpiresAt",
+			},
+			{
+				Name:        "connectedAt",
+				FieldMapKey: "connectedAt",
+			},
+			{
+				Name:        "disconnectedAt",
+				FieldMapKey: "disconnectedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

@@ -167,6 +167,18 @@ func (l *Loader) configureViper() {
 
 	l.setDefaults()
 	l.bindControlPlaneEnvAliases()
+	l.bindAccountingEnv()
+}
+
+func (l *Loader) bindAccountingEnv() {
+	_ = l.viper.BindEnv("accounting.quickbooks.clientId", "TRENOVA_QUICKBOOKS_CLIENT_ID")
+	_ = l.viper.BindEnv("accounting.quickbooks.clientSecret", "TRENOVA_QUICKBOOKS_CLIENT_SECRET")
+	_ = l.viper.BindEnv(
+		"accounting.quickbooks.webhookVerifierToken",
+		"TRENOVA_QUICKBOOKS_WEBHOOK_VERIFIER_TOKEN",
+	)
+	_ = l.viper.BindEnv("accounting.quickbooks.environment", "TRENOVA_QUICKBOOKS_ENVIRONMENT")
+	_ = l.viper.BindEnv("accounting.quickbooks.redirectUrl", "TRENOVA_QUICKBOOKS_REDIRECT_URL")
 }
 
 func (l *Loader) setDefaults() { //nolint:funlen // sets default configs

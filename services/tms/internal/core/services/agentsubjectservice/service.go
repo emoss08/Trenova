@@ -41,21 +41,22 @@ type Params struct {
 	Logger       *zap.Logger
 	BillingQueue serviceports.BillingQueueService
 	Shipments    serviceports.ShipmentService
-	Console      repositories.DispatchConsoleRepository     `optional:"true"`
-	Content      serviceports.DocumentContentService        `optional:"true"`
-	Insights     repositories.InsightRepository             `optional:"true"`
-	BankReceipts serviceports.BankReceiptService            `optional:"true"`
-	WorkItems    repositories.BankReceiptWorkItemRepository `optional:"true"`
-	Occurrences  repositories.DetentionOccurrenceRepository `optional:"true"`
-	Workers      repositories.WorkerRepository              `optional:"true"`
-	Credentials  repositories.WorkerCredentialRepository    `optional:"true"`
-	CarrierIntel repositories.CarrierIntelEventRepository   `optional:"true"`
-	EDIFiles     repositories.EDIInboundFileRepository      `optional:"true"`
-	Inbound      repositories.InboundMessageRepository      `optional:"true"`
-	Reports      repositories.ReportDefinitionRepository    `optional:"true"`
-	Dashboards   repositories.ReportDashboardRepository     `optional:"true"`
-	Dispatch     repositories.DispatchControlRepository     `optional:"true"`
-	Formulas     repositories.FormulaTemplateRepository     `optional:"true"`
+	Console      repositories.DispatchConsoleRepository      `optional:"true"`
+	Content      serviceports.DocumentContentService         `optional:"true"`
+	Insights     repositories.InsightRepository              `optional:"true"`
+	BankReceipts serviceports.BankReceiptService             `optional:"true"`
+	WorkItems    repositories.BankReceiptWorkItemRepository  `optional:"true"`
+	Occurrences  repositories.DetentionOccurrenceRepository  `optional:"true"`
+	Workers      repositories.WorkerRepository               `optional:"true"`
+	Credentials  repositories.WorkerCredentialRepository     `optional:"true"`
+	CarrierIntel repositories.CarrierIntelEventRepository    `optional:"true"`
+	EDIFiles     repositories.EDIInboundFileRepository       `optional:"true"`
+	Inbound      repositories.InboundMessageRepository       `optional:"true"`
+	Reports      repositories.ReportDefinitionRepository     `optional:"true"`
+	Dashboards   repositories.ReportDashboardRepository      `optional:"true"`
+	Accounting   repositories.AccountingConnectionRepository `optional:"true"`
+	Dispatch     repositories.DispatchControlRepository      `optional:"true"`
+	Formulas     repositories.FormulaTemplateRepository      `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -77,6 +78,7 @@ type Service struct {
 	inbound      repositories.InboundMessageRepository
 	reports      repositories.ReportDefinitionRepository
 	dashboards   repositories.ReportDashboardRepository
+	accounting   repositories.AccountingConnectionRepository
 	dispatch     repositories.DispatchControlRepository
 	formulas     repositories.FormulaTemplateRepository
 	logger       *zap.Logger
@@ -99,6 +101,7 @@ func New(p Params) serviceports.AgentSubjectDescriber {
 		inbound:      p.Inbound,
 		reports:      p.Reports,
 		dashboards:   p.Dashboards,
+		accounting:   p.Accounting,
 		dispatch:     p.Dispatch,
 		formulas:     p.Formulas,
 		logger:       p.Logger.Named("service.agentsubject"),
@@ -138,6 +141,8 @@ func (s *Service) Describe(
 		return s.report(ctx, tenant, subjectID)
 	case agent.SubjectDashboard:
 		return s.dashboard(ctx, tenant, subjectID)
+	case agent.SubjectAccountingConnection:
+		return s.accountingConnection(ctx, tenant, subjectID)
 	case agent.SubjectFormulaTemplate:
 		return s.formulaTemplate(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
@@ -1024,4 +1029,42 @@ func describeAttachments(
 	}
 
 	return described
+}
+
+func (s *Service) accountingConnection(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	connectionID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectAccountingConnection,
+		ID:    connectionID.String(),
+		Label: "Accounting connection",
+	}
+	if s.accounting == nil {
+		return subject, nil
+	}
+
+	found, err := s.accounting.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{
+		TenantInfo: tenant,
+		ID:         connectionID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load accounting connection: %w", err)
+	}
+
+	subject.Label = "Accounting connection: " + found.ExternalCompanyName
+	subject.Notes = marshalNotes(map[string]any{
+		"system":              found.IntegrationType,
+		"company":             found.ExternalCompanyName,
+		"status":              found.Status,
+		"lastSuccessAt":       found.LastSuccessAt,
+		"lastCheckedAt":       found.LastCheckedAt,
+		"consecutiveFailures": found.ConsecutiveFailures,
+		"lastErrorCategory":   found.LastErrorCategory,
+		"lastError":           found.AgentErrorSummary(),
+		"reconnectBy":         found.RefreshTokenAbsoluteExpiresAt,
+	})
+
+	return subject, nil
 }

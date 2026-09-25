@@ -17,7 +17,10 @@ export const integrationModalTypes = [
   "RampFuel",
   "CarrierOK",
   "FMCSAQCMobile",
+  "QuickBooksOnline",
 ] as const;
+
+export const integrationSetupStates = ["connected"] as const;
 
 export type IntegrationModalType = (typeof integrationModalTypes)[number];
 
@@ -38,4 +41,5 @@ export const integrationCatalogSearchParamsParser = {
   status: searchParamsParser.status,
   query: searchParamsParser.query,
   type: parseAsStringLiteral(integrationModalTypes),
+  setup: parseAsStringLiteral(integrationSetupStates),
 };

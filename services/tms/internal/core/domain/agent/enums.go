@@ -49,9 +49,10 @@ const (
 	SubjectInboundMessage = SubjectType("InboundMessage")
 	// SubjectReport is a saved report definition. A report that cannot be
 	// built as asked is a case about the report, not about an insight.
-	SubjectReport          = SubjectType("Report")
-	SubjectDashboard       = SubjectType("Dashboard")
-	SubjectFormulaTemplate = SubjectType("FormulaTemplate")
+	SubjectReport               = SubjectType("Report")
+	SubjectDashboard            = SubjectType("Dashboard")
+	SubjectAccountingConnection = SubjectType("AccountingConnection")
+	SubjectFormulaTemplate      = SubjectType("FormulaTemplate")
 )
 
 // Resource is the permission a person needs to read a record of this kind.
@@ -85,6 +86,8 @@ func (s SubjectType) Resource() (permission.Resource, bool) {
 		return permission.ResourceReport, true
 	case SubjectDashboard:
 		return permission.ResourceDashboard, true
+	case SubjectAccountingConnection:
+		return permission.ResourceAccountingIntegration, true
 	case SubjectFormulaTemplate:
 		return permission.ResourceFormulaTemplate, true
 	default:
@@ -132,6 +135,7 @@ func (s SubjectType) IsValid() bool {
 		SubjectInboundMessage,
 		SubjectReport,
 		SubjectDashboard,
+		SubjectAccountingConnection,
 		SubjectFormulaTemplate:
 		return true
 	default:
@@ -156,6 +160,7 @@ func AllSubjectTypes() []SubjectType {
 		SubjectInboundMessage,
 		SubjectReport,
 		SubjectDashboard,
+		SubjectAccountingConnection,
 		SubjectFormulaTemplate,
 	}
 }

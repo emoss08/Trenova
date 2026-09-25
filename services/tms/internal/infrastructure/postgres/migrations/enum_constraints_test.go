@@ -6,6 +6,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentextension"
@@ -48,6 +49,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 	t.Parallel()
 
 	constraints := []enumConstraint{
+		{
+			name:   "ck_accounting_connections_status",
+			values: stringsOf(accountingsync.AllConnectionStatuses()),
+		},
+		{
+			name:   "ck_accounting_connections_last_error_category",
+			values: stringsOf(accountingsync.AllErrorCategories()),
+		},
 		{
 			name:   "ck_agent_definitions_template",
 			values: stringsOf(agentdefinition.AllTemplates()),

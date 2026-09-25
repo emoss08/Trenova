@@ -53,3 +53,27 @@ func PipelineSetJSON(
 
 	return nil
 }
+
+func SetStringJSON(
+	ctx context.Context,
+	client *redis.Client,
+	key string,
+	obj any,
+	ttl time.Duration,
+) error {
+	data, err := sonic.Marshal(obj)
+	if err != nil {
+		return err
+	}
+
+	return client.Set(ctx, key, data, ttl).Err()
+}
+
+func TakeStringJSON(ctx context.Context, client *redis.Client, key string, obj any) error {
+	val, err := client.GetDel(ctx, key).Result()
+	if err != nil {
+		return err
+	}
+
+	return sonic.UnmarshalString(val, obj)
+}

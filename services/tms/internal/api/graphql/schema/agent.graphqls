@@ -21,6 +21,7 @@ enum AgentSubjectType {
   InboundMessage
   Report
   Dashboard
+  AccountingConnection
   FormulaTemplate
 }
 

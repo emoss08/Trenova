@@ -1817,6 +1817,15 @@ export const routes: RouteObject[] = [
                 },
               },
               {
+                path: "integrations/quickbooks/callback",
+                loader: createPermissionLoader(Resource.AccountingIntegration, Operation.Manage),
+                async lazy() {
+                  const { QuickBooksCallbackPage } =
+                    await import("@/routes/admin/integrations/quickbooks-callback/page");
+                  return { Component: QuickBooksCallbackPage };
+                },
+              },
+              {
                 // Agents are configured from Agent Control; the old standalone
                 // page forwards so a saved link still lands somewhere useful.
                 path: "agents",

@@ -741,6 +741,47 @@
       }
     },
     {
+      "name": "check_accounting_connection",
+      "description": "Check the accounting system connection now and record whether it answers. It renews the authorization if it is about to expire and refreshes the company's details. Use it after a person says they fixed something on the accounting side, or before retrying work that failed because the connection was down. It changes nothing in the books. It cannot reconnect a revoked authorization; a person must do that from the integrations page.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_integration",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Asks the accounting system whether it answers and records the result in Trenova; it writes nothing to the books."
+      }
+    },
+    {
       "name": "compare_report_runs",
       "description": "Compare two finished runs of the same report and report what moved: rows added, rows that disappeared, rows whose numbers changed, and the totals on each side. This is how to answer \"what changed since last week\" — reading the newest run alone cannot tell you what is no longer in it. Get run ids from list_report_runs. Both runs must be the same report with the same columns; a report whose columns changed between the two cannot be compared, and the tool says so rather than lining them up by position.",
       "parameters": {
@@ -2374,6 +2415,47 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Saves a copy of a report inside Trenova; nothing leaves the organization."
+      }
+    },
+    {
+      "name": "get_accounting_sync_status",
+      "description": "Get whether the accounting system is connected, to which company, and why it last failed. It also says when it last answered and when the authorization must be renewed. Use it before explaining why something did not reach the books, or when asked whether QuickBooks is connected. It returns status and dates, never credentials.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "accounting_integration",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
       }
     },
     {
@@ -4069,7 +4151,7 @@
     },
     {
       "name": "list_agent_runs",
-      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is still running. get_agent_run reads one in full. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (BillingQueueItem|ShipmentMove|AssistantThread|Shipment|Document|Organization|Insight|BankReceipt|DetentionOccurrence|Worker|CarrierIntelEvent|EDIInboundFile|InboundMessage|Report|Dashboard|FormulaTemplate): the kind of record the run worked on; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
+      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is still running. get_agent_run reads one in full. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (BillingQueueItem|ShipmentMove|AssistantThread|Shipment|Document|Organization|Insight|BankReceipt|DetentionOccurrence|Worker|CarrierIntelEvent|EDIInboundFile|InboundMessage|Report|Dashboard|AccountingConnection|FormulaTemplate): the kind of record the run worked on; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -8131,7 +8213,8 @@
                 "InboundMessage",
                 "WorkerCredential",
                 "MoveCoverage",
-                "AgentQualityRegression"
+                "AgentQualityRegression",
+                "AccountingSync"
               ],
               "type": "string"
             },
@@ -9475,6 +9558,7 @@
               "InboundMessage",
               "Report",
               "Dashboard",
+              "AccountingConnection",
               "FormulaTemplate"
             ],
             "type": "string"

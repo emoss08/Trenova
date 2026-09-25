@@ -7778,6 +7778,15 @@
       "service/agentaccessservice"
     ]
   },
+  "Access to {0} was not granted, so nothing was connected.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Accessorial": {
     "sites": 3,
     "scope": [
@@ -8138,6 +8147,24 @@
       "service/accountingcontrolservice"
     ]
   },
+  "Accounting connection": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentsubjectservice"
+    ]
+  },
+  "Accounting connection needs attention": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Accounting control": {
     "sites": 1,
     "scope": [
@@ -8222,6 +8249,17 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Accounting sync": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "domain/watchtower",
+      "routes/admin"
     ]
   },
   "Accounts payable account": {
@@ -22884,6 +22922,15 @@
       "routes/admin"
     ]
   },
+  "Back to integrations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Back to open items": {
     "sites": 1,
     "scope": [
@@ -25894,6 +25941,15 @@
       "apps/web/components"
     ]
   },
+  "Books closed through": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Boolean": {
     "sites": 2,
     "scope": [
@@ -27402,7 +27458,7 @@
     ]
   },
   "Cancel": {
-    "sites": 252,
+    "sites": 254,
     "scope": [
       "ts"
     ],
@@ -30744,6 +30800,15 @@
       "apps/web/config"
     ]
   },
+  "Change sync settings and mappings": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Change template": {
     "sites": 2,
     "scope": [
@@ -31673,6 +31738,15 @@
       "apps/web/components"
     ]
   },
+  "Check now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Check number / ACH trace (optional)": {
     "sites": 1,
     "scope": [
@@ -31725,6 +31799,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Check this is the company you meant to connect. If it is not, disconnect it and connect again, choosing the right company on {0}'s page.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Check your hours in Dash before your next stop.": {
@@ -31800,11 +31883,12 @@
     ]
   },
   "Checking...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/shipment"
     ]
   },
@@ -36057,12 +36141,13 @@
     ]
   },
   "Company": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Company driver": {
@@ -36082,6 +36167,15 @@
     ],
     "areas": [
       "routes/holiday"
+    ]
+  },
+  "Company id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
     ]
   },
   "Compare": {
@@ -37571,6 +37665,15 @@
       "routes/jurisdiction-rule"
     ]
   },
+  "Confirm what was connected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Confirmed": {
     "sites": 9,
     "scope": [
@@ -37662,6 +37765,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Connect": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Connect CarrierOK or the free FMCSA QCMobile service to pull USDOT {0}'s public safety and compliance record.": {
@@ -37774,7 +37886,25 @@
       "routes/desk"
     ]
   },
+  "Connect or disconnect the accounting system": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Connect the outside services Trenova works with: mileage, telematics, email, fuel prices and carrier data.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Connect to {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -37846,6 +37976,15 @@
       "routes/admin"
     ]
   },
+  "Connect your QuickBooks Online company so Trenova can keep your books in step with what it posts. Trenova checks the connection and raises a Watchtower item when it needs attention.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Connect your Samsara account to stream driver vehicle inspection reports (DVIR) and defect history for this tractor.": {
     "sites": 1,
     "scope": [
@@ -37873,7 +38012,25 @@
       "routes/admin"
     ]
   },
+  "Connect {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Connected": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Connected on": {
     "sites": 1,
     "scope": [
       "ts"
@@ -37889,6 +38046,24 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Connected time is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
+    ]
+  },
+  "Connected to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Connected · polled {0}": {
@@ -37927,6 +38102,15 @@
       "service/aiproviderservice"
     ]
   },
+  "Connected, but {0} would not describe the company. Try connecting again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "Connecticut (CT)": {
     "sites": 1,
     "scope": [
@@ -37934,6 +38118,33 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Connecting QuickBooks Online": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Connecting or disconnecting an accounting system needs a signed-in person, not an API key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
+  "Connecting {0} needs manage access to the accounting integration.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Connection": {
@@ -40703,6 +40914,15 @@
       "routes/worker"
     ]
   },
+  "Could not start the connection. Try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "Could not start the simulation": {
     "sites": 1,
     "scope": [
@@ -41086,12 +41306,13 @@
     ]
   },
   "Country": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "routes/admin",
       "routes/edi",
       "routes/rate-zone"
     ]
@@ -51506,7 +51727,43 @@
       "routes/worker"
     ]
   },
+  "Disconnect": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Disconnect {0} before connecting a different {1} company.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
+  "Disconnect {0}?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Disconnected": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Disconnecting...": {
     "sites": 1,
     "scope": [
       "ts"
@@ -53839,12 +54096,13 @@
     ]
   },
   "Done": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
       "routes/fuel-purchase",
@@ -65193,6 +65451,15 @@
       "domain/permission"
     ]
   },
+  "Export sync records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Export template": {
     "sites": 1,
     "scope": [
@@ -67753,7 +68020,7 @@
     ]
   },
   "Failing": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -69524,6 +69791,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Finishing the connection to {0}...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Fire": {
@@ -76238,6 +76514,15 @@
       "routes/home"
     ]
   },
+  "Home currency": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Home screen": {
     "sites": 1,
     "scope": [
@@ -80512,6 +80797,15 @@
       "apps/web/lib"
     ]
   },
+  "Integration type is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
+    ]
+  },
   "Integrations": {
     "sites": 2,
     "scope": [
@@ -84730,6 +85024,15 @@
       "apps/dash/_components"
     ]
   },
+  "Keep {0} in step with what Trenova posts.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Keeping the original locks the fuel surcharge so future changes won't re-rate it. You can unlock it from the charge list at any time.": {
     "sites": 1,
     "scope": [
@@ -85756,6 +86059,15 @@
       "apps/web/components"
     ]
   },
+  "Last checked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Last crash": {
     "sites": 1,
     "scope": [
@@ -85819,6 +86131,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Last failure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Last failure count": {
@@ -85918,6 +86239,15 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Last notice from {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Last payment": {
@@ -86057,6 +86387,15 @@
   },
   "Last success": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Last successful call": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -87202,12 +87541,13 @@
     ]
   },
   "Legal name": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Legal on this route": {
@@ -97241,6 +97581,15 @@
       "apps/web/lib"
     ]
   },
+  "Multicurrency": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Multiple": {
     "sites": 2,
     "scope": [
@@ -98515,6 +98864,15 @@
       "apps/web/components",
       "routes/dispatch-console",
       "routes/shipment"
+    ]
+  },
+  "Needs reconnecting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Needs review": {
@@ -101140,6 +101498,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "No closing date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "No column was found for fuel product and the import has no default fuel type": {
@@ -106633,6 +107000,15 @@
       "routes/desk"
     ]
   },
+  "Nothing is sent to {0} until you map your accounts and turn syncing on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Nothing is waiting on you": {
     "sites": 2,
     "scope": [
@@ -108277,7 +108653,7 @@
     ]
   },
   "Off": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -108745,11 +109121,12 @@
     ]
   },
   "On": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control",
       "routes/carrier-invoice-matching"
     ]
@@ -112747,6 +113124,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Opening {0}...": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Opening...": {
@@ -131670,6 +132056,24 @@
       "routes/reconciliation-summary"
     ]
   },
+  "Reconnect": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Reconnect by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Record": {
     "sites": 8,
     "scope": [
@@ -133383,6 +133787,15 @@
       "routes/shipment"
     ]
   },
+  "Refresh accounting authorizations that are about to expire and check each connection answers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Refresh before tender": {
     "sites": 1,
     "scope": [
@@ -133435,6 +133848,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "Refresh expiring accounting authorizations and check every connection answers": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Refresh feed status": {
@@ -138987,7 +139409,7 @@
     ]
   },
   "Retry": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "ts"
     ],
@@ -139075,12 +139497,22 @@
       "routes/billing-queue"
     ]
   },
-  "Retrying": {
+  "Retry, skip and resolve sync records and differences": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Retrying": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/agent-control"
     ]
   },
@@ -140030,6 +140462,15 @@
       "routes/worker"
     ]
   },
+  "Review company": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Review decisions": {
     "sites": 1,
     "scope": [
@@ -140646,6 +141087,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Right away, Trenova reads the company's name, home currency, multicurrency setting and closing date, and checks the connection every fifteen minutes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Right pad": {
@@ -155086,11 +155536,12 @@
     ]
   },
   "Sign in to {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/auth"
     ]
   },
@@ -158643,11 +159094,12 @@
     ]
   },
   "Status is required": {
-    "sites": 129,
+    "sites": 130,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/accountingsync",
       "domain/accounttype",
       "domain/agent",
       "domain/agentquality",
@@ -164769,6 +165221,24 @@
       "routes/edi"
     ]
   },
+  "The authorization code is missing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
+  "The authorization was revoked or has expired. Nothing reaches {0} until someone with manage access reconnects the same company.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The backtest could not run": {
     "sites": 1,
     "scope": [
@@ -165779,6 +166249,15 @@
       "routes/osha"
     ]
   },
+  "The company id returned by the provider is not valid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "The comparison appears under Evaluations when it finishes.": {
     "sites": 1,
     "scope": [
@@ -165824,6 +166303,24 @@
       "service/rateconfirmationservice"
     ]
   },
+  "The connection request has expired or was already used": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The connection request is missing its state": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "The connection settings could not be loaded. Close the dialog and try again.": {
     "sites": 1,
     "scope": [
@@ -165849,6 +166346,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The connection to the organization's accounting system and how Trenova maps to it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "The consignee pays the carrier on delivery": {
@@ -168229,6 +168735,15 @@
       "routes/worker"
     ]
   },
+  "The last call to {0} failed; Trenova will keep retrying": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The last day being reviewed; it also dates the default title.": {
     "sites": 1,
     "scope": [
@@ -168425,6 +168940,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The link to the accounting system stopped working normally: calls are failing, the authorization was revoked, or it expires soon.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "The linked assignment is unavailable. Expected total:": {
@@ -172379,6 +172903,24 @@
       "packages/shared/components"
     ]
   },
+  "The webhook body could not be read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
+  "The webhook signature did not verify": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "The week adds up to more hours than a week has — check for an entry that was never closed": {
     "sites": 1,
     "scope": [
@@ -172632,6 +173174,15 @@
     ],
     "areas": [
       "service/assistantservice"
+    ]
+  },
+  "The {0} connection could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The {0} protocol has no embedding endpoint": {
@@ -173534,6 +174085,24 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "This connection request expired or was already used. Start the connection again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
+  "This connection was started by someone else. Start the connection again from your own account.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
     ]
   },
   "This contract has no fuel terms of its own, so fuel comes from the customer's billing profile.": {
@@ -175019,6 +175588,15 @@
       "service/driversettlementservice"
     ]
   },
+  "This organization was connected to {0} before. Connecting the same company picks up where it left off.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "This organization's stricter posture on a jurisdiction. Unlike a jurisdiction rule these are yours alone, and an override can only tighten a state limit, never loosen one.": {
     "sites": 1,
     "scope": [
@@ -175071,6 +175649,15 @@
     ],
     "areas": [
       "routes/placeholder-page.tsx"
+    ]
+  },
+  "This page was opened without everything {0} sends back. Start the connection again from Integrations.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "This pairing cannot run as planned.": {
@@ -176441,6 +177028,15 @@
     "areas": [
       "apps/web/types",
       "routes/holiday"
+    ]
+  },
+  "This {0} company is already connected to another Trenova organization. Disconnect it there first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
     ]
   },
   "This {0} could not be loaded, so it cannot be edited safely. Close the panel and try again.": {
@@ -180243,6 +180839,15 @@
       "packages/shared/components"
     ]
   },
+  "Trenova finishes the connection QuickBooks Online just approved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Trenova has been updated": {
     "sites": 1,
     "scope": [
@@ -180277,6 +180882,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Trenova revokes its access to {0} and stops reading from and writing to it. Nothing already in {1} is changed or deleted. You can connect again later.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Trenova starts this agent itself. You can change what it is told, which tools it may use and how much it may do, but not when it runs, and it cannot be removed.": {
@@ -180642,7 +181256,7 @@
     ]
   },
   "Try again": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "ts"
     ],
@@ -187252,6 +187866,15 @@
       "domain/permission"
     ]
   },
+  "View sync status, records and differences": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "View table change alert subscriptions": {
     "sites": 1,
     "scope": [
@@ -187280,6 +187903,15 @@
     ]
   },
   "View test records, violations and Clearinghouse queries": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "View the accounting connection, its health and its mappings": {
     "sites": 1,
     "scope": [
       "go"
@@ -189676,6 +190308,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "What has been sent to the accounting system, what failed and where the two disagree": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "What if": {
@@ -194944,6 +195585,15 @@
       "routes/admin"
     ]
   },
+  "You do not have permission to view the accounting integration.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "You do not have permission to {0} briefings": {
     "sites": 1,
     "scope": [
@@ -195153,6 +195803,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "You sign in on {0}'s own page and choose the company to connect. Trenova never sees your password; it keeps an encrypted authorization that you can revoke at any time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "You stopped it before it finished": {
@@ -203211,6 +203870,15 @@
       "routes/shipment"
     ]
   },
+  "{0} answered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} applications in period": {
     "sites": 1,
     "scope": [
@@ -203409,6 +204077,15 @@
       "routes/inbox"
     ]
   },
+  "{0} calls in a row have failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} calls unpriced": {
     "sites": 1,
     "scope": [
@@ -203571,6 +204248,15 @@
       "routes/shipment"
     ]
   },
+  "{0} connected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} could not be re-rated with the current template": {
     "sites": 1,
     "scope": [
@@ -203698,6 +204384,24 @@
       "routes/edi"
     ]
   },
+  "{0} did not accept the authorization. Try connecting again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
+  "{0} did not answer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} didn't go through": {
     "sites": 1,
     "scope": [
@@ -203705,6 +204409,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} disconnected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} disputed": {
@@ -203844,6 +204557,15 @@
     ]
   },
   "{0} enabled": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "{0} ends this authorization on {1}. Reconnect before then to keep syncing without a gap.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -204144,6 +204866,15 @@
       "go/other"
     ]
   },
+  "{0} has not been connected yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "{0} has set up a Dash account for you. Dash is where you will see your assigned loads, submit expenses, and check your pay.": {
     "sites": 2,
     "scope": [
@@ -204178,6 +204909,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "{0} help": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} identity token is invalid": {
@@ -204444,6 +205184,15 @@
       "service/customfieldservice"
     ]
   },
+  "{0} is not an accounting system Trenova can sync with": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "{0} is not an active jurisdiction": {
     "sites": 1,
     "scope": [
@@ -204489,6 +205238,15 @@
       "service/fuelpurchaseservice"
     ]
   },
+  "{0} is not connected. A person must connect it from the integrations page.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} is not printed, so it has no running header or footer": {
     "sites": 1,
     "scope": [
@@ -204505,6 +205263,24 @@
     ],
     "areas": [
       "service/documenttemplateservice"
+    ]
+  },
+  "{0} is not set up on this Trenova instance. Ask your administrator to add the Intuit app credentials.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
+  "{0} is not set up on this Trenova server yet. The server's administrator has to add the {0} app credentials before anyone can connect.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} is not tracked by this policy": {
@@ -204796,6 +205572,15 @@
     ],
     "areas": [
       "service/authservice"
+    ]
+  },
+  "{0} logo": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} looks carriers up by USDOT or MC number only. Enter a number above, or connect a provider that searches the market.": {
@@ -205128,6 +205913,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} no longer accepts Trenova's access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} no longer has a share of shipment {1}": {
@@ -205930,6 +206724,15 @@
       "routes/dispatch-console"
     ]
   },
+  "{0} returned an error ({1}). Nothing was connected.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} returned no data for this section": {
     "sites": 1,
     "scope": [
@@ -206099,6 +206902,15 @@
       "routes/ar-open-items"
     ]
   },
+  "{0} sent back an address Trenova does not recognize, so nothing was opened.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "{0} settings saved": {
     "sites": 1,
     "scope": [
@@ -206115,6 +206927,15 @@
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "{0} setup": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} shared invoice {1} for {2} with you.": {
@@ -206480,6 +207301,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "{0} was not connected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} was unavailable; the fallback provider answered instead.": {

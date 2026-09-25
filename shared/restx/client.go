@@ -19,6 +19,7 @@ const (
 	defaultTimeout          = 30 * time.Second
 	defaultMaxResponseBytes = 32 << 20
 	contentTypeJSON         = "application/json"
+	contentTypeForm         = "application/x-www-form-urlencoded"
 )
 
 var (
@@ -28,6 +29,7 @@ var (
 	ErrLimiterNoBucket   = errors.New("restx: a limiter requires a BucketFor function")
 	ErrResponseTooLarge  = errors.New("restx: response body exceeds the configured limit")
 	ErrInvalidHeaderName = errors.New("restx: header names must not be blank")
+	ErrBodyAndForm       = errors.New("restx: a request carries a JSON body or a form, not both")
 )
 
 type Bucket struct {
@@ -80,6 +82,7 @@ type Request struct {
 	Path           string
 	Query          url.Values
 	Body           any
+	Form           url.Values
 	Out            any
 	ExpectedStatus []int
 }
@@ -177,12 +180,9 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 		return nil, err
 	}
 
-	var payload []byte
-	if req.Body != nil {
-		payload, err = sonic.Marshal(req.Body)
-		if err != nil {
-			return nil, fmt.Errorf("encode %s %s request body: %w", method, req.Path, err)
-		}
+	payload, contentType, err := encodePayload(method, req)
+	if err != nil {
+		return nil, err
 	}
 
 	bucket, limited := c.resolveBucket(req.Endpoint)
@@ -209,7 +209,7 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 		}
 
 		started := time.Now()
-		resp, sendErr := c.send(ctx, method, target, payload)
+		resp, sendErr := c.send(ctx, method, target, payload, contentType)
 		info.Latency = time.Since(started)
 
 		if sendErr != nil {
@@ -264,6 +264,23 @@ func (c *Client) Do(ctx context.Context, req *Request) (*Response, error) {
 		if err = sleep(ctx, c.retry.delay(attempt, retryAfter, hasRetryAfter)); err != nil {
 			return nil, err
 		}
+	}
+}
+
+func encodePayload(method string, req *Request) (payload []byte, contentType string, err error) {
+	switch {
+	case req.Body != nil && req.Form != nil:
+		return nil, "", ErrBodyAndForm
+	case req.Body != nil:
+		payload, err = sonic.Marshal(req.Body)
+		if err != nil {
+			return nil, "", fmt.Errorf("encode %s %s request body: %w", method, req.Path, err)
+		}
+		return payload, contentTypeJSON, nil
+	case req.Form != nil:
+		return []byte(req.Form.Encode()), contentTypeForm, nil
+	default:
+		return nil, "", nil
 	}
 }
 
@@ -328,6 +345,7 @@ func (c *Client) send(
 	method string,
 	target *url.URL,
 	payload []byte,
+	contentType string,
 ) (*Response, error) {
 	var body io.Reader
 	if payload != nil {
@@ -339,8 +357,8 @@ func (c *Client) send(
 		return nil, fmt.Errorf("build request: %w", err)
 	}
 	httpReq.Header = c.headers.Clone()
-	if payload != nil {
-		httpReq.Header.Set("Content-Type", contentTypeJSON)
+	if contentType != "" {
+		httpReq.Header.Set("Content-Type", contentType)
 	}
 
 	httpResp, err := c.httpClient.Do(httpReq)

@@ -142,6 +142,12 @@ cases:
     expect: [search_inbound_messages]
   - request: find mail from Globex about detention charges
     expect: [search_inbound_messages]
+  - request: is quickbooks connected
+    expect: [get_accounting_sync_status]
+  - request: why is the accounting sync not working
+    expect: [get_accounting_sync_status, check_accounting_connection]
+  - request: check the quickbooks connection again now
+    expect: [check_accounting_connection, get_accounting_sync_status]
   - request: show the accounts receivable aging by customer
     expect: [get_ar_aging]
   - request: which customers owe us money over 90 days

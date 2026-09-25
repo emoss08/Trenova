@@ -55,6 +55,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 	},
 	FeatureAccounting: {
 		"account_type.graphqls",
+		"accounting_sync.graphqls",
 		"accounts_receivable.graphqls",
 		"fiscal_period.graphqls",
 		"fiscal_year.graphqls",

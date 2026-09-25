@@ -19,6 +19,7 @@ const maxFamilySize = 4
 var families = [...][]string{
 	{"list_reports", "describe_report", "run_report", "get_report_run"},
 	{"list_report_datasets", "describe_report_dataset", "preview_report"},
+	{"get_accounting_sync_status", "check_accounting_connection"},
 	{"list_watchtower_items", "get_daily_briefing", "list_agent_runs", "get_agent_run"},
 	{"list_driver_settlements", "get_driver_settlement", "list_driver_pay_events"},
 	{"get_ar_aging", "list_ar_open_items", "get_customer_statement"},

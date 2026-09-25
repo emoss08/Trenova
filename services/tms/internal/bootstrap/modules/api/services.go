@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accessorialchargeservice"
+	"github.com/emoss08/trenova/internal/core/services/accountingconnectionservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
@@ -500,6 +501,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	permitservice.NewService,
 	jurisdictionruleservice.NewService,
 	detentionservice.New,
+	accountingconnectionservice.New,
+	func(s *accountingconnectionservice.Service) services.AccountingConnectionService { return s },
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(
 		func(g seqgen.Generator) services.InvoiceAdjustGenerator { return g },

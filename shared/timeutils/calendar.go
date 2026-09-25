@@ -41,3 +41,7 @@ func IsCalendarDate(value string) bool {
 
 	return err == nil
 }
+
+func FormatInstantUTC(ts int64) string {
+	return time.Unix(ts, 0).UTC().Format(time.RFC3339)
+}

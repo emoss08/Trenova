@@ -1,0 +1,103 @@
+"An accounting system Trenova keeps its books in step with."
+enum AccountingSystem {
+  QuickBooksOnline
+}
+
+"How the link to the accounting system is doing right now."
+enum AccountingConnectionStatus {
+  "Calls succeed."
+  Connected
+  "The last call failed; Trenova keeps retrying."
+  Degraded
+  "Several calls in a row failed; nothing reaches the books until it recovers."
+  Failing
+  "The authorization was revoked or expired; someone has to reconnect."
+  Revoked
+  "Someone disconnected it on purpose."
+  Disconnected
+}
+
+"Why the last call to the accounting system failed."
+enum AccountingErrorCategory {
+  Transient
+  RateLimited
+  Unauthorized
+  Revoked
+  Configuration
+  Unknown
+}
+
+"""
+A tenant's link to its accounting system.
+
+The authorization itself is never returned. It is stored encrypted, bound to
+this connection, and only the server that refreshes it can read it.
+"""
+type AccountingConnection {
+  id: ID!
+  integrationType: AccountingSystem!
+  status: AccountingConnectionStatus!
+  "The company's name in the accounting system."
+  externalCompanyName: String!
+  externalLegalName: String!
+  externalCountry: String!
+  "ISO 4217 code of the company's home currency."
+  externalHomeCurrency: String!
+  externalMultiCurrencyEnabled: Boolean!
+  "The last day the accounting system accepts postings for, end of day UTC. Absent when the books are open."
+  externalBooksClosedThrough: Timestamp
+  lastCheckedAt: Timestamp
+  lastSuccessAt: Timestamp
+  lastFailureAt: Timestamp
+  consecutiveFailures: Int!
+  lastErrorCategory: AccountingErrorCategory
+  "The last failure in plain language. Empty when the last check succeeded."
+  lastErrorMessage: String!
+  lastWebhookAt: Timestamp
+  "When the authorization's five-year limit runs out and someone must reconnect."
+  refreshTokenAbsoluteExpiresAt: Timestamp!
+  connectedAt: Timestamp!
+  disconnectedAt: Timestamp
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+"What an organization's link to one accounting system looks like."
+type AccountingSyncStatus {
+  integrationType: AccountingSystem!
+  providerName: String!
+  "Whether this Trenova instance has the accounting system's app credentials configured."
+  available: Boolean!
+  "Absent until the organization first connects."
+  connection: AccountingConnection
+}
+
+"Where to send the person to authorize Trenova, and until when that link works."
+type AccountingAuthorizationStart {
+  authorizeUrl: String!
+  expiresAt: Timestamp!
+}
+
+"What the accounting system returned to the callback page after the person approved access."
+input CompleteAccountingAuthorizationInput {
+  integrationType: AccountingSystem!
+  state: String!
+  code: String!
+  realmId: String!
+}
+
+extend type Query {
+  "The organization's link to an accounting system, and whether this instance can connect to it at all."
+  accountingSyncStatus(integrationType: AccountingSystem!): AccountingSyncStatus!
+}
+
+extend type Mutation {
+  "Starts connecting an accounting system. Returns the provider's page to send the person to."
+  startAccountingAuthorization(integrationType: AccountingSystem!): AccountingAuthorizationStart!
+  "Finishes connecting with what the provider returned. Only the person who started it can finish it."
+  completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection!
+  "Disconnects the accounting system and revokes Trenova's access to it."
+  disconnectAccountingSystem(integrationType: AccountingSystem!): AccountingConnection!
+  "Checks the connection now instead of waiting for the next scheduled check."
+  checkAccountingConnection(integrationType: AccountingSystem!): AccountingConnection!
+}

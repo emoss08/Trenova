@@ -20,6 +20,7 @@ const (
 	TypeRampFuel           = Type("RampFuel")
 	TypeCarrierOK          = Type("CarrierOK")
 	TypeFMCSAQCMobile      = Type("FMCSAQCMobile")
+	TypeQuickBooksOnline   = Type("QuickBooksOnline")
 	// TypeMotive     Type = "Motive"
 )
 
@@ -35,6 +36,7 @@ const (
 	CategoryEmail                  = Category("Email")
 	CategoryFuelCards              = Category("FuelCards")
 	CategoryCarrierCompliance      = Category("CarrierCompliance")
+	CategoryAccounting             = Category("Accounting")
 )
 
 func (v Type) String() string { return string(v) }
@@ -59,7 +61,8 @@ func (v Type) IsValid() bool {
 		TypeComdataFuel,
 		TypeRampFuel,
 		TypeCarrierOK,
-		TypeFMCSAQCMobile:
+		TypeFMCSAQCMobile,
+		TypeQuickBooksOnline:
 		return true
 	default:
 		return false
@@ -76,7 +79,8 @@ func (v Category) IsValid() bool {
 		CategoryFinancialData,
 		CategoryEmail,
 		CategoryFuelCards,
-		CategoryCarrierCompliance:
+		CategoryCarrierCompliance,
+		CategoryAccounting:
 		return true
 	default:
 		return false

@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const expectedCatalogItems = 16
+const expectedCatalogItems = 17
 
 type stubIntegrationRepo struct {
 	listByTenantResult []*integration.Integration
@@ -196,6 +196,31 @@ func TestListCatalogSortedBySortOrderThenName(t *testing.T) {
 	require.Equal(t, integration.TypeAmazonSES, resp.Items[11].Type)
 	require.Equal(t, integration.TypeSendGrid, resp.Items[12].Type)
 	require.Equal(t, integration.TypeMailgun, resp.Items[13].Type)
+	require.Equal(t, integration.TypeQuickBooksOnline, resp.Items[16].Type)
+}
+
+func TestListCatalogIncludesQuickBooksUnderAccounting(t *testing.T) {
+	t.Parallel()
+
+	svc := New(Params{
+		Logger: zap.NewNop(),
+		Repo: &stubIntegrationRepo{
+			listByTenantResult: []*integration.Integration{
+				{Type: integration.TypeQuickBooksOnline, Enabled: true},
+			},
+		},
+	})
+
+	resp, err := svc.ListCatalog(t.Context(), pagination.TenantInfo{})
+	require.NoError(t, err)
+
+	quickBooks := findCatalogItem(t, resp.Items, integration.TypeQuickBooksOnline)
+	require.Equal(t, integration.CategoryAccounting, quickBooks.Category)
+	require.Equal(t, "Accounting", quickBooks.CategoryLabel)
+	require.Equal(t, "/integrations/logos/quickbooks-light.svg", quickBooks.LogoLightURL)
+	require.Equal(t, "/integrations/logos/quickbooks-dark.svg", quickBooks.LogoDarkURL)
+	require.Equal(t, "Connect", quickBooks.PrimaryActionLabel)
+	require.True(t, quickBooks.Enabled)
 }
 
 func TestListCatalogIncludesPlannedEmailProviderLogos(t *testing.T) {

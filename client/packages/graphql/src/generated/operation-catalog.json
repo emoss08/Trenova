@@ -1,6 +1,6 @@
 {
-  "operationCount": 843,
-  "fragmentCount": 229,
+  "operationCount": 848,
+  "fragmentCount": 230,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -69,6 +69,28 @@
       ],
       "usages": [],
       "sdl": "query AccessorialChargeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  accessorialCharges(input: $input) {\n    edges {\n      node {\n        ...AccessorialChargeTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AccessorialChargeTableRowFields on AccessorialCharge {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  method\n  rateUnit\n  amount\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AccountingSyncStatus",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:16ae3e4e0f45221cfa86cfa3f45945ca826bfe1a692ac60eb2bed6644e18a3c6",
+      "rootFields": [
+        "accountingSyncStatus"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingSyncStatus($integrationType: AccountingSystem!) {\n  accountingSyncStatus(integrationType: $integrationType) {\n    integrationType\n    providerName\n    available\n    connection {\n      ...AccountingConnectionFields\n    }\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountTypeTable",
@@ -4033,6 +4055,28 @@
       "sdl": "mutation CertifyOshaSummary($year: Int!) {\n  certifyOshaSummary(year: $year) {\n    id\n    year\n    status\n    certifiedAt\n    version\n  }\n}"
     },
     {
+      "name": "CheckAccountingConnection",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:8ddef940e7cccb5b77bf8ae81b1c7388a8eca497512c2e38e8558d75d3e0d172",
+      "rootFields": [
+        "checkAccountingConnection"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CheckAccountingConnection($integrationType: AccountingSystem!) {\n  checkAccountingConnection(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "CheckShipmentDuplicateBol",
       "kind": "mutation",
       "domain": "shipment",
@@ -4312,6 +4356,28 @@
       ],
       "usages": [],
       "sdl": "query CommodityTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  commodities(input: $input) {\n    edges {\n      node {\n        ...CommodityTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment CommodityTableRowFields on Commodity {\n  id\n  businessUnitId\n  organizationId\n  hazardousMaterialId\n  status\n  name\n  description\n  minTemperature\n  maxTemperature\n  weightPerUnit\n  linearFeetPerUnit\n  maxQuantityPerShipment\n  freightClass\n  loadingInstructions\n  stackable\n  fragile\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "CompleteAccountingAuthorization",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:0f72c9060076527bca175381acc647bb7d87b6781c158b57125859bbb4484708",
+      "rootFields": [
+        "completeAccountingAuthorization"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CompleteAccountingAuthorizationInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CompleteAccountingAuthorization($input: CompleteAccountingAuthorizationInput!) {\n  completeAccountingAuthorization(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  version\n  updatedAt\n}"
     },
     {
       "name": "CompleteClearinghouseQuery",
@@ -6665,6 +6731,28 @@
       ],
       "usages": [],
       "sdl": "mutation DiscardFuelPurchaseImport($id: ID!, $version: Int!, $reason: String) {\n  discardFuelPurchaseImport(id: $id, version: $version, reason: $reason) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
+    },
+    {
+      "name": "DisconnectAccountingSystem",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:2b055a0f01c1196b4f0ea31bb959296c9b44ee68629a90ab49348b87d1394f45",
+      "rootFields": [
+        "disconnectAccountingSystem"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "mutation DisconnectAccountingSystem($integrationType: AccountingSystem!) {\n  disconnectAccountingSystem(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  version\n  updatedAt\n}"
     },
     {
       "name": "DismissAgentMemorySuggestion",
@@ -15425,6 +15513,26 @@
       "sdl": "mutation StageFuelPurchaseImport($input: StageFuelPurchaseImportInput!) {\n  stageFuelPurchaseImport(input: $input) {\n    ...FuelPurchaseImportBatchFields\n  }\n}\n\nfragment FuelPurchaseImportBatchFields on FuelPurchaseImportBatch {\n  id\n  businessUnitId\n  organizationId\n  provider\n  origin\n  feedReference\n  documentId\n  fileName\n  sourceFormat\n  status\n  defaultFuelType\n  defaultFuelCardId\n  defaultCurrency\n  mapping\n  unmappedHeaders\n  summary {\n    rowCount\n    newCount\n    duplicateInFileCount\n    alreadyImportedCount\n    errorCount\n    totalGallons\n    totalAmount\n    byFuelType\n    byJurisdiction\n    earliestPurchasedAt\n    latestPurchasedAt\n  }\n  rowCount\n  errorCount\n  committedCount\n  error\n  uploadedById\n  stagedAt\n  committedAt\n  committedById\n  version\n  createdAt\n  updatedAt\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  defaultFuelCard {\n    id\n    provider\n    lastFour\n    label\n  }\n}"
     },
     {
+      "name": "StartAccountingAuthorization",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:373bd1c21d5c39a7e820ca7c9442eed0be3481386e556b544455ad7b6c94815f",
+      "rootFields": [
+        "startAccountingAuthorization"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation StartAccountingAuthorization($integrationType: AccountingSystem!) {\n  startAccountingAuthorization(integrationType: $integrationType) {\n    authorizeUrl\n    expiresAt\n  }\n}"
+    },
+    {
       "name": "StartBillingTransferRun",
       "kind": "mutation",
       "domain": "billing-queue",
@@ -19438,6 +19546,21 @@
       "sdl": "fragment AccessorialChargeTableRowFields on AccessorialCharge {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  method\n  rateUnit\n  amount\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AccountingConnectionFields",
+      "typeCondition": "AccountingConnection",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AccountingSyncStatus",
+        "CheckAccountingConnection",
+        "CompleteAccountingAuthorization",
+        "DisconnectAccountingSystem"
+      ],
+      "usages": [],
+      "sdl": "fragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "AccountTypeTableRowFields",
       "typeCondition": "AccountType",
       "domain": "account-type",
@@ -22903,6 +23026,13 @@
     }
   ],
   "types": {
+    "AccountingSystem": {
+      "kind": "enum",
+      "values": [
+        "QuickBooksOnline"
+      ],
+      "sdl": "\"\"\"An accounting system Trenova keeps its books in step with.\"\"\"\nenum AccountingSystem {\n  QuickBooksOnline\n}"
+    },
     "AcknowledgeMyPolicyInput": {
       "kind": "input",
       "fields": [
@@ -24367,6 +24497,32 @@
         }
       ],
       "sdl": "input ClockInput {\n  \"\"\"Any instant; defaults to now. A punch cannot be dated in the future.\"\"\"\n  at: Timestamp\n  breakMinutes: Int\n  note: String\n  payCodeId: ID\n  workerId: ID!\n}"
+    },
+    "CompleteAccountingAuthorizationInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "code",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        },
+        {
+          "name": "realmId",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "state",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nWhat the accounting system returned to the callback page after the person approved access.\n\"\"\"\ninput CompleteAccountingAuthorizationInput {\n  code: String!\n  integrationType: AccountingSystem!\n  realmId: String!\n  state: String!\n}"
     },
     "CompleteClearinghouseQueryInput": {
       "kind": "input",
@@ -36999,6 +37155,7 @@
     "WatchtowerSourceKind": {
       "kind": "enum",
       "values": [
+        "AccountingSync",
         "AgentException",
         "AgentPlan",
         "AgentProposal",
@@ -37016,7 +37173,7 @@
         "WeatherAlert",
         "WorkerCredential"
       ],
-      "sdl": "\"\"\"\nThe record an item stands in for. The source stays authoritative: an item\nis a projection of it, keyed by kind and id, and resolves when the source\ndoes.\n\"\"\"\nenum WatchtowerSourceKind {\n  AgentException\n  AgentPlan\n  AgentProposal\n  AgentQualityRegression\n  AgentRunFailed\n  BillingException\n  CarrierIntelEvent\n  DetentionOccurrence\n  EDIInboundQuarantined\n  HOSViolation\n  InboundMessage\n  Insight\n  MoveCoverage\n  ServiceFailure\n  WeatherAlert\n  WorkerCredential\n}"
+      "sdl": "\"\"\"\nThe record an item stands in for. The source stays authoritative: an item\nis a projection of it, keyed by kind and id, and resolves when the source\ndoes.\n\"\"\"\nenum WatchtowerSourceKind {\n  AccountingSync\n  AgentException\n  AgentPlan\n  AgentProposal\n  AgentQualityRegression\n  AgentRunFailed\n  BillingException\n  CarrierIntelEvent\n  DetentionOccurrence\n  EDIInboundQuarantined\n  HOSViolation\n  InboundMessage\n  Insight\n  MoveCoverage\n  ServiceFailure\n  WeatherAlert\n  WorkerCredential\n}"
     },
     "WatchtowerSeverity": {
       "kind": "enum",

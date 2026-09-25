@@ -521,3 +521,53 @@ func TestAPIErrorMessage(t *testing.T) {
 	assert.False(t, restx.IsStatus(errors.New("plain"), 0))
 	assert.Equal(t, 0, restx.StatusCode(nil))
 }
+
+func TestDoSendsFormBodies(t *testing.T) {
+	t.Parallel()
+
+	var gotContentType string
+	var gotForm url.Values
+	client := newClient(t, func(w http.ResponseWriter, r *http.Request) {
+		gotContentType = r.Header.Get("Content-Type")
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		gotForm, err = url.ParseQuery(string(body))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}, nil)
+
+	_, err := client.Do(t.Context(), &restx.Request{
+		Method: http.MethodPost,
+		Path:   "/token",
+		Form:   url.Values{"grant_type": {"refresh_token"}, "refresh_token": {"abc def"}},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "application/x-www-form-urlencoded", gotContentType)
+	assert.Equal(t, "refresh_token", gotForm.Get("grant_type"))
+	assert.Equal(t, "abc def", gotForm.Get("refresh_token"))
+}
+
+func TestDoRefusesBodyAndForm(t *testing.T) {
+	t.Parallel()
+
+	var calls atomic.Int32
+	client := newClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		w.WriteHeader(http.StatusOK)
+	}, nil)
+
+	_, err := client.Do(t.Context(), &restx.Request{
+		Method: http.MethodPost,
+		Path:   "/token",
+		Body:   map[string]string{"a": "b"},
+		Form:   url.Values{"a": {"b"}},
+	})
+	require.ErrorIs(t, err, restx.ErrBodyAndForm)
+	assert.Zero(t, calls.Load())
+}
