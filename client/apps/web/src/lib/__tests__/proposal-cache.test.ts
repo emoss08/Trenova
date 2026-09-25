@@ -200,4 +200,27 @@ describe("invalidateProposalViews", () => {
       expect(invalidated(client, [...key, "page-1"])).toBe(true);
     }
   });
+
+  // What a write would do is read from the world as it is now. A decision
+  // changes that world: the proposal decided reads as recorded, and another
+  // proposal or a later plan step on the same record starts from what this
+  // one left. A preview kept past a decision would carry a digest the server
+  // no longer agrees with, and the next approval would be refused.
+  it("makes every proposal and plan preview stale, whoever read it and with whatever draft", async () => {
+    const client = seededClient();
+    const previews = [
+      queries.agentPreview.proposal("mine", "prop_1").queryKey,
+      queries.agentPreview.proposal("approver", "prop_2", { status: "Late" }).queryKey,
+      queries.agentPreview.plan("approver", "plan_1").queryKey,
+    ];
+    for (const key of previews) {
+      client.setQueryData(key, { digest: "sha256:x", stale: false });
+    }
+
+    await invalidateProposalViews(client, THREAD);
+
+    for (const key of previews) {
+      expect(invalidated(client, key)).toBe(true);
+    }
+  });
 });
