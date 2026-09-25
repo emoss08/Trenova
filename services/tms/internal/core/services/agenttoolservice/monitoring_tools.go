@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
@@ -21,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 )
 
@@ -420,6 +418,7 @@ type customerMailer struct {
 	customers repositories.CustomerRepository
 	shipments repositories.ShipmentRepository
 	comments  serviceports.ShipmentCommentService
+	senders   serviceports.EmailSenderResolver
 }
 
 type emailCustomerParams struct {
@@ -432,6 +431,7 @@ type emailCustomerParams struct {
 	Customers repositories.CustomerRepository
 	Shipments repositories.ShipmentRepository
 	Comments  serviceports.ShipmentCommentService
+	Senders   serviceports.EmailSenderResolver `optional:"true"`
 }
 
 type emailCustomerTool struct {
@@ -447,6 +447,7 @@ func newEmailCustomerTool(p emailCustomerParams) serviceports.AgentTool {
 		customers: p.Customers,
 		shipments: p.Shipments,
 		comments:  p.Comments,
+		senders:   p.Senders,
 	}}
 }
 
@@ -513,86 +514,19 @@ func (t *emailCustomerTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	composed, err := t.compose(ctx, params)
 	if err != nil {
 		return err
 	}
-	profileID, err := requirePulid(params.Params, "profileId")
-	if err != nil {
-		return err
-	}
-	subject, err := requireString(params.Params, "subject")
-	if err != nil {
-		return err
-	}
-	body, err := requireString(params.Params, "body")
-	if err != nil {
-		return err
-	}
-
-	tenant := tenantFrom(params)
-	sp, err := t.deps.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:              shipmentID,
-		TenantInfo:      tenant,
-		ShipmentOptions: repositories.ShipmentOptions{IncludeCustomer: true},
-	})
-	if err != nil {
-		return err
-	}
-
-	// The customer update desk is woken by every arrival and every
-	// departure, so a shipment crossing a yard can raise several runs in a
-	// few minutes. Telling the customer once is the rule; reading back what
-	// was already sent is what enforces it.
-	told, err := alreadyToldCustomer(ctx, t.deps.comments, tenant, sp.ID, timeutils.NowUnix())
-	if err != nil {
-		return err
-	}
-	if told {
+	if composed.alreadyTold {
 		return ErrCustomerAlreadyTold
 	}
 
-	recipients, customerName, err := t.recipients(ctx, sp, tenant)
-	if err != nil {
+	if _, err = t.deps.email.Send(ctx, composed.send); err != nil {
 		return err
 	}
 
-	context := documenttemplate.AgentEmailContext{
-		AgentSubject:      strings.TrimSpace(subject),
-		AgentBody:         strings.TrimSpace(body),
-		CustomerName:      customerName,
-		ShipmentProNumber: sp.ProNumber,
-	}
-	brandAgentEmail(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &context)
-
-	rendered, err := t.deps.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
-		TenantInfo: tenant,
-		Kind:       documenttemplate.KindAgentCustomerUpdateEmail,
-		CustomerID: pulid.PtrOrNil(sp.CustomerID),
-		Data:       context,
-	})
-	if err != nil {
-		return err
-	}
-
-	if _, err = t.deps.email.Send(ctx, &serviceports.SendEmailRequest{
-		TenantInfo:     tenant,
-		ProfileID:      profileID,
-		Purpose:        email.PurposeOperations,
-		To:             recipients,
-		Subject:        rendered.Subject,
-		HTML:           rendered.HTML,
-		Text:           rendered.Text,
-		IdempotencyKey: params.IdempotencyKey,
-	}); err != nil {
-		return err
-	}
-
-	return t.record(ctx, sp, tenant, recipients, context)
+	return t.record(ctx, composed)
 }
 
 // recipients are the customer's notice contacts, read from the record. The
@@ -633,35 +567,12 @@ func (t *emailCustomerTool) recipients(
 // record leaves the email on the shipment's thread so the desk sees what the
 // customer was told. A failure to record never undoes a send that already
 // happened; it is reported so the run shows it.
-func (t *emailCustomerTool) record(
-	ctx context.Context,
-	sp *shipment.Shipment,
-	tenant pagination.TenantInfo,
-	recipients []string,
-	context documenttemplate.AgentEmailContext,
-) error {
+func (t *emailCustomerTool) record(ctx context.Context, composed *customerEmail) error {
 	if t.deps.comments == nil {
 		return nil
 	}
 
-	_, err := t.deps.comments.CreateSystem(ctx, &serviceports.CreateSystemShipmentCommentRequest{
-		TenantInfo: tenant,
-		ShipmentID: sp.ID,
-		Comment: fmt.Sprintf(
-			"Emailed %s: %s\n\n%s",
-			strings.Join(recipients, ", "), context.AgentSubject, context.AgentBody,
-		),
-		Type:       shipment.CommentTypeCustomerUpdate,
-		Visibility: shipment.CommentVisibilityOperations,
-		Priority:   shipment.CommentPriorityNormal,
-		Metadata: map[string]any{
-			shipment.CommentMetadataOrigin: shipment.CommentOriginAgent,
-			"tool":                         "email_customer",
-			"recipients":                   recipients,
-			"subject":                      context.AgentSubject,
-		},
-	})
-	if err != nil {
+	if _, err := t.deps.comments.CreateSystem(ctx, customerUpdateComment(composed)); err != nil {
 		return fmt.Errorf("the email was sent but could not be recorded on the shipment: %w", err)
 	}
 

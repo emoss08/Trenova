@@ -220,12 +220,7 @@ func (s *Service) Review(
 		return nil, err
 	}
 
-	message.Status = req.Status
-	message.ReviewedBy = req.ReviewerID
-	message.ReviewedAt = timeutils.NowUnix()
-	if note != "" {
-		message.ReviewNote = note
-	}
+	message.ApplyReview(req.Status, req.ReviewerID, note, timeutils.NowUnix())
 
 	updated, err := s.messageRepo.Update(ctx, message)
 	if err != nil {

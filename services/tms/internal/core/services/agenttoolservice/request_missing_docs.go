@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -18,6 +17,7 @@ type requestMissingDocsTool struct {
 	templates serviceports.DocumentTemplateResolver
 	orgRepo   repositories.OrganizationRepository
 	inliner   serviceports.AssetInliner
+	senders   serviceports.EmailSenderResolver
 }
 
 type requestMissingDocsParams struct {
@@ -27,6 +27,7 @@ type requestMissingDocsParams struct {
 	Templates serviceports.DocumentTemplateResolver
 	OrgRepo   repositories.OrganizationRepository
 	Inliner   serviceports.AssetInliner
+	Senders   serviceports.EmailSenderResolver `optional:"true"`
 }
 
 func newRequestMissingDocsTool(p requestMissingDocsParams) serviceports.AgentTool {
@@ -35,6 +36,7 @@ func newRequestMissingDocsTool(p requestMissingDocsParams) serviceports.AgentToo
 		templates: p.Templates,
 		orgRepo:   p.OrgRepo,
 		inliner:   p.Inliner,
+		senders:   p.Senders,
 	}
 }
 
@@ -109,63 +111,12 @@ func (t *requestMissingDocsTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	profileID, err := requirePulid(params.Params, "profileId")
+	composed, err := t.compose(ctx, params)
 	if err != nil {
 		return err
 	}
 
-	subject, err := requireString(params.Params, "subject")
-	if err != nil {
-		return err
-	}
-
-	body, err := requireString(params.Params, "body")
-	if err != nil {
-		return err
-	}
-
-	var to []string
-	if err = decodeParam(params.Params, "to", &to); err != nil {
-		return err
-	}
-
-	tenantInfo := pagination.TenantInfo{
-		OrgID: params.OrganizationID,
-		BuID:  params.BusinessUnitID,
-	}
-
-	// The agent's prose is wrapped by the organization's template rather than
-	// being the whole message. That inversion is the point: an email that goes out
-	// under a carrier's name should look like the carrier wrote it, and an
-	// organization should be able to add a signature or a payment-terms footer to
-	// everything an agent sends without the agent knowing about it.
-	//
-	// It renders with no fallback. A template a carrier authored badly must not be
-	// silently replaced on a message being sent under their letterhead — the tool
-	// fails and the run surfaces it.
-	rendered, err := t.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
-		TenantInfo: tenantInfo,
-		Kind:       documenttemplate.KindAgentRequestMissingDocsEmail,
-		Data:       t.agentEmailContext(ctx, tenantInfo, subject, body, params.Params),
-	})
-	if err != nil {
-		return err
-	}
-
-	_, err = t.email.Send(ctx, &serviceports.SendEmailRequest{
-		TenantInfo:     tenantInfo,
-		ProfileID:      profileID,
-		Purpose:        email.PurposeBilling,
-		To:             to,
-		Subject:        rendered.Subject,
-		HTML:           rendered.HTML,
-		Text:           rendered.Text,
-		IdempotencyKey: params.IdempotencyKey,
-	})
+	_, err = t.email.Send(ctx, composed.send)
 
 	return err
 }
