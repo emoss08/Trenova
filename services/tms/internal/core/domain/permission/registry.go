@@ -2326,6 +2326,31 @@ func (r *Registry) registerBillingResources() {
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
+	// The sealed record of what every agent did and on whose behalf: each
+	// model call, tool call, proposal, decision and write. It names people,
+	// records and arguments across the whole organization, so it is kept for
+	// those who answer for the organization's agents; reading an agent's runs
+	// does not grant it, and no agent can hold it.
+	_ = r.Register(&ResourceDefinition{
+		Resource:    ResourceAIAuditTrail.String(),
+		DisplayName: "AI Audit Trail",
+		Description: "The tamper-evident record of what agents did, for whom, and who decided",
+		Category:    "Administration",
+		Operations: []OperationDefinition{
+			{
+				Operation:   OpRead,
+				DisplayName: "Read",
+				Description: "View the AI audit trail and verify its chain",
+			},
+			{
+				Operation:   OpExport,
+				DisplayName: "Export",
+				Description: "Export the AI audit trail and download exports",
+			},
+		},
+		DefaultSensitivity: SensitivityConfidential,
+	})
+
 	// unattended, so it sits at the same sensitivity as provider configuration.
 	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceAgentDefinition.String(),

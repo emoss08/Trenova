@@ -193,6 +193,14 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			name:   "ck_ai_usage_records_subject_type",
 			values: stringsOf(aiusage.AllSubjectTypes()),
 		},
+		{
+			name:   "ck_ai_usage_records_owner_kind",
+			values: stringsOf(agent.AllRunOwnerKinds()),
+		},
+		{
+			name:   "ck_agent_runs_parent_owner_kind",
+			values: stringsOf(agent.AllRunOwnerKinds()),
+		},
 	}
 
 	files := embeddedMigrationFiles(t)

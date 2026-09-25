@@ -78,6 +78,9 @@ type RunStepOutcome struct {
 	// Taint is the outside content the call read, so a replayed step taints
 	// the run the way the original did.
 	Taint []agent.TaintMark `json:"taint,omitempty"`
+	// Reason is why a call that did not run was refused, in words fit for
+	// the audit trail: the permission it lacked, the argument it got wrong.
+	Reason string `json:"reason,omitempty"`
 }
 
 // StepState is what a claim found.

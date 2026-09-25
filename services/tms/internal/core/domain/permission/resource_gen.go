@@ -132,6 +132,7 @@ const (
 	ResourceAgentMemory     Resource = "agent_memory"
 	ResourceAgentEvalSuite  Resource = "agent_eval_suite"
 	ResourceAgentFeedback   Resource = "agent_feedback"
+	ResourceAIAuditTrail    Resource = "ai_audit_trail"
 	ResourceAssistant       Resource = "assistant"
 	ResourceInsight         Resource = "insight"
 	ResourceWatchtower      Resource = "watchtower"

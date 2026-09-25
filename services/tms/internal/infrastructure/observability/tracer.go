@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -42,6 +43,7 @@ type TracerProvider struct {
 
 func NewTracerProvider(p TracerProviderParams) (*TracerProvider, error) {
 	log := p.Logger.With(zap.String("component", "tracer"))
+	aitrace.SetSamplingRate(p.Config.Monitoring.Tracing.GetAISamplingRate())
 
 	if !p.Config.Monitoring.Tracing.Enabled {
 		log.Warn("🟡 Tracing is disabled")
@@ -96,6 +98,7 @@ func (tp *TracerProvider) initialize(ctx context.Context) error {
 			sdktrace.WithMaxExportBatchSize(512),
 		),
 		sdktrace.WithResource(res),
+		sdktrace.WithIDGenerator(aitrace.NewIDGenerator()),
 		sdktrace.WithSampler(createSampler(&tp.cfg.Monitoring.Tracing)),
 	)
 
@@ -115,6 +118,7 @@ func (tp *TracerProvider) initialize(ctx context.Context) error {
 		zap.String("provider", tp.cfg.Monitoring.Tracing.Provider),
 		zap.String("endpoint", tp.cfg.Monitoring.Tracing.Endpoint),
 		zap.Float64("sampling_rate", tp.cfg.Monitoring.Tracing.SamplingRate),
+		zap.Float64("ai_sampling_rate", tp.cfg.Monitoring.Tracing.GetAISamplingRate()),
 	)
 
 	return nil
@@ -179,14 +183,7 @@ func createStdoutExporter() (sdktrace.SpanExporter, error) {
 }
 
 func createSampler(cfg *config.TracingConfig) sdktrace.Sampler {
-	if cfg.SamplingRate >= 1.0 {
-		return sdktrace.AlwaysSample()
-	}
-	if cfg.SamplingRate <= 0.0 {
-		return sdktrace.NeverSample()
-	}
-
-	return sdktrace.TraceIDRatioBased(cfg.SamplingRate)
+	return aitrace.NewSampler(cfg.SamplingRate)
 }
 
 func (tp *TracerProvider) Tracer() trace.Tracer {

@@ -19,10 +19,14 @@ func TestDataRetention_Validate(t *testing.T) {
 		dr      *DataRetention
 		wantErr bool
 	}{
-		{"valid entity passes", &DataRetention{AuditRetentionPeriod: 120}, false},
-		{"zero retention period fails", &DataRetention{AuditRetentionPeriod: 0}, true},
-		{"negative retention period fails", &DataRetention{AuditRetentionPeriod: -1}, true},
-		{"retention period of 1 passes", &DataRetention{AuditRetentionPeriod: 1}, false},
+		{"valid entity passes", validRetention(120, DefaultAIAuditRetentionDays), false},
+		{"zero retention period fails", validRetention(0, DefaultAIAuditRetentionDays), true},
+		{"negative retention period fails", validRetention(-1, DefaultAIAuditRetentionDays), true},
+		{"retention period of 1 passes", validRetention(1, DefaultAIAuditRetentionDays), false},
+		{"missing AI audit trail retention fails", validRetention(120, 0), true},
+		{"AI audit trail kept under a year fails", validRetention(120, 364), true},
+		{"AI audit trail kept a year passes", validRetention(120, MinAIAuditRetentionDays), false},
+		{"AI audit trail kept ten years passes", validRetention(120, 3650), false},
 	}
 
 	for _, tt := range tests {
@@ -37,6 +41,29 @@ func TestDataRetention_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func validRetention(auditDays, aiAuditDays int) *DataRetention {
+	return &DataRetention{AuditRetentionPeriod: auditDays, AIAuditRetentionPeriod: aiAuditDays}
+}
+
+func TestDataRetention_AIAuditRetentionDays(t *testing.T) {
+	t.Parallel()
+
+	var missing *DataRetention
+	assert.Equal(t, DefaultAIAuditRetentionDays, missing.AIAuditRetentionDays())
+	assert.Equal(t, DefaultAIAuditRetentionDays, (&DataRetention{}).AIAuditRetentionDays())
+	assert.Equal(t, 400, (&DataRetention{AIAuditRetentionPeriod: 400}).AIAuditRetentionDays())
+}
+
+func TestDataRetention_AIAuditRetentionError_NamesTheField(t *testing.T) {
+	t.Parallel()
+
+	multiErr := errortypes.NewMultiError()
+	validRetention(120, 30).Validate(multiErr)
+
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, "aiAuditRetentionPeriod", multiErr.Errors[0].Field)
 }
 
 func TestDataRetention_BeforeAppendModel(t *testing.T) {

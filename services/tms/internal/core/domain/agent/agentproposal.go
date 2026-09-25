@@ -86,6 +86,16 @@ type AgentProposal struct {
 	EgressClass EgressClass `json:"egressClass" bun:"egress_class,type:VARCHAR(30),nullzero"`
 	HeldBy      []string    `json:"heldBy"      bun:"held_by,type:TEXT[],array,notnull"`
 
+	// TraceID and SpanID are the tool span the write was decided in, so a
+	// decision made later links back to it; StepKey is the ledger step that
+	// raised it. ExecutedByUserID and ExecutedTargetVersion say who the write
+	// ran as and what version it left the record at.
+	TraceID               string   `json:"traceId"               bun:"trace_id,type:VARCHAR(32),nullzero"`
+	SpanID                string   `json:"spanId"                bun:"span_id,type:VARCHAR(16),nullzero"`
+	StepKey               string   `json:"stepKey"               bun:"step_key,type:VARCHAR(120),nullzero"`
+	ExecutedByUserID      pulid.ID `json:"executedByUserId"      bun:"executed_by_user_id,type:VARCHAR(100),nullzero"`
+	ExecutedTargetVersion *int64   `json:"executedTargetVersion" bun:"executed_target_version,type:BIGINT,nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -128,6 +138,11 @@ func (p *AgentProposal) Validate(multiErr *errortypes.MultiError) {
 				}
 				return nil
 			}),
+		),
+		validation.Field(&p.TraceID, domainvalidation.TraceID("Trace id is invalid")),
+		validation.Field(&p.SpanID, domainvalidation.SpanID("Span id is invalid")),
+		validation.Field(&p.ExecutedTargetVersion,
+			validation.Min(int64(0)).Error("Executed target version cannot be negative"),
 		),
 	))
 
@@ -183,6 +198,7 @@ func (p *AgentProposal) BeforeAppendModel(_ context.Context, query bun.Query) er
 			p.ID = pulid.MustNew("ap_")
 		}
 		p.CreatedAt = now
+		p.UpdatedAt = now
 		if p.ExpiresAt == 0 {
 			p.ExpiresAt = now + int64(DefaultProposalTTL.Seconds())
 		}

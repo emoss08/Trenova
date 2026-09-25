@@ -72,6 +72,15 @@ monitoring:
     endpoint: localhost:4317
     serviceName: trenova
     samplingRate: 1.0
+    aiSamplingRate: 1.0
+    traceUrlTemplate: ""
+
+aiAudit:
+  chain:
+    keys:
+      - id: test-2026
+        secret: test-ai-audit-chain-key-for-testing-only-32chars
+    activeKeyId: test-2026
 
 # No renderer in tests: PDF paths use the hand-written mock, and an empty URL
 # makes an accidental real render fail loudly instead of reaching out.

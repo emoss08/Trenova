@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,6 +17,28 @@ var (
 	_ bun.BeforeAppendModelHook          = (*AgentRunStep)(nil)
 	_ validationframework.TenantedEntity = (*AgentRunStep)(nil)
 )
+
+// RunOwnerKind names the unit of work a step, a usage row or a delegate run
+// belongs to: a background agent run or a conversation turn.
+type RunOwnerKind string
+
+const (
+	RunOwnerAgentRun      = RunOwnerKind("AgentRun")
+	RunOwnerAssistantTurn = RunOwnerKind("AssistantTurn")
+)
+
+func (k RunOwnerKind) IsValid() bool {
+	switch k {
+	case RunOwnerAgentRun, RunOwnerAssistantTurn:
+		return true
+	default:
+		return false
+	}
+}
+
+func AllRunOwnerKinds() []RunOwnerKind {
+	return []RunOwnerKind{RunOwnerAgentRun, RunOwnerAssistantTurn}
+}
 
 // AgentRunStep is one thing a run did, or began to do.
 //
@@ -46,6 +69,16 @@ type AgentRunStep struct {
 	Arguments map[string]any `json:"arguments" bun:"arguments,type:JSONB,notnull,default:'{}'::jsonb"`
 	Outcome   map[string]any `json:"outcome"   bun:"outcome,type:JSONB,notnull,default:'{}'::jsonb"`
 
+	// TraceID and SpanID are the span the step ran in. AgentDefinitionID and
+	// AgentDefinitionVersion are the agent that made the call as it was then,
+	// which for a delegate's step is not the agent the run belongs to, and
+	// DelegateCallID the task it was working on.
+	TraceID                string   `json:"traceId"                bun:"trace_id,type:VARCHAR(32),nullzero"`
+	SpanID                 string   `json:"spanId"                 bun:"span_id,type:VARCHAR(16),nullzero"`
+	AgentDefinitionID      pulid.ID `json:"agentDefinitionId"      bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
+	AgentDefinitionVersion *int64   `json:"agentDefinitionVersion" bun:"agent_definition_version,type:BIGINT,nullzero"`
+	DelegateCallID         string   `json:"delegateCallId"         bun:"delegate_call_id,type:VARCHAR(200),nullzero"`
+
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -71,6 +104,11 @@ func (s *AgentRunStep) Validate(multiErr *errortypes.MultiError) {
 			validation.In("Started", "Completed", "Failed").Error("Invalid status"),
 		),
 		validation.Field(&s.StepKey, validation.Required.Error("Step key is required")),
+		validation.Field(&s.TraceID, domainvalidation.TraceID("Trace id is invalid")),
+		validation.Field(&s.SpanID, domainvalidation.SpanID("Span id is invalid")),
+		validation.Field(&s.AgentDefinitionVersion,
+			validation.Min(int64(0)).Error("Agent definition version cannot be negative"),
+		),
 	))
 }
 
