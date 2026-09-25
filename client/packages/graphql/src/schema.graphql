@@ -1348,6 +1348,14 @@ type AgentDecision {
   organizationId: ID!
   proposalId: ID
   reasonCode: String!
+  """
+  The trace the decision was made in. Empty for a decision recorded before traces were kept.
+  """
+  traceId: String!
+  """
+  The decision's trace in the tracing backend, when one is configured and the decision has a trace.
+  """
+  traceUrl: String
   updatedAt: Timestamp!
   version: Int!
 }
@@ -2059,6 +2067,14 @@ type AgentProposal {
   Tool parameters are tool-specific and validated per tool, so they remain intentionally open-ended.
   """
   toolParams: JSON!
+  """
+  The trace of the tool call the write was proposed in. Empty for a proposal recorded before traces were kept.
+  """
+  traceId: String!
+  """
+  The proposing tool call's trace in the tracing backend, when one is configured and the proposal has a trace.
+  """
+  traceUrl: String
   updatedAt: Timestamp!
   version: Int!
 }
@@ -2339,6 +2355,14 @@ type AgentRun {
   tainted: Boolean!
   """When the run first read outside content."""
   taintedAt: Timestamp
+  """
+  The trace the run's work was recorded in. Empty for a run recorded before traces were kept.
+  """
+  traceId: String!
+  """
+  The run's trace in the tracing backend, when one is configured and the run has a trace.
+  """
+  traceUrl: String
   trigger: AgentRunTrigger!
   updatedAt: Timestamp!
   version: Int!

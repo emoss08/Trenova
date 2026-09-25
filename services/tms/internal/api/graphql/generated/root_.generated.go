@@ -43,6 +43,7 @@ type ResolverRoot interface {
 	AccountingConnection() AccountingConnectionResolver
 	AccountingMapping() AccountingMappingResolver
 	AccountingReferenceObject() AccountingReferenceObjectResolver
+	AgentDecision() AgentDecisionResolver
 	AgentDefinition() AgentDefinitionResolver
 	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
@@ -922,6 +923,8 @@ type ComplexityRoot struct {
 		OrganizationID  func(childComplexity int) int
 		ProposalID      func(childComplexity int) int
 		ReasonCode      func(childComplexity int) int
+		TraceID         func(childComplexity int) int
+		TraceURL        func(childComplexity int) int
 		UpdatedAt       func(childComplexity int) int
 		Version         func(childComplexity int) int
 	}
@@ -1271,6 +1274,8 @@ type ComplexityRoot struct {
 		Tainted         func(childComplexity int) int
 		ToolName        func(childComplexity int) int
 		ToolParams      func(childComplexity int) int
+		TraceID         func(childComplexity int) int
+		TraceURL        func(childComplexity int) int
 		UpdatedAt       func(childComplexity int) int
 		Version         func(childComplexity int) int
 	}
@@ -1427,6 +1432,8 @@ type ComplexityRoot struct {
 		Taint             func(childComplexity int) int
 		Tainted           func(childComplexity int) int
 		TaintedAt         func(childComplexity int) int
+		TraceID           func(childComplexity int) int
+		TraceURL          func(childComplexity int) int
 		Trigger           func(childComplexity int) int
 		UpdatedAt         func(childComplexity int) int
 		Version           func(childComplexity int) int
@@ -15796,6 +15803,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDecision.ReasonCode(childComplexity), true
+	case "AgentDecision.traceId":
+		if e.ComplexityRoot.AgentDecision.TraceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDecision.TraceID(childComplexity), true
+	case "AgentDecision.traceUrl":
+		if e.ComplexityRoot.AgentDecision.TraceURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDecision.TraceURL(childComplexity), true
 	case "AgentDecision.updatedAt":
 		if e.ComplexityRoot.AgentDecision.UpdatedAt == nil {
 			break
@@ -17431,6 +17450,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposal.ToolParams(childComplexity), true
+	case "AgentProposal.traceId":
+		if e.ComplexityRoot.AgentProposal.TraceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.TraceID(childComplexity), true
+	case "AgentProposal.traceUrl":
+		if e.ComplexityRoot.AgentProposal.TraceURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposal.TraceURL(childComplexity), true
 	case "AgentProposal.updatedAt":
 		if e.ComplexityRoot.AgentProposal.UpdatedAt == nil {
 			break
@@ -18129,6 +18160,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentRun.TaintedAt(childComplexity), true
+	case "AgentRun.traceId":
+		if e.ComplexityRoot.AgentRun.TraceID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRun.TraceID(childComplexity), true
+	case "AgentRun.traceUrl":
+		if e.ComplexityRoot.AgentRun.TraceURL == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentRun.TraceURL(childComplexity), true
 	case "AgentRun.trigger":
 		if e.ComplexityRoot.AgentRun.Trigger == nil {
 			break
@@ -77371,6 +77414,10 @@ type AgentRun {
   taint: AgentRunTaint
   "When the run first read outside content."
   taintedAt: Timestamp
+  "The trace the run's work was recorded in. Empty for a run recorded before traces were kept."
+  traceId: String!
+  "The run's trace in the tracing backend, when one is configured and the run has a trace."
+  traceUrl: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -77409,6 +77456,10 @@ type AgentProposal {
   egressClass: AgentEgressClass
   "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier or personal_exemption."
   heldBy: [String!]!
+  "The trace of the tool call the write was proposed in. Empty for a proposal recorded before traces were kept."
+  traceId: String!
+  "The proposing tool call's trace in the tracing backend, when one is configured and the proposal has a trace."
+  traceUrl: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -77492,6 +77543,10 @@ type AgentDecision {
   "Modifications carry tool-specific parameter overrides captured at decision time."
   modifications: JSON
   reasonCode: String!
+  "The trace the decision was made in. Empty for a decision recorded before traces were kept."
+  traceId: String!
+  "The decision's trace in the tracing backend, when one is configured and the decision has a trace."
+  traceUrl: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -101247,6 +101302,10 @@ func (ec *executionContext) childFields_AgentDecision(ctx context.Context, field
 		return ec.fieldContext_AgentDecision_modifications(ctx, field)
 	case "reasonCode":
 		return ec.fieldContext_AgentDecision_reasonCode(ctx, field)
+	case "traceId":
+		return ec.fieldContext_AgentDecision_traceId(ctx, field)
+	case "traceUrl":
+		return ec.fieldContext_AgentDecision_traceUrl(ctx, field)
 	case "version":
 		return ec.fieldContext_AgentDecision_version(ctx, field)
 	case "createdAt":
@@ -101943,6 +102002,10 @@ func (ec *executionContext) childFields_AgentProposal(ctx context.Context, field
 		return ec.fieldContext_AgentProposal_egressClass(ctx, field)
 	case "heldBy":
 		return ec.fieldContext_AgentProposal_heldBy(ctx, field)
+	case "traceId":
+		return ec.fieldContext_AgentProposal_traceId(ctx, field)
+	case "traceUrl":
+		return ec.fieldContext_AgentProposal_traceUrl(ctx, field)
 	case "version":
 		return ec.fieldContext_AgentProposal_version(ctx, field)
 	case "createdAt":
@@ -102259,6 +102322,10 @@ func (ec *executionContext) childFields_AgentRun(ctx context.Context, field grap
 		return ec.fieldContext_AgentRun_taint(ctx, field)
 	case "taintedAt":
 		return ec.fieldContext_AgentRun_taintedAt(ctx, field)
+	case "traceId":
+		return ec.fieldContext_AgentRun_traceId(ctx, field)
+	case "traceUrl":
+		return ec.fieldContext_AgentRun_traceUrl(ctx, field)
 	case "version":
 		return ec.fieldContext_AgentRun_version(ctx, field)
 	case "createdAt":
