@@ -1990,6 +1990,7 @@ var InvoiceLineColumns = struct {
 	FormulaTemplateName Column // "formula_template_name" → qualified: "invl.formula_template_name"
 	AllocationPercent   Column // "allocation_percent" → qualified: "invl.allocation_percent"
 	ChargeAllocationID  Column // "charge_allocation_id" → qualified: "invl.charge_allocation_id"
+	AdditionalChargeID  Column // "additional_charge_id" → qualified: "invl.additional_charge_id"
 	Version             Column // "version" → qualified: "invl.version"
 	CreatedAt           Column // "created_at" → qualified: "invl.created_at"
 	UpdatedAt           Column // "updated_at" → qualified: "invl.updated_at"
@@ -2017,6 +2018,7 @@ var InvoiceLineColumns = struct {
 	FormulaTemplateName: NewColumn("formula_template_name", "invl"),
 	AllocationPercent:   NewColumn("allocation_percent", "invl"),
 	ChargeAllocationID:  NewColumn("charge_allocation_id", "invl"),
+	AdditionalChargeID:  NewColumn("additional_charge_id", "invl"),
 	Version:             NewColumn("version", "invl"),
 	CreatedAt:           NewColumn("created_at", "invl"),
 	UpdatedAt:           NewColumn("updated_at", "invl"),
@@ -2050,6 +2052,7 @@ var InvoiceLineFieldMap = map[string]string{
 	"formulaTemplateName": "formula_template_name",
 	"allocationPercent":   "allocation_percent",
 	"chargeAllocationId":  "charge_allocation_id",
+	"additionalChargeId":  "additional_charge_id",
 	"version":             "version",
 	"createdAt":           "created_at",
 	"updatedAt":           "updated_at",
@@ -2081,6 +2084,7 @@ var InvoiceLineInsertableColumns = []string{
 	"formula_template_name",
 	"allocation_percent",
 	"charge_allocation_id",
+	"additional_charge_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -2170,6 +2174,7 @@ var InvoiceLineFilter = struct {
 	FormulaTemplateName func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "formulaTemplateName" → DB: "formula_template_name"
 	AllocationPercent   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "allocationPercent" → DB: "allocation_percent"
 	ChargeAllocationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "chargeAllocationId" → DB: "charge_allocation_id"
+	AdditionalChargeID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "additionalChargeId" → DB: "additional_charge_id"
 	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -2242,6 +2247,9 @@ var InvoiceLineFilter = struct {
 	},
 	ChargeAllocationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("chargeAllocationId", op, value)
+	},
+	AdditionalChargeID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("additionalChargeId", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

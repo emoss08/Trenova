@@ -21757,6 +21757,8 @@
   "{0, plural, one {# day} other {# days}} · {1}": "{0, plural, one {# día} other {# días}} · {1}",
   "{0, plural, one {# day} other {# days}} · {1} a week": "{0, plural, one {# día} other {# días}} · {1} por semana",
   "{0, plural, one {# debit memo} other {# debit memos}} raised for {1}": "{0, plural, one {# nota de débito generada} other {# notas de débito generadas}} para {1}",
+  "{0, plural, one {# detention charge on this shipment still needs approval} other {# detention charges on this shipment still need approval}} before the shipment can be billed. Approve or waive {0, plural, one {it} other {them}} on the detention desk first.": "{0, plural, one {# cargo por demoras de este envío aún necesita aprobación} other {# cargos por demoras de este envío aún necesitan aprobación}} antes de que el envío pueda facturarse. {0, plural, one {Apruébelo o exímalo} other {Apruébelos o exímalos}} primero en el escritorio de demoras.",
+  "{0, plural, one {# detention charge} other {# detention charges}} across {1, plural, one {# shipment} other {# shipments}} still need approval before those shipments can be billed. Approve or waive them on the detention desk first.": "{0, plural, one {# cargo por demoras} other {# cargos por demoras}} en {1, plural, one {# envío} other {# envíos}} aún necesitan aprobación antes de que esos envíos puedan facturarse. Apruébelos o exímalos primero en el escritorio de demoras.",
   "{0, plural, one {# dimension} other {# dimensions}}": "{0, plural, one {# dimensión} other {# dimensiones}}",
   "{0, plural, one {# doc} other {# docs}}": "{0, plural, one {# doc.} other {# docs.}}",
   "{0, plural, one {# error} other {# errors}}": "{0, plural, one {# error} other {# errores}}",

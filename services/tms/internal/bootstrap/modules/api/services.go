@@ -68,6 +68,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/dataentrycontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/dataretentionservice"
 	"github.com/emoss08/trenova/internal/core/services/datatransformer"
+	"github.com/emoss08/trenova/internal/core/services/detentionbillingservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/dispatchautoassignservice"
@@ -500,6 +501,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	permitservice.NewService,
 	jurisdictionruleservice.NewService,
 	detentionservice.New,
+	detentionbillingservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(
 		func(g seqgen.Generator) services.InvoiceAdjustGenerator { return g },

@@ -321,6 +321,14 @@ definitions:
                 type: string
             createdAt:
                 type: integer
+            detentionHolds:
+                description: |-
+                    DetentionHolds are the detention charges on the shipment still waiting
+                    on an approver, filled when the item is read with its shipment details.
+                    While any is listed the item cannot be approved.
+                items:
+                    $ref: '#/definitions/billingqueue.DetentionHold'
+                type: array
             exceptionNotes:
                 type: string
             exceptionReasonCode:
@@ -371,6 +379,25 @@ definitions:
                 type: integer
             version:
                 type: integer
+        type: object
+    billingqueue.DetentionHold:
+        properties:
+            billableAmount:
+                type: number
+            clockStartAt:
+                type: integer
+            currency:
+                type: string
+            locationName:
+                type: string
+            occurrenceId:
+                type: string
+            reason:
+                $ref: '#/definitions/detention.BillingHoldReason'
+            stopId:
+                type: string
+            stopType:
+                $ref: '#/definitions/shipment.StopType'
         type: object
     billingqueue.ExceptionReasonCode:
         enum:
@@ -1581,6 +1608,16 @@ definitions:
             valid:
                 type: boolean
         type: object
+    detention.BillingHoldReason:
+        enum:
+            - OverApprovalThreshold
+            - NoticeNotSent
+            - Escalated
+        type: string
+        x-enum-varnames:
+            - BillingHoldReasonOverApprovalThreshold
+            - BillingHoldReasonNoticeNotSent
+            - BillingHoldReasonEscalated
     detention.CalculationTrace:
         properties:
             computedAt:
@@ -6205,6 +6242,8 @@ definitions:
     invoice.InvoiceLine:
         properties:
             accessorialChargeId:
+                type: string
+            additionalChargeId:
                 type: string
             allocationPercent:
                 $ref: '#/definitions/decimal.NullDecimal'

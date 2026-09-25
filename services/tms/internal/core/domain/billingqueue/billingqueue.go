@@ -69,6 +69,11 @@ type BillingQueueItem struct {
 	// PayerShare is this item's payer's part of the shipment's charges, filled
 	// when the item is read with its shipment details.
 	PayerShare *PayerShare `json:"payerShare,omitempty" bun:"-"`
+
+	// DetentionHolds are the detention charges on the shipment still waiting
+	// on an approver, filled when the item is read with its shipment details.
+	// While any is listed the item cannot be approved.
+	DetentionHolds []*DetentionHold `json:"detentionHolds,omitempty" bun:"-"`
 }
 
 func (b *BillingQueueItem) Validate(multiErr *errortypes.MultiError) {

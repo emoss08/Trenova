@@ -162,6 +162,9 @@ func (s *Service) CreateInvoicesFromShipments(
 			"Shipment must be completed or ready to invoice",
 		)
 	}
+	if err = s.guardDetentionHolds(ctx, req.TenantInfo, []pulid.ID{shp.ID}); err != nil {
+		return nil, err
+	}
 
 	resolution, err := shipment.ResolveShares(shp, shp.ChargeAllocations)
 	if err != nil {
@@ -580,6 +583,9 @@ func (s *Service) createOrderInvoicesTx(
 			"Order has no legs that are completed or ready to invoice",
 		)
 	}
+	if txErr = s.guardDetentionHolds(txCtx, req.TenantInfo, legIDs(legs)); txErr != nil {
+		return nil, txErr
+	}
 
 	buckets, txErr := bucketLegsByPayer(ord, legs)
 	if txErr != nil {
@@ -722,6 +728,10 @@ func (s *Service) createOrderInvoicesTx(
 			chargeShare,
 			created,
 		); err != nil {
+			return nil, err
+		}
+
+		if err = s.syncDetentionBilling(txCtx, created, actor); err != nil {
 			return nil, err
 		}
 

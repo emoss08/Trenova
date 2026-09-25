@@ -201765,6 +201765,24 @@
       "routes/late-charges"
     ]
   },
+  "{0, plural, one {# detention charge on this shipment still needs approval} other {# detention charges on this shipment still need approval}} before the shipment can be billed. Approve or waive {0, plural, one {it} other {them}} on the detention desk first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/detention"
+    ]
+  },
+  "{0, plural, one {# detention charge} other {# detention charges}} across {1, plural, one {# shipment} other {# shipments}} still need approval before those shipments can be billed. Approve or waive them on the detention desk first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/detention"
+    ]
+  },
   "{0, plural, one {# dimension} other {# dimensions}}": {
     "sites": 2,
     "scope": [

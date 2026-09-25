@@ -265,6 +265,7 @@ func (s *Service) voidDeps(tenantInfo pagination.TenantInfo) invoicevoid.Deps {
 		ShipmentRepo:         s.shipmentRepo,
 		InvoiceRepo:          s.repo,
 		OrderDerivation:      s.orderDerivation,
+		DetentionBilling:     s.detentionBilling,
 		Renumber: func(ctx context.Context, billType billingqueue.BillType) (string, error) {
 			return s.renumberBillingItem(ctx, tenantInfo, billType)
 		},

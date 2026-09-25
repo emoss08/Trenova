@@ -21757,6 +21757,8 @@
   "{0, plural, one {# day} other {# days}} · {1}": "{0, plural, other {# 天}} · {1}",
   "{0, plural, one {# day} other {# days}} · {1} a week": "{0, plural, other {# 天}} · 每週 {1}",
   "{0, plural, one {# debit memo} other {# debit memos}} raised for {1}": "已為 {1} 開立 {0, plural, other {# 筆借項通知單}}",
+  "{0, plural, one {# detention charge on this shipment still needs approval} other {# detention charges on this shipment still need approval}} before the shipment can be billed. Approve or waive {0, plural, one {it} other {them}} on the detention desk first.": "此運單仍有 {0, plural, other {# 筆滯留費}}需要核准，才能開立帳單。請先在滯留費作業台核准或豁免。",
+  "{0, plural, one {# detention charge} other {# detention charges}} across {1, plural, one {# shipment} other {# shipments}} still need approval before those shipments can be billed. Approve or waive them on the detention desk first.": "{1, plural, other {# 筆運單}}上仍有 {0, plural, other {# 筆滯留費}}需要核准，才能開立帳單。請先在滯留費作業台核准或豁免。",
   "{0, plural, one {# dimension} other {# dimensions}}": "{0, plural, other {# 維}}",
   "{0, plural, one {# doc} other {# docs}}": "{0, plural, other {# 份文件}}",
   "{0, plural, one {# error} other {# errors}}": "{0, plural, other {# 項錯誤}}",

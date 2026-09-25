@@ -22,6 +22,7 @@ type Deps struct {
 	ShipmentRepo         repositories.ShipmentRepository
 	InvoiceRepo          repositories.InvoiceRepository
 	OrderDerivation      servicesports.OrderDerivationService
+	DetentionBilling     servicesports.DetentionBillingService
 	Renumber             func(ctx context.Context, billType billingqueue.BillType) (string, error)
 }
 
@@ -88,6 +89,21 @@ func Release(ctx context.Context, deps Deps, p Params) ([]pulid.ID, error) {
 			TenantInfo: tenantInfo,
 			InvoiceID:  entity.ID,
 		}); err != nil {
+			return nil, err
+		}
+	}
+
+	if deps.DetentionBilling != nil {
+		if err = deps.DetentionBilling.SyncInvoiceBilling(
+			ctx,
+			&servicesports.SyncDetentionInvoiceBillingRequest{
+				TenantInfo:    tenantInfo,
+				InvoiceIDs:    []pulid.ID{entity.ID},
+				InvoiceNumber: entity.Number,
+				Event:         servicesports.DetentionBillingInvoiceVoided,
+				ActorUserID:   p.ActorUserID,
+			},
+		); err != nil {
 			return nil, err
 		}
 	}

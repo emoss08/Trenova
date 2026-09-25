@@ -72,6 +72,7 @@ type Params struct {
 	SequenceGenerator    seqgen.Generator
 	SequenceProvider     seqgen.FormatProvider
 	OrderDerivation      servicesports.OrderDerivationService
+	DetentionBilling     servicesports.DetentionBillingService
 	AccountingPolicy     *accountingcontrolpolicyservice.Service
 	BillingPolicy        *billingcontrolpolicyservice.Service
 
@@ -112,6 +113,7 @@ type Service struct {
 	sequenceGenerator    seqgen.Generator
 	sequenceProvider     seqgen.FormatProvider
 	orderDerivation      servicesports.OrderDerivationService
+	detentionBilling     servicesports.DetentionBillingService
 	accountingPolicy     *accountingcontrolpolicyservice.Service
 	billingPolicy        *billingcontrolpolicyservice.Service
 
@@ -184,6 +186,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		sequenceGenerator:           p.SequenceGenerator,
 		sequenceProvider:            p.SequenceProvider,
 		orderDerivation:             p.OrderDerivation,
+		detentionBilling:            p.DetentionBilling,
 		accountingPolicy:            p.AccountingPolicy,
 		billingPolicy:               p.BillingPolicy,
 		ediPartnerRepo:              p.EDIPartnerRepo,
@@ -269,6 +272,9 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 	if err = guardStatementCadence(dependencies.Customer, req.OffCycleReason); err != nil {
 		return nil, err
 	}
+	if err = s.guardItemDetentionHolds(ctx, req.TenantInfo, item); err != nil {
+		return nil, err
+	}
 
 	entity := s.buildInvoiceEntity(&buildInvoiceParams{
 		Anchor:         item,
@@ -295,6 +301,10 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 
 	created, err := s.repo.Create(ctx, entity)
 	if err != nil {
+		return nil, err
+	}
+
+	if err = s.syncDetentionBilling(ctx, created, actor); err != nil {
 		return nil, err
 	}
 

@@ -170,6 +170,7 @@ type InvoiceLine struct {
 	FormulaTemplateName string                     `json:"formulaTemplateName" bun:"formula_template_name,type:TEXT,nullzero"`
 	AllocationPercent   decimal.NullDecimal        `json:"allocationPercent"   bun:"allocation_percent,type:NUMERIC(9,6),nullzero"`
 	ChargeAllocationID  pulid.ID                   `json:"chargeAllocationId"  bun:"charge_allocation_id,type:VARCHAR(100),nullzero"`
+	AdditionalChargeID  pulid.ID                   `json:"additionalChargeId"  bun:"additional_charge_id,type:VARCHAR(100),nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -627,6 +628,7 @@ func (l *InvoiceLine) CopyChargeDetail(src *InvoiceLine) {
 	l.FormulaTemplateName = src.FormulaTemplateName
 	l.AllocationPercent = src.AllocationPercent
 	l.ChargeAllocationID = src.ChargeAllocationID
+	l.AdditionalChargeID = src.AdditionalChargeID
 }
 
 // IsPartialShare reports whether the line bills only part of its charge, which
