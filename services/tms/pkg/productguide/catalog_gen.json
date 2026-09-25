@@ -1,5 +1,5 @@
 {
-  "version": "sha256:d0701ecb4c7f779d21eb6a22780bf9a725203bc6fc1830cd3bfa933e88556b78",
+  "version": "sha256:faa93ec2fdf26b8979c79602a2e57c76492d3376363889aa5afe42966b9b1924",
   "modules": [
     {
       "id": "home",
@@ -2090,13 +2090,16 @@
             "agent decisions",
             "pending proposals",
             "review agent changes",
-            "approve plan"
+            "approve plan",
+            "preview agent change"
           ],
           "steps": [
             "Open [AI control](/admin/agent-control), select **Activity** in the rail and then **Proposals**.",
             "Right-click a pending proposal and choose **Approve**, **Approve with changes** or **Reject**.",
-            "Give a **Reason** (required when rejecting) and confirm with **Approve and run** or **Reject**.",
-            "For a multi-step plan, select **Plans** instead and use **Approve all** or **Reject all**."
+            "Read **What changes** in the dialog: each record the change would touch and its values before and after, worked out from the records as they are now. Anything you may not see reads **Hidden by your data access**. **Approve and run** stays off until it has loaded, and for a change whose record was edited since it was proposed (**Changed since it was proposed**).",
+            "Give a **Reason** (required when rejecting) and confirm with **Approve and run** or **Reject**. If the change moved while the dialog was open, nothing is recorded and the dialog shows it again; read it and confirm.",
+            "With **Approve with changes**, the record the change is about cannot be edited, and what your values would do is shown as you type.",
+            "For a multi-step plan, select **Plans** instead and use **Approve all** or **Reject all**; the dialog shows every step's changes in order."
           ]
         },
         {
@@ -7190,6 +7193,20 @@
           ]
         },
         {
+          "title": "Answer a change an agent proposes in the conversation",
+          "keywords": [
+            "approve in chat",
+            "review agent change",
+            "preview before approving",
+            "what will this change"
+          ],
+          "steps": [
+            "In the conversation, read the change's card: what each record would look like before and after, and any message or amount it would send or move. Select **Show all changes** to see all of it.",
+            "Select **Approve** once the preview has loaded, **Reject** to turn it down, or **Modify** to change the values; the dialog shows what your values would do as you type, and confirms with **Approve with changes**.",
+            "If the card says **Changed since it was proposed**, it can only be rejected; ask the agent again for a fresh proposal."
+          ]
+        },
+        {
           "title": "Start a conversation without asking a question yet",
           "keywords": [
             "new chat",
@@ -7244,7 +7261,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI control** on the Desk.\n\nWhen an agent in your own conversation asks to make several changes as one plan, answer it right there with **Approve all** or **Reject all**; you need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.",
+      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, its card shows what the change would do before you answer: each record it would touch with its values before and after, the message it would send as it would go out, and any amounts it would move. Select **Show all changes** for the rest of a long change. **Approve** waits until this has loaded, and stays off if the record was edited after the agent proposed the change (**Changed since it was proposed**); reject it and ask again. Values you may not see read **Hidden by your data access**. If the change moved while you were reading it, nothing is recorded and the card shows it again so you can approve what is there now. An email draft in the workspace shows the message as it would really go out, with its real recipients.\n\nWhen an agent in your own conversation asks to make several changes as one plan, answer it right there with **Approve all** or **Reject all**; each step shows what it would change, and a step that starts from a record an earlier step changes says so. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.",
       "related": [
         "/desk/decisions",
         "/desk/watchtower",
@@ -7266,7 +7283,7 @@
         "Decisions"
       ],
       "description": "Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan.",
-      "summary": "Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan. Each proposal shows the agent, what it would change (**Exactly as proposed**), **Why** it wants to, how sure it is, the **Evidence** behind it, and for a plan the **Steps, in the order they run**. Changes that cannot be undone are marked **Permanent**. Dispatchers, billing staff and managers work this queue so agents can act on the operation safely.",
+      "summary": "Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan. Each proposal leads with **What changes**: every record the change would touch, what happens to it, and each value before and after, worked out by the same code that would make the change and read from your records as they are now. A message the change would send is shown as it would go out, with the recipients it would really reach, and amounts it would move are shown line by line with the totals before and after. Below that are **Why** the agent wants it, how sure it is, the **Evidence** behind it, and under **Details** the arguments **Exactly as proposed**. A plan shows **What changes, in the order it runs**, step by step. Changes that cannot be undone are marked **Permanent**. Dispatchers, billing staff and managers work this queue so agents can act on the operation safely.",
       "requires": [
         {
           "resource": "assistant",
@@ -7284,9 +7301,26 @@
         "approval queue",
         "pending changes",
         "human in the loop",
-        "review agent actions"
+        "review agent actions",
+        "preview agent change",
+        "what will this change"
       ],
       "tasks": [
+        {
+          "title": "Review what a change would do before approving it",
+          "keywords": [
+            "preview agent change",
+            "what will this change",
+            "before and after",
+            "check proposed values"
+          ],
+          "steps": [
+            "Open [Decisions](/desk/decisions) and select a proposal (or use j and k to move through the list; the next row is read ahead so it is ready when you reach it).",
+            "Read **What changes**. The old value is struck through with the new one after it; a value that has moved since the agent proposed the change says what it was then (\"Was … when proposed\").",
+            "A value, record or amount you are not allowed to see reads **Hidden by your data access**, and the number of hidden parts is shown under the change. You can still approve it; the decision records that parts were hidden from you.",
+            "If a record the change depends on was edited or removed after the agent proposed it, the change says **Changed since it was proposed** and can only be rejected; ask the agent again for a fresh proposal."
+          ]
+        },
         {
           "title": "Approve or reject a proposed change",
           "keywords": [
@@ -7295,9 +7329,10 @@
             "review proposal"
           ],
           "steps": [
-            "Open [Decisions](/desk/decisions) and select a proposal (or use j and k to move through the list).",
-            "Read **Why**, **Evidence** and **Exactly as proposed**.",
-            "Select **Approve** (a) or **Reject** (r). Enter a **Reason** (required when rejecting, optional when approving) and confirm with **Approve and run** or **Reject**."
+            "Open [Decisions](/desk/decisions) and select a proposal.",
+            "Read **What changes**, **Why** and **Evidence**. **Approve** stays off until what the change would do has loaded.",
+            "Select **Approve** (a) or **Reject** (r). The dialog shows what changes again; enter a **Reason** (required when rejecting, optional when approving) and confirm with **Approve and run** or **Reject**.",
+            "If what the change would do moved while you were reading it, nothing is recorded: the dialog shows the change as it is now and says it looks different. Read it again and confirm."
           ]
         },
         {
@@ -7309,7 +7344,9 @@
           ],
           "steps": [
             "Open [Decisions](/desk/decisions) and select the proposal.",
-            "Select **Modify** (m), adjust the values, optionally add a reason, and confirm. The change runs with your values."
+            "Select **Modify** (m) and adjust the values. The record the change is about stays as proposed and cannot be edited; a change can alter what is done to that record, never which record it is.",
+            "As you type, the dialog shows what your values would do. Values the change would refuse say why and cannot be approved.",
+            "Optionally add a reason and confirm with **Approve with changes**. The change runs with the values you saw previewed."
           ]
         },
         {
@@ -7322,7 +7359,7 @@
           "steps": [
             "Open [Decisions](/desk/decisions).",
             "Mark proposals with their checkbox (or x). A batch holds one kind of change at a time, and a plan is always decided on its own.",
-            "Select **Approve all** or **Reject all**, enter one **Reason** for all of them (required when rejecting), and confirm. Approved changes run one after another; one that cannot run is reported on its own."
+            "Select **Approve all** or **Reject all**, enter one **Reason** for all of them (required when rejecting), and confirm. Approved changes run one after another; one that cannot run, or whose preview changed since you read it, is reported on its own."
           ]
         },
         {
@@ -7345,7 +7382,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to the assistant and to agent proposals. Approving, rejecting and modifying need update permission on agent proposals. A rejected change never runs.",
+      "notes": "Needs read access to the assistant and to agent proposals. Approving, rejecting and modifying need update permission on agent proposals. A rejected change never runs.\n\nAn approval records exactly what you were shown. In a batch, a proposal you never opened is recorded as approved without its preview having been reviewed, and the confirmation says how many of those there are. Some changes cannot say exactly what they would do; they show the values they would run with under a warning instead. If what a change would do cannot be loaded at all, you can still approve it, and the decision is recorded as made without a preview.\n\nIn a plan, a step that changes a record an earlier step also changes is shown as that earlier step would leave it, with a note naming the step.",
       "related": [
         "/desk",
         "/desk/watchtower",
