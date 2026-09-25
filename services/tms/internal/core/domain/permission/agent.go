@@ -172,6 +172,13 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead:   {},
 		OpUpdate: {},
 	},
+	// Reading the sync ledger, and retrying, skipping, pausing and resuming
+	// what it sends. Connecting, disconnecting and backfilling are manage on
+	// the integration, which stays a person's.
+	ResourceAccountingSync: {
+		OpRead:   {},
+		OpUpdate: {},
+	},
 	ResourceWatchtower: {
 		OpRead: {},
 	},

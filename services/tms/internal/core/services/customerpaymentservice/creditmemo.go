@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
@@ -42,11 +44,14 @@ func (s *Service) ApplyCreditMemo(
 		return nil, multiErr
 	}
 
-	if _, err := s.validator.fiscalPeriodRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
-		OrgID: req.TenantInfo.OrgID,
-		BuID:  req.TenantInfo.BuID,
-		Date:  req.AccountingDate,
-	}); err != nil {
+	if _, err := s.validator.fiscalPeriodRepo.GetPeriodByDate(
+		ctx,
+		repositories.GetPeriodByDateRequest{
+			OrgID: req.TenantInfo.OrgID,
+			BuID:  req.TenantInfo.BuID,
+			Date:  req.AccountingDate,
+		},
+	); err != nil {
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add(
 			"accountingDate",
@@ -94,7 +99,12 @@ func (s *Service) ApplyCreditMemo(
 			if lockErr != nil {
 				return lockErr
 			}
-			if multiErr := validateCreditTarget(memo, target, app.AppliedAmountMinor, idx); multiErr != nil {
+			if multiErr := validateCreditTarget(
+				memo,
+				target,
+				app.AppliedAmountMinor,
+				idx,
+			); multiErr != nil {
 				return multiErr
 			}
 
@@ -126,6 +136,20 @@ func (s *Service) ApplyCreditMemo(
 		}
 		if txErr = s.repo.CreateCreditMemoApplications(txCtx, applied); txErr != nil {
 			return txErr
+		}
+		for _, app := range applied {
+			if txErr = serviceports.EnqueueAccountingSync(
+				txCtx,
+				s.accountingSync,
+				serviceports.CreditApplicationSyncRequest(
+					app,
+					memo.Number,
+					accountingsync.SyncOperationCreate,
+					accountingsync.SyncSourceCreditMemoApplied,
+				),
+			); txErr != nil {
+				return txErr
+			}
 		}
 		s.logInvoiceAudit(&previousMemo, updatedMemo, actor.UserID)
 		return nil
@@ -226,6 +250,18 @@ func (s *Service) UnapplyCreditMemoApplication(
 		application.UnappliedReason = strings.TrimSpace(req.Reason)
 		updated, txErr = s.repo.UpdateCreditMemoApplication(txCtx, application)
 		if txErr != nil {
+			return txErr
+		}
+		if txErr = serviceports.EnqueueAccountingSync(
+			txCtx,
+			s.accountingSync,
+			serviceports.CreditApplicationSyncRequest(
+				updated,
+				memo.Number,
+				accountingsync.SyncOperationVoid,
+				accountingsync.SyncSourceCreditMemoUnapplied,
+			),
+		); txErr != nil {
 			return txErr
 		}
 

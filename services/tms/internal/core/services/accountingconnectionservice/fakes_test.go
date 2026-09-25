@@ -404,11 +404,22 @@ type fakeConnector struct {
 	webhookErr     error
 	webhookRealms  []string
 	errCategories  map[error]accountingsync.ErrorCategory
+	redirectURL    string
+	verifyAppErr   error
+	bound          []*services.AccountingApp
+}
+
+var testInstanceApp = services.AccountingApp{
+	Source:      accountingsync.AppSourceInstance,
+	Environment: accountingsync.AppEnvironmentSandbox,
+	ClientID:    "instance-client",
+	ClientSecret: "instance-secret",
 }
 
 func newFakeConnector() *fakeConnector {
 	return &fakeConnector{
-		available: true,
+		available:   true,
+		redirectURL: "https://app.example.com/admin/integrations/quickbooks/callback",
 		exchangeGrant: &services.AccountingTokenGrant{
 			AccessToken:     "access-1",
 			RefreshToken:    "refresh-1",
@@ -433,7 +444,48 @@ func newFakeConnector() *fakeConnector {
 
 func (f *fakeConnector) IntegrationType() integration.Type { return integration.TypeQuickBooksOnline }
 
-func (f *fakeConnector) Available() bool { return f.available }
+func (f *fakeConnector) InstanceApp() (*services.AccountingApp, bool) {
+	if !f.available {
+		return nil, false
+	}
+	app := testInstanceApp
+	return &app, true
+}
+
+func (f *fakeConnector) RedirectURL() string { return f.redirectURL }
+
+func (f *fakeConnector) Bind(app *services.AccountingApp) (services.AccountingConnector, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.bound = append(f.bound, app)
+	return &boundConnector{fakeConnector: f, app: app}, nil
+}
+
+func (f *fakeConnector) lastBound() *services.AccountingApp {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if len(f.bound) == 0 {
+		return nil
+	}
+	return f.bound[len(f.bound)-1]
+}
+
+func (f *fakeConnector) VerifyApp(context.Context) error { return f.verifyAppErr }
+
+type boundConnector struct {
+	*fakeConnector
+	app *services.AccountingApp
+}
+
+func (b *boundConnector) VerifyWebhook(signature string, body []byte) error {
+	if err := b.fakeConnector.VerifyWebhook(signature, body); err != nil {
+		return err
+	}
+	if b.app.WebhookVerifierToken != "" && signature != b.app.WebhookVerifierToken {
+		return errProvider
+	}
+	return nil
+}
 
 func (f *fakeConnector) AuthorizeURL(state string) (string, error) {
 	return "https://appcenter.intuit.com/connect/oauth2?state=" + state, nil
@@ -513,7 +565,7 @@ func (f *fakeConnector) ClassifyError(err error) accountingsync.ErrorCategory {
 
 type fakeRegistry struct{ connector *fakeConnector }
 
-func (r fakeRegistry) For(typ integration.Type) (services.AccountingConnector, bool) {
+func (r fakeRegistry) For(typ integration.Type) (services.AccountingProvider, bool) {
 	if typ == integration.TypeQuickBooksOnline {
 		return r.connector, true
 	}
@@ -589,4 +641,72 @@ func (f *fakeRefresher) RequestReferenceRefresh(
 	defer f.mu.Unlock()
 	f.requested = append(f.requested, connectionID)
 	return f.err
+}
+
+type fakeApps struct {
+	mu   sync.Mutex
+	rows map[string]*accountingsync.AccountingAppCredential
+}
+
+func newFakeApps() *fakeApps {
+	return &fakeApps{rows: map[string]*accountingsync.AccountingAppCredential{}}
+}
+
+func (f *fakeApps) GetByType(
+	_ context.Context,
+	req repositories.GetAccountingAppCredentialRequest,
+) (*accountingsync.AccountingAppCredential, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	row, ok := f.rows[integrationKey(req.TenantInfo, req.IntegrationType)]
+	if !ok {
+		return nil, errortypes.NewNotFoundError("Accounting app not found")
+	}
+	clone := *row
+	return &clone, nil
+}
+
+func (f *fakeApps) Create(
+	_ context.Context,
+	entity *accountingsync.AccountingAppCredential,
+) (*accountingsync.AccountingAppCredential, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	key := integrationKey(
+		pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		entity.IntegrationType,
+	)
+	clone := *entity
+	f.rows[key] = &clone
+	return entity, nil
+}
+
+func (f *fakeApps) Update(
+	_ context.Context,
+	entity *accountingsync.AccountingAppCredential,
+) (*accountingsync.AccountingAppCredential, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	key := integrationKey(
+		pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
+		entity.IntegrationType,
+	)
+	current, ok := f.rows[key]
+	if !ok || current.Version != entity.Version {
+		return nil, errortypes.NewNotFoundError("Accounting app not found")
+	}
+	entity.Version++
+	clone := *entity
+	f.rows[key] = &clone
+	return entity, nil
+}
+
+func (f *fakeApps) Delete(
+	_ context.Context,
+	req repositories.GetAccountingAppCredentialRequest,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	delete(f.rows, integrationKey(req.TenantInfo, req.IntegrationType))
+	return nil
 }

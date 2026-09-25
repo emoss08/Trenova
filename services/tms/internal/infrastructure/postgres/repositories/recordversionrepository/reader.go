@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -145,6 +146,20 @@ var lookups = map[permission.Resource]lookup{
 		scope:   buncolgen.DetentionOccurrenceScopeTenant,
 		idEq:    buncolgen.DetentionOccurrenceColumns.ID.Eq(),
 		version: func(v versioned) int64 { return v.(*detention.DetentionOccurrence).Version },
+	},
+	// The sync tools act on one ledger record under the accounting sync
+	// resource; its version moves each time it is claimed, sent or failed.
+	permission.ResourceAccountingSync: {
+		model: func() versioned { return new(accountingsync.AccountingSyncRecord) },
+		scope: buncolgen.AccountingSyncRecordScopeTenant,
+		idEq:  buncolgen.AccountingSyncRecordColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			record, ok := v.(*accountingsync.AccountingSyncRecord)
+			if !ok {
+				return 0
+			}
+			return record.Version
+		},
 	},
 	// Likewise the carrier intelligence tools act on one event.
 	permission.ResourceCarrierIntelligence: {

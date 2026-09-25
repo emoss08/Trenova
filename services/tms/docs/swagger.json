@@ -206,7 +206,8 @@
                 "Report",
                 "Dashboard",
                 "AccountingConnection",
-                "FormulaTemplate"
+                "FormulaTemplate",
+                "AccountingSyncRecord"
             ],
             "type": "string",
             "x-enum-varnames": [
@@ -226,7 +227,8 @@
                 "SubjectReport",
                 "SubjectDashboard",
                 "SubjectAccountingConnection",
-                "SubjectFormulaTemplate"
+                "SubjectFormulaTemplate",
+                "SubjectAccountingSyncRecord"
             ]
         },
         "agent.TaintMark": {
@@ -309,7 +311,8 @@
                 "ServiceFailureDesk",
                 "InsightAnalyst",
                 "EDIDesk",
-                "FormulaAssistant"
+                "FormulaAssistant",
+                "BooksKeeper"
             ],
             "type": "string",
             "x-enum-varnames": [
@@ -333,7 +336,8 @@
                 "TemplateServiceFailureDesk",
                 "TemplateInsightAnalyst",
                 "TemplateEDIDesk",
-                "TemplateFormulaAssistant"
+                "TemplateFormulaAssistant",
+                "TemplateBooksKeeper"
             ]
         },
         "apikeyservice.AllowedResourceCategory": {

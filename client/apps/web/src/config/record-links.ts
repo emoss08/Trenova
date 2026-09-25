@@ -103,6 +103,11 @@ export const RECORD_LINKS = {
     label: "Conversation",
     path: "/desk/t/{id}",
   },
+  accounting_sync_record: {
+    label: "Sync record",
+    path: "/accounting/sync",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
   agent_run: {
     label: "Agent run",
     path: "/admin/agent-control",

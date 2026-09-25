@@ -119,3 +119,12 @@ func Pointers[T any](items []T) []*T {
 
 	return out
 }
+
+func Strings[T ~string](items []T) []string {
+	out := make([]string, len(items))
+	for idx, item := range items {
+		out[idx] = string(item)
+	}
+
+	return out
+}

@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 184.
+Tools listed: 192.
 
 ## The model
 
@@ -51,9 +51,9 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 124 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 127 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 6 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 37 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 42 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 1 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 5 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 10 |
@@ -78,6 +78,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Find in trenova (`find_in_trenova`) | Reads only | Automatic | — | — | Searches the product guide for the caller; nothing changes and nothing is sent. |
 | Find tools (`find_tools`) | Reads only | Automatic | — | — | Loads more of the agent's own tools into the turn; it reads the catalog and changes nothing. |
 | Get accounting mapping (`get_accounting_mapping`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get accounting sync record (`get_accounting_sync_record`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get accounting sync status (`get_accounting_sync_status`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get agent run (`get_agent_run`) | Reads only | Automatic | — | When the record is marked, from run record | Reads a run's own record, whose summary may repeat outside text the run read. |
 | Get ar aging (`get_ar_aging`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -105,6 +106,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get order (`get_order`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get rate agreement (`get_rate_agreement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get rate matrix (`get_rate_matrix`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get record accounting sync state (`get_record_accounting_sync_state`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get report run (`get_report_run`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get service failure (`get_service_failure`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get settlement dispute (`get_settlement_dispute`) | Reads only | Automatic | — | When the record is marked, from record note | Reads a pay dispute whose description a driver wrote in the driver portal; nothing changes and nothing is sent. |
@@ -119,6 +121,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get worker HOS (`get_worker_hos`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accessorial charges (`list_accessorial_charges`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accounting mapping gaps (`list_accounting_mapping_gaps`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List accounting sync records (`list_accounting_sync_records`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List agent runs (`list_agent_runs`) | Reads only | Automatic | — | When the record is marked, from run record | Lists agent runs, whose summaries may repeat outside text a run read; a run on a conversation is listed only to the person who owns it. |
 | List ar open items (`list_ar_open_items`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List bank receipt exceptions (`list_bank_receipt_exceptions`) | Reads only | Automatic | — | Always, from bank receipt | Lists bank receipts whose memos the payers wrote; nothing changes and nothing is sent. |
@@ -228,6 +231,7 @@ Changes records only people inside the organization see.
 | Fork report (`fork_report`) | Inside the organization | Automatic | — | — | Saves a copy of a report inside Trenova; nothing leaves the organization. |
 | Link inbound message (`link_inbound_message`) | Inside the organization | Automatic | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Links an inbound message to a record inside Trenova; the mailbox decides how far it may run. |
 | Mark inbound message (`mark_inbound_message`) | Inside the organization | Automatic | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Settles an inbound message inside Trenova; the mailbox decides how far it may run. |
+| Pause accounting sync (`pause_accounting_sync`) | Inside the organization | Automatic | — | — | Holds what is waiting to go to the books; nothing is sent, changed or lost, and resuming sends it on. |
 | Place shipment hold (`place_shipment_hold`) | Inside the organization | Automatic | — | — | Places a hold on a shipment inside Trenova; no customer or EDI notice is sent. |
 | Place worker dispatch hold (`place_worker_dispatch_hold`) | Inside the organization | Automatic | — | — | Keeps a driver off new freight inside Trenova; the driver is not messaged. |
 | Raise exception (`raise_exception`) | Inside the organization | Automatic | — | — | Records an exception against the run itself for a person inside the organization. |
@@ -235,10 +239,14 @@ Changes records only people inside the organization see.
 | Refresh accounting reference data (`refresh_accounting_reference_data`) | Inside the organization | Automatic | — | — | Reads the accounting system and refreshes Trenova's suggestions; it writes nothing to the books and leaves confirmed mappings alone. |
 | Release shipment hold (`release_shipment_hold`) | Inside the organization | Automatic | — | — | Releases a hold on a shipment inside Trenova; no customer or EDI notice is sent. |
 | Remember (`remember`) | Inside the organization | Automatic | An Instruction or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text. | Carries outside text into later runs | Saves a memory later runs read, so it keeps the taint of the run that wrote it. |
+| Request accounting backfill (`request_accounting_backfill`) | Inside the organization | Ask first | — | — | Sends historical documents to the organization's books, some of which may already be there by hand, and cannot be called back; a person who manages the integration approves it. |
 | Resolve bank receipt work item (`resolve_bank_receipt_work_item`) | Inside the organization | Automatic | — | — | Closes a reconciliation work item without moving money; the note is read inside the organization. |
 | Resolve carrier intel event (`resolve_carrier_intel_event`) | Inside the organization | Automatic | — | — | Closes a carrier finding inside Trenova. |
+| Resume accounting sync (`resume_accounting_sync`) | Inside the organization | Ask first | — | — | Releases everything held to the organization's books at once, and a person paused it for a reason, so a person approves it; what is sent cannot be called back. |
+| Retry accounting sync (`retry_accounting_sync`) | Inside the organization | Automatic | — | — | Sends again, to the organization's own books, documents Trenova already decided to send; the accounting system recognizes a repeat by its request id, so nothing is entered twice, and a document held for release stays held. |
 | Save table view (`save_table_view`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. A call on the caller's own records runs unasked while they are present. | — | A private view is the caller's own picker entry; a shared one appears for every colleague, and nothing leaves the organization. |
 | Set accounting mapping (`set_accounting_mapping`) | Inside the organization | Ask first | — | — | Decides which account or record Trenova's invoices, payments and bills will post to, so a person approves it; clearing or changing it undoes it. |
+| Skip accounting sync (`skip_accounting_sync`) | Inside the organization | Ask first | — | — | Leaves a document out of the organization's books for good; nothing sends it again, so a person approves it. |
 | Transition item to in review (`transition_item_to_in_review`) | Inside the organization | Automatic | An item on hold was held there by a person or a rule, so moving one into review is a proposal a person decides; an item in any other state moves as far as the agent allows, and one that cannot be read waits for a person. | — | Moves the run's billing queue item into review inside Trenova; nothing is sent anywhere. |
 | Update report (`update_report`) | Inside the organization | Automatic | — | — | Changes a saved report colleagues may open; nothing leaves the organization. |
 | Update tractor status (`update_tractor_status`) | Inside the organization | Automatic | — | — | Changes a tractor's status inside Trenova. |

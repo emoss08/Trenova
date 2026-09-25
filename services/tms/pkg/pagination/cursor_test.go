@@ -252,3 +252,60 @@ func TestCursorInt64Value_SurvivesTheCursorCodec(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, int64(1_700_000_123), got)
 }
+
+func TestCursorListResult_NextCursor(t *testing.T) {
+	t.Parallel()
+
+	first := cursorTestItem{ID: pulid.MustNew("item_"), CreatedAt: 1710000000, Name: "a"}
+	last := cursorTestItem{ID: pulid.MustNew("item_"), CreatedAt: 1710000100, Name: "b"}
+
+	t.Run("no next page", func(t *testing.T) {
+		t.Parallel()
+
+		next, err := (&CursorListResult[cursorTestItem]{
+			Items: []cursorTestItem{first, last},
+		}).NextCursor()
+		require.NoError(t, err)
+		assert.Empty(t, next)
+	})
+
+	t.Run("created order", func(t *testing.T) {
+		t.Parallel()
+
+		next, err := (&CursorListResult[cursorTestItem]{
+			Items:       []cursorTestItem{first, last},
+			HasNextPage: true,
+		}).NextCursor()
+		require.NoError(t, err)
+
+		cursor, err := DecodeCursor(next)
+		require.NoError(t, err)
+		assert.Equal(t, last.ID, cursor.ID)
+		assert.Equal(t, last.CreatedAt, cursor.CreatedAt)
+	})
+
+	t.Run("sorted with scanned values", func(t *testing.T) {
+		t.Parallel()
+
+		sort := []CursorSortField{
+			{Field: "name", Direction: "asc"},
+			{Field: "id", Direction: "asc"},
+		}
+		result := (&CursorListResult[cursorTestItem]{
+			Items:       []cursorTestItem{first, last},
+			HasNextPage: true,
+		}).WithCursorSort(sort)
+		require.NoError(t, result.WithCursorValues([][]any{
+			{"a", first.ID.String()},
+			{"b", last.ID.String()},
+		}))
+
+		next, err := result.NextCursor()
+		require.NoError(t, err)
+
+		cursor, err := DecodeCursor(next)
+		require.NoError(t, err)
+		assert.Equal(t, last.ID, cursor.ID)
+		assert.Equal(t, []any{"b", last.ID.String()}, cursor.Values)
+	})
+}

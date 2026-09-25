@@ -116,6 +116,21 @@ func TestRefreshRejectedAsInvalidGrant(t *testing.T) {
 	assert.NotContains(t, err.Error(), testClientSecret)
 }
 
+func TestRefreshRejectedAsInvalidClient(t *testing.T) {
+	t.Parallel()
+
+	client := newOAuthClient(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write(fixture(t, "invalid_client.json"))
+	})
+
+	_, err := client.Refresh(t.Context(), "refresh")
+	require.Error(t, err)
+	assert.True(t, quickbooks.IsInvalidClient(err))
+	assert.False(t, quickbooks.IsInvalidGrant(err))
+	assert.NotContains(t, err.Error(), testClientSecret)
+}
+
 func TestTokenCallsAreNeverRetried(t *testing.T) {
 	t.Parallel()
 

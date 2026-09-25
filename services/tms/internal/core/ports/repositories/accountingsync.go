@@ -107,15 +107,38 @@ type AccountingConnectionRepository interface {
 }
 
 type AccountingOAuthState struct {
-	State           string           `json:"state"`
-	IntegrationType integration.Type `json:"integrationType"`
-	UserID          pulid.ID         `json:"userId"`
-	OrganizationID  pulid.ID         `json:"organizationId"`
-	BusinessUnitID  pulid.ID         `json:"businessUnitId"`
-	CreatedAt       int64            `json:"createdAt"`
+	State           string                   `json:"state"`
+	IntegrationType integration.Type         `json:"integrationType"`
+	UserID          pulid.ID                 `json:"userId"`
+	OrganizationID  pulid.ID                 `json:"organizationId"`
+	BusinessUnitID  pulid.ID                 `json:"businessUnitId"`
+	CreatedAt       int64                    `json:"createdAt"`
+	AppSource       accountingsync.AppSource `json:"appSource"`
+	AppFingerprint  string                   `json:"appFingerprint"`
 }
 
 type AccountingOAuthStateRepository interface {
 	Save(ctx context.Context, state *AccountingOAuthState, ttl time.Duration) error
 	Take(ctx context.Context, state string) (*AccountingOAuthState, error)
+}
+
+type GetAccountingAppCredentialRequest struct {
+	TenantInfo      pagination.TenantInfo
+	IntegrationType integration.Type
+}
+
+type AccountingAppCredentialRepository interface {
+	GetByType(
+		ctx context.Context,
+		req GetAccountingAppCredentialRequest,
+	) (*accountingsync.AccountingAppCredential, error)
+	Create(
+		ctx context.Context,
+		entity *accountingsync.AccountingAppCredential,
+	) (*accountingsync.AccountingAppCredential, error)
+	Update(
+		ctx context.Context,
+		entity *accountingsync.AccountingAppCredential,
+	) (*accountingsync.AccountingAppCredential, error)
+	Delete(ctx context.Context, req GetAccountingAppCredentialRequest) error
 }

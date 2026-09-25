@@ -29,6 +29,7 @@ var subjectRecords = map[SubjectType]subjectRecord{
 	SubjectReport:               {"rd_", "report", "a"},
 	SubjectDashboard:            {"rdb_", "dashboard", "a"},
 	SubjectAccountingConnection: {"acctc_", "accounting connection", "an"},
+	SubjectAccountingSyncRecord: {"acctsr_", "accounting sync record", "an"},
 	SubjectFormulaTemplate:      {"ft_", "formula template", "a"},
 }
 

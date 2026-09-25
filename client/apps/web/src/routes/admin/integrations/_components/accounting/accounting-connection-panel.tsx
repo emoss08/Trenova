@@ -25,11 +25,14 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { useState } from "react";
+import type { AccountingAppSettings } from "@/lib/graphql/accounting-sync";
+import { AccountingAppKeys } from "./accounting-app-keys";
 import { AccountingCompanyFacts } from "./accounting-company-facts";
 import type { AccountingVendor } from "./accounting-vendors";
 
 type AccountingConnectionPanelProps = {
   vendor: AccountingVendor;
+  app: AccountingAppSettings;
   connection: AccountingConnection;
   canUpdate: boolean;
   canManage: boolean;
@@ -43,6 +46,7 @@ type AccountingConnectionPanelProps = {
 
 export function AccountingConnectionPanel({
   vendor,
+  app,
   connection,
   canUpdate,
   canManage,
@@ -152,6 +156,8 @@ export function AccountingConnectionPanel({
           {since(connection.lastWebhookAt) ?? <DescriptionEmpty />}
         </DescriptionItem>
       </DescriptionList>
+
+      <AccountingAppKeys vendor={vendor} app={app} connection={connection} canManage={canManage} />
 
       {canManage ? (
         <div className="flex justify-end gap-2 border-t pt-4">

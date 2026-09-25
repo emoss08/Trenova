@@ -486,8 +486,8 @@ func TestCompleteSetupWaitsForTheRequiredMappings(t *testing.T) {
 
 	conn, err := h.svc.CompleteSetup(t.Context(), req)
 	require.NoError(t, err)
-	assert.Equal(t, accountingsync.SetupStepComplete, conn.SetupStep)
-	assert.Equal(t, accountingsync.SetupStepComplete, h.connections.rows[h.conn.ID].SetupStep)
+	assert.Equal(t, accountingsync.SetupStepStartDate, conn.SetupStep)
+	assert.Equal(t, accountingsync.SetupStepStartDate, h.connections.rows[h.conn.ID].SetupStep)
 
 	again, err := h.svc.CompleteSetup(t.Context(), req)
 	require.NoError(t, err)

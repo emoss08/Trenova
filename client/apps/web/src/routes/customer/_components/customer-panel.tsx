@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
+import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import { FormEditPanel } from "@/components/form-edit-panel";
 import { GeocodedBadge } from "@/components/geocode-badge";
 import { DialogDescription, DialogTitle } from "@trenova/shared/components/ui/dialog";
@@ -143,6 +144,7 @@ export function CustomerPanel({ open, onOpenChange, mode, row }: DataTablePanelP
                 ) : null}
               </DialogTitle>
               <DialogDescription>{panelDescription}</DialogDescription>
+              <AccountingSyncStateLine objectId={currentRecord.id} className="text-xs" />
             </div>
           );
         }}

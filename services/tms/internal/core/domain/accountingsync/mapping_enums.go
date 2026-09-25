@@ -9,15 +9,16 @@ import (
 type SetupStep string
 
 const (
-	SetupStepMappings = SetupStep("Mappings")
-	SetupStepComplete = SetupStep("Complete")
+	SetupStepMappings  = SetupStep("Mappings")
+	SetupStepStartDate = SetupStep("StartDate")
+	SetupStepComplete  = SetupStep("Complete")
 )
 
 func (s SetupStep) String() string { return string(s) }
 
 func (s SetupStep) IsValid() bool {
 	switch s {
-	case SetupStepMappings, SetupStepComplete:
+	case SetupStepMappings, SetupStepStartDate, SetupStepComplete:
 		return true
 	default:
 		return false
@@ -25,7 +26,7 @@ func (s SetupStep) IsValid() bool {
 }
 
 func AllSetupSteps() []SetupStep {
-	return []SetupStep{SetupStepMappings, SetupStepComplete}
+	return []SetupStep{SetupStepMappings, SetupStepStartDate, SetupStepComplete}
 }
 
 type ReferenceKind string

@@ -70,6 +70,7 @@ type AgentTemplateDescriptor struct {
 	StarterDataAccess    agentdefinition.DataAccessCeiling `json:"starterDataAccess"`
 	StarterOutput        agentdefinition.OutputMode        `json:"starterOutput"`
 	StarterDailyRunLimit int                               `json:"starterDailyRunLimit"`
+	StarterShadow        bool                              `json:"starterShadow"`
 	SystemKey            string                            `json:"systemKey"`
 	ContextProviders     []agentdefinition.ContextProvider `json:"contextProviders"`
 }

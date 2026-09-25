@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -28,6 +30,8 @@ type Params struct {
 	AuditService services.AuditService
 	Realtime     services.RealtimeService
 	Transformer  services.DataTransformer
+	DB           ports.DBConnection              `optional:"true"`
+	Sync         services.AccountingSyncEnqueuer `optional:"true"`
 }
 
 type Service struct {
@@ -38,6 +42,8 @@ type Service struct {
 	auditService services.AuditService
 	realtime     services.RealtimeService
 	transformer  services.DataTransformer
+	db           ports.DBConnection
+	sync         services.AccountingSyncEnqueuer
 }
 
 func New(p Params) *Service {
@@ -49,7 +55,40 @@ func New(p Params) *Service {
 		auditService: p.AuditService,
 		realtime:     p.Realtime,
 		transformer:  p.Transformer,
+		db:           p.DB,
+		sync:         p.Sync,
 	}
+}
+
+func (s *Service) updateAndQueueSync(
+	ctx context.Context,
+	entity *customer.Customer,
+	original *customer.Customer,
+) (*customer.Customer, error) {
+	if s.db == nil || s.sync == nil {
+		return s.repo.Update(ctx, entity)
+	}
+
+	var updated *customer.Customer
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		if updated, txErr = s.repo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		if updated.SamePartyDetails(original) {
+			return nil
+		}
+		return services.EnqueueAccountingSync(txCtx, s.sync, services.CustomerSyncRequest(
+			pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
+			updated.ID,
+			updated.Name,
+			updated.Version,
+		))
+	})
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (s *Service) List(
@@ -253,7 +292,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	updatedEntity, err := s.repo.Update(ctx, entity)
+	updatedEntity, err := s.updateAndQueueSync(ctx, entity, original)
 	if err != nil {
 		log.Error("failed to update customer", zap.Error(err))
 		return nil, err

@@ -150,6 +150,14 @@ const TOOL_TITLES: Record<string, string> = {
   clear_accounting_mapping: "Clear accounting mapping",
   create_accounting_reference_record: "Create accounting record",
   refresh_accounting_reference_data: "Refresh accounting records",
+  list_accounting_sync_records: "List accounting sync records",
+  get_accounting_sync_record: "Look up accounting sync record",
+  get_record_accounting_sync_state: "Check accounting sync state",
+  retry_accounting_sync: "Retry accounting sync",
+  skip_accounting_sync: "Skip accounting sync",
+  pause_accounting_sync: "Pause accounting sync",
+  resume_accounting_sync: "Resume accounting sync",
+  request_accounting_backfill: "Request accounting backfill",
 };
 
 /** Argument keys that name the record a tool was about, most specific first. */

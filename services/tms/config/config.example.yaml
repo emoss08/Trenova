@@ -334,12 +334,16 @@ push:
     vapidPrivateKey: ""
     subject: mailto:admin@example.com
 
-# Accounting sync. One Intuit app serves every tenant: register it at
-# developer.intuit.com, set its redirect URI to <webBaseUrl>/admin/integrations/quickbooks/callback
-# and its webhook endpoint to <api origin>/webhooks/accounting/quickbooks/. Leave the client id
-# and secret empty and the QuickBooks card explains that the instance is not set up.
-# Secrets come from TRENOVA_QUICKBOOKS_CLIENT_ID, TRENOVA_QUICKBOOKS_CLIENT_SECRET and
-# TRENOVA_QUICKBOOKS_WEBHOOK_VERIFIER_TOKEN rather than this file.
+# Accounting sync. An instance app is optional: with one, every organization can connect with
+# a click; without one, each organization enters its own Intuit app's keys on the QuickBooks
+# card, and an organization that does so uses its own app even when the instance has one.
+# Either way, register the app at developer.intuit.com, set its redirect URI to
+# <webBaseUrl>/admin/integrations/quickbooks/callback (development keys accept http://localhost,
+# production keys need https) and its webhook endpoint to
+# <api origin>/api/v1/webhooks/accounting/quickbooks/. app.webBaseUrl (or redirectUrl below) is
+# required for any connection. Instance secrets come from TRENOVA_QUICKBOOKS_CLIENT_ID,
+# TRENOVA_QUICKBOOKS_CLIENT_SECRET and TRENOVA_QUICKBOOKS_WEBHOOK_VERIFIER_TOKEN rather than
+# this file.
 accounting:
   quickbooks:
     environment: sandbox # sandbox or production

@@ -125,7 +125,9 @@ func TestConnectorRatesEveryAPICallPerRealm(t *testing.T) {
 
 	limiter := &countingLimiter{}
 	cfg := &config.Config{App: config.AppConfig{WebBaseURL: "https://app.example.com"}}
-	conn, err := New(Params{Config: cfg, Logger: zap.NewNop(), Limiter: limiter})
+	provider, err := New(Params{Config: cfg, Logger: zap.NewNop(), Limiter: limiter})
+	require.NoError(t, err)
+	conn, err := provider.bind(tenantApp(accountingsync.AppEnvironmentProduction))
 	require.NoError(t, err)
 	conn.apiOpts = append(conn.apiOpts, quickbooks.WithBaseURL(server.URL))
 

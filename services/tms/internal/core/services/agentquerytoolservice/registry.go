@@ -320,6 +320,31 @@ func validEnum(params map[string]any, key string, values []string) (string, erro
 	return "", fmt.Errorf("%s %q is not one of %s", key, value, strings.Join(values, ", "))
 }
 
+// optionalEnums reads a list of enum values the caller may leave out and
+// refuses any value the domain does not know, naming it, so a misspelt status
+// is a correctable error rather than a filter that silently matches nothing.
+func optionalEnums[T ~string](
+	params map[string]any,
+	key string,
+	valid func(T) bool,
+) ([]T, error) {
+	raw := optionalStrings(params, key)
+	if len(raw) == 0 {
+		return nil, nil
+	}
+
+	values := make([]T, 0, len(raw))
+	for _, value := range raw {
+		typed := T(value)
+		if !valid(typed) {
+			return nil, fmt.Errorf("%s %q is not a known value", key, value)
+		}
+		values = append(values, typed)
+	}
+
+	return values, nil
+}
+
 func optionalBoolPointer(params map[string]any, key string) *bool {
 	value, ok := params[key].(bool)
 	if !ok {

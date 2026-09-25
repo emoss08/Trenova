@@ -1,0 +1,11 @@
+{
+  "Invoice": {
+    "Id": "145",
+    "DocNumber": "INV-1001",
+    "SyncToken": "0",
+    "TotalAmt": 1250.5,
+    "TxnDate": "2026-09-20",
+    "CustomerRef": { "value": "58", "name": "Acme Foods" }
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

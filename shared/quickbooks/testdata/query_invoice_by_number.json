@@ -1,0 +1,10 @@
+{
+  "QueryResponse": {
+    "Invoice": [
+      { "Id": "90", "DocNumber": "INV-0999", "SyncToken": "2", "TotalAmt": 400 }
+    ],
+    "startPosition": 1,
+    "maxResults": 1
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

@@ -19,6 +19,7 @@ var (
 	ErrCodeRequired         = errors.New("quickbooks: authorization code is required")
 	ErrTokenRequired        = errors.New("quickbooks: token is required")
 	ErrInvalidGrant         = errors.New("quickbooks: the authorization was revoked or has expired")
+	ErrInvalidClient        = errors.New("quickbooks: the app's client id or secret was not accepted")
 	ErrUnexpectedPayload    = errors.New("quickbooks: unexpected response payload")
 	ErrInvalidSignature     = errors.New("quickbooks: webhook signature does not match")
 	ErrMissingSignature     = errors.New("quickbooks: webhook signature is missing")
@@ -78,7 +79,14 @@ func (e *OAuthError) Error() string {
 }
 
 func (e *OAuthError) Is(target error) bool {
-	return target == ErrInvalidGrant && e.Code == "invalid_grant"
+	switch target {
+	case ErrInvalidGrant:
+		return e.Code == "invalid_grant"
+	case ErrInvalidClient:
+		return e.Code == "invalid_client"
+	default:
+		return false
+	}
 }
 
 type faultEnvelope struct {
@@ -135,6 +143,10 @@ func IsForbidden(err error) bool {
 
 func IsInvalidGrant(err error) bool {
 	return errors.Is(err, ErrInvalidGrant)
+}
+
+func IsInvalidClient(err error) bool {
+	return errors.Is(err, ErrInvalidClient)
 }
 
 func IsRateLimited(err error) bool {

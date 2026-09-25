@@ -242,3 +242,14 @@ func (c *Customer) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (c *Customer) SamePartyDetails(other *Customer) bool {
+	if c == nil || other == nil {
+		return c == other
+	}
+	return c.Name == other.Name &&
+		c.AddressLine1 == other.AddressLine1 &&
+		c.City == other.City &&
+		c.StateID == other.StateID &&
+		c.PostalCode == other.PostalCode
+}

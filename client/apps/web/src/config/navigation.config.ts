@@ -958,6 +958,12 @@ const accountingModule: NavModule = {
       defaultOpen: false,
       items: [
         {
+          id: "accounting-sync-ledger",
+          label: "Sync ledger",
+          path: "/accounting/sync",
+          resource: Resource.AccountingSync,
+        },
+        {
           id: "accounting-mappings",
           label: "Mappings",
           path: "/accounting/sync/mappings",

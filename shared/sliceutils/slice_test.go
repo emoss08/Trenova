@@ -106,3 +106,12 @@ func TestPage(t *testing.T) {
 		assert.Equal(t, []string{}, sliceutils.Page([]string{}, 0, 5))
 	})
 }
+
+func TestStrings(t *testing.T) {
+	t.Parallel()
+
+	type status string
+
+	assert.Equal(t, []string{"Queued", "Blocked"}, sliceutils.Strings([]status{"Queued", "Blocked"}))
+	assert.Equal(t, []string{}, sliceutils.Strings([]status(nil)))
+}
