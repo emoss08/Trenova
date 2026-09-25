@@ -10,6 +10,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
@@ -53,6 +54,7 @@ func (d *Dispatcher) CompleteStructured(
 		id:           "structured-completion/" + pulid.MustNew("scmp_").String(),
 		workflow:     StructuredCompletionWorkflowName,
 		summary:      "Ask the model: " + string(req.Task),
+		feature:      structuredFeature(req),
 		organization: req.TenantInfo.OrgID,
 		exclusive:    true,
 		payload:      &StructuredCompletionPayload{Request: req},
@@ -74,6 +76,7 @@ func (d *Dispatcher) Test(
 		id:           "ai-provider-test/" + req.ID.String(),
 		workflow:     TestAIProviderWorkflowName,
 		summary:      "Test an AI provider",
+		feature:      jobFeatureProviderTest,
 		organization: req.TenantInfo.OrgID,
 		payload:      &TestAIProviderPayload{Request: req},
 	}, &result); err != nil {
@@ -94,6 +97,7 @@ func (d *Dispatcher) WriteForDay(
 		id:           briefingWriteID(req),
 		workflow:     WriteBriefingWorkflowName,
 		summary:      "Write the briefing",
+		feature:      jobFeatureBriefing,
 		organization: req.TenantInfo.OrgID,
 		payload:      &WriteBriefingPayload{Request: req},
 	}, &result); err != nil {
@@ -129,6 +133,7 @@ type call struct {
 	id           string
 	workflow     string
 	summary      string
+	feature      string
 	organization pulid.ID
 	// exclusive says the call is this request's alone, so a request that
 	// stops waiting cancels it. A shared call is left to whoever else waits.
@@ -136,7 +141,19 @@ type call struct {
 	payload   any
 }
 
-func (d *Dispatcher) await(ctx context.Context, c call, result any) error {
+func (d *Dispatcher) await(ctx context.Context, c call, result any) (err error) {
+	ctx, span := aitrace.StartJob(ctx, &aitrace.JobSpec{
+		Feature:        c.feature,
+		WorkflowID:     c.id,
+		OrganizationID: c.organization,
+	})
+	defer func() {
+		if err != nil {
+			aitrace.MarkFailed(span, jobFailure(ctx, err))
+		}
+		span.End()
+	}()
+
 	run, err := d.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                       c.id,
 		TaskQueue:                temporaltype.TaskQueueAgentChat.String(),
@@ -162,6 +179,25 @@ func (d *Dispatcher) await(ctx context.Context, c call, result any) error {
 	}
 
 	return nil
+}
+
+func structuredFeature(req *serviceports.StructuredCompletionRequest) string {
+	if req.Attribution.Feature != "" {
+		return string(req.Attribution.Feature)
+	}
+
+	return jobFeatureStructured
+}
+
+func jobFailure(ctx context.Context, err error) string {
+	if ctx.Err() != nil {
+		return jobFailureAbandoned
+	}
+	if kind := agentflow.FailureKind(modelcall.FailureOf(err)); kind != "" {
+		return kind
+	}
+
+	return jobFailureFailed
 }
 
 // abandon cancels a call its caller stopped waiting for, so a person who
