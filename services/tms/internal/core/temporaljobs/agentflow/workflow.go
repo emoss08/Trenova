@@ -145,7 +145,7 @@ func (fx *workflowEffects) Emit(event serviceports.StreamEvent) {
 	if !shown {
 		return
 	}
-	item := StreamItem{Event: event.Event, Data: event.Data}
+	item := StreamItem{Event: event.Event, Data: event.Data, At: workflow.Now(fx.ctx).Unix()}
 	if fx.events != nil {
 		if err := fx.events.Publish(item); err != nil {
 			workflow.GetLogger(fx.ctx).

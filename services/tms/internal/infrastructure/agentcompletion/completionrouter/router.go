@@ -20,6 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/httpsafe"
@@ -37,7 +39,8 @@ type Params struct {
 	Encryption *encryptionservice.Service
 	// Usage records every attempt. Optional so a router built without a
 	// database still answers; without it nothing is counted.
-	Usage repositories.AIUsageRepository `optional:"true"`
+	Usage   repositories.AIUsageRepository `optional:"true"`
+	Metrics *metrics.Registry              `optional:"true"`
 }
 
 type Service struct {
@@ -49,6 +52,7 @@ type Service struct {
 	encryption *encryptionservice.Service
 	adapters   *modeladapter.Registry
 	usage      repositories.AIUsageRepository
+	genAI      *metrics.GenAI
 	// health rests a provider that keeps failing, so a turn does not pay for
 	// attempts on a provider that is down before reaching one that is up.
 	health *providerHealth
@@ -78,6 +82,7 @@ func newService(p Params) *Service {
 		repo:          p.Repo,
 		encryption:    p.Encryption,
 		usage:         p.Usage,
+		genAI:         p.Metrics.GenAI(),
 		adapters:      modeladapter.NewRegistry(),
 		health:        newProviderHealth(nil),
 		pause:         pauseFor,
@@ -141,15 +146,19 @@ type runRequest struct {
 }
 
 type runOutcome struct {
-	Text            string
-	Model           string
-	InputTokens     int
-	OutputTokens    int
-	ReasoningTokens int
-	ProviderID      pulid.ID
-	ProviderKind    aiprovider.Kind
-	LatencyMs       int64
-	CostUSD         *decimal.Decimal
+	Text             string
+	Model            string
+	InputTokens      int
+	OutputTokens     int
+	ReasoningTokens  int
+	CacheReadTokens  int
+	CacheWriteTokens int
+	FinishReason     string
+	Truncated        bool
+	ProviderID       pulid.ID
+	ProviderKind     aiprovider.Kind
+	LatencyMs        int64
+	CostUSD          *decimal.Decimal
 }
 
 // candidatesFor resolves the providers allowed to serve a task, in the order
@@ -257,19 +266,27 @@ func (s *Service) runAmong(
 	req *runRequest,
 ) (*runOutcome, error) {
 	var lastErr error
-	for _, provider := range usable {
+	for idx, provider := range usable {
 		// A caller that has gone is not answered by the next provider: the
 		// attempt would fail at once and be charged to that provider.
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
 
+		attemptCtx, span := s.startAttempt(ctx, attemptSpec{
+			operation:   aitrace.OperationChat,
+			provider:    provider,
+			attempt:     idx + 1,
+			failover:    idx > 0,
+			maxTokens:   req.MaxTokens,
+			attribution: req.Attribution,
+		})
 		started := time.Now()
-		outcome, attemptErr := s.attempt(ctx, provider, req)
+		outcome, attemptErr := s.attempt(attemptCtx, provider, req)
 		latency := time.Since(started)
 		attemptErr = stopped(ctx, attemptErr)
 		s.observe(ctx, provider, attemptErr)
-		s.record(ctx, usageAttempt{
+		s.settleAttempt(attemptCtx, span, usageAttempt{
 			provider:    provider,
 			task:        req.Task,
 			surface:     surfaceFor(aiusage.SurfaceStructured, req.Attribution),
@@ -278,6 +295,9 @@ func (s *Service) runAmong(
 			latency:     latency,
 			outcome:     outcome,
 			err:         attemptErr,
+			operation:   aitrace.OperationChat,
+			attempt:     idx + 1,
+			failover:    idx > 0,
 		})
 		if attemptErr == nil {
 			outcome.LatencyMs = latency.Milliseconds()
@@ -360,13 +380,17 @@ func (s *Service) attempt(
 	}
 
 	return &runOutcome{
-		Text:            resp.Text,
-		Model:           resp.ModelIdentifier,
-		InputTokens:     resp.InputTokens,
-		OutputTokens:    resp.OutputTokens,
-		ReasoningTokens: resp.ReasoningTokens,
-		ProviderID:      provider.ID,
-		ProviderKind:    provider.Kind,
+		Text:             resp.Text,
+		Model:            resp.ModelIdentifier,
+		InputTokens:      resp.InputTokens,
+		OutputTokens:     resp.OutputTokens,
+		ReasoningTokens:  resp.ReasoningTokens,
+		CacheReadTokens:  resp.CacheReadTokens,
+		CacheWriteTokens: resp.CacheWriteTokens,
+		FinishReason:     finishReason(resp),
+		Truncated:        resp.Truncated,
+		ProviderID:       provider.ID,
+		ProviderKind:     provider.Kind,
 	}, nil
 }
 

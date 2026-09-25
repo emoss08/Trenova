@@ -19,6 +19,7 @@ type Registry struct {
 	logger   *zap.Logger
 	enabled  bool
 	otel     meterProviderOnce
+	genAI    genAIOnce
 
 	HTTP       *HTTP
 	Error      *Error

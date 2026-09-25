@@ -289,6 +289,26 @@ so; nothing ever claims a write did not happen.
 - **Transcript.** The delegate's steps are one section, "Handed to {agent}",
   quoted under the call.
 - **Trajectory.** Every event, tagged, is kept with the turn's events.
+- **The run's parent.** The delegate's run records where it came from:
+  `turn_id` and `parent_owner_id` are the asking turn, `parent_owner_kind` is
+  `AssistantTurn`, and `delegate_call_id` is the `delegate_task` call. Its
+  `trace_id` is the delegate's own trace (below).
+
+### Tracing
+
+A delegate's task is a trace of its own, named by the turn's id and the call id
+(`aitrace.ForDelegate`), not a subtree of the asking turn's. Its model calls, its
+provider attempts and its tool calls run as activities of the turn's workflow
+and are re-parented to the delegate's anchor, each linking the activity span it
+ran under. `OpenDelegateActivity` opens a `trenova.ai.delegate.open` span in the
+turn's trace, linked to the delegate's anchor, with the declined reason when it
+was declined. When the turn is filed, `FinishTurnActivity` emits the delegate's
+`invoke_agent` root from its `delegate_started` and `delegate_finished` events,
+with its status, tool calls and the tokens and cost it spent
+(`DelegatedRun.Usage`); the turn's root links to each delegate's root and each
+delegate's root back to it. Its usage rows carry the call id and the delegate's
+definition version, its steps the delegate's definition and version, and its
+proposals the delegate's trace. See [ai-tracing.md](ai-tracing.md).
 
 ## The stream
 
@@ -341,6 +361,12 @@ published to the Workflow Stream (no command). A turn opened before the release
 has a nil taint and hands its delegate a nil, which counts as tainted for every
 class that leaves the organization; see
 [agent-runtime.md](agent-runtime.md#taint-is-data).
+
+Tracing took no gate. The delegate's spans are opened in its activities and its
+root by the activity that files the turn; `DelegatedRun.Usage` is summed from
+model replies the workflow already holds, and the call id and definition version
+on the usage attribution come from the delegate's own request. None of it adds a
+command. See [agent-runtime.md](agent-runtime.md#waiting-on-in-flight-executions).
 
 A rolling deploy is the one exposure: a turn opened by a new worker and replayed
 by an old one would dispatch `delegate_task` as a tool. Finish rolling the

@@ -692,6 +692,18 @@ activity that files it, last, so a retry of the filing does not write it twice.
 Read a trajectory through the `agentRunEvents` GraphQL connection, gated on
 reading an agent run.
 
+An event's `occurred_at` is the instant the workflow emitted it
+(`StreamItem.At`, stamped with `workflow.Now`), not when the filing activity
+wrote the account, so a day-long run's events keep their real spacing.
+
+Each claimed step also carries the trace and span of its `execute_tool` span, the
+definition and version that made the call and, for a delegate, the call id; its
+outcome carries a one-line `reason` and a `verdict` (`ran`, `proposed`,
+`denied`, …). A proposal carries the same trace and span, its `step_key`, when an
+automatic write ran and at what version it left the record, and who it ran as.
+The whole table of link columns, and who writes each, is in
+[ai-tracing.md](ai-tracing.md#link-columns).
+
 ## Measuring it
 
 `turn_first_event_seconds` is separate from `turn_duration_seconds` on purpose:
@@ -700,6 +712,15 @@ attached as the turn began stared at nothing.
 
 `trajectory_events_total{result}` counts dropped events. They are invisible by
 design — the run carries on — so this is the only place they show up.
+
+`gen_ai.client.token.usage` and `gen_ai.client.operation.duration` are recorded
+per provider attempt, with the GenAI semantic-convention buckets.
+
+Every run, turn, delegate's task and evaluation is one trace, named by its id and
+rooted in an `invoke_agent` span its finishing activity emits; model calls, each
+provider attempt, tool calls and writes hang beneath it, and a later decision
+links back to the call it answers. **Read [ai-tracing.md](ai-tracing.md) before
+adding a span, a trace attribute or a link column.**
 
 ## Running it in production
 
@@ -750,6 +771,22 @@ the tools a `find_tools` call found ride on `FindToolsResult.Found` into the sav
 both are optional data, and a history without them replays by keyword. See "Ranking" in
 [ai-retrieval.md](ai-retrieval.md).
 
+Tracing and provenance took no gate. No span is started in workflow code; the
+root is emitted by the activity that files the run or turn. What rides through
+workflow code is data: `StreamItem.At` is read from `workflow.Now`, which records
+no command; the owner, delegate call and definition version on
+`AIUsageAttribution` come from the turn's own request; `ModelReply.Usage` is an
+activity result that `Drive` sums into `RunResult.Usage` (and a delegate's into
+`DelegatedRun.Usage`); the proposal id, trace and span, tier source, executed
+version, step key and executed time on `PendingAction`, and the reason and verdict
+on `RunStepOutcome`, are all set inside the tool activity; the caller's
+`traceOrigin` is a payload field. A history recorded before them replays with
+none of it and is written as before: the writer stamps the event time, usage is
+counted from the answering call, the proposal insert mints its id, and the root
+has no origin link. The histories under `agentjobs/testdata/replay-loop` and
+`assistantjobs/testdata/replay` were recorded before the change and replay
+against it. See [ai-tracing.md](ai-tracing.md#determinism).
+
 Agent delegation (`delegate_task`) took no gate: whether a turn holds the tool
 is decided when it opens, in an activity, and kept in `TurnState.Held`, so an
 execution opened before it never takes the new branch. Keeping the hand-off's
@@ -782,3 +819,8 @@ each of them.
   search attributes need registering on the server first.
 - **The provider circuit breaker is per worker.** Temporal's retries cover what
   it compensated for; sharing it across workers is a separate change.
+- **A run's trace root is emitted when the run is filed.** A run parked in a
+  decision wait shows its root once it is filed, not when the last proposal is
+  decided, and a workflow evicted from the cache may never export its
+  `RunWorkflow` span. The limits of tracing are listed in
+  [ai-tracing.md](ai-tracing.md#known-limits).

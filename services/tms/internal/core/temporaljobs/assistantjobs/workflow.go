@@ -171,10 +171,16 @@ func (w *Workflows) answer(
 	finish.Plan = &plan
 
 	opening := plan.Opening()
-	stream.Publish(ctx, temporaltype.StreamItem{Event: opening.Event, Data: opening.Data})
+	openedAt := workflow.Now(ctx).Unix()
+	stream.Publish(ctx, temporaltype.StreamItem{
+		Event: opening.Event,
+		Data:  opening.Data,
+		At:    openedAt,
+	})
 	finish.Events = append(finish.Events, temporaltype.StreamItem{
 		Event: opening.Event,
 		Data:  opening.Data,
+		At:    openedAt,
 	})
 	if plan.Refused() {
 		return finish

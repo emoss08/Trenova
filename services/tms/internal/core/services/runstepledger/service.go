@@ -11,6 +11,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/intutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -180,16 +181,21 @@ func (s *Service) Loaded(
 	steps := make([]serviceports.RunStep, 0, len(rows))
 	for _, row := range rows {
 		steps = append(steps, serviceports.RunStep{
-			OwnerKind: serviceports.RunStepOwnerKind(row.OwnerKind),
-			OwnerID:   row.OwnerID,
-			Attempt:   row.Attempt,
-			Kind:      serviceports.RunStepKind(row.Kind),
-			Status:    serviceports.RunStepStatus(row.Status),
-			Key:       row.StepKey,
-			ToolName:  row.ToolName,
-			CallID:    row.CallID,
-			Args:      row.Arguments,
-			Outcome:   decodeOutcome(s.l, row),
+			OwnerKind:         serviceports.RunStepOwnerKind(row.OwnerKind),
+			OwnerID:           row.OwnerID,
+			Attempt:           row.Attempt,
+			Kind:              serviceports.RunStepKind(row.Kind),
+			Status:            serviceports.RunStepStatus(row.Status),
+			Key:               row.StepKey,
+			ToolName:          row.ToolName,
+			CallID:            row.CallID,
+			Args:              row.Arguments,
+			Outcome:           decodeOutcome(s.l, row),
+			TraceID:           row.TraceID,
+			SpanID:            row.SpanID,
+			DefinitionID:      row.AgentDefinitionID,
+			DefinitionVersion: intutils.ClonePointer(row.AgentDefinitionVersion),
+			DelegateCallID:    row.DelegateCallID,
 		})
 	}
 
@@ -212,18 +218,23 @@ func toEntity(
 	}
 
 	return &agent.AgentRunStep{
-		OrganizationID: tenant.OrgID,
-		BusinessUnitID: tenant.BuID,
-		OwnerKind:      string(step.OwnerKind),
-		OwnerID:        step.OwnerID,
-		Attempt:        attempt,
-		Kind:           string(step.Kind),
-		Status:         string(status),
-		StepKey:        step.Key,
-		ToolName:       step.ToolName,
-		CallID:         step.CallID,
-		Arguments:      args,
-		Outcome:        map[string]any{},
+		OrganizationID:         tenant.OrgID,
+		BusinessUnitID:         tenant.BuID,
+		OwnerKind:              string(step.OwnerKind),
+		OwnerID:                step.OwnerID,
+		Attempt:                attempt,
+		Kind:                   string(step.Kind),
+		Status:                 string(status),
+		StepKey:                step.Key,
+		ToolName:               step.ToolName,
+		CallID:                 step.CallID,
+		Arguments:              args,
+		Outcome:                map[string]any{},
+		TraceID:                step.TraceID,
+		SpanID:                 step.SpanID,
+		AgentDefinitionID:      step.DefinitionID,
+		AgentDefinitionVersion: intutils.ClonePointer(step.DefinitionVersion),
+		DelegateCallID:         step.DelegateCallID,
 	}
 }
 

@@ -47,18 +47,21 @@ type RecordAgentProposalExecutionRequest struct {
 	ExecutionResult *agent.ToolExecutionResult `json:"executionResult"`
 	// EgressClass is where the write reached as it ran, with any change the
 	// approver made. Empty leaves the proposal's as it was.
-	EgressClass agent.EgressClass     `json:"egressClass"`
-	TenantInfo  pagination.TenantInfo `json:"-"`
+	EgressClass           agent.EgressClass     `json:"egressClass"`
+	TenantInfo            pagination.TenantInfo `json:"-"`
+	ExecutedByUserID      pulid.ID              `json:"executedByUserId"`
+	ExecutedTargetVersion *int64                `json:"executedTargetVersion"`
 }
 
 // RecordAgentProposalSimulationRequest stores what a write would have
 // changed, in place of an execution, for a proposal cleared while its agent
 // was in simulation.
 type RecordAgentProposalSimulationRequest struct {
-	ID          pulid.ID
-	TenantInfo  pagination.TenantInfo
-	SimulatedAt int64
-	Simulation  *agent.ToolSimulation
+	ID               pulid.ID
+	TenantInfo       pagination.TenantInfo
+	SimulatedAt      int64
+	Simulation       *agent.ToolSimulation
+	ExecutedByUserID pulid.ID
 }
 
 // CountExecutedToolRequest counts how many times one agent has executed one

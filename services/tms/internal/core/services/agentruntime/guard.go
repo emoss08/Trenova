@@ -6,6 +6,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -75,8 +77,11 @@ func (s *Service) guardedDispatch(
 		})
 	}
 
+	ctx, span := s.startToolSpan(ctx, req, p.call, key)
+	defer span.End()
+
 	if key == "" {
-		return s.dispatch(ctx, dispatchParams{
+		outcome := s.dispatch(ctx, dispatchParams{
 			req:            req,
 			call:           p.call,
 			completionText: p.completionText,
@@ -85,6 +90,9 @@ func (s *Service) guardedDispatch(
 			taint:          p.taint,
 			afterExternal:  p.afterExternal,
 		})
+		finishToolSpan(span, &outcome, p.afterExternal)
+
+		return outcome
 	}
 
 	step := serviceports.RunStep{
@@ -97,6 +105,30 @@ func (s *Service) guardedDispatch(
 		CallID:    p.call.ID,
 		Args:      p.call.Arguments,
 	}
+	step.TraceID, step.SpanID = aitrace.IDs(ctx)
+	if definition := req.Definition; definition != nil {
+		version := definition.Version
+		step.DefinitionID = definition.ID
+		step.DefinitionVersion = &version
+	}
+	if req.Delegation != nil {
+		step.DelegateCallID = req.Delegation.CallID
+	}
+
+	outcome := s.claimAndDispatch(ctx, p, step)
+	finishToolSpan(span, &outcome, p.afterExternal)
+
+	return outcome
+}
+
+func (s *Service) claimAndDispatch(
+	ctx context.Context,
+	p guardedDispatchParams,
+	step serviceports.RunStep,
+) toolOutcome {
+	req := p.req
+	key := step.Key
+	span := trace.SpanFromContext(ctx)
 
 	verdict, err := req.Steps.Claim(ctx, req.Actor.TenantInfo(), step)
 	if err != nil {
@@ -110,13 +142,16 @@ func (s *Service) guardedDispatch(
 			zap.Error(err),
 		)
 
-		return failedOutcome(
+		return refusedOutcome(
+			aitrace.OutcomeFailed,
+			"the run could not record that it was about to make the call",
 			"Tool %q was not run: this run could not record that it was about to. "+
 				"Tell the person it could not be done right now, and do not retry it.",
 			p.call.Name,
 		)
 	}
 
+	span.SetAttributes(aitrace.AIStepState.String(stepState(verdict.State)))
 	switch verdict.State {
 	case serviceports.StepCompleted, serviceports.StepFailed:
 		return replayedOutcome(verdict.Outcome)
@@ -132,6 +167,7 @@ func (s *Service) guardedDispatch(
 		idempotencyKey: key,
 		taint:          p.taint,
 		afterExternal:  p.afterExternal,
+		stepKey:        key,
 	})
 
 	step.Status = serviceports.RunStepCompleted
@@ -143,6 +179,8 @@ func (s *Service) guardedDispatch(
 		Failed:  outcome.failed,
 		Action:  outcome.action,
 		Taint:   outcome.taint,
+		Reason:  outcome.reason,
+		Verdict: outcome.verdictOrDerived(),
 	}
 	if !outcome.failed && showsResults(req) {
 		step.Outcome.Data = stepData(outcome.data)
@@ -185,6 +223,8 @@ func replayedOutcome(recorded serviceports.RunStepOutcome) toolOutcome {
 		failed:  recorded.Failed,
 		action:  recorded.Action,
 		taint:   recorded.Taint,
+		verdict: recorded.Verdict,
+		reason:  recorded.Reason,
 	}
 	// A nil map in an interface is not a nil interface, and an observer
 	// reading one would take the call for a query that returned something.
@@ -233,7 +273,9 @@ func stepData(data any) map[string]any {
 // or may not have; nobody knows, and the one thing worse than telling the
 // person that is quietly doing it a second time.
 func unknownOutcome(toolName string) toolOutcome {
-	return failedOutcome(
+	return refusedOutcome(
+		aitrace.OutcomeUnknown,
+		"an earlier attempt began it and never recorded how it ended",
 		"Tool %q was begun on an earlier attempt of this run and its outcome was never "+
 			"recorded, so it was not run again. It may or may not have taken effect. "+
 			"Check whether the change is already in place before doing anything that "+

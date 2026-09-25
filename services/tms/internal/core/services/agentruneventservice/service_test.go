@@ -250,3 +250,35 @@ func TestRecordTrajectory_IsSafeWithoutARecorder(t *testing.T) {
 		serviceports.FlushTrajectory(nil, t.Context())
 	})
 }
+
+func TestRecord_KeepsWhenTheEventHappened(t *testing.T) {
+	t.Parallel()
+
+	repo := &fakeRepo{}
+	writer := newRecorder(t, repo).Recorder(t.Context(), pagination.TenantInfo{},
+		serviceports.RunStepOwner{
+			Kind: serviceports.RunStepOwnerAgentRun,
+			ID:   pulid.MustNew("ar_"),
+		})
+
+	started := int64(1_790_000_000)
+	writer.Record(t.Context(), serviceports.StreamEvent{
+		Event: serviceports.AssistantEventToolStarted,
+		Data:  serviceports.AssistantToolStartedEvent{CallID: "call_1"},
+		At:    started,
+	})
+	writer.Record(t.Context(), serviceports.StreamEvent{
+		Event: serviceports.AssistantEventToolFinished,
+		Data:  serviceports.AssistantToolFinishedEvent{CallID: "call_1"},
+		At:    started + 95,
+	})
+	writer.Record(t.Context(), serviceports.StreamEvent{Event: serviceports.AssistantEventDone})
+	writer.Flush(t.Context())
+
+	rows := repo.rows()
+	require.Len(t, rows, 3)
+	assert.Equal(t, started, rows[0].OccurredAt, "a durable run's events keep their own times")
+	assert.Equal(t, started+95, rows[1].OccurredAt)
+	assert.Greater(t, rows[2].OccurredAt, started+95,
+		"an event from before times were kept is stamped when it is written")
+}

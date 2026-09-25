@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -263,4 +264,18 @@ func (r *recordingTurns) RecordFingerprint(
 	repositories.RecordAssistantTurnFingerprintRequest,
 ) error {
 	return nil
+}
+
+func TestStart_RecordsTheTurnsTrace(t *testing.T) {
+	t.Parallel()
+
+	turns := &recordingTurns{}
+	turn, err := newDurable(turns).Start(t.Context(), startRequest())
+	require.NoError(t, err)
+
+	require.True(t, turn.ID.IsNotNil(), "the id is known before the row is written")
+	assert.Equal(t,
+		aitrace.AnchorFor(aitrace.AnchorAssistantTurn, turn.ID.String()).TraceID.String(),
+		turn.TraceID,
+		"the turn names the trace its workflow is anchored in")
 }

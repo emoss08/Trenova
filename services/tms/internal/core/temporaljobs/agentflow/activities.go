@@ -9,6 +9,9 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"go.opentelemetry.io/otel/trace"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/converter"
 	"go.temporal.io/sdk/temporal"
@@ -96,7 +99,11 @@ func (a *Activities) ModelCallActivity(
 		publish := func(event serviceports.StreamEvent, force bool) {
 			tagged, shown := in.Scope.Tag(event)
 			if shown {
-				events.Publish(StreamItem{Event: tagged.Event, Data: tagged.Data}, force)
+				events.Publish(StreamItem{
+					Event: tagged.Event,
+					Data:  tagged.Data,
+					At:    timeutils.NowUnix(),
+				}, force)
 			}
 		}
 
@@ -121,6 +128,10 @@ func (a *Activities) ModelCallActivity(
 	stopBeating := modelcall.Heartbeat(ctx)
 	defer stopBeating()
 
+	ctx = aitrace.WithCallOrigin(ctx, aitrace.CallOrigin{
+		ActivityAttempt: int(activity.GetInfo(ctx).Attempt),
+		Stream:          in.Stream,
+	})
 	reply, err := a.runtime.StreamCompletion(ctx, in.Request, emit)
 	if err != nil {
 		return nil, modelcall.Classify(err)
@@ -153,14 +164,21 @@ func (a *Activities) OpenDelegateActivity(
 		)
 	}
 
+	ctx, span := startDelegateOpen(ctx, in)
+	defer span.End()
+
 	opening, err := a.delegates.OpenDelegate(ctx, in.Run, in.Call)
 	if err != nil {
 		var declined *DelegateDeclinedError
 		if errors.As(err, &declined) {
+			span.SetAttributes(aitrace.AIDelegateDeclined.String(declined.Reason))
+			aitrace.MarkFailed(span, ErrTypeDelegateDeclined)
+
 			return nil, temporal.NewNonRetryableApplicationError(
 				declined.Reason, ErrTypeDelegateDeclined, nil,
 			)
 		}
+		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
 
 		return nil, fmt.Errorf("open %s's turn: %w", in.Call.Delegate.Name, err)
 	}
@@ -257,7 +275,11 @@ func (a *Activities) observing(
 	}
 	emit := func(event serviceports.StreamEvent) {
 		if events != nil {
-			events.Publish(StreamItem{Event: event.Event, Data: event.Data}, true)
+			events.Publish(StreamItem{
+				Event: event.Event,
+				Data:  event.Data,
+				At:    timeutils.NowUnix(),
+			}, true)
 		}
 	}
 
@@ -273,4 +295,14 @@ func (a *Activities) observing(
 			CloseStream(ctx, stream, a.l)
 		}
 	}
+}
+
+func startDelegateOpen(ctx context.Context, in *OpenDelegateInput) (context.Context, trace.Span) {
+	return aitrace.StartDelegateOpen(ctx, &aitrace.DelegateOpenSpec{
+		Anchor:            aitrace.ForRun(in.Run.StepOwner, in.Run.Delegation),
+		OwnerID:           in.Run.StepOwner.ID,
+		DelegateCallID:    in.Call.Call.ID,
+		DelegateAgentID:   in.Call.Delegate.ID,
+		DelegateAgentName: in.Call.Delegate.Name,
+	})
 }

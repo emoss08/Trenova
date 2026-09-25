@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -187,7 +188,9 @@ func (s *Service) start(
 		},
 		EvaluationID: created.ID,
 	}
-	if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
+	anchor := aitrace.AnchorFor(aitrace.AnchorEvaluation, created.ID.String())
+	startCtx := aitrace.ContextWithAnchor(ctx, anchor)
+	if _, err = s.workflows.StartWorkflow(startCtx, client.StartWorkflowOptions{
 		ID:                    workflowID,
 		TaskQueue:             temporaltype.TaskQueueAgentHeavy.String(),
 		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,

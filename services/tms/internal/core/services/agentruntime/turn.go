@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"context"
+	"errors"
 	"maps"
 	"slices"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -88,7 +90,24 @@ type ModelReply struct {
 	Looped     bool                               `json:"looped"`
 	// InReasoning says the loop was in the model's thinking rather than its
 	// reply.
-	InReasoning bool `json:"inReasoning,omitempty"`
+	InReasoning bool                   `json:"inReasoning,omitempty"`
+	Usage       *serviceports.RunUsage `json:"usage,omitempty"`
+}
+
+func (r ModelReply) usage() *serviceports.RunUsage {
+	if r.Usage != nil {
+		return r.Usage
+	}
+	if r.Completion == nil {
+		return nil
+	}
+
+	return &serviceports.RunUsage{
+		ModelCalls:   1,
+		InputTokens:  int64(r.Completion.InputTokens),
+		OutputTokens: int64(r.Completion.OutputTokens),
+		CostUSD:      r.Completion.CostUSD,
+	}
 }
 
 // DispatchCall is one tool call the loop has decided to run.
@@ -439,15 +458,31 @@ func (t *Turn) completionRequest() *serviceports.ChatCompletionRequest {
 		Tools:               t.tools.specs,
 		PreferredProviderID: preferredProvider(req, definition),
 		PinPreferred:        req.PinProvider && !req.PreferredProviderID.IsNil(),
-		Attribution: serviceports.AIUsageAttribution{
-			UserID:            req.Actor.UserID,
-			AgentDefinitionID: definition.ID,
-			ThreadID:          req.ThreadID,
-			RunID:             req.RunID,
-			Purpose:           req.AttributedPurpose(),
-			Feature:           aiusage.FeatureAgentTurn,
-		},
+		Attribution:         turnAttribution(req),
 	}
+}
+
+func turnAttribution(req *serviceports.RunRequest) serviceports.AIUsageAttribution {
+	definition := req.Definition
+	version := definition.Version
+	attribution := serviceports.AIUsageAttribution{
+		UserID:            req.Actor.UserID,
+		AgentDefinitionID: definition.ID,
+		ThreadID:          req.ThreadID,
+		RunID:             req.RunID,
+		Purpose:           req.AttributedPurpose(),
+		Feature:           aiusage.FeatureAgentTurn,
+		DefinitionVersion: &version,
+	}
+	if req.StepOwner.ID.IsNotNil() {
+		attribution.OwnerKind = req.StepOwner.Kind
+		attribution.OwnerID = req.StepOwner.ID
+	}
+	if req.Delegation != nil {
+		attribution.DelegateCallID = req.Delegation.CallID
+	}
+
+	return attribution
 }
 
 // localEffects runs every effect in process, as a turn always did before it
@@ -483,6 +518,44 @@ func (s *Service) StreamCompletion(
 	req *serviceports.ChatCompletionRequest,
 	emit serviceports.AssistantStreamEmitter,
 ) (ModelReply, error) {
+	ctx, tally := aitrace.WithCompletionTally(ctx)
+	reply, err := s.streamCompletion(ctx, req, emit)
+	reply.Usage = replyUsage(tally, reply)
+
+	return reply, err
+}
+
+func replyUsage(tally *aitrace.CompletionTally, reply ModelReply) *serviceports.RunUsage {
+	totals := tally.Totals()
+	if totals.Attempts == 0 {
+		return reply.usage()
+	}
+
+	return &serviceports.RunUsage{
+		ModelCalls:       totals.Attempts,
+		InputTokens:      totals.InputTokens,
+		OutputTokens:     totals.OutputTokens,
+		CacheReadTokens:  totals.CacheReadTokens,
+		CacheWriteTokens: totals.CacheWriteTokens,
+		CostUSD:          totals.CostUSD,
+	}
+}
+
+func (s *Service) streamCompletion(
+	ctx context.Context,
+	req *serviceports.ChatCompletionRequest,
+	emit serviceports.AssistantStreamEmitter,
+) (ModelReply, error) {
+	origin := aitrace.CallOriginFrom(ctx)
+	ctx, span := aitrace.StartModelCall(ctx, &aitrace.ModelCallSpec{
+		Anchor:          aitrace.ForAttribution(&req.Attribution),
+		Feature:         string(req.Attribution.Feature),
+		ActivityAttempt: origin.ActivityAttempt,
+		Stream:          origin.Stream,
+	})
+	defer span.End()
+	defer aitrace.TallyFrom(ctx).Record(span)
+
 	streamCtx, cancelStream := context.WithCancel(ctx)
 	defer cancelStream()
 
@@ -512,14 +585,35 @@ func (s *Service) StreamCompletion(
 		if completion == nil {
 			completion = &serviceports.ChatCompletionResult{}
 		}
+		span.SetAttributes(aitrace.AILooped.Bool(true))
 
 		return ModelReply{Completion: completion, Looped: true, InReasoning: thinking.tripped}, nil
 	}
 	if err != nil {
+		aitrace.MarkFailed(span, completionErrorType(ctx, err))
+
 		return ModelReply{Completion: completion}, err
 	}
 
-	return ModelReply{Completion: completion, Looped: guard.looped(completion.Text)}, nil
+	looped := guard.looped(completion.Text)
+	span.SetAttributes(aitrace.AILooped.Bool(looped))
+
+	return ModelReply{Completion: completion, Looped: looped}, nil
+}
+
+func completionErrorType(ctx context.Context, err error) string {
+	switch {
+	case errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled):
+		return "cancelled"
+	case errors.Is(err, context.DeadlineExceeded):
+		return "timeout"
+	case errors.Is(err, serviceports.ErrNoProviderConfigured):
+		return "no_provider"
+	case errors.Is(err, serviceports.ErrProvidersResting):
+		return "providers_resting"
+	default:
+		return "provider_error"
+	}
 }
 
 // KnowsTool reports whether name is a registered tool, read or write.

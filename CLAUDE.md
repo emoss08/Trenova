@@ -323,6 +323,12 @@ content proposes every later write, is in
 An agent handing a task to another agent (`delegate_task`, the per-agent
 allowlist, one level only, same person) is described in
 [docs/engineering/agent-delegation.md](docs/engineering/agent-delegation.md).
+Every run, turn, delegate's task and evaluation is one trace named by its id, rooted in an
+`invoke_agent` span its finishing activity emits (never a span in workflow code); the span
+catalogue, anchors, sampling, the link columns that tie proposals, steps, decisions and usage
+rows to their spans, and the known limits are in
+[docs/engineering/ai-tracing.md](docs/engineering/ai-tracing.md). Read it before adding a span,
+a trace attribute or a link column.
 
 ## Realtime
 

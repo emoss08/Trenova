@@ -12,6 +12,14 @@ import (
 )
 
 const (
+	jobFeatureStructured   = "structured_completion"
+	jobFeatureProviderTest = "provider_test"
+	jobFeatureBriefing     = "briefing_write"
+	jobFailureAbandoned    = "abandoned"
+	jobFailureFailed       = "failed"
+)
+
+const (
 	StructuredCompletionWorkflowName = "StructuredCompletionWorkflow"
 	TestAIProviderWorkflowName       = "TestAIProviderWorkflow"
 	WriteBriefingWorkflowName        = "WriteBriefingWorkflow"

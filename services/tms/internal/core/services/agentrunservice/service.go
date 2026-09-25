@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -127,6 +128,8 @@ func (s *Service) StartForDefinition(
 	// that carries the run starts first and is told which run it is.
 	run.ID = pulid.MustNew("ar_")
 	run.WorkflowID = workflowIDFor(definition, run, req.Slot)
+	anchor := aitrace.AnchorFor(aitrace.AnchorAgentRun, run.ID.String())
+	run.TraceID = anchor.TraceID.String()
 
 	payload := &agentjobs.AgentRunPayload{
 		BasePayload: temporaltype.BasePayload{
@@ -141,6 +144,7 @@ func (s *Service) StartForDefinition(
 		SubjectType:  subjectType,
 		SubjectID:    subjectID,
 		EventKind:    req.EventKind,
+		Origin:       aitrace.Traceparent(ctx),
 	}
 
 	// The workflow starts before the run is recorded, because its id is what
@@ -149,7 +153,8 @@ func (s *Service) StartForDefinition(
 	// both pass the check. Recording first would leave a record behind for
 	// every duplicate refused. The run's first activity waits out the moment
 	// between the start and the record.
-	if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
+	startCtx := aitrace.ContextWithAnchor(ctx, anchor)
+	if _, err = s.workflows.StartWorkflow(startCtx, client.StartWorkflowOptions{
 		ID:                       run.WorkflowID,
 		TaskQueue:                temporaltype.TaskQueueAgentBackground.String(),
 		WorkflowIDReusePolicy:    reusePolicyFor(run, req.Slot),
@@ -265,6 +270,7 @@ func (s *Service) StartInline(
 		InputContextHash:  provisionalHash,
 		StartedAt:         timeutils.NowUnix(),
 	}
+	run.TraceID, _ = aitrace.IDs(ctx)
 
 	if multiErr := s.validator.ValidateCreate(ctx, run); multiErr != nil {
 		return nil, multiErr

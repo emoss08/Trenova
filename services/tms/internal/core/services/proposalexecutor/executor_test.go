@@ -75,6 +75,8 @@ type recordedExecution struct {
 	errText    string
 	result     *agent.ToolExecutionResult
 	egress     agent.EgressClass
+	by         pulid.ID
+	version    *int64
 }
 
 type fakeProposalRepo struct {
@@ -92,6 +94,8 @@ func (r *fakeProposalRepo) RecordExecution(
 		errText:    req.ExecutionError,
 		result:     req.ExecutionResult,
 		egress:     req.EgressClass,
+		by:         req.ExecutedByUserID,
+		version:    req.ExecutedTargetVersion,
 	})
 
 	return nil, nil

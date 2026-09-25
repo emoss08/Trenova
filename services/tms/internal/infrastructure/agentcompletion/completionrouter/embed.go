@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/agentcompletion/modeladapter"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/llmtokens"
@@ -253,13 +254,20 @@ func (s *Service) embedBatch(
 	batch embeddingBatch,
 ) (*servedBatch, error) {
 	var lastErr error
-	for _, provider := range candidates {
+	for idx, provider := range candidates {
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
 
+		attemptCtx, span := s.startAttempt(ctx, attemptSpec{
+			operation:   aitrace.OperationEmbeddings,
+			provider:    provider,
+			attempt:     idx + 1,
+			failover:    idx > 0,
+			attribution: req.Attribution,
+		})
 		started := time.Now()
-		served, attemptErr := s.attemptEmbed(ctx, provider, req.Purpose, batch)
+		served, attemptErr := s.attemptEmbed(attemptCtx, provider, req.Purpose, batch)
 		latency := time.Since(started)
 		attemptErr = stopped(ctx, attemptErr)
 		s.observe(ctx, provider, attemptErr)
@@ -268,7 +276,7 @@ func (s *Service) embedBatch(
 		if served != nil {
 			outcome = &runOutcome{Model: served.model, InputTokens: served.tokens}
 		}
-		s.record(ctx, usageAttempt{
+		s.settleAttempt(attemptCtx, span, usageAttempt{
 			provider:    provider,
 			task:        aiprovider.TaskEmbedding,
 			surface:     surfaceFor(req.ResolvedSurface(), req.Attribution),
@@ -277,6 +285,9 @@ func (s *Service) embedBatch(
 			latency:     latency,
 			outcome:     outcome,
 			err:         attemptErr,
+			operation:   aitrace.OperationEmbeddings,
+			attempt:     idx + 1,
+			failover:    idx > 0,
 		})
 
 		if attemptErr == nil {

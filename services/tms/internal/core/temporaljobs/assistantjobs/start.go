@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/api/enums/v1"
@@ -35,7 +36,13 @@ func StartTurnWorkflow(
 	turn *conversation.AssistantTurn,
 	start TurnStart,
 ) (client.WorkflowRun, error) {
-	return workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
+	origin := aitrace.Traceparent(ctx)
+	anchored := aitrace.ContextWithAnchor(
+		ctx,
+		aitrace.AnchorFor(aitrace.AnchorAssistantTurn, turn.ID.String()),
+	)
+
+	return workflows.StartWorkflow(anchored, client.StartWorkflowOptions{
 		ID:        WorkflowIDFor(turn.ID),
 		TaskQueue: temporaltype.TaskQueueAgentChat.String(),
 		// One turn, one execution. A duplicate start is a bug rather than a
@@ -61,6 +68,7 @@ func StartTurnWorkflow(
 		Actor:    start.Actor,
 		Content:  start.Content,
 		Request:  start.Request,
+		Origin:   origin,
 	})
 }
 

@@ -92,10 +92,14 @@ virtuals:
     - run
     - parameterFields
     - modifications
+    - traceUrl
   AgentPlan:
     - run
   AgentRun:
     - definition
+    - traceUrl
+  AgentDecision:
+    - traceUrl
   AgentEvalCase:
     - weight
   AgentSuiteRun:

@@ -15,9 +15,7 @@ func (s *Service) decideCall(
 	ctx context.Context,
 	in agenttoolpolicy.DecideInput,
 ) agenttoolpolicy.Decision {
-	if agenttoolpolicy.SeeksPersonalExemption(in) {
-		in.TierSetByPerson = s.tierSetByPerson(ctx, in.Definition, in.Policy.Name)
-	}
+	in.TierSetByPerson = s.tierSetByPerson(ctx, in.Definition, in.Policy.Name)
 
 	return agenttoolpolicy.Decide(ctx, in)
 }

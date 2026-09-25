@@ -23,6 +23,10 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
+func (r *agentDecisionResolver) TraceURL(ctx context.Context, obj *agent.AgentDecision) (*string, error) {
+	return r.traceURLOf(obj.TraceID), nil
+}
+
 func (r *agentEvaluationResolver) SubjectType(ctx context.Context, obj *agent.Evaluation) (string, error) {
 	return string(obj.SubjectType), nil
 }
@@ -126,6 +130,14 @@ func (r *agentProposalResolver) Modifications(ctx context.Context, obj *agent.Ag
 
 func (r *agentProposalResolver) EgressClass(ctx context.Context, obj *agent.AgentProposal) (*agent.EgressClass, error) {
 	return recordedEgressClass(obj), nil
+}
+
+func (r *agentProposalResolver) TraceURL(ctx context.Context, obj *agent.AgentProposal) (*string, error) {
+	return r.traceURLOf(obj.TraceID), nil
+}
+
+func (r *agentRunResolver) TraceURL(ctx context.Context, obj *agent.AgentRun) (*string, error) {
+	return r.traceURLOf(obj.TraceID), nil
 }
 
 func (r *mutationResolver) DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error) {
@@ -687,6 +699,8 @@ func (r *queryResolver) AgentControl(ctx context.Context) (*tenant.AgentControl,
 	return r.agentControlService.Get(ctx, tenantInfo(authCtx))
 }
 
+func (r *Resolver) AgentDecision() generated.AgentDecisionResolver { return &agentDecisionResolver{r} }
+
 func (r *Resolver) AgentEvaluation() generated.AgentEvaluationResolver {
 	return &agentEvaluationResolver{r}
 }
@@ -698,6 +712,7 @@ func (r *Resolver) AgentProposal() generated.AgentProposalResolver { return &age
 func (r *Resolver) AgentRun() generated.AgentRunResolver { return &agentRunResolver{r} }
 
 type (
+	agentDecisionResolver   struct{ *Resolver }
 	agentEvaluationResolver struct{ *Resolver }
 	agentPlanResolver       struct{ *Resolver }
 	agentProposalResolver   struct{ *Resolver }

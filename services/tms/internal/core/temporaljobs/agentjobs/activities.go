@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -281,7 +282,7 @@ func (a *Activities) RunAgentActivity(
 		return nil, err
 	}
 
-	settled, err := a.settleRun(ctx, settleRunParams{
+	settled, _, err := a.settleRun(ctx, settleRunParams{
 		Payload:    payload,
 		Definition: input.Definition,
 		Subject:    input.Subject,
@@ -341,7 +342,7 @@ func (a *Activities) FinishRunActivity(
 		outcome = &serviceports.RunResult{}
 	}
 
-	settled, err := a.settleRun(ctx, settleRunParams{
+	settled, run, err := a.settleRun(ctx, settleRunParams{
 		Payload:    input.Payload,
 		Definition: input.Definition,
 		Subject:    input.Subject,
@@ -355,8 +356,42 @@ func (a *Activities) FinishRunActivity(
 	// Last, so an attempt that fails before this is the one that writes it:
 	// written earlier, a retry would write the run's account twice.
 	a.recordTrajectory(ctx, input.Payload, input.Events)
+	emitRunRoot(ctx, input, run, settled)
 
 	return settled, nil
+}
+
+func emitRunRoot(
+	ctx context.Context,
+	input *FinishRunInput,
+	run *agent.AgentRun,
+	settled *FinishRunResult,
+) {
+	payload := input.Payload
+	status := agent.RunStatusCompleted
+	switch {
+	case input.Failure != nil:
+		status = agent.RunStatusFailed
+	case settled.PendingProposals > 0:
+		status = agent.RunStatusAwaitingDecision
+	}
+
+	agentflow.EmitRoot(ctx, &agentflow.RootParams{
+		Anchor:     aitrace.AnchorFor(aitrace.AnchorAgentRun, payload.RunID.String()),
+		Definition: input.Definition,
+		OwnerKind:  serviceports.RunStepOwnerAgentRun,
+		OwnerID:    payload.RunID,
+		RunID:      payload.RunID,
+		UserID:     payload.UserID,
+		Tenant:     payload.tenantInfo(),
+		Trigger:    string(payload.Trigger),
+		Status:     string(status),
+		Failure:    input.Failure,
+		Result:     input.Run,
+		Start:      agentflow.StartedAt(run.CreatedAt, run.StartedAt),
+		End:        time.Now(),
+		Origin:     payload.Origin,
+	})
 }
 
 // PendingProposalsActivity counts the run's proposals still waiting on a
@@ -397,6 +432,7 @@ func (a *Activities) recordTrajectory(
 		serviceports.RecordTrajectory(writer, ctx, serviceports.StreamEvent{
 			Event: event.Event,
 			Data:  event.Data,
+			At:    event.At,
 		})
 	}
 	serviceports.FlushTrajectory(writer, ctx)
@@ -414,7 +450,10 @@ type settleRunParams struct {
 }
 
 // settleRun files a run's proposals and summary.
-func (a *Activities) settleRun(ctx context.Context, p settleRunParams) (*FinishRunResult, error) {
+func (a *Activities) settleRun(
+	ctx context.Context,
+	p settleRunParams,
+) (*FinishRunResult, *agent.AgentRun, error) {
 	tenant := p.Payload.tenantInfo()
 
 	run, err := a.runRepo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
@@ -422,7 +461,7 @@ func (a *Activities) settleRun(ctx context.Context, p settleRunParams) (*FinishR
 		TenantInfo: &tenant,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("load agent run: %w", err)
+		return nil, nil, fmt.Errorf("load agent run: %w", err)
 	}
 
 	// The step ledger keeps a retry from running a tool twice, but the
@@ -440,7 +479,7 @@ func (a *Activities) settleRun(ctx context.Context, p settleRunParams) (*FinishR
 		Taint:      p.Outcome.Taint,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	pending := countPending(recorded.Proposals)
@@ -455,14 +494,14 @@ func (a *Activities) settleRun(ctx context.Context, p settleRunParams) (*FinishR
 		run.Status = agent.RunStatusAwaitingDecision
 	}
 	if _, err = a.runRepo.Update(ctx, run); err != nil {
-		return nil, fmt.Errorf("update agent run: %w", err)
+		return nil, nil, fmt.Errorf("update agent run: %w", err)
 	}
 	a.announceRun(ctx, run)
 
 	return &FinishRunResult{
 		ProposalsRaised:  len(recorded.Proposals),
 		PendingProposals: pending,
-	}, nil
+	}, run, nil
 }
 
 func (a *Activities) CompleteRunActivity(ctx context.Context, input *CompleteRunInput) error {
@@ -517,15 +556,30 @@ func (a *Activities) ExpireProposalsActivity(
 	ctx context.Context,
 	input *ExpireProposalsInput,
 ) error {
-	if _, err := a.proposalRepo.ExpirePendingByRun(
+	run := aitrace.AnchorFor(aitrace.AnchorAgentRun, input.RunID.String())
+	ctx, span := aitrace.StartDecide(ctx, &aitrace.DecideSpec{
+		Operation:       aitrace.DecideOperationExpire,
+		OrganizationID:  input.TenantInfo.OrgID,
+		BusinessUnitID:  input.TenantInfo.BuID,
+		RunID:           input.RunID,
+		ProposalTraceID: run.TraceID.String(),
+		ProposalSpanID:  run.RootSpanID.String(),
+	})
+	defer span.End()
+
+	expired, err := a.proposalRepo.ExpirePendingByRun(
 		ctx,
 		repositories.ExpireAgentProposalsByRunRequest{
 			RunID:      input.RunID,
 			TenantInfo: input.TenantInfo,
 		},
-	); err != nil {
+	)
+	if err != nil {
+		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
+
 		return fmt.Errorf("expire proposals: %w", err)
 	}
+	span.SetAttributes(aitrace.AIExpired.Int(expired))
 
 	return a.updateRun(ctx, input.TenantInfo, input.RunID, func(run *agent.AgentRun) {
 		run.Status = agent.RunStatusCompleted
@@ -714,12 +768,20 @@ func (a *Activities) ExpireStaleProposalsActivity(
 	ctx context.Context,
 	input *ExpireStaleProposalsInput,
 ) (*ExpireStaleProposalsResult, error) {
+	ctx, span := aitrace.StartDecide(ctx, &aitrace.DecideSpec{
+		Operation: aitrace.DecideOperationExpire,
+	})
+	defer span.End()
+
 	expired, err := a.proposalRepo.ExpirePending(ctx, repositories.ExpireAgentProposalsRequest{
 		Before: input.Now,
 	})
 	if err != nil {
+		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
+
 		return nil, fmt.Errorf("expire pending proposals: %w", err)
 	}
+	span.SetAttributes(aitrace.AIExpired.Int(expired))
 
 	if expired > 0 {
 		a.logger.Info("expired agent proposals past their decision window",

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -209,6 +210,22 @@ func (s *Service) DecideWithOutcome(
 		return nil, err
 	}
 
+	ctx, span := aitrace.StartDecide(ctx, &aitrace.DecideSpec{
+		Operation:         aitrace.DecideOperationDecide,
+		OrganizationID:    req.TenantInfo.OrgID,
+		BusinessUnitID:    req.TenantInfo.BuID,
+		ProposalID:        proposal.ID,
+		RunID:             proposal.RunID,
+		ToolName:          proposal.ToolName,
+		Decision:          string(req.Decision),
+		UserID:            actor.UserID,
+		ReasonCode:        reasonCodeFor(req.Decision, req.ReasonCode),
+		ModificationCount: len(req.Modifications),
+		ProposalTraceID:   proposal.TraceID,
+		ProposalSpanID:    proposal.SpanID,
+	})
+	defer span.End()
+
 	decision := &agent.AgentDecision{
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
@@ -218,6 +235,7 @@ func (s *Service) DecideWithOutcome(
 		Modifications:   req.Modifications,
 		ReasonCode:      reasonCodeFor(req.Decision, req.ReasonCode),
 	}
+	decision.TraceID, _ = aitrace.IDs(ctx)
 
 	me := errortypes.NewMultiError()
 	decision.Validate(me)
@@ -227,6 +245,8 @@ func (s *Service) DecideWithOutcome(
 
 	created, err := s.decisionRepo.Create(ctx, decision)
 	if err != nil {
+		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
+
 		return nil, err
 	}
 
@@ -240,6 +260,8 @@ func (s *Service) DecideWithOutcome(
 		FromStatus: agent.ProposalStatusPending,
 		TenantInfo: req.TenantInfo,
 	}); err != nil {
+		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
+
 		return nil, err
 	}
 

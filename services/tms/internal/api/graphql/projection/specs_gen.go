@@ -1336,6 +1336,14 @@ func init() {
 				FieldMapKey: "reasonCode",
 			},
 			{
+				Name:        "traceId",
+				FieldMapKey: "traceId",
+			},
+			{
+				Name:    "traceUrl",
+				Special: "traceUrl",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -2206,6 +2214,14 @@ func init() {
 				FieldMapKey: "heldBy",
 			},
 			{
+				Name:        "traceId",
+				FieldMapKey: "traceId",
+			},
+			{
+				Name:    "traceUrl",
+				Special: "traceUrl",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
@@ -2378,6 +2394,14 @@ func init() {
 			{
 				Name:        "taintedAt",
 				FieldMapKey: "taintedAt",
+			},
+			{
+				Name:        "traceId",
+				FieldMapKey: "traceId",
+			},
+			{
+				Name:    "traceUrl",
+				Special: "traceUrl",
 			},
 			{
 				Name:        "version",
