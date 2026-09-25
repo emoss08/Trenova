@@ -384,6 +384,74 @@ M1 shipped the connect-and-health slice with four departures from the table abov
 - **`check_accounting_connection` was added.** It is an `AutoExecute`, `EgressInternal` tool that lets an agent re-test the link right away rather than wait for the fifteen-minute check.
 - **The §1.3 open facts are handled, not confirmed.** The webhook verifier accepts both the CloudEvents envelope and the legacy `eventNotifications` shape, under the `intuit-signature` HMAC. PKCE is not used: Trenova is a confidential client, and the state is single-use, hashed and bound to the person. Both need checking against a live Intuit sandbox app, which depends on D6.
 
+### 9.2 M2 design, pinned to the code
+
+The survey before M2 found three facts that change §3.3 and §4.8:
+
+- **Trenova posts with default accounts, not per-line accounts.** An invoice posts one entry, from `AccountingControl.DefaultARAccountID` to `DefaultRevenueAccountID`. Invoice lines (`Freight`, `Accessorial`, `Memo`), accessorial charges and fuel surcharges carry no GL account. Customer payments use `DefaultCashAccountID`, `DefaultUnappliedCashAccountID` and `DefaultWriteOffAccountID`. So QuickBooks accounts map to these **roles**, and QuickBooks items map to line types and accessorial charges. Mapping individual GL accounts belongs to ledger mode (M6).
+- **Customers have no email or legal-name field.** Matching uses name, DOT/MC number, address and postal code. Carriers have name, DBA, DOT, MC and SCAC.
+- **Payment terms are a fixed string enum** (`Net10` to `Net90`, `DueOnReceipt`), and so are payment methods (`ACH`, `Check`, `Wire`, `Card`, `Cash`, `Other`).
+
+**Mapping targets.** `accounting_mappings.target_type` and the column that identifies the Trenova side:
+
+| `target_type` | Trenova side | QuickBooks kind | First used |
+|---|---|---|---|
+| `AccountRole` | `trenova_key`: `ARAccount`, `RevenueAccount`, `DepositAccount`, `WriteOffAccount`, `APAccount`, `PurchasedTransportationAccount` | Account | M3, M4 |
+| `LineType` | `trenova_key`: `Freight`, `Memo` | Item | M3 |
+| `AccessorialCharge` | `trenova_object_id` | Item | M3 |
+| `ItemRole` | `trenova_key`: `ShortPayWriteOff` | Item | M3 |
+| `Customer` | `trenova_object_id` | Customer | M3 |
+| `Carrier` | `trenova_object_id` | Vendor | M4 |
+| `PaymentTerm` | `trenova_key`: the enum value | Term | M3 |
+| `PaymentMethod` | `trenova_key`: the enum value | PaymentMethod | M3 |
+
+**States.** Every target has a row, so gaps are visible:
+- `Unmatched`: no candidate.
+- `Proposed`: the scorer or the model chose one.
+- `Confirmed`: a person or an approved agent action chose it. Only `Confirmed` rows reach payload builders.
+
+Rejecting a proposal returns the row to `Unmatched` and remembers the rejected id in `signals`, so it is never proposed again for that target. Re-scoring never touches `Confirmed` rows, or rows a person set by hand. A confirmed mapping whose QuickBooks record has gone inactive or been removed is flagged as needing attention; it is never changed on its own.
+
+**Eligibility.** Only active records are proposed. Category and Group items are never proposed, because they cannot appear on a document. Account roles filter by type:
+- AR: `Accounts Receivable`.
+- Revenue: `Income`.
+- Deposit: `Bank` or Undeposited Funds.
+- Write-off: `Expense` or `Other Expense`.
+- AP: `Accounts Payable`.
+- Purchased transportation: `Cost of Goods Sold` or `Expense`.
+
+**Scorer.** This is deterministic, uses `shared/stringutils` similarity, and records the reason sentence and signals for every proposal.
+- **Account role:** the exact account number (Trenova `AccountCode` against `AcctNum`) scores 0.99. Next is the name of the Trenova account behind the role against the QuickBooks name and fully qualified name. With no Trenova account set, the role's synonyms are used instead (for example "Undeposited Funds" for the deposit role). The only eligible account of its type scores 0.96.
+- **Items:** the accessorial code against `Sku` or name scores 0.99 when equal. Otherwise the description is compared with the name. Line types and the item role use synonym lists; `Freight`, for example, uses "Freight", "Linehaul" and "Line haul".
+- **Customers and vendors:** equal company names, legal suffixes stripped, score 0.97. Otherwise company-name similarity is used, and an equal postal code adds 0.02. For vendors, an MC or DOT number found in the vendor's account number scores 0.99. Candidates are narrowed by a token index first, so thousands of customers do not become millions of comparisons.
+- **Terms:** equal due days score 0.98. `DueOnReceipt` matches zero days.
+- **Payment methods:** a synonym table, for example `Card` matches "Credit Card", "Visa" and "Mastercard".
+- **Bands:** 0.95 and above is pre-checked in the review. 0.70 to 0.95 is shown with its reason. Below 0.70, the proposal is shown as "no confident match" with the top three candidates.
+
+**Model pass.** `TaskAccountingMapping` runs inside the reference refresh activity on Temporal, calling `CompletionService` directly.
+- It is only for targets below 0.70 that have candidates, at most 25 targets per call and 100 per refresh. It sends names and types only, never balances or amounts.
+- Its answer is accepted only if it names a supplied candidate. Accepted answers are capped at 0.90, so a model's pick is never pre-checked.
+- With no provider configured, or on the last failed attempt, the deterministic result stands.
+- Usage is attributed to feature `AccountingMapping` and subject `AccountingConnection`.
+
+**Setup step.** `setup_step` is `Mappings` after connecting and `Complete` once a person finishes the review. M3 inserts `StartDate` between them.
+- The review cannot finish while any required mapping is unconfirmed. The required set is the AR, revenue and deposit roles and the `Freight` line item.
+- Customers, vendors and accessorial items can be confirmed later, or created on demand when M3 first needs them.
+
+**Create in QuickBooks.** Items, customers and vendors can be created.
+- Every item is created with the confirmed revenue role's account as its income account, so an item cannot be created before that role is mapped.
+- The `requestid` is derived from the connection, the mapping and its version, so a retry replays rather than duplicating. A duplicate-name answer offers the existing record instead.
+- Accounts, terms and payment methods are never created from Trenova: they are the bookkeeper's.
+
+**Refresh.** `RefreshAccountingReferenceWorkflow` runs:
+- on connect;
+- daily, for every active connection;
+- on demand.
+
+One workflow per connection (`accounting-reference:<connectionID>`) deduplicates concurrent requests. A record not returned by a complete pull is marked removed.
+
+**Deferred to M3, with the records they depend on.** Usage counts and the remap guard (`acknowledgeHistory`) need `accounting_sync_records`. So do the sync start date and backfill.
+
 
 ---
 

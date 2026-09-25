@@ -300,6 +300,69 @@ func (r *connectionRepository) MarkWebhookReceived(
 	return results.RowsAffected()
 }
 
+func (r *connectionRepository) MarkReferenceRefresh(
+	ctx context.Context,
+	req repositories.MarkAccountingReferenceRefreshRequest,
+) error {
+	if req.StartedAt == nil && req.RefreshedAt == nil && req.Error == "" {
+		return nil
+	}
+
+	cols := buncolgen.AccountingConnectionColumns
+	query := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*accountingsync.AccountingConnection)(nil)).
+		WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		})
+	if req.StartedAt != nil {
+		query = query.Set(cols.ReferenceRefreshStartedAt.Set(), *req.StartedAt)
+	}
+	if req.RefreshedAt != nil {
+		query = query.Set(cols.ReferenceRefreshedAt.Set(), *req.RefreshedAt)
+	}
+	if req.RefreshedAt != nil || req.Error != "" {
+		query = setOrNull(query, cols.ReferenceRefreshError, req.Error)
+	}
+
+	results, err := query.Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return dberror.CheckRowsAffected(results, connectionEntity, req.ID.String())
+}
+
+func (r *connectionRepository) ListActive(
+	ctx context.Context,
+	req repositories.ListActiveAccountingConnectionsRequest,
+) ([]*accountingsync.AccountingConnection, error) {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+
+	entities := make([]*accountingsync.AccountingConnection, 0, limit)
+	cols := buncolgen.AccountingConnectionColumns
+
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		ExcludeColumn(tokenColumns()...).
+		Where(cols.Status.In(), bun.List(activeStatuses())).
+		Order(cols.ID.OrderAsc()).
+		Limit(limit)
+	if !req.AfterID.IsNil() {
+		query = query.Where(cols.ID.Gt(), req.AfterID)
+	}
+	if err := query.Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func setOrNull(q *bun.UpdateQuery, col buncolgen.Column, value string) *bun.UpdateQuery {
 	if value == "" {
 		return q.Set(col.SetNull())
