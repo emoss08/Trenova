@@ -45,6 +45,8 @@ export const ACCOUNTING_MAPPING_TARGET_TYPES: readonly AccountingMappingTargetTy
   "ItemRole",
   "Customer",
   "Carrier",
+  "Driver",
+  "GLAccount",
   "PaymentTerm",
   "PaymentMethod",
 ];

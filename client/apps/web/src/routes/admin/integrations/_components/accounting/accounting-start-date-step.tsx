@@ -36,6 +36,7 @@ export function AccountingStartDateStep({
     defaultValues: {
       startDate: connection.syncStartDate ?? getStartOfDay(),
       autoSync: connection.autoSync,
+      driverSettlements: connection.syncsDriverSettlements,
       backfill: false,
     },
   });
@@ -52,7 +53,7 @@ export function AccountingStartDateStep({
         <h3 className="text-base font-semibold">{t("Choose when sending starts")}</h3>
         <p className="text-foreground-muted text-sm">
           {t(
-            "Trenova sends invoices, credit and debit memos, customer payments and credit applications to {0} as they are posted. Documents dated before the start date are never sent, so anything you already entered in {0} by hand is not duplicated.",
+            "Trenova sends invoices, credit and debit memos, customer payments, credit applications, carrier settlements and their payments to {0} as they are posted. Documents dated before the start date are never sent, so anything you already entered in {0} by hand is not duplicated.",
             vendor.name,
           )}
         </p>
@@ -77,6 +78,18 @@ export function AccountingStartDateStep({
                 ? t("Each document is sent as soon as it is posted.")
                 : t("Each document waits in the sync ledger until someone releases it.")
             }
+            disabled={!canManage}
+          />
+        </FormControl>
+        <FormControl>
+          <SwitchField
+            name="driverSettlements"
+            control={control}
+            label={t("Send owner-operator settlements")}
+            description={t(
+              "Sends owner-operator settlements to {0} as bills to a vendor for each driver. Company driver pay is never sent; it belongs to your payroll system.",
+              vendor.name,
+            )}
             disabled={!canManage}
           />
         </FormControl>

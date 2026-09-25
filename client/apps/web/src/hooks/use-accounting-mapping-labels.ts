@@ -25,6 +25,8 @@ export function useAccountingMappingLabels(): AccountingMappingLabels {
       ItemRole: t("Item roles"),
       Customer: t("Customers"),
       Carrier: t("Carriers"),
+      Driver: t("Owner-operators"),
+      GLAccount: t("GL accounts"),
       PaymentTerm: t("Payment terms"),
       PaymentMethod: t("Payment methods"),
     };

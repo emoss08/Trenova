@@ -22,6 +22,7 @@ type DataTablePanelContainerProps = {
   title: string;
   description?: string;
   titleComponent?: React.ReactNode;
+  subtitle?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
   headerActions?: React.ReactNode;
@@ -34,6 +35,7 @@ export function DataTablePanelContainer({
   title,
   description,
   titleComponent,
+  subtitle,
   children,
   footer,
   headerActions,
@@ -62,6 +64,7 @@ export function DataTablePanelContainer({
                     {description}
                   </Dialog.Description>
                 )}
+                {subtitle}
               </div>
             )}
             <div className="flex items-center gap-1">

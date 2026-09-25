@@ -14,9 +14,15 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import type { UseFormReturn } from "react-hook-form";
-import { enableAccountingSync } from "@/lib/graphql/accounting-sync-ledger";
+import {
+  enableAccountingSync,
+  updateAccountingSyncSettings,
+} from "@/lib/graphql/accounting-sync-ledger";
 import type { AccountingAppFormValues } from "./accounting-app-schema";
-import type { AccountingStartDateValues } from "./accounting-start-date-schema";
+import type {
+  AccountingStartDateValues,
+  AccountingSyncSettingsValues,
+} from "./accounting-start-date-schema";
 import type { AccountingVendor } from "./accounting-vendors";
 
 export function useAccountingConnectionActions(vendor: AccountingVendor) {
@@ -138,6 +144,7 @@ export function useAccountingSyncSetupActions(
         integrationType: vendor.system,
         startDate: values.startDate,
         autoSync: values.autoSync,
+        driverSettlements: values.driverSettlements,
         backfill: values.backfill,
       }),
     form,
@@ -157,4 +164,38 @@ export function useAccountingSyncSetupActions(
   });
 
   return { enable };
+}
+
+export function useAccountingSyncSettingsAction(
+  vendor: AccountingVendor,
+  form: UseFormReturn<AccountingSyncSettingsValues>,
+) {
+  const t = useT();
+  const queryClient = useQueryClient();
+
+  return useApiMutation({
+    mutationFn: (values: AccountingSyncSettingsValues) =>
+      updateAccountingSyncSettings({
+        integrationType: vendor.system,
+        autoSync: values.autoSync,
+        driverSettlements: values.driverSettlements,
+      }),
+    form,
+    resourceName: vendor.name,
+    onSuccess: async (connection) => {
+      form.reset({
+        autoSync: connection.autoSync,
+        driverSettlements: connection.syncsDriverSettlements,
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queries.accountingSync.status(vendor.system).queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queries.accountingSync.syncSummary(vendor.system).queryKey,
+        }),
+      ]);
+      toast.success(t("Sync settings saved"));
+    },
+  });
 }

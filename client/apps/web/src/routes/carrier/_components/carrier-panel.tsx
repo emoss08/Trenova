@@ -1,3 +1,4 @@
+import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FormCreatePanel } from "@/components/form-create-panel";
 import { FormEditPanel } from "@/components/form-edit-panel";
@@ -68,6 +69,7 @@ export function CarrierPanel({ open, onOpenChange, mode, row }: DataTablePanelPr
         fieldKey="name"
         size="lg"
         formComponent={<CarrierTabbedForm carrierId={row?.id} />}
+        subtitle={(record) => <AccountingSyncStateLine objectId={record.id} className="text-xs" />}
       />
     );
   }

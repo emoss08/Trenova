@@ -337,6 +337,16 @@ function trenovaDocumentPath(record: AccountingSyncRecord): string | null {
       return recordPath("invoice", record.objectId);
     case "Customer":
       return recordPath("customer", record.objectId);
+    case "CarrierBill":
+    case "CarrierBillPayment":
+      return recordPath("carrier_settlement", record.objectId);
+    case "DriverBill":
+    case "DriverBillPayment":
+      return recordPath("driver_settlement", record.objectId);
+    case "CarrierVendor":
+      return recordPath("carrier", record.objectId);
+    case "DriverVendor":
+      return recordPath("worker", record.objectId);
     case "CustomerPayment":
     case "CreditApplication":
       return null;

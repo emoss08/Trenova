@@ -29,6 +29,7 @@ const mocks = vi.hoisted(() => ({
   saveAccountingApp: vi.fn(),
   removeAccountingApp: vi.fn(),
   enableAccountingSync: vi.fn(),
+  updateAccountingSyncSettings: vi.fn(),
   granted: new Set<string>(),
   assign: vi.fn(),
 }));
@@ -55,6 +56,7 @@ vi.mock("@/lib/graphql/accounting-sync", () => ({
 
 vi.mock("@/lib/graphql/accounting-sync-ledger", () => ({
   enableAccountingSync: mocks.enableAccountingSync,
+  updateAccountingSyncSettings: mocks.updateAccountingSyncSettings,
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -106,6 +108,8 @@ const connected: AccountingConnection = {
   syncStartDate: 1_780_000_000,
   syncEnabledAt: 1_780_000_000,
   autoSync: true,
+  driverSettlementsEnabledAt: null,
+  syncsDriverSettlements: false,
   pausedAt: null,
   pausedBy: null,
   pausedReason: "",
@@ -714,10 +718,17 @@ describe("QuickBooksIntegrationModal", () => {
 
     await waitFor(() => expect(mocks.enableAccountingSync).toHaveBeenCalledTimes(1));
     const [input] = mocks.enableAccountingSync.mock.calls[0] as [
-      { integrationType: string; startDate: number; autoSync: boolean; backfill: boolean },
+      {
+        integrationType: string;
+        startDate: number;
+        autoSync: boolean;
+        driverSettlements: boolean;
+        backfill: boolean;
+      },
     ];
     expect(input.integrationType).toBe("QuickBooksOnline");
     expect(input.autoSync).toBe(true);
+    expect(input.driverSettlements).toBe(false);
     expect(input.backfill).toBe(false);
     expect(input.startDate).toBeLessThanOrEqual(Math.floor(Date.now() / 1000));
     expect(Math.floor(Date.now() / 1000) - input.startDate).toBeLessThan(24 * 60 * 60 + 1);
@@ -740,6 +751,7 @@ describe("QuickBooksIntegrationModal", () => {
         integrationType: "QuickBooksOnline",
         startDate: 1_780_000_000,
         autoSync: true,
+        driverSettlements: false,
         backfill: true,
       }),
     );
@@ -766,7 +778,9 @@ describe("QuickBooksIntegrationModal", () => {
     mocks.enableAccountingSync.mockResolvedValue({ ...startDate, setupStep: "Complete" });
 
     renderModal();
-    await userEvent.click(await screen.findByRole("switch"));
+    await userEvent.click(
+      await screen.findByRole("switch", { name: "Send posted documents automatically" }),
+    );
     expect(
       screen.getByText("Each document waits in the sync ledger until someone releases it."),
     ).toBeInTheDocument();
@@ -791,5 +805,104 @@ describe("QuickBooksIntegrationModal", () => {
         "Choosing the start date needs manage access to the accounting integration.",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("sends owner-operator settlements only when asked at the start date step", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: startDate }));
+    mocks.enableAccountingSync.mockResolvedValue({ ...startDate, setupStep: "Complete" });
+
+    renderModal();
+    const driverSwitch = await screen.findByRole("switch", {
+      name: "Send owner-operator settlements",
+    });
+    expect(driverSwitch).not.toBeChecked();
+    await userEvent.click(driverSwitch);
+    await userEvent.click(screen.getByRole("button", { name: "Start sending" }));
+
+    await waitFor(() =>
+      expect(mocks.enableAccountingSync).toHaveBeenCalledWith(
+        expect.objectContaining({ driverSettlements: true }),
+      ),
+    );
+  });
+
+  it("changes how documents are sent after setup from the sync settings", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: connected }));
+    mocks.updateAccountingSyncSettings.mockResolvedValue({
+      ...connected,
+      driverSettlementsEnabledAt: 1_790_000_000,
+      syncsDriverSettlements: true,
+    });
+
+    renderModal();
+    const save = await screen.findByRole("button", { name: "Save" });
+    expect(save).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("switch", { name: "Send owner-operator settlements" }));
+    expect(
+      screen.getByText(
+        "Settlements posted from now on are sent. To send ones posted earlier, request a backfill from the sync ledger.",
+      ),
+    ).toBeInTheDocument();
+    await userEvent.click(save);
+
+    await waitFor(() =>
+      expect(mocks.updateAccountingSyncSettings).toHaveBeenCalledWith({
+        integrationType: "QuickBooksOnline",
+        autoSync: true,
+        driverSettlements: true,
+      }),
+    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "Save" })).toBeDisabled());
+  });
+
+  it("puts the sync settings back when the change is cancelled", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(
+      status({
+        connection: {
+          ...connected,
+          driverSettlementsEnabledAt: 1_790_000_000,
+          syncsDriverSettlements: true,
+        },
+      }),
+    );
+
+    renderModal();
+    const driverSwitch = await screen.findByRole("switch", {
+      name: "Send owner-operator settlements",
+    });
+    expect(driverSwitch).toBeChecked();
+    await userEvent.click(driverSwitch);
+    expect(driverSwitch).not.toBeChecked();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(driverSwitch).toBeChecked();
+    expect(mocks.updateAccountingSyncSettings).not.toHaveBeenCalled();
+  });
+
+  it("shows the sync settings read-only without manage access", async () => {
+    mocks.granted = new Set([READ, UPDATE]);
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: connected }));
+
+    renderModal();
+
+    expect(
+      await screen.findByRole("switch", { name: "Send owner-operator settlements" }),
+    ).toHaveAttribute("data-disabled");
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Changing how documents are sent needs manage access to the accounting integration.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show sync settings before setup is complete", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: startDate }));
+
+    renderModal();
+
+    expect(await screen.findByText("Choose when sending starts")).toBeInTheDocument();
+    expect(screen.queryByText("Sync settings")).not.toBeInTheDocument();
   });
 });

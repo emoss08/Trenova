@@ -16,6 +16,7 @@ import {
   ResumeAccountingSyncDocument,
   RetryAccountingSyncDocument,
   SkipAccountingSyncDocument,
+  UpdateAccountingSyncSettingsDocument,
   type AccountingBackfillFieldsFragment,
   type AccountingSyncAttemptsQuery,
   type AccountingSyncRecordFieldsFragment,
@@ -28,6 +29,7 @@ import {
   type RequestAccountingBackfillInput,
   type RetryAccountingSyncInput,
   type SkipAccountingSyncInput,
+  type UpdateAccountingSyncSettingsInput,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { AccountingConnection } from "./accounting-sync";
@@ -151,6 +153,17 @@ export async function enableAccountingSync(
     variables: { input },
   });
   return getFragmentData(AccountingConnectionFieldsFragmentDoc, data.enableAccountingSync);
+}
+
+export async function updateAccountingSyncSettings(
+  input: UpdateAccountingSyncSettingsInput,
+): Promise<AccountingConnection> {
+  const data = await requestGraphQL({
+    document: UpdateAccountingSyncSettingsDocument,
+    operationName: "UpdateAccountingSyncSettings",
+    variables: { input },
+  });
+  return getFragmentData(AccountingConnectionFieldsFragmentDoc, data.updateAccountingSyncSettings);
 }
 
 export async function pauseAccountingSync(

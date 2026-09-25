@@ -28,6 +28,7 @@ import { useState } from "react";
 import type { AccountingAppSettings } from "@/lib/graphql/accounting-sync";
 import { AccountingAppKeys } from "./accounting-app-keys";
 import { AccountingCompanyFacts } from "./accounting-company-facts";
+import { AccountingSyncSettings } from "./accounting-sync-settings";
 import type { AccountingVendor } from "./accounting-vendors";
 
 type AccountingConnectionPanelProps = {
@@ -156,6 +157,10 @@ export function AccountingConnectionPanel({
           {since(connection.lastWebhookAt) ?? <DescriptionEmpty />}
         </DescriptionItem>
       </DescriptionList>
+
+      {connection.setupStep === "Complete" ? (
+        <AccountingSyncSettings vendor={vendor} connection={connection} canManage={canManage} />
+      ) : null}
 
       <AccountingAppKeys vendor={vendor} app={app} connection={connection} canManage={canManage} />
 

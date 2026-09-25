@@ -24,6 +24,8 @@ fragment AccountingConnectionFields on AccountingConnection {
   syncStartDate
   syncEnabledAt
   autoSync
+  driverSettlementsEnabledAt
+  syncsDriverSettlements
   pausedAt
   pausedBy {
     id
@@ -397,6 +399,12 @@ query AccountingBackfills($integrationType: AccountingSystem!) {
 
 mutation EnableAccountingSync($input: EnableAccountingSyncInput!) {
   enableAccountingSync(input: $input) {
+    ...AccountingConnectionFields
+  }
+}
+
+mutation UpdateAccountingSyncSettings($input: UpdateAccountingSyncSettingsInput!) {
+  updateAccountingSyncSettings(input: $input) {
     ...AccountingConnectionFields
   }
 }

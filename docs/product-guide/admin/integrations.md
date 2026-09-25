@@ -83,9 +83,22 @@ Keywords: QuickBooks setup, connect accounting, Intuit sign in, accounting sync
    documents automatically** on to send each document as it is posted, or turn it off to hold each
    one in the [Sync ledger](/accounting/sync) until someone releases it. When the start date is in
    the past, tick **Also send documents already posted since the start date** to queue those too.
+   Turn on **Send owner-operator settlements** to also send owner-operator settlements as bills;
+   it is off unless you turn it on, and company driver pay is never sent.
 7. Select **Start sending**. From then on Trenova sends invoices, credit and debit memos, customer
-   payments and credit applications as they are posted, and checks the connection every fifteen
-   minutes.
+   payments, credit applications, carrier settlements and their payments as they are posted, and
+   checks the connection every fifteen minutes.
+
+### Change how documents are sent
+Keywords: automatic sync, hold documents, owner-operator settlements, 1099 drivers, driver bills
+1. Open [Integrations](/admin/integrations) and open the QuickBooks Online card.
+2. Under **Sync settings**, turn **Send posted documents automatically** on or off. When it is
+   off, each new document waits in the [Sync ledger](/accounting/sync) until someone releases it;
+   documents already held stay held.
+3. Turn **Send owner-operator settlements** on to send owner-operator settlements to QuickBooks
+   as bills, with a 1099 vendor for each driver. Settlements posted from then on are sent; request
+   a backfill from the [Sync ledger](/accounting/sync) to send earlier ones.
+4. Select **Save**.
 
 ### Use your own Intuit app
 Keywords: Intuit app keys, client ID, client secret, redirect URI, QuickBooks developer app, self-hosted QuickBooks
@@ -119,6 +132,7 @@ intelligence tabs need read access to carrier intelligence, and changing them ne
 
 Seeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs
 update access, and connecting, reconnecting or disconnecting needs manage access and must be done
-by a signed-in person, as do saving or removing the Intuit app keys and choosing the start date.
+by a signed-in person, as do saving or removing the Intuit app keys, choosing the start date and
+changing the sync settings.
 A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an
 item that links back here.

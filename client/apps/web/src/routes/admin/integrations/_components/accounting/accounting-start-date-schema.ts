@@ -8,9 +8,17 @@ export function accountingStartDateSchema(latestAllowed: number) {
       .positive({ error: "Choose the first day documents are sent from" })
       .max(latestAllowed, { error: "The start date cannot be in the future" }),
     autoSync: z.boolean(),
+    driverSettlements: z.boolean(),
     backfill: z.boolean(),
   });
 }
+
+export const accountingSyncSettingsSchema = z.object({
+  autoSync: z.boolean(),
+  driverSettlements: z.boolean(),
+});
+
+export type AccountingSyncSettingsValues = z.infer<typeof accountingSyncSettingsSchema>;
 
 export type AccountingStartDateValues = z.infer<ReturnType<typeof accountingStartDateSchema>>;
 

@@ -28047,7 +28047,7 @@
     ]
   },
   "Cancel": {
-    "sites": 262,
+    "sites": 263,
     "scope": [
       "ts"
     ],
@@ -29477,7 +29477,7 @@
     ]
   },
   "Carrier": {
-    "sites": 32,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -29485,6 +29485,7 @@
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "apps/web/hooks",
       "apps/web/lib",
       "routes/agent-control",
       "routes/benefits",
@@ -29992,15 +29993,6 @@
       "routes/carrier-invoice-matching"
     ]
   },
-  "Carrier mappings are created by the reference refresh": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/accountingmappingservice"
-    ]
-  },
   "Carrier marked reviewed": {
     "sites": 1,
     "scope": [
@@ -30139,6 +30131,16 @@
       "api/graphql"
     ]
   },
+  "Carrier settlement": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "apps/web/hooks"
+    ]
+  },
   "Carrier settlement batch": {
     "sites": 1,
     "scope": [
@@ -30195,11 +30197,12 @@
     ]
   },
   "Carrier settlement paid": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
@@ -30212,12 +30215,22 @@
       "domain/permission"
     ]
   },
-  "Carrier settlement posted": {
+  "Carrier settlement payment": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Carrier settlement posted": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
@@ -30240,11 +30253,12 @@
     ]
   },
   "Carrier settlement voided": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
@@ -30340,12 +30354,13 @@
     ]
   },
   "Carrier updated": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "apps/web/hooks"
     ]
   },
   "Carrier vetted": {
@@ -31775,6 +31790,15 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "Changing how documents are sent needs manage access to the accounting integration.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Changing somebody's hours needs a reason": {
@@ -55090,7 +55114,7 @@
       "routes/billing-queue"
     ]
   },
-  "Documents held, failed or skipped on their way to the accounting system, by the week they were queued, the reason and the kind of document": {
+  "Documents held, failed or skipped on their way to the accounting system, by the week they were queued, the reason and the kind of document; choose document types to see receivables or payables alone": {
     "sites": 1,
     "scope": [
       "go"
@@ -56345,6 +56369,15 @@
       "service/shipmenteventservice"
     ]
   },
+  "Driver records are not available": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "Driver reimbursement account": {
     "sites": 1,
     "scope": [
@@ -56352,6 +56385,15 @@
     ],
     "areas": [
       "routes/accounting-control"
+    ]
+  },
+  "Driver settlement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Driver settlement posting": {
@@ -58416,7 +58458,7 @@
     ]
   },
   "Each document is sent as soon as it is posted.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -58425,6 +58467,15 @@
     ]
   },
   "Each document waits in the sync ledger until someone releases it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Each document waits in the sync ledger until someone releases it. Documents already held stay held.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -71092,6 +71143,15 @@
       "routes/detention-policy"
     ]
   },
+  "Finish setting up {0} before changing how documents are sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "Finish setup": {
     "sites": 3,
     "scope": [
@@ -74337,6 +74397,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "GL accounts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "GL accounts used when driver settlements post to the ledger. These allocations feed the DriverWages and DriverBenefits cost categories, so cost-per-mile in Cost Control reflects actual driver pay.": {
@@ -118166,11 +118235,12 @@
     ]
   },
   "Owner-operator": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components"
     ]
@@ -118191,6 +118261,78 @@
     ],
     "areas": [
       "routes/escrow-account"
+    ]
+  },
+  "Owner-operator settlement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operator settlement paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operator settlement payment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operator settlement posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operator settlement voided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operator settlements are not sent to {0}; turn them on first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
+  "Owner-operator updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operators": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Owner:": {
@@ -146897,7 +147039,7 @@
     ]
   },
   "Save": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "ts"
     ],
@@ -147606,7 +147748,7 @@
     ]
   },
   "Saving...": {
-    "sites": 59,
+    "sites": 60,
     "scope": [
       "ts"
     ],
@@ -152815,6 +152957,15 @@
       "go/other"
     ]
   },
+  "Send owner-operator settlements": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Send persisted email message via provider": {
     "sites": 1,
     "scope": [
@@ -152843,7 +152994,7 @@
     ]
   },
   "Send posted documents automatically": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -153360,6 +153511,15 @@
       "routes/reports"
     ]
   },
+  "Sends owner-operator settlements to {0} as bills to a vendor for each driver. Company driver pay is never sent; it belongs to your payroll system.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Sends posted invoices to the customer's EDI partner as an EDI 210. Link an active outbound partner with a 210 document profile first, or every send is refused as unconfigured.": {
     "sites": 1,
     "scope": [
@@ -153408,6 +153568,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Sent as bills since {0}. Company driver pay is never sent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Sent back": {
@@ -155183,6 +155352,15 @@
     ],
     "areas": [
       "routes/accounting-control"
+    ]
+  },
+  "Settlements posted from now on are sent. To send ones posted earlier, request a backfill from the sync ledger.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Settlements posted to the GL and settlements already paid out.": {
@@ -164405,6 +164583,24 @@
       "apps/web/hooks"
     ]
   },
+  "Sync settings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Sync settings saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Sync status is unavailable right now.": {
     "sites": 1,
     "scope": [
@@ -167604,6 +167800,15 @@
       "routes/worker"
     ]
   },
+  "The GL account no longer exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "The GL date for this application. It must fall within an open fiscal period.": {
     "sites": 1,
     "scope": [
@@ -170305,6 +170510,15 @@
     ],
     "areas": [
       "routes/training-course"
+    ]
+  },
+  "The driver for this mapping no longer exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "The driver has no email address on file; provide one to send the invitation": {
@@ -184501,7 +184715,7 @@
       "routes/admin"
     ]
   },
-  "Trenova sends invoices, credit and debit memos, customer payments and credit applications to {0} as they are posted. Documents dated before the start date are never sent, so anything you already entered in {0} by hand is not duplicated.": {
+  "Trenova sends invoices, credit and debit memos, customer payments, credit applications, carrier settlements and their payments to {0} as they are posted. Documents dated before the start date are never sent, so anything you already entered in {0} by hand is not duplicated.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -209507,6 +209721,15 @@
     ],
     "areas": [
       "service/customfieldservice"
+    ]
+  },
+  "{0} is not a vendor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
     ]
   },
   "{0} is not a {1} key": {
