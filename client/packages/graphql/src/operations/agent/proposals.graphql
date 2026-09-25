@@ -30,6 +30,8 @@ fragment AgentProposalTableRowFields on AgentProposal {
   tainted
   egressClass
   heldBy
+  traceId
+  traceUrl
   version
   createdAt
   updatedAt
