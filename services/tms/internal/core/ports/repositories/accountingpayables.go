@@ -26,6 +26,12 @@ func (l *PayableJournalLine) NetMinor() int64 {
 	return l.DebitMinor - l.CreditMinor
 }
 
+type PayableDefaultAccounts struct {
+	Payable                 pulid.ID
+	PurchasedTransportation pulid.ID
+	Cash                    pulid.ID
+}
+
 type PayableSettlement struct {
 	Kind             PayableKind
 	ID               pulid.ID
@@ -45,6 +51,7 @@ type PayableSettlement struct {
 	PaymentReference string
 	PayableAccountID pulid.ID
 	BankAccountID    pulid.ID
+	Defaults         PayableDefaultAccounts
 	Lines            []PayableJournalLine
 	InvoiceNumbers   []string
 }

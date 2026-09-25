@@ -3,6 +3,10 @@ package carrierservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/uptrace/bun"
+
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -24,6 +28,8 @@ type Params struct {
 	Validator    *Validator
 	AuditService services.AuditService
 	Realtime     services.RealtimeService
+	DB           ports.DBConnection              `optional:"true"`
+	Sync         services.AccountingSyncEnqueuer `optional:"true"`
 }
 
 type Service struct {
@@ -33,6 +39,8 @@ type Service struct {
 	auditService services.AuditService
 	realtime     services.RealtimeService
 	observer     services.CarrierLifecycleObserver
+	db           ports.DBConnection
+	sync         services.AccountingSyncEnqueuer
 }
 
 func New(p Params) *Service {
@@ -42,7 +50,41 @@ func New(p Params) *Service {
 		validator:    p.Validator,
 		auditService: p.AuditService,
 		realtime:     p.Realtime,
+		db:           p.DB,
+		sync:         p.Sync,
 	}
+}
+
+func (s *Service) updateAndQueueSync(
+	ctx context.Context,
+	entity *carrier.Carrier,
+	original *carrier.Carrier,
+) (*carrier.Carrier, error) {
+	if s.db == nil || s.sync == nil {
+		return s.repo.Update(ctx, entity)
+	}
+
+	var updated *carrier.Carrier
+	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		var txErr error
+		if updated, txErr = s.repo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		if updated.SamePartyDetails(original) {
+			return nil
+		}
+		return services.EnqueueAccountingSync(txCtx, s.sync, services.VendorSyncRequest(
+			pagination.TenantInfo{OrgID: updated.OrganizationID, BuID: updated.BusinessUnitID},
+			accountingsync.SyncObjectCarrierVendor,
+			updated.ID,
+			updated.Name,
+			updated.Version,
+		))
+	})
+	if err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (s *Service) List(
@@ -246,7 +288,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	updatedEntity, err := s.repo.Update(ctx, entity)
+	updatedEntity, err := s.updateAndQueueSync(ctx, entity, original)
 	if err != nil {
 		log.Error("failed to update carrier", zap.Error(err))
 		return nil, err

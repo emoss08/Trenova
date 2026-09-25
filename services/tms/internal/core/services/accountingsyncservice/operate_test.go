@@ -188,7 +188,15 @@ func TestEnableSyncWithBackfillStartsOne(t *testing.T) {
 	assert.Equal(t, syncStartDate, started[0].RangeStart)
 	assert.Equal(t, *conn.SyncEnabledAt, started[0].RangeEnd,
 		"a backfill covers documents dated from the start date up to when sync began")
-	assert.Equal(t, accountingsync.BackfillObjectTypes(), started[0].ObjectTypes)
+	assert.Equal(t, []accountingsync.SyncObjectType{
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncObjectDebitMemo,
+		accountingsync.SyncObjectCreditMemo,
+		accountingsync.SyncObjectCustomerPayment,
+		accountingsync.SyncObjectCreditApplication,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncObjectCarrierBillPay,
+	}, started[0].ObjectTypes, "owner-operator settlements are left out while they are not sent")
 	assert.Equal(t, accountingsync.BackfillStatusQueued, started[0].Status)
 }
 

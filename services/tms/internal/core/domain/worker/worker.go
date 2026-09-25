@@ -251,3 +251,16 @@ func (w *Worker) BeforeAppendModel(_ context.Context, query bun.Query) error {
 
 	return nil
 }
+
+func (w *Worker) SamePartyDetails(other *Worker) bool {
+	if w == nil || other == nil {
+		return w == other
+	}
+	return w.FirstName == other.FirstName &&
+		w.LastName == other.LastName &&
+		w.Email == other.Email &&
+		w.AddressLine1 == other.AddressLine1 &&
+		w.City == other.City &&
+		w.StateID == other.StateID &&
+		w.PostalCode == other.PostalCode
+}

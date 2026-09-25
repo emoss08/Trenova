@@ -35,6 +35,18 @@ func documentLabel(objectType accountingsync.SyncObjectType, number string) stri
 		kind = "Customer"
 	case accountingsync.SyncObjectInvoice:
 		kind = "Invoice"
+	case accountingsync.SyncObjectCarrierVendor:
+		kind = "Carrier"
+	case accountingsync.SyncObjectDriverVendor:
+		kind = "Driver"
+	case accountingsync.SyncObjectCarrierBill:
+		kind = "Carrier settlement"
+	case accountingsync.SyncObjectDriverBill:
+		kind = "Owner-operator settlement"
+	case accountingsync.SyncObjectCarrierBillPay:
+		kind = "Payment of carrier settlement"
+	case accountingsync.SyncObjectDriverBillPay:
+		kind = "Payment of owner-operator settlement"
 	default:
 		kind = "Document"
 	}
@@ -75,38 +87,7 @@ func (s *Service) customerRef(
 	res *resolver,
 	customerID pulid.ID,
 ) (string, error) {
-	row, err := res.mapping(ctx, mappingTarget{
-		TargetType: accountingsync.TargetCustomer,
-		ObjectID:   customerID,
-	})
-	if err != nil {
-		return "", err
-	}
-	if row.State == accountingsync.MappingStateConfirmed && row.ExternalID != "" {
-		res.used[row.ID] = struct{}{}
-		return row.ExternalID, nil
-	}
-
-	dependency, err := s.enqueueDependency(ctx, sess, &services.AccountingSyncEnqueueRequest{
-		ObjectType:   accountingsync.SyncObjectCustomer,
-		ObjectID:     customerID,
-		ObjectNumber: row.TargetLabel,
-		Operation:    accountingsync.SyncOperationCreate,
-		Revision:     1,
-	})
-	if err != nil {
-		return "", err
-	}
-	if dependency == nil || dependency.Status == accountingsync.SyncStatusSynced ||
-		dependency.Status == accountingsync.SyncStatusSkipped {
-		return "", res.missing(row, mappingTarget{
-			TargetType: accountingsync.TargetCustomer,
-			ObjectID:   customerID,
-			Label:      "Customer " + row.TargetLabel,
-		})
-	}
-	s.kick(ctx, sess.tenant, sess.conn.ID)
-	return "", waitingOn(dependency, "Customer "+row.TargetLabel)
+	return s.partyRef(ctx, sess, res, accountingsync.SyncObjectCustomer, customerID)
 }
 
 func (s *Service) salesRef(
@@ -165,97 +146,6 @@ func (s *Service) salesRef(
 		)
 	}
 	return found.ExternalID, nil
-}
-
-func (s *Service) pushCustomer(
-	ctx context.Context,
-	sess *pushSession,
-	record *accountingsync.AccountingSyncRecord,
-) (*pushResult, error) {
-	res := newResolver(s, sess)
-	row, err := res.mapping(ctx, mappingTarget{
-		TargetType: accountingsync.TargetCustomer,
-		ObjectID:   record.ObjectID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if record.Operation == accountingsync.SyncOperationCreate {
-		if row.State == accountingsync.MappingStateConfirmed && row.ExternalID != "" {
-			res.used[row.ID] = struct{}{}
-			return finishedResult(sess, record, &services.AccountingDocumentResult{
-				ExternalID: row.ExternalID,
-				DocNumber:  row.ExternalName,
-			}, nil, res.mappingIDs())
-		}
-		created, createErr := s.mappingService.CreateReferenceRecord(
-			ctx,
-			&services.CreateAccountingReferenceRecordRequest{
-				TenantInfo: sess.tenant,
-				UserID:     sess.conn.ConnectedByID,
-				MappingID:  row.ID,
-				Source:     accountingsync.MappingSourceCreatedInProvider,
-			},
-		)
-		if createErr != nil {
-			return nil, customerCreateError(sess, row, createErr)
-		}
-		return finishedResult(sess, record, &services.AccountingDocumentResult{
-			ExternalID: created.ExternalID,
-			DocNumber:  created.ExternalName,
-		}, nil, []string{created.ID.String()})
-	}
-
-	if row.State != accountingsync.MappingStateConfirmed || row.ExternalID == "" {
-		return nil, &noopError{reason: "The customer is not mapped, so there is nothing to update"}
-	}
-	party, err := s.mappingService.CustomerParty(ctx, sess.tenant, record.ObjectID)
-	if err != nil {
-		return nil, err
-	}
-	doc := &services.AccountingCustomerDocument{
-		Auth:       sess.auth,
-		RequestID:  record.RequestID,
-		ExternalID: row.ExternalID,
-		Party:      *party,
-	}
-	written, err := sess.writer.UpsertCustomer(ctx, doc)
-	if err != nil {
-		return nil, err
-	}
-	res.used[row.ID] = struct{}{}
-	return finishedResult(sess, record, written, doc, res.mappingIDs())
-}
-
-func customerCreateError(
-	sess *pushSession,
-	row *accountingsync.AccountingMapping,
-	err error,
-) error {
-	if errortypes.IsNotFoundError(err) {
-		return blocked(accountingsync.SyncErrorNotFound, err.Error(), "Skip this record")
-	}
-	classified := sess.writer.ClassifyDocumentError(err)
-	if classified != nil && classified.Category == accountingsync.SyncErrorDuplicate {
-		return blocked(
-			accountingsync.SyncErrorMapping,
-			err.Error(),
-			"Map "+row.TargetLabel+" to the existing "+sess.providerName+" customer, then retry",
-		)
-	}
-	if classified != nil &&
-		(classified.Category.Retries() || classified.Category.WaitsOnConnection()) {
-		return err
-	}
-	if errortypes.IsBusinessError(err) || errortypes.IsError(err) {
-		return blocked(
-			accountingsync.SyncErrorValidation,
-			err.Error(),
-			"Correct the customer in Trenova or map it by hand, then retry",
-		)
-	}
-	return err
 }
 
 func (s *Service) pushSales(

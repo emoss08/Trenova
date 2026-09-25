@@ -638,7 +638,7 @@ func (s *Service) RequestBackfill(
 			"A backfill covers documents posted between the start date and when sync began",
 		)
 	}
-	types, err := backfillTypes(req.ObjectTypes)
+	types, err := backfillTypes(conn, req.ObjectTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -679,9 +679,24 @@ func (s *Service) RequestBackfill(
 }
 
 func backfillTypes(
+	conn *accountingsync.AccountingConnection,
 	requested []accountingsync.SyncObjectType,
 ) ([]accountingsync.SyncObjectType, error) {
-	allowed := accountingsync.BackfillObjectTypes()
+	allowed := make([]accountingsync.SyncObjectType, 0, len(accountingsync.BackfillObjectTypes()))
+	for _, typ := range accountingsync.BackfillObjectTypes() {
+		if typ.NeedsDriverSettlements() && !conn.SyncsDriverSettlements() {
+			if slices.Contains(requested, typ) {
+				return nil, errortypes.NewValidationError(
+					"objectTypes",
+					errortypes.ErrInvalid,
+					"Owner-operator settlements are not sent to {0}; turn them on first",
+					accountingsync.ProviderName(conn.IntegrationType),
+				)
+			}
+			continue
+		}
+		allowed = append(allowed, typ)
+	}
 	if len(requested) == 0 {
 		return allowed, nil
 	}

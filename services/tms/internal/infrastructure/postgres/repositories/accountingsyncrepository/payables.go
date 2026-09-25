@@ -91,7 +91,12 @@ func (r *payablesRepository) carrierSettlement(
 		out.PartyName = entity.Carrier.Name
 	}
 
-	var err error
+	control, err := r.accountingControl(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	out.Defaults = defaultAccounts(control)
+
 	if out.Lines, err = r.journalLines(
 		ctx,
 		req.TenantInfo,
@@ -99,9 +104,11 @@ func (r *payablesRepository) carrierSettlement(
 	); err != nil {
 		return nil, err
 	}
-	if out.BankAccountID, err = r.carrierBankAccount(ctx, req.TenantInfo, entity); err != nil {
+	paid, err := r.journalLines(ctx, req.TenantInfo, entity.PaidJournalBatchID)
+	if err != nil {
 		return nil, err
 	}
+	out.BankAccountID = carrierBankAccount(paid, entity, control)
 	if out.InvoiceNumbers, err = r.invoiceNumbers(ctx, req.TenantInfo, entity.ID); err != nil {
 		return nil, err
 	}
@@ -155,6 +162,7 @@ func (r *payablesRepository) driverSettlement(
 			),
 		)
 	}
+	out.Defaults = defaultAccounts(control)
 	if control != nil {
 		if out.PayableAccountID.IsNil() {
 			out.PayableAccountID = control.DefaultSettlementsPayableAccountID
@@ -240,27 +248,32 @@ func (r *payablesRepository) journalLines(
 	return out, nil
 }
 
-func (r *payablesRepository) carrierBankAccount(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+func carrierBankAccount(
+	paid []repositories.PayableJournalLine,
 	entity *carriersettlement.CarrierSettlement,
-) (pulid.ID, error) {
-	paid, err := r.journalLines(ctx, tenantInfo, entity.PaidJournalBatchID)
-	if err != nil {
-		return pulid.Nil, err
-	}
+	control *tenant.AccountingControl,
+) pulid.ID {
 	payable := pulid.ConvertFromPtr(entity.PostedAPAccountID)
 	for idx := range paid {
 		if paid[idx].AccountID != payable {
-			return paid[idx].AccountID, nil
+			return paid[idx].AccountID
 		}
 	}
-
-	control, err := r.accountingControl(ctx, tenantInfo)
-	if err != nil || control == nil {
-		return pulid.Nil, err
+	if control == nil {
+		return pulid.Nil
 	}
-	return control.DefaultCashAccountID, nil
+	return control.DefaultCashAccountID
+}
+
+func defaultAccounts(control *tenant.AccountingControl) repositories.PayableDefaultAccounts {
+	if control == nil {
+		return repositories.PayableDefaultAccounts{}
+	}
+	return repositories.PayableDefaultAccounts{
+		Payable:                 control.DefaultAPAccountID,
+		PurchasedTransportation: control.DefaultPurchasedTransportationAccountID,
+		Cash:                    control.DefaultCashAccountID,
+	}
 }
 
 func (r *payablesRepository) invoiceNumbers(

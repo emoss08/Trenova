@@ -277,8 +277,15 @@ func (s *Service) pushOne(
 	record *accountingsync.AccountingSyncRecord,
 ) (*pushResult, error) {
 	switch {
-	case record.ObjectType == accountingsync.SyncObjectCustomer:
-		return s.pushCustomer(ctx, sess, record)
+	case record.ObjectType == accountingsync.SyncObjectCustomer, record.ObjectType.IsVendor():
+		return s.pushParty(ctx, sess, record)
+	case record.ObjectType.IsBill():
+		if record.Operation == accountingsync.SyncOperationVoid {
+			return s.pushBillVoid(ctx, sess, record)
+		}
+		return s.pushBill(ctx, sess, record)
+	case record.ObjectType.IsBillPayment():
+		return s.pushBillPayment(ctx, sess, record)
 	case record.ObjectType.IsSalesDocument():
 		if record.Operation == accountingsync.SyncOperationVoid {
 			return s.pushSalesVoid(ctx, sess, record)

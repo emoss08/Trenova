@@ -18,7 +18,7 @@ const enqueueCall = "EnqueueAccountingSync"
 
 type postingPackage struct {
 	name          string
-	customerWrite bool
+	partyWrite    bool
 	enqueuePoints []string
 }
 
@@ -33,13 +33,21 @@ func postingPackages() []postingPackage {
 			"Service.ApplyCreditMemo",
 			"Service.UnapplyCreditMemoApplication",
 		}},
-		{name: "customerservice", customerWrite: true, enqueuePoints: []string{"Service.updateAndQueueSync"}},
+		{name: "customerservice", partyWrite: true, enqueuePoints: []string{"Service.updateAndQueueSync"}},
+		{name: "carriersettlementservice", enqueuePoints: []string{"Service.queueSync"}},
+		{name: "driversettlementservice", enqueuePoints: []string{"Service.queueSync"}},
+		{name: "carrierservice", partyWrite: true, enqueuePoints: []string{"Service.updateAndQueueSync"}},
+		{name: "workerservice", partyWrite: true, enqueuePoints: []string{"Service.updateAndQueueSync"}},
 	}
 }
 
 var postingAllowList = map[string]string{}
 
 var postedStatusPackages = []string{"invoice", "customerpayment"}
+
+var settlementStatusPackages = []string{"carriersettlement", "driversettlement"}
+
+var settlementSyncedStatuses = []string{"StatusPosted", "StatusPaid", "StatusVoided"}
 
 type postingFunc struct {
 	key      string
@@ -85,11 +93,17 @@ func funcKey(decl *ast.FuncDecl) string {
 
 func isPostedStatus(expr ast.Expr) bool {
 	sel, ok := expr.(*ast.SelectorExpr)
-	if !ok || sel.Sel.Name != "StatusPosted" {
+	if !ok {
 		return false
 	}
 	pkg, ok := sel.X.(*ast.Ident)
-	return ok && slices.Contains(postedStatusPackages, pkg.Name)
+	if !ok {
+		return false
+	}
+	if slices.Contains(settlementStatusPackages, pkg.Name) {
+		return slices.Contains(settlementSyncedStatuses, sel.Sel.Name)
+	}
+	return sel.Sel.Name == "StatusPosted" && slices.Contains(postedStatusPackages, pkg.Name)
 }
 
 func isStatusField(expr ast.Expr) bool {
@@ -118,7 +132,7 @@ func isRepoUpdate(sel *ast.SelectorExpr, receiver string) bool {
 func inspectPostingFunc(
 	fset *token.FileSet,
 	decl *ast.FuncDecl,
-	customerWrite bool,
+	partyWrite bool,
 ) *postingFunc {
 	typeName, receiver := receiverOf(decl)
 	fn := &postingFunc{
@@ -136,8 +150,8 @@ func inspectPostingFunc(
 					fn.enqueues = true
 				case callee.Sel.Name == "CreatePosting":
 					fn.sinks = append(fn.sinks, "creates a journal posting")
-				case customerWrite && isRepoUpdate(callee, receiver):
-					fn.sinks = append(fn.sinks, "writes the customer")
+				case partyWrite && isRepoUpdate(callee, receiver):
+					fn.sinks = append(fn.sinks, "writes a customer, carrier or worker")
 				}
 				if owner, ok := callee.X.(*ast.Ident); ok && receiver != "" && owner.Name == receiver {
 					fn.callees[typeName+"."+callee.Sel.Name] = struct{}{}
@@ -151,12 +165,12 @@ func inspectPostingFunc(
 		case *ast.AssignStmt:
 			for idx, lhs := range n.Lhs {
 				if idx < len(n.Rhs) && isStatusField(lhs) && isPostedStatus(n.Rhs[idx]) {
-					fn.sinks = append(fn.sinks, "writes a Posted status")
+					fn.sinks = append(fn.sinks, "writes a synced status")
 				}
 			}
 		case *ast.KeyValueExpr:
 			if isStatusField(n.Key) && isPostedStatus(n.Value) {
-				fn.sinks = append(fn.sinks, "writes a Posted status")
+				fn.sinks = append(fn.sinks, "writes a synced status")
 			}
 		}
 		return true
@@ -164,7 +178,7 @@ func inspectPostingFunc(
 	return fn
 }
 
-func buildPostingGraph(fset *token.FileSet, files []*ast.File, customerWrite bool) *postingGraph {
+func buildPostingGraph(fset *token.FileSet, files []*ast.File, partyWrite bool) *postingGraph {
 	graph := &postingGraph{funcs: map[string]*postingFunc{}, callers: map[string][]string{}}
 	for _, file := range files {
 		for _, decl := range file.Decls {
@@ -172,7 +186,7 @@ func buildPostingGraph(fset *token.FileSet, files []*ast.File, customerWrite boo
 			if !ok || fnDecl.Body == nil {
 				continue
 			}
-			fn := inspectPostingFunc(fset, fnDecl, customerWrite)
+			fn := inspectPostingFunc(fset, fnDecl, partyWrite)
 			graph.funcs[fn.key] = fn
 		}
 	}
@@ -186,9 +200,26 @@ func buildPostingGraph(fset *token.FileSet, files []*ast.File, customerWrite boo
 	return graph
 }
 
-func (g *postingGraph) covered(key string, visiting map[string]bool) bool {
+func (g *postingGraph) enqueuesVia(key string, visiting map[string]bool) bool {
 	fn := g.funcs[key]
 	if fn.enqueues {
+		return true
+	}
+	if visiting[key] {
+		return false
+	}
+	visiting[key] = true
+	defer delete(visiting, key)
+	for callee := range fn.callees {
+		if _, known := g.funcs[callee]; known && g.enqueuesVia(callee, visiting) {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *postingGraph) covered(key string, visiting map[string]bool) bool {
+	if g.enqueuesVia(key, map[string]bool{}) {
 		return true
 	}
 	callers := g.callers[key]
@@ -241,7 +272,7 @@ func TestEveryPostingPathEnqueues(t *testing.T) {
 	for _, pkg := range postingPackages() {
 		t.Run(pkg.name, func(t *testing.T) {
 			fset := token.NewFileSet()
-			graph := buildPostingGraph(fset, parsePackageDir(t, fset, filepath.Join("..", pkg.name)), pkg.customerWrite)
+			graph := buildPostingGraph(fset, parsePackageDir(t, fset, filepath.Join("..", pkg.name)), pkg.partyWrite)
 
 			sinks := 0
 			for _, fn := range graph.funcs {

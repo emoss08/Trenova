@@ -547,6 +547,10 @@ func BackfillObjectTypes() []SyncObjectType {
 		SyncObjectCreditMemo,
 		SyncObjectCustomerPayment,
 		SyncObjectCreditApplication,
+		SyncObjectCarrierBill,
+		SyncObjectCarrierBillPay,
+		SyncObjectDriverBill,
+		SyncObjectDriverBillPay,
 	}
 }
 
