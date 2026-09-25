@@ -59,6 +59,11 @@ type PTOBulkActionPayload struct {
 	FailureCount int                    `json:"failureCount"`
 }
 
+type PTOApprovalPlan struct {
+	Current  *worker.WorkerPTO
+	Approved *worker.WorkerPTO
+}
+
 type WorkerPTOService interface {
 	List(
 		ctx context.Context,
@@ -83,6 +88,10 @@ type WorkerPTOService interface {
 		ctx context.Context,
 		req *repositories.UpdatePTOStatusRequest,
 	) (*worker.WorkerPTO, error)
+	PreviewApprove(
+		ctx context.Context,
+		req *repositories.UpdatePTOStatusRequest,
+	) (*PTOApprovalPlan, error)
 	Reject(ctx context.Context, req *repositories.UpdatePTOStatusRequest) (*worker.WorkerPTO, error)
 	Cancel(ctx context.Context, req *repositories.UpdatePTOStatusRequest) (*worker.WorkerPTO, error)
 	CancelRequested(

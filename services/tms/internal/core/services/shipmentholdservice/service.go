@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -124,57 +123,9 @@ func (s *service) Create(
 	req *repositories.CreateShipmentHoldRequest,
 	actor *services.RequestActor,
 ) (*shipment.ShipmentHold, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Shipment hold request is required",
-		)
-	}
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
-	}
-
-	userID, err := requireHoldUser(actor)
+	entity, err := s.planCreate(ctx, req, actor)
 	if err != nil {
 		return nil, err
-	}
-
-	if err = s.ensureShipmentExists(ctx, req.ShipmentID, req.TenantInfo); err != nil {
-		return nil, err
-	}
-
-	reason, err := s.getActiveHoldReason(ctx, req.HoldReasonID, req.TenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	startedAt := timeutils.NowUnix()
-	if req.StartedAt != nil {
-		startedAt = *req.StartedAt
-	}
-
-	entity := &shipment.ShipmentHold{
-		ShipmentID:        req.ShipmentID,
-		OrganizationID:    req.TenantInfo.OrgID,
-		BusinessUnitID:    req.TenantInfo.BuID,
-		HoldReasonID:      idPtr(reason.ID),
-		Type:              reason.Type,
-		Severity:          reason.DefaultSeverity,
-		ReasonCode:        reason.Code,
-		Notes:             strings.TrimSpace(req.Notes),
-		Source:            shipment.HoldSourceUser,
-		BlocksDispatch:    reason.DefaultBlocksDispatch,
-		BlocksDelivery:    reason.DefaultBlocksDelivery,
-		BlocksBilling:     reason.DefaultBlocksBilling,
-		VisibleToCustomer: reason.DefaultVisibleToCustomer,
-		StartedAt:         startedAt,
-		CreatedByID:       idPtr(userID),
-	}
-	applyCreateOverrides(entity, req)
-
-	if multiErr := validateHold(entity); multiErr != nil {
-		return nil, multiErr
 	}
 
 	created, err := s.repo.Create(ctx, entity)
@@ -266,41 +217,12 @@ func (s *service) Release(
 	req *repositories.ReleaseShipmentHoldRequest,
 	actor *services.RequestActor,
 ) (*shipment.ShipmentHold, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Shipment hold request is required",
-		)
-	}
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
-	}
-
-	userID, err := requireHoldUser(actor)
+	original, toRelease, err := s.planRelease(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentHoldByIDRequest{
-		HoldID:     req.HoldID,
-		ShipmentID: req.ShipmentID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !original.IsActive() {
-		return nil, errortypes.NewBusinessError("Shipment hold is already released").
-			WithParam("holdId", req.HoldID.String())
-	}
-
-	releasedAt := timeutils.NowUnix()
-	toRelease := *original
-	toRelease.ReleasedAt = &releasedAt
-	toRelease.ReleasedByID = idPtr(userID)
-
-	released, err := s.repo.Release(ctx, &toRelease)
+	released, err := s.repo.Release(ctx, toRelease)
 	if err != nil {
 		return nil, err
 	}

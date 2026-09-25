@@ -2,6 +2,7 @@ package billingqueueservice
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
@@ -652,11 +653,7 @@ func (s *service) UpdateStatus(
 	actor *services.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if actor.IsAgent() {
-		return nil, errortypes.NewValidationError(
-			"actor",
-			errortypes.ErrForbidden,
-			"Agent principals cannot transition billing queue items; a human must decide",
-		)
+		return nil, errAgentCannotTransition()
 	}
 
 	var (
@@ -674,12 +671,8 @@ func (s *service) UpdateStatus(
 			return getErr
 		}
 
-		if !billingqueue.IsAllowedTransition(entity.Status, req.NewStatus) {
-			return errortypes.NewValidationError(
-				"status",
-				errortypes.ErrInvalidOperation,
-				"Cannot transition from {0} to {1}", string(entity.Status), string(req.NewStatus),
-			)
+		if transitionErr := checkStatusTransition(entity, req); transitionErr != nil {
+			return transitionErr
 		}
 
 		if req.NewStatus == billingqueue.StatusApproved {
@@ -690,9 +683,9 @@ func (s *service) UpdateStatus(
 
 		prev := *entity
 		previous = &prev
-		entity.Status = req.NewStatus
-
-		s.applyStatusFields(entity, req, actor)
+		if planErr := PlanStatusChange(entity, req, actor, timeutils.NowUnix()); planErr != nil {
+			return planErr
+		}
 
 		if multiErr := s.validator.ValidateUpdate(txCtx, entity); multiErr != nil {
 			return multiErr
@@ -1024,44 +1017,6 @@ func (s *service) guardSiblingPayersUnposted(
 	}
 
 	return nil
-}
-
-func (s *service) applyStatusFields(
-	entity *billingqueue.BillingQueueItem,
-	req *services.UpdateBillingQueueStatusRequest,
-	actor *services.RequestActor,
-) {
-	now := timeutils.NowUnix()
-
-	switch req.NewStatus {
-	case billingqueue.StatusInReview:
-		if entity.ReviewStartedAt == nil {
-			entity.ReviewStartedAt = &now
-		}
-		entity.ReviewCompletedAt = nil
-	case billingqueue.StatusApproved:
-		entity.ReviewCompletedAt = &now
-		if req.ReviewNotes != "" {
-			entity.ReviewNotes = req.ReviewNotes
-		}
-	case billingqueue.StatusPosted:
-		entity.ReviewCompletedAt = &now
-	case billingqueue.StatusSentBackToOps, billingqueue.StatusException:
-		entity.ExceptionReasonCode = req.ExceptionReasonCode
-		entity.ExceptionNotes = req.ExceptionNotes
-	case billingqueue.StatusCanceled:
-		userID := actor.UserID
-		entity.CanceledByID = &userID
-		entity.CanceledAt = &now
-		entity.CancelReason = req.CancelReason
-	case billingqueue.StatusReadyForReview:
-		entity.ExceptionReasonCode = nil
-		entity.ExceptionNotes = ""
-	case billingqueue.StatusOnHold:
-		if req.ReviewNotes != "" {
-			entity.ReviewNotes = req.ReviewNotes
-		}
-	}
 }
 
 func (s *service) logAction(

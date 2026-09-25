@@ -32,10 +32,10 @@ const ptoIDNote = "The id of the time-off request, from list_time_off. " +
 	"A worker id is not a request id."
 
 type approveWorkerPTOTool struct {
-	pto ptoDecider
+	pto ptoApprover
 }
 
-func newApproveWorkerPTOTool(pto ptoDecider) serviceports.AgentTool {
+func newApproveWorkerPTOTool(pto ptoApprover) serviceports.AgentTool {
 	return &approveWorkerPTOTool{pto: pto}
 }
 

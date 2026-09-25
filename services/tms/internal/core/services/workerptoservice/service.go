@@ -437,20 +437,8 @@ func (s *Service) transition(
 		}
 	}
 
-	if !current.Status.CanTransitionTo(params.target) {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"PTO is {0} and cannot be {1}",
-			strings.ToLower(string(current.Status)),
-			strings.ToLower(string(params.target)),
-		)
-	}
-
-	req.Status = params.target
-	req.Reason = strings.TrimSpace(req.Reason)
-	if req.ExpectedVersion == 0 {
-		req.ExpectedVersion = current.Version
+	if err := planTransition(current, req, params.target); err != nil {
+		return nil, err
 	}
 
 	if params.target == worker.PTOStatusApproved {
@@ -890,17 +878,7 @@ func (s *Service) requireAvailability(
 	pto *worker.WorkerPTO,
 	excludeID pulid.ID,
 ) error {
-	if s.ledger == nil {
-		return nil
-	}
-	availability, err := s.ledger.CheckAvailability(ctx, &ptoledgerservice.AvailabilityRequest{
-		TenantInfo:   tenantOf(pto),
-		WorkerID:     pto.WorkerID,
-		PTOType:      pto.Type,
-		Days:         pto.Days,
-		StartDate:    pto.StartDate,
-		ExcludePTOID: excludeID,
-	})
+	availability, err := s.checkAvailability(ctx, pto, excludeID)
 	if err != nil {
 		return err
 	}

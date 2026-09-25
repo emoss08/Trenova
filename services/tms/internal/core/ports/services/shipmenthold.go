@@ -32,4 +32,14 @@ type ShipmentHoldService interface {
 		req *repositories.ReleaseShipmentHoldRequest,
 		actor *RequestActor,
 	) (*shipment.ShipmentHold, error)
+	PreviewCreate(
+		ctx context.Context,
+		req *repositories.CreateShipmentHoldRequest,
+		actor *RequestActor,
+	) (*shipment.ShipmentHold, error)
+	PreviewRelease(
+		ctx context.Context,
+		req *repositories.ReleaseShipmentHoldRequest,
+		actor *RequestActor,
+	) (*shipment.ShipmentHold, error)
 }
