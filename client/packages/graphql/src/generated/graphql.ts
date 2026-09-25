@@ -271,10 +271,12 @@ export type AccountingReferenceKind =
 
 /** How far the organization has got through setting up the accounting sync. */
 export type AccountingSetupStep =
-  /** The required matches are confirmed and setup is finished. */
+  /** Setup is finished and documents dated from the start date are sent. */
   | 'Complete'
   /** Trenova records are being matched to the accounting system's records. */
-  | 'Mappings';
+  | 'Mappings'
+  /** The matches are confirmed; a start date has to be chosen before anything is sent. */
+  | 'StartDate';
 
 /** An accounting system Trenova keeps its books in step with. */
 export type AccountingSystem =
@@ -633,6 +635,7 @@ export type AgentSeverity =
 
 export type AgentSubjectType =
   | 'AccountingConnection'
+  | 'AccountingSyncRecord'
   | 'AssistantThread'
   | 'BankReceipt'
   | 'BillingQueueItem'
