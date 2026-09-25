@@ -1,0 +1,9 @@
+{
+  "QueryResponse": {
+    "PaymentMethod": [
+      { "Id": "2", "Name": "Check", "Type": "NON_CREDIT_CARD", "Active": true, "SyncToken": "0", "MetaData": { "LastUpdatedTime": "2024-01-01T00:00:00Z" } }
+    ],
+    "startPosition": 1,
+    "maxResults": 1
+  }
+}

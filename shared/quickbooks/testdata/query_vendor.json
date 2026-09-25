@@ -1,0 +1,21 @@
+{
+  "QueryResponse": {
+    "Vendor": [
+      {
+        "Id": "91",
+        "DisplayName": "Swift Haul Inc",
+        "CompanyName": "Swift Haul",
+        "PrimaryEmailAddr": { "Address": "billing@swifthaul.example" },
+        "BillAddr": { "Line1": "9 Depot Rd", "City": "Reno", "CountrySubDivisionCode": "NV", "PostalCode": "89501" },
+        "AcctNum": "MC-123456",
+        "Vendor1099": true,
+        "Active": true,
+        "CurrencyRef": { "value": "USD" },
+        "SyncToken": "0",
+        "MetaData": { "LastUpdatedTime": "2025-06-01T00:00:00Z" }
+      }
+    ],
+    "startPosition": 1,
+    "maxResults": 1
+  }
+}

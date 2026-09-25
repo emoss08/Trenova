@@ -1,0 +1,14 @@
+{
+  "Item": {
+    "Id": "150",
+    "Name": "Lumper Fee",
+    "FullyQualifiedName": "Lumper Fee",
+    "Description": "Lumper service",
+    "Type": "Service",
+    "Active": true,
+    "IncomeAccountRef": { "value": "79", "name": "Freight Income" },
+    "SyncToken": "0",
+    "MetaData": { "CreateTime": "2026-09-25T08:00:00-07:00", "LastUpdatedTime": "2026-09-25T08:00:00-07:00" }
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

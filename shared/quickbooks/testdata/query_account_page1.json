@@ -1,0 +1,37 @@
+{
+  "QueryResponse": {
+    "Account": [
+      {
+        "Id": "84",
+        "Name": "Accounts Receivable (A/R)",
+        "FullyQualifiedName": "Accounts Receivable (A/R)",
+        "AcctNum": "1200",
+        "Classification": "Asset",
+        "AccountType": "Accounts Receivable",
+        "AccountSubType": "AccountsReceivable",
+        "Active": true,
+        "SubAccount": false,
+        "CurrencyRef": { "value": "USD", "name": "United States Dollar" },
+        "SyncToken": "0",
+        "MetaData": { "CreateTime": "2025-01-10T09:00:00-08:00", "LastUpdatedTime": "2025-02-01T10:30:00-08:00" }
+      },
+      {
+        "Id": "79",
+        "Name": "Freight Income",
+        "FullyQualifiedName": "Income:Freight Income",
+        "Classification": "Revenue",
+        "AccountType": "Income",
+        "AccountSubType": "ServiceFeeIncome",
+        "Active": true,
+        "SubAccount": true,
+        "ParentRef": { "value": "78" },
+        "CurrencyRef": { "value": "USD" },
+        "SyncToken": "2",
+        "MetaData": { "LastUpdatedTime": "2025-03-05T12:00:00Z" }
+      }
+    ],
+    "startPosition": 1,
+    "maxResults": 2
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

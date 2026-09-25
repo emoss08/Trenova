@@ -1,0 +1,10 @@
+{
+  "QueryResponse": {
+    "Term": [
+      { "Id": "3", "Name": "Net 30", "Type": "STANDARD", "DueDays": 30, "Active": true, "SyncToken": "0", "MetaData": { "LastUpdatedTime": "2024-01-01T00:00:00Z" } },
+      { "Id": "1", "Name": "Due on receipt", "Type": "STANDARD", "DueDays": 0, "Active": true, "SyncToken": "0", "MetaData": { "LastUpdatedTime": "2024-01-01T00:00:00Z" } }
+    ],
+    "startPosition": 1,
+    "maxResults": 2
+  }
+}
