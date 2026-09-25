@@ -1935,6 +1935,11 @@ var DocumentControlColumns = struct {
 	EnableAIAssistedExtraction      Column // "enable_ai_assisted_extraction" → qualified: "dc.enable_ai_assisted_extraction"
 	ShipmentDraftAllowedResources   Column // "shipment_draft_allowed_resources" → qualified: "dc.shipment_draft_allowed_resources"
 	EnableFullTextIndexing          Column // "enable_full_text_indexing" → qualified: "dc.enable_full_text_indexing"
+	EnableCapture                   Column // "enable_capture" → qualified: "dc.enable_capture"
+	CaptureAutoFileCoverSheets      Column // "capture_auto_file_cover_sheets" → qualified: "dc.capture_auto_file_cover_sheets"
+	CaptureRetentionDays            Column // "capture_retention_days" → qualified: "dc.capture_retention_days"
+	CaptureMinAgentVersion          Column // "capture_min_agent_version" → qualified: "dc.capture_min_agent_version"
+	CaptureAllowAutoUpdate          Column // "capture_allow_auto_update" → qualified: "dc.capture_allow_auto_update"
 	Version                         Column // "version" → qualified: "dc.version"
 	CreatedAt                       Column // "created_at" → qualified: "dc.created_at"
 	UpdatedAt                       Column // "updated_at" → qualified: "dc.updated_at"
@@ -1952,6 +1957,11 @@ var DocumentControlColumns = struct {
 	EnableAIAssistedExtraction:      NewColumn("enable_ai_assisted_extraction", "dc"),
 	ShipmentDraftAllowedResources:   NewColumn("shipment_draft_allowed_resources", "dc"),
 	EnableFullTextIndexing:          NewColumn("enable_full_text_indexing", "dc"),
+	EnableCapture:                   NewColumn("enable_capture", "dc"),
+	CaptureAutoFileCoverSheets:      NewColumn("capture_auto_file_cover_sheets", "dc"),
+	CaptureRetentionDays:            NewColumn("capture_retention_days", "dc"),
+	CaptureMinAgentVersion:          NewColumn("capture_min_agent_version", "dc"),
+	CaptureAllowAutoUpdate:          NewColumn("capture_allow_auto_update", "dc"),
 	Version:                         NewColumn("version", "dc"),
 	CreatedAt:                       NewColumn("created_at", "dc"),
 	UpdatedAt:                       NewColumn("updated_at", "dc"),
@@ -1975,6 +1985,11 @@ var DocumentControlFieldMap = map[string]string{
 	"enableAiAssistedExtraction":      "enable_ai_assisted_extraction",
 	"shipmentDraftAllowedResources":   "shipment_draft_allowed_resources",
 	"enableFullTextIndexing":          "enable_full_text_indexing",
+	"enableCapture":                   "enable_capture",
+	"captureAutoFileCoverSheets":      "capture_auto_file_cover_sheets",
+	"captureRetentionDays":            "capture_retention_days",
+	"captureMinAgentVersion":          "capture_min_agent_version",
+	"captureAllowAutoUpdate":          "capture_allow_auto_update",
 	"version":                         "version",
 	"createdAt":                       "created_at",
 	"updatedAt":                       "updated_at",
@@ -1996,6 +2011,11 @@ var DocumentControlInsertableColumns = []string{
 	"enable_ai_assisted_extraction",
 	"shipment_draft_allowed_resources",
 	"enable_full_text_indexing",
+	"enable_capture",
+	"capture_auto_file_cover_sheets",
+	"capture_retention_days",
+	"capture_min_agent_version",
+	"capture_allow_auto_update",
 	"version",
 	"created_at",
 	"updated_at",
@@ -2064,6 +2084,11 @@ var DocumentControlFilter = struct {
 	EnableAIAssistedExtraction      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableAiAssistedExtraction" → DB: "enable_ai_assisted_extraction"
 	ShipmentDraftAllowedResources   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentDraftAllowedResources" → DB: "shipment_draft_allowed_resources"
 	EnableFullTextIndexing          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableFullTextIndexing" → DB: "enable_full_text_indexing"
+	EnableCapture                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enableCapture" → DB: "enable_capture"
+	CaptureAutoFileCoverSheets      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "captureAutoFileCoverSheets" → DB: "capture_auto_file_cover_sheets"
+	CaptureRetentionDays            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "captureRetentionDays" → DB: "capture_retention_days"
+	CaptureMinAgentVersion          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "captureMinAgentVersion" → DB: "capture_min_agent_version"
+	CaptureAllowAutoUpdate          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "captureAllowAutoUpdate" → DB: "capture_allow_auto_update"
 	Version                         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -2106,6 +2131,21 @@ var DocumentControlFilter = struct {
 	},
 	EnableFullTextIndexing: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("enableFullTextIndexing", op, value)
+	},
+	EnableCapture: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enableCapture", op, value)
+	},
+	CaptureAutoFileCoverSheets: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("captureAutoFileCoverSheets", op, value)
+	},
+	CaptureRetentionDays: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("captureRetentionDays", op, value)
+	},
+	CaptureMinAgentVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("captureMinAgentVersion", op, value)
+	},
+	CaptureAllowAutoUpdate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("captureAllowAutoUpdate", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/versionutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
@@ -35,6 +36,11 @@ type DocumentControl struct {
 	EnableAIAssistedExtraction      bool     `json:"enableAiAssistedExtraction"      bun:"enable_ai_assisted_extraction,type:BOOLEAN,notnull"`
 	ShipmentDraftAllowedResources   []string `json:"shipmentDraftAllowedResources"   bun:"shipment_draft_allowed_resources,type:VARCHAR(100)[],notnull,default:'{}'"`
 	EnableFullTextIndexing          bool     `json:"enableFullTextIndexing"          bun:"enable_full_text_indexing,type:BOOLEAN,notnull"`
+	EnableCapture                   bool     `json:"enableCapture"                   bun:"enable_capture,type:BOOLEAN,notnull,default:true"`
+	CaptureAutoFileCoverSheets      bool     `json:"captureAutoFileCoverSheets"      bun:"capture_auto_file_cover_sheets,type:BOOLEAN,notnull,default:true"`
+	CaptureRetentionDays            int      `json:"captureRetentionDays"            bun:"capture_retention_days,type:INTEGER,notnull,default:30"`
+	CaptureMinAgentVersion          string   `json:"captureMinAgentVersion"          bun:"capture_min_agent_version,type:VARCHAR(20),nullzero"`
+	CaptureAllowAutoUpdate          bool     `json:"captureAllowAutoUpdate"          bun:"capture_allow_auto_update,type:BOOLEAN,notnull,default:true"`
 	Version                         int64    `json:"version"                         bun:"version,type:BIGINT"`
 	CreatedAt                       int64    `json:"createdAt"                       bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                       int64    `json:"updatedAt"                       bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -54,12 +60,43 @@ func NewDefaultDocumentControl(orgID, buID pulid.ID) *DocumentControl {
 		EnableAIAssistedExtraction:      true,
 		ShipmentDraftAllowedResources:   []string{"shipment"},
 		EnableFullTextIndexing:          true,
+		EnableCapture:                   true,
+		CaptureAutoFileCoverSheets:      true,
+		CaptureRetentionDays:            DefaultCaptureRetentionDays,
+		CaptureAllowAutoUpdate:          true,
 	}
 }
+
+const (
+	// DefaultCaptureRetentionDays is how long an unfiled scan waits in intake
+	// before it is discarded. A month covers a slow billing cycle; longer and
+	// the queue fills with paper somebody decided not to file.
+	DefaultCaptureRetentionDays = 30
+	minCaptureRetentionDays     = 1
+	maxCaptureRetentionDays     = 365
+)
 
 func (dc *DocumentControl) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		dc,
+		validation.Field(
+			&dc.CaptureRetentionDays,
+			validation.Required.Error("Intake retention is required"),
+			validation.Min(minCaptureRetentionDays).
+				Error("Intake retention must be at least 1 day"),
+			validation.Max(maxCaptureRetentionDays).
+				Error("Intake retention must be at most 365 days"),
+		),
+		validation.Field(
+			&dc.CaptureMinAgentVersion,
+			validation.By(func(value any) error {
+				raw, _ := value.(string)
+				if raw == "" || versionutils.IsValid(raw) {
+					return nil
+				}
+				return errors.New("minimum version must look like 1.4.0")
+			}),
+		),
 		validation.Field(
 			&dc.ShipmentDraftAllowedResources,
 			validation.Each(validation.By(func(value any) error {
@@ -134,6 +171,9 @@ func (dc *DocumentControl) BeforeAppendModel(_ context.Context, query bun.Query)
 		}
 		if len(dc.ShipmentDraftAllowedResources) == 0 {
 			dc.ShipmentDraftAllowedResources = []string{"shipment"}
+		}
+		if dc.CaptureRetentionDays == 0 {
+			dc.CaptureRetentionDays = DefaultCaptureRetentionDays
 		}
 		dc.CreatedAt = now
 		dc.UpdatedAt = now

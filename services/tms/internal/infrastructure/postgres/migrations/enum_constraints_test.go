@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/stretchr/testify/require"
 )
@@ -269,6 +270,66 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 		{
 			name:   "ck_ai_audit_projector_state_source",
 			values: stringsOf(aiaudit.AllSources()),
+		},
+		{
+			name:   "ck_capture_devices_architecture",
+			values: stringsOf(capture.AllArchitectures()),
+		},
+		{
+			name:   "ck_capture_devices_status",
+			values: stringsOf(capture.AllDeviceStatuses()),
+		},
+		{
+			name:   "ck_capture_pairings_architecture",
+			values: stringsOf(capture.AllArchitectures()),
+		},
+		{
+			name:   "ck_capture_pairings_status",
+			values: stringsOf(capture.AllPairingStatuses()),
+		},
+		{
+			name:   "ck_capture_profiles_status",
+			values: stringsOf(capture.AllProfileStatuses()),
+		},
+		{
+			name:   "ck_capture_profiles_pixel_type",
+			values: stringsOf(capture.AllPixelTypes()),
+		},
+		{
+			name:   "ck_capture_profiles_separator_strategies",
+			values: stringsOf(capture.AllSeparatorStrategies()),
+		},
+		{
+			name:   "ck_capture_requests_mode",
+			values: stringsOf(capture.AllRequestModes()),
+		},
+		{
+			name:   "ck_capture_requests_status",
+			values: stringsOf(capture.AllRequestStatuses()),
+		},
+		{
+			name:   "ck_capture_requests_failure_code",
+			values: stringsOf(capture.AllRequestFailureCodes()),
+		},
+		{
+			name:   "ck_capture_batches_source",
+			values: stringsOf(capture.AllSources()),
+		},
+		{
+			name:   "ck_capture_batches_status",
+			values: stringsOf(capture.AllBatchStatuses()),
+		},
+		{
+			name:   "ck_capture_pages_status",
+			values: stringsOf(capture.AllPageStatuses()),
+		},
+		{
+			name:   "ck_capture_items_status",
+			values: stringsOf(capture.AllItemStatuses()),
+		},
+		{
+			name:   "ck_capture_items_suggestion_source",
+			values: stringsOf(capture.AllSuggestionSources()),
 		},
 	}
 

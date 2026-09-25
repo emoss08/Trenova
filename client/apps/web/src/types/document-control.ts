@@ -24,6 +24,11 @@ export const documentControlSchema = z.object({
   enableAiAssistedExtraction: z.boolean(),
   shipmentDraftAllowedResources: z.array(documentControlResourceSchema),
   enableFullTextIndexing: z.boolean(),
+  enableCapture: z.boolean(),
+  captureAutoFileCoverSheets: z.boolean(),
+  captureRetentionDays: z.number().int().min(1).max(365),
+  captureMinAgentVersion: optionalStringSchema,
+  captureAllowAutoUpdate: z.boolean(),
 });
 
 export type DocumentControl = z.infer<typeof documentControlSchema>;
