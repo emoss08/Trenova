@@ -582,7 +582,7 @@ func (s *Service) CompleteSetup(
 			summary.ProviderName,
 		)
 	}
-	if conn.SetupStep == accountingsync.SetupStepComplete {
+	if conn.SetupStep != accountingsync.SetupStepMappings {
 		return conn, nil
 	}
 	if !summary.CanCompleteSetup {
@@ -594,7 +594,7 @@ func (s *Service) CompleteSetup(
 	}
 
 	before := jsonutils.MustToJSON(conn)
-	conn.SetupStep = accountingsync.SetupStepComplete
+	conn.FinishMappings()
 	updated, err := s.connections.Update(ctx, conn)
 	if err != nil {
 		return nil, err
@@ -609,7 +609,7 @@ func (s *Service) CompleteSetup(
 		PreviousState:  before,
 		OrganizationID: updated.OrganizationID,
 		BusinessUnitID: updated.BusinessUnitID,
-	}, auditservice.WithComment("Finished the "+summary.ProviderName+" setup")); logErr != nil {
+	}, auditservice.WithComment("Confirmed the "+summary.ProviderName+" mappings")); logErr != nil {
 		s.l.Error("failed to log accounting setup audit", zap.Error(logErr))
 	}
 	s.publishConnectionInvalidation(ctx, updated, req.UserID)

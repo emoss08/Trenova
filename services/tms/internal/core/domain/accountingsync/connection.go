@@ -2,6 +2,7 @@ package accountingsync
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -18,6 +19,7 @@ const (
 	FailingAfterConsecutiveFailures = 3
 	RefreshTokenWarningWindow       = int64(14 * 24 * 60 * 60)
 	RefreshTokenAbsoluteLifetime    = int64(5 * 365 * 24 * 60 * 60)
+	maxPausedReasonLength           = 500
 	maxErrorMessageLength           = 2000
 )
 
@@ -55,6 +57,12 @@ type AccountingConnection struct {
 	ReferenceRefreshStartedAt     *int64           `json:"referenceRefreshStartedAt"     bun:"reference_refresh_started_at,type:BIGINT,nullzero"`
 	ReferenceRefreshedAt          *int64           `json:"referenceRefreshedAt"          bun:"reference_refreshed_at,type:BIGINT,nullzero"`
 	ReferenceRefreshError         string           `json:"referenceRefreshError"         bun:"reference_refresh_error,type:TEXT,nullzero"`
+	SyncStartDate                 *int64           `json:"syncStartDate"                 bun:"sync_start_date,type:BIGINT,nullzero"`
+	SyncEnabledAt                 *int64           `json:"syncEnabledAt"                 bun:"sync_enabled_at,type:BIGINT,nullzero"`
+	AutoSync                      bool             `json:"autoSync"                      bun:"auto_sync,type:BOOLEAN,notnull"`
+	PausedAt                      *int64           `json:"pausedAt"                      bun:"paused_at,type:BIGINT,nullzero"`
+	PausedByID                    pulid.ID         `json:"pausedById"                    bun:"paused_by_id,type:VARCHAR(100),nullzero"`
+	PausedReason                  string           `json:"pausedReason"                  bun:"paused_reason,type:TEXT,nullzero"`
 	ConnectedByID                 pulid.ID         `json:"connectedById"                 bun:"connected_by_id,type:VARCHAR(100),nullzero"`
 	ConnectedAt                   int64            `json:"connectedAt"                   bun:"connected_at,type:BIGINT,notnull"`
 	DisconnectedByID              pulid.ID         `json:"disconnectedById"              bun:"disconnected_by_id,type:VARCHAR(100),nullzero"`
@@ -67,6 +75,7 @@ type AccountingConnection struct {
 	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty"   bun:"rel:belongs-to,join:business_unit_id=id"`
 	ConnectedBy    *tenant.User         `json:"connectedBy,omitempty"    bun:"rel:belongs-to,join:connected_by_id=id"`
 	DisconnectedBy *tenant.User         `json:"disconnectedBy,omitempty" bun:"rel:belongs-to,join:disconnected_by_id=id"`
+	PausedBy       *tenant.User         `json:"pausedBy,omitempty"       bun:"rel:belongs-to,join:paused_by_id=id"`
 }
 
 type TokenGrant struct {
@@ -116,6 +125,17 @@ func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Setup step is required"),
 			domainvalidation.ValidEnum[SetupStep]("Setup step is not recognized"),
 		),
+		validation.Field(&c.SyncStartDate, validation.By(func(any) error {
+			if c.SetupStep == SetupStepComplete &&
+				(c.SyncStartDate == nil || c.SyncEnabledAt == nil) {
+				return validation.NewError(
+					"required",
+					"A start date is required before documents are sent",
+				)
+			}
+			return nil
+		})),
+		validation.Field(&c.PausedReason, validation.Length(0, maxPausedReasonLength)),
 	))
 }
 
@@ -244,6 +264,56 @@ func (c *AccountingConnection) Disconnect(userID pulid.ID, now int64) {
 	c.ConsecutiveFailures = 0
 	c.LastErrorCategory = ""
 	c.LastErrorMessage = ""
+}
+
+func (c *AccountingConnection) IsSyncing() bool {
+	return c.IsActive() && c.SetupStep == SetupStepComplete &&
+		c.SyncStartDate != nil && c.SyncEnabledAt != nil
+}
+
+func (c *AccountingConnection) IsPaused() bool {
+	return c.PausedAt != nil
+}
+
+func (c *AccountingConnection) CanDispatch() bool {
+	return c.IsSyncing() && !c.IsPaused()
+}
+
+func (c *AccountingConnection) Covers(documentDate int64) bool {
+	return c.SyncStartDate != nil && documentDate >= *c.SyncStartDate
+}
+
+func (c *AccountingConnection) BooksClosedOn(documentDate int64) bool {
+	return c.ExternalBooksClosedThrough != nil && documentDate <= *c.ExternalBooksClosedThrough
+}
+
+func (c *AccountingConnection) FinishMappings() bool {
+	if c.SetupStep != SetupStepMappings {
+		return false
+	}
+	c.SetupStep = SetupStepStartDate
+	return true
+}
+
+func (c *AccountingConnection) EnableSync(startDate int64, autoSync bool, now int64) {
+	c.SyncStartDate = &startDate
+	c.AutoSync = autoSync
+	if c.SyncEnabledAt == nil {
+		c.SyncEnabledAt = &now
+	}
+	c.SetupStep = SetupStepComplete
+}
+
+func (c *AccountingConnection) Pause(userID pulid.ID, reason string, now int64) {
+	c.PausedAt = &now
+	c.PausedByID = userID
+	c.PausedReason = stringutils.TruncateRunes(strings.TrimSpace(reason), maxPausedReasonLength)
+}
+
+func (c *AccountingConnection) Resume() {
+	c.PausedAt = nil
+	c.PausedByID = pulid.Nil
+	c.PausedReason = ""
 }
 
 func (c *AccountingConnection) RecordWebhook(now int64) {
