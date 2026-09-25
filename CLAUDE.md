@@ -334,6 +334,17 @@ paths) and set `AudienceUserID` for anything addressed to one person. **Read
 `realtimeservice`, `infrastructure/realtimebroker`, the stream endpoint, or the
 browser `realtimeClient`**, and before adding a presence or typing scope.
 
+## AI Audit Trail
+
+`ai_audit_events` is an append-only, per-tenant hash chain, signed with keys kept outside the
+database (`aiAudit.chain.*`). One projector writes it from rows the agent runtime already
+records; nothing else may write it. **Read
+[docs/engineering/ai-audit-trail.md](docs/engineering/ai-audit-trail.md) before changing
+`aiauditservice`, `aiauditjobs`, `domain/aiaudit` (the canonical form is hashed, so a field
+change is a `hash_version` change), or any agent source table the projector reads.** A
+retention sweep that deletes agent rows must stay behind `SourcePruneHorizon`. Never remove a
+chain key while rows signed with it are retained.
+
 ## Bun ORM
 
 For help with Bun ORM, look in the [docs](docs/bun/).
