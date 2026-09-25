@@ -43,6 +43,7 @@ enum AITask {
   DailyBriefing
   QueryCompose
   InboundClassification
+  AccountingMapping
   EvaluationJudge
   Embedding
   AssistantChat

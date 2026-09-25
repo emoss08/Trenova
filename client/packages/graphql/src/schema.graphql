@@ -451,6 +451,7 @@ enum AIStructuredOutputMode {
 }
 
 enum AITask {
+  AccountingMapping
   AssistantChat
   BillingDiagnosis
   DailyBriefing
@@ -880,10 +881,20 @@ type AccountingConnection {
   lastFailureAt: Timestamp
   lastSuccessAt: Timestamp
   lastWebhookAt: Timestamp
+  """Why the last reference data refresh failed. Empty when it succeeded."""
+  referenceRefreshError: String!
+  """
+  When the running reference data refresh started. Absent when none has started.
+  """
+  referenceRefreshStartedAt: Timestamp
+  """When the reference data was last pulled in full."""
+  referenceRefreshedAt: Timestamp
   """
   When the authorization's five-year limit runs out and someone must reconnect.
   """
   refreshTokenAbsoluteExpiresAt: Timestamp!
+  """How far setup has got. Syncing waits until it is Complete."""
+  setupStep: AccountingSetupStep!
   status: AccountingConnectionStatus!
   updatedAt: Timestamp!
   version: Int!
@@ -913,6 +924,195 @@ enum AccountingErrorCategory {
   Transient
   Unauthorized
   Unknown
+}
+
+"""
+Which accounting system record a Trenova record or setting is sent as.
+
+Only confirmed mappings are used when syncing. A proposal is Trenova's
+suggestion and waits for a person.
+"""
+type AccountingMapping {
+  candidates: [AccountingMappingCandidate!]!
+  """How sure Trenova is of a proposal, from 0 to 1."""
+  confidence: Float
+  confirmedAt: Timestamp
+  confirmedBy: User
+  createdAt: Timestamp!
+  externalId: String!
+  externalName: String!
+  id: ID!
+  matchers: [AccountingMappingMatcher!]!
+  """
+  Whether the proposal is sure enough to be ticked for confirmation by default.
+  """
+  prechecked: Boolean!
+  """The kind of accounting system record it maps to."""
+  providerKind: AccountingReferenceKind!
+  reason: String!
+  """Whether setup cannot finish until this mapping is confirmed."""
+  required: Boolean!
+  source: AccountingMappingSource
+  state: AccountingMappingState!
+  targetLabel: String!
+  targetType: AccountingMappingTargetType!
+  """
+  The Trenova setting, for account roles, line types, item roles, terms and payment methods.
+  """
+  trenovaKey: String!
+  """The Trenova record, for accessorial charges, customers and carriers."""
+  trenovaObjectId: ID
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""A record the scorer or the model considered for a mapping."""
+type AccountingMappingCandidate {
+  externalId: String!
+  name: String!
+  reason: String!
+  """How well it matches, from 0 to 1."""
+  score: Float!
+}
+
+type AccountingMappingConnection {
+  edges: [AccountingMappingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AccountingMappingEdge {
+  cursor: String!
+  node: AccountingMapping!
+}
+
+input AccountingMappingFilterInput {
+  requiredOnly: Boolean
+  """Matches the Trenova label or the chosen record's name."""
+  search: String
+  states: [AccountingMappingState!]
+  targetTypes: [AccountingMappingTargetType!]
+}
+
+"""How many mappings of one kind are in each state."""
+type AccountingMappingGroup {
+  confirmed: Int!
+  proposed: Int!
+  targetType: AccountingMappingTargetType!
+  unmatched: Int!
+}
+
+"""A rule that matched when the proposal was made."""
+type AccountingMappingMatcher {
+  matcher: String!
+  score: Float!
+}
+
+"""Who chose the record a mapping points at."""
+enum AccountingMappingSource {
+  """An agent chose it."""
+  Agent
+  """Trenova created the record in the accounting system for it."""
+  CreatedInProvider
+  """A person chose it."""
+  Manual
+  """A model picked it from the listed candidates."""
+  Model
+  """Trenova matched it on numbers, names or identifiers."""
+  Suggested
+}
+
+"""Where a mapping stands."""
+enum AccountingMappingState {
+  """
+  A person confirmed the record. Only confirmed mappings are used when syncing.
+  """
+  Confirmed
+  """Trenova suggests a record, which a person has not confirmed yet."""
+  Proposed
+  """Nothing is chosen yet."""
+  Unmatched
+}
+
+"""Where the organization's mappings stand for one accounting system."""
+type AccountingMappingSummary {
+  canCompleteSetup: Boolean!
+  """Absent until the organization first connects."""
+  connection: AccountingConnection
+  groups: [AccountingMappingGroup!]!
+  integrationType: AccountingSystem!
+  providerName: String!
+  requiredConfirmed: Int!
+  requiredTotal: Int!
+}
+
+"""The kind of Trenova record or setting a mapping is for."""
+enum AccountingMappingTargetType {
+  AccessorialCharge
+  """A role an account plays, such as accounts receivable or revenue."""
+  AccountRole
+  Carrier
+  Customer
+  """A role an item plays, such as the short-pay write-off."""
+  ItemRole
+  """An invoice line type."""
+  LineType
+  PaymentMethod
+  PaymentTerm
+}
+
+"""A kind of record kept in the accounting system."""
+enum AccountingReferenceKind {
+  Account
+  Customer
+  Item
+  PaymentMethod
+  Term
+  Vendor
+}
+
+"""A record Trenova has read from the accounting system."""
+type AccountingReferenceObject {
+  accountSubType: String!
+  accountType: String!
+  active: Boolean!
+  city: String!
+  companyName: String!
+  currencyCode: String!
+  description: String!
+  """Days until an invoice under this term is due."""
+  dueDays: Int
+  email: String!
+  """The record's ID in the accounting system."""
+  externalId: String!
+  """The name with its parents, such as "Income:Freight Income"."""
+  fullyQualifiedName: String!
+  id: ID!
+  itemType: String!
+  kind: AccountingReferenceKind!
+  """The name to show a person."""
+  label: String!
+  name: String!
+  """The account number or item SKU."""
+  number: String!
+  postalCode: String!
+  """When a full refresh stopped returning the record."""
+  removedAt: Timestamp
+  state: String!
+  """
+  Whether the record can be chosen: active, not removed, and not a category or group item.
+  """
+  usable: Boolean!
+}
+
+"""
+How far the organization has got through setting up the accounting sync.
+"""
+enum AccountingSetupStep {
+  """The required matches are confirmed and setup is finished."""
+  Complete
+  """Trenova records are being matched to the accounting system's records."""
+  Mappings
 }
 
 """What an organization's link to one accounting system looks like."""
@@ -5242,6 +5442,13 @@ enum ConfigurationVisibility {
   Shared
 }
 
+"""A proposal to confirm, with the record it proposed when it was shown."""
+input ConfirmAccountingMappingInput {
+  """The proposed record's ID in the accounting system, as shown."""
+  externalId: String!
+  id: ID!
+}
+
 enum CostBehavior {
   Fixed
   Variable
@@ -5337,6 +5544,13 @@ enum CoverageTier {
   EmployeeChildren
   EmployeeSpouse
   Family
+}
+
+"""Creates the record in the accounting system and maps to it."""
+input CreateAccountingReferenceRecordInput {
+  mappingId: ID!
+  """The name to create it under. Defaults to the Trenova record's name."""
+  name: String
 }
 
 """Exactly one of the four."""
@@ -12485,6 +12699,10 @@ type Mutation {
   checkAccountingConnection(integrationType: AccountingSystem!): AccountingConnection!
   checkShipmentDuplicateBol(input: ShipmentDuplicateBolInput!): ShipmentValidationResponse!
   checkShipmentHazmatSegregation(input: ShipmentHazmatInput!): ShipmentValidationResponse!
+  """
+  Removes the chosen record so the mapping is unmatched again. Trenova will not propose that record for it again.
+  """
+  clearAccountingMapping(id: ID!): AccountingMapping!
   """Removes the caller's rating of a target; false when there was none."""
   clearMyAIFeedback(input: AIFeedbackTargetInput!): Boolean!
   clockIn(input: ClockInput!): TimeClockEntry!
@@ -12503,9 +12721,19 @@ type Mutation {
   Finishes connecting with what the provider returned. Only the person who started it can finish it.
   """
   completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection!
+  """Finishes setup once every required mapping is confirmed."""
+  completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
   completeClearinghouseQuery(input: CompleteClearinghouseQueryInput!): WorkerClearinghouseQuery!
   completeWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   completeWorkerTraining(input: CompleteWorkerTrainingInput!): WorkerTrainingRecord!
+  """
+  Confirms Trenova's proposals as they were shown. A proposal that changed since is refused. At most 200 at a time.
+  """
+  confirmAccountingMappings(input: [ConfirmAccountingMappingInput!]!): [AccountingMapping!]!
+  """
+  Creates an item, customer or vendor in the accounting system for the mapping and confirms it.
+  """
+  createAccountingReferenceRecord(input: CreateAccountingReferenceRecordInput!): AccountingMapping!
   createAgentEvalCase(input: CreateAgentEvalCaseInput!): AgentEvalCaseCapture!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!
   createBenefitPlan(input: BenefitPlanInput!): BenefitPlan!
@@ -12782,6 +13010,10 @@ type Mutation {
   recordWorkerEmploymentEvent(input: RecordWorkerEmploymentEventInput!): RecordWorkerEmploymentEventPayload!
   recordWorkerInjury(input: RecordWorkerInjuryInput!): WorkerInjury!
   """
+  Reads the accounting system's records again and refreshes the proposals.
+  """
+  refreshAccountingReferenceData(integrationType: AccountingSystem!): AccountingConnection!
+  """
   Writes today's page again from current figures, replacing what was there.
   """
   regenerateBriefing(input: TodaysBriefingInput!): Briefing!
@@ -12789,6 +13021,10 @@ type Mutation {
   Marks every source of one type stale; only chunks whose text changed are embedded again.
   """
   reindexAIRetrievalSource(sourceType: AIRetrievalSourceType!): AIRetrievalStatus!
+  """
+  Turns down a proposal. Trenova will not propose that record for it again.
+  """
+  rejectAccountingMapping(id: ID!): AccountingMapping!
   rejectCarrierInvoiceMatch(input: CarrierInvoiceMatchActionInput!): CarrierInvoiceMatch!
   rejectCarrierSettlement(input: CarrierSettlementActionInput!): CarrierSettlement!
   rejectDriverSettlement(input: DriverSettlementActionInput!): DriverSettlement!
@@ -12892,6 +13128,7 @@ type Mutation {
   """
   sendInvoiceEdi(force: Boolean, invoiceId: ID!): InvoiceEDISendResult!
   sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
+  setAccountingMapping(input: SetAccountingMappingInput!): AccountingMapping!
   """
   Sets who may use an agent. Needs permission to update agents and roles.
   """
@@ -14762,6 +14999,11 @@ type Query {
   accessorialCharges(input: DataTableConnectionInput!): AccessorialChargeConnection!
   accountType(id: ID!): AccountType
   accountTypes(input: DataTableConnectionInput!): AccountTypeConnection!
+  """How many mappings are in each state, and whether setup can finish."""
+  accountingMappingSummary(integrationType: AccountingSystem!): AccountingMappingSummary!
+  accountingMappings(after: String, filter: AccountingMappingFilterInput, first: Int, integrationType: AccountingSystem!): AccountingMappingConnection!
+  """Searches the accounting system records Trenova has read."""
+  accountingReferenceObjects(integrationType: AccountingSystem!, kind: AccountingReferenceKind!, limit: Int, query: String, usableOnly: Boolean): [AccountingReferenceObject!]!
   """
   The organization's link to an accounting system, and whether this instance can connect to it at all.
   """
@@ -17307,6 +17549,14 @@ type ServiceTypeConnection {
 type ServiceTypeEdge {
   cursor: String!
   node: ServiceType!
+}
+
+"""Chooses an accounting system record for a mapping and confirms it."""
+input SetAccountingMappingInput {
+  """The record's ID in the accounting system."""
+  externalId: String!
+  mappingId: ID!
+  reason: String
 }
 
 input SetAgentAccessInput {

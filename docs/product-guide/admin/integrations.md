@@ -7,6 +7,7 @@ related:
   - /dispatch/carrier-monitoring
   - /fuel/feed-runs
   - /fuel/configuration-files/surcharge
+  - /accounting/sync/mappings
 covers:
   - /admin/integrations/quickbooks/callback
 ---
@@ -71,9 +72,14 @@ Keywords: QuickBooks setup, connect accounting, Intuit sign in, accounting sync
    the company to connect. Trenova never sees the QuickBooks password.
 3. Intuit sends you back to Trenova, which finishes the connection and shows the company it
    connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books
-   closed through**. Check it is the right company, then select **Done**.
-4. Nothing is sent to QuickBooks yet. Trenova only reads the company's settings and checks the
-   connection every fifteen minutes.
+   closed through**. Check it is the right company, then select **Continue**.
+4. On **Match records**, Trenova reads the company's accounts, items, customers and vendors and
+   proposes a match for each Trenova record. Tick the proposals that are right and select the
+   confirm button, which names how many are ticked, or select a row to choose another record.
+5. When every required mapping is confirmed, select **Finish setup**. The rest can be done later
+   on [Mappings](/accounting/sync/mappings) (**Open all mappings**).
+6. Nothing is sent to QuickBooks yet. Trenova reads the company's settings and records and checks
+   the connection every fifteen minutes.
 
 ### Check or disconnect QuickBooks Online
 Keywords: QuickBooks not syncing, QuickBooks connection failing, reconnect QuickBooks, revoke QuickBooks

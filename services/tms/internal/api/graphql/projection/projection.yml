@@ -74,6 +74,14 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  AccountingMapping:
+    - required
+    - prechecked
+    - candidates
+    - matchers
+  AccountingReferenceObject:
+    - label
+    - usable
   FormSubmissionField:
     - label
     - value

@@ -3795,6 +3795,59 @@ models:
   AccountingSyncStatus:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AccountingSyncStatus
+  AccountingSetupStep:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.SetupStep
+  AccountingReferenceKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.ReferenceKind
+  AccountingMappingTargetType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.MappingTargetType
+  AccountingMappingState:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.MappingState
+  AccountingMappingSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.MappingSource
+  AccountingReferenceObject:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingReferenceObject
+    fields:
+      label:
+        resolver: true
+      usable:
+        resolver: true
+  AccountingMappingCandidate:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.MappingCandidate
+  AccountingMappingMatcher:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.MatcherSignal
+  AccountingMapping:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingMapping
+    fields:
+      trenovaObjectId:
+        resolver: true
+      source:
+        resolver: true
+      required:
+        resolver: true
+      prechecked:
+        resolver: true
+      candidates:
+        resolver: true
+      matchers:
+        resolver: true
+      confirmedBy:
+        resolver: true
+  AccountingMappingGroup:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingMappingGroup
+  AccountingMappingSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingMappingSummary
   AccountingAuthorizationStart:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AccountingAuthorizationStart

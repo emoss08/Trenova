@@ -10,3 +10,17 @@ import "github.com/emoss08/trenova/pkg/buncolgen"
 func (e *AccountingConnection) GetStaticFieldMap() map[string]string {
 	return buncolgen.AccountingConnectionFieldMap
 }
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingMapping].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AccountingMappingFieldMap] instead of parsing struct tags via reflection.
+func (e *AccountingMapping) GetStaticFieldMap() map[string]string {
+	return buncolgen.AccountingMappingFieldMap
+}
+
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingReferenceObject].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AccountingReferenceObjectFieldMap] instead of parsing struct tags via reflection.
+func (e *AccountingReferenceObject) GetStaticFieldMap() map[string]string {
+	return buncolgen.AccountingReferenceObjectFieldMap
+}

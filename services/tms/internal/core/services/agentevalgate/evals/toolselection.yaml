@@ -150,6 +150,18 @@ cases:
     expect: [get_accounting_sync_status, check_accounting_connection]
   - request: check the quickbooks connection again now
     expect: [check_accounting_connection, get_accounting_sync_status]
+  - request: what still needs mapping before quickbooks can sync
+    expect: [list_accounting_mapping_gaps]
+  - request: which quickbooks account does our revenue post to
+    expect: [get_accounting_mapping, list_accounting_mapping_gaps]
+  - request: map the detention charge to the Detention item in quickbooks
+    expect: [set_accounting_mapping, get_accounting_mapping]
+  - request: that customer mapping is wrong, unmap it
+    expect: [clear_accounting_mapping, get_accounting_mapping]
+  - request: create the lumper fee as an item in quickbooks
+    expect: [create_accounting_reference_record, get_accounting_mapping]
+  - request: I just added new accounts in quickbooks, pull them in
+    expect: [refresh_accounting_reference_data]
   - request: show the accounts receivable aging by customer
     expect: [get_ar_aging]
   - request: which customers owe us money over 90 days

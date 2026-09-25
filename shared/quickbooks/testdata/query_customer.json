@@ -1,0 +1,21 @@
+{
+  "QueryResponse": {
+    "Customer": [
+      {
+        "Id": "58",
+        "DisplayName": "Peak Distributing LLC",
+        "CompanyName": "Peak Distributing",
+        "FullyQualifiedName": "Peak Distributing LLC",
+        "PrimaryEmailAddr": { "Address": "ap@peakdistributing.example" },
+        "BillAddr": { "Line1": "100 Main St", "City": "Denver", "CountrySubDivisionCode": "CO", "PostalCode": "80202", "Country": "USA" },
+        "Active": true,
+        "Job": false,
+        "CurrencyRef": { "value": "USD" },
+        "SyncToken": "3",
+        "MetaData": { "LastUpdatedTime": "2025-05-01T00:00:00Z" }
+      }
+    ],
+    "startPosition": 1,
+    "maxResults": 1
+  }
+}

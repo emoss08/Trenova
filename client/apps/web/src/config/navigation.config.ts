@@ -953,6 +953,19 @@ const accountingModule: NavModule = {
       ],
     },
     {
+      id: "accounting-sync-group",
+      label: "Accounting sync",
+      defaultOpen: false,
+      items: [
+        {
+          id: "accounting-mappings",
+          label: "Mappings",
+          path: "/accounting/sync/mappings",
+          resource: Resource.AccountingIntegration,
+        },
+      ],
+    },
+    {
       id: "configuration-files-group",
       label: "Configuration files",
       kind: "configuration",

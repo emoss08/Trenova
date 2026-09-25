@@ -14,6 +14,10 @@ var AccountTypeSpec TypeSpec
 
 var AccountingConnectionSpec TypeSpec
 
+var AccountingMappingSpec TypeSpec
+
+var AccountingReferenceObjectSpec TypeSpec
+
 var AgentControlSpec TypeSpec
 
 var AgentDecisionSpec TypeSpec
@@ -1013,12 +1017,221 @@ func init() {
 				FieldMapKey: "disconnectedAt",
 			},
 			{
+				Name:        "setupStep",
+				FieldMapKey: "setupStep",
+			},
+			{
+				Name:        "referenceRefreshStartedAt",
+				FieldMapKey: "referenceRefreshStartedAt",
+			},
+			{
+				Name:        "referenceRefreshedAt",
+				FieldMapKey: "referenceRefreshedAt",
+			},
+			{
+				Name:        "referenceRefreshError",
+				FieldMapKey: "referenceRefreshError",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},
 			{
 				Name:        "updatedAt",
 				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AccountingMappingSpec = TypeSpec{
+		TypeName: "AccountingMapping",
+		FieldMap: buncolgen.AccountingMappingFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "targetType",
+				FieldMapKey: "targetType",
+			},
+			{
+				Name:        "trenovaObjectId",
+				FieldMapKey: "trenovaObjectId",
+			},
+			{
+				Name:        "trenovaKey",
+				FieldMapKey: "trenovaKey",
+			},
+			{
+				Name:        "targetLabel",
+				FieldMapKey: "targetLabel",
+			},
+			{
+				Name:        "providerKind",
+				FieldMapKey: "providerKind",
+			},
+			{
+				Name:        "externalId",
+				FieldMapKey: "externalId",
+			},
+			{
+				Name:        "externalName",
+				FieldMapKey: "externalName",
+			},
+			{
+				Name:        "state",
+				FieldMapKey: "state",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "confidence",
+				FieldMapKey: "confidence",
+			},
+			{
+				Name:        "reason",
+				FieldMapKey: "reason",
+			},
+			{
+				Name:    "required",
+				Special: "required",
+			},
+			{
+				Name:    "prechecked",
+				Special: "prechecked",
+			},
+			{
+				Name:    "candidates",
+				Special: "candidates",
+			},
+			{
+				Name:    "matchers",
+				Special: "matchers",
+			},
+			{
+				Name:        "confirmedBy",
+				FieldMapKey: "confirmedById",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:        "confirmedAt",
+				FieldMapKey: "confirmedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AccountingReferenceObjectSpec = TypeSpec{
+		TypeName: "AccountingReferenceObject",
+		FieldMap: buncolgen.AccountingReferenceObjectFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "kind",
+				FieldMapKey: "kind",
+			},
+			{
+				Name:        "externalId",
+				FieldMapKey: "externalId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "fullyQualifiedName",
+				FieldMapKey: "fullyQualifiedName",
+			},
+			{
+				Name:    "label",
+				Special: "label",
+			},
+			{
+				Name:        "number",
+				FieldMapKey: "number",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "accountType",
+				FieldMapKey: "accountType",
+			},
+			{
+				Name:        "accountSubType",
+				FieldMapKey: "accountSubType",
+			},
+			{
+				Name:        "itemType",
+				FieldMapKey: "itemType",
+			},
+			{
+				Name:        "companyName",
+				FieldMapKey: "companyName",
+			},
+			{
+				Name:        "email",
+				FieldMapKey: "email",
+			},
+			{
+				Name:        "city",
+				FieldMapKey: "city",
+			},
+			{
+				Name:        "state",
+				FieldMapKey: "state",
+			},
+			{
+				Name:        "postalCode",
+				FieldMapKey: "postalCode",
+			},
+			{
+				Name:        "currencyCode",
+				FieldMapKey: "currencyCode",
+			},
+			{
+				Name:        "dueDays",
+				FieldMapKey: "dueDays",
+			},
+			{
+				Name:        "active",
+				FieldMapKey: "active",
+			},
+			{
+				Name:        "removedAt",
+				FieldMapKey: "removedAt",
+			},
+			{
+				Name:    "usable",
+				Special: "usable",
 			},
 		},
 	}

@@ -1,8 +1,46 @@
+import { recordPath, type RecordEntityType } from "@/config/record-links";
 import type {
   AccountingConnectionStatus,
+  AccountingMappingFilterInput,
+  AccountingMappingState,
+  AccountingMappingTargetType,
+  AccountingReferenceKind,
+  AccountingSetupStep,
   AccountingSystem,
 } from "@trenova/graphql/generated/graphql";
 import type { StatusPhase } from "@trenova/shared/lib/status-phase";
+
+export const ACCOUNTING_MAPPINGS_PATH = "/accounting/sync/mappings";
+
+export const REFERENCE_REFRESH_STALE_SECONDS = 2 * 60 * 60;
+
+export const ACCOUNTING_MAPPING_TARGET_TYPES: readonly AccountingMappingTargetType[] = [
+  "AccountRole",
+  "LineType",
+  "AccessorialCharge",
+  "ItemRole",
+  "Customer",
+  "Carrier",
+  "PaymentTerm",
+  "PaymentMethod",
+];
+
+const MAPPING_PHASES: Record<AccountingMappingState, StatusPhase> = {
+  Unmatched: "attention",
+  Proposed: "awaiting",
+  Confirmed: "complete",
+};
+
+const CREATABLE_KINDS: ReadonlySet<AccountingReferenceKind> = new Set([
+  "Item",
+  "Customer",
+  "Vendor",
+]);
+
+const MAPPING_RECORD_ENTITIES: Partial<Record<AccountingMappingTargetType, RecordEntityType>> = {
+  Customer: "customer",
+  Carrier: "carrier",
+};
 
 export const ACCOUNTING_RECONNECT_WARNING_SECONDS = 14 * 24 * 60 * 60;
 
@@ -79,4 +117,86 @@ export function reconnectDeadlineNear(
 
 export function accountingSetupPath(system: AccountingSystem): string {
   return `/admin/integrations?type=${system}`;
+}
+
+export function accountingMappingPhase(state: AccountingMappingState): StatusPhase {
+  return MAPPING_PHASES[state];
+}
+
+export function referenceRefreshRunning(
+  connection: { referenceRefreshStartedAt?: number | null } | null | undefined,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): boolean {
+  const startedAt = connection?.referenceRefreshStartedAt;
+  return startedAt != null && nowSeconds - startedAt <= REFERENCE_REFRESH_STALE_SECONDS;
+}
+
+export function needsAccountingMappings(
+  connection:
+    | { status: AccountingConnectionStatus; setupStep: AccountingSetupStep }
+    | null
+    | undefined,
+): boolean {
+  return hasLiveAccountingConnection(connection) && connection?.setupStep === "Mappings";
+}
+
+export function mappingCheckKey(mapping: { id: string; externalId: string }): string {
+  return `${mapping.id}:${mapping.externalId}`;
+}
+
+export function checkedMappingConfirmations(
+  mappings: ReadonlyArray<{
+    id: string;
+    externalId: string;
+    state: AccountingMappingState;
+    prechecked: boolean;
+  }>,
+  overrides: Readonly<Record<string, boolean>>,
+): { id: string; externalId: string }[] {
+  return mappings
+    .filter(
+      (mapping) =>
+        mapping.state === "Proposed" && (overrides[mappingCheckKey(mapping)] ?? mapping.prechecked),
+    )
+    .map((mapping) => ({ id: mapping.id, externalId: mapping.externalId }));
+}
+
+export function accountingMappingRecordPath(mapping: {
+  targetType: AccountingMappingTargetType;
+  trenovaObjectId?: string | null;
+}): string | null {
+  const entity = MAPPING_RECORD_ENTITIES[mapping.targetType];
+  if (!entity || !mapping.trenovaObjectId) {
+    return null;
+  }
+  return recordPath(entity, mapping.trenovaObjectId);
+}
+
+export function accountingMappingFilterKey(filter: AccountingMappingFilterInput): string {
+  return JSON.stringify({
+    targetTypes: [...(filter.targetTypes ?? [])].sort(),
+    states: [...(filter.states ?? [])].sort(),
+    requiredOnly: filter.requiredOnly ?? false,
+    search: filter.search?.trim() ?? "",
+  });
+}
+
+export function accountingMappingCreatable(mapping: {
+  providerKind: AccountingReferenceKind;
+  state: AccountingMappingState;
+}): boolean {
+  return CREATABLE_KINDS.has(mapping.providerKind) && mapping.state !== "Confirmed";
+}
+
+export function accountingReferenceDetail(ref: {
+  accountType: string;
+  itemType: string;
+  number: string;
+  companyName: string;
+  city: string;
+  state: string;
+}): string {
+  return [ref.accountType || ref.itemType, ref.number, ref.companyName, ref.city, ref.state]
+    .filter(Boolean)
+    .join(" · ");
 }

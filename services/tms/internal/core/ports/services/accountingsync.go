@@ -79,4 +79,29 @@ type AccountingConnectionService interface {
 	) (*accountingsync.AccountingConnection, error)
 	CheckDue(ctx context.Context, limit int) (*AccountingHealthSweep, error)
 	ReceiveWebhook(ctx context.Context, req *ReceiveAccountingWebhookRequest) error
+	Session(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		connectionID pulid.ID,
+	) (*AccountingSession, error)
+	ReportCallFailure(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		connectionID pulid.ID,
+		cause error,
+	) accountingsync.ErrorCategory
+}
+
+type AccountingSession struct {
+	Connection  *accountingsync.AccountingConnection
+	AccessToken string
+	Connector   AccountingConnector
+}
+
+type AccountingReferenceRefresher interface {
+	RequestReferenceRefresh(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		connectionID pulid.ID,
+	) error
 }

@@ -1,0 +1,21 @@
+{
+  "QueryResponse": {
+    "Account": [
+      {
+        "Id": "41",
+        "Name": "Old Clearing",
+        "FullyQualifiedName": "Old Clearing",
+        "Classification": "Asset",
+        "AccountType": "Other Current Asset",
+        "AccountSubType": "OtherCurrentAssets",
+        "Active": false,
+        "SubAccount": false,
+        "SyncToken": "5",
+        "MetaData": { "LastUpdatedTime": "2024-11-01T00:00:00Z" }
+      }
+    ],
+    "startPosition": 3,
+    "maxResults": 1
+  },
+  "time": "2026-09-25T08:00:01.000-07:00"
+}

@@ -448,6 +448,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	customerrepository.New,
 	accountingcontrolrepository.New,
 	accountingsyncrepository.NewConnectionRepository,
+	accountingsyncrepository.NewReferenceRepository,
+	accountingsyncrepository.NewMappingRepository,
 	accountsreceivablerepository.New,
 	accountsreceivablerepository.NewAnalytics,
 	accounttyperepository.New,

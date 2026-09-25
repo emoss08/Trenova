@@ -37,6 +37,7 @@ func SamplingForTask(task aiprovider.Task) Sampling {
 	case aiprovider.TaskScopeClassification,
 		aiprovider.TaskDocumentClassification,
 		aiprovider.TaskInboundClassification,
+		aiprovider.TaskAccountingMapping,
 		// Compiling a sentence into a table's filters is the same kind of work:
 		// the answer is a structure checked against a catalogue afterwards, and
 		// the same question giving two different sets of filters is a defect

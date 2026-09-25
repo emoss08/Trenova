@@ -378,6 +378,14 @@ func taskDescriptors() []TaskDescriptor {
 				"afterwards, so the cheapest model that reads English reliably will do.",
 		},
 		{
+			Task:        aiprovider.TaskAccountingMapping,
+			Label:       "Accounting mapping",
+			Description: "Choose which accounting-system record matches a Trenova record when the name rules are unsure.",
+			VolumeGuidance: "Runs only for records the deterministic matcher could not settle, at most " +
+				"a hundred per refresh and usually a handful. It picks from a supplied list, so a " +
+				"small, inexpensive model is enough.",
+		},
+		{
 			Task:  aiprovider.TaskEvaluationJudge,
 			Label: "Evaluation judge",
 			Description: "Score a sample of agents' answers to their evaluation cases " +

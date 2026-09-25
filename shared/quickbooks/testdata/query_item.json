@@ -1,0 +1,30 @@
+{
+  "QueryResponse": {
+    "Item": [
+      {
+        "Id": "12",
+        "Name": "Detention",
+        "FullyQualifiedName": "Accessorials:Detention",
+        "Sku": "DET",
+        "Description": "Detention at shipper or consignee",
+        "Type": "Service",
+        "Active": true,
+        "IncomeAccountRef": { "value": "79", "name": "Freight Income" },
+        "ParentRef": { "value": "11" },
+        "SyncToken": "1",
+        "MetaData": { "LastUpdatedTime": "2025-04-01T00:00:00Z" }
+      },
+      {
+        "Id": "11",
+        "Name": "Accessorials",
+        "FullyQualifiedName": "Accessorials",
+        "Type": "Category",
+        "Active": true,
+        "SyncToken": "0",
+        "MetaData": { "LastUpdatedTime": "2025-04-01T00:00:00Z" }
+      }
+    ],
+    "startPosition": 1,
+    "maxResults": 2
+  }
+}

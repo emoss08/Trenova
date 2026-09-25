@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/shared/quickbooks"
+	"github.com/emoss08/trenova/shared/restx"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -21,8 +22,9 @@ var ErrNotConfigured = errors.New("quickbooks online is not configured on this i
 type Params struct {
 	fx.In
 
-	Config *config.Config
-	Logger *zap.Logger
+	Config  *config.Config
+	Logger  *zap.Logger
+	Limiter restx.Limiter `name:"accountingLimiter" optional:"true"`
 }
 
 type Connector struct {
@@ -44,6 +46,9 @@ func New(p Params) (*Connector, error) {
 		env:      env,
 		verifier: strings.TrimSpace(qbo.WebhookVerifierToken),
 		l:        p.Logger.Named("accounting.quickbooks"),
+	}
+	if p.Limiter != nil {
+		conn.apiOpts = append(conn.apiOpts, quickbooks.WithLimiter(p.Limiter, ""))
 	}
 	if !qbo.IsConfigured(&p.Config.App) {
 		return conn, nil

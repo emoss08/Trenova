@@ -181,6 +181,12 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"link_inbound_message":           {agent.EgressInternal},
 		"mark_inbound_message":           {agent.EgressInternal},
 		"check_accounting_connection":    {agent.EgressInternal},
+		"set_accounting_mapping":         {agent.EgressInternal},
+		"clear_accounting_mapping":       {agent.EgressInternal},
+		"create_accounting_reference_record": {
+			agent.EgressInternal,
+		},
+		"refresh_accounting_reference_data": {agent.EgressInternal},
 		"add_shipment_comment": {
 			agent.EgressInternal,
 			agent.EgressCustomerVisible,

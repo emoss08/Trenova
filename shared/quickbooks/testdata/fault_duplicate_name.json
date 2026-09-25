@@ -1,0 +1,14 @@
+{
+  "Fault": {
+    "Error": [
+      {
+        "Message": "Duplicate Name Exists Error",
+        "Detail": "The name supplied already exists. : Another product or service is already using this name. Please use a different name.",
+        "code": "6240",
+        "element": ""
+      }
+    ],
+    "type": "ValidationFault"
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

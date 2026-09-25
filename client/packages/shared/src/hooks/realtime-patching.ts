@@ -44,6 +44,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "attention",
   ],
   agent_run: ["agent-run-list", ["assistant", "agents"]],
+  accounting_integration: ["accountingSync"],
   assistant_artifact: [["assistant", "artifacts"]],
   // A reply starting or closing moves the "writing" markers and the
   // conversation's place in the list together.

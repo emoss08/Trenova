@@ -1,6 +1,6 @@
 {
-  "operationCount": 848,
-  "fragmentCount": 230,
+  "operationCount": 858,
+  "fragmentCount": 232,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -71,11 +71,112 @@
       "sdl": "query AccessorialChargeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  accessorialCharges(input: $input) {\n    edges {\n      node {\n        ...AccessorialChargeTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AccessorialChargeTableRowFields on AccessorialCharge {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  method\n  rateUnit\n  amount\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
+      "name": "AccountingMappings",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:ec5c15fcda7c5480585a4bceed9ee0a06b51a918213489948873b69815602e21",
+      "rootFields": [
+        "accountingMappings"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "filter",
+          "type": "AccountingMappingFilterInput",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingMappingFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingMappings($integrationType: AccountingSystem!, $first: Int, $after: String, $filter: AccountingMappingFilterInput) {\n  accountingMappings(\n    integrationType: $integrationType\n    first: $first\n    after: $after\n    filter: $filter\n  ) {\n    edges {\n      node {\n        ...AccountingMappingFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment AccountingMappingFields on AccountingMapping {\n  id\n  targetType\n  trenovaObjectId\n  trenovaKey\n  targetLabel\n  providerKind\n  externalId\n  externalName\n  state\n  source\n  confidence\n  reason\n  required\n  prechecked\n  candidates {\n    externalId\n    name\n    score\n    reason\n  }\n  confirmedBy {\n    id\n    name\n  }\n  confirmedAt\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "AccountingMappingSummary",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:86376103c7d6a75333ab51a8a17331b6d5e983221b3b636a774bc49e99e3a16c",
+      "rootFields": [
+        "accountingMappingSummary"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingMappingSummary($integrationType: AccountingSystem!) {\n  accountingMappingSummary(integrationType: $integrationType) {\n    integrationType\n    providerName\n    connection {\n      ...AccountingConnectionFields\n    }\n    groups {\n      targetType\n      unmatched\n      proposed\n      confirmed\n    }\n    requiredTotal\n    requiredConfirmed\n    canCompleteSetup\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "AccountingReferenceObjects",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:c17d6f7e89eb758f813e16f3f368e0e9ff1fa4675322e6635e0b404634c26497",
+      "rootFields": [
+        "accountingReferenceObjects"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        },
+        {
+          "name": "kind",
+          "type": "AccountingReferenceKind!",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "usableOnly",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingReferenceObjectFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingReferenceObjects($integrationType: AccountingSystem!, $kind: AccountingReferenceKind!, $query: String, $usableOnly: Boolean, $limit: Int) {\n  accountingReferenceObjects(\n    integrationType: $integrationType\n    kind: $kind\n    query: $query\n    usableOnly: $usableOnly\n    limit: $limit\n  ) {\n    ...AccountingReferenceObjectFields\n  }\n}\n\nfragment AccountingReferenceObjectFields on AccountingReferenceObject {\n  id\n  kind\n  externalId\n  label\n  number\n  accountType\n  accountSubType\n  itemType\n  companyName\n  city\n  state\n  postalCode\n  dueDays\n  active\n  usable\n}"
+    },
+    {
       "name": "AccountingSyncStatus",
       "kind": "query",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:16ae3e4e0f45221cfa86cfa3f45945ca826bfe1a692ac60eb2bed6644e18a3c6",
+      "hash": "sha256:18d656a85d8d6d2cd50789e32da3a8822079e6e1c95d70c87fb8c21b51edb827",
       "rootFields": [
         "accountingSyncStatus"
       ],
@@ -90,7 +191,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "query AccountingSyncStatus($integrationType: AccountingSystem!) {\n  accountingSyncStatus(integrationType: $integrationType) {\n    integrationType\n    providerName\n    available\n    connection {\n      ...AccountingConnectionFields\n    }\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  version\n  updatedAt\n}"
+      "sdl": "query AccountingSyncStatus($integrationType: AccountingSystem!) {\n  accountingSyncStatus(integrationType: $integrationType) {\n    integrationType\n    providerName\n    available\n    connection {\n      ...AccountingConnectionFields\n    }\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountTypeTable",
@@ -4059,7 +4160,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:8ddef940e7cccb5b77bf8ae81b1c7388a8eca497512c2e38e8558d75d3e0d172",
+      "hash": "sha256:91617e54bef69e91cb3f9e1963f300e278b3839720814caa60b69824e2cde851",
       "rootFields": [
         "checkAccountingConnection"
       ],
@@ -4074,7 +4175,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation CheckAccountingConnection($integrationType: AccountingSystem!) {\n  checkAccountingConnection(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  version\n  updatedAt\n}"
+      "sdl": "mutation CheckAccountingConnection($integrationType: AccountingSystem!) {\n  checkAccountingConnection(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "CheckShipmentDuplicateBol",
@@ -4115,6 +4216,28 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation CheckShipmentHazmatSegregation($input: ShipmentHazmatInput!) {\n  checkShipmentHazmatSegregation(input: $input) {\n    valid\n  }\n}"
+    },
+    {
+      "name": "ClearAccountingMapping",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:3a4c31af7f87007aa586714692ca62e827f49dca04f7581b88cbda6642fbc629",
+      "rootFields": [
+        "clearAccountingMapping"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingMappingFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ClearAccountingMapping($id: ID!) {\n  clearAccountingMapping(id: $id) {\n    ...AccountingMappingFields\n  }\n}\n\nfragment AccountingMappingFields on AccountingMapping {\n  id\n  targetType\n  trenovaObjectId\n  trenovaKey\n  targetLabel\n  providerKind\n  externalId\n  externalName\n  state\n  source\n  confidence\n  reason\n  required\n  prechecked\n  candidates {\n    externalId\n    name\n    score\n    reason\n  }\n  confirmedBy {\n    id\n    name\n  }\n  confirmedAt\n  version\n  updatedAt\n}"
     },
     {
       "name": "ClearMyAIFeedback",
@@ -4362,7 +4485,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:0f72c9060076527bca175381acc647bb7d87b6781c158b57125859bbb4484708",
+      "hash": "sha256:5e8309ec8536fdeb8d3094032ad9164f590931775d44ea2a65731d275f0a59e8",
       "rootFields": [
         "completeAccountingAuthorization"
       ],
@@ -4377,7 +4500,29 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation CompleteAccountingAuthorization($input: CompleteAccountingAuthorizationInput!) {\n  completeAccountingAuthorization(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  version\n  updatedAt\n}"
+      "sdl": "mutation CompleteAccountingAuthorization($input: CompleteAccountingAuthorizationInput!) {\n  completeAccountingAuthorization(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "CompleteAccountingSetup",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:038f16e955717a9140a5ca88e4f27ef065c7df44601662f98b92e6d581f940d9",
+      "rootFields": [
+        "completeAccountingSetup"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CompleteAccountingSetup($integrationType: AccountingSystem!) {\n  completeAccountingSetup(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "CompleteClearinghouseQuery",
@@ -4446,6 +4591,28 @@
       "sdl": "mutation CompleteWorkerTraining($input: CompleteWorkerTrainingInput!) {\n  completeWorkerTraining(input: $input) {\n    ...WorkerTrainingRecordFields\n  }\n}\n\nfragment WorkerTrainingRecordFields on WorkerTrainingRecord {\n  id\n  businessUnitId\n  organizationId\n  workerId\n  courseId\n  course {\n    id\n    businessUnitId\n    organizationId\n    code\n    name\n    description\n    category\n    status\n    delivery\n    contentUrl\n    durationMinutes\n    passingScore\n    validityMonths\n    renewalWindowDays\n    isRequired\n    requiredForDriverTypes\n    dueDaysAfterAssignment\n    requiresAcknowledgement\n    sortOrder\n    openRecordCount\n    version\n    createdAt\n    updatedAt\n  }\n  status\n  assignedAt\n  dueAt\n  startedAt\n  completedAt\n  expiresAt\n  score\n  passed\n  acknowledgedAt\n  documentId\n  document {\n    id\n    fileName\n    originalName\n    fileType\n    fileSize\n    createdAt\n  }\n  assignedById\n  assignedBy {\n    id\n    name\n  }\n  recordedById\n  recordedBy {\n    id\n    name\n  }\n  notes\n  waivedReason\n  health\n  daysUntilDue\n  daysUntilExpiry\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "ConfirmAccountingMappings",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:972c4c1295fdfd7686c0941ce7f6d05b5ef38e472d509a40063c660ed8af807b",
+      "rootFields": [
+        "confirmAccountingMappings"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "[ConfirmAccountingMappingInput!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingMappingFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ConfirmAccountingMappings($input: [ConfirmAccountingMappingInput!]!) {\n  confirmAccountingMappings(input: $input) {\n    ...AccountingMappingFields\n  }\n}\n\nfragment AccountingMappingFields on AccountingMapping {\n  id\n  targetType\n  trenovaObjectId\n  trenovaKey\n  targetLabel\n  providerKind\n  externalId\n  externalName\n  state\n  source\n  confidence\n  reason\n  required\n  prechecked\n  candidates {\n    externalId\n    name\n    score\n    reason\n  }\n  confirmedBy {\n    id\n    name\n  }\n  confirmedAt\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "CostingControlPage",
       "kind": "query",
       "domain": "cost-control",
@@ -4458,6 +4625,28 @@
       "fragments": [],
       "usages": [],
       "sdl": "query CostingControlPage {\n  costingControl {\n    id\n    businessUnitId\n    organizationId\n    fuelIndexId\n    fuelIndex {\n      id\n      name\n      code\n      source\n      fuelType\n      isActive\n    }\n    useLiveFuelPrice\n    milesPerGallon\n    includeDeadheadMiles\n    glActualsEnabled\n    glRollingMonths\n    plannedMonthlyMiles\n    targetMarginPercent\n    version\n    createdAt\n    updatedAt\n    categories {\n      id\n      category\n      name\n      costBehavior\n      rateSource\n      benchmarkRatePerMile\n      overrideRatePerMile\n      isActive\n      sortOrder\n      version\n      glAccounts {\n        id\n        glAccountId\n        accountCode\n        accountName\n      }\n    }\n  }\n}"
+    },
+    {
+      "name": "CreateAccountingReferenceRecord",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:38c54277694239f55cc2ee899869f98216caee08c3ca7f73614ac37eb2507710",
+      "rootFields": [
+        "createAccountingReferenceRecord"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CreateAccountingReferenceRecordInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingMappingFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CreateAccountingReferenceRecord($input: CreateAccountingReferenceRecordInput!) {\n  createAccountingReferenceRecord(input: $input) {\n    ...AccountingMappingFields\n  }\n}\n\nfragment AccountingMappingFields on AccountingMapping {\n  id\n  targetType\n  trenovaObjectId\n  trenovaKey\n  targetLabel\n  providerKind\n  externalId\n  externalName\n  state\n  source\n  confidence\n  reason\n  required\n  prechecked\n  candidates {\n    externalId\n    name\n    score\n    reason\n  }\n  confirmedBy {\n    id\n    name\n  }\n  confirmedAt\n  version\n  updatedAt\n}"
     },
     {
       "name": "CreateAgentEvalCase",
@@ -6737,7 +6926,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:2b055a0f01c1196b4f0ea31bb959296c9b44ee68629a90ab49348b87d1394f45",
+      "hash": "sha256:f0dffe70fc26b7fab486fef311a8a25f5a28b7fbc4aa730283c4aab62374742b",
       "rootFields": [
         "disconnectAccountingSystem"
       ],
@@ -6752,7 +6941,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation DisconnectAccountingSystem($integrationType: AccountingSystem!) {\n  disconnectAccountingSystem(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  version\n  updatedAt\n}"
+      "sdl": "mutation DisconnectAccountingSystem($integrationType: AccountingSystem!) {\n  disconnectAccountingSystem(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "DismissAgentMemorySuggestion",
@@ -12715,6 +12904,28 @@
       "sdl": "query RecurringShipmentTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  recurringShipments(input: $input) {\n    edges {\n      node {\n        ...RecurringShipmentTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RecurringShipmentTableRowFields on RecurringShipment {\n  id\n  businessUnitId\n  organizationId\n  sourceShipmentId\n  customerId\n  originLocationId\n  destinationLocationId\n  name\n  description\n  status\n  cronExpression\n  timezone\n  startDate\n  endDate\n  maxOccurrences\n  leadTimeDays\n  skipWeekends\n  exceptionPolicy\n  blackoutDates\n  autoGenerate\n  nextOccurrenceAt\n  lastOccurrenceAt\n  lastRunAt\n  generationCount\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n  originLocation {\n    id\n    name\n    code\n  }\n  destinationLocation {\n    id\n    name\n    code\n  }\n}"
     },
     {
+      "name": "RefreshAccountingReferenceData",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:aa0e7f55c009a95c9ce76a43fd02b591f634f890c64cec197bf986e2124a5ba6",
+      "rootFields": [
+        "refreshAccountingReferenceData"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RefreshAccountingReferenceData($integrationType: AccountingSystem!) {\n  refreshAccountingReferenceData(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "RegenerateBriefing",
       "kind": "mutation",
       "domain": "briefing",
@@ -12757,6 +12968,28 @@
       ],
       "usages": [],
       "sdl": "mutation ReindexAIRetrievalSource($sourceType: AIRetrievalSourceType!) {\n  reindexAIRetrievalSource(sourceType: $sourceType) {\n    ...AIRetrievalStatusFields\n  }\n}\n\nfragment AIRetrievalStatusFields on AIRetrievalStatus {\n  availability {\n    available\n    reason\n    extensionInstalled\n    extensionVersion\n  }\n  settings {\n    memoryEnabled\n    documentsEnabled\n    inboundMessagesEnabled\n    monthlyIndexingBudgetUsd\n    paused\n    pausedReason\n    pausedAt\n    activeModelKey\n    dimensions\n    pendingModelKey\n    pendingDimensions\n    version\n    updatedAt\n  }\n  sources {\n    sourceType\n    enabled\n    total\n    indexed\n    pending\n    failed\n    skipped\n    lastIndexedAt\n    lastAttemptAt\n  }\n  monthStartedAt\n  indexingCostMonthUsd\n  indexingUnpricedCalls\n  retrievalCostMonthUsd\n  retrievalUnpricedCalls\n  lastIndexedAt\n  modelChange {\n    fromModelKey\n    toModelKey\n    dimensions\n    total\n    indexed\n    pending\n    failed\n  }\n  configuredModelKey\n  configuredModelDiffers\n}"
+    },
+    {
+      "name": "RejectAccountingMapping",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:e5e8aa7a30a3f0d0b7474f6f3121a3311f76277e9e8a2a846e6f7e4e8b3f94af",
+      "rootFields": [
+        "rejectAccountingMapping"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingMappingFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RejectAccountingMapping($id: ID!) {\n  rejectAccountingMapping(id: $id) {\n    ...AccountingMappingFields\n  }\n}\n\nfragment AccountingMappingFields on AccountingMapping {\n  id\n  targetType\n  trenovaObjectId\n  trenovaKey\n  targetLabel\n  providerKind\n  externalId\n  externalName\n  state\n  source\n  confidence\n  reason\n  required\n  prechecked\n  candidates {\n    externalId\n    name\n    score\n    reason\n  }\n  confirmedBy {\n    id\n    name\n  }\n  confirmedAt\n  version\n  updatedAt\n}"
     },
     {
       "name": "RejectCarrierInvoiceMatch",
@@ -14488,6 +14721,28 @@
       ],
       "usages": [],
       "sdl": "query ServiceTypeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  serviceTypes(input: $input) {\n    edges {\n      node {\n        ...ServiceTypeTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ServiceTypeTableRowFields on ServiceType {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  color\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "SetAccountingMapping",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:62076000a35af1ae7f74db441e343d561ba833bbaa2db69a78d2b43f16ff66e6",
+      "rootFields": [
+        "setAccountingMapping"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "SetAccountingMappingInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingMappingFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SetAccountingMapping($input: SetAccountingMappingInput!) {\n  setAccountingMapping(input: $input) {\n    ...AccountingMappingFields\n  }\n}\n\nfragment AccountingMappingFields on AccountingMapping {\n  id\n  targetType\n  trenovaObjectId\n  trenovaKey\n  targetLabel\n  providerKind\n  externalId\n  externalName\n  state\n  source\n  confidence\n  reason\n  required\n  prechecked\n  candidates {\n    externalId\n    name\n    score\n    reason\n  }\n  confirmedBy {\n    id\n    name\n  }\n  confirmedAt\n  version\n  updatedAt\n}"
     },
     {
       "name": "SetAgentAccess",
@@ -19552,13 +19807,45 @@
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
       "fragments": [],
       "usedByOperations": [
+        "AccountingMappingSummary",
         "AccountingSyncStatus",
         "CheckAccountingConnection",
         "CompleteAccountingAuthorization",
-        "DisconnectAccountingSystem"
+        "CompleteAccountingSetup",
+        "DisconnectAccountingSystem",
+        "RefreshAccountingReferenceData"
       ],
       "usages": [],
-      "sdl": "fragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  version\n  updatedAt\n}"
+      "sdl": "fragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "AccountingMappingFields",
+      "typeCondition": "AccountingMapping",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AccountingMappings",
+        "ClearAccountingMapping",
+        "ConfirmAccountingMappings",
+        "CreateAccountingReferenceRecord",
+        "RejectAccountingMapping",
+        "SetAccountingMapping"
+      ],
+      "usages": [],
+      "sdl": "fragment AccountingMappingFields on AccountingMapping {\n  id\n  targetType\n  trenovaObjectId\n  trenovaKey\n  targetLabel\n  providerKind\n  externalId\n  externalName\n  state\n  source\n  confidence\n  reason\n  required\n  prechecked\n  candidates {\n    externalId\n    name\n    score\n    reason\n  }\n  confirmedBy {\n    id\n    name\n  }\n  confirmedAt\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "AccountingReferenceObjectFields",
+      "typeCondition": "AccountingReferenceObject",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AccountingReferenceObjects"
+      ],
+      "usages": [],
+      "sdl": "fragment AccountingReferenceObjectFields on AccountingReferenceObject {\n  id\n  kind\n  externalId\n  label\n  number\n  accountType\n  accountSubType\n  itemType\n  companyName\n  city\n  state\n  postalCode\n  dueDays\n  active\n  usable\n}"
     },
     {
       "name": "AccountTypeTableRowFields",
@@ -23026,6 +23313,44 @@
     }
   ],
   "types": {
+    "AccountingMappingFilterInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "requiredOnly",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "search",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "states",
+          "type": "[AccountingMappingState!]",
+          "defaultValue": null
+        },
+        {
+          "name": "targetTypes",
+          "type": "[AccountingMappingTargetType!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AccountingMappingFilterInput {\n  requiredOnly: Boolean\n  \"\"\"Matches the Trenova label or the chosen record's name.\"\"\"\n  search: String\n  states: [AccountingMappingState!]\n  targetTypes: [AccountingMappingTargetType!]\n}"
+    },
+    "AccountingReferenceKind": {
+      "kind": "enum",
+      "values": [
+        "Account",
+        "Customer",
+        "Item",
+        "PaymentMethod",
+        "Term",
+        "Vendor"
+      ],
+      "sdl": "\"\"\"A kind of record kept in the accounting system.\"\"\"\nenum AccountingReferenceKind {\n  Account\n  Customer\n  Item\n  PaymentMethod\n  Term\n  Vendor\n}"
+    },
     "AccountingSystem": {
       "kind": "enum",
       "values": [
@@ -24620,6 +24945,22 @@
       ],
       "sdl": "enum ConfigurationVisibility {\n  Private\n  Public\n  Shared\n}"
     },
+    "ConfirmAccountingMappingInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "externalId",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"A proposal to confirm, with the record it proposed when it was shown.\"\"\"\ninput ConfirmAccountingMappingInput {\n  \"\"\"The proposed record's ID in the accounting system, as shown.\"\"\"\n  externalId: String!\n  id: ID!\n}"
+    },
     "CostCategoryUpdateInput": {
       "kind": "input",
       "fields": [
@@ -24706,6 +25047,22 @@
         }
       ],
       "sdl": "input CostingControlInput {\n  fuelIndexId: ID\n  glActualsEnabled: Boolean!\n  glRollingMonths: Int!\n  includeDeadheadMiles: Boolean!\n  milesPerGallon: Decimal!\n  plannedMonthlyMiles: Int\n  targetMarginPercent: Decimal\n  useLiveFuelPrice: Boolean!\n  version: Int!\n}"
+    },
+    "CreateAccountingReferenceRecordInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "mappingId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"Creates the record in the accounting system and maps to it.\"\"\"\ninput CreateAccountingReferenceRecordInput {\n  mappingId: ID!\n  \"\"\"The name to create it under. Defaults to the Trenova record's name.\"\"\"\n  name: String\n}"
     },
     "CreateAgentEvalCaseInput": {
       "kind": "input",
@@ -30386,6 +30743,27 @@
       ],
       "sdl": "input SelectOptionsInput {\n  filters: JSON\n  first: Int = 20\n  ids: [ID!]\n  offset: Int = 0\n  query: String\n  resource: SelectOptionResource!\n}"
     },
+    "SetAccountingMappingInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "externalId",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "mappingId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"Chooses an accounting system record for a mapping and confirms it.\"\"\"\ninput SetAccountingMappingInput {\n  \"\"\"The record's ID in the accounting system.\"\"\"\n  externalId: String!\n  mappingId: ID!\n  reason: String\n}"
+    },
     "SetAgentAccessInput": {
       "kind": "input",
       "fields": [
@@ -34445,6 +34823,29 @@
         }
       ],
       "sdl": "input WriteOffPayAdvanceInput {\n  advanceId: ID!\n  reason: String!\n}"
+    },
+    "AccountingMappingState": {
+      "kind": "enum",
+      "values": [
+        "Confirmed",
+        "Proposed",
+        "Unmatched"
+      ],
+      "sdl": "\"\"\"Where a mapping stands.\"\"\"\nenum AccountingMappingState {\n  \"\"\"\n  A person confirmed the record. Only confirmed mappings are used when syncing.\n  \"\"\"\n  Confirmed\n  \"\"\"Trenova suggests a record, which a person has not confirmed yet.\"\"\"\n  Proposed\n  \"\"\"Nothing is chosen yet.\"\"\"\n  Unmatched\n}"
+    },
+    "AccountingMappingTargetType": {
+      "kind": "enum",
+      "values": [
+        "AccessorialCharge",
+        "AccountRole",
+        "Carrier",
+        "Customer",
+        "ItemRole",
+        "LineType",
+        "PaymentMethod",
+        "PaymentTerm"
+      ],
+      "sdl": "\"\"\"The kind of Trenova record or setting a mapping is for.\"\"\"\nenum AccountingMappingTargetType {\n  AccessorialCharge\n  \"\"\"A role an account plays, such as accounts receivable or revenue.\"\"\"\n  AccountRole\n  Carrier\n  Customer\n  \"\"\"A role an item plays, such as the short-pay write-off.\"\"\"\n  ItemRole\n  \"\"\"An invoice line type.\"\"\"\n  LineType\n  PaymentMethod\n  PaymentTerm\n}"
     },
     "PTOType": {
       "kind": "enum",
