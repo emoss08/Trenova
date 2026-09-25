@@ -80,3 +80,43 @@ func TestScheduleReportPreview_ShowsTheRecurringEmail(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, *schedules.previewed, *schedules.created)
 }
+
+// The schedule form in the app starts every schedule on Excel, and a schedule
+// with no format is refused. The agent is told formats are optional, so a call
+// that leaves them out gets what a person filling in the form would get,
+// rather than a proposal that can only fail when it is approved.
+func TestScheduleReport_DefaultsToExcelLikeTheScheduleForm(t *testing.T) {
+	t.Parallel()
+
+	schedules := &previewingSchedules{}
+	tool := &scheduleReportTool{schedules: schedules}
+	params := executeParams(map[string]any{
+		"definitionId":    pulid.MustNew("rdef_").String(),
+		"cronExpression":  "0 7 * * 1",
+		"emailRecipients": []any{"ops@carrier.example"},
+	})
+	params.IdempotencyKey = "idem-1"
+
+	require.NoError(t, tool.Execute(t.Context(), params))
+	require.NotNil(t, schedules.created)
+	assert.Equal(t, []string{string(report.FormatXLSX)}, schedules.created.Formats)
+}
+
+func TestScheduleReport_RefusesAFormatReportsCannotBeWrittenIn(t *testing.T) {
+	t.Parallel()
+
+	tool := &scheduleReportTool{}
+
+	require.Error(t, tool.validateArgs(map[string]any{
+		"definitionId":    "rdef_1",
+		"cronExpression":  "0 7 * * 1",
+		"emailRecipients": []any{"ops@example.com"},
+		"formats":         []any{"docx"},
+	}))
+	require.NoError(t, tool.validateArgs(map[string]any{
+		"definitionId":    "rdef_1",
+		"cronExpression":  "0 7 * * 1",
+		"emailRecipients": []any{"ops@example.com"},
+		"formats":         []any{"csv", "pdf"},
+	}))
+}
