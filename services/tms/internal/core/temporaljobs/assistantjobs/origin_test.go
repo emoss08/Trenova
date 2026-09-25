@@ -57,7 +57,10 @@ func TestStartTurnWorkflow_StartsTheTurnUnderItsAnchorAndKeepsTheRequest(t *test
 	aitracetest.Install()
 
 	starter := &anchoredStarter{}
-	turn := &conversation.AssistantTurn{ID: pulid.MustNew("atrn_"), ThreadID: pulid.MustNew("athr_")}
+	turn := &conversation.AssistantTurn{
+		ID:       pulid.MustNew("atrn_"),
+		ThreadID: pulid.MustNew("athr_"),
+	}
 	ctx, request := otel.Tracer("assistantjobs-test").Start(t.Context(), "POST /assistant/turns/")
 	_, err := StartTurnWorkflow(ctx, starter, turn, TurnStart{Content: "Where is 12345?"})
 	request.End()

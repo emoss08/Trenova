@@ -116,9 +116,13 @@ func TestOpenAIChatAdapter_StreamReadsCachedPromptTokens(t *testing.T) {
 func TestOpenAIResponsesAdapter_ReadsCachedInputTokens(t *testing.T) {
 	t.Parallel()
 
-	server, _ := streamServer(t, "application/json", `{"id":"resp_1","model":"model-c","status":"completed",`+
-		`"output":[{"type":"message","content":[{"type":"output_text","text":"Done."}]}],`+
-		`"usage":{"input_tokens":3000,"output_tokens":5,"input_tokens_details":{"cached_tokens":2816}}}`)
+	server, _ := streamServer(
+		t,
+		"application/json",
+		`{"id":"resp_1","model":"model-c","status":"completed",`+
+			`"output":[{"type":"message","content":[{"type":"output_text","text":"Done."}]}],`+
+			`"usage":{"input_tokens":3000,"output_tokens":5,"input_tokens_details":{"cached_tokens":2816}}}`,
+	)
 
 	resp := completeWith(t, NewOpenAIResponsesAdapter(), callFor(
 		aiprovider.KindOpenAIResponses, server.URL, &Request{Messages: UserMessage("hi")},

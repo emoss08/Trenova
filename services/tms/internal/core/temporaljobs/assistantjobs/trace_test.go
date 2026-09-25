@@ -46,7 +46,9 @@ func TestFinish_TheTurnIsOneTraceUnderItsRoot(t *testing.T) {
 	runtime := agentruntime.New(agentruntime.Params{
 		Logger: zap.NewNop(),
 		Completion: &agentruntimetest.ScriptedCompletion{
-			Turns: []*serviceports.ChatCompletionResult{{Text: "Done.", ModelIdentifier: "model-a"}},
+			Turns: []*serviceports.ChatCompletionResult{
+				{Text: "Done.", ModelIdentifier: "model-a"},
+			},
 		},
 		QueryTools: &agentruntimetest.StubQueryRegistry{Tools: []serviceports.AgentQueryTool{
 			&agentruntimetest.StubQueryTool{ToolName: replayToolName, Result: map[string]any{}},
@@ -69,7 +71,11 @@ func TestFinish_TheTurnIsOneTraceUnderItsRoot(t *testing.T) {
 	}, func(serviceports.StreamEvent) {})
 	require.NoError(t, err)
 	runtime.DispatchStep(t.Context(), req, agentruntime.DispatchCall{
-		Call: serviceports.ToolCall{ID: "call_1", Name: replayToolName, Arguments: map[string]any{}},
+		Call: serviceports.ToolCall{
+			ID:        "call_1",
+			Name:      replayToolName,
+			Arguments: map[string]any{},
+		},
 	})
 
 	cost := decimal.RequireFromString("0.0042")
@@ -104,8 +110,12 @@ func TestFinish_TheTurnIsOneTraceUnderItsRoot(t *testing.T) {
 		assert.Contains(t, root.Attributes, want)
 	}
 	require.Len(t, root.Links, 1)
-	assert.Equal(t, "4bf92f3577b34da6a3ce929d0e0e4736", root.Links[0].SpanContext.TraceID().String(),
-		"the root links to the request that asked")
+	assert.Equal(
+		t,
+		"4bf92f3577b34da6a3ce929d0e0e4736",
+		root.Links[0].SpanContext.TraceID().String(),
+		"the root links to the request that asked",
+	)
 
 	for _, name := range []string{aitrace.SpanCompletion, "execute_tool " + replayToolName} {
 		child := aitracetest.One(t, anchor.TraceID, name)
@@ -125,7 +135,9 @@ func TestFinish_ADelegateHasItsOwnRootAndBothLinkEachOther(t *testing.T) {
 		Version: 5,
 	}
 	delegateTaint := &agent.RunTaint{}
-	delegateTaint.Add(agent.TaintMark{Source: agent.TaintSourceWeb, ToolName: "web_read", CallID: "c"})
+	delegateTaint.Add(
+		agent.TaintMark{Source: agent.TaintSourceWeb, ToolName: "web_read", CallID: "c"},
+	)
 
 	emitTurnRoots(t.Context(), &FinishTurnInput{
 		Payload: payload,
@@ -135,7 +147,11 @@ func TestFinish_ADelegateHasItsOwnRootAndBothLinkEachOther(t *testing.T) {
 				Definition: delegateDefinition,
 				CallID:     "call_task_9",
 				Taint:      delegateTaint,
-				Usage:      &serviceports.RunUsage{ModelCalls: 1, InputTokens: 700, OutputTokens: 20},
+				Usage: &serviceports.RunUsage{
+					ModelCalls:   1,
+					InputTokens:  700,
+					OutputTokens: 20,
+				},
 			}},
 		},
 		Events: []temporaltype.StreamItem{
@@ -194,5 +210,10 @@ func TestCloseTurn_ATurnThatCouldNotBeSavedStillHasARoot(t *testing.T) {
 	root := aitracetest.One(t, anchor.TraceID, aitrace.OperationInvokeAgent)
 	assert.Contains(t, root.Attributes,
 		aitrace.AIStatus.String(string(conversation.AssistantTurnStatusFailed)))
-	assert.Equal(t, codes.Unset, root.Status.Code, "a failure with no cause recorded is not guessed at")
+	assert.Equal(
+		t,
+		codes.Unset,
+		root.Status.Code,
+		"a failure with no cause recorded is not guessed at",
+	)
 }

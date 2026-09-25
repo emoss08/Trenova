@@ -44,7 +44,11 @@ func TestFinishRun_EmitsTheRunsRootAtItsAnchorFromItsRealStart(t *testing.T) {
 		Definition: definition,
 		Run: &serviceports.RunResult{
 			ToolCallsUsed: 4,
-			Usage:         &serviceports.RunUsage{ModelCalls: 3, InputTokens: 900, OutputTokens: 60},
+			Usage: &serviceports.RunUsage{
+				ModelCalls:   3,
+				InputTokens:  900,
+				OutputTokens: 60,
+			},
 		},
 	}, &agent.AgentRun{CreatedAt: 1_790_000_100, StartedAt: 1_790_000_105},
 		&FinishRunResult{PendingProposals: 2})
@@ -152,7 +156,8 @@ func TestExpireProposals_TracesTheExpiryAndLinksItToTheRun(t *testing.T) {
 		runRepo:      expiringRuns{},
 	}
 	runID := pulid.MustNew("ar_")
-	ctx, sweep := otel.Tracer("agentjobs-test").Start(t.Context(), "RunActivity:ExpireProposalsActivity")
+	ctx, sweep := otel.Tracer("agentjobs-test").
+		Start(t.Context(), "RunActivity:ExpireProposalsActivity")
 	require.NoError(t, a.ExpireProposalsActivity(ctx, &ExpireProposalsInput{
 		RunID:      runID,
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},

@@ -31,7 +31,10 @@ type attemptSpec struct {
 	attribution serviceports.AIUsageAttribution
 }
 
-func (s *Service) startAttempt(ctx context.Context, spec attemptSpec) (context.Context, trace.Span) {
+func (s *Service) startAttempt(
+	ctx context.Context,
+	spec attemptSpec,
+) (context.Context, trace.Span) {
 	return aitrace.StartAttempt(ctx, &aitrace.AttemptSpec{
 		Anchor:        aitrace.ForAttribution(&spec.attribution),
 		Operation:     spec.operation,

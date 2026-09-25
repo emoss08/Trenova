@@ -73,7 +73,10 @@ func TestDispatcher_AFailedJobSaysSo(t *testing.T) {
 	}}}
 
 	d := &Dispatcher{workflows: starter}
-	_, err := d.Test(t.Context(), repositories.GetAIProviderByIDRequest{ID: pulid.MustNew("aiprv_")})
+	_, err := d.Test(
+		t.Context(),
+		repositories.GetAIProviderByIDRequest{ID: pulid.MustNew("aiprv_")},
+	)
 	require.Error(t, err)
 
 	job := aitracetest.One(t, starter.startedUnder.TraceID(), "trenova.ai.job provider_test")

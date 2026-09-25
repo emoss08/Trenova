@@ -131,7 +131,11 @@ func TestDispatchStep_TracesAProposalAndStampsItWithTheSpan(t *testing.T) {
 	assert.Equal(t, aitrace.StepStateFresh, stringAttr(t, span, aitrace.AIStepState))
 	assert.Equal(t, aitrace.OutcomeProposed, stringAttr(t, span, aitrace.AIOutcome))
 	assert.Equal(t, string(agent.TierPropose), stringAttr(t, span, aitrace.AITier))
-	assert.Equal(t, string(agent.TierSourcePolicyDefault), stringAttr(t, span, aitrace.AITierSource))
+	assert.Equal(
+		t,
+		string(agent.TierSourcePolicyDefault),
+		stringAttr(t, span, aitrace.AITierSource),
+	)
 	assert.Equal(t, "call_hold", stringAttr(t, span, aitrace.GenAIToolCallID))
 	assert.Equal(t, string(agent.ToolEffectChange), stringAttr(t, span, aitrace.AIToolEffect))
 	assert.Contains(t, span.Attributes, aitrace.AIHeldBy.StringSlice(action.HeldBy))

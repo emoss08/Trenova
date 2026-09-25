@@ -29,7 +29,10 @@ type traceControls struct {
 	repositories.AgentControlRepository
 }
 
-func (traceControls) GetOrCreate(context.Context, pagination.TenantInfo) (*tenant.AgentControl, error) {
+func (traceControls) GetOrCreate(
+	context.Context,
+	pagination.TenantInfo,
+) (*tenant.AgentControl, error) {
 	return &tenant.AgentControl{}, nil
 }
 

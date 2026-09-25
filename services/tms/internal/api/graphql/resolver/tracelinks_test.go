@@ -18,7 +18,10 @@ func TestTraceURL_LinksARecordToItsTraceWhenABackendIsConfigured(t *testing.T) {
 	cfg.Monitoring.Tracing.TraceURLTemplate = "https://traces.example.com/trace/{traceId}"
 	r := &Resolver{traceURL: traceURLBuilder(cfg)}
 
-	run, err := (&agentRunResolver{r}).TraceURL(t.Context(), &agent.AgentRun{TraceID: linkedTraceID})
+	run, err := (&agentRunResolver{r}).TraceURL(
+		t.Context(),
+		&agent.AgentRun{TraceID: linkedTraceID},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, run)
 	assert.Equal(t, "https://traces.example.com/trace/"+linkedTraceID, *run)
@@ -46,7 +49,10 @@ func TestTraceURL_IsAbsentWithoutABackend(t *testing.T) {
 		{traceURL: traceURLBuilder(nil)},
 		{},
 	} {
-		link, err := (&agentRunResolver{r}).TraceURL(t.Context(), &agent.AgentRun{TraceID: linkedTraceID})
+		link, err := (&agentRunResolver{r}).TraceURL(
+			t.Context(),
+			&agent.AgentRun{TraceID: linkedTraceID},
+		)
 		require.NoError(t, err)
 		assert.Nil(t, link)
 	}

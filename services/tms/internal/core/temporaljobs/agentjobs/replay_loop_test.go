@@ -21,9 +21,6 @@ const (
 	loopReplayWrite = "assign_move"
 )
 
-// loopReplayRuntime is the runtime the recorded loop runs were driven by: one
-// read and one write the agent holds, so the loop dispatches each as an
-// activity of its own.
 func loopReplayRuntime() *agentruntime.Service {
 	return agentruntime.New(agentruntime.Params{
 		Logger:     zap.NewNop(),
@@ -57,11 +54,6 @@ func loopReplayDefinition(id pulid.ID) *agentdefinition.Definition {
 	return definition
 }
 
-// Runs like these, driven in workflow code, were in flight when the tracing
-// and provenance fields shipped: recorded by replay_loop_record_test.go from
-// the code before it, on a real server. The fields ride activity inputs and
-// results and the account of events, and none may add, remove or reorder a
-// command, so each must still replay.
 func TestAgentRunWorkflow_ReplaysRecordedLoopHistories(t *testing.T) {
 	t.Parallel()
 

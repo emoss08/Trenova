@@ -31,5 +31,7 @@ func StartJob(ctx context.Context, spec *JobSpec) (context.Context, trace.Span) 
 		opts = append(opts, trace.WithLinks(trace.Link{SpanContext: caller}))
 	}
 
-	return tracer().Start(ctx, spanName(SpanJob, spec.Feature), opts...) //nolint:spancheck // the caller ends it
+	name := spanName(SpanJob, spec.Feature)
+
+	return tracer().Start(ctx, name, opts...) //nolint:spancheck // the caller ends it
 }

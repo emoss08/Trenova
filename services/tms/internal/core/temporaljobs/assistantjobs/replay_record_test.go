@@ -38,9 +38,7 @@ import (
 )
 
 type recordedTurn struct {
-	name string
-	// drained says a reader took the last event, so the turn closes at once
-	// and tells nobody afterwards.
+	name    string
 	drained bool
 }
 

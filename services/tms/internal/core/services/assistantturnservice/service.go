@@ -83,9 +83,10 @@ func (s *Service) Start(
 	req StartRequest,
 ) (*conversation.AssistantTurn, error) {
 	id := pulid.MustNew("atrn_")
+	anchor := aitrace.AnchorFor(aitrace.AnchorAssistantTurn, id.String())
 	turn, err := s.turns.Start(ctx, &conversation.AssistantTurn{
 		ID:             id,
-		TraceID:        aitrace.AnchorFor(aitrace.AnchorAssistantTurn, id.String()).TraceID.String(),
+		TraceID:        anchor.TraceID.String(),
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		ThreadID:       req.ThreadID,

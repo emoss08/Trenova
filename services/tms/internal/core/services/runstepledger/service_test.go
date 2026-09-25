@@ -20,7 +20,10 @@ type fakeStepRepo struct {
 	rows    []*agent.AgentRunStep
 }
 
-func (f *fakeStepRepo) Claim(_ context.Context, step *agent.AgentRunStep) (*agent.AgentRunStep, error) {
+func (f *fakeStepRepo) Claim(
+	_ context.Context,
+	step *agent.AgentRunStep,
+) (*agent.AgentRunStep, error) {
 	f.claimed = append(f.claimed, step)
 
 	return step, nil

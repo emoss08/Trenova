@@ -21,8 +21,6 @@ import (
 
 const replayToolName = "get_shipment"
 
-// replayRuntime is the runtime the recorded turns were driven by: one read
-// tool, held by the agent, so the loop dispatches it as an activity.
 func replayRuntime() *agentruntime.Service {
 	return agentruntime.New(agentruntime.Params{
 		Logger:     zap.NewNop(),
@@ -88,11 +86,6 @@ func replayPlan(
 	return plan
 }
 
-// Turns like these were in flight when the tracing and provenance fields
-// shipped: recorded by replay_record_test.go from the code before it, on a real
-// server. Every change since added data to activity inputs, stream items and
-// results, and none may add, remove or reorder a command, so each must still
-// replay.
 func TestAssistantTurnWorkflow_ReplaysRecordedHistories(t *testing.T) {
 	t.Parallel()
 

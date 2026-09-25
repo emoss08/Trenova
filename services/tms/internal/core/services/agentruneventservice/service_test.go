@@ -256,7 +256,10 @@ func TestRecord_KeepsWhenTheEventHappened(t *testing.T) {
 
 	repo := &fakeRepo{}
 	writer := newRecorder(t, repo).Recorder(t.Context(), pagination.TenantInfo{},
-		serviceports.RunStepOwner{Kind: serviceports.RunStepOwnerAgentRun, ID: pulid.MustNew("ar_")})
+		serviceports.RunStepOwner{
+			Kind: serviceports.RunStepOwnerAgentRun,
+			ID:   pulid.MustNew("ar_"),
+		})
 
 	started := int64(1_790_000_000)
 	writer.Record(t.Context(), serviceports.StreamEvent{

@@ -78,7 +78,7 @@ func delegateInput(t *testing.T) *OpenDelegateInput {
 	return &OpenDelegateInput{
 		Run: rc,
 		Call: agentruntime.DelegateCall{
-			Call: serviceports.ToolCall{ID: "call_task_7", Name: "delegate_task"},
+			Call:     serviceports.ToolCall{ID: "call_task_7", Name: "delegate_task"},
 			Delegate: agentdefinition.RuntimeDelegate{ID: delegate.ID, Name: delegate.Name},
 			Task:     "Find load 12345.",
 		},
