@@ -444,7 +444,7 @@ func (t *updateReportTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	save, err := t.prepare(ctx, params)
+	save, _, err := t.prepare(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -461,7 +461,7 @@ func (t *updateReportTool) Validate(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	save, err := t.prepare(ctx, params)
+	save, _, err := t.prepare(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -475,33 +475,33 @@ func (t *updateReportTool) Validate(
 func (t *updateReportTool) prepare(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
-) (*reporting.SaveDefinitionRequest, error) {
+) (*reporting.SaveDefinitionRequest, *report.ReportDefinition, error) {
 	if err := guardExecute(t, params); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	definitionID, err := requirePulid(params.Params, "definitionId")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	meta, err := readReportMetadata(params.Params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	definition, err := readDefinition(params.Params, false)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	status, err := readDefinitionStatus(params.Params)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if len(meta.given) == 0 && definition == nil && status == "" {
-		return nil, errors.New(
+		return nil, nil, errors.New(
 			"nothing to change: send the definition, or at least one of name, " +
 				"description, category, tags, visibility, defaultFormat or status",
 		)
@@ -514,17 +514,17 @@ func (t *updateReportTool) prepare(
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, fmt.Errorf(
+			return nil, nil, fmt.Errorf(
 				"there is no saved report with the id %q that you can see; call "+
 					"list_reports for the ones that exist",
 				definitionID.String(),
 			)
 		}
 
-		return nil, err
+		return nil, nil, err
 	}
 	if existing.OwnerID != params.Actor.UserID {
-		return nil, fmt.Errorf(
+		return nil, nil, fmt.Errorf(
 			"%q belongs to someone else, so only they can change it; create_report "+
 				"can build the person their own version from its definition",
 			existing.Name,
@@ -546,7 +546,7 @@ func (t *updateReportTool) prepare(
 	}
 	if meta.given["name"] {
 		if meta.Name == "" {
-			return nil, errors.New("parameter \"name\" must be a non-empty string")
+			return nil, nil, errors.New("parameter \"name\" must be a non-empty string")
 		}
 		save.Name = meta.Name
 	}
@@ -572,7 +572,7 @@ func (t *updateReportTool) prepare(
 		save.Status = status
 	}
 
-	return save, nil
+	return save, existing, nil
 }
 
 func readDefinitionStatus(params map[string]any) (report.DefinitionStatus, error) {
@@ -665,24 +665,12 @@ func (t *forkReportTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	key, err := requireString(params.Params, "reportKey")
+	request, _, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
-	key = strings.TrimSpace(key)
 
-	if _, err = t.reports.GetCanned(key); err != nil {
-		return nil, fmt.Errorf(
-			"there is no built-in report with the key %q; call list_reports for the keys that exist",
-			key,
-		)
-	}
-
-	forked, err := t.reports.ForkCanned(ctx, &reporting.ForkCannedRequest{
-		Request:   reportingRequestFrom(params),
-		CannedKey: key,
-		Name:      strings.TrimSpace(optionalString(params.Params, "name")),
-	})
+	forked, err := t.reports.ForkCanned(ctx, request)
 	if err != nil {
 		return nil, err
 	}

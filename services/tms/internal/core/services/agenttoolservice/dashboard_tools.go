@@ -271,6 +271,19 @@ func (t *createDashboardTool) Execute(
 		return err
 	}
 
+	request, err := t.request(params)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.dashboards.CreateDashboard(ctx, request)
+
+	return err
+}
+
+func (t *createDashboardTool) request(
+	params serviceports.ToolExecuteParams,
+) (*reporting.SaveDashboardRequest, error) {
 	visibility := report.VisibilityPrivate
 	if optionalBool(params.Params, "shared") {
 		visibility = report.VisibilityShared
@@ -278,19 +291,17 @@ func (t *createDashboardTool) Execute(
 
 	tiles, err := buildTiles(tileParams(params.Params), 0)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = t.dashboards.CreateDashboard(ctx, &reporting.SaveDashboardRequest{
+	return &reporting.SaveDashboardRequest{
 		Request:     reporting.Request{TenantInfo: tenantFrom(params)},
 		Name:        optionalString(params.Params, "name"),
 		Description: optionalString(params.Params, "description"),
 		Category:    optionalString(params.Params, "category"),
 		Visibility:  visibility,
 		Layout:      &report.DashboardLayout{Tiles: tiles},
-	})
-
-	return err
+	}, nil
 }
 
 type addDashboardTileTool struct {
@@ -411,9 +422,23 @@ func (t *addDashboardTileTool) Execute(
 		return err
 	}
 
-	dashboardID, err := requirePulid(params.Params, "dashboardId")
+	request, _, err := t.request(ctx, params)
 	if err != nil {
 		return err
+	}
+
+	_, err = t.dashboards.UpdateDashboard(ctx, request)
+
+	return err
+}
+
+func (t *addDashboardTileTool) request(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) (*reporting.SaveDashboardRequest, *report.Dashboard, error) {
+	dashboardID, err := requirePulid(params.Params, "dashboardId")
+	if err != nil {
+		return nil, nil, err
 	}
 
 	tenant := tenantFrom(params)
@@ -422,14 +447,18 @@ func (t *addDashboardTileTool) Execute(
 		DashboardID: dashboardID,
 	})
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
-	if existing.Layout == nil {
-		existing.Layout = &report.DashboardLayout{}
+	tiles := make([]report.DashboardTile, 0, report.MaxDashboardTiles)
+	layout := &report.DashboardLayout{}
+	if existing.Layout != nil {
+		tiles = append(tiles, existing.Layout.Tiles...)
+		layout.Parameters = existing.Layout.Parameters
+		layout.Filters = existing.Layout.Filters
 	}
-	if len(existing.Layout.Tiles) >= report.MaxDashboardTiles {
-		return fmt.Errorf(
-			"%q already holds the maximum of %d tiles",
+	if len(tiles) >= report.MaxDashboardTiles {
+		return nil, existing, errortypes.NewBusinessError(
+			"{0} already holds the maximum of {1} tiles",
 			existing.Name, report.MaxDashboardTiles,
 		)
 	}
@@ -437,12 +466,13 @@ func (t *addDashboardTileTool) Execute(
 	tile, _ := params.Params["tile"].(map[string]any)
 	// The new tile is placed below what is already there rather than at the
 	// origin, which is what keeps adding one from landing it on top of another.
-	added, err := buildTiles([]map[string]any{tile}, nextRow(existing.Layout.Tiles))
+	added, err := buildTiles([]map[string]any{tile}, nextRow(tiles))
 	if err != nil {
-		return err
+		return nil, existing, err
 	}
+	layout.Tiles = append(tiles, added...)
 
-	_, err = t.dashboards.UpdateDashboard(ctx, &reporting.SaveDashboardRequest{
+	return &reporting.SaveDashboardRequest{
 		Request:     reporting.Request{TenantInfo: tenant},
 		DashboardID: dashboardID,
 		Name:        existing.Name,
@@ -451,14 +481,8 @@ func (t *addDashboardTileTool) Execute(
 		Tags:        existing.Tags,
 		Visibility:  existing.Visibility,
 		Version:     existing.Version,
-		Layout: &report.DashboardLayout{
-			Tiles:      append(existing.Layout.Tiles, added...),
-			Parameters: existing.Layout.Parameters,
-			Filters:    existing.Layout.Filters,
-		},
-	})
-
-	return err
+		Layout:      layout,
+	}, existing, nil
 }
 
 func (t *addDashboardTileTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {

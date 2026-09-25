@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -163,21 +162,7 @@ func (s *Service) CreateDefinition(
 		return nil, err
 	}
 
-	entity := &report.ReportDefinition{
-		BusinessUnitID: req.TenantInfo.BuID,
-		OrganizationID: req.TenantInfo.OrgID,
-		Name:           req.Name,
-		Description:    req.Description,
-		Category:       req.Category,
-		Tags:           req.Tags,
-		Kind:           report.DefinitionKindCustom,
-		OwnerID:        req.TenantInfo.UserID,
-		Visibility:     defaultVisibility(req.Visibility),
-		Status:         defaultStatus(req.Status),
-		CatalogVersion: reportcatalog.Version,
-		Definition:     req.Definition,
-		DefaultFormat:  defaultFormat(req.DefaultFormat),
-	}
+	entity := NewDefinition(req)
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -220,17 +205,7 @@ func (s *Service) UpdateDefinition(
 		return nil, err
 	}
 
-	existing.Name = req.Name
-	existing.Description = req.Description
-	existing.Category = req.Category
-	existing.Tags = req.Tags
-	existing.Visibility = defaultVisibility(req.Visibility)
-	existing.Status = defaultStatus(req.Status)
-	existing.Definition = req.Definition
-	existing.CatalogVersion = reportcatalog.Version
-	existing.DefaultFormat = defaultFormat(req.DefaultFormat)
-	existing.Diagnostics = nil
-	existing.Version = req.Version
+	ApplyDefinitionSave(existing, req)
 
 	multiErr := errortypes.NewMultiError()
 	existing.Validate(multiErr)

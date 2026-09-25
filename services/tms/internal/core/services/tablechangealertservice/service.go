@@ -47,23 +47,11 @@ func (s *Service) CreateSubscription(
 ) (*tablechangealert.TCASubscription, error) {
 	log := s.l.With(zap.String("operation", "CreateSubscription"))
 
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-
-	allowed, err := s.allowlistRepo.IsTableAllowed(ctx, entity.TableName, pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	})
-	if err != nil {
-		log.Error("failed to check allowlist", zap.Error(err))
+	if err := s.CheckSubscription(ctx, entity); err != nil {
+		if !errortypes.IsError(err) {
+			log.Error("failed to check allowlist", zap.Error(err))
+		}
 		return nil, err
-	}
-	if !allowed {
-		multiErr.Add("tableName", errortypes.ErrInvalid, "Table is not eligible for change alerts")
-	}
-
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	created, err := s.subRepo.Create(ctx, entity)

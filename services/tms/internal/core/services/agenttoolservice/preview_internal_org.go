@@ -20,6 +20,17 @@ func warnWouldFail(preview *agent.ToolPreview, err error) *agent.ToolPreview {
 	)
 }
 
+func warnRefusal(preview *agent.ToolPreview, err error) (*agent.ToolPreview, error) {
+	switch {
+	case err == nil:
+		return preview, nil
+	case isRefusal(err):
+		return warnWouldFail(preview, err), nil
+	default:
+		return nil, err
+	}
+}
+
 func isRefusal(err error) bool {
 	return errortypes.IsError(err) ||
 		errortypes.IsBusinessError(err) ||
