@@ -1,8 +1,15 @@
 import type { AIControlTab, RailView } from "../ai-control-tabs";
 import { retrievalRailStatus, type RetrievalRailState } from "./retrieval/retrieval-model";
+import type { AiAuditVerificationStatus } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
-export type { ActivityView, QualityView, RailView, SafetyView } from "../ai-control-tabs";
+export type {
+  ActivityView,
+  AuditView,
+  QualityView,
+  RailView,
+  SafetyView,
+} from "../ai-control-tabs";
 
 export type RailItem = {
   tab: AIControlTab;
@@ -28,6 +35,8 @@ export type RailCounts = {
   qualityRegressions: number;
   /** Where search by meaning stands; null until it has been read. */
   retrieval: RetrievalRailState | null;
+  /** What the audit trail's last verification found; null until it has been checked or read. */
+  auditVerification: AiAuditVerificationStatus | null;
 };
 
 export type RailPermissions = {
@@ -46,6 +55,8 @@ export type RailPermissions = {
   quality: boolean;
   /** The answers people rated down are read under the right to read agent feedback. */
   ratings: boolean;
+  /** The audit trail has its own right; reading runs does not grant it. */
+  audit: boolean;
 };
 
 /**
@@ -174,6 +185,24 @@ export function buildRailItems(
             : "",
       attention: pending > 0 && permissions.proposals,
       children,
+    });
+  }
+
+  if (permissions.audit) {
+    const verification = counts?.auditVerification ?? null;
+    items.push({
+      tab: "audit",
+      status:
+        verification === "Mismatch"
+          ? t("Failed verification")
+          : verification === "KeyMissing"
+            ? t("Signing key missing")
+            : "",
+      attention: verification === "Mismatch" || verification === "KeyMissing",
+      children: [
+        { view: "trail", label: t("Trail") },
+        { view: "exports", label: t("Exports") },
+      ],
     });
   }
 

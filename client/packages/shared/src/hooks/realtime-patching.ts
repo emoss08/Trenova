@@ -44,6 +44,10 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "attention",
   ],
   agent_run: ["agent-run-list", ["assistant", "agents"]],
+  // aiauditservice announces an export to its requester as it is written,
+  // expires or fails, and the chain once a check has stored its result.
+  "ai-audit-export": ["ai-audit-export-list"],
+  "ai-audit-chain": [["aiAudit", "chainStatus"]],
   accounting_integration: ["accountingSync"],
   assistant_artifact: [["assistant", "artifacts"]],
   // A reply starting or closing moves the "writing" markers and the

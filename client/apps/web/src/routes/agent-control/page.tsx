@@ -9,18 +9,21 @@ import { lazy, useCallback, useMemo } from "react";
 import {
   ACTIVITY_VIEW_PARAM,
   AI_CONTROL_TAB_PARAM,
+  AUDIT_VIEW_PARAM,
   QUALITY_AGENT_PARAM,
   QUALITY_SUITE_RUN_PARAM,
   QUALITY_VIEW_PARAM,
   SAFETY_VIEW_PARAM,
   activityViewParser,
   aiControlTabParser,
+  auditViewParser,
   qualityAgentParser,
   qualitySuiteRunParser,
   qualityViewParser,
   safetyViewParser,
   type AIControlTab,
   type ActivityView,
+  type AuditView,
   type QualityView,
   type RailView,
   type SafetyView,
@@ -42,6 +45,7 @@ const RetrievalTab = lazy(() => import("./_components/retrieval/retrieval-tab"))
 const SafetyTab = lazy(() => import("./_components/safety/safety-tab"));
 const QualityTab = lazy(() => import("./_components/quality/quality-tab"));
 const ActivityTab = lazy(() => import("./_components/activity/activity-tab"));
+const AuditTab = lazy(() => import("./_components/audit/audit-tab"));
 
 /**
  * One place for everything AI in the organization: where work goes
@@ -60,6 +64,7 @@ export function AgentControlPage() {
   const [qualityView] = useQueryState(QUALITY_VIEW_PARAM, qualityViewParser);
   const [qualityAgent] = useQueryState(QUALITY_AGENT_PARAM, qualityAgentParser);
   const [suiteRun] = useQueryState(QUALITY_SUITE_RUN_PARAM, qualitySuiteRunParser);
+  const [auditView] = useQueryState(AUDIT_VIEW_PARAM, auditViewParser);
 
   const { allowed: canReadAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { allowed: canReadProviders } = usePermission(Resource.AIProvider, Operation.Read);
@@ -70,6 +75,7 @@ export function AgentControlPage() {
   const { allowed: canReadExtensions } = usePermission(Resource.AgentExtension, Operation.Read);
   const { allowed: canReadQuality } = usePermission(Resource.AgentEvalSuite, Operation.Read);
   const { allowed: canReadRatings } = usePermission(Resource.AgentFeedback, Operation.Read);
+  const { allowed: canReadAudit } = usePermission(Resource.AIAuditTrail, Operation.Read);
 
   const stats = useAIControlStats();
   const extensionsQuery = useQuery({
@@ -87,6 +93,12 @@ export function AgentControlPage() {
     enabled: canReadProviders,
     staleTime: RETRIEVAL_STALE_MS,
   });
+  const auditChainQuery = useQuery({
+    ...queries.aiAudit.chainStatus(),
+    enabled: canReadAudit,
+    staleTime: 60_000,
+  });
+  const auditVerification = auditChainQuery.data?.lastVerificationStatus ?? null;
   const retrievalState = useMemo(
     () => (retrievalQuery.data ? retrievalRailState(retrievalQuery.data) : null),
     [retrievalQuery.data],
@@ -113,6 +125,7 @@ export function AgentControlPage() {
               extensionsTotal: extensionItems?.length ?? 0,
               qualityRegressions,
               retrieval: retrievalState,
+              auditVerification,
             },
         {
           agents: canReadAgents,
@@ -126,10 +139,13 @@ export function AgentControlPage() {
           safety: canReadAgents,
           quality: canReadQuality,
           ratings: canReadRatings,
+          audit: canReadAudit,
         },
         t,
       ),
     [
+      auditVerification,
+      canReadAudit,
       canReadAgents,
       canReadExceptions,
       canReadExtensions,
@@ -160,6 +176,7 @@ export function AgentControlPage() {
     activeItem,
     requestedView(activeTab, {
       activity: activityView,
+      audit: auditView,
       safety: safetyView,
       quality: qualityView ?? (suiteRun || qualityAgent ? "runs" : "agents"),
     }),
@@ -175,13 +192,14 @@ export function AgentControlPage() {
     (nextView: ActivityView) => select("activity", nextView),
     [select],
   );
+  const openAuditExports = useCallback(() => select("audit", "exports"), [select]);
 
   return (
     <PageLayout
       pageHeaderProps={{
         title: t("AI control"),
         description: t(
-          "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, quality says how well they do it, and activity shows what it did.",
+          "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, quality says how well they do it, activity shows what it did, and the audit trail keeps a signed record of it.",
         ),
       }}
     >
@@ -205,6 +223,9 @@ export function AgentControlPage() {
             {activeTab === "safety" && <SafetyTab view={activeView as SafetyView} />}
             {activeTab === "quality" && <QualityTab view={activeView as QualityView} />}
             {activeTab === "activity" && <ActivityTab view={activeView as ActivityView} />}
+            {activeTab === "audit" && (
+              <AuditTab view={activeView as AuditView} onOpenExports={openAuditExports} />
+            )}
           </DataTableLazyComponent>
         </div>
       </div>
@@ -214,6 +235,7 @@ export function AgentControlPage() {
 
 type RequestedViews = {
   activity: ActivityView;
+  audit: AuditView;
   safety: SafetyView;
   quality: QualityView;
 };
@@ -222,6 +244,8 @@ function requestedView(tab: AIControlTab, views: RequestedViews): RailView | nul
   switch (tab) {
     case "activity":
       return views.activity;
+    case "audit":
+      return views.audit;
     case "safety":
       return views.safety;
     case "quality":

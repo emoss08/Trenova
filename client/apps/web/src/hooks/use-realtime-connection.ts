@@ -1,5 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { downloadReportRun } from "@/hooks/use-reports";
+import { aiAuditExportNotice, downloadAIAuditExport } from "@/lib/ai-audit-exports";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { APP_ENV } from "@trenova/shared/lib/constants";
 import { queries } from "@/lib/queries";
 import { realtimeClient, type RealtimeConnectionState } from "@trenova/shared/services/realtime";
@@ -180,6 +182,11 @@ export function useRealtimeConnection() {
                 ? notif.data.runId
                 : null;
 
+            // An AI audit export is only ever downloaded by the person who
+            // asked for it, which is who this notice is addressed to, so the
+            // toast downloads it directly; a failed one opens the exports.
+            const auditExport = aiAuditExportNotice(notif);
+
             toast.info(notif.title, {
               description: notif.message,
               action: runId
@@ -195,7 +202,22 @@ export function useRealtimeConnection() {
                           `/billing-queue?transferRun=${encodeURIComponent(transferRunId)}`,
                         ),
                     }
-                  : undefined,
+                  : auditExport?.kind === "download"
+                    ? {
+                        label: t("Download"),
+                        onClick: () =>
+                          void downloadAIAuditExport(auditExport.exportId).catch((error) => {
+                            toast.error(t("The file could not be downloaded"), {
+                              description: graphQLErrorMessage(error, t("Try again shortly.")),
+                            });
+                          }),
+                      }
+                    : auditExport
+                      ? {
+                          label: t("View exports"),
+                          onClick: () => navigateRef.current(auditExport.link),
+                        }
+                      : undefined,
             });
           }
         }

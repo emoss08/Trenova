@@ -10,6 +10,7 @@ export const aiControlTabValues = [
   "safety",
   "quality",
   "activity",
+  "audit",
 ] as const;
 export type AIControlTab = (typeof aiControlTabValues)[number];
 
@@ -80,8 +81,21 @@ export const retrievalSourceParser = parseAsStringLiteral(retrievalSourceValues)
   shallow: true,
 });
 
+/**
+ * The audit trail is two tables: the signed trail of what agents did, and the
+ * files it has been exported to.
+ */
+export const auditViews = ["trail", "exports"] as const;
+export type AuditView = (typeof auditViews)[number];
+
+export const AUDIT_VIEW_PARAM = "audit";
+
+export const auditViewParser = parseAsStringLiteral(auditViews)
+  .withOptions({ history: "replace", shallow: true })
+  .withDefault("trail");
+
 /** A view below a rail row, whichever row it belongs to. */
-export type RailView = ActivityView | SafetyView | QualityView;
+export type RailView = ActivityView | SafetyView | QualityView | AuditView;
 
 /**
  * The tables on this page share the address for their page, search, filters,
