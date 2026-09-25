@@ -49,57 +49,77 @@ var AIUsageRecordTable = TableInfo{
 //	q.Where(AIUsageRecordColumns.ID.Eq(), id)           // WHERE aiu.id = ?
 //	q.Order(AIUsageRecordColumns.CreatedAt.OrderDesc())  // ORDER BY aiu.created_at DESC
 var AIUsageRecordColumns = struct {
-	ID                Column // "id" → qualified: "aiu.id"
-	BusinessUnitID    Column // "business_unit_id" → qualified: "aiu.business_unit_id"
-	OrganizationID    Column // "organization_id" → qualified: "aiu.organization_id"
-	ProviderID        Column // "provider_id" → qualified: "aiu.provider_id"
-	ProviderKind      Column // "provider_kind" → qualified: "aiu.provider_kind"
-	Model             Column // "model" → qualified: "aiu.model"
-	Task              Column // "task" → qualified: "aiu.task"
-	Surface           Column // "surface" → qualified: "aiu.surface"
-	UserID            Column // "user_id" → qualified: "aiu.user_id"
-	AgentDefinitionID Column // "agent_definition_id" → qualified: "aiu.agent_definition_id"
-	ThreadID          Column // "thread_id" → qualified: "aiu.thread_id"
-	RunID             Column // "run_id" → qualified: "aiu.run_id"
-	Feature           Column // "feature" → qualified: "aiu.feature"
-	SubjectType       Column // "subject_type" → qualified: "aiu.subject_type"
-	SubjectID         Column // "subject_id" → qualified: "aiu.subject_id"
-	Succeeded         Column // "succeeded" → qualified: "aiu.succeeded"
-	ErrorClass        Column // "error_class" → qualified: "aiu.error_class"
-	ErrorMessage      Column // "error_message" → qualified: "aiu.error_message"
-	Streamed          Column // "streamed" → qualified: "aiu.streamed"
-	LatencyMs         Column // "latency_ms" → qualified: "aiu.latency_ms"
-	InputTokens       Column // "input_tokens" → qualified: "aiu.input_tokens"
-	OutputTokens      Column // "output_tokens" → qualified: "aiu.output_tokens"
-	ReasoningTokens   Column // "reasoning_tokens" → qualified: "aiu.reasoning_tokens"
-	CostUSD           Column // "cost_usd" → qualified: "aiu.cost_usd"
-	CreatedAt         Column // "created_at" → qualified: "aiu.created_at"
+	ID                     Column // "id" → qualified: "aiu.id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "aiu.business_unit_id"
+	OrganizationID         Column // "organization_id" → qualified: "aiu.organization_id"
+	ProviderID             Column // "provider_id" → qualified: "aiu.provider_id"
+	ProviderKind           Column // "provider_kind" → qualified: "aiu.provider_kind"
+	Model                  Column // "model" → qualified: "aiu.model"
+	Task                   Column // "task" → qualified: "aiu.task"
+	Surface                Column // "surface" → qualified: "aiu.surface"
+	UserID                 Column // "user_id" → qualified: "aiu.user_id"
+	AgentDefinitionID      Column // "agent_definition_id" → qualified: "aiu.agent_definition_id"
+	ThreadID               Column // "thread_id" → qualified: "aiu.thread_id"
+	RunID                  Column // "run_id" → qualified: "aiu.run_id"
+	Feature                Column // "feature" → qualified: "aiu.feature"
+	SubjectType            Column // "subject_type" → qualified: "aiu.subject_type"
+	SubjectID              Column // "subject_id" → qualified: "aiu.subject_id"
+	Succeeded              Column // "succeeded" → qualified: "aiu.succeeded"
+	ErrorClass             Column // "error_class" → qualified: "aiu.error_class"
+	ErrorMessage           Column // "error_message" → qualified: "aiu.error_message"
+	Streamed               Column // "streamed" → qualified: "aiu.streamed"
+	LatencyMs              Column // "latency_ms" → qualified: "aiu.latency_ms"
+	InputTokens            Column // "input_tokens" → qualified: "aiu.input_tokens"
+	OutputTokens           Column // "output_tokens" → qualified: "aiu.output_tokens"
+	ReasoningTokens        Column // "reasoning_tokens" → qualified: "aiu.reasoning_tokens"
+	CostUSD                Column // "cost_usd" → qualified: "aiu.cost_usd"
+	TraceID                Column // "trace_id" → qualified: "aiu.trace_id"
+	SpanID                 Column // "span_id" → qualified: "aiu.span_id"
+	OwnerKind              Column // "owner_kind" → qualified: "aiu.owner_kind"
+	OwnerID                Column // "owner_id" → qualified: "aiu.owner_id"
+	DelegateCallID         Column // "delegate_call_id" → qualified: "aiu.delegate_call_id"
+	AgentDefinitionVersion Column // "agent_definition_version" → qualified: "aiu.agent_definition_version"
+	Attempt                Column // "attempt" → qualified: "aiu.attempt"
+	Failover               Column // "failover" → qualified: "aiu.failover"
+	CacheReadTokens        Column // "cache_read_tokens" → qualified: "aiu.cache_read_tokens"
+	CacheWriteTokens       Column // "cache_write_tokens" → qualified: "aiu.cache_write_tokens"
+	CreatedAt              Column // "created_at" → qualified: "aiu.created_at"
 }{
-	ID:                NewColumn("id", "aiu"),
-	BusinessUnitID:    NewColumn("business_unit_id", "aiu"),
-	OrganizationID:    NewColumn("organization_id", "aiu"),
-	ProviderID:        NewColumn("provider_id", "aiu"),
-	ProviderKind:      NewColumn("provider_kind", "aiu"),
-	Model:             NewColumn("model", "aiu"),
-	Task:              NewColumn("task", "aiu"),
-	Surface:           NewColumn("surface", "aiu"),
-	UserID:            NewColumn("user_id", "aiu"),
-	AgentDefinitionID: NewColumn("agent_definition_id", "aiu"),
-	ThreadID:          NewColumn("thread_id", "aiu"),
-	RunID:             NewColumn("run_id", "aiu"),
-	Feature:           NewColumn("feature", "aiu"),
-	SubjectType:       NewColumn("subject_type", "aiu"),
-	SubjectID:         NewColumn("subject_id", "aiu"),
-	Succeeded:         NewColumn("succeeded", "aiu"),
-	ErrorClass:        NewColumn("error_class", "aiu"),
-	ErrorMessage:      NewColumn("error_message", "aiu"),
-	Streamed:          NewColumn("streamed", "aiu"),
-	LatencyMs:         NewColumn("latency_ms", "aiu"),
-	InputTokens:       NewColumn("input_tokens", "aiu"),
-	OutputTokens:      NewColumn("output_tokens", "aiu"),
-	ReasoningTokens:   NewColumn("reasoning_tokens", "aiu"),
-	CostUSD:           NewColumn("cost_usd", "aiu"),
-	CreatedAt:         NewColumn("created_at", "aiu"),
+	ID:                     NewColumn("id", "aiu"),
+	BusinessUnitID:         NewColumn("business_unit_id", "aiu"),
+	OrganizationID:         NewColumn("organization_id", "aiu"),
+	ProviderID:             NewColumn("provider_id", "aiu"),
+	ProviderKind:           NewColumn("provider_kind", "aiu"),
+	Model:                  NewColumn("model", "aiu"),
+	Task:                   NewColumn("task", "aiu"),
+	Surface:                NewColumn("surface", "aiu"),
+	UserID:                 NewColumn("user_id", "aiu"),
+	AgentDefinitionID:      NewColumn("agent_definition_id", "aiu"),
+	ThreadID:               NewColumn("thread_id", "aiu"),
+	RunID:                  NewColumn("run_id", "aiu"),
+	Feature:                NewColumn("feature", "aiu"),
+	SubjectType:            NewColumn("subject_type", "aiu"),
+	SubjectID:              NewColumn("subject_id", "aiu"),
+	Succeeded:              NewColumn("succeeded", "aiu"),
+	ErrorClass:             NewColumn("error_class", "aiu"),
+	ErrorMessage:           NewColumn("error_message", "aiu"),
+	Streamed:               NewColumn("streamed", "aiu"),
+	LatencyMs:              NewColumn("latency_ms", "aiu"),
+	InputTokens:            NewColumn("input_tokens", "aiu"),
+	OutputTokens:           NewColumn("output_tokens", "aiu"),
+	ReasoningTokens:        NewColumn("reasoning_tokens", "aiu"),
+	CostUSD:                NewColumn("cost_usd", "aiu"),
+	TraceID:                NewColumn("trace_id", "aiu"),
+	SpanID:                 NewColumn("span_id", "aiu"),
+	OwnerKind:              NewColumn("owner_kind", "aiu"),
+	OwnerID:                NewColumn("owner_id", "aiu"),
+	DelegateCallID:         NewColumn("delegate_call_id", "aiu"),
+	AgentDefinitionVersion: NewColumn("agent_definition_version", "aiu"),
+	Attempt:                NewColumn("attempt", "aiu"),
+	Failover:               NewColumn("failover", "aiu"),
+	CacheReadTokens:        NewColumn("cache_read_tokens", "aiu"),
+	CacheWriteTokens:       NewColumn("cache_write_tokens", "aiu"),
+	CreatedAt:              NewColumn("created_at", "aiu"),
 }
 
 // AIUsageRecordFieldMap maps JSON API field names to database column names.
@@ -107,31 +127,41 @@ var AIUsageRecordColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AIUsageRecord.GetStaticFieldMap().
 var AIUsageRecordFieldMap = map[string]string{
-	"id":                "id",
-	"businessUnitId":    "business_unit_id",
-	"organizationId":    "organization_id",
-	"providerId":        "provider_id",
-	"providerKind":      "provider_kind",
-	"model":             "model",
-	"task":              "task",
-	"surface":           "surface",
-	"userId":            "user_id",
-	"agentDefinitionId": "agent_definition_id",
-	"threadId":          "thread_id",
-	"runId":             "run_id",
-	"feature":           "feature",
-	"subjectType":       "subject_type",
-	"subjectId":         "subject_id",
-	"succeeded":         "succeeded",
-	"errorClass":        "error_class",
-	"errorMessage":      "error_message",
-	"streamed":          "streamed",
-	"latencyMs":         "latency_ms",
-	"inputTokens":       "input_tokens",
-	"outputTokens":      "output_tokens",
-	"reasoningTokens":   "reasoning_tokens",
-	"costUsd":           "cost_usd",
-	"createdAt":         "created_at",
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"providerId":             "provider_id",
+	"providerKind":           "provider_kind",
+	"model":                  "model",
+	"task":                   "task",
+	"surface":                "surface",
+	"userId":                 "user_id",
+	"agentDefinitionId":      "agent_definition_id",
+	"threadId":               "thread_id",
+	"runId":                  "run_id",
+	"feature":                "feature",
+	"subjectType":            "subject_type",
+	"subjectId":              "subject_id",
+	"succeeded":              "succeeded",
+	"errorClass":             "error_class",
+	"errorMessage":           "error_message",
+	"streamed":               "streamed",
+	"latencyMs":              "latency_ms",
+	"inputTokens":            "input_tokens",
+	"outputTokens":           "output_tokens",
+	"reasoningTokens":        "reasoning_tokens",
+	"costUsd":                "cost_usd",
+	"traceId":                "trace_id",
+	"spanId":                 "span_id",
+	"ownerKind":              "owner_kind",
+	"ownerId":                "owner_id",
+	"delegateCallId":         "delegate_call_id",
+	"agentDefinitionVersion": "agent_definition_version",
+	"attempt":                "attempt",
+	"failover":               "failover",
+	"cacheReadTokens":        "cache_read_tokens",
+	"cacheWriteTokens":       "cache_write_tokens",
+	"createdAt":              "created_at",
 }
 
 // AIUsageRecordInsertableColumns lists column names suitable for INSERT statements on the "ai_usage_records" table.
@@ -161,6 +191,16 @@ var AIUsageRecordInsertableColumns = []string{
 	"output_tokens",
 	"reasoning_tokens",
 	"cost_usd",
+	"trace_id",
+	"span_id",
+	"owner_kind",
+	"owner_id",
+	"delegate_call_id",
+	"agent_definition_version",
+	"attempt",
+	"failover",
+	"cache_read_tokens",
+	"cache_write_tokens",
 	"created_at",
 }
 
@@ -214,31 +254,41 @@ func AIUsageRecordApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *
 //	AIUsageRecordFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AIUsageRecordFilter = struct {
-	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	ProviderID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
-	ProviderKind      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerKind" → DB: "provider_kind"
-	Model             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
-	Task              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "task" → DB: "task"
-	Surface           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "surface" → DB: "surface"
-	UserID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
-	AgentDefinitionID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
-	ThreadID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
-	RunID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
-	Feature           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "feature" → DB: "feature"
-	SubjectType       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
-	SubjectID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
-	Succeeded         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "succeeded" → DB: "succeeded"
-	ErrorClass        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorClass" → DB: "error_class"
-	ErrorMessage      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
-	Streamed          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "streamed" → DB: "streamed"
-	LatencyMs         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latencyMs" → DB: "latency_ms"
-	InputTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
-	OutputTokens      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
-	ReasoningTokens   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoningTokens" → DB: "reasoning_tokens"
-	CostUSD           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
-	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ProviderID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerId" → DB: "provider_id"
+	ProviderKind           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerKind" → DB: "provider_kind"
+	Model                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "model" → DB: "model"
+	Task                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "task" → DB: "task"
+	Surface                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "surface" → DB: "surface"
+	UserID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "userId" → DB: "user_id"
+	AgentDefinitionID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionId" → DB: "agent_definition_id"
+	ThreadID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "threadId" → DB: "thread_id"
+	RunID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "runId" → DB: "run_id"
+	Feature                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "feature" → DB: "feature"
+	SubjectType            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectType" → DB: "subject_type"
+	SubjectID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "subjectId" → DB: "subject_id"
+	Succeeded              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "succeeded" → DB: "succeeded"
+	ErrorClass             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorClass" → DB: "error_class"
+	ErrorMessage           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
+	Streamed               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "streamed" → DB: "streamed"
+	LatencyMs              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "latencyMs" → DB: "latency_ms"
+	InputTokens            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "inputTokens" → DB: "input_tokens"
+	OutputTokens           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outputTokens" → DB: "output_tokens"
+	ReasoningTokens        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reasoningTokens" → DB: "reasoning_tokens"
+	CostUSD                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "costUsd" → DB: "cost_usd"
+	TraceID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "traceId" → DB: "trace_id"
+	SpanID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "spanId" → DB: "span_id"
+	OwnerKind              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerKind" → DB: "owner_kind"
+	OwnerID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ownerId" → DB: "owner_id"
+	DelegateCallID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "delegateCallId" → DB: "delegate_call_id"
+	AgentDefinitionVersion func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentDefinitionVersion" → DB: "agent_definition_version"
+	Attempt                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attempt" → DB: "attempt"
+	Failover               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "failover" → DB: "failover"
+	CacheReadTokens        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheReadTokens" → DB: "cache_read_tokens"
+	CacheWriteTokens       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheWriteTokens" → DB: "cache_write_tokens"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -311,6 +361,36 @@ var AIUsageRecordFilter = struct {
 	},
 	CostUSD: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("costUsd", op, value)
+	},
+	TraceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("traceId", op, value)
+	},
+	SpanID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("spanId", op, value)
+	},
+	OwnerKind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ownerKind", op, value)
+	},
+	OwnerID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ownerId", op, value)
+	},
+	DelegateCallID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("delegateCallId", op, value)
+	},
+	AgentDefinitionVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("agentDefinitionVersion", op, value)
+	},
+	Attempt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("attempt", op, value)
+	},
+	Failover: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("failover", op, value)
+	},
+	CacheReadTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cacheReadTokens", op, value)
+	},
+	CacheWriteTokens: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cacheWriteTokens", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)

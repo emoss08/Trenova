@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
+	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
@@ -111,6 +112,28 @@ type ShipmentEvent interface {
 	GetCorrelationID() *string
 	GetActor() *tenant.User
 	GetShipment() *ShipmentEventShipmentReference
+}
+
+type AIAuditEventConnection struct {
+	Edges      []*AIAuditEventEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type AIAuditEventEdge struct {
+	Node   *aiaudit.AIAuditEvent `json:"node"`
+	Cursor string                `json:"cursor"`
+}
+
+type AIAuditExportConnection struct {
+	Edges      []*AIAuditExportEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount *int                 `json:"totalCount,omitempty"`
+}
+
+type AIAuditExportEdge struct {
+	Node   *aiaudit.AIAuditExport `json:"node"`
+	Cursor string                 `json:"cursor"`
 }
 
 type AIFeedbackConnection struct {
@@ -5481,6 +5504,16 @@ type ReportView struct {
 	Version      int            `json:"version"`
 	CreatedAt    int            `json:"createdAt"`
 	UpdatedAt    int            `json:"updatedAt"`
+}
+
+type RequestAIAuditExportInput struct {
+	Format       aiaudit.ExportFormat `json:"format"`
+	From         int                  `json:"from"`
+	To           int                  `json:"to"`
+	Query        *string              `json:"query,omitempty"`
+	FieldFilters []*FieldFilterInput  `json:"fieldFilters,omitempty"`
+	FilterGroups []*FilterGroupInput  `json:"filterGroups,omitempty"`
+	Sort         []*SortFieldInput    `json:"sort,omitempty"`
 }
 
 type RequestAccountingBackfillInput struct {

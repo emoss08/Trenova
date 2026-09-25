@@ -1,6 +1,6 @@
 {
-  "operationCount": 875,
-  "fragmentCount": 236,
+  "operationCount": 883,
+  "fragmentCount": 240,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -1183,7 +1183,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/proposals.graphql",
-      "hash": "sha256:368b228c6509f703237086c611f9ce712f4aead026d170e61fa1bb14b20aed5b",
+      "hash": "sha256:23c2a7710b90b7e612855b1126f3938b7bdf74c7f9f899ff6db317f7be067d82",
       "rootFields": [
         "agentProposal"
       ],
@@ -1200,14 +1200,14 @@
         "AgentProposalTableRowFields"
       ],
       "usages": [],
-      "sdl": "query AgentProposalDetail($id: ID!) {\n  agentProposal(id: $id) {\n    ...AgentProposalDetailFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AgentProposalDetail($id: ID!) {\n  agentProposal(id: $id) {\n    ...AgentProposalDetailFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentProposalTable",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/proposals.graphql",
-      "hash": "sha256:d40973ae042db835fb380334d8fa552bdfb5041bcf88854f0a16b24dc2e0b3d5",
+      "hash": "sha256:8ab53908dace62550c99e3dd0961deda1222e1e0260ba26d826c16fee00db78e",
       "rootFields": [
         "agentProposals"
       ],
@@ -1228,7 +1228,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentProposalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...AgentProposalTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentProposalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...AgentProposalTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentQuality",
@@ -1354,7 +1354,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/runs.graphql",
-      "hash": "sha256:780230a3bc44a3aed467ed21d5aabd4142c705410579b4bcd855316f808315c5",
+      "hash": "sha256:542619e8aa647c0c8e3407b58eb090062f51b06e9e01c659be42f80040f1abd8",
       "rootFields": [
         "agentRun"
       ],
@@ -1369,14 +1369,14 @@
         "AgentRunTableRowFields"
       ],
       "usages": [],
-      "sdl": "query AgentRunDetail($id: ID!) {\n  agentRun(id: $id) {\n    ...AgentRunTableRowFields\n    inputContextHash\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AgentRunDetail($id: ID!) {\n  agentRun(id: $id) {\n    ...AgentRunTableRowFields\n    inputContextHash\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentRunTable",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/runs.graphql",
-      "hash": "sha256:938af4f2a45104c1bf195b3a992b531ebb470f63a2b1dd65dd1b933827662d5d",
+      "hash": "sha256:bd4c2649fa274bd45001f5123142976a84960ecfad6c95566cbc5f46362e2468",
       "rootFields": [
         "agentRuns"
       ],
@@ -1397,7 +1397,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentRuns(input: $input) {\n    edges {\n      node {\n        ...AgentRunTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentRuns(input: $input) {\n    edges {\n      node {\n        ...AgentRunTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentSafety",
@@ -1645,6 +1645,144 @@
       ],
       "usages": [],
       "sdl": "query AgentWorstRatedAnswerTable($agentDefinitionId: ID, $window: Int, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentWorstRatedAnswerConnection(\n    agentDefinitionId: $agentDefinitionId\n    window: $window\n    input: $input\n  ) {\n    edges {\n      node {\n        ...AgentWorstRatedAnswerFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentWorstRatedAnswerFields on AgentWorstRatedAnswer {\n  id\n  targetType\n  targetId\n  targetPart\n  positive\n  negative\n  lastRatedAt\n  threadId\n  canOpenThread\n  agentDefinitionId\n  agentName\n  sample {\n    id\n    reasons\n    comment\n    createdAt\n    turnSnapshot {\n      question\n      answer\n      tools {\n        name\n        summary\n        failed\n      }\n      omittedTools\n      redacted\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AIAuditChainStatus",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "hash": "sha256:189c7a9b735b0b8ec6b15f9d4a9ce6bc3cd25c26cd30f99b7dda9538c48b6820",
+      "rootFields": [
+        "aiAuditChainStatus"
+      ],
+      "variables": [],
+      "fragments": [
+        "AIAuditChainStatusFields"
+      ],
+      "usages": [],
+      "sdl": "query AIAuditChainStatus {\n  aiAuditChainStatus {\n    ...AIAuditChainStatusFields\n  }\n}\n\nfragment AIAuditChainStatusFields on AIAuditChainStatus {\n  signed\n  activeKeyId\n  firstSeq\n  lastSeq\n  lastHash\n  sealedThroughSeq\n  lastVerifiedSeq\n  lastVerifiedAt\n  lastVerificationStatus\n  failedSeq\n  detail\n  verifying\n}"
+    },
+    {
+      "name": "AIAuditEventDetail",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "hash": "sha256:ed73402380199934972ba4aa4c9baba8179b23d14cb6e7463f76a9c34c8c89da",
+      "rootFields": [
+        "aiAuditEvent"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AIAuditEventDetailFields",
+        "AIAuditEventRowFields",
+        "AuditLogTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query AIAuditEventDetail($id: ID!) {\n  aiAuditEvent(id: $id) {\n    ...AIAuditEventDetailFields\n  }\n}\n\nfragment AIAuditEventDetailFields on AIAuditEvent {\n  ...AIAuditEventRowFields\n  organizationId\n  businessUnitId\n  sourceKey\n  onBehalfOf {\n    id\n    name\n    username\n    profilePicUrl\n    thumbnailUrl\n  }\n  decidedBy {\n    id\n    name\n    username\n    profilePicUrl\n    thumbnailUrl\n  }\n  agent {\n    id\n    name\n  }\n  planId\n  decisionId\n  stepKey\n  callId\n  delegateCallId\n  parentOwnerId\n  spanId\n  providerId\n  attempt\n  failover\n  reasoningTokens\n  cacheReadTokens\n  cacheWriteTokens\n  toolEffect\n  egressClass\n  tierSource\n  arguments\n  argumentSensitivity\n  argumentsTruncated\n  redactedPaths\n  versionBefore\n  versionAfter\n  windowStart\n  windowEnd\n  taint\n  auditEntries {\n    ...AuditLogTableRowFields\n  }\n  prevHash\n  hash\n  hashKeyId\n  hashVersion\n  createdAt\n}\n\nfragment AIAuditEventRowFields on AIAuditEvent {\n  id\n  seq\n  occurredAt\n  recordedAt\n  kind\n  outcome\n  purpose\n  principalType\n  principalId\n  onBehalfOfUserId\n  onBehalfOfUserName\n  decidedByUserId\n  decidedByUserName\n  agentDefinitionId\n  agentDefinitionVersion\n  agentName\n  ownerKind\n  ownerId\n  runId\n  turnId\n  threadId\n  proposalId\n  toolName\n  tier\n  heldBy\n  model\n  providerKind\n  inputTokens\n  outputTokens\n  costUsd\n  latencyMs\n  entityType\n  entityId\n  reason\n  resultSummary\n  tainted\n  externalContent\n  simulated\n  reconstructed\n  traceId\n  traceUrl\n}\n\nfragment AuditLogTableRowFields on AuditEntry {\n  id\n  userId\n  businessUnitId\n  organizationId\n  timestamp\n  changes\n  previousState\n  currentState\n  metadata\n  resource\n  operation\n  resourceId\n  correlationId\n  userAgent\n  comment\n  ipAddress\n  category\n  sensitiveData\n  critical\n  user {\n    id\n    name\n    username\n    emailAddress\n    profilePicUrl\n    thumbnailUrl\n  }\n}"
+    },
+    {
+      "name": "AIAuditEventTable",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "hash": "sha256:4df8553a5f6877364cf0f4bf0bf7fd0745b577dd89671d7f6ce85bda0bd5684e",
+      "rootFields": [
+        "aiAuditEvents"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "AIAuditEventRowFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AIAuditEventTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  aiAuditEvents(input: $input) {\n    edges {\n      node {\n        ...AIAuditEventRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AIAuditEventRowFields on AIAuditEvent {\n  id\n  seq\n  occurredAt\n  recordedAt\n  kind\n  outcome\n  purpose\n  principalType\n  principalId\n  onBehalfOfUserId\n  onBehalfOfUserName\n  decidedByUserId\n  decidedByUserName\n  agentDefinitionId\n  agentDefinitionVersion\n  agentName\n  ownerKind\n  ownerId\n  runId\n  turnId\n  threadId\n  proposalId\n  toolName\n  tier\n  heldBy\n  model\n  providerKind\n  inputTokens\n  outputTokens\n  costUsd\n  latencyMs\n  entityType\n  entityId\n  reason\n  resultSummary\n  tainted\n  externalContent\n  simulated\n  reconstructed\n  traceId\n  traceUrl\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AIAuditExportDetail",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "hash": "sha256:1207b0bb7ed325dbc1fe9b0afd092c0855cd5030ac489ff9a219eeeeb22c4f0c",
+      "rootFields": [
+        "aiAuditExport"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AIAuditExportFields"
+      ],
+      "usages": [],
+      "sdl": "query AIAuditExportDetail($id: ID!) {\n  aiAuditExport(id: $id) {\n    ...AIAuditExportFields\n  }\n}\n\nfragment AIAuditExportFields on AIAuditExport {\n  id\n  requestedByUserId\n  requestedBy {\n    id\n    name\n    username\n    profilePicUrl\n    thumbnailUrl\n  }\n  format\n  filters\n  rangeFrom\n  rangeTo\n  snapshotSeq\n  status\n  rowCount\n  byteSize\n  sha256\n  artifactExpiresAt\n  chainKeyId\n  chainFirstSeq\n  chainLastSeq\n  chainComplete\n  errorMessage\n  startedAt\n  completedAt\n  downloadable\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AIAuditExportDownload",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "hash": "sha256:c2de785dfd66b796b3fe28d2540c3661146c4fb1ec351a765baa567758c6a80f",
+      "rootFields": [
+        "aiAuditExportDownload"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation AIAuditExportDownload($id: ID!) {\n  aiAuditExportDownload(id: $id) {\n    url\n    fileName\n    expiresAt\n    sha256\n  }\n}"
+    },
+    {
+      "name": "AIAuditExportTable",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "hash": "sha256:6310f09eac70ab9eb3e60fbe4a7b11c039943748fd8b1c7f7ab5848ec1c11f14",
+      "rootFields": [
+        "aiAuditExports"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "AIAuditExportFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AIAuditExportTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  aiAuditExports(input: $input) {\n    edges {\n      node {\n        ...AIAuditExportFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AIAuditExportFields on AIAuditExport {\n  id\n  requestedByUserId\n  requestedBy {\n    id\n    name\n    username\n    profilePicUrl\n    thumbnailUrl\n  }\n  format\n  filters\n  rangeFrom\n  rangeTo\n  snapshotSeq\n  status\n  rowCount\n  byteSize\n  sha256\n  artifactExpiresAt\n  chainKeyId\n  chainFirstSeq\n  chainLastSeq\n  chainComplete\n  errorMessage\n  startedAt\n  completedAt\n  downloadable\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AIFeedbackTable",
@@ -13893,6 +14031,28 @@
       "sdl": "mutation RequestAccountingBackfill($input: RequestAccountingBackfillInput!) {\n  requestAccountingBackfill(input: $input) {\n    ...AccountingBackfillFields\n  }\n}\n\nfragment AccountingBackfillFields on AccountingBackfill {\n  id\n  rangeStart\n  rangeEnd\n  objectTypes\n  status\n  enqueuedCount\n  alreadyQueuedCount\n  startedAt\n  completedAt\n  lastError\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "RequestAIAuditExport",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "hash": "sha256:58b7441c924c34ef725b97617378507ee9fbc255c4807fa0a1c6728b3a686e3f",
+      "rootFields": [
+        "requestAIAuditExport"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "RequestAIAuditExportInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AIAuditExportFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RequestAIAuditExport($input: RequestAIAuditExportInput!) {\n  requestAIAuditExport(input: $input) {\n    ...AIAuditExportFields\n  }\n}\n\nfragment AIAuditExportFields on AIAuditExport {\n  id\n  requestedByUserId\n  requestedBy {\n    id\n    name\n    username\n    profilePicUrl\n    thumbnailUrl\n  }\n  format\n  filters\n  rangeFrom\n  rangeTo\n  snapshotSeq\n  status\n  rowCount\n  byteSize\n  sha256\n  artifactExpiresAt\n  chainKeyId\n  chainFirstSeq\n  chainLastSeq\n  chainComplete\n  errorMessage\n  startedAt\n  completedAt\n  downloadable\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "RequestLeaveCertification",
       "kind": "mutation",
       "domain": "worker-leave",
@@ -18787,6 +18947,22 @@
       "sdl": "query VehiclePositions($maxAgeSeconds: Int) {\n  vehiclePositions(maxAgeSeconds: $maxAgeSeconds) {\n    tractorId\n    tractorCode\n    provider\n    providerVehicleId\n    latitude\n    longitude\n    headingDegrees\n    speedMph\n    engineState\n    fuelPercent\n    odometerMeters\n    formattedLocation\n    recordedAt\n    receivedAt\n    primaryWorkerId\n    primaryWorkerName\n  }\n}"
     },
     {
+      "name": "VerifyAIAuditChain",
+      "kind": "mutation",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "hash": "sha256:ef094f57f0060f6885edbec0665b81e27e2b8e09b047819be47dae0e6b423ad5",
+      "rootFields": [
+        "verifyAIAuditChain"
+      ],
+      "variables": [],
+      "fragments": [
+        "AIAuditChainStatusFields"
+      ],
+      "usages": [],
+      "sdl": "mutation VerifyAIAuditChain {\n  verifyAIAuditChain {\n    ...AIAuditChainStatusFields\n  }\n}\n\nfragment AIAuditChainStatusFields on AIAuditChainStatus {\n  signed\n  activeKeyId\n  firstSeq\n  lastSeq\n  lastHash\n  sealedThroughSeq\n  lastVerifiedSeq\n  lastVerifiedAt\n  lastVerificationStatus\n  failedSeq\n  detail\n  verifying\n}"
+    },
+    {
       "name": "VerifyCarrierEquipment",
       "kind": "mutation",
       "domain": "carrier-intelligence",
@@ -20525,7 +20701,7 @@
         "AgentProposalDetail"
       ],
       "usages": [],
-      "sdl": "fragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentProposalTableRowFields",
@@ -20538,7 +20714,7 @@
         "AgentProposalTable"
       ],
       "usages": [],
-      "sdl": "fragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentQualityControlFields",
@@ -20577,7 +20753,7 @@
         "AgentRunTable"
       ],
       "usages": [],
-      "sdl": "fragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentRunTableRowFields on AgentRun {\n  id\n  organizationId\n  businessUnitId\n  agentType\n  agentDefinitionId\n  trigger\n  summary\n  subjectType\n  subjectId\n  status\n  workflowId\n  modelIdentifier\n  promptVersion\n  startedAt\n  completedAt\n  errorMessage\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentSafetyHeaderFields",
@@ -20685,6 +20861,61 @@
       "sdl": "fragment AgentWorstRatedAnswerFields on AgentWorstRatedAnswer {\n  id\n  targetType\n  targetId\n  targetPart\n  positive\n  negative\n  lastRatedAt\n  threadId\n  canOpenThread\n  agentDefinitionId\n  agentName\n  sample {\n    id\n    reasons\n    comment\n    createdAt\n    turnSnapshot {\n      question\n      answer\n      tools {\n        name\n        summary\n        failed\n      }\n      omittedTools\n      redacted\n    }\n  }\n}"
     },
     {
+      "name": "AIAuditChainStatusFields",
+      "typeCondition": "AIAuditChainStatus",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AIAuditChainStatus",
+        "VerifyAIAuditChain"
+      ],
+      "usages": [],
+      "sdl": "fragment AIAuditChainStatusFields on AIAuditChainStatus {\n  signed\n  activeKeyId\n  firstSeq\n  lastSeq\n  lastHash\n  sealedThroughSeq\n  lastVerifiedSeq\n  lastVerifiedAt\n  lastVerificationStatus\n  failedSeq\n  detail\n  verifying\n}"
+    },
+    {
+      "name": "AIAuditEventDetailFields",
+      "typeCondition": "AIAuditEvent",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "fragments": [
+        "AIAuditEventRowFields",
+        "AuditLogTableRowFields"
+      ],
+      "usedByOperations": [
+        "AIAuditEventDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment AIAuditEventDetailFields on AIAuditEvent {\n  ...AIAuditEventRowFields\n  organizationId\n  businessUnitId\n  sourceKey\n  onBehalfOf {\n    id\n    name\n    username\n    profilePicUrl\n    thumbnailUrl\n  }\n  decidedBy {\n    id\n    name\n    username\n    profilePicUrl\n    thumbnailUrl\n  }\n  agent {\n    id\n    name\n  }\n  planId\n  decisionId\n  stepKey\n  callId\n  delegateCallId\n  parentOwnerId\n  spanId\n  providerId\n  attempt\n  failover\n  reasoningTokens\n  cacheReadTokens\n  cacheWriteTokens\n  toolEffect\n  egressClass\n  tierSource\n  arguments\n  argumentSensitivity\n  argumentsTruncated\n  redactedPaths\n  versionBefore\n  versionAfter\n  windowStart\n  windowEnd\n  taint\n  auditEntries {\n    ...AuditLogTableRowFields\n  }\n  prevHash\n  hash\n  hashKeyId\n  hashVersion\n  createdAt\n}\n\nfragment AIAuditEventRowFields on AIAuditEvent {\n  id\n  seq\n  occurredAt\n  recordedAt\n  kind\n  outcome\n  purpose\n  principalType\n  principalId\n  onBehalfOfUserId\n  onBehalfOfUserName\n  decidedByUserId\n  decidedByUserName\n  agentDefinitionId\n  agentDefinitionVersion\n  agentName\n  ownerKind\n  ownerId\n  runId\n  turnId\n  threadId\n  proposalId\n  toolName\n  tier\n  heldBy\n  model\n  providerKind\n  inputTokens\n  outputTokens\n  costUsd\n  latencyMs\n  entityType\n  entityId\n  reason\n  resultSummary\n  tainted\n  externalContent\n  simulated\n  reconstructed\n  traceId\n  traceUrl\n}\n\nfragment AuditLogTableRowFields on AuditEntry {\n  id\n  userId\n  businessUnitId\n  organizationId\n  timestamp\n  changes\n  previousState\n  currentState\n  metadata\n  resource\n  operation\n  resourceId\n  correlationId\n  userAgent\n  comment\n  ipAddress\n  category\n  sensitiveData\n  critical\n  user {\n    id\n    name\n    username\n    emailAddress\n    profilePicUrl\n    thumbnailUrl\n  }\n}"
+    },
+    {
+      "name": "AIAuditEventRowFields",
+      "typeCondition": "AIAuditEvent",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AIAuditEventDetail",
+        "AIAuditEventTable"
+      ],
+      "usages": [],
+      "sdl": "fragment AIAuditEventRowFields on AIAuditEvent {\n  id\n  seq\n  occurredAt\n  recordedAt\n  kind\n  outcome\n  purpose\n  principalType\n  principalId\n  onBehalfOfUserId\n  onBehalfOfUserName\n  decidedByUserId\n  decidedByUserName\n  agentDefinitionId\n  agentDefinitionVersion\n  agentName\n  ownerKind\n  ownerId\n  runId\n  turnId\n  threadId\n  proposalId\n  toolName\n  tier\n  heldBy\n  model\n  providerKind\n  inputTokens\n  outputTokens\n  costUsd\n  latencyMs\n  entityType\n  entityId\n  reason\n  resultSummary\n  tainted\n  externalContent\n  simulated\n  reconstructed\n  traceId\n  traceUrl\n}"
+    },
+    {
+      "name": "AIAuditExportFields",
+      "typeCondition": "AIAuditExport",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/audit.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AIAuditExportDetail",
+        "AIAuditExportTable",
+        "RequestAIAuditExport"
+      ],
+      "usages": [],
+      "sdl": "fragment AIAuditExportFields on AIAuditExport {\n  id\n  requestedByUserId\n  requestedBy {\n    id\n    name\n    username\n    profilePicUrl\n    thumbnailUrl\n  }\n  format\n  filters\n  rangeFrom\n  rangeTo\n  snapshotSeq\n  status\n  rowCount\n  byteSize\n  sha256\n  artifactExpiresAt\n  chainKeyId\n  chainFirstSeq\n  chainLastSeq\n  chainComplete\n  errorMessage\n  startedAt\n  completedAt\n  downloadable\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "AIFeedbackTableRowFields",
       "typeCondition": "AIFeedback",
       "domain": "ai-feedback",
@@ -20755,6 +20986,7 @@
       "sourceFile": "src/operations/audit-log/table.graphql",
       "fragments": [],
       "usedByOperations": [
+        "AIAuditEventDetail",
         "AuditLogTable"
       ],
       "usages": [],
@@ -21208,6 +21440,8 @@
         "AgentToolRuleTable",
         "AgentToolSafetyTable",
         "AgentWorstRatedAnswerTable",
+        "AIAuditEventTable",
+        "AIAuditExportTable",
         "AIFeedbackTable",
         "AIProviderCards",
         "AIRetrievalFailedEntryTable",
@@ -30688,6 +30922,47 @@
       ],
       "sdl": "input RequestAccountingBackfillInput {\n  integrationType: AccountingSystem!\n  \"\"\"Defaults to every kind of document.\"\"\"\n  objectTypes: [AccountingSyncObjectType!]\n  \"\"\"Defaults to when sync was turned on.\"\"\"\n  rangeEnd: Timestamp\n  \"\"\"Defaults to the start date.\"\"\"\n  rangeStart: Timestamp\n}"
     },
+    "RequestAIAuditExportInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "fieldFilters",
+          "type": "[FieldFilterInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "filterGroups",
+          "type": "[FilterGroupInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "format",
+          "type": "AIAuditExportFormat!",
+          "defaultValue": null
+        },
+        {
+          "name": "from",
+          "type": "Timestamp!",
+          "defaultValue": null
+        },
+        {
+          "name": "query",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "sort",
+          "type": "[SortFieldInput!]",
+          "defaultValue": null
+        },
+        {
+          "name": "to",
+          "type": "Timestamp!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input RequestAIAuditExportInput {\n  fieldFilters: [FieldFilterInput!]\n  filterGroups: [FilterGroupInput!]\n  format: AIAuditExportFormat!\n  from: Timestamp!\n  query: String\n  sort: [SortFieldInput!]\n  to: Timestamp!\n}"
+    },
     "RequestMyPtoInput": {
       "kind": "input",
       "fields": [
@@ -37459,6 +37734,14 @@
         }
       ],
       "sdl": "input ReportSortInput {\n  columnId: String!\n  direction: String!\n}"
+    },
+    "AIAuditExportFormat": {
+      "kind": "enum",
+      "values": [
+        "CSV",
+        "JSON"
+      ],
+      "sdl": "enum AIAuditExportFormat {\n  CSV\n  JSON\n}"
     },
     "PortalPtoType": {
       "kind": "enum",

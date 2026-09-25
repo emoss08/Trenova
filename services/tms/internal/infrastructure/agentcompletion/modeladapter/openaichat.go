@@ -160,6 +160,9 @@ type chatUsage struct {
 	CompletionTokensDetails struct {
 		ReasoningTokens int `json:"reasoning_tokens"`
 	} `json:"completion_tokens_details"`
+	PromptTokensDetails struct {
+		CachedTokens int `json:"cached_tokens"`
+	} `json:"prompt_tokens_details"`
 }
 
 func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response, error) {
@@ -208,6 +211,7 @@ func (a openAIChatAdapter) Complete(ctx context.Context, call *Call) (*Response,
 		Truncated:       truncated,
 		Reasoning:       reasoning,
 		ReasoningTokens: envelope.Usage.CompletionTokensDetails.ReasoningTokens,
+		CacheReadTokens: envelope.Usage.PromptTokensDetails.CachedTokens,
 	}, nil
 }
 
@@ -397,6 +401,7 @@ func (a openAIChatAdapter) Stream(
 		Truncated:       truncated,
 		Reasoning:       reasoning,
 		ReasoningTokens: usage.CompletionTokensDetails.ReasoningTokens,
+		CacheReadTokens: usage.PromptTokensDetails.CachedTokens,
 	}, nil
 }
 

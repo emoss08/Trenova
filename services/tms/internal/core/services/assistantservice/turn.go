@@ -293,6 +293,7 @@ func (s *Service) keepProviderChoice(
 
 // FinishTurnRequest is what a turn came to, for saving.
 type FinishTurnRequest struct {
+	TurnID     pulid.ID
 	Plan       *TurnPlan
 	Actor      *services.RequestActor
 	TenantInfo pagination.TenantInfo
@@ -371,6 +372,7 @@ func (s *Service) FinishTurn(
 	// before it ended happened, and without its proposal it would leave no
 	// audit row, count against no cap, and earn no trust.
 	own := persistProposalsParams{
+		TurnID:      req.TurnID,
 		Failed:      req.Failure != nil,
 		Definition:  plan.Definition,
 		Thread:      thread,

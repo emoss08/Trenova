@@ -89,6 +89,30 @@ describe("record links", () => {
     });
   });
 
+  it("tells apart records that open on the same page by the view they name", () => {
+    expect(recordAtLocation("/admin/agent-control", "?tab=audit&audit=exports")).toEqual({
+      entityType: "ai_audit_export",
+      entityId: "",
+    });
+    expect(
+      recordAtLocation(
+        "/admin/agent-control",
+        "?tab=audit&audit=trail&panelType=edit&panelEntityId=aiae_1",
+      ),
+    ).toEqual({ entityType: "ai_audit_event", entityId: "aiae_1" });
+    expect(recordAtLocation("/admin/agent-control", "?tab=activity&activity=runs")).toEqual({
+      entityType: "agent_run",
+      entityId: "",
+    });
+  });
+
+  it("reads a shared page naming no view as its first record", () => {
+    expect(recordAtLocation("/admin/agent-control", "")).toEqual({
+      entityType: "agent_run",
+      entityId: "",
+    });
+  });
+
   it("does not claim a page records do not open on", () => {
     expect(recordAtLocation("/reports/ifta", "?item=x")).toBeNull();
     expect(recordAtLocation("/hr/workers/extra", "")).toBeNull();

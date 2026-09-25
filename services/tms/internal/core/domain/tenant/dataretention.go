@@ -20,6 +20,8 @@ const (
 	DefaultAIFeedbackRetentionDays    = 730
 	DefaultAIFeedbackRetentionMinDays = 30
 	DefaultAgentEvalCaseRetentionDays = 365
+	DefaultAIAuditRetentionDays       = 2555
+	MinAIAuditRetentionDays           = 365
 )
 
 type DataRetention struct {
@@ -39,6 +41,7 @@ type DataRetention struct {
 	DriverQualificationRetentionPeriod int   `json:"driverQualificationRetentionPeriod" bun:"driver_qualification_retention_period,type:INTEGER,notnull,default:1095"`
 	AgentEvalCaseRetentionPeriod       int   `json:"agentEvalCaseRetentionPeriod"       bun:"agent_eval_case_retention_period,type:INTEGER,notnull,default:365"`
 	AIFeedbackRetentionPeriod          int   `json:"aiFeedbackRetentionPeriod"          bun:"ai_feedback_retention_period,type:INTEGER,notnull,default:730"`
+	AIAuditRetentionPeriod             int   `json:"aiAuditRetentionPeriod"             bun:"ai_audit_retention_period,type:INTEGER,notnull,default:2555"` // In days, at least MinAIAuditRetentionDays
 	Version                            int64 `json:"version"                            bun:"version,type:BIGINT"`
 	CreatedAt                          int64 `json:"createdAt"                          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                          int64 `json:"updatedAt"                          bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -70,6 +73,11 @@ func (dr *DataRetention) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&dr.AIFeedbackRetentionPeriod,
 			validation.Min(0).Error("AI feedback retention period cannot be negative"),
 		),
+		validation.Field(&dr.AIAuditRetentionPeriod,
+			validation.Required.Error("AI audit trail retention period is required"),
+			validation.Min(MinAIAuditRetentionDays).
+				Error("AI audit trail retention period must be at least 365 days"),
+		),
 	))
 
 	if dr.AIFeedbackRetentionPeriod > 0 &&
@@ -88,6 +96,14 @@ func (dr *DataRetention) AIFeedbackRetentionDays() int {
 	}
 
 	return dr.AIFeedbackRetentionPeriod
+}
+
+func (dr *DataRetention) AIAuditRetentionDays() int {
+	if dr == nil || dr.AIAuditRetentionPeriod <= 0 {
+		return DefaultAIAuditRetentionDays
+	}
+
+	return dr.AIAuditRetentionPeriod
 }
 
 func (dr *DataRetention) GetID() pulid.ID {

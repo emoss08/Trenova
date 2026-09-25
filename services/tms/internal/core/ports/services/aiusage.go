@@ -20,6 +20,15 @@ type AIUsageAttribution struct {
 	Purpose           AIUsagePurpose
 	Feature           aiusage.Feature
 	Subject           aiusage.Subject
+	// OwnerKind and OwnerID name the run or turn the call was made for, and
+	// DelegateCallID the task another agent handed it, so its cost and its
+	// trace are tied to the unit of work rather than only to the agent.
+	OwnerKind      RunStepOwnerKind `json:",omitempty"`
+	OwnerID        pulid.ID         `json:",omitempty"`
+	DelegateCallID string           `json:",omitempty"`
+	// DefinitionVersion is the agent definition's version as the call was
+	// made. Nil when the caller is no agent.
+	DefinitionVersion *int64 `json:",omitempty"`
 }
 
 type AIUsagePurpose string

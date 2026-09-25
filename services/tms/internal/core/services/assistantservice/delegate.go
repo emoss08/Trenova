@@ -216,16 +216,18 @@ func (s *Service) persistDelegatedProposals(
 		}
 
 		recorded, err := s.persistProposals(ctx, persistProposalsParams{
-			Failed:     params.Failed || delegation.Failed,
-			Definition: delegation.Definition,
-			Thread:     params.Thread,
-			Actor:      params.Actor,
-			Saved:      params.Saved,
-			Actions:    delegation.Actions,
-			Model:      delegation.Model,
-			Input:      delegation.Input,
-			Artifacts:  params.Artifacts,
-			Taint:      delegation.Taint,
+			TurnID:         params.TurnID,
+			DelegateCallID: delegation.CallID,
+			Failed:         params.Failed || delegation.Failed,
+			Definition:     delegation.Definition,
+			Thread:         params.Thread,
+			Actor:          params.Actor,
+			Saved:          params.Saved,
+			Actions:        delegation.Actions,
+			Model:          delegation.Model,
+			Input:          delegation.Input,
+			Artifacts:      params.Artifacts,
+			Taint:          delegation.Taint,
 		})
 		if err != nil {
 			failures = append(failures, fmt.Errorf("record %s's proposals: %w",

@@ -13,6 +13,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -127,6 +128,11 @@ type OpenRunRequest struct {
 	InputContextHash string
 	Summary          string
 	Fingerprint      *agent.Fingerprint
+	TraceID          string
+	TurnID           pulid.ID
+	ParentOwnerKind  agent.RunOwnerKind
+	ParentOwnerID    pulid.ID
+	DelegateCallID   string
 }
 
 type EvidenceFunc func(action serviceports.PendingAction, sourceMessageID pulid.ID) []agent.EvidenceRef
@@ -219,9 +225,13 @@ func (s *Service) write(ctx context.Context, req *RecordRequest) (*RecordResult,
 		sourceMessageID := req.SourceMessageIDs[action.ToolCallID]
 
 		proposal := &agent.AgentProposal{
+			ID:              action.ProposalID,
 			OrganizationID:  req.Actor.OrganizationID,
 			BusinessUnitID:  req.Actor.BusinessUnitID,
 			RunID:           run.ID,
+			TraceID:         action.TraceID,
+			SpanID:          action.SpanID,
+			StepKey:         action.StepKey,
 			ToolName:        action.ToolName,
 			ToolParams:      nonNilParams(action.Arguments),
 			Rationale:       action.Rationale,
@@ -239,6 +249,7 @@ func (s *Service) write(ctx context.Context, req *RecordRequest) (*RecordResult,
 		}
 		applyTaint(proposal, action, req.Taint)
 		applyExecution(proposal, action, now)
+		applyExecutor(proposal, action, req.Actor)
 		if plan != nil && proposal.Status == agent.ProposalStatusPending {
 			step++
 			planID := plan.ID
@@ -381,6 +392,11 @@ func (s *Service) openRun(ctx context.Context, req *RecordRequest) (*agent.Agent
 		Fingerprint:      open.Fingerprint,
 		StartedAt:        now,
 		CompletedAt:      &now,
+		TraceID:          open.TraceID,
+		TurnID:           open.TurnID,
+		ParentOwnerKind:  open.ParentOwnerKind,
+		ParentOwnerID:    open.ParentOwnerID,
+		DelegateCallID:   open.DelegateCallID,
 	}
 	if req.Definition != nil {
 		run.AgentDefinitionID = req.Definition.ID
@@ -434,6 +450,9 @@ func applyExecution(proposal *agent.AgentProposal, action serviceports.PendingAc
 	}
 
 	executedAt := now
+	if action.ExecutedAt > 0 {
+		executedAt = action.ExecutedAt
+	}
 	proposal.ExecutedAt = &executedAt
 	if action.ExecutionError != "" {
 		proposal.Status = agent.ProposalStatusExecutionFailed
@@ -444,6 +463,22 @@ func applyExecution(proposal *agent.AgentProposal, action serviceports.PendingAc
 
 	proposal.Status = agent.ProposalStatusExecuted
 	proposal.ExecutionResult = action.ExecutionResult.Bounded()
+}
+
+func applyExecutor(
+	proposal *agent.AgentProposal,
+	action serviceports.PendingAction,
+	actor *serviceports.RequestActor,
+) {
+	if !action.Executed && !action.Simulated {
+		return
+	}
+	if actor != nil && actor.PrincipalType == serviceports.PrincipalTypeUser {
+		proposal.ExecutedByUserID = actor.UserID
+	}
+	if action.Executed && !action.Simulated && action.ExecutionError == "" {
+		proposal.ExecutedTargetVersion = intutils.ClonePointer(action.ExecutedVersion)
+	}
 }
 
 func proposalTier(tier agent.AutonomyTier) agent.AutonomyTier {

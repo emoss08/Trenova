@@ -42,9 +42,13 @@ func (r *repository) RecordExecution(
 		Set(cols.ExecutedAt.Set(), req.ExecutedAt).
 		Set(cols.ExecutionError.Set(), req.ExecutionError).
 		Set(cols.ExecutionResult.Set(), req.ExecutionResult.Bounded()).
+		Set(cols.ExecutedTargetVersion.Set(), req.ExecutedTargetVersion).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix())
 	if req.EgressClass.IsValid() {
 		query = query.Set(cols.EgressClass.Set(), req.EgressClass)
+	}
+	if req.ExecutedByUserID.IsNotNil() {
+		query = query.Set(cols.ExecutedByUserID.Set(), req.ExecutedByUserID)
 	}
 
 	results, err := query.Returning("*").Exec(ctx)
@@ -123,6 +127,13 @@ func (r *repository) RecordSimulation(
 		Set(cols.SimulatedAt.Set(), req.SimulatedAt).
 		Set(cols.Simulation.Set(), req.Simulation).
 		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
+		Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			if req.ExecutedByUserID.IsNil() {
+				return uq
+			}
+
+			return uq.Set(cols.ExecutedByUserID.Set(), req.ExecutedByUserID)
+		}).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {

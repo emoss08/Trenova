@@ -210,23 +210,28 @@ func TestRun_APrivateWriteKeepsATierAPersonMovedAfterTrust(t *testing.T) {
 	}
 }
 
-// The ledger is read only for a personal call on a tool whose tier the agent
-// names; every other call decides without it.
-func TestRun_OnlyAPersonalCallReadsTheLedger(t *testing.T) {
+// The ledger is read only for a tool whose tier the agent names, whether or
+// not the call is personal, because what set that tier (a person, or trust) is
+// recorded with every call; a call on a tool the agent names no tier for
+// decides without it.
+func TestRun_OnlyATierTheAgentNamesReadsTheLedger(t *testing.T) {
 	t.Parallel()
 
-	ledger := &ledgerTrust{}
+	named := &ledgerTrust{}
 	shared := &privateActionTool{
 		StubActionTool: actionTool("create_report", agent.TierAutoExecute, nil),
 		private:        false,
 	}
-	runPrivateWithTrust(t, shared, ledger, onRecordedAgent(agent.TierActWithApproval))
+	result := runPrivateWithTrust(t, shared, named, onRecordedAgent(agent.TierActWithApproval))
+	assert.Equal(t, 1, named.asks)
+	assert.True(t, result.Actions[0].TierSource.IsValid())
 
+	unnamed := &ledgerTrust{}
 	unset := &privateActionTool{
 		StubActionTool: actionTool("create_report", agent.TierAutoExecute, nil),
 		private:        true,
 	}
-	runPrivateWithTrust(t, unset, ledger, nil)
-
-	assert.Zero(t, ledger.asks)
+	result = runPrivateWithTrust(t, unset, unnamed, nil)
+	assert.Zero(t, unnamed.asks)
+	assert.Equal(t, agent.TierSourcePersonalExemption, result.Actions[0].TierSource)
 }

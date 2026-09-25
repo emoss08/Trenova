@@ -190,8 +190,16 @@ func (w *writer) rowFor(event serviceports.StreamEvent) *agent.AgentRunEvent {
 		CallID:         callIDOf(event.Data),
 		Payload:        payload,
 		Truncated:      truncated,
-		OccurredAt:     timeutils.NowUnix(),
+		OccurredAt:     occurredAt(event.At),
 	}
+}
+
+func occurredAt(at int64) int64 {
+	if at > 0 {
+		return at
+	}
+
+	return timeutils.NowUnix()
 }
 
 // encodePayload turns a typed event into something a jsonb column can hold.

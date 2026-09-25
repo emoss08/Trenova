@@ -2005,6 +2005,70 @@ models:
   AgentRunEvent:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentRunEvent
+  AIAuditEvent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiaudit.AIAuditEvent
+    fields:
+      onBehalfOf:
+        resolver: true
+      decidedBy:
+        resolver: true
+      agent:
+        resolver: true
+      ownerKind:
+        resolver: true
+      traceUrl:
+        resolver: true
+      costUsd:
+        resolver: true
+      arguments:
+        resolver: true
+      argumentSensitivity:
+        resolver: true
+      auditEntries:
+        resolver: true
+      taint:
+        resolver: true
+  AIAuditEventKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiaudit.Kind
+  AIAuditEventOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiaudit.Outcome
+  AIAuditPrincipalType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiaudit.PrincipalType
+  AIAuditPurpose:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiaudit.Purpose
+  AIAuditExportFormat:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiaudit.ExportFormat
+  AIAuditExportStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiaudit.ExportStatus
+  AIAuditVerificationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiaudit.VerificationStatus
+  AIAuditChainStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIAuditChainStatus
+    fields:
+      lastVerificationStatus:
+        resolver: true
+  AIAuditExport:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aiaudit.AIAuditExport
+    fields:
+      requestedBy:
+        resolver: true
+      filters:
+        resolver: true
+      downloadable:
+        resolver: true
+  AIAuditDownload:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AIAuditExportDownload
   AgentScorecardWindow:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.ScorecardWindow

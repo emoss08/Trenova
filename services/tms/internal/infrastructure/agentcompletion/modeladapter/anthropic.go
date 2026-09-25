@@ -123,8 +123,28 @@ type anthropicResponse struct {
 }
 
 type anthropicUsage struct {
-	InputTokens  int `json:"input_tokens"`
-	OutputTokens int `json:"output_tokens"`
+	InputTokens              int `json:"input_tokens"`
+	OutputTokens             int `json:"output_tokens"`
+	CacheReadInputTokens     int `json:"cache_read_input_tokens"`
+	CacheCreationInputTokens int `json:"cache_creation_input_tokens"`
+}
+
+func (u *anthropicUsage) merge(update *anthropicUsage) {
+	if update == nil {
+		return
+	}
+	if update.InputTokens > 0 {
+		u.InputTokens = update.InputTokens
+	}
+	if update.OutputTokens > 0 {
+		u.OutputTokens = update.OutputTokens
+	}
+	if update.CacheReadInputTokens > 0 {
+		u.CacheReadInputTokens = update.CacheReadInputTokens
+	}
+	if update.CacheCreationInputTokens > 0 {
+		u.CacheCreationInputTokens = update.CacheCreationInputTokens
+	}
 }
 
 func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, error) {
@@ -164,14 +184,16 @@ func (a anthropicAdapter) Complete(ctx context.Context, call *Call) (*Response, 
 	text, toolCalls := splitAnthropicContent(envelope.Content)
 
 	return &Response{
-		Text:            text,
-		ToolCalls:       toolCalls,
-		ModelIdentifier: envelope.Model,
-		InputTokens:     envelope.Usage.InputTokens,
-		OutputTokens:    envelope.Usage.OutputTokens,
-		Refused:         envelope.StopReason == "refusal",
-		Truncated:       envelope.StopReason == "max_tokens",
-		Reasoning:       anthropicReasoning(envelope.Content),
+		Text:             text,
+		ToolCalls:        toolCalls,
+		ModelIdentifier:  envelope.Model,
+		InputTokens:      envelope.Usage.InputTokens,
+		OutputTokens:     envelope.Usage.OutputTokens,
+		CacheReadTokens:  envelope.Usage.CacheReadInputTokens,
+		CacheWriteTokens: envelope.Usage.CacheCreationInputTokens,
+		Refused:          envelope.StopReason == "refusal",
+		Truncated:        envelope.StopReason == "max_tokens",
+		Reasoning:        anthropicReasoning(envelope.Content),
 	}, nil
 }
 
@@ -259,7 +281,7 @@ func (a anthropicAdapter) Stream(
 		case "message_start":
 			if event.Message != nil {
 				model = event.Message.Model
-				usage.InputTokens = event.Message.Usage.InputTokens
+				usage.merge(&event.Message.Usage)
 			}
 		case "content_block_start":
 			if event.ContentBlock == nil {
@@ -292,9 +314,7 @@ func (a anthropicAdapter) Stream(
 			if event.Delta != nil {
 				stopReason = stringutils.FirstNonEmpty(event.Delta.StopReason, stopReason)
 			}
-			if event.Usage != nil {
-				usage.OutputTokens = event.Usage.OutputTokens
-			}
+			usage.merge(event.Usage)
 		case "error":
 			if event.Error != nil {
 				return streamError(event.Error.Type, event.Error.Message)
@@ -331,14 +351,16 @@ func (a anthropicAdapter) Stream(
 	text, toolCalls := splitAnthropicContent(content)
 
 	return &Response{
-		Text:            text,
-		ToolCalls:       toolCalls,
-		ModelIdentifier: stringutils.FirstNonEmpty(model, call.Provider.Model),
-		InputTokens:     usage.InputTokens,
-		OutputTokens:    usage.OutputTokens,
-		Refused:         stopReason == "refusal",
-		Truncated:       stopReason == "max_tokens",
-		Reasoning:       anthropicReasoning(content),
+		Text:             text,
+		ToolCalls:        toolCalls,
+		ModelIdentifier:  stringutils.FirstNonEmpty(model, call.Provider.Model),
+		InputTokens:      usage.InputTokens,
+		OutputTokens:     usage.OutputTokens,
+		CacheReadTokens:  usage.CacheReadInputTokens,
+		CacheWriteTokens: usage.CacheCreationInputTokens,
+		Refused:          stopReason == "refusal",
+		Truncated:        stopReason == "max_tokens",
+		Reasoning:        anthropicReasoning(content),
 	}, nil
 }
 

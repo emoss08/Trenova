@@ -5,10 +5,15 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+	"go.uber.org/fx/fxtest"
+	"go.uber.org/zap"
 )
 
 func TestCreateSampler(t *testing.T) {
@@ -60,6 +65,54 @@ func TestCreateSampler(t *testing.T) {
 			assert.NotNil(t, sampler)
 		})
 	}
+}
+
+func TestCreateSampler_FollowsTheParentsDecision(t *testing.T) {
+	t.Parallel()
+
+	parent := trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID:    trace.TraceID{1, 8: 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		SpanID:     trace.SpanID{1},
+		TraceFlags: trace.FlagsSampled,
+		Remote:     true,
+	})
+
+	sampled := createSampler(&config.TracingConfig{SamplingRate: 0.01}).
+		ShouldSample(sdktrace.SamplingParameters{
+			ParentContext: trace.ContextWithRemoteSpanContext(t.Context(), parent),
+			TraceID:       parent.TraceID(),
+		})
+	dropped := createSampler(&config.TracingConfig{SamplingRate: 1}).
+		ShouldSample(sdktrace.SamplingParameters{
+			ParentContext: trace.ContextWithRemoteSpanContext(
+				t.Context(),
+				parent.WithTraceFlags(0),
+			),
+			TraceID: parent.TraceID(),
+		})
+
+	assert.Equal(t, sdktrace.RecordAndSample, sampled.Decision,
+		"a trace sampled upstream is kept whatever this service's own rate")
+	assert.Equal(t, sdktrace.Drop, dropped.Decision,
+		"a trace dropped upstream is not half-recorded here")
+}
+
+func TestNewTracerProvider_AppliesTheAISamplingRate(t *testing.T) {
+	t.Cleanup(func() { aitrace.SetSamplingRate(1) })
+
+	rate := 0.25
+	cfg := &config.Config{}
+	cfg.Monitoring.Tracing.AISamplingRate = &rate
+
+	tp, err := NewTracerProvider(TracerProviderParams{
+		Lifecycle: fxtest.NewLifecycle(t),
+		Config:    cfg,
+		Logger:    zap.NewNop(),
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, tp)
+	assert.InDelta(t, 0.25, aitrace.SamplingRate(), 0)
 }
 
 func TestGenerateInstanceID(t *testing.T) {

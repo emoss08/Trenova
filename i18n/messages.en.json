@@ -2631,6 +2631,15 @@
       "service/carriersettlementservice"
     ]
   },
+  "A delegate call requires the run or turn that made it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A delegation cannot end before it begins": {
     "sites": 2,
     "scope": [
@@ -3124,6 +3133,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A filter is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
     ]
   },
   "A filter may bind either a literal value or a parameter, not both": {
@@ -4075,6 +4093,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "A person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "A person approved this and the replay no longer proposes it.": {
@@ -5060,6 +5087,24 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "A row names a signing key that is no longer configured, so the chain cannot be checked past it. Put the key back, then verify again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "A row of the AI audit trail no longer matches its chain. Open the audit trail in AI Control to see where.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
     ]
   },
   "A row-count threshold cannot be negative": {
@@ -6840,6 +6885,51 @@
       "routes/agent-control"
     ]
   },
+  "AI audit event": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "AI audit trail export": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "AI audit trail retention (days)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
+  "AI audit trail retention period is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/tenant"
+    ]
+  },
+  "AI audit trail retention period must be at least 365 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/tenant"
+    ]
+  },
   "AI candidate": {
     "sites": 1,
     "scope": [
@@ -7674,7 +7764,7 @@
     ]
   },
   "Accepted": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -7734,7 +7824,7 @@
     ]
   },
   "Accepted with changes": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -8427,6 +8517,15 @@
       "domain/agent"
     ]
   },
+  "Accounting sync record": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentsubjectservice"
+    ]
+  },
   "Accounts payable account": {
     "sites": 1,
     "scope": [
@@ -8954,6 +9053,15 @@
     ]
   },
   "Act with approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Acting as": {
     "sites": 1,
     "scope": [
       "ts"
@@ -12304,6 +12412,15 @@
       "routes/rate-agreement"
     ]
   },
+  "After outside content": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "After outside text": {
     "sites": 3,
     "scope": [
@@ -12368,7 +12485,7 @@
     ]
   },
   "Agent": {
-    "sites": 13,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -12420,6 +12537,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Agent definition version cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Agent disabled": {
@@ -12690,6 +12816,15 @@
     ]
   },
   "Agent version {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Agent work reaches the trail within a minute of happening. Widen the range, pick another agent or person, or include evaluations.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -15040,6 +15175,15 @@
       "routes/desk"
     ]
   },
+  "An agent": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "An agent can ask at most {0} others": {
     "sites": 1,
     "scope": [
@@ -15782,6 +15926,53 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An export can cover at most seven years": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "domain/aiaudit",
+      "routes/agent-control"
+    ]
+  },
+  "An export must be requested by a person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiaudit"
+    ]
+  },
+  "An export of the AI audit trail must be requested by a person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
+  "An export takes at most 20 filters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiaudit"
+    ]
+  },
+  "An export takes at most {0} filters. Remove some, or export without them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "An expression in the same language the rating formulas use. Leave empty to apply to every shipment.": {
@@ -16750,6 +16941,15 @@
       "routes/time-attendance"
     ]
   },
+  "Anyone": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Anyone in your organization can use this view": {
     "sites": 1,
     "scope": [
@@ -17371,13 +17571,14 @@
     ]
   },
   "Apply": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/components",
+      "routes/agent-control",
       "routes/invoice",
       "routes/reports",
       "routes/worker"
@@ -18815,6 +19016,15 @@
       "routes/agent-control"
     ]
   },
+  "Arguments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Arizona (AZ)": {
     "sites": 1,
     "scope": [
@@ -19238,7 +19448,7 @@
     ]
   },
   "Ask first": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -21300,6 +21510,15 @@
       "service/shipmentcommentservice"
     ]
   },
+  "Attempt": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Attempt number is required": {
     "sites": 1,
     "scope": [
@@ -21392,6 +21611,15 @@
       "routes/organization"
     ]
   },
+  "Audit chain": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Audit entries": {
     "sites": 2,
     "scope": [
@@ -21418,6 +21646,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Audit log entries": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Audit logs are processed in batches and may take a few moments to appear. If logs are not immediately visible, please refresh the page after a brief wait.": {
@@ -21454,6 +21691,15 @@
     ],
     "areas": [
       "domain/tenant"
+    ]
+  },
+  "Audit trail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Auth events": {
@@ -21549,13 +21795,14 @@
     ]
   },
   "Authentication required": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
     "areas": [
       "api/graphql",
-      "api/middleware"
+      "api/middleware",
+      "service/aiauditservice"
     ]
   },
   "Authentication risk decisions": {
@@ -22280,7 +22527,7 @@
     ]
   },
   "Automatic": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -27064,12 +27311,13 @@
     ]
   },
   "By": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/worker"
     ]
   },
@@ -27347,7 +27595,7 @@
     ]
   },
   "CSV": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -27355,6 +27603,7 @@
     "areas": [
       "apps/web/types",
       "domain/fuelpurchase",
+      "routes/agent-control",
       "routes/time-attendance"
     ]
   },
@@ -27365,6 +27614,24 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Cache read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Cache written": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Cadence": {
@@ -27587,6 +27854,15 @@
       "routes/org-structure"
     ]
   },
+  "Call id": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Callback URI registered in the provider application.": {
     "sites": 1,
     "scope": [
@@ -27771,7 +28047,7 @@
     ]
   },
   "Cancel": {
-    "sites": 260,
+    "sites": 262,
     "scope": [
       "ts"
     ],
@@ -30211,6 +30487,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Carry the agent, person, evaluations and table filters into the file. Without them, the file holds every row in the range, which is the only file whose chain an auditor can check end to end.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Carryover cap": {
     "sites": 1,
     "scope": [
@@ -30911,6 +31196,15 @@
       "routes/osha"
     ]
   },
+  "Chain": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Change": {
     "sites": 4,
     "scope": [
@@ -31215,7 +31509,7 @@
     ]
   },
   "Changed": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -32177,6 +32471,15 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
+    ]
+  },
+  "Checked every night on its own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Checked the product guide": {
@@ -34828,7 +35131,7 @@
     ]
   },
   "Close": {
-    "sites": 39,
+    "sites": 40,
     "scope": [
       "ts"
     ],
@@ -36822,11 +37125,12 @@
     ]
   },
   "Complete": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/shipment",
       "routes/worker"
     ]
@@ -36877,7 +37181,7 @@
     ]
   },
   "Completed": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -37772,7 +38076,7 @@
       "routes/customer"
     ]
   },
-  "Configure how long audit entries and raw EDI payloads are kept before the nightly purge jobs remove them.": {
+  "Configure how long audit entries, the AI audit trail and raw EDI payloads are kept before the nightly purge jobs remove them.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -39446,6 +39750,15 @@
       "routes/auth"
     ]
   },
+  "Continue verifying the AI audit trail's hash chain for the tenants left": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Continue with {0}": {
     "sites": 1,
     "scope": [
@@ -40313,6 +40626,15 @@
       "apps/web/components"
     ]
   },
+  "Copy SHA-256": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Copy a link to the selected result": {
     "sites": 1,
     "scope": [
@@ -40386,12 +40708,13 @@
     ]
   },
   "Copy hash": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Copy link": {
@@ -40602,6 +40925,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Copy trace id": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Copy webhook URL": {
@@ -40884,7 +41216,7 @@
     ]
   },
   "Cost": {
-    "sites": 9,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -47509,6 +47841,24 @@
       "routes/agent-control"
     ]
   },
+  "Decided by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Decided by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Decided proposal": {
     "sites": 1,
     "scope": [
@@ -47777,13 +48127,14 @@
     ]
   },
   "Declined": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/components",
       "packages/shared/lib",
+      "routes/agent-control",
       "routes/dispatch-console"
     ]
   },
@@ -49429,6 +49780,15 @@
       "routes/shipment"
     ]
   },
+  "Delete AI audit export files past their download window": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Delete SCIM directory": {
     "sites": 1,
     "scope": [
@@ -50331,7 +50691,7 @@
     ]
   },
   "Denied": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -50342,6 +50702,7 @@
       "apps/web/lib",
       "domain/worker",
       "routes/admin",
+      "routes/agent-control",
       "routes/settlement-dispute"
     ]
   },
@@ -54967,18 +55328,28 @@
     ]
   },
   "Download": {
-    "sites": 10,
+    "sites": 13,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/hooks",
+      "routes/agent-control",
       "routes/carrier",
       "routes/desk",
       "routes/edi",
       "routes/reports",
       "routes/shipment"
+    ]
+  },
+  "Download again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Download document": {
@@ -58849,12 +59220,13 @@
     ]
   },
   "Effect": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/agent-control"
     ]
   },
   "Effective": {
@@ -62661,6 +63033,15 @@
       "routes/shipment"
     ]
   },
+  "Evaluation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Evaluation case": {
     "sites": 6,
     "scope": [
@@ -62734,7 +63115,7 @@
     ]
   },
   "Event": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -62992,6 +63373,15 @@
       "routes/fleet-safety"
     ]
   },
+  "Events on the signed AI audit trail older than this are deleted by the nightly sweep, which only cuts where the chain was sealed. At least 365 days; the default of 2555 days is seven years, which is what most audits of AI decisions ask for.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/organization"
+    ]
+  },
   "Every": {
     "sites": 1,
     "scope": [
@@ -63119,7 +63509,7 @@
     ]
   },
   "Every agent": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -63701,6 +64091,15 @@
     ],
     "areas": [
       "routes/ifta-tax-rate"
+    ]
+  },
+  "Every row in the range is in the file, so its chain can be checked end to end.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Every scenario passes against the current content": {
@@ -64739,6 +65138,15 @@
       "routes/invoice"
     ]
   },
+  "Executed target version cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Executing…": {
     "sites": 1,
     "scope": [
@@ -65483,7 +65891,7 @@
     ]
   },
   "Expired": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -65508,7 +65916,7 @@
     ]
   },
   "Expires": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -65920,13 +66328,14 @@
     ]
   },
   "Export": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/lib",
+      "routes/agent-control",
       "routes/customer-ledger",
       "routes/formula-template",
       "routes/reports"
@@ -66349,6 +66758,15 @@
       "domain/permission"
     ]
   },
+  "Export the AI audit trail and download exports": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Export the AR subledger": {
     "sites": 1,
     "scope": [
@@ -66376,6 +66794,15 @@
       "domain/permission"
     ]
   },
+  "Export the trail from the Trail view. Each file is signed row by row, keeps its SHA-256 here, and can be downloaded by the person who asked for it until it expires.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Export to CSV": {
     "sites": 3,
     "scope": [
@@ -66394,6 +66821,15 @@
       "domain/permission"
     ]
   },
+  "Export trail": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Export trailer data": {
     "sites": 1,
     "scope": [
@@ -66401,6 +66837,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Export trail…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Export training course data": {
@@ -66465,6 +66910,24 @@
     "areas": [
       "routes/formula-template",
       "routes/reports"
+    ]
+  },
+  "Exporting…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Exports": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Exports are capped at {0} rows. Narrow your filters to export a specific slice.": {
@@ -67294,7 +67757,7 @@
     ]
   },
   "Failed": {
-    "sites": 32,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -68873,6 +69336,15 @@
       "service/documentuploadservice"
     ]
   },
+  "Failed verification": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Failed {0}": {
     "sites": 1,
     "scope": [
@@ -68898,6 +69370,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Failover": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Failure": {
@@ -69589,12 +70070,13 @@
     ]
   },
   "File": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -69830,7 +70312,7 @@
     ]
   },
   "Filed": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -69839,6 +70321,7 @@
       "domain/ifta",
       "domain/worker",
       "packages/shared/components",
+      "routes/agent-control",
       "routes/osha"
     ]
   },
@@ -70133,6 +70616,15 @@
       "apps/web/components"
     ]
   },
+  "Filtered": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Filters": {
     "sites": 5,
     "scope": [
@@ -70141,6 +70633,15 @@
     "areas": [
       "routes/billing-queue",
       "routes/reports"
+    ]
+  },
+  "Filters left rows out, so the file's chain cannot be checked end to end.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Filters narrow every tile built on the same data. Parameters answer a question a report asks for by name, like a lookback window.": {
@@ -71670,11 +72171,12 @@
     ]
   },
   "For {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/benefits"
     ]
   },
@@ -71931,11 +72433,12 @@
     ]
   },
   "Format": {
-    "sites": 4,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/reports"
     ]
   },
@@ -72003,11 +72506,12 @@
     ]
   },
   "Format is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aiaudit",
       "domain/report"
     ]
   },
@@ -72739,12 +73243,13 @@
     ]
   },
   "From": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/accounting-sync",
+      "routes/agent-control",
       "routes/detention-policy",
       "routes/fuel-management",
       "routes/invoice",
@@ -75941,6 +76446,24 @@
       "routes/desk"
     ]
   },
+  "Handed-off task": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Handed-off task ended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Handing approval to somebody else while a manager is away": {
     "sites": 1,
     "scope": [
@@ -76075,6 +76598,15 @@
     ],
     "areas": [
       "routes/settlement-workspace"
+    ]
+  },
+  "Hash": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Hash must be a 64 character digest": {
@@ -76492,7 +77024,7 @@
     ]
   },
   "Held by": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -80586,6 +81118,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Include evaluations": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Include in batch": {
@@ -86278,6 +86819,15 @@
       "routes/rate-matrix"
     ]
   },
+  "Key missing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Key normalization only applies to an axis matched by exact key": {
     "sites": 1,
     "scope": [
@@ -86306,6 +86856,15 @@
     ]
   },
   "Key stored": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Key {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -86935,13 +87494,41 @@
       "routes/org-structure"
     ]
   },
-  "Last 7 days": {
+  "Last 24 hours": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Last 30 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Last 7 days": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
       "routes/hos.tsx"
+    ]
+  },
+  "Last 90 days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Last Name is required": {
@@ -87415,6 +88002,15 @@
       "domain/apikey"
     ]
   },
+  "Last verified": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Last week": {
     "sites": 1,
     "scope": [
@@ -87626,6 +88222,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Latency": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Latency cannot be negative": {
@@ -93911,6 +94516,15 @@
       "apps/web/lib"
     ]
   },
+  "Masked when recorded: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Massachusetts (MA)": {
     "sites": 1,
     "scope": [
@@ -94212,6 +94826,15 @@
     ],
     "areas": [
       "apps/web/hooks"
+    ]
+  },
+  "Matched by time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Matched from this move's lane. Offers go out to each carrier in rank order until one accepts.": {
@@ -96826,12 +97449,13 @@
     ]
   },
   "Mismatch": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Missed": {
@@ -97091,7 +97715,7 @@
     ]
   },
   "Model": {
-    "sites": 15,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -97102,6 +97726,15 @@
     ]
   },
   "Model and limits": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Model call": {
     "sites": 1,
     "scope": [
       "ts"
@@ -100373,6 +101006,15 @@
       "routes/detention-policy"
     ]
   },
+  "Never checked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Never convert": {
     "sites": 1,
     "scope": [
@@ -101623,7 +102265,7 @@
     ]
   },
   "No": {
-    "sites": 21,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -102009,6 +102651,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "No agent matches.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No agent subscribes to this yet": {
@@ -103366,6 +104017,15 @@
       "apps/web/components"
     ]
   },
+  "No event fits the search and filters. Widen them, or clear them to see every one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No evidence has been recorded yet.": {
     "sites": 1,
     "scope": [
@@ -103404,6 +104064,15 @@
       "routes/shipment"
     ]
   },
+  "No export fits the filters. Clear them to see every one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No exportable columns are available.": {
     "sites": 1,
     "scope": [
@@ -103411,6 +104080,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "No exports yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "No extensions available": {
@@ -107582,6 +108260,15 @@
       "routes/osha"
     ]
   },
+  "Not yet verified": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "NotSent": {
     "sites": 1,
     "scope": [
@@ -108207,12 +108894,13 @@
     ]
   },
   "Nothing matches": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/carrier-invoice-matching",
       "routes/carrier-monitoring",
@@ -108423,6 +109111,15 @@
       "packages/shared/lib"
     ]
   },
+  "Nothing on the trail in this range": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Nothing on this selection could be billed": {
     "sites": 1,
     "scope": [
@@ -108515,11 +109212,12 @@
     ]
   },
   "Nothing recorded yet": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/worker"
     ]
   },
@@ -110329,11 +111027,12 @@
     ]
   },
   "On behalf of": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/billing-queue",
       "routes/invoice"
     ]
@@ -110938,6 +111637,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "One row per event": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "One row per violation. A single inspection routinely cites several in different BASICs, and only the rows can say which.": {
@@ -112291,6 +112999,15 @@
       "service/driversettlementservice"
     ]
   },
+  "Only its requester can download it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Only manual adjustment lines can be removed": {
     "sites": 2,
     "scope": [
@@ -112859,6 +113576,15 @@
     ],
     "areas": [
       "service/proposalexecutor"
+    ]
+  },
+  "Only the person who asked for an export may download it": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
     ]
   },
   "Only the person who started a transfer can stop it": {
@@ -113522,6 +114248,15 @@
       "routes/invoice-reconciliation"
     ]
   },
+  "Open exports": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Open fiscal period": {
     "sites": 1,
     "scope": [
@@ -114077,6 +114812,15 @@
     ]
   },
   "Open to everyone, with tools that reach sensitive data": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Open trace {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -116634,7 +117378,7 @@
     ]
   },
   "Outcome": {
-    "sites": 8,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -116656,6 +117400,15 @@
     "areas": [
       "domain/iam",
       "domain/ratequote"
+    ]
+  },
+  "Outcome unknown": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Output": {
@@ -116702,6 +117455,15 @@
     ],
     "areas": [
       "domain/conversation"
+    ]
+  },
+  "Outside content read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Outside every band": {
@@ -117301,7 +118063,7 @@
     ]
   },
   "Own records, person present": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -118454,6 +119216,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "Parent owner kind and parent owner id must be set together": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Paris (CET)": {
@@ -122035,6 +122806,15 @@
       "routes/shipment"
     ]
   },
+  "Person": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Person-days on the board": {
     "sites": 1,
     "scope": [
@@ -123282,6 +124062,15 @@
     "areas": [
       "routes/edi",
       "routes/rate-zone"
+    ]
+  },
+  "Plain SHA-256; no signing key is configured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Plain description of the event, as it would read in a file review": {
@@ -125761,6 +126550,15 @@
       "routes/shipment"
     ]
   },
+  "Previous hash": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Previous hash must be a 64 character digest": {
     "sites": 1,
     "scope": [
@@ -127158,13 +127956,58 @@
     ]
   },
   "Proposal": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "domain/watchtower",
+      "routes/agent-control"
+    ]
+  },
+  "Proposal carried out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Proposal decided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Proposal expired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Proposal failed to run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Proposal filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/agent-control"
     ]
   },
@@ -127184,6 +128027,15 @@
     ],
     "areas": [
       "service/agentdecisionqueueservice"
+    ]
+  },
+  "Proposal simulated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Proposal turned down": {
@@ -127259,7 +128111,7 @@
     ]
   },
   "Propose": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -127288,7 +128140,7 @@
     ]
   },
   "Proposed": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -127381,11 +128233,12 @@
     ]
   },
   "Provenance": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -127500,13 +128353,14 @@
     ]
   },
   "Provider": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/carrier",
       "routes/carrier-monitoring",
       "routes/fuel-card",
@@ -127942,7 +128796,7 @@
       "routes/agent-control"
     ]
   },
-  "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, quality says how well they do it, and activity shows what it did.": {
+  "Providers say where AI work goes, agents say what it may do, extensions add what they can reach, quality says how well they do it, activity shows what it did, and the audit trail keeps a signed record of it.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -129220,7 +130074,7 @@
     ]
   },
   "Queued": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -129597,11 +130451,12 @@
     ]
   },
   "Ran": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/fuel-feed-run"
     ]
   },
@@ -129612,6 +130467,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Ran out of steps": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Ran {0}": {
@@ -129712,11 +130576,12 @@
     ]
   },
   "Range": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/reports"
     ]
   },
@@ -131552,12 +132417,13 @@
     ]
   },
   "Read outside content": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Read outside text": {
@@ -131878,7 +132744,7 @@
     ]
   },
   "Ready": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -131886,6 +132752,7 @@
       "apps/web/components",
       "packages/shared/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/edi",
       "routes/ifta-tax-rate"
     ]
@@ -132075,7 +132942,7 @@
     ]
   },
   "Reason": {
-    "sites": 53,
+    "sites": 54,
     "scope": [
       "ts"
     ],
@@ -132529,6 +133396,15 @@
     ],
     "areas": [
       "domain/aiprovider"
+    ]
+  },
+  "Reasoning tokens": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Reasons": {
@@ -133580,8 +134456,17 @@
       "routes/admin"
     ]
   },
+  "Reconstructed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Record": {
-    "sites": 8,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -134255,6 +135140,15 @@
       "routes/worker"
     ]
   },
+  "Record type": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Record type is required with a record identifier": {
     "sites": 1,
     "scope": [
@@ -134455,7 +135349,7 @@
     ]
   },
   "Recorded": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -135476,11 +136370,12 @@
     ]
   },
   "Refused": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/inbox"
     ]
   },
@@ -136061,7 +136956,7 @@
     ]
   },
   "Rejected": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -136467,6 +137362,15 @@
       "routes/shipment",
       "routes/time-attendance",
       "routes/worker"
+    ]
+  },
+  "Remove AI audit trail rows past each organization's retention period": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Remove AI provider": {
@@ -138653,7 +139557,7 @@
     ]
   },
   "Requested": {
-    "sites": 6,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -138663,6 +139567,7 @@
       "apps/web/lib",
       "domain/worker",
       "packages/shared/components",
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -140801,7 +141706,7 @@
     ]
   },
   "Result": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -143989,12 +144894,13 @@
     ]
   },
   "Rows": {
-    "sites": 7,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/fuel-feed-run",
       "routes/fuel-purchase",
       "routes/reports",
@@ -144251,7 +145157,7 @@
     ]
   },
   "Run": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -144445,6 +145351,15 @@
       "routes/random-testing"
     ]
   },
+  "Run ended": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Run history": {
     "sites": 4,
     "scope": [
@@ -144611,7 +145526,7 @@
     ]
   },
   "Run started": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -144827,6 +145742,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Running — you'll be notified": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Running...": {
@@ -145297,11 +146221,12 @@
     ]
   },
   "SHA-256": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/edi"
     ]
   },
@@ -147807,6 +148732,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Sealed through": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Seamlessly connect your Samsara account to Trenova for real-time telematics data, driver performance insights, and streamlined fleet management. Unlock the full potential of your fleet with our powerful integration.": {
@@ -152671,6 +153605,15 @@
       "apps/web/types"
     ]
   },
+  "Seq": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Seq {0}": {
     "sites": 1,
     "scope": [
@@ -156710,7 +157653,7 @@
     ]
   },
   "Show every agent": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -157450,12 +158393,13 @@
     ]
   },
   "Signed": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
+      "routes/agent-control",
       "routes/policies",
       "routes/tractor"
     ]
@@ -157494,6 +158438,15 @@
     ],
     "areas": [
       "routes/login.tsx"
+    ]
+  },
+  "Signing key missing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Signing secret": {
@@ -157542,7 +158495,7 @@
     ]
   },
   "Simulated": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -157674,12 +158627,13 @@
     ]
   },
   "Size": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/edi",
       "routes/reports"
     ]
@@ -158658,7 +159612,7 @@
     ]
   },
   "Source": {
-    "sites": 34,
+    "sites": 35,
     "scope": [
       "ts"
     ],
@@ -159175,6 +160129,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Span id": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Spark": {
@@ -160338,7 +161301,7 @@
     ]
   },
   "Started": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -160482,6 +161445,15 @@
     ],
     "areas": [
       "routes/benefits"
+    ]
+  },
+  "Starting the check…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Starting the transfer...": {
@@ -160816,7 +161788,7 @@
     ]
   },
   "Status": {
-    "sites": 245,
+    "sites": 248,
     "scope": [
       "go",
       "ts"
@@ -161268,6 +162240,15 @@
       "routes/reports"
     ]
   },
+  "Step key": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Step key is required": {
     "sites": 1,
     "scope": [
@@ -161666,7 +162647,7 @@
     ]
   },
   "Stopped": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -162568,11 +163549,12 @@
     ]
   },
   "Succeeded": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/invoice-adjustment-batch"
     ]
   },
@@ -163508,7 +164490,7 @@
     ]
   },
   "System": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -163876,6 +164858,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Tainted": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Take a driver off dispatch, and put them back": {
@@ -164351,6 +165342,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Task handed off": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Task is not one this system routes": {
@@ -166496,6 +167496,15 @@
       "routes/driver-settlement"
     ]
   },
+  "The AI audit trail failed verification": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
   "The AI provider neither deferred the extraction nor returned a result": {
     "sites": 1,
     "scope": [
@@ -167082,6 +168091,15 @@
       "routes/agent-control"
     ]
   },
+  "The arguments were longer than the trail keeps, so some values were cut.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The artifact format, such as XLSX or CSV.": {
     "sites": 1,
     "scope": [
@@ -167197,6 +168215,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The audit chain's status could not be loaded. Try again shortly.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The authentication mode for the SFTP server.": {
@@ -167982,6 +169009,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "The check could not be started.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The check number or ACH trace so the payment reconciles against the bank.": {
@@ -169633,6 +170669,26 @@
       "packages/shared/types"
     ]
   },
+  "The end of the range is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiaudit"
+    ]
+  },
+  "The end of the range must not be before its start": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "domain/aiaudit",
+      "routes/agent-control"
+    ]
+  },
   "The end of the sample must be after its start": {
     "sites": 1,
     "scope": [
@@ -169876,6 +170932,51 @@
       "domain/documenttemplate"
     ]
   },
+  "The export could not be prepared for download — try again shortly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
+  "The export could not be queued — try again shortly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
+  "The export could not be requested.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The export could not be written.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The export failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The export format — xlsx, csv, pdf. Pipe it through upper if you want it shouted.": {
     "sites": 1,
     "scope": [
@@ -169993,6 +171094,34 @@
       "routes/fuel-management"
     ]
   },
+  "The file carries each row's place in the chain and its hash, and the export records the file's SHA-256, so it can be checked later. Requesting it is written to the audit log.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The file could not be downloaded": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/agent-control"
+    ]
+  },
+  "The file could not be downloaded.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The file could not be opened": {
     "sites": 1,
     "scope": [
@@ -170018,6 +171147,15 @@
     ],
     "areas": [
       "routes/bank-receipt-batch"
+    ]
+  },
+  "The file is ready": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The filing date cannot be in the future": {
@@ -172186,6 +173324,15 @@
       "service/agenttoolservice"
     ]
   },
+  "The person's setting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The phone number for the emergency contact.": {
     "sites": 1,
     "scope": [
@@ -173320,6 +174467,15 @@
       "routes/policies"
     ]
   },
+  "The result appears here when the check finishes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The result below is from the last successful run.": {
     "sites": 1,
     "scope": [
@@ -174161,6 +175317,15 @@
       "service/accountingsyncservice"
     ]
   },
+  "The start of the range is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aiaudit"
+    ]
+  },
   "The start time is not a time of day": {
     "sites": 1,
     "scope": [
@@ -174467,6 +175632,15 @@
       "routes/accounting-sync"
     ]
   },
+  "The system": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The system classified this as a rate confirmation, but no structured shipment fields were extracted.": {
     "sites": 1,
     "scope": [
@@ -174483,6 +175657,15 @@
     ],
     "areas": [
       "routes/hazardous-material"
+    ]
+  },
+  "The tamper-evident record of what agents did, for whom, and who decided": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "The target must be a finite number": {
@@ -174675,6 +175858,15 @@
       "routes/worker"
     ]
   },
+  "The tool's rule": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The tractor, jurisdiction or move referenced by this entry does not exist": {
     "sites": 2,
     "scope": [
@@ -174700,6 +175892,24 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "The trail no longer matches its chain at #{0}: {1}. The failure is in the audit log, and everyone who reads the trail was told.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The trail no longer matches its chain: {0}. The failure is in the audit log, and everyone who reads the trail was told.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "The training course this is about.": {
@@ -174970,6 +176180,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The verification could not be started — try again shortly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
     ]
   },
   "The version signed is required": {
@@ -175523,6 +176742,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "These are the audit log rows written for the same record, by the same principal, within this event's window. They are matched by time, not by a shared key.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "These dates fall on a blackout: {0}": {
@@ -176851,6 +178079,15 @@
       "domain/worker"
     ]
   },
+  "This event could not be loaded. Try again shortly.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This event is already closed": {
     "sites": 1,
     "scope": [
@@ -176858,6 +178095,15 @@
     ],
     "areas": [
       "domain/carrierintel"
+    ]
+  },
+  "This event is not on your organization's trail, or retention has removed it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "This expense could not be loaded.": {
@@ -176886,6 +178132,42 @@
     "areas": [
       "routes/home",
       "routes/insights"
+    ]
+  },
+  "This export has expired — export the trail again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
+  "This export has no file to download yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
+    ]
+  },
+  "This export is too large to write while you wait. It is being written in the background; you'll be notified when the file is ready, and it will be under Exports.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "This export would hold {0} rows; one export can hold at most {1}. Narrow the range or the filters.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aiauditservice"
     ]
   },
   "This extension was set up by someone else while you were editing. Reload and try again.": {
@@ -179455,12 +180737,13 @@
     ]
   },
   "Tier": {
-    "sites": 2,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/detention-policy",
       "template/detention.notice.pdf"
     ]
@@ -179526,6 +180809,15 @@
     ],
     "areas": [
       "domain/detention"
+    ]
+  },
+  "Tier set by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Tier start cannot be negative": {
@@ -180310,12 +181602,13 @@
     ]
   },
   "To": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/accounting-sync",
+      "routes/agent-control",
       "routes/desk",
       "routes/detention-policy",
       "routes/fuel-management"
@@ -180604,7 +181897,25 @@
       "routes/agent-control"
     ]
   },
+  "Tokens in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Tokens in all": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tokens out": {
     "sites": 1,
     "scope": [
       "ts"
@@ -180907,7 +182218,16 @@
     ]
   },
   "Tool": {
-    "sites": 9,
+    "sites": 12,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tool call": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -181003,6 +182323,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Tool refused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Tool results it was given": {
@@ -181751,6 +183080,24 @@
       "apps/web/components"
     ]
   },
+  "Trace": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Trace id": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Traced back to the accrued cost event": {
     "sites": 1,
     "scope": [
@@ -182092,6 +183439,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Trail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Trailer": {
@@ -183471,6 +184827,15 @@
       "routes/admin"
     ]
   },
+  "Trust the agent earned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Trusted": {
     "sites": 1,
     "scope": [
@@ -183558,6 +184923,16 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Try again shortly.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/agent-control"
+    ]
+  },
   "Try another file": {
     "sites": 1,
     "scope": [
@@ -183583,6 +184958,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Try the download again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Try {0}": {
@@ -183611,6 +184995,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Turn": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Turn a request down": {
@@ -185938,6 +187331,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Unsigned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Unsupported IR version {0} (expected {1})": {
     "sites": 1,
     "scope": [
@@ -187218,6 +188620,15 @@
       "routes/fuel-purchase"
     ]
   },
+  "Use current filters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Use current sample data {0}": {
     "sites": 1,
     "scope": [
@@ -188377,6 +189788,15 @@
       "routes/edi"
     ]
   },
+  "Values above what you may see on this record are shown as [withheld]. Confidential values were never recorded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Values shown as": {
     "sites": 1,
     "scope": [
@@ -188700,13 +190120,14 @@
     ]
   },
   "Verified": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
+      "routes/agent-control",
       "routes/carrier",
       "routes/jurisdiction-rule",
       "routes/worker"
@@ -188759,6 +190180,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Verify every tenant's AI audit trail hash chain": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Verify jurisdiction rule": {
     "sites": 1,
     "scope": [
@@ -188766,6 +190196,24 @@
     ],
     "areas": [
       "routes/jurisdiction-rule"
+    ]
+  },
+  "Verify now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Verify the AI audit trail's hash chain for one tenant or every tenant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Verifying credentials": {
@@ -188784,6 +190232,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Verifying…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Vermont (VT)": {
@@ -188816,6 +190273,24 @@
     ],
     "areas": [
       "service/edix12inspect"
+    ]
+  },
+  "Version after": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Version before": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Version cannot exceed 30 characters": {
@@ -189581,6 +191056,15 @@
       "domain/permission"
     ]
   },
+  "View exports": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "View fiscal periods": {
     "sites": 1,
     "scope": [
@@ -190223,6 +191707,15 @@
     ]
   },
   "View test records, violations and Clearinghouse queries": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "View the AI audit trail and verify its chain": {
     "sites": 1,
     "scope": [
       "go"
@@ -192405,6 +193898,15 @@
       "apps/web/lib"
     ]
   },
+  "What": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "What a good answer does": {
     "sites": 1,
     "scope": [
@@ -193587,12 +195089,13 @@
     ]
   },
   "When": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/agent-control",
       "routes/edi",
       "routes/worker"
     ]
@@ -194518,6 +196021,15 @@
       "routes/worker"
     ]
   },
+  "Where the write reaches": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Where the year stands": {
     "sites": 1,
     "scope": [
@@ -195202,6 +196714,15 @@
       "routes/admin"
     ]
   },
+  "Who": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Who and when": {
     "sites": 1,
     "scope": [
@@ -195510,7 +197031,7 @@
     ]
   },
   "Why": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -196024,6 +197545,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "With the chain's details": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Withdraw": {
@@ -197095,6 +198625,15 @@
       "go/other"
     ]
   },
+  "Write a large AI audit trail export to object storage": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Write a summary the worker will read": {
     "sites": 1,
     "scope": [
@@ -197111,6 +198650,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "Write new agent activity to the AI audit trail": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Write off": {
@@ -197297,12 +198845,13 @@
     ]
   },
   "Writing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Writing a reply": {
@@ -197679,7 +199228,7 @@
     ]
   },
   "Yes": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "ts"
     ],
@@ -197701,6 +199250,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Yes, with key {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Yesterday": {
@@ -202726,6 +204284,15 @@
       "routes/customer-ledger"
     ]
   },
+  "no detail was recorded": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "no earlier runs to compare": {
     "sites": 1,
     "scope": [
@@ -202836,6 +204403,15 @@
     ],
     "areas": [
       "routes/customer-ledger"
+    ]
+  },
+  "of {0} recorded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "of {0} required": {
@@ -204198,13 +205774,14 @@
     ]
   },
   "v{0}": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/agent-control",
       "routes/auth",
       "routes/edi",
       "routes/formula-template",
@@ -206122,6 +207699,15 @@
     ]
   },
   "{0} (disabled)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0} ({1} days ago), through #{2}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -209698,6 +211284,15 @@
       "routes/shipment"
     ]
   },
+  "{0} rows, {1}. {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "{0} rule set {1}": {
     "sites": 1,
     "scope": [
@@ -210974,6 +212569,15 @@
     ]
   },
   "{0}, no cap": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "{0}, through #{1}": {
     "sites": 1,
     "scope": [
       "ts"

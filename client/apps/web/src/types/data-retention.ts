@@ -9,6 +9,7 @@ export const dataRetentionSchema = z.object({
   ediMessageRetentionPeriod: z.number().default(0),
   agentEvalCaseRetentionPeriod: z.number().default(365),
   aiFeedbackRetentionPeriod: z.number().default(730),
+  aiAuditRetentionPeriod: z.number().default(2555),
   version: z.number().default(0),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
@@ -22,4 +23,5 @@ export type UpdateDataRetentionRequest = {
   ediMessageRetentionPeriod: number;
   agentEvalCaseRetentionPeriod: number;
   aiFeedbackRetentionPeriod: number;
+  aiAuditRetentionPeriod: number;
 };

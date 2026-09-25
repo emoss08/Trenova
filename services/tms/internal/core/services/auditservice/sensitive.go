@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"maps"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -583,6 +584,57 @@ func (s *SensitiveDataManager) applyMaskStrategy(value any) any {
 	}
 
 	return starPattern
+}
+
+// MaskField masks one named value the way an entry's state is masked: in
+// full when its field name marks it sensitive, or when the value itself
+// matches a sensitive pattern. It reports whether it masked anything.
+func (s *SensitiveDataManager) MaskField(name, value string) (string, bool) {
+	if value == "" {
+		return value, false
+	}
+	if (name != "" && s.isSensitiveFieldName(name)) || s.containsSensitivePattern(value) {
+		masked, _ := s.applyMaskStrategy(value).(string)
+
+		return masked, true
+	}
+
+	return value, false
+}
+
+// MaskText masks every sensitive pattern found inside free text, leaving the
+// words around it readable. Patterns are applied in name order, so the same
+// text always masks the same way.
+func (s *SensitiveDataManager) MaskText(text string) (string, bool) {
+	if text == "" {
+		return text, false
+	}
+
+	sensitivePatternsMu.RLock()
+	names := make([]string, 0, len(sensitivePatterns))
+	for name := range sensitivePatterns {
+		names = append(names, name)
+	}
+	patterns := make(map[string]string, len(sensitivePatterns))
+	maps.Copy(patterns, sensitivePatterns)
+	sensitivePatternsMu.RUnlock()
+	slices.Sort(names)
+
+	masked := false
+	for _, name := range names {
+		regex, err := s.getCompiledPattern(patterns[name])
+		if err != nil {
+			continue
+		}
+		text = regex.ReplaceAllStringFunc(text, func(match string) string {
+			masked = true
+			replacement, _ := s.applyMaskStrategy(match).(string)
+
+			return replacement
+		})
+	}
+
+	return text, masked
 }
 
 func (s *SensitiveDataManager) SetAutoDetect(enabled bool) {

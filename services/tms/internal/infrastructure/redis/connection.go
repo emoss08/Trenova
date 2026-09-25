@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/redis/go-redis/extra/redisotel/v9"
@@ -29,7 +28,6 @@ type ConnectionParams struct {
 
 	Config *config.Config
 	Logger *zap.Logger
-	Tracer observability.Tracer `optional:"true"`
 	LC     fx.Lifecycle
 }
 
@@ -60,7 +58,7 @@ func NewConnection(p ConnectionParams) (*redis.Client, error) {
 		MaxRetryBackoff: cacheConfig.MaxRetryBackoff,
 	})
 
-	if p.Tracer != nil && p.Tracer.IsEnabled() {
+	if p.Config.Monitoring.Tracing.Enabled {
 		if err := redisotel.InstrumentTracing(client); err != nil {
 			logger.Warn("Failed to instrument Redis tracing", zap.Error(err))
 		}

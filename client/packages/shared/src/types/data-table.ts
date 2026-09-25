@@ -168,6 +168,19 @@ export type DataTableProps<TData extends Record<string, any>> = {
    * table's own clear-filters action to offer.
    */
   renderEmptyState?: (state: DataTableEmptyStateRenderProps) => React.ReactNode;
+  /**
+   * Filters the table's surroundings put on it: a range or a record chosen
+   * beside the table rather than in its filter builder. They are ANDed ahead
+   * of the person's own filters in every query the table makes, and are not
+   * shown as chips, because the control that set them is already on screen.
+   */
+  scopeFilters?: FieldFilter[];
+  /**
+   * Offers the browser-side CSV export to people who may export the
+   * resource. Off for a table whose export is a server-side record of its
+   * own, such as an audited, signed file.
+   */
+  enableExport?: boolean;
 };
 
 export type DataTableEmptyStateRenderProps = {

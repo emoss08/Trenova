@@ -50,3 +50,37 @@ func AnswerForTier(tier AutonomyTier) AutonomyAnswer {
 		return AutonomyProposeOnly
 	}
 }
+
+// TierSource is what set the tier a call ran or was held at: the tool's own
+// policy and the agent's ceilings, a person choosing the tool's tier on the
+// agent, a tier the tool earned through a clean record of approvals, or the
+// exemption that lets a person's change to their own records run unasked.
+type TierSource string
+
+const (
+	TierSourcePolicyDefault     = TierSource("PolicyDefault")
+	TierSourcePersonSetting     = TierSource("PersonSetting")
+	TierSourceTrustEarned       = TierSource("TrustEarned")
+	TierSourcePersonalExemption = TierSource("PersonalExemption")
+)
+
+func (s TierSource) IsValid() bool {
+	switch s {
+	case TierSourcePolicyDefault,
+		TierSourcePersonSetting,
+		TierSourceTrustEarned,
+		TierSourcePersonalExemption:
+		return true
+	default:
+		return false
+	}
+}
+
+func AllTierSources() []TierSource {
+	return []TierSource{
+		TierSourcePolicyDefault,
+		TierSourcePersonSetting,
+		TierSourceTrustEarned,
+		TierSourcePersonalExemption,
+	}
+}

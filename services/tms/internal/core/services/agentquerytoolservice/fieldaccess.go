@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/fieldsensitivity"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -80,22 +81,9 @@ func (a fieldAccess) personCeiling(
 	params *serviceports.QueryToolParams,
 	resource permission.Resource,
 ) permission.FieldSensitivity {
-	if a.permissions == nil {
-		return permission.SensitivityInternal
-	}
-
-	detail, err := a.permissions.GetResourcePermissions(
-		ctx, params.Actor.UserID, params.OrganizationID, resource.String(),
+	return fieldsensitivity.PersonCeiling(
+		ctx, a.permissions, params.Actor.UserID, params.OrganizationID, resource,
 	)
-	if err != nil || detail == nil {
-		return permission.SensitivityInternal
-	}
-	if detail.MaxSensitivity.CanAccess(permission.SensitivityConfidential) {
-		// Nothing above Restricted reaches a model, however far the role goes.
-		return permission.SensitivityRestricted
-	}
-
-	return detail.MaxSensitivity
 }
 
 // visible reports whether one field of a resource may be shown under a
@@ -105,12 +93,7 @@ func (a fieldAccess) visible(
 	field string,
 	ceiling permission.FieldSensitivity,
 ) bool {
-	sensitivity := a.registry.GetFieldSensitivity(resource.String(), field)
-	if sensitivity == permission.SensitivityConfidential {
-		return false
-	}
-
-	return ceiling.CanAccess(sensitivity)
+	return fieldsensitivity.Visible(a.registry, resource, field, ceiling)
 }
 
 // mayRead reports whether the actor may read a resource other than the one

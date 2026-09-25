@@ -1,4 +1,11 @@
 import { ASSISTANT_REPLY_READY, parseReplyReady } from "@/components/assistant/reply-ready";
+import {
+  AI_AUDIT_CHAIN_MISMATCH_EVENT,
+  AI_AUDIT_EXPORT_FAILED_EVENT,
+  AI_AUDIT_EXPORT_READY_EVENT,
+  AI_AUDIT_TRAIL_PATH,
+  aiAuditExportNotice,
+} from "@/lib/ai-audit-exports";
 import { invoicePanelPath } from "@/lib/invoice-links";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import type { Notification } from "@trenova/shared/types/notification";
@@ -20,6 +27,7 @@ import {
   DatabaseZapIcon,
   FileCheckIcon,
   FileDownIcon,
+  FileLockIcon,
   FileWarningIcon,
   FileXIcon,
   FilterXIcon,
@@ -201,6 +209,27 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
       notificationDataString(n, "severity") === "Critical"
         ? { iconClass: "text-destructive", tileClass: "bg-danger-subtle" }
         : null,
+  },
+  [AI_AUDIT_EXPORT_READY_EVENT]: {
+    category: "AI Control",
+    icon: FileDownIcon,
+    iconClass: "text-success",
+    tileClass: "bg-success-subtle",
+    getLink: (n) => aiAuditExportNotice(n)?.link ?? null,
+  },
+  [AI_AUDIT_EXPORT_FAILED_EVENT]: {
+    category: "AI Control",
+    icon: FileXIcon,
+    iconClass: "text-destructive",
+    tileClass: "bg-danger-subtle",
+    getLink: (n) => aiAuditExportNotice(n)?.link ?? null,
+  },
+  [AI_AUDIT_CHAIN_MISMATCH_EVENT]: {
+    category: "AI Control",
+    icon: FileLockIcon,
+    iconClass: "text-destructive",
+    tileClass: "bg-danger-subtle",
+    getLink: () => AI_AUDIT_TRAIL_PATH,
   },
   "dash.pto_requested": {
     category: "Workers",

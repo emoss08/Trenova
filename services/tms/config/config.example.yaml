@@ -90,6 +90,14 @@ monitoring:
     enabled: false
     host: 127.0.0.1
     port: 6060
+  tracing:
+    enabled: false # Export traces over OpenTelemetry
+    provider: otlp # jaeger, otlp, otlp-grpc or stdout
+    endpoint: localhost:4318 # Collector endpoint (host:port)
+    serviceName: trenova # service.name on every span
+    samplingRate: 1.0 # Share of ordinary traces kept, 0 to 1
+    aiSamplingRate: 1.0 # Share of agent runs, assistant turns and delegates whose traces are kept, 0 to 1
+    traceUrlTemplate: "" # Opens a trace in your backend, e.g. https://tempo.example.com/trace/{traceId}; empty shows the id to copy
   graphql:
     resolverMetrics: true # Per-resolver metrics/spans for N+1 hunting; keep off in production
     slowOperationAfter: 1s # Operations at or above this are logged by name
@@ -254,6 +262,26 @@ security:
       credentialsFile: ""
       timeout: 10s
       retryAttempts: 3
+
+# AI audit trail. Each row is chained to the one before it with HMAC-SHA256
+# under a key kept outside the database, so an edit or a deleted row breaks the
+# chain. Keep every key that ever signed a row: old rows are verified with the
+# key that signed them. To rotate, add a new key and make it active.
+# In production pass the keys as TRENOVA_AI_AUDIT_CHAIN_KEYS="id:secret,id:secret"
+# and the active one as TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID rather than in this file.
+aiAudit:
+  chain:
+    keys:
+      - id: dev-2026 # 1-40 letters, digits, '.', '_' or '-'
+        secret: change-me-local-ai-audit-chain-key-32chars # At least 32 characters
+    activeKeyId: dev-2026 # The key new rows are signed with
+  export:
+    syncMaxRows: 5000 # Exports up to this many rows are written at once; larger ones run in the background
+    maxRows: 1000000 # Largest export allowed
+    ttl: 168h # How long an export file can be downloaded
+  projector:
+    interval: 1m # How often new activity is written to the trail (at least 10s)
+    batchSize: 1000 # Rows read from each source per pass
 
 # Logging configuration
 logging:

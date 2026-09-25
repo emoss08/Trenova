@@ -96,6 +96,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/workersafetyservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/internal/core/services/workertrainingservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -232,6 +233,7 @@ type Params struct {
 	InboundMessageService        *inboundmessageservice.Service
 	AgentScorecardService        services.AgentScorecardService
 	AgentRunEventRepo            repositories.AgentRunEventRepository
+	AIAuditService               services.AIAuditService
 	BriefingService              services.BriefingService
 	AgentTools                   services.AgentToolRegistry
 	AgentControlService          services.AgentControlService
@@ -267,6 +269,7 @@ type Params struct {
 	FuelPurchaseService          *fuelpurchaseservice.Service
 	IFTAService                  *iftaservice.Service
 	DistanceCalculationService   services.DistanceCalculationService `optional:"true"`
+	Config                       *config.Config                      `optional:"true"`
 }
 
 type Resolver struct {
@@ -396,6 +399,7 @@ type Resolver struct {
 	inboundMessageService        *inboundmessageservice.Service
 	agentScorecardService        services.AgentScorecardService
 	agentRunEventRepo            repositories.AgentRunEventRepository
+	aiAuditService               services.AIAuditService
 	briefingService              services.BriefingService
 	agentTools                   services.AgentToolRegistry
 	agentControlService          services.AgentControlService
@@ -431,6 +435,7 @@ type Resolver struct {
 	billingTransferService       *billingtransferservice.Service
 	reportingService             *reportingservice.Service
 	permissionEngine             services.PermissionEngine
+	traceURL                     func(traceID string) string
 }
 
 func New(p Params) *Resolver {
@@ -561,6 +566,7 @@ func New(p Params) *Resolver {
 		inboundMessageService:        p.InboundMessageService,
 		agentScorecardService:        p.AgentScorecardService,
 		agentRunEventRepo:            p.AgentRunEventRepo,
+		aiAuditService:               p.AIAuditService,
 		briefingService:              p.BriefingService,
 		agentTools:                   p.AgentTools,
 		agentControlService:          p.AgentControlService,
@@ -596,6 +602,7 @@ func New(p Params) *Resolver {
 		fuelPurchaseService:          p.FuelPurchaseService,
 		iftaService:                  p.IFTAService,
 		distanceCalculationService:   p.DistanceCalculationService,
+		traceURL:                     traceURLBuilder(p.Config),
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 type PendingAction struct {
@@ -41,6 +42,22 @@ type PendingAction struct {
 	// Tainted says the turn had read outside content when the call was
 	// decided.
 	Tainted bool `json:"tainted,omitempty"`
+	// ProposalID is the proposal this action is recorded as, minted when the
+	// call is decided so the step, the proposal and the trace name the same
+	// record. Empty for an action recorded before it was kept, which the
+	// recorder mints as it always has.
+	ProposalID pulid.ID `json:"proposalId,omitempty"`
+	// TraceID and SpanID are the tool span the call was decided in, so a
+	// decision made hours later can link back to it.
+	TraceID string `json:"traceId,omitempty"`
+	SpanID  string `json:"spanId,omitempty"`
+	// TierSource says what set the tier the call ran or was held at.
+	TierSource agent.TierSource `json:"tierSource,omitempty"`
+	// ExecutedVersion is the target record's version after an automatic
+	// write, when the tool reports it.
+	ExecutedVersion *int64 `json:"executedVersion,omitempty"`
+	StepKey         string `json:"stepKey,omitempty"`
+	ExecutedAt      int64  `json:"executedAt,omitempty"`
 }
 
 // ProposalTarget is a record and its version at the moment a change to it was
@@ -256,6 +273,53 @@ type RunResult struct {
 	// before taint was kept, which counts as tainted wherever it matters.
 	Taint       *agent.RunTaint    `json:",omitempty"`
 	Fingerprint *agent.Fingerprint `json:",omitempty"`
+	Usage       *RunUsage          `json:",omitempty"`
+}
+
+type RunUsage struct {
+	ModelCalls       int              `json:"modelCalls,omitempty"`
+	InputTokens      int64            `json:"inputTokens,omitempty"`
+	OutputTokens     int64            `json:"outputTokens,omitempty"`
+	CacheReadTokens  int64            `json:"cacheReadTokens,omitempty"`
+	CacheWriteTokens int64            `json:"cacheWriteTokens,omitempty"`
+	CostUSD          *decimal.Decimal `json:"costUsd,omitempty"`
+}
+
+func (u *RunUsage) Add(other *RunUsage) *RunUsage {
+	if other == nil {
+		return u
+	}
+	sum := u.Clone()
+	if sum == nil {
+		sum = &RunUsage{}
+	}
+	sum.ModelCalls += other.ModelCalls
+	sum.InputTokens += other.InputTokens
+	sum.OutputTokens += other.OutputTokens
+	sum.CacheReadTokens += other.CacheReadTokens
+	sum.CacheWriteTokens += other.CacheWriteTokens
+	if other.CostUSD != nil {
+		cost := *other.CostUSD
+		if sum.CostUSD != nil {
+			cost = sum.CostUSD.Add(cost)
+		}
+		sum.CostUSD = &cost
+	}
+
+	return sum
+}
+
+func (u *RunUsage) Clone() *RunUsage {
+	if u == nil {
+		return nil
+	}
+	clone := *u
+	if u.CostUSD != nil {
+		cost := *u.CostUSD
+		clone.CostUSD = &cost
+	}
+
+	return &clone
 }
 
 func (r *RunResult) ServedFingerprint() *agent.Fingerprint {
@@ -281,6 +345,7 @@ type DelegatedRun struct {
 	// Taint is the outside content the delegate's turn read, which its
 	// proposals carry.
 	Taint *agent.RunTaint `json:"taint,omitempty"`
+	Usage *RunUsage       `json:"usage,omitempty"`
 }
 
 type AgentRuntime interface {

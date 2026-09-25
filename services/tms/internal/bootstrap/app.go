@@ -7,6 +7,7 @@ import (
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentextensionservice"
+	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruneventservice"
@@ -35,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentqualityjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/aiauditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aifeedbackjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
@@ -126,6 +128,7 @@ func Options() fx.Option {
 		temporaljobs.Module,
 		schedule.Module,
 		auditjobs.Module,
+		aiauditjobs.Module,
 		billingjobs.Module,
 		billingtransferjobs.Module,
 		detentionjobs.Module,
@@ -163,6 +166,7 @@ func Options() fx.Option {
 		agentruntime.Module,
 		runstepledger.Module,
 		agentruneventservice.Module,
+		aiauditservice.Module,
 		turnstream.Module,
 		watchtowersources.Module,
 		proposalrecorder.Module,

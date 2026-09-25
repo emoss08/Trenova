@@ -3,6 +3,7 @@ package aiusage
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -77,6 +78,20 @@ type AIUsageRecord struct {
 	// CostUSD is nil when the provider carries no pricing. It is not zero:
 	// a call that cost something unknown must not be summed as free.
 	CostUSD *decimal.Decimal `json:"costUsd"         bun:"cost_usd,type:NUMERIC(14,6),nullzero"`
+
+	// Provenance: the span the attempt ran in, the run or turn it was for and
+	// the task a delegate was working on, the agent's version, which try of
+	// the call this was and whether it had fallen over to another provider.
+	TraceID                string             `json:"traceId"                bun:"trace_id,type:VARCHAR(32),nullzero"`
+	SpanID                 string             `json:"spanId"                 bun:"span_id,type:VARCHAR(16),nullzero"`
+	OwnerKind              agent.RunOwnerKind `json:"ownerKind"              bun:"owner_kind,type:VARCHAR(20),nullzero"`
+	OwnerID                pulid.ID           `json:"ownerId"                bun:"owner_id,type:VARCHAR(100),nullzero"`
+	DelegateCallID         string             `json:"delegateCallId"         bun:"delegate_call_id,type:VARCHAR(200),nullzero"`
+	AgentDefinitionVersion *int64             `json:"agentDefinitionVersion" bun:"agent_definition_version,type:BIGINT,nullzero"`
+	Attempt                int                `json:"attempt"                bun:"attempt,type:INTEGER,nullzero"`
+	Failover               bool               `json:"failover"               bun:"failover,type:BOOLEAN,notnull,default:false"`
+	CacheReadTokens        int                `json:"cacheReadTokens"        bun:"cache_read_tokens,type:INTEGER,notnull,default:0"`
+	CacheWriteTokens       int                `json:"cacheWriteTokens"       bun:"cache_write_tokens,type:INTEGER,notnull,default:0"`
 
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 }

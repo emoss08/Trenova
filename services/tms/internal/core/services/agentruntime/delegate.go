@@ -215,6 +215,7 @@ func (s *Service) delegate(t *Turn, fx TurnEffects, call serviceports.ToolCall) 
 			Input:      task,
 			Failed:     run.Failure != "" || run.Stopped,
 			Taint:      run.Result.Taint.Clone(),
+			Usage:      run.Result.Usage.Clone(),
 		})
 	}
 

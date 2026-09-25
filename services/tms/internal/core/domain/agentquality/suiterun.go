@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -20,6 +21,7 @@ import (
 var (
 	_ bun.BeforeAppendModelHook          = (*SuiteRun)(nil)
 	_ validationframework.TenantedEntity = (*SuiteRun)(nil)
+	_ pagination.CursorEntity            = (*SuiteRun)(nil)
 )
 
 const (
@@ -77,7 +79,8 @@ func (t SuiteRunTrigger) IsValid() bool {
 }
 
 type SuiteRun struct {
-	bun.BaseModel `bun:"table:agent_suite_runs,alias:asr" json:"-"`
+	bun.BaseModel             `bun:"table:agent_suite_runs,alias:asr" json:"-"`
+	pagination.CursorValueSet `bun:",embed"                           json:"-"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
@@ -126,32 +129,39 @@ func NewSuiteRunID() pulid.ID {
 }
 
 func (r *SuiteRun) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(r,
+	multiErr.AddOzzoError(validation.ValidateStruct(
+		r,
 		validation.Field(&r.OrganizationID, validation.Required.Error("Organization is required")),
 		validation.Field(&r.BusinessUnitID, validation.Required.Error("Business unit is required")),
 		validation.Field(&r.AgentDefinitionID, validation.Required.Error("Agent is required")),
-		validation.Field(&r.Trigger,
+		validation.Field(
+			&r.Trigger,
 			validation.Required.Error("Trigger is required"),
 			domainvalidation.ValidEnum[SuiteRunTrigger]("Trigger is invalid"),
 		),
-		validation.Field(&r.Status,
+		validation.Field(
+			&r.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[SuiteRunStatus]("Status is invalid"),
 		),
-		validation.Field(&r.FingerprintHash,
+		validation.Field(
+			&r.FingerprintHash,
 			validation.Required.Error("Fingerprint is required"),
 			validation.Length(SuiteRevisionChars, SuiteRevisionChars).
 				Error("Fingerprint is invalid"),
 		),
-		validation.Field(&r.SuiteRevision,
+		validation.Field(
+			&r.SuiteRevision,
 			validation.Required.Error("Suite revision is required"),
 			validation.Length(SuiteRevisionChars, SuiteRevisionChars).
 				Error("Suite revision is invalid"),
 		),
-		validation.Field(&r.SweepKey,
+		validation.Field(
+			&r.SweepKey,
 			validation.Length(0, MaxSweepKeyChars).Error("Sweep key is at most 200 characters"),
 		),
-		validation.Field(&r.Comments,
+		validation.Field(
+			&r.Comments,
 			validation.Length(0, MaxSuiteComments).Error("Comments are at most 2000 characters"),
 		),
 		validation.Field(&r.StartedAt, validation.Required.Error("Start time is required")),

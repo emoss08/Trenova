@@ -12,7 +12,9 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/toolsimulation"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 )
 
@@ -31,12 +33,22 @@ type toolOutcome struct {
 	// the call's result message.
 	delegateReport *conversation.DelegateReport
 	// taint is the outside content the call read.
-	taint []agent.TaintMark
-	found []string
+	taint   []agent.TaintMark
+	found   []string
+	verdict string
+	reason  string
 }
 
 func failedOutcome(format string, args ...any) toolOutcome {
 	return toolOutcome{content: fmt.Sprintf(format, args...), failed: true}
+}
+
+func refusedOutcome(verdict, reason, format string, args ...any) toolOutcome {
+	outcome := failedOutcome(format, args...)
+	outcome.verdict = verdict
+	outcome.reason = reason
+
+	return outcome
 }
 
 // dispatchParams groups one tool call and everything deciding how it runs.
@@ -55,6 +67,7 @@ type dispatchParams struct {
 	// content from outside the organization, which may have been written to
 	// steer it.
 	afterExternal bool
+	stepKey       string
 }
 
 func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
@@ -65,16 +78,22 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	// The loop refuses a tool the agent does not hold before it gets here, with
 	// the nearest tools it does hold; this is the backstop for any other caller.
 	if refusal, refused := s.extensionRefusal(ctx, req, call.Name); refused {
+		refusal.verdict = aitrace.OutcomeDenied
+		refusal.reason = "its extension is turned off or not set up"
+
 		return refusal
 	}
 	if !s.holdsFor(ctx, req, call.Name) {
-		return failedOutcome("Tool %q is not available to this agent.", call.Name)
+		return refusedOutcome(aitrace.OutcomeDenied, "the agent does not hold the tool",
+			"Tool %q is not available to this agent.", call.Name)
 	}
 
 	selfScoped := serviceports.IsSelfScoped(s.toolNamed(call.Name))
 	if selfScoped && (req.Unattended || req.Actor == nil ||
 		req.Actor.PrincipalType != serviceports.PrincipalTypeUser) {
-		return failedOutcome(
+		return refusedOutcome(
+			aitrace.OutcomeDenied,
+			"it acts only on the records of a person in the conversation, and none was",
 			"Tool %q works only on the records of the person in the conversation, "+
 				"and nobody is in this one.",
 			call.Name,
@@ -97,7 +116,8 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 
 	tool, ok := s.actionTools.Get(call.Name)
 	if !ok {
-		return failedOutcome("Tool %q does not exist.", call.Name)
+		return refusedOutcome(aitrace.OutcomeInvalid, "no such tool is registered",
+			"Tool %q does not exist.", call.Name)
 	}
 
 	policy := tool.Policy()
@@ -157,6 +177,11 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 	if heldForExternal && !slices.Contains(action.HeldBy, agenttoolpolicy.HeldByTainted) {
 		action.HeldBy = append(slices.Clone(action.HeldBy), agenttoolpolicy.HeldByTainted)
 	}
+	source := decision.Source
+	if heldForExternal {
+		source = agent.TierSourcePolicyDefault
+	}
+	stampAction(ctx, action, source, p.stepKey)
 
 	if tier != agent.TierAutoExecute {
 		// The same write proposed twice is one decision asked for twice. A
@@ -164,7 +189,11 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		// used to raise it again on every "yes", and the person got a stack
 		// of identical cards.
 		if pendingDuplicate(call, req.Proposals, proposedSoFar) {
-			return toolOutcome{content: duplicateProposalText(call.Name)}
+			return toolOutcome{
+				content: duplicateProposalText(call.Name),
+				verdict: aitrace.OutcomeDuplicate,
+				reason:  "the same change is already waiting for a decision",
+			}
 		}
 
 		// A tool that can check its own arguments does so now, while the
@@ -179,7 +208,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 				RunID:          req.RunID,
 				Params:         call.Arguments,
 			}); vErr != nil {
-				return failedOutcome(
+				return refusedOutcome(
+					aitrace.OutcomeInvalid,
+					vErr.Error(),
 					"Tool %q was not proposed, because it would fail as called: %s\n"+
 						"Fix the call and try again.",
 					call.Name, vErr.Error(),
@@ -201,7 +232,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			content += " This agent is in simulation: an approval will preview the change, not make it."
 		}
 
-		return toolOutcome{content: content, action: action}
+		return toolOutcome{content: content, action: action, verdict: aitrace.OutcomeProposed}
 	}
 
 	// An automatic write in simulation is previewed where it would have run,
@@ -239,7 +270,9 @@ func (s *Service) withinBudget(
 		s.logger.Error("agent tool budget check failed",
 			zap.String("tool", toolName), zap.Error(err))
 
-		return failedOutcome(
+		return refusedOutcome(
+			aitrace.OutcomeFailed,
+			"its daily cap could not be checked",
 			"Tool %q was not run: its budget could not be checked. Try again later.",
 			toolName,
 		), true
@@ -248,8 +281,11 @@ func (s *Service) withinBudget(
 		return toolOutcome{}, false
 	}
 
-	return failedOutcome("Tool %q was not run. %s Tell the person, and do not retry it.",
-		toolName, refusal.Message(req.Definition.Name)), true
+	message := refusal.Message(req.Definition.Name)
+
+	return refusedOutcome(aitrace.OutcomeOverBudget, message,
+		"Tool %q was not run. %s Tell the person, and do not retry it.",
+		toolName, message), true
 }
 
 // executedCount is how many times this turn already ran a tool for real. Those
@@ -296,9 +332,13 @@ func (s *Service) simulateAction(ctx context.Context, a actionParams) toolOutcom
 	action := a.action
 
 	action.Simulated = true
-	action.Simulation = toolsimulation.Simulate(ctx, a.tool, a.executeParams())
+	action.Target = s.snapshotTarget(ctx, a.req, a.tool, call)
+	writeCtx, write := s.startWrite(ctx, a, true)
+	action.Simulation = toolsimulation.Simulate(writeCtx, a.tool, a.executeParams())
+	write.End()
 
 	return toolOutcome{
+		verdict: aitrace.OutcomeSimulated,
 		content: fmt.Sprintf(
 			"Simulated %q: nothing was changed, because this agent is in simulation. "+
 				"What it would have done:\n%s\nCarry on as if it had run, and say in your "+
@@ -317,7 +357,8 @@ func (s *Service) authorize(
 	operation permission.Operation,
 ) (toolOutcome, bool) {
 	if s.permissions == nil {
-		return failedOutcome("Tool %q could not be authorized.", toolName), true
+		return refusedOutcome(aitrace.OutcomeFailed, "no permission engine could authorize it",
+			"Tool %q could not be authorized.", toolName), true
 	}
 
 	result, err := s.permissions.Check(ctx, &serviceports.PermissionCheckRequest{
@@ -337,7 +378,8 @@ func (s *Service) authorize(
 			zap.Error(err),
 		)
 
-		return failedOutcome("Tool %q could not be authorized. Try again later.", toolName), true
+		return refusedOutcome(aitrace.OutcomeFailed, "its permission could not be checked",
+			"Tool %q could not be authorized. Try again later.", toolName), true
 	}
 
 	if !result.Allowed {
@@ -349,7 +391,9 @@ func (s *Service) authorize(
 			zap.String("reason", result.Reason),
 		)
 
-		return failedOutcome(
+		return refusedOutcome(
+			aitrace.OutcomeDenied,
+			fmt.Sprintf("lacks %s access to %s", operation, resource.String()),
 			"Tool %q is not permitted: the person you are working for does not have %s access to %s.",
 			toolName,
 			operation,
@@ -376,12 +420,14 @@ func (s *Service) runQueryTool(
 		DataAccessCeiling: req.Definition.DataAccessSensitivity(),
 	})
 	if err != nil {
-		return failedOutcome("Tool %q failed: %s", call.Name, err.Error())
+		return refusedOutcome(aitrace.OutcomeFailed, err.Error(),
+			"Tool %q failed: %s", call.Name, err.Error())
 	}
 
 	encoded, document, err := encodeToolDocument(data, timeutils.NowUnix(), req.Context.Timezone)
 	if err != nil {
-		return failedOutcome("Tool %q returned data that could not be encoded.", call.Name)
+		return refusedOutcome(aitrace.OutcomeFailed, "its result could not be encoded",
+			"Tool %q returned data that could not be encoded.", call.Name)
 	}
 
 	return toolOutcome{
@@ -389,6 +435,7 @@ func (s *Service) runQueryTool(
 		data:    data,
 		summary: summarizeResult(call.Name, document),
 		taint:   callTaint(tool.Policy(), call, data, timeutils.NowUnix()),
+		verdict: aitrace.OutcomeRan,
 	}
 }
 
@@ -397,24 +444,83 @@ func (s *Service) executeAction(ctx context.Context, a actionParams) toolOutcome
 	action := a.action
 
 	action.Executed = true
+	action.Target = s.snapshotTarget(ctx, a.req, a.tool, call)
 
-	result, err := serviceports.ExecuteTool(ctx, a.tool, a.executeParams())
+	writeCtx, write := s.startWrite(ctx, a, false)
+	action.ExecutedAt = timeutils.NowUnix()
+	result, err := serviceports.ExecuteTool(writeCtx, a.tool, a.executeParams())
 	if err != nil {
+		aitrace.MarkFailed(write, aitrace.OutcomeFailed)
+		write.End()
 		action.ExecutionError = err.Error()
 
 		return toolOutcome{
 			content: fmt.Sprintf("Tool %q failed: %s", call.Name, err.Error()),
 			failed:  true,
 			action:  action,
+			verdict: aitrace.OutcomeFailed,
+			reason:  err.Error(),
 		}
 	}
 	action.ExecutionResult = result
+	action.ExecutedVersion = s.versionAfter(writeCtx, a.req, action.Target)
+	if action.ExecutedVersion != nil {
+		write.SetAttributes(aitrace.AIVersionAfter.Int64(*action.ExecutedVersion))
+	}
+	write.End()
 
 	return toolOutcome{
 		content: ranContent(call.Name, result),
 		action:  action,
 		taint:   callTaint(a.tool.Policy(), call, nil, timeutils.NowUnix()),
+		verdict: aitrace.OutcomeRan,
 	}
+}
+
+func (s *Service) startWrite(
+	ctx context.Context,
+	a actionParams,
+	simulated bool,
+) (context.Context, trace.Span) {
+	spec := &aitrace.WriteSpec{
+		EntityType: string(a.tool.Policy().Resource),
+		ProposalID: a.action.ProposalID,
+		Simulated:  simulated,
+	}
+	if target := a.action.Target; target != nil {
+		spec.EntityType = string(target.Resource)
+		spec.EntityID = target.ID.String()
+		before := target.Version
+		spec.VersionBefore = &before
+	}
+
+	return aitrace.StartWrite(ctx, spec)
+}
+
+func (s *Service) versionAfter(
+	ctx context.Context,
+	req *serviceports.RunRequest,
+	target *serviceports.ProposalTarget,
+) *int64 {
+	if target == nil || s.versions == nil {
+		return nil
+	}
+
+	version, err := s.versions.Version(ctx, req.Actor.TenantInfo(), serviceports.ToolTarget{
+		Resource: target.Resource,
+		ID:       target.ID,
+	})
+	if err != nil {
+		s.logger.Warn("could not read the version a write left its record at",
+			zap.String("resource", string(target.Resource)),
+			zap.String("id", target.ID.String()),
+			zap.Error(err),
+		)
+
+		return nil
+	}
+
+	return &version
 }
 
 // ranContent tells the model a write ran and, when the tool says what it

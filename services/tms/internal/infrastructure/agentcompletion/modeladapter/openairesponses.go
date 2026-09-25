@@ -129,6 +129,9 @@ type responsesUsage struct {
 	OutputTokensDetails struct {
 		ReasoningTokens int `json:"reasoning_tokens"`
 	} `json:"output_tokens_details"`
+	InputTokensDetails struct {
+		CachedTokens int `json:"cached_tokens"`
+	} `json:"input_tokens_details"`
 }
 
 func (a openAIResponsesAdapter) requestFor(call *Call) responsesRequest {
@@ -186,6 +189,7 @@ func (a openAIResponsesAdapter) responseFrom(call *Call, envelope *responsesEnve
 		Truncated:       responsesTruncated(envelope),
 		Reasoning:       responsesReasoningOf(envelope),
 		ReasoningTokens: envelope.Usage.OutputTokensDetails.ReasoningTokens,
+		CacheReadTokens: envelope.Usage.InputTokensDetails.CachedTokens,
 	}
 }
 
@@ -416,6 +420,7 @@ func (a openAIResponsesAdapter) Stream(
 		Truncated:       responsesTruncated(completed),
 		Reasoning:       reasoning,
 		ReasoningTokens: completed.Usage.OutputTokensDetails.ReasoningTokens,
+		CacheReadTokens: completed.Usage.InputTokensDetails.CachedTokens,
 	}, nil
 }
 

@@ -18,4 +18,8 @@ const (
 type StreamItem struct {
 	Event string `json:"event"`
 	Data  any    `json:"data"`
+	// At is when the event happened, in Unix seconds, stamped by the
+	// workflow so a replay reads back the same instant. Zero on an event
+	// published before it was kept.
+	At int64 `json:"at,omitempty"`
 }

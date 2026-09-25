@@ -111,6 +111,8 @@ type AssistantTurn struct {
 	StartedAt    int64               `json:"startedAt"    bun:"started_at,type:BIGINT,nullzero"`
 	CompletedAt  *int64              `json:"completedAt"  bun:"completed_at,type:BIGINT,nullzero"`
 	Fingerprint  *agent.Fingerprint  `json:"fingerprint"  bun:"fingerprint,type:JSONB,nullzero"`
+	// TraceID is the turn's trace.
+	TraceID string `json:"traceId" bun:"trace_id,type:VARCHAR(32),nullzero"`
 
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -133,6 +135,7 @@ func (t *AssistantTurn) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Origin is required"),
 			domainvalidation.ValidEnum[AssistantTurnOrigin]("Invalid origin"),
 		),
+		validation.Field(&t.TraceID, domainvalidation.TraceID("Trace id is invalid")),
 	))
 }
 

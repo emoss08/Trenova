@@ -92,6 +92,10 @@ func (l *Loader) Load() (*Config, error) {
 		return nil, fmt.Errorf("apply environment overrides: %w", err)
 	}
 
+	if err := l.applyAIAuditChainKeysEnv(config); err != nil {
+		return nil, err
+	}
+
 	if err := l.validateConfig(config); err != nil {
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
@@ -168,6 +172,26 @@ func (l *Loader) configureViper() {
 	l.setDefaults()
 	l.bindControlPlaneEnvAliases()
 	l.bindAccountingEnv()
+	l.bindAIAuditEnv()
+}
+
+func (l *Loader) bindAIAuditEnv() {
+	_ = l.viper.BindEnv("aiAudit.chain.activeKeyId", l.envPrefix+aiAuditChainActiveKeyIDEnvSuffix)
+}
+
+func (l *Loader) applyAIAuditChainKeysEnv(config *Config) error {
+	raw := strings.TrimSpace(os.Getenv(l.envPrefix + aiAuditChainKeysEnvSuffix))
+	if raw == "" {
+		return nil
+	}
+
+	keys, err := parseAIAuditChainKeys(raw)
+	if err != nil {
+		return err
+	}
+	config.AIAudit.Chain.Keys = keys
+
+	return nil
 }
 
 func (l *Loader) bindAccountingEnv() {
@@ -269,6 +293,16 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 		l.viper.SetDefault(prefix+".requestsPerMinute", 0)
 		l.viper.SetDefault(prefix+".burstSize", 0)
 	}
+
+	// Tracing and AI audit trail defaults
+	l.viper.SetDefault("monitoring.tracing.aiSamplingRate", defaultAISamplingRate)
+	l.viper.SetDefault("monitoring.tracing.traceUrlTemplate", "")
+	l.viper.SetDefault("aiAudit.chain.activeKeyId", "")
+	l.viper.SetDefault("aiAudit.export.syncMaxRows", defaultAIAuditExportSyncMaxRows)
+	l.viper.SetDefault("aiAudit.export.maxRows", defaultAIAuditExportMaxRows)
+	l.viper.SetDefault("aiAudit.export.ttl", defaultAIAuditExportTTL.String())
+	l.viper.SetDefault("aiAudit.projector.interval", defaultAIAuditProjectorInterval.String())
+	l.viper.SetDefault("aiAudit.projector.batchSize", defaultAIAuditProjectorBatchSize)
 
 	// Logging defaults
 	l.viper.SetDefault("logging.level", "info")
@@ -411,6 +445,8 @@ func (l *Loader) validateConfig(config *Config) error {
 		validateLoggingConfig,
 		validatePlatformConfig,
 		validateR2PublicEndpoint,
+		validateTracingConfig,
+		validateAIAuditConfig,
 	}
 	for _, validator := range validators {
 		if err := validator(config); err != nil {
@@ -574,7 +610,7 @@ func validateProductionSecurity(config *Config) error {
 		return ErrProductionStorageTLSRequired
 	}
 
-	return nil
+	return validateAIAuditChainSecrets(config)
 }
 
 func (l *Loader) applyEnvironmentOverrides(config *Config) error {

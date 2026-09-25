@@ -165,6 +165,10 @@ type AgentRun {
   taint: AgentRunTaint
   "When the run first read outside content."
   taintedAt: Timestamp
+  "The trace the run's work was recorded in. Empty for a run recorded before traces were kept."
+  traceId: String!
+  "The run's trace in the tracing backend, when one is configured and the run has a trace."
+  traceUrl: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -203,6 +207,10 @@ type AgentProposal {
   egressClass: AgentEgressClass
   "What held the write below running on its own: agent_ceiling, tool_max, egress_class, condition, tainted, tool_tier or personal_exemption."
   heldBy: [String!]!
+  "The trace of the tool call the write was proposed in. Empty for a proposal recorded before traces were kept."
+  traceId: String!
+  "The proposing tool call's trace in the tracing backend, when one is configured and the proposal has a trace."
+  traceUrl: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -286,6 +294,10 @@ type AgentDecision {
   "Modifications carry tool-specific parameter overrides captured at decision time."
   modifications: JSON
   reasonCode: String!
+  "The trace the decision was made in. Empty for a decision recorded before traces were kept."
+  traceId: String!
+  "The decision's trace in the tracing backend, when one is configured and the decision has a trace."
+  traceUrl: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!

@@ -52,11 +52,16 @@ type RunStep struct {
 	Kind    RunStepKind   `json:"kind"`
 	Status  RunStepStatus `json:"status"`
 	// Key identifies the operation across attempts. See agentruntime.StepKey.
-	Key      string         `json:"key"`
-	ToolName string         `json:"toolName"`
-	CallID   string         `json:"callId"`
-	Args     map[string]any `json:"args"`
-	Outcome  RunStepOutcome `json:"outcome"`
+	Key               string         `json:"key"`
+	ToolName          string         `json:"toolName"`
+	CallID            string         `json:"callId"`
+	Args              map[string]any `json:"args"`
+	Outcome           RunStepOutcome `json:"outcome"`
+	TraceID           string         `json:"traceId,omitempty"`
+	SpanID            string         `json:"spanId,omitempty"`
+	DefinitionID      pulid.ID       `json:"definitionId,omitempty"`
+	DefinitionVersion *int64         `json:"definitionVersion,omitempty"`
+	DelegateCallID    string         `json:"delegateCallId,omitempty"`
 }
 
 // RunStepOutcome is what a settled step produced, in the shape the runtime
@@ -78,6 +83,10 @@ type RunStepOutcome struct {
 	// Taint is the outside content the call read, so a replayed step taints
 	// the run the way the original did.
 	Taint []agent.TaintMark `json:"taint,omitempty"`
+	// Reason is why a call that did not run was refused, in words fit for
+	// the audit trail: the permission it lacked, the argument it got wrong.
+	Reason  string `json:"reason,omitempty"`
+	Verdict string `json:"verdict,omitempty"`
 }
 
 // StepState is what a claim found.

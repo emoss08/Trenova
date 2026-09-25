@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -195,4 +196,53 @@ func TestPersistDelegatedProposals_CarryTheDelegatesTaint(t *testing.T) {
 	assert.True(t, proposal.Tainted)
 	assert.Equal(t, delegateTaint.Marks, proposal.Taint.Marks)
 	assert.Equal(t, agent.EgressCustomerVisible, proposal.EgressClass)
+}
+
+func TestPersistProposals_TieTheRunsToTheTurnAndADelegatesToItsTask(t *testing.T) {
+	t.Parallel()
+
+	runs := &stubRunRepo{}
+	svc := newProposalService(runs, &stubProposalRepo{}, &stubConversationRepo{})
+	turnID := pulid.MustNew("atrn_")
+
+	params := proposalTestParams(nil, nil)
+	params.TurnID = turnID
+	params.Actions = []serviceports.PendingAction{{
+		ToolName:  "assign_move",
+		Rationale: "Cover the move.",
+		Tier:      agent.TierPropose,
+	}}
+	_, err := svc.persistProposals(t.Context(), params)
+	require.NoError(t, err)
+
+	_, err = svc.persistDelegatedProposals(t.Context(), params, []serviceports.DelegatedRun{{
+		Definition: &agentdefinition.Definition{
+			ID:              pulid.MustNew("agd_"),
+			Name:            "Report Builder",
+			AutonomyCeiling: agent.TierPropose,
+		},
+		CallID: "call_task_3",
+		Input:  "Build the report.",
+		Actions: []serviceports.PendingAction{{
+			ToolName:  "create_report",
+			Rationale: "Asked for it.",
+			Tier:      agent.TierPropose,
+		}},
+	}})
+	require.NoError(t, err)
+
+	require.Len(t, runs.created, 2)
+	own, delegated := runs.created[0], runs.created[1]
+	assert.Equal(t,
+		aitrace.AnchorFor(aitrace.AnchorAssistantTurn, turnID.String()).TraceID.String(),
+		own.TraceID)
+	assert.Equal(t, turnID, own.TurnID)
+	assert.Empty(t, own.ParentOwnerKind, "the turn's own run was handed nothing")
+	assert.Empty(t, own.DelegateCallID)
+
+	assert.Equal(t, aitrace.ForDelegate(turnID, "call_task_3").TraceID.String(), delegated.TraceID)
+	assert.Equal(t, turnID, delegated.TurnID)
+	assert.Equal(t, agent.RunOwnerAssistantTurn, delegated.ParentOwnerKind)
+	assert.Equal(t, turnID, delegated.ParentOwnerID)
+	assert.Equal(t, "call_task_3", delegated.DelegateCallID)
 }

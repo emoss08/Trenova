@@ -11,6 +11,7 @@ import {
   triggerChoices,
 } from "./agent-badges";
 import { AgentSubjectCell } from "./agent-subject-cell";
+import { traceColumn } from "../trace-link";
 
 export function getRunColumns(t: TranslateFn): ColumnDef<AgentRunRow>[] {
   return [
@@ -151,5 +152,6 @@ export function getRunColumns(t: TranslateFn): ColumnDef<AgentRunRow>[] {
         filterType: "date",
       },
     },
+    traceColumn<AgentRunRow>(t),
   ];
 }

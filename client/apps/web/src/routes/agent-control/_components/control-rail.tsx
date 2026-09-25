@@ -4,6 +4,7 @@ import {
   ActivityIcon,
   BotIcon,
   BrainIcon,
+  FileClockIcon,
   LayoutDashboardIcon,
   PlugZapIcon,
   PuzzleIcon,
@@ -25,6 +26,7 @@ const ICONS: Record<AIControlTab, typeof BotIcon> = {
   safety: ShieldCheckIcon,
   quality: TargetIcon,
   activity: ActivityIcon,
+  audit: FileClockIcon,
 };
 
 type ControlRailProps = {
@@ -146,4 +148,5 @@ const LABELS: Record<AIControlTab, { label: string }> = {
   safety: { label: "Safety" },
   quality: { label: "Quality" },
   activity: { label: "Activity" },
+  audit: { label: "Audit trail" },
 };

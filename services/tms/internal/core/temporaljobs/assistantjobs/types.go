@@ -50,6 +50,10 @@ type AssistantTurnPayload struct {
 	Actor    serviceports.RequestActor `json:"actor"`
 	Content  string                    `json:"content"`
 	Request  AssistantTurnRequest      `json:"request"`
+	// Origin is the W3C traceparent of the request that started the turn,
+	// so the turn's trace links back to it. Empty on a turn started before
+	// it was kept, or from outside any trace.
+	Origin string `json:"traceOrigin,omitempty"`
 }
 
 func (p *AssistantTurnPayload) tenantInfo() pagination.TenantInfo {

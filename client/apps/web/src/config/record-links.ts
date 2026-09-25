@@ -117,6 +117,20 @@ export const RECORD_LINKS = {
       fieldFilters: '[{"field":"id","operator":"eq","value":"{id}"}]',
     },
   },
+  ai_audit_event: {
+    label: "AI audit event",
+    path: "/admin/agent-control",
+    params: { tab: "audit", audit: "trail", panelType: "edit", panelEntityId: "{id}" },
+  },
+  ai_audit_export: {
+    label: "AI audit trail export",
+    path: "/admin/agent-control",
+    params: {
+      tab: "audit",
+      audit: "exports",
+      fieldFilters: '[{"field":"id","operator":"eq","value":"{id}"}]',
+    },
+  },
 } as const satisfies Record<string, RecordLink>;
 
 export type RecordEntityType = keyof typeof RECORD_LINKS;
@@ -171,37 +185,58 @@ function valuePattern(template: string): RegExp {
 const LOCATORS = (Object.keys(RECORD_LINKS) as RecordEntityType[])
   .map((entityType) => {
     const link: RecordLink = RECORD_LINKS[entityType];
-    const idParams = Object.entries(link.params ?? {})
+    const entries = Object.entries(link.params ?? {});
+    const idParams = entries
       .filter(([, value]) => value.includes(ID))
       .map(([key, value]) => ({ key, pattern: valuePattern(value) }));
-    return { entityType, pattern: pathPattern(link.path), idParams, specificity: link.path.length };
+    const fixedParams = entries.filter(([, value]) => !value.includes(ID));
+    return {
+      entityType,
+      pattern: pathPattern(link.path),
+      idParams,
+      fixedParams,
+      specificity: link.path.length,
+    };
   })
   // Longest path first, so a page nested under another is not claimed by it.
   .sort((a, b) => b.specificity - a.specificity);
 
+type Locator = (typeof LOCATORS)[number];
+
 /**
  * The record a location shows, when it is one of the pages records open on:
- * the reverse of `recordPath`.
+ * the reverse of `recordPath`. Several kinds of record can open on one page
+ * (AI Control holds agent runs and the audit trail's events and exports);
+ * the one whose fixed parameters the address carries is the one it shows,
+ * and an address naming none of them reads as the first.
  */
 export function recordAtLocation(pathname: string, search: string): RecordAtLocation | null {
   const params = new URLSearchParams(search);
+  let chosen: { locator: Locator; match: RegExpExecArray } | null = null;
   for (const locator of LOCATORS) {
     const match = locator.pattern.exec(pathname);
     if (!match) {
       continue;
     }
-
-    const fromPath = match[1] === undefined ? "" : decodeURIComponent(match[1]);
-    let fromQuery = "";
-    for (const idParam of locator.idParams) {
-      const found = idParam.pattern.exec(params.get(idParam.key) ?? "");
-      if (found?.[1]) {
-        fromQuery = found[1];
-        break;
-      }
+    if (locator.fixedParams.every(([key, value]) => params.get(key) === value)) {
+      chosen = { locator, match };
+      break;
     }
-    return { entityType: locator.entityType, entityId: (fromPath || fromQuery).trim() };
+    chosen ??= { locator, match };
+  }
+  if (chosen === null) {
+    return null;
   }
 
-  return null;
+  const { locator, match } = chosen;
+  const fromPath = match[1] === undefined ? "" : decodeURIComponent(match[1]);
+  let fromQuery = "";
+  for (const idParam of locator.idParams) {
+    const found = idParam.pattern.exec(params.get(idParam.key) ?? "");
+    if (found?.[1]) {
+      fromQuery = found[1];
+      break;
+    }
+  }
+  return { entityType: locator.entityType, entityId: (fromPath || fromQuery).trim() };
 }
