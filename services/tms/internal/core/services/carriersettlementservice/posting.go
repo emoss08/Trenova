@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+
 	"github.com/emoss08/trenova/internal/core/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -148,8 +150,16 @@ func (s *Service) Post(
 		entity.PostedByID = actor.UserID
 		entity.PostedAt = &now
 		entity.PostedJournalBatchID = batchID
-		updated, txErr = s.settlementRepo.Update(txCtx, entity)
-		return txErr
+		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		return s.queueSync(
+			txCtx,
+			updated,
+			accountingsync.SyncObjectCarrierBill,
+			accountingsync.SyncOperationCreate,
+			accountingsync.SyncSourceCarrierSettlementPosted,
+		)
 	})
 	if err != nil {
 		return nil, err

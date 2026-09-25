@@ -1104,6 +1104,34 @@ func (f *fakeWriter) VoidCreditApplication(
 	return f.record("VoidCreditApplication", ref)
 }
 
+func (f *fakeWriter) UpsertVendor(
+	_ context.Context,
+	doc *services.AccountingVendorDocument,
+) (*services.AccountingDocumentResult, error) {
+	return f.record("UpsertVendor", doc)
+}
+
+func (f *fakeWriter) CreatePurchaseDocument(
+	_ context.Context,
+	doc *services.AccountingPurchaseDocument,
+) (*services.AccountingDocumentResult, error) {
+	return f.record("CreatePurchaseDocument", doc)
+}
+
+func (f *fakeWriter) VoidPurchaseDocument(
+	_ context.Context,
+	ref *services.AccountingDocumentRef,
+) (*services.AccountingDocumentResult, error) {
+	return f.record("VoidPurchaseDocument", ref)
+}
+
+func (f *fakeWriter) CreateBillPayment(
+	_ context.Context,
+	doc *services.AccountingBillPaymentDocument,
+) (*services.AccountingDocumentResult, error) {
+	return f.record("CreateBillPayment", doc)
+}
+
 func (f *fakeWriter) FindSalesDocument(
 	_ context.Context,
 	req *services.AccountingFindDocumentRequest,

@@ -256,4 +256,10 @@ type AccountingMappingService interface {
 		tenantInfo pagination.TenantInfo,
 		customerID pulid.ID,
 	) (*AccountingPartyDraft, error)
+	VendorParty(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		targetType accountingsync.MappingTargetType,
+		objectID pulid.ID,
+	) (*AccountingPartyDraft, error)
 }

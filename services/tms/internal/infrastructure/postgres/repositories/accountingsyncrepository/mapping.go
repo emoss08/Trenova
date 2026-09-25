@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/driverpay"
+	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -392,4 +396,41 @@ func (r *mappingRepository) CountByState(
 	}
 
 	return counts, nil
+}
+
+func (r *mappingRepository) ListOwnerOperators(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*worker.Worker, error) {
+	db := r.db.DBForContext(ctx)
+	settled := db.NewSelect().
+		Model((*driversettlement.Settlement)(nil)).
+		ColumnExpr(buncolgen.SettlementColumns.WorkerID.Qualified()).
+		Apply(buncolgen.SettlementApplyTenant(tenantInfo)).
+		Where(
+			buncolgen.SettlementColumns.Classification.Eq(),
+			driverpay.PayeeClassificationOwnerOperator,
+		).
+		Where(
+			buncolgen.SettlementColumns.Status.In(),
+			bun.List([]driversettlement.Status{
+				driversettlement.StatusPosted,
+				driversettlement.StatusPaid,
+			}),
+		)
+
+	workers := make([]*worker.Worker, 0)
+	if err := db.NewSelect().
+		Model(&workers).
+		Relation(buncolgen.WorkerRelations.State).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.WorkerScopeTenant(sq, tenantInfo).
+				Where(buncolgen.Expr("{0} IN (?)", buncolgen.WorkerColumns.ID), settled)
+		}).
+		Order(buncolgen.WorkerColumns.ID.OrderAsc()).
+		Scan(ctx); err != nil {
+		r.l.Error("failed to list owner-operators", zap.Error(err))
+		return nil, fmt.Errorf("list owner-operators: %w", err)
+	}
+	return workers, nil
 }

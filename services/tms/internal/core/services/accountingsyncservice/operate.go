@@ -235,6 +235,55 @@ func (s *Service) ListBackfills(
 	})
 }
 
+func (s *Service) UpdateSettings(
+	ctx context.Context,
+	req *services.UpdateAccountingSyncSettingsRequest,
+) (*accountingsync.AccountingConnection, error) {
+	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
+	if err != nil {
+		return nil, err
+	}
+	if conn.SetupStep != accountingsync.SetupStepComplete {
+		return nil, errortypes.NewBusinessError(
+			"Finish setting up {0} before changing how documents are sent",
+			accountingsync.ProviderName(conn.IntegrationType),
+		)
+	}
+
+	before := jsonutils.MustToJSON(conn)
+	wasSendingDrivers := conn.SyncsDriverSettlements()
+	conn.AutoSync = req.AutoSync
+	conn.SetDriverSettlements(req.DriverSettlements, timeutils.NowUnix())
+	updated, err := s.connections.Update(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logAudit(&auditEntry{
+		resource:   permission.ResourceAccountingIntegration,
+		resourceID: updated.ID,
+		userID:     req.UserID,
+		tenant:     req.TenantInfo,
+		current:    updated,
+		previous:   before,
+		comment:    settingsComment(wasSendingDrivers, updated),
+	})
+	s.publishInvalidation(ctx, req.TenantInfo, req.UserID, updated.ID)
+	return updated, nil
+}
+
+func settingsComment(wasSendingDrivers bool, conn *accountingsync.AccountingConnection) string {
+	provider := accountingsync.ProviderName(conn.IntegrationType)
+	switch {
+	case !wasSendingDrivers && conn.SyncsDriverSettlements():
+		return "Started sending owner-operator settlements to " + provider
+	case wasSendingDrivers && !conn.SyncsDriverSettlements():
+		return "Stopped sending owner-operator settlements to " + provider
+	default:
+		return "Changed how documents are sent to " + provider
+	}
+}
+
 func (s *Service) EnableSync(
 	ctx context.Context,
 	req *services.EnableAccountingSyncRequest,
@@ -270,7 +319,11 @@ func (s *Service) EnableSync(
 	}
 
 	before := jsonutils.MustToJSON(conn)
-	conn.EnableSync(req.StartDate, req.AutoSync, now)
+	conn.EnableSync(accountingsync.SyncSettings{
+		StartDate:         req.StartDate,
+		AutoSync:          req.AutoSync,
+		DriverSettlements: req.DriverSettlements,
+	}, now)
 	multiErr := errortypes.NewMultiError()
 	conn.Validate(multiErr)
 	if multiErr.HasErrors() {

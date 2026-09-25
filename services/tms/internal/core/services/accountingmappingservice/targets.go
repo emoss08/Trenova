@@ -4,6 +4,9 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/glaccount"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
@@ -72,7 +75,9 @@ func keyLabel(targetType accountingsync.MappingTargetType, key string) string {
 		return roleLabels[key]
 	case accountingsync.TargetAccessorialCharge,
 		accountingsync.TargetCustomer,
-		accountingsync.TargetCarrier:
+		accountingsync.TargetCarrier,
+		accountingsync.TargetDriver,
+		accountingsync.TargetGLAccount:
 		return key
 	default:
 		return key
@@ -133,6 +138,18 @@ func (s *Service) listTargets(
 		return nil, err
 	}
 	targets = append(targets, carriers...)
+
+	drivers, err := s.driverTargets(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	targets = append(targets, drivers...)
+
+	accounts, err := s.glAccountTargets(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	targets = append(targets, accounts...)
 
 	return targets, nil
 }
@@ -342,6 +359,129 @@ func carrierTarget(carr *carrier.Carrier) *target {
 		PostalCode:  carr.PostalCode,
 		Identifiers: nonEmpty(carr.MCNumber, carr.DOTNumber),
 	}
+}
+
+func (s *Service) driverTargets(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*target, error) {
+	workers, err := s.mappings.ListOwnerOperators(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	targets := make([]*target, 0, len(workers))
+	for _, wrk := range workers {
+		targets = append(targets, driverTarget(wrk))
+	}
+	return targets, nil
+}
+
+func driverTarget(wrk *worker.Worker) *target {
+	name := workerName(wrk)
+	return &target{
+		TargetType: accountingsync.TargetDriver,
+		ObjectID:   wrk.ID,
+		Label:      name,
+		Names:      nonEmpty(name),
+		PostalCode: wrk.PostalCode,
+	}
+}
+
+func workerName(wrk *worker.Worker) string {
+	return strings.TrimSpace(
+		strings.TrimSpace(wrk.FirstName) + " " + strings.TrimSpace(wrk.LastName),
+	)
+}
+
+func (s *Service) glAccountTargets(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*target, error) {
+	ids, err := s.payablesAccountIDs(ctx, tenantInfo)
+	if err != nil || len(ids) == 0 {
+		return nil, err
+	}
+	accounts, err := s.glAccounts.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+		TenantInfo:   tenantInfo,
+		GLAccountIDs: ids,
+	})
+	if err != nil {
+		return nil, err
+	}
+	targets := make([]*target, 0, len(accounts))
+	for _, account := range accounts {
+		targets = append(targets, glAccountTarget(account))
+	}
+	return targets, nil
+}
+
+func glAccountTarget(account *glaccount.GLAccount) *target {
+	return &target{
+		TargetType: accountingsync.TargetGLAccount,
+		ObjectID:   account.ID,
+		Label:      joinLabel(account.AccountCode, account.Name),
+		Code:       account.AccountCode,
+		Names:      nonEmpty(account.Name),
+	}
+}
+
+func (s *Service) payablesAccountIDs(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]pulid.ID, error) {
+	control, err := s.accountingControls.GetByOrgID(ctx, tenantInfo.OrgID)
+	if err != nil && !errortypes.IsNotFoundError(err) {
+		return nil, err
+	}
+	covered := make(map[pulid.ID]struct{}, 8)
+	for _, id := range roleAccounts(control) {
+		covered[id] = struct{}{}
+	}
+
+	candidates := make([]pulid.ID, 0, 16)
+	if control != nil {
+		candidates = append(candidates,
+			control.DefaultDriverPayExpenseAccountID,
+			control.DefaultDriverReimbursementAccountID,
+			control.DefaultSettlementsPayableAccountID,
+			control.DefaultDriverAdvanceAccountID,
+			control.DefaultEscrowLiabilityAccountID,
+		)
+	}
+	if s.settlementControls != nil {
+		carrierControl, getErr := s.settlementControls.GetOrCreate(ctx, tenantInfo)
+		if getErr != nil {
+			return nil, getErr
+		}
+		candidates = append(candidates,
+			pulid.ConvertFromPtr(carrierControl.DefaultAPAccountID),
+			pulid.ConvertFromPtr(carrierControl.DefaultPurchasedTransportationAccountID),
+		)
+	}
+	if s.payCodes != nil {
+		codes, listErr := s.payCodes.ListActive(ctx, repositories.ListActivePayCodesRequest{
+			TenantInfo: tenantInfo,
+		})
+		if listErr != nil {
+			return nil, listErr
+		}
+		for _, code := range codes {
+			candidates = append(candidates, pulid.ConvertFromPtr(code.GLAccountID))
+		}
+	}
+
+	ids := make([]pulid.ID, 0, len(candidates))
+	for _, id := range candidates {
+		if id.IsNil() {
+			continue
+		}
+		if _, seen := covered[id]; seen {
+			continue
+		}
+		covered[id] = struct{}{}
+		ids = append(ids, id)
+	}
+	return ids, nil
 }
 
 func joinLabel(primary, secondary string) string {

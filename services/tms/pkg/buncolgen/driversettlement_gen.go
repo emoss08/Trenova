@@ -605,93 +605,95 @@ var SettlementTable = TableInfo{
 //	q.Where(SettlementColumns.ID.Eq(), id)           // WHERE dstl.id = ?
 //	q.Order(SettlementColumns.CreatedAt.OrderDesc())  // ORDER BY dstl.created_at DESC
 var SettlementColumns = struct {
-	ID                   Column // "id" → qualified: "dstl.id"
-	BusinessUnitID       Column // "business_unit_id" → qualified: "dstl.business_unit_id"
-	OrganizationID       Column // "organization_id" → qualified: "dstl.organization_id"
-	WorkerID             Column // "worker_id" → qualified: "dstl.worker_id"
-	BatchID              Column // "batch_id" → qualified: "dstl.batch_id"
-	PayProfileID         Column // "pay_profile_id" → qualified: "dstl.pay_profile_id"
-	SettlementNumber     Column // "settlement_number" → qualified: "dstl.settlement_number"
-	Status               Column // "status" → qualified: "dstl.status"
-	Classification       Column // "classification" → qualified: "dstl.classification"
-	PayProfileName       Column // "pay_profile_name" → qualified: "dstl.pay_profile_name"
-	PeriodStart          Column // "period_start" → qualified: "dstl.period_start"
-	PeriodEnd            Column // "period_end" → qualified: "dstl.period_end"
-	PayDate              Column // "pay_date" → qualified: "dstl.pay_date"
-	GrossEarningsMinor   Column // "gross_earnings_minor" → qualified: "dstl.gross_earnings_minor"
-	ReimbursementsMinor  Column // "reimbursements_minor" → qualified: "dstl.reimbursements_minor"
-	DeductionsMinor      Column // "deductions_minor" → qualified: "dstl.deductions_minor"
-	CarryForwardInMinor  Column // "carry_forward_in_minor" → qualified: "dstl.carry_forward_in_minor"
-	CarryForwardOutMinor Column // "carry_forward_out_minor" → qualified: "dstl.carry_forward_out_minor"
-	NetPayMinor          Column // "net_pay_minor" → qualified: "dstl.net_pay_minor"
-	TotalMiles           Column // "total_miles" → qualified: "dstl.total_miles"
-	ShipmentCount        Column // "shipment_count" → qualified: "dstl.shipment_count"
-	CurrencyCode         Column // "currency_code" → qualified: "dstl.currency_code"
-	HasExceptions        Column // "has_exceptions" → qualified: "dstl.has_exceptions"
-	Exceptions           Column // "exceptions" → qualified: "dstl.exceptions"
-	Notes                Column // "notes" → qualified: "dstl.notes"
-	SubmittedByID        Column // "submitted_by_id" → qualified: "dstl.submitted_by_id"
-	SubmittedAt          Column // "submitted_at" → qualified: "dstl.submitted_at"
-	ApprovedByID         Column // "approved_by_id" → qualified: "dstl.approved_by_id"
-	ApprovedAt           Column // "approved_at" → qualified: "dstl.approved_at"
-	PostedByID           Column // "posted_by_id" → qualified: "dstl.posted_by_id"
-	PostedAt             Column // "posted_at" → qualified: "dstl.posted_at"
-	PostedJournalBatchID Column // "posted_journal_batch_id" → qualified: "dstl.posted_journal_batch_id"
-	PaidAt               Column // "paid_at" → qualified: "dstl.paid_at"
-	PaidByID             Column // "paid_by_id" → qualified: "dstl.paid_by_id"
-	PaymentMethod        Column // "payment_method" → qualified: "dstl.payment_method"
-	PaymentReference     Column // "payment_reference" → qualified: "dstl.payment_reference"
-	VoidedByID           Column // "voided_by_id" → qualified: "dstl.voided_by_id"
-	VoidedAt             Column // "voided_at" → qualified: "dstl.voided_at"
-	VoidReason           Column // "void_reason" → qualified: "dstl.void_reason"
-	VoidJournalBatchID   Column // "void_journal_batch_id" → qualified: "dstl.void_journal_batch_id"
-	Version              Column // "version" → qualified: "dstl.version"
-	CreatedAt            Column // "created_at" → qualified: "dstl.created_at"
-	UpdatedAt            Column // "updated_at" → qualified: "dstl.updated_at"
+	ID                     Column // "id" → qualified: "dstl.id"
+	BusinessUnitID         Column // "business_unit_id" → qualified: "dstl.business_unit_id"
+	OrganizationID         Column // "organization_id" → qualified: "dstl.organization_id"
+	WorkerID               Column // "worker_id" → qualified: "dstl.worker_id"
+	BatchID                Column // "batch_id" → qualified: "dstl.batch_id"
+	PayProfileID           Column // "pay_profile_id" → qualified: "dstl.pay_profile_id"
+	SettlementNumber       Column // "settlement_number" → qualified: "dstl.settlement_number"
+	Status                 Column // "status" → qualified: "dstl.status"
+	Classification         Column // "classification" → qualified: "dstl.classification"
+	PayProfileName         Column // "pay_profile_name" → qualified: "dstl.pay_profile_name"
+	PeriodStart            Column // "period_start" → qualified: "dstl.period_start"
+	PeriodEnd              Column // "period_end" → qualified: "dstl.period_end"
+	PayDate                Column // "pay_date" → qualified: "dstl.pay_date"
+	GrossEarningsMinor     Column // "gross_earnings_minor" → qualified: "dstl.gross_earnings_minor"
+	ReimbursementsMinor    Column // "reimbursements_minor" → qualified: "dstl.reimbursements_minor"
+	DeductionsMinor        Column // "deductions_minor" → qualified: "dstl.deductions_minor"
+	CarryForwardInMinor    Column // "carry_forward_in_minor" → qualified: "dstl.carry_forward_in_minor"
+	CarryForwardOutMinor   Column // "carry_forward_out_minor" → qualified: "dstl.carry_forward_out_minor"
+	NetPayMinor            Column // "net_pay_minor" → qualified: "dstl.net_pay_minor"
+	TotalMiles             Column // "total_miles" → qualified: "dstl.total_miles"
+	ShipmentCount          Column // "shipment_count" → qualified: "dstl.shipment_count"
+	CurrencyCode           Column // "currency_code" → qualified: "dstl.currency_code"
+	HasExceptions          Column // "has_exceptions" → qualified: "dstl.has_exceptions"
+	Exceptions             Column // "exceptions" → qualified: "dstl.exceptions"
+	Notes                  Column // "notes" → qualified: "dstl.notes"
+	SubmittedByID          Column // "submitted_by_id" → qualified: "dstl.submitted_by_id"
+	SubmittedAt            Column // "submitted_at" → qualified: "dstl.submitted_at"
+	ApprovedByID           Column // "approved_by_id" → qualified: "dstl.approved_by_id"
+	ApprovedAt             Column // "approved_at" → qualified: "dstl.approved_at"
+	PostedByID             Column // "posted_by_id" → qualified: "dstl.posted_by_id"
+	PostedAt               Column // "posted_at" → qualified: "dstl.posted_at"
+	PostedJournalBatchID   Column // "posted_journal_batch_id" → qualified: "dstl.posted_journal_batch_id"
+	PostedPayableAccountID Column // "posted_payable_account_id" → qualified: "dstl.posted_payable_account_id"
+	PaidAt                 Column // "paid_at" → qualified: "dstl.paid_at"
+	PaidByID               Column // "paid_by_id" → qualified: "dstl.paid_by_id"
+	PaymentMethod          Column // "payment_method" → qualified: "dstl.payment_method"
+	PaymentReference       Column // "payment_reference" → qualified: "dstl.payment_reference"
+	VoidedByID             Column // "voided_by_id" → qualified: "dstl.voided_by_id"
+	VoidedAt               Column // "voided_at" → qualified: "dstl.voided_at"
+	VoidReason             Column // "void_reason" → qualified: "dstl.void_reason"
+	VoidJournalBatchID     Column // "void_journal_batch_id" → qualified: "dstl.void_journal_batch_id"
+	Version                Column // "version" → qualified: "dstl.version"
+	CreatedAt              Column // "created_at" → qualified: "dstl.created_at"
+	UpdatedAt              Column // "updated_at" → qualified: "dstl.updated_at"
 }{
-	ID:                   NewColumn("id", "dstl"),
-	BusinessUnitID:       NewColumn("business_unit_id", "dstl"),
-	OrganizationID:       NewColumn("organization_id", "dstl"),
-	WorkerID:             NewColumn("worker_id", "dstl"),
-	BatchID:              NewColumn("batch_id", "dstl"),
-	PayProfileID:         NewColumn("pay_profile_id", "dstl"),
-	SettlementNumber:     NewColumn("settlement_number", "dstl"),
-	Status:               NewColumn("status", "dstl"),
-	Classification:       NewColumn("classification", "dstl"),
-	PayProfileName:       NewColumn("pay_profile_name", "dstl"),
-	PeriodStart:          NewColumn("period_start", "dstl"),
-	PeriodEnd:            NewColumn("period_end", "dstl"),
-	PayDate:              NewColumn("pay_date", "dstl"),
-	GrossEarningsMinor:   NewColumn("gross_earnings_minor", "dstl"),
-	ReimbursementsMinor:  NewColumn("reimbursements_minor", "dstl"),
-	DeductionsMinor:      NewColumn("deductions_minor", "dstl"),
-	CarryForwardInMinor:  NewColumn("carry_forward_in_minor", "dstl"),
-	CarryForwardOutMinor: NewColumn("carry_forward_out_minor", "dstl"),
-	NetPayMinor:          NewColumn("net_pay_minor", "dstl"),
-	TotalMiles:           NewColumn("total_miles", "dstl"),
-	ShipmentCount:        NewColumn("shipment_count", "dstl"),
-	CurrencyCode:         NewColumn("currency_code", "dstl"),
-	HasExceptions:        NewColumn("has_exceptions", "dstl"),
-	Exceptions:           NewColumn("exceptions", "dstl"),
-	Notes:                NewColumn("notes", "dstl"),
-	SubmittedByID:        NewColumn("submitted_by_id", "dstl"),
-	SubmittedAt:          NewColumn("submitted_at", "dstl"),
-	ApprovedByID:         NewColumn("approved_by_id", "dstl"),
-	ApprovedAt:           NewColumn("approved_at", "dstl"),
-	PostedByID:           NewColumn("posted_by_id", "dstl"),
-	PostedAt:             NewColumn("posted_at", "dstl"),
-	PostedJournalBatchID: NewColumn("posted_journal_batch_id", "dstl"),
-	PaidAt:               NewColumn("paid_at", "dstl"),
-	PaidByID:             NewColumn("paid_by_id", "dstl"),
-	PaymentMethod:        NewColumn("payment_method", "dstl"),
-	PaymentReference:     NewColumn("payment_reference", "dstl"),
-	VoidedByID:           NewColumn("voided_by_id", "dstl"),
-	VoidedAt:             NewColumn("voided_at", "dstl"),
-	VoidReason:           NewColumn("void_reason", "dstl"),
-	VoidJournalBatchID:   NewColumn("void_journal_batch_id", "dstl"),
-	Version:              NewColumn("version", "dstl"),
-	CreatedAt:            NewColumn("created_at", "dstl"),
-	UpdatedAt:            NewColumn("updated_at", "dstl"),
+	ID:                     NewColumn("id", "dstl"),
+	BusinessUnitID:         NewColumn("business_unit_id", "dstl"),
+	OrganizationID:         NewColumn("organization_id", "dstl"),
+	WorkerID:               NewColumn("worker_id", "dstl"),
+	BatchID:                NewColumn("batch_id", "dstl"),
+	PayProfileID:           NewColumn("pay_profile_id", "dstl"),
+	SettlementNumber:       NewColumn("settlement_number", "dstl"),
+	Status:                 NewColumn("status", "dstl"),
+	Classification:         NewColumn("classification", "dstl"),
+	PayProfileName:         NewColumn("pay_profile_name", "dstl"),
+	PeriodStart:            NewColumn("period_start", "dstl"),
+	PeriodEnd:              NewColumn("period_end", "dstl"),
+	PayDate:                NewColumn("pay_date", "dstl"),
+	GrossEarningsMinor:     NewColumn("gross_earnings_minor", "dstl"),
+	ReimbursementsMinor:    NewColumn("reimbursements_minor", "dstl"),
+	DeductionsMinor:        NewColumn("deductions_minor", "dstl"),
+	CarryForwardInMinor:    NewColumn("carry_forward_in_minor", "dstl"),
+	CarryForwardOutMinor:   NewColumn("carry_forward_out_minor", "dstl"),
+	NetPayMinor:            NewColumn("net_pay_minor", "dstl"),
+	TotalMiles:             NewColumn("total_miles", "dstl"),
+	ShipmentCount:          NewColumn("shipment_count", "dstl"),
+	CurrencyCode:           NewColumn("currency_code", "dstl"),
+	HasExceptions:          NewColumn("has_exceptions", "dstl"),
+	Exceptions:             NewColumn("exceptions", "dstl"),
+	Notes:                  NewColumn("notes", "dstl"),
+	SubmittedByID:          NewColumn("submitted_by_id", "dstl"),
+	SubmittedAt:            NewColumn("submitted_at", "dstl"),
+	ApprovedByID:           NewColumn("approved_by_id", "dstl"),
+	ApprovedAt:             NewColumn("approved_at", "dstl"),
+	PostedByID:             NewColumn("posted_by_id", "dstl"),
+	PostedAt:               NewColumn("posted_at", "dstl"),
+	PostedJournalBatchID:   NewColumn("posted_journal_batch_id", "dstl"),
+	PostedPayableAccountID: NewColumn("posted_payable_account_id", "dstl"),
+	PaidAt:                 NewColumn("paid_at", "dstl"),
+	PaidByID:               NewColumn("paid_by_id", "dstl"),
+	PaymentMethod:          NewColumn("payment_method", "dstl"),
+	PaymentReference:       NewColumn("payment_reference", "dstl"),
+	VoidedByID:             NewColumn("voided_by_id", "dstl"),
+	VoidedAt:               NewColumn("voided_at", "dstl"),
+	VoidReason:             NewColumn("void_reason", "dstl"),
+	VoidJournalBatchID:     NewColumn("void_journal_batch_id", "dstl"),
+	Version:                NewColumn("version", "dstl"),
+	CreatedAt:              NewColumn("created_at", "dstl"),
+	UpdatedAt:              NewColumn("updated_at", "dstl"),
 }
 
 // SettlementFieldMap maps JSON API field names to database column names.
@@ -699,49 +701,50 @@ var SettlementColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Settlement.GetStaticFieldMap().
 var SettlementFieldMap = map[string]string{
-	"id":                   "id",
-	"businessUnitId":       "business_unit_id",
-	"organizationId":       "organization_id",
-	"workerId":             "worker_id",
-	"batchId":              "batch_id",
-	"payProfileId":         "pay_profile_id",
-	"settlementNumber":     "settlement_number",
-	"status":               "status",
-	"classification":       "classification",
-	"payProfileName":       "pay_profile_name",
-	"periodStart":          "period_start",
-	"periodEnd":            "period_end",
-	"payDate":              "pay_date",
-	"grossEarningsMinor":   "gross_earnings_minor",
-	"reimbursementsMinor":  "reimbursements_minor",
-	"deductionsMinor":      "deductions_minor",
-	"carryForwardInMinor":  "carry_forward_in_minor",
-	"carryForwardOutMinor": "carry_forward_out_minor",
-	"netPayMinor":          "net_pay_minor",
-	"totalMiles":           "total_miles",
-	"shipmentCount":        "shipment_count",
-	"currencyCode":         "currency_code",
-	"hasExceptions":        "has_exceptions",
-	"exceptions":           "exceptions",
-	"notes":                "notes",
-	"submittedById":        "submitted_by_id",
-	"submittedAt":          "submitted_at",
-	"approvedById":         "approved_by_id",
-	"approvedAt":           "approved_at",
-	"postedById":           "posted_by_id",
-	"postedAt":             "posted_at",
-	"postedJournalBatchId": "posted_journal_batch_id",
-	"paidAt":               "paid_at",
-	"paidById":             "paid_by_id",
-	"paymentMethod":        "payment_method",
-	"paymentReference":     "payment_reference",
-	"voidedById":           "voided_by_id",
-	"voidedAt":             "voided_at",
-	"voidReason":           "void_reason",
-	"voidJournalBatchId":   "void_journal_batch_id",
-	"version":              "version",
-	"createdAt":            "created_at",
-	"updatedAt":            "updated_at",
+	"id":                     "id",
+	"businessUnitId":         "business_unit_id",
+	"organizationId":         "organization_id",
+	"workerId":               "worker_id",
+	"batchId":                "batch_id",
+	"payProfileId":           "pay_profile_id",
+	"settlementNumber":       "settlement_number",
+	"status":                 "status",
+	"classification":         "classification",
+	"payProfileName":         "pay_profile_name",
+	"periodStart":            "period_start",
+	"periodEnd":              "period_end",
+	"payDate":                "pay_date",
+	"grossEarningsMinor":     "gross_earnings_minor",
+	"reimbursementsMinor":    "reimbursements_minor",
+	"deductionsMinor":        "deductions_minor",
+	"carryForwardInMinor":    "carry_forward_in_minor",
+	"carryForwardOutMinor":   "carry_forward_out_minor",
+	"netPayMinor":            "net_pay_minor",
+	"totalMiles":             "total_miles",
+	"shipmentCount":          "shipment_count",
+	"currencyCode":           "currency_code",
+	"hasExceptions":          "has_exceptions",
+	"exceptions":             "exceptions",
+	"notes":                  "notes",
+	"submittedById":          "submitted_by_id",
+	"submittedAt":            "submitted_at",
+	"approvedById":           "approved_by_id",
+	"approvedAt":             "approved_at",
+	"postedById":             "posted_by_id",
+	"postedAt":               "posted_at",
+	"postedJournalBatchId":   "posted_journal_batch_id",
+	"postedPayableAccountId": "posted_payable_account_id",
+	"paidAt":                 "paid_at",
+	"paidById":               "paid_by_id",
+	"paymentMethod":          "payment_method",
+	"paymentReference":       "payment_reference",
+	"voidedById":             "voided_by_id",
+	"voidedAt":               "voided_at",
+	"voidReason":             "void_reason",
+	"voidJournalBatchId":     "void_journal_batch_id",
+	"version":                "version",
+	"createdAt":              "created_at",
+	"updatedAt":              "updated_at",
 }
 
 // SettlementInsertableColumns lists column names suitable for INSERT statements on the "driver_settlements" table.
@@ -779,6 +782,7 @@ var SettlementInsertableColumns = []string{
 	"posted_by_id",
 	"posted_at",
 	"posted_journal_batch_id",
+	"posted_payable_account_id",
 	"paid_at",
 	"paid_by_id",
 	"payment_method",
@@ -863,49 +867,50 @@ func SettlementApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun
 //	SettlementFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var SettlementFilter = struct {
-	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	WorkerID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workerId" → DB: "worker_id"
-	BatchID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "batchId" → DB: "batch_id"
-	PayProfileID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payProfileId" → DB: "pay_profile_id"
-	SettlementNumber     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "settlementNumber" → DB: "settlement_number"
-	Status               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Classification       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "classification" → DB: "classification"
-	PayProfileName       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payProfileName" → DB: "pay_profile_name"
-	PeriodStart          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodStart" → DB: "period_start"
-	PeriodEnd            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodEnd" → DB: "period_end"
-	PayDate              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payDate" → DB: "pay_date"
-	GrossEarningsMinor   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "grossEarningsMinor" → DB: "gross_earnings_minor"
-	ReimbursementsMinor  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reimbursementsMinor" → DB: "reimbursements_minor"
-	DeductionsMinor      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deductionsMinor" → DB: "deductions_minor"
-	CarryForwardInMinor  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carryForwardInMinor" → DB: "carry_forward_in_minor"
-	CarryForwardOutMinor func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carryForwardOutMinor" → DB: "carry_forward_out_minor"
-	NetPayMinor          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "netPayMinor" → DB: "net_pay_minor"
-	TotalMiles           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalMiles" → DB: "total_miles"
-	ShipmentCount        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentCount" → DB: "shipment_count"
-	CurrencyCode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
-	HasExceptions        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hasExceptions" → DB: "has_exceptions"
-	Exceptions           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptions" → DB: "exceptions"
-	Notes                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
-	SubmittedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
-	SubmittedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedAt" → DB: "submitted_at"
-	ApprovedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
-	ApprovedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedAt" → DB: "approved_at"
-	PostedByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedById" → DB: "posted_by_id"
-	PostedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedAt" → DB: "posted_at"
-	PostedJournalBatchID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedJournalBatchId" → DB: "posted_journal_batch_id"
-	PaidAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidAt" → DB: "paid_at"
-	PaidByID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidById" → DB: "paid_by_id"
-	PaymentMethod        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentMethod" → DB: "payment_method"
-	PaymentReference     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentReference" → DB: "payment_reference"
-	VoidedByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedById" → DB: "voided_by_id"
-	VoidedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedAt" → DB: "voided_at"
-	VoidReason           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidReason" → DB: "void_reason"
-	VoidJournalBatchID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidJournalBatchId" → DB: "void_journal_batch_id"
-	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	WorkerID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "workerId" → DB: "worker_id"
+	BatchID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "batchId" → DB: "batch_id"
+	PayProfileID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payProfileId" → DB: "pay_profile_id"
+	SettlementNumber       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "settlementNumber" → DB: "settlement_number"
+	Status                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Classification         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "classification" → DB: "classification"
+	PayProfileName         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payProfileName" → DB: "pay_profile_name"
+	PeriodStart            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodStart" → DB: "period_start"
+	PeriodEnd              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "periodEnd" → DB: "period_end"
+	PayDate                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payDate" → DB: "pay_date"
+	GrossEarningsMinor     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "grossEarningsMinor" → DB: "gross_earnings_minor"
+	ReimbursementsMinor    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reimbursementsMinor" → DB: "reimbursements_minor"
+	DeductionsMinor        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "deductionsMinor" → DB: "deductions_minor"
+	CarryForwardInMinor    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carryForwardInMinor" → DB: "carry_forward_in_minor"
+	CarryForwardOutMinor   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "carryForwardOutMinor" → DB: "carry_forward_out_minor"
+	NetPayMinor            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "netPayMinor" → DB: "net_pay_minor"
+	TotalMiles             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalMiles" → DB: "total_miles"
+	ShipmentCount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentCount" → DB: "shipment_count"
+	CurrencyCode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	HasExceptions          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hasExceptions" → DB: "has_exceptions"
+	Exceptions             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptions" → DB: "exceptions"
+	Notes                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
+	SubmittedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedById" → DB: "submitted_by_id"
+	SubmittedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "submittedAt" → DB: "submitted_at"
+	ApprovedByID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
+	ApprovedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedAt" → DB: "approved_at"
+	PostedByID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedById" → DB: "posted_by_id"
+	PostedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedAt" → DB: "posted_at"
+	PostedJournalBatchID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedJournalBatchId" → DB: "posted_journal_batch_id"
+	PostedPayableAccountID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedPayableAccountId" → DB: "posted_payable_account_id"
+	PaidAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidAt" → DB: "paid_at"
+	PaidByID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidById" → DB: "paid_by_id"
+	PaymentMethod          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentMethod" → DB: "payment_method"
+	PaymentReference       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentReference" → DB: "payment_reference"
+	VoidedByID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedById" → DB: "voided_by_id"
+	VoidedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedAt" → DB: "voided_at"
+	VoidReason             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidReason" → DB: "void_reason"
+	VoidJournalBatchID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidJournalBatchId" → DB: "void_journal_batch_id"
+	Version                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -1002,6 +1007,9 @@ var SettlementFilter = struct {
 	},
 	PostedJournalBatchID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("postedJournalBatchId", op, value)
+	},
+	PostedPayableAccountID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("postedPayableAccountId", op, value)
 	},
 	PaidAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("paidAt", op, value)

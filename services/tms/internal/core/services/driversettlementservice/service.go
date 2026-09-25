@@ -3,6 +3,9 @@ package driversettlementservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/core/domain/driverpay"
+
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -51,6 +54,7 @@ type Params struct {
 	Realtime            serviceports.RealtimeService
 	DriverNotify        *drivernotificationservice.Service
 	NotificationService *notificationservice.Service
+	Sync                serviceports.AccountingSyncEnqueuer `optional:"true"`
 }
 
 type Service struct {
@@ -80,6 +84,7 @@ type Service struct {
 	realtime            serviceports.RealtimeService
 	driverNotify        *drivernotificationservice.Service
 	notificationService *notificationservice.Service
+	sync                serviceports.AccountingSyncEnqueuer
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -110,7 +115,36 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		realtime:            p.Realtime,
 		driverNotify:        p.DriverNotify,
 		notificationService: p.NotificationService,
+		sync:                p.Sync,
 	}
+}
+
+func (s *Service) queueSync(
+	ctx context.Context,
+	entity *driversettlement.Settlement,
+	objectType accountingsync.SyncObjectType,
+	operation accountingsync.SyncOperation,
+	source accountingsync.SyncSourceEvent,
+) error {
+	if entity.Classification != driverpay.PayeeClassificationOwnerOperator {
+		return nil
+	}
+	return serviceports.EnqueueAccountingSync(
+		ctx,
+		s.sync,
+		serviceports.SettlementSync(&serviceports.SettlementSyncRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: entity.OrganizationID,
+				BuID:  entity.BusinessUnitID,
+			},
+			ObjectType:  objectType,
+			ObjectID:    entity.ID,
+			Number:      entity.SettlementNumber,
+			Operation:   operation,
+			SourceEvent: source,
+			PostedAt:    entity.PostedAt,
+		}),
+	)
 }
 
 func requireActor(actor *serviceports.RequestActor, operation string) error {

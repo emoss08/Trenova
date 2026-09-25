@@ -525,6 +525,7 @@ var AccountingConnectionColumns = struct {
 	SyncStartDate                 Column // "sync_start_date" → qualified: "acctc.sync_start_date"
 	SyncEnabledAt                 Column // "sync_enabled_at" → qualified: "acctc.sync_enabled_at"
 	AutoSync                      Column // "auto_sync" → qualified: "acctc.auto_sync"
+	DriverSettlementsEnabledAt    Column // "driver_settlements_enabled_at" → qualified: "acctc.driver_settlements_enabled_at"
 	PausedAt                      Column // "paused_at" → qualified: "acctc.paused_at"
 	PausedByID                    Column // "paused_by_id" → qualified: "acctc.paused_by_id"
 	PausedReason                  Column // "paused_reason" → qualified: "acctc.paused_reason"
@@ -571,6 +572,7 @@ var AccountingConnectionColumns = struct {
 	SyncStartDate:                 NewColumn("sync_start_date", "acctc"),
 	SyncEnabledAt:                 NewColumn("sync_enabled_at", "acctc"),
 	AutoSync:                      NewColumn("auto_sync", "acctc"),
+	DriverSettlementsEnabledAt:    NewColumn("driver_settlements_enabled_at", "acctc"),
 	PausedAt:                      NewColumn("paused_at", "acctc"),
 	PausedByID:                    NewColumn("paused_by_id", "acctc"),
 	PausedReason:                  NewColumn("paused_reason", "acctc"),
@@ -620,6 +622,7 @@ var AccountingConnectionFieldMap = map[string]string{
 	"syncStartDate":                 "sync_start_date",
 	"syncEnabledAt":                 "sync_enabled_at",
 	"autoSync":                      "auto_sync",
+	"driverSettlementsEnabledAt":    "driver_settlements_enabled_at",
 	"pausedAt":                      "paused_at",
 	"pausedById":                    "paused_by_id",
 	"pausedReason":                  "paused_reason",
@@ -670,6 +673,7 @@ var AccountingConnectionInsertableColumns = []string{
 	"sync_start_date",
 	"sync_enabled_at",
 	"auto_sync",
+	"driver_settlements_enabled_at",
 	"paused_at",
 	"paused_by_id",
 	"paused_reason",
@@ -783,6 +787,7 @@ var AccountingConnectionFilter = struct {
 	SyncStartDate                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "syncStartDate" → DB: "sync_start_date"
 	SyncEnabledAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "syncEnabledAt" → DB: "sync_enabled_at"
 	AutoSync                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoSync" → DB: "auto_sync"
+	DriverSettlementsEnabledAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverSettlementsEnabledAt" → DB: "driver_settlements_enabled_at"
 	PausedAt                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pausedAt" → DB: "paused_at"
 	PausedByID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pausedById" → DB: "paused_by_id"
 	PausedReason                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pausedReason" → DB: "paused_reason"
@@ -889,6 +894,9 @@ var AccountingConnectionFilter = struct {
 	},
 	AutoSync: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("autoSync", op, value)
+	},
+	DriverSettlementsEnabledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("driverSettlementsEnabledAt", op, value)
 	},
 	PausedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("pausedAt", op, value)

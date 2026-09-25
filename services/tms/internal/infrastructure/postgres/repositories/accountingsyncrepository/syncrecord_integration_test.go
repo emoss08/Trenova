@@ -559,7 +559,7 @@ func TestConnectionRepository_SyncSettingsAndPauseRoundTrip(t *testing.T) {
 	connections := NewConnectionRepository(ConnectionParams{DB: f.conn, Logger: zap.NewNop()})
 
 	f.connection.SetupStep = accountingsync.SetupStepStartDate
-	f.connection.EnableSync(f.now-86_400, false, f.now)
+	f.connection.EnableSync(accountingsync.SyncSettings{StartDate: f.now - 86_400}, f.now)
 	f.connection.Pause(f.userID, "Month-end close", f.now+1)
 	_, err := connections.Update(f.ctx, f.connection)
 	require.NoError(t, err)

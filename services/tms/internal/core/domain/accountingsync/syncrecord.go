@@ -36,6 +36,8 @@ const (
 	ExternalRefDocument       = "document"
 	ExternalRefApplication    = "application"
 	ExternalRefShortPayPrefix = "shortPay:"
+	ExternalRefDocumentType   = "documentType"
+	ExternalRefURL            = "url"
 )
 
 var (

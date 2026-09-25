@@ -38,11 +38,14 @@ type Params struct {
 	Carriers           repositories.CarrierRepository
 	Accessorials       repositories.AccessorialChargeRepository
 	AuditService       services.AuditService
-	Completion         services.CompletionService                  `optional:"true"`
-	Refresher          services.AccountingReferenceRefresher       `optional:"true"`
-	Realtime           services.RealtimeService                    `optional:"true"`
-	SyncRecords        repositories.AccountingSyncRecordRepository `optional:"true"`
-	Dispatcher         services.AccountingSyncDispatcher           `optional:"true"`
+	Completion         services.CompletionService                      `optional:"true"`
+	Refresher          services.AccountingReferenceRefresher           `optional:"true"`
+	Realtime           services.RealtimeService                        `optional:"true"`
+	SyncRecords        repositories.AccountingSyncRecordRepository     `optional:"true"`
+	Dispatcher         services.AccountingSyncDispatcher               `optional:"true"`
+	Workers            repositories.WorkerRepository                   `optional:"true"`
+	SettlementControls repositories.CarrierSettlementControlRepository `optional:"true"`
+	PayCodes           repositories.PayCodeRepository                  `optional:"true"`
 }
 
 type Service struct {
@@ -63,6 +66,9 @@ type Service struct {
 	realtime           services.RealtimeService
 	syncRecords        repositories.AccountingSyncRecordRepository
 	dispatcher         services.AccountingSyncDispatcher
+	workers            repositories.WorkerRepository
+	settlementControls repositories.CarrierSettlementControlRepository
+	payCodes           repositories.PayCodeRepository
 }
 
 var _ services.AccountingMappingService = (*Service)(nil)
@@ -87,6 +93,9 @@ func New(p Params) *Service {
 		realtime:           p.Realtime,
 		syncRecords:        p.SyncRecords,
 		dispatcher:         p.Dispatcher,
+		workers:            p.Workers,
+		settlementControls: p.SettlementControls,
+		payCodes:           p.PayCodes,
 	}
 }
 

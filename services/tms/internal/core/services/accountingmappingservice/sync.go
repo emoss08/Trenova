@@ -182,9 +182,32 @@ func (s *Service) targetFor(
 			Label:      keyLabel(req.TargetType, req.Key),
 		}, nil
 	case accountingsync.TargetCarrier:
-		return nil, errortypes.NewBusinessError(
-			"Carrier mappings are created by the reference refresh",
-		)
+		carr, err := s.carriers.GetByID(ctx, repositories.GetCarrierByIDRequest{
+			ID:         req.ObjectID,
+			TenantInfo: req.TenantInfo,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return carrierTarget(carr), nil
+	case accountingsync.TargetDriver:
+		wrk, err := s.workerWithState(ctx, req.TenantInfo, req.ObjectID)
+		if err != nil {
+			return nil, err
+		}
+		return driverTarget(wrk), nil
+	case accountingsync.TargetGLAccount:
+		accounts, err := s.glAccounts.GetByIDs(ctx, repositories.GetGLAccountsByIDsRequest{
+			TenantInfo:   req.TenantInfo,
+			GLAccountIDs: []pulid.ID{req.ObjectID},
+		})
+		if err != nil {
+			return nil, err
+		}
+		if len(accounts) == 0 {
+			return nil, errortypes.NewNotFoundError("The GL account no longer exists")
+		}
+		return glAccountTarget(accounts[0]), nil
 	default:
 		return nil, errortypes.NewValidationError(
 			"targetType",

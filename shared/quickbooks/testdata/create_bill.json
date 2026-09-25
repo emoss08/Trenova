@@ -1,0 +1,11 @@
+{
+  "Bill": {
+    "Id": "210",
+    "DocNumber": "CINV-778",
+    "SyncToken": "0",
+    "TotalAmt": 1350,
+    "VendorRef": { "value": "91" },
+    "APAccountRef": { "value": "33" }
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}
