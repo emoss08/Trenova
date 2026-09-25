@@ -40,6 +40,10 @@ type AgentRunPayload struct {
 	SubjectType  agent.SubjectType `json:"subjectType"`
 	SubjectID    pulid.ID          `json:"subjectId"`
 	EventKind    agent.EventKind   `json:"eventKind,omitempty"`
+	// Origin is the W3C traceparent of whatever started the run: the
+	// request, the event or the schedule firing. Empty on a run started
+	// before it was kept, or from outside any trace.
+	Origin string `json:"traceOrigin,omitempty"`
 }
 
 func (p *AgentRunPayload) tenantInfo() pagination.TenantInfo {
