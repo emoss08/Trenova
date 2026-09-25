@@ -209,11 +209,8 @@ func provideDismissInsightTool(insights *insightservice.Service) services.AgentT
 	return newDismissInsightTool(insights)
 }
 
-func provideMatchBankReceiptTool(
-	receipts *bankreceiptservice.Service,
-	payments services.CustomerPaymentService,
-) services.AgentTool {
-	return newMatchBankReceiptTool(receipts, payments)
+func provideMatchBankReceiptTool(receipts *bankreceiptservice.Service) services.AgentTool {
+	return newMatchBankReceiptTool(receipts)
 }
 
 func providePostCustomerPaymentTool(
