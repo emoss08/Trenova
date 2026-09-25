@@ -1,0 +1,10 @@
+{
+  "Payment": {
+    "Id": "147",
+    "SyncToken": "4",
+    "TotalAmt": 0,
+    "PrivateNote": "Voided",
+    "CustomerRef": { "value": "58" }
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

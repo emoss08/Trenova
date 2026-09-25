@@ -4829,6 +4829,29 @@ func (ec *executionContext) fieldContext_AgentProposalField_maxLength(_ context.
 	return graphql.NewScalarFieldContext("AgentProposalField", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _AgentProposalField_readOnly(ctx context.Context, field graphql.CollectedField, obj *toolschema.Field) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentProposalField_readOnly(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ReadOnly, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentProposalField_readOnly(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentProposalField", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _AgentRun_id(ctx context.Context, field graphql.CollectedField, obj *agent.AgentRun) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -8302,6 +8325,11 @@ func (ec *executionContext) _AgentProposalField(ctx context.Context, sel ast.Sel
 		case "maxLength":
 			out.Values[i] = ec._AgentProposalField_maxLength(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "readOnly":
+			out.Values[i] = ec._AgentProposalField_readOnly(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		default:

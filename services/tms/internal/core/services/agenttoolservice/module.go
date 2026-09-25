@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
+	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
@@ -44,7 +45,7 @@ func ToolProviders() []any {
 		newAddShipmentCommentTool,
 		newPlaceShipmentHoldTool,
 		newReleaseShipmentHoldTool,
-		newCancelShipmentTool,
+		provideCancelShipmentTool,
 		newRecordStopActualTool,
 		provideUpdateTractorStatusTool,
 		provideUpdateTrailerStatusTool,
@@ -76,6 +77,11 @@ func ToolProviders() []any {
 		provideClearAccountingMappingTool,
 		provideCreateAccountingReferenceRecordTool,
 		provideRefreshAccountingReferenceDataTool,
+		provideRetryAccountingSyncTool,
+		provideSkipAccountingSyncTool,
+		providePauseAccountingSyncTool,
+		provideResumeAccountingSyncTool,
+		provideRequestAccountingBackfillTool,
 		provideMatchBankReceiptTool,
 		providePostCustomerPaymentTool,
 		provideResolveBankReceiptWorkItemTool,
@@ -193,8 +199,19 @@ func provideCreateLocationTool(
 	return newCreateLocationTool(locations, states, categories)
 }
 
-func provideUpdateShipmentTool(shipments services.ShipmentService) services.AgentTool {
-	return newUpdateShipmentTool(shipments)
+func provideUpdateShipmentTool(
+	shipments services.ShipmentService,
+	partners *ediservice.Service,
+) services.AgentTool {
+	return newUpdateShipmentTool(shipments, partners)
+}
+
+func provideCancelShipmentTool(
+	shipments services.ShipmentService,
+	partners *ediservice.Service,
+	tenders *tenderservice.Service,
+) services.AgentTool {
+	return newCancelShipmentTool(shipments, partners, tenders)
 }
 
 func provideTenderToRoutingGuideTool(tenders *tenderservice.Service) services.AgentTool {
@@ -209,11 +226,8 @@ func provideDismissInsightTool(insights *insightservice.Service) services.AgentT
 	return newDismissInsightTool(insights)
 }
 
-func provideMatchBankReceiptTool(
-	receipts *bankreceiptservice.Service,
-	payments services.CustomerPaymentService,
-) services.AgentTool {
-	return newMatchBankReceiptTool(receipts, payments)
+func provideMatchBankReceiptTool(receipts *bankreceiptservice.Service) services.AgentTool {
+	return newMatchBankReceiptTool(receipts)
 }
 
 func providePostCustomerPaymentTool(

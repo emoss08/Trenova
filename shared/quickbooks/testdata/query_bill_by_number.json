@@ -1,0 +1,10 @@
+{
+  "QueryResponse": {
+    "Bill": [
+      { "Id": "205", "DocNumber": "CINV-700", "SyncToken": "1", "TotalAmt": 900 }
+    ],
+    "startPosition": 1,
+    "maxResults": 1
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

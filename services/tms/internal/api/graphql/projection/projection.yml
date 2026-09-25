@@ -1,4 +1,6 @@
 aliases:
+  AccountingConnection:
+    syncsDriverSettlements: driverSettlementsEnabledAt
   AgentDefinition:
     delegates: delegateIds
   MyAgent:
@@ -74,6 +76,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  AccountingAppCredential:
+    - hasWebhookVerifier
   AccountingMapping:
     - required
     - prechecked

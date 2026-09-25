@@ -21,6 +21,8 @@ const (
 	EventEDIFileQuarantined           = EventKind("edi.file_quarantined")
 	EventInboundMessageClassified     = EventKind("inbound_message.classified")
 	EventAccountingConnectionDegraded = EventKind("accounting.connection_degraded")
+	EventAccountingSyncFailed         = EventKind("accounting.sync_failed")
+	EventAccountingSyncBlocked        = EventKind("accounting.sync_blocked")
 )
 
 type EventDescriptor struct {
@@ -138,6 +140,18 @@ var knownEvents = []EventDescriptor{
 		SubjectType: SubjectAccountingConnection,
 		Label:       "Accounting connection needs attention",
 		Description: "The link to the accounting system stopped working normally: calls are failing, the authorization was revoked, or it expires soon.",
+	},
+	{
+		Kind:        EventAccountingSyncFailed,
+		SubjectType: SubjectAccountingSyncRecord,
+		Label:       "Accounting sync gave up",
+		Description: "A document kept failing to reach the accounting system and stopped retrying after its last attempt.",
+	},
+	{
+		Kind:        EventAccountingSyncBlocked,
+		SubjectType: SubjectAccountingSyncRecord,
+		Label:       "Accounting sync blocked",
+		Description: "A document cannot reach the accounting system until something is fixed: a missing mapping, a closed period, a duplicate number, or a rejected value.",
 	}}
 
 func KnownEvents() []EventDescriptor {

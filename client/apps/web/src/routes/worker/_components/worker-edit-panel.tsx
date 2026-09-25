@@ -1,3 +1,4 @@
+import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ComponentLoader } from "@trenova/shared/components/component-loader";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -271,6 +272,7 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                   {panelDescription}
                 </Dialog.Description>
               )}
+              <AccountingSyncStateLine objectId={row?.id} className="text-xs" />
             </div>
             <Dialog.Close
               render={

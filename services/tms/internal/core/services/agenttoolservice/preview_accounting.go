@@ -128,6 +128,26 @@ func (t *setAccountingMappingTool) Preview(
 		return nil, err
 	}
 
+	summary := fmt.Sprintf(
+		"Would send %s as %s in the accounting system and confirm it.",
+		row.TargetLabel,
+		ref.Label(),
+	)
+	if row.ExternalID != ref.ExternalID {
+		if _, err = t.mappings.GuardHistory(
+			ctx,
+			req.TenantInfo,
+			row,
+			req.AcknowledgeHistory,
+		); err != nil {
+			if isRefusal(err) {
+				return warnWouldFail(toolpreview.Build(summary), err), nil
+			}
+
+			return nil, err
+		}
+	}
+
 	choice := accountingmappingservice.MappingChoice(req, ref, timeutils.NowUnix())
 	change, err := toolpreview.Update(
 		mappingRecord(row),
@@ -143,11 +163,7 @@ func (t *setAccountingMappingTool) Preview(
 		return nil, err
 	}
 
-	return toolpreview.Build(fmt.Sprintf(
-		"Would send %s as %s in the accounting system and confirm it.",
-		row.TargetLabel,
-		ref.Label(),
-	), change), nil
+	return toolpreview.Build(summary, change), nil
 }
 
 func (t *clearAccountingMappingTool) Preview(
@@ -166,6 +182,20 @@ func (t *clearAccountingMappingTool) Preview(
 		return nil, err
 	}
 
+	summary := fmt.Sprintf(
+		"Would unmatch %s from %s, and never propose %s for it again.",
+		row.TargetLabel,
+		mappedLabel(row),
+		mappedLabel(row),
+	)
+	if _, err = t.mappings.GuardHistory(ctx, tenantFrom(params), row, false); err != nil {
+		if isRefusal(err) {
+			return warnWouldFail(toolpreview.Build(summary), err), nil
+		}
+
+		return nil, err
+	}
+
 	plan, err := planUpdate(
 		mappingRecord(row),
 		row,
@@ -176,12 +206,7 @@ func (t *clearAccountingMappingTool) Preview(
 		return nil, err
 	}
 
-	return plan.preview(fmt.Sprintf(
-		"Would unmatch %s from %s, and never propose %s for it again.",
-		row.TargetLabel,
-		mappedLabel(row),
-		mappedLabel(row),
-	)), nil
+	return plan.preview(summary), nil
 }
 
 type accountingRecordDraft struct {

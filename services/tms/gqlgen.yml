@@ -3930,9 +3930,95 @@ models:
     fields:
       lastErrorCategory:
         resolver: true
+      appEnvironment:
+        resolver: true
+      pausedBy:
+        resolver: true
   AccountingSyncStatus:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AccountingSyncStatus
+  AccountingSyncObjectType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.SyncObjectType
+  AccountingSyncOperation:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.SyncOperation
+  AccountingSyncSourceEvent:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.SyncSourceEvent
+  AccountingSyncRecordStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.SyncStatus
+  AccountingSyncErrorCategory:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.SyncErrorCategory
+  AccountingSyncAttemptOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.SyncAttemptOutcome
+  AccountingBackfillStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.BackfillStatus
+  AccountingBackfillAction:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingBackfillAction
+  AccountingSyncRecord:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingSyncRecord
+    fields:
+      dependsOnRecordId:
+        resolver: true
+      errorCategory:
+        resolver: true
+      externalUrl:
+        fieldName: ExternalURL
+      skippedBy:
+        resolver: true
+  AccountingSyncAttempt:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingSyncAttempt
+    fields:
+      errorCategory:
+        resolver: true
+  AccountingBackfill:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingBackfill
+  AccountingSyncStatusCount:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingSyncStatusCount
+  AccountingSyncAttentionGroup:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingSyncAttentionGroup
+    fields:
+      errorCategory:
+        resolver: true
+  AccountingSyncSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingSyncSummary
+  AccountingSyncObjectState:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingSyncObjectState
+  AccountingAppSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AppSource
+  AccountingAppEnvironment:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AppEnvironment
+  AccountingAppCredential:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingAppCredential
+    fields:
+      hasWebhookVerifier:
+        resolver: true
+  AccountingAppSettings:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingAppSettings
+    fields:
+      activeSource:
+        resolver: true
+      instanceEnvironment:
+        resolver: true
+      redirectUrl:
+        fieldName: RedirectURL
   AccountingSetupStep:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.SetupStep

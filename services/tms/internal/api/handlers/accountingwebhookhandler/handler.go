@@ -51,7 +51,7 @@ func (h *Handler) receive(c *gin.Context) {
 		c.Status(http.StatusNotFound)
 		return
 	}
-	connector, ok := h.connectors.For(typ)
+	provider, ok := h.connectors.For(typ)
 	if !ok {
 		c.Status(http.StatusNotFound)
 		return
@@ -69,7 +69,7 @@ func (h *Handler) receive(c *gin.Context) {
 
 	err = h.service.ReceiveWebhook(c.Request.Context(), &services.ReceiveAccountingWebhookRequest{
 		IntegrationType: typ,
-		Signature:       c.GetHeader(connector.WebhookSignatureHeader()),
+		Signature:       c.GetHeader(provider.WebhookSignatureHeader()),
 		Body:            body,
 	})
 	switch {

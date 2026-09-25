@@ -244,6 +244,35 @@ export type AccountCategory =
   | 'Liability'
   | 'Revenue';
 
+/** Which of the accounting system's environments an app's keys are for. */
+export type AccountingAppEnvironment =
+  /** Production keys, which work with real companies. */
+  | 'Production'
+  /** Development keys, which work only with test companies. */
+  | 'Sandbox';
+
+/** Whose app a connection to the accounting system is authorized through. */
+export type AccountingAppSource =
+  /** The app this Trenova server is configured with. */
+  | 'Instance'
+  /** An app the organization registered with the accounting system itself. */
+  | 'Tenant';
+
+/** What to do with a running backfill. */
+export type AccountingBackfillAction =
+  | 'Cancel'
+  | 'Pause'
+  | 'Resume';
+
+/** Where a backfill stands. */
+export type AccountingBackfillStatus =
+  | 'Cancelled'
+  | 'Completed'
+  | 'Failed'
+  | 'Paused'
+  | 'Queued'
+  | 'Running';
+
 /** How the link to the accounting system is doing right now. */
 export type AccountingConnectionStatus =
   /** Calls succeed. */
@@ -303,6 +332,10 @@ export type AccountingMappingTargetType =
   | 'AccountRole'
   | 'Carrier'
   | 'Customer'
+  /** An owner-operator driver, mapped to a vendor. */
+  | 'Driver'
+  /** A Trenova GL account that bills post to, mapped to an account. */
+  | 'GLAccount'
   /** A role an item plays, such as the short-pay write-off. */
   | 'ItemRole'
   /** An invoice line type. */
@@ -321,10 +354,120 @@ export type AccountingReferenceKind =
 
 /** How far the organization has got through setting up the accounting sync. */
 export type AccountingSetupStep =
-  /** The required matches are confirmed and setup is finished. */
+  /** Setup is finished and documents dated from the start date are sent. */
   | 'Complete'
   /** Trenova records are being matched to the accounting system's records. */
-  | 'Mappings';
+  | 'Mappings'
+  /** The matches are confirmed; a start date has to be chosen before anything is sent. */
+  | 'StartDate';
+
+/** How one try at sending a record ended. */
+export type AccountingSyncAttemptOutcome =
+  | 'Blocked'
+  | 'DeadLettered'
+  | 'Retrying'
+  | 'Synced'
+  /** It waited on something else, such as the customer it depends on, without spending an attempt. */
+  | 'Waiting';
+
+/** Why a sync record failed. */
+export type AccountingSyncErrorCategory =
+  | 'Auth'
+  | 'ClosedPeriod'
+  | 'Configuration'
+  | 'Conflict'
+  | 'Currency'
+  | 'Duplicate'
+  | 'Mapping'
+  | 'NotFound'
+  | 'RateLimited'
+  | 'Transient'
+  | 'Validation';
+
+/** A kind of Trenova document sent to the accounting system. */
+export type AccountingSyncObjectType =
+  /** A carrier settlement, sent as a bill, or as a vendor credit when the net is negative. */
+  | 'CarrierBill'
+  /** The payment of a carrier settlement, sent as a bill payment. */
+  | 'CarrierBillPayment'
+  /** A carrier, sent as a vendor. */
+  | 'CarrierVendor'
+  /** A credit memo applied to an invoice. */
+  | 'CreditApplication'
+  | 'CreditMemo'
+  | 'Customer'
+  | 'CustomerPayment'
+  | 'DebitMemo'
+  /** An owner-operator settlement, sent as a bill, or as a vendor credit when the net is negative. */
+  | 'DriverBill'
+  /** The payment of an owner-operator settlement, sent as a bill payment. */
+  | 'DriverBillPayment'
+  /** An owner-operator driver, sent as a 1099 vendor. */
+  | 'DriverVendor'
+  | 'Invoice';
+
+/** What a sync record does to the document in the accounting system. */
+export type AccountingSyncOperation =
+  | 'Create'
+  | 'Update'
+  | 'Void';
+
+export type AccountingSyncRecordFilterInput = {
+  errorCategories?: Array<AccountingSyncErrorCategory> | null | undefined;
+  /** Only the records for one Trenova document. */
+  objectId?: string | number | null | undefined;
+  objectTypes?: Array<AccountingSyncObjectType> | null | undefined;
+  /** Matches the document number. */
+  search?: string | null | undefined;
+  statuses?: Array<AccountingSyncRecordStatus> | null | undefined;
+};
+
+/** Where a sync record stands. */
+export type AccountingSyncRecordStatus =
+  /** Held until a person releases it, because automatic sync is off. */
+  | 'AwaitingApproval'
+  /** Cannot be sent until someone fixes what the resolution names. */
+  | 'Blocked'
+  /** Failed too many times in a row; a person has to retry it. */
+  | 'DeadLettered'
+  /** Being sent now. */
+  | 'InFlight'
+  /** Waiting its turn. */
+  | 'Queued'
+  /** The last try failed in a way that may pass; Trenova tries again on its own. */
+  | 'Retrying'
+  /** A person chose not to send it. */
+  | 'Skipped'
+  /** A newer revision of the same document replaced it. */
+  | 'Superseded'
+  | 'Synced';
+
+/** What queued a sync record. */
+export type AccountingSyncSourceEvent =
+  | 'AdjustmentCreditMemo'
+  /** A backfill of documents dated before sync was turned on. */
+  | 'Backfill'
+  | 'CarrierSettlementPaid'
+  | 'CarrierSettlementPosted'
+  | 'CarrierSettlementVoided'
+  | 'CarrierUpdated'
+  | 'CreditMemoApplied'
+  | 'CreditMemoPosted'
+  | 'CreditMemoUnapplied'
+  | 'CustomerPaymentApplied'
+  | 'CustomerPaymentPosted'
+  | 'CustomerPaymentReversed'
+  | 'CustomerUpdated'
+  | 'DebitMemoPosted'
+  /** Another record needed this one first, such as a customer an invoice is for. */
+  | 'DependencyOf'
+  | 'DriverSettlementPaid'
+  | 'DriverSettlementPosted'
+  | 'DriverSettlementVoided'
+  | 'DriverUpdated'
+  | 'InvoicePosted'
+  /** The hourly check found a posted document no enqueue point had queued. */
+  | 'SafetyNet';
 
 /** An accounting system Trenova keeps its books in step with. */
 export type AccountingSystem =
@@ -608,6 +751,33 @@ export type AgentPlanStatus =
   | 'Pending'
   | 'Rejected';
 
+/** How much of what a write would do its preview could say. */
+export type AgentPreviewCoverage =
+  /** Every record the write changes, as the tool's own code would change it. */
+  | 'Full'
+  /** Some of it: the tool previews part of what it does, or the preview was cut to its bounds. */
+  | 'Partial'
+  /** The tool cannot say what it would change; the parameters it would run with are shown instead. */
+  | 'Unavailable';
+
+/** How a message a write would send reaches its recipients. */
+export type AgentPreviewMessageChannel =
+  | 'Comment'
+  | 'Dash'
+  | 'EDI'
+  | 'Email'
+  | 'SMS';
+
+/** What a write would do to one record. */
+export type AgentPreviewOperation =
+  | 'Archive'
+  | 'Create'
+  | 'Delete'
+  /** A tool that cannot say what it changes, run with the parameters shown. */
+  | 'Run'
+  | 'Send'
+  | 'Update';
+
 export type AgentProposalDecisionInput = {
   decision: AgentDecisionType;
   modifications?: unknown;
@@ -697,6 +867,7 @@ export type AgentSeverity =
 
 export type AgentSubjectType =
   | 'AccountingConnection'
+  | 'AccountingSyncRecord'
   | 'AssistantThread'
   | 'BankReceipt'
   | 'BillingQueueItem'
@@ -745,6 +916,7 @@ export type AgentTaintSource =
 export type AgentTemplate =
   | 'BillingAssistant'
   | 'BillingException'
+  | 'BooksKeeper'
   | 'CarrierRiskDesk'
   | 'CashApplication'
   | 'ComplianceAssistant'
@@ -1496,6 +1668,11 @@ export type CarrierType =
   | 'Common'
   | 'Contract'
   | 'Exempt';
+
+export type ChangeAccountingBackfillInput = {
+  action: AccountingBackfillAction;
+  id: string | number;
+};
 
 export type ChargeAllocationInput = {
   amount?: string | null | undefined;
@@ -2541,6 +2718,19 @@ export type EmploymentVerificationStatus =
   | 'Pending'
   | 'Received'
   | 'Requested';
+
+/** Finishes setup: from which day documents are sent, and how. */
+export type EnableAccountingSyncInput = {
+  /** Send posted documents on their own. When off, each waits for a person to release it. */
+  autoSync: boolean;
+  /** Also queue documents dated from the start date up to now, which were posted before sync was on. */
+  backfill: boolean;
+  /** Also send owner-operator settlements as bills. Company driver pay is never sent. */
+  driverSettlements?: boolean | null | undefined;
+  integrationType: AccountingSystem;
+  /** Documents dated before this day are never sent. */
+  startDate: number;
+};
 
 export type EndBenefitEnrollmentInput = {
   effectiveTo?: number | null | undefined;
@@ -3959,6 +4149,11 @@ export type PackingGroup =
   | 'II'
   | 'III';
 
+export type PauseAccountingSyncInput = {
+  integrationType: AccountingSystem;
+  reason?: string | null | undefined;
+};
+
 export type PayAdvanceSource =
   | 'Cash'
   | 'ComdataCode'
@@ -4473,6 +4668,12 @@ export type RejectInvoiceAdjustmentInput = {
   reason?: string | null | undefined;
 };
 
+/** Releases the named records waiting for approval, or all of them when none are named. */
+export type ReleaseAccountingSyncInput = {
+  ids?: Array<string | number> | null | undefined;
+  integrationType: AccountingSystem;
+};
+
 export type RemoveCarrierSettlementAdjustmentInput = {
   lineId: string | number;
   settlementId: string | number;
@@ -4696,6 +4897,16 @@ export type RequestAiAuditExportInput = {
   to: number;
 };
 
+export type RequestAccountingBackfillInput = {
+  integrationType: AccountingSystem;
+  /** Defaults to every kind of document. */
+  objectTypes?: Array<AccountingSyncObjectType> | null | undefined;
+  /** Defaults to when sync was turned on. */
+  rangeEnd?: number | null | undefined;
+  /** Defaults to the start date. */
+  rangeStart?: number | null | undefined;
+};
+
 export type RequestMyPtoInput = {
   endDate: number;
   reason: string;
@@ -4744,6 +4955,13 @@ export type RespondToMyShiftSwapInput = {
   id: string | number;
   note?: string | null | undefined;
   response: MyShiftSwapResponse;
+};
+
+/** Retries the named records, or every failed record in the named categories. */
+export type RetryAccountingSyncInput = {
+  errorCategories?: Array<AccountingSyncErrorCategory> | null | undefined;
+  ids?: Array<string | number> | null | undefined;
+  integrationType: AccountingSystem;
 };
 
 export type ReturnToDutyStatus =
@@ -4874,6 +5092,18 @@ export type SafetySeverity =
   | 'Major'
   | 'Minor'
   | 'Moderate';
+
+/** The organization's own app keys. Leave the secret or verifier token out to keep the saved one. */
+export type SaveAccountingAppInput = {
+  /** Removes the saved webhook verifier token. */
+  clearWebhookVerifierToken?: boolean | null | undefined;
+  clientId: string;
+  /** Required the first time, and whenever the client ID or environment changes. */
+  clientSecret?: string | null | undefined;
+  environment: AccountingAppEnvironment;
+  integrationType: AccountingSystem;
+  webhookVerifierToken?: string | null | undefined;
+};
 
 export type SaveHomeLayoutPresetInput = {
   coreResponsibility?: string | null | undefined;
@@ -5563,6 +5793,12 @@ export type SidebarSectionPreferenceInput = {
   key: string;
 };
 
+export type SkipAccountingSyncInput = {
+  id: string | number;
+  /** Why the document is not sent. Required. */
+  reason: string;
+};
+
 export type SortFieldInput = {
   direction: string;
   field: string;
@@ -5783,6 +6019,14 @@ export type UpcomingWorkerPtoInput = {
   timezone?: string | null | undefined;
   type?: PtoType | null | undefined;
   workerId?: string | number | null | undefined;
+};
+
+export type UpdateAccountingSyncSettingsInput = {
+  /** Send posted documents on their own. When off, each waits for a person to release it; records already held stay held. */
+  autoSync: boolean;
+  /** Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones. */
+  driverSettlements: boolean;
+  integrationType: AccountingSystem;
 };
 
 export type UpdateAgentEvalCaseInput = {
@@ -6623,18 +6867,36 @@ export type AccountTypeTableQueryVariables = Exact<{
 
 export type AccountTypeTableQuery = { accountTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type AccountingConnectionFieldsFragment = { id: string, integrationType: AccountingSystem, status: AccountingConnectionStatus, externalCompanyName: string, externalLegalName: string, externalCountry: string, externalHomeCurrency: string, externalMultiCurrencyEnabled: boolean, externalBooksClosedThrough: number | null, lastCheckedAt: number | null, lastSuccessAt: number | null, lastFailureAt: number | null, consecutiveFailures: number, lastErrorCategory: AccountingErrorCategory | null, lastErrorMessage: string, lastWebhookAt: number | null, refreshTokenAbsoluteExpiresAt: number, connectedAt: number, disconnectedAt: number | null, setupStep: AccountingSetupStep, referenceRefreshStartedAt: number | null, referenceRefreshedAt: number | null, referenceRefreshError: string, version: number, updatedAt: number } & { ' $fragmentName'?: 'AccountingConnectionFieldsFragment' };
+export type AccountingConnectionFieldsFragment = { id: string, integrationType: AccountingSystem, status: AccountingConnectionStatus, appSource: AccountingAppSource, appEnvironment: AccountingAppEnvironment | null, externalCompanyName: string, externalLegalName: string, externalCountry: string, externalHomeCurrency: string, externalMultiCurrencyEnabled: boolean, externalBooksClosedThrough: number | null, lastCheckedAt: number | null, lastSuccessAt: number | null, lastFailureAt: number | null, consecutiveFailures: number, lastErrorCategory: AccountingErrorCategory | null, lastErrorMessage: string, lastWebhookAt: number | null, refreshTokenAbsoluteExpiresAt: number, connectedAt: number, disconnectedAt: number | null, setupStep: AccountingSetupStep, syncStartDate: number | null, syncEnabledAt: number | null, autoSync: boolean, driverSettlementsEnabledAt: number | null, syncsDriverSettlements: boolean, pausedAt: number | null, pausedReason: string, referenceRefreshStartedAt: number | null, referenceRefreshedAt: number | null, referenceRefreshError: string, version: number, updatedAt: number, pausedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingConnectionFieldsFragment' };
 
 export type AccountingMappingFieldsFragment = { id: string, targetType: AccountingMappingTargetType, trenovaObjectId: string | null, trenovaKey: string, targetLabel: string, providerKind: AccountingReferenceKind, externalId: string, externalName: string, state: AccountingMappingState, source: AccountingMappingSource | null, confidence: number | null, reason: string, required: boolean, prechecked: boolean, confirmedAt: number | null, version: number, updatedAt: number, candidates: Array<{ externalId: string, name: string, score: number, reason: string }>, confirmedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingMappingFieldsFragment' };
 
 export type AccountingReferenceObjectFieldsFragment = { id: string, kind: AccountingReferenceKind, externalId: string, label: string, number: string, accountType: string, accountSubType: string, itemType: string, companyName: string, city: string, state: string, postalCode: string, dueDays: number | null, active: boolean, usable: boolean } & { ' $fragmentName'?: 'AccountingReferenceObjectFieldsFragment' };
+
+export type AccountingAppSettingsFieldsFragment = { activeSource: AccountingAppSource | null, instanceAppAvailable: boolean, instanceEnvironment: AccountingAppEnvironment | null, redirectUrl: string, webhookPath: string, tenantApp: { id: string, integrationType: AccountingSystem, environment: AccountingAppEnvironment, clientId: string, hasWebhookVerifier: boolean, version: number, updatedAt: number } | null } & { ' $fragmentName'?: 'AccountingAppSettingsFieldsFragment' };
+
+export type AccountingSyncStatusFieldsFragment = { integrationType: AccountingSystem, providerName: string, available: boolean, app: { ' $fragmentRefs'?: { 'AccountingAppSettingsFieldsFragment': AccountingAppSettingsFieldsFragment } }, connection: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } | null } & { ' $fragmentName'?: 'AccountingSyncStatusFieldsFragment' };
 
 export type AccountingSyncStatusQueryVariables = Exact<{
   integrationType: AccountingSystem;
 }>;
 
 
-export type AccountingSyncStatusQuery = { accountingSyncStatus: { integrationType: AccountingSystem, providerName: string, available: boolean, connection: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } | null } };
+export type AccountingSyncStatusQuery = { accountingSyncStatus: { ' $fragmentRefs'?: { 'AccountingSyncStatusFieldsFragment': AccountingSyncStatusFieldsFragment } } };
+
+export type SaveAccountingAppMutationVariables = Exact<{
+  input: SaveAccountingAppInput;
+}>;
+
+
+export type SaveAccountingAppMutation = { saveAccountingApp: { ' $fragmentRefs'?: { 'AccountingSyncStatusFieldsFragment': AccountingSyncStatusFieldsFragment } } };
+
+export type RemoveAccountingAppMutationVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type RemoveAccountingAppMutation = { removeAccountingApp: { ' $fragmentRefs'?: { 'AccountingSyncStatusFieldsFragment': AccountingSyncStatusFieldsFragment } } };
 
 export type AccountingMappingSummaryQueryVariables = Exact<{
   integrationType: AccountingSystem;
@@ -6740,6 +7002,127 @@ export type CheckAccountingConnectionMutationVariables = Exact<{
 
 
 export type CheckAccountingConnectionMutation = { checkAccountingConnection: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } };
+
+export type AccountingSyncRecordFieldsFragment = { id: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, operation: AccountingSyncOperation, sourceEvent: AccountingSyncSourceEvent, revision: number, documentDate: number | null, dependsOnRecordId: string | null, status: AccountingSyncRecordStatus, attemptCount: number, nextAttemptAt: number | null, externalId: string, externalDocNumber: string, externalUrl: string, errorCategory: AccountingSyncErrorCategory | null, errorCode: string, errorMessage: string, resolution: string, queuedAt: number, startedAt: number | null, syncedAt: number | null, skippedReason: string, version: number, updatedAt: number, skippedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingSyncRecordFieldsFragment' };
+
+export type AccountingBackfillFieldsFragment = { id: string, rangeStart: number, rangeEnd: number, objectTypes: Array<AccountingSyncObjectType>, status: AccountingBackfillStatus, enqueuedCount: number, alreadyQueuedCount: number, startedAt: number | null, completedAt: number | null, lastError: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AccountingBackfillFieldsFragment' };
+
+export type AccountingSyncSummaryQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type AccountingSyncSummaryQuery = { accountingSyncSummary: { integrationType: AccountingSystem, providerName: string, connection: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } | null, counts: Array<{ status: AccountingSyncRecordStatus, count: number }>, attention: Array<{ status: AccountingSyncRecordStatus, errorCategory: AccountingSyncErrorCategory | null, resolution: string, count: number, oldestQueuedAt: number, sampleRecordId: string }>, activeBackfill: { ' $fragmentRefs'?: { 'AccountingBackfillFieldsFragment': AccountingBackfillFieldsFragment } } | null } };
+
+export type AccountingSyncRecordsQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  filter?: AccountingSyncRecordFilterInput | null | undefined;
+}>;
+
+
+export type AccountingSyncRecordsQuery = { accountingSyncRecords: { totalCount: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountingSyncRecordFieldsFragment': AccountingSyncRecordFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type AccountingSyncRecordQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AccountingSyncRecordQuery = { accountingSyncRecord: { ' $fragmentRefs'?: { 'AccountingSyncRecordFieldsFragment': AccountingSyncRecordFieldsFragment } } };
+
+export type AccountingSyncAttemptsQueryVariables = Exact<{
+  recordId: string | number;
+}>;
+
+
+export type AccountingSyncAttemptsQuery = { accountingSyncAttempts: Array<{ id: string, attemptNumber: number, outcome: AccountingSyncAttemptOutcome, errorCategory: AccountingSyncErrorCategory | null, errorCode: string, errorMessage: string, startedAt: number, finishedAt: number, durationMs: number }> };
+
+export type AccountingSyncObjectStatesQueryVariables = Exact<{
+  objectIds: Array<string | number> | string | number;
+}>;
+
+
+export type AccountingSyncObjectStatesQuery = { accountingSyncObjectStates: Array<{ objectType: AccountingSyncObjectType, objectId: string, providerName: string, record: { ' $fragmentRefs'?: { 'AccountingSyncRecordFieldsFragment': AccountingSyncRecordFieldsFragment } } }> };
+
+export type AccountingBackfillsQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type AccountingBackfillsQuery = { accountingBackfills: Array<{ ' $fragmentRefs'?: { 'AccountingBackfillFieldsFragment': AccountingBackfillFieldsFragment } }> };
+
+export type EnableAccountingSyncMutationVariables = Exact<{
+  input: EnableAccountingSyncInput;
+}>;
+
+
+export type EnableAccountingSyncMutation = { enableAccountingSync: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } };
+
+export type UpdateAccountingSyncSettingsMutationVariables = Exact<{
+  input: UpdateAccountingSyncSettingsInput;
+}>;
+
+
+export type UpdateAccountingSyncSettingsMutation = { updateAccountingSyncSettings: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } };
+
+export type PauseAccountingSyncMutationVariables = Exact<{
+  input: PauseAccountingSyncInput;
+}>;
+
+
+export type PauseAccountingSyncMutation = { pauseAccountingSync: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } };
+
+export type ResumeAccountingSyncMutationVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type ResumeAccountingSyncMutation = { resumeAccountingSync: { ' $fragmentRefs'?: { 'AccountingConnectionFieldsFragment': AccountingConnectionFieldsFragment } } };
+
+export type RetryAccountingSyncMutationVariables = Exact<{
+  input: RetryAccountingSyncInput;
+}>;
+
+
+export type RetryAccountingSyncMutation = { retryAccountingSync: { affected: number } };
+
+export type ReleaseAccountingSyncMutationVariables = Exact<{
+  input: ReleaseAccountingSyncInput;
+}>;
+
+
+export type ReleaseAccountingSyncMutation = { releaseAccountingSync: { affected: number } };
+
+export type SkipAccountingSyncMutationVariables = Exact<{
+  input: SkipAccountingSyncInput;
+}>;
+
+
+export type SkipAccountingSyncMutation = { skipAccountingSync: { ' $fragmentRefs'?: { 'AccountingSyncRecordFieldsFragment': AccountingSyncRecordFieldsFragment } } };
+
+export type RequestAccountingBackfillMutationVariables = Exact<{
+  input: RequestAccountingBackfillInput;
+}>;
+
+
+export type RequestAccountingBackfillMutation = { requestAccountingBackfill: { ' $fragmentRefs'?: { 'AccountingBackfillFieldsFragment': AccountingBackfillFieldsFragment } } };
+
+export type ChangeAccountingBackfillMutationVariables = Exact<{
+  input: ChangeAccountingBackfillInput;
+}>;
+
+
+export type ChangeAccountingBackfillMutation = { changeAccountingBackfill: { ' $fragmentRefs'?: { 'AccountingBackfillFieldsFragment': AccountingBackfillFieldsFragment } } };
+
+export type AccountingSyncRecordTableQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AccountingSyncRecordTableQuery = { accountingSyncRecordTable: { totalCount?: number | null, edges: Array<{ node: { id: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, operation: AccountingSyncOperation, sourceEvent: AccountingSyncSourceEvent, revision: number, documentDate: number | null, dependsOnRecordId: string | null, status: AccountingSyncRecordStatus, attemptCount: number, nextAttemptAt: number | null, externalId: string, externalDocNumber: string, externalUrl: string, errorCategory: AccountingSyncErrorCategory | null, errorCode: string, errorMessage: string, resolution: string, queuedAt: number, startedAt: number | null, syncedAt: number | null, skippedReason: string, version: number, updatedAt: number, skippedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type LateChargeAssessmentResultFieldsFragment = { asOfDate: number, preview: boolean, mode: LateChargeAssessmentMode, memosCreated: number, memosPosted: number, customersSkipped: number, totalChargeMinor: number, customers: Array<{ customerId: string, customerName: string, currencyCode: string, totalChargeMinor: number, debitMemoId: string | null, debitMemoNumber: string, posted: boolean, skipped: boolean, skipReason: string, lines: Array<{ invoiceId: string, invoiceNumber: string, periodIndex: number, periodStart: number, periodEnd: number, basisOpenBalanceMinor: number, ratePercent: string, chargeMinor: number }> }> } & { ' $fragmentName'?: 'LateChargeAssessmentResultFieldsFragment' };
 
@@ -6881,7 +7264,7 @@ export type DecideMyProposalMutationVariables = Exact<{
 }>;
 
 
-export type DecideMyProposalMutation = { decideMyProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, version: number, createdAt: number } };
+export type DecideMyProposalMutation = { decideMyProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, previewDigest: string, previewReviewed: boolean, version: number, createdAt: number } };
 
 export type AgentAccessRoleFieldsFragment = { id: string, name: string, description: string, isSystem: boolean } & { ' $fragmentName'?: 'AgentAccessRoleFieldsFragment' };
 
@@ -7012,7 +7395,7 @@ export type UpdateAgentControlMutationVariables = Exact<{
 
 export type UpdateAgentControlMutation = { updateAgentControl: { ' $fragmentRefs'?: { 'AgentControlFieldsFragment': AgentControlFieldsFragment } } };
 
-export type PendingProposalFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, planId: string | null, planStep: number, simulatedAt: number | null, simulation: unknown, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null }>, evidence: Array<{ type: string, id: string, note: string }>, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingProposalFieldsFragment' };
+export type PendingProposalFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, planId: string | null, planStep: number, simulatedAt: number | null, simulation: unknown, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean }>, evidence: Array<{ type: string, id: string, note: string }>, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingProposalFieldsFragment' };
 
 export type PendingPlanFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, title: string, summary: string, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, expiresAt: number | null, version: number, createdAt: number, updatedAt: number, planStatus: AgentPlanStatus, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingPlanFieldsFragment' };
 
@@ -7051,7 +7434,7 @@ export type DecideAgentProposalsMutationVariables = Exact<{
 }>;
 
 
-export type DecideAgentProposalsMutation = { decideAgentProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, createdAt: number } | null }> };
+export type DecideAgentProposalsMutation = { decideAgentProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, createdAt: number } | null }> };
 
 export type AgentDefinitionCardFieldsFragment = { id: string, organizationId: string, businessUnitId: string, name: string, description: string, template: AgentTemplate | null, icon: string, accent: string, instructions: string, guardrails: Array<string>, toolNames: Array<string>, toolTiers: unknown, autonomyCeiling: AgentAutonomyTier, dataAccessCeiling: AgentDataAccessCeiling, enabled: boolean, shadowMode: boolean, decisionTimeoutSeconds: number, triggerMode: AgentTriggerMode, cronExpression: string, cronTimezone: string, eventKinds: Array<string>, intervalSeconds: number, endsAt: number | null, maxConcurrentRuns: number, runTimeoutSeconds: number, maxToolCalls: number, monthlyBudgetUsd: string | null, dailyRunLimit: number, toolDailyLimits: unknown, simulationMode: boolean, memoryTokenBudget: number | null, contextProviders: Array<AgentContextProvider>, outputMode: AgentOutputMode, preferredProviderId: string, systemKey: string, delegateIds: Array<string>, accessMode: AgentAccessMode, lastRunAt: number | null, nextRunAt: number | null, pendingProposals: number, openRuns: number, version: number, createdAt: number, updatedAt: number, starters: Array<{ label: string, prompt: string }>, delegates: Array<{ id: string, name: string, icon: string, accent: string, enabled: boolean, triggerMode: AgentTriggerMode }>, accessRoles: Array<{ id: string, name: string }> } & { ' $fragmentName'?: 'AgentDefinitionCardFieldsFragment' };
 
@@ -7286,9 +7669,43 @@ export type DecideAgentPlanMutationVariables = Exact<{
 
 export type DecideAgentPlanMutation = { decideAgentPlan: { ' $fragmentRefs'?: { 'AgentPlanTableRowFieldsFragment': AgentPlanTableRowFieldsFragment } } };
 
+export type AgentProposalPreviewFieldsFragment = { proposalId: string, tool: string, summary: string, coverage: AgentPreviewCoverage, stale: boolean, targetVersion: number | null, withheldCount: number, omittedRecords: number, recorded: boolean, computedAt: number, digest: string, changes: Array<{ resource: string, entityId: string | null, label: string, operation: AgentPreviewOperation, version: number | null, withheld: boolean, dependsOnStep: number, omittedFields: number, record: { entityType: string, id: string } | null, fields: Array<{ path: string, label: string, valueType: string, before: unknown, after: unknown, withheld: boolean, volatile: boolean, truncated: boolean, changedSinceProposed: boolean, proposedBefore: unknown, projectedFromStep: number, beforeRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null, afterRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null }>, message: { channel: AgentPreviewMessageChannel, from: string, to: Array<string>, cc: Array<string>, bcc: Array<string>, attachments: Array<string>, subject: string, body: string, bodyTruncated: boolean, visibility: string, cadence: string, templateVersionId: string | null } | null, money: { currency: string, totalBefore: string | null, totalAfter: string | null, delta: string | null, withheld: boolean, lines: Array<{ label: string, before: string | null, after: string | null }> } | null }>, warnings: Array<{ code: string, args: Array<string>, message: string }>, staleness: { pinned: boolean, proposedVersion: number, currentVersion: number, missing: boolean } | null } & { ' $fragmentName'?: 'AgentProposalPreviewFieldsFragment' };
+
+export type AgentPlanPreviewFieldsFragment = { planId: string, digest: string, stale: boolean, withheldCount: number, computedAt: number, steps: Array<{ proposalId: string, step: number, preview: { ' $fragmentRefs'?: { 'AgentProposalPreviewFieldsFragment': AgentProposalPreviewFieldsFragment } } }> } & { ' $fragmentName'?: 'AgentPlanPreviewFieldsFragment' };
+
+export type AgentProposalPreviewQueryVariables = Exact<{
+  id: string | number;
+  modifications?: unknown;
+}>;
+
+
+export type AgentProposalPreviewQuery = { agentProposalPreview: { ' $fragmentRefs'?: { 'AgentProposalPreviewFieldsFragment': AgentProposalPreviewFieldsFragment } } };
+
+export type MyProposalPreviewQueryVariables = Exact<{
+  id: string | number;
+  modifications?: unknown;
+}>;
+
+
+export type MyProposalPreviewQuery = { myProposalPreview: { ' $fragmentRefs'?: { 'AgentProposalPreviewFieldsFragment': AgentProposalPreviewFieldsFragment } } };
+
+export type AgentPlanPreviewQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AgentPlanPreviewQuery = { agentPlanPreview: { ' $fragmentRefs'?: { 'AgentPlanPreviewFieldsFragment': AgentPlanPreviewFieldsFragment } } };
+
+export type MyPlanPreviewQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type MyPlanPreviewQuery = { myPlanPreview: { ' $fragmentRefs'?: { 'AgentPlanPreviewFieldsFragment': AgentPlanPreviewFieldsFragment } } };
+
 export type AgentEvidenceRefFieldsFragment = { type: string, id: string, note: string } & { ' $fragmentName'?: 'AgentEvidenceRefFieldsFragment' };
 
-export type AgentProposalTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, modifications: unknown, tainted: boolean, egressClass: AgentEgressClass | null, heldBy: Array<string>, traceId: string, traceUrl: string | null, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null }> } & { ' $fragmentName'?: 'AgentProposalTableRowFieldsFragment' };
+export type AgentProposalTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, modifications: unknown, tainted: boolean, egressClass: AgentEgressClass | null, heldBy: Array<string>, traceId: string, traceUrl: string | null, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean }> } & { ' $fragmentName'?: 'AgentProposalTableRowFieldsFragment' };
 
 export type AgentProposalDetailFieldsFragment = (
   { evidence: Array<{ ' $fragmentRefs'?: { 'AgentEvidenceRefFieldsFragment': AgentEvidenceRefFieldsFragment } }> }
@@ -7316,7 +7733,7 @@ export type DecideAgentProposalMutationVariables = Exact<{
 }>;
 
 
-export type DecideAgentProposalMutation = { decideAgentProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, version: number, createdAt: number } };
+export type DecideAgentProposalMutation = { decideAgentProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, previewDigest: string, previewReviewed: boolean, version: number, createdAt: number } };
 
 export type AgentSuiteRunFieldsFragment = { id: string, agentDefinitionId: string, agentName: string, trigger: AgentSuiteRunTrigger, fingerprintHash: string, changeSummary: string, suiteRevision: string, status: AgentSuiteRunStatus, casesTotal: number, casesPassed: number, casesFailed: number, casesSkipped: number, hardFailures: number, deterministicScore: number | null, judgeScore: number | null, qualityScore: number | null, baselineScore: number | null, baselineRunId: string | null, regression: boolean, costUsd: string, startedAt: number, finishedAt: number | null, comments: string, requestedByUserId: string | null, fingerprintChanges: Array<{ field: string, from: string, to: string }> } & { ' $fragmentName'?: 'AgentSuiteRunFieldsFragment' };
 
@@ -13466,35 +13883,6 @@ export const AccountTypeTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AccountTypeTableRowFields"}) as unknown as TypedDocumentString<AccountTypeTableRowFieldsFragment, unknown>;
-export const AccountingConnectionFieldsFragmentDoc = new TypedDocumentString(`
-    fragment AccountingConnectionFields on AccountingConnection {
-  id
-  integrationType
-  status
-  externalCompanyName
-  externalLegalName
-  externalCountry
-  externalHomeCurrency
-  externalMultiCurrencyEnabled
-  externalBooksClosedThrough
-  lastCheckedAt
-  lastSuccessAt
-  lastFailureAt
-  consecutiveFailures
-  lastErrorCategory
-  lastErrorMessage
-  lastWebhookAt
-  refreshTokenAbsoluteExpiresAt
-  connectedAt
-  disconnectedAt
-  setupStep
-  referenceRefreshStartedAt
-  referenceRefreshedAt
-  referenceRefreshError
-  version
-  updatedAt
-}
-    `, {"fragmentName":"AccountingConnectionFields"}) as unknown as TypedDocumentString<AccountingConnectionFieldsFragment, unknown>;
 export const AccountingMappingFieldsFragmentDoc = new TypedDocumentString(`
     fragment AccountingMappingFields on AccountingMapping {
   id
@@ -13545,6 +13933,184 @@ export const AccountingReferenceObjectFieldsFragmentDoc = new TypedDocumentStrin
   usable
 }
     `, {"fragmentName":"AccountingReferenceObjectFields"}) as unknown as TypedDocumentString<AccountingReferenceObjectFieldsFragment, unknown>;
+export const AccountingAppSettingsFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccountingAppSettingsFields on AccountingAppSettings {
+  activeSource
+  instanceAppAvailable
+  instanceEnvironment
+  redirectUrl
+  webhookPath
+  tenantApp {
+    id
+    integrationType
+    environment
+    clientId
+    hasWebhookVerifier
+    version
+    updatedAt
+  }
+}
+    `, {"fragmentName":"AccountingAppSettingsFields"}) as unknown as TypedDocumentString<AccountingAppSettingsFieldsFragment, unknown>;
+export const AccountingConnectionFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccountingConnectionFields on AccountingConnection {
+  id
+  integrationType
+  status
+  appSource
+  appEnvironment
+  externalCompanyName
+  externalLegalName
+  externalCountry
+  externalHomeCurrency
+  externalMultiCurrencyEnabled
+  externalBooksClosedThrough
+  lastCheckedAt
+  lastSuccessAt
+  lastFailureAt
+  consecutiveFailures
+  lastErrorCategory
+  lastErrorMessage
+  lastWebhookAt
+  refreshTokenAbsoluteExpiresAt
+  connectedAt
+  disconnectedAt
+  setupStep
+  syncStartDate
+  syncEnabledAt
+  autoSync
+  driverSettlementsEnabledAt
+  syncsDriverSettlements
+  pausedAt
+  pausedBy {
+    id
+    name
+  }
+  pausedReason
+  referenceRefreshStartedAt
+  referenceRefreshedAt
+  referenceRefreshError
+  version
+  updatedAt
+}
+    `, {"fragmentName":"AccountingConnectionFields"}) as unknown as TypedDocumentString<AccountingConnectionFieldsFragment, unknown>;
+export const AccountingSyncStatusFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccountingSyncStatusFields on AccountingSyncStatus {
+  integrationType
+  providerName
+  available
+  app {
+    ...AccountingAppSettingsFields
+  }
+  connection {
+    ...AccountingConnectionFields
+  }
+}
+    fragment AccountingConnectionFields on AccountingConnection {
+  id
+  integrationType
+  status
+  appSource
+  appEnvironment
+  externalCompanyName
+  externalLegalName
+  externalCountry
+  externalHomeCurrency
+  externalMultiCurrencyEnabled
+  externalBooksClosedThrough
+  lastCheckedAt
+  lastSuccessAt
+  lastFailureAt
+  consecutiveFailures
+  lastErrorCategory
+  lastErrorMessage
+  lastWebhookAt
+  refreshTokenAbsoluteExpiresAt
+  connectedAt
+  disconnectedAt
+  setupStep
+  syncStartDate
+  syncEnabledAt
+  autoSync
+  driverSettlementsEnabledAt
+  syncsDriverSettlements
+  pausedAt
+  pausedBy {
+    id
+    name
+  }
+  pausedReason
+  referenceRefreshStartedAt
+  referenceRefreshedAt
+  referenceRefreshError
+  version
+  updatedAt
+}
+fragment AccountingAppSettingsFields on AccountingAppSettings {
+  activeSource
+  instanceAppAvailable
+  instanceEnvironment
+  redirectUrl
+  webhookPath
+  tenantApp {
+    id
+    integrationType
+    environment
+    clientId
+    hasWebhookVerifier
+    version
+    updatedAt
+  }
+}`, {"fragmentName":"AccountingSyncStatusFields"}) as unknown as TypedDocumentString<AccountingSyncStatusFieldsFragment, unknown>;
+export const AccountingSyncRecordFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccountingSyncRecordFields on AccountingSyncRecord {
+  id
+  objectType
+  objectId
+  objectNumber
+  operation
+  sourceEvent
+  revision
+  documentDate
+  dependsOnRecordId
+  status
+  attemptCount
+  nextAttemptAt
+  externalId
+  externalDocNumber
+  externalUrl
+  errorCategory
+  errorCode
+  errorMessage
+  resolution
+  queuedAt
+  startedAt
+  syncedAt
+  skippedBy {
+    id
+    name
+  }
+  skippedReason
+  version
+  updatedAt
+}
+    `, {"fragmentName":"AccountingSyncRecordFields"}) as unknown as TypedDocumentString<AccountingSyncRecordFieldsFragment, unknown>;
+export const AccountingBackfillFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccountingBackfillFields on AccountingBackfill {
+  id
+  rangeStart
+  rangeEnd
+  objectTypes
+  status
+  enqueuedCount
+  alreadyQueuedCount
+  startedAt
+  completedAt
+  lastError
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AccountingBackfillFields"}) as unknown as TypedDocumentString<AccountingBackfillFieldsFragment, unknown>;
 export const LateChargeAssessmentResultFieldsFragmentDoc = new TypedDocumentString(`
     fragment LateChargeAssessmentResultFields on LateChargeAssessmentResult {
   asOfDate
@@ -13980,6 +14546,7 @@ export const PendingProposalFieldsFragmentDoc = new TypedDocumentString(`
     minimum
     maximum
     maxLength
+    readOnly
   }
   modifications
   evidence {
@@ -14325,6 +14892,217 @@ export const AgentPlanTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AgentPlanTableRowFields"}) as unknown as TypedDocumentString<AgentPlanTableRowFieldsFragment, unknown>;
+export const AgentProposalPreviewFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentProposalPreviewFields on AgentProposalPreview {
+  proposalId
+  tool
+  summary
+  coverage
+  changes {
+    resource
+    record {
+      entityType
+      id
+    }
+    entityId
+    label
+    operation
+    version
+    withheld
+    dependsOnStep
+    fields {
+      path
+      label
+      valueType
+      before
+      after
+      beforeRef {
+        resource
+        id
+        label
+        record {
+          entityType
+          id
+        }
+        withheld
+      }
+      afterRef {
+        resource
+        id
+        label
+        record {
+          entityType
+          id
+        }
+        withheld
+      }
+      withheld
+      volatile
+      truncated
+      changedSinceProposed
+      proposedBefore
+      projectedFromStep
+    }
+    omittedFields
+    message {
+      channel
+      from
+      to
+      cc
+      bcc
+      attachments
+      subject
+      body
+      bodyTruncated
+      visibility
+      cadence
+      templateVersionId
+    }
+    money {
+      currency
+      lines {
+        label
+        before
+        after
+      }
+      totalBefore
+      totalAfter
+      delta
+      withheld
+    }
+  }
+  warnings {
+    code
+    args
+    message
+  }
+  stale
+  staleness {
+    pinned
+    proposedVersion
+    currentVersion
+    missing
+  }
+  targetVersion
+  withheldCount
+  omittedRecords
+  recorded
+  computedAt
+  digest
+}
+    `, {"fragmentName":"AgentProposalPreviewFields"}) as unknown as TypedDocumentString<AgentProposalPreviewFieldsFragment, unknown>;
+export const AgentPlanPreviewFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AgentPlanPreviewFields on AgentPlanPreview {
+  planId
+  steps {
+    proposalId
+    step
+    preview {
+      ...AgentProposalPreviewFields
+    }
+  }
+  digest
+  stale
+  withheldCount
+  computedAt
+}
+    fragment AgentProposalPreviewFields on AgentProposalPreview {
+  proposalId
+  tool
+  summary
+  coverage
+  changes {
+    resource
+    record {
+      entityType
+      id
+    }
+    entityId
+    label
+    operation
+    version
+    withheld
+    dependsOnStep
+    fields {
+      path
+      label
+      valueType
+      before
+      after
+      beforeRef {
+        resource
+        id
+        label
+        record {
+          entityType
+          id
+        }
+        withheld
+      }
+      afterRef {
+        resource
+        id
+        label
+        record {
+          entityType
+          id
+        }
+        withheld
+      }
+      withheld
+      volatile
+      truncated
+      changedSinceProposed
+      proposedBefore
+      projectedFromStep
+    }
+    omittedFields
+    message {
+      channel
+      from
+      to
+      cc
+      bcc
+      attachments
+      subject
+      body
+      bodyTruncated
+      visibility
+      cadence
+      templateVersionId
+    }
+    money {
+      currency
+      lines {
+        label
+        before
+        after
+      }
+      totalBefore
+      totalAfter
+      delta
+      withheld
+    }
+  }
+  warnings {
+    code
+    args
+    message
+  }
+  stale
+  staleness {
+    pinned
+    proposedVersion
+    currentVersion
+    missing
+  }
+  targetVersion
+  withheldCount
+  omittedRecords
+  recorded
+  computedAt
+  digest
+}`, {"fragmentName":"AgentPlanPreviewFields"}) as unknown as TypedDocumentString<AgentPlanPreviewFieldsFragment, unknown>;
 export const AgentProposalTableRowFieldsFragmentDoc = new TypedDocumentString(`
     fragment AgentProposalTableRowFields on AgentProposal {
   id
@@ -14347,6 +15125,7 @@ export const AgentProposalTableRowFieldsFragmentDoc = new TypedDocumentString(`
     minimum
     maximum
     maxLength
+    readOnly
   }
   modifications
   tainted
@@ -14392,6 +15171,7 @@ fragment AgentProposalTableRowFields on AgentProposal {
     minimum
     maximum
     maxLength
+    readOnly
   }
   modifications
   tainted
@@ -21363,8 +22143,10 @@ export const WorkerDataTablePageInfoFieldsFragmentDoc = new TypedDocumentString(
     `, {"fragmentName":"WorkerDataTablePageInfoFields"}) as unknown as TypedDocumentString<WorkerDataTablePageInfoFieldsFragment, unknown>;
 export const AccessorialChargeTableDocument = {"__meta__":{"kind":"query","name":"AccessorialChargeTable","hash":"sha256:428bf0351875289ecd242e7153b17c69f386b3edb5106b4bc369b85341769d91"}} as unknown as TypedDocumentString<AccessorialChargeTableQuery, AccessorialChargeTableQueryVariables>;
 export const AccountTypeTableDocument = {"__meta__":{"kind":"query","name":"AccountTypeTable","hash":"sha256:bd52997a38905cd2b8343527e55ae1488b2e2f87bc1e50192a1909481e075956"}} as unknown as TypedDocumentString<AccountTypeTableQuery, AccountTypeTableQueryVariables>;
-export const AccountingSyncStatusDocument = {"__meta__":{"kind":"query","name":"AccountingSyncStatus","hash":"sha256:18d656a85d8d6d2cd50789e32da3a8822079e6e1c95d70c87fb8c21b51edb827"}} as unknown as TypedDocumentString<AccountingSyncStatusQuery, AccountingSyncStatusQueryVariables>;
-export const AccountingMappingSummaryDocument = {"__meta__":{"kind":"query","name":"AccountingMappingSummary","hash":"sha256:86376103c7d6a75333ab51a8a17331b6d5e983221b3b636a774bc49e99e3a16c"}} as unknown as TypedDocumentString<AccountingMappingSummaryQuery, AccountingMappingSummaryQueryVariables>;
+export const AccountingSyncStatusDocument = {"__meta__":{"kind":"query","name":"AccountingSyncStatus","hash":"sha256:e16e7cd9f706060a6c86ef5cb54f12ae78b3ef05ce98cec0df533405392c9640"}} as unknown as TypedDocumentString<AccountingSyncStatusQuery, AccountingSyncStatusQueryVariables>;
+export const SaveAccountingAppDocument = {"__meta__":{"kind":"mutation","name":"SaveAccountingApp","hash":"sha256:733dc6e12ce68fcbcd7aa7d624d8cbaa4edf6d6ed8d12b5dcb46c2be9c7e982f"}} as unknown as TypedDocumentString<SaveAccountingAppMutation, SaveAccountingAppMutationVariables>;
+export const RemoveAccountingAppDocument = {"__meta__":{"kind":"mutation","name":"RemoveAccountingApp","hash":"sha256:f852854f7e9078476c8d29033afd4a772796708ad7603f4d2dae8df21ffd7d20"}} as unknown as TypedDocumentString<RemoveAccountingAppMutation, RemoveAccountingAppMutationVariables>;
+export const AccountingMappingSummaryDocument = {"__meta__":{"kind":"query","name":"AccountingMappingSummary","hash":"sha256:eeb7c4f23d4f18601d058a077f411ea5b09c64ba58ccee1e9bc780207e258298"}} as unknown as TypedDocumentString<AccountingMappingSummaryQuery, AccountingMappingSummaryQueryVariables>;
 export const AccountingMappingsDocument = {"__meta__":{"kind":"query","name":"AccountingMappings","hash":"sha256:ec5c15fcda7c5480585a4bceed9ee0a06b51a918213489948873b69815602e21"}} as unknown as TypedDocumentString<AccountingMappingsQuery, AccountingMappingsQueryVariables>;
 export const AccountingReferenceObjectsDocument = {"__meta__":{"kind":"query","name":"AccountingReferenceObjects","hash":"sha256:c17d6f7e89eb758f813e16f3f368e0e9ff1fa4675322e6635e0b404634c26497"}} as unknown as TypedDocumentString<AccountingReferenceObjectsQuery, AccountingReferenceObjectsQueryVariables>;
 export const ConfirmAccountingMappingsDocument = {"__meta__":{"kind":"mutation","name":"ConfirmAccountingMappings","hash":"sha256:972c4c1295fdfd7686c0941ce7f6d05b5ef38e472d509a40063c660ed8af807b"}} as unknown as TypedDocumentString<ConfirmAccountingMappingsMutation, ConfirmAccountingMappingsMutationVariables>;
@@ -21372,12 +22154,28 @@ export const RejectAccountingMappingDocument = {"__meta__":{"kind":"mutation","n
 export const SetAccountingMappingDocument = {"__meta__":{"kind":"mutation","name":"SetAccountingMapping","hash":"sha256:62076000a35af1ae7f74db441e343d561ba833bbaa2db69a78d2b43f16ff66e6"}} as unknown as TypedDocumentString<SetAccountingMappingMutation, SetAccountingMappingMutationVariables>;
 export const ClearAccountingMappingDocument = {"__meta__":{"kind":"mutation","name":"ClearAccountingMapping","hash":"sha256:3a4c31af7f87007aa586714692ca62e827f49dca04f7581b88cbda6642fbc629"}} as unknown as TypedDocumentString<ClearAccountingMappingMutation, ClearAccountingMappingMutationVariables>;
 export const CreateAccountingReferenceRecordDocument = {"__meta__":{"kind":"mutation","name":"CreateAccountingReferenceRecord","hash":"sha256:38c54277694239f55cc2ee899869f98216caee08c3ca7f73614ac37eb2507710"}} as unknown as TypedDocumentString<CreateAccountingReferenceRecordMutation, CreateAccountingReferenceRecordMutationVariables>;
-export const RefreshAccountingReferenceDataDocument = {"__meta__":{"kind":"mutation","name":"RefreshAccountingReferenceData","hash":"sha256:aa0e7f55c009a95c9ce76a43fd02b591f634f890c64cec197bf986e2124a5ba6"}} as unknown as TypedDocumentString<RefreshAccountingReferenceDataMutation, RefreshAccountingReferenceDataMutationVariables>;
-export const CompleteAccountingSetupDocument = {"__meta__":{"kind":"mutation","name":"CompleteAccountingSetup","hash":"sha256:038f16e955717a9140a5ca88e4f27ef065c7df44601662f98b92e6d581f940d9"}} as unknown as TypedDocumentString<CompleteAccountingSetupMutation, CompleteAccountingSetupMutationVariables>;
+export const RefreshAccountingReferenceDataDocument = {"__meta__":{"kind":"mutation","name":"RefreshAccountingReferenceData","hash":"sha256:9dd16cbefc7626732a87394513d20eaad5e64e985556a01191a731863ac872a9"}} as unknown as TypedDocumentString<RefreshAccountingReferenceDataMutation, RefreshAccountingReferenceDataMutationVariables>;
+export const CompleteAccountingSetupDocument = {"__meta__":{"kind":"mutation","name":"CompleteAccountingSetup","hash":"sha256:f5eb426e439f0d92bd525b820988aead49cc811d794620b98ec0a88fc7b9a36c"}} as unknown as TypedDocumentString<CompleteAccountingSetupMutation, CompleteAccountingSetupMutationVariables>;
 export const StartAccountingAuthorizationDocument = {"__meta__":{"kind":"mutation","name":"StartAccountingAuthorization","hash":"sha256:373bd1c21d5c39a7e820ca7c9442eed0be3481386e556b544455ad7b6c94815f"}} as unknown as TypedDocumentString<StartAccountingAuthorizationMutation, StartAccountingAuthorizationMutationVariables>;
-export const CompleteAccountingAuthorizationDocument = {"__meta__":{"kind":"mutation","name":"CompleteAccountingAuthorization","hash":"sha256:5e8309ec8536fdeb8d3094032ad9164f590931775d44ea2a65731d275f0a59e8"}} as unknown as TypedDocumentString<CompleteAccountingAuthorizationMutation, CompleteAccountingAuthorizationMutationVariables>;
-export const DisconnectAccountingSystemDocument = {"__meta__":{"kind":"mutation","name":"DisconnectAccountingSystem","hash":"sha256:f0dffe70fc26b7fab486fef311a8a25f5a28b7fbc4aa730283c4aab62374742b"}} as unknown as TypedDocumentString<DisconnectAccountingSystemMutation, DisconnectAccountingSystemMutationVariables>;
-export const CheckAccountingConnectionDocument = {"__meta__":{"kind":"mutation","name":"CheckAccountingConnection","hash":"sha256:91617e54bef69e91cb3f9e1963f300e278b3839720814caa60b69824e2cde851"}} as unknown as TypedDocumentString<CheckAccountingConnectionMutation, CheckAccountingConnectionMutationVariables>;
+export const CompleteAccountingAuthorizationDocument = {"__meta__":{"kind":"mutation","name":"CompleteAccountingAuthorization","hash":"sha256:d70e0c4e5de9a50ade90eecafb660ac13f984b48d75362ed62f60e5b88766517"}} as unknown as TypedDocumentString<CompleteAccountingAuthorizationMutation, CompleteAccountingAuthorizationMutationVariables>;
+export const DisconnectAccountingSystemDocument = {"__meta__":{"kind":"mutation","name":"DisconnectAccountingSystem","hash":"sha256:2c575fb840455bb3ceb9f231c3bcd7e2428b3bd9fcbe9285c4ce9f239c52b7ce"}} as unknown as TypedDocumentString<DisconnectAccountingSystemMutation, DisconnectAccountingSystemMutationVariables>;
+export const CheckAccountingConnectionDocument = {"__meta__":{"kind":"mutation","name":"CheckAccountingConnection","hash":"sha256:49b9aaf645d78b2e29c4043109cbf1f1cc72f63827b3bca493ae2db34e63191a"}} as unknown as TypedDocumentString<CheckAccountingConnectionMutation, CheckAccountingConnectionMutationVariables>;
+export const AccountingSyncSummaryDocument = {"__meta__":{"kind":"query","name":"AccountingSyncSummary","hash":"sha256:ed68a2cf908c2c99cf32c4bd82449af383fde7ad67a137a1249f5b4c72aa2251"}} as unknown as TypedDocumentString<AccountingSyncSummaryQuery, AccountingSyncSummaryQueryVariables>;
+export const AccountingSyncRecordsDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecords","hash":"sha256:3022089755fa1469cd41421894de5c50fe8121974fa14f2a36709713ed761b40"}} as unknown as TypedDocumentString<AccountingSyncRecordsQuery, AccountingSyncRecordsQueryVariables>;
+export const AccountingSyncRecordDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecord","hash":"sha256:4383a49db007e46422387d7a4eb5dccd2d5e1df0de4a43ef2ff85a45cfdd3dab"}} as unknown as TypedDocumentString<AccountingSyncRecordQuery, AccountingSyncRecordQueryVariables>;
+export const AccountingSyncAttemptsDocument = {"__meta__":{"kind":"query","name":"AccountingSyncAttempts","hash":"sha256:d3f0cb9f536ed5e5f3abe09b9abfc0cee6af53b85b6a57dbfb60c70412de4874"}} as unknown as TypedDocumentString<AccountingSyncAttemptsQuery, AccountingSyncAttemptsQueryVariables>;
+export const AccountingSyncObjectStatesDocument = {"__meta__":{"kind":"query","name":"AccountingSyncObjectStates","hash":"sha256:b18f5f22813de4df41fd57d9916f0257cb454cbf9eaff002e55d5b717e9ed845"}} as unknown as TypedDocumentString<AccountingSyncObjectStatesQuery, AccountingSyncObjectStatesQueryVariables>;
+export const AccountingBackfillsDocument = {"__meta__":{"kind":"query","name":"AccountingBackfills","hash":"sha256:949d632c126674d015d12b70208d61672d82b30e3fc9757c55f777e4e710d29b"}} as unknown as TypedDocumentString<AccountingBackfillsQuery, AccountingBackfillsQueryVariables>;
+export const EnableAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"EnableAccountingSync","hash":"sha256:4d59412b58e538deed12f3b4a8031a6179b3e5fef3784b3274ea38f33f1597e9"}} as unknown as TypedDocumentString<EnableAccountingSyncMutation, EnableAccountingSyncMutationVariables>;
+export const UpdateAccountingSyncSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateAccountingSyncSettings","hash":"sha256:286bc6ad30ae8900234d76bbe8a4120fbc498d48f70c1be005e148edf6f53578"}} as unknown as TypedDocumentString<UpdateAccountingSyncSettingsMutation, UpdateAccountingSyncSettingsMutationVariables>;
+export const PauseAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"PauseAccountingSync","hash":"sha256:c21618c88de51d5d71b1b39e23054f30070cf0befea1670e0f118aa71083a636"}} as unknown as TypedDocumentString<PauseAccountingSyncMutation, PauseAccountingSyncMutationVariables>;
+export const ResumeAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"ResumeAccountingSync","hash":"sha256:a468cf9f1c8759b3d37b74997a7445ef2d5de2b9d873b89b1522e5bd76f04ce1"}} as unknown as TypedDocumentString<ResumeAccountingSyncMutation, ResumeAccountingSyncMutationVariables>;
+export const RetryAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"RetryAccountingSync","hash":"sha256:e979623f3d680cc3e11b35af17517321244479a9490b5a33bc0d61a7fd36307b"}} as unknown as TypedDocumentString<RetryAccountingSyncMutation, RetryAccountingSyncMutationVariables>;
+export const ReleaseAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"ReleaseAccountingSync","hash":"sha256:92e93ee66e3af468923f09c1e34ce36127a8ce406ee96c7a484349f60c1bda9e"}} as unknown as TypedDocumentString<ReleaseAccountingSyncMutation, ReleaseAccountingSyncMutationVariables>;
+export const SkipAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"SkipAccountingSync","hash":"sha256:952b395783216172a3ef671af3d707ef257507d24a4cfd055641d0f9938d6168"}} as unknown as TypedDocumentString<SkipAccountingSyncMutation, SkipAccountingSyncMutationVariables>;
+export const RequestAccountingBackfillDocument = {"__meta__":{"kind":"mutation","name":"RequestAccountingBackfill","hash":"sha256:8f2d2eb0a1b533f8f6840beeb2d1acb4521cde2fb60fb4d388f3a09487d18106"}} as unknown as TypedDocumentString<RequestAccountingBackfillMutation, RequestAccountingBackfillMutationVariables>;
+export const ChangeAccountingBackfillDocument = {"__meta__":{"kind":"mutation","name":"ChangeAccountingBackfill","hash":"sha256:25c2e40a5030190dba087fe94b6f9078acff46f0065f77611f3b35f1931a9523"}} as unknown as TypedDocumentString<ChangeAccountingBackfillMutation, ChangeAccountingBackfillMutationVariables>;
+export const AccountingSyncRecordTableDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecordTable","hash":"sha256:044e65c16d681d57e28f63b395f5308354481365cb818e35c44a610e9e4728be"}} as unknown as TypedDocumentString<AccountingSyncRecordTableQuery, AccountingSyncRecordTableQueryVariables>;
 export const LateChargePreviewDocument = {"__meta__":{"kind":"query","name":"LateChargePreview","hash":"sha256:44fccb916e6be6056ca7ed3b6854c5dd9f7421889b8e5ce421b347391a22d5fb"}} as unknown as TypedDocumentString<LateChargePreviewQuery, LateChargePreviewQueryVariables>;
 export const AssessLateChargesDocument = {"__meta__":{"kind":"mutation","name":"AssessLateCharges","hash":"sha256:c63c2c03e469f92f955ba04285415d029b2fb6bf3b9f79432e0afb9a967ab66c"}} as unknown as TypedDocumentString<AssessLateChargesMutation, AssessLateChargesMutationVariables>;
 export const ArAgingSummaryDocument = {"__meta__":{"kind":"query","name":"ArAgingSummary","hash":"sha256:6e0cbca355dfb7e59c403efe34be542aee4f26ff779d480e08e077574626daf9"}} as unknown as TypedDocumentString<ArAgingSummaryQuery, ArAgingSummaryQueryVariables>;
@@ -21396,7 +22194,7 @@ export const ArCustomerProfileDocument = {"__meta__":{"kind":"query","name":"ArC
 export const AgentScorecardDocument = {"__meta__":{"kind":"query","name":"AgentScorecard","hash":"sha256:4ad32e77a6c5d07bddbf798b32093cb772102fd0a3a232f14c6c0e1136dc699f"}} as unknown as TypedDocumentString<AgentScorecardQuery, AgentScorecardQueryVariables>;
 export const MyAgentsDocument = {"__meta__":{"kind":"query","name":"MyAgents","hash":"sha256:fbba5deefba9da56ab81d72cd1815eed78a2855232af5826e2ec73f3f787cbc5"}} as unknown as TypedDocumentString<MyAgentsQuery, MyAgentsQueryVariables>;
 export const DecideMyPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideMyPlan","hash":"sha256:9a89b2fadb3bbade1f0c771624ca6cc51a6f9331c122e4c14d462c629db2e868"}} as unknown as TypedDocumentString<DecideMyPlanMutation, DecideMyPlanMutationVariables>;
-export const DecideMyProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposal","hash":"sha256:64dea8adddc7bea71fcfb7abc268678df95b4aa90847396b783656abc92f0180"}} as unknown as TypedDocumentString<DecideMyProposalMutation, DecideMyProposalMutationVariables>;
+export const DecideMyProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideMyProposal","hash":"sha256:cf3c4ea53d12c1f61f37b2fdefda3a45507f197dcfc721e514db2a83c876a993"}} as unknown as TypedDocumentString<DecideMyProposalMutation, DecideMyProposalMutationVariables>;
 export const AgentAccessDocument = {"__meta__":{"kind":"query","name":"AgentAccess","hash":"sha256:a96fd576cc93fef1d6389a872a52d1d681ed4ce882cba36bb6ef2199d6fda41f"}} as unknown as TypedDocumentString<AgentAccessQuery, AgentAccessQueryVariables>;
 export const SetAgentAccessDocument = {"__meta__":{"kind":"mutation","name":"SetAgentAccess","hash":"sha256:e6df898351f5a8c4e7ba13ec77ffd0d5b05464e9abe0fff637b90a0d2e6e61ce"}} as unknown as TypedDocumentString<SetAgentAccessMutation, SetAgentAccessMutationVariables>;
 export const RoleAgentAccessDocument = {"__meta__":{"kind":"query","name":"RoleAgentAccess","hash":"sha256:4320bfe8fce105b07adf7782d513aaff38f3b1aa012079c2d259df9de7eaebcc"}} as unknown as TypedDocumentString<RoleAgentAccessQuery, RoleAgentAccessQueryVariables>;
@@ -21413,10 +22211,10 @@ export const AiAuditExportDownloadDocument = {"__meta__":{"kind":"mutation","nam
 export const VerifyAiAuditChainDocument = {"__meta__":{"kind":"mutation","name":"VerifyAIAuditChain","hash":"sha256:ef094f57f0060f6885edbec0665b81e27e2b8e09b047819be47dae0e6b423ad5"}} as unknown as TypedDocumentString<VerifyAiAuditChainMutation, VerifyAiAuditChainMutationVariables>;
 export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:a44ebbd4e0c314668190068941ad623cefb3b405b0fb345a4dfe58072465cf70"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
 export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:5f38f15ae16abb622bccc80b578ce30e1743ab4b89440782ac1b96232f48a2c3"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
-export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"PendingDecisions","hash":"sha256:830984fb64f11f16fc179642cec7259c4e9c4274405f3cf81a86367a8bc77a91"}} as unknown as TypedDocumentString<PendingDecisionsQuery, PendingDecisionsQueryVariables>;
+export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"PendingDecisions","hash":"sha256:f81797b6723f5a53cc3d5fa9f98285e347b14158be8f0039c6a93769ce5cb00c"}} as unknown as TypedDocumentString<PendingDecisionsQuery, PendingDecisionsQueryVariables>;
 export const PendingDecisionSummaryDocument = {"__meta__":{"kind":"query","name":"PendingDecisionSummary","hash":"sha256:4da8f1517d5269e2a6a982d9b22085d0fc060aad3115dfe942ffbbb4318f0aa6"}} as unknown as TypedDocumentString<PendingDecisionSummaryQuery, PendingDecisionSummaryQueryVariables>;
-export const PlanStepsDocument = {"__meta__":{"kind":"query","name":"PlanSteps","hash":"sha256:8e998d8ca99ecb3ec7ccb8444e779245bf0b12661400fe1e4ddee2e86cd22472"}} as unknown as TypedDocumentString<PlanStepsQuery, PlanStepsQueryVariables>;
-export const DecideAgentProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposals","hash":"sha256:59304c594ac96561580ae98bff8ecf6ac041a40f45487c9319485de537cef971"}} as unknown as TypedDocumentString<DecideAgentProposalsMutation, DecideAgentProposalsMutationVariables>;
+export const PlanStepsDocument = {"__meta__":{"kind":"query","name":"PlanSteps","hash":"sha256:be027bd8678aed7dad10ecd7053e48b476074bdfd2f37ffbab2df21aaaa50d02"}} as unknown as TypedDocumentString<PlanStepsQuery, PlanStepsQueryVariables>;
+export const DecideAgentProposalsDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposals","hash":"sha256:307e160ab24ebe206297811b6ef210e7fda7d5f4412f9d5018d00bdce35f4d91"}} as unknown as TypedDocumentString<DecideAgentProposalsMutation, DecideAgentProposalsMutationVariables>;
 export const AgentDefinitionCardsDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCards","hash":"sha256:ff67572be665e12db87c087023a2b6d8a8fc15ac2af2add16594e6ef22feca59"}} as unknown as TypedDocumentString<AgentDefinitionCardsQuery, AgentDefinitionCardsQueryVariables>;
 export const AgentChoicesDocument = {"__meta__":{"kind":"query","name":"AgentChoices","hash":"sha256:6bb1514f9329e2c8e1ed77638129117516e2d14d070b7502591fbc60fbe83130"}} as unknown as TypedDocumentString<AgentChoicesQuery, AgentChoicesQueryVariables>;
 export const AgentDefinitionCountDocument = {"__meta__":{"kind":"query","name":"AgentDefinitionCount","hash":"sha256:daacf568820fcf8bddb93d6841d154a39ae37f4f40aab47e3e127efda1270831"}} as unknown as TypedDocumentString<AgentDefinitionCountQuery, AgentDefinitionCountQueryVariables>;
@@ -21445,9 +22243,13 @@ export const DismissAgentMemorySuggestionDocument = {"__meta__":{"kind":"mutatio
 export const AgentPlanTableDocument = {"__meta__":{"kind":"query","name":"AgentPlanTable","hash":"sha256:5255cd6f89e45711f75b6a9c0bab65c62fd49fb78028a756fa2ad1645c479b3b"}} as unknown as TypedDocumentString<AgentPlanTableQuery, AgentPlanTableQueryVariables>;
 export const AgentPlanDetailDocument = {"__meta__":{"kind":"query","name":"AgentPlanDetail","hash":"sha256:3affbeb0bac2f8967290c76d3dce18119fce77b53b295399e5764897a1a475ef"}} as unknown as TypedDocumentString<AgentPlanDetailQuery, AgentPlanDetailQueryVariables>;
 export const DecideAgentPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentPlan","hash":"sha256:b2f23a83f557ca02504d0a017043627ff687ebcebb5ac117779eb4d5611ff57c"}} as unknown as TypedDocumentString<DecideAgentPlanMutation, DecideAgentPlanMutationVariables>;
-export const AgentProposalTableDocument = {"__meta__":{"kind":"query","name":"AgentProposalTable","hash":"sha256:8ab53908dace62550c99e3dd0961deda1222e1e0260ba26d826c16fee00db78e"}} as unknown as TypedDocumentString<AgentProposalTableQuery, AgentProposalTableQueryVariables>;
-export const AgentProposalDetailDocument = {"__meta__":{"kind":"query","name":"AgentProposalDetail","hash":"sha256:23c2a7710b90b7e612855b1126f3938b7bdf74c7f9f899ff6db317f7be067d82"}} as unknown as TypedDocumentString<AgentProposalDetailQuery, AgentProposalDetailQueryVariables>;
-export const DecideAgentProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposal","hash":"sha256:ba06fd0f5bb9168980d5d967514bf0bcbd80382200e836955aa5704c4c9f1836"}} as unknown as TypedDocumentString<DecideAgentProposalMutation, DecideAgentProposalMutationVariables>;
+export const AgentProposalPreviewDocument = {"__meta__":{"kind":"query","name":"AgentProposalPreview","hash":"sha256:cc8c911a73bd53b7f470b05bd8168f72c08120cc0170c4fe436c93fcd7e95116"}} as unknown as TypedDocumentString<AgentProposalPreviewQuery, AgentProposalPreviewQueryVariables>;
+export const MyProposalPreviewDocument = {"__meta__":{"kind":"query","name":"MyProposalPreview","hash":"sha256:b5f2a2de45a60b828581481d2aa42377afde5a9a9bf09d84bd778d11d967e55c"}} as unknown as TypedDocumentString<MyProposalPreviewQuery, MyProposalPreviewQueryVariables>;
+export const AgentPlanPreviewDocument = {"__meta__":{"kind":"query","name":"AgentPlanPreview","hash":"sha256:96a86d17e65b779fc5373755a99a2b8e934c0dba1fb89d4cab052205fd4a58d5"}} as unknown as TypedDocumentString<AgentPlanPreviewQuery, AgentPlanPreviewQueryVariables>;
+export const MyPlanPreviewDocument = {"__meta__":{"kind":"query","name":"MyPlanPreview","hash":"sha256:bdeb1162f88da7b25a4f705e845dca4c3d943257b88905d885af2ccb30023342"}} as unknown as TypedDocumentString<MyPlanPreviewQuery, MyPlanPreviewQueryVariables>;
+export const AgentProposalTableDocument = {"__meta__":{"kind":"query","name":"AgentProposalTable","hash":"sha256:fb30332a91016c92c863b7ae2d4504ca5f097ed77f0583216d92ecc403582380"}} as unknown as TypedDocumentString<AgentProposalTableQuery, AgentProposalTableQueryVariables>;
+export const AgentProposalDetailDocument = {"__meta__":{"kind":"query","name":"AgentProposalDetail","hash":"sha256:f099f071d05e17291714533568e09673169e7234a66a98098624adcbcc8ec826"}} as unknown as TypedDocumentString<AgentProposalDetailQuery, AgentProposalDetailQueryVariables>;
+export const DecideAgentProposalDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentProposal","hash":"sha256:d5dd2d9f5f76ec53c9208554a9161365633dc1fa2cb1823a1431098cddcf71bf"}} as unknown as TypedDocumentString<DecideAgentProposalMutation, DecideAgentProposalMutationVariables>;
 export const AgentQualityOverviewDocument = {"__meta__":{"kind":"query","name":"AgentQualityOverview","hash":"sha256:fd588f4ad3aa62b884aa8b47212820447464b06189aede33f9fff7c0313a741b"}} as unknown as TypedDocumentString<AgentQualityOverviewQuery, AgentQualityOverviewQueryVariables>;
 export const AgentQualityAgentTableDocument = {"__meta__":{"kind":"query","name":"AgentQualityAgentTable","hash":"sha256:02b7d69ddd49b36da7d8a72d39d36e8860177855abe0149232e6363974291339"}} as unknown as TypedDocumentString<AgentQualityAgentTableQuery, AgentQualityAgentTableQueryVariables>;
 export const AgentWorstRatedAnswerTableDocument = {"__meta__":{"kind":"query","name":"AgentWorstRatedAnswerTable","hash":"sha256:1754184fcf56f7a454908a044f784df3d4ee77f4a441897ddbf6323455fd21f4"}} as unknown as TypedDocumentString<AgentWorstRatedAnswerTableQuery, AgentWorstRatedAnswerTableQueryVariables>;

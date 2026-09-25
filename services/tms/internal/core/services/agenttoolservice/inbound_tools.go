@@ -9,7 +9,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -422,6 +421,7 @@ type inboundReplier struct {
 	inliner   serviceports.AssetInliner
 	customers repositories.CustomerRepository
 	shipments repositories.ShipmentRepository
+	senders   serviceports.EmailSenderResolver
 }
 
 type replyToInboundMessageParams struct {
@@ -434,6 +434,7 @@ type replyToInboundMessageParams struct {
 	Inliner   serviceports.AssetInliner
 	Customers repositories.CustomerRepository
 	Shipments repositories.ShipmentRepository
+	Senders   serviceports.EmailSenderResolver `optional:"true"`
 }
 
 type replyToInboundMessageTool struct {
@@ -451,6 +452,7 @@ func newReplyToInboundMessageTool(p replyToInboundMessageParams) serviceports.Ag
 			inliner:   p.Inliner,
 			customers: p.Customers,
 			shipments: p.Shipments,
+			senders:   p.Senders,
 		},
 	}
 }
@@ -585,86 +587,25 @@ func (t *replyToInboundMessageTool) Validate(
 	return err
 }
 
-func (t *replyToInboundMessageTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	reply, err := t.prepare(ctx, params)
-	if err != nil {
-		return nil, err
-	}
-
-	return &agent.ToolSimulation{
-		Summary: "Would reply to " + reply.message.FromAddress + " in the thread " +
-			describeInboundMessage(reply.message) + ", and mark the message actioned",
-		Changes: []agent.FieldChange{
-			{Field: "to", To: reply.message.FromAddress},
-			{Field: "subject", To: reply.subject},
-			{Field: "body", To: reply.body},
-			{
-				Field: "status",
-				From:  string(reply.message.Status),
-				To:    string(inboundmessage.StatusActioned),
-			},
-		},
-		Previewed: true,
-	}, nil
-}
-
 func (t *replyToInboundMessageTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	reply, err := t.prepare(ctx, params)
+	composed, err := t.compose(ctx, &params)
 	if err != nil {
 		return err
 	}
 
-	tenant := tenantFrom(params)
-	data := documenttemplate.AgentEmailContext{
-		AgentSubject: reply.subject,
-		AgentBody:    reply.body,
-	}
-	t.describeMatch(ctx, reply.message, tenant, &data)
-	brandAgentEmail(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &data)
-
-	rendered, err := t.deps.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
-		TenantInfo: tenant,
-		Kind:       documenttemplate.KindAgentInboundReplyEmail,
-		CustomerID: pulid.PtrOrNil(reply.message.MatchedCustomerID),
-		Data:       data,
-	})
-	if err != nil {
-		return err
-	}
-
-	if _, err = t.deps.email.Send(ctx, &serviceports.SendEmailRequest{
-		TenantInfo:     tenant,
-		ProfileID:      reply.profileID,
-		Purpose:        email.PurposeOperations,
-		To:             []string{reply.message.FromAddress},
-		Subject:        rendered.Subject,
-		HTML:           rendered.HTML,
-		Text:           rendered.Text,
-		Headers:        threadHeaders(reply.message),
-		IdempotencyKey: params.IdempotencyKey,
-	}); err != nil {
+	if _, err = t.deps.email.Send(ctx, composed.send); err != nil {
 		return err
 	}
 
 	if _, err = t.inbox.Review(ctx, inboundmessageservice.ReviewRequest{
-		MessageID:  reply.message.ID,
-		TenantInfo: tenant,
+		MessageID:  composed.reply.message.ID,
+		TenantInfo: composed.send.TenantInfo,
 		ReviewerID: params.Actor.UserID,
 		Status:     inboundmessage.StatusActioned,
-		Note: stringutils.TruncateRunes(
-			"Replied to "+reply.message.FromAddress+": "+reply.body,
-			maxInboundReviewNote,
-		),
+		Note:       replyReviewNote(composed.reply),
 	}); err != nil {
 		return fmt.Errorf("the reply was sent but the message could not be marked: %w", err)
 	}

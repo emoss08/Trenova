@@ -52,6 +52,8 @@ type Params struct {
 	// Realtime refreshes the billing queue when a charge starts or stops
 	// holding its shipment off an invoice.
 	Realtime services.RealtimeService `optional:"true"`
+	// Senders names who a notice would go out as, for its preview.
+	Senders services.EmailSenderResolver `optional:"true"`
 }
 
 type Service struct {
@@ -78,6 +80,7 @@ type Service struct {
 	watchtower        services.WatchtowerProjector
 	publisher         services.AgentEventPublisher
 	realtime          services.RealtimeService
+	senders           services.EmailSenderResolver
 	now               func() int64
 }
 
@@ -107,6 +110,7 @@ func New(p Params) *Service {
 		watchtower:        p.Watchtower,
 		publisher:         p.Publisher,
 		realtime:          p.Realtime,
+		senders:           p.Senders,
 		auditService:      p.AuditService,
 		now:               timeutils.NowUnix,
 	}

@@ -22,6 +22,7 @@ enum AgentSubjectType {
   Report
   Dashboard
   AccountingConnection
+  AccountingSyncRecord
   FormulaTemplate
 }
 
@@ -227,6 +228,8 @@ type AgentProposalField {
   minimum: Float
   maximum: Float
   maxLength: Int
+  "The parameter names the record the change is for, which an approver may not change."
+  readOnly: Boolean!
 }
 
 "The control a parameter takes when edited: the schema's type, read for a form."

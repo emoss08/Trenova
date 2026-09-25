@@ -87,6 +87,7 @@ func Default() *Registry {
 		trialBalance(),
 		revenueByGLAccount(),
 		arAgingByDocument(),
+		syncExceptionsByWeek(),
 		settlementRegister(),
 	})
 }

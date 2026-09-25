@@ -22,12 +22,7 @@ func ApplyReview(message *inboundmessage.InboundMessage, req *ReviewRequest, now
 		return err
 	}
 
-	message.Status = req.Status
-	message.ReviewedBy = req.ReviewerID
-	message.ReviewedAt = now
-	if note != "" {
-		message.ReviewNote = note
-	}
+	message.ApplyReview(req.Status, req.ReviewerID, note, now)
 
 	return nil
 }

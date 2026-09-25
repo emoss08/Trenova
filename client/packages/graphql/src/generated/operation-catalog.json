@@ -1,6 +1,6 @@
 {
-  "operationCount": 866,
-  "fragmentCount": 236,
+  "operationCount": 888,
+  "fragmentCount": 242,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -71,6 +71,28 @@
       "sdl": "query AccessorialChargeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  accessorialCharges(input: $input) {\n    edges {\n      node {\n        ...AccessorialChargeTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AccessorialChargeTableRowFields on AccessorialCharge {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  method\n  rateUnit\n  amount\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
+      "name": "AccountingBackfills",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:949d632c126674d015d12b70208d61672d82b30e3fc9757c55f777e4e710d29b",
+      "rootFields": [
+        "accountingBackfills"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingBackfillFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingBackfills($integrationType: AccountingSystem!) {\n  accountingBackfills(integrationType: $integrationType) {\n    ...AccountingBackfillFields\n  }\n}\n\nfragment AccountingBackfillFields on AccountingBackfill {\n  id\n  rangeStart\n  rangeEnd\n  objectTypes\n  status\n  enqueuedCount\n  alreadyQueuedCount\n  startedAt\n  completedAt\n  lastError\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "AccountingMappings",
       "kind": "query",
       "domain": "accounting-sync",
@@ -112,7 +134,7 @@
       "kind": "query",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:86376103c7d6a75333ab51a8a17331b6d5e983221b3b636a774bc49e99e3a16c",
+      "hash": "sha256:eeb7c4f23d4f18601d058a077f411ea5b09c64ba58ccee1e9bc780207e258298",
       "rootFields": [
         "accountingMappingSummary"
       ],
@@ -127,7 +149,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "query AccountingMappingSummary($integrationType: AccountingSystem!) {\n  accountingMappingSummary(integrationType: $integrationType) {\n    integrationType\n    providerName\n    connection {\n      ...AccountingConnectionFields\n    }\n    groups {\n      targetType\n      unmatched\n      proposed\n      confirmed\n    }\n    requiredTotal\n    requiredConfirmed\n    canCompleteSetup\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "query AccountingMappingSummary($integrationType: AccountingSystem!) {\n  accountingMappingSummary(integrationType: $integrationType) {\n    integrationType\n    providerName\n    connection {\n      ...AccountingConnectionFields\n    }\n    groups {\n      targetType\n      unmatched\n      proposed\n      confirmed\n    }\n    requiredTotal\n    requiredConfirmed\n    canCompleteSetup\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountingReferenceObjects",
@@ -172,11 +194,144 @@
       "sdl": "query AccountingReferenceObjects($integrationType: AccountingSystem!, $kind: AccountingReferenceKind!, $query: String, $usableOnly: Boolean, $limit: Int) {\n  accountingReferenceObjects(\n    integrationType: $integrationType\n    kind: $kind\n    query: $query\n    usableOnly: $usableOnly\n    limit: $limit\n  ) {\n    ...AccountingReferenceObjectFields\n  }\n}\n\nfragment AccountingReferenceObjectFields on AccountingReferenceObject {\n  id\n  kind\n  externalId\n  label\n  number\n  accountType\n  accountSubType\n  itemType\n  companyName\n  city\n  state\n  postalCode\n  dueDays\n  active\n  usable\n}"
     },
     {
+      "name": "AccountingSyncAttempts",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:d3f0cb9f536ed5e5f3abe09b9abfc0cee6af53b85b6a57dbfb60c70412de4874",
+      "rootFields": [
+        "accountingSyncAttempts"
+      ],
+      "variables": [
+        {
+          "name": "recordId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query AccountingSyncAttempts($recordId: ID!) {\n  accountingSyncAttempts(recordId: $recordId) {\n    id\n    attemptNumber\n    outcome\n    errorCategory\n    errorCode\n    errorMessage\n    startedAt\n    finishedAt\n    durationMs\n  }\n}"
+    },
+    {
+      "name": "AccountingSyncObjectStates",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:b18f5f22813de4df41fd57d9916f0257cb454cbf9eaff002e55d5b717e9ed845",
+      "rootFields": [
+        "accountingSyncObjectStates"
+      ],
+      "variables": [
+        {
+          "name": "objectIds",
+          "type": "[ID!]!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingSyncRecordFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingSyncObjectStates($objectIds: [ID!]!) {\n  accountingSyncObjectStates(objectIds: $objectIds) {\n    objectType\n    objectId\n    providerName\n    record {\n      ...AccountingSyncRecordFields\n    }\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "AccountingSyncRecord",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:4383a49db007e46422387d7a4eb5dccd2d5e1df0de4a43ef2ff85a45cfdd3dab",
+      "rootFields": [
+        "accountingSyncRecord"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingSyncRecordFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingSyncRecord($id: ID!) {\n  accountingSyncRecord(id: $id) {\n    ...AccountingSyncRecordFields\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "AccountingSyncRecords",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:3022089755fa1469cd41421894de5c50fe8121974fa14f2a36709713ed761b40",
+      "rootFields": [
+        "accountingSyncRecords"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        },
+        {
+          "name": "first",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "after",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "filter",
+          "type": "AccountingSyncRecordFilterInput",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingSyncRecordFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingSyncRecords($integrationType: AccountingSystem!, $first: Int, $after: String, $filter: AccountingSyncRecordFilterInput) {\n  accountingSyncRecords(\n    integrationType: $integrationType\n    first: $first\n    after: $after\n    filter: $filter\n  ) {\n    edges {\n      node {\n        ...AccountingSyncRecordFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    totalCount\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "AccountingSyncRecordTable",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/table.graphql",
+      "hash": "sha256:044e65c16d681d57e28f63b395f5308354481365cb818e35c44a610e9e4728be",
+      "rootFields": [
+        "accountingSyncRecordTable"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingSyncRecordTable($integrationType: AccountingSystem!, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  accountingSyncRecordTable(integrationType: $integrationType, input: $input) {\n    edges {\n      node {\n        id\n        objectType\n        objectId\n        objectNumber\n        operation\n        sourceEvent\n        revision\n        documentDate\n        dependsOnRecordId\n        status\n        attemptCount\n        nextAttemptAt\n        externalId\n        externalDocNumber\n        externalUrl\n        errorCategory\n        errorCode\n        errorMessage\n        resolution\n        queuedAt\n        startedAt\n        syncedAt\n        skippedBy {\n          id\n          name\n        }\n        skippedReason\n        version\n        updatedAt\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
       "name": "AccountingSyncStatus",
       "kind": "query",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:18d656a85d8d6d2cd50789e32da3a8822079e6e1c95d70c87fb8c21b51edb827",
+      "hash": "sha256:e16e7cd9f706060a6c86ef5cb54f12ae78b3ef05ce98cec0df533405392c9640",
       "rootFields": [
         "accountingSyncStatus"
       ],
@@ -188,10 +343,35 @@
         }
       ],
       "fragments": [
+        "AccountingAppSettingsFields",
+        "AccountingConnectionFields",
+        "AccountingSyncStatusFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingSyncStatus($integrationType: AccountingSystem!) {\n  accountingSyncStatus(integrationType: $integrationType) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
+    },
+    {
+      "name": "AccountingSyncSummary",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:ed68a2cf908c2c99cf32c4bd82449af383fde7ad67a137a1249f5b4c72aa2251",
+      "rootFields": [
+        "accountingSyncSummary"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingBackfillFields",
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "query AccountingSyncStatus($integrationType: AccountingSystem!) {\n  accountingSyncStatus(integrationType: $integrationType) {\n    integrationType\n    providerName\n    available\n    connection {\n      ...AccountingConnectionFields\n    }\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "query AccountingSyncSummary($integrationType: AccountingSystem!) {\n  accountingSyncSummary(integrationType: $integrationType) {\n    integrationType\n    providerName\n    connection {\n      ...AccountingConnectionFields\n    }\n    counts {\n      status\n      count\n    }\n    attention {\n      status\n      errorCategory\n      resolution\n      count\n      oldestQueuedAt\n      sampleRecordId\n    }\n    activeBackfill {\n      ...AccountingBackfillFields\n    }\n  }\n}\n\nfragment AccountingBackfillFields on AccountingBackfill {\n  id\n  rangeStart\n  rangeEnd\n  objectTypes\n  status\n  enqueuedCount\n  alreadyQueuedCount\n  startedAt\n  completedAt\n  lastError\n  version\n  createdAt\n  updatedAt\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountTypeTable",
@@ -951,6 +1131,29 @@
       "sdl": "query AgentPlanDetail($id: ID!) {\n  agentPlan(id: $id) {\n    ...AgentPlanTableRowFields\n  }\n}\n\nfragment AgentPlanTableRowFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentPlanPreview",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "hash": "sha256:96a86d17e65b779fc5373755a99a2b8e934c0dba1fb89d4cab052205fd4a58d5",
+      "rootFields": [
+        "agentPlanPreview"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentPlanPreviewFields",
+        "AgentProposalPreviewFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentPlanPreview($id: ID!) {\n  agentPlanPreview(id: $id) {\n    ...AgentPlanPreviewFields\n  }\n}\n\nfragment AgentPlanPreviewFields on AgentPlanPreview {\n  planId\n  steps {\n    proposalId\n    step\n    preview {\n      ...AgentProposalPreviewFields\n    }\n  }\n  digest\n  stale\n  withheldCount\n  computedAt\n}\n\nfragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
+    },
+    {
       "name": "AgentPlanTable",
       "kind": "query",
       "domain": "agent",
@@ -1003,7 +1206,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/proposals.graphql",
-      "hash": "sha256:23c2a7710b90b7e612855b1126f3938b7bdf74c7f9f899ff6db317f7be067d82",
+      "hash": "sha256:f099f071d05e17291714533568e09673169e7234a66a98098624adcbcc8ec826",
       "rootFields": [
         "agentProposal"
       ],
@@ -1020,14 +1223,41 @@
         "AgentProposalTableRowFields"
       ],
       "usages": [],
-      "sdl": "query AgentProposalDetail($id: ID!) {\n  agentProposal(id: $id) {\n    ...AgentProposalDetailFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AgentProposalDetail($id: ID!) {\n  agentProposal(id: $id) {\n    ...AgentProposalDetailFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentProposalPreview",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "hash": "sha256:cc8c911a73bd53b7f470b05bd8168f72c08120cc0170c4fe436c93fcd7e95116",
+      "rootFields": [
+        "agentProposalPreview"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "modifications",
+          "type": "JSON",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentProposalPreviewFields"
+      ],
+      "usages": [],
+      "sdl": "query AgentProposalPreview($id: ID!, $modifications: JSON) {\n  agentProposalPreview(id: $id, modifications: $modifications) {\n    ...AgentProposalPreviewFields\n  }\n}\n\nfragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
     },
     {
       "name": "AgentProposalTable",
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/proposals.graphql",
-      "hash": "sha256:8ab53908dace62550c99e3dd0961deda1222e1e0260ba26d826c16fee00db78e",
+      "hash": "sha256:fb30332a91016c92c863b7ae2d4504ca5f097ed77f0583216d92ecc403582380",
       "rootFields": [
         "agentProposals"
       ],
@@ -1048,7 +1278,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentProposalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...AgentProposalTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentProposalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...AgentProposalTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentQuality",
@@ -4294,11 +4524,33 @@
       "sdl": "mutation CertifyOshaSummary($year: Int!) {\n  certifyOshaSummary(year: $year) {\n    id\n    year\n    status\n    certifiedAt\n    version\n  }\n}"
     },
     {
+      "name": "ChangeAccountingBackfill",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:25c2e40a5030190dba087fe94b6f9078acff46f0065f77611f3b35f1931a9523",
+      "rootFields": [
+        "changeAccountingBackfill"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ChangeAccountingBackfillInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingBackfillFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ChangeAccountingBackfill($input: ChangeAccountingBackfillInput!) {\n  changeAccountingBackfill(input: $input) {\n    ...AccountingBackfillFields\n  }\n}\n\nfragment AccountingBackfillFields on AccountingBackfill {\n  id\n  rangeStart\n  rangeEnd\n  objectTypes\n  status\n  enqueuedCount\n  alreadyQueuedCount\n  startedAt\n  completedAt\n  lastError\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "CheckAccountingConnection",
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:91617e54bef69e91cb3f9e1963f300e278b3839720814caa60b69824e2cde851",
+      "hash": "sha256:49b9aaf645d78b2e29c4043109cbf1f1cc72f63827b3bca493ae2db34e63191a",
       "rootFields": [
         "checkAccountingConnection"
       ],
@@ -4313,7 +4565,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation CheckAccountingConnection($integrationType: AccountingSystem!) {\n  checkAccountingConnection(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation CheckAccountingConnection($integrationType: AccountingSystem!) {\n  checkAccountingConnection(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "CheckShipmentDuplicateBol",
@@ -4623,7 +4875,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:5e8309ec8536fdeb8d3094032ad9164f590931775d44ea2a65731d275f0a59e8",
+      "hash": "sha256:d70e0c4e5de9a50ade90eecafb660ac13f984b48d75362ed62f60e5b88766517",
       "rootFields": [
         "completeAccountingAuthorization"
       ],
@@ -4638,14 +4890,14 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation CompleteAccountingAuthorization($input: CompleteAccountingAuthorizationInput!) {\n  completeAccountingAuthorization(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation CompleteAccountingAuthorization($input: CompleteAccountingAuthorizationInput!) {\n  completeAccountingAuthorization(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "CompleteAccountingSetup",
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:038f16e955717a9140a5ca88e4f27ef065c7df44601662f98b92e6d581f940d9",
+      "hash": "sha256:f5eb426e439f0d92bd525b820988aead49cc811d794620b98ec0a88fc7b9a36c",
       "rootFields": [
         "completeAccountingSetup"
       ],
@@ -4660,7 +4912,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation CompleteAccountingSetup($integrationType: AccountingSystem!) {\n  completeAccountingSetup(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation CompleteAccountingSetup($integrationType: AccountingSystem!) {\n  completeAccountingSetup(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "CompleteClearinghouseQuery",
@@ -6020,7 +6272,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/proposals.graphql",
-      "hash": "sha256:ba06fd0f5bb9168980d5d967514bf0bcbd80382200e836955aa5704c4c9f1836",
+      "hash": "sha256:d5dd2d9f5f76ec53c9208554a9161365633dc1fa2cb1823a1431098cddcf71bf",
       "rootFields": [
         "decideAgentProposal"
       ],
@@ -6038,14 +6290,14 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "mutation DecideAgentProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideAgentProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    version\n    createdAt\n  }\n}"
+      "sdl": "mutation DecideAgentProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideAgentProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    previewDigest\n    previewReviewed\n    version\n    createdAt\n  }\n}"
     },
     {
       "name": "DecideAgentProposals",
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/decisions.graphql",
-      "hash": "sha256:59304c594ac96561580ae98bff8ecf6ac041a40f45487c9319485de537cef971",
+      "hash": "sha256:307e160ab24ebe206297811b6ef210e7fda7d5f4412f9d5018d00bdce35f4d91",
       "rootFields": [
         "decideAgentProposals"
       ],
@@ -6063,7 +6315,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "mutation DecideAgentProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {\n  decideAgentProposals(ids: $ids, input: $input) {\n    proposalId\n    executed\n    error\n    decision {\n      id\n      decision\n      reasonCode\n      createdAt\n    }\n  }\n}"
+      "sdl": "mutation DecideAgentProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {\n  decideAgentProposals(ids: $ids, input: $input) {\n    proposalId\n    executed\n    error\n    decision {\n      id\n      decision\n      reasonCode\n      previewDigest\n      previewReviewed\n      createdAt\n    }\n  }\n}"
     },
     {
       "name": "DecideLeaveCase",
@@ -6115,7 +6367,7 @@
       "kind": "mutation",
       "domain": "agent",
       "sourceFile": "src/operations/agent/access.graphql",
-      "hash": "sha256:64dea8adddc7bea71fcfb7abc268678df95b4aa90847396b783656abc92f0180",
+      "hash": "sha256:cf3c4ea53d12c1f61f37b2fdefda3a45507f197dcfc721e514db2a83c876a993",
       "rootFields": [
         "decideMyProposal"
       ],
@@ -6133,7 +6385,7 @@
       ],
       "fragments": [],
       "usages": [],
-      "sdl": "mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideMyProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    version\n    createdAt\n  }\n}"
+      "sdl": "mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {\n  decideMyProposal(id: $id, input: $input) {\n    id\n    proposalId\n    decision\n    reasonCode\n    decidedByUserId\n    previewDigest\n    previewReviewed\n    version\n    createdAt\n  }\n}"
     },
     {
       "name": "DecideProfileChange",
@@ -7064,7 +7316,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:f0dffe70fc26b7fab486fef311a8a25f5a28b7fbc4aa730283c4aab62374742b",
+      "hash": "sha256:2c575fb840455bb3ceb9f231c3bcd7e2428b3bd9fcbe9285c4ce9f239c52b7ce",
       "rootFields": [
         "disconnectAccountingSystem"
       ],
@@ -7079,7 +7331,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation DisconnectAccountingSystem($integrationType: AccountingSystem!) {\n  disconnectAccountingSystem(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation DisconnectAccountingSystem($integrationType: AccountingSystem!) {\n  disconnectAccountingSystem(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "DismissAgentMemorySuggestion",
@@ -8182,6 +8434,28 @@
       ],
       "usages": [],
       "sdl": "query EmailProfileTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  emailProfiles(input: $input) {\n    edges {\n      node {\n        ...EmailProfileTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment EmailProfileTableRowFields on EmailProfile {\n  id\n  businessUnitId\n  organizationId\n  name\n  description\n  senderName\n  senderEmail\n  replyToEmail\n  provider\n  status\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "EnableAccountingSync",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:4d59412b58e538deed12f3b4a8031a6179b3e5fef3784b3274ea38f33f1597e9",
+      "rootFields": [
+        "enableAccountingSync"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "EnableAccountingSyncInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "mutation EnableAccountingSync($input: EnableAccountingSyncInput!) {\n  enableAccountingSync(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "EndBenefitEnrollment",
@@ -11102,6 +11376,29 @@
       "sdl": "query MyPeriodSummary {\n  myPeriodSummary {\n    periodStart\n    periodEnd\n    payDate\n    accruedGrossMinor\n    eventCount\n  }\n}"
     },
     {
+      "name": "MyPlanPreview",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "hash": "sha256:bdeb1162f88da7b25a4f705e845dca4c3d943257b88905d885af2ccb30023342",
+      "rootFields": [
+        "myPlanPreview"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentPlanPreviewFields",
+        "AgentProposalPreviewFields"
+      ],
+      "usages": [],
+      "sdl": "query MyPlanPreview($id: ID!) {\n  myPlanPreview(id: $id) {\n    ...AgentPlanPreviewFields\n  }\n}\n\nfragment AgentPlanPreviewFields on AgentPlanPreview {\n  planId\n  steps {\n    proposalId\n    step\n    preview {\n      ...AgentProposalPreviewFields\n    }\n  }\n  digest\n  stale\n  withheldCount\n  computedAt\n}\n\nfragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
+    },
+    {
       "name": "MyPolicies",
       "kind": "query",
       "domain": "driver-portal",
@@ -11176,6 +11473,33 @@
       "fragments": [],
       "usages": [],
       "sdl": "query MyProfileChangeRequests {\n  myProfileChangeRequests {\n    id\n    status\n    note\n    submittedAt\n    decidedAt\n    decisionNote\n    changes {\n      field\n      label\n      from\n      to\n    }\n  }\n}"
+    },
+    {
+      "name": "MyProposalPreview",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "hash": "sha256:b5f2a2de45a60b828581481d2aa42377afde5a9a9bf09d84bd778d11d967e55c",
+      "rootFields": [
+        "myProposalPreview"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "modifications",
+          "type": "JSON",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AgentProposalPreviewFields"
+      ],
+      "usages": [],
+      "sdl": "query MyProposalPreview($id: ID!, $modifications: JSON) {\n  myProposalPreview(id: $id, modifications: $modifications) {\n    ...AgentProposalPreviewFields\n  }\n}\n\nfragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
     },
     {
       "name": "MyPto",
@@ -11833,6 +12157,28 @@
       "sdl": "mutation PatchWorker($id: ID!, $input: WorkerPatchInput!) {\n  patchWorker(id: $id, input: $input) {\n    ...WorkerTableRowFields\n  }\n}\n\nfragment WorkerFleetCodeFields on FleetCode {\n  id\n  code\n  color\n}\n\nfragment WorkerProfileTableFields on WorkerProfile {\n  id\n  workerId\n  businessUnitId\n  organizationId\n  licenseStateId\n  dob\n  licenseNumber\n  cdlClass\n  cdlRestrictions\n  endorsement\n  hazmatExpiry\n  licenseExpiry\n  medicalCardExpiry\n  medicalExaminerName\n  medicalExaminerNpi\n  twicCardNumber\n  twicExpiry\n  hireDate\n  terminationDate\n  physicalDueDate\n  mvrDueDate\n  complianceStatus\n  trainingHealth\n  safetyRating\n  safetyScore\n  nextCredentialExpiry\n  nextTrainingDue\n  drugAlcoholStatus\n  isQualified\n  disqualificationReason\n  lastComplianceCheck\n  lastMvrCheck\n  lastDrugTest\n  eldExempt\n  shortHaulExempt\n  version\n  createdAt\n  updatedAt\n  licenseState {\n    ...WorkerUsStateFields\n  }\n}\n\nfragment WorkerTableRowFields on Worker {\n  id\n  businessUnitId\n  organizationId\n  stateId\n  fleetCodeId\n  managerId\n  status\n  type\n  driverType\n  leaveType\n  profilePicUrl\n  firstName\n  lastName\n  wholeName\n  addressLine1\n  addressLine2\n  city\n  postalCode\n  email\n  phoneNumber\n  emergencyContactName\n  emergencyContactPhone\n  externalId\n  assignmentBlocked\n  gender\n  canBeAssigned\n  availableForDispatch\n  version\n  createdAt\n  updatedAt\n  customFields\n  fleetCode {\n    ...WorkerFleetCodeFields\n  }\n  state {\n    ...WorkerUsStateFields\n  }\n  profile {\n    ...WorkerProfileTableFields\n  }\n}\n\nfragment WorkerUsStateFields on UsState {\n  id\n  name\n  abbreviation\n}"
     },
     {
+      "name": "PauseAccountingSync",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:c21618c88de51d5d71b1b39e23054f30070cf0befea1670e0f118aa71083a636",
+      "rootFields": [
+        "pauseAccountingSync"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "PauseAccountingSyncInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "mutation PauseAccountingSync($input: PauseAccountingSyncInput!) {\n  pauseAccountingSync(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "PayAdvanceTable",
       "kind": "query",
       "domain": "driver-settlement",
@@ -12018,7 +12364,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/decisions.graphql",
-      "hash": "sha256:830984fb64f11f16fc179642cec7259c4e9c4274405f3cf81a86367a8bc77a91",
+      "hash": "sha256:f81797b6723f5a53cc3d5fa9f98285e347b14158be8f0039c6a93769ce5cb00c",
       "rootFields": [
         "pendingDecisions"
       ],
@@ -12039,7 +12385,7 @@
         "PendingProposalFields"
       ],
       "usages": [],
-      "sdl": "query PendingDecisions($input: PendingDecisionsInput!, $includeTotalCount: Boolean = true) {\n  pendingDecisions(input: $input) {\n    edges {\n      cursor\n      node {\n        __typename\n        ... on AgentProposal {\n          ...PendingProposalFields\n        }\n        ... on AgentPlan {\n          ...PendingPlanFields\n        }\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment PendingPlanFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  planStatus: status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}\n\nfragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
+      "sdl": "query PendingDecisions($input: PendingDecisionsInput!, $includeTotalCount: Boolean = true) {\n  pendingDecisions(input: $input) {\n    edges {\n      cursor\n      node {\n        __typename\n        ... on AgentProposal {\n          ...PendingProposalFields\n        }\n        ... on AgentPlan {\n          ...PendingPlanFields\n        }\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment PendingPlanFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  planStatus: status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}\n\nfragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
     },
     {
       "name": "PendingDecisionSummary",
@@ -12132,7 +12478,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/decisions.graphql",
-      "hash": "sha256:8e998d8ca99ecb3ec7ccb8444e779245bf0b12661400fe1e4ddee2e86cd22472",
+      "hash": "sha256:be027bd8678aed7dad10ecd7053e48b476074bdfd2f37ffbab2df21aaaa50d02",
       "rootFields": [
         "agentProposals"
       ],
@@ -12147,7 +12493,7 @@
         "PendingProposalFields"
       ],
       "usages": [],
-      "sdl": "query PlanSteps($input: DataTableConnectionInput!) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...PendingProposalFields\n      }\n    }\n  }\n}\n\nfragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
+      "sdl": "query PlanSteps($input: DataTableConnectionInput!) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...PendingProposalFields\n      }\n    }\n  }\n}\n\nfragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
     },
     {
       "name": "PostAndApplyCustomerPayment",
@@ -13046,7 +13392,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:aa0e7f55c009a95c9ce76a43fd02b591f634f890c64cec197bf986e2124a5ba6",
+      "hash": "sha256:9dd16cbefc7626732a87394513d20eaad5e64e985556a01191a731863ac872a9",
       "rootFields": [
         "refreshAccountingReferenceData"
       ],
@@ -13061,7 +13407,7 @@
         "AccountingConnectionFields"
       ],
       "usages": [],
-      "sdl": "mutation RefreshAccountingReferenceData($integrationType: AccountingSystem!) {\n  refreshAccountingReferenceData(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "mutation RefreshAccountingReferenceData($integrationType: AccountingSystem!) {\n  refreshAccountingReferenceData(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "RegenerateBriefing",
@@ -13239,6 +13585,26 @@
       "sdl": "mutation RejectWorkerPto($id: ID!, $reason: String!) {\n  rejectWorkerPTO(id: $id, reason: $reason) {\n    ...WorkerPtoRowFields\n  }\n}\n\nfragment WorkerPtoActorFields on User {\n  id\n  name\n}\n\nfragment WorkerPtoRowFields on WorkerPTO {\n  id\n  workerId\n  organizationId\n  businessUnitId\n  approverId\n  rejectorId\n  cancelledById\n  status\n  type\n  startDate\n  endDate\n  reason\n  rejectionReason\n  cancellationReason\n  days\n  balanceAfterDays\n  autoApproved\n  version\n  createdAt\n  updatedAt\n  worker {\n    ...WorkerPtoWorkerFields\n  }\n  approver {\n    ...WorkerPtoActorFields\n  }\n  rejector {\n    ...WorkerPtoActorFields\n  }\n  cancelledBy {\n    ...WorkerPtoActorFields\n  }\n}\n\nfragment WorkerPtoWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
     },
     {
+      "name": "ReleaseAccountingSync",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:92e93ee66e3af468923f09c1e34ce36127a8ce406ee96c7a484349f60c1bda9e",
+      "rootFields": [
+        "releaseAccountingSync"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ReleaseAccountingSyncInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation ReleaseAccountingSync($input: ReleaseAccountingSyncInput!) {\n  releaseAccountingSync(input: $input) {\n    affected\n  }\n}"
+    },
+    {
       "name": "ReleaseDriverPayEvent",
       "kind": "mutation",
       "domain": "driver-settlement",
@@ -13257,6 +13623,30 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation ReleaseDriverPayEvent($payEventId: ID!) {\n  releaseDriverPayEvent(payEventId: $payEventId) {\n    id\n    status\n    onHold\n    holdReason\n    version\n  }\n}"
+    },
+    {
+      "name": "RemoveAccountingApp",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:f852854f7e9078476c8d29033afd4a772796708ad7603f4d2dae8df21ffd7d20",
+      "rootFields": [
+        "removeAccountingApp"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingAppSettingsFields",
+        "AccountingConnectionFields",
+        "AccountingSyncStatusFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RemoveAccountingApp($integrationType: AccountingSystem!) {\n  removeAccountingApp(integrationType: $integrationType) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
     },
     {
       "name": "RemoveCarrierSettlementAdjustment",
@@ -13717,6 +14107,28 @@
       ],
       "usages": [],
       "sdl": "query ReportViews($definitionId: ID) {\n  reportViews(definitionId: $definitionId) {\n    ...ReportViewFields\n  }\n}\n\nfragment ReportViewFields on ReportView {\n  id\n  definitionId\n  ownerId\n  name\n  description\n  params\n  shared\n  pinned\n  format\n  lastRunAt\n  runCount\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "RequestAccountingBackfill",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:8f2d2eb0a1b533f8f6840beeb2d1acb4521cde2fb60fb4d388f3a09487d18106",
+      "rootFields": [
+        "requestAccountingBackfill"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "RequestAccountingBackfillInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingBackfillFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RequestAccountingBackfill($input: RequestAccountingBackfillInput!) {\n  requestAccountingBackfill(input: $input) {\n    ...AccountingBackfillFields\n  }\n}\n\nfragment AccountingBackfillFields on AccountingBackfill {\n  id\n  rangeStart\n  rangeEnd\n  objectTypes\n  status\n  enqueuedCount\n  alreadyQueuedCount\n  startedAt\n  completedAt\n  lastError\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "RequestAIAuditExport",
@@ -14229,6 +14641,28 @@
       "sdl": "mutation RestoreWorkerCredentialType($id: ID!, $version: Int) {\n  restoreWorkerCredentialType(id: $id, version: $version) {\n    ...WorkerCredentialTypeFields\n  }\n}\n\nfragment WorkerCredentialTypeFields on WorkerCredentialType {\n  id\n  businessUnitId\n  organizationId\n  code\n  name\n  description\n  category\n  status\n  isRequired\n  requiredForDriverTypes\n  renewalWindowDays\n  validityMonths\n  requiresNumber\n  requiresDocument\n  profileField\n  isSystem\n  sortOrder\n  activeCredentialCount\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "ResumeAccountingSync",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:a468cf9f1c8759b3d37b74997a7445ef2d5de2b9d873b89b1522e5bd76f04ce1",
+      "rootFields": [
+        "resumeAccountingSync"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ResumeAccountingSync($integrationType: AccountingSystem!) {\n  resumeAccountingSync(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "ResumeCarrierIntelMonitoring",
       "kind": "mutation",
       "domain": "carrier-intelligence",
@@ -14241,6 +14675,26 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation ResumeCarrierIntelMonitoring {\n  resumeCarrierIntelMonitoring\n}"
+    },
+    {
+      "name": "RetryAccountingSync",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:e979623f3d680cc3e11b35af17517321244479a9490b5a33bc0d61a7fd36307b",
+      "rootFields": [
+        "retryAccountingSync"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "RetryAccountingSyncInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation RetryAccountingSync($input: RetryAccountingSyncInput!) {\n  retryAccountingSync(input: $input) {\n    affected\n  }\n}"
     },
     {
       "name": "RetryBillingTransferRun",
@@ -14652,6 +15106,30 @@
       ],
       "usages": [],
       "sdl": "mutation RunReport($input: RunReportInput!) {\n  runReport(input: $input) {\n    ...ReportRunFields\n  }\n}\n\nfragment ReportRunFields on ReportRun {\n  id\n  definitionId\n  revisionId\n  cannedKey\n  cannedVersion\n  requestedById\n  trigger\n  params\n  format\n  status\n  rowCount\n  byteSize\n  durationMs\n  truncated\n  error {\n    code\n    message\n    detail\n  }\n  artifactExpiresAt\n  cacheHit\n  queuedAt\n  startedAt\n  completedAt\n  version\n  createdAt\n}"
+    },
+    {
+      "name": "SaveAccountingApp",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:733dc6e12ce68fcbcd7aa7d624d8cbaa4edf6d6ed8d12b5dcb46c2be9c7e982f",
+      "rootFields": [
+        "saveAccountingApp"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "SaveAccountingAppInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingAppSettingsFields",
+        "AccountingConnectionFields",
+        "AccountingSyncStatusFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SaveAccountingApp($input: SaveAccountingAppInput!) {\n  saveAccountingApp(input: $input) {\n    ...AccountingSyncStatusFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}\n\nfragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}"
     },
     {
       "name": "SaveOshaSummary",
@@ -15884,6 +16362,28 @@
       "sdl": "query SidebarPreferences {\n  sidebarPreferences {\n    schemaVersion\n    version\n    sections {\n      key\n      hidden\n    }\n    attentionMetrics\n    quickActionIds\n    activity {\n      pageSize\n      defaultOpen\n    }\n  }\n}"
     },
     {
+      "name": "SkipAccountingSync",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:952b395783216172a3ef671af3d707ef257507d24a4cfd055641d0f9938d6168",
+      "rootFields": [
+        "skipAccountingSync"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "SkipAccountingSyncInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingSyncRecordFields"
+      ],
+      "usages": [],
+      "sdl": "mutation SkipAccountingSync($input: SkipAccountingSyncInput!) {\n  skipAccountingSync(input: $input) {\n    ...AccountingSyncRecordFields\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "SkipWorkerChecklistItem",
       "kind": "mutation",
       "domain": "worker-checklist",
@@ -16947,6 +17447,28 @@
       ],
       "usages": [],
       "sdl": "query UpcomingWorkerPto($input: UpcomingWorkerPTOInput!) {\n  upcomingWorkerPTO(input: $input) {\n    edges {\n      node {\n        ...WorkerPtoRowFields\n      }\n    }\n    totalCount\n    pageInfo {\n      ...WorkerDataTablePageInfoFields\n    }\n  }\n}\n\nfragment WorkerDataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment WorkerPtoActorFields on User {\n  id\n  name\n}\n\nfragment WorkerPtoRowFields on WorkerPTO {\n  id\n  workerId\n  organizationId\n  businessUnitId\n  approverId\n  rejectorId\n  cancelledById\n  status\n  type\n  startDate\n  endDate\n  reason\n  rejectionReason\n  cancellationReason\n  days\n  balanceAfterDays\n  autoApproved\n  version\n  createdAt\n  updatedAt\n  worker {\n    ...WorkerPtoWorkerFields\n  }\n  approver {\n    ...WorkerPtoActorFields\n  }\n  rejector {\n    ...WorkerPtoActorFields\n  }\n  cancelledBy {\n    ...WorkerPtoActorFields\n  }\n}\n\nfragment WorkerPtoWorkerFields on Worker {\n  id\n  firstName\n  lastName\n  wholeName\n  profilePicUrl\n}"
+    },
+    {
+      "name": "UpdateAccountingSyncSettings",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:286bc6ad30ae8900234d76bbe8a4120fbc498d48f70c1be005e148edf6f53578",
+      "rootFields": [
+        "updateAccountingSyncSettings"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "UpdateAccountingSyncSettingsInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingConnectionFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateAccountingSyncSettings($input: UpdateAccountingSyncSettingsInput!) {\n  updateAccountingSyncSettings(input: $input) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "UpdateAgentControl",
@@ -19977,6 +20499,35 @@
       "sdl": "fragment AccessorialChargeTableRowFields on AccessorialCharge {\n  id\n  businessUnitId\n  organizationId\n  status\n  code\n  description\n  method\n  rateUnit\n  amount\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AccountingAppSettingsFields",
+      "typeCondition": "AccountingAppSettings",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AccountingSyncStatus",
+        "RemoveAccountingApp",
+        "SaveAccountingApp"
+      ],
+      "usages": [],
+      "sdl": "fragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}"
+    },
+    {
+      "name": "AccountingBackfillFields",
+      "typeCondition": "AccountingBackfill",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AccountingBackfills",
+        "AccountingSyncSummary",
+        "ChangeAccountingBackfill",
+        "RequestAccountingBackfill"
+      ],
+      "usages": [],
+      "sdl": "fragment AccountingBackfillFields on AccountingBackfill {\n  id\n  rangeStart\n  rangeEnd\n  objectTypes\n  status\n  enqueuedCount\n  alreadyQueuedCount\n  startedAt\n  completedAt\n  lastError\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "AccountingConnectionFields",
       "typeCondition": "AccountingConnection",
       "domain": "accounting-sync",
@@ -19985,14 +20536,21 @@
       "usedByOperations": [
         "AccountingMappingSummary",
         "AccountingSyncStatus",
+        "AccountingSyncSummary",
         "CheckAccountingConnection",
         "CompleteAccountingAuthorization",
         "CompleteAccountingSetup",
         "DisconnectAccountingSystem",
-        "RefreshAccountingReferenceData"
+        "EnableAccountingSync",
+        "PauseAccountingSync",
+        "RefreshAccountingReferenceData",
+        "RemoveAccountingApp",
+        "ResumeAccountingSync",
+        "SaveAccountingApp",
+        "UpdateAccountingSyncSettings"
       ],
       "usages": [],
-      "sdl": "fragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+      "sdl": "fragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountingMappingFields",
@@ -20022,6 +20580,38 @@
       ],
       "usages": [],
       "sdl": "fragment AccountingReferenceObjectFields on AccountingReferenceObject {\n  id\n  kind\n  externalId\n  label\n  number\n  accountType\n  accountSubType\n  itemType\n  companyName\n  city\n  state\n  postalCode\n  dueDays\n  active\n  usable\n}"
+    },
+    {
+      "name": "AccountingSyncRecordFields",
+      "typeCondition": "AccountingSyncRecord",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AccountingSyncObjectStates",
+        "AccountingSyncRecord",
+        "AccountingSyncRecords",
+        "SkipAccountingSync"
+      ],
+      "usages": [],
+      "sdl": "fragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "AccountingSyncStatusFields",
+      "typeCondition": "AccountingSyncStatus",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "fragments": [
+        "AccountingAppSettingsFields",
+        "AccountingConnectionFields"
+      ],
+      "usedByOperations": [
+        "AccountingSyncStatus",
+        "RemoveAccountingApp",
+        "SaveAccountingApp"
+      ],
+      "usages": [],
+      "sdl": "fragment AccountingSyncStatusFields on AccountingSyncStatus {\n  integrationType\n  providerName\n  available\n  app {\n    ...AccountingAppSettingsFields\n  }\n  connection {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingAppSettingsFields on AccountingAppSettings {\n  activeSource\n  instanceAppAvailable\n  instanceEnvironment\n  redirectUrl\n  webhookPath\n  tenantApp {\n    id\n    integrationType\n    environment\n    clientId\n    hasWebhookVerifier\n    version\n    updatedAt\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountTypeTableRowFields",
@@ -20208,6 +20798,21 @@
       "sdl": "fragment AgentMemoryTableRowFields on AgentMemory {\n  id\n  organizationId\n  businessUnitId\n  kind\n  source\n  status\n  subjectType\n  subjectId\n  subjectLabel\n  toolName\n  content\n  agentDefinitionId\n  sourceRunId\n  sourceProposalId\n  createdByUserId\n  retiredByUserId\n  retiredAt\n  expiresAt\n  useCount\n  lastUsedAt\n  evidence {\n    feedbackIds\n    patternKey\n    ratingCount\n    distinctUsers\n    distinctThreads\n    reason\n    quotes\n    firstRatedAt\n    lastRatedAt\n  }\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AgentPlanPreviewFields",
+      "typeCondition": "AgentPlanPreview",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "fragments": [
+        "AgentProposalPreviewFields"
+      ],
+      "usedByOperations": [
+        "AgentPlanPreview",
+        "MyPlanPreview"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentPlanPreviewFields on AgentPlanPreview {\n  planId\n  steps {\n    proposalId\n    step\n    preview {\n      ...AgentProposalPreviewFields\n    }\n  }\n  digest\n  stale\n  withheldCount\n  computedAt\n}\n\nfragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
+    },
+    {
       "name": "AgentPlanTableRowFields",
       "typeCondition": "AgentPlan",
       "domain": "agent",
@@ -20234,7 +20839,22 @@
         "AgentProposalDetail"
       ],
       "usages": [],
-      "sdl": "fragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AgentProposalPreviewFields",
+      "typeCondition": "AgentProposalPreview",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/previews.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AgentPlanPreview",
+        "AgentProposalPreview",
+        "MyPlanPreview",
+        "MyProposalPreview"
+      ],
+      "usages": [],
+      "sdl": "fragment AgentProposalPreviewFields on AgentProposalPreview {\n  proposalId\n  tool\n  summary\n  coverage\n  changes {\n    resource\n    record {\n      entityType\n      id\n    }\n    entityId\n    label\n    operation\n    version\n    withheld\n    dependsOnStep\n    fields {\n      path\n      label\n      valueType\n      before\n      after\n      beforeRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      afterRef {\n        resource\n        id\n        label\n        record {\n          entityType\n          id\n        }\n        withheld\n      }\n      withheld\n      volatile\n      truncated\n      changedSinceProposed\n      proposedBefore\n      projectedFromStep\n    }\n    omittedFields\n    message {\n      channel\n      from\n      to\n      cc\n      bcc\n      attachments\n      subject\n      body\n      bodyTruncated\n      visibility\n      cadence\n      templateVersionId\n    }\n    money {\n      currency\n      lines {\n        label\n        before\n        after\n      }\n      totalBefore\n      totalAfter\n      delta\n      withheld\n    }\n  }\n  warnings {\n    code\n    args\n    message\n  }\n  stale\n  staleness {\n    pinned\n    proposedVersion\n    currentVersion\n    missing\n  }\n  targetVersion\n  withheldCount\n  omittedRecords\n  recorded\n  computedAt\n  digest\n}"
     },
     {
       "name": "AgentProposalTableRowFields",
@@ -20247,7 +20867,7 @@
         "AgentProposalTable"
       ],
       "usages": [],
-      "sdl": "fragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentQualityControlFields",
@@ -20956,6 +21576,7 @@
       "fragments": [],
       "usedByOperations": [
         "AccessorialChargeTable",
+        "AccountingSyncRecordTable",
         "AccountTypeTable",
         "AgentChoices",
         "AgentDefinitionCards",
@@ -22186,7 +22807,7 @@
         "PlanSteps"
       ],
       "usages": [],
-      "sdl": "fragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
+      "sdl": "fragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
     },
     {
       "name": "PerformanceReviewFields",
@@ -23584,6 +24205,37 @@
         "Vendor"
       ],
       "sdl": "\"\"\"A kind of record kept in the accounting system.\"\"\"\nenum AccountingReferenceKind {\n  Account\n  Customer\n  Item\n  PaymentMethod\n  Term\n  Vendor\n}"
+    },
+    "AccountingSyncRecordFilterInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "errorCategories",
+          "type": "[AccountingSyncErrorCategory!]",
+          "defaultValue": null
+        },
+        {
+          "name": "objectId",
+          "type": "ID",
+          "defaultValue": null
+        },
+        {
+          "name": "objectTypes",
+          "type": "[AccountingSyncObjectType!]",
+          "defaultValue": null
+        },
+        {
+          "name": "search",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "statuses",
+          "type": "[AccountingSyncRecordStatus!]",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input AccountingSyncRecordFilterInput {\n  errorCategories: [AccountingSyncErrorCategory!]\n  \"\"\"Only the records for one Trenova document.\"\"\"\n  objectId: ID\n  objectTypes: [AccountingSyncObjectType!]\n  \"\"\"Matches the document number.\"\"\"\n  search: String\n  statuses: [AccountingSyncRecordStatus!]\n}"
     },
     "AccountingSystem": {
       "kind": "enum",
@@ -24993,6 +25645,22 @@
         }
       ],
       "sdl": "input CarrierSourcingSearchInput {\n  destinationState: String\n  excludeBlocking: Boolean\n  excludeExistingCarriers: Boolean\n  hazmatOnly: Boolean\n  limit: Int\n  maxAuthorityAgeDays: Int\n  maxPowerUnits: Int\n  minAuthorityAgeDays: Int\n  minPowerUnits: Int\n  offset: Int\n  originState: String\n  sort: CarrierSourcingSort\n  state: String\n  text: String\n}"
+    },
+    "ChangeAccountingBackfillInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "action",
+          "type": "AccountingBackfillAction!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ChangeAccountingBackfillInput {\n  action: AccountingBackfillAction!\n  id: ID!\n}"
     },
     "ChargeAllocationInput": {
       "kind": "input",
@@ -26866,6 +27534,38 @@
         "Outbound"
       ],
       "sdl": "enum EdiTransferDirection {\n  Inbound\n  Outbound\n}"
+    },
+    "EnableAccountingSyncInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "autoSync",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "backfill",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "driverSettlements",
+          "type": "Boolean",
+          "defaultValue": "false",
+          "defaultJson": false
+        },
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        },
+        {
+          "name": "startDate",
+          "type": "Timestamp!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"Finishes setup: from which day documents are sent, and how.\"\"\"\ninput EnableAccountingSyncInput {\n  \"\"\"\n  Send posted documents on their own. When off, each waits for a person to release it.\n  \"\"\"\n  autoSync: Boolean!\n  \"\"\"\n  Also queue documents dated from the start date up to now, which were posted before sync was on.\n  \"\"\"\n  backfill: Boolean!\n  \"\"\"\n  Also send owner-operator settlements as bills. Company driver pay is never sent.\n  \"\"\"\n  driverSettlements: Boolean = false\n  integrationType: AccountingSystem!\n  \"\"\"Documents dated before this day are never sent.\"\"\"\n  startDate: Timestamp!\n}"
     },
     "EndBenefitEnrollmentInput": {
       "kind": "input",
@@ -29008,6 +29708,22 @@
       ],
       "sdl": "input OrgHolidayInput {\n  description: String\n  holidayDate: Timestamp!\n  kind: OrgHolidayKind!\n  name: String!\n  recursAnnually: Boolean!\n  version: Int\n}"
     },
+    "PauseAccountingSyncInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input PauseAccountingSyncInput {\n  integrationType: AccountingSystem!\n  reason: String\n}"
+    },
     "PayeeClassification": {
       "kind": "enum",
       "values": [
@@ -30182,6 +30898,22 @@
       ],
       "sdl": "input RejectInvoiceAdjustmentInput {\n  adjustmentId: ID!\n  reason: String\n}"
     },
+    "ReleaseAccountingSyncInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "ids",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nReleases the named records waiting for approval, or all of them when none are named.\n\"\"\"\ninput ReleaseAccountingSyncInput {\n  ids: [ID!]\n  integrationType: AccountingSystem!\n}"
+    },
     "RemoveCarrierSettlementAdjustmentInput": {
       "kind": "input",
       "fields": [
@@ -30337,6 +31069,32 @@
         }
       ],
       "sdl": "input ReportRunsFilterInput {\n  definitionId: ID\n  mineOnly: Boolean\n  statuses: [String!]\n}"
+    },
+    "RequestAccountingBackfillInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        },
+        {
+          "name": "objectTypes",
+          "type": "[AccountingSyncObjectType!]",
+          "defaultValue": null
+        },
+        {
+          "name": "rangeEnd",
+          "type": "Timestamp",
+          "defaultValue": null
+        },
+        {
+          "name": "rangeStart",
+          "type": "Timestamp",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input RequestAccountingBackfillInput {\n  integrationType: AccountingSystem!\n  \"\"\"Defaults to every kind of document.\"\"\"\n  objectTypes: [AccountingSyncObjectType!]\n  \"\"\"Defaults to when sync was turned on.\"\"\"\n  rangeEnd: Timestamp\n  \"\"\"Defaults to the start date.\"\"\"\n  rangeStart: Timestamp\n}"
     },
     "RequestAIAuditExportInput": {
       "kind": "input",
@@ -30540,6 +31298,27 @@
         }
       ],
       "sdl": "input RespondToMyShiftSwapInput {\n  id: ID!\n  note: String\n  response: MyShiftSwapResponse!\n}"
+    },
+    "RetryAccountingSyncInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "errorCategories",
+          "type": "[AccountingSyncErrorCategory!]",
+          "defaultValue": null
+        },
+        {
+          "name": "ids",
+          "type": "[ID!]",
+          "defaultValue": null
+        },
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nRetries the named records, or every failed record in the named categories.\n\"\"\"\ninput RetryAccountingSyncInput {\n  errorCategories: [AccountingSyncErrorCategory!]\n  ids: [ID!]\n  integrationType: AccountingSystem!\n}"
     },
     "ReverseCustomerPaymentInput": {
       "kind": "input",
@@ -30749,6 +31528,42 @@
         "Moderate"
       ],
       "sdl": "enum SafetySeverity {\n  Critical\n  Major\n  Minor\n  Moderate\n}"
+    },
+    "SaveAccountingAppInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "clearWebhookVerifierToken",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "clientId",
+          "type": "String!",
+          "defaultValue": null
+        },
+        {
+          "name": "clientSecret",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "environment",
+          "type": "AccountingAppEnvironment!",
+          "defaultValue": null
+        },
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        },
+        {
+          "name": "webhookVerifierToken",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "\"\"\"\nThe organization's own app keys. Leave the secret or verifier token out to keep the saved one.\n\"\"\"\ninput SaveAccountingAppInput {\n  \"\"\"Removes the saved webhook verifier token.\"\"\"\n  clearWebhookVerifierToken: Boolean\n  clientId: String!\n  \"\"\"\n  Required the first time, and whenever the client ID or environment changes.\n  \"\"\"\n  clientSecret: String\n  environment: AccountingAppEnvironment!\n  integrationType: AccountingSystem!\n  webhookVerifierToken: String\n}"
     },
     "SaveHomeLayoutPresetInput": {
       "kind": "input",
@@ -31986,6 +32801,22 @@
       ],
       "sdl": "input SidebarPreferencesInput {\n  activity: SidebarActivityPreferenceInput!\n  attentionMetrics: [String!]!\n  quickActionIds: [String!]!\n  sections: [SidebarSectionPreferenceInput!]!\n  version: Int!\n}"
     },
+    "SkipAccountingSyncInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "reason",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input SkipAccountingSyncInput {\n  id: ID!\n  \"\"\"Why the document is not sent. Required.\"\"\"\n  reason: String!\n}"
+    },
     "StageFuelPurchaseImportInput": {
       "kind": "input",
       "fields": [
@@ -32442,6 +33273,27 @@
         }
       ],
       "sdl": "input UpcomingWorkerPTOInput {\n  after: String\n  endDate: Timestamp\n  first: Int = 20\n  fleetCodeId: ID\n  startDate: Timestamp\n  status: PTOStatus\n  timezone: String\n  type: PTOType\n  workerId: ID\n}"
+    },
+    "UpdateAccountingSyncSettingsInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "autoSync",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "driverSettlements",
+          "type": "Boolean!",
+          "defaultValue": null
+        },
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateAccountingSyncSettingsInput {\n  \"\"\"\n  Send posted documents on their own. When off, each waits for a person to release it; records already held stay held.\n  \"\"\"\n  autoSync: Boolean!\n  \"\"\"\n  Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones.\n  \"\"\"\n  driverSettlements: Boolean!\n  integrationType: AccountingSystem!\n}"
     },
     "UpdateAgentEvalCaseInput": {
       "kind": "input",
@@ -35130,12 +35982,64 @@
         "AccountRole",
         "Carrier",
         "Customer",
+        "Driver",
+        "GLAccount",
         "ItemRole",
         "LineType",
         "PaymentMethod",
         "PaymentTerm"
       ],
-      "sdl": "\"\"\"The kind of Trenova record or setting a mapping is for.\"\"\"\nenum AccountingMappingTargetType {\n  AccessorialCharge\n  \"\"\"A role an account plays, such as accounts receivable or revenue.\"\"\"\n  AccountRole\n  Carrier\n  Customer\n  \"\"\"A role an item plays, such as the short-pay write-off.\"\"\"\n  ItemRole\n  \"\"\"An invoice line type.\"\"\"\n  LineType\n  PaymentMethod\n  PaymentTerm\n}"
+      "sdl": "\"\"\"The kind of Trenova record or setting a mapping is for.\"\"\"\nenum AccountingMappingTargetType {\n  AccessorialCharge\n  \"\"\"A role an account plays, such as accounts receivable or revenue.\"\"\"\n  AccountRole\n  Carrier\n  Customer\n  \"\"\"An owner-operator driver, mapped to a vendor.\"\"\"\n  Driver\n  \"\"\"A Trenova GL account that bills post to, mapped to an account.\"\"\"\n  GLAccount\n  \"\"\"A role an item plays, such as the short-pay write-off.\"\"\"\n  ItemRole\n  \"\"\"An invoice line type.\"\"\"\n  LineType\n  PaymentMethod\n  PaymentTerm\n}"
+    },
+    "AccountingSyncErrorCategory": {
+      "kind": "enum",
+      "values": [
+        "Auth",
+        "ClosedPeriod",
+        "Configuration",
+        "Conflict",
+        "Currency",
+        "Duplicate",
+        "Mapping",
+        "NotFound",
+        "RateLimited",
+        "Transient",
+        "Validation"
+      ],
+      "sdl": "\"\"\"Why a sync record failed.\"\"\"\nenum AccountingSyncErrorCategory {\n  Auth\n  ClosedPeriod\n  Configuration\n  Conflict\n  Currency\n  Duplicate\n  Mapping\n  NotFound\n  RateLimited\n  Transient\n  Validation\n}"
+    },
+    "AccountingSyncObjectType": {
+      "kind": "enum",
+      "values": [
+        "CarrierBill",
+        "CarrierBillPayment",
+        "CarrierVendor",
+        "CreditApplication",
+        "CreditMemo",
+        "Customer",
+        "CustomerPayment",
+        "DebitMemo",
+        "DriverBill",
+        "DriverBillPayment",
+        "DriverVendor",
+        "Invoice"
+      ],
+      "sdl": "\"\"\"A kind of Trenova document sent to the accounting system.\"\"\"\nenum AccountingSyncObjectType {\n  \"\"\"\n  A carrier settlement, sent as a bill, or as a vendor credit when the net is negative.\n  \"\"\"\n  CarrierBill\n  \"\"\"The payment of a carrier settlement, sent as a bill payment.\"\"\"\n  CarrierBillPayment\n  \"\"\"A carrier, sent as a vendor.\"\"\"\n  CarrierVendor\n  \"\"\"A credit memo applied to an invoice.\"\"\"\n  CreditApplication\n  CreditMemo\n  Customer\n  CustomerPayment\n  DebitMemo\n  \"\"\"\n  An owner-operator settlement, sent as a bill, or as a vendor credit when the net is negative.\n  \"\"\"\n  DriverBill\n  \"\"\"The payment of an owner-operator settlement, sent as a bill payment.\"\"\"\n  DriverBillPayment\n  \"\"\"An owner-operator driver, sent as a 1099 vendor.\"\"\"\n  DriverVendor\n  Invoice\n}"
+    },
+    "AccountingSyncRecordStatus": {
+      "kind": "enum",
+      "values": [
+        "AwaitingApproval",
+        "Blocked",
+        "DeadLettered",
+        "InFlight",
+        "Queued",
+        "Retrying",
+        "Skipped",
+        "Superseded",
+        "Synced"
+      ],
+      "sdl": "\"\"\"Where a sync record stands.\"\"\"\nenum AccountingSyncRecordStatus {\n  \"\"\"Held until a person releases it, because automatic sync is off.\"\"\"\n  AwaitingApproval\n  \"\"\"Cannot be sent until someone fixes what the resolution names.\"\"\"\n  Blocked\n  \"\"\"Failed too many times in a row; a person has to retry it.\"\"\"\n  DeadLettered\n  \"\"\"Being sent now.\"\"\"\n  InFlight\n  \"\"\"Waiting its turn.\"\"\"\n  Queued\n  \"\"\"\n  The last try failed in a way that may pass; Trenova tries again on its own.\n  \"\"\"\n  Retrying\n  \"\"\"A person chose not to send it.\"\"\"\n  Skipped\n  \"\"\"A newer revision of the same document replaced it.\"\"\"\n  Superseded\n  Synced\n}"
     },
     "PTOType": {
       "kind": "enum",
@@ -35498,6 +36402,15 @@
         "FleetSizeDesc"
       ],
       "sdl": "enum CarrierSourcingSort {\n  AuthorityAgeDesc\n  BestMatch\n  FleetSizeDesc\n}"
+    },
+    "AccountingBackfillAction": {
+      "kind": "enum",
+      "values": [
+        "Cancel",
+        "Pause",
+        "Resume"
+      ],
+      "sdl": "\"\"\"What to do with a running backfill.\"\"\"\nenum AccountingBackfillAction {\n  Cancel\n  Pause\n  Resume\n}"
     },
     "ChargeAllocationMethod": {
       "kind": "enum",
@@ -37113,6 +38026,14 @@
         "Withdrawn"
       ],
       "sdl": "\"\"\"\nThe driver's own answer to a swap. Approving and rejecting are deliberately\nabsent: a swap is decided by the office.\n\"\"\"\nenum MyShiftSwapResponse {\n  Accepted\n  Declined\n  Withdrawn\n}"
+    },
+    "AccountingAppEnvironment": {
+      "kind": "enum",
+      "values": [
+        "Production",
+        "Sandbox"
+      ],
+      "sdl": "\"\"\"Which of the accounting system's environments an app's keys are for.\"\"\"\nenum AccountingAppEnvironment {\n  \"\"\"Production keys, which work with real companies.\"\"\"\n  Production\n  \"\"\"Development keys, which work only with test companies.\"\"\"\n  Sandbox\n}"
     },
     "ReportDashboardLayoutInput": {
       "kind": "input",

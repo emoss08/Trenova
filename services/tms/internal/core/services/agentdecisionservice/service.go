@@ -2,8 +2,9 @@ package agentdecisionservice
 
 import (
 	"context"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"strings"
+
+	"github.com/emoss08/trenova/shared/timeutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -47,6 +49,10 @@ type Params struct {
 	// FollowUps has the conversation that raised a proposal report what came
 	// of deciding it.
 	FollowUps services.DecisionFollowUps `optional:"true"`
+	// Previews says what an approval would do, as the decider sees it, so
+	// the decision records what was approved and refuses what moved on.
+	Previews services.ProposalPreviewService `optional:"true"`
+	Metrics  *metrics.Registry               `optional:"true"`
 }
 
 type Service struct {
@@ -65,6 +71,8 @@ type Service struct {
 	activity     services.AgentActivityPublisher
 	watchtower   services.WatchtowerProjector
 	followUps    services.DecisionFollowUps
+	previews     services.ProposalPreviewService
+	metrics      *metrics.ProposalPreview
 }
 
 func New(p Params) services.AgentDecisionService {
@@ -84,7 +92,17 @@ func New(p Params) services.AgentDecisionService {
 		activity:     p.Activity,
 		watchtower:   p.Watchtower,
 		followUps:    p.FollowUps,
+		previews:     p.Previews,
+		metrics:      previewMetrics(p.Metrics),
 	}
+}
+
+func previewMetrics(registry *metrics.Registry) *metrics.ProposalPreview {
+	if registry == nil {
+		return nil
+	}
+
+	return registry.ProposalPreview
 }
 
 func (s *Service) Decide(
@@ -227,14 +245,29 @@ func (s *Service) DecideWithOutcome(
 	})
 	defer span.End()
 
+	// What the decider approves is what they were shown, as the world is now:
+	// a change whose record moved on, or whose preview no longer matches the
+	// one they reviewed, is refused before anything is recorded.
+	shown, err := s.settlePreview(ctx, proposal, req, actor)
+	if err != nil {
+		aitrace.MarkFailed(span, previewRefusal(err))
+
+		return nil, err
+	}
+	aitrace.RecordDecidedPreview(span, shown.digest, shown.reviewed)
+
 	decision := &agent.AgentDecision{
-		OrganizationID:  req.TenantInfo.OrgID,
-		BusinessUnitID:  req.TenantInfo.BuID,
-		ProposalID:      &proposal.ID,
-		DecidedByUserID: actor.UserID,
-		Decision:        req.Decision,
-		Modifications:   req.Modifications,
-		ReasonCode:      reasonCodeFor(req.Decision, req.ReasonCode),
+		OrganizationID:       req.TenantInfo.OrgID,
+		BusinessUnitID:       req.TenantInfo.BuID,
+		ProposalID:           &proposal.ID,
+		DecidedByUserID:      actor.UserID,
+		Decision:             req.Decision,
+		Modifications:        req.Modifications,
+		ReasonCode:           reasonCodeFor(req.Decision, req.ReasonCode),
+		Preview:              shown.preview,
+		PreviewDigest:        shown.digest,
+		PreviewReviewed:      shown.reviewed,
+		PreviewTargetVersion: shown.targetVersion,
 	}
 	decision.TraceID, _ = aitrace.IDs(ctx)
 
@@ -279,7 +312,7 @@ func (s *Service) DecideWithOutcome(
 
 	// An approval that does not act is worse than no approval: the audit trail
 	// would say a person authorized something that never happened.
-	execErr := s.executeIfApproved(ctx, proposal, req, actor)
+	executed, execErr := s.executeIfApproved(ctx, proposal, req, actor)
 
 	// The ledger learns from the outcome, not the intent: an approval whose
 	// write failed is a setback for the tool, whatever the person decided.
@@ -318,7 +351,11 @@ func (s *Service) DecideWithOutcome(
 		})
 	}
 
-	return &services.DecisionOutcome{Decision: created, ExecutionError: execErr}, nil
+	return &services.DecisionOutcome{
+		Decision:              created,
+		ExecutionError:        execErr,
+		ExecutedTargetVersion: executed,
+	}, nil
 }
 
 // settleModifications turns what the form sent back into what the decision
@@ -428,21 +465,28 @@ func (s *Service) executeIfApproved(
 	proposal *agent.AgentProposal,
 	req *services.DecideAgentProposalRequest,
 	actor *services.RequestActor,
-) error {
+) (*int64, error) {
 	if req.Decision != agent.DecisionAccepted && req.Decision != agent.DecisionModified {
-		return nil
+		return nil, nil //nolint:nilnil // a rejection runs nothing and leaves no version
 	}
 
-	err := s.executor.Execute(ctx, proposal, req.Modifications, actor)
+	outcome, err := s.executor.Run(ctx, &proposalexecutor.Approval{
+		Proposal:              proposal,
+		Modifications:         req.Modifications,
+		Actor:                 actor,
+		ExpectedTargetVersion: req.ExpectedTargetVersion,
+	})
 	if err != nil {
 		s.l.Error("approved proposal did not execute",
 			zap.String("proposal", proposal.ID.String()),
 			zap.String("tool", proposal.ToolName),
 			zap.Error(err),
 		)
+
+		return nil, err
 	}
 
-	return err
+	return outcome.TargetVersion, nil
 }
 
 // recordTrust is best effort: the decision is the durable fact, and a ledger

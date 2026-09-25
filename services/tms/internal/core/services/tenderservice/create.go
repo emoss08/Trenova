@@ -131,39 +131,13 @@ func (s *Service) CreateWaterfall(
 	ctx context.Context,
 	req *CreateWaterfallTenderRequest,
 ) (*CreateWaterfallResult, error) {
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
-	}
-
-	move, sh, err := s.loadTenderableMove(ctx, req.TenantInfo, req.ShipmentMoveID)
+	waterfall, err := s.planWaterfall(ctx, req, true)
 	if err != nil {
 		return nil, err
 	}
+	guide, plan := waterfall.guide, waterfall.offers
 
-	guide, err := s.resolveGuide(ctx, req, move, sh)
-	if err != nil {
-		return nil, err
-	}
-
-	plan, err := s.buildGuideOffers(ctx, req.TenantInfo, guide, move)
-	if err != nil {
-		return nil, err
-	}
-
-	guideID := guide.ID
-	entity := &tender.Tender{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		ShipmentID:     move.ShipmentID,
-		ShipmentMoveID: move.ID,
-		RoutingGuideID: &guideID,
-		Mode:           tender.ModeWaterfall,
-		Status:         tender.StatusActive,
-		CreatedByID:    userIDPtr(req.TenantInfo),
-		Offers:         plan.offers,
-	}
-
-	created, err := s.persistAndStart(ctx, req.TenantInfo, entity)
+	created, err := s.persistAndStart(ctx, req.TenantInfo, waterfall.tender)
 	if err != nil {
 		return nil, err
 	}
@@ -187,32 +161,16 @@ func (s *Service) CreateSpot(
 	ctx context.Context,
 	req *CreateSpotTenderRequest,
 ) (*tender.Tender, error) {
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
-	}
-
-	move, _, err := s.loadTenderableMove(ctx, req.TenantInfo, req.ShipmentMoveID)
+	spot, err := s.planSpot(ctx, req, true)
 	if err != nil {
 		return nil, err
 	}
-
-	offers, err := s.buildSpotOffers(ctx, req, move)
-	if err != nil {
+	if err = spot.refusal(req); err != nil {
 		return nil, err
 	}
+	offers := spot.tender.Offers
 
-	entity := &tender.Tender{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
-		ShipmentID:     move.ShipmentID,
-		ShipmentMoveID: move.ID,
-		Mode:           req.Mode,
-		Status:         tender.StatusActive,
-		CreatedByID:    userIDPtr(req.TenantInfo),
-		Offers:         offers,
-	}
-
-	created, err := s.persistAndStart(ctx, req.TenantInfo, entity)
+	created, err := s.persistAndStart(ctx, req.TenantInfo, spot.tender)
 	if err != nil {
 		return nil, err
 	}
@@ -403,9 +361,10 @@ type guideEntryScreening struct {
 // guideOfferPlan is the screened offer plan for a waterfall tender: the offers
 // that survived the eligibility gate plus the entries skipped or warned on.
 type guideOfferPlan struct {
-	offers  []*tender.TenderOffer
-	skipped []guideEntryScreening
-	warned  []guideEntryScreening
+	offers   []*tender.TenderOffer
+	skipped  []guideEntryScreening
+	warned   []guideEntryScreening
+	carriers map[pulid.ID]string
 }
 
 // buildGuideOffers screens every guide entry's carrier before it can be
@@ -417,6 +376,7 @@ func (s *Service) buildGuideOffers(
 	tenantInfo pagination.TenantInfo,
 	guide *tender.RoutingGuide,
 	move *shipment.ShipmentMove,
+	refreshIntel bool,
 ) (*guideOfferPlan, error) {
 	carrierIDs := make([]pulid.ID, 0, len(guide.Entries))
 	for _, entry := range guide.Entries {
@@ -441,9 +401,10 @@ func (s *Service) buildGuideOffers(
 	}
 
 	now := timeutils.NowUnix()
-	gates := s.intelGates(ctx, tenantInfo, carrierIDs, true)
+	gates := s.intelGates(ctx, tenantInfo, carrierIDs, refreshIntel)
 	plan := &guideOfferPlan{
-		offers: make([]*tender.TenderOffer, 0, len(guide.Entries)),
+		offers:   make([]*tender.TenderOffer, 0, len(guide.Entries)),
+		carriers: carrierNames(carriers),
 	}
 	multiErr := errortypes.NewMultiError()
 
@@ -627,7 +588,8 @@ func (s *Service) buildSpotOffers(
 	ctx context.Context,
 	req *CreateSpotTenderRequest,
 	move *shipment.ShipmentMove,
-) ([]*tender.TenderOffer, error) {
+	refreshIntel bool,
+) (*spotOfferPlan, error) {
 	carrierIDs := make([]pulid.ID, 0, len(req.Lines))
 	for _, line := range req.Lines {
 		carrierIDs = append(carrierIDs, line.CarrierID)
@@ -648,7 +610,7 @@ func (s *Service) buildSpotOffers(
 	}
 
 	now := timeutils.NowUnix()
-	gates := s.intelGates(ctx, req.TenantInfo, carrierIDs, true)
+	gates := s.intelGates(ctx, req.TenantInfo, carrierIDs, refreshIntel)
 	offers := make([]*tender.TenderOffer, 0, len(req.Lines))
 	warnings := make([]string, 0, len(req.Lines))
 	multiErr := errortypes.NewMultiError()
@@ -732,13 +694,11 @@ func (s *Service) buildSpotOffers(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	if len(warnings) > 0 && !req.OverrideInsuranceWarnings {
-		return nil, errortypes.NewBusinessError(
-			"Carrier has insurance warnings: {0}. Confirm the override to proceed",
-			strings.Join(warnings, "; "),
-		).WithParam("overridable", "true")
-	}
-	return offers, nil
+	return &spotOfferPlan{
+		offers:   offers,
+		warnings: warnings,
+		carriers: carrierNames(carriers),
+	}, nil
 }
 
 // resolveOfferChannel fills the channel-specific delivery fields: the

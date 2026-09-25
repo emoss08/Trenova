@@ -1,6 +1,7 @@
 package agenttoolservice
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -115,4 +116,12 @@ func (p plannedChange) preview(
 	changes = append(changes, extra...)
 
 	return toolpreview.Build(summary, changes...)
+}
+
+func countOf(n int, noun string) string {
+	if n == 1 {
+		return "1 " + noun
+	}
+
+	return fmt.Sprintf("%d %ss", n, noun)
 }

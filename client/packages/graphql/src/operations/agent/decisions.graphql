@@ -23,6 +23,7 @@ fragment PendingProposalFields on AgentProposal {
     minimum
     maximum
     maxLength
+    readOnly
   }
   modifications
   evidence {
@@ -142,6 +143,8 @@ mutation DecideAgentProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) 
       id
       decision
       reasonCode
+      previewDigest
+      previewReviewed
       createdAt
     }
   }

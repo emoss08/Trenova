@@ -1,5 +1,5 @@
 {
-  "version": "sha256:d0701ecb4c7f779d21eb6a22780bf9a725203bc6fc1830cd3bfa933e88556b78",
+  "version": "sha256:f3a6de2de93576aef7faaf58f65c3191f0823982ba3f358cd4ee4b0c921e4bd4",
   "modules": [
     {
       "id": "home",
@@ -1605,6 +1605,127 @@
       "inNavigation": true
     },
     {
+      "path": "/accounting/sync",
+      "name": "Sync ledger",
+      "module": "accounting",
+      "breadcrumb": [
+        "Accounting management",
+        "Accounting sync",
+        "Sync ledger"
+      ],
+      "description": "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.",
+      "summary": "The sync ledger lists every document Trenova sends to QuickBooks Online and what happened to each one: invoices, credit and debit memos, customer payments, credit applications and customer changes, and on the payables side carrier settlements, owner-operator settlements, their payments, and changes to carriers and drivers. Documents are sent on their own as they are posted; the ledger is where you see what went through, what is waiting, and fix what did not.\n\nThe strip at the top counts **Synced**, **In progress**, **Waiting for release** and **Needs attention** records; selecting a figure filters the table to it. Records held or failed for the same reason are grouped under **Needs attention**, so one fix clears them all.\n\nA posted carrier settlement is sent as a bill to the carrier's vendor, or as a vendor credit when it nets below zero; its lines follow the settlement's journal entry, one per GL account. Marking it paid sends a bill payment from the cash account. Voiding a posted settlement removes its bill. Owner-operator settlements work the same way once **Send owner-operator settlements** is on for the connection, each driver becoming a 1099 vendor; company driver pay is never sent.",
+      "requires": [
+        {
+          "resource": "accounting_sync",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "QuickBooks sync",
+        "sync log",
+        "sync errors",
+        "sync history",
+        "failed to sync",
+        "QuickBooks not updating",
+        "invoice not in QuickBooks",
+        "accounting sync ledger",
+        "outbox",
+        "settlement not in QuickBooks",
+        "carrier bill",
+        "bill payment",
+        "vendor credit"
+      ],
+      "tasks": [
+        {
+          "title": "Fix a document that did not reach QuickBooks",
+          "keywords": [
+            "sync failed",
+            "held document",
+            "blocked invoice",
+            "missing mapping",
+            "closed period"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and select **Needs attention** in the strip.",
+            "Open the record. Its reason says what to do, such as mapping a charge code to a QuickBooks item on the [Mappings](/accounting/sync/mappings) page.",
+            "Fix what the reason names, then select **Retry now**. To retry every record held for the same reason, select **Retry these** beside the reason under **Needs attention**."
+          ]
+        },
+        {
+          "title": "Fix a settlement that did not reach QuickBooks",
+          "keywords": [
+            "carrier bill held",
+            "settlement not synced",
+            "map GL account",
+            "vendor missing"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and open the settlement's record.",
+            "When its reason names a GL account, map that account to a QuickBooks account on the [Mappings](/accounting/sync/mappings) page (filter by **GL accounts**). When it names a carrier or an owner-operator, map them to the existing QuickBooks vendor, or let Trenova create one.",
+            "Select **Retry now**. A settlement's payment waits for its bill and follows once the bill is in QuickBooks."
+          ]
+        },
+        {
+          "title": "Release documents waiting for approval",
+          "keywords": [
+            "approve sync",
+            "send held documents",
+            "manual sync"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and select **Waiting for release** in the strip.",
+            "Open a record and select **Release** to send it, or use the release button in the page header to send all of them."
+          ]
+        },
+        {
+          "title": "Skip a document",
+          "keywords": [
+            "do not send",
+            "already entered by hand",
+            "ignore sync error"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and open the record.",
+            "Select **Skip**, say why it is not sent, then select **Skip document**."
+          ]
+        },
+        {
+          "title": "Pause or resume sending",
+          "keywords": [
+            "stop syncing",
+            "month-end close",
+            "hold QuickBooks sync"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and select **Pause sending**. Add a reason if you like, then select **Pause sending** again to confirm.",
+            "Posted documents keep queueing while sending is paused. Select **Resume sending** to send them in order."
+          ]
+        },
+        {
+          "title": "Send documents posted before sync was turned on",
+          "keywords": [
+            "backfill",
+            "historical invoices",
+            "send old documents"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and select **Backfill**.",
+            "Choose the range and, optionally, the kinds of documents, then select **Start backfill**. Documents already queued are left alone, and one backfill runs at a time."
+          ]
+        }
+      ],
+      "notes": "Viewing the ledger needs read access to accounting sync; retrying, releasing, skipping, pausing and resuming need update access; a backfill needs manage access to the accounting integration. A document that fails for a temporary reason is retried on its own, backing off from 30 seconds to 6 hours, and is marked failed after 8 tries. Invoices, customer payments, customers, carrier and driver settlements, carriers and workers show where they stand in QuickBooks Online on their own pages, with a link back to this ledger.",
+      "related": [
+        "/accounting/sync/mappings",
+        "/admin/integrations"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
       "path": "/accounting/sync/mappings",
       "name": "Mappings",
       "module": "accounting",
@@ -2090,13 +2211,16 @@
             "agent decisions",
             "pending proposals",
             "review agent changes",
-            "approve plan"
+            "approve plan",
+            "preview agent change"
           ],
           "steps": [
             "Open [AI control](/admin/agent-control), select **Activity** in the rail and then **Proposals**.",
             "Right-click a pending proposal and choose **Approve**, **Approve with changes** or **Reject**.",
-            "Give a **Reason** (required when rejecting) and confirm with **Approve and run** or **Reject**.",
-            "For a multi-step plan, select **Plans** instead and use **Approve all** or **Reject all**."
+            "Read **What changes** in the dialog: each record the change would touch and its values before and after, worked out from the records as they are now. Anything you may not see reads **Hidden by your data access**. **Approve and run** stays off until it has loaded, and for a change whose record was edited since it was proposed (**Changed since it was proposed**).",
+            "Give a **Reason** (required when rejecting) and confirm with **Approve and run** or **Reject**. If the change moved while the dialog was open, nothing is recorded and the dialog shows it again; read it and confirm.",
+            "With **Approve with changes**, the record the change is about cannot be edited, and what your values would do is shown as you type.",
+            "For a multi-step plan, select **Plans** instead and use **Approve all** or **Reject all**; the dialog shows every step's changes in order."
           ]
         },
         {
@@ -4214,7 +4338,42 @@
             "Intuit sends you back to Trenova, which finishes the connection and shows the company it connected: its name, legal name, country, **Home currency**, **Multicurrency** and **Books closed through**. Check it is the right company, then select **Continue**.",
             "On **Match records**, Trenova reads the company's accounts, items, customers and vendors and proposes a match for each Trenova record. Tick the proposals that are right and select the confirm button, which names how many are ticked, or select a row to choose another record.",
             "When every required mapping is confirmed, select **Finish setup**. The rest can be done later on [Mappings](/accounting/sync/mappings) (**Open all mappings**).",
-            "Nothing is sent to QuickBooks yet. Trenova reads the company's settings and records and checks the connection every fifteen minutes."
+            "Choose the **Start date**: documents dated before it are never sent. Leave **Send posted documents automatically** on to send each document as it is posted, or turn it off to hold each one in the [Sync ledger](/accounting/sync) until someone releases it. When the start date is in the past, tick **Also send documents already posted since the start date** to queue those too. Turn on **Send owner-operator settlements** to also send owner-operator settlements as bills; it is off unless you turn it on, and company driver pay is never sent.",
+            "Select **Start sending**. From then on Trenova sends invoices, credit and debit memos, customer payments, credit applications, carrier settlements and their payments as they are posted, and checks the connection every fifteen minutes."
+          ]
+        },
+        {
+          "title": "Change how documents are sent",
+          "keywords": [
+            "automatic sync",
+            "hold documents",
+            "owner-operator settlements",
+            "1099 drivers",
+            "driver bills"
+          ],
+          "steps": [
+            "Open [Integrations](/admin/integrations) and open the QuickBooks Online card.",
+            "Under **Sync settings**, turn **Send posted documents automatically** on or off. When it is off, each new document waits in the [Sync ledger](/accounting/sync) until someone releases it; documents already held stay held.",
+            "Turn **Send owner-operator settlements** on to send owner-operator settlements to QuickBooks as bills, with a 1099 vendor for each driver. Settlements posted from then on are sent; request a backfill from the [Sync ledger](/accounting/sync) to send earlier ones.",
+            "Select **Save**."
+          ]
+        },
+        {
+          "title": "Use your own Intuit app",
+          "keywords": [
+            "Intuit app keys",
+            "client ID",
+            "client secret",
+            "redirect URI",
+            "QuickBooks developer app",
+            "self-hosted QuickBooks"
+          ],
+          "steps": [
+            "On the Intuit developer portal, create an app with the com.intuit.quickbooks.accounting scope.",
+            "Open [Integrations](/admin/integrations) and open the QuickBooks Online card. When this server has no Intuit app of its own the keys form is already open; otherwise select **Use your own app**.",
+            "Copy the **Redirect URI** into the app's redirect URIs on the Intuit developer portal exactly as written. Development keys accept http://localhost; production keys need https.",
+            "Choose the **Environment**, enter the **Client ID** and **Client secret** from the same environment, and optionally the webhook verifier token, then select **Save keys**. Trenova checks the keys with Intuit before saving them.",
+            "To change the keys later select **Change keys**; to go back to the server's app select **Remove**. While a company is connected, only the client secret and verifier token can change."
           ]
         },
         {
@@ -4233,8 +4392,9 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person. A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
+      "notes": "Viewing the page needs read access to integrations; saving or testing a connection needs update access to integrations. Starting a Samsara worker sync needs update access to workers. The carrier intelligence tabs need read access to carrier intelligence, and changing them needs manage access.\n\nSeeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs update access, and connecting, reconnecting or disconnecting needs manage access and must be done by a signed-in person, as do saving or removing the Intuit app keys, choosing the start date and changing the sync settings. A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an item that links back here.",
       "related": [
+        "/accounting/sync",
         "/admin/inbound-mailboxes",
         "/admin/api-keys",
         "/dispatch/carrier-monitoring",
@@ -7190,6 +7350,20 @@
           ]
         },
         {
+          "title": "Answer a change an agent proposes in the conversation",
+          "keywords": [
+            "approve in chat",
+            "review agent change",
+            "preview before approving",
+            "what will this change"
+          ],
+          "steps": [
+            "In the conversation, read the change's card: what each record would look like before and after, and any message or amount it would send or move. Select **Show all changes** to see all of it.",
+            "Select **Approve** once the preview has loaded, **Reject** to turn it down, or **Modify** to change the values; the dialog shows what your values would do as you type, and confirms with **Approve with changes**.",
+            "If the card says **Changed since it was proposed**, it can only be rejected; ask the agent again for a fresh proposal."
+          ]
+        },
+        {
           "title": "Start a conversation without asking a question yet",
           "keywords": [
             "new chat",
@@ -7244,7 +7418,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI control** on the Desk.\n\nWhen an agent in your own conversation asks to make several changes as one plan, answer it right there with **Approve all** or **Reject all**; you need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.",
+      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, its card shows what the change would do before you answer: each record it would touch with its values before and after, the message it would send as it would go out, and any amounts it would move. Select **Show all changes** for the rest of a long change. **Approve** waits until this has loaded, and stays off if the record was edited after the agent proposed the change (**Changed since it was proposed**); reject it and ask again. Values you may not see read **Hidden by your data access**. If the change moved while you were reading it, nothing is recorded and the card shows it again so you can approve what is there now. An email draft in the workspace shows the message as it would really go out, with its real recipients.\n\nWhen an agent in your own conversation asks to make several changes as one plan, answer it right there with **Approve all** or **Reject all**; each step shows what it would change, and a step that starts from a record an earlier step changes says so. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.",
       "related": [
         "/desk/decisions",
         "/desk/watchtower",
@@ -7266,7 +7440,7 @@
         "Decisions"
       ],
       "description": "Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan.",
-      "summary": "Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan. Each proposal shows the agent, what it would change (**Exactly as proposed**), **Why** it wants to, how sure it is, the **Evidence** behind it, and for a plan the **Steps, in the order they run**. Changes that cannot be undone are marked **Permanent**. Dispatchers, billing staff and managers work this queue so agents can act on the operation safely.",
+      "summary": "Decisions is the queue of changes AI agents have proposed and that need a person to approve before they run, such as updating a record or a multi-step plan. Each proposal leads with **What changes**: every record the change would touch, what happens to it, and each value before and after, worked out by the same code that would make the change and read from your records as they are now. A message the change would send is shown as it would go out, with the recipients it would really reach, and amounts it would move are shown line by line with the totals before and after. Below that are **Why** the agent wants it, how sure it is, the **Evidence** behind it, and under **Details** the arguments **Exactly as proposed**. A plan shows **What changes, in the order it runs**, step by step. Changes that cannot be undone are marked **Permanent**. Dispatchers, billing staff and managers work this queue so agents can act on the operation safely.",
       "requires": [
         {
           "resource": "assistant",
@@ -7284,9 +7458,26 @@
         "approval queue",
         "pending changes",
         "human in the loop",
-        "review agent actions"
+        "review agent actions",
+        "preview agent change",
+        "what will this change"
       ],
       "tasks": [
+        {
+          "title": "Review what a change would do before approving it",
+          "keywords": [
+            "preview agent change",
+            "what will this change",
+            "before and after",
+            "check proposed values"
+          ],
+          "steps": [
+            "Open [Decisions](/desk/decisions) and select a proposal (or use j and k to move through the list; the next row is read ahead so it is ready when you reach it).",
+            "Read **What changes**. The old value is struck through with the new one after it; a value that has moved since the agent proposed the change says what it was then (\"Was … when proposed\").",
+            "A value, record or amount you are not allowed to see reads **Hidden by your data access**, and the number of hidden parts is shown under the change. You can still approve it; the decision records that parts were hidden from you.",
+            "If a record the change depends on was edited or removed after the agent proposed it, the change says **Changed since it was proposed** and can only be rejected; ask the agent again for a fresh proposal."
+          ]
+        },
         {
           "title": "Approve or reject a proposed change",
           "keywords": [
@@ -7295,9 +7486,10 @@
             "review proposal"
           ],
           "steps": [
-            "Open [Decisions](/desk/decisions) and select a proposal (or use j and k to move through the list).",
-            "Read **Why**, **Evidence** and **Exactly as proposed**.",
-            "Select **Approve** (a) or **Reject** (r). Enter a **Reason** (required when rejecting, optional when approving) and confirm with **Approve and run** or **Reject**."
+            "Open [Decisions](/desk/decisions) and select a proposal.",
+            "Read **What changes**, **Why** and **Evidence**. **Approve** stays off until what the change would do has loaded.",
+            "Select **Approve** (a) or **Reject** (r). The dialog shows what changes again; enter a **Reason** (required when rejecting, optional when approving) and confirm with **Approve and run** or **Reject**.",
+            "If what the change would do moved while you were reading it, nothing is recorded: the dialog shows the change as it is now and says it looks different. Read it again and confirm."
           ]
         },
         {
@@ -7309,7 +7501,9 @@
           ],
           "steps": [
             "Open [Decisions](/desk/decisions) and select the proposal.",
-            "Select **Modify** (m), adjust the values, optionally add a reason, and confirm. The change runs with your values."
+            "Select **Modify** (m) and adjust the values. The record the change is about stays as proposed and cannot be edited; a change can alter what is done to that record, never which record it is.",
+            "As you type, the dialog shows what your values would do. Values the change would refuse say why and cannot be approved.",
+            "Optionally add a reason and confirm with **Approve with changes**. The change runs with the values you saw previewed."
           ]
         },
         {
@@ -7322,7 +7516,7 @@
           "steps": [
             "Open [Decisions](/desk/decisions).",
             "Mark proposals with their checkbox (or x). A batch holds one kind of change at a time, and a plan is always decided on its own.",
-            "Select **Approve all** or **Reject all**, enter one **Reason** for all of them (required when rejecting), and confirm. Approved changes run one after another; one that cannot run is reported on its own."
+            "Select **Approve all** or **Reject all**, enter one **Reason** for all of them (required when rejecting), and confirm. Approved changes run one after another; one that cannot run, or whose preview changed since you read it, is reported on its own."
           ]
         },
         {
@@ -7345,7 +7539,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to the assistant and to agent proposals. Approving, rejecting and modifying need update permission on agent proposals. A rejected change never runs.",
+      "notes": "Needs read access to the assistant and to agent proposals. Approving, rejecting and modifying need update permission on agent proposals. A rejected change never runs.\n\nAn approval records exactly what you were shown. In a batch, a proposal you never opened is recorded as approved without its preview having been reviewed, and the confirmation says how many of those there are. Some changes cannot say exactly what they would do; they show the values they would run with under a warning instead. If what a change would do cannot be loaded at all, you can still approve it, and the decision is recorded as made without a preview.\n\nIn a plan, a step that changes a record an earlier step also changes is shown as that earlier step would leave it, with a note naming the step.",
       "related": [
         "/desk",
         "/desk/watchtower",
@@ -14542,6 +14736,15 @@
   ],
   "records": [
     {
+      "entity": "accounting_sync_record",
+      "label": "Sync record",
+      "path": "/accounting/sync",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
       "entity": "agent_run",
       "label": "Agent run",
       "path": "/admin/agent-control",
@@ -14596,6 +14799,15 @@
       }
     },
     {
+      "entity": "carrier_settlement",
+      "label": "Carrier settlement",
+      "path": "/carrier-settlements/settlements",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
+    {
       "entity": "customer",
       "label": "Customer",
       "path": "/billing/configuration-files/customers",
@@ -14616,6 +14828,15 @@
       "path": "/detention/desk",
       "params": {
         "stop": "{id}"
+      }
+    },
+    {
+      "entity": "driver_settlement",
+      "label": "Driver settlement",
+      "path": "/payroll/settlements",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
       }
     },
     {

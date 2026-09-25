@@ -6,20 +6,20 @@ import (
 )
 
 type registry struct {
-	connectors map[integration.Type]services.AccountingConnector
+	providers map[integration.Type]services.AccountingProvider
 }
 
-func NewRegistry(connectors ...services.AccountingConnector) services.AccountingConnectorRegistry {
-	byType := make(map[integration.Type]services.AccountingConnector, len(connectors))
-	for _, connector := range connectors {
-		if connector != nil {
-			byType[connector.IntegrationType()] = connector
+func NewRegistry(providers ...services.AccountingProvider) services.AccountingConnectorRegistry {
+	byType := make(map[integration.Type]services.AccountingProvider, len(providers))
+	for _, provider := range providers {
+		if provider != nil {
+			byType[provider.IntegrationType()] = provider
 		}
 	}
-	return &registry{connectors: byType}
+	return &registry{providers: byType}
 }
 
-func (r *registry) For(typ integration.Type) (services.AccountingConnector, bool) {
-	connector, ok := r.connectors[typ]
-	return connector, ok
+func (r *registry) For(typ integration.Type) (services.AccountingProvider, bool) {
+	provider, ok := r.providers[typ]
+	return provider, ok
 }

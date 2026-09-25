@@ -199,31 +199,12 @@ func (s *Service) Waive(
 	ctx context.Context,
 	p WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
-	if _, err := detention.WaiverReasonFromString(string(p.Reason)); err != nil {
-		return nil, errortypes.NewValidationError(
-			"waiverReason", errortypes.ErrInvalid, "A coded waiver reason is required")
-	}
-
-	occurrence, err := s.occurrenceRepo.GetByID(
-		ctx,
-		&repositories.GetDetentionOccurrenceByIDRequest{
-			OccurrenceID: p.OccurrenceID,
-			TenantInfo:   p.TenantInfo,
-		},
-	)
+	change, err := s.planWaive(ctx, &p)
 	if err != nil {
 		return nil, err
 	}
 
-	original := *occurrence
-	now := s.now()
-
-	if wErr := occurrence.Waive(p.Reason, p.Note, p.UserID, now); wErr != nil {
-		return nil, errortypes.NewValidationError(
-			"status", errortypes.ErrInvalidOperation, wErr.Error())
-	}
-
-	saved, err := s.occurrenceRepo.Update(ctx, occurrence)
+	saved, err := s.occurrenceRepo.Update(ctx, change.After)
 	if err != nil {
 		return nil, err
 	}
@@ -232,10 +213,10 @@ func (s *Service) Waive(
 		detention.EvidenceSourceManual,
 		fmt.Sprintf("Waived %s %s as %s: %s",
 			saved.WaivedAmount.StringFixed(2), saved.Currency, p.Reason, p.Note),
-		now)
+		change.Now)
 
-	s.audit(&original, saved, p.UserID, "Detention charge waived")
-	s.publishBillingHoldChange(ctx, &original, saved, p.UserID)
+	s.audit(change.Before, saved, p.UserID, "Detention charge waived")
+	s.publishBillingHoldChange(ctx, change.Before, saved, p.UserID)
 
 	return saved, nil
 }
@@ -253,26 +234,12 @@ func (s *Service) Approve(
 	ctx context.Context,
 	p ApproveParams,
 ) (*detention.DetentionOccurrence, error) {
-	occurrence, err := s.occurrenceRepo.GetByID(
-		ctx,
-		&repositories.GetDetentionOccurrenceByIDRequest{
-			OccurrenceID: p.OccurrenceID,
-			TenantInfo:   p.TenantInfo,
-		},
-	)
+	change, err := s.planApprove(ctx, &p)
 	if err != nil {
 		return nil, err
 	}
 
-	original := *occurrence
-	now := s.now()
-
-	if aErr := occurrence.Approve(p.UserID, now); aErr != nil {
-		return nil, errortypes.NewValidationError(
-			"status", errortypes.ErrInvalidOperation, aErr.Error())
-	}
-
-	saved, err := s.occurrenceRepo.Update(ctx, occurrence)
+	saved, err := s.occurrenceRepo.Update(ctx, change.After)
 	if err != nil {
 		return nil, err
 	}
@@ -283,10 +250,10 @@ func (s *Service) Approve(
 		summary += ": " + note
 	}
 	s.appendEvidence(ctx, saved, detention.EvidenceKindStatusChange,
-		detention.EvidenceSourceManual, summary, now)
+		detention.EvidenceSourceManual, summary, change.Now)
 
-	s.audit(&original, saved, p.UserID, "Detention charge approved")
-	s.publishBillingHoldChange(ctx, &original, saved, p.UserID)
+	s.audit(change.Before, saved, p.UserID, "Detention charge approved")
+	s.publishBillingHoldChange(ctx, change.Before, saved, p.UserID)
 
 	return saved, nil
 }
@@ -449,13 +416,17 @@ func (s *Service) publishBillingHoldChange(
 
 	orgID, buID := saved.OrganizationID, saved.BusinessUnitID
 	ports.AfterCommit(ctx, func(runCtx context.Context) {
-		if err := realtimeinvalidation.Publish(runCtx, s.realtime, &realtimeinvalidation.PublishParams{
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			ActorUserID:    actorUserID,
-			Resource:       permission.ResourceBillingQueue.String(),
-			Action:         "updated",
-		}); err != nil {
+		if err := realtimeinvalidation.Publish(
+			runCtx,
+			s.realtime,
+			&realtimeinvalidation.PublishParams{
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+				ActorUserID:    actorUserID,
+				Resource:       permission.ResourceBillingQueue.String(),
+				Action:         "updated",
+			},
+		); err != nil {
 			s.l.Warn("failed to publish billing queue invalidation for a detention hold",
 				zap.String("occurrenceId", saved.ID.String()), zap.Error(err))
 		}

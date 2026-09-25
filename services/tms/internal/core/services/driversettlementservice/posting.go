@@ -5,6 +5,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/driverpay"
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
@@ -56,8 +58,16 @@ func (s *Service) Post(
 		entity.PostedByID = actor.UserID
 		entity.PostedAt = &now
 		entity.PostedJournalBatchID = batchID
-		updated, txErr = s.settlementRepo.Update(txCtx, entity)
-		return txErr
+		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
+			return txErr
+		}
+		return s.queueSync(
+			txCtx,
+			updated,
+			accountingsync.SyncObjectDriverBill,
+			accountingsync.SyncOperationCreate,
+			accountingsync.SyncSourceDriverSettlementPosted,
+		)
 	})
 	if err != nil {
 		return nil, err
@@ -366,6 +376,11 @@ func (s *Service) postSettlementJournal(
 		description = "Void of driver settlement " + entity.SettlementNumber
 		sourceEvent = tenant.JournalSourceEventDriverSettlementVoided
 		idempotencyPrefix = "driver-settlement-voided:"
+	}
+
+	if !reversal {
+		payable := control.DefaultSettlementsPayableAccountID
+		entity.PostedPayableAccountID = &payable
 	}
 
 	legs := BuildSettlementPostingLegs(entity, &PostingAccounts{

@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentmemoryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentmemorysubjectrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentplanrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentproposalbaselinerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentproposalrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentqualityrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentruneventrepository"
@@ -29,10 +30,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentscorecardrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agentsubjectrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/agenttooltrustrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiauditrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aifeedbackrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiproviderrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/airetrievalrepository"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiauditrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aiusagerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/apikeyrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/assignmentrepository"
@@ -173,6 +174,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratesimulationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ratezonerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rbacrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recordlabelrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recordversionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/recurringshipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/reportrepository"
@@ -336,6 +338,8 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	),
 	retrievalsourcerepository.New,
 	recordversionrepository.New,
+	recordlabelrepository.New,
+	agentproposalbaselinerepository.New,
 	aiusagerepository.New,
 	aiauditrepository.New,
 	aiauditrepository.NewSource,
@@ -452,8 +456,12 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	customerrepository.New,
 	accountingcontrolrepository.New,
 	accountingsyncrepository.NewConnectionRepository,
+	accountingsyncrepository.NewAppCredentialRepository,
 	accountingsyncrepository.NewReferenceRepository,
 	accountingsyncrepository.NewMappingRepository,
+	accountingsyncrepository.NewSyncRecordRepository,
+	accountingsyncrepository.NewBackfillRepository,
+	accountingsyncrepository.NewPayablesRepository,
 	accountsreceivablerepository.New,
 	accountsreceivablerepository.NewAnalytics,
 	accounttyperepository.New,

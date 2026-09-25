@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  accountingWebhookUrl,
   ACCOUNTING_MAPPINGS_PATH,
   ACCOUNTING_RECONNECT_WARNING_SECONDS,
   accountingConnectionPhase,
@@ -330,5 +331,28 @@ describe("accountingReferenceDetail", () => {
         state: "TX",
       }),
     ).toBe("Roadrunner Freight LLC · Dallas · TX");
+  });
+});
+
+describe("accountingWebhookUrl", () => {
+  const path = "/webhooks/accounting/quickbooks/";
+
+  it("joins an absolute API base and the webhook path", () => {
+    expect(accountingWebhookUrl(path, "https://api.example.com/api/v1")).toBe(
+      "https://api.example.com/api/v1/webhooks/accounting/quickbooks/",
+    );
+    expect(accountingWebhookUrl(path, "https://api.example.com/api/v1/")).toBe(
+      "https://api.example.com/api/v1/webhooks/accounting/quickbooks/",
+    );
+  });
+
+  it("puts a relative API base on the page's origin", () => {
+    expect(accountingWebhookUrl(path, "/api/v1", "https://tms.example.com")).toBe(
+      "https://tms.example.com/api/v1/webhooks/accounting/quickbooks/",
+    );
+  });
+
+  it("is empty when the server names no webhook path", () => {
+    expect(accountingWebhookUrl("", "https://api.example.com/api/v1")).toBe("");
   });
 });

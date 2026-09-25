@@ -542,7 +542,7 @@ export function ArtifactChips({
   artifacts,
   onOpen,
 }: {
-  artifacts: AssistantArtifact[];
+  artifacts: readonly Pick<AssistantArtifact, "id" | "kind" | "title">[];
   onOpen: (id: string) => void;
 }) {
   const t = useT();

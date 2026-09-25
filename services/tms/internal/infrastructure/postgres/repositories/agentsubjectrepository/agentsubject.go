@@ -130,6 +130,11 @@ var subjectTables = map[agent.SubjectType]subjectTable{
 		tenant: buncolgen.AccountingConnectionApplyTenant,
 		id:     buncolgen.AccountingConnectionColumns.ID,
 	},
+	agent.SubjectAccountingSyncRecord: {
+		model:  func() any { return (*accountingsync.AccountingSyncRecord)(nil) },
+		tenant: buncolgen.AccountingSyncRecordApplyTenant,
+		id:     buncolgen.AccountingSyncRecordColumns.ID,
+	},
 	agent.SubjectFormulaTemplate: {
 		model:  func() any { return (*formulatemplate.FormulaTemplate)(nil) },
 		tenant: buncolgen.FormulaTemplateApplyTenant,

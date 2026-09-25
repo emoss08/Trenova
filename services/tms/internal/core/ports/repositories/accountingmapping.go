@@ -3,6 +3,8 @@ package repositories
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -139,4 +141,8 @@ type AccountingMappingRepository interface {
 		tenantInfo pagination.TenantInfo,
 		connectionID pulid.ID,
 	) ([]AccountingMappingCount, error)
+	ListOwnerOperators(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*worker.Worker, error)
 }

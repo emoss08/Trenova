@@ -2,6 +2,7 @@
 path: /admin/integrations
 aliases: [connected apps, marketplace, third-party connections, API keys for services, Samsara, PC*Miler, Google Maps, telematics setup, email provider, fuel card feed, CarrierOk, FMCSA, QuickBooks, QuickBooks Online, accounting sync, Intuit]
 related:
+  - /accounting/sync
   - /admin/inbound-mailboxes
   - /admin/api-keys
   - /dispatch/carrier-monitoring
@@ -78,8 +79,40 @@ Keywords: QuickBooks setup, connect accounting, Intuit sign in, accounting sync
    confirm button, which names how many are ticked, or select a row to choose another record.
 5. When every required mapping is confirmed, select **Finish setup**. The rest can be done later
    on [Mappings](/accounting/sync/mappings) (**Open all mappings**).
-6. Nothing is sent to QuickBooks yet. Trenova reads the company's settings and records and checks
-   the connection every fifteen minutes.
+6. Choose the **Start date**: documents dated before it are never sent. Leave **Send posted
+   documents automatically** on to send each document as it is posted, or turn it off to hold each
+   one in the [Sync ledger](/accounting/sync) until someone releases it. When the start date is in
+   the past, tick **Also send documents already posted since the start date** to queue those too.
+   Turn on **Send owner-operator settlements** to also send owner-operator settlements as bills;
+   it is off unless you turn it on, and company driver pay is never sent.
+7. Select **Start sending**. From then on Trenova sends invoices, credit and debit memos, customer
+   payments, credit applications, carrier settlements and their payments as they are posted, and
+   checks the connection every fifteen minutes.
+
+### Change how documents are sent
+Keywords: automatic sync, hold documents, owner-operator settlements, 1099 drivers, driver bills
+1. Open [Integrations](/admin/integrations) and open the QuickBooks Online card.
+2. Under **Sync settings**, turn **Send posted documents automatically** on or off. When it is
+   off, each new document waits in the [Sync ledger](/accounting/sync) until someone releases it;
+   documents already held stay held.
+3. Turn **Send owner-operator settlements** on to send owner-operator settlements to QuickBooks
+   as bills, with a 1099 vendor for each driver. Settlements posted from then on are sent; request
+   a backfill from the [Sync ledger](/accounting/sync) to send earlier ones.
+4. Select **Save**.
+
+### Use your own Intuit app
+Keywords: Intuit app keys, client ID, client secret, redirect URI, QuickBooks developer app, self-hosted QuickBooks
+1. On the Intuit developer portal, create an app with the com.intuit.quickbooks.accounting scope.
+2. Open [Integrations](/admin/integrations) and open the QuickBooks Online card. When this server
+   has no Intuit app of its own the keys form is already open; otherwise select **Use your own
+   app**.
+3. Copy the **Redirect URI** into the app's redirect URIs on the Intuit developer portal exactly as
+   written. Development keys accept http://localhost; production keys need https.
+4. Choose the **Environment**, enter the **Client ID** and **Client secret** from the same
+   environment, and optionally the webhook verifier token, then select **Save keys**. Trenova
+   checks the keys with Intuit before saving them.
+5. To change the keys later select **Change keys**; to go back to the server's app select
+   **Remove**. While a company is connected, only the client secret and verifier token can change.
 
 ### Check or disconnect QuickBooks Online
 Keywords: QuickBooks not syncing, QuickBooks connection failing, reconnect QuickBooks, revoke QuickBooks
@@ -99,6 +132,7 @@ intelligence tabs need read access to carrier intelligence, and changing them ne
 
 Seeing the QuickBooks Online connection needs read access to the accounting integration, **Check now** needs
 update access, and connecting, reconnecting or disconnecting needs manage access and must be done
-by a signed-in person. A QuickBooks company can be connected to only one Trenova organization at a
-time. When the connection fails or its authorization is about to run out, Watchtower raises an
+by a signed-in person, as do saving or removing the Intuit app keys, choosing the start date and
+changing the sync settings.
+A QuickBooks company can be connected to only one Trenova organization at a time. When the connection fails or its authorization is about to run out, Watchtower raises an
 item that links back here.

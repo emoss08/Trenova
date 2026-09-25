@@ -45,7 +45,11 @@ source row and moment, so projecting the same row twice writes nothing the secon
 | `agent_run_steps` (tool steps) | Settled: `ToolCall` with outcome `Ran` / `Proposed` / `Simulated` / `Failed` / `Denied`, plus tier, what held it, egress, tier source, proposal, record versions and redacted arguments. Still `Started` when its run or turn ended: `ToolCall` with outcome `Unknown` | `step:{owner}:{step_key}` |
 | `agent_run_events` | `tool_finished` failed with no step for that call: `ToolRefused`. `delegate_started` / `delegate_finished`: `DelegationStarted` / `DelegationEnded` (`Completed` / `Exhausted` / `Refused` / `Declined` / `Stopped` / `Failed`) | `event:{id}` |
 | `agent_proposals` | `ProposalFiled`. `ProposalExecuted` / `ProposalExecutionFailed` / `ProposalSimulated`, with the principal set to the executing user, or the agent for auto-execution. `ProposalExpired`, with the principal set to the system | `proposal:{id}:filed`, `…:executed`, `…:expired` |
-| `agent_decisions` (proposal decisions) | `ProposalDecided` (`Accepted` / `Modified` / `Rejected`): who decided, and the redacted modifications | `decision:{id}` |
+| `agent_decisions` (proposal decisions) | `ProposalDecided` (`Accepted` / `Modified` / `Rejected`): who decided, the redacted modifications, and what they were shown: `result_summary` is "Reviewed preview sha256:…" when the decision named the digest of the preview it recorded, "Preview not reviewed; sha256:…" when it recorded one it did not name, and empty for a decision before previews; `version_before` is the target's version the preview was read at | `decision:{id}` |
+
+The preview's digest and version ride fields the canonical form already hashes, so recording
+them changed no `hash_version`. The recorded preview itself is not read by the projector
+(`ListDecisions` leaves the column out); see [proposal-previews.md](proposal-previews.md).
 
 An owner whose id carries the evaluation prefix is an evaluation replay. Its events get the
 purpose `Evaluation`, so a reader can keep them apart from live work.

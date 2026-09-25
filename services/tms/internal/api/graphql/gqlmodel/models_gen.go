@@ -227,6 +227,32 @@ type AccountingMappingFilterInput struct {
 	Search *string `json:"search,omitempty"`
 }
 
+// How many records an action changed.
+type AccountingSyncActionResult struct {
+	Affected int `json:"affected"`
+}
+
+type AccountingSyncRecordConnection struct {
+	Edges      []*AccountingSyncRecordEdge `json:"edges"`
+	PageInfo   *PageInfo                   `json:"pageInfo"`
+	TotalCount *int                        `json:"totalCount,omitempty"`
+}
+
+type AccountingSyncRecordEdge struct {
+	Node   *accountingsync.AccountingSyncRecord `json:"node"`
+	Cursor string                               `json:"cursor"`
+}
+
+type AccountingSyncRecordFilterInput struct {
+	Statuses        []accountingsync.SyncStatus        `json:"statuses,omitempty"`
+	ObjectTypes     []accountingsync.SyncObjectType    `json:"objectTypes,omitempty"`
+	ErrorCategories []accountingsync.SyncErrorCategory `json:"errorCategories,omitempty"`
+	// Only the records for one Trenova document.
+	ObjectID *string `json:"objectId,omitempty"`
+	// Matches the document number.
+	Search *string `json:"search,omitempty"`
+}
+
 type AcknowledgeMyPolicyInput struct {
 	PolicyID string `json:"policyId"`
 	// Typed full name. Required when the policy asks for a signature, and it has to be the name on the record.
@@ -1371,6 +1397,11 @@ type CategoryCostLine struct {
 	RatePerMile     string              `json:"ratePerMile"`
 	Amount          string              `json:"amount"`
 	EffectiveSource EffectiveRateSource `json:"effectiveSource"`
+}
+
+type ChangeAccountingBackfillInput struct {
+	ID     string                            `json:"id"`
+	Action services.AccountingBackfillAction `json:"action"`
 }
 
 type ChargeAllocationInput struct {
@@ -2988,6 +3019,19 @@ type EmailProfileEdge struct {
 	Cursor string         `json:"cursor"`
 }
 
+// Finishes setup: from which day documents are sent, and how.
+type EnableAccountingSyncInput struct {
+	IntegrationType integration.Type `json:"integrationType"`
+	// Documents dated before this day are never sent.
+	StartDate int `json:"startDate"`
+	// Send posted documents on their own. When off, each waits for a person to release it.
+	AutoSync bool `json:"autoSync"`
+	// Also send owner-operator settlements as bills. Company driver pay is never sent.
+	DriverSettlements *bool `json:"driverSettlements,omitempty"`
+	// Also queue documents dated from the start date up to now, which were posted before sync was on.
+	Backfill bool `json:"backfill"`
+}
+
 type EndBenefitEnrollmentInput struct {
 	ID          string  `json:"id"`
 	EffectiveTo *int    `json:"effectiveTo,omitempty"`
@@ -4427,6 +4471,11 @@ type PageInfo struct {
 	EndCursor   *string `json:"endCursor,omitempty"`
 }
 
+type PauseAccountingSyncInput struct {
+	IntegrationType integration.Type `json:"integrationType"`
+	Reason          *string          `json:"reason,omitempty"`
+}
+
 type PayAdvanceConnection struct {
 	Edges      []*PayAdvanceEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
@@ -5015,6 +5064,12 @@ type RejectInvoiceAdjustmentInput struct {
 	Reason       *string `json:"reason,omitempty"`
 }
 
+// Releases the named records waiting for approval, or all of them when none are named.
+type ReleaseAccountingSyncInput struct {
+	IntegrationType integration.Type `json:"integrationType"`
+	Ids             []string         `json:"ids,omitempty"`
+}
+
 type RemoveCarrierSettlementAdjustmentInput struct {
 	SettlementID string `json:"settlementId"`
 	LineID       string `json:"lineId"`
@@ -5475,6 +5530,16 @@ type RequestAIAuditExportInput struct {
 	Sort         []*SortFieldInput    `json:"sort,omitempty"`
 }
 
+type RequestAccountingBackfillInput struct {
+	IntegrationType integration.Type `json:"integrationType"`
+	// Defaults to the start date.
+	RangeStart *int `json:"rangeStart,omitempty"`
+	// Defaults to when sync was turned on.
+	RangeEnd *int `json:"rangeEnd,omitempty"`
+	// Defaults to every kind of document.
+	ObjectTypes []accountingsync.SyncObjectType `json:"objectTypes,omitempty"`
+}
+
 type RequestMyPTOInput struct {
 	Type      worker.PTOType `json:"type"`
 	StartDate int            `json:"startDate"`
@@ -5541,6 +5606,13 @@ type RespondToMyShiftSwapInput struct {
 	ID       string              `json:"id"`
 	Response MyShiftSwapResponse `json:"response"`
 	Note     *string             `json:"note,omitempty"`
+}
+
+// Retries the named records, or every failed record in the named categories.
+type RetryAccountingSyncInput struct {
+	IntegrationType integration.Type                   `json:"integrationType"`
+	Ids             []string                           `json:"ids,omitempty"`
+	ErrorCategories []accountingsync.SyncErrorCategory `json:"errorCategories,omitempty"`
 }
 
 type ReverseCustomerPaymentInput struct {
@@ -5698,6 +5770,18 @@ type SafetyEventStatusInput struct {
 	ID         string  `json:"id"`
 	Resolution *string `json:"resolution,omitempty"`
 	Version    *int    `json:"version,omitempty"`
+}
+
+// The organization's own app keys. Leave the secret or verifier token out to keep the saved one.
+type SaveAccountingAppInput struct {
+	IntegrationType integration.Type              `json:"integrationType"`
+	Environment     accountingsync.AppEnvironment `json:"environment"`
+	ClientID        string                        `json:"clientId"`
+	// Required the first time, and whenever the client ID or environment changes.
+	ClientSecret         *string `json:"clientSecret,omitempty"`
+	WebhookVerifierToken *string `json:"webhookVerifierToken,omitempty"`
+	// Removes the saved webhook verifier token.
+	ClearWebhookVerifierToken *bool `json:"clearWebhookVerifierToken,omitempty"`
 }
 
 type SaveHomeLayoutPresetInput struct {
@@ -7592,6 +7676,12 @@ type SidebarSectionPreferenceInput struct {
 	Hidden bool   `json:"hidden"`
 }
 
+type SkipAccountingSyncInput struct {
+	ID string `json:"id"`
+	// Why the document is not sent. Required.
+	Reason string `json:"reason"`
+}
+
 type SortFieldInput struct {
 	Field     string `json:"field"`
 	Direction string `json:"direction"`
@@ -8016,6 +8106,14 @@ type UpcomingWorkerPTOInput struct {
 	WorkerID    *string           `json:"workerId,omitempty"`
 	FleetCodeID *string           `json:"fleetCodeId,omitempty"`
 	Timezone    *string           `json:"timezone,omitempty"`
+}
+
+type UpdateAccountingSyncSettingsInput struct {
+	IntegrationType integration.Type `json:"integrationType"`
+	// Send posted documents on their own. When off, each waits for a person to release it; records already held stay held.
+	AutoSync bool `json:"autoSync"`
+	// Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones.
+	DriverSettlements bool `json:"driverSettlements"`
 }
 
 type UpdateAgentEvalCaseInput struct {

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingmappingservice"
+	"github.com/emoss08/trenova/internal/core/services/accountingsyncservice"
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/agentaccessservice"
@@ -152,6 +153,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/permitservice"
 	"github.com/emoss08/trenova/internal/core/services/platformbillingservice"
 	"github.com/emoss08/trenova/internal/core/services/proposalexecutor"
+	"github.com/emoss08/trenova/internal/core/services/proposalpreviewservice"
 	"github.com/emoss08/trenova/internal/core/services/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/core/services/ptopolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/rateagreementservice"
@@ -324,6 +326,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentproposalservice.New,
 	agentexceptionservice.New,
 	proposalexecutor.New,
+	proposalpreviewservice.New,
 	narrator.New,
 	newDetectorRegistry,
 	insightservice.New,
@@ -425,6 +428,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	),
 	emailservice.New,
 	func(s *emailservice.Service) services.EmailService { return s },
+	func(s *emailservice.Service) services.EmailSenderResolver { return s },
 	commodityservice.New,
 	fx.Annotate(
 		customerpaymentservice.New,
@@ -507,6 +511,10 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	func(s *accountingconnectionservice.Service) services.AccountingConnectionService { return s },
 	accountingmappingservice.New,
 	func(s *accountingmappingservice.Service) services.AccountingMappingService { return s },
+	accountingsyncservice.NewEnqueuer,
+	func(e *accountingsyncservice.Enqueuer) services.AccountingSyncEnqueuer { return e },
+	accountingsyncservice.New,
+	func(s *accountingsyncservice.Service) services.AccountingSyncService { return s },
 	detentionbillingservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(

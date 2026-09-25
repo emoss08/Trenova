@@ -25,6 +25,7 @@ fragment AgentProposalTableRowFields on AgentProposal {
     minimum
     maximum
     maxLength
+    readOnly
   }
   modifications
   tainted
@@ -71,6 +72,8 @@ mutation DecideAgentProposal($id: ID!, $input: AgentProposalDecisionInput!) {
     decision
     reasonCode
     decidedByUserId
+    previewDigest
+    previewReviewed
     version
     createdAt
   }

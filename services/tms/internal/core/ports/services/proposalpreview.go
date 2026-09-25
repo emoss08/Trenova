@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -29,6 +30,13 @@ type ProposalPreviewRequest struct {
 	Proposal      *agent.AgentProposal
 	Modifications map[string]any
 	Viewer        *PreviewViewer
+	// Params are the parameters as they would run, already checked, from a
+	// caller that settled the approver's changes itself; they stand in for
+	// Modifications. Never taken from a request.
+	Params map[string]any
+	// Deciding says the preview is being computed for a decision rather
+	// than for a person to read.
+	Deciding bool
 }
 
 // PlanPreviewRequest asks what every pending step of a plan would do, in
@@ -56,6 +64,25 @@ type ProposalBaselineRequest struct {
 type ProposalBaselineResult struct {
 	Target  *ProposalTarget
 	Preview *agent.ToolPreview
+}
+
+// RecordLabels are the words each record is known by, per resource and id.
+// A record that is gone, or of a resource no label is kept for, is absent.
+type RecordLabels map[permission.Resource]map[pulid.ID]string
+
+// Label is one record's label, or "" when there is none.
+func (l RecordLabels) Label(resource permission.Resource, id pulid.ID) string {
+	return l[resource][id]
+}
+
+// RecordLabeler reads the labels of many records at once, one query per
+// resource, inside the tenant.
+type RecordLabeler interface {
+	Labels(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		refs map[permission.Resource][]pulid.ID,
+	) (RecordLabels, error)
 }
 
 // ProposalPreviewService says what a proposed write would do, for one

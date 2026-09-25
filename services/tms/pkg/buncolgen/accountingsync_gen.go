@@ -24,6 +24,447 @@ var (
 )
 
 // ---------------------------------------------------------------------------
+// AccountingAppCredential — table "accounting_app_credentials", alias "acctapp"
+// ---------------------------------------------------------------------------
+
+// AccountingAppCredentialTable holds the table name, alias, and primary key columns
+// for the "accounting_app_credentials" table. The alias "acctapp" is used in all generated
+// SQL fragments (e.g. "acctapp.id = ?").
+var AccountingAppCredentialTable = TableInfo{
+	Name:       "accounting_app_credentials",
+	Alias:      "acctapp",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AccountingAppCredentialColumns provides type-safe column references for the "accounting_app_credentials" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AccountingAppCredentialColumns.ID.String())
+//	// SELECT acctapp.id FROM accounting_app_credentials AS acctapp
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AccountingAppCredentialColumns.ID.Eq(), id)           // WHERE acctapp.id = ?
+//	q.Order(AccountingAppCredentialColumns.CreatedAt.OrderDesc())  // ORDER BY acctapp.created_at DESC
+var AccountingAppCredentialColumns = struct {
+	ID                        Column // "id" → qualified: "acctapp.id"
+	BusinessUnitID            Column // "business_unit_id" → qualified: "acctapp.business_unit_id"
+	OrganizationID            Column // "organization_id" → qualified: "acctapp.organization_id"
+	IntegrationType           Column // "integration_type" → qualified: "acctapp.integration_type"
+	Environment               Column // "environment" → qualified: "acctapp.environment"
+	ClientID                  Column // "client_id" → qualified: "acctapp.client_id"
+	ClientSecretCiphertext    Column // "client_secret_ciphertext" → qualified: "acctapp.client_secret_ciphertext"
+	WebhookVerifierCiphertext Column // "webhook_verifier_ciphertext" → qualified: "acctapp.webhook_verifier_ciphertext"
+	Fingerprint               Column // "fingerprint" → qualified: "acctapp.fingerprint"
+	UpdatedByID               Column // "updated_by_id" → qualified: "acctapp.updated_by_id"
+	Version                   Column // "version" → qualified: "acctapp.version"
+	CreatedAt                 Column // "created_at" → qualified: "acctapp.created_at"
+	UpdatedAt                 Column // "updated_at" → qualified: "acctapp.updated_at"
+}{
+	ID:                        NewColumn("id", "acctapp"),
+	BusinessUnitID:            NewColumn("business_unit_id", "acctapp"),
+	OrganizationID:            NewColumn("organization_id", "acctapp"),
+	IntegrationType:           NewColumn("integration_type", "acctapp"),
+	Environment:               NewColumn("environment", "acctapp"),
+	ClientID:                  NewColumn("client_id", "acctapp"),
+	ClientSecretCiphertext:    NewColumn("client_secret_ciphertext", "acctapp"),
+	WebhookVerifierCiphertext: NewColumn("webhook_verifier_ciphertext", "acctapp"),
+	Fingerprint:               NewColumn("fingerprint", "acctapp"),
+	UpdatedByID:               NewColumn("updated_by_id", "acctapp"),
+	Version:                   NewColumn("version", "acctapp"),
+	CreatedAt:                 NewColumn("created_at", "acctapp"),
+	UpdatedAt:                 NewColumn("updated_at", "acctapp"),
+}
+
+// AccountingAppCredentialFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AccountingAppCredential.GetStaticFieldMap().
+var AccountingAppCredentialFieldMap = map[string]string{
+	"id":              "id",
+	"businessUnitId":  "business_unit_id",
+	"organizationId":  "organization_id",
+	"integrationType": "integration_type",
+	"environment":     "environment",
+	"clientId":        "client_id",
+	"fingerprint":     "fingerprint",
+	"updatedById":     "updated_by_id",
+	"version":         "version",
+	"createdAt":       "created_at",
+	"updatedAt":       "updated_at",
+}
+
+// AccountingAppCredentialInsertableColumns lists column names suitable for INSERT statements on the "accounting_app_credentials" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AccountingAppCredentialInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"integration_type",
+	"environment",
+	"client_id",
+	"client_secret_ciphertext",
+	"webhook_verifier_ciphertext",
+	"fingerprint",
+	"updated_by_id",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AccountingAppCredentialRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AccountingAppCredentialRelations.Organization)
+//	// Bun eager-loads the Organization association via a separate query
+var AccountingAppCredentialRelations = struct {
+	Organization string
+	BusinessUnit string
+	UpdatedBy    string
+}{
+	Organization: "Organization",
+	BusinessUnit: "BusinessUnit",
+	UpdatedBy:    "UpdatedBy",
+}
+
+// AccountingAppCredentialScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE acctapp.organization_id = ? AND acctapp.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AccountingAppCredentialScopeTenant(sq, ti).
+//		Where(buncolgen.AccountingAppCredentialColumns.ID.Eq(), id)
+func AccountingAppCredentialScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AccountingAppCredentialColumns.OrganizationID, AccountingAppCredentialColumns.BusinessUnitID, ti)
+}
+
+// AccountingAppCredentialScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AccountingAppCredentialScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AccountingAppCredentialColumns.ID.In(), bun.List(ids))
+//	})
+func AccountingAppCredentialScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AccountingAppCredentialColumns.OrganizationID, AccountingAppCredentialColumns.BusinessUnitID, ti)
+}
+
+// AccountingAppCredentialScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AccountingAppCredentialScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AccountingAppCredentialColumns.ID.Eq(), id)
+//	})
+func AccountingAppCredentialScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AccountingAppCredentialColumns.OrganizationID, AccountingAppCredentialColumns.BusinessUnitID, ti)
+}
+
+// AccountingAppCredentialApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AccountingAppCredentialApplyTenant(tenantInfo))
+func AccountingAppCredentialApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AccountingAppCredentialColumns.OrganizationID, AccountingAppCredentialColumns.BusinessUnitID, ti)
+}
+
+// AccountingAppCredentialFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "accounting_app_credentials" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AccountingAppCredentialFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AccountingAppCredentialFilter = struct {
+	ID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	IntegrationType func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "integrationType" → DB: "integration_type"
+	Environment     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "environment" → DB: "environment"
+	ClientID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "clientId" → DB: "client_id"
+	Fingerprint     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fingerprint" → DB: "fingerprint"
+	UpdatedByID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedById" → DB: "updated_by_id"
+	Version         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	IntegrationType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("integrationType", op, value)
+	},
+	Environment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("environment", op, value)
+	},
+	ClientID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("clientId", op, value)
+	},
+	Fingerprint: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("fingerprint", op, value)
+	},
+	UpdatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedById", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// AccountingBackfill — table "accounting_backfills", alias "acctbf"
+// ---------------------------------------------------------------------------
+
+// AccountingBackfillTable holds the table name, alias, and primary key columns
+// for the "accounting_backfills" table. The alias "acctbf" is used in all generated
+// SQL fragments (e.g. "acctbf.id = ?").
+var AccountingBackfillTable = TableInfo{
+	Name:       "accounting_backfills",
+	Alias:      "acctbf",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AccountingBackfillColumns provides type-safe column references for the "accounting_backfills" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AccountingBackfillColumns.ID.String())
+//	// SELECT acctbf.id FROM accounting_backfills AS acctbf
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AccountingBackfillColumns.ID.Eq(), id)           // WHERE acctbf.id = ?
+//	q.Order(AccountingBackfillColumns.CreatedAt.OrderDesc())  // ORDER BY acctbf.created_at DESC
+var AccountingBackfillColumns = struct {
+	ID                 Column // "id" → qualified: "acctbf.id"
+	BusinessUnitID     Column // "business_unit_id" → qualified: "acctbf.business_unit_id"
+	OrganizationID     Column // "organization_id" → qualified: "acctbf.organization_id"
+	ConnectionID       Column // "connection_id" → qualified: "acctbf.connection_id"
+	RangeStart         Column // "range_start" → qualified: "acctbf.range_start"
+	RangeEnd           Column // "range_end" → qualified: "acctbf.range_end"
+	ObjectTypes        Column // "object_types" → qualified: "acctbf.object_types"
+	Cursor             Column // "cursor" → qualified: "acctbf.cursor"
+	Status             Column // "status" → qualified: "acctbf.status"
+	EnqueuedCount      Column // "enqueued_count" → qualified: "acctbf.enqueued_count"
+	AlreadyQueuedCount Column // "already_queued_count" → qualified: "acctbf.already_queued_count"
+	RequestedByID      Column // "requested_by_id" → qualified: "acctbf.requested_by_id"
+	StartedAt          Column // "started_at" → qualified: "acctbf.started_at"
+	CompletedAt        Column // "completed_at" → qualified: "acctbf.completed_at"
+	LastError          Column // "last_error" → qualified: "acctbf.last_error"
+	Version            Column // "version" → qualified: "acctbf.version"
+	CreatedAt          Column // "created_at" → qualified: "acctbf.created_at"
+	UpdatedAt          Column // "updated_at" → qualified: "acctbf.updated_at"
+}{
+	ID:                 NewColumn("id", "acctbf"),
+	BusinessUnitID:     NewColumn("business_unit_id", "acctbf"),
+	OrganizationID:     NewColumn("organization_id", "acctbf"),
+	ConnectionID:       NewColumn("connection_id", "acctbf"),
+	RangeStart:         NewColumn("range_start", "acctbf"),
+	RangeEnd:           NewColumn("range_end", "acctbf"),
+	ObjectTypes:        NewColumn("object_types", "acctbf"),
+	Cursor:             NewColumn("cursor", "acctbf"),
+	Status:             NewColumn("status", "acctbf"),
+	EnqueuedCount:      NewColumn("enqueued_count", "acctbf"),
+	AlreadyQueuedCount: NewColumn("already_queued_count", "acctbf"),
+	RequestedByID:      NewColumn("requested_by_id", "acctbf"),
+	StartedAt:          NewColumn("started_at", "acctbf"),
+	CompletedAt:        NewColumn("completed_at", "acctbf"),
+	LastError:          NewColumn("last_error", "acctbf"),
+	Version:            NewColumn("version", "acctbf"),
+	CreatedAt:          NewColumn("created_at", "acctbf"),
+	UpdatedAt:          NewColumn("updated_at", "acctbf"),
+}
+
+// AccountingBackfillFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AccountingBackfill.GetStaticFieldMap().
+var AccountingBackfillFieldMap = map[string]string{
+	"id":                 "id",
+	"businessUnitId":     "business_unit_id",
+	"organizationId":     "organization_id",
+	"connectionId":       "connection_id",
+	"rangeStart":         "range_start",
+	"rangeEnd":           "range_end",
+	"objectTypes":        "object_types",
+	"cursor":             "cursor",
+	"status":             "status",
+	"enqueuedCount":      "enqueued_count",
+	"alreadyQueuedCount": "already_queued_count",
+	"requestedById":      "requested_by_id",
+	"startedAt":          "started_at",
+	"completedAt":        "completed_at",
+	"lastError":          "last_error",
+	"version":            "version",
+	"createdAt":          "created_at",
+	"updatedAt":          "updated_at",
+}
+
+// AccountingBackfillInsertableColumns lists column names suitable for INSERT statements on the "accounting_backfills" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AccountingBackfillInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"connection_id",
+	"range_start",
+	"range_end",
+	"object_types",
+	"cursor",
+	"status",
+	"enqueued_count",
+	"already_queued_count",
+	"requested_by_id",
+	"started_at",
+	"completed_at",
+	"last_error",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AccountingBackfillScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE acctbf.organization_id = ? AND acctbf.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AccountingBackfillScopeTenant(sq, ti).
+//		Where(buncolgen.AccountingBackfillColumns.ID.Eq(), id)
+func AccountingBackfillScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AccountingBackfillColumns.OrganizationID, AccountingBackfillColumns.BusinessUnitID, ti)
+}
+
+// AccountingBackfillScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AccountingBackfillScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AccountingBackfillColumns.ID.In(), bun.List(ids))
+//	})
+func AccountingBackfillScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AccountingBackfillColumns.OrganizationID, AccountingBackfillColumns.BusinessUnitID, ti)
+}
+
+// AccountingBackfillScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AccountingBackfillScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AccountingBackfillColumns.ID.Eq(), id)
+//	})
+func AccountingBackfillScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AccountingBackfillColumns.OrganizationID, AccountingBackfillColumns.BusinessUnitID, ti)
+}
+
+// AccountingBackfillApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AccountingBackfillApplyTenant(tenantInfo))
+func AccountingBackfillApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AccountingBackfillColumns.OrganizationID, AccountingBackfillColumns.BusinessUnitID, ti)
+}
+
+// AccountingBackfillFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "accounting_backfills" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AccountingBackfillFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AccountingBackfillFilter = struct {
+	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ConnectionID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "connectionId" → DB: "connection_id"
+	RangeStart         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rangeStart" → DB: "range_start"
+	RangeEnd           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rangeEnd" → DB: "range_end"
+	ObjectTypes        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "objectTypes" → DB: "object_types"
+	Cursor             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cursor" → DB: "cursor"
+	Status             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	EnqueuedCount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "enqueuedCount" → DB: "enqueued_count"
+	AlreadyQueuedCount func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "alreadyQueuedCount" → DB: "already_queued_count"
+	RequestedByID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestedById" → DB: "requested_by_id"
+	StartedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
+	CompletedAt        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "completedAt" → DB: "completed_at"
+	LastError          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lastError" → DB: "last_error"
+	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ConnectionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("connectionId", op, value)
+	},
+	RangeStart: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rangeStart", op, value)
+	},
+	RangeEnd: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("rangeEnd", op, value)
+	},
+	ObjectTypes: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("objectTypes", op, value)
+	},
+	Cursor: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("cursor", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	EnqueuedCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("enqueuedCount", op, value)
+	},
+	AlreadyQueuedCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("alreadyQueuedCount", op, value)
+	},
+	RequestedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requestedById", op, value)
+	},
+	StartedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("startedAt", op, value)
+	},
+	CompletedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("completedAt", op, value)
+	},
+	LastError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lastError", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
 // AccountingConnection — table "accounting_connections", alias "acctc"
 // ---------------------------------------------------------------------------
 
@@ -55,6 +496,9 @@ var AccountingConnectionColumns = struct {
 	IntegrationType               Column // "integration_type" → qualified: "acctc.integration_type"
 	Status                        Column // "status" → qualified: "acctc.status"
 	ExternalRealmID               Column // "external_realm_id" → qualified: "acctc.external_realm_id"
+	AppSource                     Column // "app_source" → qualified: "acctc.app_source"
+	AppEnvironment                Column // "app_environment" → qualified: "acctc.app_environment"
+	AppFingerprint                Column // "app_fingerprint" → qualified: "acctc.app_fingerprint"
 	ExternalCompanyName           Column // "external_company_name" → qualified: "acctc.external_company_name"
 	ExternalLegalName             Column // "external_legal_name" → qualified: "acctc.external_legal_name"
 	ExternalCountry               Column // "external_country" → qualified: "acctc.external_country"
@@ -78,6 +522,13 @@ var AccountingConnectionColumns = struct {
 	ReferenceRefreshStartedAt     Column // "reference_refresh_started_at" → qualified: "acctc.reference_refresh_started_at"
 	ReferenceRefreshedAt          Column // "reference_refreshed_at" → qualified: "acctc.reference_refreshed_at"
 	ReferenceRefreshError         Column // "reference_refresh_error" → qualified: "acctc.reference_refresh_error"
+	SyncStartDate                 Column // "sync_start_date" → qualified: "acctc.sync_start_date"
+	SyncEnabledAt                 Column // "sync_enabled_at" → qualified: "acctc.sync_enabled_at"
+	AutoSync                      Column // "auto_sync" → qualified: "acctc.auto_sync"
+	DriverSettlementsEnabledAt    Column // "driver_settlements_enabled_at" → qualified: "acctc.driver_settlements_enabled_at"
+	PausedAt                      Column // "paused_at" → qualified: "acctc.paused_at"
+	PausedByID                    Column // "paused_by_id" → qualified: "acctc.paused_by_id"
+	PausedReason                  Column // "paused_reason" → qualified: "acctc.paused_reason"
 	ConnectedByID                 Column // "connected_by_id" → qualified: "acctc.connected_by_id"
 	ConnectedAt                   Column // "connected_at" → qualified: "acctc.connected_at"
 	DisconnectedByID              Column // "disconnected_by_id" → qualified: "acctc.disconnected_by_id"
@@ -92,6 +543,9 @@ var AccountingConnectionColumns = struct {
 	IntegrationType:               NewColumn("integration_type", "acctc"),
 	Status:                        NewColumn("status", "acctc"),
 	ExternalRealmID:               NewColumn("external_realm_id", "acctc"),
+	AppSource:                     NewColumn("app_source", "acctc"),
+	AppEnvironment:                NewColumn("app_environment", "acctc"),
+	AppFingerprint:                NewColumn("app_fingerprint", "acctc"),
 	ExternalCompanyName:           NewColumn("external_company_name", "acctc"),
 	ExternalLegalName:             NewColumn("external_legal_name", "acctc"),
 	ExternalCountry:               NewColumn("external_country", "acctc"),
@@ -115,6 +569,13 @@ var AccountingConnectionColumns = struct {
 	ReferenceRefreshStartedAt:     NewColumn("reference_refresh_started_at", "acctc"),
 	ReferenceRefreshedAt:          NewColumn("reference_refreshed_at", "acctc"),
 	ReferenceRefreshError:         NewColumn("reference_refresh_error", "acctc"),
+	SyncStartDate:                 NewColumn("sync_start_date", "acctc"),
+	SyncEnabledAt:                 NewColumn("sync_enabled_at", "acctc"),
+	AutoSync:                      NewColumn("auto_sync", "acctc"),
+	DriverSettlementsEnabledAt:    NewColumn("driver_settlements_enabled_at", "acctc"),
+	PausedAt:                      NewColumn("paused_at", "acctc"),
+	PausedByID:                    NewColumn("paused_by_id", "acctc"),
+	PausedReason:                  NewColumn("paused_reason", "acctc"),
 	ConnectedByID:                 NewColumn("connected_by_id", "acctc"),
 	ConnectedAt:                   NewColumn("connected_at", "acctc"),
 	DisconnectedByID:              NewColumn("disconnected_by_id", "acctc"),
@@ -135,6 +596,8 @@ var AccountingConnectionFieldMap = map[string]string{
 	"integrationType":               "integration_type",
 	"status":                        "status",
 	"externalRealmId":               "external_realm_id",
+	"appSource":                     "app_source",
+	"appEnvironment":                "app_environment",
 	"externalCompanyName":           "external_company_name",
 	"externalLegalName":             "external_legal_name",
 	"externalCountry":               "external_country",
@@ -156,6 +619,13 @@ var AccountingConnectionFieldMap = map[string]string{
 	"referenceRefreshStartedAt":     "reference_refresh_started_at",
 	"referenceRefreshedAt":          "reference_refreshed_at",
 	"referenceRefreshError":         "reference_refresh_error",
+	"syncStartDate":                 "sync_start_date",
+	"syncEnabledAt":                 "sync_enabled_at",
+	"autoSync":                      "auto_sync",
+	"driverSettlementsEnabledAt":    "driver_settlements_enabled_at",
+	"pausedAt":                      "paused_at",
+	"pausedById":                    "paused_by_id",
+	"pausedReason":                  "paused_reason",
 	"connectedById":                 "connected_by_id",
 	"connectedAt":                   "connected_at",
 	"disconnectedById":              "disconnected_by_id",
@@ -174,6 +644,9 @@ var AccountingConnectionInsertableColumns = []string{
 	"integration_type",
 	"status",
 	"external_realm_id",
+	"app_source",
+	"app_environment",
+	"app_fingerprint",
 	"external_company_name",
 	"external_legal_name",
 	"external_country",
@@ -197,6 +670,13 @@ var AccountingConnectionInsertableColumns = []string{
 	"reference_refresh_started_at",
 	"reference_refreshed_at",
 	"reference_refresh_error",
+	"sync_start_date",
+	"sync_enabled_at",
+	"auto_sync",
+	"driver_settlements_enabled_at",
+	"paused_at",
+	"paused_by_id",
+	"paused_reason",
 	"connected_by_id",
 	"connected_at",
 	"disconnected_by_id",
@@ -216,11 +696,13 @@ var AccountingConnectionRelations = struct {
 	BusinessUnit   string
 	ConnectedBy    string
 	DisconnectedBy string
+	PausedBy       string
 }{
 	Organization:   "Organization",
 	BusinessUnit:   "BusinessUnit",
 	ConnectedBy:    "ConnectedBy",
 	DisconnectedBy: "DisconnectedBy",
+	PausedBy:       "PausedBy",
 }
 
 // AccountingConnectionScopeTenant restricts a query to a single tenant by adding:
@@ -279,6 +761,8 @@ var AccountingConnectionFilter = struct {
 	IntegrationType               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "integrationType" → DB: "integration_type"
 	Status                        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
 	ExternalRealmID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalRealmId" → DB: "external_realm_id"
+	AppSource                     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appSource" → DB: "app_source"
+	AppEnvironment                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "appEnvironment" → DB: "app_environment"
 	ExternalCompanyName           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalCompanyName" → DB: "external_company_name"
 	ExternalLegalName             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalLegalName" → DB: "external_legal_name"
 	ExternalCountry               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalCountry" → DB: "external_country"
@@ -300,6 +784,13 @@ var AccountingConnectionFilter = struct {
 	ReferenceRefreshStartedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "referenceRefreshStartedAt" → DB: "reference_refresh_started_at"
 	ReferenceRefreshedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "referenceRefreshedAt" → DB: "reference_refreshed_at"
 	ReferenceRefreshError         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "referenceRefreshError" → DB: "reference_refresh_error"
+	SyncStartDate                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "syncStartDate" → DB: "sync_start_date"
+	SyncEnabledAt                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "syncEnabledAt" → DB: "sync_enabled_at"
+	AutoSync                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "autoSync" → DB: "auto_sync"
+	DriverSettlementsEnabledAt    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "driverSettlementsEnabledAt" → DB: "driver_settlements_enabled_at"
+	PausedAt                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pausedAt" → DB: "paused_at"
+	PausedByID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pausedById" → DB: "paused_by_id"
+	PausedReason                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pausedReason" → DB: "paused_reason"
 	ConnectedByID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "connectedById" → DB: "connected_by_id"
 	ConnectedAt                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "connectedAt" → DB: "connected_at"
 	DisconnectedByID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "disconnectedById" → DB: "disconnected_by_id"
@@ -325,6 +816,12 @@ var AccountingConnectionFilter = struct {
 	},
 	ExternalRealmID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("externalRealmId", op, value)
+	},
+	AppSource: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("appSource", op, value)
+	},
+	AppEnvironment: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("appEnvironment", op, value)
 	},
 	ExternalCompanyName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("externalCompanyName", op, value)
@@ -388,6 +885,27 @@ var AccountingConnectionFilter = struct {
 	},
 	ReferenceRefreshError: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("referenceRefreshError", op, value)
+	},
+	SyncStartDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("syncStartDate", op, value)
+	},
+	SyncEnabledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("syncEnabledAt", op, value)
+	},
+	AutoSync: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("autoSync", op, value)
+	},
+	DriverSettlementsEnabledAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("driverSettlementsEnabledAt", op, value)
+	},
+	PausedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pausedAt", op, value)
+	},
+	PausedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pausedById", op, value)
+	},
+	PausedReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pausedReason", op, value)
 	},
 	ConnectedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("connectedById", op, value)
@@ -1052,6 +1570,614 @@ var AccountingReferenceObjectFilter = struct {
 	},
 	RemovedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("removedAt", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// AccountingSyncAttempt — table "accounting_sync_attempts", alias "acctsa"
+// ---------------------------------------------------------------------------
+
+// AccountingSyncAttemptTable holds the table name, alias, and primary key columns
+// for the "accounting_sync_attempts" table. The alias "acctsa" is used in all generated
+// SQL fragments (e.g. "acctsa.id = ?").
+var AccountingSyncAttemptTable = TableInfo{
+	Name:       "accounting_sync_attempts",
+	Alias:      "acctsa",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AccountingSyncAttemptColumns provides type-safe column references for the "accounting_sync_attempts" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AccountingSyncAttemptColumns.ID.String())
+//	// SELECT acctsa.id FROM accounting_sync_attempts AS acctsa
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AccountingSyncAttemptColumns.ID.Eq(), id)           // WHERE acctsa.id = ?
+//	q.Order(AccountingSyncAttemptColumns.CreatedAt.OrderDesc())  // ORDER BY acctsa.created_at DESC
+var AccountingSyncAttemptColumns = struct {
+	ID             Column // "id" → qualified: "acctsa.id"
+	BusinessUnitID Column // "business_unit_id" → qualified: "acctsa.business_unit_id"
+	OrganizationID Column // "organization_id" → qualified: "acctsa.organization_id"
+	SyncRecordID   Column // "sync_record_id" → qualified: "acctsa.sync_record_id"
+	AttemptNumber  Column // "attempt_number" → qualified: "acctsa.attempt_number"
+	Outcome        Column // "outcome" → qualified: "acctsa.outcome"
+	ErrorCategory  Column // "error_category" → qualified: "acctsa.error_category"
+	ErrorCode      Column // "error_code" → qualified: "acctsa.error_code"
+	ErrorMessage   Column // "error_message" → qualified: "acctsa.error_message"
+	StartedAt      Column // "started_at" → qualified: "acctsa.started_at"
+	FinishedAt     Column // "finished_at" → qualified: "acctsa.finished_at"
+	DurationMs     Column // "duration_ms" → qualified: "acctsa.duration_ms"
+	CreatedAt      Column // "created_at" → qualified: "acctsa.created_at"
+}{
+	ID:             NewColumn("id", "acctsa"),
+	BusinessUnitID: NewColumn("business_unit_id", "acctsa"),
+	OrganizationID: NewColumn("organization_id", "acctsa"),
+	SyncRecordID:   NewColumn("sync_record_id", "acctsa"),
+	AttemptNumber:  NewColumn("attempt_number", "acctsa"),
+	Outcome:        NewColumn("outcome", "acctsa"),
+	ErrorCategory:  NewColumn("error_category", "acctsa"),
+	ErrorCode:      NewColumn("error_code", "acctsa"),
+	ErrorMessage:   NewColumn("error_message", "acctsa"),
+	StartedAt:      NewColumn("started_at", "acctsa"),
+	FinishedAt:     NewColumn("finished_at", "acctsa"),
+	DurationMs:     NewColumn("duration_ms", "acctsa"),
+	CreatedAt:      NewColumn("created_at", "acctsa"),
+}
+
+// AccountingSyncAttemptFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AccountingSyncAttempt.GetStaticFieldMap().
+var AccountingSyncAttemptFieldMap = map[string]string{
+	"id":             "id",
+	"businessUnitId": "business_unit_id",
+	"organizationId": "organization_id",
+	"syncRecordId":   "sync_record_id",
+	"attemptNumber":  "attempt_number",
+	"outcome":        "outcome",
+	"errorCategory":  "error_category",
+	"errorCode":      "error_code",
+	"errorMessage":   "error_message",
+	"startedAt":      "started_at",
+	"finishedAt":     "finished_at",
+	"durationMs":     "duration_ms",
+	"createdAt":      "created_at",
+}
+
+// AccountingSyncAttemptInsertableColumns lists column names suitable for INSERT statements on the "accounting_sync_attempts" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AccountingSyncAttemptInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"sync_record_id",
+	"attempt_number",
+	"outcome",
+	"error_category",
+	"error_code",
+	"error_message",
+	"started_at",
+	"finished_at",
+	"duration_ms",
+	"created_at",
+}
+
+// AccountingSyncAttemptScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE acctsa.organization_id = ? AND acctsa.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AccountingSyncAttemptScopeTenant(sq, ti).
+//		Where(buncolgen.AccountingSyncAttemptColumns.ID.Eq(), id)
+func AccountingSyncAttemptScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AccountingSyncAttemptColumns.OrganizationID, AccountingSyncAttemptColumns.BusinessUnitID, ti)
+}
+
+// AccountingSyncAttemptScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AccountingSyncAttemptScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AccountingSyncAttemptColumns.ID.In(), bun.List(ids))
+//	})
+func AccountingSyncAttemptScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AccountingSyncAttemptColumns.OrganizationID, AccountingSyncAttemptColumns.BusinessUnitID, ti)
+}
+
+// AccountingSyncAttemptScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AccountingSyncAttemptScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AccountingSyncAttemptColumns.ID.Eq(), id)
+//	})
+func AccountingSyncAttemptScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AccountingSyncAttemptColumns.OrganizationID, AccountingSyncAttemptColumns.BusinessUnitID, ti)
+}
+
+// AccountingSyncAttemptApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AccountingSyncAttemptApplyTenant(tenantInfo))
+func AccountingSyncAttemptApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AccountingSyncAttemptColumns.OrganizationID, AccountingSyncAttemptColumns.BusinessUnitID, ti)
+}
+
+// AccountingSyncAttemptFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "accounting_sync_attempts" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AccountingSyncAttemptFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AccountingSyncAttemptFilter = struct {
+	ID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	SyncRecordID   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "syncRecordId" → DB: "sync_record_id"
+	AttemptNumber  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attemptNumber" → DB: "attempt_number"
+	Outcome        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "outcome" → DB: "outcome"
+	ErrorCategory  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorCategory" → DB: "error_category"
+	ErrorCode      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorCode" → DB: "error_code"
+	ErrorMessage   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
+	StartedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
+	FinishedAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "finishedAt" → DB: "finished_at"
+	DurationMs     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "durationMs" → DB: "duration_ms"
+	CreatedAt      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	SyncRecordID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("syncRecordId", op, value)
+	},
+	AttemptNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("attemptNumber", op, value)
+	},
+	Outcome: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("outcome", op, value)
+	},
+	ErrorCategory: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("errorCategory", op, value)
+	},
+	ErrorCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("errorCode", op, value)
+	},
+	ErrorMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("errorMessage", op, value)
+	},
+	StartedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("startedAt", op, value)
+	},
+	FinishedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("finishedAt", op, value)
+	},
+	DurationMs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("durationMs", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+}
+
+// ---------------------------------------------------------------------------
+// AccountingSyncRecord — table "accounting_sync_records", alias "acctsr"
+// ---------------------------------------------------------------------------
+
+// AccountingSyncRecordTable holds the table name, alias, and primary key columns
+// for the "accounting_sync_records" table. The alias "acctsr" is used in all generated
+// SQL fragments (e.g. "acctsr.id = ?").
+var AccountingSyncRecordTable = TableInfo{
+	Name:       "accounting_sync_records",
+	Alias:      "acctsr",
+	PrimaryKey: []string{"id", "business_unit_id", "organization_id"},
+}
+
+// AccountingSyncRecordColumns provides type-safe column references for the "accounting_sync_records" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(AccountingSyncRecordColumns.ID.String())
+//	// SELECT acctsr.id FROM accounting_sync_records AS acctsr
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(AccountingSyncRecordColumns.ID.Eq(), id)           // WHERE acctsr.id = ?
+//	q.Order(AccountingSyncRecordColumns.CreatedAt.OrderDesc())  // ORDER BY acctsr.created_at DESC
+var AccountingSyncRecordColumns = struct {
+	ID                Column // "id" → qualified: "acctsr.id"
+	BusinessUnitID    Column // "business_unit_id" → qualified: "acctsr.business_unit_id"
+	OrganizationID    Column // "organization_id" → qualified: "acctsr.organization_id"
+	ConnectionID      Column // "connection_id" → qualified: "acctsr.connection_id"
+	ObjectType        Column // "object_type" → qualified: "acctsr.object_type"
+	ObjectID          Column // "object_id" → qualified: "acctsr.object_id"
+	ObjectNumber      Column // "object_number" → qualified: "acctsr.object_number"
+	Operation         Column // "operation" → qualified: "acctsr.operation"
+	SourceEvent       Column // "source_event" → qualified: "acctsr.source_event"
+	IdempotencyKey    Column // "idempotency_key" → qualified: "acctsr.idempotency_key"
+	RequestID         Column // "request_id" → qualified: "acctsr.request_id"
+	Revision          Column // "revision" → qualified: "acctsr.revision"
+	DocumentDate      Column // "document_date" → qualified: "acctsr.document_date"
+	DependsOnRecordID Column // "depends_on_record_id" → qualified: "acctsr.depends_on_record_id"
+	Status            Column // "status" → qualified: "acctsr.status"
+	AttemptCount      Column // "attempt_count" → qualified: "acctsr.attempt_count"
+	NextAttemptAt     Column // "next_attempt_at" → qualified: "acctsr.next_attempt_at"
+	LeaseExpiresAt    Column // "lease_expires_at" → qualified: "acctsr.lease_expires_at"
+	ExternalID        Column // "external_id" → qualified: "acctsr.external_id"
+	ExternalDocNumber Column // "external_doc_number" → qualified: "acctsr.external_doc_number"
+	ExternalURL       Column // "external_url" → qualified: "acctsr.external_url"
+	ExternalRefs      Column // "external_refs" → qualified: "acctsr.external_refs"
+	PayloadHash       Column // "payload_hash" → qualified: "acctsr.payload_hash"
+	Payload           Column // "payload" → qualified: "acctsr.payload"
+	MappingIDs        Column // "mapping_ids" → qualified: "acctsr.mapping_ids"
+	ErrorCategory     Column // "error_category" → qualified: "acctsr.error_category"
+	ErrorCode         Column // "error_code" → qualified: "acctsr.error_code"
+	ErrorMessage      Column // "error_message" → qualified: "acctsr.error_message"
+	Resolution        Column // "resolution" → qualified: "acctsr.resolution"
+	QueuedAt          Column // "queued_at" → qualified: "acctsr.queued_at"
+	StartedAt         Column // "started_at" → qualified: "acctsr.started_at"
+	SyncedAt          Column // "synced_at" → qualified: "acctsr.synced_at"
+	ReleasedByID      Column // "released_by_id" → qualified: "acctsr.released_by_id"
+	SkippedByID       Column // "skipped_by_id" → qualified: "acctsr.skipped_by_id"
+	SkippedReason     Column // "skipped_reason" → qualified: "acctsr.skipped_reason"
+	Version           Column // "version" → qualified: "acctsr.version"
+	CreatedAt         Column // "created_at" → qualified: "acctsr.created_at"
+	UpdatedAt         Column // "updated_at" → qualified: "acctsr.updated_at"
+}{
+	ID:                NewColumn("id", "acctsr"),
+	BusinessUnitID:    NewColumn("business_unit_id", "acctsr"),
+	OrganizationID:    NewColumn("organization_id", "acctsr"),
+	ConnectionID:      NewColumn("connection_id", "acctsr"),
+	ObjectType:        NewColumn("object_type", "acctsr"),
+	ObjectID:          NewColumn("object_id", "acctsr"),
+	ObjectNumber:      NewColumn("object_number", "acctsr"),
+	Operation:         NewColumn("operation", "acctsr"),
+	SourceEvent:       NewColumn("source_event", "acctsr"),
+	IdempotencyKey:    NewColumn("idempotency_key", "acctsr"),
+	RequestID:         NewColumn("request_id", "acctsr"),
+	Revision:          NewColumn("revision", "acctsr"),
+	DocumentDate:      NewColumn("document_date", "acctsr"),
+	DependsOnRecordID: NewColumn("depends_on_record_id", "acctsr"),
+	Status:            NewColumn("status", "acctsr"),
+	AttemptCount:      NewColumn("attempt_count", "acctsr"),
+	NextAttemptAt:     NewColumn("next_attempt_at", "acctsr"),
+	LeaseExpiresAt:    NewColumn("lease_expires_at", "acctsr"),
+	ExternalID:        NewColumn("external_id", "acctsr"),
+	ExternalDocNumber: NewColumn("external_doc_number", "acctsr"),
+	ExternalURL:       NewColumn("external_url", "acctsr"),
+	ExternalRefs:      NewColumn("external_refs", "acctsr"),
+	PayloadHash:       NewColumn("payload_hash", "acctsr"),
+	Payload:           NewColumn("payload", "acctsr"),
+	MappingIDs:        NewColumn("mapping_ids", "acctsr"),
+	ErrorCategory:     NewColumn("error_category", "acctsr"),
+	ErrorCode:         NewColumn("error_code", "acctsr"),
+	ErrorMessage:      NewColumn("error_message", "acctsr"),
+	Resolution:        NewColumn("resolution", "acctsr"),
+	QueuedAt:          NewColumn("queued_at", "acctsr"),
+	StartedAt:         NewColumn("started_at", "acctsr"),
+	SyncedAt:          NewColumn("synced_at", "acctsr"),
+	ReleasedByID:      NewColumn("released_by_id", "acctsr"),
+	SkippedByID:       NewColumn("skipped_by_id", "acctsr"),
+	SkippedReason:     NewColumn("skipped_reason", "acctsr"),
+	Version:           NewColumn("version", "acctsr"),
+	CreatedAt:         NewColumn("created_at", "acctsr"),
+	UpdatedAt:         NewColumn("updated_at", "acctsr"),
+}
+
+// AccountingSyncRecordFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by AccountingSyncRecord.GetStaticFieldMap().
+var AccountingSyncRecordFieldMap = map[string]string{
+	"id":                "id",
+	"businessUnitId":    "business_unit_id",
+	"organizationId":    "organization_id",
+	"connectionId":      "connection_id",
+	"objectType":        "object_type",
+	"objectId":          "object_id",
+	"objectNumber":      "object_number",
+	"operation":         "operation",
+	"sourceEvent":       "source_event",
+	"idempotencyKey":    "idempotency_key",
+	"requestId":         "request_id",
+	"revision":          "revision",
+	"documentDate":      "document_date",
+	"dependsOnRecordId": "depends_on_record_id",
+	"status":            "status",
+	"attemptCount":      "attempt_count",
+	"nextAttemptAt":     "next_attempt_at",
+	"externalId":        "external_id",
+	"externalDocNumber": "external_doc_number",
+	"externalUrl":       "external_url",
+	"externalRefs":      "external_refs",
+	"payloadHash":       "payload_hash",
+	"payload":           "payload",
+	"mappingIds":        "mapping_ids",
+	"errorCategory":     "error_category",
+	"errorCode":         "error_code",
+	"errorMessage":      "error_message",
+	"resolution":        "resolution",
+	"queuedAt":          "queued_at",
+	"startedAt":         "started_at",
+	"syncedAt":          "synced_at",
+	"releasedById":      "released_by_id",
+	"skippedById":       "skipped_by_id",
+	"skippedReason":     "skipped_reason",
+	"version":           "version",
+	"createdAt":         "created_at",
+	"updatedAt":         "updated_at",
+}
+
+// AccountingSyncRecordInsertableColumns lists column names suitable for INSERT statements on the "accounting_sync_records" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var AccountingSyncRecordInsertableColumns = []string{
+	"id",
+	"business_unit_id",
+	"organization_id",
+	"connection_id",
+	"object_type",
+	"object_id",
+	"object_number",
+	"operation",
+	"source_event",
+	"idempotency_key",
+	"request_id",
+	"revision",
+	"document_date",
+	"depends_on_record_id",
+	"status",
+	"attempt_count",
+	"next_attempt_at",
+	"lease_expires_at",
+	"external_id",
+	"external_doc_number",
+	"external_url",
+	"external_refs",
+	"payload_hash",
+	"payload",
+	"mapping_ids",
+	"error_category",
+	"error_code",
+	"error_message",
+	"resolution",
+	"queued_at",
+	"started_at",
+	"synced_at",
+	"released_by_id",
+	"skipped_by_id",
+	"skipped_reason",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// AccountingSyncRecordRelations provides type-safe names for Bun eager-loading.
+// Use these instead of string literals in .Relation() calls to get compile-time safety.
+//
+//	q.Relation(AccountingSyncRecordRelations.Organization)
+//	// Bun eager-loads the Organization association via a separate query
+var AccountingSyncRecordRelations = struct {
+	Organization string
+	BusinessUnit string
+	SkippedBy    string
+	ReleasedBy   string
+}{
+	Organization: "Organization",
+	BusinessUnit: "BusinessUnit",
+	SkippedBy:    "SkippedBy",
+	ReleasedBy:   "ReleasedBy",
+}
+
+// AccountingSyncRecordScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE acctsr.organization_id = ? AND acctsr.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.AccountingSyncRecordScopeTenant(sq, ti).
+//		Where(buncolgen.AccountingSyncRecordColumns.ID.Eq(), id)
+func AccountingSyncRecordScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, AccountingSyncRecordColumns.OrganizationID, AccountingSyncRecordColumns.BusinessUnitID, ti)
+}
+
+// AccountingSyncRecordScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.AccountingSyncRecordScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.AccountingSyncRecordColumns.ID.In(), bun.List(ids))
+//	})
+func AccountingSyncRecordScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, AccountingSyncRecordColumns.OrganizationID, AccountingSyncRecordColumns.BusinessUnitID, ti)
+}
+
+// AccountingSyncRecordScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.AccountingSyncRecordScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.AccountingSyncRecordColumns.ID.Eq(), id)
+//	})
+func AccountingSyncRecordScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, AccountingSyncRecordColumns.OrganizationID, AccountingSyncRecordColumns.BusinessUnitID, ti)
+}
+
+// AccountingSyncRecordApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.AccountingSyncRecordApplyTenant(tenantInfo))
+func AccountingSyncRecordApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(AccountingSyncRecordColumns.OrganizationID, AccountingSyncRecordColumns.BusinessUnitID, ti)
+}
+
+// AccountingSyncRecordFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "accounting_sync_records" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	AccountingSyncRecordFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var AccountingSyncRecordFilter = struct {
+	ID                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ConnectionID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "connectionId" → DB: "connection_id"
+	ObjectType        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "objectType" → DB: "object_type"
+	ObjectID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "objectId" → DB: "object_id"
+	ObjectNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "objectNumber" → DB: "object_number"
+	Operation         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "operation" → DB: "operation"
+	SourceEvent       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceEvent" → DB: "source_event"
+	IdempotencyKey    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "idempotencyKey" → DB: "idempotency_key"
+	RequestID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "requestId" → DB: "request_id"
+	Revision          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "revision" → DB: "revision"
+	DocumentDate      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentDate" → DB: "document_date"
+	DependsOnRecordID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "dependsOnRecordId" → DB: "depends_on_record_id"
+	Status            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	AttemptCount      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "attemptCount" → DB: "attempt_count"
+	NextAttemptAt     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "nextAttemptAt" → DB: "next_attempt_at"
+	ExternalID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
+	ExternalDocNumber func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalDocNumber" → DB: "external_doc_number"
+	ExternalURL       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalUrl" → DB: "external_url"
+	ExternalRefs      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalRefs" → DB: "external_refs"
+	PayloadHash       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payloadHash" → DB: "payload_hash"
+	Payload           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "payload" → DB: "payload"
+	MappingIDs        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "mappingIds" → DB: "mapping_ids"
+	ErrorCategory     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorCategory" → DB: "error_category"
+	ErrorCode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorCode" → DB: "error_code"
+	ErrorMessage      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "errorMessage" → DB: "error_message"
+	Resolution        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resolution" → DB: "resolution"
+	QueuedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "queuedAt" → DB: "queued_at"
+	StartedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "startedAt" → DB: "started_at"
+	SyncedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "syncedAt" → DB: "synced_at"
+	ReleasedByID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "releasedById" → DB: "released_by_id"
+	SkippedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "skippedById" → DB: "skipped_by_id"
+	SkippedReason     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "skippedReason" → DB: "skipped_reason"
+	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	ConnectionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("connectionId", op, value)
+	},
+	ObjectType: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("objectType", op, value)
+	},
+	ObjectID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("objectId", op, value)
+	},
+	ObjectNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("objectNumber", op, value)
+	},
+	Operation: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("operation", op, value)
+	},
+	SourceEvent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceEvent", op, value)
+	},
+	IdempotencyKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("idempotencyKey", op, value)
+	},
+	RequestID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("requestId", op, value)
+	},
+	Revision: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("revision", op, value)
+	},
+	DocumentDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("documentDate", op, value)
+	},
+	DependsOnRecordID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("dependsOnRecordId", op, value)
+	},
+	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("status", op, value)
+	},
+	AttemptCount: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("attemptCount", op, value)
+	},
+	NextAttemptAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("nextAttemptAt", op, value)
+	},
+	ExternalID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalId", op, value)
+	},
+	ExternalDocNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalDocNumber", op, value)
+	},
+	ExternalURL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalUrl", op, value)
+	},
+	ExternalRefs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalRefs", op, value)
+	},
+	PayloadHash: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payloadHash", op, value)
+	},
+	Payload: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("payload", op, value)
+	},
+	MappingIDs: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("mappingIds", op, value)
+	},
+	ErrorCategory: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("errorCategory", op, value)
+	},
+	ErrorCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("errorCode", op, value)
+	},
+	ErrorMessage: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("errorMessage", op, value)
+	},
+	Resolution: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("resolution", op, value)
+	},
+	QueuedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("queuedAt", op, value)
+	},
+	StartedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("startedAt", op, value)
+	},
+	SyncedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("syncedAt", op, value)
+	},
+	ReleasedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("releasedById", op, value)
+	},
+	SkippedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("skippedById", op, value)
+	},
+	SkippedReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("skippedReason", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
 	},
 	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("createdAt", op, value)

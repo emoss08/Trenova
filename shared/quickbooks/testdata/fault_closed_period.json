@@ -1,0 +1,14 @@
+{
+  "Fault": {
+    "Error": [
+      {
+        "Message": "Account Period Closed",
+        "Detail": "The account period has closed and the transaction date is within the closed period.",
+        "code": "6210",
+        "element": ""
+      }
+    ],
+    "type": "ValidationFault"
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

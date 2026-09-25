@@ -24,6 +24,7 @@ export const agentTemplateKindSchema = z.enum([
   "InsightAnalyst",
   "EDIDesk",
   "FormulaAssistant",
+  "BooksKeeper",
 ]);
 
 export const autonomyTierSchema = z.enum(["Propose", "ActWithApproval", "AutoExecute"]);
@@ -247,6 +248,8 @@ export const agentTemplateSchema = z.object({
   starterOutput: outputModeSchema,
   /** Runs a day the starter suggests; 0 is no cap. */
   starterDailyRunLimit: z.number().int().nonnegative().default(0),
+  /** The starter asks to begin in shadow mode: its runs are recorded, not acted on. */
+  starterShadow: z.boolean().default(false),
   systemKey: z.string().optional().default(""),
   contextProviders: nullableList(contextProviderSchema),
 });
@@ -850,6 +853,13 @@ export const proposalFieldSchema = z.object({
   minimum: z.number().nullish(),
   maximum: z.number().nullish(),
   maxLength: z.number().int().nullish(),
+  /**
+   * The parameter that names the record the write is about. A change may
+   * alter what is done to that record, never which record it is, so the
+   * form shows it without letting it be edited; the server refuses a
+   * retargeted approval either way.
+   */
+  readOnly: z.boolean().optional(),
 });
 
 /**

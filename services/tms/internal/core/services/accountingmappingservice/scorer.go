@@ -250,7 +250,7 @@ func score(
 	}
 
 	if len(scored) == 0 {
-		proposal.Reason = "No usable QuickBooks record of this kind"
+		proposal.Reason = "No usable record of this kind in the accounting system"
 		return proposal
 	}
 	best := scored[0]
@@ -284,7 +284,7 @@ func scoreCandidate(t *target, ref *accountingsync.AccountingReferenceObject) ca
 	}
 
 	switch t.TargetType {
-	case accountingsync.TargetAccountRole:
+	case accountingsync.TargetAccountRole, accountingsync.TargetGLAccount:
 		if t.Code != "" &&
 			strings.EqualFold(strings.TrimSpace(ref.Number), strings.TrimSpace(t.Code)) {
 			consider(scoreNumber, matcherNumber, fmt.Sprintf("Account number %s matches", t.Code))
@@ -320,7 +320,7 @@ func scoreCandidate(t *target, ref *accountingsync.AccountingReferenceObject) ca
 			stringutils.NameSimilarity,
 			consider,
 		)
-	case accountingsync.TargetCustomer, accountingsync.TargetCarrier:
+	case accountingsync.TargetCustomer, accountingsync.TargetCarrier, accountingsync.TargetDriver:
 		scoreParty(t, ref, consider, &result)
 	case accountingsync.TargetPaymentTerm:
 		if t.DueDays != nil && ref.DueDays != nil && *t.DueDays == *ref.DueDays {
@@ -350,7 +350,7 @@ func scoreParty(
 		digits := stringutils.DigitsOnly(identifier)
 		if len(digits) >= minIdentifierDigits && slices.Contains(runs, digits) {
 			consider(scoreIdentifier, matcherIdentifier,
-				fmt.Sprintf("QuickBooks account number carries %s", identifier))
+				fmt.Sprintf("The account number in the accounting system carries %s", identifier))
 		}
 	}
 

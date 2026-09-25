@@ -187,7 +187,7 @@ func TestUpdateShipment_PatchesOnlyTheNamedFields(t *testing.T) {
 		BOL: "OLD", Version: 3,
 	}
 	writer := &fakeShipmentWriter{existing: original}
-	tool := newUpdateShipmentTool(writer)
+	tool := newUpdateShipmentTool(writer, nil)
 	assert.Equal(t, permission.OpUpdate, tool.Policy().Operation)
 
 	newCustomer := pulid.MustNew("cust_")
@@ -220,7 +220,7 @@ func TestUpdateShipment_RefusesAnEmptyPatchAndABadID(t *testing.T) {
 	t.Parallel()
 
 	writer := &fakeShipmentWriter{existing: &shipment.Shipment{}}
-	tool := newUpdateShipmentTool(writer)
+	tool := newUpdateShipmentTool(writer, nil)
 
 	err := tool.Execute(
 		t.Context(),

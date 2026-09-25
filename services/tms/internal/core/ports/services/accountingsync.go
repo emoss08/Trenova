@@ -13,7 +13,34 @@ type AccountingSyncStatus struct {
 	IntegrationType integration.Type
 	ProviderName    string
 	Available       bool
+	App             *AccountingAppSettings
 	Connection      *accountingsync.AccountingConnection
+}
+
+type AccountingAppSettings struct {
+	ActiveSource         accountingsync.AppSource
+	InstanceAppAvailable bool
+	InstanceEnvironment  accountingsync.AppEnvironment
+	RedirectURL          string
+	WebhookPath          string
+	TenantApp            *accountingsync.AccountingAppCredential
+}
+
+type SaveAccountingAppRequest struct {
+	TenantInfo                pagination.TenantInfo
+	UserID                    pulid.ID
+	IntegrationType           integration.Type
+	Environment               accountingsync.AppEnvironment
+	ClientID                  string
+	ClientSecret              string
+	WebhookVerifierToken      string
+	ClearWebhookVerifierToken bool
+}
+
+type RemoveAccountingAppRequest struct {
+	TenantInfo      pagination.TenantInfo
+	UserID          pulid.ID
+	IntegrationType integration.Type
 }
 
 type StartAccountingAuthorizationRequest struct {
@@ -79,6 +106,8 @@ type AccountingConnectionService interface {
 	) (*accountingsync.AccountingConnection, error)
 	CheckDue(ctx context.Context, limit int) (*AccountingHealthSweep, error)
 	ReceiveWebhook(ctx context.Context, req *ReceiveAccountingWebhookRequest) error
+	SaveApp(ctx context.Context, req *SaveAccountingAppRequest) (*AccountingSyncStatus, error)
+	RemoveApp(ctx context.Context, req *RemoveAccountingAppRequest) (*AccountingSyncStatus, error)
 	Session(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

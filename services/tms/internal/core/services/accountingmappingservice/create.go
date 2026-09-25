@@ -7,8 +7,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/worker"
+
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/carrier"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -128,6 +131,7 @@ func (s *Service) CreateReferenceRecord(
 		req.UserID,
 		[]*accountingsync.AccountingMapping{updated},
 	)
+	s.requeueMappingBlocked(ctx, req.TenantInfo, updated.ConnectionID)
 	return updated, nil
 }
 
@@ -259,24 +263,40 @@ func (s *Service) customerDraft(
 	creator services.AccountingReferenceCreator,
 	createReq *services.AccountingCreateReferenceRequest,
 ) (string, error) {
-	found, err := s.customers.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
-		TenantInfo:            req.TenantInfo,
-		CustomerIDs:           []pulid.ID{row.TrenovaObjectID},
-		CustomerFilterOptions: repositories.CustomerFilterOptions{IncludeState: true},
-	})
+	cus, err := s.customerWithState(ctx, req.TenantInfo, row.TrenovaObjectID)
 	if err != nil {
 		return "", err
 	}
-	if len(found) == 0 {
-		return "", errortypes.NewNotFoundError("The customer for this mapping no longer exists")
-	}
-	cus := found[0]
 
 	name, err := chosenName(creator, accountingsync.ReferenceKindCustomer, req.Name, cus.Name)
 	if err != nil {
 		return "", err
 	}
-	createReq.Party = &services.AccountingPartyDraft{
+	createReq.Party = customerParty(cus, name)
+	return name, nil
+}
+
+func (s *Service) customerWithState(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	customerID pulid.ID,
+) (*customer.Customer, error) {
+	found, err := s.customers.GetByIDs(ctx, repositories.GetCustomersByIDsRequest{
+		TenantInfo:            tenantInfo,
+		CustomerIDs:           []pulid.ID{customerID},
+		CustomerFilterOptions: repositories.CustomerFilterOptions{IncludeState: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(found) == 0 {
+		return nil, errortypes.NewNotFoundError("The customer for this mapping no longer exists")
+	}
+	return found[0], nil
+}
+
+func customerParty(cus *customer.Customer, name string) *services.AccountingPartyDraft {
+	return &services.AccountingPartyDraft{
 		DisplayName:  name,
 		CompanyName:  cus.Name,
 		AddressLine1: cus.AddressLine1,
@@ -285,7 +305,18 @@ func (s *Service) customerDraft(
 		PostalCode:   cus.PostalCode,
 		Country:      stateCountry(cus.State),
 	}
-	return name, nil
+}
+
+func (s *Service) CustomerParty(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	customerID pulid.ID,
+) (*services.AccountingPartyDraft, error) {
+	cus, err := s.customerWithState(ctx, tenantInfo, customerID)
+	if err != nil {
+		return nil, err
+	}
+	return customerParty(cus, cus.Name), nil
 }
 
 func (s *Service) vendorDraft(
@@ -295,18 +326,13 @@ func (s *Service) vendorDraft(
 	creator services.AccountingReferenceCreator,
 	createReq *services.AccountingCreateReferenceRequest,
 ) (string, error) {
-	found, err := s.carriers.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
-		TenantInfo:           req.TenantInfo,
-		CarrierIDs:           []pulid.ID{row.TrenovaObjectID},
-		CarrierFilterOptions: repositories.CarrierFilterOptions{IncludeState: true},
-	})
+	if row.TargetType == accountingsync.TargetDriver {
+		return s.driverDraft(ctx, req, row, creator, createReq)
+	}
+	carr, err := s.carrierWithState(ctx, req.TenantInfo, row.TrenovaObjectID)
 	if err != nil {
 		return "", err
 	}
-	if len(found) == 0 {
-		return "", errortypes.NewNotFoundError("The carrier for this mapping no longer exists")
-	}
-	carr := found[0]
 
 	name, err := chosenName(
 		creator,
@@ -318,6 +344,30 @@ func (s *Service) vendorDraft(
 	if err != nil {
 		return "", err
 	}
+	createReq.Party = carrierParty(carr, name)
+	return name, nil
+}
+
+func (s *Service) carrierWithState(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	carrierID pulid.ID,
+) (*carrier.Carrier, error) {
+	found, err := s.carriers.GetByIDs(ctx, repositories.GetCarriersByIDsRequest{
+		TenantInfo:           tenantInfo,
+		CarrierIDs:           []pulid.ID{carrierID},
+		CarrierFilterOptions: repositories.CarrierFilterOptions{IncludeState: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(found) == 0 {
+		return nil, errortypes.NewNotFoundError("The carrier for this mapping no longer exists")
+	}
+	return found[0], nil
+}
+
+func carrierParty(carr *carrier.Carrier, name string) *services.AccountingPartyDraft {
 	draft := &services.AccountingPartyDraft{
 		DisplayName: name,
 		CompanyName: carr.Name,
@@ -325,8 +375,87 @@ func (s *Service) vendorDraft(
 		Is1099:      carr.Is1099Eligible,
 	}
 	applyCarrierAddress(draft, carr)
-	createReq.Party = draft
+	return draft
+}
+
+func (s *Service) driverDraft(
+	ctx context.Context,
+	req *services.CreateAccountingReferenceRecordRequest,
+	row *accountingsync.AccountingMapping,
+	creator services.AccountingReferenceCreator,
+	createReq *services.AccountingCreateReferenceRequest,
+) (string, error) {
+	wrk, err := s.workerWithState(ctx, req.TenantInfo, row.TrenovaObjectID)
+	if err != nil {
+		return "", err
+	}
+	name, err := chosenName(creator, accountingsync.ReferenceKindVendor, req.Name, workerName(wrk))
+	if err != nil {
+		return "", err
+	}
+	createReq.Party = driverParty(wrk, name)
 	return name, nil
+}
+
+func (s *Service) workerWithState(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	workerID pulid.ID,
+) (*worker.Worker, error) {
+	if s.workers == nil {
+		return nil, errortypes.NewBusinessError("Driver records are not available")
+	}
+	wrk, err := s.workers.GetByID(ctx, repositories.GetWorkerByIDRequest{
+		ID:           workerID,
+		TenantInfo:   tenantInfo,
+		IncludeState: true,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, errortypes.NewNotFoundError(
+				"The driver for this mapping no longer exists",
+			)
+		}
+		return nil, err
+	}
+	return wrk, nil
+}
+
+func driverParty(wrk *worker.Worker, name string) *services.AccountingPartyDraft {
+	return &services.AccountingPartyDraft{
+		DisplayName:  name,
+		Email:        strings.TrimSpace(wrk.Email),
+		AddressLine1: wrk.AddressLine1,
+		City:         wrk.City,
+		State:        stateCode(wrk.State),
+		PostalCode:   wrk.PostalCode,
+		Country:      stateCountry(wrk.State),
+		Is1099:       true,
+	}
+}
+
+func (s *Service) VendorParty(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	targetType accountingsync.MappingTargetType,
+	objectID pulid.ID,
+) (*services.AccountingPartyDraft, error) {
+	switch targetType {
+	case accountingsync.TargetCarrier:
+		carr, err := s.carrierWithState(ctx, tenantInfo, objectID)
+		if err != nil {
+			return nil, err
+		}
+		return carrierParty(carr, carr.Name), nil
+	case accountingsync.TargetDriver:
+		wrk, err := s.workerWithState(ctx, tenantInfo, objectID)
+		if err != nil {
+			return nil, err
+		}
+		return driverParty(wrk, workerName(wrk)), nil
+	default:
+		return nil, errortypes.NewBusinessError("{0} is not a vendor", string(targetType))
+	}
 }
 
 func applyCarrierAddress(draft *services.AccountingPartyDraft, carr *carrier.Carrier) {

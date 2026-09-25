@@ -114,6 +114,43 @@ func TestClearAccountingMapping_PreviewMatchesWhatIsSaved(t *testing.T) {
 	requireUpdateParity(t, change, &before, writer.row, mappingOptions()...)
 }
 
+func TestAccountingMapping_PreviewWarnsWhenDocumentsWereAlreadySent(t *testing.T) {
+	t.Parallel()
+
+	row := proposedCustomerMapping()
+	row.State = accountingsync.MappingStateConfirmed
+	writer := &fakeMappingWriter{
+		row:  row,
+		used: 4,
+		refs: []*accountingsync.AccountingReferenceObject{
+			customerRef("51", "Acme Logistics LLC", true),
+		},
+	}
+	setTool := newSetAccountingMappingTool(writer).(*setAccountingMappingTool)
+	clearTool := newClearAccountingMappingTool(writer).(*clearAccountingMappingTool)
+
+	for _, preview := range []*agent.ToolPreview{
+		previewWithoutWrites(t, &writer.guard, func() (*agent.ToolPreview, error) {
+			return setTool.Preview(t.Context(), executeParams(map[string]any{
+				"system":     "QuickBooksOnline",
+				"mappingId":  row.ID.String(),
+				"externalId": "51",
+				"reason":     "The LLC is the entity Acme invoices under.",
+			}))
+		}),
+		previewWithoutWrites(t, &writer.guard, func() (*agent.ToolPreview, error) {
+			return clearTool.Preview(t.Context(), executeParams(map[string]any{
+				"system":    "QuickBooksOnline",
+				"mappingId": row.ID.String(),
+			}))
+		}),
+	} {
+		assert.Empty(t, preview.Changes)
+		requireWarning(t, preview, agent.PreviewWarningWouldFail)
+		assert.Contains(t, preview.Warnings[0].Message, "already sent")
+	}
+}
+
 func TestCreateAccountingReferenceRecord_PreviewShowsTheRecordAndTheMapping(t *testing.T) {
 	t.Parallel()
 

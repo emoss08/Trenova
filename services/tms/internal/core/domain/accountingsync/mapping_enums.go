@@ -9,15 +9,16 @@ import (
 type SetupStep string
 
 const (
-	SetupStepMappings = SetupStep("Mappings")
-	SetupStepComplete = SetupStep("Complete")
+	SetupStepMappings  = SetupStep("Mappings")
+	SetupStepStartDate = SetupStep("StartDate")
+	SetupStepComplete  = SetupStep("Complete")
 )
 
 func (s SetupStep) String() string { return string(s) }
 
 func (s SetupStep) IsValid() bool {
 	switch s {
-	case SetupStepMappings, SetupStepComplete:
+	case SetupStepMappings, SetupStepStartDate, SetupStepComplete:
 		return true
 	default:
 		return false
@@ -25,7 +26,7 @@ func (s SetupStep) IsValid() bool {
 }
 
 func AllSetupSteps() []SetupStep {
-	return []SetupStep{SetupStepMappings, SetupStepComplete}
+	return []SetupStep{SetupStepMappings, SetupStepStartDate, SetupStepComplete}
 }
 
 type ReferenceKind string
@@ -79,6 +80,8 @@ const (
 	TargetItemRole          = MappingTargetType("ItemRole")
 	TargetCustomer          = MappingTargetType("Customer")
 	TargetCarrier           = MappingTargetType("Carrier")
+	TargetDriver            = MappingTargetType("Driver")
+	TargetGLAccount         = MappingTargetType("GLAccount")
 	TargetPaymentTerm       = MappingTargetType("PaymentTerm")
 	TargetPaymentMethod     = MappingTargetType("PaymentMethod")
 )
@@ -93,6 +96,8 @@ func (t MappingTargetType) IsValid() bool {
 		TargetItemRole,
 		TargetCustomer,
 		TargetCarrier,
+		TargetDriver,
+		TargetGLAccount,
 		TargetPaymentTerm,
 		TargetPaymentMethod:
 		return true
@@ -109,6 +114,8 @@ func AllMappingTargetTypes() []MappingTargetType {
 		TargetItemRole,
 		TargetCustomer,
 		TargetCarrier,
+		TargetDriver,
+		TargetGLAccount,
 		TargetPaymentTerm,
 		TargetPaymentMethod,
 	}
@@ -116,13 +123,13 @@ func AllMappingTargetTypes() []MappingTargetType {
 
 func (t MappingTargetType) ProviderKind() ReferenceKind {
 	switch t {
-	case TargetAccountRole:
+	case TargetAccountRole, TargetGLAccount:
 		return ReferenceKindAccount
 	case TargetLineType, TargetAccessorialCharge, TargetItemRole:
 		return ReferenceKindItem
 	case TargetCustomer:
 		return ReferenceKindCustomer
-	case TargetCarrier:
+	case TargetCarrier, TargetDriver:
 		return ReferenceKindVendor
 	case TargetPaymentTerm:
 		return ReferenceKindTerm
@@ -134,7 +141,12 @@ func (t MappingTargetType) ProviderKind() ReferenceKind {
 }
 
 func (t MappingTargetType) KeyedByObject() bool {
-	return t == TargetAccessorialCharge || t == TargetCustomer || t == TargetCarrier
+	switch t {
+	case TargetAccessorialCharge, TargetCustomer, TargetCarrier, TargetDriver, TargetGLAccount:
+		return true
+	default:
+		return false
+	}
 }
 
 func (t MappingTargetType) Keys() []string {
@@ -171,7 +183,7 @@ func (t MappingTargetType) Keys() []string {
 			string(customerpayment.MethodCash),
 			string(customerpayment.MethodOther),
 		}
-	case TargetAccessorialCharge, TargetCustomer, TargetCarrier:
+	case TargetAccessorialCharge, TargetCustomer, TargetCarrier, TargetDriver, TargetGLAccount:
 		return nil
 	default:
 		return nil

@@ -55,6 +55,7 @@ type Params struct {
 	Reports      repositories.ReportDefinitionRepository     `optional:"true"`
 	Dashboards   repositories.ReportDashboardRepository      `optional:"true"`
 	Accounting   repositories.AccountingConnectionRepository `optional:"true"`
+	SyncRecords  repositories.AccountingSyncRecordRepository `optional:"true"`
 	Dispatch     repositories.DispatchControlRepository      `optional:"true"`
 	Formulas     repositories.FormulaTemplateRepository      `optional:"true"`
 }
@@ -79,6 +80,7 @@ type Service struct {
 	reports      repositories.ReportDefinitionRepository
 	dashboards   repositories.ReportDashboardRepository
 	accounting   repositories.AccountingConnectionRepository
+	syncRecords  repositories.AccountingSyncRecordRepository
 	dispatch     repositories.DispatchControlRepository
 	formulas     repositories.FormulaTemplateRepository
 	logger       *zap.Logger
@@ -102,6 +104,7 @@ func New(p Params) serviceports.AgentSubjectDescriber {
 		reports:      p.Reports,
 		dashboards:   p.Dashboards,
 		accounting:   p.Accounting,
+		syncRecords:  p.SyncRecords,
 		dispatch:     p.Dispatch,
 		formulas:     p.Formulas,
 		logger:       p.Logger.Named("service.agentsubject"),
@@ -143,6 +146,8 @@ func (s *Service) Describe(
 		return s.dashboard(ctx, tenant, subjectID)
 	case agent.SubjectAccountingConnection:
 		return s.accountingConnection(ctx, tenant, subjectID)
+	case agent.SubjectAccountingSyncRecord:
+		return s.accountingSyncRecord(ctx, tenant, subjectID)
 	case agent.SubjectFormulaTemplate:
 		return s.formulaTemplate(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
@@ -515,9 +520,10 @@ func (s *Service) bankReceipt(
 					"customerPaymentId": suggestion.CustomerPaymentID.String(),
 					"customerId":        suggestion.CustomerID.String(),
 					"referenceNumber":   suggestion.ReferenceNumber,
-					"amount":            money.DecimalFromMinor(suggestion.AmountMinor).StringFixed(2),
-					"score":             suggestion.Score,
-					"reason":            suggestion.Reason,
+					"amount": money.DecimalFromMinor(suggestion.AmountMinor).
+						StringFixed(2),
+					"score":  suggestion.Score,
+					"reason": suggestion.Reason,
 				})
 			}
 			notes["candidatePayments"] = candidates
@@ -1064,6 +1070,46 @@ func (s *Service) accountingConnection(
 		"lastErrorCategory":   found.LastErrorCategory,
 		"lastError":           found.AgentErrorSummary(),
 		"reconnectBy":         found.RefreshTokenAbsoluteExpiresAt,
+	})
+
+	return subject, nil
+}
+
+func (s *Service) accountingSyncRecord(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	recordID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectAccountingSyncRecord,
+		ID:    recordID.String(),
+		Label: "Accounting sync record",
+	}
+	if s.syncRecords == nil {
+		return subject, nil
+	}
+
+	found, err := s.syncRecords.GetByID(ctx, repositories.GetAccountingSyncRecordRequest{
+		TenantInfo: tenant,
+		ID:         recordID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load accounting sync record: %w", err)
+	}
+
+	subject.Label = "Accounting sync record: " + string(found.ObjectType) + " " + found.ObjectNumber
+	subject.Notes = marshalNotes(map[string]any{
+		"documentType":  found.ObjectType,
+		"documentId":    found.ObjectID,
+		"number":        found.ObjectNumber,
+		"operation":     found.Operation,
+		"status":        found.Status,
+		"attempts":      found.AttemptCount,
+		"errorCategory": found.ErrorCategory,
+		"resolution":    found.Resolution,
+		"documentDate":  found.DocumentDate,
+		"queuedAt":      found.QueuedAt,
+		"nextAttemptAt": found.NextAttemptAt,
 	})
 
 	return subject, nil

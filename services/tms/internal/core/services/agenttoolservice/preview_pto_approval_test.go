@@ -41,14 +41,24 @@ func (f *savingPTO) approve(req *repositories.UpdatePTOStatusRequest) (*worker.W
 func (f *savingPTO) PreviewApprove(
 	_ context.Context,
 	req *repositories.UpdatePTOStatusRequest,
-) (*serviceports.PTOApprovalPlan, error) {
+) (*serviceports.WorkerPTOTransitionPreview, error) {
 	approved, err := f.approve(req)
 	if err != nil {
 		return nil, err
 	}
 	current := *f.pto
 
-	return &serviceports.PTOApprovalPlan{Current: &current, Approved: approved}, nil
+	return &serviceports.WorkerPTOTransitionPreview{
+		Before: &current,
+		After:  approved,
+		Driver: &serviceports.DriverNotificationPreview{
+			WorkerID:   current.WorkerID,
+			WorkerName: "Ana Reyes",
+			Reachable:  true,
+			Title:      "Time off approved",
+			Message:    "Your time off was approved.",
+		},
+	}, nil
 }
 
 func (f *savingPTO) Approve(
@@ -94,11 +104,17 @@ func TestApproveWorkerPTO_PreviewMatchesWhatIsSaved(t *testing.T) {
 	assert.Equal(t, permission.ResourceWorkerPTO, change.Resource)
 	assert.Equal(t, "Approved", fieldByPath(t, change, "status").After)
 	balance := fieldByPath(t, change, "balanceAfterDays")
-	assert.Equal(t, "Balance after (days)", balance.Label)
-	assert.Contains(t, preview.Summary, "3 days of Vacation")
+	assert.Equal(t, "7", balance.After)
+	assert.Contains(t, preview.Summary, "booking 3 days")
+	assert.Empty(t, preview.Warnings)
+	require.Len(t, preview.Changes, 2)
+	told := previewChange(t, preview, 1)
+	assert.Equal(t, agent.PreviewOperationSend, told.Operation)
+	require.NotNil(t, told.Message)
+	assert.Equal(t, agent.MessageChannelDash, told.Message.Channel)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
-	requireUpdateParity(t, change, &before, pto, approvedPTOOptions()...)
+	requireUpdateParity(t, change, &before, pto, ptoDecisionOptions()...)
 }
 
 func TestApproveWorkerPTO_PreviewWarnsForARequestAlreadyDecided(t *testing.T) {

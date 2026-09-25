@@ -19,7 +19,18 @@ const maxFamilySize = 4
 var families = [...][]string{
 	{"list_reports", "describe_report", "run_report", "get_report_run"},
 	{"list_report_datasets", "describe_report_dataset", "preview_report"},
-	{"get_accounting_sync_status", "check_accounting_connection"},
+	{
+		"get_accounting_sync_status",
+		"check_accounting_connection",
+		"pause_accounting_sync",
+		"resume_accounting_sync",
+	},
+	{
+		"list_accounting_sync_records",
+		"get_accounting_sync_record",
+		"retry_accounting_sync",
+		"skip_accounting_sync",
+	},
 	{
 		"list_accounting_mapping_gaps",
 		"get_accounting_mapping",

@@ -1358,3 +1358,39 @@ entities:
     edges:
       customer: { label: Customer }
       relatedInvoice: { label: Invoice }
+
+  accounting_sync_record:
+    struct: accountingsync.AccountingSyncRecord
+    resource: accounting_sync
+    label: Accounting Sync Record
+    pluralLabel: Accounting Sync Records
+    description: Every document sent to the accounting system and what happened to it
+    category: Accounting
+    excludeFields:
+      - idempotencyKey
+      - requestId
+      - payloadHash
+      - payload
+      - externalRefs
+      - mappingIds
+      - dependsOnRecordId
+    fields:
+      objectType: { label: "Document Type" }
+      objectId: { label: "Document ID" }
+      objectNumber: { label: "Document Number" }
+      operation: { label: Action }
+      sourceEvent: { label: "Queued By" }
+      documentDate: { label: "Document Date" }
+      attemptCount: { label: Tries, format: count }
+      nextAttemptAt: { label: "Next Try" }
+      externalId: { label: "ID in the Books" }
+      externalDocNumber: { label: "Number in the Books" }
+      externalUrl: { label: "Link in the Books" }
+      errorCategory: { label: "Error Category" }
+      errorCode: { label: "Error Code" }
+      errorMessage: { label: "Error Message" }
+      resolution: { label: "What to Do" }
+      queuedAt: { label: "Queued At" }
+      startedAt: { label: "Started At" }
+      syncedAt: { label: "Synced At" }
+      skippedReason: { label: "Skip Reason" }

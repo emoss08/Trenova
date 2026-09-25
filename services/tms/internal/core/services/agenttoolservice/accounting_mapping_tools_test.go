@@ -26,7 +26,27 @@ type fakeMappingWriter struct {
 	cleared   *serviceports.AccountingMappingActionRequest
 	created   *serviceports.CreateAccountingReferenceRecordRequest
 	refreshed *serviceports.AccountingSetupRequest
+	used      int
 	guard     writeGuard
+}
+
+func (f *fakeMappingWriter) GuardHistory(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	row *accountingsync.AccountingMapping,
+	acknowledged bool,
+) (int, error) {
+	if f.used == 0 || acknowledged {
+		return f.used, nil
+	}
+
+	return f.used, errortypes.NewValidationError(
+		"acknowledgeHistory",
+		errortypes.ErrInvalidOperation,
+		"{0} was used by {1} documents already sent to the accounting system",
+		row.TargetLabel,
+		f.used,
+	)
 }
 
 func (f *fakeMappingWriter) FindMapping(

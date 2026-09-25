@@ -67,23 +67,33 @@ type ConfirmAccountingMappingsRequest struct {
 }
 
 type AccountingMappingActionRequest struct {
-	TenantInfo pagination.TenantInfo
-	UserID     pulid.ID
-	ID         pulid.ID
-	Source     accountingsync.MappingSource
+	TenantInfo         pagination.TenantInfo
+	UserID             pulid.ID
+	ID                 pulid.ID
+	Source             accountingsync.MappingSource
+	AcknowledgeHistory bool
 }
 
 type SetAccountingMappingRequest struct {
-	TenantInfo      pagination.TenantInfo
-	UserID          pulid.ID
-	IntegrationType integration.Type
-	MappingID       pulid.ID
-	TargetType      accountingsync.MappingTargetType
-	TrenovaObjectID pulid.ID
-	TrenovaKey      string
-	ExternalID      string
-	Source          accountingsync.MappingSource
-	Reason          string
+	TenantInfo         pagination.TenantInfo
+	UserID             pulid.ID
+	IntegrationType    integration.Type
+	MappingID          pulid.ID
+	TargetType         accountingsync.MappingTargetType
+	TrenovaObjectID    pulid.ID
+	TrenovaKey         string
+	ExternalID         string
+	Source             accountingsync.MappingSource
+	Reason             string
+	AcknowledgeHistory bool
+}
+
+type EnsureAccountingMappingRequest struct {
+	TenantInfo   pagination.TenantInfo
+	ConnectionID pulid.ID
+	TargetType   accountingsync.MappingTargetType
+	ObjectID     pulid.ID
+	Key          string
 }
 
 func (r *SetAccountingMappingRequest) ValidateTarget() error {
@@ -197,6 +207,12 @@ type AccountingMappingService interface {
 		ctx context.Context,
 		req *AccountingMappingActionRequest,
 	) (*accountingsync.AccountingMapping, error)
+	GuardHistory(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		row *accountingsync.AccountingMapping,
+		acknowledged bool,
+	) (int, error)
 	CreateReferenceRecord(
 		ctx context.Context,
 		req *CreateAccountingReferenceRecordRequest,
@@ -237,4 +253,19 @@ type AccountingMappingService interface {
 		connectionID pulid.ID,
 		failure string,
 	) error
+	EnsureMapping(
+		ctx context.Context,
+		req *EnsureAccountingMappingRequest,
+	) (*accountingsync.AccountingMapping, error)
+	CustomerParty(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		customerID pulid.ID,
+	) (*AccountingPartyDraft, error)
+	VendorParty(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		targetType accountingsync.MappingTargetType,
+		objectID pulid.ID,
+	) (*AccountingPartyDraft, error)
 }

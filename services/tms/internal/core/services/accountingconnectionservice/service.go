@@ -48,6 +48,7 @@ type Params struct {
 	Logger       *zap.Logger
 	DB           ports.DBConnection
 	Connections  repositories.AccountingConnectionRepository
+	Apps         repositories.AccountingAppCredentialRepository
 	States       repositories.AccountingOAuthStateRepository
 	Integrations repositories.IntegrationRepository
 	Connectors   services.AccountingConnectorRegistry
@@ -63,6 +64,7 @@ type Service struct {
 	l            *zap.Logger
 	db           ports.DBConnection
 	connections  repositories.AccountingConnectionRepository
+	apps         repositories.AccountingAppCredentialRepository
 	states       repositories.AccountingOAuthStateRepository
 	integrations repositories.IntegrationRepository
 	connectors   services.AccountingConnectorRegistry
@@ -82,6 +84,7 @@ func New(p Params) *Service {
 		l:            p.Logger.Named("service.accounting-connection"),
 		db:           p.DB,
 		connections:  p.Connections,
+		apps:         p.Apps,
 		states:       p.States,
 		integrations: p.Integrations,
 		connectors:   p.Connectors,
@@ -94,25 +97,16 @@ func New(p Params) *Service {
 	}
 }
 
-func (s *Service) connector(typ integration.Type) (services.AccountingConnector, error) {
-	connector, ok := s.connectors.For(typ)
-	if !ok || !accountingsync.SupportsAccountingSync(typ) {
-		return nil, errortypes.NewValidationError(
-			"integrationType",
-			errortypes.ErrInvalid,
-			"{0} is not an accounting system Trenova can sync with",
-			string(typ),
-		)
-	}
-	return connector, nil
-}
-
 func (s *Service) Status(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
 ) (*services.AccountingSyncStatus, error) {
-	connector, err := s.connector(typ)
+	provider, err := s.provider(typ)
+	if err != nil {
+		return nil, err
+	}
+	settings, err := s.appSettings(ctx, tenantInfo, provider)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +114,8 @@ func (s *Service) Status(
 	status := &services.AccountingSyncStatus{
 		IntegrationType: typ,
 		ProviderName:    accountingsync.ProviderName(typ),
-		Available:       connector.Available(),
+		Available:       settings.ActiveSource != "" && settings.RedirectURL != "",
+		App:             settings,
 	}
 
 	conn, err := s.connections.GetByType(ctx, repositories.GetAccountingConnectionRequest{
@@ -141,16 +136,23 @@ func (s *Service) StartAuthorization(
 	ctx context.Context,
 	req *services.StartAccountingAuthorizationRequest,
 ) (*services.AccountingAuthorizationStart, error) {
-	connector, err := s.connector(req.IntegrationType)
+	provider, err := s.provider(req.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
-	if !connector.Available() {
-		return nil, errortypes.NewBusinessError(
-			"{0} is not set up on this Trenova instance. Ask your administrator to add the Intuit app credentials.",
-			accountingsync.ProviderName(req.IntegrationType),
-		)
+	name := accountingsync.ProviderName(req.IntegrationType)
+	if provider.RedirectURL() == "" {
+		return nil, errNoRedirect(name)
 	}
+	app, err := s.appForTenant(ctx, req.TenantInfo, provider)
+	if err != nil {
+		return nil, err
+	}
+	connector, err := provider.Bind(app)
+	if err != nil {
+		return nil, err
+	}
+	identity := app.Identity()
 
 	token, tokenHash, err := tokenutils.New()
 	if err != nil {
@@ -165,6 +167,8 @@ func (s *Service) StartAuthorization(
 		OrganizationID:  req.TenantInfo.OrgID,
 		BusinessUnitID:  req.TenantInfo.BuID,
 		CreatedAt:       now,
+		AppSource:       identity.Source,
+		AppFingerprint:  identity.Fingerprint,
 	}, authorizationStateTTL); err != nil {
 		return nil, errortypes.NewBusinessError("Could not start the connection. Try again.").
 			WithInternal(err)
@@ -209,13 +213,31 @@ func (s *Service) CompleteAuthorization(
 	if err := validateCompletion(req); err != nil {
 		return nil, err
 	}
-	connector, err := s.connector(req.IntegrationType)
+	accountingProvider, err := s.provider(req.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
 	provider := accountingsync.ProviderName(req.IntegrationType)
 
-	if err = s.takeState(ctx, req); err != nil {
+	state, err := s.takeState(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	app, err := s.appForTenant(ctx, req.TenantInfo, accountingProvider)
+	if err != nil {
+		return nil, err
+	}
+	identity := app.Identity()
+	if state.AppSource != identity.Source || state.AppFingerprint != identity.Fingerprint {
+		return nil, errortypes.NewValidationError(
+			"state",
+			errortypes.ErrInvalid,
+			"The {0} app keys changed while you were signing in. Start the connection again.",
+			provider,
+		)
+	}
+	connector, err := accountingProvider.Bind(app)
+	if err != nil {
 		return nil, err
 	}
 
@@ -241,6 +263,7 @@ func (s *Service) CompleteAuthorization(
 		req:      req,
 		grant:    grant,
 		facts:    facts,
+		app:      identity,
 		provider: provider,
 		now:      now,
 	})
@@ -285,34 +308,35 @@ func (s *Service) requestReferenceRefresh(
 func (s *Service) takeState(
 	ctx context.Context,
 	req *services.CompleteAccountingAuthorizationRequest,
-) error {
+) (*repositories.AccountingOAuthState, error) {
 	state, err := s.states.Take(ctx, tokenutils.Hash(req.State))
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return errortypes.NewValidationError(
+			return nil, errortypes.NewValidationError(
 				"state",
 				errortypes.ErrInvalid,
 				"This connection request expired or was already used. Start the connection again.",
 			)
 		}
-		return err
+		return nil, err
 	}
 	if state.UserID != req.UserID ||
 		state.OrganizationID != req.TenantInfo.OrgID ||
 		state.BusinessUnitID != req.TenantInfo.BuID ||
 		state.IntegrationType != req.IntegrationType {
-		return errortypes.NewAuthorizationError(
+		return nil, errortypes.NewAuthorizationError(
 			"This connection was started by someone else. Start the connection again from your own account.",
 		)
 	}
 
-	return nil
+	return state, nil
 }
 
 type connectionSave struct {
 	req      *services.CompleteAccountingAuthorizationRequest
 	grant    *services.AccountingTokenGrant
 	facts    *accountingsync.CompanyFacts
+	app      accountingsync.AppIdentity
 	provider string
 	now      int64
 }
@@ -344,6 +368,7 @@ func (s *Service) saveConnection(
 				IntegrationType: req.IntegrationType,
 				ExternalRealmID: req.RealmID,
 			}
+			conn.BindApp(in.app)
 			if sealErr := s.connect(conn, req.UserID, grant, facts, now); sealErr != nil {
 				return sealErr
 			}
@@ -361,6 +386,7 @@ func (s *Service) saveConnection(
 
 		previous = jsonutils.MustToJSON(existing)
 		existing.ExternalRealmID = req.RealmID
+		existing.BindApp(in.app)
 		if sealErr := s.connect(existing, req.UserID, grant, facts, now); sealErr != nil {
 			return sealErr
 		}
@@ -435,7 +461,7 @@ func (s *Service) Disconnect(
 	ctx context.Context,
 	req *services.DisconnectAccountingRequest,
 ) (*accountingsync.AccountingConnection, error) {
-	connector, err := s.connector(req.IntegrationType)
+	provider, err := s.provider(req.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
@@ -478,15 +504,7 @@ func (s *Service) Disconnect(
 	}
 
 	if refreshCiphertext != "" {
-		if refreshToken, decryptErr := s.open(
-			conn,
-			refreshTokenField,
-			refreshCiphertext,
-		); decryptErr == nil {
-			s.revokeQuietly(ctx, connector, refreshToken)
-		} else {
-			s.l.Warn("could not read refresh token to revoke it", zap.Error(decryptErr))
-		}
+		s.revokeStored(ctx, provider, conn, refreshCiphertext)
 	}
 
 	s.syncIntegrationFlag(ctx, conn)
@@ -504,8 +522,28 @@ func (s *Service) Disconnect(
 	return conn, nil
 }
 
+func (s *Service) revokeStored(
+	ctx context.Context,
+	provider services.AccountingProvider,
+	conn *accountingsync.AccountingConnection,
+	refreshCiphertext string,
+) {
+	connector, err := s.connectorFor(ctx, provider, conn)
+	if err != nil {
+		s.l.Warn("could not resolve the app to revoke the authorization with", zap.Error(err))
+		return
+	}
+	refreshToken, err := s.open(conn, refreshTokenField, refreshCiphertext)
+	if err != nil {
+		s.l.Warn("could not read refresh token to revoke it", zap.Error(err))
+		return
+	}
+	s.revokeQuietly(ctx, connector, refreshToken)
+}
+
 type tokenOutcome struct {
 	conn        *accountingsync.AccountingConnection
+	connector   services.AccountingConnector
 	accessToken string
 	failure     error
 	category    accountingsync.ErrorCategory
@@ -514,7 +552,7 @@ type tokenOutcome struct {
 
 func (s *Service) freshAccessToken(
 	ctx context.Context,
-	connector services.AccountingConnector,
+	provider services.AccountingProvider,
 	tenantInfo pagination.TenantInfo,
 	connectionID pulid.ID,
 	now int64,
@@ -536,6 +574,14 @@ func (s *Service) freshAccessToken(
 		if !conn.IsActive() {
 			return nil
 		}
+
+		connector, bindErr := s.connectorFor(txCtx, provider, conn)
+		if bindErr != nil {
+			outcome.failure = bindErr
+			outcome.category = accountingsync.ErrorCategoryConfiguration
+			return s.recordFailure(txCtx, conn, outcome.category, bindErr, now)
+		}
+		outcome.connector = connector
 
 		if conn.HasTokens() && conn.AccessTokenExpiresWithin(now, accessTokenRefreshWindow) {
 			if refreshErr := s.refresh(ctx, txCtx, connector, conn, now); refreshErr != nil {
@@ -616,13 +662,13 @@ func (s *Service) CheckHealth(
 	if err != nil {
 		return nil, err
 	}
-	connector, err := s.connector(current.IntegrationType)
+	provider, err := s.provider(current.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
 
 	now := timeutils.NowUnix()
-	outcome, err := s.freshAccessToken(ctx, connector, tenantInfo, connectionID, now)
+	outcome, err := s.freshAccessToken(ctx, provider, tenantInfo, connectionID, now)
 	if err != nil {
 		return nil, err
 	}
@@ -631,6 +677,7 @@ func (s *Service) CheckHealth(
 		return outcome.conn, nil //nolint:nilerr // a failed check is recorded as the connection's health, not returned
 	}
 
+	connector := outcome.connector
 	facts, factsErr := connector.CompanyFacts(
 		ctx,
 		outcome.conn.ExternalRealmID,
@@ -681,7 +728,7 @@ func (s *Service) Session(
 	if err != nil {
 		return nil, err
 	}
-	connector, err := s.connector(current.IntegrationType)
+	accountingProvider, err := s.provider(current.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
@@ -691,7 +738,7 @@ func (s *Service) Session(
 	}
 
 	now := timeutils.NowUnix()
-	outcome, err := s.freshAccessToken(ctx, connector, tenantInfo, connectionID, now)
+	outcome, err := s.freshAccessToken(ctx, accountingProvider, tenantInfo, connectionID, now)
 	if err != nil {
 		return nil, err
 	}
@@ -707,7 +754,7 @@ func (s *Service) Session(
 	return &services.AccountingSession{
 		Connection:  outcome.conn,
 		AccessToken: outcome.accessToken,
-		Connector:   connector,
+		Connector:   outcome.connector,
 	}, nil
 }
 
@@ -725,12 +772,12 @@ func (s *Service) ReportCallFailure(
 		s.l.Warn("could not load the connection to record a failed call", zap.Error(err))
 		return accountingsync.ErrorCategoryUnknown
 	}
-	connector, err := s.connector(current.IntegrationType)
+	provider, err := s.provider(current.IntegrationType)
 	if err != nil {
 		return accountingsync.ErrorCategoryConfiguration
 	}
 
-	category := connector.ClassifyError(cause)
+	category := provider.ClassifyError(cause)
 	if category != accountingsync.ErrorCategoryUnauthorized &&
 		category != accountingsync.ErrorCategoryRevoked {
 		return category
@@ -809,16 +856,12 @@ func (s *Service) ReceiveWebhook(
 	ctx context.Context,
 	req *services.ReceiveAccountingWebhookRequest,
 ) error {
-	connector, err := s.connector(req.IntegrationType)
+	provider, err := s.provider(req.IntegrationType)
 	if err != nil {
 		return err
 	}
-	if err = connector.VerifyWebhook(req.Signature, req.Body); err != nil {
-		return errortypes.NewAuthenticationError("The webhook signature did not verify").
-			WithInternal(err)
-	}
 
-	realms, err := connector.WebhookRealmIDs(req.Body)
+	realms, err := provider.WebhookRealmIDs(req.Body)
 	if err != nil {
 		return errortypes.NewValidationError(
 			"body",
@@ -826,23 +869,65 @@ func (s *Service) ReceiveWebhook(
 			"The webhook body could not be read",
 		)
 	}
-
-	updated, err := s.connections.MarkWebhookReceived(
+	holders, err := s.connections.ListHoldingRealm(
 		ctx,
-		repositories.MarkAccountingWebhookRequest{
+		repositories.ListAccountingConnectionsByRealmRequest{
 			IntegrationType: req.IntegrationType,
 			RealmIDs:        realms,
-			ReceivedAt:      timeutils.NowUnix(),
 		},
 	)
 	if err != nil {
 		return err
 	}
-	if updated == 0 {
+	if len(holders) == 0 {
 		s.l.Debug("webhook for companies with no connection", zap.Int("realms", len(realms)))
+		return nil
+	}
+
+	verified := s.verifiedRealms(ctx, provider, holders, req)
+	if len(verified) == 0 {
+		return errortypes.NewAuthenticationError("The webhook signature did not verify")
+	}
+
+	if _, err = s.connections.MarkWebhookReceived(
+		ctx,
+		repositories.MarkAccountingWebhookRequest{
+			IntegrationType: req.IntegrationType,
+			RealmIDs:        verified,
+			ReceivedAt:      timeutils.NowUnix(),
+		},
+	); err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func (s *Service) verifiedRealms(
+	ctx context.Context,
+	provider services.AccountingProvider,
+	holders []*accountingsync.AccountingConnection,
+	req *services.ReceiveAccountingWebhookRequest,
+) []string {
+	byApp := make(map[string]bool, len(holders))
+	verified := make([]string, 0, len(holders))
+	for _, holder := range holders {
+		app, err := s.appForConnection(ctx, provider, holder)
+		if err != nil {
+			continue
+		}
+		key := string(app.Source) + ":" + app.Identity().Fingerprint
+		ok, seen := byApp[key]
+		if !seen {
+			connector, bindErr := provider.Bind(app)
+			ok = bindErr == nil && connector.VerifyWebhook(req.Signature, req.Body) == nil
+			byApp[key] = ok
+		}
+		if ok {
+			verified = append(verified, holder.ExternalRealmID)
+		}
+	}
+	return verified
 }
 
 func (s *Service) afterHealthChange(

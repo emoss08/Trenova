@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -104,6 +105,10 @@ type Params struct {
 	Watchtower services.WatchtowerProjector `optional:"true"`
 	// FollowUps has the conversation that raised the plan report its outcome.
 	FollowUps services.DecisionFollowUps `optional:"true"`
+	// Previews says what the plan's steps would do, as the decider sees it,
+	// so an approval approves what was shown and nothing that moved on.
+	Previews services.ProposalPreviewService `optional:"true"`
+	Metrics  *metrics.Registry               `optional:"true"`
 }
 
 type Service struct {
@@ -120,6 +125,8 @@ type Service struct {
 	activity   services.AgentActivityPublisher
 	watchtower services.WatchtowerProjector
 	followUps  services.DecisionFollowUps
+	previews   services.ProposalPreviewService
+	metrics    *metrics.ProposalPreview
 }
 
 func New(p Params) services.AgentPlanService {
@@ -135,6 +142,10 @@ func New(p Params) services.AgentPlanService {
 		activity:   p.Activity,
 		watchtower: p.Watchtower,
 		followUps:  p.FollowUps,
+		previews:   p.Previews,
+	}
+	if p.Metrics != nil {
+		svc.metrics = p.Metrics.ProposalPreview
 	}
 	if p.Runs != nil {
 		svc.runs = p.Runs
@@ -246,6 +257,11 @@ func (s *Service) Decide(
 		return nil, err
 	}
 
+	shown, err := s.settlePreview(ctx, req, plan, steps, actor)
+	if err != nil {
+		return nil, err
+	}
+
 	now := timeutils.NowUnix()
 	claimed := agent.PlanStatusApproved
 	if req.Decision == agent.DecisionRejected {
@@ -274,7 +290,13 @@ func (s *Service) Decide(
 		return plan, nil
 	}
 
-	plan = s.runSteps(ctx, req, plan, steps, actor)
+	plan = s.runSteps(ctx, &stepRun{
+		req:     req,
+		plan:    plan,
+		steps:   steps,
+		actor:   actor,
+		preview: shown,
+	})
 	s.logDecision(plan, actor, "Agent plan approved and executed")
 	s.announce(ctx, plan, actor)
 	s.followUp(ctx, plan, req.TenantInfo)
@@ -443,22 +465,38 @@ func (s *Service) announce(
 	s.activity.PlanChanged(ctx, plan, actor.AuditActorOrSystem(), services.ActivityUpdated)
 }
 
+// stepRun is one approved plan being run: its steps, who approved them, and
+// the preview they approved.
+type stepRun struct {
+	req     *services.DecideAgentPlanRequest
+	plan    *agent.AgentPlan
+	steps   []*agent.AgentProposal
+	actor   *services.RequestActor
+	preview *shownPlan
+}
+
+type recordKey struct {
+	resource string
+	id       pulid.ID
+}
+
 // runSteps decides each pending step in order and stops at the first whose
 // write fails. A step that was already decided on its own, or that expired,
 // is passed over rather than treated as a failure: it is not the plan's to
 // run twice.
-func (s *Service) runSteps(
-	ctx context.Context,
-	req *services.DecideAgentPlanRequest,
-	plan *agent.AgentPlan,
-	steps []*agent.AgentProposal,
-	actor *services.RequestActor,
-) *agent.AgentPlan {
+//
+// A step on a record an earlier step already changed is run against the
+// version that step left it at. Its own pin was taken before either ran, so
+// comparing against it refused the second of two changes to one record every
+// time, although the approver approved both together.
+func (s *Service) runSteps(ctx context.Context, r *stepRun) *agent.AgentPlan {
+	req, plan := r.req, r.plan
 	completed := plan.CompletedSteps
 	var last *agent.AgentDecision
 	var stepReq *services.DecideAgentProposalRequest
+	left := make(map[recordKey]int64, len(r.steps))
 
-	for _, step := range steps {
+	for _, step := range r.steps {
 		if step.Status != agent.ProposalStatusPending {
 			if step.Status == agent.ProposalStatusExecuted {
 				completed++
@@ -467,6 +505,7 @@ func (s *Service) runSteps(
 			continue
 		}
 
+		key := recordKey{resource: step.TargetResource, id: step.TargetID}
 		stepReq = &services.DecideAgentProposalRequest{
 			ProposalID: step.ID,
 			Decision:   agent.DecisionAccepted,
@@ -474,12 +513,20 @@ func (s *Service) runSteps(
 			TenantInfo: req.TenantInfo,
 			WithinPlan: true,
 		}
-		outcome, err := s.decisions.DecideWithOutcome(ctx, stepReq, actor)
+		if version, changed := left[key]; changed && step.TargetID.IsNotNil() {
+			stepReq.ExpectedTargetVersion = &version
+		}
+		r.preview.annotate(stepReq, step.ID)
+
+		outcome, err := s.decisions.DecideWithOutcome(ctx, stepReq, r.actor)
 		if err == nil && outcome.ExecutionError != nil {
 			err = outcome.ExecutionError
 		}
 		if err != nil {
 			return s.failAt(ctx, req, plan, step.PlanStep, completed, err)
+		}
+		if step.TargetID.IsNotNil() && outcome.ExecutedTargetVersion != nil {
+			left[key] = *outcome.ExecutedTargetVersion
 		}
 		last = outcome.Decision
 		completed++

@@ -1,6 +1,8 @@
 import { recordPath, type RecordEntityType } from "@/config/record-links";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import type {
   AccountingConnectionStatus,
+  AccountingSyncRecordStatus,
   AccountingMappingFilterInput,
   AccountingMappingState,
   AccountingMappingTargetType,
@@ -12,6 +14,28 @@ import type { StatusPhase } from "@trenova/shared/lib/status-phase";
 
 export const ACCOUNTING_MAPPINGS_PATH = "/accounting/sync/mappings";
 
+export const ACCOUNTING_SYNC_PATH = "/accounting/sync";
+
+const SYNC_RECORD_PHASES: Record<AccountingSyncRecordStatus, StatusPhase> = {
+  Queued: "queued",
+  AwaitingApproval: "awaiting",
+  InFlight: "active",
+  Retrying: "active",
+  Synced: "complete",
+  Blocked: "attention",
+  DeadLettered: "failed",
+  Skipped: "closed",
+  Superseded: "closed",
+};
+
+export function accountingSyncRecordPhase(status: AccountingSyncRecordStatus): StatusPhase {
+  return SYNC_RECORD_PHASES[status];
+}
+
+export function accountingSyncNeedsAction(status: AccountingSyncRecordStatus): boolean {
+  return status === "Blocked" || status === "DeadLettered" || status === "AwaitingApproval";
+}
+
 export const REFERENCE_REFRESH_STALE_SECONDS = 2 * 60 * 60;
 
 export const ACCOUNTING_MAPPING_TARGET_TYPES: readonly AccountingMappingTargetType[] = [
@@ -21,6 +45,8 @@ export const ACCOUNTING_MAPPING_TARGET_TYPES: readonly AccountingMappingTargetTy
   "ItemRole",
   "Customer",
   "Carrier",
+  "Driver",
+  "GLAccount",
   "PaymentTerm",
   "PaymentMethod",
 ];
@@ -140,6 +166,15 @@ export function needsAccountingMappings(
   return hasLiveAccountingConnection(connection) && connection?.setupStep === "Mappings";
 }
 
+export function needsAccountingStartDate(
+  connection:
+    | { status: AccountingConnectionStatus; setupStep: AccountingSetupStep }
+    | null
+    | undefined,
+): boolean {
+  return hasLiveAccountingConnection(connection) && connection?.setupStep === "StartDate";
+}
+
 export function mappingCheckKey(mapping: { id: string; externalId: string }): string {
   return `${mapping.id}:${mapping.externalId}`;
 }
@@ -199,4 +234,16 @@ export function accountingReferenceDetail(ref: {
   return [ref.accountType || ref.itemType, ref.number, ref.companyName, ref.city, ref.state]
     .filter(Boolean)
     .join(" · ");
+}
+
+export function accountingWebhookUrl(
+  webhookPath: string,
+  apiBaseUrl = API_BASE_URL,
+  origin = window.location.origin,
+): string {
+  if (!webhookPath) {
+    return "";
+  }
+  const apiBase = apiBaseUrl.startsWith("http") ? apiBaseUrl : `${origin}${apiBaseUrl}`;
+  return `${apiBase.replace(/\/+$/, "")}${webhookPath}`;
 }

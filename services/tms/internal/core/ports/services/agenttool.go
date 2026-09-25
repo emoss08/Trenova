@@ -3,7 +3,10 @@ package services
 import (
 	"context"
 	"errors"
+	"slices"
+
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -181,6 +184,45 @@ type ToolTarget struct {
 // knows which argument names its subject.
 type TargetedTool interface {
 	Target(params map[string]any) (ToolTarget, bool)
+}
+
+// TargetParameters names the parameters that hold the id of the record a
+// call acts on: those whose value is the target's id. They are what a
+// person may not change when approving, since changing them would point the
+// write at a record nobody proposed a change to.
+func TargetParameters(tool any, params map[string]any) []string {
+	targeted, ok := tool.(TargetedTool)
+	if !ok || len(params) == 0 {
+		return nil
+	}
+
+	target, ok := targeted.Target(params)
+	if !ok || target.ID.IsNil() {
+		return nil
+	}
+
+	names := make([]string, 0, 1)
+	for name, value := range params {
+		if text, isText := value.(string); isText && text == target.ID.String() {
+			names = append(names, name)
+		}
+	}
+	slices.Sort(names)
+
+	return names
+}
+
+// ProposalFields is a pending proposal's parameters as a person may edit
+// them, from the tool's schema, with the parameters that name its target
+// read-only.
+func ProposalFields(tool AgentTool, params map[string]any) []toolschema.Field {
+	fields := toolschema.Fields(tool.ParamSchema())
+	targets := TargetParameters(tool, params)
+	for i := range fields {
+		fields[i].ReadOnly = slices.Contains(targets, fields[i].Name)
+	}
+
+	return fields
 }
 
 // ErrRecordVersionUnsupported reports a resource the reader has no table for.

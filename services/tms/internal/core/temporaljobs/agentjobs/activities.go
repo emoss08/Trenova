@@ -41,21 +41,24 @@ const (
 type ActivitiesParams struct {
 	fx.In
 
-	Logger        *zap.Logger
-	Definitions   repositories.AgentDefinitionRepository
-	Controls      repositories.AgentControlRepository
-	RunRepo       repositories.AgentRunRepository
-	ProposalRepo  repositories.AgentProposalRepository
-	Runs          serviceports.AgentRunService
-	Runtime       *agentruntime.Service
-	Steps         serviceports.RunStepLedger
-	Trajectory    serviceports.AgentRunEventRecorder `optional:"true"`
-	Contexts      serviceports.RuntimeContextBuilder
-	Recorder      *proposalrecorder.Service
-	Subjects      serviceports.AgentSubjectDescriber
-	Activity      serviceports.AgentActivityPublisher `optional:"true"`
-	Notifier      serviceports.AgentProposalNotifier  `optional:"true"`
-	Plans         repositories.AgentPlanRepository    `optional:"true"`
+	Logger       *zap.Logger
+	Definitions  repositories.AgentDefinitionRepository
+	Controls     repositories.AgentControlRepository
+	RunRepo      repositories.AgentRunRepository
+	ProposalRepo repositories.AgentProposalRepository
+	Runs         serviceports.AgentRunService
+	Runtime      *agentruntime.Service
+	Steps        serviceports.RunStepLedger
+	Trajectory   serviceports.AgentRunEventRecorder `optional:"true"`
+	Contexts     serviceports.RuntimeContextBuilder
+	Recorder     *proposalrecorder.Service
+	Subjects     serviceports.AgentSubjectDescriber
+	Activity     serviceports.AgentActivityPublisher `optional:"true"`
+	Notifier     serviceports.AgentProposalNotifier  `optional:"true"`
+	Plans        repositories.AgentPlanRepository    `optional:"true"`
+	// Baselines is optional; with it the expiry sweep removes baselines whose
+	// proposal was never filed.
+	Baselines     repositories.AgentProposalBaselineRepository `optional:"true"`
 	Evaluations   repositories.AgentEvaluationRepository
 	EvalCases     repositories.AgentEvalCaseRepository
 	CaseService   serviceports.AgentEvalCaseService `optional:"true"`
@@ -84,6 +87,7 @@ type Activities struct {
 	recorder      *proposalrecorder.Service
 	notifier      serviceports.AgentProposalNotifier
 	plans         repositories.AgentPlanRepository
+	baselines     repositories.AgentProposalBaselineRepository
 	evaluations   repositories.AgentEvaluationRepository
 	evalCases     repositories.AgentEvalCaseRepository
 	caseService   serviceports.AgentEvalCaseService
@@ -117,6 +121,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		recorder:      p.Recorder,
 		notifier:      p.Notifier,
 		plans:         p.Plans,
+		baselines:     p.Baselines,
 		evaluations:   p.Evaluations,
 		evalCases:     p.EvalCases,
 		caseService:   p.CaseService,
@@ -789,6 +794,8 @@ func (a *Activities) ExpireStaleProposalsActivity(
 		)
 	}
 
+	a.purgeOrphanBaselines(ctx, input.Now)
+
 	// A plan outlives none of its steps: once they have expired, so has it.
 	if a.plans != nil {
 		expiredPlans, planErr := a.plans.ExpirePending(ctx, repositories.ExpireAgentPlansRequest{
@@ -805,6 +812,36 @@ func (a *Activities) ExpireStaleProposalsActivity(
 	}
 
 	return &ExpireStaleProposalsResult{Expired: expired}, nil
+}
+
+// orphanBaselineAge is how long a baseline waits for its proposal. A baseline
+// is kept as its call is decided and the proposal is filed when the turn or
+// run ends; one older than this whose proposal never arrived belongs to an
+// activity attempt that was retried under another id, or to a turn that never
+// finished.
+const orphanBaselineAge = 48 * time.Hour
+
+// purgeOrphanBaselines removes the baselines no proposal was ever filed for.
+// It rides the expiry sweep inside its activity, so it adds no command, and a
+// failure is logged rather than allowed to fail the sweep.
+func (a *Activities) purgeOrphanBaselines(ctx context.Context, now int64) {
+	if a.baselines == nil {
+		return
+	}
+
+	purged, err := a.baselines.PurgeOrphans(ctx, repositories.PurgeOrphanProposalBaselinesRequest{
+		Before: now - int64(orphanBaselineAge.Seconds()),
+	})
+	if err != nil {
+		a.logger.Warn("could not purge orphaned proposal baselines", zap.Error(err))
+
+		return
+	}
+	if purged > 0 {
+		a.logger.Info("purged proposal baselines whose proposal was never filed",
+			zap.Int("purged", purged),
+		)
+	}
 }
 
 // DeleteStaleAskThreadsActivity removes one batch of unkept quick questions

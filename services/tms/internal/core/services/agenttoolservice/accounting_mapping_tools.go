@@ -56,6 +56,12 @@ type accountingMappingWriter interface {
 		tenantInfo pagination.TenantInfo,
 		integrationType integration.Type,
 	) (*serviceports.AccountingMappingSummary, error)
+	GuardHistory(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		row *accountingsync.AccountingMapping,
+		acknowledged bool,
+	) (int, error)
 }
 
 func accountingSystemSchema() map[string]any {

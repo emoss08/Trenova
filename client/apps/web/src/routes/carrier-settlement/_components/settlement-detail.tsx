@@ -1,3 +1,4 @@
+import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
@@ -172,38 +173,37 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
           )}
         </span>
       </div>
+      <AccountingSyncStateLine objectId={settlement.id} className="text-xs" />
       <KpiStrip minItemWidth="8rem">
         <KpiStripItem
           label={t("Gross cost")}
           value={
-              <AmountDisplay value={settlement.grossCostMinor} currency={settlement.currencyCode} />
+            <AmountDisplay value={settlement.grossCostMinor} currency={settlement.currencyCode} />
           }
         />
         <KpiStripItem
           label={t("Adjustments")}
           value={
-              <AmountDisplay
-                value={settlement.adjustmentsMinor}
-                variant="auto"
-                currency={settlement.currencyCode}
-              />
+            <AmountDisplay
+              value={settlement.adjustmentsMinor}
+              variant="auto"
+              currency={settlement.currencyCode}
+            />
           }
         />
         <KpiStripItem
           label={t("Loads")}
-          value={
-              <span className="tabular-nums">{settlement.shipmentCount}</span>
-          }
+          value={<span className="tabular-nums">{settlement.shipmentCount}</span>}
         />
         <KpiStripItem
           label={t("Net payable")}
           tone="success"
           value={
-              <AmountDisplay
-                value={settlement.netPayableMinor}
-                variant="positive"
-                currency={settlement.currencyCode}
-              />
+            <AmountDisplay
+              value={settlement.netPayableMinor}
+              variant="positive"
+              currency={settlement.currencyCode}
+            />
           }
         />
       </KpiStrip>
@@ -764,9 +764,7 @@ function RemittanceCard({ settlement }: { settlement: SettlementDetailData }) {
 
   return (
     <div className="bg-muted/30 rounded-lg border p-3">
-      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
-        {t("Remittance")}
-      </h4>
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">{t("Remittance")}</h4>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <p className="text-muted-foreground text-xs">{t("Remit to")}</p>
@@ -895,9 +893,7 @@ function LinkedInvoiceMatches({ settlement }: { settlement: SettlementDetailData
 
   return (
     <div>
-      <h4 className="text-muted-foreground mb-1 text-xs font-semibold">
-        {t("Invoice matches")}
-      </h4>
+      <h4 className="text-muted-foreground mb-1 text-xs font-semibold">{t("Invoice matches")}</h4>
       <ul className="flex flex-col gap-1">
         {matches.map((match) => (
           <li
@@ -955,9 +951,7 @@ function SettlementTimeline({ settlement }: { settlement: SettlementDetailData }
 
   return (
     <div className="border-t pt-3">
-      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">
-        {t("History")}
-      </h4>
+      <h4 className="text-muted-foreground mb-2 text-xs font-semibold">{t("History")}</h4>
       <ol className="flex flex-col gap-1">
         {events.map((event) => (
           <li key={event.label} className="flex justify-between text-xs">

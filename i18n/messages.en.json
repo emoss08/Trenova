@@ -225,6 +225,15 @@
       "routes/pay-profile"
     ]
   },
+  "(shortened)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "(truncated)": {
     "sites": 1,
     "scope": [
@@ -1404,6 +1413,69 @@
       "domain/iam"
     ]
   },
+  "A backfill cannot reach before the start date, {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "A backfill cannot reach before the start date; move the start date first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
+  "A backfill covers documents dated from {0} to {1}, the day sending began": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "A backfill covers documents posted between the start date and when sync began": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
+  "A backfill is already running for {0}; pause or cancel it first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
+  "A backfill is already {0} for {1}; it must finish or be cancelled first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "A backfill is started by a person who manages the accounting integration": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A background handle is required": {
     "sites": 1,
     "scope": [
@@ -1959,6 +2031,15 @@
     ],
     "areas": [
       "service/agentdecisionqueueservice"
+    ]
+  },
+  "A change can't be pointed at a different record; ask the agent for a new proposal instead.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "A change didn't go through": {
@@ -2790,6 +2871,24 @@
     "areas": [
       "domain/carrier",
       "packages/shared/types"
+    ]
+  },
+  "A document cannot reach the accounting system until something is fixed: a missing mapping, a closed period, a duplicate number, or a rejected value.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "A document kept failing to reach the accounting system and stopped retrying after its last attempt.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A driver": {
@@ -4345,6 +4444,15 @@
       "routes/agent-control"
     ]
   },
+  "A proposal's digest is listed twice": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "A published version cannot be edited. Create a new draft from it instead, so the bytes a customer already received stay reproducible.": {
     "sites": 1,
     "scope": [
@@ -4527,6 +4635,15 @@
       "service/ratematrixservice"
     ]
   },
+  "A rate or formula change reprices the shipment and cannot be previewed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/billingqueueservice"
+    ]
+  },
   "A rated quote must name the agreement that priced it": {
     "sites": 1,
     "scope": [
@@ -4609,6 +4726,15 @@
       "service/iftaservice"
     ]
   },
+  "A record hidden by your data access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A record named {0} already exists in the accounting system. Refresh the reference data and map to it, or choose another name.": {
     "sites": 1,
     "scope": [
@@ -4616,6 +4742,15 @@
     ],
     "areas": [
       "service/accountingmappingservice"
+    ]
+  },
+  "A record that is no longer there": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "A recurring shipment already covers this lane": {
@@ -4943,6 +5078,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "A reviewed preview must name the digest that was reviewed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "A revoked connection must record when it was revoked": {
@@ -5648,6 +5792,24 @@
     ],
     "areas": [
       "domain/customer"
+    ]
+  },
+  "A step no longer in the plan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "A step of this plan changes a record that has changed since the plan was proposed, so it cannot be approved as it stands. Reject it, or ask the agent again for a current plan": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
     ]
   },
   "A stop was reached late, or missed, and a service failure was opened on the shipment.": {
@@ -6524,6 +6686,15 @@
     ],
     "areas": [
       "domain/ratezone"
+    ]
+  },
+  "A {0} backfill cannot be changed that way": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
     ]
   },
   "A {0} chart plots exactly one measure": {
@@ -8409,6 +8580,33 @@
       "routes/admin"
     ]
   },
+  "Accounting sync blocked": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Accounting sync gave up": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Accounting sync record": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentsubjectservice"
+    ]
+  },
   "Accounts payable account": {
     "sites": 1,
     "scope": [
@@ -8926,6 +9124,15 @@
       "routes/agent-control"
     ]
   },
+  "Act on at most {0} records at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "Act with approval": {
     "sites": 1,
     "scope": [
@@ -8945,12 +9152,13 @@
     ]
   },
   "Action": {
-    "sites": 5,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/accounting-sync",
       "routes/admin",
       "routes/bank-receipt"
     ]
@@ -12543,12 +12751,13 @@
     ]
   },
   "Agent plan not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/agentplanservice"
+      "service/agentplanservice",
+      "service/proposalpreviewservice"
     ]
   },
   "Agent principals cannot reassign billing charges": {
@@ -14268,6 +14477,15 @@
       "routes/rate-confirmation-public"
     ]
   },
+  "Already entered in the books by hand": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Already imported": {
     "sites": 1,
     "scope": [
@@ -14329,6 +14547,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Also send documents already posted since the start date": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Alternative labels the parser will also recognize": {
@@ -14883,6 +15110,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An accounting sync request is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
     ]
   },
   "An accounts payable account must be configured before posting carrier settlements": {
@@ -15460,6 +15696,15 @@
     ],
     "areas": [
       "domain/invoice"
+    ]
+  },
+  "An earlier step changes this record first; it is shown as it would be after it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "An effective date is required": {
@@ -16959,6 +17204,15 @@
       "routes/worker"
     ]
   },
+  "App source is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
+    ]
+  },
   "Appearance": {
     "sites": 2,
     "scope": [
@@ -17309,12 +17563,14 @@
     ]
   },
   "Applied to invoices": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/invoice"
+      "routes/invoice",
+      "service/agenttoolservice"
     ]
   },
   "Applied to new escrow accounts unless overridden per account.": {
@@ -18480,7 +18736,7 @@
     ]
   },
   "Archive": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -19101,6 +19357,15 @@
       "apps/web/lib"
     ]
   },
+  "As it was shown when it was decided.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "As of": {
     "sites": 1,
     "scope": [
@@ -19136,6 +19401,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "As step {0} leaves it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "As-of date is required": {
@@ -20923,6 +21197,15 @@
       "routes/invoice"
     ]
   },
+  "At most {0} documents can be looked up at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "At most {0} extra request fields": {
     "sites": 1,
     "scope": [
@@ -20939,6 +21222,15 @@
     ],
     "areas": [
       "domain/sidebarpreference"
+    ]
+  },
+  "At most {0} records can be changed at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "At most {0} scenarios are priced at once": {
@@ -21294,11 +21586,12 @@
     ]
   },
   "Attachments": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/inbox"
     ]
   },
@@ -21714,6 +22007,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Authorization": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Authorization Information": {
@@ -23352,6 +23654,25 @@
       "routes/edi"
     ]
   },
+  "Backfill": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/accounting-sync"
+    ]
+  },
+  "Backfill documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Backfill jurisdiction miles": {
     "sites": 1,
     "scope": [
@@ -23371,12 +23692,22 @@
     ]
   },
   "Backfill started": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/ifta-return"
+    ]
+  },
+  "Backfill {0}: documents dated {1} to {2}, {3} queued, {4} already queued.": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/ifta-return"
+      "routes/accounting-sync"
     ]
   },
   "Background jobs are disabled; run accrual for a single worker instead": {
@@ -23395,6 +23726,16 @@
     ],
     "areas": [
       "service/distancecalculationservice"
+    ]
+  },
+  "Background work is not available on this server, so a backfill cannot run": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other",
+      "service/accountingsyncservice"
     ]
   },
   "Background work is not available on this server, so the reference data cannot be refreshed": {
@@ -24327,6 +24668,15 @@
     "areas": [
       "routes/invoice-adjustment-batch",
       "routes/invoice-reconciliation"
+    ]
+  },
+  "Bcc": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Before": {
@@ -26272,6 +26622,15 @@
       "routes/admin"
     ]
   },
+  "Books keeper": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Boolean": {
     "sites": 2,
     "scope": [
@@ -26990,6 +27349,15 @@
       "service/invoiceadjustmentservice",
       "service/sequenceconfigservice",
       "service/shipmenteventservice"
+    ]
+  },
+  "Business unit id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Business unit is required": {
@@ -27809,7 +28177,7 @@
     ]
   },
   "Cancel": {
-    "sites": 256,
+    "sites": 263,
     "scope": [
       "ts"
     ],
@@ -27817,6 +28185,7 @@
       "apps/dash/_components",
       "apps/web/components",
       "apps/web/lib",
+      "routes/accounting-sync",
       "routes/admin",
       "routes/agent-control",
       "routes/bank-receipt-batch",
@@ -27907,6 +28276,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Cancel backfill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Cancel billing queue item": {
@@ -29229,7 +29607,7 @@
     ]
   },
   "Carrier": {
-    "sites": 32,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -29237,6 +29615,7 @@
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "apps/web/hooks",
       "apps/web/lib",
       "routes/agent-control",
       "routes/benefits",
@@ -29882,6 +30261,16 @@
       "api/graphql"
     ]
   },
+  "Carrier settlement": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "apps/web/hooks"
+    ]
+  },
   "Carrier settlement batch": {
     "sites": 1,
     "scope": [
@@ -29938,11 +30327,12 @@
     ]
   },
   "Carrier settlement paid": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
@@ -29955,12 +30345,22 @@
       "domain/permission"
     ]
   },
-  "Carrier settlement posted": {
+  "Carrier settlement payment": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Carrier settlement posted": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
@@ -29983,11 +30383,12 @@
     ]
   },
   "Carrier settlement voided": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
@@ -30083,12 +30484,13 @@
     ]
   },
   "Carrier updated": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "apps/web/hooks"
     ]
   },
   "Carrier vetted": {
@@ -30666,6 +31068,15 @@
       "domain/accounttype"
     ]
   },
+  "Cc": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Ceiling": {
     "sites": 2,
     "scope": [
@@ -30949,7 +31360,7 @@
     ]
   },
   "Change": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -31085,6 +31496,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Change keys": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Change limits every organization is held to": {
@@ -31270,6 +31690,15 @@
     ],
     "areas": [
       "routes/table-change-alert"
+    ]
+  },
+  "Changed since it was proposed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Changed to": {
@@ -31475,6 +31904,15 @@
       "routes/fiscal-year"
     ]
   },
+  "Changes to a proposal cannot be checked right now. Try again shortly": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
+    ]
+  },
   "Changes to the items below only affect checklists started after you save. Checklists already in progress keep the items they were started with.": {
     "sites": 1,
     "scope": [
@@ -31509,6 +31947,15 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "Changing how documents are sent needs manage access to the accounting integration.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Changing somebody's hours needs a reason": {
@@ -31593,11 +32040,12 @@
     ]
   },
   "Channel": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/dispatch-console",
       "routes/routing-guide"
     ]
@@ -32259,6 +32707,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Checking with Intuit...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Checking...": {
@@ -32980,6 +33437,24 @@
       "packages/shared/types"
     ]
   },
+  "Choose the first day documents are sent from": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
+  "Choose the first day sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Choose the fleet the worker is moving to": {
     "sites": 1,
     "scope": [
@@ -33243,6 +33718,15 @@
       "domain/report"
     ]
   },
+  "Choose when sending starts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Choose when the override ends": {
     "sites": 1,
     "scope": [
@@ -33362,6 +33846,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Choosing the start date needs manage access to the accounting integration.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Chosen": {
@@ -34294,6 +34787,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Clear accounting sync payloads and attempts older than 90 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Clear all": {
     "sites": 6,
     "scope": [
@@ -34352,6 +34854,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Clear old accounting sync payloads and attempts": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Clear reason code": {
@@ -34580,7 +35091,7 @@
     ]
   },
   "Client ID": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -34590,12 +35101,32 @@
       "routes/admin"
     ]
   },
-  "Client ID is required": {
-    "sites": 2,
+  "Client ID can only contain letters, numbers, dots, dashes and underscores": {
+    "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/accountingsync"
+    ]
+  },
+  "Client ID cannot be longer than 255 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
+    ]
+  },
+  "Client ID is required": {
+    "sites": 4,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync",
+      "service/accountingconnectionservice",
       "service/organizationservice"
     ]
   },
@@ -34627,7 +35158,7 @@
     ]
   },
   "Client secret": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -34636,11 +35167,12 @@
     ]
   },
   "Client secret is required": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/accountingsync",
       "domain/tenant",
       "service/organizationservice"
     ]
@@ -35204,6 +35736,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Closed period": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Closed period adjustment policy": {
@@ -36177,7 +36718,7 @@
     ]
   },
   "Comment": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -37553,12 +38094,13 @@
     ]
   },
   "Configuration": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "routes/admin"
     ]
   },
@@ -38082,6 +38624,15 @@
       "routes/shipment"
     ]
   },
+  "Confirm the required mappings first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "Confirm the required mappings first: {0} of {1} are confirmed": {
     "sites": 1,
     "scope": [
@@ -38224,12 +38775,13 @@
     ]
   },
   "Conflict": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "apps/web/hooks"
     ]
   },
   "Conflict policy must be reject or rename": {
@@ -38532,11 +39084,12 @@
     ]
   },
   "Connect {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-sync",
       "routes/admin"
     ]
   },
@@ -38737,6 +39290,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Connects through the {0} this server is configured with ({1}). Use your own app instead if your organization registers one with Intuit.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Connects through the {0} this server is configured with.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Consent expires": {
@@ -40457,6 +41028,15 @@
       "routes/admin"
     ]
   },
+  "Copy the client ID and client secret for the same environment into this form.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Copy the selected record's PRO number, name or file name": {
     "sites": 1,
     "scope": [
@@ -40540,6 +41120,15 @@
   },
   "Copy webhook URL": {
     "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Copy {0}": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -41298,6 +41887,15 @@
     ],
     "areas": [
       "service/aiproviderservice"
+    ]
+  },
+  "Could not reach {0} to check the app's keys. Try again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
     ]
   },
   "Could not record the certification": {
@@ -42332,12 +42930,13 @@
     ]
   },
   "Create": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "routes/admin",
       "routes/random-testing"
@@ -42548,6 +43147,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Create an app on the Intuit developer portal with the com.intuit.quickbooks.accounting scope.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Create an external trading partner or request an internal organization connection.": {
@@ -43635,6 +44243,15 @@
       "routes/invoice-adjustment-control"
     ]
   },
+  "Credit application": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Credit balance cannot be negative": {
     "sites": 1,
     "scope": [
@@ -43691,17 +44308,27 @@
     ]
   },
   "Credit memo": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "routes/billing-queue",
       "routes/invoice",
       "routes/invoice-approval",
       "routes/invoice-reconciliation"
+    ]
+  },
+  "Credit memo applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Credit memo is required": {
@@ -43715,11 +44342,12 @@
     ]
   },
   "Credit memo posted": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
@@ -43730,6 +44358,15 @@
     ],
     "areas": [
       "domain/invoice"
+    ]
+  },
+  "Credit memo unapplied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Credit only": {
@@ -44025,12 +44662,13 @@
     ]
   },
   "Currency": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/types",
       "domain/integration",
       "go/other",
@@ -44809,7 +45447,7 @@
     ]
   },
   "Customer": {
-    "sites": 44,
+    "sites": 45,
     "scope": [
       "go",
       "ts"
@@ -45112,6 +45750,15 @@
       "routes/detention-policy"
     ]
   },
+  "Customer payment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Customer payment application requires an authenticated user": {
     "sites": 1,
     "scope": [
@@ -45240,6 +45887,15 @@
       "domain/agentdefinition"
     ]
   },
+  "Customer updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Customer was notified within the contractual window": {
     "sites": 1,
     "scope": [
@@ -45256,6 +45912,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Customer's EDI trading partner": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Customer, rating method, and charge amounts": {
@@ -47239,21 +47904,23 @@
     ]
   },
   "Debit memo": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
   "Debit memo posted": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
@@ -49283,7 +49950,7 @@
     ]
   },
   "Delete": {
-    "sites": 32,
+    "sites": 33,
     "scope": [
       "ts"
     ],
@@ -51035,7 +51702,7 @@
     ]
   },
   "Details": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -51044,6 +51711,7 @@
       "routes/admin",
       "routes/billing-queue",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/edi",
       "routes/hold-reason",
       "routes/service-failure-reason-code",
@@ -51680,6 +52348,15 @@
       "routes/admin"
     ]
   },
+  "Development keys, for test companies": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Diagnose a blocked billing item and propose resolutions.": {
     "sites": 1,
     "scope": [
@@ -51828,11 +52505,12 @@
     ]
   },
   "Difference": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/manual-journal"
     ]
   },
@@ -52354,6 +53032,33 @@
     ]
   },
   "Disconnect {0} before connecting a different {1} company.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
+  "Disconnect {0} before switching to your own app. Its authorization belongs to the app it was connected through.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Disconnect {0} company {1} before changing the client ID or environment. Its authorization belongs to the app it was connected through; you can still replace the client secret or the webhook verifier token.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
+  "Disconnect {0} company {1} before removing the app it was connected through.": {
     "sites": 1,
     "scope": [
       "go"
@@ -53744,7 +54449,7 @@
     ]
   },
   "Document": {
-    "sites": 14,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -53752,6 +54457,7 @@
     "areas": [
       "apps/web/components",
       "packages/shared/lib",
+      "routes/accounting-sync",
       "routes/admin",
       "routes/agent-control",
       "routes/customer-ledger",
@@ -53880,12 +54586,13 @@
     ]
   },
   "Document date": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/lib"
+      "apps/web/lib",
+      "routes/accounting-sync"
     ]
   },
   "Document deleted": {
@@ -54522,6 +55229,15 @@
       "routes/worker"
     ]
   },
+  "Documents (leave all unticked for every kind)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Documents ({0})": {
     "sites": 1,
     "scope": [
@@ -54565,6 +55281,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Documents held, failed or skipped on their way to the accounting system, by the week they were queued, the reason and the kind of document; choose document types to see receivables or payables alone": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/reporting"
     ]
   },
   "Documents must include an expiration date": {
@@ -55732,6 +56457,15 @@
       "apps/web/components"
     ]
   },
+  "Driver portal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Driver portal (Dash) access management and invitations": {
     "sites": 1,
     "scope": [
@@ -55813,6 +56547,15 @@
       "service/shipmenteventservice"
     ]
   },
+  "Driver records are not available": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "Driver reimbursement account": {
     "sites": 1,
     "scope": [
@@ -55820,6 +56563,15 @@
     ],
     "areas": [
       "routes/accounting-control"
+    ]
+  },
+  "Driver settlement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Driver settlement posting": {
@@ -56547,12 +57299,13 @@
     ]
   },
   "Duplicate": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components",
       "routes/formula-template",
@@ -56900,11 +57653,12 @@
     ]
   },
   "EDI": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/config",
       "apps/web/lib",
       "routes/agent-control",
@@ -56946,6 +57700,15 @@
     ],
     "areas": [
       "routes/service-failure"
+    ]
+  },
+  "EDI 214 service failure resolved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "EDI Inbound File Retention (days)": {
@@ -57880,6 +58643,33 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Each document is sent as soon as it is posted.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Each document waits in the sync ledger until someone releases it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Each document waits in the sync ledger until someone releases it. Documents already held stay held.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Each enrolment keeps the price it was made at, so changing a cost here only affects people enrolled from now on; existing deductions are not repriced.": {
@@ -59010,7 +59800,7 @@
     ]
   },
   "Email": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -61108,6 +61898,15 @@
       "routes/admin"
     ]
   },
+  "Enter a verifier token or clear it, not both": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "Enter address": {
     "sites": 1,
     "scope": [
@@ -61305,6 +62104,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Enter the client secret that goes with this client ID": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
     ]
   },
   "Enter the day the miles were run": {
@@ -61709,12 +62517,31 @@
     ]
   },
   "Environment": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/edi"
+    ]
+  },
+  "Environment is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/accountingsync"
+    ]
+  },
+  "Environment must be Sandbox or Production": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
     ]
   },
   "Equals": {
@@ -63179,6 +64006,15 @@
     ],
     "areas": [
       "domain/formulatemplate"
+    ]
+  },
+  "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Every document that moved a customer balance — invoices, credits, payments and adjustments — with its signed amount": {
@@ -67160,13 +67996,14 @@
     ]
   },
   "Failed": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "domain/fuelpurchase",
       "packages/shared/components",
@@ -70494,13 +71331,23 @@
       "routes/detention-policy"
     ]
   },
+  "Finish setting up {0} before changing how documents are sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "Finish setup": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/accounting-mapping",
+      "routes/accounting-sync",
       "routes/admin"
     ]
   },
@@ -70942,6 +71789,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Fix the values above to see what they would do.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Fixed amount for each shipment regardless of miles.": {
@@ -72212,6 +73068,15 @@
       "routes/insights"
     ]
   },
+  "Found by the hourly check": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Found nothing": {
     "sites": 1,
     "scope": [
@@ -72422,7 +73287,7 @@
     ]
   },
   "Freight": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -72434,6 +73299,7 @@
       "routes/invoice",
       "routes/order",
       "routes/shipment",
+      "service/agenttoolservice",
       "template/invoice.pdf"
     ]
   },
@@ -72635,11 +73501,13 @@
     ]
   },
   "From": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
+      "routes/accounting-sync",
       "routes/agent-control",
       "routes/detention-policy",
       "routes/fuel-management",
@@ -72758,6 +73626,15 @@
     ]
   },
   "From the Resend webhook. You can add it later; until then the mailbox refuses deliveries.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "From the app's Webhooks page. Lets Trenova check that notices really come from {0}.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -73719,6 +74596,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "GL accounts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "GL accounts used when driver settlements post to the ledger. These allocations feed the DriverWages and DriverBenefits cost categories, so cost-per-mile in Cost Control reflects actual driver pay.": {
@@ -76382,12 +77268,13 @@
     ]
   },
   "Held": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "routes/agent-control",
       "routes/driver-pay-event",
       "routes/fuel-feed-run",
@@ -76430,6 +77317,15 @@
     ],
     "areas": [
       "service/detentionservice"
+    ]
+  },
+  "Held from {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Held past its retention window. Purging is a deliberate act, never automatic.": {
@@ -76624,6 +77520,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Hidden by your data access": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Hidden from default selection while preserving historical audit data.": {
@@ -79927,13 +80832,14 @@
     ]
   },
   "In progress": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/components",
+      "routes/accounting-sync",
       "routes/training-course",
       "routes/worker",
       "routes/worker-checklist-template"
@@ -80015,11 +80921,13 @@
     ]
   },
   "In {0}": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
+      "routes/accounting-sync",
       "routes/formula-template"
     ]
   },
@@ -81623,7 +82531,7 @@
     ]
   },
   "Integration type is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -83145,13 +84053,14 @@
     ]
   },
   "Invoice": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "apps/web/hooks",
       "apps/web/lib",
       "routes/ar-open-items",
       "routes/customer-payments",
@@ -83255,11 +84164,12 @@
     ]
   },
   "Invoice adjustment": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/invoice"
     ]
   },
@@ -83764,11 +84674,12 @@
     ]
   },
   "Invoice posted": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib"
     ]
   },
@@ -86934,12 +87845,13 @@
     ]
   },
   "Last changed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/admin"
     ]
   },
   "Last checked": {
@@ -90141,6 +91053,15 @@
       "routes/edi"
     ]
   },
+  "Load tender offer": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Load tender request is required": {
     "sites": 1,
     "scope": [
@@ -90884,6 +91805,15 @@
       "routes/billing-queue"
     ]
   },
+  "Loading sync record...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Loading template designer": {
     "sites": 1,
     "scope": [
@@ -90974,7 +91904,25 @@
       "routes/billing-queue"
     ]
   },
+  "Loading tries...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Loading versions...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Loading what would change": {
     "sites": 1,
     "scope": [
       "ts"
@@ -95116,6 +96064,15 @@
       "routes/admin"
     ]
   },
+  "May move before it runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "May reach a server on your own network": {
     "sites": 1,
     "scope": [
@@ -96916,6 +97873,15 @@
       "routes/admin"
     ]
   },
+  "Missing mapping": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Missing pay": {
     "sites": 1,
     "scope": [
@@ -97822,6 +98788,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Month-end close in progress": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Month-over-month shipments, revenue mix, tonnage, miles, and revenue per mile": {
@@ -99463,6 +100438,15 @@
       "service/aifeedbackservice"
     ]
   },
+  "Name the records to retry, or the error categories whose records to retry": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Name the report to run": {
     "sites": 1,
     "scope": [
@@ -99733,6 +100717,15 @@
       "packages/shared/components"
     ]
   },
+  "Needed by another document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Needed by {0}": {
     "sites": 1,
     "scope": [
@@ -99848,13 +100841,14 @@
     ]
   },
   "Needs attention": {
-    "sites": 16,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/accounting-sync",
       "routes/carrier",
       "routes/carrier-invoice-matching",
       "routes/carrier-monitoring",
@@ -100372,7 +101366,7 @@
     ]
   },
   "New": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -101464,6 +102458,15 @@
     ],
     "areas": [
       "routes/load-detail.tsx"
+    ]
+  },
+  "Next try": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Next value must be at least 1": {
@@ -104750,6 +105753,15 @@
       "apps/web/components"
     ]
   },
+  "No preview was recorded when this was decided; the parameters it was proposed with are shown.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
+    ]
+  },
   "No previous employer has been recorded. Until one is, the three-year investigation has not been made.": {
     "sites": 1,
     "scope": [
@@ -105761,6 +106773,15 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "No steps are left to run.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "No stop details were returned.": {
@@ -107031,7 +108052,7 @@
     ]
   },
   "Not found": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -107368,6 +108389,15 @@
       "routes/invoice"
     ]
   },
+  "Not sent to {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Not sent yet": {
     "sites": 1,
     "scope": [
@@ -107378,7 +108408,7 @@
     ]
   },
   "Not set": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -107396,11 +108426,12 @@
     ]
   },
   "Not set up": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/worker"
     ]
   },
@@ -107476,6 +108507,15 @@
     "areas": [
       "routes/billing-queue",
       "routes/shipment"
+    ]
+  },
+  "Not tried yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Not verified": {
@@ -108100,6 +109140,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Nothing is sent to {0} until setup is finished: confirm the mappings, then choose a start date.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Nothing is sent to {0} until you map your accounts and turn syncing on.": {
@@ -108828,6 +109877,15 @@
       "service/selfserviceservice"
     ]
   },
+  "Nothing would change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Nothing yet": {
     "sites": 1,
     "scope": [
@@ -109141,7 +110199,7 @@
     ]
   },
   "Number": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -109149,6 +110207,7 @@
       "apps/web/components",
       "apps/web/lib",
       "apps/web/types",
+      "routes/accounting-sync",
       "routes/worker",
       "routes/worker-credential-type"
     ]
@@ -109160,6 +110219,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "Number in the books": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Number of Included Functional Groups": {
@@ -113247,6 +114315,15 @@
       "routes/admin"
     ]
   },
+  "Open an example": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Open approvals": {
     "sites": 1,
     "scope": [
@@ -113275,13 +114352,15 @@
     ]
   },
   "Open balance": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/customer-ledger",
-      "routes/invoice"
+      "routes/invoice",
+      "service/agenttoolservice"
     ]
   },
   "Open batch": {
@@ -113577,6 +114656,15 @@
       "routes/invoice-register"
     ]
   },
+  "Open in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Open inactive fiscal periods": {
     "sites": 1,
     "scope": [
@@ -113660,6 +114748,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Open mappings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Open menu": {
@@ -113828,6 +114925,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Open the Intuit developer portal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Open the amendment": {
@@ -114076,6 +115182,15 @@
       "routes/carrier-sourcing",
       "routes/inbox",
       "routes/worker"
+    ]
+  },
+  "Open {0} in {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Open, days may still accrue": {
@@ -115708,6 +116823,15 @@
     ],
     "areas": [
       "service/capabilityguard"
+    ]
+  },
+  "Organization id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Organization is required": {
@@ -117384,11 +118508,12 @@
     ]
   },
   "Owner-operator": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components"
     ]
@@ -117409,6 +118534,78 @@
     ],
     "areas": [
       "routes/escrow-account"
+    ]
+  },
+  "Owner-operator settlement": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operator settlement paid": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operator settlement payment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operator settlement posted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operator settlement voided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operator settlements are not sent to {0}; turn them on first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
+  "Owner-operator updated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Owner-operators": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Owner:": {
@@ -118545,6 +119742,15 @@
       "domain/invoice"
     ]
   },
+  "Part of this change is hidden by your data access.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
+    ]
+  },
   "Part size cannot be negative": {
     "sites": 1,
     "scope": [
@@ -119394,11 +120600,12 @@
     ]
   },
   "Pause": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-sync",
       "routes/recurring-deduction",
       "routes/recurring-earning"
     ]
@@ -119430,6 +120637,24 @@
       "routes/agent-control"
     ]
   },
+  "Pause sending": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
+  "Pause sending to {0}?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Pause to skip upcoming settlements without losing history; completed deductions stop permanently.": {
     "sites": 1,
     "scope": [
@@ -119446,6 +120671,15 @@
     ],
     "areas": [
       "routes/recurring-earning"
+    ]
+  },
+  "Pause, resume or cancel a backfill": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
     ]
   },
   "Paused": {
@@ -119480,6 +120714,24 @@
       "routes/carrier-monitoring"
     ]
   },
+  "Paused {0} by {1}. Posted documents keep queueing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
+  "Paused {0} by {1}: {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Paused: {0}": {
     "sites": 1,
     "scope": [
@@ -119487,6 +120739,15 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "Pausing...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Pay": {
@@ -120238,6 +121499,15 @@
       "service/customerpaymentservice"
     ]
   },
+  "Payment applied": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Payment date": {
     "sites": 3,
     "scope": [
@@ -120301,11 +121571,12 @@
     ]
   },
   "Payment posted": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/customer-payments"
     ]
   },
@@ -120319,11 +121590,12 @@
     ]
   },
   "Payment reversed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/customer-payments"
     ]
   },
@@ -124747,6 +126019,24 @@
       "routes/settlement-workspace"
     ]
   },
+  "Posted documents keep queueing and go out when you resume.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Posted documents keep queueing while sending is paused, and go out in order when it resumes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Posted invoices are sent to {0} as an EDI 210.": {
     "sites": 1,
     "scope": [
@@ -125502,6 +126792,24 @@
       "service/documentoperationsservice"
     ]
   },
+  "Preview is larger than a baseline keeps": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Preview is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Preview not available for this document": {
     "sites": 2,
     "scope": [
@@ -125592,6 +126900,15 @@
       "domain/document"
     ]
   },
+  "Preview target version cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Preview unavailable": {
     "sites": 4,
     "scope": [
@@ -125637,6 +126954,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Previews of proposed changes are not available": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "Previous": {
@@ -126652,12 +127978,13 @@
     ]
   },
   "Production": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/types",
+      "routes/admin",
       "routes/edi"
     ]
   },
@@ -126668,6 +127995,15 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Production keys, for real companies": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Profile": {
@@ -127135,6 +128471,24 @@
       "routes/agent-control"
     ]
   },
+  "Proposal id is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
+  "Proposal identifier is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Proposal listed twice": {
     "sites": 1,
     "scope": [
@@ -127145,12 +128499,13 @@
     ]
   },
   "Proposal not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/agentdecisionqueueservice"
+      "service/agentdecisionqueueservice",
+      "service/proposalpreviewservice"
     ]
   },
   "Proposal simulated": {
@@ -129143,6 +130498,24 @@
       "routes/organization"
     ]
   },
+  "Queue any posted document that never reached the accounting outbox": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Queue documents dated from the start date until sync began": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Queue item": {
     "sites": 1,
     "scope": [
@@ -129161,6 +130534,15 @@
       "service/billingqueueservice"
     ]
   },
+  "Queue posted documents that never reached the accounting outbox": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Queue this already-delivered document for another delivery to the partner": {
     "sites": 1,
     "scope": [
@@ -129171,13 +130553,15 @@
     ]
   },
   "Queued": {
-    "sites": 7,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components",
+      "routes/accounting-sync",
       "routes/agent-control",
       "routes/invoice-adjustment-batch"
     ]
@@ -129209,6 +130593,15 @@
       "routes/edi"
     ]
   },
+  "Queued for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Queued — waiting to start.": {
     "sites": 1,
     "scope": [
@@ -129236,6 +130629,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Queues posted documents dated in the range that were never queued, such as those posted before sync was turned on. Documents already queued are left alone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Queues that need someone to act": {
     "sites": 1,
     "scope": [
@@ -129243,6 +130645,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Queues the documents dated from the start date up to today. Leave this off if they are already in {0}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Queuing...": {
@@ -130103,6 +131514,15 @@
     "areas": [
       "apps/web/hooks",
       "routes/worker"
+    ]
+  },
+  "Rate limited": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Rate matrices": {
@@ -132029,11 +133449,12 @@
     ]
   },
   "Reason (optional)": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-sync",
       "routes/tender-offer-public"
     ]
   },
@@ -134072,6 +135493,15 @@
       "domain/dispatchcontrol"
     ]
   },
+  "Record skipped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Record that a finalized return was filed with the base jurisdiction": {
     "sites": 1,
     "scope": [
@@ -134581,6 +136011,15 @@
       "routes/reports"
     ]
   },
+  "Records held or failed for the same reason are grouped, so one fix clears them all. Fix what the reason names, then retry.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Records shown in the timezone of": {
     "sites": 1,
     "scope": [
@@ -134876,7 +136315,7 @@
     ]
   },
   "Redirect URI": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -135996,13 +137435,14 @@
     ]
   },
   "Rejected": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components",
       "packages/shared/lib",
@@ -136149,6 +137589,15 @@
       "domain/agentquality"
     ]
   },
+  "Release": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Release freight for rebilling": {
     "sites": 1,
     "scope": [
@@ -136156,6 +137605,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Release held ({0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Release hold": {
@@ -136186,11 +137644,12 @@
     ]
   },
   "Releasing...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-sync",
       "routes/driver-pay-event"
     ]
   },
@@ -136360,7 +137819,7 @@
     ]
   },
   "Remove": {
-    "sites": 20,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -136874,6 +138333,15 @@
       "routes/policies"
     ]
   },
+  "Remove the saved webhook verifier token": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Remove the scheduled activation": {
     "sites": 1,
     "scope": [
@@ -136881,6 +138349,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Remove the {0} keys?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Remove this charge?": {
@@ -137103,11 +138580,12 @@
     ]
   },
   "Removing...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/jurisdiction-rule-override"
     ]
   },
@@ -137449,11 +138927,12 @@
     ]
   },
   "Repeats": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/review-template"
     ]
   },
@@ -137569,6 +139048,24 @@
     ],
     "areas": [
       "routes/cost-control"
+    ]
+  },
+  "Replaced": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Replaced by a newer version": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Replaced by newer numbers": {
@@ -138413,7 +139910,7 @@
     ]
   },
   "Request is required": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "go"
     ],
@@ -139912,6 +141409,15 @@
       "routes/settlement-dispute"
     ]
   },
+  "Resolve in the sync ledger": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Resolve or deny settlement disputes": {
     "sites": 1,
     "scope": [
@@ -140736,11 +142242,12 @@
     ]
   },
   "Resume": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-sync",
       "routes/billing-queue",
       "routes/carrier-monitoring",
       "routes/rate-agreement",
@@ -140764,6 +142271,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Resume sending": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Resuming...": {
@@ -140905,13 +142421,14 @@
     ]
   },
   "Retry": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/accounting-mapping",
+      "routes/accounting-sync",
       "routes/admin",
       "routes/carrier-monitoring",
       "routes/edi",
@@ -140957,6 +142474,15 @@
       "routes/shipment"
     ]
   },
+  "Retry failed ({0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Retry failed audit entries from dead-letter queue": {
     "sites": 2,
     "scope": [
@@ -140973,6 +142499,24 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Retry now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
+  "Retry these": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Retry upload": {
@@ -141004,11 +142548,12 @@
     ]
   },
   "Retrying": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "routes/admin",
       "routes/agent-control"
     ]
@@ -141029,6 +142574,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Retrying {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Retrying...": {
@@ -144083,7 +145637,7 @@
     ]
   },
   "Run": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -145748,6 +147302,15 @@
       "go/other"
     ]
   },
+  "Sandbox": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Sandbox key": {
     "sites": 1,
     "scope": [
@@ -145814,7 +147377,7 @@
     ]
   },
   "Save": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "ts"
     ],
@@ -146035,6 +147598,15 @@
     ]
   },
   "Save fixture": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Save keys": {
     "sites": 1,
     "scope": [
       "ts"
@@ -146351,6 +147923,15 @@
       "routes/agent-control"
     ]
   },
+  "Saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Saved Views": {
     "sites": 1,
     "scope": [
@@ -146459,6 +148040,15 @@
       "apps/web/components"
     ]
   },
+  "Saved. Leave blank to keep it.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Saved. Set the new provider's signing secret before mail will be accepted.": {
     "sites": 1,
     "scope": [
@@ -146496,7 +148086,7 @@
     ]
   },
   "Saving...": {
-    "sites": 59,
+    "sites": 60,
     "scope": [
       "ts"
     ],
@@ -146705,6 +148295,15 @@
       "domain/airetrieval"
     ]
   },
+  "Say why sync is paused so others know when to resume it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "Say why the action is being taken": {
     "sites": 2,
     "scope": [
@@ -146832,6 +148431,15 @@
     ],
     "areas": [
       "service/workerchecklistservice"
+    ]
+  },
+  "Say why this record is skipped": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
     ]
   },
   "Say why this statement is being billed before its cycle closes": {
@@ -148981,6 +150589,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "Seen by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Seen by whoever reviews the request.": {
@@ -151449,7 +153066,7 @@
     ]
   },
   "Send": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -151678,6 +153295,24 @@
       "routes/dispatch-console"
     ]
   },
+  "Send one connection's queued documents to its accounting system": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Send owner-operator settlements": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Send persisted email message via provider": {
     "sites": 1,
     "scope": [
@@ -151703,6 +153338,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Send posted documents automatically": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Send rate confirmations to this contact's email.": {
@@ -152060,11 +153704,12 @@
     ]
   },
   "Sending": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components",
       "routes/detention-desk"
@@ -152077,6 +153722,61 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Sending to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Sending to {0} is already paused: {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "Sending to {0} is not paused": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "Sending to {0} is on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Sending to {0} is paused": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/accounting-sync"
+    ]
+  },
+  "Sending to {0} resumed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Sending...": {
@@ -152158,6 +153858,15 @@
       "routes/reports"
     ]
   },
+  "Sends owner-operator settlements to {0} as bills to a vendor for each driver. Company driver pay is never sent; it belongs to your payroll system.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Sends posted invoices to the customer's EDI partner as an EDI 210. Link an active outbound partner with a 210 document profile first, or every send is refused as unconfigured.": {
     "sites": 1,
     "scope": [
@@ -152206,6 +153915,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Sent as bills since {0}. Company driver pay is never sent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Sent back": {
@@ -153983,6 +155701,15 @@
       "routes/accounting-control"
     ]
   },
+  "Settlements posted from now on are sent. To send ones posted earlier, request a backfill from the sync ledger.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Settlements posted to the GL and settlements already paid out.": {
     "sites": 1,
     "scope": [
@@ -154776,6 +156503,15 @@
     ],
     "areas": [
       "service/orderservice"
+    ]
+  },
+  "Shipment comment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Shipment comment actions require a user actor": {
@@ -156369,6 +158105,15 @@
       "routes/shipment"
     ]
   },
+  "Show all changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Show all notifications": {
     "sites": 1,
     "scope": [
@@ -156495,6 +158240,15 @@
       "routes/desk",
       "routes/detention-intelligence",
       "routes/scheduling"
+    ]
+  },
+  "Show fewer changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Show findings": {
@@ -156956,6 +158710,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "Shows part of what this does.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Shows what a member of that role resolves to today. Unsaved edits are not included.": {
@@ -157491,6 +159254,15 @@
       "apps/web/lib"
     ]
   },
+  "Skip": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Skip delivery entirely when the result does not meet your condition.": {
     "sites": 1,
     "scope": [
@@ -157498,6 +159270,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Skip document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Skip item": {
@@ -157537,16 +159318,26 @@
     ]
   },
   "Skipped": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "domain/fuelpurchase",
       "packages/shared/components",
       "routes/agent-control",
       "routes/shipment"
+    ]
+  },
+  "Skipped by": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Skips the snapshot cache and always calls the provider, even when the current snapshot is still fresh.": {
@@ -158012,6 +159803,15 @@
       "routes/desk"
     ]
   },
+  "Some of what this changes is hidden by your data access.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Some selected pay events are no longer payable — they may be settled, held, or voided. Refresh and try again.": {
     "sites": 2,
     "scope": [
@@ -158083,6 +159883,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Someone with manage access to the accounting integration has to enter the {0} keys.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Something else took the microphone. Try again.": {
@@ -159795,6 +161604,15 @@
       "routes/admin"
     ]
   },
+  "Start backfill": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Start conversations and send messages": {
     "sites": 1,
     "scope": [
@@ -159805,11 +161623,12 @@
     ]
   },
   "Start date": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/admin",
       "routes/customer-statement",
       "routes/fiscal-year",
       "routes/recurring-deduction",
@@ -159914,6 +161733,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Start sending": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Start something here": {
@@ -160208,11 +162036,12 @@
     ]
   },
   "Starting...": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-sync",
       "routes/admin",
       "routes/dispatch-console",
       "routes/ifta-return",
@@ -160529,7 +162358,7 @@
     ]
   },
   "Status": {
-    "sites": 246,
+    "sites": 248,
     "scope": [
       "go",
       "ts"
@@ -160540,6 +162369,7 @@
       "packages/shared/components",
       "routes/accessorial-charge",
       "routes/account-type",
+      "routes/accounting-sync",
       "routes/admin",
       "routes/agent-control",
       "routes/ar-open-items",
@@ -160971,6 +162801,15 @@
       "routes/shipment"
     ]
   },
+  "Stays as proposed: a change can't point this at a different record.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Stays quiet while the condition keeps holding, and alerts again once it clears and returns.": {
     "sites": 1,
     "scope": [
@@ -161025,6 +162864,24 @@
       "domain/fuelsurcharge"
     ]
   },
+  "Step {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Step {0} changes this record first; it is shown as it would be after that step.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Steps": {
     "sites": 2,
     "scope": [
@@ -161032,15 +162889,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Steps, in the order they run": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Still being read": {
@@ -161626,6 +163474,15 @@
       "service/documentservice"
     ]
   },
+  "Stored encrypted and never shown again. Enter it again whenever the client ID or environment changes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Stored mileage deactivated": {
     "sites": 1,
     "scope": [
@@ -161791,12 +163648,13 @@
     ]
   },
   "Subject": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control",
       "routes/desk",
       "routes/invoice",
@@ -163079,6 +164937,25 @@
       "routes/admin"
     ]
   },
+  "Sync history": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Sync ledger": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/accounting-sync"
+    ]
+  },
   "Sync now": {
     "sites": 1,
     "scope": [
@@ -163095,6 +164972,44 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "Sync record": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "apps/web/hooks",
+      "routes/accounting-sync"
+    ]
+  },
+  "Sync records": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Sync settings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Sync settings saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Sync status is unavailable right now.": {
@@ -163134,12 +165049,15 @@
     ]
   },
   "Synced": {
-    "sites": 1,
+    "sites": 6,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "domain/fuelpurchase"
+      "apps/web/hooks",
+      "domain/fuelpurchase",
+      "routes/accounting-sync"
     ]
   },
   "Synced active": {
@@ -163968,6 +165886,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Target version cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
     ]
   },
   "Target {0}% · 7-day {1}%": {
@@ -164876,6 +166803,15 @@
       "routes/tender-offer-public"
     ]
   },
+  "Temporary failure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Tenant ID is required": {
     "sites": 1,
     "scope": [
@@ -165158,6 +167094,15 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Tender offer withdrawn": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Tender processing failed. Review the failure reason for details.": {
@@ -165689,6 +167634,15 @@
       "apps/web/components"
     ]
   },
+  "Text message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Text node must contain text": {
     "sites": 1,
     "scope": [
@@ -166031,6 +167985,15 @@
       "service/assistantservice"
     ]
   },
+  "That proposal is not one you can preview": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
+    ]
+  },
   "That proposal is not part of this conversation": {
     "sites": 1,
     "scope": [
@@ -166284,6 +168247,15 @@
       "routes/worker"
     ]
   },
+  "The GL account no longer exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "The GL date for this application. It must fall within an open fiscal period.": {
     "sites": 1,
     "scope": [
@@ -166471,6 +168443,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "The action this would run is no longer available.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The active roster counted by terminal, position and department, with the driving half broken out": {
@@ -168330,6 +170311,15 @@
       "routes/admin"
     ]
   },
+  "The customer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The customer cannot be changed while the order has legs; detach them first": {
     "sites": 1,
     "scope": [
@@ -168355,6 +170345,15 @@
     ],
     "areas": [
       "service/accountingmappingservice"
+    ]
+  },
+  "The customer has already been told about this.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The customer has no notice recipients configured — add a customer email profile first": {
@@ -168699,6 +170698,15 @@
       "routes/fleet-code"
     ]
   },
+  "The decision could not be recorded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The deduction begins applying to settlements whose period ends after this date.": {
     "sites": 1,
     "scope": [
@@ -168724,6 +170732,15 @@
     ],
     "areas": [
       "domain/ratematrix"
+    ]
+  },
+  "The deposit account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
     ]
   },
   "The description of the account type": {
@@ -168969,6 +170986,15 @@
       "routes/invoice"
     ]
   },
+  "The driver": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The driver confirms in Dash that they took the course.": {
     "sites": 1,
     "scope": [
@@ -168976,6 +171002,24 @@
     ],
     "areas": [
       "routes/training-course"
+    ]
+  },
+  "The driver for this mapping no longer exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
+  "The driver has no driver portal access, so the message would not reach them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The driver has no email address on file; provide one to send the invitation": {
@@ -169919,6 +171963,15 @@
       "routes/org-structure"
     ]
   },
+  "The first document date Trenova sends.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "The first name of the person who can decide.": {
     "sites": 1,
     "scope": [
@@ -170313,6 +172366,15 @@
     ],
     "areas": [
       "domain/agentquality"
+    ]
+  },
+  "The hourly check found and queued them, so they will still arrive. A posting path skipped the queue; report it so it can be fixed.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/watchtowersources"
     ]
   },
   "The hours go back to the entitlement.": {
@@ -170973,6 +173035,33 @@
       "domain/documenttemplate"
     ]
   },
+  "The message contains details your organization marks as sensitive.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The message has no body.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The message is longer than a preview keeps; the rest is not shown.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The message is no longer in the conversation": {
     "sites": 1,
     "scope": [
@@ -171405,6 +173494,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "The next connection goes through this server's {0} instead. You can enter your keys again later.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "The next day": {
@@ -172038,6 +174136,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The plan's steps cannot be read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
     ]
   },
   "The planned delivery window.": {
@@ -172697,6 +174804,15 @@
       "routes/worker"
     ]
   },
+  "The record has been edited since this was proposed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The record is kept for retention. Nothing else on it needs action.": {
     "sites": 1,
     "scope": [
@@ -172704,6 +174820,33 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "The record it depends on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
+  "The record it would change has been edited since. It can only be rejected now; ask the agent again for a fresh proposal.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The record it would change is gone. It can only be rejected now.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The record of how each shipment was priced, including every rate considered and why it lost": {
@@ -172740,6 +174883,42 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The record this change is for has changed since it was proposed, so it cannot be approved as it stands. Reject it, or ask the agent again for a current one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdecisionservice"
+    ]
+  },
+  "The record this change is for is set when it is proposed and cannot be changed. Reject it and ask the agent again for the record you mean": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalexecutor"
+    ]
+  },
+  "The record this change is for was not pinned when it was proposed, so whether it has changed since cannot be told.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/proposalpreviewservice"
+    ]
+  },
+  "The record this would change is no longer there.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The records behind this": {
@@ -173375,6 +175554,15 @@
       "domain/ratesimulation"
     ]
   },
+  "The saved {0} app keys could not be read. Enter them again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "The schedule could not be computed: {0}": {
     "sites": 1,
     "scope": [
@@ -173763,6 +175951,24 @@
       "routes/rate-matrix"
     ]
   },
+  "The short pay write-off item is not mapped": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The short-pay write-off item": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "The signed document's own number, for when somebody asks": {
     "sites": 1,
     "scope": [
@@ -173914,6 +176120,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "The start date cannot be in the future": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
     ]
   },
   "The start of the range is required": {
@@ -174220,6 +176435,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The sync ledger could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "The system": {
@@ -174763,6 +176987,15 @@
       "domain/documenttemplate"
     ]
   },
+  "The values are not valid.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The vector size the model returns. A reply of any other size is refused.": {
     "sites": 1,
     "scope": [
@@ -175099,6 +177332,24 @@
       "routes/customer"
     ]
   },
+  "The {0} app keys changed while you were signing in. Start the connection again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
+  "The {0} app keys were changed by someone else while you were saving. Review them and save again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "The {0} assistant is not available on this server": {
     "sites": 1,
     "scope": [
@@ -175397,6 +177648,15 @@
       "routes/shipment"
     ]
   },
+  "These values would not go through: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "They are in the purchases table now and will be counted the next time the quarter's return is computed.": {
     "sites": 1,
     "scope": [
@@ -175404,6 +177664,15 @@
     ],
     "areas": [
       "routes/fuel-purchase"
+    ]
+  },
+  "They are sent to {0} right away, in the order they were posted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "They can now approve what you can approve, for the people you manage — and nothing beyond that.": {
@@ -175496,6 +177765,26 @@
       "service/carriersettlementservice"
     ]
   },
+  "This Trenova server has no web address configured (app.webBaseUrl), so {0} cannot send people back after they sign in. Ask the server's administrator to set it.": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "routes/admin",
+      "service/accountingconnectionservice"
+    ]
+  },
+  "This Trenova server has no {0} of its own, so this organization connects through one it registers with Intuit. Create an app on the Intuit developer portal and enter its keys below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "This accessorial is already priced by the agreement": {
     "sites": 1,
     "scope": [
@@ -175530,6 +177819,15 @@
     ],
     "areas": [
       "service/accountingmappingservice"
+    ]
+  },
+  "This action can't say exactly what it would change. It would run with the values below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This action cannot be undone. This will permanently delete this comment and its attachments.": {
@@ -175909,6 +178207,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "This change looks different now — review it again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This changes what the reviewer is looking at, so the template returns to Draft and must be submitted again.": {
@@ -178011,6 +180318,15 @@
       "routes/desk"
     ]
   },
+  "This record was already sent, skipped or is being sent now": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "This records that someone checked these limits against the state, and does not change them. If the numbers are wrong, edit the rule instead — that clears the verification on its own.": {
     "sites": 1,
     "scope": [
@@ -178417,6 +180733,24 @@
       "service/aiproviderservice"
     ]
   },
+  "This server has no {0} of its own, so nobody can connect {1} until keys are entered again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "This server's app": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "This settlement does not belong to you": {
     "sites": 1,
     "scope": [
@@ -178588,6 +180922,15 @@
     ],
     "areas": [
       "service/workerinjuryservice"
+    ]
+  },
+  "This sync record could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "This target has no parts to rate": {
@@ -178808,6 +181151,15 @@
     ]
   },
   "This view has unsaved changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This was proposed without noting the record's version, so later edits to it can't be detected.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -179049,6 +181401,24 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "This would not go through as it stands.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "This would not go through as it stands: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This year": {
@@ -180109,11 +182479,13 @@
     ]
   },
   "To": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
+      "routes/accounting-sync",
       "routes/agent-control",
       "routes/desk",
       "routes/detention-policy",
@@ -180805,7 +183177,7 @@
     ]
   },
   "Tool name is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -181003,7 +183375,7 @@
     ]
   },
   "Total": {
-    "sites": 31,
+    "sites": 32,
     "scope": [
       "go",
       "ts"
@@ -183007,6 +185379,15 @@
       "routes/admin"
     ]
   },
+  "Trenova sends invoices, credit and debit memos, customer payments, credit applications, carrier settlements and their payments to {0} as they are posted. Documents dated before the start date are never sent, so anything you already entered in {0} by hand is not duplicated.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Trenova starts this agent itself. You can change what it is told, which tools it may use and how much it may do, but not when it runs, and it cannot be removed.": {
     "sites": 1,
     "scope": [
@@ -183052,6 +185433,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Tries": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Trigger": {
@@ -183379,7 +185769,7 @@
     ]
   },
   "Try again": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "ts"
     ],
@@ -183455,6 +185845,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Try {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Tue": {
@@ -184385,6 +186784,15 @@
       "routes/customer-payments"
     ]
   },
+  "Unapplied cash on account": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Unapplied credit": {
     "sites": 1,
     "scope": [
@@ -184652,6 +187060,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Under Keys and credentials, add the redirect URI below exactly as written. Development keys accept http://localhost; production keys need https.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Under billing review": {
@@ -185370,11 +187787,12 @@
     ]
   },
   "Unknown user": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-sync",
       "routes/admin",
       "routes/invoice"
     ]
@@ -185660,6 +188078,15 @@
     ],
     "areas": [
       "service/accountingcontrolservice"
+    ]
+  },
+  "Unreconciled cash": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Unresolved": {
@@ -186131,11 +188558,12 @@
     ]
   },
   "Update": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/hooks",
       "apps/web/lib",
       "routes/worker"
     ]
@@ -187359,6 +189787,15 @@
       "service/jurisdictionruleservice"
     ]
   },
+  "Use your own app": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Use {0}": {
     "sites": 1,
     "scope": [
@@ -187787,6 +190224,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Uses the record step {0} changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Using the assistant needs permission to start assistant conversations. An administrator can add it to one of your roles.": {
@@ -190593,12 +193039,13 @@
     ]
   },
   "Void": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "routes/carrier-settlement",
       "routes/driver-settlement",
       "routes/invoice-register",
@@ -190952,6 +193399,16 @@
       "apps/web/components"
     ]
   },
+  "Waiting for release": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks",
+      "routes/accounting-sync"
+    ]
+  },
   "Waiting for the files to finish uploading": {
     "sites": 1,
     "scope": [
@@ -191135,6 +193592,15 @@
       "domain/driverpay"
     ]
   },
+  "Waiting to be released to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Waiting {0, plural, one {# day} other {# days}}": {
     "sites": 1,
     "scope": [
@@ -191160,6 +193626,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Waits for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Waive": {
@@ -191320,6 +193795,15 @@
       "routes/worker"
     ]
   },
+  "Wake the sender for every accounting connection with documents due": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Wallet": {
     "sites": 1,
     "scope": [
@@ -191415,6 +193899,15 @@
       "routes/invoice"
     ]
   },
+  "Was empty when proposed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Was modified": {
     "sites": 1,
     "scope": [
@@ -191422,6 +193915,15 @@
     ],
     "areas": [
       "routes/table-change-alert"
+    ]
+  },
+  "Was {0} when proposed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Washington (WA)": {
@@ -191801,6 +194303,15 @@
       "routes/admin"
     ]
   },
+  "Webhook endpoint (optional)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Webhook signing secret {0}": {
     "sites": 1,
     "scope": [
@@ -191812,6 +194323,24 @@
   },
   "Webhook token": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Webhook verifier token": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "Webhook verifier token (optional)": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -192419,6 +194948,25 @@
       "domain/homelayout"
     ]
   },
+  "What changes": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control",
+      "routes/desk"
+    ]
+  },
+  "What changes, in the order it runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "What could not be": {
     "sites": 1,
     "scope": [
@@ -192742,6 +195290,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "What it would do as proposed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What it would have done": {
@@ -193248,6 +195805,15 @@
       "routes/rate-matrix"
     ]
   },
+  "What this change would do has changed since you reviewed it. Review it again, then decide": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentdecisionservice"
+    ]
+  },
   "What this contract is written in, converted at the rating date when it differs from yours": {
     "sites": 1,
     "scope": [
@@ -193293,6 +195859,15 @@
       "routes/rate-agreement"
     ]
   },
+  "What this plan would do has changed since you reviewed it. Review it again, then decide": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentplanservice"
+    ]
+  },
   "What this recurring lane is called and which shipment it copies": {
     "sites": 1,
     "scope": [
@@ -193327,6 +195902,33 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "What this would change could not be loaded. Approving now is recorded as approved without a preview.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "What this would change could not be worked out; the values it would run with are shown instead.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "What to do": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "What to remember": {
@@ -193462,6 +196064,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "What your values would do": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What's it for? A quick note helps your manager plan coverage.": {
@@ -194469,6 +197080,15 @@
       "domain/documenttemplate"
     ]
   },
+  "Where to find them": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Where to improve": {
     "sites": 1,
     "scope": [
@@ -195081,6 +197701,15 @@
       "routes/policies"
     ]
   },
+  "While {0} is connected, only the client secret and webhook verifier token can change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Who": {
     "sites": 1,
     "scope": [
@@ -195481,6 +198110,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Why is this document not sent?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Why is this period being reopened?": {
@@ -198765,6 +201403,15 @@
       "api/middleware"
     ]
   },
+  "Your organization only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Your organization requires a reason when a shipment is not billed at its contract rate": {
     "sites": 1,
     "scope": [
@@ -198790,6 +201437,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Your own app": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "Your own price bands, each with its own per-mile rate. Bands can be irregular — use this for customer-supplied fuel tables.": {
@@ -202228,6 +204884,15 @@
       "routes/formula-template"
     ]
   },
+  "held or failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "hours left": {
     "sites": 1,
     "scope": [
@@ -202586,6 +205251,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "next try {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "next {0}": {
@@ -203135,6 +205809,15 @@
       "service/tablequeryservice"
     ]
   },
+  "queued, sending or retrying": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "qwen3:32b": {
     "sites": 1,
     "scope": [
@@ -203278,6 +205961,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "revision {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "revocation pending": {
@@ -203476,6 +206168,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "since {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "since {0}{1}": {
@@ -205178,6 +207879,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# more record is past what a preview shows} other {# more records are past what a preview shows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {# more shipment for this period is} other {# more shipments for this period are}} still in review and will not be on this invoice. Billing now leaves {1} unbilled.": {
     "sites": 1,
     "scope": [
@@ -205194,6 +207904,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# more value is past what a preview shows} other {# more values are past what a preview shows}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# more value} other {# more values}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# move} other {# moves}}": {
@@ -205223,6 +207951,15 @@
       "apps/dash/_components"
     ]
   },
+  "{0, plural, one {# of them you have not opened; it is recorded as approved without reviewing what it changes.} other {# of them you have not opened; they are recorded as approved without reviewing what they change.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# open change} other {# open changes}}": {
     "sites": 1,
     "scope": [
@@ -205248,6 +207985,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "{0, plural, one {# part hidden by your data access} other {# parts hidden by your data access}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# pay event} other {# pay events}} awaiting settlement": {
@@ -205376,6 +208122,24 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# record queued again} other {# records queued again}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "{0, plural, one {# record released} other {# records released}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "{0, plural, one {# record} other {# records}}": {
     "sites": 2,
     "scope": [
@@ -205384,6 +208148,15 @@
     "areas": [
       "apps/web/components",
       "routes/reports"
+    ]
+  },
+  "{0, plural, one {# record} other {# records}} since {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "{0, plural, one {# required document} other {# required documents}} missing": {
@@ -205867,6 +208640,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {Release # held document?} other {Release # held documents?}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "{0, plural, one {Searched the web # time} other {Searched the web # times}}": {
     "sites": 1,
     "scope": [
@@ -205919,6 +208701,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {gave up after # try} other {gave up after # tries}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {last # day} other {last # days}}": {
@@ -206135,6 +208926,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "{0} accepted the client ID and secret.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} accidents · {1} preventable · {2} out of service · {3} points": {
@@ -206641,6 +209441,15 @@
       "routes/shipment"
     ]
   },
+  "{0} company {1} is connected through this server's app. Disconnect it before switching to your own app.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
   "{0} compared with {1}": {
     "sites": 1,
     "scope": [
@@ -206822,7 +209631,25 @@
       "service/accountingconnectionservice"
     ]
   },
+  "{0} did not accept it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "{0} did not accept the authorization. Try connecting again.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
+  "{0} did not accept this client ID and secret. Check that both come from the same app and the environment you chose.": {
     "sites": 1,
     "scope": [
       "go"
@@ -207277,6 +210104,33 @@
       "template/notification.dash.review_submitted"
     ]
   },
+  "{0} has its books closed through {1}. Documents dated on or before that day will be held until the books are reopened or the documents are skipped.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "{0} has no app to connect through. Add your own {0} app's keys on this page, or ask the server's administrator to configure one for the whole server.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingconnectionservice"
+    ]
+  },
+  "{0} has no driver portal access, so the message would not reach them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} has no proposed match to confirm; choose a record for it instead": {
     "sites": 1,
     "scope": [
@@ -207332,13 +210186,14 @@
     ]
   },
   "{0} has not been connected yet": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
       "api/graphql",
-      "service/accountingmappingservice"
+      "service/accountingmappingservice",
+      "service/accountingsyncservice"
     ]
   },
   "{0} has set up a Dash account for you. Dash is where you will see your assigned loads, submit expenses, and check your pay.": {
@@ -207677,6 +210532,15 @@
       "apps/web/hooks"
     ]
   },
+  "{0} is not a mapping target": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "{0} is not a supported telematics provider": {
     "sites": 1,
     "scope": [
@@ -207704,6 +210568,24 @@
       "service/customfieldservice"
     ]
   },
+  "{0} is not a vendor": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
+  "{0} is not a {1} key": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "{0} is not a {1} key; use one of {2}": {
     "sites": 1,
     "scope": [
@@ -207714,13 +210596,14 @@
     ]
   },
   "{0} is not an accounting system Trenova can sync with": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "service/accountingconnectionservice",
-      "service/accountingmappingservice"
+      "service/accountingmappingservice",
+      "service/accountingsyncservice"
     ]
   },
   "{0} is not an active jurisdiction": {
@@ -207730,6 +210613,15 @@
     ],
     "areas": [
       "service/fuelpurchaseservice"
+    ]
+  },
+  "{0} is not an error category": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
     ]
   },
   "{0} is not available": {
@@ -207777,14 +210669,24 @@
       "service/fuelpurchaseservice"
     ]
   },
+  "{0} is not connected yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "{0} is not connected. A person must connect it from the integrations page.": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go"
     ],
     "areas": [
       "service/accountingconnectionservice",
       "service/accountingmappingservice",
+      "service/accountingsyncservice",
       "service/agenttoolservice"
     ]
   },
@@ -207807,6 +210709,24 @@
       "service/documenttemplateservice"
     ]
   },
+  "{0} is not sending documents yet; a person finishes its setup first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is not sending documents yet; finish its setup first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "{0} is not sent per customer, so assigning it to one has no effect": {
     "sites": 1,
     "scope": [
@@ -207814,24 +210734,6 @@
     ],
     "areas": [
       "service/documenttemplateservice"
-    ]
-  },
-  "{0} is not set up on this Trenova instance. Ask your administrator to add the Intuit app credentials.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/accountingconnectionservice"
-    ]
-  },
-  "{0} is not set up on this Trenova server yet. The server's administrator has to add the {0} app credentials before anyone can connect.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/admin"
     ]
   },
   "{0} is not tracked by this policy": {
@@ -208007,6 +210909,15 @@
       "apps/web/hooks"
     ]
   },
+  "{0} is {1} and cannot be skipped": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} is {1} and holds the opening balances carried out of {2}. Reopen {3} first.": {
     "sites": 1,
     "scope": [
@@ -208025,6 +210936,15 @@
       "routes/worker"
     ]
   },
+  "{0} is {1}; only Blocked, DeadLettered and Retrying records are retried": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "{0} issued": {
     "sites": 1,
     "scope": [
@@ -208041,6 +210961,33 @@
     ],
     "areas": [
       "routes/fiscal-year"
+    ]
+  },
+  "{0} keys": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "{0} keys removed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
+  "{0} keys saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
     ]
   },
   "{0} lanes across {1} agreements move.": {
@@ -208361,6 +211308,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} must be a date as YYYY-MM-DD": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} must be a number": {
@@ -209167,6 +212123,15 @@
       "service/agenttoolservice"
     ]
   },
+  "{0} records are not backfilled; choose from {1}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "{0} records read {1}": {
     "sites": 1,
     "scope": [
@@ -209546,7 +212511,7 @@
     ]
   },
   "{0} setup": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -209955,6 +212920,15 @@
       "routes/carrier"
     ]
   },
+  "{0} was used by {1} documents already sent to the accounting system. They keep the record they were sent with; confirm that only new documents change": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingmappingservice"
+    ]
+  },
   "{0} watch": {
     "sites": 1,
     "scope": [
@@ -210322,6 +213296,15 @@
     ],
     "areas": [
       "routes/policies"
+    ]
+  },
+  "{0} · queued {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "{0} · since {1}{2}": {

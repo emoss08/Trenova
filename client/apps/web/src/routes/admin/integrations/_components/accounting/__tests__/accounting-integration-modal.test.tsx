@@ -1,11 +1,13 @@
 import type {
+  AccountingAppSettings,
   AccountingConnection,
   AccountingMapping,
   AccountingMappingSummary,
   AccountingSyncStatus,
 } from "@/lib/graphql/accounting-sync";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { ApiRequestError } from "@trenova/shared/lib/api";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { MemoryRouter } from "react-router";
@@ -24,6 +26,10 @@ const mocks = vi.hoisted(() => ({
   confirmAccountingMappings: vi.fn(),
   completeAccountingSetup: vi.fn(),
   refreshAccountingReferenceData: vi.fn(),
+  saveAccountingApp: vi.fn(),
+  removeAccountingApp: vi.fn(),
+  enableAccountingSync: vi.fn(),
+  updateAccountingSyncSettings: vi.fn(),
   granted: new Set<string>(),
   assign: vi.fn(),
 }));
@@ -40,10 +46,17 @@ vi.mock("@/lib/graphql/accounting-sync", () => ({
   confirmAccountingMappings: mocks.confirmAccountingMappings,
   completeAccountingSetup: mocks.completeAccountingSetup,
   refreshAccountingReferenceData: mocks.refreshAccountingReferenceData,
+  saveAccountingApp: mocks.saveAccountingApp,
+  removeAccountingApp: mocks.removeAccountingApp,
   rejectAccountingMapping: vi.fn(),
   setAccountingMapping: vi.fn(),
   clearAccountingMapping: vi.fn(),
   createAccountingReferenceRecord: vi.fn(),
+}));
+
+vi.mock("@/lib/graphql/accounting-sync-ledger", () => ({
+  enableAccountingSync: mocks.enableAccountingSync,
+  updateAccountingSyncSettings: mocks.updateAccountingSyncSettings,
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -73,6 +86,8 @@ const connected: AccountingConnection = {
   id: "acctc_1",
   integrationType: "QuickBooksOnline",
   status: "Connected",
+  appSource: "Instance",
+  appEnvironment: "Sandbox",
   externalCompanyName: "Peak Freight",
   externalLegalName: "Peak Freight LLC",
   externalCountry: "US",
@@ -90,6 +105,14 @@ const connected: AccountingConnection = {
   connectedAt: 1_780_000_000,
   disconnectedAt: null,
   setupStep: "Complete",
+  syncStartDate: 1_780_000_000,
+  syncEnabledAt: 1_780_000_000,
+  autoSync: true,
+  driverSettlementsEnabledAt: null,
+  syncsDriverSettlements: false,
+  pausedAt: null,
+  pausedBy: null,
+  pausedReason: "",
   referenceRefreshStartedAt: null,
   referenceRefreshedAt: 1_780_000_100,
   referenceRefreshError: "",
@@ -98,6 +121,12 @@ const connected: AccountingConnection = {
 };
 
 const mapping = { ...connected, setupStep: "Mappings" as const };
+const startDate = {
+  ...connected,
+  setupStep: "StartDate" as const,
+  syncStartDate: null,
+  syncEnabledAt: null,
+};
 
 function mappingRow(overrides: Partial<AccountingMapping>): AccountingMapping {
   return {
@@ -148,14 +177,57 @@ function mappingPages(required: AccountingMapping[], proposed: AccountingMapping
   );
 }
 
+const REDIRECT_URL = "http://localhost:5173/admin/integrations/quickbooks/callback";
+
+const instanceApp: AccountingAppSettings = {
+  activeSource: "Instance",
+  instanceAppAvailable: true,
+  instanceEnvironment: "Production",
+  redirectUrl: REDIRECT_URL,
+  webhookPath: "/webhooks/accounting/quickbooks/",
+  tenantApp: null,
+};
+
+const noApp: AccountingAppSettings = {
+  ...instanceApp,
+  activeSource: null,
+  instanceAppAvailable: false,
+  instanceEnvironment: null,
+};
+
+const tenantApp: AccountingAppSettings = {
+  ...noApp,
+  activeSource: "Tenant",
+  tenantApp: {
+    id: "acctapp_1",
+    integrationType: "QuickBooksOnline",
+    environment: "Sandbox",
+    clientId: "ABtenantClient",
+    hasWebhookVerifier: true,
+    version: 2,
+    updatedAt: 1_780_000_000,
+  },
+};
+
 function status(overrides: Partial<AccountingSyncStatus> = {}): AccountingSyncStatus {
   return {
     integrationType: "QuickBooksOnline",
     providerName: "QuickBooks Online",
     available: true,
+    app: instanceApp,
     connection: null,
     ...overrides,
   };
+}
+
+async function field(name: string): Promise<HTMLElement> {
+  return waitFor(() => {
+    const element = document.getElementById(`input-${name}`);
+    if (!element) {
+      throw new Error(`input-${name} not rendered`);
+    }
+    return element;
+  });
 }
 
 function renderModal(props: { justConnected?: boolean } = {}) {
@@ -218,15 +290,174 @@ describe("QuickBooksIntegrationModal", () => {
     expect(screen.getByRole("button", { name: /Connect to QuickBooks Online/ })).toBeEnabled();
   });
 
-  it("cannot connect while the server has no QuickBooks app credentials", async () => {
-    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ available: false }));
+  it("asks for the organization's own app keys when the server has no app", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ available: false, app: noApp }));
 
     renderModal();
 
     expect(
       await screen.findByRole("button", { name: /Connect to QuickBooks Online/ }),
     ).toBeDisabled();
-    expect(screen.getByText(/is not set up on this Trenova server yet/)).toBeInTheDocument();
+    expect(screen.getByText(/has no Intuit app of its own/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save keys" })).toBeInTheDocument();
+    expect(screen.getByText(REDIRECT_URL)).toBeInTheDocument();
+    expect(screen.getByText(/\/webhooks\/accounting\/quickbooks\/$/)).toBeInTheDocument();
+    expect(screen.queryByText(/is not set up on this Trenova server yet/)).not.toBeInTheDocument();
+  });
+
+  it("saves the keys and makes connecting possible", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ available: false, app: noApp }));
+    mocks.saveAccountingApp.mockResolvedValue(status({ available: true, app: tenantApp }));
+
+    renderModal();
+    await userEvent.type(await field("clientId"), "  ABtenantClient ");
+    await userEvent.type(await field("clientSecret"), "s3cret");
+    await userEvent.click(screen.getByRole("button", { name: "Save keys" }));
+
+    await waitFor(() =>
+      expect(mocks.saveAccountingApp).toHaveBeenCalledWith({
+        integrationType: "QuickBooksOnline",
+        environment: "Sandbox",
+        clientId: "ABtenantClient",
+        clientSecret: "s3cret",
+        webhookVerifierToken: null,
+        clearWebhookVerifierToken: false,
+      }),
+    );
+    expect(
+      await screen.findByRole("button", { name: /Connect to QuickBooks Online/ }),
+    ).toBeEnabled();
+    expect(screen.getByText("ABtenantClient")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save keys" })).not.toBeInTheDocument();
+  });
+
+  it("will not save a new app without its secret", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ available: false, app: noApp }));
+
+    renderModal();
+    await userEvent.type(await field("clientId"), "ABtenantClient");
+    await userEvent.click(screen.getByRole("button", { name: "Save keys" }));
+
+    expect(
+      await screen.findByText("Enter the client secret that goes with this client ID"),
+    ).toBeInTheDocument();
+    expect(mocks.saveAccountingApp).not.toHaveBeenCalled();
+  });
+
+  it("shows the server's error on the field it names", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ available: false, app: noApp }));
+    mocks.saveAccountingApp.mockRejectedValue(
+      new ApiRequestError(422, {
+        type: "https://api.trenova.app/problems/validation-error",
+        title: "Validation error",
+        status: 422,
+        detail: "Validation failed",
+        errors: [
+          {
+            field: "clientSecret",
+            code: "INVALID",
+            message: "QuickBooks Online did not accept this client ID and secret.",
+          },
+        ],
+      }),
+    );
+
+    renderModal();
+    await userEvent.type(await field("clientId"), "ABtenantClient");
+    await userEvent.type(await field("clientSecret"), "wrong");
+    await userEvent.click(screen.getByRole("button", { name: "Save keys" }));
+
+    expect(
+      await screen.findByText("QuickBooks Online did not accept this client ID and secret."),
+    ).toBeInTheDocument();
+  });
+
+  it("connects through the server's app and offers the organization's own instead", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status());
+
+    renderModal();
+
+    expect(
+      await screen.findByText(/Connects through the Intuit app this server/),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save keys" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Use your own app" }));
+    expect(screen.getByRole("button", { name: "Save keys" })).toBeInTheDocument();
+    const keys = screen.getByRole("region", { name: "Intuit app" });
+    await userEvent.click(within(keys).getByRole("button", { name: "Cancel" }));
+    expect(screen.queryByRole("button", { name: "Save keys" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the saved secret when changing only the verifier token", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ app: tenantApp }));
+    mocks.saveAccountingApp.mockResolvedValue(status({ app: tenantApp }));
+
+    renderModal();
+    await userEvent.click(await screen.findByRole("button", { name: "Change keys" }));
+    expect(await field("clientId")).toHaveValue("ABtenantClient");
+    await userEvent.type(await field("webhookVerifierToken"), "new-verifier");
+    await userEvent.click(screen.getByRole("button", { name: "Save keys" }));
+
+    await waitFor(() =>
+      expect(mocks.saveAccountingApp).toHaveBeenCalledWith({
+        integrationType: "QuickBooksOnline",
+        environment: "Sandbox",
+        clientId: "ABtenantClient",
+        clientSecret: null,
+        webhookVerifierToken: "new-verifier",
+        clearWebhookVerifierToken: false,
+      }),
+    );
+  });
+
+  it("removes the organization's keys after confirming", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ app: tenantApp }));
+    mocks.removeAccountingApp.mockResolvedValue(status());
+
+    renderModal();
+    await userEvent.click(await screen.findByRole("button", { name: "Remove" }));
+    const dialog = await screen.findByRole("alertdialog");
+    expect(dialog).toHaveTextContent("Remove the Intuit app keys?");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Remove" }));
+
+    await waitFor(() => expect(mocks.removeAccountingApp).toHaveBeenCalledWith("QuickBooksOnline"));
+    expect(await screen.findByRole("button", { name: "Use your own app" })).toBeInTheDocument();
+  });
+
+  it("does not offer switching apps while connected through the server's app", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: connected }));
+
+    renderModal();
+
+    expect(await screen.findByRole("button", { name: "Use your own app" })).toBeDisabled();
+    expect(
+      screen.getByText(/Disconnect Peak Freight before switching to your own app/),
+    ).toBeInTheDocument();
+  });
+
+  it("locks the client ID but not the secret while connected through the organization's app", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(
+      status({ app: tenantApp, connection: { ...connected, appSource: "Tenant" } }),
+    );
+
+    renderModal();
+
+    expect(await screen.findByRole("button", { name: "Remove" })).toBeDisabled();
+    await userEvent.click(screen.getByRole("button", { name: "Change keys" }));
+    expect(await field("clientId")).toHaveAttribute("readonly");
+    expect(await field("clientSecret")).not.toHaveAttribute("readonly");
+  });
+
+  it("asks someone with manage access to enter the keys", async () => {
+    mocks.granted = new Set([READ, UPDATE]);
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ available: false, app: noApp }));
+
+    renderModal();
+
+    expect(
+      await screen.findByText(/Someone with manage access to the accounting integration/),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save keys" })).not.toBeInTheDocument();
   });
 
   it("cannot connect without manage access", async () => {
@@ -471,5 +702,207 @@ describe("QuickBooksIntegrationModal", () => {
     renderModal({ justConnected: true });
 
     expect(await screen.findByRole("button", { name: "Continue" })).toBeInTheDocument();
+  });
+
+  it("asks for a start date once the mappings are confirmed", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: startDate }));
+    mocks.enableAccountingSync.mockResolvedValue({ ...startDate, setupStep: "Complete" });
+
+    renderModal();
+
+    expect(await screen.findByText("Choose when sending starts")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Also send documents already posted since the start date"),
+    ).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Start sending" }));
+
+    await waitFor(() => expect(mocks.enableAccountingSync).toHaveBeenCalledTimes(1));
+    const [input] = mocks.enableAccountingSync.mock.calls[0] as [
+      {
+        integrationType: string;
+        startDate: number;
+        autoSync: boolean;
+        driverSettlements: boolean;
+        backfill: boolean;
+      },
+    ];
+    expect(input.integrationType).toBe("QuickBooksOnline");
+    expect(input.autoSync).toBe(true);
+    expect(input.driverSettlements).toBe(false);
+    expect(input.backfill).toBe(false);
+    expect(input.startDate).toBeLessThanOrEqual(Math.floor(Date.now() / 1000));
+    expect(Math.floor(Date.now() / 1000) - input.startDate).toBeLessThan(24 * 60 * 60 + 1);
+  });
+
+  it("offers a backfill when the start date is in the past", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(
+      status({ connection: { ...startDate, syncStartDate: 1_780_000_000 } }),
+    );
+    mocks.enableAccountingSync.mockResolvedValue({ ...startDate, setupStep: "Complete" });
+
+    renderModal();
+    await userEvent.click(
+      await screen.findByText("Also send documents already posted since the start date"),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Start sending" }));
+
+    await waitFor(() =>
+      expect(mocks.enableAccountingSync).toHaveBeenCalledWith({
+        integrationType: "QuickBooksOnline",
+        startDate: 1_780_000_000,
+        autoSync: true,
+        driverSettlements: false,
+        backfill: true,
+      }),
+    );
+  });
+
+  it("warns when the start date falls in books QuickBooks has closed", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(
+      status({
+        connection: {
+          ...startDate,
+          syncStartDate: 1_780_000_000,
+          externalBooksClosedThrough: 1_780_100_000,
+        },
+      }),
+    );
+
+    renderModal();
+
+    expect(await screen.findByText(/has its books closed through/)).toBeInTheDocument();
+  });
+
+  it("holds each document for release when automatic sending is off", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: startDate }));
+    mocks.enableAccountingSync.mockResolvedValue({ ...startDate, setupStep: "Complete" });
+
+    renderModal();
+    await userEvent.click(
+      await screen.findByRole("switch", { name: "Send posted documents automatically" }),
+    );
+    expect(
+      screen.getByText("Each document waits in the sync ledger until someone releases it."),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Start sending" }));
+
+    await waitFor(() =>
+      expect(mocks.enableAccountingSync).toHaveBeenCalledWith(
+        expect.objectContaining({ autoSync: false }),
+      ),
+    );
+  });
+
+  it("cannot choose the start date without manage access", async () => {
+    mocks.granted = new Set([READ, UPDATE]);
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: startDate }));
+
+    renderModal();
+
+    expect(await screen.findByRole("button", { name: "Start sending" })).toBeDisabled();
+    expect(
+      screen.getByText(
+        "Choosing the start date needs manage access to the accounting integration.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("sends owner-operator settlements only when asked at the start date step", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: startDate }));
+    mocks.enableAccountingSync.mockResolvedValue({ ...startDate, setupStep: "Complete" });
+
+    renderModal();
+    const driverSwitch = await screen.findByRole("switch", {
+      name: "Send owner-operator settlements",
+    });
+    expect(driverSwitch).not.toBeChecked();
+    await userEvent.click(driverSwitch);
+    await userEvent.click(screen.getByRole("button", { name: "Start sending" }));
+
+    await waitFor(() =>
+      expect(mocks.enableAccountingSync).toHaveBeenCalledWith(
+        expect.objectContaining({ driverSettlements: true }),
+      ),
+    );
+  });
+
+  it("changes how documents are sent after setup from the sync settings", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: connected }));
+    mocks.updateAccountingSyncSettings.mockResolvedValue({
+      ...connected,
+      driverSettlementsEnabledAt: 1_790_000_000,
+      syncsDriverSettlements: true,
+    });
+
+    renderModal();
+    const save = await screen.findByRole("button", { name: "Save" });
+    expect(save).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("switch", { name: "Send owner-operator settlements" }));
+    expect(
+      screen.getByText(
+        "Settlements posted from now on are sent. To send ones posted earlier, request a backfill from the sync ledger.",
+      ),
+    ).toBeInTheDocument();
+    await userEvent.click(save);
+
+    await waitFor(() =>
+      expect(mocks.updateAccountingSyncSettings).toHaveBeenCalledWith({
+        integrationType: "QuickBooksOnline",
+        autoSync: true,
+        driverSettlements: true,
+      }),
+    );
+    await waitFor(() => expect(screen.getByRole("button", { name: "Save" })).toBeDisabled());
+  });
+
+  it("puts the sync settings back when the change is cancelled", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(
+      status({
+        connection: {
+          ...connected,
+          driverSettlementsEnabledAt: 1_790_000_000,
+          syncsDriverSettlements: true,
+        },
+      }),
+    );
+
+    renderModal();
+    const driverSwitch = await screen.findByRole("switch", {
+      name: "Send owner-operator settlements",
+    });
+    expect(driverSwitch).toBeChecked();
+    await userEvent.click(driverSwitch);
+    expect(driverSwitch).not.toBeChecked();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(driverSwitch).toBeChecked();
+    expect(mocks.updateAccountingSyncSettings).not.toHaveBeenCalled();
+  });
+
+  it("shows the sync settings read-only without manage access", async () => {
+    mocks.granted = new Set([READ, UPDATE]);
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: connected }));
+
+    renderModal();
+
+    expect(
+      await screen.findByRole("switch", { name: "Send owner-operator settlements" }),
+    ).toHaveAttribute("data-disabled");
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Changing how documents are sent needs manage access to the accounting integration.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("does not show sync settings before setup is complete", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: startDate }));
+
+    renderModal();
+
+    expect(await screen.findByText("Choose when sending starts")).toBeInTheDocument();
+    expect(screen.queryByText("Sync settings")).not.toBeInTheDocument();
   });
 });

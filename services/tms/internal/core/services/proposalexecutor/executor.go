@@ -167,6 +167,23 @@ var ErrTaintedNeedsPerson = errors.New(
 		"it, so only a person can approve it",
 )
 
+// Approval is an approved proposal to run. ExpectedTargetVersion is the
+// version its target is expected at when an earlier step of the same plan
+// changed that record first; without it the target must still be at the
+// version pinned when the change was proposed.
+type Approval struct {
+	Proposal              *agent.AgentProposal
+	Modifications         map[string]any
+	Actor                 *services.RequestActor
+	ExpectedTargetVersion *int64
+}
+
+// Outcome is what running an approval left behind: the version the write
+// left its target at, when the target is pinned and could be read.
+type Outcome struct {
+	TargetVersion *int64
+}
+
 // Execute runs an approved proposal's tool.
 //
 // The approver is the actor, not the agent. Everything the tool does is
@@ -183,46 +200,55 @@ func (s *Service) Execute(
 	modifications map[string]any,
 	actor *services.RequestActor,
 ) error {
-	ctx, span := startExecute(ctx, proposal, modifications, actor)
-	defer span.End()
-
-	err := s.execute(ctx, proposal, modifications, actor)
-	if err != nil {
-		aitrace.MarkFailed(span, executeFailure(err))
-	}
+	_, err := s.Run(ctx, &Approval{
+		Proposal:      proposal,
+		Modifications: modifications,
+		Actor:         actor,
+	})
 
 	return err
 }
 
-func (s *Service) execute(
-	ctx context.Context,
-	proposal *agent.AgentProposal,
-	modifications map[string]any,
-	actor *services.RequestActor,
-) error {
+// Run is Execute for a caller that needs what the write left behind, such
+// as a plan whose next step changes the same record.
+func (s *Service) Run(ctx context.Context, approval *Approval) (*Outcome, error) {
+	ctx, span := startExecute(ctx, approval.Proposal, approval.Modifications, approval.Actor)
+	defer span.End()
+
+	outcome, err := s.execute(ctx, approval)
+	if err != nil {
+		aitrace.MarkFailed(span, executeFailure(err))
+	}
+
+	return outcome, err
+}
+
+func (s *Service) execute(ctx context.Context, approval *Approval) (*Outcome, error) {
+	proposal := approval.Proposal
+	actor := approval.Actor
 	// The tenant the write runs in is the proposal's and the principal is
 	// the approver's. The two are asserted to agree here, where they meet,
 	// rather than trusted to have been scoped alike by every caller.
 	if actor == nil || proposal.OrganizationID != actor.OrganizationID ||
 		proposal.BusinessUnitID != actor.BusinessUnitID {
-		return ErrTenantMismatch
+		return nil, ErrTenantMismatch
 	}
 
-	tool, params, err := s.admit(ctx, proposal, modifications, actor)
+	tool, params, err := s.admit(ctx, approval)
 	if err != nil {
 		s.recordFailureBy(ctx, proposal, err, actor)
 
-		return err
+		return nil, err
 	}
 
 	policy := tool.Policy()
-	execParams := executionParams(proposal, &policy, params, actor)
+	execParams := ExecutionParams(proposal, &policy, params, actor)
 
 	egress := policy.Classified(execParams).Egress
 	if err = assertTaintDecidedByPerson(proposal, egress, actor); err != nil {
 		s.recordFailureAs(ctx, proposal, err, egress, actor)
 
-		return err
+		return nil, err
 	}
 	proposal.EgressClass = recordedEgress(proposal.EgressClass, egress)
 
@@ -230,7 +256,7 @@ func (s *Service) execute(
 	if err != nil {
 		s.recordFailureBy(ctx, proposal, err, actor)
 
-		return err
+		return nil, err
 	}
 
 	approved := &approvedRun{
@@ -245,34 +271,39 @@ func (s *Service) execute(
 	// the proposal was decided: the approval is real and recorded, the
 	// change is not.
 	if definition != nil && definition.SimulationMode {
-		return s.simulate(ctx, approved)
+		return &Outcome{}, s.simulate(ctx, approved)
 	}
 
 	if err = s.assertWithinBudget(ctx, definition, tool.Name()); err != nil {
 		s.recordFailureBy(ctx, proposal, err, actor)
 
-		return err
+		return nil, err
 	}
 
-	return s.run(ctx, approved)
+	after, err := s.run(ctx, approved)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Outcome{TargetVersion: after}, nil
 }
 
 func (s *Service) admit(
 	ctx context.Context,
-	proposal *agent.AgentProposal,
-	modifications map[string]any,
-	actor *services.RequestActor,
+	approval *Approval,
 ) (services.AgentTool, map[string]any, error) {
+	proposal := approval.Proposal
+	modifications := approval.Modifications
 	tool, ok := s.tools.Get(proposal.ToolName)
 	if !ok {
 		return nil, nil, fmt.Errorf("%w: %s", ErrToolMissing, proposal.ToolName)
 	}
 
-	if err := s.assertActorMayRun(ctx, tool, actor); err != nil {
+	if err := s.assertActorMayRun(ctx, tool, approval.Actor); err != nil {
 		return nil, nil, err
 	}
 
-	if err := s.assertTargetUnchanged(ctx, proposal); err != nil {
+	if err := s.assertTargetUnchanged(ctx, proposal, approval.ExpectedTargetVersion); err != nil {
 		return nil, nil, err
 	}
 
@@ -280,11 +311,15 @@ func (s *Service) admit(
 		return nil, nil, err
 	}
 
-	params := mergeParams(proposal.ToolParams, modifications)
+	params := MergeParams(proposal.ToolParams, modifications)
 	if len(modifications) > 0 {
-		// What the approver changed is checked against the tool's own
-		// schema once more here, where it runs: the decision that carried
-		// it was checked when it was made, and the tool may have changed.
+		// What the approver changed is checked once more here, where it
+		// runs: the decision that carried it was checked when it was made,
+		// and the tool may have changed. It may not point the write at
+		// another record, and it must fit the tool's own schema.
+		if err := refuseRetarget(tool, proposal.ToolParams, params); err != nil {
+			return nil, nil, err
+		}
 		if err := validateParams(tool, params); err != nil {
 			return nil, nil, err
 		}
@@ -293,7 +328,9 @@ func (s *Service) admit(
 	return tool, params, nil
 }
 
-func executionParams(
+// ExecutionParams is what the tool behind a proposal is handed when it runs
+// for an approver, and when it previews for one.
+func ExecutionParams(
 	proposal *agent.AgentProposal,
 	policy *services.ToolPolicy,
 	params map[string]any,
@@ -326,7 +363,7 @@ type approvedRun struct {
 	params   *services.ToolExecuteParams
 }
 
-func (s *Service) run(ctx context.Context, r *approvedRun) error {
+func (s *Service) run(ctx context.Context, r *approvedRun) (*int64, error) {
 	proposal := r.proposal
 	toolCtx, toolSpan := startTool(ctx, proposal, r.policy)
 	defer toolSpan.End()
@@ -343,7 +380,7 @@ func (s *Service) run(ctx context.Context, r *approvedRun) error {
 		)
 		s.recordFailureBy(ctx, proposal, err, r.actor)
 
-		return err
+		return nil, err
 	}
 	after := s.versionAfter(writeCtx, proposal)
 	if after != nil {
@@ -360,7 +397,7 @@ func (s *Service) run(ctx context.Context, r *approvedRun) error {
 		targetVersion: after,
 	})
 
-	return nil
+	return after, nil
 }
 
 func (s *Service) versionAfter(ctx context.Context, proposal *agent.AgentProposal) *int64 {
@@ -413,7 +450,10 @@ func (s *Service) CheckModifications(
 		return nil, err
 	}
 
-	params := mergeParams(proposal.ToolParams, modifications)
+	params := MergeParams(proposal.ToolParams, modifications)
+	if err := refuseRetarget(tool, proposal.ToolParams, params); err != nil {
+		return nil, err
+	}
 	if err := validateParams(tool, params); err != nil {
 		return nil, err
 	}
@@ -533,10 +573,21 @@ var ErrTargetChanged = errors.New("the record changed since this was proposed")
 
 // assertTargetUnchanged compares the pinned version with the record's current
 // one. A proposal without a pin — an older one, or a tool with no single
-// target — passes; only a pin that no longer matches refuses.
-func (s *Service) assertTargetUnchanged(ctx context.Context, proposal *agent.AgentProposal) error {
+// target — passes; only a pin that no longer matches refuses. An expected
+// version stands in for the pin when an earlier step of the same plan changed
+// the record: that step's write is the one change the approver allowed for.
+func (s *Service) assertTargetUnchanged(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	expected *int64,
+) error {
 	if proposal.TargetID.IsNil() || s.versions == nil {
 		return nil
+	}
+
+	pinned := proposal.TargetVersion
+	if expected != nil {
+		pinned = *expected
 	}
 
 	current, err := s.versions.Version(ctx, pagination.TenantInfo{
@@ -555,11 +606,11 @@ func (s *Service) assertTargetUnchanged(ctx context.Context, proposal *agent.Age
 		)
 	}
 
-	if current != proposal.TargetVersion {
+	if current != pinned {
 		return fmt.Errorf(
 			"%w: the %s is at version %d and was at %d when this was proposed. "+
 				"Review the current record and ask again",
-			ErrTargetChanged, proposal.TargetResource, current, proposal.TargetVersion,
+			ErrTargetChanged, proposal.TargetResource, current, pinned,
 		)
 	}
 
@@ -637,6 +688,38 @@ func refuseOwnerChange(modifications map[string]any) error {
 	return multiErr
 }
 
+// refuseRetarget keeps an approver's changes on the record the change was
+// proposed for. A change that pointed the write at another record would be a
+// different proposal, approved without anyone having proposed it, and would
+// escape the staleness check, which compares the record that was pinned.
+func refuseRetarget(tool services.AgentTool, proposed, merged map[string]any) error {
+	targeted, ok := tool.(services.TargetedTool)
+	if !ok {
+		return nil
+	}
+
+	before, hadTarget := targeted.Target(proposed)
+	after, hasTarget := targeted.Target(merged)
+	if hadTarget == hasTarget && (!hadTarget || before == after) {
+		return nil
+	}
+
+	field := "modifications"
+	if names := services.TargetParameters(tool, proposed); len(names) > 0 {
+		field = names[0]
+	}
+
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add(
+		field,
+		errortypes.ErrForbidden,
+		"The record this change is for is set when it is proposed and cannot be changed. "+
+			"Reject it and ask the agent again for the record you mean",
+	)
+
+	return multiErr
+}
+
 // validateParams checks the parameters as they would run against the tool's
 // schema. The owner the runtime records on a self-scoped call is not one of
 // the tool's declared parameters, so it is set aside for the check and the
@@ -656,11 +739,11 @@ func validateParams(tool services.AgentTool, params map[string]any) error {
 	return toolschema.Validate(tool.ParamSchema(), declared)
 }
 
-// mergeParams overlays an approver's modifications onto the proposed parameters.
+// MergeParams overlays an approver's modifications onto the proposed parameters.
 // A nil or empty modification map leaves the proposal untouched. The owner of a
 // self-scoped call is always the one stored on the proposal: it is taken from
 // the proposed parameters after the overlay, never from the modifications.
-func mergeParams(proposed, modifications map[string]any) map[string]any {
+func MergeParams(proposed, modifications map[string]any) map[string]any {
 	merged := make(map[string]any, len(proposed)+len(modifications))
 	for key, value := range proposed {
 		merged[key] = value

@@ -29,12 +29,16 @@ export function queryKeyRootId(root: QueryKeyRoot): string {
 }
 
 export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
+  // A proposal or plan moving can change what another one would do (a step
+  // after it on the same record, one decided elsewhere now reading as
+  // recorded), so the previews go with them.
   agent_proposal: [
     ["assistant", "proposals"],
     "agent-proposal-list",
     "pending-decisions",
     "pending-decision-summary",
     "attention",
+    "agentPreview",
   ],
   agent_plan: [
     ["assistant", "plans"],
@@ -42,6 +46,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "pending-decisions",
     "pending-decision-summary",
     "attention",
+    "agentPreview",
   ],
   agent_run: ["agent-run-list", ["assistant", "agents"]],
   // aiauditservice announces an export to its requester as it is written,

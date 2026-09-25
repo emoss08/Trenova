@@ -38,9 +38,14 @@ type Params struct {
 	Carriers           repositories.CarrierRepository
 	Accessorials       repositories.AccessorialChargeRepository
 	AuditService       services.AuditService
-	Completion         services.CompletionService            `optional:"true"`
-	Refresher          services.AccountingReferenceRefresher `optional:"true"`
-	Realtime           services.RealtimeService              `optional:"true"`
+	Completion         services.CompletionService                      `optional:"true"`
+	Refresher          services.AccountingReferenceRefresher           `optional:"true"`
+	Realtime           services.RealtimeService                        `optional:"true"`
+	SyncRecords        repositories.AccountingSyncRecordRepository     `optional:"true"`
+	Dispatcher         services.AccountingSyncDispatcher               `optional:"true"`
+	Workers            repositories.WorkerRepository                   `optional:"true"`
+	SettlementControls repositories.CarrierSettlementControlRepository `optional:"true"`
+	PayCodes           repositories.PayCodeRepository                  `optional:"true"`
 }
 
 type Service struct {
@@ -59,6 +64,11 @@ type Service struct {
 	completion         services.CompletionService
 	refresher          services.AccountingReferenceRefresher
 	realtime           services.RealtimeService
+	syncRecords        repositories.AccountingSyncRecordRepository
+	dispatcher         services.AccountingSyncDispatcher
+	workers            repositories.WorkerRepository
+	settlementControls repositories.CarrierSettlementControlRepository
+	payCodes           repositories.PayCodeRepository
 }
 
 var _ services.AccountingMappingService = (*Service)(nil)
@@ -81,6 +91,11 @@ func New(p Params) *Service {
 		completion:         p.Completion,
 		refresher:          p.Refresher,
 		realtime:           p.Realtime,
+		syncRecords:        p.SyncRecords,
+		dispatcher:         p.Dispatcher,
+		workers:            p.Workers,
+		settlementControls: p.SettlementControls,
+		payCodes:           p.PayCodes,
 	}
 }
 
@@ -438,12 +453,15 @@ func (s *Service) Confirm(
 		return nil, err
 	}
 
+	connectionIDs := make([]pulid.ID, 0, 1)
 	for _, row := range confirmed {
 		if before, ok := previous[row.ID]; ok {
 			s.logAudit(row, req.UserID, before, "Confirmed mapping for "+row.TargetLabel)
+			connectionIDs = append(connectionIDs, row.ConnectionID)
 		}
 	}
 	s.publishInvalidation(ctx, req.TenantInfo, req.UserID, confirmed)
+	s.requeueMappingBlocked(ctx, req.TenantInfo, connectionIDs...)
 	return confirmed, nil
 }
 
@@ -487,6 +505,17 @@ func (s *Service) Set(
 		return nil, err
 	}
 
+	used := 0
+	if row.ExternalID != ref.ExternalID {
+		if used, err = s.GuardHistory(
+			ctx,
+			req.TenantInfo,
+			row,
+			req.AcknowledgeHistory,
+		); err != nil {
+			return nil, err
+		}
+	}
 	before := jsonutils.MustToJSON(row)
 	row.Confirm(MappingChoice(req, ref, timeutils.NowUnix()))
 
@@ -494,13 +523,19 @@ func (s *Service) Set(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(updated, req.UserID, before, "Mapped "+updated.TargetLabel+" to "+ref.Label())
+	s.logAudit(
+		updated,
+		req.UserID,
+		before,
+		"Mapped "+updated.TargetLabel+" to "+ref.Label()+historyNote(used),
+	)
 	s.publishInvalidation(
 		ctx,
 		req.TenantInfo,
 		req.UserID,
 		[]*accountingsync.AccountingMapping{updated},
 	)
+	s.requeueMappingBlocked(ctx, req.TenantInfo, updated.ConnectionID)
 	return updated, nil
 }
 
@@ -509,6 +544,10 @@ func (s *Service) Clear(
 	req *services.AccountingMappingActionRequest,
 ) (*accountingsync.AccountingMapping, error) {
 	row, err := s.GetMapping(ctx, req.TenantInfo, req.ID)
+	if err != nil {
+		return nil, err
+	}
+	used, err := s.GuardHistory(ctx, req.TenantInfo, row, req.AcknowledgeHistory)
 	if err != nil {
 		return nil, err
 	}
@@ -521,7 +560,12 @@ func (s *Service) Clear(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(updated, req.UserID, before, "Cleared the mapping for "+updated.TargetLabel)
+	s.logAudit(
+		updated,
+		req.UserID,
+		before,
+		"Cleared the mapping for "+updated.TargetLabel+historyNote(used),
+	)
 	s.publishInvalidation(
 		ctx,
 		req.TenantInfo,
@@ -571,7 +615,7 @@ func (s *Service) CompleteSetup(
 			summary.ProviderName,
 		)
 	}
-	if conn.SetupStep == accountingsync.SetupStepComplete {
+	if conn.SetupStep != accountingsync.SetupStepMappings {
 		return conn, nil
 	}
 	if !summary.CanCompleteSetup {
@@ -583,7 +627,7 @@ func (s *Service) CompleteSetup(
 	}
 
 	before := jsonutils.MustToJSON(conn)
-	conn.SetupStep = accountingsync.SetupStepComplete
+	conn.FinishMappings()
 	updated, err := s.connections.Update(ctx, conn)
 	if err != nil {
 		return nil, err
@@ -598,7 +642,7 @@ func (s *Service) CompleteSetup(
 		PreviousState:  before,
 		OrganizationID: updated.OrganizationID,
 		BusinessUnitID: updated.BusinessUnitID,
-	}, auditservice.WithComment("Finished the "+summary.ProviderName+" setup")); logErr != nil {
+	}, auditservice.WithComment("Confirmed the "+summary.ProviderName+" mappings")); logErr != nil {
 		s.l.Error("failed to log accounting setup audit", zap.Error(logErr))
 	}
 	s.publishConnectionInvalidation(ctx, updated, req.UserID)

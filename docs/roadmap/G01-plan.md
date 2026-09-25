@@ -16,6 +16,7 @@ Every fact here was read in the code, not taken from the brief. The ones that ch
 |---|---|---|---|
 | F1 | In `JournalPostingMode = Manual` (the default), subledger journals are written as `Pending` or `Approved` and **nothing ever moves them to `Posted`**. The journal repositories expose only `CreatePosting` and `MarkReversed`; balances are updated only when `IsPosted` is true. | `invoiceservice/accounting_helpers.go` `invoicePostingWorkflow`; `journalentryrepository` `MarkReversed`; `journalpostingrepository.CreatePosting` | Ledger mode (push journals) would push nothing for a Manual-mode tenant. Document mode must not depend on journals at all. |
 | F2 | Credit memos created by invoice adjustments (void of a posted invoice, CreditOnly, CreditAndRebill, FullReversal) are inserted directly as `Posted` with no journal and no `journal_sources` row. Only write-offs journal. | `invoiceadjustmentservice/service.go` `createCreditMemoInvoice` | `journal_sources` cannot be the sync trigger; it misses real documents. |
+| F3 | Driver settlement `MarkPaid` writes no payment journal and runs outside a transaction, so settlements payable is never relieved in Trenova's GL. Carrier settlements do write one. | `driversettlementservice/lifecycle.go` `MarkPaid` | Document mode still sends the bill payment, so the provider's AP is right while Trenova's GL keeps the payable. M4 adds the transaction; the journal is a fix outside G01. |
 | F3 | `journal_sources` rows exist only when a journal was created (`journal_batch_id NOT NULL`), keyed by an idempotency key unique per org and business unit. | migration `20260410203000_add_journal_sources_and_balances` | Useful as a cross-reference in ledger mode, not as the outbox. |
 | F4 | Invoices post two header lines to the tenant default AR and revenue accounts. Invoice lines carry `Type` (Freight, Accessorial, Memo) and `ChargeCode` but no GL account. The billing profile's `RevenueAccountID`/`ARAccountID` are never read. `accessorial_charges` has no GL account. There is no revenue-code model. | `accounting_helpers.go:89-120`; `invoice/invoice.go` `InvoiceLine` | Document mode maps line type and charge code to QuickBooks **Items**, which carry the income account. This gives QuickBooks line detail that Trenova's own GL does not have. |
 | F5 | Posting services run in `db.WithTx`; the transaction rides the context and nested calls reuse it. There is **no after-commit hook**. Invoice posting enqueues EDI best-effort *after* `WithTx` returns. | `infrastructure/postgres/connection.go` `WithTx`; `invoiceservice/edi.go` `enqueueEDIAfterPost` | Best-effort after-commit enqueue loses work if the process dies between commit and enqueue. G01 writes its outbox row **inside** the posting transaction. |
@@ -451,6 +452,218 @@ Rejecting a proposal returns the row to `Unmatched` and remembers the rejected i
 One workflow per connection (`accounting-reference:<connectionID>`) deduplicates concurrent requests. A record not returned by a complete pull is marked removed.
 
 **Deferred to M3, with the records they depend on.** Usage counts and the remap guard (`acknowledgeHistory`) need `accounting_sync_records`. So do the sync start date and backfill.
+
+### 9.3 M3 design, pinned to the code
+
+QuickBooks Online is the first adapter, not the design. Everything below the connector port speaks provider-neutral documents, stores provider-neutral states and shows the connection's provider name. Xero, Business Central and NetSuite add an adapter and nothing else.
+
+**What the survey found.** Four facts reshape §4.4:
+- **Credit memos from adjustments do not pass through `Post`.** `invoiceadjustmentservice.createCreditMemoInvoice` inserts the memo already `Posted`. It has its own enqueue point, inside `executeApprovedAdjustment`'s transaction.
+- **An adjustment credit memo is not applied to its invoice.** It stands open with its own negative balance. `customerpaymentservice.ApplyCreditMemo` settles it later, and `UnapplyCreditMemoApplication` undoes that. So credit applications are a document of their own (`CreditApplication`, `Create` and `Void`), not a side effect of the memo.
+- **`SubmitDraft` runs an adjustment without a transaction.** M3 wraps its execution in one, so the memo and its outbox row commit together.
+- **`ports.AfterCommit` is the after-commit hook.** It queues on the outermost `WithTx` and runs once that commits. The dispatcher kick uses it; the outbox row itself is written with the transaction's context.
+
+**The provider-neutral port.** `AccountingDocumentWriter` is an optional capability, found by type assertion like the M2 reference ports:
+- `UpsertCustomer(party)`, `CreateSalesDocument(doc)`, `VoidSalesDocument(ref)`, `CreatePayment(payment)`, `VoidPayment(ref)`, `CreateCreditApplication(app)`, `VoidCreditApplication(ref)`.
+- `DocumentLimits()` says what the provider accepts: the longest document number, whether it has debit memos, whether a credit memo can be voided in place.
+- `DocumentURL(kind, externalID)` builds the link back.
+- `ClassifyDocumentError(err)` returns a `SyncErrorCategory` with the provider's code and text.
+
+Documents carry external ids already resolved from confirmed mappings, amounts as decimals, dates as calendar dates and the request id. Mapping rules live once, in the payload builders. Each adapter chooses how to express what its provider lacks:
+- QuickBooks has no debit memo, so a debit memo is sent as an invoice whose private note names the memo and its reference invoice.
+- A short pay becomes a credit memo to the short-pay write-off item, linked in the same payment.
+- A credit application becomes a zero-total payment that links the invoice and the credit memo.
+
+**Multi-step writes.** When one Trenova document needs several provider requests, each request carries its own request id derived from the record's (`<request id>-1`, `-2`), and the adapter reports every external id it received. A retry therefore replays the steps already done and finishes the rest. The short-pay credit memo and then the payment is one example.
+
+**Outbox.** `accounting_sync_records` and `accounting_sync_attempts` are as in §3.4 and §3.5. Changes:
+- **Object types for M3:** `Customer`, `Invoice`, `CreditMemo`, `DebitMemo`, `CustomerPayment`, `CreditApplication`. M4 adds the payables types by widening the CHECK.
+- **Idempotency key:** `<objectType>:<objectID>:<operation>:<revision>`. The revision is 1 for a creation and the document's version for an update. A payment re-applied by `ApplyUnapplied` is an `Update` at its new version.
+- **Request id:** `trn-` plus 40 hex characters of SHA-256 over the connection and the idempotency key. It is stable across leases and retries.
+- **`mapping_ids`:** the confirmed mappings a synced payload used. This is the M2 deferral: a mapping's usage count is how many `Synced` records name it. Changing or clearing a used mapping needs `acknowledgeHistory`, and the change is audited.
+- **One record per connection.** The enqueuer writes a record for every connection that is syncing. A tenant normally has one; a second accounting provider gets its own records.
+
+**Which connections sync.** A connection enqueues when it is active, its setup is `Complete` and it has a `sync_start_date`. Setup now has a `StartDate` step between `Mappings` and `Complete`. It takes:
+- the start date;
+- whether posted documents sync on their own (`auto_sync`) or wait as `AwaitingApproval` for a person to release them;
+- whether to backfill.
+
+Finishing it stamps `sync_enabled_at`. Documents dated before the start date are never enqueued. Pausing (`paused_at`, `paused_by_id`, `paused_reason`) keeps enqueueing but holds the dispatcher.
+
+**Enqueue points.**
+
+| Where | Record |
+|---|---|
+| `invoiceservice.Post`, after the journal posting and inside its transaction (memo auto-post nests into the memo's transaction) | `Invoice`, `CreditMemo` or `DebitMemo` / `Create` |
+| `invoiceadjustmentservice.createCreditMemoInvoice` (every adjustment kind; a write-off memo carries one line to the `ShortPayWriteOff` item) | `CreditMemo` / `Create` |
+| `customerpaymentservice.PostAndApply` | `CustomerPayment` / `Create` |
+| `customerpaymentservice.ApplyUnapplied` | `CustomerPayment` / `Update` |
+| `customerpaymentservice.Reverse` | `CustomerPayment` / `Void` |
+| `customerpaymentservice.ApplyCreditMemo` / `UnapplyCreditMemoApplication` | `CreditApplication` / `Create`, `Void` |
+| `customerservice.Update`, when the customer is mapped (the service gains a transaction so the row commits with the change) | `Customer` / `Update` |
+
+A draft voided never synced. A posted invoice is reversed by a credit memo, which is already an enqueue point. `TestEveryPostingPathEnqueues` reads these packages and fails when a journal posting or a `Posted` status write appears in a function the table does not name.
+
+**Dependencies.** Resolved when a record is pushed, not when it is queued:
+- **Customer.** A document whose customer is unmapped queues a `Customer` / `Create` record (source `DependencyOf`) and waits for it. That record creates the customer through the M2 create path and confirms the mapping. A duplicate name blocks it as `Mapping` and names the existing record to map to instead.
+- **Items and accounts.** An unmapped line (freight, memo, an accessorial charge), payment method or deposit account blocks the record as `Mapping`. The message names the exact mapping, for example "Map charge code DET to a QuickBooks Online item".
+- **Payments and credit applications.** These wait for the documents they link, and are blocked if one of those documents is itself blocked.
+- **Mapping changes.** Confirming or creating a mapping re-queues the connection's `Mapping`-blocked records.
+
+**Checks before a push.**
+- **Currency.** A document whose currency differs from the provider's home currency is `Blocked(Currency)`, unless the provider has multicurrency. In that case the currency is sent and the provider's rate applies, since Trenova keeps no document rate.
+- **Closed books.** A document dated on or before `external_books_closed_through` is `Blocked(ClosedPeriod)`.
+- **Document number.** A number longer than the provider allows is left for the provider to assign, and Trenova's number is written into the private note.
+- **Dates.** Invoices use the invoice date. Payments use their accounting date, so the provider's books agree with Trenova's GL.
+
+**Dispatcher.** `DrainAccountingOutboxWorkflow`, one per connection (`accounting-sync:<connectionID>`):
+- **Claiming.** It claims due records (`Queued` whose `next_attempt_at` has passed) with `FOR UPDATE SKIP LOCKED` and a lease, in dependency order: customers, then sales documents, then payments and credit applications.
+- **Pushing.** It pushes each claimed record in one activity that heartbeats, and records an attempt row per push.
+- **Idle and restart.** It waits for a signal or 60 seconds, and continues as new after 50 batches.
+- **Starting it.**
+  - `Kick` starts it with `SignalWithStartWorkflow` after commit.
+  - A one-minute schedule starts it for every connection that has due records. A lost kick therefore costs at most a minute.
+  - An expired lease returns the record to the queue, and the stable request id makes the re-push a replay.
+
+**Retries.**
+
+| Error | What happens |
+|---|---|
+| `Transient` or `RateLimited` | Retried, backing off exponentially from 30 seconds to 6 hours. After 8 attempts the record is `DeadLettered` and `accounting.sync_failed` is raised. |
+| `Auth` | Reported to the connection's health (M1). The record waits 15 minutes without spending an attempt. |
+| `Validation`, `Mapping`, `ClosedPeriod`, `Currency`, `Duplicate`, `NotFound`, `Conflict` | The record goes straight to `Blocked` with a plain-language `resolution`, and `accounting.sync_blocked` is raised. |
+
+A person or the retry tool re-queues a blocked record, and skipping one marks it `Skipped` with a reason.
+
+**Safety net and backfill.**
+- **Safety net.** It runs hourly. It enqueues any document posted since `sync_enabled_at` that has no record (source `SafetyNet`). A document it finds means an enqueue point was missed, so the count is a Watchtower item.
+- **Backfill.** It covers documents dated from the start date up to `sync_enabled_at`, which never passed a live enqueue point. It is an `accounting_backfills` row driven by `BackfillAccountingWorkflow`. That workflow pages each object type by `(posted_at, id)`, saves the cursor after every page, checks the row's status between pages to pause or cancel, and counts what it enqueued. It can be asked for from the `StartDate` step or later, and one runs per connection at a time.
+
+**Retention.** Daily, the `payload` of records `Synced` more than 90 days ago is cleared (the hash stays), and attempts older than 90 days are deleted.
+
+**Agent surface.**
+- **Events.** `accounting.sync_failed` and `accounting.sync_blocked`, on subject type `AccountingSyncRecord` (prefix `acctsr_`).
+- **Watchtower.** Items are grouped by cause, so 400 records blocked by one missing item are one item that names it. There are also items for a safety-net count above zero, and for a connection paused longer than a day.
+- **Template.** `BooksKeeper` listens for `sync_failed`, `sync_blocked` and `connection_degraded`, plus a weekly schedule. It starts in shadow mode.
+- **Tools.**
+  - `get_accounting_sync_status` gains queue depth by status.
+  - New tools:
+    - `list_accounting_sync_records`
+    - `get_accounting_sync_record`
+    - `get_record_accounting_sync_state`
+    - `retry_accounting_sync`
+    - `skip_accounting_sync`
+    - `pause_accounting_sync`
+    - `resume_accounting_sync`
+    - `request_accounting_backfill`
+
+  They carry the tiers in §6.2, and `accounting_sync` read and update join the agent's allowed permissions.
+- **Reporting.** Report catalog entity `accounting_sync_record`, and the canned report **Sync exceptions by week**.
+
+**UI.**
+- **Sync ledger page.** `/accounting/sync` has a KPI strip, a ledger table, a row sheet with the attempts and the one action that fixes the row, and header actions (pause or resume, retry failed, release held, backfill).
+- **Setup wizard.** The `StartDate` step is added.
+- **Status line.** An `AccountingSyncStateLine` goes on the invoice, customer payment and customer views. It is fed by a per-request loader and hidden when nothing is syncing.
+
+**Deferred to M4 and M5.** Payables records, inbound changes and drift, as §9 lists.
+
+### 9.4 M4 design, pinned to the code
+
+M4 sends payables to the books: carrier settlements, and owner-operator driver settlements when the connection opts in. It reuses the M3 outbox, dispatcher, retries, safety net, backfill, ledger and tools. Every rule below sits above the provider-neutral port, and QuickBooks Online is the first adapter again.
+
+**What the survey found.** Six facts shape the design:
+- **A paid settlement cannot be voided.** `Paid` and `Voided` are terminal for both carrier and driver settlements. A void therefore only ever reverses a posted, unpaid bill, and no bill payment has to be undone first.
+- **QuickBooks Online has no void for a bill or a vendor credit.** The API deletes them. The adapter reports this in `DocumentLimits` (`CanVoidPurchaseDocument: false`), the same way credit memos work in M3. A bill payment can be voided.
+- **Settlement lines post to many accounts.** A carrier line can override the purchased-transportation account. A driver settlement posts earnings, reimbursements, pay-code accounts, escrow withheld, advance recovery and carry-forwards to their own accounts. Re-deriving that would duplicate `BuildCarrierSettlementPostingLegs` and `BuildSettlementPostingLegs`. So a bill is built **from the settlement's journal entry**, which is the GL truth. The entry's lines exist whatever its posting status, so a Manual-mode tenant (F1) still gets bills.
+- **A driver settlement does not record its payable account.** Carrier settlements stamp `posted_ap_account_id`; driver settlements read the control each time. M4 adds `posted_payable_account_id` to driver settlements, stamped at `Post`. Settlements posted before the migration fall back to the control's current settlements payable account.
+- **Driver `MarkPaid` runs outside a transaction and posts no payment journal.** M4 wraps it in a transaction so the outbox row commits with the status change. The missing payment journal is filed as **F3**, outside G01, beside F1 and F2: Trenova's settlements payable is never relieved, while the provider's AP is.
+- **Owner-operators are marked on the settlement.** `Classification` is `OwnerOperator` or `CompanyDriver`, copied from the pay profile when the settlement is built. Decision D5 keys on it, not on the worker's employment type.
+
+**Object types.** The `accounting_sync_records` CHECK widens:
+
+| Object type | Trenova object | Provider document |
+|---|---|---|
+| `CarrierVendor` | carrier (`car_`) | vendor |
+| `DriverVendor` | worker (`wrk_`) | vendor, marked as a 1099 vendor |
+| `CarrierBill` | carrier settlement (`carstl_`) | bill, or vendor credit when the net is negative |
+| `CarrierBillPayment` | carrier settlement | bill payment |
+| `DriverBill` | driver settlement (`dstl_`) | bill, or vendor credit when the net is negative |
+| `DriverBillPayment` | driver settlement | bill payment |
+
+A bill and its payment share the settlement's id and differ by object type, so the idempotency key stays `<objectType>:<objectID>:<operation>:<revision>`. Dispatch rank: vendors with customers (0), bills with sales documents (1), bill payments with payments (2).
+
+**The driver settlement setting.** A new connection column `driver_settlements_enabled_at` (nullable) is the D5 toggle, **off by default**. Setting it stamps the time; clearing it sets it to null. It is set in the `StartDate` step and changed later by `updateAccountingSyncSettings`, which also changes `auto_sync`. Driver records are enqueued only while it is set. The safety net looks for driver settlements posted since that time, and a backfill reaches driver settlements only when the setting is on. Company-driver settlements are never enqueued.
+
+**Enqueue points.**
+
+| Where | Record |
+|---|---|
+| `carriersettlementservice.Post`, after the journal posting, inside its transaction | `CarrierBill` / `Create` |
+| `carriersettlementservice.Void`, when the settlement was `Posted` | `CarrierBill` / `Void` |
+| `carriersettlementservice.MarkPaid` | `CarrierBillPayment` / `Create` (nothing when the net is zero) |
+| `driversettlementservice.Post`, owner-operators only | `DriverBill` / `Create` |
+| `driversettlementservice.Void`, when the settlement was `Posted` | `DriverBill` / `Void` |
+| `driversettlementservice.MarkPaid` (now transactional), owner-operators only | `DriverBillPayment` / `Create` (nothing when the net is zero) |
+| `carrierservice.Update`, when the carrier is mapped (the service gains a transaction) | `CarrierVendor` / `Update` |
+| `workerservice.Update`, when the worker is mapped as a driver vendor (the service gains a transaction) | `DriverVendor` / `Update` |
+
+A settlement voided before it was posted never synced. `TestEveryPostingPathEnqueues` gains these packages, and it now also watches writes of `StatusPaid` for settlements.
+
+**Mappings.** Two target types are added:
+- **`Driver`**, keyed by worker, maps to a provider vendor. It is listed only for workers who have had an owner-operator settlement. A driver with no mapping gets a `DriverVendor` / `Create` dependency, the same way unmapped customers work in M3. The vendor is created as a 1099 vendor, from the worker's legal name and address.
+- **`GLAccount`**, keyed by a Trenova GL account, maps to a provider account.
+
+Each Trenova account a bill touches is resolved in this order:
+1. its confirmed `GLAccount` mapping;
+2. if it is the default account behind a role (accounts payable, purchased transportation, or the deposit account for cash), that role's mapping;
+3. otherwise the record is blocked as `Mapping`, naming the account, for example "Map GL account 2150 Escrow liability to a QuickBooks Online account".
+
+This keeps the M2 wizard's role mappings working for the common case, and never files an override account under a role silently. The mappings page lists a `GLAccount` row for every account a payables document posts to: the carrier settlement control's defaults, the driver pay defaults, and pay-code accounts. It gains filters for the new target types. The `GLAccount` mappings are also the first step toward M6, which maps every account with activity.
+
+**Bills.**
+- **Vendor.** The carrier or driver vendor, created on demand as above.
+- **Lines.** One account-based expense line per journal line of the posted entry, except the payable line. The amount is the line's debit minus its credit, so an escrow deduction or advance recovery becomes a negative line. The description is the GL account's name.
+- **Accounts payable.** The payable line's account: `posted_ap_account_id` for carriers, `posted_payable_account_id` for drivers.
+- **Dates.** The bill date is the journal's accounting date, and the due date is the settlement's pay date.
+- **Number.** When all the carrier invoice matches on the settlement that are `Matched` or `Resolved` share one invoice number, it becomes the bill number, because that is how the carrier's own invoice is found in the books. Otherwise the settlement number is used. A number longer than the provider allows goes in the private note, and the provider assigns one.
+- **Private note.** "Trenova carrier settlement CS-1042", then the pay period, the shipment count, and every matched invoice number.
+- **Negative total.** When the lines sent total below zero, the document is a vendor credit with the same lines, with signs flipped so the credit total is positive. The decision follows the lines, not the settlement's net field, so the document total can never be negative.
+- **Negative lines.** QuickBooks Online accepts negative lines on a bill whose total is not negative. That is Intuit's documented product behavior, and it is confirmed against the sandbox before merge, the way the §1.3 facts were.
+- **Zero net.** A zero net still creates the bill, because the expense and the deductions it offsets are real. No payment follows.
+- **Currency and closed books.** The M3 checks apply unchanged.
+
+**Bill payments.**
+- **Link.** The payment is paid against the bill created for the settlement, and waits for it the way a customer payment waits for its invoices. If the bill was never sent (skipped, withdrawn, or dated before the start date), the payment finishes without sending anything and says why.
+- **Account.** Payment is by bank from the account the Trenova payment journal credited (the accounting control's cash account), resolved through the rules above. That account normally maps through the deposit role.
+- **Date, number and note.** The date is the paid date. The number is the payment reference, cut to the provider's limit by the service, so every adapter gets the same rule. The private note gives the payment method and the full reference.
+- **Negative net.** A settlement with a negative net never gets a bill payment. A refund from the vendor against the vendor credit is recorded by a person in the provider. The record finishes without sending anything, and its resolution says so, the same way M3 records that need nothing sent finish.
+
+**Voids.** A `Void` record waits for its `Create` record, as in M3. The adapter then deletes the bill or vendor credit, because the provider has no void. If the `Create` record was never synced, the void is skipped instead, and the `Create` record is skipped with it when still queued, so nothing reaches the books.
+
+**Provider-neutral port.** `AccountingDocumentWriter` gains four methods:
+- `UpsertVendor(doc)` creates or updates a vendor.
+- `CreatePurchaseDocument(doc)` creates a bill or vendor credit, chosen by the document's `Kind`.
+- `VoidPurchaseDocument(ref)` voids or deletes one, depending on `DocumentLimits`.
+- `CreateBillPayment(doc)` creates a bill payment.
+
+`DocumentURL` covers the new kinds. `shared/quickbooks` gains bill, vendor credit and bill payment writes, and a sparse vendor update. The request id, the multi-step `-1`/`-2` convention and the fault classifier are unchanged.
+
+**Agent surface.**
+- **Tools and events.** Every sync tool, and the `sync_failed`/`sync_blocked` events, already take any object type. Their descriptions and the tool catalog list the new ones.
+- **Record state.** `get_record_accounting_sync_state` accepts carrier and driver settlements, carriers and workers.
+- **BooksKeeper.** Its instructions name bills and bill payments.
+- **Watchtower.** Grouping by cause covers the new mapping gaps, so 60 bills blocked on one escrow account show as one item.
+
+**Reporting.** The `accounting_sync_record` catalog entity already carries object type, so bills and bill payments are their own document types. **Sync exceptions by week** (version 1.1.0) gains a document types parameter, so it runs for receivables or payables alone.
+
+**UI.**
+- **Setup wizard.** The `StartDate` step gains the driver-settlement switch, off, with a line explaining that company drivers are never sent.
+- **QuickBooks card.** A new **Sync settings** section edits automatic sync and the driver switch after setup.
+- **Status lines.** The `AccountingSyncStateLine` goes on the carrier settlement and driver settlement views, and on the carrier and worker records.
+- **Ledger and mappings page.** The ledger's object filter gains the new types. The mappings page gains the `Driver` and `GL account` groups.
+- **Docs.** The product guide's sync-ledger and integrations pages cover payables.
+
+**Deferred.** Inbound bill payments made in the provider, and drift on payables, are part of M5, as §9 lists.
 
 
 ---

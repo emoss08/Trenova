@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
@@ -21,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 )
 
@@ -147,10 +145,10 @@ func (t *evaluateServiceFailuresTool) request(
 }
 
 type resolveServiceFailureTool struct {
-	failures serviceFailureDecider
+	failures serviceFailureResolver
 }
 
-func newResolveServiceFailureTool(failures serviceFailureDecider) serviceports.AgentTool {
+func newResolveServiceFailureTool(failures serviceFailureResolver) serviceports.AgentTool {
 	return &resolveServiceFailureTool{failures: failures}
 }
 
@@ -212,29 +210,46 @@ func (t *resolveServiceFailureTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	request, _, err := t.request(ctx, &params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.failures.Resolve(ctx, request, params.Actor)
+
+	return err
+}
+
+// request is the resolution the preview shows and the write makes: an open
+// failure, closed at the version read, with the reason code the call sends
+// or the one already on file.
+func (t *resolveServiceFailureTool) request(
+	ctx context.Context,
+	params *serviceports.ToolExecuteParams,
+) (*serviceports.ServiceFailureLifecycleRequest, *servicefailure.ServiceFailure, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return nil, nil, err
 	}
 
 	failureID, err := requirePulid(params.Params, "serviceFailureId")
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	notes, err := requireString(params.Params, "notes")
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	tenant := tenantFrom(params)
+	tenant := tenantFrom(*params)
 	existing, err := t.failures.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
 		ID:         failureID,
 		TenantInfo: tenant,
 	})
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	if existing.IsTerminal() {
-		return fmt.Errorf(
+		return nil, nil, fmt.Errorf(
 			"service failure %s is already %s and cannot be resolved again",
 			existing.Number, existing.Status,
 		)
@@ -250,19 +265,19 @@ func (t *resolveServiceFailureTool) Execute(
 	if raw := optionalString(params.Params, "reasonCodeId"); raw != "" {
 		reasonID, parseErr := pulid.Parse(raw)
 		if parseErr != nil {
-			return fmt.Errorf("parameter \"reasonCodeId\" is not a valid id: %w", parseErr)
+			return nil, nil, fmt.Errorf(
+				"parameter \"reasonCodeId\" is not a valid id: %w", parseErr,
+			)
 		}
 		request.ReasonCodeID = reasonID
 	} else if existing.ReasonCodeID == nil || existing.ReasonCodeID.IsNil() {
-		return errors.New(
+		return nil, nil, errors.New(
 			"this failure has no reason code yet; pick one from " +
 				"list_service_failure_reason_codes and send it as reasonCodeId",
 		)
 	}
 
-	_, err = t.failures.Resolve(ctx, request, params.Actor)
-
-	return err
+	return request, existing, nil
 }
 
 // driverNotifier is the driver portal's notification path. The wording
@@ -270,6 +285,10 @@ func (t *resolveServiceFailureTool) Execute(
 // the title and the text, and the template decides how they are dressed.
 type driverNotifier interface {
 	Notify(ctx context.Context, req *drivernotificationservice.DriverNotification)
+	Preview(
+		ctx context.Context,
+		req *drivernotificationservice.DriverNotification,
+	) (*serviceports.DriverNotificationPreview, error)
 }
 
 const (
@@ -350,24 +369,39 @@ func (t *notifyDriverTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	request, err := t.request(&params)
+	if err != nil {
 		return err
+	}
+
+	t.drivers.Notify(ctx, request)
+
+	return nil
+}
+
+// request is the message the preview renders and the write sends: the
+// dispatch template, the model's title and text, and the shipment it opens.
+func (t *notifyDriverTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*drivernotificationservice.DriverNotification, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return nil, err
 	}
 
 	workerID, err := requirePulid(params.Params, "workerId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	title, err := requireString(params.Params, "title")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	message, err := requireString(params.Params, "message")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(message) > maxDriverMessageChars {
-		return fmt.Errorf(
+		return nil, fmt.Errorf(
 			"parameter \"message\" is %d characters; keep it under %d so it reads on a phone",
 			len(message), maxDriverMessageChars,
 		)
@@ -380,11 +414,11 @@ func (t *notifyDriverTool) Execute(
 	case "":
 		priority = notification.PriorityMedium
 	default:
-		return errors.New("parameter \"priority\" must be low, medium, high or critical")
+		return nil, errors.New("parameter \"priority\" must be low, medium, high or critical")
 	}
 
 	request := &drivernotificationservice.DriverNotification{
-		TenantInfo: tenantFrom(params),
+		TenantInfo: tenantFrom(*params),
 		WorkerID:   workerID,
 		EventType:  dispatchMessageEvent,
 		Priority:   priority,
@@ -396,15 +430,13 @@ func (t *notifyDriverTool) Execute(
 	if raw := optionalString(params.Params, "shipmentId"); raw != "" {
 		shipmentID, parseErr := pulid.Parse(raw)
 		if parseErr != nil {
-			return fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", parseErr)
+			return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", parseErr)
 		}
 		request.RelatedEntities = map[string]any{"shipmentId": shipmentID.String()}
 		request.Link = "/loads/" + shipmentID.String()
 	}
 
-	t.drivers.Notify(ctx, request)
-
-	return nil
+	return request, nil
 }
 
 // customerMailer is what email_customer needs: the shipment for its customer
@@ -418,6 +450,7 @@ type customerMailer struct {
 	customers repositories.CustomerRepository
 	shipments repositories.ShipmentRepository
 	comments  serviceports.ShipmentCommentService
+	senders   serviceports.EmailSenderResolver
 }
 
 type emailCustomerParams struct {
@@ -430,6 +463,7 @@ type emailCustomerParams struct {
 	Customers repositories.CustomerRepository
 	Shipments repositories.ShipmentRepository
 	Comments  serviceports.ShipmentCommentService
+	Senders   serviceports.EmailSenderResolver `optional:"true"`
 }
 
 type emailCustomerTool struct {
@@ -445,10 +479,13 @@ func newEmailCustomerTool(p emailCustomerParams) serviceports.AgentTool {
 		customers: p.Customers,
 		shipments: p.Shipments,
 		comments:  p.Comments,
+		senders:   p.Senders,
 	}}
 }
 
-func (t *emailCustomerTool) Name() string { return "email_customer" }
+const emailCustomerToolName = "email_customer"
+
+func (t *emailCustomerTool) Name() string { return emailCustomerToolName }
 
 func (t *emailCustomerTool) Description() string {
 	return "Email a shipment's customer a status update: a delay and the new expected " +
@@ -511,86 +548,19 @@ func (t *emailCustomerTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	composed, err := t.compose(ctx, &params)
 	if err != nil {
 		return err
 	}
-	profileID, err := requirePulid(params.Params, "profileId")
-	if err != nil {
-		return err
-	}
-	subject, err := requireString(params.Params, "subject")
-	if err != nil {
-		return err
-	}
-	body, err := requireString(params.Params, "body")
-	if err != nil {
-		return err
-	}
-
-	tenant := tenantFrom(params)
-	sp, err := t.deps.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:              shipmentID,
-		TenantInfo:      tenant,
-		ShipmentOptions: repositories.ShipmentOptions{IncludeCustomer: true},
-	})
-	if err != nil {
-		return err
-	}
-
-	// The customer update desk is woken by every arrival and every
-	// departure, so a shipment crossing a yard can raise several runs in a
-	// few minutes. Telling the customer once is the rule; reading back what
-	// was already sent is what enforces it.
-	told, err := alreadyToldCustomer(ctx, t.deps.comments, tenant, sp.ID, timeutils.NowUnix())
-	if err != nil {
-		return err
-	}
-	if told {
+	if composed.alreadyTold {
 		return ErrCustomerAlreadyTold
 	}
 
-	recipients, customerName, err := t.recipients(ctx, sp, tenant)
-	if err != nil {
+	if _, err = t.deps.email.Send(ctx, composed.send); err != nil {
 		return err
 	}
 
-	context := documenttemplate.AgentEmailContext{
-		AgentSubject:      strings.TrimSpace(subject),
-		AgentBody:         strings.TrimSpace(body),
-		CustomerName:      customerName,
-		ShipmentProNumber: sp.ProNumber,
-	}
-	brandAgentEmail(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &context)
-
-	rendered, err := t.deps.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
-		TenantInfo: tenant,
-		Kind:       documenttemplate.KindAgentCustomerUpdateEmail,
-		CustomerID: pulid.PtrOrNil(sp.CustomerID),
-		Data:       context,
-	})
-	if err != nil {
-		return err
-	}
-
-	if _, err = t.deps.email.Send(ctx, &serviceports.SendEmailRequest{
-		TenantInfo:     tenant,
-		ProfileID:      profileID,
-		Purpose:        email.PurposeOperations,
-		To:             recipients,
-		Subject:        rendered.Subject,
-		HTML:           rendered.HTML,
-		Text:           rendered.Text,
-		IdempotencyKey: params.IdempotencyKey,
-	}); err != nil {
-		return err
-	}
-
-	return t.record(ctx, sp, tenant, recipients, context)
+	return t.record(ctx, composed)
 }
 
 // recipients are the customer's notice contacts, read from the record. The
@@ -631,35 +601,12 @@ func (t *emailCustomerTool) recipients(
 // record leaves the email on the shipment's thread so the desk sees what the
 // customer was told. A failure to record never undoes a send that already
 // happened; it is reported so the run shows it.
-func (t *emailCustomerTool) record(
-	ctx context.Context,
-	sp *shipment.Shipment,
-	tenant pagination.TenantInfo,
-	recipients []string,
-	context documenttemplate.AgentEmailContext,
-) error {
+func (t *emailCustomerTool) record(ctx context.Context, composed *customerEmail) error {
 	if t.deps.comments == nil {
 		return nil
 	}
 
-	_, err := t.deps.comments.CreateSystem(ctx, &serviceports.CreateSystemShipmentCommentRequest{
-		TenantInfo: tenant,
-		ShipmentID: sp.ID,
-		Comment: fmt.Sprintf(
-			"Emailed %s: %s\n\n%s",
-			strings.Join(recipients, ", "), context.AgentSubject, context.AgentBody,
-		),
-		Type:       shipment.CommentTypeCustomerUpdate,
-		Visibility: shipment.CommentVisibilityOperations,
-		Priority:   shipment.CommentPriorityNormal,
-		Metadata: map[string]any{
-			shipment.CommentMetadataOrigin: shipment.CommentOriginAgent,
-			"tool":                         "email_customer",
-			"recipients":                   recipients,
-			"subject":                      context.AgentSubject,
-		},
-	})
-	if err != nil {
+	if _, err := t.deps.comments.CreateSystem(ctx, customerUpdateComment(composed)); err != nil {
 		return fmt.Errorf("the email was sent but could not be recorded on the shipment: %w", err)
 	}
 
@@ -677,6 +624,14 @@ type detentionActor interface {
 		ctx context.Context,
 		params detentionservice.WaiveParams,
 	) (*detention.DetentionOccurrence, error)
+	PreviewOccurrenceNotice(
+		ctx context.Context,
+		params *detentionservice.SendOccurrenceNoticeParams,
+	) (*detentionservice.NoticePreview, error)
+	PreviewWaive(
+		ctx context.Context,
+		params *detentionservice.WaiveParams,
+	) (*detentionservice.OccurrenceChange, error)
 }
 
 type sendDetentionNoticeTool struct {
@@ -732,22 +687,33 @@ func (t *sendDetentionNoticeTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	occurrenceID, err := requirePulid(params.Params, "occurrenceId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.detention.SendOccurrenceNotice(ctx, detentionservice.SendOccurrenceNoticeParams{
-		OccurrenceID: occurrenceID,
-		TenantInfo:   tenantFrom(params),
-		UserID:       params.Actor.UserID,
-	})
+	_, err = t.detention.SendOccurrenceNotice(ctx, request)
 
 	return err
+}
+
+func (t *sendDetentionNoticeTool) request(
+	params *serviceports.ToolExecuteParams,
+) (detentionservice.SendOccurrenceNoticeParams, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return detentionservice.SendOccurrenceNoticeParams{}, err
+	}
+
+	occurrenceID, err := requirePulid(params.Params, "occurrenceId")
+	if err != nil {
+		return detentionservice.SendOccurrenceNoticeParams{}, err
+	}
+
+	return detentionservice.SendOccurrenceNoticeParams{
+		OccurrenceID: occurrenceID,
+		TenantInfo:   tenantFrom(*params),
+		UserID:       params.Actor.UserID,
+	}, nil
 }
 
 type waiveDetentionTool struct {
@@ -821,30 +787,47 @@ func (t *waiveDetentionTool) Execute(
 		return ErrApprovalNeedsAPerson
 	}
 
-	occurrenceID, err := requirePulid(params.Params, "occurrenceId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
+	}
+
+	_, err = t.detention.Waive(ctx, request)
+
+	return err
+}
+
+func (t *waiveDetentionTool) request(
+	params *serviceports.ToolExecuteParams,
+) (detentionservice.WaiveParams, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return detentionservice.WaiveParams{}, err
+	}
+
+	occurrenceID, err := requirePulid(params.Params, "occurrenceId")
+	if err != nil {
+		return detentionservice.WaiveParams{}, err
 	}
 	rawReason, err := requireString(params.Params, "reason")
 	if err != nil {
-		return err
+		return detentionservice.WaiveParams{}, err
 	}
 	reason, err := detention.WaiverReasonFromString(rawReason)
 	if err != nil {
-		return fmt.Errorf("parameter \"reason\" is not a waiver reason: %w", err)
+		return detentionservice.WaiveParams{}, fmt.Errorf(
+			"parameter \"reason\" is not a waiver reason: %w", err,
+		)
 	}
 	note, err := requireString(params.Params, "note")
 	if err != nil {
-		return err
+		return detentionservice.WaiveParams{}, err
 	}
 
-	_, err = t.detention.Waive(ctx, detentionservice.WaiveParams{
+	return detentionservice.WaiveParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   tenantFrom(params),
+		TenantInfo:   tenantFrom(*params),
 		Reason:       reason,
 		Note:         strings.TrimSpace(note),
 		UserID:       params.Actor.UserID,
-	})
-
-	return err
+	}, nil
 }

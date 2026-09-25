@@ -971,6 +971,80 @@ func (_c *MockServiceFailureService_Void_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
+// PreviewResolve provides a mock function for the type MockServiceFailureService
+func (_mock *MockServiceFailureService) PreviewResolve(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor) (*services.ServiceFailureLifecyclePreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewResolve")
+	}
+
+	var r0 *services.ServiceFailureLifecyclePreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ServiceFailureLifecycleRequest, *services.RequestActor) (*services.ServiceFailureLifecyclePreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ServiceFailureLifecycleRequest, *services.RequestActor) *services.ServiceFailureLifecyclePreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ServiceFailureLifecyclePreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ServiceFailureLifecycleRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockServiceFailureService_PreviewResolve_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewResolve'
+type MockServiceFailureService_PreviewResolve_Call struct {
+	*mock.Call
+}
+
+// PreviewResolve is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ServiceFailureLifecycleRequest
+//   - actor *services.RequestActor
+func (_e *MockServiceFailureService_Expecter) PreviewResolve(ctx any, req any, actor any) *MockServiceFailureService_PreviewResolve_Call {
+	return &MockServiceFailureService_PreviewResolve_Call{Call: _e.mock.On("PreviewResolve", ctx, req, actor)}
+}
+
+func (_c *MockServiceFailureService_PreviewResolve_Call) Run(run func(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor)) *MockServiceFailureService_PreviewResolve_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ServiceFailureLifecycleRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ServiceFailureLifecycleRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockServiceFailureService_PreviewResolve_Call) Return(result *services.ServiceFailureLifecyclePreview, err error) *MockServiceFailureService_PreviewResolve_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockServiceFailureService_PreviewResolve_Call) RunAndReturn(run func(ctx context.Context, req *services.ServiceFailureLifecycleRequest, actor *services.RequestActor) (*services.ServiceFailureLifecyclePreview, error)) *MockServiceFailureService_PreviewResolve_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PreviewEvaluateShipment provides a mock function for the type MockServiceFailureService
 func (_mock *MockServiceFailureService) PreviewEvaluateShipment(ctx context.Context, req *services.EvaluateShipmentServiceFailuresRequest) (*services.ServiceFailureDetectionPlan, error) {
 	ret := _mock.Called(ctx, req)

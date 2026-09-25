@@ -32,13 +32,13 @@ func (f *fakePTODecider) Approve(
 func (f *fakePTODecider) PreviewApprove(
 	_ context.Context,
 	req *repositories.UpdatePTOStatusRequest,
-) (*serviceports.PTOApprovalPlan, error) {
+) (*serviceports.WorkerPTOTransitionPreview, error) {
 	current := &worker.WorkerPTO{ID: req.ID, Status: worker.PTOStatusRequested}
 	approved := *current
 	approved.Status = worker.PTOStatusApproved
 	approved.ApproverID = req.UserID
 
-	return &serviceports.PTOApprovalPlan{Current: current, Approved: &approved}, nil
+	return &serviceports.WorkerPTOTransitionPreview{Before: current, After: &approved}, nil
 }
 
 func (f *fakePTODecider) Reject(

@@ -1,3 +1,4 @@
+import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
@@ -187,44 +188,48 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
           )}
         </span>
       </div>
+      <AccountingSyncStateLine objectId={settlement.id} className="text-xs" />
       <KpiStrip minItemWidth="8rem">
         <KpiStripItem
           label={t("Gross earnings")}
           value={
-              <AmountDisplay value={settlement.grossEarningsMinor} currency={settlement.currencyCode} />
+            <AmountDisplay
+              value={settlement.grossEarningsMinor}
+              currency={settlement.currencyCode}
+            />
           }
         />
         <KpiStripItem
           label={t("Deductions")}
           value={
-              <AmountDisplay
-                value={-settlement.deductionsMinor}
-                variant="negative"
-                currency={settlement.currencyCode}
-              />
+            <AmountDisplay
+              value={-settlement.deductionsMinor}
+              variant="negative"
+              currency={settlement.currencyCode}
+            />
           }
         />
         <KpiStripItem
           label={t("Miles / loads")}
           value={
-              <span className="tabular-nums">
-                {t(
-                  "{0} mi · {1}",
-                  Number(settlement.totalMiles).toLocaleString(),
-                  settlement.shipmentCount,
-                )}
-              </span>
+            <span className="tabular-nums">
+              {t(
+                "{0} mi · {1}",
+                Number(settlement.totalMiles).toLocaleString(),
+                settlement.shipmentCount,
+              )}
+            </span>
           }
         />
         <KpiStripItem
           label={t("Net pay")}
           tone="success"
           value={
-              <AmountDisplay
-                value={settlement.netPayMinor}
-                variant="positive"
-                currency={settlement.currencyCode}
-              />
+            <AmountDisplay
+              value={settlement.netPayMinor}
+              variant="positive"
+              currency={settlement.currencyCode}
+            />
           }
         />
       </KpiStrip>
