@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
@@ -10,22 +11,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type systemAgentEventMove struct {
+type eventKindsMove struct {
 	migration string
 	systemKey string
 	from      []agent.EventKind
 	to        []agent.EventKind
 }
 
-type systemAgentTemplate struct {
-	systemKey string
-	template  agentdefinition.Template
+var systemAgentTemplates = map[string]agentdefinition.Template{
+	"billing_exception":   agentdefinition.TemplateBillingException,
+	"dispatch_assignment": agentdefinition.TemplateDispatchAssignment,
 }
 
-func systemAgentEventMoves() []systemAgentEventMove {
-	return []systemAgentEventMove{
+func systemAgentEventKindMoves() []eventKindsMove {
+	return []eventKindsMove{
 		{
-			migration: "20261231006510_system_agent_event_kinds",
+			migration: "20261231006510_system_agent_event_kinds.tx",
 			systemKey: "billing_exception",
 			from:      []agent.EventKind{agent.EventBillingQueueItemException},
 			to: []agent.EventKind{
@@ -34,7 +35,7 @@ func systemAgentEventMoves() []systemAgentEventMove {
 			},
 		},
 		{
-			migration: "20261231006510_system_agent_event_kinds",
+			migration: "20261231006510_system_agent_event_kinds.tx",
 			systemKey: "dispatch_assignment",
 			from:      []agent.EventKind{agent.EventShipmentMoveCoverageAtRisk},
 			to: []agent.EventKind{
@@ -43,7 +44,7 @@ func systemAgentEventMoves() []systemAgentEventMove {
 			},
 		},
 		{
-			migration: "20261231006660_billing_exception_accounting_event",
+			migration: "20261231006640_billing_exception_accounting_event.tx",
 			systemKey: "billing_exception",
 			from: []agent.EventKind{
 				agent.EventBillingQueueItemException,
@@ -55,13 +56,6 @@ func systemAgentEventMoves() []systemAgentEventMove {
 				agent.EventAccountingConnectionDegraded,
 			},
 		},
-	}
-}
-
-func systemAgentTemplates() []systemAgentTemplate {
-	return []systemAgentTemplate{
-		{systemKey: "billing_exception", template: agentdefinition.TemplateBillingException},
-		{systemKey: "dispatch_assignment", template: agentdefinition.TemplateDispatchAssignment},
 	}
 }
 
@@ -77,49 +71,45 @@ func textArray(kinds []agent.EventKind) string {
 func TestSystemAgentEventKindsMigrations_MoveOnlyRowsStillOnThePreviousDefault(t *testing.T) {
 	t.Parallel()
 
-	for _, move := range systemAgentEventMoves() {
-		up := compactSQL(readMigration(t, move.migration+".tx.up.sql"))
+	for _, move := range systemAgentEventKindMoves() {
+		up := compactSQL(readMigration(t, move.migration+".up.sql"))
 
-		assert.Contains(t, up, fmt.Sprintf(
-			`SET "event_kinds" = %s`, textArray(move.to),
-		), "%s: %s is moved to its new events", move.migration, move.systemKey)
+		assert.Contains(t, up, fmt.Sprintf(`SET "event_kinds" = %s`, textArray(move.to)),
+			"%s moves %s to its new events", move.migration, move.systemKey)
 		assert.Contains(t, up, fmt.Sprintf(
 			`WHERE "system_key" = '%s' AND "event_kinds" = %s`,
 			move.systemKey, textArray(move.from),
-		), "%s: %s is left alone once somebody changed its events", move.migration, move.systemKey)
+		), "%s leaves %s alone once somebody changed its events", move.migration, move.systemKey)
 	}
 }
 
 func TestSystemAgentEventKindsMigrations_DownRestoresThePreviousDefault(t *testing.T) {
 	t.Parallel()
 
-	for _, move := range systemAgentEventMoves() {
-		down := compactSQL(readMigration(t, move.migration+".tx.down.sql"))
+	for _, move := range systemAgentEventKindMoves() {
+		down := compactSQL(readMigration(t, move.migration+".down.sql"))
 
-		assert.Contains(t, down, fmt.Sprintf(
-			`SET "event_kinds" = %s`, textArray(move.from),
-		), "%s: %s", move.migration, move.systemKey)
+		assert.Contains(t, down, fmt.Sprintf(`SET "event_kinds" = %s`, textArray(move.from)),
+			"%s restores %s", move.migration, move.systemKey)
 		assert.Contains(t, down, fmt.Sprintf(
 			`WHERE "system_key" = '%s' AND "event_kinds" = %s`,
 			move.systemKey, textArray(move.to),
-		), "%s: %s", move.migration, move.systemKey)
+		), "%s restores %s only from what it wrote", move.migration, move.systemKey)
 	}
 }
 
-func TestSystemAgentEventKindsMigrations_LatestMoveMatchesTheTemplate(t *testing.T) {
+func TestSystemAgentEventKindsMigrations_EndOnWhatEachTemplateListensFor(t *testing.T) {
 	t.Parallel()
 
-	moves := systemAgentEventMoves()
-	for _, system := range systemAgentTemplates() {
-		var latest []agent.EventKind
-		for _, move := range moves {
-			if move.systemKey == system.systemKey {
-				latest = move.to
-			}
-		}
+	latest := make(map[string][]agent.EventKind, len(systemAgentTemplates))
+	for _, move := range systemAgentEventKindMoves() {
+		latest[move.systemKey] = move.to
+	}
 
-		assert.Equal(t, system.template.StarterEvents(), latest,
-			"%s listens for events its seeded rows never receive; add a migration that moves them",
-			system.systemKey)
+	for systemKey, template := range systemAgentTemplates {
+		assert.Truef(t, slices.Equal(latest[systemKey], template.StarterEvents()),
+			"%s's template listens for %v but the last migration leaves it on %v; add a migration "+
+				"that moves rows still on the previous default",
+			systemKey, template.StarterEvents(), latest[systemKey])
 	}
 }
