@@ -1,6 +1,7 @@
 package assistantjobs
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -16,9 +18,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/assistantturnservice"
 	"github.com/emoss08/trenova/internal/core/services/notificationservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"go.opentelemetry.io/otel/trace"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/contrib/workflowstreams"
 	"go.temporal.io/sdk/temporal"
@@ -181,6 +186,7 @@ func (a *Activities) FinishTurnActivity(
 
 		ending := a.alreadySaved(ctx, turn)
 		a.resumeFollowUps(ctx, in)
+		emitTurnRoots(ctx, in, turn, ending.Result.Status)
 
 		return ending, nil
 	}
@@ -197,8 +203,93 @@ func (a *Activities) FinishTurnActivity(
 	a.turns.Complete(ctx, turn, conversation.AssistantTurnStatus(ending.Result.Status), cause)
 	a.recordTrajectory(ctx, tenant, payload, in.Events, ending.Event)
 	a.resumeFollowUps(ctx, in)
+	emitTurnRoots(ctx, in, turn, ending.Result.Status)
 
 	return ending, nil
+}
+
+func emitTurnRoots(
+	ctx context.Context,
+	in *FinishTurnInput,
+	turn *conversation.AssistantTurn,
+	status string,
+) {
+	payload := in.Payload
+	end := time.Now()
+	start := agentflow.StartedAt(turn.CreatedAt, turn.StartedAt)
+	turnAnchor := aitrace.AnchorFor(aitrace.AnchorAssistantTurn, payload.TurnID.String())
+
+	var definition *agentdefinition.Definition
+	if in.Plan != nil {
+		definition = in.Plan.Definition
+	}
+
+	var delegations []serviceports.DelegatedRun
+	if in.Run != nil {
+		delegations = in.Run.Delegations
+	}
+	spans := agentflow.DelegateSpans(in.Events)
+	links := make([]trace.Link, 0, len(delegations))
+	for idx := range delegations {
+		delegation := &delegations[idx]
+		anchor := aitrace.ForDelegate(payload.TurnID, delegation.CallID)
+		if !anchor.IsValid() {
+			continue
+		}
+		links = append(links, anchor.Link())
+
+		span := spans[delegation.CallID]
+		delegateStatus := span.Status
+		if delegateStatus == "" {
+			delegateStatus = string(serviceports.DelegateStatusCompleted)
+			if delegation.Failed {
+				delegateStatus = string(serviceports.DelegateStatusFailed)
+			}
+		}
+		var failure *modelcall.Failure
+		if delegation.Failed {
+			failure = &modelcall.Failure{Message: delegateStatus}
+		}
+		agentflow.EmitRoot(ctx, &agentflow.RootParams{
+			Anchor:         anchor,
+			Definition:     delegation.Definition,
+			OwnerKind:      serviceports.RunStepOwnerAssistantTurn,
+			OwnerID:        payload.TurnID,
+			TurnID:         payload.TurnID,
+			ThreadID:       payload.ThreadID,
+			DelegateCallID: delegation.CallID,
+			UserID:         payload.Actor.UserID,
+			Tenant:         payload.tenantInfo(),
+			Trigger:        string(turn.Origin),
+			Status:         delegateStatus,
+			Failure:        failure,
+			Result:         &serviceports.RunResult{Taint: delegation.Taint},
+			Usage:          delegation.Usage,
+			ToolCalls:      span.ToolCalls,
+			Start:          cmp.Or(span.Start, start),
+			End:            cmp.Or(span.End, end),
+			Links:          []trace.Link{turnAnchor.Link()},
+		})
+	}
+
+	agentflow.EmitRoot(ctx, &agentflow.RootParams{
+		Anchor:     turnAnchor,
+		Definition: definition,
+		OwnerKind:  serviceports.RunStepOwnerAssistantTurn,
+		OwnerID:    payload.TurnID,
+		TurnID:     payload.TurnID,
+		ThreadID:   payload.ThreadID,
+		UserID:     payload.Actor.UserID,
+		Tenant:     payload.tenantInfo(),
+		Trigger:    string(turn.Origin),
+		Status:     status,
+		Failure:    in.Failure,
+		Result:     in.Run,
+		Start:      start,
+		End:        end,
+		Origin:     payload.Origin,
+		Links:      links,
+	})
 }
 
 // resumeFollowUps starts the report of a decision made while this turn held
@@ -248,6 +339,7 @@ func (a *Activities) finish(
 	defer a.closeStream(ctx, stream)
 
 	result, err := a.assistant.FinishTurn(ctx, &assistantservice.FinishTurnRequest{
+		TurnID:     in.Payload.TurnID,
 		Plan:       in.Plan,
 		Actor:      &in.Payload.Actor,
 		TenantInfo: in.Payload.tenantInfo(),
@@ -360,6 +452,10 @@ func (a *Activities) CloseTurnActivity(
 	if err != nil {
 		return fmt.Errorf("close this turn's record: %w", err)
 	}
+	emitTurnRoots(ctx, &FinishTurnInput{
+		Payload: payload,
+		Failure: &modelcall.Failure{Message: message},
+	}, turn, string(conversation.AssistantTurnStatusFailed))
 
 	return nil
 }

@@ -27,7 +27,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
 	"github.com/emoss08/trenova/pkg/temporaltype"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	enumspb "go.temporal.io/api/enums/v1"
 	historypb "go.temporal.io/api/history/v1"
@@ -174,30 +173,6 @@ func registerTurnStandIns(
 	w.RegisterActivityWithOptions(func(context.Context, *AssistantTurnPayload, string) error {
 		return nil
 	}, activity.RegisterOptions{Name: "CloseTurnActivity"})
-}
-
-func replayPayload() *AssistantTurnPayload {
-	org := pulid.MustNew("org_")
-	bu := pulid.MustNew("bu_")
-	user := pulid.MustNew("usr_")
-
-	return &AssistantTurnPayload{
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: org,
-			BusinessUnitID: bu,
-			UserID:         user,
-		},
-		TurnID:   pulid.MustNew("atrn_"),
-		ThreadID: pulid.MustNew("athr_"),
-		Content:  "Where is load 12345?",
-		Actor: serviceports.RequestActor{
-			PrincipalType:  serviceports.PrincipalTypeUser,
-			PrincipalID:    user,
-			UserID:         user,
-			OrganizationID: org,
-			BusinessUnitID: bu,
-		},
-	}
 }
 
 func writeTurnHistory(t *testing.T, c client.Client, run client.WorkflowRun, path string) {

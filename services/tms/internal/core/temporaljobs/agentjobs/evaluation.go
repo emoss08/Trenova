@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -14,6 +15,8 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentscoring"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentflow"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/modelcall"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -581,7 +584,51 @@ func (a *Activities) FinishReplayActivity(
 		outcome = &serviceports.RunResult{}
 	}
 
-	return a.storeReplay(ctx, evaluation, input.Originals, outcome)
+	stored, err := a.storeReplay(ctx, evaluation, input.Originals, outcome)
+	if err != nil {
+		return nil, err
+	}
+	emitEvaluationRoot(ctx, evaluation, outcome, agent.EvaluationStatusCompleted, "")
+
+	return stored, nil
+}
+
+func emitEvaluationRoot(
+	ctx context.Context,
+	evaluation *agent.Evaluation,
+	outcome *serviceports.RunResult,
+	status agent.EvaluationStatus,
+	errorType string,
+) {
+	var failure *modelcall.Failure
+	if errorType != "" {
+		failure = &modelcall.Failure{Message: errorType}
+	}
+	var started int64
+	if evaluation.StartedAt != nil {
+		started = *evaluation.StartedAt
+	}
+
+	agentflow.EmitRoot(ctx, &agentflow.RootParams{
+		Anchor: aitrace.AnchorFor(aitrace.AnchorEvaluation, evaluation.ID.String()),
+		Definition: &agentdefinition.Definition{
+			ID:             evaluation.AgentDefinitionID,
+			Version:        evaluation.DefinitionVersion,
+			SimulationMode: true,
+		},
+		RunID: evaluation.ID,
+		Tenant: pagination.TenantInfo{
+			OrgID: evaluation.OrganizationID,
+			BuID:  evaluation.BusinessUnitID,
+		},
+		Trigger: string(evaluation.Trigger),
+		Status:  string(status),
+		Failure: failure,
+		Result:  outcome,
+		Purpose: aitrace.PurposeEvaluation,
+		Start:   agentflow.StartedAt(evaluation.CreatedAt, started),
+		End:     time.Now(),
+	})
 }
 
 // FailEvaluationActivity records why a replay did not finish, so the row
@@ -602,9 +649,12 @@ func (a *Activities) FailEvaluationActivity(ctx context.Context, input *FailEval
 	evaluation.Status = agent.EvaluationStatusFailed
 	evaluation.ErrorMessage = stringutils.Ellipsize(input.Error, maxSummaryChars)
 	evaluation.CompletedAt = &completedAt
-	_, err = a.evaluations.Update(ctx, evaluation)
+	if _, err = a.evaluations.Update(ctx, evaluation); err != nil {
+		return err
+	}
+	emitEvaluationRoot(ctx, evaluation, nil, agent.EvaluationStatusFailed, "failed")
 
-	return err
+	return nil
 }
 
 // originalProposals reads what the source run proposed and the latest

@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/replaytest"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
 	"go.uber.org/zap"
@@ -33,6 +35,30 @@ func replayRuntime() *agentruntime.Service {
 		ActionTools: &agentruntimetest.StubActionRegistry{},
 		Permissions: &agentruntimetest.StubPermissions{},
 	})
+}
+
+func replayPayload() *AssistantTurnPayload {
+	org := pulid.MustNew("org_")
+	bu := pulid.MustNew("bu_")
+	user := pulid.MustNew("usr_")
+
+	return &AssistantTurnPayload{
+		BasePayload: temporaltype.BasePayload{
+			OrganizationID: org,
+			BusinessUnitID: bu,
+			UserID:         user,
+		},
+		TurnID:   pulid.MustNew("atrn_"),
+		ThreadID: pulid.MustNew("athr_"),
+		Content:  "Where is load 12345?",
+		Actor: serviceports.RequestActor{
+			PrincipalType:  serviceports.PrincipalTypeUser,
+			PrincipalID:    user,
+			UserID:         user,
+			OrganizationID: org,
+			BusinessUnitID: bu,
+		},
+	}
 }
 
 func replayPlan(

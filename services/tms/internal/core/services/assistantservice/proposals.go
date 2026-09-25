@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/proposalrecorder"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -41,9 +42,11 @@ const chatPromptVersion = "assistant-chat/v2"
 // persistProposalsParams groups what turning a turn's pending actions into
 // durable proposals needs.
 type persistProposalsParams struct {
-	Definition *agentdefinition.Definition
-	Thread     *conversation.Thread
-	Actor      *services.RequestActor
+	TurnID         pulid.ID
+	DelegateCallID string
+	Definition     *agentdefinition.Definition
+	Thread         *conversation.Thread
+	Actor          *services.RequestActor
 	// Saved are the messages as persisted, used to tie each proposal to the
 	// assistant turn that asked for it.
 	Saved   []conversation.Message
@@ -94,6 +97,11 @@ func (s *Service) persistProposals(
 			PromptVersion:    chatPromptVersion,
 			InputContextHash: hashChatContext(params.Definition, params.Input),
 			Fingerprint:      params.Fingerprint,
+			TraceID:          params.traceID(),
+			TurnID:           params.TurnID,
+			ParentOwnerKind:  params.parentOwnerKind(),
+			ParentOwnerID:    params.parentOwnerID(),
+			DelegateCallID:   params.delegateCallID(),
 		},
 		Actions:          params.Actions,
 		Taint:            params.Taint,
@@ -127,6 +135,41 @@ func (s *Service) persistProposals(
 	}
 
 	return persisted, nil
+}
+
+func (p *persistProposalsParams) traceID() string {
+	if p.TurnID.IsNil() {
+		return ""
+	}
+	if p.DelegateCallID != "" {
+		return aitrace.ForDelegate(p.TurnID, p.DelegateCallID).TraceID.String()
+	}
+
+	return aitrace.AnchorFor(aitrace.AnchorAssistantTurn, p.TurnID.String()).TraceID.String()
+}
+
+func (p *persistProposalsParams) parentOwnerKind() agent.RunOwnerKind {
+	if p.DelegateCallID == "" || p.TurnID.IsNil() {
+		return ""
+	}
+
+	return agent.RunOwnerAssistantTurn
+}
+
+func (p *persistProposalsParams) parentOwnerID() pulid.ID {
+	if p.DelegateCallID == "" {
+		return pulid.Nil
+	}
+
+	return p.TurnID
+}
+
+func (p *persistProposalsParams) delegateCallID() string {
+	if p.TurnID.IsNil() {
+		return ""
+	}
+
+	return p.DelegateCallID
 }
 
 func tenantOf(actor *services.RequestActor) pagination.TenantInfo {
