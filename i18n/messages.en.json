@@ -17767,6 +17767,15 @@
       "routes/dash-control"
     ]
   },
+  "Approve detention charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approve expense": {
     "sites": 1,
     "scope": [
@@ -17901,6 +17910,15 @@
     "areas": [
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "Approve this detention charge as calculated, so its shipment can be invoiced.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Approve with changes": {

@@ -433,6 +433,49 @@
       }
     },
     {
+      "name": "approve_detention",
+      "description": "Propose approving a detention charge that is waiting on approval, so it can be invoiced. list_detention_desk shows these as AwaitingApproval, and while one waits its shipment cannot be billed. The charge is approved exactly as calculated. Propose it only when the evidence holds up: arrival and departure on record, the notice sent inside the policy's window or none required, and nothing on file that contradicts the time. Say what shows that in evidence. Only a pending charge can be approved, and a person always decides; when the evidence does not hold up, propose waive_detention instead or leave it for a person.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence": {
+            "description": "What on the occurrence justifies billing it, in a sentence the approver can check: the times on record, the notice, and anything else on file that supports the charge.",
+            "type": "string"
+          },
+          "occurrenceId": {
+            "description": "The occurrence id, from list_detention_desk or get_detention_occurrence.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "occurrenceId",
+          "evidence"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "detention_policy",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Releases a held detention charge onto the customer's invoice; only a person approves it."
+      }
+    },
+    {
       "name": "approve_worker_pto",
       "description": "Approve a worker's time-off request. Approving books the days against their balance and takes them off the board for those dates, so check what they are covering before you propose it. Only a request that is still awaiting a decision can be approved.",
       "parameters": {
@@ -4918,7 +4961,7 @@
     },
     {
       "name": "list_detention_desk",
-      "description": "List every open detention occurrence: a truck at a stop past its free time, with minutes until free time ends, notice status and the amount at risk. The notice status says whether the customer notice is due or overdue. Urgency Lost means the notice window closed without a notice and the charge may not be collectable; NoticeOverdue and NoticeDueSoon say what to send. send_detention_notice sends it.",
+      "description": "List every open detention occurrence: a truck at a stop past its free time, with minutes until free time ends, notice status and the amount at risk. The notice status says whether the customer notice is due or overdue. Urgency Lost means the notice window closed without a notice and the charge may not be collectable; NoticeOverdue and NoticeDueSoon say what to send. send_detention_notice sends it. The list also carries every stopped charge waiting on approval, as AwaitingApproval: its shipment cannot be invoiced until someone approves or waives it, which approve_detention and waive_detention propose.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -4927,7 +4970,8 @@
             "enum": [
               "Lost",
               "NoticeOverdue",
-              "NoticeDueSoon"
+              "NoticeDueSoon",
+              "AwaitingApproval"
             ],
             "type": "string"
           }

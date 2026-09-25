@@ -35,6 +35,10 @@ type detentionDeskReader interface {
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
 	) ([]*detentionservice.DeskEntry, error)
+	ListAwaitingApproval(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*detentionservice.DeskEntry, error)
 }
 
 type weatherReader interface {
@@ -283,7 +287,10 @@ func (t *listDetentionDeskTool) Description() string {
 		"with minutes until free time ends, notice status and the amount at risk. The " +
 		"notice status says whether the customer notice is due or overdue. Urgency Lost means the notice window " +
 		"closed without a notice and the charge may not be collectable; NoticeOverdue " +
-		"and NoticeDueSoon say what to send. send_detention_notice sends it."
+		"and NoticeDueSoon say what to send. send_detention_notice sends it. The list " +
+		"also carries every stopped charge waiting on approval, as AwaitingApproval: its " +
+		"shipment cannot be invoiced until someone approves or waives it, which " +
+		"approve_detention and waive_detention propose."
 }
 
 func (t *listDetentionDeskTool) ParamSchema() map[string]any {
@@ -291,8 +298,11 @@ func (t *listDetentionDeskTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			"urgency": map[string]any{
-				"type":        "string",
-				"enum":        []string{"Lost", "NoticeOverdue", "NoticeDueSoon"},
+				"type": "string",
+				"enum": []string{
+					"Lost", "NoticeOverdue", "NoticeDueSoon",
+					detentionservice.UrgencyAwaitingApproval,
+				},
 				"description": "Optional: only occurrences at this urgency.",
 			},
 		},
@@ -318,7 +328,7 @@ func (t *listDetentionDeskTool) Query(
 	criteria := filtercatalog.NewCriteria("open detention occurrences").At(clockFor(params))
 	criteria.Field("urgency", urgency)
 
-	entries, err := t.desk.ListDesk(ctx, tenantOf(params))
+	entries, err := t.entries(ctx, tenantOf(params), urgency)
 	if err != nil {
 		return nil, err
 	}
@@ -335,6 +345,34 @@ func (t *listDetentionDeskTool) Query(
 	}
 
 	return searchResult(criteria, rows, len(rows)), nil
+}
+
+// entries reads the running clocks, the charges waiting on approval, or both,
+// as the urgency asks.
+func (t *listDetentionDeskTool) entries(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	urgency string,
+) ([]*detentionservice.DeskEntry, error) {
+	awaiting := strings.EqualFold(urgency, detentionservice.UrgencyAwaitingApproval)
+
+	var entries []*detentionservice.DeskEntry
+	if urgency == "" || !awaiting {
+		open, err := t.desk.ListDesk(ctx, tenant)
+		if err != nil {
+			return nil, err
+		}
+		entries = open
+	}
+	if urgency == "" || awaiting {
+		held, err := t.desk.ListAwaitingApproval(ctx, tenant)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, held...)
+	}
+
+	return entries, nil
 }
 
 func toDetentionDeskRow(entry *detentionservice.DeskEntry, timezone string) detentionDeskRow {
