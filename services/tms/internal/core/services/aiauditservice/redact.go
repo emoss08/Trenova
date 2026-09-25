@@ -2,6 +2,7 @@ package aiauditservice
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"strings"
 	"unicode/utf8"
@@ -94,7 +95,11 @@ func (r *Redactor) Arguments(toolName string, args map[string]any) (*RedactedArg
 	if err != nil {
 		return nil, err
 	}
-	bounded, truncated, err := boundArguments(canonical.(map[string]any))
+	canonicalMap, ok := canonical.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("canonical arguments are %T, not an object", canonical)
+	}
+	bounded, truncated, err := boundArguments(canonicalMap)
 	if err != nil {
 		return nil, err
 	}
