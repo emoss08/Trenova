@@ -280,27 +280,38 @@ func (t *placeShipmentHoldTool) Execute(
 		return err
 	}
 
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
 
+	_, err = t.holds.Create(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *placeShipmentHoldTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*repositories.CreateShipmentHoldRequest, error) {
+	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	if err != nil {
+		return nil, err
+	}
+
 	reasonID, err := requirePulid(params.Params, "holdReasonId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// The blocking flags and severity are left unset on purpose: they default
 	// from the hold reason, which is policy the organization already decided.
 	// An agent choosing them would be quietly overriding that.
-	_, err = t.holds.Create(ctx, &repositories.CreateShipmentHoldRequest{
-		TenantInfo:   tenantFrom(params),
+	return &repositories.CreateShipmentHoldRequest{
+		TenantInfo:   tenantFrom(*params),
 		ShipmentID:   shipmentID,
 		HoldReasonID: reasonID,
 		Notes:        optionalString(params.Params, "notes"),
-	}, params.Actor)
-
-	return err
+	}, nil
 }
 
 // --- release_shipment_hold --------------------------------------------------
@@ -366,23 +377,34 @@ func (t *releaseShipmentHoldTool) Execute(
 		return err
 	}
 
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
+	}
+
+	_, err = t.holds.Release(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *releaseShipmentHoldTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*repositories.ReleaseShipmentHoldRequest, error) {
+	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	if err != nil {
+		return nil, err
 	}
 
 	holdID, err := requirePulid(params.Params, "holdId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = t.holds.Release(ctx, &repositories.ReleaseShipmentHoldRequest{
-		TenantInfo: tenantFrom(params),
+	return &repositories.ReleaseShipmentHoldRequest{
+		TenantInfo: tenantFrom(*params),
 		ShipmentID: shipmentID,
 		HoldID:     holdID,
-	}, params.Actor)
-
-	return err
+	}, nil
 }
 
 // --- cancel_shipment --------------------------------------------------------

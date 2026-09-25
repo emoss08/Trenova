@@ -278,6 +278,7 @@ func (t *scheduleReportTool) Target(params map[string]any) (serviceports.ToolTar
 }
 
 type alertWriter interface {
+	CheckSubscription(ctx context.Context, entity *tablechangealert.TCASubscription) error
 	CreateSubscription(
 		ctx context.Context,
 		entity *tablechangealert.TCASubscription,
@@ -475,6 +476,12 @@ func (t *createTableChangeAlertTool) Execute(
 		return err
 	}
 
+	_, err := t.alerts.CreateSubscription(ctx, alertSubscription(&params))
+
+	return err
+}
+
+func alertSubscription(params *serviceports.ToolExecuteParams) *tablechangealert.TCASubscription {
 	match := optionalString(params.Params, "conditionMatch")
 	if match == "" {
 		match = "all"
@@ -485,7 +492,7 @@ func (t *createTableChangeAlertTool) Execute(
 		events[i] = strings.ToUpper(event)
 	}
 
-	_, err := t.alerts.CreateSubscription(ctx, &tablechangealert.TCASubscription{
+	return &tablechangealert.TCASubscription{
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 		UserID:         params.Actor.UserID,
@@ -497,9 +504,7 @@ func (t *createTableChangeAlertTool) Execute(
 		ConditionMatch: match,
 		CustomMessage:  optionalString(params.Params, "customMessage"),
 		Status:         tablechangealert.SubscriptionStatusActive,
-	})
-
-	return err
+	}
 }
 
 // stringSliceParam reads an array of strings, dropping anything that is not

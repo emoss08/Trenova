@@ -31,6 +31,19 @@ type shipmentWriter interface {
 	) (*shipment.Shipment, error)
 }
 
+type shipmentCreator interface {
+	Create(
+		ctx context.Context,
+		entity *shipment.Shipment,
+		actor *serviceports.RequestActor,
+	) (*shipment.Shipment, error)
+	PreviewCreate(
+		ctx context.Context,
+		entity *shipment.Shipment,
+		actor *serviceports.RequestActor,
+	) (*serviceports.ShipmentCreatePlan, error)
+}
+
 // importCompleter closes the import assistant's conversation for a document
 // once the shipment it was about exists, the way the shipment form does.
 type importCompleter interface {
@@ -42,13 +55,13 @@ type importCompleter interface {
 // shape the shipment form sends, so what an agent builds from a document is
 // validated by exactly the rules a person's entry is.
 type createShipmentTool struct {
-	shipments shipmentWriter
+	shipments shipmentCreator
 	imports   importCompleter
 	logger    *zap.Logger
 }
 
 func newCreateShipmentTool(
-	shipments shipmentWriter,
+	shipments shipmentCreator,
 	imports importCompleter,
 	logger *zap.Logger,
 ) serviceports.AgentTool {
@@ -230,14 +243,44 @@ func (t *createShipmentTool) Execute(
 		return err
 	}
 
+	entity, err := t.draft(&params)
+	if err != nil {
+		return err
+	}
+
+	created, err := t.shipments.Create(ctx, entity, params.Actor)
+	if err != nil {
+		return err
+	}
+
+	if entity.SourceDocumentID != "" && t.imports != nil {
+		if completeErr := t.imports.CompleteHistory(
+			ctx,
+			entity.SourceDocumentID,
+			tenantFrom(params),
+		); completeErr != nil {
+			t.logger.Warn("shipment created but the import conversation could not be closed",
+				zap.String("sourceDocumentId", entity.SourceDocumentID),
+				zap.String("shipmentId", created.ID.String()),
+				zap.Error(completeErr),
+			)
+		}
+	}
+
+	return nil
+}
+
+func (t *createShipmentTool) draft(
+	params *serviceports.ToolExecuteParams,
+) (*shipment.Shipment, error) {
 	entity := new(shipment.Shipment)
 	if err := decodeParam(params.Params, "shipment", entity); err != nil {
-		return err
+		return nil, err
 	}
 
 	// The tenant is the actor's, whatever the model wrote; a model cannot
 	// enter a shipment for another organization by naming it.
-	tenantInfo := tenantFrom(params)
+	tenantInfo := tenantFrom(*params)
 	entity.ID = pulid.Nil
 	entity.OrganizationID = tenantInfo.OrgID
 	entity.BusinessUnitID = tenantInfo.BuID
@@ -250,7 +293,7 @@ func (t *createShipmentTool) Execute(
 		"sourceDocumentId",
 	); sourceDocumentID != "" {
 		if _, err := pulid.Parse(sourceDocumentID); err != nil {
-			return errortypes.NewValidationError(
+			return nil, errortypes.NewValidationError(
 				"sourceDocumentId",
 				errortypes.ErrInvalid,
 				"Source document id is not an id",
@@ -259,26 +302,7 @@ func (t *createShipmentTool) Execute(
 		entity.SourceDocumentID = sourceDocumentID
 	}
 
-	created, err := t.shipments.Create(ctx, entity, params.Actor)
-	if err != nil {
-		return err
-	}
-
-	if entity.SourceDocumentID != "" && t.imports != nil {
-		if completeErr := t.imports.CompleteHistory(
-			ctx,
-			entity.SourceDocumentID,
-			tenantInfo,
-		); completeErr != nil {
-			t.logger.Warn("shipment created but the import conversation could not be closed",
-				zap.String("sourceDocumentId", entity.SourceDocumentID),
-				zap.String("shipmentId", created.ID.String()),
-				zap.Error(completeErr),
-			)
-		}
-	}
-
-	return nil
+	return entity, nil
 }
 
 // scopeShipmentChildren stamps the tenant on every move and stop and clears

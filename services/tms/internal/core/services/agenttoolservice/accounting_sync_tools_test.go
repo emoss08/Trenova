@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -31,6 +32,10 @@ type fakeSyncOperator struct {
 	paused     *serviceports.PauseAccountingSyncRequest
 	resumed    *serviceports.PauseAccountingSyncRequest
 	backfilled *serviceports.RequestAccountingBackfillRequest
+
+	savedRecords  []*accountingsync.AccountingSyncRecord
+	savedBackfill *accountingsync.AccountingBackfill
+	guard         writeGuard
 }
 
 func (f *fakeSyncOperator) Summary(
@@ -58,7 +63,17 @@ func (f *fakeSyncOperator) Retry(
 	_ context.Context,
 	req *serviceports.RetryAccountingSyncRequest,
 ) (int64, error) {
+	if err := f.guard.write(); err != nil {
+		return 0, err
+	}
 	f.retried = req
+	for _, id := range req.IDs {
+		record := *f.records[id]
+		if err := record.Retry(timeutils.NowUnix()); err != nil {
+			return 0, err
+		}
+		f.savedRecords = append(f.savedRecords, &record)
+	}
 	return int64(len(req.IDs)), nil
 }
 
@@ -66,32 +81,61 @@ func (f *fakeSyncOperator) Skip(
 	_ context.Context,
 	req *serviceports.SkipAccountingSyncRequest,
 ) (*accountingsync.AccountingSyncRecord, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.skipped = req
-	return f.records[req.ID], nil
+	record := *f.records[req.ID]
+	if err := record.Skip(req.UserID, req.Reason); err != nil {
+		return nil, err
+	}
+	f.savedRecords = append(f.savedRecords, &record)
+	return &record, nil
 }
 
 func (f *fakeSyncOperator) Pause(
 	_ context.Context,
 	req *serviceports.PauseAccountingSyncRequest,
 ) (*accountingsync.AccountingConnection, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.paused = req
-	return f.summary.Connection, nil
+	paused := *f.summary.Connection
+	paused.Pause(req.UserID, req.Reason, timeutils.NowUnix())
+	return &paused, nil
 }
 
 func (f *fakeSyncOperator) Resume(
 	_ context.Context,
 	req *serviceports.PauseAccountingSyncRequest,
 ) (*accountingsync.AccountingConnection, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.resumed = req
-	return f.summary.Connection, nil
+	resumed := *f.summary.Connection
+	resumed.Resume()
+	return &resumed, nil
 }
 
 func (f *fakeSyncOperator) RequestBackfill(
 	_ context.Context,
 	req *serviceports.RequestAccountingBackfillRequest,
 ) (*accountingsync.AccountingBackfill, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.backfilled = req
-	return &accountingsync.AccountingBackfill{ID: pulid.MustNew("acctbf_")}, nil
+	f.savedBackfill = accountingsync.NewAccountingBackfill(&accountingsync.NewBackfillParams{
+		TenantInfo:    req.TenantInfo,
+		ConnectionID:  f.summary.Connection.ID,
+		RangeStart:    *req.RangeStart,
+		RangeEnd:      *req.RangeEnd,
+		ObjectTypes:   req.ObjectTypes,
+		RequestedByID: req.UserID,
+	})
+	return f.savedBackfill, nil
 }
 
 func syncingSummary() *serviceports.AccountingSyncSummary {
@@ -169,19 +213,32 @@ func TestRetryAccountingSync_RetriesNamedRecordsAsTheActor(t *testing.T) {
 		"syncRecordIds": []any{blocked.ID.String(), dead.ID.String(), blocked.ID.String()},
 	})
 
+	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
+		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	})
+	assert.Empty(t, preview.Warnings)
+	assert.Contains(t, preview.Summary, "Would send 2 documents to QuickBooks Online again")
+	require.Len(t, preview.Changes, 2)
+	first := previewChange(t, preview, 0)
+	assert.Equal(t, "Invoice INV-1042", first.Label)
+	assert.Equal(t, blocked.ID, first.EntityID)
+	assert.Equal(t, "Queued", fieldByPath(t, first, "status").After)
+
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, operator.retried)
 	assert.Equal(t, []pulid.ID{blocked.ID, dead.ID}, operator.retried.IDs)
 	assert.Equal(t, params.Actor.UserID, operator.retried.UserID)
 	assert.Equal(t, params.OrganizationID, operator.retried.TenantInfo.OrgID)
 	assert.Equal(t, integration.TypeQuickBooksOnline, operator.retried.IntegrationType)
-
-	sim, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), params)
-	require.NoError(t, err)
-	assert.Contains(t, sim.Summary, "2 document(s)")
-	require.Len(t, sim.Changes, 2)
-	assert.Equal(t, "Invoice INV-1042", sim.Changes[0].Field)
-	assert.Equal(t, "Queued", sim.Changes[0].To)
+	require.Len(t, operator.savedRecords, 2)
+	requireUpdateParity(t, first, blocked, operator.savedRecords[0], syncRecordOptions()...)
+	requireUpdateParity(
+		t,
+		previewChange(t, preview, 1),
+		dead,
+		operator.savedRecords[1],
+		syncRecordOptions()...,
+	)
 }
 
 func TestRetryAccountingSync_RetriesByErrorCategory(t *testing.T) {
@@ -194,11 +251,13 @@ func TestRetryAccountingSync_RetriesByErrorCategory(t *testing.T) {
 		"errorCategories": []any{"Transient", "RateLimited"},
 	})
 
-	sim, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), params)
-	require.NoError(t, err)
-	assert.Contains(t, sim.Summary, "Transient or RateLimited")
-	assert.Contains(t, sim.Summary, "5 are blocked")
-	assert.Nil(t, operator.retried, "simulating changes nothing")
+	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
+		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	})
+	assert.Contains(t, preview.Summary, "Transient or RateLimited")
+	assert.Contains(t, preview.Summary, "5 are blocked")
+	assert.True(t, preview.Partial, "the records a category names are not listed")
+	assert.Nil(t, operator.retried, "previewing changes nothing")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, operator.retried)
@@ -259,9 +318,17 @@ func TestSkipAccountingSync_SkipsWithTheReasonAndNamesItsTarget(t *testing.T) {
 		"reason":       "  Entered by hand in QuickBooks\n on the 3rd.  ",
 	})
 
-	sim, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), params)
-	require.NoError(t, err)
-	assert.Equal(t, []agent.FieldChange{{Field: "status", From: "Blocked", To: "Skipped"}}, sim.Changes)
+	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
+		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	})
+	assert.Contains(t, preview.Summary, "Entered by hand in QuickBooks on the 3rd.")
+	change := previewChange(t, preview, 0)
+	status := fieldByPath(t, change, "status")
+	assert.Equal(t, "Blocked", status.Before)
+	assert.Equal(t, "Skipped", status.After)
+	skippedBy := fieldByPath(t, change, "skippedById")
+	require.NotNil(t, skippedBy.AfterRef)
+	assert.Equal(t, permission.ResourceUser, skippedBy.AfterRef.Resource)
 	assert.Nil(t, operator.skipped)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -269,6 +336,8 @@ func TestSkipAccountingSync_SkipsWithTheReasonAndNamesItsTarget(t *testing.T) {
 	assert.Equal(t, blocked.ID, operator.skipped.ID)
 	assert.Equal(t, "Entered by hand in QuickBooks on the 3rd.", operator.skipped.Reason)
 	assert.Equal(t, params.Actor.UserID, operator.skipped.UserID)
+	require.Len(t, operator.savedRecords, 1)
+	requireUpdateParity(t, change, blocked, operator.savedRecords[0], syncRecordOptions()...)
 
 	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
 	require.True(t, ok)
@@ -312,20 +381,32 @@ func TestPauseAccountingSync_PausesWithAReason(t *testing.T) {
 		"system": "QuickBooksOnline",
 		"reason": "QuickBooks is down for maintenance until 6pm.",
 	})
-	sim, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), params)
-	require.NoError(t, err)
-	assert.Contains(t, sim.Summary, "9 document(s) waiting")
-	assert.Equal(t, "Paused", sim.Changes[0].To)
+	before := *operator.summary.Connection
+	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
+		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	})
+	assert.Contains(t, preview.Summary, "9 documents waiting")
+	change := previewChange(t, preview, 0)
+	assert.Equal(t, permission.ResourceAccountingIntegration, change.Resource)
+	assert.Equal(t, "QuickBooks Online", change.Label)
+	assert.Equal(
+		t,
+		"QuickBooks is down for maintenance until 6pm.",
+		fieldByPath(t, change, "pausedReason").After,
+	)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, operator.paused)
 	assert.Equal(t, "QuickBooks is down for maintenance until 6pm.", operator.paused.Reason)
+	saved := before
+	saved.Pause(operator.paused.UserID, operator.paused.Reason, 1)
+	requireUpdateParity(t, change, &before, &saved, syncPauseOptions()...)
 
 	paused := int64(1_790_000_000)
 	operator.summary.Connection.PausedAt = &paused
 	operator.summary.Connection.PausedReason = "Month-end close"
 	operator.paused = nil
-	err = tool.Execute(t.Context(), params)
+	err := tool.Execute(t.Context(), params)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "Month-end close")
 	assert.Nil(t, operator.paused)
@@ -345,14 +426,21 @@ func TestResumeAccountingSync_OnlyResumesWhatIsPaused(t *testing.T) {
 	operator.summary.Connection.PausedAt = &paused
 	operator.summary.Connection.PausedReason = "Month-end close"
 
-	sim, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), params)
-	require.NoError(t, err)
-	assert.Contains(t, sim.Summary, "9 queued document(s)")
-	assert.Contains(t, sim.Summary, "Month-end close")
+	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
+		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	})
+	assert.Contains(t, preview.Summary, "9 documents queued")
+	assert.Contains(t, preview.Summary, "Month-end close")
+	change := previewChange(t, preview, 0)
+	assert.Equal(t, "Month-end close", fieldByPath(t, change, "pausedReason").Before)
 
+	before := *operator.summary.Connection
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, operator.resumed)
 	assert.Equal(t, params.Actor.UserID, operator.resumed.UserID)
+	saved := before
+	saved.Resume()
+	requireUpdateParity(t, change, &before, &saved, syncPauseOptions()...)
 }
 
 func TestRequestAccountingBackfill_SendsTheRangeAPersonAskedFor(t *testing.T) {
@@ -367,10 +455,14 @@ func TestRequestAccountingBackfill_SendsTheRangeAPersonAskedFor(t *testing.T) {
 		"documentTypes": []any{"Invoice", "CustomerPayment"},
 	})
 
-	sim, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), params)
-	require.NoError(t, err)
-	assert.Contains(t, sim.Summary, "2026-01-15 to 2026-02-10")
-	assert.Contains(t, sim.Summary, "arrive twice")
+	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
+		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	})
+	assert.Contains(t, preview.Summary, "2026-01-15 to 2026-02-10")
+	assert.Contains(t, preview.Summary, "arrive twice")
+	created := previewChange(t, preview, 0)
+	assert.Equal(t, agent.PreviewOperationCreate, created.Operation)
+	assert.Equal(t, "Backfill to QuickBooks Online", created.Label)
 	assert.Nil(t, operator.backfilled)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
@@ -382,6 +474,7 @@ func TestRequestAccountingBackfill_SendsTheRangeAPersonAskedFor(t *testing.T) {
 		accountingsync.SyncObjectCustomerPayment,
 	}, operator.backfilled.ObjectTypes)
 	assert.Equal(t, params.Actor.UserID, operator.backfilled.UserID)
+	requireCreateParity(t, created, operator.savedBackfill, backfillOptions()...)
 }
 
 func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
@@ -394,7 +487,34 @@ func TestRequestAccountingBackfill_DefaultsToTheWholeGap(t *testing.T) {
 	require.NotNil(t, operator.backfilled)
 	assert.Equal(t, syncStartDay, *operator.backfilled.RangeStart)
 	assert.Equal(t, syncEnabledDay, *operator.backfilled.RangeEnd)
+	assert.Equal(t, []accountingsync.SyncObjectType{
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncObjectDebitMemo,
+		accountingsync.SyncObjectCreditMemo,
+		accountingsync.SyncObjectCustomerPayment,
+		accountingsync.SyncObjectCreditApplication,
+		accountingsync.SyncObjectCarrierBill,
+		accountingsync.SyncObjectCarrierBillPay,
+	}, operator.backfilled.ObjectTypes, "owner-operator settlements wait until they are turned on")
+
+	settlementsOn := int64(1_772_000_000)
+	operator.summary.Connection.DriverSettlementsEnabledAt = &settlementsOn
+	require.NoError(t, tool.Execute(t.Context(), syncParams(map[string]any{"system": "QuickBooksOnline"})))
 	assert.Equal(t, accountingsync.BackfillObjectTypes(), operator.backfilled.ObjectTypes)
+
+	err := tool.Execute(t.Context(), syncParams(map[string]any{
+		"system":        "QuickBooksOnline",
+		"documentTypes": []any{"DriverBill"},
+	}))
+	require.NoError(t, err)
+	operator.summary.Connection.DriverSettlementsEnabledAt = nil
+	preview, err := tool.(serviceports.ToolPreviewer).Preview(t.Context(), syncParams(map[string]any{
+		"system":        "QuickBooksOnline",
+		"documentTypes": []any{"DriverBill"},
+	}))
+	require.NoError(t, err)
+	assert.Empty(t, preview.Changes)
+	requireWarning(t, preview, agent.PreviewWarningWouldFail)
 }
 
 func TestRequestAccountingBackfill_RefusesWhatCannotBeBackfilled(t *testing.T) {

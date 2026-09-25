@@ -6,8 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/agentmemoryservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,26 +20,77 @@ type fakeMemories struct {
 	serviceports.AgentMemoryService
 	remembered *serviceports.RememberRequest
 	status     *serviceports.SetAgentMemoryStatusRequest
+	created    *agent.Memory
+	stored     map[pulid.ID]*agent.Memory
+	existing   *agent.Memory
+	guard      writeGuard
 }
 
 func (f *fakeMemories) Remember(
 	_ context.Context,
 	req *serviceports.RememberRequest,
-	_ *serviceports.RequestActor,
+	actor *serviceports.RequestActor,
 ) (*agent.Memory, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.remembered = req
+	if f.existing != nil {
+		return f.existing, nil
+	}
+	f.created = agentmemoryservice.NewMemory(req, actor)
+	f.created.ID = pulid.MustNew("amem_")
 
-	return &agent.Memory{ID: pulid.MustNew("amem_")}, nil
+	return f.created, nil
+}
+
+func (f *fakeMemories) PreviewRemember(
+	_ context.Context,
+	req *serviceports.RememberRequest,
+	actor *serviceports.RequestActor,
+) (*serviceports.RememberPlan, error) {
+	return &serviceports.RememberPlan{
+		Memory:   agentmemoryservice.NewMemory(req, actor),
+		Existing: f.existing,
+	}, nil
+}
+
+func (f *fakeMemories) GetByID(
+	_ context.Context,
+	req repositories.GetAgentMemoryByIDRequest,
+) (*agent.Memory, error) {
+	memory, ok := f.stored[req.ID]
+	if !ok {
+		return nil, errortypes.NewNotFoundError("Agent memory not found")
+	}
+	copied := *memory
+
+	return &copied, nil
 }
 
 func (f *fakeMemories) SetStatus(
 	_ context.Context,
 	req serviceports.SetAgentMemoryStatusRequest,
-	_ *serviceports.RequestActor,
+	actor *serviceports.RequestActor,
 ) (*agent.Memory, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.status = &req
+	memory, ok := f.stored[req.ID]
+	if !ok {
+		return &agent.Memory{ID: req.ID, Status: req.Status}, nil
+	}
+	if err := agentmemoryservice.PlanStatus(memory, agentmemoryservice.StatusChange{
+		Status:   req.Status,
+		ByUserID: agentmemoryservice.StatusActor(actor),
+		At:       timeutils.NowUnix(),
+	}); err != nil {
+		return nil, err
+	}
+	memory.Version++
 
-	return &agent.Memory{ID: req.ID, Status: req.Status}, nil
+	return memory, nil
 }
 
 func memoryParams(params map[string]any) serviceports.ToolExecuteParams {

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -649,64 +650,40 @@ func (t *resolveBankReceiptWorkItemTool) Execute(
 	}
 
 	tenant := tenantFrom(params)
-	if args.resolution == bankreceiptworkitem.ResolutionMarkedFalsePositive {
-		_, err = t.items.Dismiss(ctx, &serviceports.DismissBankReceiptWorkItemRequest{
-			WorkItemID:     args.id,
-			ResolutionNote: args.note,
-			TenantInfo:     tenant,
-		}, params.Actor)
+	if args.dismisses() {
+		_, err = t.items.Dismiss(ctx, args.dismissal(tenant), params.Actor)
 
 		return err
 	}
 
-	_, err = t.items.Resolve(ctx, &serviceports.ResolveBankReceiptWorkItemRequest{
-		WorkItemID:     args.id,
-		ResolutionType: args.resolution,
-		ResolutionNote: args.note,
-		TenantInfo:     tenant,
-	}, params.Actor)
+	_, err = t.items.Resolve(ctx, args.resolved(tenant), params.Actor)
 
 	return err
 }
 
-func (t *resolveBankReceiptWorkItemTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	args, err := t.arguments(params)
-	if err != nil {
-		return nil, err
-	}
+func (a resolveWorkItemArgs) dismisses() bool {
+	return a.resolution == bankreceiptworkitem.ResolutionMarkedFalsePositive
+}
 
-	item, err := t.items.Get(ctx, &serviceports.GetBankReceiptWorkItemRequest{
-		WorkItemID: args.id,
-		TenantInfo: tenantFrom(params),
-	})
-	if err != nil {
-		return nil, err
+func (a resolveWorkItemArgs) dismissal(
+	tenant pagination.TenantInfo,
+) *serviceports.DismissBankReceiptWorkItemRequest {
+	return &serviceports.DismissBankReceiptWorkItemRequest{
+		WorkItemID:     a.id,
+		ResolutionNote: a.note,
+		TenantInfo:     tenant,
 	}
-	if !item.Status.IsActive() {
-		return nil, fmt.Errorf("work item %s is already %s", args.id, item.Status)
-	}
+}
 
-	to := bankreceiptworkitem.StatusResolved
-	if args.resolution == bankreceiptworkitem.ResolutionMarkedFalsePositive {
-		to = bankreceiptworkitem.StatusDismissed
+func (a resolveWorkItemArgs) resolved(
+	tenant pagination.TenantInfo,
+) *serviceports.ResolveBankReceiptWorkItemRequest {
+	return &serviceports.ResolveBankReceiptWorkItemRequest{
+		WorkItemID:     a.id,
+		ResolutionType: a.resolution,
+		ResolutionNote: a.note,
+		TenantInfo:     tenant,
 	}
-
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf("Would close work item %s as %s.", args.id, args.resolution),
-		Changes: []agent.FieldChange{
-			{Field: "status", From: string(item.Status), To: string(to)},
-			{
-				Field: "resolutionType",
-				From:  string(item.ResolutionType),
-				To:    string(args.resolution),
-			},
-			{Field: "resolutionNote", From: item.ResolutionNote, To: args.note},
-		},
-		Previewed: true,
-	}, nil
 }
 
 func (t *resolveBankReceiptWorkItemTool) arguments(

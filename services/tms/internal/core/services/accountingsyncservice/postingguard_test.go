@@ -41,7 +41,11 @@ func postingPackages() []postingPackage {
 	}
 }
 
-var postingAllowList = map[string]string{}
+var postingAllowList = map[string]string{
+	"customerpaymentservice.Service.planPost": "builds the payment a post would record without " +
+		"saving it, for the preview and for PostAndApply; PostAndApply, the only caller that " +
+		"saves it, enqueues the sync record",
+}
 
 var postedStatusPackages = []string{"invoice", "customerpayment"}
 

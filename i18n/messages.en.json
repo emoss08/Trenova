@@ -24066,12 +24066,14 @@
     ]
   },
   "Bank receipt reconciliation": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/bank-receipt"
+      "routes/bank-receipt",
+      "service/agenttoolservice"
     ]
   },
   "Bank receipt requires reconciliation": {
@@ -52045,6 +52047,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Detention evidence": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Detention has started — shipment {0} at {1}": {
@@ -90183,7 +90194,7 @@
     ]
   },
   "Linehaul": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -90191,7 +90202,8 @@
     "areas": [
       "apps/web/lib",
       "domain/documenttemplate",
-      "routes/shipment"
+      "routes/shipment",
+      "service/agenttoolservice"
     ]
   },
   "Linehaul ({0})": {
@@ -99306,7 +99318,7 @@
     ]
   },
   "Move status transition from {0} to {1} is not allowed": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
@@ -117413,13 +117425,15 @@
     ]
   },
   "Other charges": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "routes/invoice",
-      "routes/shipment"
+      "routes/shipment",
+      "service/agenttoolservice"
     ]
   },
   "Other courses": {
@@ -156789,7 +156803,7 @@
     ]
   },
   "Shipment does not contain the target move": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "go"
     ],
@@ -157037,7 +157051,7 @@
     ]
   },
   "Shipment hold request is required": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -157100,7 +157114,7 @@
     ]
   },
   "Shipment is required": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go"
     ],
@@ -179299,6 +179313,15 @@
       "service/fuelpurchaseservice"
     ]
   },
+  "This insight is {0}, and only an active one can be dismissed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/insight"
+    ]
+  },
   "This installation does not offer any extensions yet.": {
     "sites": 1,
     "scope": [
@@ -179749,6 +179772,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "This memory is already {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentmemoryservice"
     ]
   },
   "This message could not be opened.": {
@@ -199558,15 +199590,6 @@
       "routes/formula-template"
     ]
   },
-  "Would record a memory every later run of every agent reads.": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/agenttoolservice"
-    ]
-  },
   "Wrap": {
     "sites": 1,
     "scope": [
@@ -209079,6 +209102,15 @@
     ],
     "areas": [
       "service/accountingmappingservice"
+    ]
+  },
+  "{0} already holds the maximum of {1} tiles": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} alternatives": {

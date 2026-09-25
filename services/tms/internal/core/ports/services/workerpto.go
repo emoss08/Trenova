@@ -95,6 +95,10 @@ type WorkerPTOService interface {
 		ctx context.Context,
 		req *repositories.UpdatePTOStatusRequest,
 	) (*worker.WorkerPTO, error)
+	PreviewApprove(
+		ctx context.Context,
+		req *repositories.UpdatePTOStatusRequest,
+	) (*WorkerPTOTransitionPreview, error)
 	Reject(ctx context.Context, req *repositories.UpdatePTOStatusRequest) (*worker.WorkerPTO, error)
 	Cancel(ctx context.Context, req *repositories.UpdatePTOStatusRequest) (*worker.WorkerPTO, error)
 	// PreviewReject and PreviewCancel check the decision as Reject and Cancel

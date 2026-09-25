@@ -141,6 +141,16 @@ func (t *requestCredentialRenewalTool) Preview(
 
 // ptoDecisionPreview is a time-off decision: the request's new status and
 // reason, and what the driver is told in Dash and by text.
+func ptoDecisionOptions() []toolpreview.Option {
+	return []toolpreview.Option{
+		toolpreview.WithRefs(map[string]permission.Resource{
+			"approverId":    permission.ResourceUser,
+			"rejectorId":    permission.ResourceUser,
+			"cancelledById": permission.ResourceUser,
+		}),
+	}
+}
+
 func ptoDecisionPreview(
 	summary string,
 	decision *serviceports.WorkerPTOTransitionPreview,
@@ -154,10 +164,7 @@ func ptoDecisionPreview(
 		},
 		decision.Before,
 		decision.After,
-		toolpreview.WithRefs(map[string]permission.Resource{
-			"rejectorId":    permission.ResourceUser,
-			"cancelledById": permission.ResourceUser,
-		}),
+		ptoDecisionOptions()...,
 	)
 	if err != nil {
 		return nil, err

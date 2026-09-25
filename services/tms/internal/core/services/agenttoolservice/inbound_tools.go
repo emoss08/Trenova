@@ -241,45 +241,6 @@ func (t *linkInboundMessageTool) Validate(
 	return t.inbox.CheckLink(ctx, req)
 }
 
-func (t *linkInboundMessageTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	req, err := t.request(params)
-	if err != nil {
-		return nil, err
-	}
-	message, err := loadInboundMessage(ctx, t.inbox, params)
-	if err != nil {
-		return nil, err
-	}
-
-	changes := make([]agent.FieldChange, 0, 4)
-	for _, field := range []struct {
-		name     string
-		from, to pulid.ID
-	}{
-		{name: "shipment", from: message.MatchedShipmentID, to: req.ShipmentID},
-		{name: "customer", from: message.MatchedCustomerID, to: req.CustomerID},
-		{name: "carrier", from: message.MatchedCarrierID, to: req.CarrierID},
-	} {
-		if field.from != field.to {
-			changes = append(changes, agent.FieldChange{
-				Field: field.name, From: pulidText(field.from), To: pulidText(field.to),
-			})
-		}
-	}
-	changes = append(changes, agent.FieldChange{
-		Field: "reason", From: message.MatchReason, To: strings.TrimSpace(req.Reason),
-	})
-
-	return &agent.ToolSimulation{
-		Summary:   "Would link the message " + describeInboundMessage(message),
-		Changes:   changes,
-		Previewed: true,
-	}, nil
-}
-
 func (t *linkInboundMessageTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
@@ -296,14 +257,6 @@ func (t *linkInboundMessageTool) Execute(
 	_, err = t.inbox.Link(ctx, req)
 
 	return err
-}
-
-func pulidText(id pulid.ID) string {
-	if id.IsNil() {
-		return "none"
-	}
-
-	return id.String()
 }
 
 type markInboundMessageTool struct {
@@ -425,26 +378,6 @@ func (t *markInboundMessageTool) Validate(
 	return err
 }
 
-func (t *markInboundMessageTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	message, status, note, err := t.settle(ctx, params)
-	if err != nil {
-		return nil, err
-	}
-
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf("Would mark the message %s %s",
-			describeInboundMessage(message), strings.ToLower(string(status))),
-		Changes: []agent.FieldChange{
-			{Field: "status", From: string(message.Status), To: string(status)},
-			{Field: "note", From: message.ReviewNote, To: note},
-		},
-		Previewed: true,
-	}, nil
-}
-
 func (t *markInboundMessageTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
@@ -458,15 +391,24 @@ func (t *markInboundMessageTool) Execute(
 		return err
 	}
 
-	_, err = t.inbox.Review(ctx, inboundmessageservice.ReviewRequest{
+	_, err = t.inbox.Review(ctx, reviewRequest(&params, message, status, note))
+
+	return err
+}
+
+func reviewRequest(
+	params *serviceports.ToolExecuteParams,
+	message *inboundmessage.InboundMessage,
+	status inboundmessage.Status,
+	note string,
+) inboundmessageservice.ReviewRequest {
+	return inboundmessageservice.ReviewRequest{
 		MessageID:  message.ID,
-		TenantInfo: tenantFrom(params),
+		TenantInfo: tenantFrom(*params),
 		ReviewerID: params.Actor.UserID,
 		Status:     status,
 		Note:       note,
-	})
-
-	return err
+	}
 }
 
 // inboundReplier is what a reply needs beyond the inbox: the mailer, the

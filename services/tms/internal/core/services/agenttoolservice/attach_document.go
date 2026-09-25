@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -17,6 +18,10 @@ const documentResourceTypeShipment = "shipment"
 // is a lineage move on a document that already exists, which is a different
 // operation from uploading one and belongs to a different service.
 type documentAttacher interface {
+	PreviewAttachLineage(
+		ctx context.Context,
+		req *documentservice.AttachLineageRequest,
+	) (*documentservice.AttachLineagePlan, error)
 	AttachLineageToResource(
 		ctx context.Context,
 		documentID pulid.ID,
@@ -115,28 +120,44 @@ func (t *attachDocumentTool) Execute(
 		return err
 	}
 
-	documentID, err := requirePulid(params.Params, "documentId")
-	if err != nil {
-		return err
-	}
-
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
 
 	_, err = t.documents.AttachLineageToResource(
 		ctx,
-		documentID,
-		documentResourceTypeShipment,
-		shipmentID.String(),
-		pagination.TenantInfo{
-			OrgID:  params.OrganizationID,
-			BuID:   params.BusinessUnitID,
-			UserID: params.Actor.UserID,
-		},
+		request.DocumentID,
+		request.ResourceType,
+		request.ResourceID,
+		request.TenantInfo,
 		params.Actor.UserID,
 	)
 
 	return err
+}
+
+func (t *attachDocumentTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*documentservice.AttachLineageRequest, error) {
+	documentID, err := requirePulid(params.Params, "documentId")
+	if err != nil {
+		return nil, err
+	}
+
+	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	if err != nil {
+		return nil, err
+	}
+
+	return &documentservice.AttachLineageRequest{
+		DocumentID:   documentID,
+		ResourceType: documentResourceTypeShipment,
+		ResourceID:   shipmentID.String(),
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  params.OrganizationID,
+			BuID:   params.BusinessUnitID,
+			UserID: params.Actor.UserID,
+		},
+	}, nil
 }

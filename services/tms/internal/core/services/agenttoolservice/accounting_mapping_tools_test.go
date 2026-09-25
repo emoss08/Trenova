@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/accountingmappingservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,6 +26,27 @@ type fakeMappingWriter struct {
 	cleared   *serviceports.AccountingMappingActionRequest
 	created   *serviceports.CreateAccountingReferenceRecordRequest
 	refreshed *serviceports.AccountingSetupRequest
+	used      int
+	guard     writeGuard
+}
+
+func (f *fakeMappingWriter) GuardHistory(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	row *accountingsync.AccountingMapping,
+	acknowledged bool,
+) (int, error) {
+	if f.used == 0 || acknowledged {
+		return f.used, nil
+	}
+
+	return f.used, errortypes.NewValidationError(
+		"acknowledgeHistory",
+		errortypes.ErrInvalidOperation,
+		"{0} was used by {1} documents already sent to the accounting system",
+		row.TargetLabel,
+		f.used,
+	)
 }
 
 func (f *fakeMappingWriter) FindMapping(
@@ -55,7 +78,15 @@ func (f *fakeMappingWriter) Set(
 	_ context.Context,
 	req *serviceports.SetAccountingMappingRequest,
 ) (*accountingsync.AccountingMapping, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.set = req
+	for _, ref := range f.refs {
+		if ref.ExternalID == req.ExternalID {
+			f.row.Confirm(accountingmappingservice.MappingChoice(req, ref, timeutils.NowUnix()))
+		}
+	}
 	return f.row, nil
 }
 
@@ -63,7 +94,13 @@ func (f *fakeMappingWriter) Clear(
 	_ context.Context,
 	req *serviceports.AccountingMappingActionRequest,
 ) (*accountingsync.AccountingMapping, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.cleared = req
+	if err := f.row.Clear(); err != nil {
+		return nil, err
+	}
 	return f.row, nil
 }
 
@@ -71,7 +108,24 @@ func (f *fakeMappingWriter) CreateReferenceRecord(
 	_ context.Context,
 	req *serviceports.CreateAccountingReferenceRecordRequest,
 ) (*accountingsync.AccountingMapping, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.created = req
+	name := req.Name
+	if name == "" {
+		name = f.row.TargetLabel
+	}
+	f.row.Confirm(accountingmappingservice.CreatedReferenceChoice(
+		&accountingmappingservice.CreatedReference{
+			ExternalID:      "created-1",
+			ExternalName:    name,
+			RequestedSource: req.Source,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			ActorID:         req.UserID,
+			At:              timeutils.NowUnix(),
+		},
+	))
 	return f.row, nil
 }
 
@@ -79,6 +133,9 @@ func (f *fakeMappingWriter) RequestRefresh(
 	_ context.Context,
 	req *serviceports.AccountingSetupRequest,
 ) (*accountingsync.AccountingConnection, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.refreshed = req
 	return f.summary.Connection, nil
 }
@@ -185,27 +242,6 @@ func TestSetAccountingMapping_NamesATargetByKey(t *testing.T) {
 	require.NotNil(t, writer.found)
 	assert.Equal(t, accountingsync.TargetAccountRole, writer.found.TargetType)
 	assert.Equal(t, "ARAccount", writer.found.TrenovaKey)
-}
-
-func TestSetAccountingMapping_SimulatesTheChange(t *testing.T) {
-	t.Parallel()
-
-	row := proposedCustomerMapping()
-	writer := &fakeMappingWriter{row: row, refs: []*accountingsync.AccountingReferenceObject{
-		customerRef("51", "Acme Logistics LLC", true),
-	}}
-	tool := newSetAccountingMappingTool(writer)
-
-	sim, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), executeParams(map[string]any{
-		"system":     "QuickBooksOnline",
-		"mappingId":  row.ID.String(),
-		"externalId": "51",
-		"reason":     "LLC",
-	}))
-	require.NoError(t, err)
-	assert.Contains(t, sim.Summary, "Acme Logistics LLC")
-	assert.Equal(t, "Acme Logistics, Inc.", sim.Changes[0].From)
-	assert.Nil(t, writer.set, "simulating changes nothing")
 }
 
 func TestClearAccountingMapping_RefusesAnUnmatchedMapping(t *testing.T) {

@@ -7,6 +7,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 )
 
+type StopActualPlan struct {
+	Before *shipment.ShipmentMove
+	After  *shipment.ShipmentMove
+}
+
 type ShipmentMoveService interface {
 	UpdateStatus(
 		ctx context.Context,
@@ -16,6 +21,10 @@ type ShipmentMoveService interface {
 		ctx context.Context,
 		req *repositories.RecordStopActualRequest,
 	) (*shipment.ShipmentMove, error)
+	PreviewStopActual(
+		ctx context.Context,
+		req *repositories.RecordStopActualRequest,
+	) (*StopActualPlan, error)
 	BulkUpdateStatus(
 		ctx context.Context,
 		req *repositories.BulkUpdateMoveStatusRequest,

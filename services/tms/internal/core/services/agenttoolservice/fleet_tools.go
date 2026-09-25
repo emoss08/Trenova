@@ -28,6 +28,10 @@ const equipmentStatusNote = "Available means it can be dispatched. " +
 	"and is not coming back."
 
 type tractorStatusUpdater interface {
+	GetByIDs(
+		ctx context.Context,
+		req repositories.GetTractorsByIDsRequest,
+	) ([]*tractor.Tractor, error)
 	BulkUpdateStatus(
 		ctx context.Context,
 		req *repositories.BulkUpdateTractorStatusRequest,
@@ -35,6 +39,10 @@ type tractorStatusUpdater interface {
 }
 
 type trailerStatusUpdater interface {
+	GetByIDs(
+		ctx context.Context,
+		req repositories.GetTrailersByIDsRequest,
+	) ([]*trailer.Trailer, error)
 	BulkUpdateStatus(
 		ctx context.Context,
 		req *repositories.BulkUpdateTrailerStatusRequest,

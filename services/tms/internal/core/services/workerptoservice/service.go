@@ -831,17 +831,7 @@ func (s *Service) requireAvailability(
 	pto *worker.WorkerPTO,
 	excludeID pulid.ID,
 ) error {
-	if s.ledger == nil {
-		return nil
-	}
-	availability, err := s.ledger.CheckAvailability(ctx, &ptoledgerservice.AvailabilityRequest{
-		TenantInfo:   tenantOf(pto),
-		WorkerID:     pto.WorkerID,
-		PTOType:      pto.Type,
-		Days:         pto.Days,
-		StartDate:    pto.StartDate,
-		ExcludePTOID: excludeID,
-	})
+	availability, err := s.checkAvailability(ctx, pto, excludeID)
 	if err != nil {
 		return err
 	}

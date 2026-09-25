@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -14,7 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
+	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -163,39 +167,67 @@ type fakeWorkItemResolver struct {
 	item      *bankreceiptworkitem.WorkItem
 	resolved  *serviceports.ResolveBankReceiptWorkItemRequest
 	dismissed *serviceports.DismissBankReceiptWorkItemRequest
+	guard     writeGuard
 }
 
 func (f *fakeWorkItemResolver) Get(
 	_ context.Context,
 	_ *serviceports.GetBankReceiptWorkItemRequest,
 ) (*bankreceiptworkitem.WorkItem, error) {
-	return f.item, nil
+	if f.item == nil {
+		return nil, errortypes.NewNotFoundError("Bank receipt work item not found")
+	}
+	copied := *f.item
+
+	return &copied, nil
 }
 
 func (f *fakeWorkItemResolver) Resolve(
 	_ context.Context,
 	req *serviceports.ResolveBankReceiptWorkItemRequest,
-	_ *serviceports.RequestActor,
+	actor *serviceports.RequestActor,
 ) (*bankreceiptworkitem.WorkItem, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.resolved = req
+	if f.item == nil {
+		return &bankreceiptworkitem.WorkItem{
+			ID:     req.WorkItemID,
+			Status: bankreceiptworkitem.StatusResolved,
+		}, nil
+	}
+	if err := bankreceiptworkitemservice.ResolveWorkItem(
+		f.item, req, actor.UserID, timeutils.NowUnix(),
+	); err != nil {
+		return nil, err
+	}
 
-	return &bankreceiptworkitem.WorkItem{
-		ID:     req.WorkItemID,
-		Status: bankreceiptworkitem.StatusResolved,
-	}, nil
+	return f.item, nil
 }
 
 func (f *fakeWorkItemResolver) Dismiss(
 	_ context.Context,
 	req *serviceports.DismissBankReceiptWorkItemRequest,
-	_ *serviceports.RequestActor,
+	actor *serviceports.RequestActor,
 ) (*bankreceiptworkitem.WorkItem, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.dismissed = req
+	if f.item == nil {
+		return &bankreceiptworkitem.WorkItem{
+			ID:     req.WorkItemID,
+			Status: bankreceiptworkitem.StatusDismissed,
+		}, nil
+	}
+	if err := bankreceiptworkitemservice.DismissWorkItem(
+		f.item, req, actor.UserID, timeutils.NowUnix(),
+	); err != nil {
+		return nil, err
+	}
 
-	return &bankreceiptworkitem.WorkItem{
-		ID:     req.WorkItemID,
-		Status: bankreceiptworkitem.StatusDismissed,
-	}, nil
+	return f.item, nil
 }
 
 type allowingPermissions struct {
@@ -472,4 +504,58 @@ func TestPostCustomerPayment_PreviewShowsWhatStaysUnapplied(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	assert.Equal(t, *poster.previewed, *poster.posted,
 		"the preview and the write must post the same payment")
+}
+
+func TestResolveBankReceiptWorkItem_DismissesAFalsePositiveAndResolvesTheRest(t *testing.T) {
+	t.Parallel()
+
+	items := &fakeWorkItemResolver{}
+	tool := newResolveBankReceiptWorkItemTool(items)
+	id := pulid.MustNew("brwi_")
+
+	require.NoError(t, tool.Execute(t.Context(), memoryParams(map[string]any{
+		"workItemId": id.String(),
+		"resolution": "MarkedFalsePositive",
+		"note":       "Interest credit from the bank, not a customer payment.",
+	})))
+	require.NotNil(t, items.dismissed)
+	assert.Equal(t, id, items.dismissed.WorkItemID)
+	assert.Contains(t, items.dismissed.ResolutionNote, "Interest credit")
+
+	require.NoError(t, tool.Execute(t.Context(), memoryParams(map[string]any{
+		"workItemId": id.String(),
+		"resolution": "RequiresExternalFollowUp",
+		"note":       "Payer unknown; ask the bank for the remittance advice.",
+	})))
+	require.NotNil(t, items.resolved)
+	assert.Equal(
+		t,
+		bankreceiptworkitem.ResolutionRequiresExternalFollowUp,
+		items.resolved.ResolutionType,
+	)
+}
+
+func TestResolveBankReceiptWorkItem_RefusesAMatchResolutionAndAnOverlongNote(t *testing.T) {
+	t.Parallel()
+
+	items := &fakeWorkItemResolver{}
+	tool := newResolveBankReceiptWorkItemTool(items)
+	id := pulid.MustNew("brwi_")
+
+	err := tool.Execute(t.Context(), memoryParams(map[string]any{
+		"workItemId": id.String(),
+		"resolution": "MatchedToPayment",
+		"note":       "x",
+	}))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "match_bank_receipt")
+
+	err = tool.Execute(t.Context(), memoryParams(map[string]any{
+		"workItemId": id.String(),
+		"resolution": "MarkedFalsePositive",
+		"note":       strings.Repeat("x", maxResolutionNoteChars+1),
+	}))
+	require.Error(t, err)
+	assert.Nil(t, items.dismissed)
+	assert.Nil(t, items.resolved)
 }
