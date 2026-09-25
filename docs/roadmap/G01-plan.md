@@ -627,16 +627,16 @@ This keeps the M2 wizard's role mappings working for the common case, and never 
 - **Dates.** The bill date is the journal's accounting date, and the due date is the settlement's pay date.
 - **Number.** When all the carrier invoice matches on the settlement that are `Matched` or `Resolved` share one invoice number, it becomes the bill number, because that is how the carrier's own invoice is found in the books. Otherwise the settlement number is used. A number longer than the provider allows goes in the private note, and the provider assigns one.
 - **Private note.** "Trenova carrier settlement CS-1042", then the pay period, the shipment count, and every matched invoice number.
-- **Negative net.** When the net is negative, the document is a vendor credit with the same lines, with signs flipped so the credit total is positive.
+- **Negative total.** When the lines sent total below zero, the document is a vendor credit with the same lines, with signs flipped so the credit total is positive. The decision follows the lines, not the settlement's net field, so the document total can never be negative.
 - **Negative lines.** QuickBooks Online accepts negative lines on a bill whose total is not negative. That is Intuit's documented product behavior, and it is confirmed against the sandbox before merge, the way the §1.3 facts were.
 - **Zero net.** A zero net still creates the bill, because the expense and the deductions it offsets are real. No payment follows.
 - **Currency and closed books.** The M3 checks apply unchanged.
 
 **Bill payments.**
-- **Link.** The payment is paid against the bill created for the settlement, and waits for it the way a customer payment waits for its invoices. If the bill was skipped or voided, the payment is skipped with a reason.
+- **Link.** The payment is paid against the bill created for the settlement, and waits for it the way a customer payment waits for its invoices. If the bill was never sent (skipped, withdrawn, or dated before the start date), the payment finishes without sending anything and says why.
 - **Account.** Payment is by bank from the account the Trenova payment journal credited (the accounting control's cash account), resolved through the rules above. That account normally maps through the deposit role.
-- **Date, number and note.** The date is the paid date. The number is the payment reference, cut to the provider's limit. The private note gives the payment method.
-- **Negative net.** A settlement with a negative net never gets a bill payment. A refund from the vendor against the vendor credit is recorded by a person in the provider. The record is marked `Skipped` with that reason, and nothing is sent.
+- **Date, number and note.** The date is the paid date. The number is the payment reference, cut to the provider's limit by the service, so every adapter gets the same rule. The private note gives the payment method and the full reference.
+- **Negative net.** A settlement with a negative net never gets a bill payment. A refund from the vendor against the vendor credit is recorded by a person in the provider. The record finishes without sending anything, and its resolution says so, the same way M3 records that need nothing sent finish.
 
 **Voids.** A `Void` record waits for its `Create` record, as in M3. The adapter then deletes the bill or vendor credit, because the provider has no void. If the `Create` record was never synced, the void is skipped instead, and the `Create` record is skipped with it when still queued, so nothing reaches the books.
 

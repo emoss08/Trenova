@@ -958,6 +958,7 @@ type ComplexityRoot struct {
 		ConnectedAt                   func(childComplexity int) int
 		ConsecutiveFailures           func(childComplexity int) int
 		DisconnectedAt                func(childComplexity int) int
+		DriverSettlementsEnabledAt    func(childComplexity int) int
 		ExternalBooksClosedThrough    func(childComplexity int) int
 		ExternalCompanyName           func(childComplexity int) int
 		ExternalCountry               func(childComplexity int) int
@@ -983,6 +984,7 @@ type ComplexityRoot struct {
 		Status                        func(childComplexity int) int
 		SyncEnabledAt                 func(childComplexity int) int
 		SyncStartDate                 func(childComplexity int) int
+		SyncsDriverSettlements        func(childComplexity int) int
 		UpdatedAt                     func(childComplexity int) int
 		Version                       func(childComplexity int) int
 	}
@@ -7726,6 +7728,7 @@ type ComplexityRoot struct {
 		UnpinShipmentComment                  func(childComplexity int, shipmentID string, commentID string) int
 		UnresolveShipmentComment              func(childComplexity int, shipmentID string, commentID string) int
 		UpdateAIRetrievalSettings             func(childComplexity int, input gqlmodel.AIRetrievalSettingsPatchInput) int
+		UpdateAccountingSyncSettings          func(childComplexity int, input gqlmodel.UpdateAccountingSyncSettingsInput) int
 		UpdateAgentControl                    func(childComplexity int, input gqlmodel.AgentControlInput) int
 		UpdateAgentEvalCase                   func(childComplexity int, id string, input gqlmodel.UpdateAgentEvalCaseInput) int
 		UpdateAgentMemory                     func(childComplexity int, id string, input gqlmodel.AgentMemoryInput) int
@@ -16332,6 +16335,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingConnection.DisconnectedAt(childComplexity), true
+	case "AccountingConnection.driverSettlementsEnabledAt":
+		if e.ComplexityRoot.AccountingConnection.DriverSettlementsEnabledAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.DriverSettlementsEnabledAt(childComplexity), true
 	case "AccountingConnection.externalBooksClosedThrough":
 		if e.ComplexityRoot.AccountingConnection.ExternalBooksClosedThrough == nil {
 			break
@@ -16482,6 +16491,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingConnection.SyncStartDate(childComplexity), true
+	case "AccountingConnection.syncsDriverSettlements":
+		if e.ComplexityRoot.AccountingConnection.SyncsDriverSettlements == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingConnection.SyncsDriverSettlements(childComplexity), true
 	case "AccountingConnection.updatedAt":
 		if e.ComplexityRoot.AccountingConnection.UpdatedAt == nil {
 			break
@@ -50109,6 +50124,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.UpdateAIRetrievalSettings(childComplexity, args["input"].(gqlmodel.AIRetrievalSettingsPatchInput)), true
+	case "Mutation.updateAccountingSyncSettings":
+		if e.ComplexityRoot.Mutation.UpdateAccountingSyncSettings == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateAccountingSyncSettings_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.UpdateAccountingSyncSettings(childComplexity, args["input"].(gqlmodel.UpdateAccountingSyncSettingsInput)), true
 	case "Mutation.updateAgentControl":
 		if e.ComplexityRoot.Mutation.UpdateAgentControl == nil {
 			break
@@ -78410,6 +78436,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUnapplyCreditMemoApplicationInput,
 		ec.unmarshalInputUnassignDocumentTemplateInput,
 		ec.unmarshalInputUpcomingWorkerPTOInput,
+		ec.unmarshalInputUpdateAccountingSyncSettingsInput,
 		ec.unmarshalInputUpdateAgentEvalCaseInput,
 		ec.unmarshalInputUpdateAgentQualityControlInput,
 		ec.unmarshalInputUpdateBenefitPlanInput,
@@ -78665,6 +78692,18 @@ enum AccountingSyncObjectType {
   CustomerPayment
   "A credit memo applied to an invoice."
   CreditApplication
+  "A carrier, sent as a vendor."
+  CarrierVendor
+  "An owner-operator driver, sent as a 1099 vendor."
+  DriverVendor
+  "A carrier settlement, sent as a bill, or as a vendor credit when the net is negative."
+  CarrierBill
+  "The payment of a carrier settlement, sent as a bill payment."
+  CarrierBillPayment
+  "An owner-operator settlement, sent as a bill, or as a vendor credit when the net is negative."
+  DriverBill
+  "The payment of an owner-operator settlement, sent as a bill payment."
+  DriverBillPayment
 }
 
 "What a sync record does to the document in the accounting system."
@@ -78686,6 +78725,14 @@ enum AccountingSyncSourceEvent {
   CreditMemoApplied
   CreditMemoUnapplied
   CustomerUpdated
+  CarrierSettlementPosted
+  CarrierSettlementVoided
+  CarrierSettlementPaid
+  DriverSettlementPosted
+  DriverSettlementVoided
+  DriverSettlementPaid
+  CarrierUpdated
+  DriverUpdated
   "Another record needed this one first, such as a customer an invoice is for."
   DependencyOf
   "The hourly check found a posted document no enqueue point had queued."
@@ -78778,6 +78825,10 @@ enum AccountingMappingTargetType {
   ItemRole
   Customer
   Carrier
+  "An owner-operator driver, mapped to a vendor."
+  Driver
+  "A Trenova GL account that bills post to, mapped to an account."
+  GLAccount
   PaymentTerm
   PaymentMethod
 }
@@ -78875,6 +78926,10 @@ type AccountingConnection {
   syncEnabledAt: Timestamp
   "Whether posted documents are sent on their own, or wait for a person to release them."
   autoSync: Boolean!
+  "When owner-operator settlements began to be sent. Absent while they are not sent; company driver pay never is."
+  driverSettlementsEnabledAt: Timestamp
+  "Whether owner-operator settlements are sent as bills."
+  syncsDriverSettlements: Boolean!
   "When sending was paused. Records keep queueing while it is. Absent when it is running."
   pausedAt: Timestamp
   pausedBy: User
@@ -79078,8 +79133,18 @@ input EnableAccountingSyncInput {
   startDate: Timestamp!
   "Send posted documents on their own. When off, each waits for a person to release it."
   autoSync: Boolean!
+  "Also send owner-operator settlements as bills. Company driver pay is never sent."
+  driverSettlements: Boolean = false
   "Also queue documents dated from the start date up to now, which were posted before sync was on."
   backfill: Boolean!
+}
+
+input UpdateAccountingSyncSettingsInput {
+  integrationType: AccountingSystem!
+  "Send posted documents on their own. When off, each waits for a person to release it; records already held stay held."
+  autoSync: Boolean!
+  "Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones."
+  driverSettlements: Boolean!
 }
 
 input PauseAccountingSyncInput {
@@ -79360,6 +79425,8 @@ extend type Mutation {
   completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
   "Finishes setup with a start date and turns sending on."
   enableAccountingSync(input: EnableAccountingSyncInput!): AccountingConnection!
+  "Change how documents are sent once setup is complete."
+  updateAccountingSyncSettings(input: UpdateAccountingSyncSettingsInput!): AccountingConnection!
   "Holds sending. Posted documents keep queueing and go out on resume."
   pauseAccountingSync(input: PauseAccountingSyncInput!): AccountingConnection!
   resumeAccountingSync(integrationType: AccountingSystem!): AccountingConnection!
@@ -104065,6 +104132,10 @@ func (ec *executionContext) childFields_AccountingConnection(ctx context.Context
 		return ec.fieldContext_AccountingConnection_syncEnabledAt(ctx, field)
 	case "autoSync":
 		return ec.fieldContext_AccountingConnection_autoSync(ctx, field)
+	case "driverSettlementsEnabledAt":
+		return ec.fieldContext_AccountingConnection_driverSettlementsEnabledAt(ctx, field)
+	case "syncsDriverSettlements":
+		return ec.fieldContext_AccountingConnection_syncsDriverSettlements(ctx, field)
 	case "pausedAt":
 		return ec.fieldContext_AccountingConnection_pausedAt(ctx, field)
 	case "pausedBy":

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
@@ -731,12 +732,18 @@ func (f *fakeBackfills) Update(
 	return cloneBackfill(entity), nil
 }
 
+type vendorPartyCall struct {
+	targetType accountingsync.MappingTargetType
+	objectID   pulid.ID
+}
+
 type fakeMappingStore struct {
-	mu        sync.Mutex
-	rows      map[string]*accountingsync.AccountingMapping
-	created   []*services.CreateAccountingReferenceRecordRequest
-	createErr error
-	parties   map[pulid.ID]*services.AccountingPartyDraft
+	mu          sync.Mutex
+	rows        map[string]*accountingsync.AccountingMapping
+	created     []*services.CreateAccountingReferenceRecordRequest
+	createErr   error
+	parties     map[pulid.ID]*services.AccountingPartyDraft
+	vendorCalls []vendorPartyCall
 }
 
 func newFakeMappingStore() *fakeMappingStore {
@@ -883,6 +890,26 @@ func (f fakeMappingService) CustomerParty(
 	return &out, nil
 }
 
+func (f fakeMappingService) VendorParty(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	targetType accountingsync.MappingTargetType,
+	objectID pulid.ID,
+) (*services.AccountingPartyDraft, error) {
+	f.store.mu.Lock()
+	defer f.store.mu.Unlock()
+	f.store.vendorCalls = append(f.store.vendorCalls, vendorPartyCall{
+		targetType: targetType,
+		objectID:   objectID,
+	})
+	party, ok := f.store.parties[objectID]
+	if !ok {
+		return nil, errortypes.NewNotFoundError("Vendor not found")
+	}
+	out := *party
+	return &out, nil
+}
+
 type reportedFailure struct {
 	connectionID pulid.ID
 	cause        error
@@ -970,14 +997,16 @@ type fakeWriter struct {
 	found     map[string]string
 	nextID    int
 	unmatched bool
+	extraRefs map[string]map[string]string
 }
 
 func newFakeWriter() *fakeWriter {
 	return &fakeWriter{
-		limits:   services.AccountingDocumentLimits{MaxDocNumberLength: 21},
-		errs:     map[string][]error{},
-		partials: map[string]map[string]string{},
-		found:    map[string]string{},
+		limits:    services.AccountingDocumentLimits{MaxDocNumberLength: 21},
+		errs:      map[string][]error{},
+		partials:  map[string]map[string]string{},
+		found:     map[string]string{},
+		extraRefs: map[string]map[string]string{},
 	}
 }
 
@@ -1023,10 +1052,12 @@ func (f *fakeWriter) record(method string, doc any) (*services.AccountingDocumen
 	}
 	f.nextID++
 	id := "qb-" + method + "-" + strconv.Itoa(f.nextID)
+	refs := map[string]string{accountingsync.ExternalRefDocument: id}
+	maps.Copy(refs, f.extraRefs[method])
 	return &services.AccountingDocumentResult{
 		ExternalID: id,
 		DocNumber:  "QB" + id,
-		Refs:       map[string]string{accountingsync.ExternalRefDocument: id},
+		Refs:       refs,
 	}, nil
 }
 
@@ -1256,15 +1287,32 @@ func (f fakeOrganizations) GetByID(
 type fakeAudit struct {
 	services.AuditService
 
-	mu      sync.Mutex
-	entries []*services.LogActionParams
+	mu       sync.Mutex
+	entries  []*services.LogActionParams
+	comments []string
 }
 
-func (f *fakeAudit) LogAction(params *services.LogActionParams, _ ...services.LogOption) error {
+func (f *fakeAudit) LogAction(params *services.LogActionParams, opts ...services.LogOption) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.entries = append(f.entries, params)
+	entry := new(audit.Entry)
+	for _, opt := range opts {
+		if err := opt(entry); err != nil {
+			return err
+		}
+	}
+	f.comments = append(f.comments, entry.Comment)
 	return nil
+}
+
+func (f *fakeAudit) lastComment() string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if len(f.comments) == 0 {
+		return ""
+	}
+	return f.comments[len(f.comments)-1]
 }
 
 func (f *fakeAudit) count() int {
@@ -1347,4 +1395,63 @@ func (f *fakeDispatcher) started() []*accountingsync.AccountingBackfill {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.backfills)
+}
+
+type payableRow struct {
+	settlement *repositories.PayableSettlement
+	tenant     pagination.TenantInfo
+}
+
+type fakePayables struct {
+	mu    sync.Mutex
+	rows  map[pulid.ID]payableRow
+	calls []repositories.GetPayableSettlementRequest
+}
+
+func newFakePayables() *fakePayables {
+	return &fakePayables{rows: map[pulid.ID]payableRow{}}
+}
+
+func (f *fakePayables) put(
+	tenantInfo pagination.TenantInfo,
+	settlement *repositories.PayableSettlement,
+) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.rows[settlement.ID] = payableRow{settlement: settlement, tenant: tenantInfo}
+}
+
+func (f *fakePayables) requests() []repositories.GetPayableSettlementRequest {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.calls)
+}
+
+func clonePayable(in *repositories.PayableSettlement) *repositories.PayableSettlement {
+	out := *in
+	out.Lines = slices.Clone(in.Lines)
+	out.InvoiceNumbers = slices.Clone(in.InvoiceNumbers)
+	if in.PostedAt != nil {
+		posted := *in.PostedAt
+		out.PostedAt = &posted
+	}
+	if in.PaidAt != nil {
+		paid := *in.PaidAt
+		out.PaidAt = &paid
+	}
+	return &out
+}
+
+func (f *fakePayables) GetSettlement(
+	_ context.Context,
+	req *repositories.GetPayableSettlementRequest,
+) (*repositories.PayableSettlement, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls = append(f.calls, *req)
+	row, ok := f.rows[req.ID]
+	if !ok || row.tenant != req.TenantInfo || row.settlement.Kind != req.Kind {
+		return nil, errortypes.NewNotFoundError("Settlement not found")
+	}
+	return clonePayable(row.settlement), nil
 }

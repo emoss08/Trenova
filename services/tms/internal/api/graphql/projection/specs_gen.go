@@ -1589,6 +1589,14 @@ func init() {
 				FieldMapKey: "autoSync",
 			},
 			{
+				Name:        "driverSettlementsEnabledAt",
+				FieldMapKey: "driverSettlementsEnabledAt",
+			},
+			{
+				Name:        "syncsDriverSettlements",
+				FieldMapKey: "driverSettlementsEnabledAt",
+			},
+			{
 				Name:        "pausedAt",
 				FieldMapKey: "pausedAt",
 			},

@@ -41,6 +41,7 @@ type harness struct {
 	invoices    *fakeInvoices
 	adjustments *fakeAdjustments
 	payments    *fakePayments
+	payables    *fakePayables
 	audit       *fakeAudit
 	watchtower  *fakeWatchtower
 	dispatcher  *fakeDispatcher
@@ -54,15 +55,20 @@ type harnessOption func(*harnessConfig)
 
 type harnessConfig struct {
 	withoutDispatcher bool
+	timezone          string
 }
 
 func withoutDispatcher() harnessOption {
 	return func(c *harnessConfig) { c.withoutDispatcher = true }
 }
 
+func withTimezone(timezone string) harnessOption {
+	return func(c *harnessConfig) { c.timezone = timezone }
+}
+
 func newHarness(t *testing.T, opts ...harnessOption) *harness {
 	t.Helper()
-	cfg := harnessConfig{}
+	cfg := harnessConfig{timezone: "UTC"}
 	for _, opt := range opts {
 		opt(&cfg)
 	}
@@ -79,6 +85,7 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 			rows:         map[pulid.ID]*customerpayment.Payment{},
 			applications: map[pulid.ID]*customerpayment.CreditMemoApplication{},
 		},
+		payables:   newFakePayables(),
 		audit:      &fakeAudit{},
 		watchtower: newFakeWatchtower(),
 		dispatcher: &fakeDispatcher{},
@@ -116,7 +123,8 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Invoices:          h.invoices,
 		Adjustments:       h.adjustments,
 		Payments:          h.payments,
-		Organizations:     fakeOrganizations{timezone: "UTC"},
+		Organizations:     fakeOrganizations{timezone: cfg.timezone},
+		Payables:          h.payables,
 		AuditService:      h.audit,
 		Enqueuer:          h.enqueuer,
 		Dispatcher:        dispatcher,

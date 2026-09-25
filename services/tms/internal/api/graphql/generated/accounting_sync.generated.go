@@ -1303,6 +1303,52 @@ func (ec *executionContext) fieldContext_AccountingConnection_autoSync(_ context
 	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
+func (ec *executionContext) _AccountingConnection_driverSettlementsEnabledAt(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingConnection_driverSettlementsEnabledAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DriverSettlementsEnabledAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingConnection_driverSettlementsEnabledAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingConnection", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AccountingConnection_syncsDriverSettlements(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AccountingConnection_syncsDriverSettlements(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SyncsDriverSettlements(), nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AccountingConnection_syncsDriverSettlements(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AccountingConnection", field, true, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _AccountingConnection_pausedAt(ctx context.Context, field graphql.CollectedField, obj *accountingsync.AccountingConnection) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4897,7 +4943,11 @@ func (ec *executionContext) unmarshalInputEnableAccountingSyncInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"integrationType", "startDate", "autoSync", "backfill"}
+	if _, present := asMap["driverSettlements"]; !present {
+		asMap["driverSettlements"] = false
+	}
+
+	fieldsInOrder := [...]string{"integrationType", "startDate", "autoSync", "driverSettlements", "backfill"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4925,6 +4975,13 @@ func (ec *executionContext) unmarshalInputEnableAccountingSyncInput(ctx context.
 				return it, err
 			}
 			it.AutoSync = data
+		case "driverSettlements":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driverSettlements"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DriverSettlements = data
 		case "backfill":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backfill"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
@@ -5247,6 +5304,50 @@ func (ec *executionContext) unmarshalInputSkipAccountingSyncInput(ctx context.Co
 				return it, err
 			}
 			it.Reason = data
+		}
+	}
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateAccountingSyncSettingsInput(ctx context.Context, obj any) (gqlmodel.UpdateAccountingSyncSettingsInput, error) {
+	var it gqlmodel.UpdateAccountingSyncSettingsInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"integrationType", "autoSync", "driverSettlements"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "integrationType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("integrationType"))
+			data, err := ec.unmarshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋintegrationᚐType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IntegrationType = data
+		case "autoSync":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoSync"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoSync = data
+		case "driverSettlements":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("driverSettlements"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DriverSettlements = data
 		}
 	}
 	return it, nil
@@ -5831,6 +5932,16 @@ func (ec *executionContext) _AccountingConnection(ctx context.Context, sel ast.S
 			}
 		case "autoSync":
 			out.Values[i] = ec._AccountingConnection_autoSync(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "driverSettlementsEnabledAt":
+			out.Values[i] = ec._AccountingConnection_driverSettlementsEnabledAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "syncsDriverSettlements":
+			out.Values[i] = ec._AccountingConnection_syncsDriverSettlements(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -8395,6 +8506,11 @@ func (ec *executionContext) unmarshalNSetAccountingMappingInput2githubᚗcomᚋe
 
 func (ec *executionContext) unmarshalNSkipAccountingSyncInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSkipAccountingSyncInput(ctx context.Context, v any) (gqlmodel.SkipAccountingSyncInput, error) {
 	res, err := ec.unmarshalInputSkipAccountingSyncInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateAccountingSyncSettingsInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateAccountingSyncSettingsInput(ctx context.Context, v any) (gqlmodel.UpdateAccountingSyncSettingsInput, error) {
+	res, err := ec.unmarshalInputUpdateAccountingSyncSettingsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

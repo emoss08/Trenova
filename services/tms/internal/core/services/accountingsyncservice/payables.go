@@ -13,17 +13,17 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 )
 
 func partyLabel(objectType accountingsync.SyncObjectType) string {
-	switch objectType {
-	case accountingsync.SyncObjectCarrierVendor:
+	if objectType == accountingsync.SyncObjectCarrierVendor {
 		return "Carrier"
-	case accountingsync.SyncObjectDriverVendor:
-		return "Driver"
-	default:
-		return "Customer"
 	}
+	if objectType == accountingsync.SyncObjectDriverVendor {
+		return "Driver"
+	}
+	return "Customer"
 }
 
 func payableKind(objectType accountingsync.SyncObjectType) repositories.PayableKind {
@@ -358,7 +358,24 @@ func (s *Service) pushBill(
 		return nil, err
 	}
 
-	credit := settlement.NetMinor < 0
+	lines, err := s.billLines(ctx, res, settlement)
+	if err != nil {
+		return nil, err
+	}
+	if len(lines) == 0 {
+		return nil, &noopError{reason: label + " has no amounts, so there is nothing to send"}
+	}
+	total := decimal.Zero
+	for idx := range lines {
+		total = total.Add(lines[idx].Amount)
+	}
+	credit := total.IsNegative()
+	if credit {
+		for idx := range lines {
+			lines[idx].Amount = lines[idx].Amount.Neg()
+		}
+	}
+
 	doc := &services.AccountingPurchaseDocument{
 		Auth:                sess.auth,
 		RequestID:           record.RequestID,
@@ -370,7 +387,7 @@ func (s *Service) pushBill(
 		TxnDate:             timeutils.FormatCalendarDate(*settlement.PostedAt, sess.loc),
 		CurrencyCode:        settlement.CurrencyCode,
 		PrivateNote:         billNote(record.ObjectType, settlement, sess.loc),
-		Lines:               make([]services.AccountingPurchaseLine, 0, len(settlement.Lines)),
+		Lines:               lines,
 	}
 	if !credit {
 		doc.DueDate = timeutils.FormatCalendarDate(settlement.PayDate, sess.loc)
@@ -379,38 +396,47 @@ func (s *Service) pushBill(
 		doc.DocNumber = ""
 	}
 
-	for idx := range settlement.Lines {
-		line := &settlement.Lines[idx]
-		if line.AccountID == settlement.PayableAccountID || line.NetMinor() == 0 {
-			continue
-		}
-		account, accountErr := s.accountRef(ctx, res, &accountRefRequest{
-			accountID: line.AccountID,
-			lines:     settlement.Lines,
-			defaults:  settlement.Defaults,
-		})
-		if accountErr != nil {
-			return nil, accountErr
-		}
-		amount := money.DecimalFromMinor(line.NetMinor())
-		if credit {
-			amount = amount.Neg()
-		}
-		doc.Lines = append(doc.Lines, services.AccountingPurchaseLine{
-			Description:       strings.TrimSpace(line.AccountName),
-			AccountExternalID: account,
-			Amount:            amount,
-		})
-	}
-	if len(doc.Lines) == 0 {
-		return nil, &noopError{reason: label + " has no amounts, so there is nothing to send"}
-	}
-
 	written, err := sess.writer.CreatePurchaseDocument(ctx, doc)
 	if err != nil {
 		return partial(written), err
 	}
 	return withProviderURL(finishedResult(sess, record, written, doc, res.mappingIDs()))
+}
+
+func (s *Service) billLines(
+	ctx context.Context,
+	res *resolver,
+	settlement *repositories.PayableSettlement,
+) ([]services.AccountingPurchaseLine, error) {
+	lines := make([]services.AccountingPurchaseLine, 0, len(settlement.Lines))
+	for idx := range settlement.Lines {
+		line := &settlement.Lines[idx]
+		if line.AccountID == settlement.PayableAccountID || line.NetMinor() == 0 {
+			continue
+		}
+		account, err := s.accountRef(ctx, res, &accountRefRequest{
+			accountID: line.AccountID,
+			lines:     settlement.Lines,
+			defaults:  settlement.Defaults,
+		})
+		if err != nil {
+			return nil, err
+		}
+		lines = append(lines, services.AccountingPurchaseLine{
+			Description:       strings.TrimSpace(line.AccountName),
+			AccountExternalID: account,
+			Amount:            money.DecimalFromMinor(line.NetMinor()),
+		})
+	}
+	return lines, nil
+}
+
+func fitDocNumber(number string, limit int) string {
+	number = strings.TrimSpace(number)
+	if runes := []rune(number); limit > 0 && len(runes) > limit {
+		return string(runes[:limit])
+	}
+	return number
 }
 
 func withProviderURL(result *pushResult, err error) (*pushResult, error) {
@@ -542,11 +568,14 @@ func (s *Service) pushBillPayment(
 		VendorExternalID:      vendorID,
 		BankAccountExternalID: bank,
 		BillExternalID:        billID,
-		DocNumber:             settlement.PaymentReference,
-		TxnDate:               timeutils.FormatCalendarDate(*settlement.PaidAt, sess.loc),
-		CurrencyCode:          settlement.CurrencyCode,
-		PrivateNote:           billPaymentNote(record.ObjectType, settlement),
-		Amount:                money.DecimalFromMinor(settlement.NetMinor),
+		DocNumber: fitDocNumber(
+			settlement.PaymentReference,
+			sess.limits.MaxDocNumberLength,
+		),
+		TxnDate:      timeutils.FormatCalendarDate(*settlement.PaidAt, sess.loc),
+		CurrencyCode: settlement.CurrencyCode,
+		PrivateNote:  billPaymentNote(record.ObjectType, settlement),
+		Amount:       money.DecimalFromMinor(settlement.NetMinor),
 	}
 	written, err := sess.writer.CreateBillPayment(ctx, doc)
 	if err != nil {
