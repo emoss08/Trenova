@@ -5,13 +5,13 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
-	"encoding/json" //nolint:depguard // json.Number is the number type sonic and bun decode into
 	"errors"
 	"fmt"
 	"hash"
 	"strconv"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/shopspring/decimal"
 )
 
@@ -284,89 +284,7 @@ func VerifyHash(e *AIAuditEvent, key *ChainKey) (bool, error) {
 // the jsonb column both hold: maps of string keys, lists, strings, booleans,
 // nil, and numbers as exact decimals.
 func CanonicalJSONValue(value any) (any, error) {
-	if typed, ok := value.(map[string]any); ok {
-		if typed == nil {
-			return nil, nil
-		}
-
-		return canonicalMap(typed)
-	}
-
-	return roundTrip(value)
-}
-
-func roundTrip(value any) (any, error) {
-	raw, err := canonicalAPI.Marshal(value)
-	if err != nil {
-		return nil, err
-	}
-	if string(raw) == "null" {
-		return nil, nil
-	}
-
-	var decoded any
-	if err = canonicalAPI.Unmarshal(raw, &decoded); err != nil {
-		return nil, err
-	}
-
-	return canonicalValue(decoded)
-}
-
-func canonicalMap(in map[string]any) (map[string]any, error) {
-	out := make(map[string]any, len(in))
-	for key, value := range in {
-		canonical, err := canonicalValue(value)
-		if err != nil {
-			return nil, err
-		}
-		out[key] = canonical
-	}
-
-	return out, nil
-}
-
-func canonicalValue(value any) (any, error) {
-	switch typed := value.(type) {
-	case nil, string, bool:
-		return typed, nil
-	case json.Number:
-		return canonicalNumber(typed.String())
-	case float64:
-		return json.Number(decimal.NewFromFloat(typed).String()), nil
-	case float32:
-		return json.Number(decimal.NewFromFloat32(typed).String()), nil
-	case int:
-		return json.Number(strconv.FormatInt(int64(typed), 10)), nil
-	case int32:
-		return json.Number(strconv.FormatInt(int64(typed), 10)), nil
-	case int64:
-		return json.Number(strconv.FormatInt(typed, 10)), nil
-	case uint64:
-		return json.Number(strconv.FormatUint(typed, 10)), nil
-	case map[string]any:
-		return canonicalMap(typed)
-	case []any:
-		out := make([]any, len(typed))
-		for i, item := range typed {
-			canonical, err := canonicalValue(item)
-			if err != nil {
-				return nil, err
-			}
-			out[i] = canonical
-		}
-		return out, nil
-	default:
-		return roundTrip(typed)
-	}
-}
-
-func canonicalNumber(raw string) (json.Number, error) {
-	d, err := decimal.NewFromString(raw)
-	if err != nil {
-		return "", fmt.Errorf("canonicalize number %q: %w", raw, err)
-	}
-
-	return json.Number(d.String()), nil
+	return jsonutils.CanonicalValue(value)
 }
 
 func canonicalCost(cost *decimal.Decimal) *string {

@@ -576,12 +576,16 @@ input AgentProposalDecisionInput {
   decision: AgentDecisionType!
   modifications: JSON
   reasonCode: String!
+  "The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed."
+  previewDigest: String
 }
 
 input AgentPlanDecisionInput {
   "Accepted runs every step in order; Rejected rejects them all."
   decision: AgentDecisionType!
   reasonCode: String!
+  "The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded."
+  previewDigest: String
 }
 
 input AgentExceptionResolveInput {

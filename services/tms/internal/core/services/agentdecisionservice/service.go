@@ -105,19 +105,20 @@ func (s *Service) DecideOwn(
 	req *services.DecideAgentProposalRequest,
 	actor *services.RequestActor,
 ) (*agent.AgentDecision, error) {
-	if err := s.assertOwnProposal(ctx, req, actor); err != nil {
+	if err := s.AssertOwnProposal(ctx, req.ProposalID, req.TenantInfo, actor); err != nil {
 		return nil, err
 	}
 
 	return s.Decide(ctx, req, actor)
 }
 
-// assertOwnProposal refuses a proposal not raised in one of the actor's own
+// AssertOwnProposal refuses a proposal not raised in one of the actor's own
 // conversations. Someone else's is not found rather than forbidden, the way
 // someone else's conversation is.
-func (s *Service) assertOwnProposal(
+func (s *Service) AssertOwnProposal(
 	ctx context.Context,
-	req *services.DecideAgentProposalRequest,
+	proposalID pulid.ID,
+	tenant pagination.TenantInfo,
 	actor *services.RequestActor,
 ) error {
 	notYours := errortypes.NewNotFoundError(
@@ -128,8 +129,8 @@ func (s *Service) assertOwnProposal(
 	}
 
 	proposal, err := s.proposalRepo.GetByID(ctx, repositories.GetAgentProposalByIDRequest{
-		ID:         req.ProposalID,
-		TenantInfo: &req.TenantInfo,
+		ID:         proposalID,
+		TenantInfo: &tenant,
 	})
 	if err != nil {
 		return err
@@ -137,7 +138,7 @@ func (s *Service) assertOwnProposal(
 
 	run, err := s.runRepo.GetByID(ctx, repositories.GetAgentRunByIDRequest{
 		ID:         proposal.RunID,
-		TenantInfo: &req.TenantInfo,
+		TenantInfo: &tenant,
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -153,7 +154,7 @@ func (s *Service) assertOwnProposal(
 	if _, err = s.threads.GetThread(ctx, repositories.GetThreadRequest{
 		ID:         run.SubjectID,
 		UserID:     actor.UserID,
-		TenantInfo: req.TenantInfo,
+		TenantInfo: tenant,
 	}); err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return notYours

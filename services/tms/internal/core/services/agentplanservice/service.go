@@ -291,21 +291,22 @@ func (s *Service) DecideOwn(
 	req *services.DecideAgentPlanRequest,
 	actor *services.RequestActor,
 ) (*agent.AgentPlan, error) {
-	if err := s.assertOwnPlan(ctx, req, actor); err != nil {
+	if err := s.AssertOwnPlan(ctx, req.PlanID, req.TenantInfo, actor); err != nil {
 		return nil, err
 	}
 
 	return s.Decide(ctx, req, actor)
 }
 
-// assertOwnPlan refuses a plan not raised in one of the actor's own
+// AssertOwnPlan refuses a plan not raised in one of the actor's own
 // conversations, and one from an agent they may no longer use. Someone
 // else's plan is not found rather than forbidden, the way someone else's
 // conversation is. The agent checked is the one whose run raised the plan,
 // which for a hand-off is the delegate, not the conversation's own agent.
-func (s *Service) assertOwnPlan(
+func (s *Service) AssertOwnPlan(
 	ctx context.Context,
-	req *services.DecideAgentPlanRequest,
+	planID pulid.ID,
+	tenant pagination.TenantInfo,
 	actor *services.RequestActor,
 ) error {
 	notYours := errortypes.NewNotFoundError(
@@ -316,8 +317,8 @@ func (s *Service) assertOwnPlan(
 	}
 
 	plan, err := s.plans.GetByID(ctx, repositories.GetAgentPlanByIDRequest{
-		ID:         req.PlanID,
-		TenantInfo: req.TenantInfo,
+		ID:         planID,
+		TenantInfo: tenant,
 	})
 	if err != nil {
 		return err
@@ -325,7 +326,7 @@ func (s *Service) assertOwnPlan(
 
 	run, err := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
 		ID:         plan.RunID,
-		TenantInfo: &req.TenantInfo,
+		TenantInfo: &tenant,
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
@@ -341,7 +342,7 @@ func (s *Service) assertOwnPlan(
 	if _, err = s.threads.GetThread(ctx, repositories.GetThreadRequest{
 		ID:         run.SubjectID,
 		UserID:     actor.UserID,
-		TenantInfo: req.TenantInfo,
+		TenantInfo: tenant,
 	}); err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return notYours
@@ -350,14 +351,14 @@ func (s *Service) assertOwnPlan(
 		return err
 	}
 
-	return s.assertMayUseAgent(ctx, req, run, actor)
+	return s.assertMayUseAgent(ctx, tenant, run, actor)
 }
 
 // assertMayUseAgent refuses a plan from an agent the actor may not use. An
 // agent removed since, or a check that cannot be made, is a refusal.
 func (s *Service) assertMayUseAgent(
 	ctx context.Context,
-	req *services.DecideAgentPlanRequest,
+	tenant pagination.TenantInfo,
 	run *agent.AgentRun,
 	actor *services.RequestActor,
 ) error {
@@ -370,7 +371,7 @@ func (s *Service) assertMayUseAgent(
 
 	definition, err := s.agents.GetByID(ctx, repositories.GetAgentDefinitionByIDRequest{
 		ID:         run.AgentDefinitionID,
-		TenantInfo: req.TenantInfo,
+		TenantInfo: tenant,
 	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {

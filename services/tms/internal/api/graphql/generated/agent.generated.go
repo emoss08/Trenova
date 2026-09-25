@@ -24,6 +24,8 @@ import (
 
 type AgentDecisionResolver interface {
 	TraceURL(ctx context.Context, obj *agent.AgentDecision) (*string, error)
+
+	Preview(ctx context.Context, obj *agent.AgentDecision) (*agent.ProposalPreview, error)
 }
 type AgentEvaluationResolver interface {
 	SubjectType(ctx context.Context, obj *agent.Evaluation) (string, error)
@@ -639,6 +641,84 @@ func (ec *executionContext) _AgentDecision_updatedAt(ctx context.Context, field 
 }
 func (ec *executionContext) fieldContext_AgentDecision_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AgentDecision", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AgentDecision_preview(ctx context.Context, field graphql.CollectedField, obj *agent.AgentDecision) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentDecision_preview(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.AgentDecision().Preview(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *agent.ProposalPreview) graphql.Marshaler {
+			return ec.marshalOAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐProposalPreview(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentDecision_preview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentDecision",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentProposalPreview(ctx, field)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AgentDecision_previewDigest(ctx context.Context, field graphql.CollectedField, obj *agent.AgentDecision) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentDecision_previewDigest(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PreviewDigest, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentDecision_previewDigest(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentDecision", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentDecision_previewReviewed(ctx context.Context, field graphql.CollectedField, obj *agent.AgentDecision) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentDecision_previewReviewed(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.PreviewReviewed, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentDecision_previewReviewed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentDecision", field, false, false, errors.New("field of type Boolean does not have child fields"))
 }
 
 func (ec *executionContext) _AgentEvaluation_id(ctx context.Context, field graphql.CollectedField, obj *agent.Evaluation) (ret graphql.Marshaler) {
@@ -5891,7 +5971,7 @@ func (ec *executionContext) unmarshalInputAgentPlanDecisionInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"decision", "reasonCode"}
+	fieldsInOrder := [...]string{"decision", "reasonCode", "previewDigest"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5912,6 +5992,13 @@ func (ec *executionContext) unmarshalInputAgentPlanDecisionInput(ctx context.Con
 				return it, err
 			}
 			it.ReasonCode = data
+		case "previewDigest":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("previewDigest"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreviewDigest = data
 		}
 	}
 	return it, nil
@@ -5928,7 +6015,7 @@ func (ec *executionContext) unmarshalInputAgentProposalDecisionInput(ctx context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"decision", "modifications", "reasonCode"}
+	fieldsInOrder := [...]string{"decision", "modifications", "reasonCode", "previewDigest"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5956,6 +6043,13 @@ func (ec *executionContext) unmarshalInputAgentProposalDecisionInput(ctx context
 				return it, err
 			}
 			it.ReasonCode = data
+		case "previewDigest":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("previewDigest"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreviewDigest = data
 		}
 	}
 	return it, nil
@@ -6220,6 +6314,54 @@ func (ec *executionContext) _AgentDecision(ctx context.Context, sel ast.Selectio
 			}
 		case "updatedAt":
 			out.Values[i] = ec._AgentDecision_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "preview":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._AgentDecision_preview(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "previewDigest":
+			out.Values[i] = ec._AgentDecision_previewDigest(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "previewReviewed":
+			out.Values[i] = ec._AgentDecision_previewReviewed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

@@ -44,6 +44,15 @@ type ToolSimulator interface {
 	Simulate(ctx context.Context, params ToolExecuteParams) (*agent.ToolSimulation, error)
 }
 
+// ToolPreviewer is a tool that can say, record by record, what its write
+// would do. Preview is read-only and deterministic given the database and
+// the parameters, and it decides what changes with the same code Execute
+// does. The preview service runs it inside a read-only snapshot, so a write
+// it attempted would fail, and filters what it returns for each reader.
+type ToolPreviewer interface {
+	Preview(ctx context.Context, params ToolExecuteParams) (*agent.ToolPreview, error)
+}
+
 // ToolValidator is a tool that can check its arguments before anything is
 // recorded. The runtime asks it before raising a proposal, so a call that
 // would fail on execution is refused to the model now, while it can still

@@ -1627,6 +1627,16 @@ type AgentDecision {
   """
   modifications: JSON
   organizationId: ID!
+  """
+  What the decider was shown of the write, filtered again for the reader. Absent for a rejection and for a decision recorded before previews were kept.
+  """
+  preview: AgentProposalPreview
+  """
+  The digest of what the decider was shown; empty when none was recorded.
+  """
+  previewDigest: String!
+  """The decision named that digest, so the decider approved what they saw."""
+  previewReviewed: Boolean!
   proposalId: ID
   reasonCode: String!
   """
@@ -2279,12 +2289,33 @@ type AgentPlanConnection {
 input AgentPlanDecisionInput {
   """Accepted runs every step in order; Rejected rejects them all."""
   decision: AgentDecisionType!
+  """
+  The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded.
+  """
+  previewDigest: String
   reasonCode: String!
 }
 
 type AgentPlanEdge {
   cursor: String!
   node: AgentPlan!
+}
+
+"""
+What a plan's pending steps would do, in order: a step that follows another on
+the same record starts from what that step leaves.
+"""
+type AgentPlanPreview {
+  computedAt: Timestamp!
+  """Covers every step's digest in order; send it back with an approval."""
+  digest: String!
+  planId: ID!
+  """
+  A step's record has changed since the plan was proposed; it can only be rejected.
+  """
+  stale: Boolean!
+  steps: [AgentPlanStepPreview!]!
+  withheldCount: Int!
 }
 
 enum AgentPlanStatus {
@@ -2294,6 +2325,190 @@ enum AgentPlanStatus {
   Failed
   Pending
   Rejected
+}
+
+"""One pending step of a plan and what it would do."""
+type AgentPlanStepPreview {
+  preview: AgentProposalPreview!
+  proposalId: ID!
+  step: Int!
+}
+
+"""How much of what a write would do its preview could say."""
+enum AgentPreviewCoverage {
+  """
+  Every record the write changes, as the tool's own code would change it.
+  """
+  Full
+  """
+  Some of it: the tool previews part of what it does, or the preview was cut to its bounds.
+  """
+  Partial
+  """
+  The tool cannot say what it would change; the parameters it would run with are shown instead.
+  """
+  Unavailable
+}
+
+"""One value a write would set."""
+type AgentPreviewFieldChange {
+  """Absent on a delete, and when withheld."""
+  after: Any
+  afterRef: AgentPreviewRef
+  """Absent on a create, and when withheld."""
+  before: Any
+  beforeRef: AgentPreviewRef
+  """
+  The value has moved since the write was proposed; proposedBefore is what it was then.
+  """
+  changedSinceProposed: Boolean!
+  label: String!
+  path: String!
+  """
+  The plan step whose change this value starts from; zero when it starts from the record as it is.
+  """
+  projectedFromStep: Int!
+  proposedBefore: Any
+  """A value too long to keep whole was cut."""
+  truncated: Boolean!
+  """
+  How to draw the value: text, longText, date, datetime, money, number, percent, enum, status, boolean, flag, metrics or links.
+  """
+  valueType: String!
+  """Moves on its own between two reads; left out of the digest."""
+  volatile: Boolean!
+  """Above the reader's data access, so neither value is shown."""
+  withheld: Boolean!
+}
+
+"""
+A message a write would send, rendered as it would go out, with the recipients it would reach.
+"""
+type AgentPreviewMessage {
+  attachments: [String!]!
+  bcc: [String!]!
+  body: String!
+  """The body was longer than a preview keeps and was cut."""
+  bodyTruncated: Boolean!
+  """How often a scheduled message recurs; empty for one sent once."""
+  cadence: String!
+  cc: [String!]!
+  channel: AgentPreviewMessageChannel!
+  from: String!
+  subject: String!
+  templateVersionId: ID
+  to: [String!]!
+  """Who can see a comment: internal, customer or driver."""
+  visibility: String!
+}
+
+"""How a message a write would send reaches its recipients."""
+enum AgentPreviewMessageChannel {
+  Comment
+  Dash
+  EDI
+  Email
+  SMS
+}
+
+"""The amounts a write would move, with totals before and after."""
+type AgentPreviewMoney {
+  currency: String!
+  """After less before."""
+  delta: Decimal
+  lines: [AgentPreviewMoneyLine!]!
+  totalAfter: Decimal
+  totalBefore: Decimal
+  """Above the reader's data access, so no amount is shown."""
+  withheld: Boolean!
+}
+
+"""One amount a write would change."""
+type AgentPreviewMoneyLine {
+  after: Decimal
+  before: Decimal
+  label: String!
+}
+
+"""What a write would do to one record."""
+enum AgentPreviewOperation {
+  Archive
+  Create
+  Delete
+  """A tool that cannot say what it changes, run with the parameters shown."""
+  Run
+  Send
+  Update
+}
+
+"""What a write would do to one record."""
+type AgentPreviewRecordChange {
+  """The plan step that changes this record first; zero when none does."""
+  dependsOnStep: Int!
+  """Absent for a record the write creates."""
+  entityId: ID
+  fields: [AgentPreviewFieldChange!]!
+  """The words the record is known by; empty when withheld."""
+  label: String!
+  message: AgentPreviewMessage
+  money: AgentPreviewMoney
+  """Values past the preview's bounds that are not shown."""
+  omittedFields: Int!
+  operation: AgentPreviewOperation!
+  """
+  Where the record opens, when it has a page; absent for a record the write creates.
+  """
+  record: AgentPreviewRecordLink
+  resource: String!
+  """The record's version as the preview read it."""
+  version: Int
+  """
+  The reader may not read this kind of record, so nothing about it is shown.
+  """
+  withheld: Boolean!
+}
+
+"""
+A record as the app opens it: a key of the record-link registry and the record's id.
+"""
+type AgentPreviewRecordLink {
+  entityType: String!
+  id: String!
+}
+
+"""A record a value points at, named by its label."""
+type AgentPreviewRef {
+  id: ID!
+  """Absent when the record is gone or the reader may not read it."""
+  label: String
+  """Where the record opens, when it has a page."""
+  record: AgentPreviewRecordLink
+  resource: String!
+  """The reader may not read this record, so its name is not shown."""
+  withheld: Boolean!
+}
+
+"""The record a proposal pinned against the record as it is now."""
+type AgentPreviewStaleness {
+  currentVersion: Int!
+  """The record is gone."""
+  missing: Boolean!
+  """The proposal names one record and remembered its version."""
+  pinned: Boolean!
+  proposedVersion: Int!
+}
+
+"""
+Something the person deciding should know. The code is translated by the
+client; the message is the English fallback, with its arguments in order.
+"""
+type AgentPreviewWarning {
+  args: [String!]!
+  """
+  would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused or unpinned.
+  """
+  code: String!
+  message: String!
 }
 
 type AgentProposal {
@@ -2369,6 +2584,10 @@ type AgentProposalConnection {
 input AgentProposalDecisionInput {
   decision: AgentDecisionType!
   modifications: JSON
+  """
+  The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed.
+  """
+  previewDigest: String
   reasonCode: String!
 }
 
@@ -2419,6 +2638,47 @@ enum AgentProposalFieldKind {
   Multiline
   Number
   Text
+}
+
+"""
+What a proposal's write would do, computed for the reader from the world as
+it is now: what they may not read is withheld, and the digest names exactly
+what they were shown. Approving sends the digest back; a digest that no longer
+matches is refused, so a person only ever approves what they saw.
+"""
+type AgentProposalPreview {
+  changes: [AgentPreviewRecordChange!]!
+  computedAt: Timestamp!
+  coverage: AgentPreviewCoverage!
+  """SHA-256 of what this reader was shown; send it back with an approval."""
+  digest: String!
+  """Records past the preview's bounds that are not shown."""
+  omittedRecords: Int!
+  proposalId: ID!
+  """
+  This is the preview recorded when the proposal was decided, not one computed now.
+  """
+  recorded: Boolean!
+  """
+  The record the proposal was made against has changed or is gone; it can only be rejected.
+  """
+  stale: Boolean!
+  staleness: AgentPreviewStaleness
+  summary: String!
+  """The target record's version as the preview read it."""
+  targetVersion: Int
+  tool: String!
+  warnings: [AgentPreviewWarning!]!
+  """How many records, values and amounts were withheld from this reader."""
+  withheldCount: Int!
+}
+
+"""
+The digest of the preview a person was shown for one proposal of a batch.
+"""
+input AgentProposalPreviewDigestInput {
+  digest: String!
+  proposalId: ID!
 }
 
 enum AgentProposalStatus {
@@ -6802,6 +7062,10 @@ input DecideAgentProposalsInput {
   Accepted or Rejected. A change applies to one proposal, from its own card.
   """
   decision: AgentDecisionType!
+  """
+  The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed.
+  """
+  previewDigests: [AgentProposalPreviewDigestInput!]
   reasonCode: String
 }
 
@@ -15348,8 +15612,16 @@ type Query {
   """How many active memories the organization keeps, against its soft cap."""
   agentMemoryUsage: AgentMemoryUsage!
   agentPlan(id: ID!): AgentPlan
+  """What every pending step of a plan would do, in order."""
+  agentPlanPreview(id: ID!): AgentPlanPreview!
   agentPlans(input: DataTableConnectionInput!): AgentPlanConnection!
   agentProposal(id: ID!): AgentProposal
+  """
+  What a proposal's write would do, with the changes an approver has in mind
+  applied over what was proposed. A decided proposal returns the preview
+  recorded when it was decided.
+  """
+  agentProposalPreview(id: ID!, modifications: JSON): AgentProposalPreview!
   agentProposals(input: DataTableConnectionInput!): AgentProposalConnection!
   """One agent's quality over the last window days."""
   agentQuality(agentDefinitionId: ID!, window: Int = 30): AgentQuality!
@@ -15764,6 +16036,10 @@ type Query {
   """
   myNotifications(filter: NotificationFilterInput, input: DataTableConnectionInput!): NotificationConnection!
   myPeriodSummary: PortalPeriodSummary!
+  """
+  agentPlanPreview for a plan raised in one of the caller's own conversations, by an agent they may still use.
+  """
+  myPlanPreview(id: ID!): AgentPlanPreview!
   """Every policy in force that binds the signed-in driver, signed or not."""
   myPolicies: [PortalPolicy!]!
   """A short-lived link to read a policy's attached document."""
@@ -15777,6 +16053,10 @@ type Query {
   myPortalProfile: PortalProfile!
   """What the signed-in driver has asked to change on their record."""
   myProfileChangeRequests: [WorkerProfileChangeRequest!]!
+  """
+  agentProposalPreview for a proposal raised in one of the caller's own conversations.
+  """
+  myProposalPreview(id: ID!, modifications: JSON): AgentProposalPreview!
   myPto: [PortalPto!]!
   myPtoBalances: [MyPTOBalance!]!
   myRecentPayEvents(limit: Int): [DriverPayEvent!]!

@@ -51,6 +51,13 @@ type ResolverRoot interface {
 	AgentEvalCase() AgentEvalCaseResolver
 	AgentEvaluation() AgentEvaluationResolver
 	AgentPlan() AgentPlanResolver
+	AgentPreviewFieldChange() AgentPreviewFieldChangeResolver
+	AgentPreviewMessage() AgentPreviewMessageResolver
+	AgentPreviewMoney() AgentPreviewMoneyResolver
+	AgentPreviewMoneyLine() AgentPreviewMoneyLineResolver
+	AgentPreviewRecordChange() AgentPreviewRecordChangeResolver
+	AgentPreviewRef() AgentPreviewRefResolver
+	AgentPreviewWarning() AgentPreviewWarningResolver
 	AgentProposal() AgentProposalResolver
 	AgentQualityAgent() AgentQualityAgentResolver
 	AgentQualityControl() AgentQualityControlResolver
@@ -1077,6 +1084,9 @@ type ComplexityRoot struct {
 		ID              func(childComplexity int) int
 		Modifications   func(childComplexity int) int
 		OrganizationID  func(childComplexity int) int
+		Preview         func(childComplexity int) int
+		PreviewDigest   func(childComplexity int) int
+		PreviewReviewed func(childComplexity int) int
 		ProposalID      func(childComplexity int) int
 		ReasonCode      func(childComplexity int) int
 		TraceID         func(childComplexity int) int
@@ -1406,6 +1416,108 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	AgentPlanPreview struct {
+		ComputedAt    func(childComplexity int) int
+		Digest        func(childComplexity int) int
+		PlanID        func(childComplexity int) int
+		Stale         func(childComplexity int) int
+		Steps         func(childComplexity int) int
+		WithheldCount func(childComplexity int) int
+	}
+
+	AgentPlanStepPreview struct {
+		Preview    func(childComplexity int) int
+		ProposalID func(childComplexity int) int
+		Step       func(childComplexity int) int
+	}
+
+	AgentPreviewFieldChange struct {
+		After                func(childComplexity int) int
+		AfterRef             func(childComplexity int) int
+		Before               func(childComplexity int) int
+		BeforeRef            func(childComplexity int) int
+		ChangedSinceProposed func(childComplexity int) int
+		Label                func(childComplexity int) int
+		Path                 func(childComplexity int) int
+		ProjectedFromStep    func(childComplexity int) int
+		ProposedBefore       func(childComplexity int) int
+		Truncated            func(childComplexity int) int
+		Type                 func(childComplexity int) int
+		Volatile             func(childComplexity int) int
+		Withheld             func(childComplexity int) int
+	}
+
+	AgentPreviewMessage struct {
+		Attachments       func(childComplexity int) int
+		Bcc               func(childComplexity int) int
+		Body              func(childComplexity int) int
+		BodyTruncated     func(childComplexity int) int
+		Cadence           func(childComplexity int) int
+		Cc                func(childComplexity int) int
+		Channel           func(childComplexity int) int
+		From              func(childComplexity int) int
+		Subject           func(childComplexity int) int
+		TemplateVersionID func(childComplexity int) int
+		To                func(childComplexity int) int
+		Visibility        func(childComplexity int) int
+	}
+
+	AgentPreviewMoney struct {
+		Currency    func(childComplexity int) int
+		Delta       func(childComplexity int) int
+		Lines       func(childComplexity int) int
+		TotalAfter  func(childComplexity int) int
+		TotalBefore func(childComplexity int) int
+		Withheld    func(childComplexity int) int
+	}
+
+	AgentPreviewMoneyLine struct {
+		After  func(childComplexity int) int
+		Before func(childComplexity int) int
+		Label  func(childComplexity int) int
+	}
+
+	AgentPreviewRecordChange struct {
+		DependsOnStep func(childComplexity int) int
+		EntityID      func(childComplexity int) int
+		Fields        func(childComplexity int) int
+		Label         func(childComplexity int) int
+		Message       func(childComplexity int) int
+		Money         func(childComplexity int) int
+		OmittedFields func(childComplexity int) int
+		Operation     func(childComplexity int) int
+		Record        func(childComplexity int) int
+		Resource      func(childComplexity int) int
+		Version       func(childComplexity int) int
+		Withheld      func(childComplexity int) int
+	}
+
+	AgentPreviewRecordLink struct {
+		EntityType func(childComplexity int) int
+		ID         func(childComplexity int) int
+	}
+
+	AgentPreviewRef struct {
+		ID       func(childComplexity int) int
+		Label    func(childComplexity int) int
+		Record   func(childComplexity int) int
+		Resource func(childComplexity int) int
+		Withheld func(childComplexity int) int
+	}
+
+	AgentPreviewStaleness struct {
+		CurrentVersion  func(childComplexity int) int
+		Missing         func(childComplexity int) int
+		Pinned          func(childComplexity int) int
+		ProposedVersion func(childComplexity int) int
+	}
+
+	AgentPreviewWarning struct {
+		Args    func(childComplexity int) int
+		Code    func(childComplexity int) int
+		Message func(childComplexity int) int
+	}
+
 	AgentProposal struct {
 		AutonomyTier    func(childComplexity int) int
 		BusinessUnitID  func(childComplexity int) int
@@ -1464,6 +1576,23 @@ type ComplexityRoot struct {
 		Name        func(childComplexity int) int
 		Options     func(childComplexity int) int
 		Required    func(childComplexity int) int
+	}
+
+	AgentProposalPreview struct {
+		Changes        func(childComplexity int) int
+		ComputedAt     func(childComplexity int) int
+		Coverage       func(childComplexity int) int
+		Digest         func(childComplexity int) int
+		IsStale        func(childComplexity int) int
+		OmittedRecords func(childComplexity int) int
+		ProposalID     func(childComplexity int) int
+		Recorded       func(childComplexity int) int
+		Staleness      func(childComplexity int) int
+		Summary        func(childComplexity int) int
+		TargetVersion  func(childComplexity int) int
+		Tool           func(childComplexity int) int
+		Warnings       func(childComplexity int) int
+		WithheldCount  func(childComplexity int) int
 	}
 
 	AgentQuality struct {
@@ -8584,8 +8713,10 @@ type ComplexityRoot struct {
 		AgentMemory                         func(childComplexity int, id string) int
 		AgentMemoryUsage                    func(childComplexity int) int
 		AgentPlan                           func(childComplexity int, id string) int
+		AgentPlanPreview                    func(childComplexity int, id string) int
 		AgentPlans                          func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentProposal                       func(childComplexity int, id string) int
+		AgentProposalPreview                func(childComplexity int, id string, modifications map[string]any) int
 		AgentProposals                      func(childComplexity int, input gqlmodel.DataTableConnectionInput) int
 		AgentQuality                        func(childComplexity int, agentDefinitionID string, window *int) int
 		AgentQualityAgentConnection         func(childComplexity int, window *int, input gqlmodel.DataTableConnectionInput) int
@@ -8858,11 +8989,13 @@ type ComplexityRoot struct {
 		MyPTO                               func(childComplexity int) int
 		MyPTOBalances                       func(childComplexity int) int
 		MyPeriodSummary                     func(childComplexity int) int
+		MyPlanPreview                       func(childComplexity int, id string) int
 		MyPolicies                          func(childComplexity int) int
 		MyPolicyDocumentURL                 func(childComplexity int, policyID string) int
 		MyPortalFeatures                    func(childComplexity int) int
 		MyPortalProfile                     func(childComplexity int) int
 		MyProfileChangeRequests             func(childComplexity int) int
+		MyProposalPreview                   func(childComplexity int, id string, modifications map[string]any) int
 		MyRecentPayEvents                   func(childComplexity int, limit *int) int
 		MyRecognitions                      func(childComplexity int) int
 		MyReviews                           func(childComplexity int) int
@@ -16737,6 +16870,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentDecision.OrganizationID(childComplexity), true
+	case "AgentDecision.preview":
+		if e.ComplexityRoot.AgentDecision.Preview == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDecision.Preview(childComplexity), true
+	case "AgentDecision.previewDigest":
+		if e.ComplexityRoot.AgentDecision.PreviewDigest == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDecision.PreviewDigest(childComplexity), true
+	case "AgentDecision.previewReviewed":
+		if e.ComplexityRoot.AgentDecision.PreviewReviewed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentDecision.PreviewReviewed(childComplexity), true
 	case "AgentDecision.proposalId":
 		if e.ComplexityRoot.AgentDecision.ProposalID == nil {
 			break
@@ -18258,6 +18409,431 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentPlanEdge.Node(childComplexity), true
 
+	case "AgentPlanPreview.computedAt":
+		if e.ComplexityRoot.AgentPlanPreview.ComputedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanPreview.ComputedAt(childComplexity), true
+	case "AgentPlanPreview.digest":
+		if e.ComplexityRoot.AgentPlanPreview.Digest == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanPreview.Digest(childComplexity), true
+	case "AgentPlanPreview.planId":
+		if e.ComplexityRoot.AgentPlanPreview.PlanID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanPreview.PlanID(childComplexity), true
+	case "AgentPlanPreview.stale":
+		if e.ComplexityRoot.AgentPlanPreview.Stale == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanPreview.Stale(childComplexity), true
+	case "AgentPlanPreview.steps":
+		if e.ComplexityRoot.AgentPlanPreview.Steps == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanPreview.Steps(childComplexity), true
+	case "AgentPlanPreview.withheldCount":
+		if e.ComplexityRoot.AgentPlanPreview.WithheldCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanPreview.WithheldCount(childComplexity), true
+
+	case "AgentPlanStepPreview.preview":
+		if e.ComplexityRoot.AgentPlanStepPreview.Preview == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanStepPreview.Preview(childComplexity), true
+	case "AgentPlanStepPreview.proposalId":
+		if e.ComplexityRoot.AgentPlanStepPreview.ProposalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanStepPreview.ProposalID(childComplexity), true
+	case "AgentPlanStepPreview.step":
+		if e.ComplexityRoot.AgentPlanStepPreview.Step == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPlanStepPreview.Step(childComplexity), true
+
+	case "AgentPreviewFieldChange.after":
+		if e.ComplexityRoot.AgentPreviewFieldChange.After == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.After(childComplexity), true
+	case "AgentPreviewFieldChange.afterRef":
+		if e.ComplexityRoot.AgentPreviewFieldChange.AfterRef == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.AfterRef(childComplexity), true
+	case "AgentPreviewFieldChange.before":
+		if e.ComplexityRoot.AgentPreviewFieldChange.Before == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.Before(childComplexity), true
+	case "AgentPreviewFieldChange.beforeRef":
+		if e.ComplexityRoot.AgentPreviewFieldChange.BeforeRef == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.BeforeRef(childComplexity), true
+	case "AgentPreviewFieldChange.changedSinceProposed":
+		if e.ComplexityRoot.AgentPreviewFieldChange.ChangedSinceProposed == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.ChangedSinceProposed(childComplexity), true
+	case "AgentPreviewFieldChange.label":
+		if e.ComplexityRoot.AgentPreviewFieldChange.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.Label(childComplexity), true
+	case "AgentPreviewFieldChange.path":
+		if e.ComplexityRoot.AgentPreviewFieldChange.Path == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.Path(childComplexity), true
+	case "AgentPreviewFieldChange.projectedFromStep":
+		if e.ComplexityRoot.AgentPreviewFieldChange.ProjectedFromStep == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.ProjectedFromStep(childComplexity), true
+	case "AgentPreviewFieldChange.proposedBefore":
+		if e.ComplexityRoot.AgentPreviewFieldChange.ProposedBefore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.ProposedBefore(childComplexity), true
+	case "AgentPreviewFieldChange.truncated":
+		if e.ComplexityRoot.AgentPreviewFieldChange.Truncated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.Truncated(childComplexity), true
+	case "AgentPreviewFieldChange.valueType":
+		if e.ComplexityRoot.AgentPreviewFieldChange.Type == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.Type(childComplexity), true
+	case "AgentPreviewFieldChange.volatile":
+		if e.ComplexityRoot.AgentPreviewFieldChange.Volatile == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.Volatile(childComplexity), true
+	case "AgentPreviewFieldChange.withheld":
+		if e.ComplexityRoot.AgentPreviewFieldChange.Withheld == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewFieldChange.Withheld(childComplexity), true
+
+	case "AgentPreviewMessage.attachments":
+		if e.ComplexityRoot.AgentPreviewMessage.Attachments == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.Attachments(childComplexity), true
+	case "AgentPreviewMessage.bcc":
+		if e.ComplexityRoot.AgentPreviewMessage.Bcc == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.Bcc(childComplexity), true
+	case "AgentPreviewMessage.body":
+		if e.ComplexityRoot.AgentPreviewMessage.Body == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.Body(childComplexity), true
+	case "AgentPreviewMessage.bodyTruncated":
+		if e.ComplexityRoot.AgentPreviewMessage.BodyTruncated == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.BodyTruncated(childComplexity), true
+	case "AgentPreviewMessage.cadence":
+		if e.ComplexityRoot.AgentPreviewMessage.Cadence == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.Cadence(childComplexity), true
+	case "AgentPreviewMessage.cc":
+		if e.ComplexityRoot.AgentPreviewMessage.Cc == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.Cc(childComplexity), true
+	case "AgentPreviewMessage.channel":
+		if e.ComplexityRoot.AgentPreviewMessage.Channel == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.Channel(childComplexity), true
+	case "AgentPreviewMessage.from":
+		if e.ComplexityRoot.AgentPreviewMessage.From == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.From(childComplexity), true
+	case "AgentPreviewMessage.subject":
+		if e.ComplexityRoot.AgentPreviewMessage.Subject == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.Subject(childComplexity), true
+	case "AgentPreviewMessage.templateVersionId":
+		if e.ComplexityRoot.AgentPreviewMessage.TemplateVersionID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.TemplateVersionID(childComplexity), true
+	case "AgentPreviewMessage.to":
+		if e.ComplexityRoot.AgentPreviewMessage.To == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.To(childComplexity), true
+	case "AgentPreviewMessage.visibility":
+		if e.ComplexityRoot.AgentPreviewMessage.Visibility == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMessage.Visibility(childComplexity), true
+
+	case "AgentPreviewMoney.currency":
+		if e.ComplexityRoot.AgentPreviewMoney.Currency == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMoney.Currency(childComplexity), true
+	case "AgentPreviewMoney.delta":
+		if e.ComplexityRoot.AgentPreviewMoney.Delta == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMoney.Delta(childComplexity), true
+	case "AgentPreviewMoney.lines":
+		if e.ComplexityRoot.AgentPreviewMoney.Lines == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMoney.Lines(childComplexity), true
+	case "AgentPreviewMoney.totalAfter":
+		if e.ComplexityRoot.AgentPreviewMoney.TotalAfter == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMoney.TotalAfter(childComplexity), true
+	case "AgentPreviewMoney.totalBefore":
+		if e.ComplexityRoot.AgentPreviewMoney.TotalBefore == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMoney.TotalBefore(childComplexity), true
+	case "AgentPreviewMoney.withheld":
+		if e.ComplexityRoot.AgentPreviewMoney.Withheld == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMoney.Withheld(childComplexity), true
+
+	case "AgentPreviewMoneyLine.after":
+		if e.ComplexityRoot.AgentPreviewMoneyLine.After == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMoneyLine.After(childComplexity), true
+	case "AgentPreviewMoneyLine.before":
+		if e.ComplexityRoot.AgentPreviewMoneyLine.Before == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMoneyLine.Before(childComplexity), true
+	case "AgentPreviewMoneyLine.label":
+		if e.ComplexityRoot.AgentPreviewMoneyLine.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewMoneyLine.Label(childComplexity), true
+
+	case "AgentPreviewRecordChange.dependsOnStep":
+		if e.ComplexityRoot.AgentPreviewRecordChange.DependsOnStep == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.DependsOnStep(childComplexity), true
+	case "AgentPreviewRecordChange.entityId":
+		if e.ComplexityRoot.AgentPreviewRecordChange.EntityID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.EntityID(childComplexity), true
+	case "AgentPreviewRecordChange.fields":
+		if e.ComplexityRoot.AgentPreviewRecordChange.Fields == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.Fields(childComplexity), true
+	case "AgentPreviewRecordChange.label":
+		if e.ComplexityRoot.AgentPreviewRecordChange.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.Label(childComplexity), true
+	case "AgentPreviewRecordChange.message":
+		if e.ComplexityRoot.AgentPreviewRecordChange.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.Message(childComplexity), true
+	case "AgentPreviewRecordChange.money":
+		if e.ComplexityRoot.AgentPreviewRecordChange.Money == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.Money(childComplexity), true
+	case "AgentPreviewRecordChange.omittedFields":
+		if e.ComplexityRoot.AgentPreviewRecordChange.OmittedFields == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.OmittedFields(childComplexity), true
+	case "AgentPreviewRecordChange.operation":
+		if e.ComplexityRoot.AgentPreviewRecordChange.Operation == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.Operation(childComplexity), true
+	case "AgentPreviewRecordChange.record":
+		if e.ComplexityRoot.AgentPreviewRecordChange.Record == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.Record(childComplexity), true
+	case "AgentPreviewRecordChange.resource":
+		if e.ComplexityRoot.AgentPreviewRecordChange.Resource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.Resource(childComplexity), true
+	case "AgentPreviewRecordChange.version":
+		if e.ComplexityRoot.AgentPreviewRecordChange.Version == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.Version(childComplexity), true
+	case "AgentPreviewRecordChange.withheld":
+		if e.ComplexityRoot.AgentPreviewRecordChange.Withheld == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordChange.Withheld(childComplexity), true
+
+	case "AgentPreviewRecordLink.entityType":
+		if e.ComplexityRoot.AgentPreviewRecordLink.EntityType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordLink.EntityType(childComplexity), true
+	case "AgentPreviewRecordLink.id":
+		if e.ComplexityRoot.AgentPreviewRecordLink.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRecordLink.ID(childComplexity), true
+
+	case "AgentPreviewRef.id":
+		if e.ComplexityRoot.AgentPreviewRef.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRef.ID(childComplexity), true
+	case "AgentPreviewRef.label":
+		if e.ComplexityRoot.AgentPreviewRef.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRef.Label(childComplexity), true
+	case "AgentPreviewRef.record":
+		if e.ComplexityRoot.AgentPreviewRef.Record == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRef.Record(childComplexity), true
+	case "AgentPreviewRef.resource":
+		if e.ComplexityRoot.AgentPreviewRef.Resource == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRef.Resource(childComplexity), true
+	case "AgentPreviewRef.withheld":
+		if e.ComplexityRoot.AgentPreviewRef.Withheld == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewRef.Withheld(childComplexity), true
+
+	case "AgentPreviewStaleness.currentVersion":
+		if e.ComplexityRoot.AgentPreviewStaleness.CurrentVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewStaleness.CurrentVersion(childComplexity), true
+	case "AgentPreviewStaleness.missing":
+		if e.ComplexityRoot.AgentPreviewStaleness.Missing == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewStaleness.Missing(childComplexity), true
+	case "AgentPreviewStaleness.pinned":
+		if e.ComplexityRoot.AgentPreviewStaleness.Pinned == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewStaleness.Pinned(childComplexity), true
+	case "AgentPreviewStaleness.proposedVersion":
+		if e.ComplexityRoot.AgentPreviewStaleness.ProposedVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewStaleness.ProposedVersion(childComplexity), true
+
+	case "AgentPreviewWarning.args":
+		if e.ComplexityRoot.AgentPreviewWarning.Args == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewWarning.Args(childComplexity), true
+	case "AgentPreviewWarning.code":
+		if e.ComplexityRoot.AgentPreviewWarning.Code == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewWarning.Code(childComplexity), true
+	case "AgentPreviewWarning.message":
+		if e.ComplexityRoot.AgentPreviewWarning.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewWarning.Message(childComplexity), true
+
 	case "AgentProposal.autonomyTier":
 		if e.ComplexityRoot.AgentProposal.AutonomyTier == nil {
 			break
@@ -18532,6 +19108,91 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposalField.Required(childComplexity), true
+
+	case "AgentProposalPreview.changes":
+		if e.ComplexityRoot.AgentProposalPreview.Changes == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.Changes(childComplexity), true
+	case "AgentProposalPreview.computedAt":
+		if e.ComplexityRoot.AgentProposalPreview.ComputedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.ComputedAt(childComplexity), true
+	case "AgentProposalPreview.coverage":
+		if e.ComplexityRoot.AgentProposalPreview.Coverage == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.Coverage(childComplexity), true
+	case "AgentProposalPreview.digest":
+		if e.ComplexityRoot.AgentProposalPreview.Digest == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.Digest(childComplexity), true
+	case "AgentProposalPreview.stale":
+		if e.ComplexityRoot.AgentProposalPreview.IsStale == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.IsStale(childComplexity), true
+	case "AgentProposalPreview.omittedRecords":
+		if e.ComplexityRoot.AgentProposalPreview.OmittedRecords == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.OmittedRecords(childComplexity), true
+	case "AgentProposalPreview.proposalId":
+		if e.ComplexityRoot.AgentProposalPreview.ProposalID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.ProposalID(childComplexity), true
+	case "AgentProposalPreview.recorded":
+		if e.ComplexityRoot.AgentProposalPreview.Recorded == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.Recorded(childComplexity), true
+	case "AgentProposalPreview.staleness":
+		if e.ComplexityRoot.AgentProposalPreview.Staleness == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.Staleness(childComplexity), true
+	case "AgentProposalPreview.summary":
+		if e.ComplexityRoot.AgentProposalPreview.Summary == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.Summary(childComplexity), true
+	case "AgentProposalPreview.targetVersion":
+		if e.ComplexityRoot.AgentProposalPreview.TargetVersion == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.TargetVersion(childComplexity), true
+	case "AgentProposalPreview.tool":
+		if e.ComplexityRoot.AgentProposalPreview.Tool == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.Tool(childComplexity), true
+	case "AgentProposalPreview.warnings":
+		if e.ComplexityRoot.AgentProposalPreview.Warnings == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.Warnings(childComplexity), true
+	case "AgentProposalPreview.withheldCount":
+		if e.ComplexityRoot.AgentProposalPreview.WithheldCount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalPreview.WithheldCount(childComplexity), true
 
 	case "AgentQuality.activeCases":
 		if e.ComplexityRoot.AgentQuality.ActiveCases == nil {
@@ -54454,6 +55115,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentPlan(childComplexity, args["id"].(string)), true
+	case "Query.agentPlanPreview":
+		if e.ComplexityRoot.Query.AgentPlanPreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentPlanPreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentPlanPreview(childComplexity, args["id"].(string)), true
 	case "Query.agentPlans":
 		if e.ComplexityRoot.Query.AgentPlans == nil {
 			break
@@ -54476,6 +55148,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AgentProposal(childComplexity, args["id"].(string)), true
+	case "Query.agentProposalPreview":
+		if e.ComplexityRoot.Query.AgentProposalPreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_agentProposalPreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.AgentProposalPreview(childComplexity, args["id"].(string), args["modifications"].(map[string]any)), true
 	case "Query.agentProposals":
 		if e.ComplexityRoot.Query.AgentProposals == nil {
 			break
@@ -57224,6 +57907,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MyPeriodSummary(childComplexity), true
+	case "Query.myPlanPreview":
+		if e.ComplexityRoot.Query.MyPlanPreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_myPlanPreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.MyPlanPreview(childComplexity, args["id"].(string)), true
 	case "Query.myPolicies":
 		if e.ComplexityRoot.Query.MyPolicies == nil {
 			break
@@ -57259,6 +57953,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MyProfileChangeRequests(childComplexity), true
+	case "Query.myProposalPreview":
+		if e.ComplexityRoot.Query.MyProposalPreview == nil {
+			break
+		}
+
+		args, err := ec.field_Query_myProposalPreview_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Query.MyProposalPreview(childComplexity, args["id"].(string), args["modifications"].(map[string]any)), true
 	case "Query.myRecentPayEvents":
 		if e.ComplexityRoot.Query.MyRecentPayEvents == nil {
 			break
@@ -77183,6 +77888,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAgentMemoryInput,
 		ec.unmarshalInputAgentPlanDecisionInput,
 		ec.unmarshalInputAgentProposalDecisionInput,
+		ec.unmarshalInputAgentProposalPreviewDigestInput,
 		ec.unmarshalInputAgentQualityAgentsInput,
 		ec.unmarshalInputAgentScorecardInput,
 		ec.unmarshalInputAgentSuiteRunCasesInput,
@@ -78851,12 +79557,16 @@ input AgentProposalDecisionInput {
   decision: AgentDecisionType!
   modifications: JSON
   reasonCode: String!
+  "The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed."
+  previewDigest: String
 }
 
 input AgentPlanDecisionInput {
   "Accepted runs every step in order; Rejected rejects them all."
   decision: AgentDecisionType!
   reasonCode: String!
+  "The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded."
+  previewDigest: String
 }
 
 input AgentExceptionResolveInput {
@@ -79242,6 +79952,242 @@ extend type Mutation {
   setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition!
   "Replaces the agents a role is granted."
   setRoleAgentAccess(roleId: ID!, agentIds: [ID!]!): Role!
+}
+`, BuiltIn: false},
+	{Name: "../schema/agentpreview.graphqls", Input: `"How much of what a write would do its preview could say."
+enum AgentPreviewCoverage {
+  "Every record the write changes, as the tool's own code would change it."
+  Full
+  "Some of it: the tool previews part of what it does, or the preview was cut to its bounds."
+  Partial
+  "The tool cannot say what it would change; the parameters it would run with are shown instead."
+  Unavailable
+}
+
+"What a write would do to one record."
+enum AgentPreviewOperation {
+  Create
+  Update
+  Delete
+  Archive
+  Send
+  "A tool that cannot say what it changes, run with the parameters shown."
+  Run
+}
+
+"How a message a write would send reaches its recipients."
+enum AgentPreviewMessageChannel {
+  Email
+  SMS
+  Dash
+  EDI
+  Comment
+}
+
+"""
+Something the person deciding should know. The code is translated by the
+client; the message is the English fallback, with its arguments in order.
+"""
+type AgentPreviewWarning {
+  "would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused or unpinned."
+  code: String!
+  args: [String!]!
+  message: String!
+}
+
+"A record as the app opens it: a key of the record-link registry and the record's id."
+type AgentPreviewRecordLink {
+  entityType: String!
+  id: String!
+}
+
+"A record a value points at, named by its label."
+type AgentPreviewRef {
+  resource: String!
+  id: ID!
+  "Absent when the record is gone or the reader may not read it."
+  label: String
+  "Where the record opens, when it has a page."
+  record: AgentPreviewRecordLink
+  "The reader may not read this record, so its name is not shown."
+  withheld: Boolean!
+}
+
+"One value a write would set."
+type AgentPreviewFieldChange {
+  path: String!
+  label: String!
+  "How to draw the value: text, longText, date, datetime, money, number, percent, enum, status, boolean, flag, metrics or links."
+  valueType: String!
+  "Absent on a create, and when withheld."
+  before: Any
+  "Absent on a delete, and when withheld."
+  after: Any
+  beforeRef: AgentPreviewRef
+  afterRef: AgentPreviewRef
+  "Above the reader's data access, so neither value is shown."
+  withheld: Boolean!
+  "Moves on its own between two reads; left out of the digest."
+  volatile: Boolean!
+  "A value too long to keep whole was cut."
+  truncated: Boolean!
+  "The value has moved since the write was proposed; proposedBefore is what it was then."
+  changedSinceProposed: Boolean!
+  proposedBefore: Any
+  "The plan step whose change this value starts from; zero when it starts from the record as it is."
+  projectedFromStep: Int!
+}
+
+"A message a write would send, rendered as it would go out, with the recipients it would reach."
+type AgentPreviewMessage {
+  channel: AgentPreviewMessageChannel!
+  from: String!
+  to: [String!]!
+  cc: [String!]!
+  bcc: [String!]!
+  attachments: [String!]!
+  subject: String!
+  body: String!
+  "The body was longer than a preview keeps and was cut."
+  bodyTruncated: Boolean!
+  "Who can see a comment: internal, customer or driver."
+  visibility: String!
+  "How often a scheduled message recurs; empty for one sent once."
+  cadence: String!
+  templateVersionId: ID
+}
+
+"One amount a write would change."
+type AgentPreviewMoneyLine {
+  label: String!
+  before: Decimal
+  after: Decimal
+}
+
+"The amounts a write would move, with totals before and after."
+type AgentPreviewMoney {
+  currency: String!
+  lines: [AgentPreviewMoneyLine!]!
+  totalBefore: Decimal
+  totalAfter: Decimal
+  "After less before."
+  delta: Decimal
+  "Above the reader's data access, so no amount is shown."
+  withheld: Boolean!
+}
+
+"What a write would do to one record."
+type AgentPreviewRecordChange {
+  resource: String!
+  "Where the record opens, when it has a page; absent for a record the write creates."
+  record: AgentPreviewRecordLink
+  "Absent for a record the write creates."
+  entityId: ID
+  "The words the record is known by; empty when withheld."
+  label: String!
+  operation: AgentPreviewOperation!
+  "The record's version as the preview read it."
+  version: Int
+  "The reader may not read this kind of record, so nothing about it is shown."
+  withheld: Boolean!
+  "The plan step that changes this record first; zero when none does."
+  dependsOnStep: Int!
+  fields: [AgentPreviewFieldChange!]!
+  "Values past the preview's bounds that are not shown."
+  omittedFields: Int!
+  message: AgentPreviewMessage
+  money: AgentPreviewMoney
+}
+
+"The record a proposal pinned against the record as it is now."
+type AgentPreviewStaleness {
+  "The proposal names one record and remembered its version."
+  pinned: Boolean!
+  proposedVersion: Int!
+  currentVersion: Int!
+  "The record is gone."
+  missing: Boolean!
+}
+
+"""
+What a proposal's write would do, computed for the reader from the world as
+it is now: what they may not read is withheld, and the digest names exactly
+what they were shown. Approving sends the digest back; a digest that no longer
+matches is refused, so a person only ever approves what they saw.
+"""
+type AgentProposalPreview {
+  proposalId: ID!
+  tool: String!
+  summary: String!
+  coverage: AgentPreviewCoverage!
+  changes: [AgentPreviewRecordChange!]!
+  warnings: [AgentPreviewWarning!]!
+  "The record the proposal was made against has changed or is gone; it can only be rejected."
+  stale: Boolean!
+  staleness: AgentPreviewStaleness
+  "The target record's version as the preview read it."
+  targetVersion: Int
+  "How many records, values and amounts were withheld from this reader."
+  withheldCount: Int!
+  "Records past the preview's bounds that are not shown."
+  omittedRecords: Int!
+  "This is the preview recorded when the proposal was decided, not one computed now."
+  recorded: Boolean!
+  computedAt: Timestamp!
+  "SHA-256 of what this reader was shown; send it back with an approval."
+  digest: String!
+}
+
+"One pending step of a plan and what it would do."
+type AgentPlanStepPreview {
+  proposalId: ID!
+  step: Int!
+  preview: AgentProposalPreview!
+}
+
+"""
+What a plan's pending steps would do, in order: a step that follows another on
+the same record starts from what that step leaves.
+"""
+type AgentPlanPreview {
+  planId: ID!
+  steps: [AgentPlanStepPreview!]!
+  "Covers every step's digest in order; send it back with an approval."
+  digest: String!
+  "A step's record has changed since the plan was proposed; it can only be rejected."
+  stale: Boolean!
+  withheldCount: Int!
+  computedAt: Timestamp!
+}
+
+"The digest of the preview a person was shown for one proposal of a batch."
+input AgentProposalPreviewDigestInput {
+  proposalId: ID!
+  digest: String!
+}
+
+extend type AgentDecision {
+  "What the decider was shown of the write, filtered again for the reader. Absent for a rejection and for a decision recorded before previews were kept."
+  preview: AgentProposalPreview
+  "The digest of what the decider was shown; empty when none was recorded."
+  previewDigest: String!
+  "The decision named that digest, so the decider approved what they saw."
+  previewReviewed: Boolean!
+}
+
+extend type Query {
+  """
+  What a proposal's write would do, with the changes an approver has in mind
+  applied over what was proposed. A decided proposal returns the preview
+  recorded when it was decided.
+  """
+  agentProposalPreview(id: ID!, modifications: JSON): AgentProposalPreview!
+  "What every pending step of a plan would do, in order."
+  agentPlanPreview(id: ID!): AgentPlanPreview!
+  "agentProposalPreview for a proposal raised in one of the caller's own conversations."
+  myProposalPreview(id: ID!, modifications: JSON): AgentProposalPreview!
+  "agentPlanPreview for a plan raised in one of the caller's own conversations, by an agent they may still use."
+  myPlanPreview(id: ID!): AgentPlanPreview!
 }
 `, BuiltIn: false},
 	{Name: "../schema/agentquality.graphqls", Input: `enum AgentEvalCaseSource {
@@ -84185,6 +85131,8 @@ input DecideAgentProposalsInput {
   "Accepted or Rejected. A change applies to one proposal, from its own card."
   decision: AgentDecisionType!
   reasonCode: String
+  "The digest of the preview shown for each proposal. A digest that no longer matches fails that proposal alone; a proposal without one is recorded as approved unreviewed."
+  previewDigests: [AgentProposalPreviewDigestInput!]
 }
 
 "What became of one proposal in a batch decision."
@@ -102956,6 +103904,12 @@ func (ec *executionContext) childFields_AgentDecision(ctx context.Context, field
 		return ec.fieldContext_AgentDecision_createdAt(ctx, field)
 	case "updatedAt":
 		return ec.fieldContext_AgentDecision_updatedAt(ctx, field)
+	case "preview":
+		return ec.fieldContext_AgentDecision_preview(ctx, field)
+	case "previewDigest":
+		return ec.fieldContext_AgentDecision_previewDigest(ctx, field)
+	case "previewReviewed":
+		return ec.fieldContext_AgentDecision_previewReviewed(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentDecision", field.Name)
 }
@@ -103602,6 +104556,210 @@ func (ec *executionContext) childFields_AgentPlanEdge(ctx context.Context, field
 	return nil, fmt.Errorf("no field named %q was found under type AgentPlanEdge", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentPlanPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "planId":
+		return ec.fieldContext_AgentPlanPreview_planId(ctx, field)
+	case "steps":
+		return ec.fieldContext_AgentPlanPreview_steps(ctx, field)
+	case "digest":
+		return ec.fieldContext_AgentPlanPreview_digest(ctx, field)
+	case "stale":
+		return ec.fieldContext_AgentPlanPreview_stale(ctx, field)
+	case "withheldCount":
+		return ec.fieldContext_AgentPlanPreview_withheldCount(ctx, field)
+	case "computedAt":
+		return ec.fieldContext_AgentPlanPreview_computedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPlanPreview", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPlanStepPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "proposalId":
+		return ec.fieldContext_AgentPlanStepPreview_proposalId(ctx, field)
+	case "step":
+		return ec.fieldContext_AgentPlanStepPreview_step(ctx, field)
+	case "preview":
+		return ec.fieldContext_AgentPlanStepPreview_preview(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPlanStepPreview", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPreviewFieldChange(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "path":
+		return ec.fieldContext_AgentPreviewFieldChange_path(ctx, field)
+	case "label":
+		return ec.fieldContext_AgentPreviewFieldChange_label(ctx, field)
+	case "valueType":
+		return ec.fieldContext_AgentPreviewFieldChange_valueType(ctx, field)
+	case "before":
+		return ec.fieldContext_AgentPreviewFieldChange_before(ctx, field)
+	case "after":
+		return ec.fieldContext_AgentPreviewFieldChange_after(ctx, field)
+	case "beforeRef":
+		return ec.fieldContext_AgentPreviewFieldChange_beforeRef(ctx, field)
+	case "afterRef":
+		return ec.fieldContext_AgentPreviewFieldChange_afterRef(ctx, field)
+	case "withheld":
+		return ec.fieldContext_AgentPreviewFieldChange_withheld(ctx, field)
+	case "volatile":
+		return ec.fieldContext_AgentPreviewFieldChange_volatile(ctx, field)
+	case "truncated":
+		return ec.fieldContext_AgentPreviewFieldChange_truncated(ctx, field)
+	case "changedSinceProposed":
+		return ec.fieldContext_AgentPreviewFieldChange_changedSinceProposed(ctx, field)
+	case "proposedBefore":
+		return ec.fieldContext_AgentPreviewFieldChange_proposedBefore(ctx, field)
+	case "projectedFromStep":
+		return ec.fieldContext_AgentPreviewFieldChange_projectedFromStep(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewFieldChange", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPreviewMessage(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "channel":
+		return ec.fieldContext_AgentPreviewMessage_channel(ctx, field)
+	case "from":
+		return ec.fieldContext_AgentPreviewMessage_from(ctx, field)
+	case "to":
+		return ec.fieldContext_AgentPreviewMessage_to(ctx, field)
+	case "cc":
+		return ec.fieldContext_AgentPreviewMessage_cc(ctx, field)
+	case "bcc":
+		return ec.fieldContext_AgentPreviewMessage_bcc(ctx, field)
+	case "attachments":
+		return ec.fieldContext_AgentPreviewMessage_attachments(ctx, field)
+	case "subject":
+		return ec.fieldContext_AgentPreviewMessage_subject(ctx, field)
+	case "body":
+		return ec.fieldContext_AgentPreviewMessage_body(ctx, field)
+	case "bodyTruncated":
+		return ec.fieldContext_AgentPreviewMessage_bodyTruncated(ctx, field)
+	case "visibility":
+		return ec.fieldContext_AgentPreviewMessage_visibility(ctx, field)
+	case "cadence":
+		return ec.fieldContext_AgentPreviewMessage_cadence(ctx, field)
+	case "templateVersionId":
+		return ec.fieldContext_AgentPreviewMessage_templateVersionId(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewMessage", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPreviewMoney(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "currency":
+		return ec.fieldContext_AgentPreviewMoney_currency(ctx, field)
+	case "lines":
+		return ec.fieldContext_AgentPreviewMoney_lines(ctx, field)
+	case "totalBefore":
+		return ec.fieldContext_AgentPreviewMoney_totalBefore(ctx, field)
+	case "totalAfter":
+		return ec.fieldContext_AgentPreviewMoney_totalAfter(ctx, field)
+	case "delta":
+		return ec.fieldContext_AgentPreviewMoney_delta(ctx, field)
+	case "withheld":
+		return ec.fieldContext_AgentPreviewMoney_withheld(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewMoney", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPreviewMoneyLine(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "label":
+		return ec.fieldContext_AgentPreviewMoneyLine_label(ctx, field)
+	case "before":
+		return ec.fieldContext_AgentPreviewMoneyLine_before(ctx, field)
+	case "after":
+		return ec.fieldContext_AgentPreviewMoneyLine_after(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewMoneyLine", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPreviewRecordChange(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "resource":
+		return ec.fieldContext_AgentPreviewRecordChange_resource(ctx, field)
+	case "record":
+		return ec.fieldContext_AgentPreviewRecordChange_record(ctx, field)
+	case "entityId":
+		return ec.fieldContext_AgentPreviewRecordChange_entityId(ctx, field)
+	case "label":
+		return ec.fieldContext_AgentPreviewRecordChange_label(ctx, field)
+	case "operation":
+		return ec.fieldContext_AgentPreviewRecordChange_operation(ctx, field)
+	case "version":
+		return ec.fieldContext_AgentPreviewRecordChange_version(ctx, field)
+	case "withheld":
+		return ec.fieldContext_AgentPreviewRecordChange_withheld(ctx, field)
+	case "dependsOnStep":
+		return ec.fieldContext_AgentPreviewRecordChange_dependsOnStep(ctx, field)
+	case "fields":
+		return ec.fieldContext_AgentPreviewRecordChange_fields(ctx, field)
+	case "omittedFields":
+		return ec.fieldContext_AgentPreviewRecordChange_omittedFields(ctx, field)
+	case "message":
+		return ec.fieldContext_AgentPreviewRecordChange_message(ctx, field)
+	case "money":
+		return ec.fieldContext_AgentPreviewRecordChange_money(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewRecordChange", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPreviewRecordLink(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "entityType":
+		return ec.fieldContext_AgentPreviewRecordLink_entityType(ctx, field)
+	case "id":
+		return ec.fieldContext_AgentPreviewRecordLink_id(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewRecordLink", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPreviewRef(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "resource":
+		return ec.fieldContext_AgentPreviewRef_resource(ctx, field)
+	case "id":
+		return ec.fieldContext_AgentPreviewRef_id(ctx, field)
+	case "label":
+		return ec.fieldContext_AgentPreviewRef_label(ctx, field)
+	case "record":
+		return ec.fieldContext_AgentPreviewRef_record(ctx, field)
+	case "withheld":
+		return ec.fieldContext_AgentPreviewRef_withheld(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewRef", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPreviewStaleness(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "pinned":
+		return ec.fieldContext_AgentPreviewStaleness_pinned(ctx, field)
+	case "proposedVersion":
+		return ec.fieldContext_AgentPreviewStaleness_proposedVersion(ctx, field)
+	case "currentVersion":
+		return ec.fieldContext_AgentPreviewStaleness_currentVersion(ctx, field)
+	case "missing":
+		return ec.fieldContext_AgentPreviewStaleness_missing(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewStaleness", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentPreviewWarning(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "code":
+		return ec.fieldContext_AgentPreviewWarning_code(ctx, field)
+	case "args":
+		return ec.fieldContext_AgentPreviewWarning_args(ctx, field)
+	case "message":
+		return ec.fieldContext_AgentPreviewWarning_message(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewWarning", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentProposal(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -103720,6 +104878,40 @@ func (ec *executionContext) childFields_AgentProposalField(ctx context.Context, 
 		return ec.fieldContext_AgentProposalField_maxLength(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentProposalField", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentProposalPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "proposalId":
+		return ec.fieldContext_AgentProposalPreview_proposalId(ctx, field)
+	case "tool":
+		return ec.fieldContext_AgentProposalPreview_tool(ctx, field)
+	case "summary":
+		return ec.fieldContext_AgentProposalPreview_summary(ctx, field)
+	case "coverage":
+		return ec.fieldContext_AgentProposalPreview_coverage(ctx, field)
+	case "changes":
+		return ec.fieldContext_AgentProposalPreview_changes(ctx, field)
+	case "warnings":
+		return ec.fieldContext_AgentProposalPreview_warnings(ctx, field)
+	case "stale":
+		return ec.fieldContext_AgentProposalPreview_stale(ctx, field)
+	case "staleness":
+		return ec.fieldContext_AgentProposalPreview_staleness(ctx, field)
+	case "targetVersion":
+		return ec.fieldContext_AgentProposalPreview_targetVersion(ctx, field)
+	case "withheldCount":
+		return ec.fieldContext_AgentProposalPreview_withheldCount(ctx, field)
+	case "omittedRecords":
+		return ec.fieldContext_AgentProposalPreview_omittedRecords(ctx, field)
+	case "recorded":
+		return ec.fieldContext_AgentProposalPreview_recorded(ctx, field)
+	case "computedAt":
+		return ec.fieldContext_AgentProposalPreview_computedAt(ctx, field)
+	case "digest":
+		return ec.fieldContext_AgentProposalPreview_digest(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentProposalPreview", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentQuality(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
