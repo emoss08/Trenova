@@ -732,3 +732,21 @@ func (f *fakeApps) Delete(
 	delete(f.rows, integrationKey(req.TenantInfo, req.IntegrationType))
 	return nil
 }
+
+type fakePoller struct {
+	mu     sync.Mutex
+	polled []pulid.ID
+}
+
+func (f *fakePoller) PollNow(_ context.Context, _ pagination.TenantInfo, connectionID pulid.ID) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.polled = append(f.polled, connectionID)
+	return nil
+}
+
+func (f *fakePoller) calls() []pulid.ID {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]pulid.ID{}, f.polled...)
+}

@@ -504,6 +504,41 @@ func TestUpdateSettingsAutoSyncOnlyChange(t *testing.T) {
 	assert.Equal(t, "Changed how documents are sent to QuickBooks Online", h.audit.lastComment())
 }
 
+func TestUpdateSettingsChangesTheInboundPaymentPolicy(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	update := func(policy accountingsync.InboundPaymentPolicy) (*accountingsync.AccountingConnection, error) {
+		return h.svc.UpdateSettings(t.Context(), &services.UpdateAccountingSyncSettingsRequest{
+			TenantInfo:      h.tenant,
+			UserID:          h.userID,
+			IntegrationType: integration.TypeQuickBooksOnline,
+			AutoSync:        true,
+			InboundPayments: policy,
+		})
+	}
+	assert.Equal(t, accountingsync.InboundPaymentsPropose, h.connections.get(h.conn.ID).PaymentPolicy(),
+		"a connection proposes payments until someone chooses otherwise")
+
+	applied, err := update(accountingsync.InboundPaymentsApply)
+	require.NoError(t, err)
+	assert.Equal(t, accountingsync.InboundPaymentsApply, applied.InboundPaymentPolicy)
+	assert.Equal(t,
+		"Payments recorded in QuickBooks Online are now applied in Trenova automatically",
+		h.audit.lastComment(),
+	)
+
+	kept, err := update("")
+	require.NoError(t, err)
+	assert.Equal(t, accountingsync.InboundPaymentsApply, kept.InboundPaymentPolicy,
+		"leaving the policy out keeps it")
+
+	_, err = update("Sometimes")
+	require.Error(t, err)
+	assert.True(t, errortypes.IsError(err))
+	assert.Equal(t, accountingsync.InboundPaymentsApply, h.connections.get(h.conn.ID).InboundPaymentPolicy)
+}
+
 func TestEnableSyncWithDriverSettlementsStampsBothTimesAndBackfillsThem(t *testing.T) {
 	t.Parallel()
 

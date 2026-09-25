@@ -38,6 +38,17 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
+			ID:            "accounting-changes-read",
+			Description:   "Read what changed in every syncing accounting system and bring payments in",
+			Spec:          schedule.Cron("*/5 * * * *"),
+			Workflow:      KickAccountingChangesWorkflow,
+			TaskQueue:     temporaltype.IntegrationTaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "accounting-changes-read",
+			},
+		},
+		{
 			ID:            "accounting-sync-dispatch",
 			Description:   "Wake the sender for every accounting connection with documents due",
 			Spec:          schedule.Cron("* * * * *"),

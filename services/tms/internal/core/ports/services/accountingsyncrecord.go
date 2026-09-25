@@ -229,6 +229,7 @@ type UpdateAccountingSyncSettingsRequest struct {
 	IntegrationType   integration.Type
 	AutoSync          bool
 	DriverSettlements bool
+	InboundPayments   accountingsync.InboundPaymentPolicy
 }
 
 type PauseAccountingSyncRequest struct {

@@ -24,6 +24,8 @@ type ActivitiesParams struct {
 	Mappings              services.AccountingMappingService
 	Sync                  services.AccountingSyncService
 	Dispatcher            services.AccountingSyncDispatcher
+	Inbound               services.AccountingInboundService
+	Poller                services.AccountingChangePoller
 	Logger                *zap.Logger
 }
 
@@ -33,6 +35,8 @@ type Activities struct {
 	mappings    services.AccountingMappingService
 	sync        services.AccountingSyncService
 	dispatcher  services.AccountingSyncDispatcher
+	inbound     services.AccountingInboundService
+	poller      services.AccountingChangePoller
 	l           *zap.Logger
 }
 
@@ -43,6 +47,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 		mappings:    p.Mappings,
 		sync:        p.Sync,
 		dispatcher:  p.Dispatcher,
+		inbound:     p.Inbound,
+		poller:      p.Poller,
 		l:           p.Logger.Named("job.accounting-sync"),
 	}
 }
