@@ -21,6 +21,15 @@ fragment AccountingConnectionFields on AccountingConnection {
   connectedAt
   disconnectedAt
   setupStep
+  syncStartDate
+  syncEnabledAt
+  autoSync
+  pausedAt
+  pausedBy {
+    id
+    name
+  }
+  pausedReason
   referenceRefreshStartedAt
   referenceRefreshedAt
   referenceRefreshError
@@ -248,5 +257,188 @@ mutation DisconnectAccountingSystem($integrationType: AccountingSystem!) {
 mutation CheckAccountingConnection($integrationType: AccountingSystem!) {
   checkAccountingConnection(integrationType: $integrationType) {
     ...AccountingConnectionFields
+  }
+}
+
+fragment AccountingSyncRecordFields on AccountingSyncRecord {
+  id
+  objectType
+  objectId
+  objectNumber
+  operation
+  sourceEvent
+  revision
+  documentDate
+  dependsOnRecordId
+  status
+  attemptCount
+  nextAttemptAt
+  externalId
+  externalDocNumber
+  externalUrl
+  errorCategory
+  errorCode
+  errorMessage
+  resolution
+  queuedAt
+  startedAt
+  syncedAt
+  skippedBy {
+    id
+    name
+  }
+  skippedReason
+  version
+  updatedAt
+}
+
+fragment AccountingBackfillFields on AccountingBackfill {
+  id
+  rangeStart
+  rangeEnd
+  objectTypes
+  status
+  enqueuedCount
+  alreadyQueuedCount
+  startedAt
+  completedAt
+  lastError
+  version
+  createdAt
+  updatedAt
+}
+
+query AccountingSyncSummary($integrationType: AccountingSystem!) {
+  accountingSyncSummary(integrationType: $integrationType) {
+    integrationType
+    providerName
+    connection {
+      ...AccountingConnectionFields
+    }
+    counts {
+      status
+      count
+    }
+    attention {
+      status
+      errorCategory
+      resolution
+      count
+      oldestQueuedAt
+      sampleRecordId
+    }
+    activeBackfill {
+      ...AccountingBackfillFields
+    }
+  }
+}
+
+query AccountingSyncRecords(
+  $integrationType: AccountingSystem!
+  $first: Int
+  $after: String
+  $filter: AccountingSyncRecordFilterInput
+) {
+  accountingSyncRecords(
+    integrationType: $integrationType
+    first: $first
+    after: $after
+    filter: $filter
+  ) {
+    edges {
+      node {
+        ...AccountingSyncRecordFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query AccountingSyncRecord($id: ID!) {
+  accountingSyncRecord(id: $id) {
+    ...AccountingSyncRecordFields
+  }
+}
+
+query AccountingSyncAttempts($recordId: ID!) {
+  accountingSyncAttempts(recordId: $recordId) {
+    id
+    attemptNumber
+    outcome
+    errorCategory
+    errorCode
+    errorMessage
+    startedAt
+    finishedAt
+    durationMs
+  }
+}
+
+query AccountingSyncObjectStates($objectIds: [ID!]!) {
+  accountingSyncObjectStates(objectIds: $objectIds) {
+    objectType
+    objectId
+    providerName
+    record {
+      ...AccountingSyncRecordFields
+    }
+  }
+}
+
+query AccountingBackfills($integrationType: AccountingSystem!) {
+  accountingBackfills(integrationType: $integrationType) {
+    ...AccountingBackfillFields
+  }
+}
+
+mutation EnableAccountingSync($input: EnableAccountingSyncInput!) {
+  enableAccountingSync(input: $input) {
+    ...AccountingConnectionFields
+  }
+}
+
+mutation PauseAccountingSync($input: PauseAccountingSyncInput!) {
+  pauseAccountingSync(input: $input) {
+    ...AccountingConnectionFields
+  }
+}
+
+mutation ResumeAccountingSync($integrationType: AccountingSystem!) {
+  resumeAccountingSync(integrationType: $integrationType) {
+    ...AccountingConnectionFields
+  }
+}
+
+mutation RetryAccountingSync($input: RetryAccountingSyncInput!) {
+  retryAccountingSync(input: $input) {
+    affected
+  }
+}
+
+mutation ReleaseAccountingSync($input: ReleaseAccountingSyncInput!) {
+  releaseAccountingSync(input: $input) {
+    affected
+  }
+}
+
+mutation SkipAccountingSync($input: SkipAccountingSyncInput!) {
+  skipAccountingSync(input: $input) {
+    ...AccountingSyncRecordFields
+  }
+}
+
+mutation RequestAccountingBackfill($input: RequestAccountingBackfillInput!) {
+  requestAccountingBackfill(input: $input) {
+    ...AccountingBackfillFields
+  }
+}
+
+mutation ChangeAccountingBackfill($input: ChangeAccountingBackfillInput!) {
+  changeAccountingBackfill(input: $input) {
+    ...AccountingBackfillFields
   }
 }

@@ -141,6 +141,15 @@ export function needsAccountingMappings(
   return hasLiveAccountingConnection(connection) && connection?.setupStep === "Mappings";
 }
 
+export function needsAccountingStartDate(
+  connection:
+    | { status: AccountingConnectionStatus; setupStep: AccountingSetupStep }
+    | null
+    | undefined,
+): boolean {
+  return hasLiveAccountingConnection(connection) && connection?.setupStep === "StartDate";
+}
+
 export function mappingCheckKey(mapping: { id: string; externalId: string }): string {
   return `${mapping.id}:${mapping.externalId}`;
 }

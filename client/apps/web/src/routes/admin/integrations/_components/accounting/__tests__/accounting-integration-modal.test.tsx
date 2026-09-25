@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => ({
   refreshAccountingReferenceData: vi.fn(),
   saveAccountingApp: vi.fn(),
   removeAccountingApp: vi.fn(),
+  enableAccountingSync: vi.fn(),
   granted: new Set<string>(),
   assign: vi.fn(),
 }));
@@ -50,6 +51,10 @@ vi.mock("@/lib/graphql/accounting-sync", () => ({
   setAccountingMapping: vi.fn(),
   clearAccountingMapping: vi.fn(),
   createAccountingReferenceRecord: vi.fn(),
+}));
+
+vi.mock("@/lib/graphql/accounting-sync-ledger", () => ({
+  enableAccountingSync: mocks.enableAccountingSync,
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -98,6 +103,12 @@ const connected: AccountingConnection = {
   connectedAt: 1_780_000_000,
   disconnectedAt: null,
   setupStep: "Complete",
+  syncStartDate: 1_780_000_000,
+  syncEnabledAt: 1_780_000_000,
+  autoSync: true,
+  pausedAt: null,
+  pausedBy: null,
+  pausedReason: "",
   referenceRefreshStartedAt: null,
   referenceRefreshedAt: 1_780_000_100,
   referenceRefreshError: "",
@@ -106,6 +117,12 @@ const connected: AccountingConnection = {
 };
 
 const mapping = { ...connected, setupStep: "Mappings" as const };
+const startDate = {
+  ...connected,
+  setupStep: "StartDate" as const,
+  syncStartDate: null,
+  syncEnabledAt: null,
+};
 
 function mappingRow(overrides: Partial<AccountingMapping>): AccountingMapping {
   return {
@@ -681,5 +698,98 @@ describe("QuickBooksIntegrationModal", () => {
     renderModal({ justConnected: true });
 
     expect(await screen.findByRole("button", { name: "Continue" })).toBeInTheDocument();
+  });
+
+  it("asks for a start date once the mappings are confirmed", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: startDate }));
+    mocks.enableAccountingSync.mockResolvedValue({ ...startDate, setupStep: "Complete" });
+
+    renderModal();
+
+    expect(await screen.findByText("Choose when sending starts")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Also send documents already posted since the start date"),
+    ).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Start sending" }));
+
+    await waitFor(() => expect(mocks.enableAccountingSync).toHaveBeenCalledTimes(1));
+    const [input] = mocks.enableAccountingSync.mock.calls[0] as [
+      { integrationType: string; startDate: number; autoSync: boolean; backfill: boolean },
+    ];
+    expect(input.integrationType).toBe("QuickBooksOnline");
+    expect(input.autoSync).toBe(true);
+    expect(input.backfill).toBe(false);
+    expect(input.startDate).toBeLessThanOrEqual(Math.floor(Date.now() / 1000));
+    expect(Math.floor(Date.now() / 1000) - input.startDate).toBeLessThan(24 * 60 * 60 + 1);
+  });
+
+  it("offers a backfill when the start date is in the past", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(
+      status({ connection: { ...startDate, syncStartDate: 1_780_000_000 } }),
+    );
+    mocks.enableAccountingSync.mockResolvedValue({ ...startDate, setupStep: "Complete" });
+
+    renderModal();
+    await userEvent.click(
+      await screen.findByText("Also send documents already posted since the start date"),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Start sending" }));
+
+    await waitFor(() =>
+      expect(mocks.enableAccountingSync).toHaveBeenCalledWith({
+        integrationType: "QuickBooksOnline",
+        startDate: 1_780_000_000,
+        autoSync: true,
+        backfill: true,
+      }),
+    );
+  });
+
+  it("warns when the start date falls in books QuickBooks has closed", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(
+      status({
+        connection: {
+          ...startDate,
+          syncStartDate: 1_780_000_000,
+          externalBooksClosedThrough: 1_780_100_000,
+        },
+      }),
+    );
+
+    renderModal();
+
+    expect(await screen.findByText(/has its books closed through/)).toBeInTheDocument();
+  });
+
+  it("holds each document for release when automatic sending is off", async () => {
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: startDate }));
+    mocks.enableAccountingSync.mockResolvedValue({ ...startDate, setupStep: "Complete" });
+
+    renderModal();
+    await userEvent.click(await screen.findByRole("switch"));
+    expect(
+      screen.getByText("Each document waits in the sync ledger until someone releases it."),
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Start sending" }));
+
+    await waitFor(() =>
+      expect(mocks.enableAccountingSync).toHaveBeenCalledWith(
+        expect.objectContaining({ autoSync: false }),
+      ),
+    );
+  });
+
+  it("cannot choose the start date without manage access", async () => {
+    mocks.granted = new Set([READ, UPDATE]);
+    mocks.fetchAccountingSyncStatus.mockResolvedValue(status({ connection: startDate }));
+
+    renderModal();
+
+    expect(await screen.findByRole("button", { name: "Start sending" })).toBeDisabled();
+    expect(
+      screen.getByText(
+        "Choosing the start date needs manage access to the accounting integration.",
+      ),
+    ).toBeInTheDocument();
   });
 });

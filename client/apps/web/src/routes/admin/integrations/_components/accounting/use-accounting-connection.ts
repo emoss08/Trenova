@@ -14,7 +14,9 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import type { UseFormReturn } from "react-hook-form";
+import { enableAccountingSync } from "@/lib/graphql/accounting-sync-ledger";
 import type { AccountingAppFormValues } from "./accounting-app-schema";
+import type { AccountingStartDateValues } from "./accounting-start-date-schema";
 import type { AccountingVendor } from "./accounting-vendors";
 
 export function useAccountingConnectionActions(vendor: AccountingVendor) {
@@ -121,4 +123,38 @@ export function useAccountingAppActions(
   });
 
   return { save, remove };
+}
+
+export function useAccountingSyncSetupActions(
+  vendor: AccountingVendor,
+  form?: UseFormReturn<AccountingStartDateValues>,
+) {
+  const t = useT();
+  const queryClient = useQueryClient();
+
+  const enable = useApiMutation({
+    mutationFn: (values: AccountingStartDateValues) =>
+      enableAccountingSync({
+        integrationType: vendor.system,
+        startDate: values.startDate,
+        autoSync: values.autoSync,
+        backfill: values.backfill,
+      }),
+    form,
+    resourceName: vendor.name,
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queries.accountingSync.status(vendor.system).queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queries.accountingSync.syncSummary(vendor.system).queryKey,
+        }),
+        queryClient.invalidateQueries({ queryKey: queries.integration.catalog().queryKey }),
+      ]);
+      toast.success(t("Sending to {0} is on", vendor.name));
+    },
+  });
+
+  return { enable };
 }
