@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { DateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -7,9 +6,10 @@ import { TextChipsField } from "@/components/fields/text-chips-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { SectionPanel } from "@/components/section-panel";
 import { fetchAgentDefinitions } from "@/lib/graphql/agent-definition";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { useQuery } from "@tanstack/react-query";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { triggerChoices } from "../../activity/agent-badges";
@@ -108,7 +108,7 @@ function QuestionSection({ creating }: { creating: boolean }) {
             description={t("What a judge weighs beyond the checks below. Optional.")}
           />
         </FormControl>
-        <FormControl>
+        <FormControl cols="full">
           <DateField
             control={control}
             name="expiresAt"
@@ -148,7 +148,7 @@ function ToolsSection() {
       }
     >
       <div className="flex flex-col gap-3 p-3">
-        <FormGroup cols={2}>
+        <FormGroup cols={1}>
           <FormControl>
             <SelectField
               control={control}
@@ -186,7 +186,7 @@ function ToolsSection() {
             <ArgumentRulesField name={`tools.${index}.args`} withValues />
           </div>
         ))}
-        <FormGroup cols={2}>
+        <FormGroup cols={1}>
           <FormControl>
             <TextChipsField
               control={control}
@@ -263,7 +263,7 @@ function ProposalRow({ index, onRemove }: { index: number; onRemove: () => void 
   return (
     <div className="border-border flex flex-col gap-2 rounded-md border p-3">
       <div className="flex items-start gap-2">
-        <div className="grid flex-1 grid-cols-2 gap-2">
+        <div className="grid flex-1 grid-cols-1 gap-2">
           <InputField
             control={control}
             name={`proposals.${index}.toolName`}
