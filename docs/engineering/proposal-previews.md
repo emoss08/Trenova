@@ -74,7 +74,7 @@ objects and bare ids, types each value with the artifact display classifier
 sensitivity from the permission registry and **drops a Confidential value where it is
 built**, so none reaches a baseline or a recorded preview.
 
-Every write tool previews itself; `TestEveryWriteToolPreviewsItself` fails for one that does
+Every write tool previews itself; `TestEveryActionToolPreviewsWhatItWouldDo` fails for one that does
 not. A tool that does not preview is shown as `Unavailable`: its parameters.
 
 An agent in simulation records what its write would have done from the same snapshot.
