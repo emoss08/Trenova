@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -81,7 +82,10 @@ func (s *Service) Start(
 	ctx context.Context,
 	req StartRequest,
 ) (*conversation.AssistantTurn, error) {
+	id := pulid.MustNew("atrn_")
 	turn, err := s.turns.Start(ctx, &conversation.AssistantTurn{
+		ID:             id,
+		TraceID:        aitrace.AnchorFor(aitrace.AnchorAssistantTurn, id.String()).TraceID.String(),
 		OrganizationID: req.TenantInfo.OrgID,
 		BusinessUnitID: req.TenantInfo.BuID,
 		ThreadID:       req.ThreadID,

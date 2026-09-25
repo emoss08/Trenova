@@ -18,7 +18,7 @@ func (s *Service) startToolSpan(
 	key string,
 ) (context.Context, trace.Span) {
 	spec := &aitrace.ToolSpec{
-		Anchor:   aitrace.ForRun(req.StepOwner, req.Delegation),
+		Anchor:   runAnchor(req),
 		ToolName: call.Name,
 		CallID:   call.ID,
 		StepKey:  key,
@@ -38,6 +38,14 @@ func (s *Service) startToolSpan(
 	}
 
 	return aitrace.StartTool(ctx, spec)
+}
+
+func runAnchor(req *serviceports.RunRequest) aitrace.Anchor {
+	if anchor := aitrace.ForRun(req.StepOwner, req.Delegation); anchor.IsValid() {
+		return anchor
+	}
+
+	return aitrace.ForAttribution(&serviceports.AIUsageAttribution{RunID: req.RunID})
 }
 
 func stepState(state serviceports.StepState) string {
