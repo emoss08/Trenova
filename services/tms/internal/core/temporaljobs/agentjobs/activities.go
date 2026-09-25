@@ -556,15 +556,30 @@ func (a *Activities) ExpireProposalsActivity(
 	ctx context.Context,
 	input *ExpireProposalsInput,
 ) error {
-	if _, err := a.proposalRepo.ExpirePendingByRun(
+	run := aitrace.AnchorFor(aitrace.AnchorAgentRun, input.RunID.String())
+	ctx, span := aitrace.StartDecide(ctx, &aitrace.DecideSpec{
+		Operation:       aitrace.DecideOperationExpire,
+		OrganizationID:  input.TenantInfo.OrgID,
+		BusinessUnitID:  input.TenantInfo.BuID,
+		RunID:           input.RunID,
+		ProposalTraceID: run.TraceID.String(),
+		ProposalSpanID:  run.RootSpanID.String(),
+	})
+	defer span.End()
+
+	expired, err := a.proposalRepo.ExpirePendingByRun(
 		ctx,
 		repositories.ExpireAgentProposalsByRunRequest{
 			RunID:      input.RunID,
 			TenantInfo: input.TenantInfo,
 		},
-	); err != nil {
+	)
+	if err != nil {
+		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
+
 		return fmt.Errorf("expire proposals: %w", err)
 	}
+	span.SetAttributes(aitrace.AIExpired.Int(expired))
 
 	return a.updateRun(ctx, input.TenantInfo, input.RunID, func(run *agent.AgentRun) {
 		run.Status = agent.RunStatusCompleted
@@ -753,12 +768,20 @@ func (a *Activities) ExpireStaleProposalsActivity(
 	ctx context.Context,
 	input *ExpireStaleProposalsInput,
 ) (*ExpireStaleProposalsResult, error) {
+	ctx, span := aitrace.StartDecide(ctx, &aitrace.DecideSpec{
+		Operation: aitrace.DecideOperationExpire,
+	})
+	defer span.End()
+
 	expired, err := a.proposalRepo.ExpirePending(ctx, repositories.ExpireAgentProposalsRequest{
 		Before: input.Now,
 	})
 	if err != nil {
+		aitrace.MarkFailed(span, aitrace.OutcomeFailed)
+
 		return nil, fmt.Errorf("expire pending proposals: %w", err)
 	}
+	span.SetAttributes(aitrace.AIExpired.Int(expired))
 
 	if expired > 0 {
 		a.logger.Info("expired agent proposals past their decision window",

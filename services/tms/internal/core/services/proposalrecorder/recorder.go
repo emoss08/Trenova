@@ -470,13 +470,13 @@ func applyExecutor(
 	action serviceports.PendingAction,
 	actor *serviceports.RequestActor,
 ) {
-	if !action.Executed || action.Simulated {
+	if !action.Executed && !action.Simulated {
 		return
 	}
 	if actor != nil && actor.PrincipalType == serviceports.PrincipalTypeUser {
 		proposal.ExecutedByUserID = actor.UserID
 	}
-	if action.ExecutionError == "" {
+	if action.Executed && !action.Simulated && action.ExecutionError == "" {
 		proposal.ExecutedTargetVersion = intutils.ClonePointer(action.ExecutedVersion)
 	}
 }

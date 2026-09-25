@@ -94,8 +94,9 @@ func TestExecute_RunsWhenTheRecordIsUnchanged(t *testing.T) {
 	)
 
 	assert.Equal(t, 1, tool.calls)
-	require.Len(t, versions.asked, 1)
+	require.Len(t, versions.asked, 2, "the version is checked before the write and read after it")
 	assert.Equal(t, proposal.TargetID, versions.asked[0].ID)
+	assert.Equal(t, proposal.TargetID, versions.asked[1].ID)
 }
 
 // A record that cannot be read is not equal to anything: a proposal against a

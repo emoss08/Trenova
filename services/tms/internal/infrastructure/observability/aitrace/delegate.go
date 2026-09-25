@@ -8,6 +8,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const AIExpired = attribute.Key("trenova.ai.proposal.expired")
+
 type DelegateOpenSpec struct {
 	Anchor            Anchor
 	OwnerID           pulid.ID

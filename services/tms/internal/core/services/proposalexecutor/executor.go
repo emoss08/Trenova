@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/toolsimulation"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -182,6 +183,23 @@ func (s *Service) Execute(
 	modifications map[string]any,
 	actor *services.RequestActor,
 ) error {
+	ctx, span := startExecute(ctx, proposal, modifications, actor)
+	defer span.End()
+
+	err := s.execute(ctx, proposal, modifications, actor)
+	if err != nil {
+		aitrace.MarkFailed(span, executeFailure(err))
+	}
+
+	return err
+}
+
+func (s *Service) execute(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	modifications map[string]any,
+	actor *services.RequestActor,
+) error {
 	// The tenant the write runs in is the proposal's and the principal is
 	// the approver's. The two are asserted to agree here, where they meet,
 	// rather than trusted to have been scoped alike by every caller.
@@ -193,25 +211,25 @@ func (s *Service) Execute(
 	tool, ok := s.tools.Get(proposal.ToolName)
 	if !ok {
 		err := fmt.Errorf("%w: %s", ErrToolMissing, proposal.ToolName)
-		s.recordFailure(ctx, proposal, err)
+		s.recordFailureBy(ctx, proposal, err, actor)
 
 		return err
 	}
 
 	if err := s.assertActorMayRun(ctx, tool, actor); err != nil {
-		s.recordFailure(ctx, proposal, err)
+		s.recordFailureBy(ctx, proposal, err, actor)
 
 		return err
 	}
 
 	if err := s.assertTargetUnchanged(ctx, proposal); err != nil {
-		s.recordFailure(ctx, proposal, err)
+		s.recordFailureBy(ctx, proposal, err, actor)
 
 		return err
 	}
 
 	if err := refuseOwnerChange(modifications); err != nil {
-		s.recordFailure(ctx, proposal, err)
+		s.recordFailureBy(ctx, proposal, err, actor)
 
 		return err
 	}
@@ -222,7 +240,7 @@ func (s *Service) Execute(
 		// schema once more here, where it runs: the decision that carried
 		// it was checked when it was made, and the tool may have changed.
 		if err := validateParams(tool, params); err != nil {
-			s.recordFailure(ctx, proposal, err)
+			s.recordFailureBy(ctx, proposal, err, actor)
 
 			return err
 		}
@@ -247,7 +265,7 @@ func (s *Service) Execute(
 
 	egress := policy.Classified(execParams).Egress
 	if err := assertTaintDecidedByPerson(proposal, egress, actor); err != nil {
-		s.recordFailureAs(ctx, proposal, err, egress)
+		s.recordFailureAs(ctx, proposal, err, egress, actor)
 
 		return err
 	}
@@ -255,7 +273,7 @@ func (s *Service) Execute(
 
 	definition, err := s.definitionFor(ctx, proposal)
 	if err != nil {
-		s.recordFailure(ctx, proposal, err)
+		s.recordFailureBy(ctx, proposal, err, actor)
 
 		return err
 	}
@@ -268,31 +286,65 @@ func (s *Service) Execute(
 	}
 
 	if err = s.assertWithinBudget(ctx, definition, tool.Name()); err != nil {
-		s.recordFailure(ctx, proposal, err)
+		s.recordFailureBy(ctx, proposal, err, actor)
 
 		return err
 	}
 
-	result, err := services.ExecuteTool(ctx, tool, execParams)
+	toolCtx, toolSpan := startTool(ctx, proposal, policy)
+	defer toolSpan.End()
+	writeCtx, write := startWrite(toolCtx, proposal, false)
+	result, err := services.ExecuteTool(writeCtx, tool, execParams)
 	if err != nil {
+		aitrace.MarkFailed(write, aitrace.OutcomeFailed)
+		write.End()
+		finishTool(toolSpan, aitrace.OutcomeFailed)
 		s.l.Error("approved proposal failed to execute",
 			zap.String("proposal", proposal.ID.String()),
 			zap.String("tool", proposal.ToolName),
 			zap.Error(err),
 		)
-		s.recordFailure(ctx, proposal, err)
+		s.recordFailureBy(ctx, proposal, err, actor)
 
 		return err
 	}
+	after := s.versionAfter(writeCtx, proposal)
+	if after != nil {
+		write.SetAttributes(aitrace.AIVersionAfter.Int64(*after))
+	}
+	write.End()
+	finishTool(toolSpan, aitrace.OutcomeRan)
 
 	s.recordSuccess(ctx, executionSuccess{
-		proposal: proposal,
-		actor:    actor,
-		params:   params,
-		result:   result,
+		proposal:      proposal,
+		actor:         actor,
+		params:        params,
+		result:        result,
+		targetVersion: after,
 	})
 
 	return nil
+}
+
+func (s *Service) versionAfter(ctx context.Context, proposal *agent.AgentProposal) *int64 {
+	if proposal.TargetID.IsNil() || s.versions == nil {
+		return nil
+	}
+
+	version, err := s.versions.Version(ctx, tenantOf(proposal), services.ToolTarget{
+		Resource: permission.Resource(proposal.TargetResource),
+		ID:       proposal.TargetID,
+	})
+	if err != nil {
+		s.l.Warn("could not read the version an approved write left its record at",
+			zap.String("proposal", proposal.ID.String()),
+			zap.Error(err),
+		)
+
+		return nil
+	}
+
+	return &version
 }
 
 // CheckModifications validates what an approver changed before the decision
@@ -393,14 +445,20 @@ func (s *Service) simulate(
 	params services.ToolExecuteParams,
 	actor *services.RequestActor,
 ) error {
-	preview := toolsimulation.Simulate(ctx, tool, params)
+	toolCtx, toolSpan := startTool(ctx, proposal, tool.Policy())
+	writeCtx, write := startWrite(toolCtx, proposal, true)
+	preview := toolsimulation.Simulate(writeCtx, tool, params)
+	write.End()
+	finishTool(toolSpan, aitrace.OutcomeSimulated)
+	toolSpan.End()
 	now := timeutils.NowUnix()
 
 	if _, err := s.proposalRepo.RecordSimulation(ctx, repositories.RecordAgentProposalSimulationRequest{
-		ID:          proposal.ID,
-		TenantInfo:  pagination.TenantInfo{OrgID: proposal.OrganizationID, BuID: proposal.BusinessUnitID},
-		SimulatedAt: now,
-		Simulation:  preview,
+		ID:               proposal.ID,
+		TenantInfo:       tenantOf(proposal),
+		SimulatedAt:      now,
+		Simulation:       preview,
+		ExecutedByUserID: executorOf(actor),
 	}); err != nil {
 		s.l.Error("failed to record proposal simulation",
 			zap.String("proposal", proposal.ID.String()), zap.Error(err))
@@ -587,10 +645,11 @@ func mergeParams(proposed, modifications map[string]any) map[string]any {
 // executionSuccess is an approved proposal that ran: who ran it, with what,
 // and what the tool reports it made.
 type executionSuccess struct {
-	proposal *agent.AgentProposal
-	actor    *services.RequestActor
-	params   map[string]any
-	result   *agent.ToolExecutionResult
+	proposal      *agent.AgentProposal
+	actor         *services.RequestActor
+	params        map[string]any
+	result        *agent.ToolExecutionResult
+	targetVersion *int64
 }
 
 func (s *Service) recordSuccess(ctx context.Context, success executionSuccess) {
@@ -599,12 +658,14 @@ func (s *Service) recordSuccess(ctx context.Context, success executionSuccess) {
 	if _, err := s.proposalRepo.RecordExecution(
 		ctx,
 		repositories.RecordAgentProposalExecutionRequest{
-			ID:              proposal.ID,
-			Status:          agent.ProposalStatusExecuted,
-			ExecutedAt:      &now,
-			ExecutionResult: success.result,
-			EgressClass:     proposal.EgressClass,
-			TenantInfo:      tenantOf(proposal),
+			ID:                    proposal.ID,
+			Status:                agent.ProposalStatusExecuted,
+			ExecutedAt:            &now,
+			ExecutionResult:       success.result,
+			EgressClass:           proposal.EgressClass,
+			TenantInfo:            tenantOf(proposal),
+			ExecutedByUserID:      executorOf(success.actor),
+			ExecutedTargetVersion: success.targetVersion,
 		},
 	); err != nil {
 		// The tool already ran, so failing to record that is a reporting problem
@@ -640,12 +701,13 @@ func (s *Service) recordSuccess(ctx context.Context, success executionSuccess) {
 	}
 }
 
-func (s *Service) recordFailure(
+func (s *Service) recordFailureBy(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
 	cause error,
+	actor *services.RequestActor,
 ) {
-	s.recordFailureAs(ctx, proposal, cause, proposal.EgressClass)
+	s.recordFailureAs(ctx, proposal, cause, proposal.EgressClass, actor)
 }
 
 func (s *Service) recordFailureAs(
@@ -653,15 +715,17 @@ func (s *Service) recordFailureAs(
 	proposal *agent.AgentProposal,
 	cause error,
 	egress agent.EgressClass,
+	actor *services.RequestActor,
 ) {
 	if _, err := s.proposalRepo.RecordExecution(
 		ctx,
 		repositories.RecordAgentProposalExecutionRequest{
-			ID:             proposal.ID,
-			Status:         agent.ProposalStatusExecutionFailed,
-			ExecutionError: cause.Error(),
-			EgressClass:    egress,
-			TenantInfo:     tenantOf(proposal),
+			ID:               proposal.ID,
+			Status:           agent.ProposalStatusExecutionFailed,
+			ExecutionError:   cause.Error(),
+			EgressClass:      egress,
+			TenantInfo:       tenantOf(proposal),
+			ExecutedByUserID: executorOf(actor),
 		},
 	); err != nil {
 		s.l.Error("failed to record proposal execution failure",
