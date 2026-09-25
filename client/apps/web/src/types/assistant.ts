@@ -850,6 +850,13 @@ export const proposalFieldSchema = z.object({
   minimum: z.number().nullish(),
   maximum: z.number().nullish(),
   maxLength: z.number().int().nullish(),
+  /**
+   * The parameter that names the record the write is about. A change may
+   * alter what is done to that record, never which record it is, so the
+   * form shows it without letting it be edited; the server refuses a
+   * retargeted approval either way.
+   */
+  readOnly: z.boolean().optional(),
 });
 
 /**

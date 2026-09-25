@@ -1,17 +1,33 @@
 import { AgentTile } from "@/components/agent-identity/agent-tile";
 import { conversationPath } from "@/lib/conversation-path";
 import { SimulationLine } from "@/components/assistant/proposal-card";
+import { PlanPreview } from "@/components/assistant/proposal-preview/plan-preview";
+import { canApprove } from "@/components/assistant/proposal-preview/preview-gate";
+import {
+  PreviewLoadState,
+  ProposalPreview,
+} from "@/components/assistant/proposal-preview/proposal-preview";
+import {
+  useApprovalGate,
+  usePlanPreview,
+  useProposalPreview,
+} from "@/components/assistant/proposal-preview/use-proposal-preview";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { argumentRows } from "@/components/assistant/proposal-state";
 import { toneVar } from "@/components/kpi/tone";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@trenova/shared/components/ui/collapsible";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
-import { CheckIcon, PencilIcon, TriangleAlertIcon, XIcon } from "lucide-react";
-import { useMemo } from "react";
+import { CheckIcon, ChevronRightIcon, PencilIcon, TriangleAlertIcon, XIcon } from "lucide-react";
+import { useEffect, useMemo } from "react";
 import { Link } from "react-router";
 import { asAssistantProposal } from "./decision-presenters";
 import {
@@ -21,6 +37,7 @@ import {
   type PendingDecisionNode,
   type PendingPlanNode,
   type PendingProposalNode,
+  type PlanStepNode,
 } from "./use-pending-decisions";
 import { agentRunPath } from "@/lib/record-paths";
 
@@ -32,17 +49,23 @@ export type DecisionActions = {
 };
 
 /**
- * The focused row read whole: what would change, why the agent wants it,
+ * The focused row read whole: what it would change, why the agent wants it,
  * what it would have done in simulation, and the run and conversation it
  * came from. The decision buttons live here and answer the same keys as
  * the list.
+ *
+ * `onPreviewShown` hears the digest of every proposal preview this pane puts
+ * on screen, so a batch approval can say which of its proposals the person
+ * actually reviewed.
  */
 export function DecisionDetail({
   node,
   actions,
+  onPreviewShown,
 }: {
   node: PendingDecisionNode | null;
   actions: DecisionActions;
+  onPreviewShown?: (proposalId: string, digest: string) => void;
 }) {
   const t = useT();
 
@@ -61,7 +84,7 @@ export function DecisionDetail({
   }
 
   if (isPendingProposal(node)) {
-    return <ProposalDetail node={node} actions={actions} />;
+    return <ProposalDetail node={node} actions={actions} onPreviewShown={onPreviewShown} />;
   }
   if (isPendingPlan(node)) {
     return <PlanDetail node={node} actions={actions} />;
@@ -101,16 +124,19 @@ function ActionRow({
   actions,
   reversible,
   editable,
+  approvable,
 }: {
   actions: DecisionActions;
   reversible: boolean;
   editable: boolean;
+  /** False while the preview is first read and once its record has moved. */
+  approvable: boolean;
 }) {
   const t = useT();
 
   return (
     <div className="border-border flex items-center gap-2 border-t pt-3">
-      <Button size="sm" onClick={actions.onAccept} disabled={actions.busy}>
+      <Button size="sm" onClick={actions.onAccept} disabled={actions.busy || !approvable}>
         <CheckIcon className="size-3.5" />
         {t("Approve")}
         <Kbd className="ml-1">a</Kbd>
@@ -121,7 +147,12 @@ function ActionRow({
         <Kbd className="ml-1">r</Kbd>
       </Button>
       {editable && actions.onModify && (
-        <Button size="sm" variant="ghost" onClick={actions.onModify} disabled={actions.busy}>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={actions.onModify}
+          disabled={actions.busy || !approvable}
+        >
           <PencilIcon className="size-3.5" />
           {t("Modify")}
           <Kbd className="ml-1">m</Kbd>
@@ -140,18 +171,83 @@ function ActionRow({
   );
 }
 
+function Highlights({ highlights }: { highlights: { label: string; value: string }[] }) {
+  if (highlights.length === 0) {
+    return null;
+  }
+
+  return (
+    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
+      {highlights.map((entry) => (
+        <div key={entry.label} className="contents">
+          <dt className="text-muted-foreground">{entry.label}</dt>
+          <dd className="break-words">{entry.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/**
+ * The literal arguments the agent sent, for anyone who wants them. They are
+ * what the preview was computed from, not what a person decides on, so they
+ * sit behind a disclosure below it.
+ */
+function ArgumentDetails({ rows }: { rows: { key: string; value: string }[] }) {
+  const t = useT();
+  if (rows.length === 0) {
+    return null;
+  }
+
+  return (
+    <Collapsible className="flex flex-col gap-1">
+      <CollapsibleTrigger className="text-muted-foreground ui-focus-ring group flex items-center gap-1 self-start rounded-md text-xs font-medium">
+        <ChevronRightIcon className="size-3 transition-transform group-data-[panel-open]:rotate-90" />
+        {t("Details")}
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="flex flex-col gap-1 pt-1">
+          <span className="text-muted-foreground text-xs">{t("Exactly as proposed")}</span>
+          <div className="flex flex-wrap gap-1">
+            {rows.map((row) => (
+              <span
+                key={row.key}
+                className="bg-sunken inline-flex max-w-full items-center gap-1 rounded-md px-1.5 py-0.5 text-xs"
+              >
+                <span className="text-muted-foreground font-mono">{row.key}</span>
+                <span className="truncate">{row.value}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 function ProposalDetail({
   node,
   actions,
+  onPreviewShown,
 }: {
   node: PendingProposalNode;
   actions: DecisionActions;
+  onPreviewShown?: (proposalId: string, digest: string) => void;
 }) {
   const t = useT();
   const proposal = useMemo(() => asAssistantProposal(node), [node]);
   const view = useMemo(() => presentProposal(proposal), [proposal]);
   const rows = useMemo(() => argumentRows(proposal.arguments ?? null), [proposal.arguments]);
   const confidence = Math.round(Math.min(1, Math.max(0, node.confidence)) * 100);
+  const previewQuery = useProposalPreview({ scope: "approver", id: node.id });
+  const approval = useApprovalGate(previewQuery);
+  const shownDigest = previewQuery.data?.digest;
+
+  useEffect(() => {
+    if (shownDigest !== undefined) {
+      onPreviewShown?.(node.id, shownDigest);
+    }
+  }, [node.id, onPreviewShown, shownDigest]);
 
   return (
     <article className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
@@ -176,16 +272,16 @@ function ProposalDetail({
         <Provenance node={node} />
       </header>
 
-      {view.highlights.length > 0 && (
-        <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-sm">
-          {view.highlights.map((entry) => (
-            <div key={entry.label} className="contents">
-              <dt className="text-muted-foreground">{entry.label}</dt>
-              <dd className="break-words">{entry.value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
+      <section className="flex flex-col gap-2">
+        <h3 className="text-muted-foreground text-xs font-medium">{t("What changes")}</h3>
+        <PreviewLoadState
+          query={previewQuery}
+          changed={approval.changed}
+          fallback={<Highlights highlights={view.highlights} />}
+        >
+          {(preview) => <ProposalPreview preview={preview} />}
+        </PreviewLoadState>
+      </section>
 
       {node.rationale !== "" && (
         <section className="flex flex-col gap-1">
@@ -203,23 +299,6 @@ function ProposalDetail({
         </section>
       )}
 
-      {rows.length > 0 && (
-        <section className="flex flex-col gap-1">
-          <h3 className="text-muted-foreground text-xs font-medium">{t("Exactly as proposed")}</h3>
-          <div className="flex flex-wrap gap-1">
-            {rows.map((row) => (
-              <span
-                key={row.key}
-                className="bg-sunken inline-flex max-w-full items-center gap-1 rounded-md px-1.5 py-0.5 text-xs"
-              >
-                <span className="text-muted-foreground font-mono">{row.key}</span>
-                <span className="truncate">{row.value}</span>
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-
       {node.evidence.length > 0 && (
         <section className="flex flex-col gap-1">
           <h3 className="text-muted-foreground text-xs font-medium">{t("Evidence")}</h3>
@@ -234,18 +313,45 @@ function ProposalDetail({
         </section>
       )}
 
+      <ArgumentDetails rows={rows} />
+
       <ActionRow
         actions={actions}
         reversible={view.reversible}
         editable={proposal.fields.length > 0}
+        approvable={canApprove(approval.gate)}
       />
     </article>
+  );
+}
+
+/** A plan step's sentence, the same one the chat card and the queue row say. */
+function StepSentence({ step }: { step: PlanStepNode | undefined }) {
+  const t = useT();
+  if (!step) {
+    return <span>{t("A step no longer in the plan")}</span>;
+  }
+  const view = presentProposal(asAssistantProposal(step));
+
+  return (
+    <span className="flex flex-col gap-0.5">
+      <span>{view.summary}</span>
+      {step.rationale !== "" && (
+        <span className="text-muted-foreground text-xs">{step.rationale}</span>
+      )}
+    </span>
   );
 }
 
 function PlanDetail({ node, actions }: { node: PendingPlanNode; actions: DecisionActions }) {
   const t = useT();
   const stepsQuery = usePlanSteps(node.id);
+  const previewQuery = usePlanPreview({ scope: "approver", id: node.id });
+  const approval = useApprovalGate(previewQuery);
+  const stepsById = useMemo(
+    () => new Map((stepsQuery.data ?? []).map((step) => [step.id, step])),
+    [stepsQuery.data],
+  );
 
   return (
     <article className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">
@@ -263,9 +369,9 @@ function PlanDetail({ node, actions }: { node: PendingPlanNode; actions: Decisio
         <Provenance node={node} />
       </header>
 
-      <section className="flex flex-col gap-1">
+      <section className="flex flex-col gap-2">
         <h3 className="text-muted-foreground text-xs font-medium">
-          {t("Steps, in the order they run")}
+          {t("What changes, in the order it runs")}
         </h3>
         {stepsQuery.isLoading ? (
           <div className="flex flex-col gap-2">
@@ -273,28 +379,45 @@ function PlanDetail({ node, actions }: { node: PendingPlanNode; actions: Decisio
             <Skeleton className="h-10" />
           </div>
         ) : (
-          <ol className="flex flex-col gap-2">
-            {(stepsQuery.data ?? []).map((step) => {
-              const view = presentProposal(asAssistantProposal(step));
-              return (
-                <li key={step.id} className="flex gap-2 text-sm">
-                  <span className="text-muted-foreground w-5 shrink-0 text-right tabular-nums">
-                    {step.planStep}.
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block">{view.summary}</span>
-                    {step.rationale !== "" && (
-                      <span className="text-muted-foreground block text-xs">{step.rationale}</span>
-                    )}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
+          <PreviewLoadState
+            query={previewQuery}
+            changed={approval.changed}
+            fallback={<StepSentences steps={stepsQuery.data ?? []} />}
+          >
+            {(plan) => (
+              <PlanPreview
+                plan={plan}
+                stepTitle={(proposalId) => <StepSentence step={stepsById.get(proposalId)} />}
+              />
+            )}
+          </PreviewLoadState>
         )}
       </section>
 
-      <ActionRow actions={actions} reversible editable={false} />
+      <ActionRow
+        actions={actions}
+        reversible
+        editable={false}
+        approvable={canApprove(approval.gate)}
+      />
     </article>
+  );
+}
+
+/** The steps as sentences alone, for when their preview could not be read. */
+function StepSentences({ steps }: { steps: PlanStepNode[] }) {
+  return (
+    <ol className="flex flex-col gap-2">
+      {steps.map((step) => (
+        <li key={step.id} className="flex gap-2 text-sm">
+          <span className="text-muted-foreground w-5 shrink-0 text-right tabular-nums">
+            {step.planStep}.
+          </span>
+          <span className="min-w-0 flex-1">
+            <StepSentence step={step} />
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }
