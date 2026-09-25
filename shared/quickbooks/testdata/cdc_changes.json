@@ -1,0 +1,96 @@
+{
+  "CDCResponse": [
+    {
+      "QueryResponse": [
+        {
+          "Payment": [
+            {
+              "Id": "301",
+              "SyncToken": "0",
+              "TxnDate": "2026-09-24",
+              "TotalAmt": 1500.25,
+              "UnappliedAmt": 49.75,
+              "CustomerRef": {"value": "58", "name": "Acme Foods"},
+              "CurrencyRef": {"value": "USD", "name": "United States Dollar"},
+              "PaymentMethodRef": {"value": "2", "name": "Check"},
+              "DepositToAccountRef": {"value": "35"},
+              "PaymentRefNum": "10442",
+              "Line": [
+                {"Amount": 1250.50, "LinkedTxn": [{"TxnId": "145", "TxnType": "Invoice"}]},
+                {"Amount": 200.00, "LinkedTxn": [{"TxnId": "146", "TxnType": "Invoice"}]},
+                {"Amount": 75.00, "LinkedTxn": [{"TxnId": "160", "TxnType": "CreditMemo"}]}
+              ],
+              "MetaData": {
+                "CreateTime": "2026-09-24T09:10:00-07:00",
+                "LastUpdatedTime": "2026-09-24T09:12:30-07:00",
+                "LastModifiedByRef": {"value": "9130347", "name": "J Doe"}
+              }
+            },
+            {
+              "Id": "302",
+              "SyncToken": "2",
+              "TxnDate": "2026-09-23",
+              "TotalAmt": 0,
+              "CustomerRef": {"value": "58", "name": "Acme Foods"},
+              "PrivateNote": "Voided",
+              "Line": [],
+              "MetaData": {"LastUpdatedTime": "2026-09-24T10:00:00-07:00"}
+            },
+            {
+              "Id": "303",
+              "status": "Deleted",
+              "MetaData": {"LastUpdatedTime": "2026-09-24T11:00:00-07:00"}
+            }
+          ],
+          "startPosition": 1,
+          "maxResults": 3
+        },
+        {
+          "BillPayment": [
+            {
+              "Id": "410",
+              "SyncToken": "0",
+              "DocNumber": "5521",
+              "TxnDate": "2026-09-25",
+              "TotalAmt": 980.00,
+              "VendorRef": {"value": "77", "name": "Swift Haulers LLC"},
+              "PayType": "Check",
+              "CheckPayment": {"BankAccountRef": {"value": "35", "name": "Checking"}},
+              "Line": [
+                {"Amount": 980.00, "LinkedTxn": [{"TxnId": "390", "TxnType": "Bill"}]}
+              ],
+              "MetaData": {"LastUpdatedTime": "2026-09-25T08:00:00Z"}
+            }
+          ],
+          "startPosition": 1,
+          "maxResults": 1
+        },
+        {
+          "Customer": [
+            {
+              "Id": "58",
+              "DisplayName": "Acme Foods Inc",
+              "Active": true,
+              "SyncToken": "4",
+              "MetaData": {"LastUpdatedTime": "2026-09-24T12:00:00Z"}
+            }
+          ],
+          "startPosition": 1,
+          "maxResults": 1
+        },
+        {
+          "Vendor": [
+            {
+              "Id": "81",
+              "status": "Deleted",
+              "MetaData": {"LastUpdatedTime": "2026-09-24T13:00:00Z"}
+            }
+          ],
+          "startPosition": 1,
+          "maxResults": 1
+        }
+      ]
+    }
+  ],
+  "time": "2026-09-25T09:00:00.000-07:00"
+}
