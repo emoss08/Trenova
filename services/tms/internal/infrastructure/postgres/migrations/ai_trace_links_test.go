@@ -130,6 +130,10 @@ func TestAITraceLinksMigration_DownRemovesWhatUpAdded(t *testing.T) {
 	indexesDown := splitStatements(readMigration(t, aiTraceIndexesDown))
 	require.Len(t, indexesDown, 6)
 	for _, statement := range indexesDown {
-		assert.True(t, strings.HasPrefix(statement, "DROP INDEX CONCURRENTLY IF EXISTS "), statement)
+		assert.True(
+			t,
+			strings.HasPrefix(statement, "DROP INDEX CONCURRENTLY IF EXISTS "),
+			statement,
+		)
 	}
 }

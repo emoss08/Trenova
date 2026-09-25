@@ -162,7 +162,10 @@ func TestValidateAIAuditConfig(t *testing.T) {
 		{
 			name: "the same key id twice",
 			mutate: func(c *AIAuditConfig) {
-				c.Chain.Keys = []AIAuditChainKey{primary, {ID: primary.ID, Secret: testChainSecretOther}}
+				c.Chain.Keys = []AIAuditChainKey{
+					primary,
+					{ID: primary.ID, Secret: testChainSecretOther},
+				}
 				c.Chain.ActiveKeyID = primary.ID
 			},
 			wantErr: ErrAIAuditChainKeyIDDuplicate,
@@ -322,7 +325,10 @@ aiAudit:
 `)
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("TRENOVA_MONITORING_TRACING_AISAMPLINGRATE", "0.25")
-	t.Setenv("TRENOVA_MONITORING_TRACING_TRACEURLTEMPLATE", "https://tempo.example.com/trace/{traceId}")
+	t.Setenv(
+		"TRENOVA_MONITORING_TRACING_TRACEURLTEMPLATE",
+		"https://tempo.example.com/trace/{traceId}",
+	)
 
 	cfg, err := NewLoader(WithConfigPath(dir), WithEnvironment(EnvDevelopment)).Load()
 

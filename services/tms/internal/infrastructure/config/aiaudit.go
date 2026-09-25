@@ -22,7 +22,7 @@ const (
 	aiAuditChainActiveKeyIDEnvSuffix  = "_AI_AUDIT_CHAIN_ACTIVE_KEY_ID"
 	aiAuditChainKeysEnvEntrySeparator = ","
 	aiAuditChainKeysEnvPairSeparator  = ":"
-	redactedSecret                    = "[redacted]"
+	redactedValue                     = "[redacted]"
 )
 
 var (
@@ -71,11 +71,11 @@ type AIAuditChainKey struct {
 }
 
 func (k AIAuditChainKey) String() string {
-	return k.ID + aiAuditChainKeysEnvPairSeparator + redactedSecret
+	return k.ID + aiAuditChainKeysEnvPairSeparator + redactedValue
 }
 
 func (k AIAuditChainKey) GoString() string {
-	return "config.AIAuditChainKey{ID:" + strconv.Quote(k.ID) + ", Secret:" + redactedSecret + "}"
+	return "config.AIAuditChainKey{ID:" + strconv.Quote(k.ID) + ", Secret:" + redactedValue + "}"
 }
 
 type AIAuditChainConfig struct {

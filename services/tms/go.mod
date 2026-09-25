@@ -7,9 +7,14 @@ require (
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/gen2brain/webp v0.6.4
 	github.com/hashicorp/golang-lru/v2 v2.0.7
+	github.com/pgvector/pgvector-go v0.4.1
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.18
 	github.com/vikstrous/dataloadgen v0.0.10
 	github.com/xuri/excelize/v2 v2.11.0
+	go.opentelemetry.io/otel/exporters/prometheus v0.68.0
+	go.opentelemetry.io/otel/sdk/metric v1.46.0
+	go.temporal.io/sdk/contrib/opentelemetry v0.8.1
+	go.temporal.io/sdk/contrib/workflowstreams v0.1.1
 	go.uber.org/goleak v1.3.0
 	modernc.org/sqlite v1.58.0
 )
@@ -104,7 +109,6 @@ require (
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/nexus-rpc/nexus-proto-annotations v0.1.0 // indirect
-	github.com/pgvector/pgvector-go v0.4.1 // indirect
 	github.com/prometheus/otlptranslator v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/richardlehane/mscfb v1.0.8 // indirect
@@ -117,10 +121,6 @@ require (
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.71.0 // indirect
-	go.opentelemetry.io/otel/exporters/prometheus v0.68.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v1.46.0 // indirect
-	go.temporal.io/sdk/contrib/opentelemetry v0.8.1 // indirect
-	go.temporal.io/sdk/contrib/workflowstreams v0.1.1 // indirect
 	google.golang.org/genproto v0.0.0-20260908043556-f8649ddbbfe6 // indirect
 	gopkg.in/ini.v1 v1.67.3 // indirect
 	modernc.org/libc v1.75.7 // indirect
@@ -252,7 +252,7 @@ require (
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.71.0 // indirect
-	go.opentelemetry.io/otel/metric v1.46.0 // indirect
+	go.opentelemetry.io/otel/metric v1.46.0
 	go.opentelemetry.io/proto/otlp v1.11.0 // indirect
 	go.uber.org/dig v1.19.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect

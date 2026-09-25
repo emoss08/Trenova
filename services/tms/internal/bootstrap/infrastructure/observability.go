@@ -17,4 +17,5 @@ var ObservabilityModule = fx.Module("observability",
 		metrics.NewRegistry,
 		observability.NewMiddleware,
 	),
+	fx.Invoke(func(*observability.TracerProvider) {}),
 )

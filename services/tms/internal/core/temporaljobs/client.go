@@ -81,7 +81,7 @@ func NewTemporalClient(p TemporalClientParams) (TemporalClientResult, error) {
 		PayloadSizeThreshold: claimCheckThreshold,
 	}
 
-	tracing, err := opentelemetry.NewTracingInterceptor(opentelemetry.TracerOptions{})
+	tracing, err := opentelemetry.NewTracingInterceptor(tracingOptions())
 	if err != nil {
 		return TemporalClientResult{}, fmt.Errorf("configure temporal tracing: %w", err)
 	}
@@ -126,6 +126,18 @@ func NewTemporalClient(p TemporalClientParams) (TemporalClientResult, error) {
 	})
 
 	return TemporalClientResult{Client: c}, nil
+}
+
+// tracingOptions keeps the interceptor to starts, workflows and activities.
+// Workflow Streams signals the workflow on every publish and polls it with an
+// update on every read, so tracing signals, updates and queries turned one
+// streamed reply into hundreds of spans that say nothing about the work.
+func tracingOptions() opentelemetry.TracerOptions {
+	return opentelemetry.TracerOptions{
+		DisableSignalTracing: true,
+		DisableUpdateTracing: true,
+		DisableQueryTracing:  true,
+	}
 }
 
 // sdkMetricsHandler reports the SDK's own metrics, such as schedule-to-start
