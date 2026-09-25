@@ -85,8 +85,9 @@ func (h *Handler) activeTurns(c *gin.Context) {
 	turns, err := h.turns.ListLive(
 		c.Request.Context(),
 		repositories.ListLiveAssistantTurnsRequest{
-			UserID:     authCtx.UserID,
-			TenantInfo: tenantFromAuthContext(authCtx),
+			UserID:         authCtx.UserID,
+			TenantInfo:     tenantFromAuthContext(authCtx),
+			ExcludeOrigins: conversation.PageBoundOrigins(),
 		},
 	)
 	if err != nil {

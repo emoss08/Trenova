@@ -268,3 +268,47 @@ cases:
     expect: [list_agent_runs]
   - request: list the runs the billing agent made this week
     expect: [list_agent_runs, get_agent_run]
+  - request: accept the extracted rate on the import
+    expect: [accept_field]
+  - request: accept the BOL field the document read
+    expect: [accept_field]
+  - request: accept all the high confidence fields on the import
+    expect: [accept_all_confident]
+  - request: accept every confident value from the rate confirmation
+    expect: [accept_all_confident]
+  - request: set the weight field on the import to 42000
+    expect: [set_field_value]
+  - request: correct the BOL value on the imported shipment
+    expect: [set_field_value]
+  - request: set the customer on the import to Acme Foods
+    expect: [set_required_field]
+  - request: set the rating method required for the imported shipment
+    expect: [set_required_field]
+  - request: match the pickup stop to one of our locations
+    expect: [set_stop_location]
+  - request: set the delivery stop location on the import
+    expect: [set_stop_location]
+  - request: schedule the pickup stop for Tuesday at 8am
+    expect: [set_stop_schedule]
+  - request: set the delivery window on the import stop
+    expect: [set_stop_schedule]
+  - request: create a new location for this consignee address
+    expect: [create_location]
+  - request: add a location for the shipper facility we do not have yet
+    expect: [create_location]
+  - request: list the formula templates we rate with
+    expect: [list_formula_templates]
+  - request: which rating methods are active
+    expect: [list_formula_templates]
+  - request: what variables and functions can a rating formula use
+    expect: [describe_formula_schema]
+  - request: describe the formula schema and its rate tables
+    expect: [describe_formula_schema]
+  - request: test this formula expression on a 500 mile load
+    expect: [test_formula_expression]
+  - request: what would this formula charge for a sample load
+    expect: [test_formula_expression]
+  - request: write a formula that charges per mile with a minimum
+    expect: [propose_formula]
+  - request: propose a rating formula with a hazmat surcharge
+    expect: [propose_formula]

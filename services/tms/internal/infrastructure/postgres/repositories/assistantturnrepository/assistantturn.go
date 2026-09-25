@@ -147,7 +147,7 @@ func (r *repository) ListLive(
 	cols := buncolgen.AssistantTurnColumns
 	turns := make([]*repositories.LiveAssistantTurn, 0)
 
-	err := r.db.DBForContext(ctx).NewSelect().
+	q := r.db.DBForContext(ctx).NewSelect().
 		Model(&turns).
 		ColumnExpr(buncolgen.AssistantTurnTable.All()).
 		ColumnExpr(buncolgen.ThreadColumns.Title.As(liveThreadTitle)).
@@ -155,9 +155,11 @@ func (r *repository) ListLive(
 		Apply(buncolgen.AssistantTurnApplyTenant(req.TenantInfo)).
 		Where(cols.UserID.Eq(), req.UserID).
 		Where(buncolgen.ThreadColumns.UserID.Eq(), req.UserID).
-		Where(cols.Status.In(), bun.List(liveStatuses)).
-		Order(cols.StartedAt.OrderAsc()).
-		Scan(ctx)
+		Where(cols.Status.In(), bun.List(liveStatuses))
+	if len(req.ExcludeOrigins) > 0 {
+		q = q.Where(buncolgen.ThreadColumns.Origin.NotIn(), bun.List(req.ExcludeOrigins))
+	}
+	err := q.Order(cols.StartedAt.OrderAsc()).Scan(ctx)
 	if err != nil {
 		r.l.Error("failed to list live assistant turns",
 			zap.String("user", req.UserID.String()),

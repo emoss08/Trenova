@@ -163,6 +163,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"place_shipment_hold":          {agent.EgressInternal},
 		"release_shipment_hold":        {agent.EgressInternal},
 		"create_shipment":              {agent.EgressInternal},
+		"create_location":              {agent.EgressInternal},
 		"escalate_detention":           {agent.EgressInternal},
 		"place_worker_dispatch_hold":   {agent.EgressInternal},
 		"update_tractor_status":        {agent.EgressInternal},

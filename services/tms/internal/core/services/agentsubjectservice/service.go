@@ -56,6 +56,7 @@ type Params struct {
 	Dashboards   repositories.ReportDashboardRepository      `optional:"true"`
 	Accounting   repositories.AccountingConnectionRepository `optional:"true"`
 	Dispatch     repositories.DispatchControlRepository      `optional:"true"`
+	Formulas     repositories.FormulaTemplateRepository      `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
@@ -79,6 +80,7 @@ type Service struct {
 	dashboards   repositories.ReportDashboardRepository
 	accounting   repositories.AccountingConnectionRepository
 	dispatch     repositories.DispatchControlRepository
+	formulas     repositories.FormulaTemplateRepository
 	logger       *zap.Logger
 }
 
@@ -101,6 +103,7 @@ func New(p Params) serviceports.AgentSubjectDescriber {
 		dashboards:   p.Dashboards,
 		accounting:   p.Accounting,
 		dispatch:     p.Dispatch,
+		formulas:     p.Formulas,
 		logger:       p.Logger.Named("service.agentsubject"),
 	}
 }
@@ -140,6 +143,8 @@ func (s *Service) Describe(
 		return s.dashboard(ctx, tenant, subjectID)
 	case agent.SubjectAccountingConnection:
 		return s.accountingConnection(ctx, tenant, subjectID)
+	case agent.SubjectFormulaTemplate:
+		return s.formulaTemplate(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
 		return nil, nil
 	default:
@@ -510,10 +515,9 @@ func (s *Service) bankReceipt(
 					"customerPaymentId": suggestion.CustomerPaymentID.String(),
 					"customerId":        suggestion.CustomerID.String(),
 					"referenceNumber":   suggestion.ReferenceNumber,
-					"amount": money.DecimalFromMinor(suggestion.AmountMinor).
-						StringFixed(2),
-					"score":  suggestion.Score,
-					"reason": suggestion.Reason,
+					"amount":            money.DecimalFromMinor(suggestion.AmountMinor).StringFixed(2),
+					"score":             suggestion.Score,
+					"reason":            suggestion.Reason,
 				})
 			}
 			notes["candidatePayments"] = candidates
@@ -952,6 +956,52 @@ func (s *Service) dashboard(
 		"visibility":  found.Visibility,
 		"tiles":       tiles,
 	})
+
+	return subject, nil
+}
+
+func (s *Service) formulaTemplate(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	templateID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectFormulaTemplate,
+		ID:    templateID.String(),
+		Label: "Formula template",
+	}
+	if s.formulas == nil {
+		return subject, nil
+	}
+
+	found, err := s.formulas.GetByID(ctx, repositories.GetFormulaTemplateByIDRequest{
+		TemplateID: templateID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load formula template: %w", err)
+	}
+
+	subject.Label = "Formula template: " + found.Name
+	notes := map[string]any{
+		"name":                found.Name,
+		"description":         found.Description,
+		"type":                found.Type,
+		"status":              found.Status,
+		"schemaId":            found.SchemaID,
+		"savedExpression":     found.Expression,
+		"variableDefinitions": found.VariableDefinitions,
+		"roundingMode":        found.RoundingMode,
+		"roundingPrecision":   found.RoundingPrecision,
+		"version":             found.CurrentVersionNumber,
+	}
+	if found.MinCharge.Valid {
+		notes["minCharge"] = found.MinCharge.Decimal.String()
+	}
+	if found.MaxCharge.Valid {
+		notes["maxCharge"] = found.MaxCharge.Decimal.String()
+	}
+	subject.Notes = marshalNotes(notes)
 
 	return subject, nil
 }

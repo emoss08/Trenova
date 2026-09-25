@@ -3,6 +3,7 @@ package agentsubjectrepository
 import (
 	"context"
 	"fmt"
+
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/edi"
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -127,6 +129,11 @@ var subjectTables = map[agent.SubjectType]subjectTable{
 		model:  func() any { return (*accountingsync.AccountingConnection)(nil) },
 		tenant: buncolgen.AccountingConnectionApplyTenant,
 		id:     buncolgen.AccountingConnectionColumns.ID,
+	},
+	agent.SubjectFormulaTemplate: {
+		model:  func() any { return (*formulatemplate.FormulaTemplate)(nil) },
+		tenant: buncolgen.FormulaTemplateApplyTenant,
+		id:     buncolgen.FormulaTemplateColumns.ID,
 	},
 }
 

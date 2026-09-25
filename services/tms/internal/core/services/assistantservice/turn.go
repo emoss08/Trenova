@@ -181,6 +181,9 @@ func (s *Service) prepareTurn(
 	if err = s.assertMayUseAgent(ctx, actor, definition); err != nil {
 		return nil, nil, err
 	}
+	if err = s.assertPageTurn(ctx, thread, page, actor); err != nil {
+		return nil, nil, err
+	}
 
 	if err = s.assertWithinBudget(ctx, definition); err != nil {
 		return nil, nil, err

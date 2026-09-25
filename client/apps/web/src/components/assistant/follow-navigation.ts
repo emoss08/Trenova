@@ -1,4 +1,5 @@
 import { isAppPath } from "@/lib/app-path";
+import { createOnceClaimer } from "@/lib/claim-once";
 import type { AssistantArtifactEvent } from "@/types/assistant";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
@@ -17,43 +18,8 @@ import { useNavigate } from "react-router";
  * events.
  */
 
-const STORAGE_KEY = "trenova-assistant-followed-navigation";
-const MAX_REMEMBERED = 50;
-
-/** Kept as well as the session copy, so a tab whose storage is blocked still follows once. */
-const followedThisPage = new Set<string>();
-
-function readFollowed(): string[] {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed)
-      ? parsed.filter((entry): entry is string => typeof entry === "string")
-      : [];
-  } catch {
-    return [];
-  }
-}
-
 /** Marks a navigation as followed; false when this tab already followed it. */
-export function claimNavigation(id: string): boolean {
-  if (followedThisPage.has(id)) {
-    return false;
-  }
-  followedThisPage.add(id);
-
-  const followed = readFollowed();
-  if (followed.includes(id)) {
-    return false;
-  }
-  try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...followed, id].slice(-MAX_REMEMBERED)));
-  } catch {
-    // Blocked storage leaves the in-page record, which is enough for this tab.
-  }
-
-  return true;
-}
+export const claimNavigation = createOnceClaimer("trenova-assistant-followed-navigation", 50);
 
 /**
  * The path to follow from what a turn has announced: the newest navigation

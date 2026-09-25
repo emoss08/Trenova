@@ -44,8 +44,6 @@ type ReconciliationWorkspaceProps = {
   onSetRequiredField: (fieldKey: string, value: string) => void;
   onSetStopLocation: (stopIndex: number, locationId: string) => void;
   onSetStopSchedule: (stopIndex: number, windowStart: string, windowEnd?: string) => void;
-  onSetShipmentField: (field: string, value: string) => void;
-  onShipmentCreated?: (shipmentId: string) => void;
   lastCreateError?: string | null;
   onClearCreateError?: () => void;
 };
@@ -70,8 +68,6 @@ export default function ReconciliationWorkspace({
   onSetRequiredField,
   onSetStopLocation,
   onSetStopSchedule,
-  onSetShipmentField,
-  onShipmentCreated,
   lastCreateError,
   onClearCreateError,
 }: ReconciliationWorkspaceProps) {
@@ -181,9 +177,6 @@ export default function ReconciliationWorkspace({
               onSetRequiredField={onSetRequiredField}
               onSetStopLocation={onSetStopLocation}
               onSetStopSchedule={onSetStopSchedule}
-              onSetShipmentField={onSetShipmentField}
-              onCreateShipment={onCreateShipment}
-              onShipmentCreated={onShipmentCreated}
               requiredFieldValues={requiredFieldValues}
               lastCreateError={lastCreateError}
               onClearCreateError={onClearCreateError}

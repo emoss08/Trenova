@@ -76356,6 +76356,7 @@ enum AgentSubjectType {
   Report
   Dashboard
   AccountingConnection
+  FormulaTemplate
 }
 
 enum AgentRunTrigger {

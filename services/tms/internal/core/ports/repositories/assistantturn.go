@@ -33,8 +33,9 @@ type ActiveAssistantTurnRequest struct {
 // ListLiveAssistantTurnsRequest asks for every reply one person still has in
 // progress, across all of their conversations in a tenant.
 type ListLiveAssistantTurnsRequest struct {
-	UserID     pulid.ID
-	TenantInfo pagination.TenantInfo
+	UserID         pulid.ID
+	TenantInfo     pagination.TenantInfo
+	ExcludeOrigins []conversation.ThreadOrigin
 }
 
 // LiveAssistantTurn is a turn still producing its reply, with the title of

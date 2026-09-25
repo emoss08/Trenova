@@ -1,59 +1,31 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import {
-  AiToolCall,
-  AiToolCallContent,
-  AiToolCallHeader,
-  AiToolCallOutput,
-} from "@/components/elements/ai-tool-call";
-import { DateTimePicker } from "@/components/fields/date-field/datetime-picker";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Input } from "@trenova/shared/components/ui/input";
-import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
-import {
-  loadConversation,
-  saveConversation,
-  type PersistedChatMessage,
-} from "@/lib/import-chat-store";
-import { cn } from "@trenova/shared/lib/utils";
+import { PageAssistant } from "@/components/assistant/page-assistant";
+import type { PageBinding, PageRequest } from "@/components/assistant/message-thread";
 import { apiService } from "@/services/api";
-import type {
-  ConversationStatus,
-  ImportAssistantChatMessage,
-  ImportAssistantSuggestion,
-  ImportAssistantToolCallRecord,
-} from "@trenova/shared/types/document";
-import { ArrowUpIcon, CheckCircle2Icon, InfoIcon } from "lucide-react";
+import type { PageDraftEdit } from "@/types/page-draft";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@trenova/shared/components/ui/collapsible";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import { ChevronRightIcon, HistoryIcon } from "lucide-react";
 import { m } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { earlierConversation, type EarlierConversation } from "./earlier-conversation";
+import {
+  applyImportDraftEdit,
+  createFailureSummary,
+  importAssistantConversationKey,
+  importDraftFromState,
+  type ImportDraftHandlers,
+  type ImportRequiredValues,
+} from "./import-draft";
 import type { ReconciliationState } from "./types";
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
-const TOOL_LABELS: Record<string, string> = {
-  search_customers: "Searching customers",
-  search_locations: "Searching locations",
-  search_service_types: "Searching service types",
-  search_shipment_types: "Searching shipment types",
-  search_formula_templates: "Searching rating methods",
-  accept_field: "Accepting field",
-  accept_all_confident: "Accepting confident fields",
-  set_field_value: "Setting field",
-  set_required_field: "Setting required field",
-};
-
-type ToolCallState = {
-  name: string;
-  callId: string;
-  status: "running" | "completed" | "error";
-  result?: string;
-};
-
-type ChatMessage = Pick<ImportAssistantChatMessage, "id" | "role" | "text"> & {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-  toolCalls?: ToolCallState[];
-  suggestions?: ImportAssistantSuggestion[];
-};
+const REQUIRED_COUNT = 4;
 
 type AIActivityPanelProps = {
   documentId: string;
@@ -64,312 +36,20 @@ type AIActivityPanelProps = {
   onSetRequiredField?: (fieldKey: string, value: string) => void;
   onSetStopLocation?: (stopIndex: number, locationId: string) => void;
   onSetStopSchedule?: (stopIndex: number, windowStart: string, windowEnd?: string) => void;
-  onSetShipmentField?: (field: string, value: string) => void;
-  onCreateShipment?: () => void;
-  onShipmentCreated?: (shipmentId: string) => void;
   lastCreateError?: string | null;
   onClearCreateError?: () => void;
-  requiredFieldValues: {
-    customerId: string;
-    serviceTypeId: string;
-    shipmentTypeId: string;
-    formulaTemplateId: string;
-  };
+  requiredFieldValues: ImportRequiredValues;
 };
 
-function getTextValue(value: unknown): string {
-  return typeof value === "string" ? value : "";
-}
+function ignore() {}
 
-function toLocalToolCalls(toolCalls: ImportAssistantToolCallRecord[]): ToolCallState[] {
-  return toolCalls.map((toolCall, index) => ({
-    name: toolCall.name,
-    callId: toolCall.callId || `${toolCall.name}-${index}`,
-    status:
-      toolCall.status === "error"
-        ? "error"
-        : toolCall.status === "running"
-          ? "running"
-          : "completed",
-    result: toolCall.output,
-  }));
-}
-
-function SuggestionButton({
-  suggestion,
-  onSend,
-  onAction,
-}: {
-  suggestion: ImportAssistantSuggestion;
-  onSend: (text: string) => Promise<void>;
-  onAction?: (action: string) => void;
-}) {
-  const t = useT();
-
-  const [isInputOpen, setIsInputOpen] = useState(false);
-  const [inputVal, setInputVal] = useState("");
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const localInputRef = useRef<HTMLInputElement>(null);
-
-  if (suggestion.type === "date") {
-    if (isInputOpen) {
-      return (
-        <div className="space-y-1.5">
-          <DateTimePicker
-            dateTime={selectedDate}
-            setDateTime={(date) => setSelectedDate(date)}
-            placeholder={suggestion.placeholder || "e.g. 3/15 0800 or t+1 1400"}
-            className="h-8 text-xs"
-          />
-          <div className="flex gap-1.5">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-2xs h-7 flex-1 px-2"
-              onClick={() => {
-                if (selectedDate) {
-                  const isoDate = selectedDate.toISOString();
-                  void onSend(suggestion.prompt + " " + isoDate);
-                  setIsInputOpen(false);
-                  setSelectedDate(undefined);
-                }
-              }}
-              disabled={!selectedDate}
-            >
-              {suggestion.submitLabel || t("Confirm")}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-2xs h-7 px-2"
-              onClick={() => {
-                setIsInputOpen(false);
-                setSelectedDate(undefined);
-              }}
-            >
-              {t("Cancel")}
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <button
-        type="button"
-        onClick={() => setIsInputOpen(true)}
-        className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border border-dashed px-2.5 py-1.5 text-left transition-colors"
-      >
-        {t(suggestion.label)}
-      </button>
-    );
-  }
-
-  if (suggestion.type === "action" && suggestion.action) {
-    return (
-      <button
-        type="button"
-        onClick={() => onAction?.(suggestion.action!)}
-        className="text-2xs rounded-md border border-success-border bg-success-subtle px-2.5 py-1.5 text-left font-medium text-success-foreground transition-colors hover:bg-success-subtle dark:text-success-foreground"
-      >
-        {t(suggestion.label)}
-      </button>
-    );
-  }
-
-  if (suggestion.type === "input") {
-    if (isInputOpen) {
-      return (
-        <div className="flex gap-1.5">
-          <Input
-            ref={localInputRef}
-            value={inputVal}
-            onChange={(e) => setInputVal(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && inputVal.trim()) {
-                void onSend(suggestion.prompt + inputVal.trim());
-                setIsInputOpen(false);
-                setInputVal("");
-              }
-              if (e.key === "Escape") {
-                setIsInputOpen(false);
-                setInputVal("");
-              }
-            }}
-            placeholder={suggestion.placeholder || "Type here..."}
-            className="text-2xs h-7 flex-1"
-            autoFocus
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-2xs h-7 shrink-0 px-2"
-            onClick={() => {
-              if (inputVal.trim()) {
-                void onSend(suggestion.prompt + inputVal.trim());
-                setIsInputOpen(false);
-                setInputVal("");
-              }
-            }}
-            disabled={!inputVal.trim()}
-          >
-            {suggestion.submitLabel || t("Confirm")}
-          </Button>
-        </div>
-      );
-    }
-
-    return (
-      <button
-        type="button"
-        onClick={() => {
-          setIsInputOpen(true);
-          requestAnimationFrame(() => localInputRef.current?.focus());
-        }}
-        className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border border-dashed px-2.5 py-1.5 text-left transition-colors"
-      >
-        {t(suggestion.label)}
-      </button>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={() => void onSend(suggestion.prompt)}
-      className="bg-background text-2xs text-muted-foreground hover:bg-muted hover:text-foreground rounded-md border px-2.5 py-1.5 text-left transition-colors"
-    >
-      {t(suggestion.label)}
-    </button>
-  );
-}
-
-function ToolResultSummary({ result, name }: { result: string; name: string }) {
-  const t = useT();
-
-  try {
-    const data = JSON.parse(result);
-
-    if (name === "search_customers" && data.customers) {
-      const customers = data.customers as Array<{ id: string; name: string }>;
-      if (customers.length === 0)
-        return <span className="text-muted-foreground">{t("No customers found")}</span>;
-      return (
-        <div className="space-y-1">
-          {customers.map((c) => (
-            <div key={c.id} className="text-2xs">
-              {c.name}
-            </div>
-          ))}
-          <div className="text-2xs text-muted-foreground">{t("{0} total", data.total)}</div>
-        </div>
-      );
-    }
-
-    if (name === "search_locations" && (data.locations || data.availableLocations)) {
-      const exactLocations = data.locations as
-        | Array<{
-            id: string;
-            name: string;
-            code: string;
-            addressLine1?: string;
-            city?: string;
-            postalCode?: string;
-          }>
-        | undefined;
-      const fallbackLocations = data.availableLocations as
-        | Array<{
-            id: string;
-            name: string;
-            code: string;
-            addressLine1?: string;
-            city?: string;
-            postalCode?: string;
-          }>
-        | undefined;
-      const locations = (exactLocations?.length ? exactLocations : fallbackLocations) ?? [];
-      if (locations.length === 0)
-        return <span className="text-muted-foreground">{t("No locations found")}</span>;
-      const label = data.noExactMatch ? "Available locations:" : "";
-      return (
-        <div className="space-y-1">
-          {label && <div className="text-2xs text-muted-foreground">{label}</div>}
-          {locations.map((l) => (
-            <div key={l.id} className="text-2xs">
-              {l.code} — {l.name}
-              {l.city && <span className="text-muted-foreground"> ({l.city})</span>}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    if (name === "search_service_types" && data.serviceTypes) {
-      const types = data.serviceTypes as Array<{ id: string; name: string; code: string }>;
-      if (types.length === 0)
-        return <span className="text-muted-foreground">{t("No service types found")}</span>;
-      return (
-        <div className="space-y-1">
-          {types.map((t) => (
-            <div key={t.id} className="text-2xs">
-              {t.code} — {t.name}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    if (name === "search_shipment_types" && data.shipmentTypes) {
-      const types = data.shipmentTypes as Array<{ id: string; name: string }>;
-      if (types.length === 0)
-        return <span className="text-muted-foreground">{t("No shipment types found")}</span>;
-      return (
-        <div className="space-y-1">
-          {types.map((t) => (
-            <div key={t.id} className="text-2xs">
-              {t.name}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    if (name === "search_formula_templates" && data.formulaTemplates) {
-      const templates = data.formulaTemplates as Array<{ id: string; name: string }>;
-      if (templates.length === 0)
-        return <span className="text-muted-foreground">{t("No rating methods found")}</span>;
-      return (
-        <div className="space-y-1">
-          {templates.map((t) => (
-            <div key={t.id} className="text-2xs">
-              {t.name}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    if (data.accepted)
-      return (
-        <span className="text-2xs text-success-foreground">
-          {t("Accepted: {0}", data.accepted)}
-        </span>
-      );
-    if (data.set)
-      return <span className="text-2xs">{t("Set {0} = {1}", data.set, data.value)}</span>;
-    if (data.set_required) {
-      const label = data.entity_id
-        ? `Set to ${data.label || data.entity_id}`
-        : `Set ${data.set_required}`;
-      return <span className="text-2xs text-success-foreground">{label}</span>;
-    }
-
-    return <span className="text-2xs text-muted-foreground">{result.slice(0, 100)}</span>;
-  } catch {
-    return <span className="text-2xs text-muted-foreground">{result.slice(0, 100)}</span>;
-  }
-}
-
+/**
+ * The import assistant beside the document: the shared conversation about
+ * this document, with the reconciliation on screen riding on every question.
+ * What it changes — a field accepted, a stop matched, a customer chosen —
+ * lands on this page as if the person had clicked it; nothing is saved until
+ * they create the shipment. A new location is a proposal they approve.
+ */
 export default function AIActivityPanel({
   documentId,
   state,
@@ -379,608 +59,170 @@ export default function AIActivityPanel({
   onSetRequiredField,
   onSetStopLocation,
   onSetStopSchedule,
-  onSetShipmentField,
-  onCreateShipment,
-  onShipmentCreated,
   lastCreateError,
   onClearCreateError,
   requiredFieldValues,
 }: AIActivityPanelProps) {
   const t = useT();
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [conversationId, setConversationId] = useState<string | undefined>();
-  const [conversationStatus, setConversationStatus] = useState<ConversationStatus>("Active");
-  const [statusReason, setStatusReason] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const hasSentInitial = useRef(false);
-  const [hasHydrated, setHasHydrated] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const streamingMsgId = useRef<string | null>(null);
-  const lastContentMsgId = useRef<string | null>(null);
-
-  const isConversationClosed =
-    conversationStatus === "Completed" || conversationStatus === "Superseded";
-
   const filledRequired = [
     requiredFieldValues.customerId,
     requiredFieldValues.serviceTypeId,
     requiredFieldValues.shipmentTypeId,
     requiredFieldValues.formulaTemplateId,
-  ].filter(Boolean).length;
-  const isReady = filledRequired === 4;
+  ].filter((value) => value.trim() !== "").length;
+  const isReady = filledRequired === REQUIRED_COUNT;
 
-  const scrollToBottom = useCallback(() => {
-    requestAnimationFrame(() => {
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-    });
-  }, []);
-
-  const reconciliationStateForAPI = useMemo(() => {
-    const fields: Record<string, unknown> = {};
-    for (const [key, field] of Object.entries(state.fields)) {
-      fields[key] = {
-        label: field.label,
-        value: field.value,
-        confidence: field.confidence,
-        status: field.status,
-      };
-    }
-    return fields;
-  }, [state.fields]);
-
-  const processActions = useCallback(
-    (
-      actions: Array<{
-        type: string;
-        fieldKey: string;
-        value: string;
-        metadata?: Record<string, unknown>;
-      }>,
-    ) => {
-      for (const action of actions) {
-        switch (action.type) {
-          case "accept_field":
-            onAcceptField(action.fieldKey);
-            break;
-          case "accept_all_confident":
-            onAcceptAllConfident();
-            break;
-          case "set_field":
-            onEditField(action.fieldKey, action.value);
-            break;
-          case "set_required_field":
-            onSetRequiredField?.(action.fieldKey, action.value);
-            break;
-          case "set_stop_location":
-            onSetStopLocation?.(Number.parseInt(action.fieldKey, 10), action.value);
-            break;
-          case "set_stop_schedule": {
-            const windowEnd = (action.metadata?.window_end as string) || undefined;
-            onSetStopSchedule?.(Number.parseInt(action.fieldKey, 10), action.value, windowEnd);
-            break;
-          }
-          case "set_shipment_field":
-            onSetShipmentField?.(action.fieldKey, action.value);
-            break;
-          case "shipment_created":
-            onShipmentCreated?.(action.value);
-            break;
-          case "create_shipment":
-            onCreateShipment?.();
-            break;
-        }
-      }
-    },
+  const handlers = useMemo<ImportDraftHandlers>(
+    () => ({
+      acceptField: onAcceptField,
+      acceptAllConfident: onAcceptAllConfident,
+      editField: onEditField,
+      setRequiredField: onSetRequiredField ?? ignore,
+      setStopLocation: onSetStopLocation ?? ignore,
+      setStopSchedule: onSetStopSchedule ?? ignore,
+    }),
     [
-      onAcceptField,
       onAcceptAllConfident,
+      onAcceptField,
       onEditField,
       onSetRequiredField,
       onSetStopLocation,
       onSetStopSchedule,
-      onSetShipmentField,
-      onCreateShipment,
-      onShipmentCreated,
     ],
   );
 
-  const sendMessage = useCallback(
-    async (text: string) => {
-      if (!text.trim() || isStreaming || isConversationClosed) return;
-
-      const userMsg: ChatMessage = { id: `user-${Date.now()}`, role: "user", text: text.trim() };
-      const assistantId = `assist-${Date.now()}`;
-      streamingMsgId.current = assistantId;
-
-      setMessages((prev) => [
-        ...prev,
-        userMsg,
-        { id: assistantId, role: "assistant", text: "", toolCalls: [] },
-      ]);
-      setIsStreaming(true);
-      setInputValue("");
-      scrollToBottom();
-
-      const stopsForAPI = state.stops.map((stop, i) => ({
-        index: i,
-        role: stop.role,
-        sequence: stop.sequence,
-        name: stop.name.value,
-        addressLine1: stop.addressLine1.value,
-        city: stop.city.value,
-        state: stop.state.value,
-        postalCode: stop.postalCode.value,
-        date: stop.date.value,
-        timeWindow: stop.timeWindow.value,
-        locationId: stop.locationId || "",
-        hasLocation: !!stop.locationId,
-        hasValidDate: getTextValue(stop.date.value).includes("-"),
-        confidence: stop.confidence,
-      }));
-
-      // Add a summary so the AI knows the overall stop status at a glance
-      const stopsSummary = {
-        totalStops: stopsForAPI.length,
-        stopsWithLocation: stopsForAPI.filter((s) => s.hasLocation).length,
-        stopsWithDate: stopsForAPI.filter((s) => s.hasValidDate).length,
-        stopsNeedingAttention: stopsForAPI.filter((s) => !s.hasLocation || !s.hasValidDate).length,
-      };
-
-      const shipmentData: Record<string, unknown> = {};
-      for (const [key, field] of Object.entries(state.fields)) {
-        if (field.value != null && field.value !== "") {
-          shipmentData[key] = field.value;
-        }
+  const stopCount = state.stops.length;
+  const onDraftEdit = useCallback(
+    (edit: PageDraftEdit) => {
+      if (!applyImportDraftEdit(edit, handlers, stopCount)) {
+        toast.warning(t("The assistant made a change that no longer fits this page"), {
+          description: t("Nothing was changed. Ask it again if you still want the change."),
+        });
       }
-
-      await apiService.documentService.chatWithImportAssistantStream(
-        documentId,
-        {
-          message: text.trim(),
-          conversationId,
-          reconciliationState: reconciliationStateForAPI,
-          requiredFields: requiredFieldValues,
-          stops: stopsForAPI,
-          shipmentData: { ...shipmentData, _stopsSummary: stopsSummary },
-        },
-        {
-          onTextDelta: (delta) => {
-            lastContentMsgId.current = streamingMsgId.current;
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === streamingMsgId.current ? { ...m, text: m.text + delta } : m,
-              ),
-            );
-            scrollToBottom();
-          },
-          onNewMessage: () => {
-            // Only create a new bubble if the current one already has text.
-            // If it only has tool calls (no text), keep accumulating so
-            // tool calls and their resulting text stay in the same bubble.
-            setMessages((prev) => {
-              const current = prev.find((m) => m.id === streamingMsgId.current);
-              if (current && current.text.length === 0) {
-                return prev;
-              }
-              const newId = `assist-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-              streamingMsgId.current = newId;
-              lastContentMsgId.current = newId;
-              return [...prev, { id: newId, role: "assistant", text: "", toolCalls: [] }];
-            });
-            scrollToBottom();
-          },
-          onToolCallStart: (name, callId) => {
-            lastContentMsgId.current = streamingMsgId.current;
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === streamingMsgId.current
-                  ? {
-                      ...m,
-                      toolCalls: [
-                        ...(m.toolCalls ?? []),
-                        { name, callId, status: "running" as const },
-                      ],
-                    }
-                  : m,
-              ),
-            );
-            scrollToBottom();
-          },
-          onToolCallDone: (_name, callId, status, result, actions) => {
-            setMessages((prev) =>
-              prev.map((m) => {
-                const tcIdx = m.toolCalls?.findIndex((tc) => tc.callId === callId);
-                if (tcIdx == null || tcIdx < 0) return m;
-                const updated = [...(m.toolCalls ?? [])];
-                updated[tcIdx] = {
-                  ...updated[tcIdx],
-                  status: status === "error" ? ("error" as const) : ("completed" as const),
-                  result,
-                };
-                return { ...m, toolCalls: updated };
-              }),
-            );
-            if (actions) processActions(actions);
-            scrollToBottom();
-          },
-          onSuggestions: (newSuggestions) => {
-            const targetId = lastContentMsgId.current ?? streamingMsgId.current;
-            setMessages((prev) =>
-              prev.map((message) =>
-                message.id === targetId ? { ...message, suggestions: newSuggestions } : message,
-              ),
-            );
-          },
-          onDone: (newConversationId, actions) => {
-            setConversationId(newConversationId);
-            if (actions) processActions(actions);
-            setIsStreaming(false);
-            streamingMsgId.current = null;
-            lastContentMsgId.current = null;
-            scrollToBottom();
-          },
-          onError: (message) => {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === streamingMsgId.current
-                  ? { ...m, text: message || "Something went wrong." }
-                  : m,
-              ),
-            );
-            setIsStreaming(false);
-            streamingMsgId.current = null;
-            lastContentMsgId.current = null;
-          },
-        },
-      );
     },
-    [
-      documentId,
-      conversationId,
-      reconciliationStateForAPI,
-      requiredFieldValues,
-      isStreaming,
-      isConversationClosed,
-      processActions,
-      scrollToBottom,
-      state.fields,
-      state.stops,
-    ],
+    [handlers, stopCount, t],
   );
 
-  // When shipment creation fails, parse errors and send readable summary to AI
-  useEffect(() => {
-    if (lastCreateError && !isStreaming) {
-      onClearCreateError?.();
+  const readDraft = useCallback(
+    () => importDraftFromState(state, requiredFieldValues),
+    [requiredFieldValues, state],
+  );
 
-      // Try to parse validation errors into human-readable format
-      let readableError = lastCreateError;
-      try {
-        const errors = JSON.parse(lastCreateError) as Array<{ path: string[]; message: string }>;
-        if (Array.isArray(errors)) {
-          const summary = errors
-            .map((e) => {
-              const path = e.path?.join(".") ?? "unknown";
-              return `- ${path}: ${e.message}`;
-            })
-            .join("\n");
-          readableError = `Validation failed:\n${summary}`;
-        }
-      } catch {
-        // Not JSON, use as-is
-      }
+  const page = useMemo<PageBinding>(
+    () => ({ surface: "shipment_import", readDraft, onDraftEdit }),
+    [onDraftEdit, readDraft],
+  );
 
-      void sendMessage(
-        `Shipment creation failed. Here are the issues:\n${readableError}\n\nPlease help me fix these one at a time.`,
-      );
-    }
-  }, [lastCreateError, isStreaming, onClearCreateError, sendMessage]);
+  const open = useCallback(
+    () => apiService.documentService.openImportAssistantThread(documentId),
+    [documentId],
+  );
 
-  // Load persisted conversation on mount
-  useEffect(() => {
-    if (!documentId) return;
-
-    setMessages([]);
-    setConversationId(undefined);
-    setConversationStatus("Active");
-    setStatusReason("");
-    setInputValue("");
-    setIsStreaming(false);
-    hasSentInitial.current = false;
-    setHasHydrated(false);
-    streamingMsgId.current = null;
-    lastContentMsgId.current = null;
-
-    const hydrateFromIndexedDB = () => {
-      void loadConversation(documentId).then((saved) => {
-        if (saved && saved.messages.length > 0) {
-          hasSentInitial.current = true;
-          setMessages(saved.messages as ChatMessage[]);
-          if (saved.conversationId) setConversationId(saved.conversationId);
-        }
-        setHasHydrated(true);
-      });
-    };
-
-    void apiService.documentService
-      .getImportAssistantHistory(documentId)
-      .then((history) => {
-        if (history.status) setConversationStatus(history.status);
-        if (history.statusReason) setStatusReason(history.statusReason);
-
-        if (history.messages.length > 0) {
-          hasSentInitial.current = true;
-          setMessages(
-            history.messages.map((message) => ({
-              id: message.id,
-              role: message.role,
-              text: message.text,
-              toolCalls: toLocalToolCalls(message.toolCalls),
-              suggestions: message.suggestions,
-            })),
-          );
-          if (history.conversationId) {
-            setConversationId(history.conversationId);
+  // A failed create is handed to the assistant as the person's own question,
+  // once, so it can walk them through what the shipment was refused over.
+  const pageRequest = useMemo<PageRequest | null>(
+    () =>
+      lastCreateError
+        ? {
+            key: lastCreateError,
+            text: [
+              t("Creating the shipment failed:"),
+              createFailureSummary(lastCreateError),
+              "",
+              t("Help me fix these one at a time."),
+            ].join("\n"),
           }
-          setHasHydrated(true);
-          return;
-        }
-
-        hydrateFromIndexedDB();
-      })
-      .catch(() => {
-        hydrateFromIndexedDB();
-      });
-  }, [documentId]);
-
-  // Persist conversation after each completed message exchange
-  useEffect(() => {
-    if (!documentId || !hasHydrated || isStreaming || messages.length === 0) return;
-
-    const persistable: PersistedChatMessage[] = messages
-      .filter((m) => m.text.length > 0)
-      .map((m) => ({
-        id: m.id,
-        role: m.role,
-        text: m.text,
-        toolCalls: m.toolCalls,
-        suggestions: m.suggestions,
-      }));
-
-    void saveConversation(documentId, conversationId, persistable);
-  }, [documentId, conversationId, hasHydrated, messages, isStreaming]);
-
-  // Auto-send initial message once, including extracted context
-  useEffect(() => {
-    if (
-      !documentId ||
-      !hasHydrated ||
-      hasSentInitial.current ||
-      isStreaming ||
-      isConversationClosed ||
-      messages.length > 0
-    ) {
-      return;
-    }
-
-    hasSentInitial.current = true;
-    const shipperName = getTextValue(state.fields.shipper?.value);
-    const initialMsg = shipperName
-      ? `Help me complete this shipment. The extracted shipper name is "${shipperName}".`
-      : "Help me complete this shipment.";
-    void sendMessage(initialMsg);
-  }, [
-    documentId,
-    hasHydrated,
-    isStreaming,
-    isConversationClosed,
-    messages.length,
-    sendMessage,
-    state.fields.shipper?.value,
-  ]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        void sendMessage(inputValue);
-      }
-    },
-    [inputValue, sendMessage],
+        : null,
+    [lastCreateError, t],
   );
+  const onPageRequestSent = useCallback(() => onClearCreateError?.(), [onClearCreateError]);
 
-  const adjustHeight = useCallback(() => {
-    const el = inputRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 100)}px`;
-  }, []);
+  const shipper = state.fields.shipper?.value;
+  const openingQuestion =
+    typeof shipper === "string" && shipper.trim() !== ""
+      ? t('Help me complete this shipment. The document names the shipper "{0}".', shipper.trim())
+      : t("Help me complete this shipment.");
 
-  useEffect(() => {
-    adjustHeight();
-  }, [inputValue, adjustHeight]);
-
-  // Find last assistant message index
-  let lastAssistantIdx = -1;
-  for (let i = messages.length - 1; i >= 0; i--) {
-    if (messages[i].role === "assistant") {
-      lastAssistantIdx = i;
-      break;
-    }
-  }
+  const historyQuery = useQuery({
+    queryKey: ["import-assistant-history", documentId],
+    queryFn: () => apiService.documentService.getImportAssistantHistory(documentId),
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: false,
+  });
+  const earlier = earlierConversation(historyQuery.data);
 
   return (
-    <div className="flex h-full flex-col border-l">
-      {/* Header */}
-      <div className="shrink-0 border-b px-3 py-2.5">
-        <div className="flex items-center gap-2">
-          <AssistMark className="text-muted-foreground size-3.5" />
-          <span className="text-xs font-medium">{t("AI assistant")}</span>
-        </div>
-        <div className="mt-2">
-          <div className="text-2xs text-muted-foreground mb-1 flex items-center justify-between">
-            <span>
-              {isReady ? t("Ready to create") : t("{0} fields remaining", 4 - filledRequired)}
+    <PageAssistant
+      className="h-full border-l"
+      conversationKey={importAssistantConversationKey(documentId)}
+      open={open}
+      page={page}
+      openingQuestion={openingQuestion}
+      pageRequest={pageRequest}
+      onPageRequestSent={onPageRequestSent}
+      header={
+        <>
+          <div className="flex flex-col gap-1">
+            <span className="text-2xs text-muted-foreground">
+              {isReady
+                ? t("Ready to create")
+                : t("{0} fields remaining", REQUIRED_COUNT - filledRequired)}
             </span>
-          </div>
-          <div className="bg-muted h-0.5 overflow-hidden rounded-full">
-            <m.div
-              className={cn("h-full rounded-full", isReady ? "bg-success" : "bg-foreground/40")}
-              animate={{ width: `${(filledRequired / 4) * 100}%` }}
-              transition={{ duration: 0.4 }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto">
-        <div className="flex flex-col gap-2 p-2.5">
-          {isConversationClosed && (
-            <div className="bg-muted flex items-center gap-2 rounded-md px-2.5 py-1.5">
-              <InfoIcon className="text-muted-foreground size-3" />
-              <span className="text-2xs text-muted-foreground">
-                {conversationStatus === "Completed" && statusReason === "shipment_created"
-                  ? t("This import has been completed.")
-                  : conversationStatus === "Superseded"
-                    ? t("This conversation was superseded by a re-extraction.")
-                    : t("This conversation is no longer active.")}
-              </span>
+            <div className="bg-muted h-0.5 overflow-hidden rounded-full">
+              <m.div
+                className={cn("h-full rounded-full", isReady ? "bg-success" : "bg-foreground/40")}
+                animate={{ width: `${(filledRequired / REQUIRED_COUNT) * 100}%` }}
+                transition={{ duration: 0.4 }}
+              />
             </div>
-          )}
+          </div>
+          {earlier && <EarlierConversationNotice conversation={earlier} />}
+        </>
+      }
+    />
+  );
+}
 
-          {isReady && !isConversationClosed && messages.length > 0 && (
-            <m.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex items-center gap-2 rounded-md bg-success-subtle px-2.5 py-1.5"
-            >
-              <CheckCircle2Icon className="size-3 text-success-foreground" />
-              <span className="text-2xs text-success-foreground">
-                {t("Ready to create shipment")}
-              </span>
-            </m.div>
-          )}
+/**
+ * What was said about this document before the assistant moved onto the
+ * shared conversation, kept readable for a release. It cannot be continued.
+ */
+function EarlierConversationNotice({ conversation }: { conversation: EarlierConversation }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
 
-          {messages.map((msg, idx) => (
-            <m.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.15 }}
-            >
-              {msg.role === "user" ? (
-                <div className="flex justify-end">
-                  <div className="bg-foreground/[0.06] text-muted-foreground max-w-[85%] rounded-lg px-2.5 py-1 text-xs">
-                    {msg.text}
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  {/* Tool calls */}
-                  {msg.toolCalls && msg.toolCalls.length > 0 && (
-                    <div className="mb-1.5 space-y-1">
-                      {msg.toolCalls.map((tc) => (
-                        <AiToolCall
-                          key={tc.callId}
-                          name={TOOL_LABELS[tc.name] ?? tc.name}
-                          state={tc.status}
-                          className="text-2xs"
-                        >
-                          <AiToolCallHeader className="text-2xs [&_span.font-mono]:text-2xs [&>span]:text-2xs px-2 py-1 [&_svg]:size-3 [&>div:first-child]:size-4 [&>div:first-child]:rounded [&>span]:py-0" />
-                          {tc.result && tc.status === "completed" && (
-                            <AiToolCallContent className="[&>div]:space-y-1 [&>div]:p-1.5">
-                              <AiToolCallOutput className="[&>div]:text-2xs [&>span]:text-2xs [&>div]:p-1.5">
-                                <ToolResultSummary result={tc.result} name={tc.name} />
-                              </AiToolCallOutput>
-                            </AiToolCallContent>
-                          )}
-                        </AiToolCall>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Message text — streams in real-time */}
-                  <div className="text-foreground text-base leading-relaxed">
-                    {msg.text}
-                    {isStreaming && msg.id === streamingMsgId.current && msg.text.length > 0 && (
-                      <span className="bg-foreground/40 ml-0.5 inline-block h-[13px] w-[1.5px] animate-pulse align-text-bottom" />
-                    )}
-                  </div>
-
-                  {/* Thinking shimmer when streaming with no text yet */}
-                  {isStreaming &&
-                    msg.id === streamingMsgId.current &&
-                    msg.text.length === 0 &&
-                    msg.toolCalls?.length === 0 && (
-                      <TextShimmer as="span" className="text-base" duration={2}>
-                        {t("Thinking")}
-                      </TextShimmer>
-                    )}
-
-                  {/* Suggestions — only on latest assistant message, after streaming completes */}
-                  {idx === lastAssistantIdx &&
-                    !isStreaming &&
-                    (msg.suggestions?.length ?? 0) > 0 && (
-                      <m.div
-                        initial={{ opacity: 0, y: 4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.15 }}
-                        className="mt-1.5 flex flex-col gap-1"
-                      >
-                        {msg.suggestions?.map((s) => (
-                          <SuggestionButton
-                            key={s.label}
-                            suggestion={s}
-                            onSend={sendMessage}
-                            onAction={(action) => {
-                              if (action === "create_shipment") onCreateShipment?.();
-                              if (action === "review_details") {
-                                // Scroll the reconciliation panel to top
-                                document
-                                  .querySelector('[data-slot="scroll-area-viewport"]')
-                                  ?.scrollTo({ top: 0, behavior: "smooth" });
-                              }
-                            }}
-                          />
-                        ))}
-                      </m.div>
-                    )}
-                </div>
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="text-2xs text-muted-foreground hover:text-foreground ui-focus-ring flex items-center gap-1 rounded-sm">
+        <ChevronRightIcon className={cn("size-3 transition-transform", open && "rotate-90")} />
+        <HistoryIcon className="size-3" />
+        {conversation.reason === "superseded"
+          ? t("Earlier conversation, ended by a re-extraction")
+          : t("Earlier conversation, finished")}
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <ol className="bg-muted/40 mt-1.5 flex max-h-56 flex-col gap-1.5 overflow-y-auto rounded-md border p-2">
+          {conversation.messages.map((message) => (
+            <li
+              key={message.id}
+              className={cn(
+                "text-xs leading-relaxed whitespace-pre-wrap",
+                message.role === "user" ? "text-muted-foreground" : "text-foreground",
               )}
-            </m.div>
+            >
+              <span className="font-medium">
+                {message.role === "user" ? t("You") : t("Assistant")}
+              </span>
+              {": "}
+              {message.text}
+            </li>
           ))}
-        </div>
-      </div>
-
-      {/* Input */}
-      <div className="shrink-0 border-t p-2">
-        <div className="ui-container-focus-ring bg-background flex items-end gap-1.5 rounded-lg border px-3 py-1.5">
-          <textarea
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={isConversationClosed ? "Conversation closed" : "Ask the assistant..."}
-            disabled={isStreaming || isConversationClosed}
-            rows={1}
-            className="placeholder:text-muted-foreground/40 flex-1 resize-none bg-transparent text-xs leading-relaxed outline-none disabled:opacity-50"
-            style={{ minHeight: 22, maxHeight: 100 }}
-          />
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={() => void sendMessage(inputValue)}
-            disabled={isStreaming || isConversationClosed || !inputValue.trim()}
-            className="mb-px shrink-0"
-          >
-            <ArrowUpIcon className="size-3.5" />
-          </Button>
-        </div>
-      </div>
-    </div>
+        </ol>
+        <p className="text-2xs text-muted-foreground mt-1">
+          {t("This conversation is read-only. Ask the assistant below to continue.")}
+        </p>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

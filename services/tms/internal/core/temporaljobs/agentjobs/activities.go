@@ -768,7 +768,21 @@ func (a *Activities) DeleteStaleAskThreadsActivity(
 		a.logger.Info("removed quick questions nobody kept", zap.Int("deleted", deleted))
 	}
 
-	return &DeleteStaleAskThreadsResult{Deleted: deleted}, nil
+	drafts, err := a.conversations.DeleteStaleThreads(ctx, repositories.DeleteStaleThreadsRequest{
+		Origin:          conversation.ThreadOriginFormula,
+		Before:          input.Before,
+		Limit:           deleteStaleAskBatch,
+		SubjectlessOnly: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("delete stale formula threads: %w", err)
+	}
+	if drafts > 0 {
+		a.logger.Info("removed formula conversations about templates never saved",
+			zap.Int("deleted", drafts))
+	}
+
+	return &DeleteStaleAskThreadsResult{Deleted: deleted + drafts}, nil
 }
 
 // RemindPendingProposalsActivity brings proposals that have waited past the

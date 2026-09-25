@@ -82,6 +82,10 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(assistantartifact.AllKinds()),
 		},
 		{
+			name:   "ck_assistant_threads_origin",
+			values: stringsOf(conversation.AllThreadOrigins()),
+		},
+		{
 			name:   "ck_assistant_messages_kind",
 			values: stringsOf(conversation.AllMessageKinds()),
 		},

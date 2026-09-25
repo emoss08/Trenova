@@ -25,6 +25,10 @@ var families = [...][]string{
 	{"get_ar_aging", "list_ar_open_items", "get_customer_statement"},
 	{"list_edi_inbound_files", "get_edi_inbound_file", "get_edi_partner"},
 	{"list_rate_agreements", "get_rate_agreement", "explain_rate"},
+	{"describe_formula_schema", "test_formula_expression", "propose_formula"},
+	{"accept_field", "accept_all_confident", "set_field_value"},
+	{"list_locations", "set_stop_location", "set_stop_schedule", "create_location"},
+	{"list_formula_templates", "set_required_field"},
 }
 
 // indexFamilies maps each family member to the others, in family order.

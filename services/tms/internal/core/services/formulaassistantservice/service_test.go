@@ -2,19 +2,18 @@ package formulaassistantservice
 
 import (
 	"context"
-	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/core/domain/aiusage"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/domain/pagedraft"
+	"github.com/emoss08/trenova/internal/core/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
-	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -22,75 +21,17 @@ import (
 	"go.uber.org/zap"
 )
 
-type stubCompletion struct {
-	text string
-	err  error
-
-	lastRequest *serviceports.StructuredCompletionRequest
-}
-
-func (s *stubCompletion) CompleteChat(
-	_ context.Context,
-	_ *serviceports.ChatCompletionRequest,
-) (*serviceports.ChatCompletionResult, error) {
-	return nil, nil
-}
-
-func (s *stubCompletion) StreamChat(
-	context.Context,
-	*serviceports.ChatCompletionRequest,
-	serviceports.ChatStreamSink,
-) (*serviceports.ChatCompletionResult, error) {
-	return nil, nil
-}
-
-// The formula assistant runs its calls inline; it never defers one. The stub
-// still has to satisfy the whole port, so these report plainly that there is
-// nothing to poll rather than returning a zero submission a caller would wait on.
-func (s *stubCompletion) SubmitBackground(
-	ctx context.Context,
-	req *serviceports.StructuredCompletionRequest,
-) (*serviceports.BackgroundSubmission, error) {
-	result, err := s.CompleteStructured(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return &serviceports.BackgroundSubmission{Result: result}, nil
-}
-
-func (s *stubCompletion) PollBackground(
-	context.Context,
-	*serviceports.BackgroundPollRequest,
-) (*serviceports.BackgroundOutcome, error) {
-	return nil, errors.New("the formula assistant runs inline and issues no handle to poll")
-}
-
-func (s *stubCompletion) CompleteStructured(
-	_ context.Context,
-	req *serviceports.StructuredCompletionRequest,
-) (*serviceports.StructuredCompletionResult, error) {
-	s.lastRequest = req
-	if s.err != nil {
-		return nil, s.err
-	}
-	return &serviceports.StructuredCompletionResult{
-		Text:            s.text,
-		ModelIdentifier: "claude-opus-5",
-		InputTokens:     100,
-		OutputTokens:    50,
-	}, nil
-}
-
 type stubMatrixRepo struct {
 	repositories.RateMatrixRepository
+
+	data []*repositories.RateMatrixLookupData
 }
 
 func (s *stubMatrixRepo) GetLookupData(
 	_ context.Context,
 	_ *repositories.GetRateMatrixLookupDataRequest,
 ) ([]*repositories.RateMatrixLookupData, error) {
-	return nil, nil
+	return s.data, nil
 }
 
 type stubVersionRepo struct {
@@ -116,7 +57,7 @@ const testSchema = `{
 	}
 }`
 
-func newTestService(t *testing.T, completion serviceports.CompletionService) *Service {
+func newTestService(t *testing.T, matrices ...*repositories.RateMatrixLookupData) *Service {
 	t.Helper()
 
 	registry := schema.NewRegistry()
@@ -133,31 +74,27 @@ func newTestService(t *testing.T, completion serviceports.CompletionService) *Se
 	})
 	require.NoError(t, err)
 
+	matrixRepo := &stubMatrixRepo{data: matrices}
 	formulaSvc := formula.NewService(formula.ServiceParams{
 		Logger:         zap.NewNop(),
 		Registry:       registry,
 		Engine:         eng,
 		Resolver:       res,
 		VersionRepo:    &stubVersionRepo{},
-		RateMatrixRepo: &stubMatrixRepo{},
+		RateMatrixRepo: matrixRepo,
 	})
 
 	return &Service{
-		completion:      completion,
-		formulaService:  formulaSvc,
-		templateService: newTemplateService(formulaSvc),
-		rateMatrixRepo:  &stubMatrixRepo{},
+		formulaService: formulaSvc,
+		templateService: formulatemplateservice.New(formulatemplateservice.Params{
+			Logger:         zap.NewNop(),
+			FormulaService: formulaSvc,
+		}),
+		rateMatrixRepo: matrixRepo,
 	}
 }
 
-func newTemplateService(formulaSvc *formula.Service) *formulatemplateservice.Service {
-	return formulatemplateservice.New(formulatemplateservice.Params{
-		Logger:         zap.NewNop(),
-		FormulaService: formulaSvc,
-	})
-}
-
-func newTenant() pagination.TenantInfo {
+func tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{
 		OrgID:  pulid.MustNew("org_"),
 		BuID:   pulid.MustNew("bu_"),
@@ -165,226 +102,180 @@ func newTenant() pagination.TenantInfo {
 	}
 }
 
-func TestGenerateFormula_RequiresInstruction(t *testing.T) {
+func matrix(code string, axes int) *repositories.RateMatrixLookupData {
+	dimensions := make([]*ratematrix.RateMatrixDimension, axes)
+	for idx := range dimensions {
+		dimensions[idx] = &ratematrix.RateMatrixDimension{}
+	}
+
+	return &repositories.RateMatrixLookupData{
+		Matrix: &ratematrix.RateMatrix{Code: code, Name: code + " table", Dimensions: dimensions},
+	}
+}
+
+func TestReference_NamesTheVariablesFunctionsAndTablesAFormulaMayUse(t *testing.T) {
 	t.Parallel()
 
-	svc := newTestService(t, &stubCompletion{})
+	svc := newTestService(t, matrix("ZONES", 1), matrix("LANES", 2), matrix("CUBE", 3), nil)
 
-	_, err := svc.GenerateFormula(t.Context(), &GenerateFormulaRequest{
-		TenantInfo: newTenant(),
-	})
+	reference, err := svc.Reference(t.Context(), tenant(), "")
+	require.NoError(t, err)
 
+	assert.Equal(t, DefaultSchemaID, reference.SchemaID)
+	names := make([]string, 0, len(reference.Variables))
+	for _, variable := range reference.Variables {
+		names = append(names, variable.Name)
+	}
+	assert.Contains(t, names, "totalDistance")
+	assert.Contains(t, names, "baseRate")
+	assert.NotEmpty(t, reference.Functions)
+	assert.Equal(t, []RateTable{
+		{Code: "ZONES", Name: "ZONES table", Axes: 1, Functions: "lookup, lookupOr"},
+		{Code: "LANES", Name: "LANES table", Axes: 2, Functions: "lookup2, lookup2Or"},
+	}, reference.RateTables, "a table a formula cannot look up is not offered")
+
+	_, err = svc.Reference(t.Context(), tenant(), "nothing")
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no formula schema named nothing")
 }
 
-func TestGenerateFormula_ParsesAndValidatesModelOutput(t *testing.T) {
+func TestTest_TheEnginePricesEveryScenario(t *testing.T) {
 	t.Parallel()
 
-	completion := &stubCompletion{
-		text: `{
-			"expression": "round(baseRate * totalDistance * (1 + fuelPct / 100), 2)",
-			"variables": [
-				{"name": "fuelPct", "type": "Number", "description": "Fuel percent", "defaultValue": 18}
-			],
-			"explanation": "Multiplies the per-mile rate by distance and adds a fuel surcharge."
-		}`,
-	}
-	svc := newTestService(t, completion)
+	svc := newTestService(t)
 
-	result, err := svc.GenerateFormula(t.Context(), &GenerateFormulaRequest{
-		TenantInfo:   newTenant(),
-		Instruction:  "per mile with fuel surcharge",
-		TemplateType: formulatemplate.TemplateTypeFreightCharge,
-	})
-
-	require.NoError(t, err)
-	assert.Contains(t, result.Expression, "fuelPct")
-	require.Len(t, result.VariableDefinitions, 1)
-	assert.Equal(t, "fuelPct", result.VariableDefinitions[0].Name)
-	assert.Equal(t, formulatypes.VariableValueTypeNumber, result.VariableDefinitions[0].Type)
-	assert.NotEmpty(t, result.Explanation)
-	require.NotNil(t, result.Validation)
-	assert.True(t, result.Validation.Valid)
-
-	require.NotNil(t, completion.lastRequest)
-	var untrusted bool
-	for _, section := range completion.lastRequest.Context.Sections {
-		if !section.Trusted && section.Content == "per mile with fuel surcharge" {
-			untrusted = true
-		}
-	}
-	assert.True(t, untrusted, "the user instruction must land in an untrusted section")
-}
-
-func TestGenerateFormula_ReportsInvalidModelJSON(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t, &stubCompletion{text: "not json"})
-
-	_, err := svc.GenerateFormula(t.Context(), &GenerateFormulaRequest{
-		TenantInfo:  newTenant(),
-		Instruction: "anything",
-	})
-
-	require.Error(t, err)
-	require.ErrorIs(t, err, serviceports.ErrModelSchemaValidation)
-}
-
-func TestExplainFormula_ParsesExplanation(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t, &stubCompletion{
-		text: `{"explanation": "Charges by distance."}`,
-	})
-
-	result, err := svc.ExplainFormula(t.Context(), &ExplainFormulaRequest{
-		TenantInfo: newTenant(),
-		Expression: "baseRate * totalDistance",
-	})
-
-	require.NoError(t, err)
-	assert.Equal(t, "Charges by distance.", result.Explanation)
-}
-
-func TestExplainFormula_RequiresExpression(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t, &stubCompletion{})
-
-	_, err := svc.ExplainFormula(t.Context(), &ExplainFormulaRequest{TenantInfo: newTenant()})
-
-	require.Error(t, err)
-}
-
-func TestMapGeneratedVariables(t *testing.T) {
-	t.Parallel()
-
-	variables, testValues := mapGeneratedVariables([]GeneratedVariable{
-		{Name: "fuelPct", Type: "Number", DefaultValue: float64(18)},
-		{Name: "flag", Type: "Boolean", DefaultValue: true},
-		{Name: "weird", Type: "Blob", DefaultValue: nil},
-		{Name: "", Type: "Number"},
-	})
-
-	require.Len(t, variables, 3)
-	assert.Equal(t, formulatypes.VariableValueTypeNumber, variables[0].Type)
-	assert.Equal(t, formulatypes.VariableValueTypeBoolean, variables[1].Type)
-	assert.Equal(t, formulatypes.VariableValueTypeNumber, variables[2].Type)
-
-	assert.Equal(t, float64(18), testValues["fuelPct"])
-	assert.Equal(t, true, testValues["flag"])
-	_, hasWeird := testValues["weird"]
-	assert.False(t, hasWeird)
-}
-
-func TestGenerateFormula_PricesProposedScenarios(t *testing.T) {
-	t.Parallel()
-
-	completion := &stubCompletion{
-		text: `{
-			"expression": "baseRate * totalDistance",
-			"variables": [],
-			"explanation": "Rate per mile.",
-			"scenarios": [
-				{"name": "Short haul", "description": "A 100 mile lane", "variables": [
-					{"name": "baseRate", "value": 2},
-					{"name": "totalDistance", "value": 100}
-				]},
-				{"name": "Broken", "description": "References nothing real", "variables": [
-					{"name": "baseRate", "value": "not a number"},
-					{"name": "totalDistance", "value": 100}
-				]},
-				{"name": "", "description": "Unnamed scenarios are dropped", "variables": []},
-				{"name": "Four", "description": "", "variables": []},
-				{"name": "Five", "description": "", "variables": []}
-			]
-		}`,
-	}
-	svc := newTestService(t, completion)
-
-	result, err := svc.GenerateFormula(t.Context(), &GenerateFormulaRequest{
-		TenantInfo:   newTenant(),
-		Instruction:  "per mile",
-		TemplateType: formulatemplate.TemplateTypeFreightCharge,
-	})
-
-	require.NoError(t, err)
-	require.Len(t, result.Scenarios, 3, "at most three named scenarios are kept")
-
-	short := result.Scenarios[0]
-	assert.Equal(t, "Short haul", short.Name)
-	assert.True(t, short.Valid)
-	require.NotNil(t, short.ExpectedAmount)
-	assert.InDelta(t, 200, *short.ExpectedAmount, 0.001)
-	assert.Equal(
-		t,
-		map[string]any{"baseRate": float64(2), "totalDistance": float64(100)},
-		short.Variables,
-	)
-
-	broken := result.Scenarios[1]
-	assert.False(t, broken.Valid)
-	assert.Nil(t, broken.ExpectedAmount)
-	assert.NotEmpty(t, broken.Error)
-}
-
-func (*stubMatrixRepo) GetLookupStamp(context.Context, pagination.TenantInfo) (string, error) {
-	return "", nil
-}
-
-func TestGenerateFormula_AttributesTheCallToThePersonFeatureAndSchema(t *testing.T) {
-	t.Parallel()
-
-	completion := &stubCompletion{
-		text: `{
-			"expression": "baseRate * totalDistance",
-			"variables": [],
-			"explanation": "Rate by distance."
-		}`,
-	}
-	svc := newTestService(t, completion)
-	tenant := newTenant()
-
-	_, err := svc.GenerateFormula(t.Context(), &GenerateFormulaRequest{
-		TenantInfo:  tenant,
-		Instruction: "per mile",
-	})
-
-	require.NoError(t, err)
-	require.NotNil(t, completion.lastRequest)
-	assert.Equal(
-		t,
-		serviceports.AIUsageAttribution{
-			UserID:  tenant.UserID,
-			Feature: aiusage.FeatureFormulaGenerate,
-			Subject: aiusage.Subject{Type: aiusage.SubjectTypeFormulaSchema, ID: "shipment"},
+	outcome, err := svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance * baseRate",
+		Variables:  map[string]any{"totalDistance": 100, "baseRate": 2.5},
+		Scenarios: []Scenario{
+			{Name: "Long haul", Variables: map[string]any{"totalDistance": 900}},
+			{Name: "Own rate", Description: "A cheaper lane",
+				Variables: map[string]any{"baseRate": 1.25}},
 		},
-		completion.lastRequest.Attribution,
-	)
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, pagedraft.FormulaCheck{Valid: true, Result: "250"}, outcome.Check)
+	require.Len(t, outcome.Scenarios, 2)
+	assert.Equal(t, "Long haul", outcome.Scenarios[0].Name)
+	assert.Equal(t, "2250", outcome.Scenarios[0].Amount)
+	assert.True(t, outcome.Scenarios[0].Valid)
+	assert.Equal(t, 2.5, outcome.Scenarios[0].Variables["baseRate"],
+		"a scenario starts from the defaults and overrides what it names")
+	assert.Equal(t, "125", outcome.Scenarios[1].Amount)
+	assert.Equal(t, "A cheaper lane", outcome.Scenarios[1].Description)
 }
 
-func TestExplainFormula_AttributesTheCallToThePersonFeatureAndSchema(t *testing.T) {
+func TestTest_ReportsAnExpressionThatWillNotEvaluate(t *testing.T) {
 	t.Parallel()
 
-	completion := &stubCompletion{text: `{"explanation": "Charges by distance."}`}
-	svc := newTestService(t, completion)
-	tenant := newTenant()
+	svc := newTestService(t)
 
-	_, err := svc.ExplainFormula(t.Context(), &ExplainFormulaRequest{
-		TenantInfo: tenant,
-		Expression: "baseRate * totalDistance",
-		SchemaID:   "shipment",
+	outcome, err := svc.Test(t.Context(), &TestRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance *",
+		Scenarios:  []Scenario{{Name: "Any"}},
 	})
-
 	require.NoError(t, err)
-	require.NotNil(t, completion.lastRequest)
-	assert.Equal(
-		t,
-		serviceports.AIUsageAttribution{
-			UserID:  tenant.UserID,
-			Feature: aiusage.FeatureFormulaExplain,
-			Subject: aiusage.Subject{Type: aiusage.SubjectTypeFormulaSchema, ID: "shipment"},
+
+	assert.False(t, outcome.Check.Valid)
+	assert.NotEmpty(t, outcome.Check.Error)
+	assert.Empty(t, outcome.Check.Result)
+	assert.Empty(t, outcome.Scenarios, "nothing is priced with an expression that does not run")
+}
+
+func TestTest_RefusesWhatCannotBeAFormulaValue(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+	scenarios := make([]Scenario, MaxScenarios+1)
+	for idx := range scenarios {
+		scenarios[idx] = Scenario{Name: "Scenario"}
+	}
+
+	cases := map[string]*TestRequest{
+		"no expression":  {Expression: "  "},
+		"a bad name":     {Expression: "1", Variables: map[string]any{"9lives": 1}},
+		"a list value":   {Expression: "1", Variables: map[string]any{"rate": []any{1, 2}}},
+		"a nameless one": {Expression: "1", Scenarios: []Scenario{{Name: " "}}},
+		"too many":       {Expression: "1", Scenarios: scenarios},
+	}
+	for name, req := range cases {
+		req.TenantInfo = tenant()
+		_, err := svc.Test(t.Context(), req)
+		require.Error(t, err, name)
+		var multiErr *errortypes.MultiError
+		require.ErrorAs(t, err, &multiErr, name)
+	}
+}
+
+func TestPropose_PricesTheDraftWithItsOwnDefaults(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+
+	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo: tenant(),
+		Expression: "max(totalDistance * perMile, minimum)",
+		Variables: []pagedraft.FormulaVariable{
+			{Name: "perMile", Type: pagedraft.VariableNumber, DefaultValue: 2.85},
+			{Name: "minimum", Type: pagedraft.VariableNumber, DefaultValue: 350},
 		},
-		completion.lastRequest.Attribution,
-	)
+		Explanation: "Charges per mile, never less than the minimum.",
+		Scenarios: []Scenario{
+			{Name: "Short run", Variables: map[string]any{"totalDistance": 10}},
+			{Name: "Long run", Variables: map[string]any{"totalDistance": 1000}},
+		},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, DefaultSchemaID, proposal.SchemaID)
+	assert.Equal(t, "Charges per mile, never less than the minimum.", proposal.Explanation)
+	require.Len(t, proposal.Scenarios, 2)
+	assert.Equal(t, "350", proposal.Scenarios[0].Amount, "the minimum holds on a short run")
+	assert.Equal(t, "2850", proposal.Scenarios[1].Amount)
+	assert.Len(t, proposal.Variables, 2)
+}
+
+func TestPropose_RefusesADraftTheStudioCouldNotHold(t *testing.T) {
+	t.Parallel()
+
+	svc := newTestService(t)
+
+	_, err := svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo: tenant(),
+		Expression: "totalDistance",
+		Variables: []pagedraft.FormulaVariable{
+			{Name: "rate", Type: "Money"},
+			{Name: "rate", Type: pagedraft.VariableNumber},
+		},
+	})
+	require.Error(t, err)
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	fields := make([]string, 0, len(multiErr.Errors))
+	for _, fieldErr := range multiErr.Errors {
+		fields = append(fields, fieldErr.Field)
+	}
+	assert.Contains(t, fields, "explanation")
+	assert.Contains(t, fields, "formula.variables[0].type")
+	assert.Contains(t, fields, "formula.variables[1].name")
+}
+
+func TestAmountOf(t *testing.T) {
+	t.Parallel()
+
+	for value, want := range map[any]string{
+		int64(12):  "12",
+		12.5:       "12.5",
+		int(7):     "7",
+		float32(2): "2",
+	} {
+		got, ok := AmountOf(value)
+		assert.True(t, ok)
+		assert.Equal(t, want, got)
+	}
+	_, ok := AmountOf("12")
+	assert.False(t, ok, "text is not an amount")
 }

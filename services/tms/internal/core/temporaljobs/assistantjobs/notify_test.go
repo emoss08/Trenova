@@ -79,7 +79,7 @@ func (c *conversations) UpdateThread(
 ) (*conversation.Thread, error) {
 	c.updated = append(c.updated, req)
 	c.actor = actor
-	if req.Keep && !c.thread.Origin.Listed() {
+	if req.Keep && c.thread.Origin.Keepable() {
 		c.thread.Origin = conversation.ThreadOriginDesk
 	}
 
@@ -195,6 +195,25 @@ func TestNotifyUnseenTurn_KeepsAQuickQuestionItLeadsTo(t *testing.T) {
 	assert.Equal(t, in.Payload.Actor.UserID, threads.actor.UserID)
 	assert.True(t, threads.thread.Origin.Listed())
 	require.Len(t, sent.created, 1)
+}
+
+func TestNotifyUnseenTurn_LeavesAPageConversationToItsPage(t *testing.T) {
+	t.Parallel()
+
+	for _, origin := range []conversation.ThreadOrigin{
+		conversation.ThreadOriginImport,
+		conversation.ThreadOriginFormula,
+	} {
+		in := notifyInput(conversation.AssistantTurnStatusCompleted)
+		threads := &conversations{thread: threadFor(in, origin)}
+		sent := &notices{}
+
+		notify(t, notifyActivities(threads, sent), in)
+
+		assert.Empty(t, sent.created, string(origin))
+		assert.Empty(t, threads.updated, string(origin))
+		assert.Equal(t, origin, threads.thread.Origin)
+	}
 }
 
 // A retry of an attempt that already told the person does not tell them

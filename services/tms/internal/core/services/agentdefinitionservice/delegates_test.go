@@ -92,21 +92,28 @@ func TestValidateDelegates_ChecksEachAgentAgainstTheTenant(t *testing.T) {
 		d.TriggerMode = agentdefinition.TriggerEvent
 	})
 	foreign := delegateCandidate(pulid.MustNew("org_"), bu, "Elsewhere", nil)
+	page := delegateCandidate(org, bu, "Shipment import assistant",
+		func(d *agentdefinition.Definition) {
+			d.SystemKey = agentdefinition.SystemKeyImportAssistant
+		})
 
 	s := &Service{
 		l: zap.NewNop(),
 		repo: &tenantDefinitions{agents: []*agentdefinition.Definition{
-			usable, disabled, background, foreign,
+			usable, disabled, background, foreign, page,
 		}},
 	}
 	definition := delegateCandidate(org, bu, "Homepage Widget Builder", nil)
-	definition.DelegateIDs = []pulid.ID{usable.ID, disabled.ID, background.ID, foreign.ID}
+	definition.DelegateIDs = []pulid.ID{
+		usable.ID, disabled.ID, background.ID, foreign.ID, page.ID,
+	}
 
 	messages := delegateMessages(t, s, definition, nil)
 	assert.NotContains(t, messages, "delegateIds[0]")
 	assert.Contains(t, messages["delegateIds[1]"], "Billing Desk is disabled")
 	assert.Contains(t, messages["delegateIds[2]"], "Load Monitor runs on its own")
 	assert.Contains(t, messages["delegateIds[3]"], "does not exist in this organization")
+	assert.Contains(t, messages["delegateIds[4]"], "works on its own page")
 
 	previous := *definition
 	previous.DelegateIDs = []pulid.ID{disabled.ID}

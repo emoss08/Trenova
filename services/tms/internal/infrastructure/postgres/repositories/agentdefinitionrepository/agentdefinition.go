@@ -2,6 +2,7 @@ package agentdefinitionrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -167,7 +168,11 @@ func applyUsability(sq *bun.SelectQuery, u usability) *bun.SelectQuery {
 		sq = sq.Where(cols.Enabled.IsTrue())
 	}
 	if u.chatOnly {
-		sq = sq.Where(cols.TriggerMode.Eq(), agentdefinition.TriggerChat)
+		sq = sq.Where(cols.TriggerMode.Eq(), agentdefinition.TriggerChat).
+			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where(cols.SystemKey.IsNull()).
+					WhereOr(cols.SystemKey.NotIn(), bun.List(agentdefinition.PageAgentKeys()))
+			})
 	}
 	if u.audience == nil {
 		return sq
@@ -364,6 +369,36 @@ func (r *repository) Create(
 	}
 
 	return entity, nil
+}
+
+func (r *repository) CreateSystem(
+	ctx context.Context,
+	entity *agentdefinition.Definition,
+) (bool, error) {
+	if !entity.IsSystem() {
+		return false, errors.New("only a system agent is created on first use")
+	}
+
+	res, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		On("CONFLICT DO NOTHING").
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to create system agent definition",
+			zap.String("systemKey", entity.SystemKey),
+			zap.Error(err),
+		)
+
+		return false, fmt.Errorf("create system agent %s: %w", entity.SystemKey, err)
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("count the system agent created: %w", err)
+	}
+
+	return affected > 0, nil
 }
 
 func (r *repository) Update(

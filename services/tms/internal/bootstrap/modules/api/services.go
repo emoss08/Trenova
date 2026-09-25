@@ -305,6 +305,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	accessorialchargeservice.New,
 	agentcontrolservice.New,
 	agentdefinitionservice.New,
+	func(s services.AgentDefinitionService) services.SystemAgentProvisioner { return s },
 	agentaccessservice.New,
 	agentsafetyservice.New,
 	aiproviderservice.NewProber,

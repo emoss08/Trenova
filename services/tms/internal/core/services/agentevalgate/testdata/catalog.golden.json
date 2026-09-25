@@ -1,6 +1,88 @@
 {
   "tools": [
     {
+      "name": "accept_all_confident",
+      "description": "Accept every field the page read from the document with high confidence, at once. Use it when the person asks to take what was read as it is; fields that need review, conflict or are missing are left for you to settle one at a time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "searchTerms": [
+        "accept all",
+        "high confidence",
+        "bulk accept",
+        "import"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "document",
+        "operation": "read",
+        "scope": "self",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "present",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Hands a change to the shipment the person is building on their own page; nothing is saved and nothing is sent."
+      }
+    },
+    {
+      "name": "accept_field",
+      "description": "Accept one field read from the document as correct on the import page. Use it once the person agrees with the value the page draft shows, or when its confidence is high and nothing on the page disagrees.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fieldKey": {
+            "description": "The field's key exactly as the page draft lists it, such as rate or bol.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fieldKey"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "accept",
+        "confirm",
+        "extracted",
+        "correct",
+        "approve value",
+        "import"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "document",
+        "operation": "read",
+        "scope": "self",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "present",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Hands a change to the shipment the person is building on their own page; nothing is saved and nothing is sent."
+      }
+    },
+    {
       "name": "acknowledge_carrier_intel_event",
       "description": "Mark a carrier finding as seen when it does not bear on whether the carrier can be given freight. Use it for a new address, a changed contact, a score that moved within its band. A finding that does bear on eligibility is not acknowledged: it is acted on, then closed with resolve_carrier_intel_event.",
       "parameters": {
@@ -793,7 +875,8 @@
               "hold reasons",
               "general ledger accounts",
               "fiscal periods",
-              "orders"
+              "orders",
+              "formula templates"
             ],
             "type": "string"
           }
@@ -990,6 +1073,87 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Saves a report dashboard colleagues can open; nothing leaves the organization."
+      }
+    },
+    {
+      "name": "create_location",
+      "description": "Create a location record for a pickup or delivery address that has none, such as a facility read from a document. Look for it with list_locations first; a person approves the new location before it is saved, and the code is assigned.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "addressLine1": {
+            "description": "The street address.",
+            "type": "string"
+          },
+          "addressLine2": {
+            "description": "Optional: suite, building or dock.",
+            "type": "string"
+          },
+          "city": {
+            "description": "The city.",
+            "type": "string"
+          },
+          "locationCategoryId": {
+            "description": "What kind of place it is, from list_location_categories: a warehouse, a customer site, a terminal.",
+            "type": "string"
+          },
+          "name": {
+            "description": "The facility or company name at the address.",
+            "type": "string"
+          },
+          "postalCode": {
+            "description": "The ZIP code.",
+            "type": "string"
+          },
+          "state": {
+            "description": "The two-letter US state abbreviation, such as TX.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "addressLine1",
+          "city",
+          "state",
+          "postalCode",
+          "locationCategoryId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "new location",
+        "add location",
+        "facility",
+        "address",
+        "warehouse",
+        "site",
+        "consignee"
+      ],
+      "prerequisites": [
+        "list_locations",
+        "list_location_categories"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "location",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "location",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "A new location is where colleagues will book freight, and its address is usually read from a document someone outside sent, so a person approves it first."
       }
     },
     {
@@ -1661,6 +1825,50 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Hands a task to another agent of the organization, which runs as the same person under its own tiers."
+      }
+    },
+    {
+      "name": "describe_formula_schema",
+      "description": "Describe what a rating formula may use: the shipment variables, the functions and the rate tables it can look up. Read it before writing or explaining a formula, so every name you use is one the engine knows.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "schemaId": {
+            "description": "The formula schema, as the page draft names it; shipment when it names none.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "formula",
+        "variables",
+        "functions",
+        "expression",
+        "rate table",
+        "lookup",
+        "rating"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "formula_template",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
       }
     },
     {
@@ -3943,7 +4151,7 @@
     },
     {
       "name": "list_agent_runs",
-      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is still running. get_agent_run reads one in full. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (BillingQueueItem|ShipmentMove|AssistantThread|Shipment|Document|Organization|Insight|BankReceipt|DetentionOccurrence|Worker|CarrierIntelEvent|EDIInboundFile|InboundMessage|Report|Dashboard|AccountingConnection): the kind of record the run worked on; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
+      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is still running. get_agent_run reads one in full. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (BillingQueueItem|ShipmentMove|AssistantThread|Shipment|Document|Organization|Insight|BankReceipt|DetentionOccurrence|Worker|CarrierIntelEvent|EDIInboundFile|InboundMessage|Report|Dashboard|AccountingConnection|FormulaTemplate): the kind of record the run worked on; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -5619,6 +5827,124 @@
       "policy": {
         "kind": "query",
         "resource": "fleet_code",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_formula_templates",
+      "description": "List formula templates — the rating methods a shipment is priced with. Use it to turn a rating method a person named into the id a shipment needs, or to find a formula to read. Filters: type (FreightCharge|AccessorialCharge); status (Active|Inactive|Draft|InReview): only Active ones price shipments; text: name; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "name",
+                    "type",
+                    "status",
+                    "createdAt"
+                  ],
+                  "type": "string"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "name",
+              "createdAt"
+            ],
+            "type": "string"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "formula_template",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -8921,6 +9247,130 @@
       }
     },
     {
+      "name": "propose_formula",
+      "description": "Put a formula in front of the person for their editor, with its variables, a plain explanation and two or three sample loads priced by the engine. Nothing is saved: the person inserts it, tests it and saves it themselves.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "explanation": {
+            "description": "What the formula charges, in plain words, term by term.",
+            "type": "string"
+          },
+          "expression": {
+            "description": "The expression, built only from describe_formula_schema's names.",
+            "type": "string"
+          },
+          "scenarios": {
+            "description": "Loads to price, each named and described in a sentence, with the variable values that make it that load.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "description": {
+                  "description": "One sentence.",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "A short name.",
+                  "type": "string"
+                },
+                "variables": {
+                  "description": "Variable values for this load, by variable name.",
+                  "type": "object"
+                }
+              },
+              "required": [
+                "name",
+                "variables"
+              ],
+              "type": "object"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "schemaId": {
+            "description": "The formula schema, as the page draft names it; shipment when it names none.",
+            "type": "string"
+          },
+          "variables": {
+            "description": "The formula's own variables: any input that is not a shipment variable, with a sensible default.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "defaultValue": {
+                  "description": "The value it takes unless a load sets one.",
+                  "type": [
+                    "number",
+                    "string",
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "description": {
+                  "description": "What it is for, for a billing clerk.",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "An identifier.",
+                  "type": "string"
+                },
+                "type": {
+                  "description": "What the variable holds.",
+                  "enum": [
+                    "Number",
+                    "String",
+                    "Boolean"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "type"
+              ],
+              "type": "object"
+            },
+            "maxItems": 50,
+            "type": "array"
+          }
+        },
+        "required": [
+          "expression",
+          "explanation"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "write formula",
+        "suggest formula",
+        "build formula",
+        "draft",
+        "rating method",
+        "charge",
+        "expression"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "formula_template",
+        "operation": "read",
+        "scope": "self",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "present",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Hands a formula to the person's own editor for them to insert, test and save; nothing is saved and nothing is sent."
+      }
+    },
+    {
       "name": "publish_artifact",
       "policy": {
         "kind": "runtime",
@@ -9108,7 +9558,8 @@
               "InboundMessage",
               "Report",
               "Dashboard",
-              "AccountingConnection"
+              "AccountingConnection",
+              "FormulaTemplate"
             ],
             "type": "string"
           }
@@ -9945,7 +10396,8 @@
               "hold reasons",
               "general ledger accounts",
               "fiscal periods",
-              "orders"
+              "orders",
+              "formula templates"
             ],
             "type": "string"
           },
@@ -10322,6 +10774,224 @@
       }
     },
     {
+      "name": "set_field_value",
+      "description": "Set or correct the value of a field on the import page, such as the BOL, the weight, the pieces or the freight rate. Use it with the value the person gave you or one the document plainly shows; never make a value up.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "fieldKey": {
+            "description": "The field's key exactly as the page draft lists it, such as rate or bol.",
+            "type": "string"
+          },
+          "value": {
+            "description": "The value as the person would type it.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fieldKey",
+          "value"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "set",
+        "change",
+        "correct",
+        "bol",
+        "weight",
+        "pieces",
+        "rate",
+        "import"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "document",
+        "operation": "read",
+        "scope": "self",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "present",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Hands a change to the shipment the person is building on their own page; nothing is saved and nothing is sent."
+      }
+    },
+    {
+      "name": "set_required_field",
+      "description": "Set the customer, service type, shipment type or rating method on the import page, by record id. Find the record first with list_customers, list_service_types, list_shipment_types or list_formula_templates, and set it once the person agrees; the page shows the record's own name.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "field": {
+            "description": "Which of the four the record is for.",
+            "enum": [
+              "customerId",
+              "serviceTypeId",
+              "shipmentTypeId",
+              "formulaTemplateId"
+            ],
+            "type": "string"
+          },
+          "recordId": {
+            "description": "The record's id, from list_customers, list_service_types, list_shipment_types or list_formula_templates to match the field.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "recordId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "customer",
+        "service type",
+        "shipment type",
+        "rating method",
+        "formula template",
+        "required",
+        "import"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "document",
+        "operation": "read",
+        "scope": "self",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "present",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Hands a change to the shipment the person is building on their own page; nothing is saved and nothing is sent."
+      }
+    },
+    {
+      "name": "set_stop_location",
+      "description": "Match a stop on the import page to a location record. Find the location with list_locations by name, city or address; when none matches, create_location proposes a new one for the person to approve, and you set it once it exists.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "locationId": {
+            "description": "The location's id, from list_locations or create_location.",
+            "type": "string"
+          },
+          "stopIndex": {
+            "description": "The stop's number as the page draft lists it, counting from 0.",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "stopIndex",
+          "locationId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "stop",
+        "location",
+        "match",
+        "pickup",
+        "delivery",
+        "facility",
+        "import"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "document",
+        "operation": "read",
+        "scope": "self",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "present",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Hands a change to the shipment the person is building on their own page; nothing is saved and nothing is sent."
+      }
+    },
+    {
+      "name": "set_stop_schedule",
+      "description": "Set when a stop on the import page is scheduled: the start of its window and, optionally, the end. A time range the document shows without a date is not a schedule; ask the person for the date first.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "stopIndex": {
+            "description": "The stop's number as the page draft lists it, counting from 0.",
+            "type": "integer"
+          },
+          "windowEnd": {
+            "description": "Optional: when the window closes, in the same form.",
+            "type": "string"
+          },
+          "windowStart": {
+            "description": "The date and time the window opens, as YYYY-MM-DDTHH:MM in the organization's time zone, or with an offset.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "stopIndex",
+          "windowStart"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "schedule",
+        "window",
+        "appointment",
+        "pickup time",
+        "delivery date",
+        "import"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "document",
+        "operation": "read",
+        "scope": "self",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "present",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Hands a change to the shipment the person is building on their own page; nothing is saved and nothing is sent."
+      }
+    },
+    {
       "name": "shop_carriers",
       "description": "Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank. Leave the carrier list empty to use the shipment's routing guide. Read this before tendering; nothing is tendered or written by it.",
       "parameters": {
@@ -10516,6 +11186,93 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Offers the load to carriers outside the organization."
+      }
+    },
+    {
+      "name": "test_formula_expression",
+      "description": "Price a formula expression with Trenova's formula engine, for sample loads or against a saved shipment. Use it to check a formula runs and to learn what it charges; say an amount only when this or propose_formula gave it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "expression": {
+            "description": "The expression to price, such as the one in the page draft.",
+            "type": "string"
+          },
+          "scenarios": {
+            "description": "Loads to price, each named and described in a sentence, with the variable values that make it that load.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "description": {
+                  "description": "One sentence.",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "A short name.",
+                  "type": "string"
+                },
+                "variables": {
+                  "description": "Variable values for this load, by variable name.",
+                  "type": "object"
+                }
+              },
+              "required": [
+                "name",
+                "variables"
+              ],
+              "type": "object"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "schemaId": {
+            "description": "The formula schema, as the page draft names it; shipment when it names none.",
+            "type": "string"
+          },
+          "shipmentId": {
+            "description": "Optional: price a saved shipment instead of sample loads, from list_shipments or search_shipments.",
+            "type": "string"
+          },
+          "variables": {
+            "description": "Values for the formula's own variables, by name, used by every load unless a load sets its own.",
+            "type": "object"
+          }
+        },
+        "required": [
+          "expression"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "test",
+        "price",
+        "evaluate",
+        "try",
+        "formula",
+        "expression",
+        "scenario",
+        "charge"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "formula_template",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Prices an expression with the formula engine, for sample values or a shipment the caller may read; nothing is saved and nothing is sent."
       }
     },
     {

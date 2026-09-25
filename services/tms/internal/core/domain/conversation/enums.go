@@ -87,12 +87,27 @@ const (
 	ThreadOriginAsk        = ThreadOrigin("Ask")
 	ThreadOriginWatchtower = ThreadOrigin("Watchtower")
 	ThreadOriginBriefing   = ThreadOrigin("Briefing")
+	ThreadOriginImport     = ThreadOrigin("Import")
+	ThreadOriginFormula    = ThreadOrigin("Formula")
 )
+
+func AllThreadOrigins() []ThreadOrigin {
+	return []ThreadOrigin{
+		ThreadOriginPanel,
+		ThreadOriginDesk,
+		ThreadOriginAsk,
+		ThreadOriginWatchtower,
+		ThreadOriginBriefing,
+		ThreadOriginImport,
+		ThreadOriginFormula,
+	}
+}
 
 func (o ThreadOrigin) IsValid() bool {
 	switch o {
 	case ThreadOriginPanel, ThreadOriginDesk, ThreadOriginAsk,
-		ThreadOriginWatchtower, ThreadOriginBriefing:
+		ThreadOriginWatchtower, ThreadOriginBriefing,
+		ThreadOriginImport, ThreadOriginFormula:
 		return true
 	default:
 		return false
@@ -102,5 +117,29 @@ func (o ThreadOrigin) IsValid() bool {
 // Listed reports whether the Desk's thread rail shows a conversation of
 // this origin. A quick question is not listed until it is kept.
 func (o ThreadOrigin) Listed() bool {
-	return o != ThreadOriginAsk
+	return o != ThreadOriginAsk && !o.PageBound()
+}
+
+func (o ThreadOrigin) Keepable() bool {
+	return o == ThreadOriginAsk
+}
+
+func (o ThreadOrigin) PageBound() bool {
+	return o == ThreadOriginImport || o == ThreadOriginFormula
+}
+
+func PageBoundOrigins() []ThreadOrigin {
+	return []ThreadOrigin{ThreadOriginImport, ThreadOriginFormula}
+}
+
+func UnlistedOrigins() []ThreadOrigin {
+	all := AllThreadOrigins()
+	out := make([]ThreadOrigin, 0, len(all))
+	for _, origin := range all {
+		if !origin.Listed() {
+			out = append(out, origin)
+		}
+	}
+
+	return out
 }

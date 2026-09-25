@@ -71,9 +71,10 @@ type AppendTurnRequest struct {
 // of one origin whose last activity is older than Before, at most Limit at a
 // time so a sweep never holds a long transaction.
 type DeleteStaleThreadsRequest struct {
-	Origin conversation.ThreadOrigin
-	Before int64
-	Limit  int
+	Origin          conversation.ThreadOrigin
+	Before          int64
+	Limit           int
+	SubjectlessOnly bool
 }
 
 // MarkThreadTaintedRequest keeps the outside content a conversation has

@@ -4,14 +4,16 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -29,27 +31,27 @@ type Params struct {
 	fx.In
 
 	Service              *formulatemplateservice.Service
-	AssistantService     *formulaassistantservice.Service
+	PageAssistant        services.PageAssistant `optional:"true"`
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 	PermissionEngine     services.PermissionEngine
 }
 
 type Handler struct {
-	service    *formulatemplateservice.Service
-	assistant  *formulaassistantservice.Service
-	eh         *helpers.ErrorHandler
-	pm         *middleware.PermissionMiddleware
-	permEngine services.PermissionEngine
+	service       *formulatemplateservice.Service
+	pageAssistant services.PageAssistant
+	eh            *helpers.ErrorHandler
+	pm            *middleware.PermissionMiddleware
+	permEngine    services.PermissionEngine
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service:    p.Service,
-		assistant:  p.AssistantService,
-		eh:         p.ErrorHandler,
-		pm:         p.PermissionMiddleware,
-		permEngine: p.PermissionEngine,
+		service:       p.Service,
+		pageAssistant: p.PageAssistant,
+		eh:            p.ErrorHandler,
+		pm:            p.PermissionMiddleware,
+		permEngine:    p.PermissionEngine,
 	}
 }
 
@@ -77,8 +79,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("/import", requireCreate, h.importTemplates)
 	api.GET("/standards", requireRead, h.listStandards)
 	api.POST("/install-standards", requireCreate, h.installStandards)
-	api.POST("/ai/generate", requireAuthoring, h.aiGenerate)
-	api.POST("/ai/explain", requireRead, h.aiExplain)
+	api.POST(
+		"/ai/thread/",
+		requireRead,
+		h.pm.RequirePermission(permission.ResourceAssistant.String(), permission.OpCreate),
+		h.openAssistantThread,
+	)
 
 	idGroup := api.Group("/:templateID")
 	idGroup.GET("/", requireRead, h.get)
@@ -837,78 +843,94 @@ func (h *Handler) installStandards(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// @Summary Generate a formula expression from a natural-language description
-// @ID generateFormulaExpression
-// @Tags Formula Templates
-// @Accept json
-// @Produce json
-// @Param request body formulaassistantservice.GenerateFormulaRequest true "Generation request"
-// @Success 200 {object} formulaassistantservice.GenerateFormulaResponse
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 422 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /formula-templates/ai/generate [post]
-func (h *Handler) aiGenerate(c *gin.Context) {
-	authCtx := authctx.GetAuthContext(c)
-
-	var req formulaassistantservice.GenerateFormulaRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	req.TenantInfo = pagination.TenantInfo{
-		OrgID:  authCtx.OrganizationID,
-		BuID:   authCtx.BusinessUnitID,
-		UserID: authCtx.UserID,
-	}
-
-	result, err := h.assistant.GenerateFormula(c.Request.Context(), &req)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
+type openAssistantThreadRequest struct {
+	TemplateID string `json:"templateId"`
 }
 
-// @Summary Explain a formula expression in plain English
-// @ID explainFormulaExpression
+// @Summary Open the formula assistant's conversation
+// @Description Opens, or returns, the caller's conversation with the formula assistant about one formula template, or a new one for a template not yet saved. Turns are then asked on it through the assistant's turn routes, carrying the editor's draft. Requires formula template read, assistant create, and access to the formula assistant.
+// @ID openFormulaAssistantThread
 // @Tags Formula Templates
 // @Accept json
 // @Produce json
-// @Param request body formulaassistantservice.ExplainFormulaRequest true "Explanation request"
-// @Success 200 {object} formulaassistantservice.ExplainFormulaResponse
+// @Param request body openAssistantThreadRequest true "The template the conversation is about, when it is saved"
+// @Success 200 {object} services.PageThread
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
 // @Failure 422 {object} helpers.ProblemDetail
 // @Failure 500 {object} helpers.ProblemDetail
 // @Security BearerAuth
-// @Router /formula-templates/ai/explain [post]
-func (h *Handler) aiExplain(c *gin.Context) {
+// @Router /formula-templates/ai/thread/ [post]
+func (h *Handler) openAssistantThread(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	var req formulaassistantservice.ExplainFormulaRequest
+	var req openAssistantThreadRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.eh.HandleError(c, err)
+		h.eh.HandleError(c, errortypes.NewValidationError(
+			"body", errortypes.ErrInvalid, "Invalid request body",
+		))
 		return
 	}
 
-	req.TenantInfo = pagination.TenantInfo{
+	templateID := pulid.Nil
+	if raw := strings.TrimSpace(req.TemplateID); raw != "" {
+		parsed, err := pulid.Parse(raw)
+		if err != nil {
+			h.eh.HandleError(c, errortypes.NewValidationError(
+				"templateId", errortypes.ErrInvalid, "Invalid formula template ID",
+			))
+			return
+		}
+		templateID = parsed
+	}
+
+	if h.pageAssistant == nil {
+		h.eh.HandleError(c, errortypes.NewBusinessError(
+			"The formula assistant is not available on this server",
+		))
+		return
+	}
+
+	tenant := pagination.TenantInfo{
 		OrgID:  authCtx.OrganizationID,
 		BuID:   authCtx.BusinessUnitID,
 		UserID: authCtx.UserID,
 	}
+	if templateID.IsNotNil() {
+		if _, err := h.service.GetByID(c.Request.Context(), repositories.GetFormulaTemplateByIDRequest{
+			TemplateID: templateID,
+			TenantInfo: tenant,
+		}); err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+	}
 
-	result, err := h.assistant.ExplainFormula(c.Request.Context(), &req)
+	actor := services.RequestActor{
+		PrincipalType:  services.PrincipalType(authCtx.PrincipalType),
+		PrincipalID:    authCtx.PrincipalID,
+		UserID:         authCtx.UserID,
+		APIKeyID:       authCtx.APIKeyID,
+		BusinessUnitID: authCtx.BusinessUnitID,
+		OrganizationID: authCtx.OrganizationID,
+	}
+	opened, err := h.pageAssistant.OpenPageThread(
+		c.Request.Context(),
+		&services.OpenPageThreadRequest{
+			TenantInfo:  tenant,
+			Origin:      conversation.ThreadOriginFormula,
+			SubjectType: agent.SubjectFormulaTemplate,
+			SubjectID:   templateID,
+		},
+		&actor,
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, opened)
 }
 
 type testExpressionRequest struct {

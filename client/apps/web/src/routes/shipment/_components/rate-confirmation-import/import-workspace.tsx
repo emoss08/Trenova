@@ -3,7 +3,7 @@ import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { SuspenseLoader } from "@trenova/shared/components/component-loader";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useDocumentUpload } from "@/hooks/use-document-upload";
-import { clearConversation } from "@/lib/import-chat-store";
+import { pageAssistantThreadKey } from "@/components/assistant/page-assistant";
 import { apiService } from "@/services/api";
 import { shipmentCreateSchema } from "@trenova/shared/types/shipment";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +13,7 @@ import { lazy, useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { importAssistantConversationKey } from "./import-draft";
 import { ProcessingPhase } from "./processing-phase";
 import { SuccessPhase } from "./success-phase";
 import type { ReconciliationPhase, RequiredFieldsForm } from "./types";
@@ -108,6 +109,11 @@ export function ImportWorkspace() {
         });
         void queryClient.invalidateQueries({
           queryKey: ["shipment-import-draft", uploadedDocumentId],
+        });
+        // Re-extracting closes the document's conversation on the server; the
+        // next one opened for it starts fresh.
+        queryClient.removeQueries({
+          queryKey: pageAssistantThreadKey(importAssistantConversationKey(uploadedDocumentId)),
         });
       }
       setReconciliationInitialized(false);
@@ -215,10 +221,6 @@ export function ImportWorkspace() {
       void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
       setCreatedShipmentId(shipmentId);
       setAttachErrorMessage(attachError?.message ?? null);
-
-      if (uploadedDocumentId) {
-        void clearConversation(uploadedDocumentId);
-      }
 
       if (attachError) {
         toast.warning(t("Shipment created, but document could not be attached"));
@@ -328,22 +330,6 @@ export function ImportWorkspace() {
     [reconciliation, requiredFieldsForm],
   );
 
-  const handleSetShipmentField = useCallback(
-    (field: string, value: string) => {
-      reconciliation.editField(field, value);
-    },
-    [reconciliation],
-  );
-
-  const handleShipmentCreated = useCallback(
-    (shipmentId: string) => {
-      setCreatedShipmentId(shipmentId);
-      void queryClient.invalidateQueries({ queryKey: ["shipment-list"] });
-      toast.success(t("Shipment created from rate confirmation"));
-    },
-    [queryClient, t],
-  );
-
   const phaseDescription =
     currentPhase === "upload"
       ? t("Upload a rate confirmation to extract shipment details.")
@@ -422,8 +408,6 @@ export function ImportWorkspace() {
             onSetRequiredField={handleSetRequiredField}
             onSetStopLocation={handleSetStopLocation}
             onSetStopSchedule={handleSetStopSchedule}
-            onSetShipmentField={handleSetShipmentField}
-            onShipmentCreated={handleShipmentCreated}
             lastCreateError={lastCreateError}
             onClearCreateError={() => setLastCreateError(null)}
           />

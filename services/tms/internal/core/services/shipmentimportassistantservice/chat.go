@@ -34,24 +34,6 @@ const (
 	EventError         = "error"
 )
 
-// Chat answers one message on a worker and returns the whole reply.
-func (s *Service) Chat(
-	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
-) (*serviceports.ShipmentImportChatResponse, error) {
-	return s.turns.Chat(ctx, req)
-}
-
-// ChatStream answers one message on a worker and hands the reply to emit as
-// it is written.
-func (s *Service) ChatStream(
-	ctx context.Context,
-	req *serviceports.ShipmentImportChatRequest,
-	emit func(serviceports.StreamEvent),
-) error {
-	return s.turns.ChatStream(ctx, req, emit)
-}
-
 // PreparedTurn is everything a turn's model calls need, read once so the
 // workflow driving the turn never reads the database itself.
 type PreparedTurn struct {

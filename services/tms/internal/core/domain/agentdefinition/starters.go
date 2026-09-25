@@ -180,19 +180,19 @@ var templateStarters = map[Template][]starterQuestion{
 	},
 	TemplateImportAssistant: {
 		ask(
-			"Turn a document into a shipment",
-			"Help me turn a customer's shipment document into a new shipment.",
-			"create_shipment", "get_shipment_draft",
+			"Finish this shipment",
+			"Help me finish this shipment from the document: what is still missing?",
+			"set_required_field", "set_stop_location",
 		),
 		ask(
-			"Quote a shipment",
-			"Quote a shipment for me before I enter it.",
-			"quote_shipment",
+			"Match the stops to locations",
+			"Match each stop on the document to one of our locations.",
+			"list_locations", "set_stop_location",
 		),
 		ask(
-			"Which shipment types can I use?",
-			"Which shipment types and service types can I choose from?",
-			"list_shipment_types", "list_service_types",
+			"Which rating method should I use?",
+			"Which rating methods can this shipment be priced with?",
+			"list_formula_templates",
 		),
 	},
 	TemplateLoadMonitor: {
@@ -410,24 +410,24 @@ var templateStarters = map[Template][]starterQuestion{
 	},
 	TemplateFormulaAssistant: {
 		ask(
+			"Write a formula",
+			"Write a formula that charges per mile with a fuel surcharge and a minimum charge.",
+			"propose_formula", "describe_formula_schema",
+		),
+		ask(
+			"Explain this formula",
+			"Explain what this formula charges, term by term.",
+			"describe_formula_schema",
+		),
+		ask(
+			"What would this charge?",
+			"What would this formula charge for a 500 mile load?",
+			"test_formula_expression",
+		),
+		ask(
 			"How was this rate worked out?",
 			"Explain how this shipment's rate was worked out, charge by charge.",
 			"explain_rate",
-		),
-		ask(
-			"Which accessorials can I charge?",
-			"List the accessorial charges we have set up and how each one is calculated.",
-			"list_accessorial_charges",
-		),
-		ask(
-			"What is this week's fuel surcharge?",
-			"What is this week's fuel surcharge for each of our fuel programs?",
-			"get_fuel_surcharge_rates",
-		),
-		ask(
-			"Which rate agreements are active?",
-			"Which rate agreements are active, and who does each one price for?",
-			"list_rate_agreements",
 		),
 	},
 }

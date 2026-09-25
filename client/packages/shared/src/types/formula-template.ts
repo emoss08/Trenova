@@ -183,7 +183,8 @@ export const VERSION_TAG_OPTIONS: {
   {
     value: "Stable",
     label: "Stable",
-    color: "bg-success-subtle text-success-foreground dark:bg-success-subtle/40 dark:text-success-foreground",
+    color:
+      "bg-success-subtle text-success-foreground dark:bg-success-subtle/40 dark:text-success-foreground",
     description: "Tested and ready for use",
   },
   {
@@ -201,13 +202,15 @@ export const VERSION_TAG_OPTIONS: {
   {
     value: "Testing",
     label: "Testing",
-    color: "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle/40 dark:text-warning-foreground",
+    color:
+      "bg-warning-subtle text-warning-foreground dark:bg-warning-subtle/40 dark:text-warning-foreground",
     description: "Under testing",
   },
   {
     value: "Deprecated",
     label: "Deprecated",
-    color: "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle/40 dark:text-danger-foreground",
+    color:
+      "bg-danger-subtle text-danger-foreground dark:bg-danger-subtle/40 dark:text-danger-foreground",
     description: "No longer recommended",
   },
 ];
@@ -1012,48 +1015,3 @@ export const installStandardsResponseSchema = z.object({
     .transform((v) => v ?? []),
 });
 export type InstallStandardsResponse = z.output<typeof installStandardsResponseSchema>;
-
-export const generateFormulaRequestSchema = z.object({
-  instruction: z.string().min(1, "An instruction is required").max(4000),
-  schemaId: z.string().optional(),
-  templateType: formulaTemplateTypeSchema.optional(),
-});
-export type GenerateFormulaRequest = z.infer<typeof generateFormulaRequestSchema>;
-
-export const proposedScenarioSchema = z.object({
-  name: z.string(),
-  description: z
-    .string()
-    .nullish()
-    .transform((v) => v ?? ""),
-  variables: z
-    .record(z.string(), z.any())
-    .nullish()
-    .transform((v) => v ?? {}),
-  expectedAmount: z.number().nullish(),
-  valid: z.boolean(),
-  error: z.string().nullish(),
-});
-export type ProposedScenario = z.output<typeof proposedScenarioSchema>;
-
-export const generateFormulaResponseSchema = z.object({
-  expression: z.string(),
-  variableDefinitions: z
-    .array(variableDefinitionSchema)
-    .nullish()
-    .transform((v) => v ?? []),
-  explanation: z.string(),
-  validation: testExpressionResponseSchema.nullish(),
-  scenarios: z
-    .array(proposedScenarioSchema)
-    .nullish()
-    .transform((v) => v ?? []),
-  modelIdentifier: z.string().optional(),
-});
-export type GenerateFormulaResponse = z.output<typeof generateFormulaResponseSchema>;
-
-export const explainFormulaResponseSchema = z.object({
-  explanation: z.string(),
-  modelIdentifier: z.string().optional(),
-});
-export type ExplainFormulaResponse = z.output<typeof explainFormulaResponseSchema>;

@@ -23,11 +23,16 @@ import {
   type FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror";
-import { ChevronDownIcon, CodeIcon, FileCode2, ShieldCheckIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  CodeIcon,
+  FileCode2,
+  MessageCircleQuestionIcon,
+  ShieldCheckIcon,
+} from "lucide-react";
 import { useEffect, useState, type Ref } from "react";
 import { Controller, useFormContext, useFormState, useWatch } from "react-hook-form";
 import { BreakdownDefinitionEditor } from "../breakdown-definition-editor";
-import { AiExplainPanel } from "./ai/ai-explain-panel";
 import { StarterTemplatePicker } from "./starter-template-picker";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 
@@ -55,14 +60,18 @@ type StudioEditorPaneProps = {
   mode: "create" | "edit";
   known: KnownIdentifiers;
   editorRef: Ref<ReactCodeMirrorRef>;
-  onOpenAiGenerate: () => void;
+  /** Opens the formula assistant beside the editor. */
+  onOpenAssistant: () => void;
+  /** Opens the formula assistant and asks it to explain the expression on screen. */
+  onExplain: () => void;
 };
 
 export function StudioEditorPane({
   mode,
   known,
   editorRef,
-  onOpenAiGenerate,
+  onOpenAssistant,
+  onExplain,
 }: StudioEditorPaneProps) {
   const t = useT();
 
@@ -80,7 +89,6 @@ export function StudioEditorPane({
   }, [detailErrorCount]);
 
   const expression = useWatch({ control, name: "expression" });
-  const schemaId = useWatch({ control, name: "schemaId" });
 
   return (
     <ScrollArea className="h-full">
@@ -165,11 +173,11 @@ export function StudioEditorPane({
               type="button"
               variant="outline"
               size="xs"
-              onClick={onOpenAiGenerate}
+              onClick={onOpenAssistant}
               className="gap-1.5"
             >
               <AssistMark className="size-3" />
-              {t("Generate with AI")}
+              {t("Formula assistant")}
             </Button>
           </div>
         </div>
@@ -192,7 +200,19 @@ export function StudioEditorPane({
             {t("Ctrl+Space for autocomplete. Click a variable in the reference to insert it.")}
           </p>
         </div>
-        <AiExplainPanel expression={expression ?? ""} schemaId={schemaId || "shipment"} />
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            size="xs"
+            onClick={onExplain}
+            disabled={!expression?.trim()}
+            className="gap-1.5"
+          >
+            <MessageCircleQuestionIcon className="size-3" />
+            {t("Explain formula")}
+          </Button>
+        </div>
 
         <Separator />
         <SectionHeader
