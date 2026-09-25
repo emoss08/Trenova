@@ -90,7 +90,24 @@ type ModelReply struct {
 	Looped     bool                               `json:"looped"`
 	// InReasoning says the loop was in the model's thinking rather than its
 	// reply.
-	InReasoning bool `json:"inReasoning,omitempty"`
+	InReasoning bool                   `json:"inReasoning,omitempty"`
+	Usage       *serviceports.RunUsage `json:"usage,omitempty"`
+}
+
+func (r ModelReply) usage() *serviceports.RunUsage {
+	if r.Usage != nil {
+		return r.Usage
+	}
+	if r.Completion == nil {
+		return nil
+	}
+
+	return &serviceports.RunUsage{
+		ModelCalls:   1,
+		InputTokens:  int64(r.Completion.InputTokens),
+		OutputTokens: int64(r.Completion.OutputTokens),
+		CostUSD:      r.Completion.CostUSD,
+	}
 }
 
 // DispatchCall is one tool call the loop has decided to run.
@@ -501,6 +518,34 @@ func (s *Service) StreamCompletion(
 	req *serviceports.ChatCompletionRequest,
 	emit serviceports.AssistantStreamEmitter,
 ) (ModelReply, error) {
+	ctx, tally := aitrace.WithCompletionTally(ctx)
+	reply, err := s.streamCompletion(ctx, req, emit)
+	reply.Usage = replyUsage(tally, reply)
+
+	return reply, err
+}
+
+func replyUsage(tally *aitrace.CompletionTally, reply ModelReply) *serviceports.RunUsage {
+	totals := tally.Totals()
+	if totals.Attempts == 0 {
+		return reply.usage()
+	}
+
+	return &serviceports.RunUsage{
+		ModelCalls:       totals.Attempts,
+		InputTokens:      totals.InputTokens,
+		OutputTokens:     totals.OutputTokens,
+		CacheReadTokens:  totals.CacheReadTokens,
+		CacheWriteTokens: totals.CacheWriteTokens,
+		CostUSD:          totals.CostUSD,
+	}
+}
+
+func (s *Service) streamCompletion(
+	ctx context.Context,
+	req *serviceports.ChatCompletionRequest,
+	emit serviceports.AssistantStreamEmitter,
+) (ModelReply, error) {
 	origin := aitrace.CallOriginFrom(ctx)
 	ctx, span := aitrace.StartModelCall(ctx, &aitrace.ModelCallSpec{
 		Anchor:          aitrace.ForAttribution(&req.Attribution),
@@ -509,8 +554,7 @@ func (s *Service) StreamCompletion(
 		Stream:          origin.Stream,
 	})
 	defer span.End()
-	ctx, tally := aitrace.WithCompletionTally(ctx)
-	defer tally.Record(span)
+	defer aitrace.TallyFrom(ctx).Record(span)
 
 	streamCtx, cancelStream := context.WithCancel(ctx)
 	defer cancelStream()

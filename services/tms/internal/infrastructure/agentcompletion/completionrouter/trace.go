@@ -67,11 +67,15 @@ func (s *Service) settleAttempt(ctx context.Context, span trace.Span, attempt us
 	}
 
 	aitrace.TallyFrom(ctx).Attempt(aitrace.AttemptTally{
-		ProviderID:   provider.ID.String(),
-		ProviderName: aitrace.ProviderName(provider.Kind),
-		Model:        usage.ResponseModel,
-		Failover:     attempt.failover,
-		CostUSD:      cost,
+		ProviderID:       provider.ID.String(),
+		ProviderName:     aitrace.ProviderName(provider.Kind),
+		Model:            usage.ResponseModel,
+		Failover:         attempt.failover,
+		CostUSD:          cost,
+		InputTokens:      usage.InputTokens,
+		OutputTokens:     usage.OutputTokens,
+		CacheReadTokens:  usage.CacheReadTokens,
+		CacheWriteTokens: usage.CacheWriteTokens,
 	})
 
 	s.genAI.RecordCall(ctx, &metrics.GenAICall{

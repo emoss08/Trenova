@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace/aitracetest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
@@ -310,4 +311,51 @@ func TestStreamCompletion_OpensTheCompletionSpanUnderTheTurn(t *testing.T) {
 	} {
 		assert.Contains(t, span.Attributes, want)
 	}
+}
+
+func TestRun_TotalsWhatEveryModelCallUsed(t *testing.T) {
+	t.Parallel()
+
+	first := decimal.RequireFromString("0.010")
+	second := decimal.RequireFromString("0.025")
+	read := toolTurn("get_shipment", map[string]any{"proNumber": "12345"})
+	read.InputTokens, read.OutputTokens, read.CostUSD = 1000, 40, &first
+	answer := textTurn("It is in Memphis.")
+	answer.InputTokens, answer.OutputTokens, answer.CostUSD = 1200, 12, &second
+
+	rt := newRuntime(&scriptedCompletion{Turns: []*serviceports.ChatCompletionResult{read, answer}},
+		&stubQueryRegistry{Tools: []serviceports.AgentQueryTool{
+			queryTool("get_shipment", map[string]any{"city": "Memphis"}, nil),
+		}}, &stubActionRegistry{}, nil)
+
+	result, err := rt.Run(t.Context(), &serviceports.RunRequest{
+		Definition: testDefinition("get_shipment"),
+		Actor:      testActor(),
+		Input:      "Where is 12345?",
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, result.Usage)
+	assert.Equal(t, 2, result.Usage.ModelCalls)
+	assert.Equal(t, int64(2200), result.Usage.InputTokens)
+	assert.Equal(t, int64(52), result.Usage.OutputTokens)
+	require.NotNil(t, result.Usage.CostUSD)
+	assert.True(t, decimal.RequireFromString("0.035").Equal(*result.Usage.CostUSD))
+}
+
+func TestRunUsage_AddsWithoutSharingItsCost(t *testing.T) {
+	t.Parallel()
+
+	cost := decimal.RequireFromString("0.5")
+	var total *serviceports.RunUsage
+	total = total.Add(&serviceports.RunUsage{ModelCalls: 1, InputTokens: 10, CostUSD: &cost})
+	total = total.Add(&serviceports.RunUsage{ModelCalls: 2, OutputTokens: 5})
+	total = total.Add(nil)
+	cost = decimal.RequireFromString("9")
+
+	assert.Equal(t, 3, total.ModelCalls)
+	assert.Equal(t, int64(10), total.InputTokens)
+	assert.Equal(t, int64(5), total.OutputTokens)
+	assert.True(t, decimal.RequireFromString("0.5").Equal(*total.CostUSD))
+	assert.Nil(t, (*serviceports.RunUsage)(nil).Clone())
 }

@@ -23,14 +23,31 @@ type CompletionTally struct {
 	model            string
 	costUSD          decimal.Decimal
 	priced           bool
+	inputTokens      int64
+	outputTokens     int64
+	cacheReadTokens  int64
+	cacheWriteTokens int64
 }
 
 type AttemptTally struct {
-	ProviderID   string
-	ProviderName string
-	Model        string
-	Failover     bool
-	CostUSD      *decimal.Decimal
+	ProviderID       string
+	ProviderName     string
+	Model            string
+	Failover         bool
+	CostUSD          *decimal.Decimal
+	InputTokens      int64
+	OutputTokens     int64
+	CacheReadTokens  int64
+	CacheWriteTokens int64
+}
+
+type TallyTotals struct {
+	Attempts         int
+	InputTokens      int64
+	OutputTokens     int64
+	CacheReadTokens  int64
+	CacheWriteTokens int64
+	CostUSD          *decimal.Decimal
 }
 
 func WithCompletionTally(ctx context.Context) (context.Context, *CompletionTally) {
@@ -68,6 +85,33 @@ func (t *CompletionTally) Attempt(a AttemptTally) {
 		t.costUSD = t.costUSD.Add(*a.CostUSD)
 		t.priced = true
 	}
+	t.inputTokens += a.InputTokens
+	t.outputTokens += a.OutputTokens
+	t.cacheReadTokens += a.CacheReadTokens
+	t.cacheWriteTokens += a.CacheWriteTokens
+}
+
+func (t *CompletionTally) Totals() TallyTotals {
+	if t == nil {
+		return TallyTotals{}
+	}
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	totals := TallyTotals{
+		Attempts:         t.attempts,
+		InputTokens:      t.inputTokens,
+		OutputTokens:     t.outputTokens,
+		CacheReadTokens:  t.cacheReadTokens,
+		CacheWriteTokens: t.cacheWriteTokens,
+	}
+	if t.priced {
+		cost := t.costUSD
+		totals.CostUSD = &cost
+	}
+
+	return totals
 }
 
 func (t *CompletionTally) Restarted() {

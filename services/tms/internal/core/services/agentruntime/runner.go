@@ -114,6 +114,7 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*serviceports.RunResult, error
 	asked := false
 	for result.ToolCallsUsed < budget {
 		reply, err := fx.Complete(t, t.completionRequest())
+		result.Usage = result.Usage.Add(reply.usage())
 		completion := reply.Completion
 		if err == nil && reply.Looped {
 			s.logger.Warn("agent reply fell into a loop; discarding it",
@@ -407,6 +408,7 @@ func (s *Service) finalAnswer(
 	})
 
 	reply, err := fx.Complete(t, req)
+	result.Usage = result.Usage.Add(reply.usage())
 	completion := reply.Completion
 	if err != nil || reply.Looped || completion == nil ||
 		len(completion.ToolCalls) > 0 || strings.TrimSpace(completion.Text) == "" {
