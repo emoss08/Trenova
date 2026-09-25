@@ -1,4 +1,5 @@
 import { recordPath, type RecordEntityType } from "@/config/record-links";
+import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import type {
   AccountingConnectionStatus,
   AccountingMappingFilterInput,
@@ -199,4 +200,16 @@ export function accountingReferenceDetail(ref: {
   return [ref.accountType || ref.itemType, ref.number, ref.companyName, ref.city, ref.state]
     .filter(Boolean)
     .join(" · ");
+}
+
+export function accountingWebhookUrl(
+  webhookPath: string,
+  apiBaseUrl = API_BASE_URL,
+  origin = window.location.origin,
+): string {
+  if (!webhookPath) {
+    return "";
+  }
+  const apiBase = apiBaseUrl.startsWith("http") ? apiBaseUrl : `${origin}${apiBaseUrl}`;
+  return `${apiBase.replace(/\/+$/, "")}${webhookPath}`;
 }

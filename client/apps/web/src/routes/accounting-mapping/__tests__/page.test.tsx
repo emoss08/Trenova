@@ -47,6 +47,8 @@ const connection: AccountingConnection = {
   id: "acctc_1",
   integrationType: "QuickBooksOnline",
   status: "Connected",
+  appSource: "Instance",
+  appEnvironment: "Production",
   externalCompanyName: "Peak Freight",
   externalLegalName: "Peak Freight LLC",
   externalCountry: "US",

@@ -2,6 +2,8 @@ fragment AccountingConnectionFields on AccountingConnection {
   id
   integrationType
   status
+  appSource
+  appEnvironment
   externalCompanyName
   externalLegalName
   externalCountry
@@ -74,14 +76,50 @@ fragment AccountingReferenceObjectFields on AccountingReferenceObject {
   usable
 }
 
+fragment AccountingAppSettingsFields on AccountingAppSettings {
+  activeSource
+  instanceAppAvailable
+  instanceEnvironment
+  redirectUrl
+  webhookPath
+  tenantApp {
+    id
+    integrationType
+    environment
+    clientId
+    hasWebhookVerifier
+    version
+    updatedAt
+  }
+}
+
+fragment AccountingSyncStatusFields on AccountingSyncStatus {
+  integrationType
+  providerName
+  available
+  app {
+    ...AccountingAppSettingsFields
+  }
+  connection {
+    ...AccountingConnectionFields
+  }
+}
+
 query AccountingSyncStatus($integrationType: AccountingSystem!) {
   accountingSyncStatus(integrationType: $integrationType) {
-    integrationType
-    providerName
-    available
-    connection {
-      ...AccountingConnectionFields
-    }
+    ...AccountingSyncStatusFields
+  }
+}
+
+mutation SaveAccountingApp($input: SaveAccountingAppInput!) {
+  saveAccountingApp(input: $input) {
+    ...AccountingSyncStatusFields
+  }
+}
+
+mutation RemoveAccountingApp($integrationType: AccountingSystem!) {
+  removeAccountingApp(integrationType: $integrationType) {
+    ...AccountingSyncStatusFields
   }
 }
 

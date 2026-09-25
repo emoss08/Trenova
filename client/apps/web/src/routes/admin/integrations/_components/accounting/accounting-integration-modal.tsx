@@ -165,6 +165,8 @@ function AccountingIntegrationBody({
         <AccountingConnectStep
           vendor={vendor}
           available={status.available}
+          app={status.app}
+          connection={connection ?? null}
           canManage={canManage}
           previousCompanyName={connection?.externalCompanyName ?? ""}
           isConnecting={connect.isPending || connect.isSuccess}
@@ -235,6 +237,7 @@ function AccountingIntegrationBody({
   return (
     <AccountingConnectionPanel
       vendor={vendor}
+      app={status.app}
       connection={connection}
       canUpdate={canUpdate}
       canManage={canManage}

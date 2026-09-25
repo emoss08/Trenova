@@ -842,6 +842,63 @@ type AccountTypeEdge {
 }
 
 """
+App keys an organization saved for connecting through its own app.
+
+The client secret and the webhook verifier token are stored encrypted and never
+returned.
+"""
+type AccountingAppCredential {
+  clientId: String!
+  environment: AccountingAppEnvironment!
+  """
+  Whether a webhook verifier token is saved, so webhooks from this app can be checked.
+  """
+  hasWebhookVerifier: Boolean!
+  id: ID!
+  integrationType: AccountingSystem!
+  updatedAt: Timestamp!
+  version: Int!
+}
+
+"""Which of the accounting system's environments an app's keys are for."""
+enum AccountingAppEnvironment {
+  """Production keys, which work with real companies."""
+  Production
+  """Development keys, which work only with test companies."""
+  Sandbox
+}
+
+"""
+Which app the organization connects through, and what registering its own app needs.
+"""
+type AccountingAppSettings {
+  """
+  The app the next connection will use. The organization's own app wins over the server's. Absent when neither exists.
+  """
+  activeSource: AccountingAppSource
+  """Whether this Trenova server is configured with an app of its own."""
+  instanceAppAvailable: Boolean!
+  """The environment of the server's app. Absent when the server has none."""
+  instanceEnvironment: AccountingAppEnvironment
+  """
+  The address the accounting system sends people back to. Register it on the app exactly as written. Empty when the server has no web address configured.
+  """
+  redirectUrl: String!
+  """The organization's own app, when it saved one."""
+  tenantApp: AccountingAppCredential
+  """The path on the API that receives the accounting system's webhooks."""
+  webhookPath: String!
+}
+
+"""Whose app a connection to the accounting system is authorized through."""
+enum AccountingAppSource {
+  """The app this Trenova server is configured with."""
+  Instance
+  """An app the organization registered with the accounting system itself."""
+  Tenant
+}
+
+"""
 Where to send the person to authorize Trenova, and until when that link works.
 """
 type AccountingAuthorizationStart {
@@ -856,6 +913,14 @@ The authorization itself is never returned. It is stored encrypted, bound to
 this connection, and only the server that refreshes it can read it.
 """
 type AccountingConnection {
+  """
+  The environment of the app the connection was authorized through. Absent for connections made before this was recorded.
+  """
+  appEnvironment: AccountingAppEnvironment
+  """
+  Whose app the connection was authorized through. Its tokens only work with that app.
+  """
+  appSource: AccountingAppSource!
   connectedAt: Timestamp!
   consecutiveFailures: Int!
   disconnectedAt: Timestamp
@@ -1117,8 +1182,9 @@ enum AccountingSetupStep {
 
 """What an organization's link to one accounting system looks like."""
 type AccountingSyncStatus {
+  app: AccountingAppSettings!
   """
-  Whether this Trenova instance has the accounting system's app credentials configured.
+  Whether the organization can connect now: there is an app to connect through and a web address to return to.
   """
   available: Boolean!
   """Absent until the organization first connects."""
@@ -12721,7 +12787,9 @@ type Mutation {
   Finishes connecting with what the provider returned. Only the person who started it can finish it.
   """
   completeAccountingAuthorization(input: CompleteAccountingAuthorizationInput!): AccountingConnection!
-  """Finishes setup once every required mapping is confirmed."""
+  """
+  Moves setup to the start date step once every required mapping is confirmed.
+  """
   completeAccountingSetup(integrationType: AccountingSystem!): AccountingConnection!
   completeClearinghouseQuery(input: CompleteClearinghouseQueryInput!): WorkerClearinghouseQuery!
   completeWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
@@ -13033,6 +13101,10 @@ type Mutation {
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   """Release a held pay event back into the settlement pool."""
   releaseDriverPayEvent(payEventId: ID!): DriverPayEvent!
+  """
+  Removes the organization's own app keys, so connections use the server's app again. Refused while a company is connected through them.
+  """
+  removeAccountingApp(integrationType: AccountingSystem!): AccountingSyncStatus!
   removeCarrierSettlementAdjustment(input: RemoveCarrierSettlementAdjustmentInput!): CarrierSettlement!
   removeDriverSettlementAdjustment(input: RemoveSettlementAdjustmentInput!): DriverSettlement!
   removeOrderCharge(input: RemoveOrderChargeInput!): Order!
@@ -13119,6 +13191,10 @@ type Mutation {
   runDotRandomDraw(input: RunDOTRandomDrawInput!): DOTRandomDraw!
   runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!
   runReport(input: RunReportInput!): ReportRun!
+  """
+  Saves the organization's own app keys after checking them with the accounting system. While a company is connected, only its app's secret and verifier token can change.
+  """
+  saveAccountingApp(input: SaveAccountingAppInput!): AccountingSyncStatus!
   saveOshaSummary(input: SaveOSHASummaryInput!): OSHAAnnualSummary!
   saveTelematicsFormMapping(input: SaveTelematicsFormMappingInput!): TelematicsFormMapping!
   sendDetentionNotice(occurrenceId: ID!): DetentionOccurrence!
@@ -17224,6 +17300,22 @@ enum SafetySeverity {
   Major
   Minor
   Moderate
+}
+
+"""
+The organization's own app keys. Leave the secret or verifier token out to keep the saved one.
+"""
+input SaveAccountingAppInput {
+  """Removes the saved webhook verifier token."""
+  clearWebhookVerifierToken: Boolean
+  clientId: String!
+  """
+  Required the first time, and whenever the client ID or environment changes.
+  """
+  clientSecret: String
+  environment: AccountingAppEnvironment!
+  integrationType: AccountingSystem!
+  webhookVerifierToken: String
 }
 
 input SaveHomeLayoutPresetInput {
