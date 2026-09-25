@@ -1945,6 +1945,14 @@ enum AgentContextProvider {
 }
 
 type AgentControl {
+  """
+  Whether the organization's AI corrections may be anonymized and used to train models outside it. Off until a person turns it on.
+  """
+  aiTrainingConsent: Boolean!
+  """When training consent was last turned on or off."""
+  aiTrainingConsentChangedAt: Timestamp
+  """Who last turned training consent on or off."""
+  aiTrainingConsentChangedById: ID
   billingAgentEnabled: Boolean! @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   businessUnitId: ID!
   createdAt: Timestamp!
@@ -1965,6 +1973,10 @@ type AgentControl {
 }
 
 input AgentControlInput {
+  """
+  Absent leaves training consent as it is. Only a signed-in person can change it.
+  """
+  aiTrainingConsent: Boolean
   billingAgentEnabled: Boolean @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int @deprecated(reason: "Set decisionTimeoutSeconds on the agent definition instead")
   """Absent leaves the organization's earned autonomy switch as it is."""

@@ -65,6 +65,7 @@ type Params struct {
 	ThumbnailGenerator   *thumbnailservice.Generator
 	Encryption           *encryptionservice.Service
 	Realtime             services.RealtimeService
+	AICorrections        services.AICorrectionService `optional:"true"`
 }
 
 type Service struct {
@@ -88,6 +89,7 @@ type Service struct {
 	thumbnailGenerator   *thumbnailservice.Generator
 	encryption           *encryptionservice.Service
 	realtime             services.RealtimeService
+	aiCorrections        services.AICorrectionService
 }
 
 func New(p Params) *Service { //nolint:gocritic // stable API shape
@@ -127,6 +129,7 @@ func New(p Params) *Service { //nolint:gocritic // stable API shape
 		thumbnailGenerator:   p.ThumbnailGenerator,
 		encryption:           p.Encryption,
 		realtime:             p.Realtime,
+		aiCorrections:        p.AICorrections,
 	}
 }
 

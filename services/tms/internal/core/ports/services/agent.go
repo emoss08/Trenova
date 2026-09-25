@@ -284,6 +284,7 @@ type UpdateAgentControlRequest struct {
 	PromotionThreshold     *int
 	BillingAgentEnabled    *bool
 	DecisionTimeoutSeconds *int
+	AITrainingConsent      *bool
 	TenantInfo             pagination.TenantInfo
 }
 

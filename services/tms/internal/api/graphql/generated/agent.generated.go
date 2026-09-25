@@ -206,6 +206,75 @@ func (ec *executionContext) fieldContext_AgentControl_promotionThreshold(_ conte
 	return graphql.NewScalarFieldContext("AgentControl", field, false, false, errors.New("field of type Int does not have child fields"))
 }
 
+func (ec *executionContext) _AgentControl_aiTrainingConsent(ctx context.Context, field graphql.CollectedField, obj *tenant.AgentControl) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentControl_aiTrainingConsent(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AITrainingConsent, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentControl_aiTrainingConsent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentControl", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _AgentControl_aiTrainingConsentChangedAt(ctx context.Context, field graphql.CollectedField, obj *tenant.AgentControl) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentControl_aiTrainingConsentChangedAt(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AITrainingConsentChangedAt, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentControl_aiTrainingConsentChangedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentControl", field, false, false, errors.New("field of type Timestamp does not have child fields"))
+}
+
+func (ec *executionContext) _AgentControl_aiTrainingConsentChangedById(ctx context.Context, field graphql.CollectedField, obj *tenant.AgentControl) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentControl_aiTrainingConsentChangedById(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.AITrainingConsentChangedByID, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *pulid.ID) graphql.Marshaler {
+			return ec.marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_AgentControl_aiTrainingConsentChangedById(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentControl", field, false, false, errors.New("field of type ID does not have child fields"))
+}
+
 func (ec *executionContext) _AgentControl_billingAgentEnabled(ctx context.Context, field graphql.CollectedField, obj *tenant.AgentControl) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5827,7 +5896,7 @@ func (ec *executionContext) unmarshalInputAgentControlInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"shadowMode", "earnedAutonomy", "promotionThreshold", "billingAgentEnabled", "decisionTimeoutSeconds"}
+	fieldsInOrder := [...]string{"shadowMode", "earnedAutonomy", "promotionThreshold", "aiTrainingConsent", "billingAgentEnabled", "decisionTimeoutSeconds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5855,6 +5924,13 @@ func (ec *executionContext) unmarshalInputAgentControlInput(ctx context.Context,
 				return it, err
 			}
 			it.PromotionThreshold = data
+		case "aiTrainingConsent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aiTrainingConsent"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AiTrainingConsent = data
 		case "billingAgentEnabled":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("billingAgentEnabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -6177,6 +6253,21 @@ func (ec *executionContext) _AgentControl(ctx context.Context, sel ast.Selection
 		case "promotionThreshold":
 			out.Values[i] = ec._AgentControl_promotionThreshold(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "aiTrainingConsent":
+			out.Values[i] = ec._AgentControl_aiTrainingConsent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "aiTrainingConsentChangedAt":
+			out.Values[i] = ec._AgentControl_aiTrainingConsentChangedAt(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		case "aiTrainingConsentChangedById":
+			out.Values[i] = ec._AgentControl_aiTrainingConsentChangedById(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
 		case "billingAgentEnabled":

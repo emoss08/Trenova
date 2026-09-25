@@ -565,6 +565,8 @@ export type AgentContextProvider =
   | 'User';
 
 export type AgentControlInput = {
+  /** Absent leaves training consent as it is. Only a signed-in person can change it. */
+  aiTrainingConsent?: boolean | null | undefined;
   /** @deprecated Enable or disable the billing exception agent definition instead */
   billingAgentEnabled?: boolean | null | undefined;
   /** @deprecated Set decisionTimeoutSeconds on the agent definition instead */
@@ -7381,7 +7383,7 @@ export type VerifyAiAuditChainMutationVariables = Exact<{ [key: string]: never; 
 
 export type VerifyAiAuditChainMutation = { verifyAIAuditChain: { ' $fragmentRefs'?: { 'AiAuditChainStatusFieldsFragment': AiAuditChainStatusFieldsFragment } } };
 
-export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
+export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, aiTrainingConsent: boolean, aiTrainingConsentChangedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
 
 export type AgentControlSettingsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -14515,6 +14517,8 @@ export const AgentControlFieldsFragmentDoc = new TypedDocumentString(`
   shadowMode
   earnedAutonomy
   promotionThreshold
+  aiTrainingConsent
+  aiTrainingConsentChangedAt
   version
   createdAt
   updatedAt
@@ -22209,8 +22213,8 @@ export const AiAuditExportDetailDocument = {"__meta__":{"kind":"query","name":"A
 export const RequestAiAuditExportDocument = {"__meta__":{"kind":"mutation","name":"RequestAIAuditExport","hash":"sha256:58b7441c924c34ef725b97617378507ee9fbc255c4807fa0a1c6728b3a686e3f"}} as unknown as TypedDocumentString<RequestAiAuditExportMutation, RequestAiAuditExportMutationVariables>;
 export const AiAuditExportDownloadDocument = {"__meta__":{"kind":"mutation","name":"AIAuditExportDownload","hash":"sha256:c2de785dfd66b796b3fe28d2540c3661146c4fb1ec351a765baa567758c6a80f"}} as unknown as TypedDocumentString<AiAuditExportDownloadMutation, AiAuditExportDownloadMutationVariables>;
 export const VerifyAiAuditChainDocument = {"__meta__":{"kind":"mutation","name":"VerifyAIAuditChain","hash":"sha256:ef094f57f0060f6885edbec0665b81e27e2b8e09b047819be47dae0e6b423ad5"}} as unknown as TypedDocumentString<VerifyAiAuditChainMutation, VerifyAiAuditChainMutationVariables>;
-export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:a44ebbd4e0c314668190068941ad623cefb3b405b0fb345a4dfe58072465cf70"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
-export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:5f38f15ae16abb622bccc80b578ce30e1743ab4b89440782ac1b96232f48a2c3"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
+export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:cd563025c7cab3cccde8facd8817fb14d5e144c41c6c47214970a4a67833e00a"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
+export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:b86ee623bcf6bbc1b1b4471e5dfb96ce75da9de979b96146ad30bf44a603bf25"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
 export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"PendingDecisions","hash":"sha256:f81797b6723f5a53cc3d5fa9f98285e347b14158be8f0039c6a93769ce5cb00c"}} as unknown as TypedDocumentString<PendingDecisionsQuery, PendingDecisionsQueryVariables>;
 export const PendingDecisionSummaryDocument = {"__meta__":{"kind":"query","name":"PendingDecisionSummary","hash":"sha256:4da8f1517d5269e2a6a982d9b22085d0fc060aad3115dfe942ffbbb4318f0aa6"}} as unknown as TypedDocumentString<PendingDecisionSummaryQuery, PendingDecisionSummaryQueryVariables>;
 export const PlanStepsDocument = {"__meta__":{"kind":"query","name":"PlanSteps","hash":"sha256:be027bd8678aed7dad10ecd7053e48b476074bdfd2f37ffbab2df21aaaa50d02"}} as unknown as TypedDocumentString<PlanStepsQuery, PlanStepsQueryVariables>;

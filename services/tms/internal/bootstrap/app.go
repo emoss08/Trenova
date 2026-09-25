@@ -37,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/agentqualityjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aiauditjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/aicorrectionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aifeedbackjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
@@ -183,6 +184,7 @@ func Options() fx.Option {
 		watchtowerjobs.Module,
 		inboundjobs.Module,
 		briefingjobs.Module,
+		aicorrectionjobs.Module,
 		aifeedbackjobs.Module,
 		retrievaljobs.Module,
 		iftajobs.Module,

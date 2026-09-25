@@ -1199,17 +1199,20 @@ type ComplexityRoot struct {
 	}
 
 	AgentControl struct {
-		BillingAgentEnabled    func(childComplexity int) int
-		BusinessUnitID         func(childComplexity int) int
-		CreatedAt              func(childComplexity int) int
-		DecisionTimeoutSeconds func(childComplexity int) int
-		EarnedAutonomy         func(childComplexity int) int
-		ID                     func(childComplexity int) int
-		OrganizationID         func(childComplexity int) int
-		PromotionThreshold     func(childComplexity int) int
-		ShadowMode             func(childComplexity int) int
-		UpdatedAt              func(childComplexity int) int
-		Version                func(childComplexity int) int
+		AITrainingConsent            func(childComplexity int) int
+		AITrainingConsentChangedAt   func(childComplexity int) int
+		AITrainingConsentChangedByID func(childComplexity int) int
+		BillingAgentEnabled          func(childComplexity int) int
+		BusinessUnitID               func(childComplexity int) int
+		CreatedAt                    func(childComplexity int) int
+		DecisionTimeoutSeconds       func(childComplexity int) int
+		EarnedAutonomy               func(childComplexity int) int
+		ID                           func(childComplexity int) int
+		OrganizationID               func(childComplexity int) int
+		PromotionThreshold           func(childComplexity int) int
+		ShadowMode                   func(childComplexity int) int
+		UpdatedAt                    func(childComplexity int) int
+		Version                      func(childComplexity int) int
 	}
 
 	AgentDecision struct {
@@ -17499,6 +17502,24 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentAudienceSuggestion.SensitiveTools(childComplexity), true
 
+	case "AgentControl.aiTrainingConsent":
+		if e.ComplexityRoot.AgentControl.AITrainingConsent == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentControl.AITrainingConsent(childComplexity), true
+	case "AgentControl.aiTrainingConsentChangedAt":
+		if e.ComplexityRoot.AgentControl.AITrainingConsentChangedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentControl.AITrainingConsentChangedAt(childComplexity), true
+	case "AgentControl.aiTrainingConsentChangedById":
+		if e.ComplexityRoot.AgentControl.AITrainingConsentChangedByID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentControl.AITrainingConsentChangedByID(childComplexity), true
 	case "AgentControl.billingAgentEnabled":
 		if e.ComplexityRoot.AgentControl.BillingAgentEnabled == nil {
 			break
@@ -80698,6 +80719,12 @@ type AgentControl {
   earnedAutonomy: Boolean!
   "Consecutive approvals without a change needed before a tool moves up a tier."
   promotionThreshold: Int!
+  "Whether the organization's AI corrections may be anonymized and used to train models outside it. Off until a person turns it on."
+  aiTrainingConsent: Boolean!
+  "When training consent was last turned on or off."
+  aiTrainingConsentChangedAt: Timestamp
+  "Who last turned training consent on or off."
+  aiTrainingConsentChangedById: ID
   billingAgentEnabled: Boolean!
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int!
@@ -80986,6 +81013,8 @@ input AgentControlInput {
   earnedAutonomy: Boolean
   "Absent leaves the promotion threshold as it is; 1 to 1000 approvals."
   promotionThreshold: Int
+  "Absent leaves training consent as it is. Only a signed-in person can change it."
+  aiTrainingConsent: Boolean
   billingAgentEnabled: Boolean
     @deprecated(reason: "Enable or disable the billing exception agent definition instead")
   decisionTimeoutSeconds: Int
@@ -105531,6 +105560,12 @@ func (ec *executionContext) childFields_AgentControl(ctx context.Context, field 
 		return ec.fieldContext_AgentControl_earnedAutonomy(ctx, field)
 	case "promotionThreshold":
 		return ec.fieldContext_AgentControl_promotionThreshold(ctx, field)
+	case "aiTrainingConsent":
+		return ec.fieldContext_AgentControl_aiTrainingConsent(ctx, field)
+	case "aiTrainingConsentChangedAt":
+		return ec.fieldContext_AgentControl_aiTrainingConsentChangedAt(ctx, field)
+	case "aiTrainingConsentChangedById":
+		return ec.fieldContext_AgentControl_aiTrainingConsentChangedById(ctx, field)
 	case "billingAgentEnabled":
 		return ec.fieldContext_AgentControl_billingAgentEnabled(ctx, field)
 	case "decisionTimeoutSeconds":

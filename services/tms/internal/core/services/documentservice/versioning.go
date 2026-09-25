@@ -3,9 +3,11 @@ package documentservice
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
@@ -423,6 +425,12 @@ func (s *Service) AttachLineageToResource(
 			if _, draftErr = s.draftRepo.Upsert(ctx, draft); draftErr != nil {
 				return nil, draftErr
 			}
+			s.captureDraftCorrection(ctx, &services.CaptureShipmentDraftCorrectionRequest{
+				Draft:        draft,
+				ShipmentID:   shipmentID,
+				CapturedByID: userID,
+				TenantInfo:   tenantInfo,
+			})
 		case errortypes.IsNotFoundError(draftErr):
 		default:
 			return nil, draftErr
@@ -454,6 +462,24 @@ func (s *Service) AttachLineageToResource(
 	}
 
 	return updated, nil
+}
+
+func (s *Service) captureDraftCorrection(
+	ctx context.Context,
+	req *services.CaptureShipmentDraftCorrectionRequest,
+) {
+	if s.aiCorrections == nil {
+		return
+	}
+
+	if _, err := s.aiCorrections.CaptureShipmentDraft(ctx, req); err != nil &&
+		!errors.Is(err, aicorrection.ErrNothingPredicted) {
+		s.l.Warn("failed to capture ai correction for attached shipment draft",
+			zap.String("draftId", req.Draft.ID.String()),
+			zap.String("shipmentId", req.ShipmentID.String()),
+			zap.Error(err),
+		)
+	}
 }
 
 // requireShipment confirms the shipment a document is moved onto is one the

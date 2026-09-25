@@ -80,11 +80,13 @@ func TestUpdate_SavesTheAIAuditTrailRetentionItWasGiven(t *testing.T) {
 		AuditRetentionPeriod:         120,
 		AgentEvalCaseRetentionPeriod: intPtr(365),
 		AIAuditRetentionPeriod:       intPtr(3650),
+		AICorrectionRetentionPeriod:  intPtr(365),
 	})
 
 	require.NoError(t, err)
 	assert.Equal(t, 3650, saved.AIAuditRetentionPeriod)
 	assert.Equal(t, 365, saved.AgentEvalCaseRetentionPeriod)
+	assert.Equal(t, 365, saved.AICorrectionRetentionPeriod)
 }
 
 func TestUpdate_KeepsTheCurrentAIAuditTrailRetentionWhenNotSent(t *testing.T) {
@@ -98,6 +100,7 @@ func TestUpdate_KeepsTheCurrentAIAuditTrailRetentionWhenNotSent(t *testing.T) {
 			AuditRetentionPeriod:         120,
 			AgentEvalCaseRetentionPeriod: 90,
 			AIAuditRetentionPeriod:       1825,
+			AICorrectionRetentionPeriod:  400,
 		}, nil).
 		Once()
 	saved := upsertReturnsEntity(repo)
@@ -110,6 +113,7 @@ func TestUpdate_KeepsTheCurrentAIAuditTrailRetentionWhenNotSent(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1825, saved.AIAuditRetentionPeriod)
 	assert.Equal(t, 90, saved.AgentEvalCaseRetentionPeriod)
+	assert.Equal(t, 400, saved.AICorrectionRetentionPeriod)
 }
 
 func TestUpdate_RefusesAnAIAuditTrailKeptUnderAYear(t *testing.T) {
@@ -122,10 +126,45 @@ func TestUpdate_RefusesAnAIAuditTrailKeptUnderAYear(t *testing.T) {
 		AuditRetentionPeriod:         120,
 		AgentEvalCaseRetentionPeriod: intPtr(365),
 		AIAuditRetentionPeriod:       intPtr(30),
+		AICorrectionRetentionPeriod:  intPtr(730),
 	})
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
 	assert.Equal(t, "aiAuditRetentionPeriod", multiErr.Errors[0].Field)
+}
+
+func TestUpdate_RefusesAICorrectionsKeptUnderAMonth(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := newTestService(t)
+
+	_, err := svc.Update(t.Context(), &UpdateDataRetentionRequest{
+		TenantInfo:                   testTenant(),
+		AuditRetentionPeriod:         120,
+		AgentEvalCaseRetentionPeriod: intPtr(365),
+		AIAuditRetentionPeriod:       intPtr(2555),
+		AICorrectionRetentionPeriod:  intPtr(7),
+	})
+
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, "aiCorrectionRetentionPeriod", multiErr.Errors[0].Field)
+}
+
+func TestGet_DefaultsAICorrectionRetentionWhenNothingIsSaved(t *testing.T) {
+	t.Parallel()
+
+	svc, repo := newTestService(t)
+	repo.EXPECT().
+		Get(mock.Anything, mock.AnythingOfType("repositories.GetDataRetentionRequest")).
+		Return(nil, errortypes.NewNotFoundError("data retention not found")).
+		Once()
+
+	entity, err := svc.Get(t.Context(), testTenant())
+
+	require.NoError(t, err)
+	assert.Equal(t, tenant.DefaultAICorrectionRetentionDays, entity.AICorrectionRetentionPeriod)
 }

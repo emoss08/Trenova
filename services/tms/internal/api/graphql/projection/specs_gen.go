@@ -2025,6 +2025,18 @@ func init() {
 				FieldMapKey: "promotionThreshold",
 			},
 			{
+				Name:        "aiTrainingConsent",
+				FieldMapKey: "aiTrainingConsent",
+			},
+			{
+				Name:        "aiTrainingConsentChangedAt",
+				FieldMapKey: "aiTrainingConsentChangedAt",
+			},
+			{
+				Name:        "aiTrainingConsentChangedById",
+				FieldMapKey: "aiTrainingConsentChangedById",
+			},
+			{
 				Name:    "billingAgentEnabled",
 				Special: "billingAgentEnabled",
 			},

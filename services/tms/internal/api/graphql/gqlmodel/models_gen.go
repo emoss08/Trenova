@@ -339,7 +339,9 @@ type AgentControlInput struct {
 	// Absent leaves the organization's earned autonomy switch as it is.
 	EarnedAutonomy *bool `json:"earnedAutonomy,omitempty"`
 	// Absent leaves the promotion threshold as it is; 1 to 1000 approvals.
-	PromotionThreshold     *int  `json:"promotionThreshold,omitempty"`
+	PromotionThreshold *int `json:"promotionThreshold,omitempty"`
+	// Absent leaves training consent as it is. Only a signed-in person can change it.
+	AiTrainingConsent      *bool `json:"aiTrainingConsent,omitempty"`
 	BillingAgentEnabled    *bool `json:"billingAgentEnabled,omitempty"`
 	DecisionTimeoutSeconds *int  `json:"decisionTimeoutSeconds,omitempty"`
 }
