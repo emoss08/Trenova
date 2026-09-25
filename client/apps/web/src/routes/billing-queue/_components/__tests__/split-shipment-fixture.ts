@@ -169,5 +169,6 @@ export function queueItem({
       ? { id: "cus_acme", name: "Acme Manufacturing", code: "ACME" }
       : { id: "cus_peak", name: "Peak Distributing", code: "PEAK" },
     payerShare: payerShareSchema.parse(share ?? (isAcme ? ACME_SHARE_JSON : PEAK_SHARE_JSON)),
+    detentionHolds: [],
   } as unknown as BillingQueueItem;
 }
