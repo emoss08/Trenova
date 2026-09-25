@@ -31,9 +31,9 @@ const ediReadyForGeneration = "ready_for_generation"
 
 func (t *resolveServiceFailureTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, existing, err := t.request(ctx, params)
+	request, existing, err := t.request(ctx, &params)
 	if err != nil {
 		return nil, err
 	}

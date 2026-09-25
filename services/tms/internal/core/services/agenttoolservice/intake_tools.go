@@ -245,7 +245,10 @@ func (t *createShipmentTool) Execute(
 	entity.Status = shipment.StatusNew
 	scopeShipmentChildren(entity, tenantInfo)
 
-	if sourceDocumentID := optionalString(params.Params, "sourceDocumentId"); sourceDocumentID != "" {
+	if sourceDocumentID := optionalString(
+		params.Params,
+		"sourceDocumentId",
+	); sourceDocumentID != "" {
 		if _, err := pulid.Parse(sourceDocumentID); err != nil {
 			return errortypes.NewValidationError(
 				"sourceDocumentId",
@@ -262,7 +265,11 @@ func (t *createShipmentTool) Execute(
 	}
 
 	if entity.SourceDocumentID != "" && t.imports != nil {
-		if completeErr := t.imports.CompleteHistory(ctx, entity.SourceDocumentID, tenantInfo); completeErr != nil {
+		if completeErr := t.imports.CompleteHistory(
+			ctx,
+			entity.SourceDocumentID,
+			tenantInfo,
+		); completeErr != nil {
 			t.logger.Warn("shipment created but the import conversation could not be closed",
 				zap.String("sourceDocumentId", entity.SourceDocumentID),
 				zap.String("shipmentId", created.ID.String()),
@@ -422,7 +429,7 @@ func (t *updateShipmentTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	_, entity, err := t.plan(ctx, params)
+	_, entity, err := t.plan(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -436,9 +443,9 @@ func (t *updateShipmentTool) Execute(
 // and as the write would save it.
 func (t *updateShipmentTool) plan(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (before, after *shipment.Shipment, err error) {
-	if err = guardExecute(t, params); err != nil {
+	if err = guardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
 
@@ -461,7 +468,7 @@ func (t *updateShipmentTool) plan(
 
 	entity, err := t.shipments.Get(ctx, &repositories.GetShipmentByIDRequest{
 		ID:         shipmentID,
-		TenantInfo: tenantFrom(params),
+		TenantInfo: tenantFrom(*params),
 		ShipmentOptions: repositories.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},

@@ -49,7 +49,7 @@ read as compliance the carrier does not have. What it does is put the ask on
 the record, so the desk can tell an unanswered ask from one never made.
 */
 func (s *Service) RequestRenewal(ctx context.Context, req RenewalRequest) error {
-	named, err := s.planRenewal(ctx, req)
+	named, err := s.planRenewal(ctx, &req)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (s *Service) RequestRenewal(ctx context.Context, req RenewalRequest) error 
 // bounds of one ask.
 func (s *Service) planRenewal(
 	ctx context.Context,
-	req RenewalRequest,
+	req *RenewalRequest,
 ) ([]*worker.WorkerCredential, error) {
 	if len(req.CredentialIDs) == 0 {
 		return nil, errortypes.NewValidationError("credentialIds", errortypes.ErrRequired,
@@ -123,7 +123,7 @@ func (s *Service) notifyRenewal(
 		return
 	}
 
-	notice, correlation := renewalNotification(req, named, timeutils.NowUnix())
+	notice, correlation := renewalNotification(&req, named, timeutils.NowUnix())
 	s.driverNotify.NotifyWithCorrelation(ctx, notice, correlation)
 }
 
@@ -131,10 +131,10 @@ func (s *Service) notifyRenewal(
 // name, the soonest expiry, and the note, keyed so a retried ask is not sent
 // twice.
 func renewalNotification(
-	req RenewalRequest,
+	req *RenewalRequest,
 	named []*worker.WorkerCredential,
 	now int64,
-) (*drivernotificationservice.DriverNotification, string) {
+) (notice *drivernotificationservice.DriverNotification, correlation string) {
 	soonest := named[0]
 	for _, credential := range named {
 		if credential.ExpiresAt == nil {
@@ -152,7 +152,7 @@ func renewalNotification(
 		expires = timeutils.FormatUnixDateIn(*soonest.ExpiresAt, "")
 	}
 
-	correlation := req.CorrelationID
+	correlation = req.CorrelationID
 	if strings.TrimSpace(correlation) == "" {
 		correlation = "cred-renewal-" + req.WorkerID.String()
 	}

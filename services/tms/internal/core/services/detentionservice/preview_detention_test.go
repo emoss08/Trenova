@@ -115,7 +115,7 @@ func TestPreviewWaive_IsWhatWaiveSaves(t *testing.T) {
 		UserID:       pulid.MustNew("usr_"),
 	}
 
-	preview, err := svc.PreviewWaive(t.Context(), params)
+	preview, err := svc.PreviewWaive(t.Context(), &params)
 	require.NoError(t, err)
 	require.Empty(t, repo.saved, "a preview must not save")
 
@@ -144,7 +144,7 @@ func TestPreviewApprove_IsWhatApproveSaves(t *testing.T) {
 		Note:         "ELD times hold up",
 	}
 
-	preview, err := svc.PreviewApprove(t.Context(), params)
+	preview, err := svc.PreviewApprove(t.Context(), &params)
 	require.NoError(t, err)
 
 	repo.readOnly = false
@@ -164,7 +164,7 @@ func TestPreviewApprove_RefusesWhatApproveRefuses(t *testing.T) {
 	svc := previewService(&previewOccurrenceRepo{stored: stored, readOnly: true})
 	params := ApproveParams{OccurrenceID: stored.ID, TenantInfo: tenantOfOccurrence(&stored)}
 
-	_, previewErr := svc.PreviewApprove(t.Context(), params)
+	_, previewErr := svc.PreviewApprove(t.Context(), &params)
 	_, executeErr := svc.Approve(t.Context(), params)
 
 	require.Error(t, previewErr)
@@ -255,7 +255,7 @@ func TestPreviewOccurrenceNotice_IsTheNoticeSendOccurrenceNoticeSends(t *testing
 		UserID:       pulid.MustNew("usr_"),
 	}
 
-	preview, err := svc.PreviewOccurrenceNotice(t.Context(), params)
+	preview, err := svc.PreviewOccurrenceNotice(t.Context(), &params)
 	require.NoError(t, err)
 	require.Empty(t, mailer.sent, "a preview must not send")
 	require.Empty(t, repo.saved, "a preview must not save")

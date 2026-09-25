@@ -408,7 +408,7 @@ func (s *Service) SendOccurrenceNotice(
 	ctx context.Context,
 	p SendOccurrenceNoticeParams,
 ) (*detention.DetentionOccurrence, error) {
-	plan, err := s.planOccurrenceNotice(ctx, p)
+	plan, err := s.planOccurrenceNotice(ctx, &p)
 	if err != nil {
 		return nil, err
 	}

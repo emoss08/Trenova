@@ -17,9 +17,9 @@ var _ serviceports.ToolPreviewer = (*scheduleReportTool)(nil)
 
 func (t *scheduleReportTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -37,9 +37,15 @@ func (t *scheduleReportTool) Preview(
 			Label:    "Schedule for " + definition.Name,
 		},
 		schedule,
-		toolpreview.Only("definitionId", "cronExpression", "timezone", "formats", "enabled"),
+		toolpreview.Only(
+			previewFieldDefinitionID,
+			"cronExpression",
+			"timezone",
+			"formats",
+			"enabled",
+		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			"definitionId": permission.ResourceReport,
+			previewFieldDefinitionID: permission.ResourceReport,
 		}),
 	)
 	if err != nil {
@@ -51,7 +57,11 @@ func (t *scheduleReportTool) Preview(
 		recipients = schedule.Delivery.EmailRecipients
 	}
 	send := toolpreview.Send(
-		toolpreview.Record{Resource: permission.ResourceReport, ID: definition.ID, Label: definition.Name},
+		toolpreview.Record{
+			Resource: permission.ResourceReport,
+			ID:       definition.ID,
+			Label:    definition.Name,
+		},
 		&agent.MessagePreview{
 			Channel: agent.MessageChannelEmail,
 			To:      recipients,
@@ -72,7 +82,10 @@ func (t *scheduleReportTool) Preview(
 	), nil
 }
 
-func scheduledReportBody(schedule *report.ReportSchedule, definition *report.ReportDefinition) string {
+func scheduledReportBody(
+	schedule *report.ReportSchedule,
+	definition *report.ReportDefinition,
+) string {
 	formats := strings.ToUpper(strings.Join(schedule.Formats, ", "))
 	if schedule.Delivery != nil && schedule.Delivery.EmailAttach {
 		return fmt.Sprintf("The latest %s report, attached as %s.", definition.Name, formats)

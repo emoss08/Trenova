@@ -71,7 +71,7 @@ func (t *correctChargeCodeTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -84,9 +84,9 @@ func (t *correctChargeCodeTool) Execute(
 // request is the charge edit the preview and the write both make: the
 // item's additional charges replaced by the set the call sends.
 func (t *correctChargeCodeTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*serviceports.UpdateChargesRequest, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 

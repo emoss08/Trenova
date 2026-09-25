@@ -199,7 +199,7 @@ func (s *Service) Waive(
 	ctx context.Context,
 	p WaiveParams,
 ) (*detention.DetentionOccurrence, error) {
-	change, err := s.planWaive(ctx, p)
+	change, err := s.planWaive(ctx, &p)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (s *Service) Approve(
 	ctx context.Context,
 	p ApproveParams,
 ) (*detention.DetentionOccurrence, error) {
-	change, err := s.planApprove(ctx, p)
+	change, err := s.planApprove(ctx, &p)
 	if err != nil {
 		return nil, err
 	}
@@ -416,13 +416,17 @@ func (s *Service) publishBillingHoldChange(
 
 	orgID, buID := saved.OrganizationID, saved.BusinessUnitID
 	ports.AfterCommit(ctx, func(runCtx context.Context) {
-		if err := realtimeinvalidation.Publish(runCtx, s.realtime, &realtimeinvalidation.PublishParams{
-			OrganizationID: orgID,
-			BusinessUnitID: buID,
-			ActorUserID:    actorUserID,
-			Resource:       permission.ResourceBillingQueue.String(),
-			Action:         "updated",
-		}); err != nil {
+		if err := realtimeinvalidation.Publish(
+			runCtx,
+			s.realtime,
+			&realtimeinvalidation.PublishParams{
+				OrganizationID: orgID,
+				BusinessUnitID: buID,
+				ActorUserID:    actorUserID,
+				Resource:       permission.ResourceBillingQueue.String(),
+				Action:         "updated",
+			},
+		); err != nil {
 			s.l.Warn("failed to publish billing queue invalidation for a detention hold",
 				zap.String("occurrenceId", saved.ID.String()), zap.Error(err))
 		}

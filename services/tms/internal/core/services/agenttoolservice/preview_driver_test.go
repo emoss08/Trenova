@@ -112,7 +112,7 @@ func decidedPTO(
 
 func (s *stubCredentialActor) PreviewRenewal(
 	_ context.Context,
-	req workercredentialservice.RenewalRequest,
+	req *workercredentialservice.RenewalRequest,
 ) (*workercredentialservice.RenewalPreview, error) {
 	expires := int64(1_790_000_000)
 

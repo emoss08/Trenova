@@ -49,18 +49,18 @@ type liveTenderReader interface {
 }
 
 var updateShipmentRefs = map[string]permission.Resource{
-	"customerId":     permission.ResourceCustomer,
-	"serviceTypeId":  permission.ResourceServiceType,
-	"shipmentTypeId": permission.ResourceShipmentType,
-	"tractorTypeId":  permission.ResourceEquipmentType,
-	"trailerTypeId":  permission.ResourceEquipmentType,
+	previewFieldCustomerID:     permission.ResourceCustomer,
+	previewFieldServiceTypeID:  permission.ResourceServiceType,
+	previewFieldShipmentTypeID: permission.ResourceShipmentType,
+	previewFieldTractorTypeID:  permission.ResourceEquipmentType,
+	previewFieldTrailerTypeID:  permission.ResourceEquipmentType,
 }
 
 func (t *addShipmentCommentTool) Preview(
 	_ context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	entity, err := t.comment(params)
+	entity, err := t.comment(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -68,9 +68,9 @@ func (t *addShipmentCommentTool) Preview(
 	created, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourceShipmentComment, Label: "Shipment comment"},
 		entity,
-		toolpreview.Only("shipmentId", "comment", "type", "visibility", "priority"),
+		toolpreview.Only(previewFieldShipmentID, "comment", "type", "visibility", "priority"),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			"shipmentId": permission.ResourceShipment,
+			previewFieldShipmentID: permission.ResourceShipment,
 		}),
 	)
 	if err != nil {
@@ -125,9 +125,9 @@ func commentAudience(visibility shipment.CommentVisibility) string {
 
 func (t *updateShipmentTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	before, after, err := t.plan(ctx, params)
+	before, after, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -137,8 +137,16 @@ func (t *updateShipmentTool) Preview(
 		before,
 		after,
 		toolpreview.Only(
-			"customerId", "serviceTypeId", "shipmentTypeId", "tractorTypeId", "trailerTypeId",
-			"bol", "pieces", "weight", "temperatureMin", "temperatureMax",
+			previewFieldCustomerID,
+			previewFieldServiceTypeID,
+			previewFieldShipmentTypeID,
+			previewFieldTractorTypeID,
+			previewFieldTrailerTypeID,
+			"bol",
+			"pieces",
+			"weight",
+			"temperatureMin",
+			"temperatureMax",
 		),
 		toolpreview.WithRefs(updateShipmentRefs),
 	)
@@ -169,9 +177,9 @@ func (t *updateShipmentTool) Preview(
 
 func (t *cancelShipmentTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +205,11 @@ func (t *cancelShipmentTool) Preview(
 	changes := []*agent.RecordChange{change}
 
 	if t.partners != nil {
-		notices, nErr := t.partners.PreviewCancelNotices(ctx, request.TenantInfo, request.ShipmentID)
+		notices, nErr := t.partners.PreviewCancelNotices(
+			ctx,
+			request.TenantInfo,
+			request.ShipmentID,
+		)
 		if nErr != nil {
 			return nil, nErr
 		}

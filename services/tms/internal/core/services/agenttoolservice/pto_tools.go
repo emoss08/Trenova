@@ -152,7 +152,7 @@ func (t *rejectWorkerPTOTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func (t *rejectWorkerPTOTool) Execute(
 }
 
 func (t *rejectWorkerPTOTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*repositories.UpdatePTOStatusRequest, error) {
 	return ptoDecisionRequest(t, params)
 }
@@ -220,7 +220,7 @@ func (t *cancelWorkerPTOTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -231,7 +231,7 @@ func (t *cancelWorkerPTOTool) Execute(
 }
 
 func (t *cancelWorkerPTOTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*repositories.UpdatePTOStatusRequest, error) {
 	return ptoDecisionRequest(t, params)
 }
@@ -241,13 +241,13 @@ func (t *cancelWorkerPTOTool) request(
 // model left out, which is the correction it can act on.
 func ptoDecisionRequest(
 	tool serviceports.AgentTool,
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*repositories.UpdatePTOStatusRequest, error) {
-	if err := guardExecute(tool, params); err != nil {
+	if err := guardExecute(tool, *params); err != nil {
 		return nil, err
 	}
 
-	request, err := ptoStatusRequest(params)
+	request, err := ptoStatusRequest(*params)
 	if err != nil {
 		return nil, err
 	}

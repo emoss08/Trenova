@@ -74,7 +74,11 @@ func (s *Service) previewTransition(
 		return preview, nil
 	}
 
-	if notice, ok := transitionNotice(params.target, params.req.Reason); ok && s.driverNotify != nil {
+	if notice, ok := transitionNotice(
+		params.target,
+		params.req.Reason,
+	); ok &&
+		s.driverNotify != nil {
 		preview.Driver, err = s.driverNotify.Preview(
 			ctx,
 			ptoDriverNotification(params.req.TenantInfo, after, notice),
@@ -165,13 +169,15 @@ func releasesUsage(current *worker.WorkerPTO, target worker.PTOStatus) bool {
 	return target == worker.PTOStatusCancelled && current.Status == worker.PTOStatusApproved
 }
 
+const eventPTOReviewed = "dash.pto_reviewed"
+
 // transitionNotice is the Dash message a decision sends the driver.
 func transitionNotice(target worker.PTOStatus, reason string) (driverPTONotice, bool) {
 	switch target { //nolint:exhaustive // Requested is never a transition target
 	case worker.PTOStatusApproved:
-		return driverPTONotice{eventType: "dash.pto_reviewed", approved: true}, true
+		return driverPTONotice{eventType: eventPTOReviewed, approved: true}, true
 	case worker.PTOStatusRejected:
-		return driverPTONotice{eventType: "dash.pto_reviewed", reason: reason}, true
+		return driverPTONotice{eventType: eventPTOReviewed, reason: reason}, true
 	case worker.PTOStatusCancelled:
 		return driverPTONotice{eventType: "dash.pto_cancelled", reason: reason}, true
 	default:
@@ -211,12 +217,12 @@ func (s *Service) transitionSMS(
 		return nil, err
 	}
 	if wrk.PhoneNumber == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a nil SMS means the driver is not texted
 	}
 
 	message, ok := transitionSMSMessage(user.Name, updated, target, req.Reason)
 	if !ok {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a nil SMS means the driver is not texted
 	}
 
 	return &services.DriverSMSPreview{PhoneNumber: wrk.PhoneNumber, Message: message}, nil

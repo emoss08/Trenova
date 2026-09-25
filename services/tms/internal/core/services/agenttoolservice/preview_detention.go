@@ -22,14 +22,14 @@ var (
 
 func (t *approveDetentionTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, detail, err := t.request(ctx, params)
 	if err != nil {
 		return nil, err
 	}
 
-	change, err := t.detention.PreviewApprove(ctx, request)
+	change, err := t.detention.PreviewApprove(ctx, &request)
 	if err != nil {
 		return nil, err
 	}
@@ -51,14 +51,14 @@ func (t *approveDetentionTool) Preview(
 
 func (t *waiveDetentionTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
 
-	change, err := t.detention.PreviewWaive(ctx, request)
+	change, err := t.detention.PreviewWaive(ctx, &request)
 	if err != nil {
 		return nil, err
 	}
@@ -77,14 +77,14 @@ func (t *waiveDetentionTool) Preview(
 
 func (t *sendDetentionNoticeTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
 
-	notice, err := t.detention.PreviewOccurrenceNotice(ctx, request)
+	notice, err := t.detention.PreviewOccurrenceNotice(ctx, &request)
 	if err != nil {
 		return nil, err
 	}

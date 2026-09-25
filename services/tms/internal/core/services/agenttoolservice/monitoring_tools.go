@@ -195,7 +195,7 @@ func (t *resolveServiceFailureTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	request, _, err := t.request(ctx, params)
+	request, _, err := t.request(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -210,9 +210,9 @@ func (t *resolveServiceFailureTool) Execute(
 // or the one already on file.
 func (t *resolveServiceFailureTool) request(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*serviceports.ServiceFailureLifecycleRequest, *servicefailure.ServiceFailure, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, nil, err
 	}
 
@@ -225,7 +225,7 @@ func (t *resolveServiceFailureTool) request(
 		return nil, nil, err
 	}
 
-	tenant := tenantFrom(params)
+	tenant := tenantFrom(*params)
 	existing, err := t.failures.GetByID(ctx, &repositories.GetServiceFailureByIDRequest{
 		ID:         failureID,
 		TenantInfo: tenant,
@@ -354,7 +354,7 @@ func (t *notifyDriverTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -367,9 +367,9 @@ func (t *notifyDriverTool) Execute(
 // request is the message the preview renders and the write sends: the
 // dispatch template, the model's title and text, and the shipment it opens.
 func (t *notifyDriverTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*drivernotificationservice.DriverNotification, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
@@ -403,7 +403,7 @@ func (t *notifyDriverTool) request(
 	}
 
 	request := &drivernotificationservice.DriverNotification{
-		TenantInfo: tenantFrom(params),
+		TenantInfo: tenantFrom(*params),
 		WorkerID:   workerID,
 		EventType:  dispatchMessageEvent,
 		Priority:   priority,
@@ -468,7 +468,9 @@ func newEmailCustomerTool(p emailCustomerParams) serviceports.AgentTool {
 	}}
 }
 
-func (t *emailCustomerTool) Name() string { return "email_customer" }
+const emailCustomerToolName = "email_customer"
+
+func (t *emailCustomerTool) Name() string { return emailCustomerToolName }
 
 func (t *emailCustomerTool) Description() string {
 	return "Email a shipment's customer a status update: a delay and the new expected " +
@@ -531,7 +533,7 @@ func (t *emailCustomerTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	composed, err := t.compose(ctx, params)
+	composed, err := t.compose(ctx, &params)
 	if err != nil {
 		return err
 	}
@@ -609,11 +611,11 @@ type detentionActor interface {
 	) (*detention.DetentionOccurrence, error)
 	PreviewOccurrenceNotice(
 		ctx context.Context,
-		params detentionservice.SendOccurrenceNoticeParams,
+		params *detentionservice.SendOccurrenceNoticeParams,
 	) (*detentionservice.NoticePreview, error)
 	PreviewWaive(
 		ctx context.Context,
-		params detentionservice.WaiveParams,
+		params *detentionservice.WaiveParams,
 	) (*detentionservice.OccurrenceChange, error)
 }
 
@@ -670,7 +672,7 @@ func (t *sendDetentionNoticeTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -681,9 +683,9 @@ func (t *sendDetentionNoticeTool) Execute(
 }
 
 func (t *sendDetentionNoticeTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (detentionservice.SendOccurrenceNoticeParams, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return detentionservice.SendOccurrenceNoticeParams{}, err
 	}
 
@@ -694,7 +696,7 @@ func (t *sendDetentionNoticeTool) request(
 
 	return detentionservice.SendOccurrenceNoticeParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   tenantFrom(params),
+		TenantInfo:   tenantFrom(*params),
 		UserID:       params.Actor.UserID,
 	}, nil
 }
@@ -770,7 +772,7 @@ func (t *waiveDetentionTool) Execute(
 		return ErrApprovalNeedsAPerson
 	}
 
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -781,9 +783,9 @@ func (t *waiveDetentionTool) Execute(
 }
 
 func (t *waiveDetentionTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (detentionservice.WaiveParams, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return detentionservice.WaiveParams{}, err
 	}
 
@@ -808,7 +810,7 @@ func (t *waiveDetentionTool) request(
 
 	return detentionservice.WaiveParams{
 		OccurrenceID: occurrenceID,
-		TenantInfo:   tenantFrom(params),
+		TenantInfo:   tenantFrom(*params),
 		Reason:       reason,
 		Note:         strings.TrimSpace(note),
 		UserID:       params.Actor.UserID,

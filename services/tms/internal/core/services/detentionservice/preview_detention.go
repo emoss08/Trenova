@@ -27,7 +27,7 @@ type OccurrenceChange struct {
 // would leave it, and the shipment's other occurrences.
 func (s *Service) PreviewApprove(
 	ctx context.Context,
-	p ApproveParams,
+	p *ApproveParams,
 ) (*OccurrenceChange, error) {
 	change, err := s.planApprove(ctx, p)
 	if err != nil {
@@ -40,7 +40,7 @@ func (s *Service) PreviewApprove(
 // PreviewWaive is Waive without the save.
 func (s *Service) PreviewWaive(
 	ctx context.Context,
-	p WaiveParams,
+	p *WaiveParams,
 ) (*OccurrenceChange, error) {
 	change, err := s.planWaive(ctx, p)
 	if err != nil {
@@ -50,14 +50,14 @@ func (s *Service) PreviewWaive(
 	return s.withShipmentOccurrences(ctx, change, p.TenantInfo)
 }
 
-func (s *Service) planApprove(ctx context.Context, p ApproveParams) (*OccurrenceChange, error) {
+func (s *Service) planApprove(ctx context.Context, p *ApproveParams) (*OccurrenceChange, error) {
 	return s.planOccurrence(ctx, p.OccurrenceID, p.TenantInfo,
 		func(occurrence *detention.DetentionOccurrence, now int64) error {
 			return occurrence.Approve(p.UserID, now)
 		})
 }
 
-func (s *Service) planWaive(ctx context.Context, p WaiveParams) (*OccurrenceChange, error) {
+func (s *Service) planWaive(ctx context.Context, p *WaiveParams) (*OccurrenceChange, error) {
 	if _, err := detention.WaiverReasonFromString(string(p.Reason)); err != nil {
 		return nil, errortypes.NewValidationError(
 			"waiverReason", errortypes.ErrInvalid, "A coded waiver reason is required")
@@ -136,7 +136,7 @@ type NoticePreview struct {
 // context as the body, and printing it is work a preview does not need.
 func (s *Service) PreviewOccurrenceNotice(
 	ctx context.Context,
-	p SendOccurrenceNoticeParams,
+	p *SendOccurrenceNoticeParams,
 ) (*NoticePreview, error) {
 	plan, err := s.planOccurrenceNotice(ctx, p)
 	if err != nil {
@@ -194,7 +194,7 @@ type occurrenceNoticePlan struct {
 // calls for, and whether the policy attaches it on paper.
 func (s *Service) planOccurrenceNotice(
 	ctx context.Context,
-	p SendOccurrenceNoticeParams,
+	p *SendOccurrenceNoticeParams,
 ) (*occurrenceNoticePlan, error) {
 	occurrence, err := s.occurrenceRepo.GetByID(
 		ctx,

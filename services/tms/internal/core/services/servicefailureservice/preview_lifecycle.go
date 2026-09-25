@@ -97,37 +97,13 @@ func (s *service) planLifecycle(
 		updated.ReasonCodeID = pulid.PtrOrNil(reason.ID)
 		updated.ReasonCode = reason
 	}
-	switch params.next {
-	case servicefailure.StatusReviewed:
-		if updated.ReasonCodeID == nil || updated.ReasonCodeID.IsNil() {
-			return nil, reasonRequiredError()
-		}
-		updated.ReviewedAt = &now
-		updated.ReviewedByID = pulid.PtrOrNil(actorUserID)
-		if strings.TrimSpace(params.req.Notes) != "" {
-			updated.InternalNotes = strings.TrimSpace(params.req.Notes)
-		}
-	case servicefailure.StatusResolved:
-		if updated.ReasonCodeID == nil || updated.ReasonCodeID.IsNil() {
-			return nil, reasonRequiredError()
-		}
-		updated.ResolvedAt = &now
-		updated.ResolvedByID = pulid.PtrOrNil(actorUserID)
-		if strings.TrimSpace(params.req.Notes) != "" {
-			updated.InternalNotes = strings.TrimSpace(params.req.Notes)
-		}
-	case servicefailure.StatusVoided:
-		if strings.TrimSpace(params.req.Notes) == "" {
-			return nil, errortypes.NewValidationError(
-				"notes",
-				errortypes.ErrRequired,
-				"Void reason is required",
-			)
-		}
-		updated.VoidedAt = &now
-		updated.VoidedByID = pulid.PtrOrNil(actorUserID)
-		updated.VoidReason = strings.TrimSpace(params.req.Notes)
-	case servicefailure.StatusOpen:
+	if err = applyLifecycleStatus(&updated, lifecycleStatusChange{
+		next:  params.next,
+		notes: params.req.Notes,
+		actor: actorUserID,
+		at:    now,
+	}); err != nil {
+		return nil, err
 	}
 
 	if multiErr := validateServiceFailure(&updated); multiErr != nil {
@@ -143,4 +119,53 @@ func (s *service) planLifecycle(
 	}
 
 	return &lifecyclePlan{original: original, updated: &updated, edi: edi}, nil
+}
+
+type lifecycleStatusChange struct {
+	next  servicefailure.Status
+	notes string
+	actor pulid.ID
+	at    int64
+}
+
+// applyLifecycleStatus stamps the status a lifecycle change moves to with who
+// moved it, when, and the note it requires.
+func applyLifecycleStatus(
+	updated *servicefailure.ServiceFailure,
+	change lifecycleStatusChange,
+) error {
+	switch change.next {
+	case servicefailure.StatusReviewed:
+		if updated.ReasonCodeID == nil || updated.ReasonCodeID.IsNil() {
+			return reasonRequiredError()
+		}
+		updated.ReviewedAt = &change.at
+		updated.ReviewedByID = pulid.PtrOrNil(change.actor)
+		if strings.TrimSpace(change.notes) != "" {
+			updated.InternalNotes = strings.TrimSpace(change.notes)
+		}
+	case servicefailure.StatusResolved:
+		if updated.ReasonCodeID == nil || updated.ReasonCodeID.IsNil() {
+			return reasonRequiredError()
+		}
+		updated.ResolvedAt = &change.at
+		updated.ResolvedByID = pulid.PtrOrNil(change.actor)
+		if strings.TrimSpace(change.notes) != "" {
+			updated.InternalNotes = strings.TrimSpace(change.notes)
+		}
+	case servicefailure.StatusVoided:
+		if strings.TrimSpace(change.notes) == "" {
+			return errortypes.NewValidationError(
+				"notes",
+				errortypes.ErrRequired,
+				"Void reason is required",
+			)
+		}
+		updated.VoidedAt = &change.at
+		updated.VoidedByID = pulid.PtrOrNil(change.actor)
+		updated.VoidReason = strings.TrimSpace(change.notes)
+	case servicefailure.StatusOpen:
+	}
+
+	return nil
 }

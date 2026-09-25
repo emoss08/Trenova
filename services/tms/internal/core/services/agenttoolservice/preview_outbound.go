@@ -18,6 +18,20 @@ type sensitiveTextScanner interface {
 	MaskText(text string) (string, bool)
 }
 
+// The record fields previews name, as the tools' parameters spell them.
+const (
+	previewFieldCustomerID     = "customerId"
+	previewFieldDefinitionID   = "definitionId"
+	previewFieldPaymentDate    = "paymentDate"
+	previewFieldServiceTypeID  = "serviceTypeId"
+	previewFieldShipmentID     = "shipmentId"
+	previewFieldShipmentMoveID = "shipmentMoveId"
+	previewFieldShipmentTypeID = "shipmentTypeId"
+	previewFieldSubject        = "subject"
+	previewFieldTractorTypeID  = "tractorTypeId"
+	previewFieldTrailerTypeID  = "trailerTypeId"
+)
+
 // outboundScanner reads text a write would send outside the organization.
 // Detection needs no key; the masking the audit log applies is not used.
 var outboundScanner sensitiveTextScanner = auditservice.NewSensitiveDataManager(
@@ -45,7 +59,7 @@ func resolveEmailSender(
 	req *serviceports.SendEmailRequest,
 ) (*serviceports.EmailSender, error) {
 	if senders == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a deployment without a resolver names no sender
 	}
 
 	return senders.ResolveSender(ctx, req)

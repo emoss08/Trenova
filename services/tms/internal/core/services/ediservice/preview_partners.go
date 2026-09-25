@@ -45,10 +45,10 @@ func (s *Service) planTenderChanges(
 	actor *services.RequestActor,
 ) (*tenderChangePlan, error) {
 	if original == nil || updated == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a nil plan means the update sends no 204 change
 	}
 	if original.ID != updated.ID || original.OrganizationID != updated.OrganizationID {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a nil plan means the update sends no 204 change
 	}
 
 	oldPayload := buildTenderPayload(original)
@@ -56,7 +56,7 @@ func (s *Service) planTenderChanges(
 	newPayload.PurposeCode = edi.LoadTenderPurposeChange
 	newHash := tenderPayloadHash(&newPayload)
 	if tenderPayloadHash(&oldPayload) == newHash {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a nil plan means the update sends no 204 change
 	}
 
 	recipients, err := s.tenderRecipientRepo.ListActiveTenderRecipientsForSourceShipment(

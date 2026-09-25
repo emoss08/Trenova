@@ -111,7 +111,7 @@ func (t *requestMissingDocsTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	composed, err := t.compose(ctx, params)
+	composed, err := t.compose(ctx, &params)
 	if err != nil {
 		return err
 	}

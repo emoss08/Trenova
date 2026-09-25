@@ -27,7 +27,7 @@ var (
 
 func (t *matchBankReceiptTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.request(params)
 	if err != nil {
@@ -56,7 +56,7 @@ func (t *matchBankReceiptTool) Preview(
 
 func (t *postCustomerPaymentTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	args, err := t.arguments(ctx, params)
 	if err != nil {
@@ -77,14 +77,18 @@ func (t *postCustomerPaymentTool) Preview(
 		},
 		payment,
 		toolpreview.Only(
-			"customerId", "paymentDate", "paymentMethod", "referenceNumber", "memo",
+			previewFieldCustomerID,
+			previewFieldPaymentDate,
+			"paymentMethod",
+			"referenceNumber",
+			"memo",
 			"currencyCode",
 		),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			"customerId": permission.ResourceCustomer,
+			previewFieldCustomerID: permission.ResourceCustomer,
 		}),
 		toolpreview.Types(map[string]assistantartifact.DisplayType{
-			"paymentDate": assistantartifact.DisplayDate,
+			previewFieldPaymentDate: assistantartifact.DisplayDate,
 		}),
 	)
 	if err != nil {
@@ -112,11 +116,15 @@ func (t *postCustomerPaymentTool) Preview(
 	)
 
 	if args.receiptID.IsNotNil() {
-		match, mErr := t.receipts.PreviewMatchPayment(ctx, &bankreceiptservice.PreviewMatchPaymentRequest{
-			ReceiptID:  args.receiptID,
-			TenantInfo: args.request.TenantInfo,
-			Payment:    payment,
-		}, params.Actor)
+		match, mErr := t.receipts.PreviewMatchPayment(
+			ctx,
+			&bankreceiptservice.PreviewMatchPaymentRequest{
+				ReceiptID:  args.receiptID,
+				TenantInfo: args.request.TenantInfo,
+				Payment:    payment,
+			},
+			params.Actor,
+		)
 		if mErr != nil {
 			return nil, mErr
 		}

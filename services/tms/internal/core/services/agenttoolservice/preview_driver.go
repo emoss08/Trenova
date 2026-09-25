@@ -41,9 +41,9 @@ type ptoRejecter interface {
 
 func (t *notifyDriverTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -66,9 +66,9 @@ func (t *notifyDriverTool) Preview(
 
 func (t *rejectWorkerPTOTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -87,9 +87,9 @@ func (t *rejectWorkerPTOTool) Preview(
 
 func (t *cancelWorkerPTOTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -111,14 +111,14 @@ func (t *cancelWorkerPTOTool) Preview(
 
 func (t *requestCredentialRenewalTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
 	request, err := t.arguments(params)
 	if err != nil {
 		return nil, err
 	}
 
-	renewal, err := t.credentials.PreviewRenewal(ctx, request)
+	renewal, err := t.credentials.PreviewRenewal(ctx, &request)
 	if err != nil {
 		return nil, err
 	}
@@ -246,5 +246,8 @@ func credentialLabel(credential *worker.WorkerCredential) string {
 		return name
 	}
 
-	return name + " (expires " + time.Unix(*credential.ExpiresAt, 0).UTC().Format("2006-01-02") + ")"
+	return name + " (expires " + time.Unix(*credential.ExpiresAt, 0).
+		UTC().
+		Format("2006-01-02") +
+		")"
 }

@@ -44,13 +44,13 @@ type customerEmail struct {
 
 func (t *emailCustomerTool) compose(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*customerEmail, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	shipmentID, err := requirePulid(params.Params, "shipmentId")
+	shipmentID, err := requirePulid(params.Params, previewFieldShipmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (t *emailCustomerTool) compose(
 	if err != nil {
 		return nil, err
 	}
-	subject, err := requireString(params.Params, "subject")
+	subject, err := requireString(params.Params, previewFieldSubject)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (t *emailCustomerTool) compose(
 		return nil, err
 	}
 
-	tenant := tenantFrom(params)
+	tenant := tenantFrom(*params)
 	sp, err := t.deps.shipments.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:              shipmentID,
 		TenantInfo:      tenant,
@@ -131,9 +131,9 @@ func (t *emailCustomerTool) compose(
 
 func (t *emailCustomerTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	composed, err := t.compose(ctx, params)
+	composed, err := t.compose(ctx, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -214,9 +214,9 @@ func customerUpdateComment(
 		Priority:   shipment.CommentPriorityNormal,
 		Metadata: map[string]any{
 			shipment.CommentMetadataOrigin: shipment.CommentOriginAgent,
-			"tool":                         "email_customer",
+			"tool":                         emailCustomerToolName,
 			"recipients":                   composed.recipients,
-			"subject":                      composed.data.AgentSubject,
+			previewFieldSubject:            composed.data.AgentSubject,
 		},
 	}
 }
@@ -234,9 +234,9 @@ type docsRequest struct {
 
 func (t *requestMissingDocsTool) compose(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*docsRequest, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
@@ -244,7 +244,7 @@ func (t *requestMissingDocsTool) compose(
 	if err != nil {
 		return nil, err
 	}
-	subject, err := requireString(params.Params, "subject")
+	subject, err := requireString(params.Params, previewFieldSubject)
 	if err != nil {
 		return nil, err
 	}
@@ -295,9 +295,9 @@ func (t *requestMissingDocsTool) compose(
 
 func (t *requestMissingDocsTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	composed, err := t.compose(ctx, params)
+	composed, err := t.compose(ctx, &params)
 	if err != nil {
 		return nil, err
 	}
@@ -346,18 +346,18 @@ type composedReply struct {
 
 func (t *replyToInboundMessageTool) compose(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*composedReply, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
-	reply, err := t.prepare(ctx, params)
+	reply, err := t.prepare(ctx, *params)
 	if err != nil {
 		return nil, err
 	}
 
-	tenant := tenantFrom(params)
+	tenant := tenantFrom(*params)
 	data := documenttemplate.AgentEmailContext{
 		AgentSubject: reply.subject,
 		AgentBody:    reply.body,
@@ -403,9 +403,9 @@ func replyReviewNote(reply *inboundReply) string {
 
 func (t *replyToInboundMessageTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	composed, err := t.compose(ctx, params)
+	composed, err := t.compose(ctx, &params)
 	if err != nil {
 		return nil, err
 	}

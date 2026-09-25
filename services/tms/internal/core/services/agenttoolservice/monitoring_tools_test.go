@@ -518,18 +518,18 @@ func (f *fakeDetention) Waive(
 
 func (f *fakeDetention) PreviewOccurrenceNotice(
 	_ context.Context,
-	params detentionservice.SendOccurrenceNoticeParams,
+	params *detentionservice.SendOccurrenceNoticeParams,
 ) (*detentionservice.NoticePreview, error) {
-	f.previewedNotice = &params
+	f.previewedNotice = params
 
 	return f.notice, nil
 }
 
 func (f *fakeDetention) PreviewWaive(
 	_ context.Context,
-	params detentionservice.WaiveParams,
+	params *detentionservice.WaiveParams,
 ) (*detentionservice.OccurrenceChange, error) {
-	f.previewedWaive = &params
+	f.previewedWaive = params
 
 	return f.change, nil
 }

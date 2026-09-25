@@ -164,7 +164,7 @@ func (s *Service) Create(
 	s.publishPTOInvalidation(ctx, createdEntity, permission.OpCreate, userID)
 	if autoApprove {
 		s.notifyDriverPTO(ctx, tenantOf(createdEntity), createdEntity, driverPTONotice{
-			eventType: "dash.pto_reviewed",
+			eventType: eventPTOReviewed,
 			approved:  true,
 		})
 	}

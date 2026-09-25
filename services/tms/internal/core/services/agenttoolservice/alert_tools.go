@@ -197,7 +197,7 @@ func (t *scheduleReportTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -209,9 +209,9 @@ func (t *scheduleReportTool) Execute(
 
 // request is the schedule the preview shows and the write creates.
 func (t *scheduleReportTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*reporting.SaveScheduleRequest, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
@@ -226,7 +226,7 @@ func (t *scheduleReportTool) request(
 	}
 
 	return &reporting.SaveScheduleRequest{
-		Request:         reporting.Request{TenantInfo: tenantFrom(params)},
+		Request:         reporting.Request{TenantInfo: tenantFrom(*params)},
 		DefinitionID:    definitionID,
 		CronExpression:  optionalString(params.Params, "cronExpression"),
 		Timezone:        optionalString(params.Params, "timezone"),

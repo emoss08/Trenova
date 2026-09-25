@@ -74,7 +74,7 @@ func TestPreviewRenewal_IsTheAskRequestRenewalSends(t *testing.T) {
 		RequestedByID: h.userID,
 	}
 
-	preview, err := svc.PreviewRenewal(t.Context(), request)
+	preview, err := svc.PreviewRenewal(t.Context(), &request)
 	require.NoError(t, err)
 	require.Len(t, preview.Credentials, 1)
 	assert.True(t, preview.Notification.Reachable)

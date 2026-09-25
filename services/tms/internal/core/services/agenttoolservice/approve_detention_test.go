@@ -24,9 +24,9 @@ type stubApprover struct {
 
 func (s *stubApprover) PreviewApprove(
 	_ context.Context,
-	p detentionservice.ApproveParams,
+	p *detentionservice.ApproveParams,
 ) (*detentionservice.OccurrenceChange, error) {
-	s.previewed = &p
+	s.previewed = p
 	before := *s.occurrence
 	after := before
 	if err := after.Approve(p.UserID, 1_767_230_000); err != nil {

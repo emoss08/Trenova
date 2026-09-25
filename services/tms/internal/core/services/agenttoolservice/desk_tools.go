@@ -235,7 +235,7 @@ type detentionApprover interface {
 	) (*detention.DetentionOccurrence, error)
 	PreviewApprove(
 		ctx context.Context,
-		params detentionservice.ApproveParams,
+		params *detentionservice.ApproveParams,
 	) (*detentionservice.OccurrenceChange, error)
 	GetOccurrenceDetail(
 		ctx context.Context,
@@ -425,7 +425,7 @@ type credentialActor interface {
 	RequestRenewal(ctx context.Context, req workercredentialservice.RenewalRequest) error
 	PreviewRenewal(
 		ctx context.Context,
-		req workercredentialservice.RenewalRequest,
+		req *workercredentialservice.RenewalRequest,
 	) (*workercredentialservice.RenewalPreview, error)
 }
 

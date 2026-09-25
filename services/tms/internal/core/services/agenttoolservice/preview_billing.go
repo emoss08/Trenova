@@ -18,9 +18,9 @@ var _ serviceports.ToolPreviewer = (*correctChargeCodeTool)(nil)
 
 func (t *correctChargeCodeTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,11 @@ func chargeEditMoney(before, after *shipment.Shipment) *agent.MoneyPreview {
 	freightAfter := after.FreightChargeAmount.Decimal
 	names := accessorialLabels(before.AdditionalCharges, after.AdditionalCharges)
 
-	lines := make([]agent.MoneyLine, 0, len(before.AdditionalCharges)+len(after.AdditionalCharges)+1)
+	lines := make(
+		[]agent.MoneyLine,
+		0,
+		len(before.AdditionalCharges)+len(after.AdditionalCharges)+1,
+	)
 	lines = append(lines, agent.MoneyLine{
 		Label:  "Freight",
 		Before: knownAmount(freightBefore),
@@ -156,7 +160,9 @@ func accessorialLabels(sets ...[]*shipment.AdditionalCharge) map[pulid.ID]string
 
 func accessorialLabel(charge *shipment.AdditionalCharge) string {
 	if charge.AccessorialCharge != nil {
-		if description := strings.TrimSpace(charge.AccessorialCharge.Description); description != "" {
+		if description := strings.TrimSpace(
+			charge.AccessorialCharge.Description,
+		); description != "" {
 			return description
 		}
 		if code := strings.TrimSpace(charge.AccessorialCharge.Code); code != "" {

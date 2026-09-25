@@ -105,7 +105,7 @@ func (t *addShipmentCommentTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	entity, err := t.comment(params)
+	entity, err := t.comment(&params)
 	if err != nil {
 		return err
 	}
@@ -117,9 +117,9 @@ func (t *addShipmentCommentTool) Execute(
 
 // comment is the note the preview shows and the write creates.
 func (t *addShipmentCommentTool) comment(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*shipment.ShipmentComment, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
@@ -147,7 +147,7 @@ func (t *addShipmentCommentTool) comment(
 		Visibility:     visibility,
 		Priority:       commentPriority(optionalString(params.Params, "priority")),
 		Source:         shipment.CommentSourceAI,
-		Metadata:       commentTaintMetadata(params),
+		Metadata:       commentTaintMetadata(*params),
 	}, nil
 }
 
@@ -451,7 +451,7 @@ func (t *cancelShipmentTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -462,9 +462,9 @@ func (t *cancelShipmentTool) Execute(
 }
 
 func (t *cancelShipmentTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*repositories.CancelShipmentRequest, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
@@ -479,7 +479,7 @@ func (t *cancelShipmentTool) request(
 	}
 
 	return &repositories.CancelShipmentRequest{
-		TenantInfo:   tenantFrom(params),
+		TenantInfo:   tenantFrom(*params),
 		ShipmentID:   shipmentID,
 		CanceledByID: params.Actor.UserID,
 		CanceledAt:   timeutils.NowUnix(),

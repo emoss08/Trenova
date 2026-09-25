@@ -22,7 +22,10 @@ type RenewalPreview struct {
 
 // PreviewRenewal checks the ask as RequestRenewal does and renders the
 // message it would send, sending nothing.
-func (s *Service) PreviewRenewal(ctx context.Context, req RenewalRequest) (*RenewalPreview, error) {
+func (s *Service) PreviewRenewal(
+	ctx context.Context,
+	req *RenewalRequest,
+) (*RenewalPreview, error) {
 	named, err := s.planRenewal(ctx, req)
 	if err != nil {
 		return nil, err

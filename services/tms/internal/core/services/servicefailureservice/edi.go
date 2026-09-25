@@ -29,7 +29,7 @@ func (s *service) preflightServiceFailure214(
 ) (*services.ServiceFailure214LifecycleResult, error) {
 	req := serviceFailure214Request(params)
 	if req == nil || s.ediService == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // a nil result means the change generates no 214
 	}
 	result, err := s.ediService.PreviewServiceFailure214ForLifecycle(ctx, req)
 	if err != nil {

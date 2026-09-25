@@ -104,7 +104,7 @@ func (t *tenderToRoutingGuideTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	req, err := t.request(params)
+	req, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -115,9 +115,9 @@ func (t *tenderToRoutingGuideTool) Execute(
 }
 
 func (t *tenderToRoutingGuideTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*tenderservice.CreateWaterfallTenderRequest, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
@@ -127,7 +127,7 @@ func (t *tenderToRoutingGuideTool) request(
 	}
 
 	req := &tenderservice.CreateWaterfallTenderRequest{
-		TenantInfo:     tenantFrom(params),
+		TenantInfo:     tenantFrom(*params),
 		ShipmentMoveID: moveID,
 	}
 	if guideID, ok, pErr := optionalPulid(params.Params, "routingGuideId"); pErr != nil {
@@ -258,7 +258,7 @@ func (t *tenderToCarriersTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	req, err := t.request(params)
+	req, err := t.request(&params)
 	if err != nil {
 		return err
 	}
@@ -269,9 +269,9 @@ func (t *tenderToCarriersTool) Execute(
 }
 
 func (t *tenderToCarriersTool) request(
-	params serviceports.ToolExecuteParams,
+	params *serviceports.ToolExecuteParams,
 ) (*tenderservice.CreateSpotTenderRequest, error) {
-	if err := guardExecute(t, params); err != nil {
+	if err := guardExecute(t, *params); err != nil {
 		return nil, err
 	}
 
@@ -306,7 +306,7 @@ func (t *tenderToCarriersTool) request(
 	}
 
 	return &tenderservice.CreateSpotTenderRequest{
-		TenantInfo:                tenantFrom(params),
+		TenantInfo:                tenantFrom(*params),
 		ShipmentMoveID:            moveID,
 		Mode:                      tender.Mode(mode),
 		Lines:                     lines,

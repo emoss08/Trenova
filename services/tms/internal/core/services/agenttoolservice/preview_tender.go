@@ -24,9 +24,9 @@ var (
 
 func (t *tenderToRoutingGuideTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -51,9 +51,9 @@ func (t *tenderToRoutingGuideTool) Preview(
 
 func (t *tenderToCarriersTool) Preview(
 	ctx context.Context,
-	params serviceports.ToolExecuteParams,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	request, err := t.request(params)
+	request, err := t.request(&params)
 	if err != nil {
 		return nil, err
 	}
@@ -94,10 +94,10 @@ func tenderPreview(
 	created, err := toolpreview.Create(
 		toolpreview.Record{Resource: permission.ResourceTender, Label: tenderLabel(planned)},
 		entity,
-		toolpreview.Only("mode", "status", "shipmentMoveId", "routingGuideId"),
+		toolpreview.Only("mode", "status", previewFieldShipmentMoveID, "routingGuideId"),
 		toolpreview.WithRefs(map[string]permission.Resource{
-			"shipmentMoveId": permission.ResourceShipmentMove,
-			"routingGuideId": permission.ResourceRoutingGuide,
+			previewFieldShipmentMoveID: permission.ResourceShipmentMove,
+			"routingGuideId":           permission.ResourceRoutingGuide,
 		}),
 	)
 	if err != nil {
