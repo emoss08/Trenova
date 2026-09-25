@@ -125,6 +125,8 @@ monitoring:
     endpoint: localhost:4317
     serviceName: trenova
     samplingRate: 1.0
+    aiSamplingRate: 1.0
+    traceUrlTemplate: ""
   graphql:
     # Per-resolver metrics and spans stay off in production; enable temporarily
     # when investigating N+1 queries on a specific operation.
