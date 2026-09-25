@@ -227,3 +227,54 @@ func TestConnectionRepository_HealthQueueWebhooksAndVersioning(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, due, "disconnected connections are never checked")
 }
+
+func TestConnectionRepository_ReferenceRefreshRunsUntilItFinishesEitherWay(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
+	now := timeutils.NowUnix()
+
+	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
+	require.NoError(t, err)
+	get := func() *accountingsync.AccountingConnection {
+		conn, getErr := repo.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{TenantInfo: tenant, ID: created.ID})
+		require.NoError(t, getErr)
+		return conn
+	}
+	mark := func(req repositories.MarkAccountingReferenceRefreshRequest) {
+		req.TenantInfo = tenant
+		req.ID = created.ID
+		require.NoError(t, repo.MarkReferenceRefresh(ctx, req))
+	}
+
+	started := now
+	mark(repositories.MarkAccountingReferenceRefreshRequest{StartedAt: &started})
+	require.NotNil(t, get().ReferenceRefreshStartedAt)
+
+	mark(repositories.MarkAccountingReferenceRefreshRequest{Error: "QuickBooks did not answer"})
+	failed := get()
+	assert.Nil(t, failed.ReferenceRefreshStartedAt, "a failed refresh is no longer running")
+	assert.Equal(t, "QuickBooks did not answer", failed.ReferenceRefreshError)
+	assert.Nil(t, failed.ReferenceRefreshedAt)
+
+	restarted := now + 10
+	mark(repositories.MarkAccountingReferenceRefreshRequest{StartedAt: &restarted})
+	running := get()
+	require.NotNil(t, running.ReferenceRefreshStartedAt)
+	assert.Empty(t, running.ReferenceRefreshError, "starting again clears the last failure")
+
+	finished := now + 20
+	mark(repositories.MarkAccountingReferenceRefreshRequest{RefreshedAt: &finished})
+	running.SetupStep = accountingsync.SetupStepComplete
+	_, err = repo.Update(ctx, running)
+	require.NoError(t, err, "a copy read while the refresh ran still saves")
+	done := get()
+	assert.Equal(t, accountingsync.SetupStepComplete, done.SetupStep)
+	assert.Nil(t, done.ReferenceRefreshStartedAt)
+	require.NotNil(t, done.ReferenceRefreshedAt)
+	assert.Equal(t, finished, *done.ReferenceRefreshedAt)
+	assert.Empty(t, done.ReferenceRefreshError)
+}

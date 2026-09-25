@@ -72,6 +72,7 @@ describe("buildModuleView", () => {
       "Reports",
       "Accounts receivable",
       "Bank reconciliation",
+      "Accounting sync",
     ]);
     expect(view.configuration.map((item) => item.id)).toEqual(["account-types", "fiscal-years"]);
   });

@@ -13,6 +13,7 @@ const (
 	FeatureShipmentImportChat          = Feature("ShipmentImportChat")
 	FeatureDocumentIntelligenceRoute   = Feature("DocumentIntelligenceRoute")
 	FeatureDocumentIntelligenceExtract = Feature("DocumentIntelligenceExtract")
+	FeatureAccountingMapping           = Feature("AccountingMapping")
 )
 
 func AllFeatures() []Feature {
@@ -25,20 +26,23 @@ func AllFeatures() []Feature {
 		FeatureShipmentImportChat,
 		FeatureDocumentIntelligenceRoute,
 		FeatureDocumentIntelligenceExtract,
+		FeatureAccountingMapping,
 	}
 }
 
 type SubjectType string
 
 const (
-	SubjectTypeDocument      = SubjectType("Document")
-	SubjectTypeFormulaSchema = SubjectType("FormulaSchema")
+	SubjectTypeDocument             = SubjectType("Document")
+	SubjectTypeFormulaSchema        = SubjectType("FormulaSchema")
+	SubjectTypeAccountingConnection = SubjectType("AccountingConnection")
 )
 
 func AllSubjectTypes() []SubjectType {
 	return []SubjectType{
 		SubjectTypeDocument,
 		SubjectTypeFormulaSchema,
+		SubjectTypeAccountingConnection,
 	}
 }
 

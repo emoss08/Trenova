@@ -58,6 +58,30 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(accountingsync.AllErrorCategories()),
 		},
 		{
+			name:   "ck_accounting_connections_setup_step",
+			values: stringsOf(accountingsync.AllSetupSteps()),
+		},
+		{
+			name:   "ck_accounting_reference_objects_kind",
+			values: stringsOf(accountingsync.AllReferenceKinds()),
+		},
+		{
+			name:   "ck_accounting_mappings_target_type",
+			values: stringsOf(accountingsync.AllMappingTargetTypes()),
+		},
+		{
+			name:   "ck_accounting_mappings_provider_kind",
+			values: stringsOf(accountingsync.AllReferenceKinds()),
+		},
+		{
+			name:   "ck_accounting_mappings_state",
+			values: stringsOf(accountingsync.AllMappingStates()),
+		},
+		{
+			name:   "ck_accounting_mappings_source",
+			values: stringsOf(accountingsync.AllMappingSources()),
+		},
+		{
 			name:   "ck_agent_definitions_template",
 			values: stringsOf(agentdefinition.AllTemplates()),
 		},

@@ -10,6 +10,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/accounttype"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
@@ -182,6 +183,25 @@ type AccountTypeConnection struct {
 type AccountTypeEdge struct {
 	Node   *accounttype.AccountType `json:"node"`
 	Cursor string                   `json:"cursor"`
+}
+
+type AccountingMappingConnection struct {
+	Edges      []*AccountingMappingEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+type AccountingMappingEdge struct {
+	Node   *accountingsync.AccountingMapping `json:"node"`
+	Cursor string                            `json:"cursor"`
+}
+
+type AccountingMappingFilterInput struct {
+	TargetTypes  []accountingsync.MappingTargetType `json:"targetTypes,omitempty"`
+	States       []accountingsync.MappingState      `json:"states,omitempty"`
+	RequiredOnly *bool                              `json:"requiredOnly,omitempty"`
+	// Matches the Trenova label or the chosen record's name.
+	Search *string `json:"search,omitempty"`
 }
 
 type AcknowledgeMyPolicyInput struct {
@@ -1381,6 +1401,13 @@ type CompleteWorkerTrainingInput struct {
 	Version     *int    `json:"version,omitempty"`
 }
 
+// A proposal to confirm, with the record it proposed when it was shown.
+type ConfirmAccountingMappingInput struct {
+	ID string `json:"id"`
+	// The proposed record's ID in the accounting system, as shown.
+	ExternalID string `json:"externalId"`
+}
+
 type CostCategory struct {
 	ID                   string                       `json:"id"`
 	Category             CostCategoryType             `json:"category"`
@@ -1440,6 +1467,13 @@ type CostingControlInput struct {
 	PlannedMonthlyMiles  *int    `json:"plannedMonthlyMiles,omitempty"`
 	TargetMarginPercent  *string `json:"targetMarginPercent,omitempty"`
 	Version              int     `json:"version"`
+}
+
+// Creates the record in the accounting system and maps to it.
+type CreateAccountingReferenceRecordInput struct {
+	MappingID string `json:"mappingId"`
+	// The name to create it under. Defaults to the Trenova record's name.
+	Name *string `json:"name,omitempty"`
 }
 
 // Exactly one of the four.
@@ -5744,6 +5778,14 @@ type ServiceTypeConnection struct {
 type ServiceTypeEdge struct {
 	Node   *servicetype.ServiceType `json:"node"`
 	Cursor string                   `json:"cursor"`
+}
+
+// Chooses an accounting system record for a mapping and confirms it.
+type SetAccountingMappingInput struct {
+	MappingID string `json:"mappingId"`
+	// The record's ID in the accounting system.
+	ExternalID string  `json:"externalId"`
+	Reason     *string `json:"reason,omitempty"`
 }
 
 type SetAgentAccessInput struct {

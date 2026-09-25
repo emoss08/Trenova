@@ -844,6 +844,17 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/accounting/sync/mappings",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountingIntegration),
+            ),
+            async lazy() {
+              const { AccountingMappingsPage } = await import("@/routes/accounting-mapping/page");
+              return { Component: AccountingMappingsPage };
+            },
+          },
+          {
             path: "/accounting/configuration-files/account-types",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.AccountType)),
             async lazy() {

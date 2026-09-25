@@ -18,8 +18,60 @@ fragment AccountingConnectionFields on AccountingConnection {
   refreshTokenAbsoluteExpiresAt
   connectedAt
   disconnectedAt
+  setupStep
+  referenceRefreshStartedAt
+  referenceRefreshedAt
+  referenceRefreshError
   version
   updatedAt
+}
+
+fragment AccountingMappingFields on AccountingMapping {
+  id
+  targetType
+  trenovaObjectId
+  trenovaKey
+  targetLabel
+  providerKind
+  externalId
+  externalName
+  state
+  source
+  confidence
+  reason
+  required
+  prechecked
+  candidates {
+    externalId
+    name
+    score
+    reason
+  }
+  confirmedBy {
+    id
+    name
+  }
+  confirmedAt
+  version
+  updatedAt
+}
+
+fragment AccountingReferenceObjectFields on AccountingReferenceObject {
+  id
+  kind
+  externalId
+  label
+  number
+  accountType
+  accountSubType
+  itemType
+  companyName
+  city
+  state
+  postalCode
+  dueDays
+  active
+  usable
 }
 
 query AccountingSyncStatus($integrationType: AccountingSystem!) {
@@ -30,6 +82,109 @@ query AccountingSyncStatus($integrationType: AccountingSystem!) {
     connection {
       ...AccountingConnectionFields
     }
+  }
+}
+
+query AccountingMappingSummary($integrationType: AccountingSystem!) {
+  accountingMappingSummary(integrationType: $integrationType) {
+    integrationType
+    providerName
+    connection {
+      ...AccountingConnectionFields
+    }
+    groups {
+      targetType
+      unmatched
+      proposed
+      confirmed
+    }
+    requiredTotal
+    requiredConfirmed
+    canCompleteSetup
+  }
+}
+
+query AccountingMappings(
+  $integrationType: AccountingSystem!
+  $first: Int
+  $after: String
+  $filter: AccountingMappingFilterInput
+) {
+  accountingMappings(
+    integrationType: $integrationType
+    first: $first
+    after: $after
+    filter: $filter
+  ) {
+    edges {
+      node {
+        ...AccountingMappingFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query AccountingReferenceObjects(
+  $integrationType: AccountingSystem!
+  $kind: AccountingReferenceKind!
+  $query: String
+  $usableOnly: Boolean
+  $limit: Int
+) {
+  accountingReferenceObjects(
+    integrationType: $integrationType
+    kind: $kind
+    query: $query
+    usableOnly: $usableOnly
+    limit: $limit
+  ) {
+    ...AccountingReferenceObjectFields
+  }
+}
+
+mutation ConfirmAccountingMappings($input: [ConfirmAccountingMappingInput!]!) {
+  confirmAccountingMappings(input: $input) {
+    ...AccountingMappingFields
+  }
+}
+
+mutation RejectAccountingMapping($id: ID!) {
+  rejectAccountingMapping(id: $id) {
+    ...AccountingMappingFields
+  }
+}
+
+mutation SetAccountingMapping($input: SetAccountingMappingInput!) {
+  setAccountingMapping(input: $input) {
+    ...AccountingMappingFields
+  }
+}
+
+mutation ClearAccountingMapping($id: ID!) {
+  clearAccountingMapping(id: $id) {
+    ...AccountingMappingFields
+  }
+}
+
+mutation CreateAccountingReferenceRecord($input: CreateAccountingReferenceRecordInput!) {
+  createAccountingReferenceRecord(input: $input) {
+    ...AccountingMappingFields
+  }
+}
+
+mutation RefreshAccountingReferenceData($integrationType: AccountingSystem!) {
+  refreshAccountingReferenceData(integrationType: $integrationType) {
+    ...AccountingConnectionFields
+  }
+}
+
+mutation CompleteAccountingSetup($integrationType: AccountingSystem!) {
+  completeAccountingSetup(integrationType: $integrationType) {
+    ...AccountingConnectionFields
   }
 }
 

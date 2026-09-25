@@ -3,6 +3,8 @@ package accountingconnectionservice
 import (
 	"context"
 	"errors"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -240,6 +242,52 @@ func (f *fakeConnections) MarkWebhookReceived(
 		}
 	}
 	return count, nil
+}
+
+func (f *fakeConnections) MarkReferenceRefresh(
+	_ context.Context,
+	req repositories.MarkAccountingReferenceRefreshRequest,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	row, ok := f.rows[req.ID]
+	if !ok {
+		return errortypes.NewNotFoundError("Accounting connection not found")
+	}
+	if req.StartedAt != nil {
+		at := *req.StartedAt
+		row.ReferenceRefreshStartedAt = &at
+	}
+	if req.RefreshedAt != nil {
+		at := *req.RefreshedAt
+		row.ReferenceRefreshedAt = &at
+	}
+	if req.RefreshedAt != nil || req.Error != "" {
+		row.ReferenceRefreshError = req.Error
+	}
+	return nil
+}
+
+func (f *fakeConnections) ListActive(
+	_ context.Context,
+	req repositories.ListActiveAccountingConnectionsRequest,
+) ([]*accountingsync.AccountingConnection, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := make([]*accountingsync.AccountingConnection, 0, len(f.rows))
+	for _, row := range f.rows {
+		if row.IsActive() && row.ID.String() > req.AfterID.String() {
+			clone := *row
+			out = append(out, &clone)
+		}
+	}
+	slices.SortFunc(out, func(a, b *accountingsync.AccountingConnection) int {
+		return strings.Compare(a.ID.String(), b.ID.String())
+	})
+	if req.Limit > 0 && len(out) > req.Limit {
+		out = out[:req.Limit]
+	}
+	return out, nil
 }
 
 type fakeStates struct {
@@ -524,4 +572,21 @@ func (f *fakeWatchtower) get(sourceID string) (projection, bool) {
 	defer f.mu.Unlock()
 	item, ok := f.items[sourceID]
 	return item, ok
+}
+
+type fakeRefresher struct {
+	mu        sync.Mutex
+	requested []pulid.ID
+	err       error
+}
+
+func (f *fakeRefresher) RequestReferenceRefresh(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	connectionID pulid.ID,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.requested = append(f.requested, connectionID)
+	return f.err
 }

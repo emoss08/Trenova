@@ -41,6 +41,15 @@ func tokenColumns() []string {
 	return []string{cols.AccessTokenCiphertext.String(), cols.RefreshTokenCiphertext.String()}
 }
 
+func refreshColumns() []string {
+	cols := buncolgen.AccountingConnectionColumns
+	return []string{
+		cols.ReferenceRefreshStartedAt.String(),
+		cols.ReferenceRefreshedAt.String(),
+		cols.ReferenceRefreshError.String(),
+	}
+}
+
 func activeStatuses() []accountingsync.ConnectionStatus {
 	return []accountingsync.ConnectionStatus{
 		accountingsync.ConnectionStatusConnected,
@@ -231,7 +240,7 @@ func (r *connectionRepository) Update(
 	results, err := r.db.DBForContext(ctx).
 		NewUpdate().
 		Model(entity).
-		ExcludeColumn(tokenColumns()...).
+		ExcludeColumn(append(tokenColumns(), refreshColumns()...)...).
 		WherePK().
 		Where(cols.Version.Eq(), ov).
 		Exec(ctx)
@@ -298,6 +307,75 @@ func (r *connectionRepository) MarkWebhookReceived(
 	}
 
 	return results.RowsAffected()
+}
+
+func (r *connectionRepository) MarkReferenceRefresh(
+	ctx context.Context,
+	req repositories.MarkAccountingReferenceRefreshRequest,
+) error {
+	if req.StartedAt == nil && req.RefreshedAt == nil && req.Error == "" {
+		return nil
+	}
+
+	cols := buncolgen.AccountingConnectionColumns
+	query := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*accountingsync.AccountingConnection)(nil)).
+		WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+			return buncolgen.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
+				Where(cols.ID.Eq(), req.ID)
+		})
+	switch {
+	case req.StartedAt != nil:
+		query = query.
+			Set(cols.ReferenceRefreshStartedAt.Set(), *req.StartedAt).
+			Set(cols.ReferenceRefreshError.SetNull())
+	default:
+		query = setOrNull(
+			query.Set(cols.ReferenceRefreshStartedAt.SetNull()),
+			cols.ReferenceRefreshError,
+			req.Error,
+		)
+		if req.RefreshedAt != nil {
+			query = query.Set(cols.ReferenceRefreshedAt.Set(), *req.RefreshedAt)
+		}
+	}
+
+	results, err := query.Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return dberror.CheckRowsAffected(results, connectionEntity, req.ID.String())
+}
+
+func (r *connectionRepository) ListActive(
+	ctx context.Context,
+	req repositories.ListActiveAccountingConnectionsRequest,
+) ([]*accountingsync.AccountingConnection, error) {
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+
+	entities := make([]*accountingsync.AccountingConnection, 0, limit)
+	cols := buncolgen.AccountingConnectionColumns
+
+	query := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		ExcludeColumn(tokenColumns()...).
+		Where(cols.Status.In(), bun.List(activeStatuses())).
+		Order(cols.ID.OrderAsc()).
+		Limit(limit)
+	if !req.AfterID.IsNil() {
+		query = query.Where(cols.ID.Gt(), req.AfterID)
+	}
+	if err := query.Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entities, nil
 }
 
 func setOrNull(q *bun.UpdateQuery, col buncolgen.Column, value string) *bun.UpdateQuery {

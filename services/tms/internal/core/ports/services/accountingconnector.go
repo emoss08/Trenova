@@ -35,3 +35,61 @@ type AccountingConnector interface {
 type AccountingConnectorRegistry interface {
 	For(typ integration.Type) (AccountingConnector, bool)
 }
+
+type AccountingReferencePageRequest struct {
+	RealmID       string
+	AccessToken   string
+	Kind          accountingsync.ReferenceKind
+	StartPosition int
+	PageSize      int
+}
+
+type AccountingReferencePage struct {
+	Objects   []*accountingsync.AccountingReferenceObject
+	NextStart int
+}
+
+type AccountingItemDraft struct {
+	Name            string
+	Description     string
+	Sku             string
+	IncomeAccountID string
+}
+
+type AccountingPartyDraft struct {
+	DisplayName  string
+	CompanyName  string
+	Email        string
+	AddressLine1 string
+	City         string
+	State        string
+	PostalCode   string
+	Country      string
+	Is1099       bool
+}
+
+type AccountingCreateReferenceRequest struct {
+	RealmID     string
+	AccessToken string
+	RequestID   string
+	Kind        accountingsync.ReferenceKind
+	Item        *AccountingItemDraft
+	Party       *AccountingPartyDraft
+}
+
+type AccountingReferenceReader interface {
+	ListReference(
+		ctx context.Context,
+		req *AccountingReferencePageRequest,
+	) (*AccountingReferencePage, error)
+	MaxReferencePageSize() int
+}
+
+type AccountingReferenceCreator interface {
+	CreateReference(
+		ctx context.Context,
+		req *AccountingCreateReferenceRequest,
+	) (*accountingsync.AccountingReferenceObject, error)
+	IsDuplicateName(err error) bool
+	SanitizeName(kind accountingsync.ReferenceKind, name string) string
+}

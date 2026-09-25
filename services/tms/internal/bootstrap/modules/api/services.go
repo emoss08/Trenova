@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/accountingconnectionservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/accountingmappingservice"
 	"github.com/emoss08/trenova/internal/core/services/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/core/services/accounttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/agentaccessservice"
@@ -504,6 +505,8 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	detentionservice.New,
 	accountingconnectionservice.New,
 	func(s *accountingconnectionservice.Service) services.AccountingConnectionService { return s },
+	accountingmappingservice.New,
+	func(s *accountingmappingservice.Service) services.AccountingMappingService { return s },
 	detentionbillingservice.New,
 	invoiceadjustmentcontrolservice.New,
 	fx.Annotate(

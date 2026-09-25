@@ -30,6 +30,7 @@ Temporal returns succeeds.
 | Insights, daily briefing | a parent plus one child per organization | `system-queue` |
 | Document extraction | `ProcessDocumentAIExtractionWorkflow` | document intelligence |
 | Inbound email | `ProcessInboundMessageWorkflow` | `system-queue` |
+| Accounting mapping suggestions | `RefreshAccountingReferenceWorkflow`, one per connection (`accounting-reference:<connectionID>`), whose model pass is one activity at background priority | `integration-queue` |
 
 The queues are split so one class of work cannot starve another: a person
 watching a reply must not wait behind a ten-minute scheduled run, and an

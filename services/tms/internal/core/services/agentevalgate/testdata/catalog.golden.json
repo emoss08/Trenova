@@ -825,6 +825,82 @@
       }
     },
     {
+      "name": "clear_accounting_mapping",
+      "description": "Remove the accounting system record a Trenova record or setting is mapped to, so it is unmatched again and that record is never proposed for it again. Use it when a person says a mapping is wrong and no right record exists yet; to replace it with another record, use set_accounting_mapping instead.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "description": "The setting's key from list_accounting_mapping_gaps, for the other target types. Examples: \"ARAccount\", \"Freight\", \"Net30\", \"ACH\".",
+            "type": "string"
+          },
+          "mappingId": {
+            "description": "The mapping's id from list_accounting_mapping_gaps or get_accounting_mapping. Never guess one.",
+            "type": "string"
+          },
+          "recordId": {
+            "description": "The Trenova customer, carrier or accessorial charge id, from list_customers, list_carriers or list_accessorial_charges.",
+            "type": "string"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          },
+          "targetType": {
+            "description": "The kind of Trenova record or setting, when naming it by recordId or key.",
+            "enum": [
+              "AccountRole",
+              "LineType",
+              "AccessorialCharge",
+              "ItemRole",
+              "Customer",
+              "Carrier",
+              "PaymentTerm",
+              "PaymentMethod"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "unmap",
+        "remove",
+        "wrong",
+        "mapping"
+      ],
+      "prerequisites": [
+        "get_accounting_mapping"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_integration",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Unmatches a record so it cannot sync until someone maps it again; mapping it again undoes it."
+      }
+    },
+    {
       "name": "compare_report_runs",
       "description": "Compare two finished runs of the same report and report what moved: rows added, rows that disappeared, rows whose numbers changed, and the totals on each side. This is how to answer \"what changed since last week\" — reading the newest run alone cannot tell you what is no longer in it. Get run ids from list_report_runs. Both runs must be the same report with the same columns; a report whose columns changed between the two cannot be compared, and the tool says so rather than lining them up by position.",
       "parameters": {
@@ -996,6 +1072,86 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Rewrites the accessorial charges a customer will be invoiced, so it moves money."
+      }
+    },
+    {
+      "name": "create_accounting_reference_record",
+      "description": "Create an item, customer or vendor in the accounting system and map a Trenova record to it. Use it for an accessorial charge, line type, customer or carrier with no match there, and only when get_accounting_mapping's search finds no existing record; a duplicate is refused and names the existing one. Accounts, terms and payment methods are the bookkeeper's and are never created.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "description": "The setting's key from list_accounting_mapping_gaps, for the other target types. Examples: \"ARAccount\", \"Freight\", \"Net30\", \"ACH\".",
+            "type": "string"
+          },
+          "mappingId": {
+            "description": "The mapping's id from list_accounting_mapping_gaps or get_accounting_mapping. Never guess one.",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name to create it under. Defaults to the Trenova record's name.",
+            "type": "string"
+          },
+          "recordId": {
+            "description": "The Trenova customer, carrier or accessorial charge id, from list_customers, list_carriers or list_accessorial_charges.",
+            "type": "string"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          },
+          "targetType": {
+            "description": "The kind of Trenova record or setting, when naming it by recordId or key.",
+            "enum": [
+              "AccountRole",
+              "LineType",
+              "AccessorialCharge",
+              "ItemRole",
+              "Customer",
+              "Carrier",
+              "PaymentTerm",
+              "PaymentMethod"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "create",
+        "item",
+        "vendor",
+        "add"
+      ],
+      "prerequisites": [
+        "get_accounting_mapping"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_integration",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Creates a record in the organization's own accounting system; Trenova cannot delete it again, so a person approves it."
       }
     },
     {
@@ -2458,6 +2614,86 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Saves a copy of a report inside Trenova; nothing leaves the organization."
+      }
+    },
+    {
+      "name": "get_accounting_mapping",
+      "description": "Get which accounting system record one Trenova record or setting is sent as. Name it by mappingId, or by targetType with recordId for a customer, carrier or accessorial charge, or with key for an account role, line type, term or payment method. With search, it also returns up to ten usable accounting records of the right kind whose names match, so you can choose one for set_accounting_mapping.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "description": "The setting's key from list_accounting_mapping_gaps, for the other target types. Examples: \"ARAccount\", \"RevenueAccount\", \"Freight\", \"Net30\", \"ACH\".",
+            "type": "string"
+          },
+          "mappingId": {
+            "description": "The mapping's id from list_accounting_mapping_gaps.",
+            "type": "string"
+          },
+          "recordId": {
+            "description": "The Trenova customer, carrier or accessorial charge id, from list_customers, list_carriers or list_accessorial_charges.",
+            "type": "string"
+          },
+          "search": {
+            "description": "Words to find in the accounting system's record names.",
+            "type": "string"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          },
+          "targetType": {
+            "description": "The kind of Trenova record or setting, when naming it by recordId or key.",
+            "enum": [
+              "AccountRole",
+              "LineType",
+              "AccessorialCharge",
+              "ItemRole",
+              "Customer",
+              "Carrier",
+              "PaymentTerm",
+              "PaymentMethod"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "account",
+        "post",
+        "posts",
+        "revenue",
+        "mapped",
+        "item",
+        "vendor"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "accounting_integration",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
       }
     },
     {
@@ -4173,6 +4409,76 @@
       "policy": {
         "kind": "query",
         "resource": "accessorial_charge",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_accounting_mapping_gaps",
+      "description": "List what still has to be matched to the accounting system before anything can sync. It covers account roles, line types, accessorial charges, customers, carriers, terms and payment methods that are unmatched or only proposed, and says how many required mappings are confirmed and whether setup can finish. Each gap carries its id and the candidates Trenova considered; pass them to get_accounting_mapping or set_accounting_mapping.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "description": "How many gaps to return, at most 50. Defaults to 25.",
+            "type": "integer"
+          },
+          "requiredOnly": {
+            "description": "Only the mappings setup cannot finish without.",
+            "type": "boolean"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          },
+          "targetType": {
+            "description": "Only gaps of this kind. Leave it out for every kind.",
+            "enum": [
+              "AccountRole",
+              "LineType",
+              "AccessorialCharge",
+              "ItemRole",
+              "Customer",
+              "Carrier",
+              "PaymentTerm",
+              "PaymentMethod"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "mapping",
+        "unmapped",
+        "setup",
+        "match",
+        "gaps"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "accounting_integration",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -9821,6 +10127,54 @@
       }
     },
     {
+      "name": "refresh_accounting_reference_data",
+      "description": "Read the accounting system's accounts, items, customers, vendors, terms and payment methods again and refresh Trenova's proposals. Use it after a person says they added or renamed something in the accounting system. It runs in the background; check list_accounting_mapping_gaps afterwards. It changes nothing in the books and never touches a confirmed mapping.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "pull",
+        "reload",
+        "sync",
+        "new accounts",
+        "refresh"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_integration",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads the accounting system and refreshes Trenova's suggestions; it writes nothing to the books and leaves confirmed mappings alone."
+      }
+    },
+    {
       "name": "reject_worker_pto",
       "description": "Decline a worker's time-off request. A rejection is final — the request cannot be reopened, and the worker is told why — so the reason must be the one you were actually given, not one you composed.",
       "parameters": {
@@ -10816,6 +11170,95 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Sends the customer a detention notice that starts a charge."
+      }
+    },
+    {
+      "name": "set_accounting_mapping",
+      "description": "Choose which accounting system record a Trenova record or setting is sent as, and confirm it. Use an externalId from the mapping's candidates or from get_accounting_mapping's search options; never guess one. To accept Trenova's proposal, send the proposed record's externalId. Give a short reason a bookkeeper would accept. Only confirmed mappings are used when syncing.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "externalId": {
+            "description": "The accounting system record's id, from get_accounting_mapping's candidates or search options.",
+            "type": "string"
+          },
+          "key": {
+            "description": "The setting's key from list_accounting_mapping_gaps, for the other target types. Examples: \"ARAccount\", \"Freight\", \"Net30\", \"ACH\".",
+            "type": "string"
+          },
+          "mappingId": {
+            "description": "The mapping's id from list_accounting_mapping_gaps or get_accounting_mapping. Never guess one.",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why this record is the right one, in one sentence.",
+            "type": "string"
+          },
+          "recordId": {
+            "description": "The Trenova customer, carrier or accessorial charge id, from list_customers, list_carriers or list_accessorial_charges.",
+            "type": "string"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          },
+          "targetType": {
+            "description": "The kind of Trenova record or setting, when naming it by recordId or key.",
+            "enum": [
+              "AccountRole",
+              "LineType",
+              "AccessorialCharge",
+              "ItemRole",
+              "Customer",
+              "Carrier",
+              "PaymentTerm",
+              "PaymentMethod"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system",
+          "externalId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "map",
+        "match",
+        "item",
+        "account",
+        "confirm",
+        "link"
+      ],
+      "prerequisites": [
+        "list_accounting_mapping_gaps",
+        "get_accounting_mapping"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_integration",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Decides which account or record Trenova's invoices, payments and bills will post to, so a person approves it; clearing or changing it undoes it."
       }
     },
     {

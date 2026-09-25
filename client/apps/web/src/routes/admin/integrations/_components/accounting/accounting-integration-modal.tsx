@@ -1,7 +1,8 @@
 import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { usePermission } from "@/hooks/use-permission";
-import { hasLiveAccountingConnection } from "@/lib/accounting-sync";
+import { useAccountingMappingSummary } from "@/hooks/use-accounting-mapping-summary";
+import { hasLiveAccountingConnection, needsAccountingMappings } from "@/lib/accounting-sync";
 import type { IntegrationSetupStep } from "@/lib/integration-setup";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +23,7 @@ import { IntegrationSetupWizard } from "../shared/integration-setup-wizard";
 import { AccountingCompanyFacts } from "./accounting-company-facts";
 import { AccountingConnectStep } from "./accounting-connect-step";
 import { AccountingConnectionPanel } from "./accounting-connection-panel";
+import { AccountingMapStep } from "./accounting-map-step";
 import { quickBooksVendor, type AccountingVendor } from "./accounting-vendors";
 import { useAccountingConnectionActions } from "./use-accounting-connection";
 
@@ -105,10 +107,13 @@ function AccountingIntegrationBody({
     enabled: open && canRead,
   });
   const { connect, check, disconnect } = useAccountingConnectionActions(vendor);
+  const mapping = needsAccountingMappings(statusQuery.data?.connection);
+  const summaryQuery = useAccountingMappingSummary(vendor.system, open && canRead && mapping);
 
   const steps: IntegrationSetupStep[] = [
     { id: "connect", label: t("Connect"), detail: t("Sign in to {0}", vendor.name) },
     { id: "review", label: t("Review company"), detail: t("Confirm what was connected") },
+    { id: "map", label: t("Match records"), detail: t("Confirm what each record is sent as") },
   ];
 
   if (permissionsLoading || (canRead && statusQuery.isLoading)) {
@@ -191,9 +196,38 @@ function AccountingIntegrationBody({
         <AccountingCompanyFacts connection={connection} />
         <div className="flex justify-end gap-2 border-t pt-4">
           <Button type="button" onClick={onReviewed}>
-            {t("Done")}
+            {needsAccountingMappings(connection) ? t("Continue") : t("Done")}
           </Button>
         </div>
+      </IntegrationSetupWizard>
+    );
+  }
+
+  if (mapping) {
+    return (
+      <IntegrationSetupWizard steps={steps} activeStepId="map" label={t("{0} setup", vendor.name)}>
+        {summaryQuery.data ? (
+          <AccountingMapStep vendor={vendor} summary={summaryQuery.data} canUpdate={canUpdate} />
+        ) : summaryQuery.isError ? (
+          <Alert size="sm" variant="destructive">
+            <AlertDescription className="flex items-center justify-between gap-3">
+              <span>{t("The mappings could not be loaded.")}</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => void summaryQuery.refetch()}
+              >
+                {t("Retry")}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <div className="space-y-3">
+            <Skeleton className="h-8 w-1/2" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        )}
       </IntegrationSetupWizard>
     );
   }

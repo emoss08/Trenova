@@ -1,6 +1,7 @@
 package accountingconnectionservice
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -35,6 +36,7 @@ type harness struct {
 	connector    *fakeConnector
 	audit        *fakeAudit
 	watchtower   *fakeWatchtower
+	refresher    *fakeRefresher
 	events       *agenteventstest.Recorder
 	encryption   *encryptionservice.Service
 	tenant       pagination.TenantInfo
@@ -50,6 +52,7 @@ func newHarness(t *testing.T) *harness {
 		connector:    newFakeConnector(),
 		audit:        &fakeAudit{},
 		watchtower:   newFakeWatchtower(),
+		refresher:    &fakeRefresher{},
 		events:       &agenteventstest.Recorder{},
 		encryption: encryptionservice.New(encryptionservice.Params{Config: &config.Config{
 			Security: config.SecurityConfig{Encryption: config.EncryptionConfig{
@@ -70,6 +73,7 @@ func newHarness(t *testing.T) *harness {
 		AuditService: h.audit,
 		Watchtower:   h.watchtower,
 		Publisher:    h.events,
+		Refresher:    h.refresher,
 	})
 	return h
 }
@@ -198,6 +202,18 @@ func TestCompleteAuthorizationConnectsWithEncryptedTokens(t *testing.T) {
 	assert.NotContains(t, serialized, "refresh-1")
 	assert.True(t, h.audit.entries[0].Critical)
 	assert.Empty(t, h.events.Published())
+	assert.Equal(t, []pulid.ID{conn.ID}, h.refresher.requested, "connecting starts the reference data refresh")
+}
+
+func TestCompleteAuthorizationSurvivesARefreshThatCannotStart(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	h.refresher.err = errors.New("temporal unavailable")
+	conn := h.connect(t)
+
+	assert.Equal(t, accountingsync.ConnectionStatusConnected, conn.Status)
+	assert.Equal(t, []pulid.ID{conn.ID}, h.refresher.requested)
 }
 
 func TestCompleteAuthorizationIsSingleUse(t *testing.T) {
@@ -510,4 +526,71 @@ func TestStatusReportsAvailabilityAndConnection(t *testing.T) {
 	require.NotNil(t, status.Connection)
 	assert.Equal(t, conn.ID, status.Connection.ID)
 	assert.Empty(t, status.Connection.AccessTokenCiphertext)
+}
+
+func TestSessionHandsOutAFreshTokenForAConnectedCompany(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	conn := h.connect(t)
+	h.expireAccessToken(conn)
+
+	session, err := h.svc.Session(t.Context(), h.tenant, conn.ID)
+	require.NoError(t, err)
+	assert.Equal(t, "access-2", session.AccessToken, "an expiring token is refreshed first")
+	assert.Equal(t, conn.ID, session.Connection.ID)
+	assert.Equal(t, testRealm, session.Connection.ExternalRealmID)
+	assert.NotNil(t, session.Connector)
+}
+
+func TestSessionRefusesADisconnectedCompany(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	conn := h.connect(t)
+	_, err := h.svc.Disconnect(t.Context(), &services.DisconnectAccountingRequest{
+		TenantInfo:      h.tenant,
+		UserID:          h.userID,
+		IntegrationType: integration.TypeQuickBooksOnline,
+	})
+	require.NoError(t, err)
+
+	_, err = h.svc.Session(t.Context(), h.tenant, conn.ID)
+	require.Error(t, err)
+	assert.True(t, errortypes.IsBusinessError(err))
+}
+
+func TestSessionRecordsARevokedAuthorizationAndRefuses(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	conn := h.connect(t)
+	h.expireAccessToken(conn)
+	h.connector.refreshErrs = []error{errProvider}
+	h.connector.errCategories[errProvider] = accountingsync.ErrorCategoryRevoked
+
+	_, err := h.svc.Session(t.Context(), h.tenant, conn.ID)
+	require.Error(t, err)
+	assert.Equal(t, accountingsync.ConnectionStatusRevoked, h.connections.rows[conn.ID].Status)
+	require.Len(t, h.events.Published(), 1)
+	assert.Equal(t, agent.EventAccountingConnectionDegraded, h.events.Published()[0].Kind)
+}
+
+func TestReportCallFailureRevokesOnlyForAuthorizationFailures(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	conn := h.connect(t)
+
+	transient := errors.New("timeout")
+	h.connector.errCategories[transient] = accountingsync.ErrorCategoryTransient
+	assert.Equal(t, accountingsync.ErrorCategoryTransient, h.svc.ReportCallFailure(t.Context(), h.tenant, conn.ID, transient))
+	assert.Equal(t, accountingsync.ConnectionStatusConnected, h.connections.rows[conn.ID].Status,
+		"a transient failure during a pull is not a health failure")
+
+	h.connector.errCategories[errProvider] = accountingsync.ErrorCategoryRevoked
+	assert.Equal(t, accountingsync.ErrorCategoryRevoked, h.svc.ReportCallFailure(t.Context(), h.tenant, conn.ID, errProvider))
+	assert.Equal(t, accountingsync.ConnectionStatusRevoked, h.connections.rows[conn.ID].Status)
+	assert.Empty(t, h.connections.tokens[conn.ID].refresh)
+	require.Len(t, h.events.Published(), 1)
 }

@@ -51,6 +51,10 @@ type AccountingConnection struct {
 	LastErrorCategory             ErrorCategory    `json:"lastErrorCategory"             bun:"last_error_category,type:VARCHAR(30),nullzero"`
 	LastErrorMessage              string           `json:"lastErrorMessage"              bun:"last_error_message,type:TEXT,nullzero"`
 	LastWebhookAt                 *int64           `json:"lastWebhookAt"                 bun:"last_webhook_at,type:BIGINT,nullzero"`
+	SetupStep                     SetupStep        `json:"setupStep"                     bun:"setup_step,type:VARCHAR(20),notnull"`
+	ReferenceRefreshStartedAt     *int64           `json:"referenceRefreshStartedAt"     bun:"reference_refresh_started_at,type:BIGINT,nullzero"`
+	ReferenceRefreshedAt          *int64           `json:"referenceRefreshedAt"          bun:"reference_refreshed_at,type:BIGINT,nullzero"`
+	ReferenceRefreshError         string           `json:"referenceRefreshError"         bun:"reference_refresh_error,type:TEXT,nullzero"`
 	ConnectedByID                 pulid.ID         `json:"connectedById"                 bun:"connected_by_id,type:VARCHAR(100),nullzero"`
 	ConnectedAt                   int64            `json:"connectedAt"                   bun:"connected_at,type:BIGINT,notnull"`
 	DisconnectedByID              pulid.ID         `json:"disconnectedById"              bun:"disconnected_by_id,type:VARCHAR(100),nullzero"`
@@ -108,6 +112,10 @@ func (c *AccountingConnection) Validate(multiErr *errortypes.MultiError) {
 			domainvalidation.ValidEnum[ErrorCategory]("Error category is not recognized"),
 		),
 		validation.Field(&c.ConnectedAt, validation.Required.Error("Connected time is required")),
+		validation.Field(&c.SetupStep,
+			validation.Required.Error("Setup step is required"),
+			domainvalidation.ValidEnum[SetupStep]("Setup step is not recognized"),
+		),
 	))
 }
 
@@ -164,6 +172,9 @@ func (c *AccountingConnection) Connect(userID pulid.ID, grant TokenGrant, now in
 	c.DisconnectedByID = pulid.Nil
 	c.DisconnectedAt = nil
 	c.RefreshTokenAbsoluteExpiresAt = now + RefreshTokenAbsoluteLifetime
+	if c.SetupStep == "" {
+		c.SetupStep = SetupStepMappings
+	}
 	c.ApplyGrant(grant, now)
 	c.RecordSuccess(now)
 }

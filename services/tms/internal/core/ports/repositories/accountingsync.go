@@ -47,6 +47,19 @@ type MarkAccountingWebhookRequest struct {
 	ReceivedAt      int64
 }
 
+type MarkAccountingReferenceRefreshRequest struct {
+	TenantInfo  pagination.TenantInfo
+	ID          pulid.ID
+	StartedAt   *int64
+	RefreshedAt *int64
+	Error       string
+}
+
+type ListActiveAccountingConnectionsRequest struct {
+	AfterID pulid.ID
+	Limit   int
+}
+
 type AccountingConnectionRepository interface {
 	GetByType(
 		ctx context.Context,
@@ -86,6 +99,11 @@ type AccountingConnectionRepository interface {
 	) (*accountingsync.AccountingConnection, error)
 	StoreTokens(ctx context.Context, req StoreAccountingTokensRequest) error
 	MarkWebhookReceived(ctx context.Context, req MarkAccountingWebhookRequest) (int64, error)
+	MarkReferenceRefresh(ctx context.Context, req MarkAccountingReferenceRefreshRequest) error
+	ListActive(
+		ctx context.Context,
+		req ListActiveAccountingConnectionsRequest,
+	) ([]*accountingsync.AccountingConnection, error)
 }
 
 type AccountingOAuthState struct {
