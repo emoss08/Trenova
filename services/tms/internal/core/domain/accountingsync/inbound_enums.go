@@ -104,6 +104,7 @@ const (
 	InboundReasonCurrencyMismatch   = InboundChangeReason("CurrencyMismatch")
 	InboundReasonVoided             = InboundChangeReason("Voided")
 	InboundReasonNotTrenovaDocument = InboundChangeReason("NotTrenovaDocument")
+	InboundReasonSentFromTrenova    = InboundChangeReason("SentFromTrenova")
 	InboundReasonApplyFailed        = InboundChangeReason("ApplyFailed")
 )
 
@@ -121,6 +122,7 @@ func (r InboundChangeReason) IsValid() bool {
 		InboundReasonCurrencyMismatch,
 		InboundReasonVoided,
 		InboundReasonNotTrenovaDocument,
+		InboundReasonSentFromTrenova,
 		InboundReasonApplyFailed:
 		return true
 	default:
@@ -145,6 +147,7 @@ func AllInboundChangeReasons() []InboundChangeReason {
 		InboundReasonCurrencyMismatch,
 		InboundReasonVoided,
 		InboundReasonNotTrenovaDocument,
+		InboundReasonSentFromTrenova,
 		InboundReasonApplyFailed,
 	}
 }

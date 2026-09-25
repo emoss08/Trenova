@@ -247,12 +247,12 @@ func (c *AccountingInboundChange) MarkApplied(
 	c.DecidedAt = &at
 }
 
-func (c *AccountingInboundChange) Supersede(resolution string) bool {
+func (c *AccountingInboundChange) Supersede(reason InboundChangeReason, resolution string) bool {
 	if !c.Status.IsOpen() {
 		return false
 	}
 	c.Status = InboundStatusSuperseded
-	c.Reason = InboundReasonVoided
+	c.Reason = reason
 	c.Resolution = stringutils.TruncateRunes(resolution, maxInboundResolution)
 	return true
 }

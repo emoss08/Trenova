@@ -128,6 +128,13 @@ func (f *fakeReferences) Upsert(
 	return nil
 }
 
+func (f *fakeReferences) MarkRemoved(
+	context.Context,
+	*repositories.MarkAccountingReferencesRemovedRequest,
+) (int64, error) {
+	return 0, nil
+}
+
 func (f *fakeReferences) MarkRemovedUnseen(
 	_ context.Context,
 	req *repositories.MarkAccountingReferenceRemovedRequest,

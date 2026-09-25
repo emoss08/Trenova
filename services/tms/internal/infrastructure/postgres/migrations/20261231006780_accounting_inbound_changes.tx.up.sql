@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS "accounting_inbound_changes"(
     CONSTRAINT "fk_accounting_inbound_changes_decided_by" FOREIGN KEY ("decided_by_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE SET NULL,
     CONSTRAINT "ck_accounting_inbound_changes_kind" CHECK ("kind" IN ('CustomerPayment', 'BillPayment')),
     CONSTRAINT "ck_accounting_inbound_changes_status" CHECK ("status" IN ('Detected', 'Proposed', 'Applied', 'Ignored', 'Superseded')),
-    CONSTRAINT "ck_accounting_inbound_changes_reason" CHECK ("reason" IS NULL OR "reason" IN ('PolicyPropose', 'PeriodNotOpen', 'UnknownDocument', 'PartyMismatch', 'Overpayment', 'PartialBillPayment', 'AlreadyPaid', 'CurrencyMismatch', 'Voided', 'NotTrenovaDocument', 'ApplyFailed')),
+    CONSTRAINT "ck_accounting_inbound_changes_reason" CHECK ("reason" IS NULL OR "reason" IN ('PolicyPropose', 'PeriodNotOpen', 'UnknownDocument', 'PartyMismatch', 'Overpayment', 'PartialBillPayment', 'AlreadyPaid', 'CurrencyMismatch', 'Voided', 'NotTrenovaDocument', 'SentFromTrenova', 'ApplyFailed')),
     CONSTRAINT "ck_accounting_inbound_changes_amount" CHECK ("amount_minor" >= 0),
     CONSTRAINT "ck_accounting_inbound_changes_decided" CHECK ("status" NOT IN ('Applied', 'Ignored') OR "decided_at" IS NOT NULL),
     CONSTRAINT "ck_accounting_inbound_changes_proposed" CHECK ("status" <> 'Proposed' OR "reason" IS NOT NULL)

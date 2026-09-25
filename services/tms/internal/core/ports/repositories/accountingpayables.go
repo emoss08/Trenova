@@ -44,6 +44,7 @@ type PayableSettlement struct {
 	PayDate          int64
 	PostedAt         *int64
 	PaidAt           *int64
+	Voided           bool
 	NetMinor         int64
 	ShipmentCount    int
 	CurrencyCode     string

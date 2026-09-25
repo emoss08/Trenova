@@ -369,6 +369,9 @@ func (s *Service) pushSalesVoid(
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
 	}
+	if created.SharesProviderDocument() {
+		return nil, sharedDocumentError(sess, documentLabel(record.ObjectType, record.ObjectNumber))
+	}
 	ref := &services.AccountingDocumentRef{
 		Auth:       sess.auth,
 		RequestID:  record.RequestID,
@@ -421,6 +424,15 @@ func (s *Service) settleUnsent(
 }
 
 const maxRevision = int64(1) << 62
+
+func sharedDocumentError(sess *pushSession, label string) *accountingsync.SyncError {
+	return blocked(
+		accountingsync.SyncErrorConflict,
+		label+" was recorded in "+sess.providerName+
+			" as part of one payment with other documents, so Trenova cannot change it alone",
+		"Edit that payment in "+sess.providerName+", then skip this record",
+	)
+}
 
 func paymentMethodLabel(method customerpayment.Method) string {
 	return "Payment method " + string(method)
@@ -477,6 +489,8 @@ func (s *Service) pushPayment(
 			return nil, &noopError{
 				reason: "The payment was never sent, so there is nothing to update",
 			}
+		case isSynced(created) && created.SharesProviderDocument():
+			return nil, sharedDocumentError(sess, label)
 		case isSynced(created):
 			externalID = created.ExternalID
 		case created.Status.IsFinal():
@@ -646,6 +660,9 @@ func (s *Service) pushPaymentVoid(
 	created := latestOf(existing, accountingsync.SyncOperationCreate)
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
+	}
+	if created.SharesProviderDocument() {
+		return nil, sharedDocumentError(sess, documentLabel(record.ObjectType, record.ObjectNumber))
 	}
 	for _, other := range existing {
 		if other.Operation == accountingsync.SyncOperationUpdate &&
