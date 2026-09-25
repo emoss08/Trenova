@@ -105,25 +105,39 @@ func (t *addShipmentCommentTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	entity, err := t.comment(params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.comments.Create(ctx, entity, params.Actor)
+
+	return err
+}
+
+// comment is the note the preview shows and the write creates.
+func (t *addShipmentCommentTool) comment(
+	params serviceports.ToolExecuteParams,
+) (*shipment.ShipmentComment, error) {
+	if err := guardExecute(t, params); err != nil {
+		return nil, err
 	}
 
 	shipmentID, err := requirePulid(params.Params, "shipmentId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	body, err := requireString(params.Params, "comment")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	visibility := commentVisibility(optionalString(params.Params, "visibility"))
 
 	// Source is the assistant's, always. A note that reads as hand-typed but
 	// was not carries a colleague's authority without a colleague's check.
-	entity := &shipment.ShipmentComment{
+	return &shipment.ShipmentComment{
 		OrganizationID: params.OrganizationID,
 		BusinessUnitID: params.BusinessUnitID,
 		ShipmentID:     shipmentID,
@@ -134,11 +148,7 @@ func (t *addShipmentCommentTool) Execute(
 		Priority:       commentPriority(optionalString(params.Params, "priority")),
 		Source:         shipment.CommentSourceAI,
 		Metadata:       commentTaintMetadata(params),
-	}
-
-	_, err = t.comments.Create(ctx, entity, params.Actor)
-
-	return err
+	}, nil
 }
 
 func commentTaintMetadata(params serviceports.ToolExecuteParams) map[string]any {
@@ -379,10 +389,16 @@ func (t *releaseShipmentHoldTool) Execute(
 
 type cancelShipmentTool struct {
 	shipments serviceports.ShipmentService
+	partners  shipmentPartnerNotices
+	tenders   liveTenderReader
 }
 
-func newCancelShipmentTool(shipments serviceports.ShipmentService) serviceports.AgentTool {
-	return &cancelShipmentTool{shipments: shipments}
+func newCancelShipmentTool(
+	shipments serviceports.ShipmentService,
+	partners shipmentPartnerNotices,
+	tenders liveTenderReader,
+) serviceports.AgentTool {
+	return &cancelShipmentTool{shipments: shipments, partners: partners, tenders: tenders}
 }
 
 func (t *cancelShipmentTool) Name() string { return "cancel_shipment" }
@@ -435,29 +451,40 @@ func (t *cancelShipmentTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	request, err := t.request(params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.shipments.Cancel(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *cancelShipmentTool) request(
+	params serviceports.ToolExecuteParams,
+) (*repositories.CancelShipmentRequest, error) {
+	if err := guardExecute(t, params); err != nil {
+		return nil, err
 	}
 
 	shipmentID, err := requirePulid(params.Params, "shipmentId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	reason, err := requireString(params.Params, "cancelReason")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = t.shipments.Cancel(ctx, &repositories.CancelShipmentRequest{
+	return &repositories.CancelShipmentRequest{
 		TenantInfo:   tenantFrom(params),
 		ShipmentID:   shipmentID,
 		CanceledByID: params.Actor.UserID,
 		CanceledAt:   timeutils.NowUnix(),
 		CancelReason: reason,
-	}, params.Actor)
-
-	return err
+	}, nil
 }
 
 // Target names the record this call would change, so a proposal to change it

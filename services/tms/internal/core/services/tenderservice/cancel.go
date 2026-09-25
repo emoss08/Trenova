@@ -113,18 +113,12 @@ func (s *Service) CancelLiveTendersForShipment(
 	shipmentID pulid.ID,
 	reason string,
 ) error {
-	tenders, err := s.repo.ListByShipment(ctx, repositories.ListTendersByShipmentRequest{
-		TenantInfo: tenantInfo,
-		ShipmentID: shipmentID,
-	})
+	live, err := s.liveTendersForShipment(ctx, tenantInfo, shipmentID)
 	if err != nil {
 		return err
 	}
 
-	for _, entity := range tenders {
-		if !entity.IsLive() {
-			continue
-		}
+	for _, entity := range live {
 		if cancelErr := s.Cancel(ctx, &CancelTenderRequest{
 			TenantInfo: tenantInfo,
 			TenderID:   entity.ID,
@@ -170,21 +164,15 @@ func (s *Service) CancelDirect(
 			WithParam("tenderId", entity.ID.String())
 	}
 
-	if _, err = s.repo.BulkUpdateOfferStatus(ctx, &repositories.BulkOfferStatusRequest{
-		TenantInfo: tenantInfo,
-		TenderID:   entity.ID,
-		FromStatus: []tender.OfferStatus{tender.OfferStatusSent},
-		ToStatus:   tender.OfferStatusWithdrawn,
-	}); err != nil {
-		return err
-	}
-	if _, err = s.repo.BulkUpdateOfferStatus(ctx, &repositories.BulkOfferStatusRequest{
-		TenantInfo: tenantInfo,
-		TenderID:   entity.ID,
-		FromStatus: []tender.OfferStatus{tender.OfferStatusPending},
-		ToStatus:   tender.OfferStatusSkipped,
-	}); err != nil {
-		return err
+	for _, withdrawal := range offerWithdrawals {
+		if _, err = s.repo.BulkUpdateOfferStatus(ctx, &repositories.BulkOfferStatusRequest{
+			TenantInfo: tenantInfo,
+			TenderID:   entity.ID,
+			FromStatus: []tender.OfferStatus{withdrawal.from},
+			ToStatus:   withdrawal.to,
+		}); err != nil {
+			return err
+		}
 	}
 
 	for _, offer := range entity.Offers {

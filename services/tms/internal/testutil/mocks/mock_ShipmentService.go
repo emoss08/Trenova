@@ -2238,3 +2238,77 @@ func (_c *MockShipmentService_Update_Call) RunAndReturn(run func(ctx context.Con
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewCancel provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) PreviewCancel(ctx context.Context, req *repositories.CancelShipmentRequest, actor *services.RequestActor) (*services.ShipmentCancelPreview, error) {
+	ret := _mock.Called(ctx, req, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewCancel")
+	}
+
+	var r0 *services.ShipmentCancelPreview
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CancelShipmentRequest, *services.RequestActor) (*services.ShipmentCancelPreview, error)); ok {
+		return returnFunc(ctx, req, actor)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CancelShipmentRequest, *services.RequestActor) *services.ShipmentCancelPreview); ok {
+		r0 = returnFunc(ctx, req, actor)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.ShipmentCancelPreview)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.CancelShipmentRequest, *services.RequestActor) error); ok {
+		r1 = returnFunc(ctx, req, actor)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_PreviewCancel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewCancel'
+type MockShipmentService_PreviewCancel_Call struct {
+	*mock.Call
+}
+
+// PreviewCancel is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.CancelShipmentRequest
+//   - actor *services.RequestActor
+func (_e *MockShipmentService_Expecter) PreviewCancel(ctx any, req any, actor any) *MockShipmentService_PreviewCancel_Call {
+	return &MockShipmentService_PreviewCancel_Call{Call: _e.mock.On("PreviewCancel", ctx, req, actor)}
+}
+
+func (_c *MockShipmentService_PreviewCancel_Call) Run(run func(ctx context.Context, req *repositories.CancelShipmentRequest, actor *services.RequestActor)) *MockShipmentService_PreviewCancel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.CancelShipmentRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.CancelShipmentRequest)
+		}
+		var arg2 *services.RequestActor
+		if args[2] != nil {
+			arg2 = args[2].(*services.RequestActor)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewCancel_Call) Return(result *services.ShipmentCancelPreview, err error) *MockShipmentService_PreviewCancel_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockShipmentService_PreviewCancel_Call) RunAndReturn(run func(ctx context.Context, req *repositories.CancelShipmentRequest, actor *services.RequestActor) (*services.ShipmentCancelPreview, error)) *MockShipmentService_PreviewCancel_Call {
+	_c.Call.Return(run)
+	return _c
+}
