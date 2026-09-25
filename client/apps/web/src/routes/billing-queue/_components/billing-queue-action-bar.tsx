@@ -45,7 +45,8 @@ export function BillingQueueActionBar({
     enabled: item.status === "InReview",
   });
 
-  const canApprove = billingReadiness?.canMarkReadyToInvoice !== false;
+  const heldCount = item.detentionHolds.length;
+  const canApprove = billingReadiness?.canMarkReadyToInvoice !== false && heldCount === 0;
   const missingCount = billingReadiness?.missingRequirements?.length ?? 0;
 
   const { mutate: updateStatus, isPending: isStatusPending } = useApiMutation({
@@ -119,12 +120,17 @@ export function BillingQueueActionBar({
             />
             {!canApprove && (
               <TooltipContent side="bottom" sideOffset={8}>
-                {missingCount > 0
+                {heldCount > 0
                   ? t(
-                      "{0, plural, one {# required document} other {# required documents}} missing",
-                      missingCount,
+                      "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}} before this can be approved",
+                      heldCount,
                     )
-                  : t("Billing requirements not met")}
+                  : missingCount > 0
+                    ? t(
+                        "{0, plural, one {# required document} other {# required documents}} missing",
+                        missingCount,
+                      )
+                    : t("Billing requirements not met")}
               </TooltipContent>
             )}
           </Tooltip>

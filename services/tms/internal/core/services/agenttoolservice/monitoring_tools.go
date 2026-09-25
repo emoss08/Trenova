@@ -786,11 +786,12 @@ func (t *waiveDetentionTool) Policy() serviceports.ToolPolicy {
 		Operation:     permission.OpUpdate,
 		Scope:         agent.ToolScopeTenant,
 		DefaultTier:   agent.TierPropose,
-		MaxTier:       agent.TierAutoExecute,
+		MaxTier:       agent.TierPropose,
 		Egress:        []agent.EgressClass{agent.EgressMoney},
 		Effect:        agent.ToolEffectChange,
 		ReadsExternal: agent.ExternalReadNever,
-		Rationale:     "Gives up detention revenue the organization would otherwise bill.",
+		Rationale: "Gives up detention revenue the organization would otherwise bill; only a " +
+			"person approves it.",
 	}
 }
 
@@ -800,6 +801,9 @@ func (t *waiveDetentionTool) Execute(
 ) error {
 	if err := guardExecute(t, params); err != nil {
 		return err
+	}
+	if !params.ApprovedFromProposal() {
+		return ErrApprovalNeedsAPerson
 	}
 
 	occurrenceID, err := requirePulid(params.Params, "occurrenceId")

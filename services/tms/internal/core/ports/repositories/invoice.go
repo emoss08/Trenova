@@ -76,7 +76,42 @@ type GetInvoiceDocumentShareTokenRequest struct {
 	TokenHash string `json:"-"`
 }
 
+// ListInvoiceLineChargesRequest asks which shipment charges the invoices' lines
+// bill.
+type ListInvoiceLineChargesRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	InvoiceIDs []pulid.ID            `json:"-"`
+}
+
+// InvoiceLineCharge is one shipment charge an invoice line bills.
+type InvoiceLineCharge struct {
+	AdditionalChargeID pulid.ID `bun:"additional_charge_id"`
+	ShipmentID         pulid.ID `bun:"shipment_id"`
+}
+
+// NetBilledByChargeRequest asks what is still billed of each shipment charge
+// across every invoice that has not been voided.
+type NetBilledByChargeRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	ChargeIDs  []pulid.ID            `json:"-"`
+}
+
 type InvoiceRepository interface {
+	// ListLineCharges returns the distinct shipment charges the invoices'
+	// lines bill.
+	ListLineCharges(
+		ctx context.Context,
+		req *ListInvoiceLineChargesRequest,
+	) ([]InvoiceLineCharge, error)
+	// NetBilledByCharge sums each charge's lines over the invoices that still
+	// stand: a voided invoice drops out, a credit memo that credits a charge
+	// counts against it, and the credit memo of a full reversal or a write-off
+	// does not, because the reversal voids the invoice it credits and a
+	// write-off gives up collecting a charge that was billed.
+	NetBilledByCharge(
+		ctx context.Context,
+		req *NetBilledByChargeRequest,
+	) (map[pulid.ID]decimal.Decimal, error)
 	List(
 		ctx context.Context,
 		req *ListInvoicesRequest,

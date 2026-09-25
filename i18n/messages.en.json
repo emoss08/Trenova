@@ -17862,6 +17862,15 @@
       "routes/dash-control"
     ]
   },
+  "Approve detention charge": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Approve expense": {
     "sites": 1,
     "scope": [
@@ -17996,6 +18005,15 @@
     "areas": [
       "routes/agent-control",
       "routes/desk"
+    ]
+  },
+  "Approve this detention charge as calculated, so its shipment can be invoiced.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Approve with changes": {
@@ -50905,12 +50923,14 @@
     ]
   },
   "Detention charge": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/config",
+      "routes/billing-queue",
       "routes/shipment-control",
       "template/detention.notice.email"
     ]
@@ -61671,6 +61691,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Escalated for review": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Escalator": {
@@ -108183,6 +108212,15 @@
       "service/detentionservice"
     ]
   },
+  "Notice not sent in time": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "Notice requirement": {
     "sites": 1,
     "scope": [
@@ -115993,6 +116031,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "Over the approval threshold": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
     ]
   },
   "Over {0} drivers, each round would draw about {1} for drug testing and {2} for alcohol.": {
@@ -175881,6 +175928,15 @@
       "service/agenttoolservice"
     ]
   },
+  "This item cannot be approved until each charge is approved or waived on the detention desk.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
   "This item is already settled. Reopen it first": {
     "sites": 1,
     "scope": [
@@ -203164,6 +203220,42 @@
     ],
     "areas": [
       "routes/late-charges"
+    ]
+  },
+  "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}} before this can be approved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {# detention charge on this shipment still needs approval} other {# detention charges on this shipment still need approval}} before the shipment can be billed. Approve or waive {0, plural, one {it} other {them}} on the detention desk first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/detention"
+    ]
+  },
+  "{0, plural, one {# detention charge} other {# detention charges}} across {1, plural, one {# shipment} other {# shipments}} still need approval before those shipments can be billed. Approve or waive them on the detention desk first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/detention"
     ]
   },
   "{0, plural, one {# dimension} other {# dimensions}}": {

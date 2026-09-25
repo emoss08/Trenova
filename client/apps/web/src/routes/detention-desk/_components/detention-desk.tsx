@@ -41,16 +41,45 @@ export function DetentionDesk({ desk }: { desk: DetentionDeskState }) {
     refetch,
   } = desk;
 
+  // A charge waiting on approval has a stopped clock, so it is not on the board;
+  // the billing queue links straight to it, and the claim file opens over
+  // whatever state the board is in.
+  const sheet = (
+    <OccurrenceDetailSheet
+      occurrenceId={selectedId}
+      onOpenChange={(open) => {
+        if (!open) {
+          selectStop(null);
+        }
+      }}
+    />
+  );
+
   if (isLoading) {
-    return <DeskSkeleton />;
+    return (
+      <>
+        <DeskSkeleton />
+        {sheet}
+      </>
+    );
   }
 
   if (isError) {
-    return <DeskError onRetry={() => void refetch()} />;
+    return (
+      <>
+        <DeskError onRetry={() => void refetch()} />
+        {sheet}
+      </>
+    );
   }
 
   if (entries.length === 0) {
-    return <DeskEmpty />;
+    return (
+      <>
+        <DeskEmpty />
+        {sheet}
+      </>
+    );
   }
 
   return (
@@ -101,14 +130,7 @@ export function DetentionDesk({ desk }: { desk: DetentionDeskState }) {
           </Button>
         </div>
       )}
-      <OccurrenceDetailSheet
-        occurrenceId={selectedId}
-        onOpenChange={(open) => {
-          if (!open) {
-            selectStop(null);
-          }
-        }}
-      />
+      {sheet}
     </>
   );
 }

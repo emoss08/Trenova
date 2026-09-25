@@ -136,6 +136,10 @@ func (s *Service) createConsolidatedTx(
 ) (*invoice.Invoice, error) {
 	anchor := params.QueueItems[0]
 
+	if err := s.guardDetentionHolds(txCtx, params.TenantInfo, legIDs(params.Legs)); err != nil {
+		return nil, err
+	}
+
 	if err := invoicelines.HydrateAccessorials(
 		txCtx,
 		s.accessorialRepo,
@@ -211,6 +215,10 @@ func (s *Service) createConsolidatedTx(
 		itemIDs = append(itemIDs, item.ID)
 	}
 	if txErr = s.attachQueueItems(txCtx, params.TenantInfo, created.ID, itemIDs); txErr != nil {
+		return nil, txErr
+	}
+
+	if txErr = s.syncDetentionBilling(txCtx, created, actor); txErr != nil {
 		return nil, txErr
 	}
 

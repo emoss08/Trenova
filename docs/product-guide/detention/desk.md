@@ -34,6 +34,12 @@ Keywords: approve detention, waive detention, dispute detention, forgive charge
 2. Review the **Billable**, **Driver pay** and **Net margin** figures, **How this charge was calculated**, the **Evidence chain** and the **Notices** sent.
 3. Choose an action: **Approve charge** posts the detention charge to the shipment; **Send notice** notifies the customer; **Record dispute** logs what the customer is disputing; **Waive** forgives the charge after you pick a coded **Reason** and add a **Note**, then **Waive charge**.
 
+### Release a charge that is holding a shipment's billing
+Keywords: detention needs approval, held detention charge, unblock billing, detention approval threshold
+1. Open the charge from the notice on the [Billing queue](/billing/queue) item it is holding; it opens here in its detail even though its clock has stopped and it is no longer on the board.
+2. Review the **Evidence chain** and the **Notices** sent.
+3. Select **Approve charge** to release it onto the invoice, or **Waive** it with a coded **Reason** and a **Note**. Either one lets the billing queue item be approved.
+
 ### Build a dispute packet
 Keywords: claim file, detention evidence, defend detention
 1. Open [Detention desk](/detention/desk) and select the stop.
@@ -41,5 +47,7 @@ Keywords: claim file, detention evidence, defend detention
 
 ## Notes
 Opening the desk needs read access to detention policies.
+
+A pending charge that went over its policy's approval threshold, missed a required notice, or was escalated holds its shipment off every invoice until it is approved or waived. The detention desk agent looks at these too: when the evidence supports a held charge it proposes approving it, with that evidence, and otherwise it proposes a waiver or leaves the charge for you; nothing is approved or waived until a person accepts the proposal. Once an invoice carries a charge it is marked billed and no longer changes when the stop is recalculated; voiding or crediting that invoice returns it to approved.
 
 **Approve charge** only appears while a charge is pending, **Send notice** only while a required notice has not been sent, and **Record dispute** only when there is a billable amount that is not already disputed. The board refreshes on its own; the refresh button in the header pulls fresh numbers straight away.

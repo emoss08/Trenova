@@ -2,6 +2,7 @@ package agenttoolservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -224,6 +225,218 @@ func (t *escalateDetentionTool) Execute(
 }
 
 func (t *escalateDetentionTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, "occurrenceId", permission.ResourceDetentionPolicy)
+}
+
+type detentionApprover interface {
+	Approve(
+		ctx context.Context,
+		params detentionservice.ApproveParams,
+	) (*detention.DetentionOccurrence, error)
+	GetOccurrenceDetail(
+		ctx context.Context,
+		req *repositories.GetDetentionOccurrenceByIDRequest,
+	) (*detentionservice.OccurrenceDetail, error)
+}
+
+// ErrApprovalNeedsAPerson is an approve_detention or waive_detention call that
+// did not come from a proposal a person approved. The tool's tier ceiling already keeps the
+// runtime from running it on its own; this is the same rule where the money
+// moves.
+var ErrApprovalNeedsAPerson = errors.New(
+	"a detention charge is approved or waived only once a person approves the proposal",
+)
+
+type approveDetentionTool struct {
+	detention detentionApprover
+}
+
+func newApproveDetentionTool(detention detentionApprover) serviceports.AgentTool {
+	return &approveDetentionTool{detention: detention}
+}
+
+func (t *approveDetentionTool) Name() string { return "approve_detention" }
+
+func (t *approveDetentionTool) Description() string {
+	return "Propose approving a detention charge that is waiting on approval, so it can " +
+		"be invoiced. list_detention_desk shows these as AwaitingApproval, and while one " +
+		"waits its shipment cannot be billed. The charge is approved exactly as calculated. " +
+		"Propose it only when the evidence holds up: arrival and departure on record, the " +
+		"notice sent inside the policy's window or none required, and nothing on file that " +
+		"contradicts the time. Say what shows that in evidence. Only a pending charge can be " +
+		"approved, and a person always decides; when the evidence does not hold up, propose " +
+		"waive_detention instead or leave it for a person."
+}
+
+func (t *approveDetentionTool) ParamSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"occurrenceId": map[string]any{
+				"type": "string",
+				"description": "The occurrence id, from list_detention_desk or " +
+					"get_detention_occurrence.",
+			},
+			"evidence": map[string]any{
+				"type": "string",
+				"description": "What on the occurrence justifies billing it, in a sentence " +
+					"the approver can check: the times on record, the notice, and anything " +
+					"else on file that supports the charge.",
+			},
+		},
+		"required":             []string{"occurrenceId", "evidence"},
+		"additionalProperties": false,
+	}
+}
+
+func (t *approveDetentionTool) Policy() serviceports.ToolPolicy {
+	return serviceports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agent.ToolKindAction,
+		Resource:      permission.ResourceDetentionPolicy,
+		Operation:     permission.OpUpdate,
+		Scope:         agent.ToolScopeTenant,
+		DefaultTier:   agent.TierPropose,
+		MaxTier:       agent.TierPropose,
+		Egress:        []agent.EgressClass{agent.EgressMoney},
+		Effect:        agent.ToolEffectChange,
+		ReadsExternal: agent.ExternalReadNever,
+		Rationale: "Releases a held detention charge onto the customer's invoice; only a " +
+			"person approves it.",
+	}
+}
+
+func (t *approveDetentionTool) arguments(
+	params serviceports.ToolExecuteParams,
+) (pulid.ID, string, error) {
+	if err := guardExecute(t, params); err != nil {
+		return "", "", err
+	}
+
+	occurrenceID, err := requirePulid(params.Params, "occurrenceId")
+	if err != nil {
+		return "", "", err
+	}
+	evidence, err := requireString(params.Params, "evidence")
+	if err != nil {
+		return "", "", err
+	}
+
+	return occurrenceID, strings.TrimSpace(evidence), nil
+}
+
+func (t *approveDetentionTool) pending(
+	ctx context.Context,
+	occurrenceID pulid.ID,
+	params serviceports.ToolExecuteParams,
+) (*detentionservice.OccurrenceDetail, error) {
+	detail, err := t.detention.GetOccurrenceDetail(
+		ctx,
+		&repositories.GetDetentionOccurrenceByIDRequest{
+			OccurrenceID: occurrenceID,
+			TenantInfo:   tenantFrom(params),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if status := detail.Occurrence.Status; status != detention.OccurrenceStatusPending {
+		return nil, fmt.Errorf(
+			"detention occurrence %s is %s; only a pending charge can be approved",
+			occurrenceID, status,
+		)
+	}
+
+	return detail, nil
+}
+
+func (t *approveDetentionTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
+	occurrenceID, _, err := t.arguments(params)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.pending(ctx, occurrenceID, params)
+
+	return err
+}
+
+func (t *approveDetentionTool) Simulate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) (*agent.ToolSimulation, error) {
+	occurrenceID, evidence, err := t.arguments(params)
+	if err != nil {
+		return nil, err
+	}
+
+	detail, err := t.pending(ctx, occurrenceID, params)
+	if err != nil {
+		return nil, err
+	}
+
+	occurrence := detail.Occurrence
+	changes := []agent.FieldChange{
+		{
+			Field: "status",
+			From:  string(detention.OccurrenceStatusPending),
+			To:    string(detention.OccurrenceStatusApproved),
+		},
+	}
+	if occurrence.RequiresApproval {
+		changes = append(changes, agent.FieldChange{
+			Field: "requiresApproval", From: "true", To: "false",
+		})
+	}
+
+	return &agent.ToolSimulation{
+		Summary: fmt.Sprintf(
+			"Would approve detention occurrence %s for billing at %s %s "+
+				"(collectability %d, %s; %d evidence records): %s",
+			occurrenceID,
+			occurrence.BillableAmount.StringFixed(2),
+			occurrence.Currency,
+			detail.Collectability.Score,
+			detail.Collectability.Band,
+			len(detail.Evidence),
+			evidence,
+		),
+		Changes:   changes,
+		Previewed: true,
+	}, nil
+}
+
+func (t *approveDetentionTool) Execute(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams,
+) error {
+	occurrenceID, evidence, err := t.arguments(params)
+	if err != nil {
+		return err
+	}
+	if !params.ApprovedFromProposal() {
+		return ErrApprovalNeedsAPerson
+	}
+
+	if _, err = t.pending(ctx, occurrenceID, params); err != nil {
+		return err
+	}
+
+	_, err = t.detention.Approve(ctx, detentionservice.ApproveParams{
+		OccurrenceID: occurrenceID,
+		TenantInfo:   tenantFrom(params),
+		UserID:       params.Actor.UserID,
+		Note:         evidence,
+	})
+
+	return err
+}
+
+func (t *approveDetentionTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
 	return targetOf(params, "occurrenceId", permission.ResourceDetentionPolicy)
 }
 

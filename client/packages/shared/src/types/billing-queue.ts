@@ -8,10 +8,12 @@ import {
   optionalStringSchema,
 } from "./helpers";
 import { customerReferenceSchema } from "./customer";
+import { billingHoldReasonSchema } from "./detention";
 import {
   chargeAllocationKindSchema,
   chargeAllocationMethodSchema,
   shipmentSchema,
+  stopTypeSchema,
 } from "./shipment";
 import { userSchema } from "./user";
 
@@ -85,6 +87,22 @@ export const payerShareSchema = z.object({
 });
 export type PayerShare = z.infer<typeof payerShareSchema>;
 
+/**
+ * A detention charge on the item's shipment that is still waiting on an
+ * approver. While any is listed the server refuses to approve the item.
+ */
+export const detentionHoldSchema = z.object({
+  occurrenceId: z.string(),
+  stopId: z.string(),
+  stopType: stopTypeSchema,
+  locationName: z.string().default(""),
+  clockStartAt: z.number(),
+  billableAmount: decimalStringSchema,
+  currency: z.string().default("USD"),
+  reason: billingHoldReasonSchema,
+});
+export type DetentionHold = z.infer<typeof detentionHoldSchema>;
+
 export const billingQueueItemSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
@@ -123,6 +141,7 @@ export const billingQueueItemSchema = z.object({
   assignedBiller: userSchema.optional().nullable(),
   canceledBy: userSchema.optional().nullable(),
   payerShare: payerShareSchema.nullish(),
+  detentionHolds: z.array(detentionHoldSchema).default([]),
 });
 
 export type BillingQueueItem = z.infer<typeof billingQueueItemSchema>;

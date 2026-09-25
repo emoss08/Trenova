@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -19,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
@@ -220,6 +222,95 @@ func (r *repository) GetByIDs(
 // ListByShipmentIDs finds every invoice carrying any of the shipments, keyed by
 // shipment. An invoice that bills a shipment through its lines counts as much as
 // one that names it in the header, so grouped and consolidated invoices appear.
+func (r *repository) ListLineCharges(
+	ctx context.Context,
+	req *repositories.ListInvoiceLineChargesRequest,
+) ([]repositories.InvoiceLineCharge, error) {
+	if req == nil || len(req.InvoiceIDs) == 0 {
+		return []repositories.InvoiceLineCharge{}, nil
+	}
+
+	invl := buncolgen.InvoiceLineColumns
+	charges := make([]repositories.InvoiceLineCharge, 0, len(req.InvoiceIDs))
+	if err := r.db.DBForContext(ctx).NewSelect().
+		Model((*invoice.InvoiceLine)(nil)).
+		Distinct().
+		Column(invl.AdditionalChargeID.Bare(), invl.ShipmentID.Bare()).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.InvoiceLineScopeTenant(sq, req.TenantInfo).
+				Where(invl.InvoiceID.In(), bun.List(req.InvoiceIDs)).
+				Where(invl.AdditionalChargeID.IsNotNull()).
+				Where(invl.ShipmentID.IsNotNull())
+		}).
+		Scan(ctx, &charges); err != nil {
+		r.l.Error("failed to list invoice line charges", zap.Error(err))
+		return nil, fmt.Errorf("list invoice line charges: %w", err)
+	}
+
+	return charges, nil
+}
+
+func (r *repository) NetBilledByCharge(
+	ctx context.Context,
+	req *repositories.NetBilledByChargeRequest,
+) (map[pulid.ID]decimal.Decimal, error) {
+	if req == nil || len(req.ChargeIDs) == 0 {
+		return map[pulid.ID]decimal.Decimal{}, nil
+	}
+
+	invl := buncolgen.InvoiceLineColumns
+	inv := buncolgen.InvoiceColumns
+	adj := buncolgen.InvoiceAdjustmentColumns
+
+	var rows []struct {
+		ChargeID pulid.ID        `bun:"charge_id"`
+		Net      decimal.Decimal `bun:"net"`
+	}
+	if err := r.db.DBForContext(ctx).NewSelect().
+		Model((*invoice.InvoiceLine)(nil)).
+		ColumnExpr(invl.AdditionalChargeID.As("charge_id")).
+		ColumnExpr(buncolgen.Sum(invl.Amount, "net")).
+		Join(
+			"JOIN "+buncolgen.InvoiceTable.As(buncolgen.InvoiceTable.Alias)+" ON ?",
+			bun.Safe(inv.ID.EqColumn(invl.InvoiceID)+
+				" AND "+inv.OrganizationID.EqColumn(invl.OrganizationID)+
+				" AND "+inv.BusinessUnitID.EqColumn(invl.BusinessUnitID)),
+		).
+		Join(
+			"LEFT JOIN "+buncolgen.InvoiceAdjustmentTable.As(
+				buncolgen.InvoiceAdjustmentTable.Alias,
+			)+" ON ?",
+			bun.Safe(adj.ID.EqColumn(inv.SourceInvoiceAdjustmentID)+
+				" AND "+adj.OrganizationID.EqColumn(inv.OrganizationID)+
+				" AND "+adj.BusinessUnitID.EqColumn(inv.BusinessUnitID)),
+		).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.InvoiceLineScopeTenant(sq, req.TenantInfo).
+				Where(invl.AdditionalChargeID.In(), bun.List(req.ChargeIDs)).
+				Where(inv.Status.Ne(), invoice.StatusVoided)
+		}).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where(inv.BillType.Ne(), billingqueue.BillTypeCreditMemo).
+				WhereOr(adj.Kind.In(), bun.List([]invoiceadjustment.Kind{
+					invoiceadjustment.KindCreditOnly,
+					invoiceadjustment.KindCreditRebill,
+				}))
+		}).
+		GroupExpr(invl.AdditionalChargeID.Qualified()).
+		Scan(ctx, &rows); err != nil {
+		r.l.Error("failed to total billed charges", zap.Error(err))
+		return nil, fmt.Errorf("total billed charges: %w", err)
+	}
+
+	net := make(map[pulid.ID]decimal.Decimal, len(rows))
+	for _, row := range rows {
+		net[row.ChargeID] = row.Net
+	}
+
+	return net, nil
+}
+
 func (r *repository) ListByShipmentIDs(
 	ctx context.Context,
 	req repositories.ListInvoicesByShipmentIDsRequest,

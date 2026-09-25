@@ -80,6 +80,7 @@ func ToolProviders() []any {
 		providePostCustomerPaymentTool,
 		provideResolveBankReceiptWorkItemTool,
 		provideEscalateDetentionTool,
+		provideApproveDetentionTool,
 		provideRequestCredentialRenewalTool,
 		providePlaceWorkerDispatchHoldTool,
 		provideAcknowledgeCarrierIntelEventTool,
@@ -231,6 +232,10 @@ func provideResolveBankReceiptWorkItemTool(
 
 func provideEscalateDetentionTool(detention *detentionservice.Service) services.AgentTool {
 	return newEscalateDetentionTool(detention)
+}
+
+func provideApproveDetentionTool(detention *detentionservice.Service) services.AgentTool {
+	return newApproveDetentionTool(detention)
 }
 
 func provideRequestCredentialRenewalTool(

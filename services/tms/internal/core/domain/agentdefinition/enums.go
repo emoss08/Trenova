@@ -164,7 +164,8 @@ func (t Template) Description() string {
 			"is a review rather than a search."
 	case TemplateDetentionDesk:
 		return "Works each detention clock from the moment it starts: gets the notice out " +
-			"while the window is open and says what the stay is going to cost."
+			"while the window is open, says what the stay is going to cost, and puts a " +
+			"held charge the evidence supports in front of a person for approval."
 	case TemplateCredentialDesk:
 		return "Takes a driver's papers in hand before they expire, chasing the renewal " +
 			"and saying when somebody has to come off dispatch."
@@ -230,7 +231,12 @@ func (t Template) StarterInstructions() string {
 			"reason: read the notes for what it is waiting on, and propose moving it into review only " +
 			"when the record shows that thing has arrived. A missing document gets " +
 			"request_missing_docs; anything else still outstanding gets an exception saying what it " +
-			"is. Never take an item off hold just because nothing looks wrong."
+			"is. Never take an item off hold just because nothing looks wrong. When the run's subject " +
+			"is the accounting connection rather than a billing item, invoices are not reaching the " +
+			"books: run check_accounting_connection once to see whether it answers now, read " +
+			"get_accounting_sync_status for what has failed to post, and if it is still not " +
+			"working raise an exception saying what a person has to do, such as reconnecting or " +
+			"re-authorizing it."
 	case TemplateDispatchAssignment:
 		return "You review moves that have no driver. A run starts either when a move inside the " +
 			"coverage window still has nobody on it or when a move loses its driver; the move is the " +
@@ -329,14 +335,22 @@ func (t Template) StarterInstructions() string {
 			"the free time, the notice window and what has already gone out. A notice " +
 			"whose window is open and that has not been sent gets send_detention_notice, " +
 			"with the stop, the times and the charge as they stand, and nothing internal. " +
-			"A clock already past its notice deadline, or one held back by a gate or " +
-			"waiting on approval, gets escalate_detention with what is blocking it rather " +
-			"than a notice the customer can reject on timing. Never send a second notice " +
-			"for an occurrence that shows one already sent, and never send one for a clock " +
-			"that has stopped. Leave the charge itself alone: waiving, approving and " +
-			"disputing are a person's to decide. When the customer has no notice " +
-			"recipients on file, or the occurrence is frozen, raise an exception saying " +
-			"so. Report the clock, what you sent, and what is still running."
+			"A clock already past its notice deadline, or one held back by a gate, gets " +
+			"escalate_detention with what is blocking it rather than a notice the customer " +
+			"can reject on timing. Never send a second notice for an occurrence that shows " +
+			"one already sent, and never send one for a clock that has stopped. A charge " +
+			"waiting on approval, AwaitingApproval on list_detention_desk, keeps its " +
+			"shipment from being invoiced until someone decides it. Read its evidence with " +
+			"get_detention_occurrence: when arrival and departure are on record, the notice " +
+			"went out inside its window or none was required, and nothing on file " +
+			"contradicts the time, propose approve_detention and put that evidence in it. " +
+			"When the evidence does not hold up and the cause is plainly the carrier's own, " +
+			"the weather or a data correction, propose waive_detention with the coded " +
+			"reason; otherwise leave it and say what is missing. You only ever propose " +
+			"these: approving, waiving and disputing a charge are a person's to decide. " +
+			"When the customer has no notice recipients on file, or the occurrence is " +
+			"frozen, raise an exception saying so. Report the clock, what you sent, what " +
+			"you proposed, and what is still running."
 	case TemplateCredentialDesk:
 		return "You keep drivers legal. A run starts when a driver has papers coming due; " +
 			"read the driver with get_worker, which lists every credential nearest expiry " +
@@ -606,6 +620,8 @@ func (t Template) StarterTools() []string {
 			"list_email_profiles",
 			"send_detention_notice",
 			"escalate_detention",
+			"approve_detention",
+			"waive_detention",
 			"add_shipment_comment",
 		}
 	case TemplateCredentialDesk:
@@ -679,6 +695,8 @@ func (t Template) StarterTools() []string {
 			"correct_charge_code",
 			"request_missing_docs",
 			"attach_document_to_shipment",
+			"get_accounting_sync_status",
+			"check_accounting_connection",
 		}
 	case TemplateDispatchAssignment:
 		return []string{
@@ -821,6 +839,7 @@ func (t Template) StarterEvents() []agent.EventKind {
 		return []agent.EventKind{
 			agent.EventBillingQueueItemException,
 			agent.EventBillingQueueItemOnHold,
+			agent.EventAccountingConnectionDegraded,
 		}
 	case TemplateShipmentIntake:
 		return []agent.EventKind{agent.EventDocumentExtracted}

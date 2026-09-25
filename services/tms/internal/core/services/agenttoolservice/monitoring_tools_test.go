@@ -533,7 +533,7 @@ func TestWaiveDetention_RequiresACodedReasonAndANote(t *testing.T) {
 	tool := newWaiveDetentionTool(det)
 	occurrenceID := pulid.MustNew("dto_")
 
-	require.NoError(t, tool.Execute(t.Context(), executeParams(map[string]any{
+	require.NoError(t, tool.Execute(t.Context(), approvedParams(map[string]any{
 		"occurrenceId": occurrenceID.String(),
 		"reason":       "CarrierFault",
 		"note":         " Our truck arrived two hours late. ",
@@ -543,7 +543,7 @@ func TestWaiveDetention_RequiresACodedReasonAndANote(t *testing.T) {
 	assert.Equal(t, "Our truck arrived two hours late.", det.waived.Note)
 
 	det.waived = nil
-	err := tool.Execute(t.Context(), executeParams(map[string]any{
+	err := tool.Execute(t.Context(), approvedParams(map[string]any{
 		"occurrenceId": occurrenceID.String(),
 		"reason":       "BecauseISaidSo",
 		"note":         "x",
@@ -551,6 +551,32 @@ func TestWaiveDetention_RequiresACodedReasonAndANote(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, det.waived)
 	assert.Equal(t, agent.TierPropose, tool.Policy().DefaultTier)
+}
+
+func TestWaiveDetention_GivesUpRevenueOnlyOnceAPersonApproves(t *testing.T) {
+	t.Parallel()
+
+	det := &fakeDetention{}
+	tool := newWaiveDetentionTool(det)
+
+	err := tool.Execute(t.Context(), executeParams(map[string]any{
+		"occurrenceId": pulid.MustNew("dto_").String(),
+		"reason":       "CarrierFault",
+		"note":         "Our truck arrived two hours late.",
+	}))
+	require.ErrorIs(t, err, ErrApprovalNeedsAPerson)
+	assert.Nil(t, det.waived)
+
+	policy := tool.Policy()
+	assert.Equal(t, agent.TierPropose, policy.MaxTier)
+	assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
+}
+
+func approvedParams(params map[string]any) serviceports.ToolExecuteParams {
+	execute := executeParams(params)
+	execute.ProposalID = pulid.MustNew("agp_")
+
+	return execute
 }
 
 func TestMonitoringActionTools_RejectAMismatchedActor(t *testing.T) {

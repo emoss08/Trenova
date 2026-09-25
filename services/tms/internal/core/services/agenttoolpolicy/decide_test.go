@@ -518,6 +518,38 @@ func TestDecide_TaintHoldsWhatLeaves(t *testing.T) {
 	}
 }
 
+// Approving a held detention charge puts money on a customer's invoice, so no
+// setting an organization can choose lets an agent do it on its own: the tier
+// stops at Propose whatever the agent and its tool tier say, and earned
+// autonomy has nowhere to promote it to.
+func TestDetentionMoneyDecisionsAreCappedAtPropose(t *testing.T) {
+	t.Parallel()
+
+	for _, name := range []string{"approve_detention", "waive_detention"} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			policy := registeredPolicy(t, name)
+			assert.Equal(t, agent.TierPropose, policy.DefaultTier)
+			assert.Equal(t, agent.TierPropose, policy.MaxTier)
+			assert.Equal(t, []agent.EgressClass{agent.EgressMoney}, policy.Egress)
+			assert.Equal(t, agent.TierPropose, agenttoolpolicy.Promotable(policy))
+
+			decision := agenttoolpolicy.Decide(t.Context(), agenttoolpolicy.DecideInput{
+				Policy: policy,
+				Params: call(agentPrincipal(), map[string]any{"occurrenceId": "dto_1"}),
+				Definition: definition(agent.TierAutoExecute, map[string]agent.AutonomyTier{
+					name: agent.TierAutoExecute,
+				}),
+				Unattended:      true,
+				TierSetByPerson: true,
+			})
+			assert.Equal(t, agent.TierPropose, decision.Tier)
+			assert.Contains(t, decision.HeldBy, agenttoolpolicy.HeldByToolMax)
+		})
+	}
+}
+
 func TestPromotable(t *testing.T) {
 	t.Parallel()
 

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
@@ -220,7 +221,48 @@ func (s *Service) resolveGroupLegs(
 		queueItems = append(queueItems, queueItem)
 	}
 
+	held, err := s.hasDetentionHolds(ctx, tenantInfo, legs)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	if held {
+		return nil, nil, "Detention charges on some shipments still need approval", nil
+	}
+
 	return legs, queueItems, "", nil
+}
+
+// hasDetentionHolds reports whether any leg has a detention charge waiting on
+// an approver. The group is skipped rather than failed: its shipments stay
+// approved and roll into the next run once the charge is decided.
+func (s *Service) hasDetentionHolds(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	legs []*shipment.Shipment,
+) (bool, error) {
+	if s.detentionBilling == nil || len(legs) == 0 {
+		return false, nil
+	}
+
+	shipmentIDs := make([]pulid.ID, 0, len(legs))
+	for _, leg := range legs {
+		if leg != nil {
+			shipmentIDs = append(shipmentIDs, leg.ID)
+		}
+	}
+
+	holds, err := s.detentionBilling.HoldsForShipments(
+		ctx,
+		&servicesports.DetentionBillingHoldsRequest{
+			TenantInfo:  tenantInfo,
+			ShipmentIDs: shipmentIDs,
+		},
+	)
+	if err != nil {
+		return false, err
+	}
+
+	return len(holds) > 0, nil
 }
 
 func (s *Service) skipGroup(

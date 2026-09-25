@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -49,6 +50,7 @@ type Params struct {
 	Realtime             services.RealtimeService
 	Validator            *Validator
 	OrderDerivation      services.OrderDerivationService
+	DetentionBilling     services.DetentionBillingService
 	AgentEvents          services.AgentEventPublisher `optional:"true"`
 	// Watchtower puts an item that cannot be invoiced on the feed.
 	Watchtower services.WatchtowerProjector `optional:"true"`
@@ -73,6 +75,7 @@ type service struct {
 	realtime             services.RealtimeService
 	validator            *Validator
 	orderDerivation      services.OrderDerivationService
+	detentionBilling     services.DetentionBillingService
 	agentEvents          services.AgentEventPublisher
 	watchtower           services.WatchtowerProjector
 }
@@ -98,6 +101,7 @@ func New(p Params) services.BillingQueueService {
 		realtime:             p.Realtime,
 		validator:            p.Validator,
 		orderDerivation:      p.OrderDerivation,
+		detentionBilling:     p.DetentionBilling,
 		agentEvents:          p.AgentEvents,
 		watchtower:           p.Watchtower,
 	}
@@ -131,7 +135,50 @@ func (s *service) GetByID(
 		)
 	}
 
+	holds, err := s.detentionHolds(ctx, item, req.TenantInfo)
+	if err != nil {
+		s.l.Warn("failed to read detention billing holds for billing queue item",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.String("shipmentId", item.ShipmentID.String()),
+			zap.Error(err),
+		)
+	}
+	item.DetentionHolds = billingqueue.NewDetentionHolds(holds)
+
 	return item, nil
+}
+
+// detentionHolds reads the detention charges holding the item's shipment off an
+// invoice. A credit memo gives money back and bills no charge, and a posted or
+// canceled item is past billing, so nothing holds either.
+func (s *service) detentionHolds(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+	tenantInfo pagination.TenantInfo,
+) ([]*detention.DetentionOccurrence, error) {
+	if s.detentionBilling == nil || item == nil || item.ShipmentID.IsNil() ||
+		item.BillType == billingqueue.BillTypeCreditMemo ||
+		billingqueue.IsTerminalStatus(item.Status) {
+		return nil, nil
+	}
+
+	return s.detentionBilling.HoldsForShipments(ctx, &services.DetentionBillingHoldsRequest{
+		TenantInfo:  tenantInfo,
+		ShipmentIDs: []pulid.ID{item.ShipmentID},
+	})
+}
+
+func (s *service) guardDetentionHolds(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+	tenantInfo pagination.TenantInfo,
+) error {
+	holds, err := s.detentionHolds(ctx, item, tenantInfo)
+	if err != nil {
+		return err
+	}
+
+	return detention.BillingHoldError(holds)
 }
 
 func (s *service) expandShipmentDetails(
@@ -448,6 +495,23 @@ func (s *service) autoApprove(
 	tenantInfo pagination.TenantInfo,
 	actor *services.RequestActor,
 ) *billingqueue.BillingQueueItem {
+	holds, err := s.detentionHolds(ctx, item, tenantInfo)
+	if err != nil {
+		s.l.Warn("failed to read detention billing holds; left for review",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.Error(err),
+		)
+		return item
+	}
+	if len(holds) > 0 {
+		s.l.Info("detention charges still need approval; billing queue item left for review",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.String("shipmentId", item.ShipmentID.String()),
+			zap.Int("heldCharges", len(holds)),
+		)
+		return item
+	}
+
 	approved, err := s.UpdateStatus(ctx, &services.UpdateBillingQueueStatusRequest{
 		ItemID:     item.ID,
 		NewStatus:  billingqueue.StatusApproved,
@@ -616,6 +680,12 @@ func (s *service) UpdateStatus(
 				errortypes.ErrInvalidOperation,
 				"Cannot transition from {0} to {1}", string(entity.Status), string(req.NewStatus),
 			)
+		}
+
+		if req.NewStatus == billingqueue.StatusApproved {
+			if holdErr := s.guardDetentionHolds(txCtx, entity, req.TenantInfo); holdErr != nil {
+				return holdErr
+			}
 		}
 
 		prev := *entity

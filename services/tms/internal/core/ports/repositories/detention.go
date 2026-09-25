@@ -151,7 +151,43 @@ type LinkOccurrenceChargesRequest struct {
 	ChargeOccurrences map[pulid.ID][]pulid.ID
 }
 
+// ListDetentionBillingHoldsRequest asks for the charges holding the shipments
+// off an invoice.
+type ListDetentionBillingHoldsRequest struct {
+	TenantInfo  pagination.TenantInfo
+	ShipmentIDs []pulid.ID
+}
+
+// ListOccurrencesByChargesRequest asks for the billable occurrences behind
+// shipment charges.
+type ListOccurrencesByChargesRequest struct {
+	TenantInfo  pagination.TenantInfo
+	ShipmentIDs []pulid.ID
+	ChargeIDs   []pulid.ID
+}
+
 type DetentionOccurrenceRepository interface {
+	// ListBillingHoldsByShipments returns every occurrence on the shipments
+	// that holds billing, ordered by shipment and then by clock.
+	ListBillingHoldsByShipments(
+		ctx context.Context,
+		req *ListDetentionBillingHoldsRequest,
+	) ([]*detention.DetentionOccurrence, error)
+
+	// ListBillingHolds returns every occurrence in the tenant that holds
+	// billing, oldest clock first.
+	ListBillingHolds(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+	) ([]*detention.DetentionOccurrence, error)
+
+	// ListByAdditionalCharges returns the pending, approved and billed
+	// occurrences the shipment charges bill.
+	ListByAdditionalCharges(
+		ctx context.Context,
+		req *ListOccurrencesByChargesRequest,
+	) ([]*detention.DetentionOccurrence, error)
+
 	List(
 		ctx context.Context,
 		req *ListDetentionOccurrencesRequest,

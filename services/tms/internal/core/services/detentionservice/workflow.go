@@ -3,16 +3,19 @@ package detentionservice
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/shared/intutils"
 
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -101,19 +104,55 @@ func (s *Service) ListDesk(
 			continue
 		}
 
-		entry := &DeskEntry{
-			Occurrence:            occurrence,
-			MinutesUntilFreeEnds:  intutils.SafeToInt32((occurrence.FreeTimeExpiresAt - now) / 60),
-			MinutesUntilNoticeDue: occurrence.MinutesUntilNoticeDue(now),
-			NoticeWindowOpen:      occurrence.NoticeWindowOpen(now),
-			AmountAtRisk:          occurrence.BillableAmount,
-			Urgency:               deskUrgency(occurrence, now),
-		}
-
-		entries = append(entries, entry)
+		entries = append(entries, newDeskEntry(occurrence, now, deskUrgency(occurrence, now)))
 	}
 
 	return entries, nil
+}
+
+// UrgencyAwaitingApproval marks a charge whose clock has stopped and that is
+// holding its shipment off an invoice until someone approves or waives it.
+const UrgencyAwaitingApproval = "AwaitingApproval"
+
+// ListAwaitingApproval returns every charge holding its shipment off an
+// invoice, oldest clock first. These are not on the live board, whose clocks
+// are still running; they are what the board's clocks became once they
+// stopped over the approval threshold, missed a notice, or were escalated.
+func (s *Service) ListAwaitingApproval(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) ([]*DeskEntry, error) {
+	occurrences, err := s.occurrenceRepo.ListBillingHolds(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	now := s.now()
+	entries := make([]*DeskEntry, 0, len(occurrences))
+	for _, occurrence := range occurrences {
+		if occurrence == nil || !occurrence.HoldsBilling() {
+			continue
+		}
+
+		entries = append(entries, newDeskEntry(occurrence, now, UrgencyAwaitingApproval))
+	}
+
+	return entries, nil
+}
+
+func newDeskEntry(
+	occurrence *detention.DetentionOccurrence,
+	now int64,
+	urgency string,
+) *DeskEntry {
+	return &DeskEntry{
+		Occurrence:            occurrence,
+		MinutesUntilFreeEnds:  intutils.SafeToInt32((occurrence.FreeTimeExpiresAt - now) / 60),
+		MinutesUntilNoticeDue: occurrence.MinutesUntilNoticeDue(now),
+		NoticeWindowOpen:      occurrence.NoticeWindowOpen(now),
+		AmountAtRisk:          occurrence.BillableAmount,
+		Urgency:               urgency,
+	}
 }
 
 // deskUrgency ranks what a dispatcher should look at first.
@@ -196,6 +235,7 @@ func (s *Service) Waive(
 		now)
 
 	s.audit(&original, saved, p.UserID, "Detention charge waived")
+	s.publishBillingHoldChange(ctx, &original, saved, p.UserID)
 
 	return saved, nil
 }
@@ -204,6 +244,9 @@ type ApproveParams struct {
 	OccurrenceID pulid.ID
 	TenantInfo   pagination.TenantInfo
 	UserID       pulid.ID
+	// Note is why the charge stands, recorded on its evidence chain with the
+	// approval.
+	Note string
 }
 
 func (s *Service) Approve(
@@ -234,13 +277,16 @@ func (s *Service) Approve(
 		return nil, err
 	}
 
+	summary := fmt.Sprintf("Approved for billing at %s %s",
+		saved.BillableAmount.StringFixed(2), saved.Currency)
+	if note := strings.TrimSpace(p.Note); note != "" {
+		summary += ": " + note
+	}
 	s.appendEvidence(ctx, saved, detention.EvidenceKindStatusChange,
-		detention.EvidenceSourceManual,
-		fmt.Sprintf("Approved for billing at %s %s",
-			saved.BillableAmount.StringFixed(2), saved.Currency),
-		now)
+		detention.EvidenceSourceManual, summary, now)
 
 	s.audit(&original, saved, p.UserID, "Detention charge approved")
+	s.publishBillingHoldChange(ctx, &original, saved, p.UserID)
 
 	return saved, nil
 }
@@ -287,6 +333,7 @@ func (s *Service) Dispute(
 		"Customer disputed the charge: "+p.Note, now)
 
 	s.audit(&original, saved, p.UserID, "Detention charge disputed")
+	s.publishBillingHoldChange(ctx, &original, saved, p.UserID)
 
 	return saved, nil
 }
@@ -336,6 +383,7 @@ func (s *Service) Escalate(
 		"Escalated to a person: "+p.Reason, now)
 
 	s.audit(&original, saved, p.UserID, "Detention escalated: "+p.Reason)
+	s.publishBillingHoldChange(ctx, &original, saved, p.UserID)
 
 	return saved, nil
 }
@@ -379,6 +427,39 @@ func (s *Service) BuildDisputePacket(
 		ChainVerified:  detention.VerifyChain(detail.Evidence) == -1,
 		GeneratedAt:    s.now(),
 	}, nil
+}
+
+// publishBillingHoldChange refreshes the billing queue when an occurrence
+// starts or stops holding its shipment off an invoice, so a biller looking at
+// the item sees the approve action unlock the moment the charge is decided. It
+// waits for the write to commit when there is a transaction.
+func (s *Service) publishBillingHoldChange(
+	ctx context.Context,
+	previous, saved *detention.DetentionOccurrence,
+	actorUserID pulid.ID,
+) {
+	if s.realtime == nil || saved == nil {
+		return
+	}
+
+	wasHeld := previous != nil && previous.HoldsBilling()
+	if wasHeld == saved.HoldsBilling() {
+		return
+	}
+
+	orgID, buID := saved.OrganizationID, saved.BusinessUnitID
+	ports.AfterCommit(ctx, func(runCtx context.Context) {
+		if err := realtimeinvalidation.Publish(runCtx, s.realtime, &realtimeinvalidation.PublishParams{
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			ActorUserID:    actorUserID,
+			Resource:       permission.ResourceBillingQueue.String(),
+			Action:         "updated",
+		}); err != nil {
+			s.l.Warn("failed to publish billing queue invalidation for a detention hold",
+				zap.String("occurrenceId", saved.ID.String()), zap.Error(err))
+		}
+	})
 }
 
 func (s *Service) audit(

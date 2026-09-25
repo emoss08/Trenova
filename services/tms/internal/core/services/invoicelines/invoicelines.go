@@ -181,6 +181,7 @@ func accessorialLine(
 		UnitPrice:           unitPrice,
 		Amount:              amount,
 		AccessorialChargeID: charge.AccessorialChargeID,
+		AdditionalChargeID:  charge.ID,
 		ChargeMethod:        charge.Method,
 		Rate:                decimal.NewNullDecimal(charge.Amount),
 	}

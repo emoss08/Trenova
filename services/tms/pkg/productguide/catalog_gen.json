@@ -1,5 +1,5 @@
 {
-  "version": "sha256:b81723efd0f7d754497b4092d671d0c3b78efd28b0feeaf3cc31d05ed9920827",
+  "version": "sha256:f42d54a66fba1fe9943d406c95ec08c6653cb74884e7493e4358305e3de5bdcd",
   "modules": [
     {
       "id": "home",
@@ -6372,7 +6372,22 @@
             "Select an item in the list (the j and k keys move down and up the list).",
             "Select **Start review** to take the item yourself, or **Assign biller** to give it to someone else.",
             "Check the **Charges** and **Documents** tabs.",
-            "Select **Approve**. If required documents are missing, **Approve** stays disabled and its tooltip says what is missing. After approval the next open item is selected automatically."
+            "Select **Approve**. If required documents are missing, or a detention charge on the shipment still needs approval, **Approve** stays disabled and its tooltip says why. After approval the next open item is selected automatically."
+          ]
+        },
+        {
+          "title": "Clear a detention charge that is holding an item",
+          "keywords": [
+            "held detention",
+            "detention needs approval",
+            "detention blocking approval",
+            "approve detention charge"
+          ],
+          "steps": [
+            "Open [Billing queue](/billing/queue) and select the item. A notice above the tabs lists each detention charge on the shipment that still needs approval, with its amount and why it is held: over the policy's approval threshold, a required notice not sent in time, or escalated for review.",
+            "Select a charge in the notice to open it on the [Detention desk](/detention/desk).",
+            "Check the evidence, then select **Approve charge** if it supports the charge, or **Waive** with a coded **Reason** and a **Note** if it does not.",
+            "Go back to the item. Once no charge is held, the notice goes away and **Approve** is available again."
           ]
         },
         {
@@ -6451,7 +6466,7 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to the billing queue. **Transfer to billing** only appears for people who can update shipments.\n\nApproving an item creates its invoice, which then appears on [Invoices](/billing/invoices). For a customer billed on a statement, the approved shipment waits on the customer's statement until the period is billed from the **Statements** view. Invoices under the customer's minimum are skipped and their shipments roll into the next period.",
+      "notes": "Opening the page needs read access to the billing queue. **Transfer to billing** only appears for people who can update shipments.\n\nA detention charge that went over its policy's approval threshold, missed a notice the policy requires, or was escalated keeps its shipment off every invoice until someone approves or waives it. While one is held the item cannot be approved, a transfer that would approve it on its own leaves it for review instead, and a statement run skips the customer's invoice until the charge is decided. A pending charge that simply was not approved automatically holds nothing. The detention desk agent can propose approving a held charge the evidence supports, but a person always decides.\n\nApproving an item creates its invoice, which then appears on [Invoices](/billing/invoices). Every detention charge on that invoice is marked billed; voiding or crediting the invoice so that nothing bills the charge any more returns it to approved. For a customer billed on a statement, the approved shipment waits on the customer's statement until the period is billed from the **Statements** view. Invoices under the customer's minimum are skipped and their shipments roll into the next period.",
       "related": [
         "/billing/invoices",
         "/billing/configuration-files/customers",
@@ -7518,6 +7533,20 @@
           ]
         },
         {
+          "title": "Release a charge that is holding a shipment's billing",
+          "keywords": [
+            "detention needs approval",
+            "held detention charge",
+            "unblock billing",
+            "detention approval threshold"
+          ],
+          "steps": [
+            "Open the charge from the notice on the [Billing queue](/billing/queue) item it is holding; it opens here in its detail even though its clock has stopped and it is no longer on the board.",
+            "Review the **Evidence chain** and the **Notices** sent.",
+            "Select **Approve charge** to release it onto the invoice, or **Waive** it with a coded **Reason** and a **Note**. Either one lets the billing queue item be approved."
+          ]
+        },
+        {
           "title": "Build a dispute packet",
           "keywords": [
             "claim file",
@@ -7530,7 +7559,7 @@
           ]
         }
       ],
-      "notes": "Opening the desk needs read access to detention policies.\n\n**Approve charge** only appears while a charge is pending, **Send notice** only while a required notice has not been sent, and **Record dispute** only when there is a billable amount that is not already disputed. The board refreshes on its own; the refresh button in the header pulls fresh numbers straight away.",
+      "notes": "Opening the desk needs read access to detention policies.\n\nA pending charge that went over its policy's approval threshold, missed a required notice, or was escalated holds its shipment off every invoice until it is approved or waived. The detention desk agent looks at these too: when the evidence supports a held charge it proposes approving it, with that evidence, and otherwise it proposes a waiver or leaves the charge for you; nothing is approved or waived until a person accepts the proposal. Once an invoice carries a charge it is marked billed and no longer changes when the stop is recalculated; voiding or crediting that invoice returns it to approved.\n\n**Approve charge** only appears while a charge is pending, **Send notice** only while a required notice has not been sent, and **Record dispute** only when there is a billable amount that is not already disputed. The board refreshes on its own; the refresh button in the header pulls fresh numbers straight away.",
       "related": [
         "/detention/configuration-files/detention-policies",
         "/detention/intelligence",
@@ -14460,6 +14489,14 @@
       "label": "Dashboard",
       "path": "/reports/dashboards/{id}",
       "params": {}
+    },
+    {
+      "entity": "detention_occurrence",
+      "label": "Detention charge",
+      "path": "/detention/desk",
+      "params": {
+        "stop": "{id}"
+      }
     },
     {
       "entity": "edi_inbound_file",
