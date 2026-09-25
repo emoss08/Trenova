@@ -10,6 +10,7 @@ const SUBJECT_RECORDS: Partial<Record<AgentSubjectType, RecordEntityType>> = {
   AssistantThread: "assistant_thread",
   BillingQueueItem: "billing_queue_item",
   Dashboard: "dashboard",
+  DetentionOccurrence: "detention_occurrence",
   EDIInboundFile: "edi_inbound_file",
   Report: "report",
   Shipment: "shipment",

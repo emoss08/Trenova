@@ -20,6 +20,7 @@ import { Link } from "react-router";
 import { BillingQueueActionBar } from "./billing-queue-action-bar";
 import { BillingQueueAssignDialog } from "./billing-queue-assign-dialog";
 import { BillingQueueChargesTab } from "./billing-queue-charges-tab";
+import { BillingQueueDetentionHolds } from "./billing-queue-detention-holds";
 import { BillingQueueDocumentsTab } from "./billing-queue-documents-tab";
 
 // The comments tab brings the realtime comment stack with it; the billing queue
@@ -160,6 +161,7 @@ export default function BillingQueueDetailPane({
           </Alert>
         </div>
       )}
+      <BillingQueueDetentionHolds holds={item.detentionHolds} />
       {item.isAdjustmentOrigin ? (
         <AdjustmentOriginBanner
           rebillStrategy={item.rebillStrategy}

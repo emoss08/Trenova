@@ -8551,6 +8551,7 @@
               "carrier",
               "customer",
               "dashboard",
+              "detention_occurrence",
               "edi_inbound_file",
               "invoice",
               "location",
