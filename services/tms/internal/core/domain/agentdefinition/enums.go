@@ -934,6 +934,8 @@ func (t Template) StarterEvents() []agent.EventKind {
 			agent.EventAccountingSyncBlocked,
 			agent.EventAccountingConnectionDegraded,
 			agent.EventAccountingPaymentProposed,
+			agent.EventAccountingDriftDetected,
+			agent.EventAccountingReconciliationDue,
 		}
 	default:
 		return nil

@@ -31,6 +31,7 @@ var subjectRecords = map[SubjectType]subjectRecord{
 	SubjectAccountingConnection: {"acctc_", "accounting connection", "an"},
 	SubjectAccountingSyncRecord: {"acctsr_", "accounting sync record", "an"},
 	SubjectAccountingInbound:    {"acctic_", "accounting inbound change", "an"},
+	SubjectAccountingDrift:      {"acctdf_", "accounting drift finding", "an"},
 	SubjectFormulaTemplate:      {"ft_", "formula template", "a"},
 }
 

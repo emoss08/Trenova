@@ -244,6 +244,13 @@ func (f *fakeConnections) MarkWebhookReceived(
 	return count, nil
 }
 
+func (f *fakeConnections) SaveDriftCheck(
+	context.Context,
+	*repositories.SaveAccountingDriftCheckRequest,
+) error {
+	return nil
+}
+
 func (f *fakeConnections) SaveChangeFeed(
 	_ context.Context,
 	req *repositories.SaveAccountingChangeFeedRequest,

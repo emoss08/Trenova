@@ -110,6 +110,7 @@ func (s *Service) PollChanges(
 		Now:            now,
 		Payments:       true,
 		BillPayments:   true,
+		Documents:      s.drift != nil,
 		ReferenceKinds: accountingsync.AllReferenceKinds(),
 	})
 	if err != nil {
@@ -145,6 +146,7 @@ func (s *Service) PollChanges(
 	}
 
 	result.Payments = len(page.Payments)
+	result.Documents = s.recheckDocuments(ctx, sess, page.Documents)
 	result.More = page.More
 	result.CursorExpired = page.CursorExpired
 	if page.CursorExpired && s.refresher != nil {
@@ -161,6 +163,31 @@ func (s *Service) PollChanges(
 		s.publishInvalidation(ctx, sess.tenant, sess.conn.ID, sess.conn.ID)
 	}
 	return result, nil
+}
+
+func (s *Service) recheckDocuments(
+	ctx context.Context,
+	sess *readSession,
+	documents []services.AccountingChangedDocument,
+) int {
+	if s.drift == nil || len(documents) == 0 {
+		return 0
+	}
+	checked, err := s.drift.RecheckDocuments(ctx, &services.RecheckAccountingDriftRequest{
+		TenantInfo:   sess.tenant,
+		ConnectionID: sess.conn.ID,
+		Documents:    documents,
+		EventBudget:  driftEventsPerPoll,
+	})
+	if err != nil {
+		s.l.Warn(
+			"failed to compare documents the accounting system changed; the nightly check will",
+			zap.String("connectionId", sess.conn.ID.String()),
+			zap.Error(err),
+		)
+		return 0
+	}
+	return checked.Compared
 }
 
 func (s *Service) startCursor(ctx context.Context, sess *readSession) (string, error) {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -424,6 +425,82 @@ func TestDriftSource_ReadsTrenovaSideOfEverySyncedDocument(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, pending)
+
+	pendingFor := func() []pulid.ID {
+		t.Helper()
+		found, pendingErr := source.ListPendingCustomers(
+			ctx,
+			&repositories.ListAccountingDriftPendingCustomersRequest{
+				TenantInfo:   tenant,
+				ConnectionID: connection.ID,
+				CustomerIDs:  []pulid.ID{shipments[0].CustomerID},
+			},
+		)
+		require.NoError(t, pendingErr)
+		return found
+	}
+	waitingOn := func(objectType accountingsync.SyncObjectType, objectID pulid.ID) {
+		t.Helper()
+		record := accountingsync.NewAccountingSyncRecord(&accountingsync.NewSyncRecord{
+			TenantInfo:   tenant,
+			ConnectionID: connection.ID,
+			Key: accountingsync.SyncRecordKey{
+				ObjectType: objectType,
+				ObjectID:   objectID,
+				Operation:  accountingsync.SyncOperationUpdate,
+				Revision:   9,
+			},
+			SourceEvent:  accountingsync.SyncSourceDriftResolved,
+			DocumentDate: driftMinor(dated),
+			At:           posted,
+		})
+		inserted, enqueueErr := records.Enqueue(ctx, []*accountingsync.AccountingSyncRecord{record})
+		require.NoError(t, enqueueErr)
+		require.Len(t, inserted.Inserted, 1)
+		assert.Equal(t, []pulid.ID{shipments[0].CustomerID}, pendingFor(),
+			"a %s still on its way to the provider holds the balance", objectType)
+
+		queued := inserted.Inserted[0]
+		queued.MarkSynced(&accountingsync.SyncResult{ExternalID: "9" + queued.ID.String()}, posted)
+		_, updateErr := records.Update(ctx, queued)
+		require.NoError(t, updateErr)
+		assert.Empty(t, pendingFor())
+	}
+	waitingOn(accountingsync.SyncObjectInvoice, open.ID)
+
+	payment := &customerpayment.Payment{
+		ID:                   pulid.MustNew("cpay_"),
+		OrganizationID:       tenant.OrgID,
+		BusinessUnitID:       tenant.BuID,
+		CustomerID:           shipments[0].CustomerID,
+		PaymentDate:          dated,
+		AccountingDate:       dated,
+		AmountMinor:          1_000,
+		UnappliedAmountMinor: 1_000,
+		Status:               customerpayment.StatusPosted,
+		PaymentMethod:        customerpayment.MethodACH,
+		CurrencyCode:         "USD",
+		CreatedByID:          userID,
+	}
+	_, err = db.NewInsert().Model(payment).Exec(ctx)
+	require.NoError(t, err)
+	waitingOn(accountingsync.SyncObjectCustomerPayment, payment.ID)
+
+	application := &customerpayment.CreditMemoApplication{
+		ID:                  pulid.MustNew("cma_"),
+		OrganizationID:      tenant.OrgID,
+		BusinessUnitID:      tenant.BuID,
+		CreditMemoInvoiceID: memo.ID,
+		InvoiceID:           open.ID,
+		AppliedAmountMinor:  500,
+		AccountingDate:      dated,
+		LineNumber:          1,
+		Status:              customerpayment.CreditApplicationStatusApplied,
+		CreatedByID:         userID,
+	}
+	_, err = db.NewInsert().Model(application).Exec(ctx)
+	require.NoError(t, err)
+	waitingOn(accountingsync.SyncObjectCreditApplication, application.ID)
 
 	change := accountingsync.NewAccountingInboundChange(&accountingsync.InboundObservation{
 		TenantInfo:   tenant,

@@ -26,6 +26,7 @@ import (
 const (
 	defaultEvaluateLimit = 100
 	summaryWindow        = 7 * 24 * time.Hour
+	driftEventsPerPoll   = 20
 )
 
 var permissionResource = permission.ResourceAccountingSync.String()
@@ -52,6 +53,7 @@ type Params struct {
 	AuditService      services.AuditService
 	Permissions       services.PermissionEngine
 	Refresher         services.AccountingReferenceRefresher `optional:"true"`
+	Drift             services.AccountingDriftRechecker     `optional:"true"`
 	Publisher         services.AgentEventPublisher          `optional:"true"`
 	Watchtower        services.WatchtowerProjector          `optional:"true"`
 	Realtime          services.RealtimeService              `optional:"true"`
@@ -77,6 +79,7 @@ type Service struct {
 	audit            services.AuditService
 	permissions      services.PermissionEngine
 	refresher        services.AccountingReferenceRefresher
+	drift            services.AccountingDriftRechecker
 	publisher        services.AgentEventPublisher
 	watchtower       services.WatchtowerProjector
 	realtime         services.RealtimeService
@@ -107,6 +110,7 @@ func New(p Params) *Service {
 		audit:            p.AuditService,
 		permissions:      p.Permissions,
 		refresher:        p.Refresher,
+		drift:            p.Drift,
 		publisher:        p.Publisher,
 		watchtower:       p.Watchtower,
 		realtime:         p.Realtime,

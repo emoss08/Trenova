@@ -22,6 +22,7 @@ type AccountingChangesPollResult struct {
 	Payments      int
 	Recorded      int
 	References    int
+	Documents     int
 }
 
 type EvaluateAccountingInboundRequest struct {

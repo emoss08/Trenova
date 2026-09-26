@@ -1,6 +1,10 @@
 package accountingsync
 
-import "github.com/emoss08/trenova/internal/core/domain/billingqueue"
+import (
+	"slices"
+
+	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+)
 
 type SyncObjectType string
 
@@ -289,8 +293,12 @@ func (s SyncStatus) IsValid() bool {
 	}
 }
 
+func FinalSyncStatuses() []SyncStatus {
+	return []SyncStatus{SyncStatusSynced, SyncStatusSkipped, SyncStatusSuperseded}
+}
+
 func (s SyncStatus) IsFinal() bool {
-	return s == SyncStatusSynced || s == SyncStatusSkipped || s == SyncStatusSuperseded
+	return slices.Contains(FinalSyncStatuses(), s)
 }
 
 func (s SyncStatus) NeedsAttention() bool {

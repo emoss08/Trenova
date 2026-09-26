@@ -485,9 +485,36 @@ func (s *driftSource) ListPendingCustomers(
 	if len(req.CustomerIDs) == 0 {
 		return ids, nil
 	}
+	dba := s.db.DBForContext(ctx)
+	queries := []*bun.SelectQuery{
+		s.waitingInbound(dba, req),
+		s.unsettledSales(dba, req),
+		s.unsettledPayments(dba, req),
+		s.unsettledApplications(dba, req),
+	}
+	seen := make(map[pulid.ID]struct{}, len(req.CustomerIDs))
+	for _, query := range queries {
+		found := make([]pulid.ID, 0, len(req.CustomerIDs))
+		if err := query.Scan(ctx, &found); err != nil {
+			return nil, fmt.Errorf("list customers with changes still waiting: %w", err)
+		}
+		for _, id := range found {
+			if _, dup := seen[id]; dup {
+				continue
+			}
+			seen[id] = struct{}{}
+			ids = append(ids, id)
+		}
+	}
+	return ids, nil
+}
+
+func (s *driftSource) waitingInbound(
+	dba bun.IDB,
+	req *repositories.ListAccountingDriftPendingCustomersRequest,
+) *bun.SelectQuery {
 	cols := buncolgen.AccountingInboundChangeColumns
-	if err := s.db.DBForContext(ctx).
-		NewSelect().
+	return dba.NewSelect().
 		Model((*accountingsync.AccountingInboundChange)(nil)).
 		ColumnExpr("DISTINCT "+cols.PartyObjectID.Qualified()).
 		Apply(buncolgen.AccountingInboundChangeApplyTenant(req.TenantInfo)).
@@ -497,9 +524,89 @@ func (s *driftSource) ListPendingCustomers(
 			accountingsync.InboundStatusDetected,
 			accountingsync.InboundStatusProposed,
 		})).
-		Where(cols.PartyObjectID.In(), bun.List(req.CustomerIDs)).
-		Scan(ctx, &ids); err != nil {
-		return nil, fmt.Errorf("list customers with payments waiting: %w", err)
-	}
-	return ids, nil
+		Where(cols.PartyObjectID.In(), bun.List(req.CustomerIDs))
+}
+
+func (s *driftSource) unsettledRecords(
+	dba bun.IDB,
+	req *repositories.ListAccountingDriftPendingCustomersRequest,
+	objectTypes []accountingsync.SyncObjectType,
+) *bun.SelectQuery {
+	records := buncolgen.AccountingSyncRecordColumns
+	return dba.NewSelect().
+		Model((*accountingsync.AccountingSyncRecord)(nil)).
+		Apply(buncolgen.AccountingSyncRecordApplyTenant(req.TenantInfo)).
+		Where(records.ConnectionID.Eq(), req.ConnectionID).
+		Where(records.ObjectType.In(), bun.List(objectTypes)).
+		Where(records.Status.NotIn(), bun.List(accountingsync.FinalSyncStatuses()))
+}
+
+func (s *driftSource) unsettledSales(
+	dba bun.IDB,
+	req *repositories.ListAccountingDriftPendingCustomersRequest,
+) *bun.SelectQuery {
+	records := buncolgen.AccountingSyncRecordColumns
+	inv := buncolgen.InvoiceColumns
+	return s.unsettledRecords(dba, req, []accountingsync.SyncObjectType{
+		accountingsync.SyncObjectInvoice,
+		accountingsync.SyncObjectCreditMemo,
+		accountingsync.SyncObjectDebitMemo,
+	}).
+		ColumnExpr("DISTINCT "+inv.CustomerID.Qualified()).
+		Join(joinOn(
+			buncolgen.InvoiceTable,
+			buncolgen.InvoiceTable.Alias,
+			inv.ID.EqColumn(records.ObjectID),
+			inv.OrganizationID.EqColumn(records.OrganizationID),
+			inv.BusinessUnitID.EqColumn(records.BusinessUnitID),
+		)).
+		Where(inv.CustomerID.In(), bun.List(req.CustomerIDs))
+}
+
+func (s *driftSource) unsettledPayments(
+	dba bun.IDB,
+	req *repositories.ListAccountingDriftPendingCustomersRequest,
+) *bun.SelectQuery {
+	records := buncolgen.AccountingSyncRecordColumns
+	cp := buncolgen.PaymentColumns
+	return s.unsettledRecords(dba, req, []accountingsync.SyncObjectType{
+		accountingsync.SyncObjectCustomerPayment,
+	}).
+		ColumnExpr("DISTINCT "+cp.CustomerID.Qualified()).
+		Join(joinOn(
+			buncolgen.PaymentTable,
+			buncolgen.PaymentTable.Alias,
+			cp.ID.EqColumn(records.ObjectID),
+			cp.OrganizationID.EqColumn(records.OrganizationID),
+			cp.BusinessUnitID.EqColumn(records.BusinessUnitID),
+		)).
+		Where(cp.CustomerID.In(), bun.List(req.CustomerIDs))
+}
+
+func (s *driftSource) unsettledApplications(
+	dba bun.IDB,
+	req *repositories.ListAccountingDriftPendingCustomersRequest,
+) *bun.SelectQuery {
+	records := buncolgen.AccountingSyncRecordColumns
+	cma := buncolgen.CreditMemoApplicationColumns
+	inv := buncolgen.InvoiceColumns
+	return s.unsettledRecords(dba, req, []accountingsync.SyncObjectType{
+		accountingsync.SyncObjectCreditApplication,
+	}).
+		ColumnExpr("DISTINCT "+inv.CustomerID.Qualified()).
+		Join(joinOn(
+			buncolgen.CreditMemoApplicationTable,
+			buncolgen.CreditMemoApplicationTable.Alias,
+			cma.ID.EqColumn(records.ObjectID),
+			cma.OrganizationID.EqColumn(records.OrganizationID),
+			cma.BusinessUnitID.EqColumn(records.BusinessUnitID),
+		)).
+		Join(joinOn(
+			buncolgen.InvoiceTable,
+			buncolgen.InvoiceTable.Alias,
+			inv.ID.EqColumn(cma.CreditMemoInvoiceID),
+			inv.OrganizationID.EqColumn(cma.OrganizationID),
+			inv.BusinessUnitID.EqColumn(cma.BusinessUnitID),
+		)).
+		Where(inv.CustomerID.In(), bun.List(req.CustomerIDs))
 }

@@ -74,6 +74,13 @@ func (f *fakeConnections) Update(
 	return &out, nil
 }
 
+func (f *fakeConnections) SaveDriftCheck(
+	context.Context,
+	*repositories.SaveAccountingDriftCheckRequest,
+) error {
+	return nil
+}
+
 func (f *fakeConnections) SaveChangeFeed(
 	context.Context,
 	*repositories.SaveAccountingChangeFeedRequest,
