@@ -5548,6 +5548,15 @@
       "service/driversettlementservice"
     ]
   },
+  "A settlements payable account must be configured before recording driver settlement payments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/driversettlementservice"
+    ]
+  },
   "A share between 0 and 1": {
     "sites": 1,
     "scope": [
@@ -57652,15 +57661,6 @@
       "apps/web/config"
     ]
   },
-  "Driver settlement has no posted payable account; it cannot be paid": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "service/driversettlementservice"
-    ]
-  },
   "Driver settlement paid": {
     "sites": 1,
     "scope": [
@@ -84996,7 +84996,7 @@
     ]
   },
   "Invalid journal entry": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -87636,6 +87636,15 @@
       "service/journalreversalservice"
     ]
   },
+  "Journal entry not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalreviewservice"
+    ]
+  },
   "Journal entry {0} does not balance and cannot be posted": {
     "sites": 1,
     "scope": [
@@ -87645,8 +87654,17 @@
       "domain/journalentry"
     ]
   },
+  "Journal entry {0} is already approved": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
+    ]
+  },
   "Journal entry {0} is already posted": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -87656,6 +87674,15 @@
   },
   "Journal entry {0} is in an unknown state": {
     "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/journalentry"
+    ]
+  },
+  "Journal entry {0} is {1} and cannot be approved": {
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -107156,6 +107183,15 @@
     ],
     "areas": [
       "service/journalreversalservice"
+    ]
+  },
+  "No next open fiscal period is available for the {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalposting"
     ]
   },
   "No note": {
@@ -180167,6 +180203,15 @@
       "service/assistantservice"
     ]
   },
+  "The {0} cannot be posted to an inactive fiscal period": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalposting"
+    ]
+  },
   "The {0} connection could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -180174,6 +180219,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "The {0} falls in a closed fiscal period; reopen the period first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/journalposting"
     ]
   },
   "The {0} journal does not balance": {

@@ -9,19 +9,18 @@ func (e *JournalEntry) CanApprove() error {
 	case StatusPending:
 		if e.IsApproved {
 			return errortypes.NewBusinessError(
-				"Journal entry " + e.EntryNumber + " is already approved",
+				"Journal entry {0} is already approved",
+				e.EntryNumber,
 			)
 		}
 		return nil
 	case StatusApproved, StatusPosted:
-		return errortypes.NewBusinessError(
-			"Journal entry " + e.EntryNumber + " is already approved",
-		)
+		return errortypes.NewBusinessError("Journal entry {0} is already approved", e.EntryNumber)
 	case StatusDraft, StatusReversed, StatusRejected, StatusVoid:
 		return errortypes.NewBusinessError(
-			"Journal entry " + e.EntryNumber + " is " + string(
-				e.Status,
-			) + " and cannot be approved",
+			"Journal entry {0} is {1} and cannot be approved",
+			e.EntryNumber,
+			string(e.Status),
 		)
 	default:
 		return errortypes.NewBusinessError(
@@ -35,9 +34,7 @@ func (e *JournalEntry) CanPost() error {
 	switch e.Status {
 	case StatusApproved:
 		if e.IsPosted {
-			return errortypes.NewBusinessError(
-				"Journal entry " + e.EntryNumber + " is already posted",
-			)
+			return errortypes.NewBusinessError("Journal entry {0} is already posted", e.EntryNumber)
 		}
 		return e.balanceError()
 	case StatusPending:

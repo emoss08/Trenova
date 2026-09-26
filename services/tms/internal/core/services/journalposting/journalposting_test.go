@@ -145,6 +145,13 @@ func TestResolvePeriodRefusesAnInactivePeriodAndAMissingOne(t *testing.T) {
 		tenant.ClosedPeriodPostingPolicyPostToNextOpen)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "inactive fiscal period")
+	var localized interface {
+		LocalizedMessage() (string, []any)
+	}
+	require.ErrorAs(t, err, &localized)
+	message, args := localized.LocalizedMessage()
+	assert.Equal(t, "The {0} cannot be posted to an inactive fiscal period", message)
+	assert.Len(t, args, 1)
 
 	missing := mocks.NewMockFiscalPeriodRepository(t)
 	missing.EXPECT().

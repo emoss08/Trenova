@@ -23,7 +23,7 @@ trenova db repair-journals --org org_01H...  # one organization
 |---|---|---|
 | Adjustment credit memo, Posted, no customer ledger line | `journalrepairrepository.ListUnjournaledAdjustmentMemos` | `CreditMemoPosted` journal (Dr revenue, Cr AR) and the ledger line, through `invoiceledger.Poster` |
 | Write-off memo, or memo whose `CreditMemoPosted` journal already exists | same | the ledger line only (the write-off journal is written by the write-off itself) |
-| Paid driver settlement, net pay ≠ 0, no `paid_journal_batch_id` | `ListUnjournaledDriverPayments` | `DriverSettlementPaid` journal (Dr the snapshotted posted payable account, Cr the default cash account) on the paid date, then stamps `paid_journal_batch_id` |
+| Paid driver settlement, net pay ≠ 0, no `paid_journal_batch_id` | `ListUnjournaledDriverPayments` | `DriverSettlementPaid` journal (Dr the snapshotted posted payable account, or the default settlements payable for a settlement posted before the snapshot existed; Cr the default cash account) on the paid date, then stamps `paid_journal_batch_id` |
 | Paid settlement whose payment journal exists but was never stamped | same | stamps `paid_journal_batch_id` with the existing batch; no new journal |
 
 The request builders are the ones the live paths use (`invoiceledger.CreditMemoRequest`,
@@ -42,7 +42,8 @@ review; with **Automatic** they post. The author recorded is the system user.
 ## Skipped records
 
 A record the repair cannot journal is listed with its reason and left unchanged: no accounting
-accounts configured, no fiscal period covering its date, a closed period under the
-reject policy, revenue not recognized on invoice post (no ledger entry is due), or a settlement
-without a posted payable account snapshot. Correct the cause and run again. Any other error stops
+accounts configured, no fiscal period covering its date, a closed period under the reject policy,
+revenue not recognized on invoice post (no ledger entry is due), a credit memo whose invoice
+adjustment cannot be found, or a settlement whose posting wrote no journal (no payable was booked,
+so there is nothing to clear). Correct the cause and run again. Any other error stops
 the run; the records already repaired stay repaired.

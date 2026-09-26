@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,17 +17,25 @@ import (
 
 type pagedRepo struct {
 	payments  [][]*repositories.DriverPaymentRepair
+	memos     [][]*repositories.AdjustmentMemoRepair
+	memoAfter []pulid.ID
 	memoErr   error
 	requests  []repositories.ListJournalRepairRequest
 	memoCalls int
 }
 
 func (r *pagedRepo) ListUnjournaledAdjustmentMemos(
-	context.Context,
-	*repositories.ListJournalRepairRequest,
+	_ context.Context,
+	req *repositories.ListJournalRepairRequest,
 ) ([]*repositories.AdjustmentMemoRepair, error) {
 	r.memoCalls++
-	return nil, r.memoErr
+	r.memoAfter = append(r.memoAfter, req.AfterID)
+	if r.memoErr != nil || len(r.memos) == 0 {
+		return nil, r.memoErr
+	}
+	page := r.memos[0]
+	r.memos = r.memos[1:]
+	return page, nil
 }
 
 func (r *pagedRepo) ListUnjournaledDriverPayments(
@@ -115,7 +124,7 @@ func TestRepairSkipsARecordItCannotJournalAndPagesOn(t *testing.T) {
 	require.Len(t, report.Skipped, 2)
 	assert.Equal(t, "STL-1", report.Skipped[0].Number)
 	assert.Equal(t, KindDriverSettlement, report.Skipped[0].Kind)
-	assert.Contains(t, report.Skipped[0].Reason, "no posted payable account")
+	assert.Contains(t, report.Skipped[0].Reason, "no payable was booked")
 	assert.Equal(t, "STL-2", report.Skipped[1].Number)
 
 	require.Len(t, repo.requests, 3)
@@ -140,4 +149,23 @@ func TestRepairLinksAnExistingPaymentJournalWithoutWritingInDryRun(t *testing.T)
 	assert.Equal(t, 1, report.PaymentsLinked)
 	assert.Zero(t, report.PaymentsJournaled)
 	assert.Empty(t, report.Skipped)
+}
+
+func TestRepairReportsAMemoWhoseAdjustmentIsMissingAndPagesPastIt(t *testing.T) {
+	orgID := pulid.MustNew("org_")
+	orphan := &invoice.Invoice{ID: pulid.MustNew("inv_"), OrganizationID: orgID, Number: "CM-7"}
+	repo := &pagedRepo{memos: [][]*repositories.AdjustmentMemoRepair{
+		{{Memo: orphan, SourceMissing: true}},
+	}}
+	svc := New(&Deps{Repo: repo, Now: func() int64 { return 1 }})
+
+	report, err := svc.Repair(t.Context(), &Request{ActorID: pulid.MustNew("usr_"), DryRun: true})
+
+	require.NoError(t, err)
+	assert.Zero(t, report.CreditMemosJournaled)
+	require.Len(t, report.Skipped, 1)
+	assert.Equal(t, KindCreditMemo, report.Skipped[0].Kind)
+	assert.Equal(t, "CM-7", report.Skipped[0].Number)
+	assert.Contains(t, report.Skipped[0].Reason, "could not be found")
+	assert.Equal(t, []pulid.ID{pulid.Nil, orphan.ID}, repo.memoAfter)
 }

@@ -21,6 +21,7 @@ type AdjustmentMemoRepair struct {
 	Kind            invoiceadjustment.Kind `json:"kind"`
 	SourceInvoiceID pulid.ID               `json:"sourceInvoiceId"`
 	Journaled       bool                   `json:"journaled"`
+	SourceMissing   bool                   `json:"sourceMissing"`
 }
 
 type DriverPaymentRepair struct {
