@@ -177,6 +177,31 @@ compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and ag
 runs. The parameter holding the target's id is `readOnly` in `parameterFields` and in the
 chat's editable fields (`services.ProposalFields`).
 
+## Record subsets
+
+A write over a set of records can let the person approving it drop some. A tool marks an
+array-of-ids parameter as a subset of one permission resource's records with
+`toolschema.RecordSubset(resource, property)`, which sets the `x-subsetOf` keyword;
+`transfer_to_billing.shipmentIds` is one, over `shipment`.
+
+- **The form.** `toolschema.Fields` reads the parameter as kind `RecordSubset` with its
+  `Resource`, and GraphQL serves both on `AgentProposal.parameterFields`:
+  `AgentProposalField.kind` is `RecordSubset` and `AgentProposalField.resource` names the
+  resource (`null` for every other kind). The preview's records carry each record's
+  `entityId`, so a client lists them as rows a person can untick and sends the ids it kept
+  back as the parameter's modification.
+- **The rule.** `CheckModifications` (and `admit`, where the write runs) refuses a
+  modification to a subset parameter that is not a narrowing of what was proposed
+  (`toolschema.CheckSubsets`): an id the agent did not propose is refused as `forbidden`, and
+  an empty list, or one that is not a list, is refused. Removing ids is allowed, and the
+  preview, the digest and the write all follow the narrowed list.
+- **The model never sees the keyword.** Every model adapter sends tools through
+  `toolschema.ForModel`, which strips `x-` keywords at any depth (a strict endpoint refuses
+  a keyword it does not know) and keeps parameter names that merely look like one.
+
+A preview still shows at most 20 records, so a subset of more is shown in part; the
+parameter's value is the whole list.
+
 ## API
 
 `internal/api/graphql/schema/agentpreview.graphqls`:
