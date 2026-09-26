@@ -12,7 +12,8 @@ use crate::capability::to_fix32;
 #[allow(clippy::wildcard_imports)]
 use crate::consts::*;
 use crate::fake::{FakeCap, FakeDsm, FakePage, FakePump, FakeSource};
-use crate::session::{AppIdentity, Manager, ScanEnd, ScanSettings, ScannedPage};
+use crate::session::{AppIdentity, Manager};
+use crate::{ScanEnd, ScanSettings, ScannedPage};
 
 fn fix(dpi: f64) -> u32 {
     let fix = to_fix32(dpi);

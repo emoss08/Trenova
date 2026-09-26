@@ -51,6 +51,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "capture-wia"
+version = "1.0.0"
+dependencies = [
+ "capture-imaging",
+ "capture-protocol",
+ "thiserror",
+ "tracing",
+ "windows",
+ "windows-core",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -19,6 +19,7 @@ use core::mem::size_of;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
+use capture_imaging::scan::{ScanEnd, ScanSettings, ScannedPage};
 use capture_imaging::{OwnedRaster, PixelFormat, Resolution};
 use capture_protocol::api::{PixelType, Settings, SourceInfo, SourceProtocol, known_patch_code};
 use capture_protocol::helper::ScanCondition;
@@ -69,19 +70,6 @@ pub struct SourceEntry {
     pub twain2: bool,
 }
 
-/// What a scan was asked for.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ScanSettings {
-    pub dpi: u32,
-    pub pixel_type: PixelType,
-    pub duplex: bool,
-    pub use_feeder: bool,
-    pub discard_blank_pages: bool,
-    pub show_ui: bool,
-    pub detect_patch_codes: bool,
-    pub detect_barcodes: bool,
-}
-
 /// The settings a source ended up using.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Negotiated {
@@ -89,32 +77,6 @@ pub struct Negotiated {
     /// Whether blank pages are dropped by the source. When not, the server's
     /// own blank detection still marks them.
     pub source_discards_blanks: bool,
-}
-
-/// One page, as transferred.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ScannedPage {
-    pub raster: OwnedRaster,
-    pub resolution: Resolution,
-    pub patch_code: Option<&'static str>,
-    pub barcodes: Vec<String>,
-}
-
-/// How a scan ended.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ScanEnd {
-    Finished {
-        pages: u32,
-    },
-    /// The source stopped early. The pages delivered before stand.
-    Stopped {
-        condition: ScanCondition,
-        pages: u32,
-    },
-    /// The agent asked to stop.
-    Canceled {
-        pages: u32,
-    },
 }
 
 /// The DSM, open (state 3).

@@ -27,11 +27,10 @@ mod tests;
 
 use capture_protocol::api::RequestFailureCode;
 
+pub use capture_imaging::scan::{ScanEnd, ScanSettings, ScannedPage};
 pub use dsm::Dsm;
 pub use pump::{EventPump, Processed, PumpEvent};
-pub use session::{
-    AppIdentity, Manager, Negotiated, ScanEnd, ScanSettings, ScannedPage, Source, SourceEntry,
-};
+pub use session::{AppIdentity, Manager, Negotiated, Source, SourceEntry};
 
 pub type TwainResult<T> = Result<T, TwainError>;
 

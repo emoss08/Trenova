@@ -7,6 +7,7 @@
 pub mod dib;
 pub mod page;
 pub mod raster;
+pub mod scan;
 
 pub use dib::{Bitmap, decode_bmp};
 pub use page::{EncodedPage, Resolution, encode_page};
