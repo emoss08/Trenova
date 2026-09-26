@@ -4624,6 +4624,15 @@
       "domain/journalreversal"
     ]
   },
+  "A prediction is missing its example id": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
   "A preference is required": {
     "sites": 1,
     "scope": [
@@ -16528,6 +16537,15 @@
       "service/driversettlementservice"
     ]
   },
+  "An evaluation record is missing its id or expected values": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
   "An evaluation replays exactly one recorded run or one evaluation case": {
     "sites": 1,
     "scope": [
@@ -16989,6 +17007,15 @@
     ],
     "areas": [
       "domain/ifta"
+    ]
+  },
+  "An output is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
     ]
   },
   "An overridden rate cannot be negative": {
@@ -18677,6 +18704,15 @@
       "apps/web/lib",
       "packages/shared/lib",
       "routes/agent-control"
+    ]
+  },
+  "Appointment Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
     ]
   },
   "Appointment missed": {
@@ -24202,13 +24238,14 @@
     ]
   },
   "BOL": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/aicorrection",
       "domain/documenttemplate",
       "routes/admin",
       "routes/billing-queue",
@@ -25870,12 +25907,13 @@
     ]
   },
   "Bill To": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "domain/aicorrection",
       "routes/billing-queue",
       "routes/carrier-invoice-matching",
       "routes/invoice-register",
@@ -27638,6 +27676,15 @@
     ],
     "areas": [
       "routes/accounting-drift"
+    ]
+  },
+  "Both the evaluation set and the predictions are required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
     ]
   },
   "Both versions must exist for comparison": {
@@ -30704,6 +30751,15 @@
       "template/rateconfirmation.pdf"
     ]
   },
+  "Carrier Contact": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
+    ]
+  },
   "Carrier Equipment": {
     "sites": 1,
     "scope": [
@@ -30711,6 +30767,15 @@
     ],
     "areas": [
       "template/rateconfirmation.pdf"
+    ]
+  },
+  "Carrier Name": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
     ]
   },
   "Carrier acceptance — signature and date": {
@@ -38220,12 +38285,13 @@
     ]
   },
   "Commodity": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "domain/aicorrection",
       "go/other",
       "routes/commodity",
       "routes/reports",
@@ -40727,13 +40793,14 @@
     ]
   },
   "Consignee": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/aicorrection",
       "go/other",
       "template/invoice.pdf"
     ]
@@ -41031,6 +41098,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Container Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
     ]
   },
   "Contains": {
@@ -52195,20 +52271,31 @@
     ]
   },
   "Delivery Date": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "service/invoiceservice"
     ]
   },
-  "Delivery Window": {
+  "Delivery Number": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection"
+    ]
+  },
+  "Delivery Window": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection",
       "go/other"
     ]
   },
@@ -64628,11 +64715,12 @@
     ]
   },
   "Equipment Type": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "go/other"
     ]
   },
@@ -67184,6 +67272,15 @@
     ],
     "areas": [
       "service/sequenceconfigservice"
+    ]
+  },
+  "Example {0} has more than one prediction": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
     ]
   },
   "Exceeds eligibility by {0}": {
@@ -76171,6 +76268,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Fuel Surcharge": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
     ]
   },
   "Fuel billing": {
@@ -93842,6 +93948,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Load Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
     ]
   },
   "Load acceptance": {
@@ -122474,6 +122589,15 @@
       "apps/web/components"
     ]
   },
+  "PO Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
+    ]
+  },
   "PO based": {
     "sites": 1,
     "scope": [
@@ -125346,11 +125470,12 @@
     ]
   },
   "Payment Terms": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "service/invoiceservice"
     ]
   },
@@ -128054,20 +128179,31 @@
     ]
   },
   "Pickup Date": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "service/invoiceservice"
     ]
   },
-  "Pickup Window": {
+  "Pickup Number": {
     "sites": 1,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection"
+    ]
+  },
+  "Pickup Window": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection",
       "go/other"
     ]
   },
@@ -131998,11 +132134,12 @@
     ]
   },
   "Pro Number": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "domain/documenttemplate"
     ]
   },
@@ -135511,13 +135648,14 @@
     ]
   },
   "Rate": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "domain/aicorrection",
       "go/other",
       "packages/shared/lib",
       "routes/accessorial-charge",
@@ -140951,11 +141089,12 @@
     ]
   },
   "Reference Number": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "go/other"
     ]
   },
@@ -151088,11 +151227,12 @@
     ]
   },
   "SCAC": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/aicorrection",
       "service/invoiceservice"
     ]
   },
@@ -159416,6 +159556,15 @@
       "domain/sidebarpreference"
     ]
   },
+  "Service Type": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
+    ]
+  },
   "Service date": {
     "sites": 1,
     "scope": [
@@ -162850,13 +162999,14 @@
     ]
   },
   "Shipper": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/lib",
+      "domain/aicorrection",
       "go/other",
       "routes/invoice-register",
       "template/invoice.pdf"
@@ -168899,6 +169049,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Structured output mode is invalid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
     ]
   },
   "Structured output mode is required": {
@@ -177233,6 +177392,33 @@
       "domain/documenttemplate"
     ]
   },
+  "The export's manifest does not match its recorded checksum; it has been changed since it was written": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
+  "The export's manifest is larger than any manifest Trenova writes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
+  "The export's manifest is not one this version of Trenova can render": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
   "The extended linehaul amount, unformatted.": {
     "sites": 1,
     "scope": [
@@ -184931,6 +185117,15 @@
       "service/aiauditservice"
     ]
   },
+  "This export has not finished; render it once its manifest is written": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
   "This export is too large to write while you wait. It is being written in the background; you'll be notified when the file is ready, and it will be under Exports.": {
     "sites": 1,
     "scope": [
@@ -190143,6 +190338,15 @@
       "go/other"
     ]
   },
+  "Tractor Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
+    ]
+  },
   "Tractor cost per mile": {
     "sites": 1,
     "scope": [
@@ -190365,6 +190569,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Trailer Number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aicorrection"
     ]
   },
   "Trailer continuity": {
@@ -190662,6 +190875,24 @@
     "areas": [
       "packages/shared/lib",
       "routes/home"
+    ]
+  },
+  "Training part {0} does not match the manifest; it has been changed since it was written": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
+  "Training part {0} holds an example this version of Trenova cannot render": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
     ]
   },
   "Training record is invalid": {
