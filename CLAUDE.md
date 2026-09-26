@@ -323,6 +323,8 @@ content proposes every later write, is in
 An agent handing a task to another agent (`delegate_task`, the per-agent
 allowlist, one level only, same person) is described in
 [docs/engineering/agent-delegation.md](docs/engineering/agent-delegation.md).
+The ledger, fiscal period and accounting system tools, and who holds them, are in
+[docs/engineering/agent-accounting-tools.md](docs/engineering/agent-accounting-tools.md).
 What a person approves is a preview of the write, computed for them from the world as it is
 now, and the approval carries its digest; tools implement `ToolPreviewer` with
 `services/toolpreview`, and the filing baseline stays off `PendingAction`. **Read
