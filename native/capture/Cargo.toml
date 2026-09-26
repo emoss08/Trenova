@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/capture-protocol", "crates/capture-imaging", "crates/capture-ipp", "crates/capture-twain", "crates/capture-wia", "crates/capture-client", "crates/capture-platform", "bins/trenova-capture-scan", "bins/trenova-capture", "bins/trenova-capture-svc"]
+members = ["crates/capture-protocol", "crates/capture-imaging", "crates/capture-ipp", "crates/capture-twain", "crates/capture-wia", "crates/capture-client", "crates/capture-platform", "bins/trenova-capture-scan", "bins/trenova-capture", "bins/trenova-capture-svc", "bins/trenova-capture-release"]
 
 [workspace.package]
 version = "1.0.0"
@@ -19,9 +19,12 @@ capture-wia = { path = "crates/capture-wia" }
 capture-platform = { path = "crates/capture-platform" }
 capture-client = { path = "crates/capture-client" }
 
+base64 = "0.22"
 bytes = "1.12"
 fastrand = "2.5"
+ed25519-dalek = "3"
 fax = "0.3"
+getrandom = "0.4"
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
 hex = "0.4"
 http = "1.4"

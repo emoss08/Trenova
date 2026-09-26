@@ -5,11 +5,13 @@
 //! between the per-user agent and the short-lived scan helper it starts for
 //! each scan. [`manifest`] is the digest a batch is sealed with.
 //! [`handoff`] is how the print service hands a printed job to the agent of
-//! the person who printed it.
+//! the person who printed it. [`release`] is the signed manifest that says
+//! which version is current and where its installer is.
 
 pub mod api;
 pub mod handoff;
 pub mod helper;
 pub mod manifest;
+pub mod release;
 
 pub use manifest::{ManifestBuilder, page_checksum};
