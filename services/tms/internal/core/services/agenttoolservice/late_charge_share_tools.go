@@ -67,10 +67,10 @@ type invoiceSharer interface {
 func newAssessLateChargesTool(charges lateChargeAssessor) serviceports.AgentTool {
 	return newReceivableTool(receivableSpec{
 		name: "assess_late_charges",
-		description: "Propose assessing late charges on overdue invoices as of a date: one debit " +
-			"memo per customer with a line per invoice and overdue period, at each customer's " +
-			"rate, never charging a period twice. Leave out customerIds to assess every customer. " +
-			"A person always decides.",
+		description: "Propose assessing late charges on overdue invoices as of a date, as one " +
+			"debit memo per customer. Each has a line per invoice and overdue period at the " +
+			"customer's rate, and no period is charged twice. Leave out customerIds to assess " +
+			"every customer. A person always decides.",
 		resource:    permission.ResourceInvoice,
 		operation:   permission.OpCreate,
 		egress:      agent.EgressMoney,

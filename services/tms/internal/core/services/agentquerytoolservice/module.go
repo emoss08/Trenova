@@ -24,6 +24,7 @@ func ToolProviders() []any {
 		coreToolProviders(),
 		accountingToolProviders(),
 		settlementToolProviders(),
+		receivableToolProviders(),
 		ratingToolProviders(),
 		orderToolProviders(),
 		ediToolProviders(),
