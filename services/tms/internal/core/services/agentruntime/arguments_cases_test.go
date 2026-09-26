@@ -3,12 +3,14 @@ package agentruntime
 import (
 	"maps"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/conversation"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentruntime/agentruntimetest"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
@@ -21,6 +23,9 @@ type argumentCase struct {
 	Schema map[string]any `yaml:"schema"`
 	Args   map[string]any `yaml:"args"`
 	Want   map[string]any `yaml:"want"`
+	// Refused lists the paths the refusal must name; a case with any is
+	// one the tool never receives.
+	Refused []string `yaml:"refused"`
 }
 
 type malformedCase struct {
@@ -49,6 +54,29 @@ func loadArgumentCases(t *testing.T) argumentCases {
 	return cases
 }
 
+func toolMessages(result *serviceports.RunResult) []conversation.Message {
+	var out []conversation.Message
+	for idx := range result.Messages {
+		if result.Messages[idx].Role == conversation.RoleTool {
+			out = append(out, result.Messages[idx])
+		}
+	}
+
+	return out
+}
+
+// requireRefusalNames asserts a refusal carries one "path: message" line
+// for each path, and tells the model to fix the call.
+func requireRefusalNames(t *testing.T, content string, paths []string) {
+	t.Helper()
+
+	assert.Contains(t, content, "do not fit the tool")
+	assert.Contains(t, content, "Fix the call and send it again.")
+	for _, path := range paths {
+		assert.Contains(t, content, "\n- "+path+": ", "the refusal names %s", path)
+	}
+}
+
 func TestArgumentCases_Aliases(t *testing.T) {
 	t.Parallel()
 
@@ -65,15 +93,27 @@ func TestArgumentCases_Aliases(t *testing.T) {
 	}
 }
 
-func TestArgumentCases_WhatAWriteReceives(t *testing.T) {
+func TestArgumentCases_WhatAToolReceives(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range loadArgumentCases(t).Pipeline {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, tc.Want,
-				declaredArguments(tc.Schema, aliasedArguments(tc.Schema, maps.Clone(tc.Args))))
+			sent := maps.Clone(tc.Args)
+			got, err := contractArguments(nil, "record_case", tc.Schema, sent)
+			assert.Equal(t, tc.Args, sent, "the model's own call is never changed")
+			if len(tc.Refused) > 0 {
+				var multiErr *errortypes.MultiError
+				require.ErrorAs(t, err, &multiErr)
+				problems := strings.Join(argumentProblems(multiErr), "\n")
+				for _, path := range tc.Refused {
+					assert.Contains(t, problems, path+": ", "the refusal names %s", path)
+				}
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tc.Want, got)
+			}
 
 			tool := &agentruntimetest.StubActionTool{
 				ToolName: "record_case",
@@ -93,6 +133,18 @@ func TestArgumentCases_WhatAWriteReceives(t *testing.T) {
 				Input:      "Record it.",
 			})
 			require.NoError(t, err)
+			assert.Equal(t, 1, result.ToolCallsUsed, "a call spends the budget either way")
+
+			if len(tc.Refused) > 0 {
+				assert.Zero(t, tool.Calls, "a call that does not fit never reaches the tool")
+				assert.Empty(t, result.Actions)
+				refusals := toolMessages(result)
+				require.Len(t, refusals, 1)
+				assert.True(t, refusals[0].ToolFailed)
+				requireRefusalNames(t, refusals[0].Content, tc.Refused)
+
+				return
+			}
 
 			require.Equal(t, 1, tool.Calls, "the write ran")
 			assert.Equal(t, tc.Want, tool.LastParams.Params)
@@ -140,16 +192,11 @@ func TestArgumentCases_MalformedArgumentsNeverRun(t *testing.T) {
 			assert.Empty(t, result.Actions)
 			assert.Equal(t, 1, result.ToolCallsUsed, "a broken call still spends the budget")
 
-			var refusal *conversation.Message
-			for idx := range result.Messages {
-				if result.Messages[idx].Role == conversation.RoleTool {
-					refusal = &result.Messages[idx]
-				}
-			}
-			require.NotNil(t, refusal)
-			assert.True(t, refusal.ToolFailed)
-			assert.Contains(t, refusal.Content, "not valid JSON")
-			assert.Contains(t, refusal.Content, tc.Error)
+			refusals := toolMessages(result)
+			require.Len(t, refusals, 1)
+			assert.True(t, refusals[0].ToolFailed)
+			assert.Contains(t, refusals[0].Content, "not valid JSON")
+			assert.Contains(t, refusals[0].Content, tc.Error)
 		})
 	}
 }

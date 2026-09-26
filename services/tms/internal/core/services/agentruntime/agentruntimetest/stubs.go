@@ -121,6 +121,8 @@ type StubQueryTool struct {
 	Reads   agent.ExternalRead
 	Source  agent.TaintSource
 	Sources []agent.TaintSource
+	// Schema stands in for the tool's declared parameters when set.
+	Schema map[string]any
 }
 
 func (t *StubQueryTool) Name() string { return t.ToolName }
@@ -132,7 +134,13 @@ func (t *StubQueryTool) Description() string {
 	return "stub query tool"
 }
 
-func (t *StubQueryTool) ParamSchema() map[string]any { return map[string]any{"type": "object"} }
+func (t *StubQueryTool) ParamSchema() map[string]any {
+	if t.Schema != nil {
+		return t.Schema
+	}
+
+	return map[string]any{"type": "object"}
+}
 func (t *StubQueryTool) Policy() serviceports.ToolPolicy {
 	resource := t.Resource
 	if resource == "" {
