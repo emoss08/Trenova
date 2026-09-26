@@ -2361,6 +2361,9 @@ models:
   AgentProposalField:
     model:
       - github.com/emoss08/trenova/pkg/toolschema.Field
+    fields:
+      resource:
+        resolver: true
   AgentProposalFieldKind:
     model:
       - github.com/emoss08/trenova/pkg/toolschema.Kind

@@ -51,58 +51,65 @@ func createStatusConstraintsRule() validationframework.TenantedRule[*billingqueu
 	).
 		OnBoth().
 		WithPriority(validationframework.ValidationPriorityHigh).
-		WithValidation(func(ctx context.Context, entity *billingqueue.BillingQueueItem, valCtx *validationframework.TenantedValidationContext, multiErr *errortypes.MultiError) error {
-			switch entity.Status { //nolint:exhaustive // only a few statuses are supported
-			case billingqueue.StatusInReview:
-				if entity.AssignedBillerID == nil || entity.AssignedBillerID.IsNil() {
-					multiErr.Add(
-						"assignedBillerId",
-						errortypes.ErrRequired,
-						"Assigned biller is required when status is InReview",
-					)
-				}
-			case billingqueue.StatusSentBackToOps, billingqueue.StatusException:
-				if entity.ExceptionReasonCode == nil {
-					multiErr.Add(
-						"exceptionReasonCode",
-						errortypes.ErrRequired,
-						"Exception reason code is required",
-					)
-				} else if !entity.ExceptionReasonCode.IsValid() {
-					multiErr.Add(
-						"exceptionReasonCode",
-						errortypes.ErrInvalid,
-						"Invalid exception reason code",
-					)
-				}
-
-				notesRequired := entity.Status == billingqueue.StatusException ||
-					(entity.ExceptionReasonCode != nil && *entity.ExceptionReasonCode == billingqueue.ExceptionOther)
-
-				if notesRequired && entity.ExceptionNotes == "" {
-					multiErr.Add(
-						"exceptionNotes",
-						errortypes.ErrRequired,
-						"Exception notes are required",
-					)
-				}
-			case billingqueue.StatusCanceled:
-				if entity.CanceledByID == nil || entity.CanceledByID.IsNil() {
-					multiErr.Add(
-						"canceledById",
-						errortypes.ErrRequired,
-						"Canceled by is required when status is Canceled",
-					)
-				}
-				if entity.CancelReason == "" {
-					multiErr.Add(
-						"cancelReason",
-						errortypes.ErrRequired,
-						"Cancel reason is required when status is Canceled",
-					)
-				}
-			}
+		WithValidation(func(_ context.Context, entity *billingqueue.BillingQueueItem, _ *validationframework.TenantedValidationContext, multiErr *errortypes.MultiError) error {
+			CheckStatusFields(entity, multiErr)
 
 			return nil
 		})
+}
+
+// CheckStatusFields adds what the item's status requires and it lacks: a
+// biller in review, a reason (and notes) in exception or back with
+// operations, and who canceled it and why.
+func CheckStatusFields(entity *billingqueue.BillingQueueItem, multiErr *errortypes.MultiError) {
+	switch entity.Status { //nolint:exhaustive // only a few statuses are supported
+	case billingqueue.StatusInReview:
+		if entity.AssignedBillerID == nil || entity.AssignedBillerID.IsNil() {
+			multiErr.Add(
+				"assignedBillerId",
+				errortypes.ErrRequired,
+				"Assigned biller is required when status is InReview",
+			)
+		}
+	case billingqueue.StatusSentBackToOps, billingqueue.StatusException:
+		if entity.ExceptionReasonCode == nil {
+			multiErr.Add(
+				"exceptionReasonCode",
+				errortypes.ErrRequired,
+				"Exception reason code is required",
+			)
+		} else if !entity.ExceptionReasonCode.IsValid() {
+			multiErr.Add(
+				"exceptionReasonCode",
+				errortypes.ErrInvalid,
+				"Invalid exception reason code",
+			)
+		}
+
+		notesRequired := entity.Status == billingqueue.StatusException ||
+			(entity.ExceptionReasonCode != nil && *entity.ExceptionReasonCode == billingqueue.ExceptionOther)
+
+		if notesRequired && entity.ExceptionNotes == "" {
+			multiErr.Add(
+				"exceptionNotes",
+				errortypes.ErrRequired,
+				"Exception notes are required",
+			)
+		}
+	case billingqueue.StatusCanceled:
+		if entity.CanceledByID == nil || entity.CanceledByID.IsNil() {
+			multiErr.Add(
+				"canceledById",
+				errortypes.ErrRequired,
+				"Canceled by is required when status is Canceled",
+			)
+		}
+		if entity.CancelReason == "" {
+			multiErr.Add(
+				"cancelReason",
+				errortypes.ErrRequired,
+				"Cancel reason is required when status is Canceled",
+			)
+		}
+	}
 }

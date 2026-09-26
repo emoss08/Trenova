@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
+	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
@@ -12,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
@@ -31,6 +33,15 @@ var Module = fx.Module("agent-tool-service", fx.Provide(append(grouped(), NewReg
 func ToolProviders() []any {
 	return []any{
 		newTransitionToInReviewTool,
+		provideTransferToBillingTool,
+		provideApproveBillingQueueItemTool,
+		provideSendBackToOpsTool,
+		provideMoveToExceptionTool,
+		provideHoldBillingQueueItemTool,
+		provideCancelBillingQueueItemTool,
+		provideAssignBillerTool,
+		providePostInvoiceTool,
+		provideSendInvoiceTool,
 		newCorrectChargeCodeTool,
 		newSaveTableViewTool,
 		newCreateDashboardTool,
@@ -246,6 +257,51 @@ func provideResolveBankReceiptWorkItemTool(
 
 func provideEscalateDetentionTool(detention *detentionservice.Service) services.AgentTool {
 	return newEscalateDetentionTool(detention)
+}
+
+func provideTransferToBillingTool(
+	shipments services.ShipmentService,
+	runs *billingtransferservice.Service,
+) services.AgentTool {
+	return newTransferToBillingTool(shipments, runs)
+}
+
+// The billing queue decision tools take the narrow billingQueueDecider; fx
+// holds the service port, so the widening happens here.
+
+func provideApproveBillingQueueItemTool(
+	billing services.BillingQueueService,
+	invoices *invoiceservice.Service,
+) services.AgentTool {
+	return newApproveBillingQueueItemTool(billing, invoices)
+}
+
+func provideSendBackToOpsTool(billing services.BillingQueueService) services.AgentTool {
+	return newSendBackToOpsTool(billing)
+}
+
+func provideMoveToExceptionTool(billing services.BillingQueueService) services.AgentTool {
+	return newMoveToExceptionTool(billing)
+}
+
+func provideHoldBillingQueueItemTool(billing services.BillingQueueService) services.AgentTool {
+	return newHoldBillingQueueItemTool(billing)
+}
+
+func provideCancelBillingQueueItemTool(billing services.BillingQueueService) services.AgentTool {
+	return newCancelBillingQueueItemTool(billing)
+}
+
+func provideAssignBillerTool(billing services.BillingQueueService) services.AgentTool {
+	return newAssignBillerTool(billing)
+}
+
+func providePostInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newPostInvoiceTool(invoices)
+}
+
+func provideSendInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newSendInvoiceTool(invoices)
 }
 
 func provideApproveDetentionTool(detention *detentionservice.Service) services.AgentTool {

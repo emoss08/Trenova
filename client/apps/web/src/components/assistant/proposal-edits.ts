@@ -32,6 +32,7 @@ function textFor(field: ProposalField, value: unknown): string {
     case "Boolean":
       return value === true ? "true" : value === false ? "false" : "";
     case "List":
+    case "RecordSubset":
       return Array.isArray(value) ? value.map(scalarText).join(", ") : scalarText(value);
     case "JSON":
       return typeof value === "string" ? value : JSON.stringify(value, null, 2);
@@ -81,7 +82,8 @@ export function parseDraftValue(field: ProposalField, raw: string): Parsed {
         return { error: "Choose one of the listed values" };
       }
       return { value: text };
-    case "List": {
+    case "List":
+    case "RecordSubset": {
       const items = text
         .split(",")
         .map((item) => item.trim())

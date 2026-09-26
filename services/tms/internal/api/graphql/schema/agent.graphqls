@@ -230,6 +230,8 @@ type AgentProposalField {
   maxLength: Int
   "The parameter names the record the change is for, which an approver may not change."
   readOnly: Boolean!
+  "For a RecordSubset field, the permission resource its ids belong to (such as shipment); absent for every other kind."
+  resource: String
 }
 
 "The control a parameter takes when edited: the schema's type, read for a form."
@@ -242,6 +244,8 @@ enum AgentProposalFieldKind {
   Choice
   List
   JSON
+  "A list of record ids the agent proposed to act on. An approver may remove ids, never add one, and must keep at least one; the records are listed in the preview by their ids."
+  RecordSubset
 }
 
 "Several proposals from one run, decided once and run in order."

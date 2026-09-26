@@ -433,6 +433,50 @@
       }
     },
     {
+      "name": "approve_billing_queue_item",
+      "description": "Propose approving a billing queue item you have reviewed and found clean: charges that match the agreement, the documents the customer requires, no detention charge waiting on approval. Approval creates the item's draft invoice, or puts it on a statement customer's statement, and the organization's auto-post setting may post it; a person always decides. Say in reviewNotes what you checked. Once approved, propose post_invoice for the draft.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemId": {
+            "description": "The billing queue item, from list_billing_queue_items, get_billing_queue_item or this run's subject. Never guess one.",
+            "type": "string"
+          },
+          "reviewNotes": {
+            "description": "What you checked, kept on the item as its review notes.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "artifact": "invoice",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Approving creates the invoice a customer is billed on, so only a person approves; the agent proposes it with what it checked."
+      }
+    },
+    {
       "name": "approve_detention",
       "description": "Propose approving a detention charge that is waiting on approval, so it can be invoiced. list_detention_desk shows these as AwaitingApproval, and while one waits its shipment cannot be billed. The charge is approved exactly as calculated. Propose it only when the evidence holds up: arrival and departure on record, the notice sent inside the policy's window or none required, and nothing on file that contradicts the time. Say what shows that in evidence. Only a pending charge can be approved, and a person always decides; when the evidence does not hold up, propose waive_detention instead or leave it for a person.",
       "parameters": {
@@ -599,6 +643,49 @@
       }
     },
     {
+      "name": "assign_billing_queue_biller",
+      "description": "Assign the biller who reviews a billing queue item. An item still waiting for review moves into review with them. Take the biller from the item's customer's default biller or the person who asked; never guess a user id.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billerId": {
+            "description": "The biller's user id.",
+            "type": "string"
+          },
+          "billingQueueItemId": {
+            "description": "The billing queue item, from list_billing_queue_items or get_billing_queue_item.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemId",
+          "billerId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "assign",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Names who reviews an item inside Trenova; it creates no money and is changed by assigning someone else."
+      }
+    },
+    {
       "name": "assign_move",
       "description": "Assign a driver and equipment to a shipment move that has no driver yet. Use it once a driver is chosen, usually from rank_move_candidates or plan_dispatch, which hand back the move, driver, tractor and trailer ids together. The move must be unassigned; use reassignment for a move that already has a driver.",
       "parameters": {
@@ -695,6 +782,50 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Files a document already in Trenova against a shipment; nobody outside is told."
+      }
+    },
+    {
+      "name": "cancel_billing_queue_item",
+      "description": "Propose canceling a billing queue item that should never be billed, such as a duplicate of another item. Canceling drops the charge from billing for good, so a person always decides; say which item it duplicates or why it must not bill.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemId": {
+            "description": "The billing queue item, from list_billing_queue_items, get_billing_queue_item or this run's subject. Never guess one.",
+            "type": "string"
+          },
+          "cancelReason": {
+            "description": "Why it must not bill, in a short phrase.",
+            "maxLength": 100,
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemId",
+          "cancelReason"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Drops a charge from billing for good, so only a person decides; the agent proposes it."
       }
     },
     {
@@ -983,6 +1114,7 @@
               "customers",
               "locations",
               "invoices",
+              "billing queue items",
               "carriers",
               "equipment types",
               "fleet codes",
@@ -2924,6 +3056,44 @@
       }
     },
     {
+      "name": "get_billing_queue_item",
+      "description": "Open one billing queue item: its payer, shipment, the charges this payer is billed, the detention charges holding it, its exception and review notes, what its shipment still lacks for billing, and the invoice it made once approved. Read it before proposing approve_billing_queue_item, hold_billing_queue_item, move_billing_item_to_exception, send_billing_item_back_to_ops or cancel_billing_queue_item. Amounts are left out, and named in withheldByAccess, when your data access does not reach them.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemId": {
+            "description": "The item's id, from list_billing_queue_items, this run's subject or the page you are on.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "billing_queue",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "get_carrier",
       "description": "Retrieve one carrier by id, including its authority, insurance and compliance state. Use list_carriers first when you have a name or a code.",
       "parameters": {
@@ -4348,6 +4518,51 @@
       }
     },
     {
+      "name": "hold_billing_queue_item",
+      "description": "Put a billing queue item that is waiting for or in review on hold, with a note saying what it waits on, when it cannot be billed yet but nothing is wrong with it: a document on its way, a customer's confirmation. A held item is taken off hold only when the note's condition is met.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemId": {
+            "description": "The billing queue item, from list_billing_queue_items, get_billing_queue_item or this run's subject. Never guess one.",
+            "type": "string"
+          },
+          "notes": {
+            "description": "What the item waits on, so whoever takes it off hold knows when.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemId",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it.",
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Parks an item inside Trenova with a note; it creates no money and is undone by moving the item on."
+      }
+    },
+    {
       "name": "link_inbound_message",
       "description": "Say which shipment, customer or carrier a message that arrived on a monitored address is about, when the automatic match missed it or got it wrong. Give the reason in words a person can check — the PRO in the subject, the BOL on the attachment, the sender being the customer's dispatcher. Every id must be one list or get tools returned; a record that does not exist is refused. Linking does not settle the message: mark_inbound_message does that.",
       "parameters": {
@@ -4941,6 +5156,199 @@
         "source": "bank_receipt",
         "carriesTaint": false,
         "rationale": "Lists bank receipts whose memos the payers wrote; nothing changes and nothing is sent."
+      }
+    },
+    {
+      "name": "list_billing_queue_items",
+      "description": "List billing queue items, the shipments waiting on a biller, by status, bill type, exception reason, assigned biller, payer or age. Open one with get_billing_queue_item before proposing a decision on it. Posted items are left out unless you filter status to Posted. Filters: status (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): ReadyForReview and InReview are waiting on a biller; OnHold, Exception and SentBackToOps are blocked; billType (Invoice|CreditMemo|DebitMemo); exceptionReasonCode (MissingDocumentation|IncorrectRates|WeightDiscrepancy|AccessorialDispute|DuplicateCharge|MissingReferenceNumber|CustomerInformationError|ServiceFailure|RateNotOnFile|Other); assignedBillerId (text): a user id; isnull for unassigned; billToCustomerId (text): the payer, from list_customers; createdAt (date): when it was queued; age is how long ago; text: number, shipment.proNumber; date: reviewStartedAt; number: allocatedTotalAmount. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "filters": {
+            "description": "Conditions, combined with AND. Give value for a single comparison, values for in and notin, days for nextndays and lastndays, and nothing at all for isnull, isnotnull, today, yesterday and tomorrow.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "days": {
+                  "type": "integer"
+                },
+                "field": {
+                  "enum": [
+                    "status",
+                    "billType",
+                    "exceptionReasonCode",
+                    "assignedBillerId",
+                    "billToCustomerId",
+                    "number",
+                    "shipment.proNumber",
+                    "createdAt",
+                    "reviewStartedAt",
+                    "allocatedTotalAmount"
+                  ],
+                  "type": "string"
+                },
+                "operator": {
+                  "enum": [
+                    "eq",
+                    "ne",
+                    "in",
+                    "notin",
+                    "isnull",
+                    "isnotnull",
+                    "contains",
+                    "startswith",
+                    "endswith",
+                    "gt",
+                    "gte",
+                    "lt",
+                    "lte",
+                    "lastndays",
+                    "nextndays",
+                    "today",
+                    "yesterday",
+                    "tomorrow"
+                  ],
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "values": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "field",
+                "operator"
+              ],
+              "type": "object"
+            },
+            "maxItems": 6,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Optional free text matched across the searchable columns. Omit it when you are filtering on a field.",
+            "type": "string"
+          },
+          "sortBy": {
+            "description": "Field to order by. Defaults to most recently created.",
+            "enum": [
+              "number",
+              "createdAt",
+              "reviewStartedAt",
+              "allocatedTotalAmount"
+            ],
+            "type": "string"
+          },
+          "sortDirection": {
+            "description": "asc for oldest or smallest first, desc for newest or largest.",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "billing_queue",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_billing_transfer_candidates",
+      "description": "List the delivered shipments not yet in the billing queue, oldest first: the same list the transfer-to-billing dialog offers. Each row says what a transfer would do with it (Transfer, MarkReadyAndTransfer, Refused with a failure code, or ReturnToOperations), the documents it still lacks and its rate or validation issues, decided by the checks the transfer itself makes. To transfer, propose one transfer_to_billing covering the rows that can go, rather than one call per shipment.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "customerId": {
+            "description": "Only this customer's shipments, by id from list_customers.",
+            "type": "string"
+          },
+          "deliveredFrom": {
+            "description": "Only shipments delivered on or after this day. A date as YYYY-MM-DD, or today.",
+            "type": "string"
+          },
+          "deliveredTo": {
+            "description": "Only shipments delivered on or before this day. A date as YYYY-MM-DD, or today.",
+            "type": "string"
+          },
+          "limit": {
+            "description": "How many rows to return: 25 unless you ask, at most 50.",
+            "type": "integer"
+          },
+          "markCompletedReadyToInvoice": {
+            "description": "Decide as a transfer that first marks completed shipments ready to invoice would. Defaults to false.",
+            "type": "boolean"
+          },
+          "offset": {
+            "description": "How many rows to skip. When a result says hasMore, call again with its nextOffset for the next page.",
+            "type": "integer"
+          },
+          "query": {
+            "description": "Words matched against pro number, BOL and the other searchable columns, as the dialog's search box does.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only shipments in this status. Completed shipments transfer only when markCompletedReadyToInvoice is true.",
+            "enum": [
+              "ReadyToInvoice",
+              "Completed"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "policy": {
+        "kind": "query",
+        "resource": "shipment",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
       }
     },
     {
@@ -8255,7 +8663,7 @@
     },
     {
       "name": "list_shipments",
-      "description": "List shipments by status, billing state, dates or charges: anything with a date or threshold, such as delivered yesterday or not yet billed. search_shipments matches text like a pro number. Filters: status (New|PartiallyAssigned|Assigned|InTransit|Delayed|PartiallyCompleted|ReadyToInvoice|Completed|Invoiced|Canceled): no Delivered; a delivered load is Completed, then ReadyToInvoice, then Invoiced. For when it delivered, filter actualDeliveryDate; billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): the billing handoff stage; freightTerms (Prepaid|Collect|ThirdParty); customerId (text): from list_customers, never guessed; text: proNumber, bol; date: actualShipDate, actualDeliveryDate, billedAt, canceledAt, createdAt; number: totalChargeAmount, weight. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
+      "description": "List shipments by status, billing state, dates or charges: anything with a date or threshold, such as delivered yesterday or not yet billed. search_shipments matches text like a pro number. Filters: status (New|PartiallyAssigned|Assigned|InTransit|Delayed|PartiallyCompleted|ReadyToInvoice|Completed|Invoiced|Canceled): no Delivered; a delivered load is Completed, then ReadyToInvoice, then Invoiced. For when it delivered, filter actualDeliveryDate; billingTransferStatus (ReadyForReview|InReview|OnHold|Exception|SentBackToOps|Approved|Posted|Canceled): the billing handoff stage; isnull means never transferred, and list_billing_transfer_candidates lists the ones ready to go; freightTerms (Prepaid|Collect|ThirdParty); customerId (text): from list_customers, never guessed; text: proNumber, bol; date: actualShipDate, actualDeliveryDate, billedAt, canceledAt, createdAt; number: totalChargeAmount, weight. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -9127,6 +9535,68 @@
       }
     },
     {
+      "name": "move_billing_item_to_exception",
+      "description": "Move a billing queue item in review into exception when the bill itself is wrong and a biller has to resolve it: a rate that disagrees with the agreement, a disputed accessorial, a duplicate charge. Give the reason and notes that say what is wrong and what would clear it.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemId": {
+            "description": "The billing queue item, from list_billing_queue_items, get_billing_queue_item or this run's subject. Never guess one.",
+            "type": "string"
+          },
+          "exceptionReasonCode": {
+            "description": "What is wrong with the bill.",
+            "enum": [
+              "MissingDocumentation",
+              "IncorrectRates",
+              "WeightDiscrepancy",
+              "AccessorialDispute",
+              "DuplicateCharge",
+              "MissingReferenceNumber",
+              "CustomerInformationError",
+              "ServiceFailure",
+              "RateNotOnFile",
+              "Other"
+            ],
+            "type": "string"
+          },
+          "notes": {
+            "description": "What is wrong and what would clear it, with the figures you checked.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemId",
+          "exceptionReasonCode",
+          "notes"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it.",
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Marks an item for a biller to resolve inside Trenova; it creates no money and a biller moves it back when it is resolved."
+      }
+    },
+    {
       "name": "notify_driver",
       "description": "Send a driver a message in the Dash app, such as a changed appointment, a weather warning on their route, or a request to call dispatch. Keep it to what the driver needs to do; it goes to their phone. A driver without portal access cannot be reached this way, and the message is not delivered; say so if a reply matters. It is a message, not a record: put anything the office needs later on the shipment with add_shipment_comment.",
       "parameters": {
@@ -9560,6 +10030,44 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Records a customer payment and applies it to invoices."
+      }
+    },
+    {
+      "name": "post_invoice",
+      "description": "Propose posting a draft invoice, usually the one approve_billing_queue_item just made. Posting books it to the ledger, marks its shipments invoiced, settles its billing queue item and queues it for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides; propose it once the draft's lines and totals are right.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "description": "The draft invoice, from approve_billing_queue_item's result, get_billing_queue_item or list_invoices.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books a receivable to the ledger and queues it for the accounting system and the customer's EDI; only a person posts, and hands-off posting is the billing-control auto-post setting."
       }
     },
     {
@@ -11274,6 +11782,7 @@
               "customers",
               "locations",
               "invoices",
+              "billing queue items",
               "carriers",
               "equipment types",
               "fleet codes",
@@ -11633,6 +12142,67 @@
       }
     },
     {
+      "name": "send_billing_item_back_to_ops",
+      "description": "Send a billing queue item in review back to operations to fix, with the reason, when the fix belongs to the shipment rather than the bill: a missing document operations must collect, a wrong weight, a missing reference number. Operations sees a high-priority note on the shipment saying why. Read the item with get_billing_queue_item first. Notes are required when the reason is Other.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billingQueueItemId": {
+            "description": "The billing queue item, from list_billing_queue_items, get_billing_queue_item or this run's subject. Never guess one.",
+            "type": "string"
+          },
+          "exceptionReasonCode": {
+            "description": "Why it goes back.",
+            "enum": [
+              "MissingDocumentation",
+              "IncorrectRates",
+              "WeightDiscrepancy",
+              "AccessorialDispute",
+              "DuplicateCharge",
+              "MissingReferenceNumber",
+              "CustomerInformationError",
+              "ServiceFailure",
+              "RateNotOnFile",
+              "Other"
+            ],
+            "type": "string"
+          },
+          "notes": {
+            "description": "What operations has to fix, in a sentence they can act on. Required when the reason is Other.",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "billingQueueItemId",
+          "exceptionReasonCode"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "billing_queue",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it.",
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Returns an item to operations with a note on its shipment inside Trenova; it creates no money and the item comes back when operations fixes it."
+      }
+    },
+    {
       "name": "send_detention_notice",
       "description": "Send the customer the detention notice for an occurrence on the desk. The notice is the organization's own template with the arrival, the free time and the rate; nothing is composed here. Send it when list_detention_desk shows the notice window open or overdue, because a charge with no notice inside the policy's window is often not collectable. An occurrence whose policy needs no notice is refused.",
       "parameters": {
@@ -11668,6 +12238,44 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Sends the customer a detention notice that starts a charge."
+      }
+    },
+    {
+      "name": "send_invoice",
+      "description": "Propose emailing an invoice to the customer, to the recipients, subject, wording and attachments the organization and the customer's billing profile set; nothing is chosen by you. A person always decides. Propose it after post_invoice when the customer is not sent invoices automatically.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "description": "The invoice, from list_invoices or post_invoice's proposal.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "submit",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Emails the customer their invoice; only a person sends it, to the recipients the customer's billing profile names."
       }
     },
     {
@@ -12315,13 +12923,71 @@
       }
     },
     {
+      "name": "transfer_to_billing",
+      "description": "Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews. Take the ids from list_billing_transfer_candidates and cover every shipment that can go in one call rather than one call per shipment; a shipment the checks refuse is reported, not transferred, and the rest still go. The person approving may untick shipments. Up to 100 transfer at once; more run as a background transfer.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billType": {
+            "description": "What the queue items bill. Defaults to Invoice.",
+            "enum": [
+              "Invoice",
+              "CreditMemo",
+              "DebitMemo"
+            ],
+            "type": "string"
+          },
+          "markCompletedReadyToInvoice": {
+            "description": "Mark Completed shipments ready to invoice first, as the dialog can. Defaults to false, which leaves a Completed shipment where it is.",
+            "type": "boolean"
+          },
+          "shipmentIds": {
+            "description": "The shipments to transfer, by id from list_billing_transfer_candidates. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "shipment"
+          }
+        },
+        "required": [
+          "shipmentIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "billing_queue_item",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Hands delivered shipments to the billing queue inside Trenova, by the checks the transfer dialog makes; a biller, or the organization's own auto-approve rule, still decides every item."
+      }
+    },
+    {
       "name": "transition_item_to_in_review",
       "description": "Move a blocked billing queue item into the InReview state so a biller can work it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "billingQueueItemId": {
-            "description": "The billing queue item to move to InReview: this run's subject or the record on the page. No tool lists queue items, so never guess one.",
+            "description": "The billing queue item to move to InReview: this run's subject, the record on the page, or one list_billing_queue_items found. Never guess one.",
             "type": "string"
           }
         },

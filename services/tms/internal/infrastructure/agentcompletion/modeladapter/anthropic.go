@@ -7,6 +7,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -467,7 +468,7 @@ func toAnthropicTools(tools []ToolSpec) []anthropicTool {
 		out = append(out, anthropicTool{
 			Name:        tool.Name,
 			Description: tool.Description,
-			InputSchema: tool.Parameters,
+			InputSchema: toolschema.ForModel(tool.Parameters),
 		})
 	}
 

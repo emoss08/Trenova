@@ -218,7 +218,15 @@ func (t Template) StarterInstructions() string {
 		return "You support the billing team. Your job is to get shipments invoiced correctly and on " +
 			"time. Explain what blocks an item in plain language, name the missing document or the " +
 			"charge in question, and prefer proposing a specific fix over describing the problem. " +
-			"Never invent a rate or a charge code."
+			"Never invent a rate or a charge code. The work runs in order. Delivered shipments reach " +
+			"billing through list_billing_transfer_candidates, which says what a transfer would do " +
+			"with each; propose one transfer_to_billing covering every shipment that can go, and " +
+			"say why the rest cannot. Review a queue item with get_billing_queue_item, then propose " +
+			"the decision it needs: approve it when it is clean, hold it while something is on its " +
+			"way, move it into exception when the bill is wrong, or send it back to operations when " +
+			"the shipment is. Approving makes the draft invoice; propose post_invoice for it, then " +
+			"send_invoice when the customer is not sent invoices automatically. Approving, " +
+			"canceling, posting and sending are always a person's decision: you propose them."
 	case TemplateComplianceAssistant:
 		return "You support safety and compliance. Focus on driver qualification: medical cards, " +
 			"licence class and endorsements, hours of service, and expiring documents. When something " +
@@ -239,7 +247,11 @@ func (t Template) StarterInstructions() string {
 			"reason: read the notes for what it is waiting on, and propose moving it into review only " +
 			"when the record shows that thing has arrived. A missing document gets " +
 			"request_missing_docs; anything else still outstanding gets an exception saying what it " +
-			"is. Never take an item off hold just because nothing looks wrong. When the run's subject " +
+			"is. Never take an item off hold just because nothing looks wrong. An item still in " +
+			"review that cannot bill yet goes on hold with a note saying what it waits on; one " +
+			"whose bill is wrong goes into exception with the reason and the figures; one whose " +
+			"shipment is wrong goes back to operations with what they must fix. You never approve " +
+			"or cancel an item: that is a biller's decision. When the run's subject " +
 			"is the accounting connection rather than a billing item, invoices are not reaching the " +
 			"books: run check_accounting_connection once to see whether it answers now, read " +
 			"get_accounting_sync_status for what has failed to post, and if it is still not " +
@@ -580,6 +592,21 @@ func (t Template) StarterTools() []string {
 			"search_shipments",
 			"list_shipments",
 			"list_customers",
+			"list_billing_transfer_candidates",
+			"transfer_to_billing",
+			"list_billing_queue_items",
+			"get_billing_queue_item",
+			"assign_billing_queue_biller",
+			"transition_item_to_in_review",
+			"hold_billing_queue_item",
+			"move_billing_item_to_exception",
+			"send_billing_item_back_to_ops",
+			"approve_billing_queue_item",
+			"cancel_billing_queue_item",
+			"list_invoices", //nolint:goconst // a template names each tool by its wire name
+			"get_invoice",
+			"post_invoice",
+			"send_invoice",
 			"list_reports",
 			"describe_report",
 			"preview_report",
@@ -587,7 +614,6 @@ func (t Template) StarterTools() []string {
 			"get_report_run",
 			"list_email_profiles",
 			"request_missing_docs",
-			"transition_item_to_in_review",
 			"list_accessorial_charges",
 			"add_shipment_comment",
 			"list_insights",
@@ -723,7 +749,13 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"get_shipment",
 			"search_shipments",
+			"list_billing_transfer_candidates",
+			"list_billing_queue_items",
+			"get_billing_queue_item",
 			"transition_item_to_in_review",
+			"hold_billing_queue_item",
+			"move_billing_item_to_exception",
+			"send_billing_item_back_to_ops",
 			"correct_charge_code",
 			"request_missing_docs",
 			"attach_document_to_shipment",

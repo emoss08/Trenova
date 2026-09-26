@@ -28,6 +28,27 @@ type AccountingSyncEnqueuer interface {
 	Enqueue(ctx context.Context, req *AccountingSyncEnqueueRequest) error
 }
 
+// AccountingSyncPlanner says where a record would be queued for the
+// accounting system, without queuing it, for a preview of the write that
+// would.
+type AccountingSyncPlanner interface {
+	Destinations(
+		ctx context.Context,
+		req *AccountingSyncEnqueueRequest,
+	) ([]AccountingSyncDestination, error)
+}
+
+// AccountingSyncDestination is one accounting connection a record would be
+// queued for.
+type AccountingSyncDestination struct {
+	ConnectionID pulid.ID `json:"connectionId"`
+	Integration  string   `json:"integration"`
+	Company      string   `json:"company"`
+	// AwaitsRelease is a connection that does not sync on its own, so the
+	// record waits until a person releases it.
+	AwaitsRelease bool `json:"awaitsRelease"`
+}
+
 func EnqueueAccountingSync(
 	ctx context.Context,
 	enqueuer AccountingSyncEnqueuer,

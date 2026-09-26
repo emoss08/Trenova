@@ -258,6 +258,115 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 		return nil, err
 	}
 
+	draft, err := s.planDraftFromItem(ctx, req, item)
+	if err != nil {
+		return nil, err
+	}
+	if draft.deferred {
+		return &servicesports.CreateInvoiceFromBillingQueueResult{
+			DeferredToStatement: true,
+		}, nil
+	}
+	dependencies := draft.dependencies
+
+	created, err := s.repo.Create(ctx, draft.entity)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.syncDetentionBilling(ctx, created, actor); err != nil {
+		return nil, err
+	}
+
+	if item.IsAdjustmentOrigin {
+		s.syncAdjustmentLineage(ctx, created, item)
+	}
+
+	autoPost := s.shouldAutoPost(ctx, created.OrganizationID, dependencies.Customer)
+	auditActor := actor.AuditActor()
+	s.logAction(
+		created,
+		auditActor,
+		permission.OpCreate,
+		nil,
+		created,
+		"Invoice created from approved billing queue item",
+	)
+	s.publishInvalidation(ctx, created, auditActor, "created", created)
+
+	return &servicesports.CreateInvoiceFromBillingQueueResult{
+		Invoice:  created,
+		AutoPost: autoPost,
+	}, nil
+}
+
+// PreviewApprovalInvoice is the invoice approving the item would make: the
+// draft CreateFromApprovedBillingQueueItem would save, planned by the same
+// code from the item as it stands, and whether it would then post on its
+// own. It saves nothing. An item that already has its invoice returns that
+// one, and a statement customer's item returns DeferredToStatement.
+func (s *Service) PreviewApprovalInvoice(
+	ctx context.Context,
+	req *servicesports.CreateInvoiceFromBillingQueueRequest,
+) (*servicesports.CreateInvoiceFromBillingQueueResult, error) {
+	existing, err := s.getExistingInvoiceByBillingQueueItem(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if existing.Found {
+		return &servicesports.CreateInvoiceFromBillingQueueResult{
+			Invoice:  existing.Invoice,
+			AutoPost: s.resolveAutoPost(existing.Invoice.Customer),
+		}, nil
+	}
+
+	item, err := s.billingQueueRepo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
+		ItemID:                req.BillingQueueItemID,
+		TenantInfo:            req.TenantInfo,
+		ExpandShipmentDetails: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if billingqueue.IsTerminalStatus(item.Status) {
+		return nil, errortypes.NewValidationError(
+			"billingQueueItemId",
+			errortypes.ErrInvalidOperation,
+			"A billing queue item in {0} status cannot be approved",
+			string(item.Status),
+		)
+	}
+
+	draft, err := s.planDraftFromItem(ctx, req, item)
+	if err != nil {
+		return nil, err
+	}
+	if draft.deferred {
+		return &servicesports.CreateInvoiceFromBillingQueueResult{
+			DeferredToStatement: true,
+		}, nil
+	}
+
+	return &servicesports.CreateInvoiceFromBillingQueueResult{
+		Invoice:  draft.entity,
+		AutoPost: s.shouldAutoPost(ctx, req.TenantInfo.OrgID, draft.dependencies.Customer),
+	}, nil
+}
+
+// invoiceDraft is the invoice an approved item bills, before it is saved.
+type invoiceDraft struct {
+	entity       *invoice.Invoice
+	dependencies *invoiceDependencies
+	deferred     bool
+}
+
+// planDraftFromItem builds, and validates, the invoice an approved item
+// bills. It reads and saves nothing but what the build reads.
+func (s *Service) planDraftFromItem(
+	ctx context.Context,
+	req *servicesports.CreateInvoiceFromBillingQueueRequest,
+	item *billingqueue.BillingQueueItem,
+) (*invoiceDraft, error) {
 	dependencies, err := s.getInvoiceDependencies(ctx, req, item)
 	if err != nil {
 		return nil, err
@@ -267,9 +376,7 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 	// not bill it. Checked before the cadence guard because this is not a
 	// deviation to be justified — it is the schedule working.
 	if req.DeferToStatement && isStatementBilled(dependencies.Customer) {
-		return &servicesports.CreateInvoiceFromBillingQueueResult{
-			DeferredToStatement: true,
-		}, nil
+		return &invoiceDraft{dependencies: dependencies, deferred: true}, nil
 	}
 
 	// The last gate before an invoice exists, so it cannot be bypassed by any of
@@ -304,35 +411,7 @@ func (s *Service) CreateFromApprovedBillingQueueItem(
 		return nil, multiErr
 	}
 
-	created, err := s.repo.Create(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = s.syncDetentionBilling(ctx, created, actor); err != nil {
-		return nil, err
-	}
-
-	if item.IsAdjustmentOrigin {
-		s.syncAdjustmentLineage(ctx, created, item)
-	}
-
-	autoPost := s.shouldAutoPost(ctx, created.OrganizationID, dependencies.Customer)
-	auditActor := actor.AuditActor()
-	s.logAction(
-		created,
-		auditActor,
-		permission.OpCreate,
-		nil,
-		created,
-		"Invoice created from approved billing queue item",
-	)
-	s.publishInvalidation(ctx, created, auditActor, "created", created)
-
-	return &servicesports.CreateInvoiceFromBillingQueueResult{
-		Invoice:  created,
-		AutoPost: autoPost,
-	}, nil
+	return &invoiceDraft{entity: entity, dependencies: dependencies}, nil
 }
 
 func (s *Service) syncAdjustmentLineage(
@@ -405,31 +484,16 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 			return getErr
 		}
 
-		if s.billingRepo != nil {
-			control, controlErr := s.billingRepo.GetByOrgID(txCtx, entity.OrganizationID)
-			if controlErr != nil {
-				if req.TriggeredBy == billingcontrolpolicyservice.AutoPostInvoiceTrigger {
-					return controlErr
-				}
-			} else {
-				if policyErr := s.billingPolicyService().
-					ValidateInvoicePosting(control, req.TriggeredBy); policyErr != nil {
-					return policyErr
-				}
-			}
-		}
-
 		auditActor := actor.AuditActor()
+		previous := *entity
+		now := timeutils.NowUnix()
 
-		if entity.Status == invoice.StatusVoided {
-			return errortypes.NewValidationError(
-				"invoiceId",
-				errortypes.ErrInvalidOperation,
-				"Voided invoices cannot be posted",
-			)
+		alreadyPosted, planErr := s.planPost(txCtx, entity, req, now)
+		if planErr != nil {
+			return planErr
 		}
 
-		if entity.Status == invoice.StatusPosted {
+		if alreadyPosted {
 			queueUpdate, err := s.markBillingQueueItemPosted(txCtx, entity, req.TenantInfo)
 			if err != nil {
 				return err
@@ -440,25 +504,6 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 
 			posted = entity
 			return nil
-		}
-
-		previous := *entity
-		now := timeutils.NowUnix()
-
-		if multiErr := s.validator.ValidatePost(
-			txCtx,
-			entity,
-			req.TenantInfo,
-			now,
-		); multiErr != nil {
-			return multiErr
-		}
-
-		entity.Status = invoice.StatusPosted
-		entity.PostedAt = &now
-
-		if multiErr := s.validator.ValidateUpdate(txCtx, entity); multiErr != nil {
-			return multiErr
 		}
 
 		updated, updateErr := s.repo.Update(txCtx, entity)
@@ -611,6 +656,31 @@ func (s *Service) markInvoicedLegs(
 	now int64,
 	tenantInfo pagination.TenantInfo,
 ) ([]*shipment.Shipment, error) {
+	changes, err := s.planInvoicedLegs(ctx, entity, now, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	legs := make([]*shipment.Shipment, 0, len(changes))
+	for _, change := range changes {
+		if _, err = s.shipmentRepo.UpdateDerivedState(ctx, change.After); err != nil {
+			return nil, err
+		}
+		legs = append(legs, change.After)
+	}
+
+	return legs, nil
+}
+
+// planInvoicedLegs loads the legs the invoice bills and marks each as posting
+// leaves it, without saving: billed now, and Invoiced unless another payer's
+// item on it is still open.
+func (s *Service) planInvoicedLegs(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	now int64,
+	tenantInfo pagination.TenantInfo,
+) ([]LegChange, error) {
 	legs, err := loadInvoiceLegs(ctx, s.shipmentRepo, entity, tenantInfo, true)
 	if err != nil {
 		return nil, err
@@ -621,17 +691,17 @@ func (s *Service) markInvoicedLegs(
 		return nil, err
 	}
 
+	changes := make([]LegChange, 0, len(legs))
 	for _, shp := range legs {
+		before := *shp
 		shp.BilledAt = &now
 		if _, open := stillOpen[shp.ID]; !open {
 			shp.Status = shipment.StatusInvoiced
 		}
-		if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
-			return nil, err
-		}
+		changes = append(changes, LegChange{Before: &before, After: shp})
 	}
 
-	return legs, nil
+	return changes, nil
 }
 
 // legsWithOpenSiblingItems reports which legs still have an invoice item that

@@ -2386,3 +2386,139 @@ func (_c *MockShipmentService_PreviewCreate_Call) RunAndReturn(run func(ctx cont
 	_c.Call.Return(run)
 	return _c
 }
+
+// PlanBillingTransfers provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) PlanBillingTransfers(ctx context.Context, req *services.PlanBillingTransfersRequest) (*services.BillingTransferPlan, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PlanBillingTransfers")
+	}
+
+	var r0 *services.BillingTransferPlan
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.PlanBillingTransfersRequest) (*services.BillingTransferPlan, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.PlanBillingTransfersRequest) *services.BillingTransferPlan); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.BillingTransferPlan)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.PlanBillingTransfersRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_PlanBillingTransfers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PlanBillingTransfers'
+type MockShipmentService_PlanBillingTransfers_Call struct {
+	*mock.Call
+}
+
+// PlanBillingTransfers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.PlanBillingTransfersRequest
+func (_e *MockShipmentService_Expecter) PlanBillingTransfers(ctx any, req any) *MockShipmentService_PlanBillingTransfers_Call {
+	return &MockShipmentService_PlanBillingTransfers_Call{Call: _e.mock.On("PlanBillingTransfers", ctx, req)}
+}
+
+func (_c *MockShipmentService_PlanBillingTransfers_Call) Run(run func(ctx context.Context, req *services.PlanBillingTransfersRequest)) *MockShipmentService_PlanBillingTransfers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.PlanBillingTransfersRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.PlanBillingTransfersRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_PlanBillingTransfers_Call) Return(billingTransferPlan *services.BillingTransferPlan, err error) *MockShipmentService_PlanBillingTransfers_Call {
+	_c.Call.Return(billingTransferPlan, err)
+	return _c
+}
+
+func (_c *MockShipmentService_PlanBillingTransfers_Call) RunAndReturn(run func(ctx context.Context, req *services.PlanBillingTransfersRequest) (*services.BillingTransferPlan, error)) *MockShipmentService_PlanBillingTransfers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListBillingTransferCandidates provides a mock function for the type MockShipmentService
+func (_mock *MockShipmentService) ListBillingTransferCandidates(ctx context.Context, req *services.ListBillingTransferCandidatesRequest) (*services.BillingTransferCandidates, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListBillingTransferCandidates")
+	}
+
+	var r0 *services.BillingTransferCandidates
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ListBillingTransferCandidatesRequest) (*services.BillingTransferCandidates, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *services.ListBillingTransferCandidatesRequest) *services.BillingTransferCandidates); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.BillingTransferCandidates)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *services.ListBillingTransferCandidatesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentService_ListBillingTransferCandidates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListBillingTransferCandidates'
+type MockShipmentService_ListBillingTransferCandidates_Call struct {
+	*mock.Call
+}
+
+// ListBillingTransferCandidates is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *services.ListBillingTransferCandidatesRequest
+func (_e *MockShipmentService_Expecter) ListBillingTransferCandidates(ctx any, req any) *MockShipmentService_ListBillingTransferCandidates_Call {
+	return &MockShipmentService_ListBillingTransferCandidates_Call{Call: _e.mock.On("ListBillingTransferCandidates", ctx, req)}
+}
+
+func (_c *MockShipmentService_ListBillingTransferCandidates_Call) Run(run func(ctx context.Context, req *services.ListBillingTransferCandidatesRequest)) *MockShipmentService_ListBillingTransferCandidates_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *services.ListBillingTransferCandidatesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*services.ListBillingTransferCandidatesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentService_ListBillingTransferCandidates_Call) Return(billingTransferCandidates *services.BillingTransferCandidates, err error) *MockShipmentService_ListBillingTransferCandidates_Call {
+	_c.Call.Return(billingTransferCandidates, err)
+	return _c
+}
+
+func (_c *MockShipmentService_ListBillingTransferCandidates_Call) RunAndReturn(run func(ctx context.Context, req *services.ListBillingTransferCandidatesRequest) (*services.BillingTransferCandidates, error)) *MockShipmentService_ListBillingTransferCandidates_Call {
+	_c.Call.Return(run)
+	return _c
+}

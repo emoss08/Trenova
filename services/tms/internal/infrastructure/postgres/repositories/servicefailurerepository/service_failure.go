@@ -365,6 +365,34 @@ func (r *repository) ListUnresolvedByShipment(
 	return entities, nil
 }
 
+func (r *repository) ListUnresolvedByShipmentIDs(
+	ctx context.Context,
+	req *repositories.ServiceFailuresByShipmentIDsRequest,
+) ([]*servicefailure.ServiceFailure, error) {
+	entities := make([]*servicefailure.ServiceFailure, 0, len(req.ShipmentIDs))
+	if len(req.ShipmentIDs) == 0 {
+		return entities, nil
+	}
+
+	cols := buncolgen.ServiceFailureColumns
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ServiceFailureScopeTenant(sq, req.TenantInfo).
+				Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs)).
+				Where(cols.Status.In(), bun.List(servicefailure.UnresolvedStatuses()))
+		}).
+		Relation(buncolgen.ServiceFailureRelations.ReasonCode).
+		Order(cols.CreatedAt.OrderDesc()).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list unresolved service failures by shipments: %w", err)
+	}
+
+	return entities, nil
+}
+
 func (r *repository) CountUnresolvedByShipment(
 	ctx context.Context,
 	req *repositories.ServiceFailuresByShipmentRequest,

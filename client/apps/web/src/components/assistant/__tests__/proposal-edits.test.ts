@@ -30,6 +30,7 @@ const FIELDS: ProposalField[] = [
   field({ name: "urgent", label: "Urgent", kind: "Boolean" }),
   field({ name: "codes", label: "Codes", kind: "List" }),
   field({ name: "extra", label: "Extra", kind: "JSON" }),
+  field({ name: "shipmentIds", label: "Shipment IDs", kind: "RecordSubset", resource: "shipment" }),
 ];
 
 /**
@@ -53,6 +54,13 @@ describe("proposal edits", () => {
     expect(draft.urgent).toBe("true");
     expect(draft.codes).toBe("A, B");
     expect(draft.extra).toBe('{\n  "a": 1\n}');
+  });
+
+  it("edits a record subset as the ids it holds, and reads it back as a list", () => {
+    const draft = draftFromArguments(FIELDS, { shipmentIds: ["shp_a", "shp_b", "shp_c"] });
+
+    expect(draft.shipmentIds).toBe("shp_a, shp_b, shp_c");
+    expect(parseDraftValue(FIELDS[7], "shp_a, shp_c")).toEqual({ value: ["shp_a", "shp_c"] });
   });
 
   it("reads each kind back into the value the tool takes", () => {
