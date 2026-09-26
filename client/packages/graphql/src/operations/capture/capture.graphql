@@ -198,6 +198,21 @@ query MyCaptureAccess {
   }
 }
 
+query CaptureAgentRelease {
+  captureAgentRelease {
+    version
+    publishedAt
+    minimumWindowsBuild
+    notes
+    installer {
+      fileName
+      url
+      sha256
+      size
+    }
+  }
+}
+
 query CaptureBatches($input: CaptureBatchesInput!) {
   captureBatches(input: $input) {
     edges {

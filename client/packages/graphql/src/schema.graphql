@@ -5153,6 +5153,29 @@ type CaptureAccess {
   enabled: Boolean!
 }
 
+"""The installer a Trenova Capture release ships."""
+type CaptureAgentInstaller {
+  fileName: String!
+  """Lowercase hex SHA-256 of the file, for anyone who checks it by hand."""
+  sha256: String!
+  """Its size in bytes."""
+  size: Int!
+  """Where it downloads from."""
+  url: String!
+}
+
+"""
+A published Trenova Capture release, as its signed manifest describes it.
+"""
+type CaptureAgentRelease {
+  installer: CaptureAgentInstaller!
+  """The oldest Windows build it installs on; 19045 is Windows 10 22H2."""
+  minimumWindowsBuild: Int!
+  notes: String!
+  publishedAt: Timestamp!
+  version: String!
+}
+
 """
 The processor a companion was built for. Trenova Capture ships for 64-bit Windows only.
 """
@@ -17257,6 +17280,10 @@ type Query {
   """Recent mornings, newest day first."""
   briefings(input: ListBriefingsInput!): [Briefing!]!
   cannedReports: [CannedReport!]!
+  """
+  The current Trenova Capture release, for the download button; null when none is published.
+  """
+  captureAgentRelease: CaptureAgentRelease
   """One stack with its pages and proposed documents."""
   captureBatch(id: ID!): CaptureBatch!
   """The intake queue: captured stacks, newest first."""

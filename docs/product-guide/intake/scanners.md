@@ -16,7 +16,7 @@ Pairing happens on the pairing page, where you approve the code Trenova Capture 
 
 ### Pair a computer
 Keywords: set up scanner, connect Trenova Capture, sign in the companion, approve code
-1. On the computer your scanner is plugged into, install Trenova Capture and choose Sign in from its tray icon. It shows an eight-letter code and opens the pairing page.
+1. On the computer your scanner is plugged into, open [My scanners](/capture/devices), select **Download Trenova Capture** and run the installer (it needs administrator rights). Then choose Sign in from the Trenova Capture icon in the notification area. It shows an eight-letter code and opens the pairing page.
 2. If the page did not open, open [My scanners](/capture/devices), select **Enter a pairing code**, type the code and select **Look up**.
 3. Check that **The computer asking** is the one in front of you, change **Name it** if you like, and select **Approve**.
 

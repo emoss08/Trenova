@@ -8635,6 +8635,11 @@ export type MyCaptureAccessQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MyCaptureAccessQuery = { myCaptureAccess: { enabled: boolean, canCapture: boolean } };
 
+export type CaptureAgentReleaseQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CaptureAgentReleaseQuery = { captureAgentRelease: { version: string, publishedAt: number, minimumWindowsBuild: number, notes: string, installer: { fileName: string, url: string, sha256: string, size: number } } | null };
+
 export type CaptureBatchesQueryVariables = Exact<{
   input: CaptureBatchesInput;
 }>;
@@ -23407,6 +23412,7 @@ export const TodaysBriefingDocument = {"__meta__":{"kind":"query","name":"Todays
 export const MarkBriefingReadDocument = {"__meta__":{"kind":"mutation","name":"MarkBriefingRead","hash":"sha256:a528508c33bf6da76c15bf36e4159bdb24aeeb7c644cabbd8e779423cfe86371"}} as unknown as TypedDocumentString<MarkBriefingReadMutation, MarkBriefingReadMutationVariables>;
 export const RegenerateBriefingDocument = {"__meta__":{"kind":"mutation","name":"RegenerateBriefing","hash":"sha256:78838e889a7a2e313f67553e5f19966a6338ae041961bd169a6bf8e9ad5108df"}} as unknown as TypedDocumentString<RegenerateBriefingMutation, RegenerateBriefingMutationVariables>;
 export const MyCaptureAccessDocument = {"__meta__":{"kind":"query","name":"MyCaptureAccess","hash":"sha256:0e0e3bed6cfbb9210e5d3a2f3d7a07d91e26763205dd3c68f4b4885d3d7b23c2"}} as unknown as TypedDocumentString<MyCaptureAccessQuery, MyCaptureAccessQueryVariables>;
+export const CaptureAgentReleaseDocument = {"__meta__":{"kind":"query","name":"CaptureAgentRelease","hash":"sha256:871e3e29040b717530d9bdae990b25cbdefea215ade1970666878959c1219e44"}} as unknown as TypedDocumentString<CaptureAgentReleaseQuery, CaptureAgentReleaseQueryVariables>;
 export const CaptureBatchesDocument = {"__meta__":{"kind":"query","name":"CaptureBatches","hash":"sha256:d40d49842db626aa6d822a89f8f3be992c716d71db561f1a4deb6127f19e40ce"}} as unknown as TypedDocumentString<CaptureBatchesQuery, CaptureBatchesQueryVariables>;
 export const CaptureBatchCountDocument = {"__meta__":{"kind":"query","name":"CaptureBatchCount","hash":"sha256:b72597d4462c7841309af83ee9f1217281f91dac439d6841b736ece7af92f402"}} as unknown as TypedDocumentString<CaptureBatchCountQuery, CaptureBatchCountQueryVariables>;
 export const CaptureBatchDocument = {"__meta__":{"kind":"query","name":"CaptureBatch","hash":"sha256:255eebc82d775317997d672fded4e4026bab5ffc76dcb793de5d5909311e255a"}} as unknown as TypedDocumentString<CaptureBatchQuery, CaptureBatchQueryVariables>;

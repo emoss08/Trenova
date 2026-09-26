@@ -1,5 +1,6 @@
 import {
   fetchAvailableCaptureProfiles,
+  fetchCaptureAgentRelease,
   fetchCaptureBatch,
   fetchCaptureBatchCount,
   fetchCaptureBatches,
@@ -22,6 +23,10 @@ export const capture = createQueryKeys("capture", {
   access: () => ({
     queryKey: ["access"],
     queryFn: ({ signal }: Signal) => fetchMyCaptureAccess({ signal }),
+  }),
+  agentRelease: () => ({
+    queryKey: ["agentRelease"],
+    queryFn: ({ signal }: Signal) => fetchCaptureAgentRelease({ signal }),
   }),
   // The filter is part of the key: the stacks waiting on a person and the
   // ones already filed are different questions.

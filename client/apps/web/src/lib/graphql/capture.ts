@@ -27,6 +27,7 @@ import {
   EditCaptureItemsDocument,
   FileCaptureItemDocument,
   FileCaptureItemsDocument,
+  CaptureAgentReleaseDocument,
   MyCaptureAccessDocument,
   MyCaptureDevicesDocument,
   RevokeCaptureDeviceDocument,
@@ -61,6 +62,7 @@ import {
   type EditCaptureItemsInput,
   type FileCaptureItemInput,
   type FileCaptureItemsEntryInput,
+  type CaptureAgentReleaseQuery,
   type MyCaptureAccessQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -82,6 +84,7 @@ export type CaptureSourceInfo = UnmaskFragments<CaptureSourceInfoFieldsFragment>
 export type CaptureProfile = UnmaskFragments<CaptureProfileFieldsFragment>;
 export type CaptureRequest = UnmaskFragments<CaptureRequestFieldsFragment>;
 export type CaptureAccess = MyCaptureAccessQuery["myCaptureAccess"];
+export type CaptureAgentRelease = NonNullable<CaptureAgentReleaseQuery["captureAgentRelease"]>;
 export type CapturePairingPreview = CaptureDevicePairingQuery["captureDevicePairing"];
 export type IssuedCoverSheet = UnmaskFragments<
   CreateCaptureCoverSheetsMutation["createCaptureCoverSheets"][number]
@@ -146,6 +149,19 @@ function profile(masked: FragmentType<typeof CaptureProfileFieldsFragmentDoc>): 
 
 function request(masked: FragmentType<typeof CaptureRequestFieldsFragmentDoc>): CaptureRequest {
   return unmasked<CaptureRequest>(getFragmentData(CaptureRequestFieldsFragmentDoc, masked));
+}
+
+/** The current Trenova Capture release, or null when none is published. */
+export async function fetchCaptureAgentRelease(
+  options?: RequestOptions,
+): Promise<CaptureAgentRelease | null> {
+  const data = await requestGraphQL({
+    document: CaptureAgentReleaseDocument,
+    operationName: "CaptureAgentRelease",
+    variables: {},
+    signal: options?.signal,
+  });
+  return data.captureAgentRelease ?? null;
 }
 
 export async function fetchMyCaptureAccess(options?: RequestOptions): Promise<CaptureAccess> {

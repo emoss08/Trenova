@@ -1,3 +1,4 @@
+import { CaptureDownloadPanel } from "@/components/capture/download-panel";
 import { DeviceList } from "@/components/capture/device-list";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { useApiMutation } from "@/hooks/use-api-mutation";
@@ -17,6 +18,7 @@ import { toast } from "sonner";
 export const prefetch: RoutePrefetch = () => [
   queries.capture.myDevices(null),
   queries.capture.access(),
+  queries.capture.agentRelease(),
 ];
 
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
@@ -74,6 +76,8 @@ export function CaptureDevicesPage() {
           </AlertDescription>
         </Alert>
       )}
+
+      <CaptureDownloadPanel />
 
       {devicesQuery.isLoading ? (
         <div className="flex flex-col gap-2" aria-busy="true">

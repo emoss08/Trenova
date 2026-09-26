@@ -1,5 +1,5 @@
 {
-  "operationCount": 926,
+  "operationCount": 927,
   "fragmentCount": 255,
   "operations": [
     {
@@ -4069,6 +4069,20 @@
       "fragments": [],
       "usages": [],
       "sdl": "query CannedReports {\n  cannedReports {\n    key\n    version\n    name\n    description\n    category\n    tags\n    defaultFormat\n    definition\n  }\n}"
+    },
+    {
+      "name": "CaptureAgentRelease",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:871e3e29040b717530d9bdae990b25cbdefea215ade1970666878959c1219e44",
+      "rootFields": [
+        "captureAgentRelease"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CaptureAgentRelease {\n  captureAgentRelease {\n    version\n    publishedAt\n    minimumWindowsBuild\n    notes\n    installer {\n      fileName\n      url\n      sha256\n      size\n    }\n  }\n}"
     },
     {
       "name": "CaptureBatch",

@@ -1,3 +1,4 @@
+import { CaptureDownloadPanel } from "@/components/capture/download-panel";
 import { DeviceList } from "@/components/capture/device-list";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -54,6 +55,17 @@ export function FleetPanel() {
 
   return (
     <div className="flex flex-col gap-3">
+      <CaptureDownloadPanel
+        whenMissing={
+          <Alert variant="info" size="sm">
+            <AlertDescription>
+              {t(
+                "No Trenova Capture installer is published yet, or this server does not serve one. Once it is, people download it from here and from My scanners.",
+              )}
+            </AlertDescription>
+          </Alert>
+        }
+      />
       <div className="flex flex-wrap items-center gap-2">
         <SegmentedControl<StatusFilter>
           aria-label={t("Which computers")}
