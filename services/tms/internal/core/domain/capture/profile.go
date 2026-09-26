@@ -40,9 +40,9 @@ type CaptureProfile struct {
 	IsDefault           bool                `json:"isDefault"           bun:"is_default,type:BOOLEAN,notnull,default:false"`
 	DPI                 int                 `json:"dpi"                 bun:"dpi,type:INTEGER,notnull"`
 	PixelType           PixelType           `json:"pixelType"           bun:"pixel_type,type:VARCHAR(20),notnull"`
-	Duplex              bool                `json:"duplex"              bun:"duplex,type:BOOLEAN,notnull,default:true"`
-	UseFeeder           bool                `json:"useFeeder"           bun:"use_feeder,type:BOOLEAN,notnull,default:true"`
-	DiscardBlankPages   bool                `json:"discardBlankPages"   bun:"discard_blank_pages,type:BOOLEAN,notnull,default:true"`
+	Duplex              bool                `json:"duplex"              bun:"duplex,type:BOOLEAN,notnull"`
+	UseFeeder           bool                `json:"useFeeder"           bun:"use_feeder,type:BOOLEAN,notnull"`
+	DiscardBlankPages   bool                `json:"discardBlankPages"   bun:"discard_blank_pages,type:BOOLEAN,notnull"`
 	JPEGQuality         int                 `json:"jpegQuality"         bun:"jpeg_quality,type:INTEGER,notnull"`
 	ShowDriverUI        bool                `json:"showDriverUi"        bun:"show_driver_ui,type:BOOLEAN,notnull,default:false"`
 	SeparatorStrategies []SeparatorStrategy `json:"separatorStrategies" bun:"separator_strategies,type:VARCHAR(30)[],notnull,default:'{}',array"`

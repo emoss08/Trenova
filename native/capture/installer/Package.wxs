@@ -68,7 +68,6 @@
       </Directory>
     </StandardDirectory>
 
-    <StandardDirectory Id="ProgramMenuFolder" />
 
     <ComponentGroup Id="Binaries" Directory="INSTALLFOLDER">
       <Component Id="Agent" Guid="a1c2e3f4-0001-4c00-8000-7d2a9f3e6c41" Bitness="always64">
@@ -96,8 +95,8 @@
                         Account="NT AUTHORITY\LocalService"
                         Arguments="service"
                         Vital="yes">
-          <util:ServiceConfig ServiceSid="unrestricted"
-                              FirstFailureActionType="restart"
+          <ServiceConfig ServiceSid="unrestricted" OnInstall="yes" OnReinstall="yes" />
+          <util:ServiceConfig FirstFailureActionType="restart"
                               SecondFailureActionType="restart"
                               ThirdFailureActionType="restart"
                               RestartServiceDelayInSeconds="30"
@@ -141,7 +140,7 @@
       </Component>
     </ComponentGroup>
 
-    <DirectoryRef Id="ProgramMenuFolder">
+    <StandardDirectory Id="ProgramMenuFolder">
       <Component Id="StartMenuShortcut" Guid="a1c2e3f4-0008-4c00-8000-7d2a9f3e6c41" Bitness="always64">
         <Shortcut Id="AgentShortcut" Name="Trenova Capture"
                   Description="Scan and print into Trenova"
@@ -149,13 +148,14 @@
         <RegistryValue Root="HKCU" Key="SOFTWARE\Trenova\Capture" Name="StartMenuShortcut"
                        Type="integer" Value="1" KeyPath="yes" />
       </Component>
-    </DirectoryRef>
+    </StandardDirectory>
 
     <!--
       What Windows Installer cannot declare, the binaries do for it, elevated
       and without a window:
-        - the print service creates %ProgramData%\Trenova\Capture\{logs,spool}
-          with their ACLs, and the "Trenova" printer on the IPP Class Driver;
+        - the print service marks its own SID unrestricted (so the ACLs below can
+          name it), creates %ProgramData%\Trenova\Capture\{logs,spool} with
+          their ACLs, and the "Trenova" printer on the IPP Class Driver;
         - the updater lets signed-in users start it (its service DACL), and at the
           end starts the tray agent for everyone signed in.
       Each is safe to run again, so a repair or an upgrade repeats them.

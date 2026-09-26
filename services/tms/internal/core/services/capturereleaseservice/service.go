@@ -119,7 +119,11 @@ func ParsePublicKey(value string) (ed25519.PublicKey, error) {
 }
 
 func newClient(proxy string) (*http.Client, error) {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	base, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		return nil, errors.New("the default HTTP transport is not an *http.Transport")
+	}
+	transport := base.Clone()
 	if proxy != "" {
 		proxyURL, err := url.Parse(proxy)
 		if err != nil {

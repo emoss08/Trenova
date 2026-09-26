@@ -36,11 +36,11 @@ type DocumentControl struct {
 	EnableAIAssistedExtraction      bool     `json:"enableAiAssistedExtraction"      bun:"enable_ai_assisted_extraction,type:BOOLEAN,notnull"`
 	ShipmentDraftAllowedResources   []string `json:"shipmentDraftAllowedResources"   bun:"shipment_draft_allowed_resources,type:VARCHAR(100)[],notnull,default:'{}'"`
 	EnableFullTextIndexing          bool     `json:"enableFullTextIndexing"          bun:"enable_full_text_indexing,type:BOOLEAN,notnull"`
-	EnableCapture                   bool     `json:"enableCapture"                   bun:"enable_capture,type:BOOLEAN,notnull,default:true"`
-	CaptureAutoFileCoverSheets      bool     `json:"captureAutoFileCoverSheets"      bun:"capture_auto_file_cover_sheets,type:BOOLEAN,notnull,default:true"`
+	EnableCapture                   bool     `json:"enableCapture"                   bun:"enable_capture,type:BOOLEAN,notnull"`
+	CaptureAutoFileCoverSheets      bool     `json:"captureAutoFileCoverSheets"      bun:"capture_auto_file_cover_sheets,type:BOOLEAN,notnull"`
 	CaptureRetentionDays            int      `json:"captureRetentionDays"            bun:"capture_retention_days,type:INTEGER,notnull,default:30"`
 	CaptureMinAgentVersion          string   `json:"captureMinAgentVersion"          bun:"capture_min_agent_version,type:VARCHAR(20),nullzero"`
-	CaptureAllowAutoUpdate          bool     `json:"captureAllowAutoUpdate"          bun:"capture_allow_auto_update,type:BOOLEAN,notnull,default:true"`
+	CaptureAllowAutoUpdate          bool     `json:"captureAllowAutoUpdate"          bun:"capture_allow_auto_update,type:BOOLEAN,notnull"`
 	Version                         int64    `json:"version"                         bun:"version,type:BIGINT"`
 	CreatedAt                       int64    `json:"createdAt"                       bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                       int64    `json:"updatedAt"                       bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

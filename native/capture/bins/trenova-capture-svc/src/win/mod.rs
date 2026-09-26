@@ -150,8 +150,8 @@ pub fn main() -> ExitCode {
         "service" => service::dispatch(),
         "run" => run_console(),
         "configure" => step(
-            "Creating the service's directories",
-            install::create_directories(),
+            "Configuring the print service",
+            install::configure_service(),
         ),
         "install" => step("Installing the print service", install::install_service()),
         "uninstall" => step("Removing the print service", install::uninstall_service()),

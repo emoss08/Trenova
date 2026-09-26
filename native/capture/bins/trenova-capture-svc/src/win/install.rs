@@ -73,9 +73,7 @@ pub fn install_service() -> io::Result<()> {
     service
         .set_description(SERVICE_DESCRIPTION)
         .map_err(service_error)?;
-    service
-        .set_config_service_sid_info(ServiceSidType::Unrestricted)
-        .map_err(service_error)?;
+    mark_sid_unrestricted(&service)?;
     let restart = |seconds| ServiceAction {
         action_type: ServiceActionType::Restart,
         delay: Duration::from_secs(seconds),
@@ -100,10 +98,29 @@ pub fn install_service() -> io::Result<()> {
     Ok(())
 }
 
+/// What the MSI cannot declare: the service SID the inbox ACLs name, and
+/// `%ProgramData%\Trenova\Capture` with its `logs` and `spool` directories
+/// ACL'd to it. Runs after the MSI has created the service and before it
+/// starts it.
+pub fn configure_service() -> io::Result<()> {
+    let manager = manager(ServiceManagerAccess::CONNECT)?;
+    let service = manager
+        .open_service(SERVICE_NAME, ServiceAccess::CHANGE_CONFIG)
+        .map_err(service_error)?;
+    mark_sid_unrestricted(&service)?;
+    create_directories()
+}
+
+/// Puts the service's own SID in its token, so an ACL can name it.
+fn mark_sid_unrestricted(service: &windows_service::service::Service) -> io::Result<()> {
+    service
+        .set_config_service_sid_info(ServiceSidType::Unrestricted)
+        .map_err(service_error)
+}
+
 /// `%ProgramData%\Trenova\Capture` and, ACL'd to the service, its `logs` and
-/// `spool` directories. The MSI runs this after it has created the service,
-/// since Windows Installer cannot set these ACLs itself.
-pub fn create_directories() -> io::Result<()> {
+/// `spool` directories.
+fn create_directories() -> io::Result<()> {
     let service_sid = acl::service_sid()?;
     let shared = paths::shared_dir()?;
     std::fs::create_dir_all(&shared)?;

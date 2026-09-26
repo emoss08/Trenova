@@ -1609,8 +1609,8 @@ const (
 // GetCaptureManifestURL is the configured manifest address, or the
 // repository's capture-stable release asset.
 func (c *UpdateConfig) GetCaptureManifestURL() string {
-	if url := strings.TrimSpace(c.CaptureManifestURL); url != "" {
-		return url
+	if configured := strings.TrimSpace(c.CaptureManifestURL); configured != "" {
+		return configured
 	}
 
 	return fmt.Sprintf("https://github.com/%s/%s/releases/download/%s/%s",

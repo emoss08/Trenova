@@ -73,9 +73,8 @@ func New(p Params) *Handler {
 
 const (
 	// apiPrefix is the versioned group the capture routes are mounted under.
-	apiPrefix        = "/api/v1"
-	captureRoot      = "/capture/"
-	pageContentRoute = "pages/:pageID/content/"
+	apiPrefix   = "/api/v1"
+	captureRoot = "/capture/"
 )
 
 // PageContentPath is where a signed-in person fetches a page to show it.
@@ -122,8 +121,8 @@ func (h *Handler) RegisterDeviceRoutes(rg *gin.RouterGroup) {
 // because it is bytes, and the browser shows it straight from an <img> or a
 // PDF viewer.
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	api := rg.Group(captureRoot)
-	api.GET(pageContentRoute, h.pageContent)
+	api := rg.Group("/capture/")
+	api.GET("pages/:pageID/content/", h.pageContent)
 }
 
 // fail answers a capture error. The two errors the companion acts on get
