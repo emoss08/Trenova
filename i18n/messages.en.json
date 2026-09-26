@@ -51223,6 +51223,15 @@
       "routes/admin"
     ]
   },
+  "Delete rule sets and fixtures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Delete scenario": {
     "sites": 1,
     "scope": [
@@ -144803,6 +144812,15 @@
       "routes/agent-control"
     ]
   },
+  "Retire a rate agreement so it no longer prices shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Retire a template version": {
     "sites": 1,
     "scope": [
@@ -155681,6 +155699,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Send a draft rate agreement for approval": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Send a message to a driver": {
