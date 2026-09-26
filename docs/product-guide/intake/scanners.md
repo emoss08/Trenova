@@ -1,6 +1,6 @@
 ---
 path: /capture/devices
-aliases: [my scanners, pair a scanner, Trenova Capture, companion app, scanner computer, pairing code, revoke scanner, tray icon, paper jam]
+aliases: [my scanners, pair a scanner, Trenova Capture, companion app, scanner computer, pairing code, revoke scanner, tray icon, paper jam, Trenova printer, print to Trenova]
 related:
   - /intake
 covers:
@@ -26,6 +26,12 @@ Keywords: scan to intake, tray menu, scan from the computer, quick scan
 2. Choose Scan to intake, then the scanner, then the scan profile (the organization's default is marked).
 3. When the scan finishes, a notification says how many pages were sent; select it to open them in [Intake](/intake).
 
+### Print a document into Trenova
+Keywords: print to Trenova, virtual printer, print from any program, print a PDF, print into a shipment, print into a record
+1. In any program on the paired computer, choose Print and pick the printer named Trenova.
+2. Trenova Capture sends what you printed, and a notification says how many pages arrived. It goes to [Intake](/intake), or to the record where you first chose **Print into this record** from **More ways to capture** on its Documents tab.
+3. If you are signed out of Trenova Capture, the print waits on the computer and is sent when you sign in.
+
 ### Carry on after a paper jam
 Keywords: jam, double feed, cover open, scanner stopped, continue scanning
 1. Clear the scanner. The pages scanned before it stopped are kept on the computer.
@@ -37,4 +43,4 @@ Keywords: lost laptop, remove scanner, unpair, revoke device
 2. Select **Revoke** beside the computer, optionally say why, and select **Revoke** again. It stops at once; pages it already sent stay in [Intake](/intake).
 
 ## Notes
-Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the icon's menu shows how many are waiting. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. Only approve a computer you are using: once paired it uploads documents as you.
+Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the icon's menu shows how many are waiting. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. The Trenova printer is added when Trenova Capture is installed, and only the person who printed a document can send it: another person signed in to the same computer never sees it. Only approve a computer you are using: once paired it uploads documents as you.

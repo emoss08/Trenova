@@ -1,6 +1,6 @@
 # Document Capture — Scanning and Virtual Printing
 
-> Status: phases 1 (server), 2 (web) and 3 (companion core) complete; the virtual printer (phase 4) is next. Purpose: let a person put paper or
+> Status: phases 1 (server), 2 (web), 3 (companion core) and 4 (virtual printer) complete; distribution (phase 5) is next. Purpose: let a person put paper or
 > another program's output into Trenova without first producing a file on their own disk, from a
 > scanner (including one behind Kofax VRS) or from the Windows print dialog of any application.
 
@@ -95,11 +95,11 @@ in the web app.
 ```
 ┌──────────────────────── Windows machine ─────────────────────────┐
 │                                                                  │
-│  TrenovaCaptureSvc (Windows service, LocalService)               │
+│  TrenovaCaptureSvc (Windows service, LocalService + service SID) │
 │   └─ IPP listener 127.0.0.1:<port>  ◄── Windows spooler          │
 │        (IPP Class Driver, "Trenova" printer)                     │
-│   └─ per-user spool  %ProgramData%\Trenova\Capture\spool\<SID>\  │
-│   └─ named pipe \\.\pipe\trenova-capture-<SID> (ACL: that SID)   │
+│   └─ per-user inbox  %ProgramData%\Trenova\Capture\spool\<SID>\  │
+│        (ACL: that SID, the service, SYSTEM, Administrators)      │
 │                                                                  │
 │  trenova-capture.exe (per user, starts at logon, tray icon)      │
 │   └─ device credential (Credential Manager, DPAPI)               │
@@ -116,9 +116,14 @@ in the web app.
 - **The service** exists because the spooler, not the user, connects to the printer, and a
   print must be accepted even before the tray agent has started. (It also keeps a shared
   workstation correct, although terminal servers are not a target.) The service receives the job, attributes it
-  to the submitting user (§5.4), and hands it to that user's agent over a named pipe whose
-  ACL admits only that user's SID. If the agent is not running, the job waits in a spool
-  directory ACL'd to that SID and the service, and is handed over at next logon.
+  to the submitting user (§5.4), and leaves it in that user's **inbox**, a directory whose ACL
+  admits only that user's SID and the service. The agent looks every two seconds; a job
+  printed while it is not running waits there until the next logon. The hand-off is a file
+  contract (`capture_protocol::handoff`): the PDF is written under a `.part` name and renamed,
+  then its JSON description the same way, so a description on disk means its PDF is whole.
+  The agent verifies the PDF against the description's SHA-256, moves it into its own
+  DPAPI spool under a key derived from the job's name, and only then deletes it, so a crash in
+  between sends the job once. A job that cannot be read is renamed `.rejected`, not deleted.
 - **Scan helpers** are short-lived child processes, one per scan, in the bitness of the chosen
   data source. A driver that crashes takes down the helper, not the agent. The helper speaks a
   length-prefixed protocol on an anonymous pipe (page metadata + page bytes) and knows nothing
@@ -186,13 +191,32 @@ pointed at the service's loopback IPP endpoint (`http://127.0.0.1:<port>/ipp/pri
   A v3/v4 driver or a port-monitor DLL loaded into `spoolsv.exe` would stop working, and it
   also runs our code inside the spooler as SYSTEM, which is exactly what we don't want.
 - **What we accept.** The service advertises `document-format-supported` =
-  `application/pdf`, `image/pwg-raster`. PDF keeps the text layer (so extraction needs no OCR);
-  PWG raster is the universal fallback and is converted to per-page PDF in the service.
+  `application/pdf`, `image/pwg-raster` (black_1, sgray_8 and srgb_8 at 300 and 600 DPI;
+  letter, legal and A4), and implements Print-Job, Validate-Job, Create-Job with
+  Send-Document, Cancel-Job, Get-Job-Attributes, Get-Jobs and Get-Printer-Attributes
+  (`capture-ipp`). PDF keeps the text layer (so extraction needs no OCR) and is passed through.
+  PWG raster is the universal fallback: the service decodes it a page at a time and writes one
+  PDF, bilevel pages as G4 and the rest as JPEG at quality 85, and a colour page with no colour
+  in it as gray. The server splits either kind into pages (`PUT …/print-job/`).
 - **Attribution.** The IPP `requesting-user-name` is a hint, not proof, since any local process
-  can connect. The service confirms the owner by matching the job against the local spooler
-  queue (`EnumJobs` on the Trenova printer, `JOB_INFO_2.pUserName` plus the submitting
-  session), and rejects a job it cannot attribute. The listener binds loopback only and caps
-  job size.
+  can connect. The service reads the Trenova queue (`EnumJobs`, `JOB_INFO_2`): the document
+  must match a queued job by name (exactly, or by prefix for names of 32 characters or more,
+  which a driver may cut short; failing any match, the only unclaimed job on the queue). Each
+  queued job can be claimed by **one** document, so a process that copies a name it can see on
+  the queue takes that job's place rather than adding a document to someone's intake. A name
+  that several people are printing at once, a claim that contradicts the queue, or a user
+  name signed in under two domains is refused. The domain comes from the signed-in sessions
+  (`WTSEnumerateSessions`), and `LookupAccountName` gives the SID that names the inbox.
+- **The listener** binds 127.0.0.1 only (default port 8631; `PrintPort` under
+  `HKLM\SOFTWARE\Policies\Trenova\Capture` or `HKLM\SOFTWARE\Trenova\Capture` moves it). It
+  refuses, before reading a body, any request a web page could send: one with an `Origin`
+  header, a `Host` other than this loopback address (DNS rebinding), or a content type other
+  than `application/ipp`. Requests are capped at 512 MB, and at most two documents are
+  converted at once.
+- **Isolation.** The service runs as LocalService with an unrestricted service SID, and every
+  directory it creates carries a protected DACL naming `NT SERVICE\TrenovaCaptureSvc` rather
+  than LocalService, which other services share. The spool root lets signed-in users traverse
+  but not list it.
 - **Where a print lands.** In the intake queue, unless the user *armed* a print destination in
   the web app ("Print into this shipment", §8.2). The agent then shows a toast ("3 pages sent to
   intake — Open").
@@ -222,16 +246,16 @@ resource, so there is one source for the mark rather than a copy that drifts.
 ```
 native/capture/                  Cargo workspace
 ├── crates/
-│   ├── capture-protocol/        API + helper-pipe message types (serde), manifest digest
+│   ├── capture-protocol/        API + helper-pipe message types (serde), manifest digest, print hand-off
 │   ├── capture-client/          API client (reqwest over SChannel), pairing, stream, spool, upload queue
 │   ├── capture-twain/           twain.h bindings, state machine, capability negotiation, memory transfer
 │   ├── capture-wia/             WIA 2.0 over windows-rs
-│   ├── capture-imaging/         G4/JPEG encode, single-page PDF writer, BMP decode (PWG raster → PDF in phase 4)
-│   ├── capture-ipp/             IPP/2.0 server subset (Print-Job, Validate-Job, Get-Printer-Attributes, Get-Jobs; phase 4)
-│   └── capture-platform/        DPAPI, Credential Manager, machine identity, settings, shell (named pipes + ACLs, spooler queries in phase 4)
+│   ├── capture-imaging/         G4/JPEG encode, PDF writer (one page or many), BMP and PWG raster decode
+│   ├── capture-ipp/             IPP/2.0 codec and the Trenova printer's operations
+│   └── capture-platform/        DPAPI, Credential Manager, accounts and SIDs, settings, paths, logging, shell
 ├── bins/
 │   ├── trenova-capture/         per-user agent + tray
-│   ├── trenova-capture-svc/     service
+│   ├── trenova-capture-svc/     print service: listener, attribution, inboxes, install
 │   └── trenova-capture-scan/    scan helper (built x64 and x86)
 └── installer/                   WiX v4 MSI
 ```
@@ -630,7 +654,8 @@ resolver reaches a permission check (authzlint).
 - **Device principal:** narrow routes; all actions check the paired user's permissions.
 - **No browser-to-localhost API.** The IPP listener is loopback-only, attributes every job
   through the spooler, and takes no commands.
-- **Local isolation:** named pipes and spool directories are ACL'd per user SID. Scan helpers
+- **Local isolation:** each person's print inbox is ACL'd to their SID and the service's own
+  SID; the agent's spool is encrypted to the user with DPAPI. Scan helpers
   run in isolated processes with no network or credential.
 - **Cover sheets:** random tokens, hashed at rest and resolved only within the scanning tenant;
   never a grant of access.
@@ -691,7 +716,29 @@ Every phase is shipped complete; the order only reflects dependencies.
    check. The Windows-only code (the DSM loader and message pump, WIA, DPAPI, Credential
    Manager, the tray) is compile-checked and linted for x64 and x86 but has not run: that needs
    the phase-0 lab and the phase-5 Windows CI.
-4. **Virtual printer:** service, IPP server, attribution, pipe handoff, printer installation.
+4. **Virtual printer — complete.** `capture-ipp` (the IPP/2.0 codec, bounded in depth and
+   attribute count, and the printer's operations over a job handler); PWG raster decoding and
+   the multi-page PDF writer in `capture-imaging`; `trenova-capture-svc` (the loopback listener,
+   spooler attribution, raster conversion, the ACL'd per-user inbox, the Windows service host,
+   and `install`/`uninstall` and `install-printer`/`uninstall-printer`, which runs
+   `Add-Printer -IppURL` from the system PowerShell); and the agent's side, which takes jobs
+   from the inbox into its spool and sends each whole to `print-job`, where the server attaches
+   the armed destination. The service needs no running agent.
+
+   **Changed from the plan:** the hand-off is the per-user inbox directory, not a named pipe.
+   The directory was needed anyway for jobs printed while the agent is not running, and with
+   the agent polling it, a pipe would have been a second path to the same place: another
+   listener, another ACL and another protocol, for a two-second saving on a print.
+
+   Tested on Linux by 141 tests across the workspace, including the IPP operations and their
+   refusals, every raster layout and hostile raster streams, the attribution rules, the
+   hand-off contract, the listener end to end over HTTP (a raster job to a G4 PDF in the owner's
+   inbox; a replay refused; each browser-reachable request refused before its body), and the
+   agent end to end (a job in the inbox sent whole to the armed destination). A converted
+   job reads back in MuPDF as two letter pages, the bilevel one pixel-exact. The Windows-only
+   code (the service host, spooler and session queries, SID lookups, directory ACLs and the
+   install commands) is compile-checked and linted for x64 and x86. It has not run, and the
+   phase-0 spike on the IPP Class Driver still gates a release.
 5. **Distribution:**
    - MSI (WiX v4), signing, and the update manifest and flow;
    - the installer download on the admin page and `/capture/devices`, served from
