@@ -94,21 +94,39 @@ type DismissAccountingDriftRequest struct {
 	TenantInfo pagination.TenantInfo
 	ID         pulid.ID
 	Note       string
-	ByAgent    bool
-}
-
-type GetAccountingDriftFindingRequest struct {
-	TenantInfo pagination.TenantInfo
-	ID         pulid.ID
 }
 
 type AccountingDriftFixPreview struct {
-	Finding        *accountingsync.AccountingDriftFinding
-	Direction      accountingsync.DriftDirection
-	FixObject      accountingsync.DriftFixObject
-	Operation      accountingsync.SyncOperation
-	AmountMinor    int64
-	CurrencyCode   string
-	ToleranceMinor int64
-	Summary        string
+	Finding         *accountingsync.AccountingDriftFinding
+	Direction       accountingsync.DriftDirection
+	FixObject       accountingsync.DriftFixObject
+	Operation       accountingsync.SyncOperation
+	AmountMinor     int64
+	CurrencyCode    string
+	ToleranceMinor  int64
+	WithinTolerance bool
+	Summary         string
+}
+
+type AccountingDriftFixer interface {
+	PreviewResolve(
+		ctx context.Context,
+		req *ResolveAccountingDriftRequest,
+		actor *RequestActor,
+	) (*AccountingDriftFixPreview, error)
+	Resolve(
+		ctx context.Context,
+		req *ResolveAccountingDriftRequest,
+		actor *RequestActor,
+	) (*accountingsync.AccountingDriftFinding, error)
+	PreviewDismiss(
+		ctx context.Context,
+		req *DismissAccountingDriftRequest,
+		actor *RequestActor,
+	) (*AccountingDriftFixPreview, error)
+	Dismiss(
+		ctx context.Context,
+		req *DismissAccountingDriftRequest,
+		actor *RequestActor,
+	) (*accountingsync.AccountingDriftFinding, error)
 }

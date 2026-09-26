@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -27,6 +29,14 @@ type harness struct {
 	findings *fakeFindings
 	source   *fakeSource
 	events   *agenteventstest.Recorder
+	perms    *fakePermissions
+	invRepo  *fakeInvoiceRepo
+	invoices *fakeInvoices
+	payments *fakePayments
+	controls *fakeControls
+	audit    *fakeAudit
+	kicks    *fakeDispatcher
+	other    *accountingsync.AccountingConnection
 	tenant   pagination.TenantInfo
 	conn     *accountingsync.AccountingConnection
 	now      time.Time
@@ -64,6 +74,24 @@ func newHarness(t *testing.T) *harness {
 		now:    checkTime,
 	}
 	h.connSvc = &fakeConnService{connections: h.conns, reader: h.reader}
+	h.other = &accountingsync.AccountingConnection{
+		ID:             pulid.MustNew("acctc_"),
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		AutoSync:       true,
+	}
+	book := &bookEnqueuer{
+		records: h.records,
+		conns:   []*accountingsync.AccountingConnection{conn, h.other},
+		at:      checkTime.Unix(),
+	}
+	h.perms = &fakePermissions{denied: map[string]bool{}}
+	h.invRepo = &fakeInvoiceRepo{rows: map[pulid.ID]*invoice.Invoice{}}
+	h.invoices = &fakeInvoices{book: book}
+	h.payments = &fakePayments{book: book, rows: map[pulid.ID]*customerpayment.Payment{}}
+	h.controls = &fakeControls{tolerance: "5.00"}
+	h.audit = &fakeAudit{}
+	h.kicks = &fakeDispatcher{}
 	h.svc = New(Params{
 		Logger:            zap.NewNop(),
 		DB:                dbtest.NopConnection{},
@@ -72,6 +100,13 @@ func newHarness(t *testing.T) *harness {
 		Records:           h.records,
 		Findings:          h.findings,
 		Source:            h.source,
+		InvoiceRepo:       h.invRepo,
+		Controls:          h.controls,
+		Invoices:          h.invoices,
+		Payments:          h.payments,
+		Permissions:       h.perms,
+		AuditService:      h.audit,
+		Dispatcher:        h.kicks,
 		Publisher:         h.events,
 	})
 	h.svc.now = func() time.Time { return h.now }

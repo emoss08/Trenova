@@ -37,8 +37,15 @@ type Params struct {
 	Records           repositories.AccountingSyncRecordRepository
 	Findings          repositories.AccountingDriftFindingRepository
 	Source            repositories.AccountingDriftSource
-	Publisher         services.AgentEventPublisher `optional:"true"`
-	Realtime          services.RealtimeService     `optional:"true"`
+	InvoiceRepo       repositories.InvoiceRepository
+	Controls          repositories.AccountingControlRepository
+	Invoices          services.InvoiceService
+	Payments          services.CustomerPaymentService
+	Permissions       services.PermissionEngine
+	AuditService      services.AuditService
+	Dispatcher        services.AccountingSyncDispatcher `optional:"true"`
+	Publisher         services.AgentEventPublisher      `optional:"true"`
+	Realtime          services.RealtimeService          `optional:"true"`
 }
 
 type Service struct {
@@ -49,6 +56,13 @@ type Service struct {
 	records     repositories.AccountingSyncRecordRepository
 	findings    repositories.AccountingDriftFindingRepository
 	source      repositories.AccountingDriftSource
+	invoiceRepo repositories.InvoiceRepository
+	controls    repositories.AccountingControlRepository
+	invoices    services.InvoiceService
+	payments    services.CustomerPaymentService
+	permissions services.PermissionEngine
+	audit       services.AuditService
+	dispatcher  services.AccountingSyncDispatcher
 	publisher   services.AgentEventPublisher
 	realtime    services.RealtimeService
 	now         func() time.Time
@@ -57,6 +71,7 @@ type Service struct {
 var (
 	_ services.AccountingDriftReconciler = (*Service)(nil)
 	_ services.AccountingDriftRechecker  = (*Service)(nil)
+	_ services.AccountingDriftFixer      = (*Service)(nil)
 )
 
 //nolint:gocritic // dependency injection
@@ -69,6 +84,13 @@ func New(p Params) *Service {
 		records:     p.Records,
 		findings:    p.Findings,
 		source:      p.Source,
+		invoiceRepo: p.InvoiceRepo,
+		controls:    p.Controls,
+		invoices:    p.Invoices,
+		payments:    p.Payments,
+		permissions: p.Permissions,
+		audit:       p.AuditService,
+		dispatcher:  p.Dispatcher,
 		publisher:   p.Publisher,
 		realtime:    p.Realtime,
 		now:         time.Now,
