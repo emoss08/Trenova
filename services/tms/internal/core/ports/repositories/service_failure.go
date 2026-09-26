@@ -45,6 +45,11 @@ type ServiceFailuresByShipmentRequest struct {
 	ShipmentID pulid.ID              `json:"shipmentId"`
 }
 
+type ServiceFailuresByShipmentIDsRequest struct {
+	TenantInfo  pagination.TenantInfo `json:"-"`
+	ShipmentIDs []pulid.ID            `json:"shipmentIds"`
+}
+
 type CountUnresolvedServiceFailuresRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
@@ -188,6 +193,12 @@ type ServiceFailureRepository interface {
 	ListUnresolvedByShipment(
 		ctx context.Context,
 		req *ServiceFailuresByShipmentRequest,
+	) ([]*servicefailure.ServiceFailure, error)
+	// ListUnresolvedByShipmentIDs is ListUnresolvedByShipment for many
+	// shipments in one read.
+	ListUnresolvedByShipmentIDs(
+		ctx context.Context,
+		req *ServiceFailuresByShipmentIDsRequest,
 	) ([]*servicefailure.ServiceFailure, error)
 	CountUnresolvedByShipment(
 		ctx context.Context,

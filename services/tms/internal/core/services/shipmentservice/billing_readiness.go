@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -367,28 +368,17 @@ func (s *service) evaluateBillingReadinessCached(
 	if err != nil {
 		return nil, err
 	}
-	payersByID := make(map[pulid.ID]*customer.Customer, len(payers))
-	for _, payer := range payers {
-		if payer != nil {
-			payersByID[payer.ID] = payer
-		}
+
+	sources := &readinessSources{
+		payers:    payersByID(payers),
+		documents: make(map[string][]*document.Document, 1),
+		failures:  make(map[pulid.ID][]*servicefailure.ServiceFailure, 1),
 	}
-	customerEntity, ok := payersByID[resolution.DefaultPayerID]
-	if !ok {
-		customerEntity, err = s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
-			ID:         resolution.DefaultPayerID,
-			TenantInfo: tenantInfo,
-			CustomerFilterOptions: repositories.CustomerFilterOptions{
-				IncludeBillingProfile: true,
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-		payersByID[customerEntity.ID] = customerEntity
+	if err = s.completePayers(ctx, tenantInfo, sources.payers, resolution.DefaultPayerID); err != nil {
+		return nil, err
 	}
 
-	billingControl, err := s.billingControlFor(ctx, entity.OrganizationID, cache)
+	sources.control, err = s.billingControlFor(ctx, entity.OrganizationID, cache)
 	if err != nil {
 		return nil, err
 	}
@@ -404,20 +394,85 @@ func (s *service) evaluateBillingReadinessCached(
 	if err != nil {
 		return nil, err
 	}
+	sources.documents[entity.ID.String()] = docs
 
-	readiness := buildShipmentBillingReadiness(
-		entity,
-		customerEntity.BillingProfile,
-		billingControl,
-		docs,
-	)
-	applyPayerReadiness(readiness, entity, resolution, payersByID, docs)
-	if err = s.applyServiceFailureBillingContext(ctx, entity, readiness); err != nil {
+	if failures, failureErr := s.unresolvedServiceFailures(ctx, entity); failureErr != nil {
 		s.l.Warn("failed to apply service failure billing context",
 			zap.String("shipmentId", entity.ID.String()),
-			zap.Error(err),
+			zap.Error(failureErr),
 		)
+	} else {
+		sources.failures[entity.ID] = failures
 	}
+
+	return s.readinessFrom(entity, resolution, sources), nil
+}
+
+// readinessSources is what a readiness evaluation reads beyond the shipment
+// itself. One shipment reads them for itself; a plan over many reads each
+// once for all of them, and both decide from the same function.
+type readinessSources struct {
+	control   *tenant.BillingControl
+	payers    map[pulid.ID]*customer.Customer
+	documents map[string][]*document.Document
+	failures  map[pulid.ID][]*servicefailure.ServiceFailure
+}
+
+func payersByID(payers []*customer.Customer) map[pulid.ID]*customer.Customer {
+	byID := make(map[pulid.ID]*customer.Customer, len(payers))
+	for _, payer := range payers {
+		if payer != nil {
+			byID[payer.ID] = payer
+		}
+	}
+
+	return byID
+}
+
+// completePayers reads a default payer the batched read did not return, which
+// readiness cannot be decided without.
+func (s *service) completePayers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	payers map[pulid.ID]*customer.Customer,
+	defaultPayerIDs ...pulid.ID,
+) error {
+	for _, payerID := range defaultPayerIDs {
+		if _, ok := payers[payerID]; ok {
+			continue
+		}
+		payer, err := s.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
+			ID:         payerID,
+			TenantInfo: tenantInfo,
+			CustomerFilterOptions: repositories.CustomerFilterOptions{
+				IncludeBillingProfile: true,
+			},
+		})
+		if err != nil {
+			return err
+		}
+		payers[payer.ID] = payer
+	}
+
+	return nil
+}
+
+// readinessFrom decides a shipment's billing readiness from what was read for
+// it. It reads nothing itself.
+func (s *service) readinessFrom(
+	entity *shipment.Shipment,
+	resolution *shipment.ShareResolution,
+	sources *readinessSources,
+) *services.ShipmentBillingReadiness {
+	var profile *customer.CustomerBillingProfile
+	if payer := sources.payers[resolution.DefaultPayerID]; payer != nil {
+		profile = payer.BillingProfile
+	}
+	docs := sources.documents[entity.ID.String()]
+
+	readiness := buildShipmentBillingReadiness(entity, profile, sources.control, docs)
+	applyPayerReadiness(readiness, entity, resolution, sources.payers, docs)
+	applyUnresolvedServiceFailures(readiness, sources.failures[entity.ID])
 	s.l.Debug(
 		"evaluated shipment billing readiness",
 		zap.String("shipmentId", entity.ID.String()),
@@ -435,19 +490,19 @@ func (s *service) evaluateBillingReadinessCached(
 		zap.Int("missingRequirementCount", len(readiness.MissingRequirements)),
 		zap.Int("validationFailureCount", len(readiness.ValidationFailures)),
 	)
-	return readiness, nil
+
+	return readiness
 }
 
-func (s *service) applyServiceFailureBillingContext(
+func (s *service) unresolvedServiceFailures(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	readiness *services.ShipmentBillingReadiness,
-) error {
-	if s.serviceFailureRepo == nil || entity == nil || readiness == nil {
-		return nil
+) ([]*servicefailure.ServiceFailure, error) {
+	if s.serviceFailureRepo == nil || entity == nil {
+		return nil, nil
 	}
 
-	unresolved, err := s.serviceFailureRepo.ListUnresolvedByShipment(
+	return s.serviceFailureRepo.ListUnresolvedByShipment(
 		ctx,
 		&repositories.ServiceFailuresByShipmentRequest{
 			TenantInfo: pagination.TenantInfo{
@@ -457,11 +512,14 @@ func (s *service) applyServiceFailureBillingContext(
 			ShipmentID: entity.ID,
 		},
 	)
-	if err != nil {
-		return err
-	}
-	if len(unresolved) == 0 {
-		return nil
+}
+
+func applyUnresolvedServiceFailures(
+	readiness *services.ShipmentBillingReadiness,
+	unresolved []*servicefailure.ServiceFailure,
+) {
+	if readiness == nil || len(unresolved) == 0 {
+		return
 	}
 
 	ids := make([]string, 0, len(unresolved))
@@ -471,7 +529,10 @@ func (s *service) applyServiceFailureBillingContext(
 		}
 		ids = append(ids, failure.ID.String())
 	}
-	readiness.ServiceFailureContext.HasUnresolved = len(ids) > 0
+	if len(ids) == 0 {
+		return
+	}
+	readiness.ServiceFailureContext.HasUnresolved = true
 	readiness.ServiceFailureContext.UnresolvedCount = len(ids)
 	readiness.ServiceFailureContext.ServiceFailureIDs = ids
 	readiness.Warnings = append(readiness.Warnings, services.ShipmentBillingWarning{
@@ -482,7 +543,6 @@ func (s *service) applyServiceFailureBillingContext(
 			"unresolvedCount":   len(ids),
 		},
 	})
-	return nil
 }
 
 // resolvePayerShares divides the shipment among its payers, reloading it with
