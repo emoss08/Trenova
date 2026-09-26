@@ -43,7 +43,7 @@ func (t *postInvoiceTool) Preview(
 	before := post.Before
 	label := invoiceLabel(before)
 	total := money.FormatMinor(before.TotalAmountMinor, before.CurrencyCode)
-	if post.Refusal != nil {
+	if post.Refused() {
 		return warnWouldFail(toolpreview.Build(fmt.Sprintf(
 			"Would post %s to %s for %s.", label, before.BillToName, total,
 		)), post.Refusal), nil
@@ -107,8 +107,8 @@ func postedInvoiceChange(post *invoiceservice.PostPreview) (*agent.RecordChange,
 
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		post.Before.CurrencyCode,
-		agent.MoneyLine{Label: "Freight", After: knownAmount(post.Before.SubtotalAmount)},
-		agent.MoneyLine{Label: "Accessorials", After: knownAmount(post.Before.OtherAmount)},
+		agent.MoneyLine{Label: moneyLineFreight, After: knownAmount(post.Before.SubtotalAmount)},
+		agent.MoneyLine{Label: moneyLineAccessorials, After: knownAmount(post.Before.OtherAmount)},
 	), toolpreview.SensitiveAs("totalAmount", "subtotalAmount", "otherAmount"))
 
 	return change, nil

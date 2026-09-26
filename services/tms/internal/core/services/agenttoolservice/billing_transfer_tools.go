@@ -87,9 +87,11 @@ func (t *transferToBillingTool) ParamSchema() map[string]any {
 					toolschema.KeyType: toolschema.TypeArray,
 					toolschema.KeyDescription: "The shipments to transfer, by id from " +
 						"list_billing_transfer_candidates. Never guess one.",
-					"minItems":          1,
-					"maxItems":          serviceports.MaxBillingTransferCandidateIDs,
-					toolschema.KeyItems: map[string]any{toolschema.KeyType: toolschema.TypeString},
+					toolschema.KeyMinItems: 1,
+					toolschema.KeyMaxItems: serviceports.MaxBillingTransferCandidateIDs,
+					toolschema.KeyItems: map[string]any{
+						toolschema.KeyType: toolschema.TypeString,
+					},
 				}),
 			paramBillType: map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,

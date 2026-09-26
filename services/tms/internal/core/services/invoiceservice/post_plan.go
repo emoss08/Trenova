@@ -2,6 +2,7 @@ package invoiceservice
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -84,6 +85,11 @@ type PostPreview struct {
 	EDI *servicesports.InvoiceEDISendPlan
 }
 
+// Refused reports whether Post would refuse the invoice as it stands.
+func (p *PostPreview) Refused() bool {
+	return p.Refusal != nil
+}
+
 // LegChange is one shipment the invoice bills, before and after posting.
 type LegChange struct {
 	Before *shipment.Shipment
@@ -145,10 +151,13 @@ func (s *Service) PreviewPost(
 	}
 	preview.AlreadyPosted = alreadyPosted
 
-	queueBefore, err := s.billingQueueRepo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
-		ItemID:     entity.BillingQueueItemID,
-		TenantInfo: req.TenantInfo,
-	})
+	queueBefore, err := s.billingQueueRepo.GetByID(
+		ctx,
+		&repositories.GetBillingQueueItemByIDRequest{
+			ItemID:     entity.BillingQueueItemID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
 	if err != nil && !errortypes.IsNotFoundError(err) {
 		return nil, err
 	}
@@ -164,14 +173,17 @@ func (s *Service) PreviewPost(
 	if preview.Legs, err = s.planInvoicedLegs(ctx, entity, now, req.TenantInfo); err != nil {
 		return nil, err
 	}
-	if preview.Journal, err = s.previewJournal(ctx, entity, actor); err != nil {
-		if isRefusal(err) {
-			preview.Refusal = err
+	journal, err := s.previewJournal(ctx, entity, actor)
+	switch {
+	case errors.Is(err, errNoLedgerEntry):
+	case isRefusal(err):
+		preview.Refusal = err
 
-			return preview, nil
-		}
-
+		return preview, nil
+	case err != nil:
 		return nil, err
+	default:
+		preview.Journal = journal
 	}
 	if preview.AccountingSync, err = s.accountingSyncDestinations(ctx, entity); err != nil {
 		return nil, err
@@ -187,7 +199,7 @@ func (s *Service) previewJournal(
 	actor *servicesports.RequestActor,
 ) (*JournalPreview, error) {
 	plan, err := s.planInvoiceJournal(ctx, entity, actor)
-	if err != nil || plan == nil {
+	if err != nil {
 		return nil, err
 	}
 

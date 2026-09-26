@@ -374,7 +374,8 @@ func (s *service) evaluateBillingReadinessCached(
 		documents: make(map[string][]*document.Document, 1),
 		failures:  make(map[pulid.ID][]*servicefailure.ServiceFailure, 1),
 	}
-	if err = s.completePayers(ctx, tenantInfo, sources.payers, resolution.DefaultPayerID); err != nil {
+	err = s.completePayers(ctx, tenantInfo, sources.payers, resolution.DefaultPayerID)
+	if err != nil {
 		return nil, err
 	}
 

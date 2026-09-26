@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
 type transitionToInReviewTool struct {
@@ -31,8 +32,9 @@ func (t *transitionToInReviewTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"billingQueueItemId": map[string]any{
 				"type": "string",
-				"description": "The billing queue item to move to InReview: this run's subject, " +
-					"the record on the page, or one list_billing_queue_items found. Never guess one.",
+				toolschema.KeyDescription: "The billing queue item to move to InReview: this " +
+					"run's subject, the record on the page, or one list_billing_queue_items " +
+					"found. Never guess one.",
 			},
 		},
 		"required":             []string{"billingQueueItemId"},

@@ -18,6 +18,8 @@ const (
 	paramDeliveredTo   = "deliveredTo"
 	paramMarkReady     = "markCompletedReadyToInvoice"
 	maxTransferIssues  = 3
+	// fieldActualDeliveryDate is the shipment field a delivery window filters.
+	fieldActualDeliveryDate = "actualDeliveryDate"
 )
 
 var billingTransferCandidateStatuses = []string{
@@ -146,13 +148,13 @@ func (t *listBillingTransferCandidatesTool) Query(
 	if from > 0 {
 		criteria.Field("delivered from", optionalString(params.Params, paramDeliveredFrom))
 		filters = append(filters, domaintypes.FieldFilter{
-			Field: "actualDeliveryDate", Operator: dbtype.OpGreaterThanOrEqual, Value: from,
+			Field: fieldActualDeliveryDate, Operator: dbtype.OpGreaterThanOrEqual, Value: from,
 		})
 	}
 	if to > 0 {
 		criteria.Field("delivered to", optionalString(params.Params, paramDeliveredTo))
 		filters = append(filters, domaintypes.FieldFilter{
-			Field: "actualDeliveryDate", Operator: dbtype.OpLessThanOrEqual,
+			Field: fieldActualDeliveryDate, Operator: dbtype.OpLessThanOrEqual,
 			Value: endOfDay(clk, to),
 		})
 	}

@@ -3,6 +3,7 @@ package invoiceservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
@@ -36,8 +37,13 @@ type invoiceJournalPlan struct {
 	lines            []repositories.JournalPostingLine
 }
 
-// planInvoiceJournal is the ledger output posting the invoice creates, or nil
-// when the organization's accounting control creates none for it.
+// errNoLedgerEntry is an invoice the organization's accounting control books
+// no ledger entry for.
+var errNoLedgerEntry = errors.New("no ledger entry for this invoice")
+
+// planInvoiceJournal is the ledger output posting the invoice creates, or
+// errNoLedgerEntry when the organization's accounting control creates none
+// for it.
 func (s *Service) planInvoiceJournal(
 	ctx context.Context,
 	entity *invoice.Invoice,
@@ -46,19 +52,19 @@ func (s *Service) planInvoiceJournal(
 	if s.accountingRepo == nil || s.journalRepo == nil || s.sequenceGenerator == nil ||
 		entity == nil ||
 		actor == nil {
-		return nil, nil
+		return nil, errNoLedgerEntry
 	}
 
 	accountingControl, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, nil
+			return nil, errNoLedgerEntry
 		}
 		return nil, err
 	}
 	event := invoicePostingSourceEvent(entity.BillType)
 	if !s.accountingPolicyService().CanCreateInvoiceLedgerEntry(accountingControl, event) {
-		return nil, nil
+		return nil, errNoLedgerEntry
 	}
 	if !invoicePostingHasRequiredAccounts(accountingControl) {
 		return nil, errortypes.NewValidationError(
@@ -78,7 +84,7 @@ func (s *Service) planInvoiceJournal(
 		amount = -amount
 	}
 	if amount == 0 {
-		return nil, nil
+		return nil, errNoLedgerEntry
 	}
 
 	plan := &invoiceJournalPlan{
@@ -140,7 +146,10 @@ func (s *Service) createInvoiceJournalPosting(
 	actor *servicesports.RequestActor,
 ) error {
 	plan, err := s.planInvoiceJournal(ctx, entity, actor)
-	if err != nil || plan == nil {
+	if errors.Is(err, errNoLedgerEntry) {
+		return nil
+	}
+	if err != nil {
 		return err
 	}
 

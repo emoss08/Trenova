@@ -24,6 +24,7 @@ const (
 	fieldAllocatedTotal     = "allocatedTotalAmount"
 	maxBillingQueueLines    = 50
 	secondsPerDayInQueue    = 86400
+	fieldNumber             = "number"
 )
 
 var (
@@ -83,7 +84,10 @@ func newListBillingQueueItemsTool(
 	return buildBillingQueueList(repo, newFieldAccess(permissions))
 }
 
-func buildBillingQueueList(lister billingQueueLister, access fieldAccess) serviceports.AgentQueryTool {
+func buildBillingQueueList(
+	lister billingQueueLister,
+	access fieldAccess,
+) serviceports.AgentQueryTool {
 	return newListTool(listSpec{
 		name:         "list_billing_queue_items",
 		entityPlural: "billing queue items",
@@ -95,7 +99,7 @@ func buildBillingQueueList(lister billingQueueLister, access fieldAccess) servic
 		config:   querybuilder.GetFieldConfiguration((*billingqueue.BillingQueueItem)(nil)),
 		fields: []listField{
 			{
-				Name:   "status",
+				Name:   paramStatus,
 				Kind:   filterEnum,
 				Values: billingQueueStatuses,
 				Note: "ReadyForReview and InReview are waiting on a biller; OnHold, Exception " +
@@ -109,10 +113,10 @@ func buildBillingQueueList(lister billingQueueLister, access fieldAccess) servic
 				Note: "a user id; isnull for unassigned",
 			},
 			{Name: "billToCustomerId", Kind: filterText, Note: "the payer, from list_customers"},
-			{Name: "number", Kind: filterText, Sortable: true},
+			{Name: fieldNumber, Kind: filterText, Sortable: true},
 			{Name: "shipment.proNumber", Kind: filterText},
 			{
-				Name:     "createdAt",
+				Name:     agentRunFieldCreatedAt,
 				Kind:     filterDate,
 				Sortable: true,
 				Note:     "when it was queued; age is how long ago",
@@ -151,7 +155,7 @@ func buildBillingQueueList(lister billingQueueLister, access fieldAccess) servic
 // which the queue leaves out unless asked.
 func asksForPosted(filters []domaintypes.FieldFilter) bool {
 	for _, filter := range filters {
-		if filter.Field != "status" {
+		if filter.Field != paramStatus {
 			continue
 		}
 		switch value := filter.Value.(type) {
@@ -395,7 +399,7 @@ func (t *getBillingQueueItemTool) Query(
 
 // approvable says whether a person could approve the item now, and if not
 // what stands in the way, by the rules approval enforces.
-func approvable(item *billingqueue.BillingQueueItem) (bool, string) {
+func approvable(item *billingqueue.BillingQueueItem) (canApprove bool, blockedBy string) {
 	switch {
 	case !billingqueue.IsAllowedTransition(item.Status, billingqueue.StatusApproved) ||
 		item.Status == billingqueue.StatusApproved:

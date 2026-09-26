@@ -45,30 +45,33 @@ func newApproveBillingQueueItemTool(
 ) serviceports.AgentTool {
 	return &approveBillingQueueItemTool{
 		invoices: invoices,
-		billingQueueDecisionTool: &billingQueueDecisionTool{billing: billing, decision: queueDecision{
-			name: "approve_billing_queue_item",
-			description: "Propose approving a billing queue item you have reviewed and found " +
-				"clean: charges that match the agreement, the documents the customer requires, " +
-				"no detention charge waiting on approval. Approval creates the item's draft " +
-				"invoice, or puts it on a statement customer's statement, and the organization's " +
-				"auto-post setting may post it; a person always decides. Say in reviewNotes what " +
-				"you checked. Once approved, propose post_invoice for the draft.",
-			status:     billingqueue.StatusApproved,
-			personOnly: true,
-			egress:     agent.EgressMoney,
-			defaultTo:  agent.TierPropose,
-			maxTier:    agent.TierPropose,
-			rationale: "Approving creates the invoice a customer is billed on, so only a person " +
-				"approves; the agent proposes it with what it checked.",
-			properties: map[string]any{
-				paramReviewNotes: map[string]any{
-					toolschema.KeyType:        toolschema.TypeString,
-					"maxLength":               maxDecisionNoteChars,
-					toolschema.KeyDescription: "What you checked, kept on the item as its review notes.",
+		billingQueueDecisionTool: &billingQueueDecisionTool{
+			billing: billing,
+			decision: queueDecision{
+				name: "approve_billing_queue_item",
+				description: "Propose approving a billing queue item you have reviewed and found " +
+					"clean: charges that match the agreement, the documents the customer requires, " +
+					"no detention charge waiting on approval. Approval creates the item's draft " +
+					"invoice, or puts it on a statement customer's statement, and the organization's " +
+					"auto-post setting may post it; a person always decides. Say in reviewNotes what " +
+					"you checked. Once approved, propose post_invoice for the draft.",
+				status:     billingqueue.StatusApproved,
+				personOnly: true,
+				egress:     agent.EgressMoney,
+				defaultTo:  agent.TierPropose,
+				maxTier:    agent.TierPropose,
+				rationale: "Approving creates the invoice a customer is billed on, so only a person " +
+					"approves; the agent proposes it with what it checked.",
+				properties: map[string]any{
+					paramReviewNotes: map[string]any{
+						toolschema.KeyType:        toolschema.TypeString,
+						toolschema.KeyMaxLength:   maxDecisionNoteChars,
+						toolschema.KeyDescription: "What you checked, kept on the item as its review notes.",
+					},
 				},
+				fill: fillApproval,
 			},
-			fill: fillApproval,
-		}},
+		},
 	}
 }
 
@@ -104,7 +107,7 @@ func (t *approveBillingQueueItemTool) Preview(
 	}
 
 	summary := fmt.Sprintf("Would approve billing queue item %s (now %s)", item.Number, item.Status)
-	if plan.refused != nil {
+	if !plan.accepted() {
 		return plan.preview(summary + "."), nil
 	}
 
@@ -169,8 +172,8 @@ func draftInvoiceChange(draft *invoice.Invoice) (*agent.RecordChange, error) {
 
 	toolpreview.AttachMoney(change, toolpreview.MoneyBlock(
 		draft.CurrencyCode,
-		agent.MoneyLine{Label: "Freight", After: knownAmount(draft.SubtotalAmount)},
-		agent.MoneyLine{Label: "Accessorials", After: knownAmount(draft.OtherAmount)},
+		agent.MoneyLine{Label: moneyLineFreight, After: knownAmount(draft.SubtotalAmount)},
+		agent.MoneyLine{Label: moneyLineAccessorials, After: knownAmount(draft.OtherAmount)},
 	), toolpreview.SensitiveAs("totalAmount", "subtotalAmount", "otherAmount"))
 
 	return change, nil
@@ -197,10 +200,10 @@ func (t *approveBillingQueueItemTool) ExecuteWithResult(
 	}
 
 	return &agent.ToolExecutionResult{
-		Action: "created",
+		Action: resultCreated,
 		Kind:   invoiceRecordEntity,
 		Name:   made.Invoice.Number,
-		IDs:    map[string]string{"invoiceId": made.Invoice.ID.String()},
+		IDs:    map[string]string{paramInvoiceID: made.Invoice.ID.String()},
 		Record: &agent.RecordRef{EntityType: invoiceRecordEntity, ID: made.Invoice.ID.String()},
 	}, nil
 }

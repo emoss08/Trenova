@@ -603,7 +603,7 @@ func (t Template) StarterTools() []string {
 			"send_billing_item_back_to_ops",
 			"approve_billing_queue_item",
 			"cancel_billing_queue_item",
-			"list_invoices",
+			"list_invoices", //nolint:goconst // a template names each tool by its wire name
 			"get_invoice",
 			"post_invoice",
 			"send_invoice",

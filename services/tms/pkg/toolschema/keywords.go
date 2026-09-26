@@ -10,6 +10,9 @@ const (
 	KeyMaximum              = "maximum"
 	KeyItems                = "items"
 	KeyEnum                 = "enum"
+	KeyMaxLength            = "maxLength"
+	KeyMinItems             = "minItems"
+	KeyMaxItems             = "maxItems"
 
 	TypeObject  = "object"
 	TypeString  = "string"

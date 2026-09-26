@@ -25,6 +25,12 @@ const (
 	paramCancelReason        = "cancelReason"
 	paramBillerID            = "billerId"
 	maxCancelReasonChars     = 100
+	fieldCanceledByID        = "canceledById"
+	fieldReviewCompletedAt   = "reviewCompletedAt"
+	fieldReviewStartedAt     = "reviewStartedAt"
+	moneyLineFreight         = "Freight"
+	moneyLineAccessorials    = "Accessorials"
+	resultCreated            = "created"
 	maxDecisionNoteChars     = 2000
 )
 
@@ -103,9 +109,11 @@ func (t *billingQueueDecisionTool) ParamSchema() map[string]any {
 	}
 
 	return map[string]any{
-		toolschema.KeyType:                 toolschema.TypeObject,
-		toolschema.KeyProperties:           properties,
-		toolschema.KeyRequired:             append([]string{paramBillingQueueItemID}, t.decision.required...),
+		toolschema.KeyType:       toolschema.TypeObject,
+		toolschema.KeyProperties: properties,
+		toolschema.KeyRequired: append(
+			[]string{paramBillingQueueItemID},
+			t.decision.required...),
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -199,7 +207,7 @@ func (t *billingQueueDecisionTool) requiredFields(item *billingqueue.BillingQueu
 	for _, entry := range multiErr.Errors {
 		// The approver who cancels is who the item records; a proposal is
 		// checked before anyone has.
-		if t.decision.personOnly && entry.Field == "canceledById" {
+		if t.decision.personOnly && entry.Field == fieldCanceledByID {
 			continue
 		}
 		kept.Add(entry.Field, entry.Code, entry.Message, entry.Args...)
@@ -310,7 +318,7 @@ func reasonCodeProperty(description string) map[string]any {
 func notesProperty(description string) map[string]any {
 	return map[string]any{
 		toolschema.KeyType:        toolschema.TypeString,
-		"maxLength":               maxDecisionNoteChars,
+		toolschema.KeyMaxLength:   maxDecisionNoteChars,
 		toolschema.KeyDescription: description,
 	}
 }
@@ -460,7 +468,7 @@ func newCancelBillingQueueItemTool(billing billingQueueDecider) serviceports.Age
 		properties: map[string]any{
 			paramCancelReason: map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,
-				"maxLength":               maxCancelReasonChars,
+				toolschema.KeyMaxLength:   maxCancelReasonChars,
 				toolschema.KeyDescription: "Why it must not bill, in a short phrase.",
 			},
 		},

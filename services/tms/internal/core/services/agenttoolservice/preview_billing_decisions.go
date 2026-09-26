@@ -16,18 +16,19 @@ import (
 // decisionFields are the item's values each decision sets, and the ones among
 // them that record when rather than what.
 var (
+	//nolint:exhaustive // the statuses a decision tool moves an item to
 	decisionFields = map[billingqueue.Status][]string{
 		billingqueue.StatusOnHold:        {fieldStatus, "reviewNotes"},
 		billingqueue.StatusException:     {fieldStatus, "exceptionReasonCode", "exceptionNotes"},
 		billingqueue.StatusSentBackToOps: {fieldStatus, "exceptionReasonCode", "exceptionNotes"},
-		billingqueue.StatusApproved:      {fieldStatus, "reviewNotes", "reviewCompletedAt"},
+		billingqueue.StatusApproved:      {fieldStatus, "reviewNotes", fieldReviewCompletedAt},
 		billingqueue.StatusCanceled: {
-			fieldStatus, "cancelReason", "canceledById", "canceledAt",
+			fieldStatus, paramCancelReason, fieldCanceledByID, "canceledAt",
 		},
 	}
-	decisionVolatile = []string{"reviewCompletedAt", "canceledAt", "reviewStartedAt"}
+	decisionVolatile = []string{fieldReviewCompletedAt, "canceledAt", fieldReviewStartedAt}
 	decisionRefs     = map[string]permission.Resource{
-		"canceledById":     permission.ResourceUser,
+		fieldCanceledByID:  permission.ResourceUser,
 		"assignedBillerId": permission.ResourceUser,
 	}
 )
@@ -58,13 +59,16 @@ func (t *billingQueueDecisionTool) planned(
 	}
 
 	now := timeutils.NowUnix()
-	plan, err := planUpdate(queueRecord(item), item, func(after *billingqueue.BillingQueueItem) error {
-		if planErr := t.plan(after, req, params.Actor, now); planErr != nil {
-			return planErr
-		}
+	plan, err := planUpdate(
+		queueRecord(item),
+		item,
+		func(after *billingqueue.BillingQueueItem) error {
+			if planErr := t.plan(after, req, params.Actor, now); planErr != nil {
+				return planErr
+			}
 
-		return detentionHold(after, req.NewStatus)
-	},
+			return detentionHold(after, req.NewStatus)
+		},
 		toolpreview.Only(decisionFields[t.decision.status]...),
 		toolpreview.Volatile(decisionVolatile...),
 		toolpreview.WithRefs(decisionRefs),
@@ -91,7 +95,7 @@ func (t *billingQueueDecisionTool) Preview(
 		item.Number,
 		item.Status,
 	)
-	if t.decision.status != billingqueue.StatusSentBackToOps || plan.refused != nil {
+	if t.decision.status != billingqueue.StatusSentBackToOps || !plan.accepted() {
 		return plan.preview(summary), nil
 	}
 
@@ -116,7 +120,9 @@ func (t *billingQueueDecisionTool) Preview(
 func (t *billingQueueDecisionTool) reasonOf(
 	params *serviceports.ToolExecuteParams,
 ) *billingqueue.ExceptionReasonCode {
-	code := billingqueue.ExceptionReasonCode(optionalString(params.Params, paramExceptionReasonCode))
+	code := billingqueue.ExceptionReasonCode(
+		optionalString(params.Params, paramExceptionReasonCode),
+	)
 
 	return &code
 }
@@ -161,10 +167,13 @@ func (t *assignBillerTool) Preview(
 	}
 
 	now := timeutils.NowUnix()
-	plan, err := planUpdate(queueRecord(item), item, func(after *billingqueue.BillingQueueItem) error {
-		return billingqueueservice.PlanAssignBiller(after, req.BillerID, now)
-	},
-		toolpreview.Only("assignedBillerId", fieldStatus, "reviewStartedAt"),
+	plan, err := planUpdate(
+		queueRecord(item),
+		item,
+		func(after *billingqueue.BillingQueueItem) error {
+			return billingqueueservice.PlanAssignBiller(after, req.BillerID, now)
+		},
+		toolpreview.Only("assignedBillerId", fieldStatus, fieldReviewStartedAt),
 		toolpreview.Volatile(decisionVolatile...),
 		toolpreview.WithRefs(decisionRefs),
 	)

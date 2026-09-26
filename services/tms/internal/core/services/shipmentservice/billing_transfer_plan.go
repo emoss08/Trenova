@@ -22,7 +22,7 @@ import (
 func transferGate(
 	entity *shipment.Shipment,
 	markCompleted bool,
-) (bool, services.BillingTransferFailureCode, error) {
+) (markReady bool, code services.BillingTransferFailureCode, err error) {
 	if !entity.BillingTransferStatus.IsOutsideBillingQueue() {
 		return false, services.BillingTransferFailureAlreadyTransferred,
 			errortypes.NewValidationError(
@@ -32,7 +32,7 @@ func transferGate(
 			)
 	}
 
-	markReady := markCompleted && entity.Status == shipment.StatusCompleted
+	markReady = markCompleted && entity.Status == shipment.StatusCompleted
 	if entity.Status != shipment.StatusReadyToInvoice && !markReady {
 		return false, services.BillingTransferFailureInvalidStatus, errortypes.NewValidationError(
 			"shipmentId",
@@ -251,11 +251,14 @@ func (s *service) readinessSourcesFor(
 		return nil, err
 	}
 
-	docs, err := s.documentRepo.GetByResourceIDs(ctx, &repositories.GetDocumentsByResourceIDsRequest{
-		TenantInfo:   tenantInfo,
-		ResourceType: "shipment",
-		ResourceIDs:  resourceIDs,
-	})
+	docs, err := s.documentRepo.GetByResourceIDs(
+		ctx,
+		&repositories.GetDocumentsByResourceIDsRequest{
+			TenantInfo:   tenantInfo,
+			ResourceType: "shipment",
+			ResourceIDs:  resourceIDs,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +299,10 @@ func (s *service) readServiceFailures(
 	}
 	for _, failure := range failures {
 		if failure != nil {
-			sources.failures[failure.ShipmentID] = append(sources.failures[failure.ShipmentID], failure)
+			sources.failures[failure.ShipmentID] = append(
+				sources.failures[failure.ShipmentID],
+				failure,
+			)
 		}
 	}
 }
