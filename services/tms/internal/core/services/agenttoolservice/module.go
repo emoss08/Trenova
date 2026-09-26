@@ -31,6 +31,10 @@ var Module = fx.Module("agent-tool-service", fx.Provide(append(grouped(), NewReg
 // The module provides them into the group, and the description contract test
 // builds each one to read what a model is shown.
 func ToolProviders() []any {
+	return append(coreToolProviders(), settlementToolProviders()...)
+}
+
+func coreToolProviders() []any {
 	return []any{
 		newTransitionToInReviewTool,
 		provideTransferToBillingTool,

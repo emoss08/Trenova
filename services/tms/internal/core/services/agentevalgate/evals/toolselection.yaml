@@ -250,6 +250,42 @@ cases:
     expect: [get_carrier_settlement]
   - request: when was this carrier settlement paid
     expect: [get_carrier_settlement, list_carrier_settlements]
+  - request: approve Ana's driver settlement
+    expect: [approve_driver_settlement]
+  - request: post the approved carrier settlement to the ledger
+    expect: [post_carrier_settlement]
+  - request: record that the driver settlement was paid by check
+    expect: [record_driver_settlement_payment]
+  - request: void the carrier settlement
+    expect: [void_carrier_settlement]
+  - request: add a fuel advance adjustment to the driver settlement
+    expect: [add_driver_settlement_adjustment]
+  - request: generate this week's driver settlement batch
+    expect: [generate_driver_settlement_batch]
+  - request: hold the driver's pay for load 4471 until the paperwork arrives
+    expect: [hold_driver_pay_event]
+  - request: release the held pay event
+    expect: [release_driver_pay_event]
+  - request: pay the driver now, off cycle
+    expect: [pay_driver_now]
+  - request: issue a pay advance to the driver
+    expect: [issue_pay_advance]
+  - request: write off the advance the driver still owes
+    expect: [write_off_pay_advance]
+  - request: open an escrow account for the owner operator
+    expect: [open_escrow_account]
+  - request: close the escrow account and refund the balance
+    expect: [close_escrow_account]
+  - request: set up a recurring insurance deduction
+    expect: [create_recurring_deduction]
+  - request: accept the carrier invoice with its variance
+    expect: [accept_carrier_invoice_match_with_variance]
+  - request: which EDI carrier invoices have no carrier
+    expect: [list_edi_carrier_invoices]
+  - request: list the deduction pay codes
+    expect: [list_pay_codes]
+  - request: which pay profile is the driver assigned to
+    expect: [list_pay_assignments]
   - request: which carrier invoices have a variance against the expected cost
     expect: [list_carrier_invoice_matches]
   - request: show the carrier freight invoice matches for Swift

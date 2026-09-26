@@ -375,7 +375,7 @@ func (t *listPayProfilesTool) Query(
 
 type listWorkerPayAssignmentsTool struct{ driverPayTool }
 
-func (t *listWorkerPayAssignmentsTool) Name() string { return "list_worker_pay_assignments" }
+func (t *listWorkerPayAssignmentsTool) Name() string { return "list_pay_assignments" }
 
 func (t *listWorkerPayAssignmentsTool) Description() string {
 	return "List a driver's pay profile assignments, newest first: which profile paid them " +

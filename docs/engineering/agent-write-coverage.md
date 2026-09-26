@@ -62,14 +62,14 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 58 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 206 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 210 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 23 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 28 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 42 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 46 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 8 |
-| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 0 |
+| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 1 |
 
 ## Totals
 
@@ -77,20 +77,21 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 75 |
-| Exempt | 444 |
+| Covered by a tool | 118 |
+| Exempt | 449 |
 | — Security | 58 |
-| — Configuration | 206 |
+| — Configuration | 210 |
 | — User preference | 23 |
 | — Infrastructure | 28 |
 | — Agent administration | 42 |
 | — Counterparty | 33 |
 | — Read-only | 46 |
 | — Attestation | 8 |
-| **Pending** | **395** |
+| — Duplicate | 1 |
+| **Pending** | **347** |
 | Total | 914 |
 
-Of the 470 writes an agent should be able to make, 75 have a tool (15%).
+Of the 465 writes an agent should be able to make, 118 have a tool (25%).
 
 ## Pending
 
@@ -127,21 +128,6 @@ The writes no tool performs yet, and what the tool would do.
 | carrierintelligence | `mutation verifyCarrierEquipment` | Verify carrier equipment. |
 | carrierintelligence | `mutation vetCarrier` | Vet carrier. |
 | carrierintelligence | `mutation vetCustomerBroker` | Vet customer broker. |
-| carriersettlement | `mutation acceptCarrierInvoiceMatch` | Accept carrier invoice match. |
-| carriersettlement | `mutation acceptCarrierInvoiceMatchWithVariance` | Accept carrier invoice match with variance. |
-| carriersettlement | `mutation addCarrierSettlementAdjustment` | Add carrier settlement adjustment. |
-| carriersettlement | `mutation approveCarrierSettlement` | Approve carrier settlement. |
-| carriersettlement | `mutation createCarrierInvoiceMatch` | Create carrier invoice match. |
-| carriersettlement | `mutation generateCarrierSettlementBatch` | Generate carrier settlement batch. |
-| carriersettlement | `mutation linkEdiCarrierInvoiceToCarrier` | Link EDI carrier invoice to carrier. |
-| carriersettlement | `mutation markCarrierSettlementPaid` | Mark carrier settlement paid. |
-| carriersettlement | `mutation postCarrierSettlement` | Post carrier settlement. |
-| carriersettlement | `mutation recalculateCarrierSettlement` | Recalculate carrier settlement. |
-| carriersettlement | `mutation rejectCarrierInvoiceMatch` | Reject carrier invoice match. |
-| carriersettlement | `mutation rejectCarrierSettlement` | Reject carrier settlement. |
-| carriersettlement | `mutation removeCarrierSettlementAdjustment` | Remove carrier settlement adjustment. |
-| carriersettlement | `mutation submitCarrierSettlement` | Submit carrier settlement. |
-| carriersettlement | `mutation voidCarrierSettlement` | Void carrier settlement. |
 | commodity | `PATCH /api/v1/commodities/:commodityID/` | Update some fields of a commodity. |
 | commodity | `POST /api/v1/commodities/` | Create a commodity. |
 | commodity | `POST /api/v1/commodities/bulk-update-status/` | Change the status of several commodities at once. |
@@ -166,39 +152,6 @@ The writes no tool performs yet, and what the tool would do.
 | driverportal | `mutation resolveSettlementDispute` | Resolve settlement dispute. |
 | driverportal | `mutation reviewDriverExpense` | Review driver expense. |
 | driverportal | `mutation startSettlementDisputeReview` | Start settlement dispute review. |
-| driversettlement | `mutation addDriverSettlementAdjustment` | Add driver settlement adjustment. |
-| driversettlement | `mutation adjustEscrowAccount` | Adjust escrow account. |
-| driversettlement | `mutation approveDriverSettlement` | Approve driver settlement. |
-| driversettlement | `mutation assignPayProfileToWorker` | Assign pay profile to worker. |
-| driversettlement | `mutation attachPayEventsToSettlement` | Attach pay events to a driver settlement. |
-| driversettlement | `mutation bulkDriverSettlementAction` | Approve, post or void several driver settlements at once. |
-| driversettlement | `mutation closeEscrowAccount` | Close escrow account. |
-| driversettlement | `mutation createPayCode` | Create pay code. |
-| driversettlement | `mutation createPayProfile` | Create pay profile. |
-| driversettlement | `mutation createRecurringDeduction` | Create recurring deduction. |
-| driversettlement | `mutation createRecurringEarning` | Create recurring earning. |
-| driversettlement | `mutation detachPayEventFromSettlement` | Detach a pay event from a driver settlement. |
-| driversettlement | `mutation endWorkerPayAssignment` | End worker pay assignment. |
-| driversettlement | `mutation generateDriverSettlement` | Generate driver settlement. |
-| driversettlement | `mutation generateSettlementBatch` | Generate settlement batch. |
-| driversettlement | `mutation holdDriverPayEvent` | Hold driver pay event. |
-| driversettlement | `mutation issuePayAdvance` | Issue pay advance. |
-| driversettlement | `mutation markDriverSettlementPaid` | Mark driver settlement paid. |
-| driversettlement | `mutation openEscrowAccount` | Open escrow account. |
-| driversettlement | `mutation payWorkerNow` | Pay a worker off cycle now. |
-| driversettlement | `mutation postDriverSettlement` | Post driver settlement. |
-| driversettlement | `mutation recalculateDriverSettlement` | Recalculate driver settlement. |
-| driversettlement | `mutation rejectDriverSettlement` | Reject driver settlement. |
-| driversettlement | `mutation releaseDriverPayEvent` | Release driver pay event. |
-| driversettlement | `mutation removeDriverSettlementAdjustment` | Remove driver settlement adjustment. |
-| driversettlement | `mutation submitDriverSettlement` | Submit driver settlement. |
-| driversettlement | `mutation updateEscrowAccount` | Update escrow account. |
-| driversettlement | `mutation updatePayCode` | Update pay code. |
-| driversettlement | `mutation updatePayProfile` | Update pay profile. |
-| driversettlement | `mutation updateRecurringDeduction` | Update recurring deduction. |
-| driversettlement | `mutation updateRecurringEarning` | Update recurring earning. |
-| driversettlement | `mutation voidDriverSettlement` | Void driver settlement. |
-| driversettlement | `mutation writeOffPayAdvance` | Write off pay advance. |
 | edi | `POST /api/v1/edi/documents/generate/` | Generate an outbound EDI document (a 214, a 210) for a record. |
 | edi | `POST /api/v1/edi/inbound-files/:fileID/reprocess/` | Process a failed inbound EDI file again. |
 | edi | `POST /api/v1/edi/inbound-files/bulk-reprocess/` | Process several failed inbound EDI files again. |
@@ -526,7 +479,7 @@ The writes no tool performs yet, and what the tool would do.
 | briefing | 2 | 0 | 2 | 0 |
 | carrier | 4 | 0 | 0 | 4 |
 | carrierintelligence | 15 | 2 | 5 | 8 |
-| carriersettlement | 16 | 0 | 1 | 15 |
+| carriersettlement | 16 | 15 | 1 | 0 |
 | commodity | 4 | 0 | 0 | 4 |
 | controlplaneprovisioning | 1 | 0 | 1 | 0 |
 | costing | 2 | 0 | 2 | 0 |
@@ -552,7 +505,7 @@ The writes no tool performs yet, and what the tool would do.
 | documenttemplate | 12 | 0 | 12 | 0 |
 | documenttype | 3 | 0 | 3 | 0 |
 | driverportal | 31 | 0 | 28 | 3 |
-| driversettlement | 34 | 0 | 1 | 33 |
+| driversettlement | 34 | 28 | 6 | 0 |
 | edi | 56 | 0 | 39 | 17 |
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
@@ -946,22 +899,22 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation acceptCarrierInvoiceMatch` | Pending: Accept carrier invoice match. |
-| `mutation acceptCarrierInvoiceMatchWithVariance` | Pending: Accept carrier invoice match with variance. |
-| `mutation addCarrierSettlementAdjustment` | Pending: Add carrier settlement adjustment. |
-| `mutation approveCarrierSettlement` | Pending: Approve carrier settlement. |
-| `mutation createCarrierInvoiceMatch` | Pending: Create carrier invoice match. |
-| `mutation generateCarrierSettlementBatch` | Pending: Generate carrier settlement batch. |
-| `mutation linkEdiCarrierInvoiceToCarrier` | Pending: Link EDI carrier invoice to carrier. |
-| `mutation markCarrierSettlementPaid` | Pending: Mark carrier settlement paid. |
-| `mutation postCarrierSettlement` | Pending: Post carrier settlement. |
-| `mutation recalculateCarrierSettlement` | Pending: Recalculate carrier settlement. |
-| `mutation rejectCarrierInvoiceMatch` | Pending: Reject carrier invoice match. |
-| `mutation rejectCarrierSettlement` | Pending: Reject carrier settlement. |
-| `mutation removeCarrierSettlementAdjustment` | Pending: Remove carrier settlement adjustment. |
-| `mutation submitCarrierSettlement` | Pending: Submit carrier settlement. |
+| `mutation acceptCarrierInvoiceMatch` | Tool: `accept_carrier_invoice_match` |
+| `mutation acceptCarrierInvoiceMatchWithVariance` | Tool: `accept_carrier_invoice_match_with_variance` |
+| `mutation addCarrierSettlementAdjustment` | Tool: `add_carrier_settlement_adjustment` |
+| `mutation approveCarrierSettlement` | Tool: `approve_carrier_settlement` |
+| `mutation createCarrierInvoiceMatch` | Tool: `create_carrier_invoice_match` |
+| `mutation generateCarrierSettlementBatch` | Tool: `generate_carrier_settlement_batch` |
+| `mutation linkEdiCarrierInvoiceToCarrier` | Tool: `link_edi_carrier_invoice_to_carrier` |
+| `mutation markCarrierSettlementPaid` | Tool: `record_carrier_settlement_payment` |
+| `mutation postCarrierSettlement` | Tool: `post_carrier_settlement` |
+| `mutation recalculateCarrierSettlement` | Tool: `recalculate_carrier_settlement` |
+| `mutation rejectCarrierInvoiceMatch` | Tool: `reject_carrier_invoice_match` |
+| `mutation rejectCarrierSettlement` | Tool: `reject_carrier_settlement` |
+| `mutation removeCarrierSettlementAdjustment` | Tool: `remove_carrier_settlement_adjustment` |
+| `mutation submitCarrierSettlement` | Tool: `submit_carrier_settlement` |
 | `mutation updateCarrierSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
-| `mutation voidCarrierSettlement` | Pending: Void carrier settlement. |
+| `mutation voidCarrierSettlement` | Tool: `void_carrier_settlement` |
 
 ### commodity
 
@@ -1217,40 +1170,40 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation addDriverSettlementAdjustment` | Pending: Add driver settlement adjustment. |
-| `mutation adjustEscrowAccount` | Pending: Adjust escrow account. |
-| `mutation approveDriverSettlement` | Pending: Approve driver settlement. |
-| `mutation assignPayProfileToWorker` | Pending: Assign pay profile to worker. |
-| `mutation attachPayEventsToSettlement` | Pending: Attach pay events to a driver settlement. |
-| `mutation bulkDriverSettlementAction` | Pending: Approve, post or void several driver settlements at once. |
-| `mutation closeEscrowAccount` | Pending: Close escrow account. |
-| `mutation createPayCode` | Pending: Create pay code. |
-| `mutation createPayProfile` | Pending: Create pay profile. |
-| `mutation createRecurringDeduction` | Pending: Create recurring deduction. |
-| `mutation createRecurringEarning` | Pending: Create recurring earning. |
-| `mutation detachPayEventFromSettlement` | Pending: Detach a pay event from a driver settlement. |
-| `mutation endWorkerPayAssignment` | Pending: End worker pay assignment. |
-| `mutation generateDriverSettlement` | Pending: Generate driver settlement. |
-| `mutation generateSettlementBatch` | Pending: Generate settlement batch. |
-| `mutation holdDriverPayEvent` | Pending: Hold driver pay event. |
-| `mutation issuePayAdvance` | Pending: Issue pay advance. |
-| `mutation markDriverSettlementPaid` | Pending: Mark driver settlement paid. |
-| `mutation openEscrowAccount` | Pending: Open escrow account. |
-| `mutation payWorkerNow` | Pending: Pay a worker off cycle now. |
-| `mutation postDriverSettlement` | Pending: Post driver settlement. |
-| `mutation recalculateDriverSettlement` | Pending: Recalculate driver settlement. |
-| `mutation rejectDriverSettlement` | Pending: Reject driver settlement. |
-| `mutation releaseDriverPayEvent` | Pending: Release driver pay event. |
-| `mutation removeDriverSettlementAdjustment` | Pending: Remove driver settlement adjustment. |
-| `mutation submitDriverSettlement` | Pending: Submit driver settlement. |
-| `mutation updateEscrowAccount` | Pending: Update escrow account. |
-| `mutation updatePayCode` | Pending: Update pay code. |
-| `mutation updatePayProfile` | Pending: Update pay profile. |
-| `mutation updateRecurringDeduction` | Pending: Update recurring deduction. |
-| `mutation updateRecurringEarning` | Pending: Update recurring earning. |
+| `mutation addDriverSettlementAdjustment` | Tool: `add_driver_settlement_adjustment` |
+| `mutation adjustEscrowAccount` | Tool: `adjust_escrow_account` |
+| `mutation approveDriverSettlement` | Tool: `approve_driver_settlement` |
+| `mutation assignPayProfileToWorker` | Tool: `assign_pay_profile` |
+| `mutation attachPayEventsToSettlement` | Tool: `attach_pay_events_to_settlement` |
+| `mutation bulkDriverSettlementAction` | Exempt, duplicate: Runs submit, approve, post or mark paid on several settlements at once; each has its own tool, and an approver decides a batch of those proposals together. |
+| `mutation closeEscrowAccount` | Tool: `close_escrow_account` |
+| `mutation createPayCode` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
+| `mutation createPayProfile` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
+| `mutation createRecurringDeduction` | Tool: `create_recurring_deduction` |
+| `mutation createRecurringEarning` | Tool: `create_recurring_earning` |
+| `mutation detachPayEventFromSettlement` | Tool: `detach_pay_event_from_settlement` |
+| `mutation endWorkerPayAssignment` | Tool: `end_pay_assignment` |
+| `mutation generateDriverSettlement` | Tool: `generate_driver_settlement` |
+| `mutation generateSettlementBatch` | Tool: `generate_driver_settlement_batch` |
+| `mutation holdDriverPayEvent` | Tool: `hold_driver_pay_event` |
+| `mutation issuePayAdvance` | Tool: `issue_pay_advance` |
+| `mutation markDriverSettlementPaid` | Tool: `record_driver_settlement_payment` |
+| `mutation openEscrowAccount` | Tool: `open_escrow_account` |
+| `mutation payWorkerNow` | Tool: `pay_driver_now` |
+| `mutation postDriverSettlement` | Tool: `post_driver_settlement` |
+| `mutation recalculateDriverSettlement` | Tool: `recalculate_driver_settlement` |
+| `mutation rejectDriverSettlement` | Tool: `reject_driver_settlement` |
+| `mutation releaseDriverPayEvent` | Tool: `release_driver_pay_event` |
+| `mutation removeDriverSettlementAdjustment` | Tool: `remove_driver_settlement_adjustment` |
+| `mutation submitDriverSettlement` | Tool: `submit_driver_settlement` |
+| `mutation updateEscrowAccount` | Tool: `update_escrow_account` |
+| `mutation updatePayCode` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
+| `mutation updatePayProfile` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
+| `mutation updateRecurringDeduction` | Tool: `update_recurring_deduction` |
+| `mutation updateRecurringEarning` | Tool: `update_recurring_earning` |
 | `mutation updateSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
-| `mutation voidDriverSettlement` | Pending: Void driver settlement. |
-| `mutation writeOffPayAdvance` | Pending: Write off pay advance. |
+| `mutation voidDriverSettlement` | Tool: `void_driver_settlement` |
+| `mutation writeOffPayAdvance` | Tool: `write_off_pay_advance` |
 
 ### edi
 
