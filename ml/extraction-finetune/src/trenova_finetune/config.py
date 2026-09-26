@@ -93,6 +93,7 @@ KVCacheDType = Literal["auto", "fp8", "fp8_e4m3", "fp8_e5m2"]
 StructuredOutputsBackend = Literal["auto", "xgrammar", "guidance", "outlines", "lm-format-enforcer"]
 SpeculativeMethod = Literal["ngram", "draft_model", "eagle", "eagle3"]
 DRAFTED_METHODS = ("draft_model", "eagle", "eagle3")
+COMPACT_JSON_BACKENDS = ("xgrammar", "guidance")
 
 
 class SpeculativeSettings(_Settings):
@@ -145,7 +146,8 @@ class ServeSettings(_Settings):
     max_num_batched_tokens: int | None = Field(None, ge=256)
     kv_cache_dtype: KVCacheDType = "auto"
     quantization: ServeQuantization | None = None
-    structured_outputs_backend: StructuredOutputsBackend = "auto"
+    structured_outputs_backend: StructuredOutputsBackend = "xgrammar"
+    compact_json: bool = True
     speculative: SpeculativeSettings | None = None
     report_cached_tokens: bool = True
 
@@ -158,6 +160,11 @@ class ServeSettings(_Settings):
         ):
             raise ValueError(
                 "without chunked prefill, max_num_batched_tokens must be at least max_model_len"
+            )
+        if self.compact_json and self.structured_outputs_backend not in COMPACT_JSON_BACKENDS:
+            raise ValueError(
+                "compact_json needs structured_outputs_backend "
+                f"{' or '.join(COMPACT_JSON_BACKENDS)}; other backends ignore it"
             )
         return self
 

@@ -42,7 +42,10 @@ def test_defaults_turn_on_prefix_caching_and_report_cached_tokens() -> None:
     assert "--enable-chunked-prefill" in args
     assert "--enable-prompt-tokens-details" in args
     assert _flag(args, "--kv-cache-dtype") == "auto"
-    assert json.loads(_flag(args, "--structured-outputs-config")) == {"backend": "auto"}
+    assert json.loads(_flag(args, "--structured-outputs-config")) == {
+        "backend": "xgrammar",
+        "disable_any_whitespace": True,
+    }
     for absent in ("--quantization", "--speculative-config", "--max-num-seqs"):
         assert absent not in args
 
@@ -56,7 +59,8 @@ def test_every_tuning_setting_reaches_vllm() -> None:
         max_num_batched_tokens=16384,
         kv_cache_dtype="fp8",
         quantization="fp8",
-        structured_outputs_backend="xgrammar",
+        structured_outputs_backend="guidance",
+        compact_json=False,
         speculative=SpeculativeSettings(
             method="ngram", num_speculative_tokens=4, prompt_lookup_min=2, prompt_lookup_max=5
         ),
@@ -70,7 +74,7 @@ def test_every_tuning_setting_reaches_vllm() -> None:
     assert _flag(args, "--max-num-batched-tokens") == "16384"
     assert _flag(args, "--kv-cache-dtype") == "fp8"
     assert _flag(args, "--quantization") == "fp8"
-    assert json.loads(_flag(args, "--structured-outputs-config")) == {"backend": "xgrammar"}
+    assert json.loads(_flag(args, "--structured-outputs-config")) == {"backend": "guidance"}
     assert json.loads(_flag(args, "--speculative-config")) == {
         "method": "ngram",
         "num_speculative_tokens": 4,
@@ -130,6 +134,13 @@ def test_without_chunked_prefill_a_batch_must_hold_a_whole_prompt() -> None:
     with pytest.raises(ValidationError, match="chunked prefill"):
         ServeSettings(enable_chunked_prefill=False, max_num_batched_tokens=4096)
     ServeSettings(enable_chunked_prefill=True, max_num_batched_tokens=4096)
+
+
+def test_compact_json_needs_a_backend_that_honours_it() -> None:
+    with pytest.raises(ValidationError, match="compact_json"):
+        ServeSettings(structured_outputs_backend="outlines")
+    ServeSettings(structured_outputs_backend="outlines", compact_json=False)
+    ServeSettings(structured_outputs_backend="guidance")
 
 
 def test_the_served_context_must_hold_a_training_example() -> None:

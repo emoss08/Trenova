@@ -62,7 +62,7 @@ def serve_arguments(settings: ServeSettings) -> list[str]:
         "--kv-cache-dtype",
         settings.kv_cache_dtype,
         "--structured-outputs-config",
-        json.dumps({"backend": settings.structured_outputs_backend}, separators=(",", ":")),
+        _structured_outputs(settings),
     ]
     if settings.max_num_seqs is not None:
         args += ["--max-num-seqs", str(settings.max_num_seqs)]
@@ -129,6 +129,13 @@ def serve(
     if executable is None:
         raise ServeError("vllm is not installed; run uv sync --extra predict")
     os.execv(executable, command)
+
+
+def _structured_outputs(settings: ServeSettings) -> str:
+    config: dict[str, str | bool] = {"backend": settings.structured_outputs_backend}
+    if settings.compact_json:
+        config["disable_any_whitespace"] = True
+    return json.dumps(config, separators=(",", ":"))
 
 
 def _toggle(flag: str, enabled: bool) -> str:

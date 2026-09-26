@@ -65,6 +65,7 @@ serve:
   kv_cache_dtype: auto
   quantization: null
   structured_outputs_backend: xgrammar
+  compact_json: true
   report_cached_tokens: true
   speculative:
     method: ngram
