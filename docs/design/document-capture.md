@@ -1,6 +1,6 @@
 # Document Capture — Scanning and Virtual Printing
 
-> Status: phases 1 (server) and 2 (web) complete; the Windows companion (phase 3) is next. Purpose: let a person put paper or
+> Status: phases 1 (server), 2 (web) and 3 (companion core) complete; the virtual printer (phase 4) is next. Purpose: let a person put paper or
 > another program's output into Trenova without first producing a file on their own disk, from a
 > scanner (including one behind Kofax VRS) or from the Windows print dialog of any application.
 
@@ -61,9 +61,12 @@ third-party scanner drivers, while parsing input from other local processes and 
 credential.
 
 - **The ABIs.** TWAIN is a C ABI (`DSM_Entry` in `twaindsm.dll`); WIA 2.0, the print spooler,
-  DPAPI and Credential Manager are Win32/COM. Rust reaches TWAIN through `bindgen` over
-  `twain.h`, and everything else through `windows-rs`, which Microsoft maintains and generates
-  from the Windows metadata. This is the same surface C++ would use, with no wrapper layer.
+  DPAPI and Credential Manager are Win32/COM. Rust reaches TWAIN through declarations
+  `bindgen` generates from the TWAIN Working Group's `twain.h` (checked in for both bitnesses by
+  `capture-twain/tools/generate-bindings.sh`, from a pinned `twain-dsm` commit verified by
+  SHA-256, with every structure's size and offsets asserted at compile time), and everything
+  else through `windows-rs`, which Microsoft maintains and generates from the Windows metadata.
+  This is the same surface C++ would use, with no wrapper layer, and no libclang in the build.
 - **Memory safety where it matters.** The companion parses IPP requests from any local process,
   PDF and raster print data, and image buffers handed over by driver code we do not control. A
   memory bug there is a local privilege boundary problem in a process holding a Trenova
@@ -124,8 +127,13 @@ in the web app.
 ### 5.2 Scanning
 
 **Source enumeration.** The agent asks both helpers (`MSG_GETFIRST`/`MSG_GETNEXT` against
-`twaindsm.dll` in each bitness) and WIA's device manager, and merges the lists. Each source is
-reported to the API with its bitness, protocol and capabilities, so the web app can offer it.
+`twaindsm.dll` in each bitness, and WIA's device manager in the 64-bit one) and merges the
+lists, keeping the 64-bit driver when a TWAIN source is installed in both. Each source is
+reported to the API with its bitness and protocol. A TWAIN source is listed without being
+opened, because opening one whose scanner is off often shows the driver's own error dialog;
+what it can do (duplex, feeder, patch codes, resolutions, pixel types) is read when it is
+first opened for a scan and reported then. WIA opens devices without UI, so WIA sources are
+described at once.
 
 **TWAIN session.** The helper walks the TWAIN state machine (states 1–7) on a dedicated thread
 with a hidden window and message loop:
@@ -214,19 +222,26 @@ resource, so there is one source for the mark rather than a copy that drifts.
 ```
 native/capture/                  Cargo workspace
 ├── crates/
-│   ├── capture-protocol/        API + helper-pipe message types (serde)
-│   ├── capture-client/          API client (reqwest, rustls + platform verifier), stream, upload queue, spool
-│   ├── capture-twain/           twain.h bindings, state machine, capability negotiation
+│   ├── capture-protocol/        API + helper-pipe message types (serde), manifest digest
+│   ├── capture-client/          API client (reqwest over SChannel), pairing, stream, spool, upload queue
+│   ├── capture-twain/           twain.h bindings, state machine, capability negotiation, memory transfer
 │   ├── capture-wia/             WIA 2.0 over windows-rs
-│   ├── capture-imaging/         G4/JPEG encode, single-page PDF writer, PWG raster → PDF
-│   ├── capture-ipp/             IPP/2.0 server subset (Print-Job, Validate-Job, Get-Printer-Attributes, Get-Jobs)
-│   └── capture-platform/        DPAPI, Credential Manager, named pipes + ACLs, spooler queries, toasts
+│   ├── capture-imaging/         G4/JPEG encode, single-page PDF writer, BMP decode (PWG raster → PDF in phase 4)
+│   ├── capture-ipp/             IPP/2.0 server subset (Print-Job, Validate-Job, Get-Printer-Attributes, Get-Jobs; phase 4)
+│   └── capture-platform/        DPAPI, Credential Manager, machine identity, settings, shell (named pipes + ACLs, spooler queries in phase 4)
 ├── bins/
 │   ├── trenova-capture/         per-user agent + tray
 │   ├── trenova-capture-svc/     service
 │   └── trenova-capture-scan/    scan helper (built x64 and x86)
 └── installer/                   WiX v4 MSI
 ```
+
+TLS is the platform's own (SChannel, through `native-tls`) rather than rustls: it trusts what
+the Windows certificate store trusts, which is what an organization that inspects TLS has
+already configured, and it needs no C toolchain for either target. The agent's core
+(`trenova-capture`'s library) and `capture-client` know nothing of Windows, so the whole flow
+from a web-app request to a sealed batch runs in tests on Linux against a mock server and a
+scripted scanner; `native/capture/README.md` says what runs where.
 
 ### 5.7 Supported scanners
 
@@ -546,7 +561,9 @@ All paths are under `/api/v1/capture/` and documented in the OpenAPI spec (tag `
 
 | Method | Path | Purpose |
 |---|---|---|
-| `GET` | `device/` | The device record, including who it acts for |
+| `GET` | `device/` | The device record, with the name of the person and organization it acts for |
+| `DELETE` | `device/` | Sign out: revoke the device's own credential |
+| `GET` | `device/profiles/` | The profiles the person may scan with, for scans started from the tray |
 | `PUT` | `device/sources/` | Report reachable scanners |
 | `GET` | `device/stream/` | SSE stream (§6.3) |
 | `GET` | `device/requests/` | Open requests, oldest first |
@@ -555,6 +572,10 @@ All paths are under `/api/v1/capture/` and documented in the OpenAPI spec (tag `
 | `PUT` | `device/batches/:id/pages/:seq/` | Upload one page |
 | `PUT` | `device/batches/:id/print-job/` | Upload a whole print job; splits and seals |
 | `POST` | `device/batches/:id/seal/` | Seal with page count and manifest digest |
+
+An organization that turned capture off answers `422` with `params.reason` =
+`capture_disabled`, so the companion holds every page until capture is back on instead of
+treating the refusal as a bad upload.
 
 A page is a raw `application/pdf` body of exactly one page, at most 20 MB, sniffed rather than
 trusted, with scanner markers in `X-Capture-Dpi`, `X-Capture-Patch-Code` and repeatable
@@ -657,8 +678,19 @@ Every phase is shipped complete; the order only reflects dependencies.
    schema-diff checks, the label and reminder queries against Postgres 16, and web unit tests
    for the page-layout editor, queue filters, destinations, cover-sheet PDF, profile schema and
    realtime keys.
-3. **Companion core:** agent, tray, pairing, stream, spool/upload queue, TWAIN helper (x64 and
-   x86) and WIA.
+3. **Companion core — complete.** The tray agent (pairing, sign-out, the device stream, the
+   encrypted spool and upload queue, scan requests, "Scan to intake", continuing a jammed
+   batch, notifications), the scan helper (TWAIN in both bitnesses, WIA), page encoding, and the
+   platform services (DPAPI, Credential Manager, registry settings). The server gained the
+   device identity and profile routes, device sign-out, the `capture_disabled` reason, and the
+   write-coverage entries for every capture write. Tested on Linux by 103 unit and integration
+   tests: the TWAIN session against a scripted DSM (enumeration, negotiation and refusals,
+   strips of unknown length, extended image info, jams, cancel, teardown order, no leaked
+   container), the API client, stream and uploader against a mock server, the spool, and the
+   agent end to end; sample pages read back pixel-exact in MuPDF and pass the server's page
+   check. The Windows-only code (the DSM loader and message pump, WIA, DPAPI, Credential
+   Manager, the tray) is compile-checked and linted for x64 and x86 but has not run: that needs
+   the phase-0 lab and the phase-5 Windows CI.
 4. **Virtual printer:** service, IPP server, attribution, pipe handoff, printer installation.
 5. **Distribution:**
    - MSI (WiX v4), signing, and the update manifest and flow;

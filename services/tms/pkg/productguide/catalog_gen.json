@@ -1,5 +1,5 @@
 {
-  "version": "sha256:25a4b8f6dc754d47b96acc12e094976f00ef7b1cba96fa737b49c47124abd9bf",
+  "version": "sha256:6b94c15cd4635e5881b60939a5ef938b22036ea70871061aea769f2d9a1c36c8",
   "modules": [
     {
       "id": "home",
@@ -7200,7 +7200,9 @@
         "companion app",
         "scanner computer",
         "pairing code",
-        "revoke scanner"
+        "revoke scanner",
+        "tray icon",
+        "paper jam"
       ],
       "tasks": [
         {
@@ -7218,6 +7220,34 @@
           ]
         },
         {
+          "title": "Scan without opening Trenova",
+          "keywords": [
+            "scan to intake",
+            "tray menu",
+            "scan from the computer",
+            "quick scan"
+          ],
+          "steps": [
+            "On the paired computer, select the Trenova Capture icon in the notification area.",
+            "Choose Scan to intake, then the scanner, then the scan profile (the organization's default is marked).",
+            "When the scan finishes, a notification says how many pages were sent; select it to open them in [Intake](/intake)."
+          ]
+        },
+        {
+          "title": "Carry on after a paper jam",
+          "keywords": [
+            "jam",
+            "double feed",
+            "cover open",
+            "scanner stopped",
+            "continue scanning"
+          ],
+          "steps": [
+            "Clear the scanner. The pages scanned before it stopped are kept on the computer.",
+            "From the Trenova Capture icon, choose Continue scanning to add the rest to the same stack, or Finish to send what was scanned as it is."
+          ]
+        },
+        {
           "title": "Stop a computer from scanning as you",
           "keywords": [
             "lost laptop",
@@ -7231,7 +7261,7 @@
           ]
         }
       ],
-      "notes": "Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. Only approve a computer you are using: once paired it uploads documents as you.",
+      "notes": "Pages wait on the computer, encrypted, until Trenova has them, so scanning works while the network is down and nothing is lost if the computer restarts; the icon's menu shows how many are waiting. Choosing Sign out from the icon revokes the computer, as **Revoke** does here. Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. Only approve a computer you are using: once paired it uploads documents as you.",
       "related": [
         "/intake"
       ],
