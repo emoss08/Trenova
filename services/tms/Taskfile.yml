@@ -333,6 +333,17 @@ tasks:
           exit 1
         fi
 
+  generate-write-coverage:
+    desc: Regenerate docs/engineering/agent-write-coverage.md from writecoverage.yml, the schema, the routes and the agent tools
+    cmds:
+      - go generate ./internal/api/writecoverage/...
+
+  generate-write-coverage-check:
+    desc: Verify every write has a decision and the write coverage document is up to date
+    dir: internal/api/writecoverage
+    cmds:
+      - go run -tags nofitz,nomsgpack ./gen -check -output=../../../../../docs/engineering/agent-write-coverage.md
+
   generate-seeds:
     desc: Regenerate seed IDs from seed files
     cmds:

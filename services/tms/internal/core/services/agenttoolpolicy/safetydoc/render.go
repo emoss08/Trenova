@@ -157,13 +157,13 @@ func writeGroup(buf *bytes.Buffer, class agent.EgressClass, policies []servicepo
 	for idx := range policies {
 		policy := &policies[idx]
 		fmt.Fprintf(buf, "| %s | %s | %s | %s | %s | %s |\n",
-			cell(fmt.Sprintf("%s (`%s`)",
+			stringutils.MarkdownTableCell(fmt.Sprintf("%s (`%s`)",
 				stringutils.HumanizeCamelCaseSentence(policy.Name), policy.Name)),
-			cell(classList(policy.Egress)),
+			stringutils.MarkdownTableCell(classList(policy.Egress)),
 			agenttoolpolicy.Promotable(*policy).Label(),
-			cell(condition(policy)),
-			cell(externalRead(policy)),
-			cell(policy.Rationale),
+			stringutils.MarkdownTableCell(condition(policy)),
+			stringutils.MarkdownTableCell(externalRead(policy)),
+			stringutils.MarkdownTableCell(policy.Rationale),
 		)
 	}
 	buf.WriteString("\n")
@@ -258,10 +258,6 @@ func sourceLabel(source agent.TaintSource) string {
 	}
 
 	return stringutils.HumanizeSnakeCase(source.String())
-}
-
-func cell(text string) string {
-	return strings.Join(strings.Fields(strings.ReplaceAll(text, "|", `\|`)), " ")
 }
 
 func yesNo(value bool) string {

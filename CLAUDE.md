@@ -329,6 +329,10 @@ now, and the approval carries its digest; tools implement `ToolPreviewer` with
 [docs/engineering/proposal-previews.md](docs/engineering/proposal-previews.md) before
 changing `toolpreview`, `proposalpreviewservice`, a tool's `Preview`, or how a proposal is
 decided.**
+Every write a person can make has an agent tool, a reasoned exemption or a `pending` entry in
+`services/tms/internal/api/writecoverage/writecoverage.yml`, and a new mutation or write route
+fails CI until it has one; see
+[docs/engineering/agent-write-coverage.md](docs/engineering/agent-write-coverage.md).
 Every run, turn, delegate's task and evaluation is one trace named by its id, rooted in an
 `invoke_agent` span its finishing activity emits (never a span in workflow code); the span
 catalogue, anchors, sampling, the link columns that tie proposals, steps, decisions and usage
