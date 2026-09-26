@@ -51,7 +51,14 @@ export const safetyAgentsParser = parseAsArrayOf(parseAsString)
  * cases), the answers people liked least, the golden set, and the sweep's
  * settings.
  */
-export const qualityViews = ["agents", "runs", "ratings", "golden", "settings"] as const;
+export const qualityViews = [
+  "agents",
+  "runs",
+  "ratings",
+  "golden",
+  "extraction",
+  "settings",
+] as const;
 export type QualityView = (typeof qualityViews)[number];
 
 export const QUALITY_VIEW_PARAM = "quality";
@@ -113,3 +120,13 @@ export const CLEARED_TABLE_STATE = {
   entityId: null,
   modalType: null,
 } as const;
+
+/** Document extraction is four views: accuracy, corrections, the evaluation set, and its runs. */
+export const extractionViews = ["accuracy", "corrections", "cases", "runs"] as const;
+export type ExtractionView = (typeof extractionViews)[number];
+
+export const EXTRACTION_VIEW_PARAM = "extraction";
+
+export const extractionViewParser = parseAsStringLiteral(extractionViews)
+  .withOptions({ history: "replace", shallow: true })
+  .withDefault("accuracy");

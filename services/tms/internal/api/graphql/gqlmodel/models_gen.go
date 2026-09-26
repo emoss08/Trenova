@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/agentquality"
 	"github.com/emoss08/trenova/internal/core/domain/aiaudit"
+	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/core/domain/apikey"
@@ -42,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/core/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
@@ -134,6 +136,17 @@ type AIAuditExportConnection struct {
 type AIAuditExportEdge struct {
 	Node   *aiaudit.AIAuditExport `json:"node"`
 	Cursor string                 `json:"cursor"`
+}
+
+type AICorrectionConnection struct {
+	Edges      []*AICorrectionEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+}
+
+type AICorrectionEdge struct {
+	Node   *aicorrection.Correction `json:"node"`
+	Cursor string                   `json:"cursor"`
 }
 
 type AIFeedbackConnection struct {
@@ -3145,6 +3158,44 @@ type EscrowAccountEdge struct {
 	Cursor string                   `json:"cursor"`
 }
 
+type ExtractionEvalCaseConnection struct {
+	Edges      []*ExtractionEvalCaseEdge `json:"edges"`
+	PageInfo   *PageInfo                 `json:"pageInfo"`
+	TotalCount *int                      `json:"totalCount,omitempty"`
+}
+
+type ExtractionEvalCaseEdge struct {
+	Node   *extractioneval.ExtractionCase `json:"node"`
+	Cursor string                         `json:"cursor"`
+}
+
+type ExtractionEvalResultConnection struct {
+	Edges      []*ExtractionEvalResultEdge `json:"edges"`
+	PageInfo   *PageInfo                   `json:"pageInfo"`
+	TotalCount *int                        `json:"totalCount,omitempty"`
+}
+
+type ExtractionEvalResultEdge struct {
+	Node   *extractioneval.ExtractionResult `json:"node"`
+	Cursor string                           `json:"cursor"`
+}
+
+type ExtractionEvalRunConnection struct {
+	Edges      []*ExtractionEvalRunEdge `json:"edges"`
+	PageInfo   *PageInfo                `json:"pageInfo"`
+	TotalCount *int                     `json:"totalCount,omitempty"`
+}
+
+type ExtractionEvalRunEdge struct {
+	Node   *extractioneval.ExtractionRun `json:"node"`
+	Cursor string                        `json:"cursor"`
+}
+
+type ExtractionSnapshotField struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
 type FacilityDetentionStat struct {
 	LocationID         string  `json:"locationId"`
 	LocationName       string  `json:"locationName"`
@@ -4684,6 +4735,13 @@ type ProfileFieldChange struct {
 	Label string `json:"label"`
 	From  string `json:"from"`
 	To    string `json:"to"`
+}
+
+type PromoteAICorrectionInput struct {
+	CorrectionID string  `json:"correctionId"`
+	Title        *string `json:"title,omitempty"`
+	// Start the case as Active rather than Candidate.
+	Activate *bool `json:"activate,omitempty"`
 }
 
 type ProposeMyShiftSwapInput struct {
@@ -7710,6 +7768,12 @@ type StartBillingTransferRunInput struct {
 	MarkCompletedReadyToInvoice *bool `json:"markCompletedReadyToInvoice,omitempty"`
 }
 
+type StartExtractionEvalRunInput struct {
+	ProviderID string `json:"providerId"`
+	// How many active cases to run, newest first; 50 by default, at most 500.
+	CaseLimit *int `json:"caseLimit,omitempty"`
+}
+
 type StartWorkerChecklistInput struct {
 	WorkerID   string `json:"workerId"`
 	TemplateID string `json:"templateId"`
@@ -8249,6 +8313,13 @@ type UpdateEscrowAccountInput struct {
 	WorkerID           string `json:"workerId"`
 	TargetAmountMinor  int    `json:"targetAmountMinor"`
 	AnnualInterestRate string `json:"annualInterestRate"`
+}
+
+type UpdateExtractionEvalCaseInput struct {
+	Version int                        `json:"version"`
+	Title   *string                    `json:"title,omitempty"`
+	Notes   *string                    `json:"notes,omitempty"`
+	Status  *extractioneval.CaseStatus `json:"status,omitempty"`
 }
 
 type UpdateFuelIndexPriceInput struct {

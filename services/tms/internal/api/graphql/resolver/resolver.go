@@ -223,6 +223,7 @@ type Params struct {
 	AIFeedbackService            services.AIFeedbackService
 	AgentEvaluationService       services.AgentEvaluationService
 	AgentEvalCaseService         services.AgentEvalCaseService
+	ExtractionEvalService        services.ExtractionEvalService
 	AgentQualityService          services.AgentQualityService
 	AgentExceptionService        services.AgentExceptionService
 	AgentDecisionService         services.AgentDecisionService
@@ -390,6 +391,7 @@ type Resolver struct {
 	aiFeedbackService            services.AIFeedbackService
 	agentEvaluationService       services.AgentEvaluationService
 	agentEvalCaseService         services.AgentEvalCaseService
+	extractionEvalService        services.ExtractionEvalService
 	agentQualityService          services.AgentQualityService
 	agentExceptionService        services.AgentExceptionService
 	agentDecisionService         services.AgentDecisionService
@@ -558,6 +560,7 @@ func New(p Params) *Resolver {
 		aiFeedbackService:            p.AIFeedbackService,
 		agentEvaluationService:       p.AgentEvaluationService,
 		agentEvalCaseService:         p.AgentEvalCaseService,
+		extractionEvalService:        p.ExtractionEvalService,
 		agentQualityService:          p.AgentQualityService,
 		agentExceptionService:        p.AgentExceptionService,
 		agentDecisionService:         p.AgentDecisionService,

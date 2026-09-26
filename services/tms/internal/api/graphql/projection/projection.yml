@@ -76,6 +76,8 @@ aliases:
     equipmentStatus: status
 
 virtuals:
+  AICorrection:
+    - accuracy
   AccountingAppCredential:
     - hasWebhookVerifier
   AccountingMapping:

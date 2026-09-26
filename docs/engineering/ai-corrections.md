@@ -34,7 +34,8 @@ A draft with nothing predicted is skipped with `aicorrection.ErrNothingPredicted
 The shipment form is pre-filled from the draft, so `Correct` means "not changed", not
 "checked". Treat it as an upper bound.
 
-Comparison rules live in `aicorrectionservice/compare.go`: identifiers ignore case and
+Comparison rules live in `aicorrection.Score` (`domain/aicorrection/score.go`), shared by capture and
+by evaluation runs: identifiers ignore case and
 punctuation, names also match when one contains the other (at least four characters), money
 compares to the cent, weights and pieces compare their first integer, postal codes compare
 five digits, and dates match the stop's scheduled day in the location's timezone or UTC.
@@ -62,3 +63,71 @@ Any export for training must:
 `data_retention.ai_correction_retention_period`: 730 days by default, at least 30, zero reads
 as the default. Set on the Data Retention page. `AICorrectionRetentionWorkflow` runs nightly
 at 02:40 UTC on the system queue and purges each organization in batches.
+
+## Production accuracy
+
+`extractionAccuracy(windowDays)` reads the corrections captured in the last 1–365 days and
+reports overall accuracy, accuracy per field (stop fields grouped across stops, so
+`stops.pickup.city`), and accuracy grouped by model and by document kind. An empty model means
+the draft was read by rules alone. When the window holds more corrections than one report reads,
+the report says `sampled`. These numbers inherit the upper-bound caveat above.
+
+## Evaluation set
+
+Production accuracy tells you how the current setup did on last month's documents. The
+evaluation set answers a different question: how would *this* model do on the *same* documents?
+It is stored in three tables (migration `20261231006810_extraction_eval`).
+
+### Cases (`extraction_eval_cases`)
+
+A case is a frozen test: the page text the extractor reads, and the snapshot a person confirmed.
+`PromoteCorrection` builds one from a correction:
+
+- the correction must still have its document, and a correction becomes at most one case;
+- the document's extracted page text is copied into the case (at most 100 pages of 20,000
+  characters each), so a later re-OCR, edit or deletion of the document never changes the test;
+- `expected` is the correction's `confirmed` snapshot;
+- `input_hash` covers the task, file name and pages, so identical inputs can be recognised.
+
+A case is `Candidate` (added, not yet run), `Active` (run by every evaluation) or `Retired`
+(kept for history, no longer run). Review a candidate's expected values before activating it:
+it is only as good as what the person confirmed. Deleting a case never changes past results,
+which keep the case's title.
+
+### Runs (`extraction_eval_runs`, `extraction_eval_results`)
+
+A run evaluates one AI provider over up to `case_limit` active cases (50 by default, at most
+500). The provider must be enabled and allowed to serve `DocumentExtraction`. One organization
+has at most one queued or running run at a time.
+
+`ExtractionEvalRunWorkflow` runs on the document-intelligence queue. For each pending case, it:
+
+1. checks the run is still active and the organization's evaluation budget, which is the same
+   budget agent evaluation suites draw on (`agentqualityservice.CheckEvaluationBudget`). A spent
+   budget ends the run as `BudgetStopped`;
+2. calls `aidocumentservice.ExtractRateConfirmationForEvaluation` with the case's frozen pages.
+   The call is pinned to the chosen provider (`completionrouter` `RequireProvider`): if the
+   provider cannot serve the call, the case fails rather than quietly falling back to another
+   model. Usage is recorded with the evaluation purpose;
+3. scores the prediction against the case's `expected` snapshot with `aicorrection.Score`, and
+   records the model served, latency, tokens and cost.
+
+A failure that can be retried is retried by Temporal; the last attempt records the case as
+`Failed` and moves on. The workflow continues as new after a fixed number of cases, so a long run keeps
+a bounded history. Cancelling stops the run before its next case.
+
+The run's accuracy is correct over scored across every completed case, with per-field accuracy
+alongside. Unlike production accuracy it is not an upper bound: the model never saw the
+person's answer.
+
+### Permissions and retention
+
+Reading the set and runs needs `AgentEvalSuite` read; promoting a correction and starting a run
+need create; editing, retiring, deleting a case and cancelling a run need update. Every change
+is audited.
+
+Runs and their results older than the correction retention period are purged by the same nightly
+`AICorrectionRetentionWorkflow`. Cases are not purged: they are the organization's own test set
+and stay until someone deletes them. The case holds document text, so the same export rules as
+corrections apply to it: consent at export time, and anonymization before anything leaves the
+tenant.

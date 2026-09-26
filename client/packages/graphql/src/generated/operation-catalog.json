@@ -1,6 +1,6 @@
 {
-  "operationCount": 888,
-  "fragmentCount": 242,
+  "operationCount": 902,
+  "fragmentCount": 251,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -1835,6 +1835,58 @@
       "sdl": "query AIAuditExportTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  aiAuditExports(input: $input) {\n    edges {\n      node {\n        ...AIAuditExportFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AIAuditExportFields on AIAuditExport {\n  id\n  requestedByUserId\n  requestedBy {\n    id\n    name\n    username\n    profilePicUrl\n    thumbnailUrl\n  }\n  format\n  filters\n  rangeFrom\n  rangeTo\n  snapshotSeq\n  status\n  rowCount\n  byteSize\n  sha256\n  artifactExpiresAt\n  chainKeyId\n  chainFirstSeq\n  chainLastSeq\n  chainComplete\n  errorMessage\n  startedAt\n  completedAt\n  downloadable\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
+      "name": "AICorrectionDetail",
+      "kind": "query",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:0ed204533a23a8ffecec788703a5e20e8808904835f2f77d6aa568ec1ab05664",
+      "rootFields": [
+        "aiCorrection"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AICorrectionDetailFields",
+        "AICorrectionFieldResultFields",
+        "AICorrectionTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query AICorrectionDetail($id: ID!) {\n  aiCorrection(id: $id) {\n    ...AICorrectionDetailFields\n  }\n}\n\nfragment AICorrectionDetailFields on AICorrection {\n  ...AICorrectionTableRowFields\n  fieldResults {\n    ...AICorrectionFieldResultFields\n  }\n}\n\nfragment AICorrectionFieldResultFields on AICorrectionFieldResult {\n  key\n  predicted\n  confirmed\n  outcome\n  source\n  confidence\n}\n\nfragment AICorrectionTableRowFields on AICorrection {\n  id\n  documentId\n  subjectId\n  documentKind\n  documentFingerprint\n  extractionModel\n  predictedConfidence\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  capturedAt\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AICorrectionTable",
+      "kind": "query",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:3be549ba2e6848838b2bae954e6bd4c34a9fe03681870dd83e4e71ae304e40f9",
+      "rootFields": [
+        "aiCorrections"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "AICorrectionTableRowFields",
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AICorrectionTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  aiCorrections(input: $input) {\n    edges {\n      node {\n        ...AICorrectionTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AICorrectionTableRowFields on AICorrection {\n  id\n  documentId\n  subjectId\n  documentKind\n  documentFingerprint\n  extractionModel\n  predictedConfidence\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  capturedAt\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
       "name": "AIFeedbackTable",
       "kind": "query",
       "domain": "ai-feedback",
@@ -3556,6 +3608,28 @@
       ],
       "usages": [],
       "sdl": "mutation CancelDotTest($id: ID!, $reason: String!) {\n  cancelDotTest(id: $id, reason: $reason) {\n    ...WorkerDotTestFields\n  }\n}\n\nfragment WorkerDotTestFields on WorkerDOTTest {\n  id\n  workerId\n  testType\n  substance\n  status\n  result\n  isDot\n  reason\n  scheduledAt\n  collectedAt\n  resultAt\n  collectionSite\n  collectorName\n  specimenId\n  labName\n  mroName\n  mroVerifiedAt\n  alcoholConcentration\n  safetyEventId\n  drawEntryId\n  documentId\n  notes\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "CancelExtractionEvalRun",
+      "kind": "mutation",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:a10fd933738a3fb17410e9299af3e277c6f8caf4344bab5eb8eef4427e44b24f",
+      "rootFields": [
+        "cancelExtractionEvalRun"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ExtractionEvalRunFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CancelExtractionEvalRun($id: ID!) {\n  cancelExtractionEvalRun(id: $id) {\n    ...ExtractionEvalRunFields\n  }\n}\n\nfragment ExtractionEvalRunFields on ExtractionEvalRun {\n  id\n  status\n  providerId\n  providerName\n  providerModel\n  servedModel\n  caseLimit\n  casesTotal\n  casesCompleted\n  casesFailed\n  casesSkipped\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  costUsd\n  inputTokens\n  outputTokens\n  avgLatencyMs\n  stopReason\n  failureMessage\n  startedAt\n  finishedAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "CancelFuelCard",
@@ -6525,6 +6599,26 @@
       "sdl": "mutation DeleteEmploymentVerification($id: ID!) {\n  deleteEmploymentVerification(id: $id)\n}"
     },
     {
+      "name": "DeleteExtractionEvalCase",
+      "kind": "mutation",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:4c69388ebac0d5ef618839865cc3665156f2f9d625726a3c26caf1708a8e0fb1",
+      "rootFields": [
+        "deleteExtractionEvalCase"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "mutation DeleteExtractionEvalCase($id: ID!) {\n  deleteExtractionEvalCase(id: $id)\n}"
+    },
+    {
       "name": "DeleteFuelIndex",
       "kind": "mutation",
       "domain": "fuel-surcharge",
@@ -8769,6 +8863,188 @@
       "fragments": [],
       "usages": [],
       "sdl": "query ExportSettlementBatchCsv($batchId: ID!) {\n  exportSettlementBatchCsv(batchId: $batchId)\n}"
+    },
+    {
+      "name": "ExtractionAccuracy",
+      "kind": "query",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:8b81dc4b87ae565327da143472887589b827a6906d106eacb1c54d5c1ed37e0d",
+      "rootFields": [
+        "extractionAccuracy"
+      ],
+      "variables": [
+        {
+          "name": "windowDays",
+          "type": "Int",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ExtractionEvalRunFields",
+        "ExtractionFieldAccuracyFields"
+      ],
+      "usages": [],
+      "sdl": "query ExtractionAccuracy($windowDays: Int) {\n  extractionAccuracy(windowDays: $windowDays) {\n    windowDays\n    since\n    corrections\n    sampled\n    scored\n    correct\n    corrected\n    missed\n    unconfirmed\n    accuracy\n    byModel {\n      key\n      corrections\n      scored\n      correct\n      accuracy\n    }\n    byKind {\n      key\n      corrections\n      scored\n      correct\n      accuracy\n    }\n    fields {\n      ...ExtractionFieldAccuracyFields\n    }\n    cases {\n      candidate\n      active\n      retired\n    }\n    recentRuns {\n      ...ExtractionEvalRunFields\n    }\n  }\n}\n\nfragment ExtractionEvalRunFields on ExtractionEvalRun {\n  id\n  status\n  providerId\n  providerName\n  providerModel\n  servedModel\n  caseLimit\n  casesTotal\n  casesCompleted\n  casesFailed\n  casesSkipped\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  costUsd\n  inputTokens\n  outputTokens\n  avgLatencyMs\n  stopReason\n  failureMessage\n  startedAt\n  finishedAt\n  version\n  createdAt\n  updatedAt\n}\n\nfragment ExtractionFieldAccuracyFields on ExtractionFieldAccuracy {\n  key\n  scored\n  correct\n  corrected\n  missed\n  unconfirmed\n  unscored\n  accuracy\n}"
+    },
+    {
+      "name": "ExtractionEvalCaseDetail",
+      "kind": "query",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:0ce9517b2ff163e5ea9bdb52ee582e25c44aeb5f2a8e0e4a6300ba8efce7cf20",
+      "rootFields": [
+        "extractionEvalCase"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ExtractionEvalCaseTableRowFields",
+        "ExtractionSnapshotFields"
+      ],
+      "usages": [],
+      "sdl": "query ExtractionEvalCaseDetail($id: ID!) {\n  extractionEvalCase(id: $id) {\n    ...ExtractionEvalCaseTableRowFields\n    expected {\n      ...ExtractionSnapshotFields\n    }\n  }\n}\n\nfragment ExtractionEvalCaseTableRowFields on ExtractionEvalCase {\n  id\n  status\n  title\n  documentKind\n  documentFingerprint\n  fileName\n  pageCount\n  expectedFieldCount\n  sourceCorrectionId\n  sourceDocumentId\n  notes\n  version\n  createdAt\n  updatedAt\n}\n\nfragment ExtractionSnapshotFields on ExtractionSnapshot {\n  fields {\n    key\n    value\n  }\n  stops {\n    role\n    sequence\n    name\n    addressLine1\n    addressLine2\n    city\n    state\n    postalCode\n    date\n    timeWindow\n    appointmentRequired\n    scheduledWindowStart\n    timezone\n  }\n}"
+    },
+    {
+      "name": "ExtractionEvalCaseTable",
+      "kind": "query",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:7216705a09f417b6317453860bd3a0895b1a109353bf79b51db1b61d4ff802ab",
+      "rootFields": [
+        "extractionEvalCases"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields",
+        "ExtractionEvalCaseTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query ExtractionEvalCaseTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  extractionEvalCases(input: $input) {\n    edges {\n      node {\n        ...ExtractionEvalCaseTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ExtractionEvalCaseTableRowFields on ExtractionEvalCase {\n  id\n  status\n  title\n  documentKind\n  documentFingerprint\n  fileName\n  pageCount\n  expectedFieldCount\n  sourceCorrectionId\n  sourceDocumentId\n  notes\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ExtractionEvalResultDetail",
+      "kind": "query",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:d5e1ffb58ee9b9b27830b744f5220c7734b462aa736d0de005f0c8f8afc5c355",
+      "rootFields": [
+        "extractionEvalResult"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AICorrectionFieldResultFields",
+        "ExtractionEvalResultTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query ExtractionEvalResultDetail($id: ID!) {\n  extractionEvalResult(id: $id) {\n    ...ExtractionEvalResultTableRowFields\n    fieldResults {\n      ...AICorrectionFieldResultFields\n    }\n  }\n}\n\nfragment AICorrectionFieldResultFields on AICorrectionFieldResult {\n  key\n  predicted\n  confirmed\n  outcome\n  source\n  confidence\n}\n\nfragment ExtractionEvalResultTableRowFields on ExtractionEvalResult {\n  id\n  runId\n  caseId\n  caseTitle\n  ordinal\n  status\n  model\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  latencyMs\n  costUsd\n  errorMessage\n  completedAt\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ExtractionEvalResultTable",
+      "kind": "query",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:c3024cec4f551f6148e539c3bf3f9637ce62b1c1ec8c751edd6f64a70c5713c0",
+      "rootFields": [
+        "extractionEvalResults"
+      ],
+      "variables": [
+        {
+          "name": "runId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields",
+        "ExtractionEvalResultTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "query ExtractionEvalResultTable($runId: ID!, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  extractionEvalResults(runId: $runId, input: $input) {\n    edges {\n      node {\n        ...ExtractionEvalResultTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ExtractionEvalResultTableRowFields on ExtractionEvalResult {\n  id\n  runId\n  caseId\n  caseTitle\n  ordinal\n  status\n  model\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  latencyMs\n  costUsd\n  errorMessage\n  completedAt\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ExtractionEvalRunDetail",
+      "kind": "query",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:c24e85086caa1e469ad7aa6be5622d59c9a11ea663a2f572bd73fced8dab7b20",
+      "rootFields": [
+        "extractionEvalRun"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ExtractionEvalRunDetailFields",
+        "ExtractionEvalRunFields",
+        "ExtractionFieldAccuracyFields"
+      ],
+      "usages": [],
+      "sdl": "query ExtractionEvalRunDetail($id: ID!) {\n  extractionEvalRun(id: $id) {\n    ...ExtractionEvalRunDetailFields\n  }\n}\n\nfragment ExtractionEvalRunDetailFields on ExtractionEvalRun {\n  ...ExtractionEvalRunFields\n  fieldAccuracy {\n    ...ExtractionFieldAccuracyFields\n  }\n}\n\nfragment ExtractionEvalRunFields on ExtractionEvalRun {\n  id\n  status\n  providerId\n  providerName\n  providerModel\n  servedModel\n  caseLimit\n  casesTotal\n  casesCompleted\n  casesFailed\n  casesSkipped\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  costUsd\n  inputTokens\n  outputTokens\n  avgLatencyMs\n  stopReason\n  failureMessage\n  startedAt\n  finishedAt\n  version\n  createdAt\n  updatedAt\n}\n\nfragment ExtractionFieldAccuracyFields on ExtractionFieldAccuracy {\n  key\n  scored\n  correct\n  corrected\n  missed\n  unconfirmed\n  unscored\n  accuracy\n}"
+    },
+    {
+      "name": "ExtractionEvalRunTable",
+      "kind": "query",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:615b9f64a568a57ce4c0330187dcb4e61cbc562c96fc98915dbc0f1ae7262bef",
+      "rootFields": [
+        "extractionEvalRuns"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields",
+        "ExtractionEvalRunFields"
+      ],
+      "usages": [],
+      "sdl": "query ExtractionEvalRunTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  extractionEvalRuns(input: $input) {\n    edges {\n      node {\n        ...ExtractionEvalRunFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment ExtractionEvalRunFields on ExtractionEvalRun {\n  id\n  status\n  providerId\n  providerName\n  providerModel\n  servedModel\n  caseLimit\n  casesTotal\n  casesCompleted\n  casesFailed\n  casesSkipped\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  costUsd\n  inputTokens\n  outputTokens\n  avgLatencyMs\n  stopReason\n  failureMessage\n  startedAt\n  finishedAt\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "FinalizeDotRandomDraw",
@@ -12687,6 +12963,28 @@
       "sdl": "query ProfileChangeRequests($filter: ProfileChangeFilterInput) {\n  profileChangeRequests(filter: $filter) {\n    id\n    workerId\n    status\n    note\n    submittedAt\n    decidedAt\n    decisionNote\n    version\n    changes {\n      field\n      label\n      from\n      to\n    }\n    worker {\n      id\n      firstName\n      lastName\n    }\n  }\n}"
     },
     {
+      "name": "PromoteAICorrection",
+      "kind": "mutation",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:bfae8f704c81b80720e502a892efe8af44a18d0fc5651d7d795ea03664f794e3",
+      "rootFields": [
+        "promoteAICorrection"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "PromoteAICorrectionInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ExtractionEvalCaseTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation PromoteAICorrection($input: PromoteAICorrectionInput!) {\n  promoteAICorrection(input: $input) {\n    ...ExtractionEvalCaseTableRowFields\n  }\n}\n\nfragment ExtractionEvalCaseTableRowFields on ExtractionEvalCase {\n  id\n  status\n  title\n  documentKind\n  documentFingerprint\n  fileName\n  pageCount\n  expectedFieldCount\n  sourceCorrectionId\n  sourceDocumentId\n  notes\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "ProposeMyShiftSwap",
       "kind": "mutation",
       "domain": "driver-portal",
@@ -16468,6 +16766,28 @@
       "sdl": "mutation StartBillingTransferRun($input: StartBillingTransferRunInput!) {\n  startBillingTransferRun(input: $input) {\n    id\n    status\n    scope\n    billType\n    searchQuery\n    shipmentStatus\n    sourceRunId\n    totalCount\n    processedCount\n    transferredCount\n    notTransferredCount\n    skippedCount\n    markedReadyToInvoiceCount\n    retryableCount\n    unmatchedCount\n    failureMessage\n    cancelRequestedAt\n    queuedAt\n    startedAt\n    completedAt\n  }\n}"
     },
     {
+      "name": "StartExtractionEvalRun",
+      "kind": "mutation",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:ea672f1a8f3e38c00676db1397816a9ea2fbe76a5984639646caae893a4df346",
+      "rootFields": [
+        "startExtractionEvalRun"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "StartExtractionEvalRunInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ExtractionEvalRunFields"
+      ],
+      "usages": [],
+      "sdl": "mutation StartExtractionEvalRun($input: StartExtractionEvalRunInput!) {\n  startExtractionEvalRun(input: $input) {\n    ...ExtractionEvalRunFields\n  }\n}\n\nfragment ExtractionEvalRunFields on ExtractionEvalRun {\n  id\n  status\n  providerId\n  providerName\n  providerModel\n  servedModel\n  caseLimit\n  casesTotal\n  casesCompleted\n  casesFailed\n  casesSkipped\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  costUsd\n  inputTokens\n  outputTokens\n  avgLatencyMs\n  stopReason\n  failureMessage\n  startedAt\n  finishedAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "StartMyTraining",
       "kind": "mutation",
       "domain": "driver-portal",
@@ -17910,6 +18230,33 @@
       "fragments": [],
       "usages": [],
       "sdl": "mutation UpdateEscrowAccount($input: UpdateEscrowAccountInput!) {\n  updateEscrowAccount(input: $input) {\n    id\n    version\n  }\n}"
+    },
+    {
+      "name": "UpdateExtractionEvalCase",
+      "kind": "mutation",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "hash": "sha256:91005cef1e2a24e5ecc21680b4ef16a06161cae4fbc4e5ecee337820fb5a0e6d",
+      "rootFields": [
+        "updateExtractionEvalCase"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "UpdateExtractionEvalCaseInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "ExtractionEvalCaseTableRowFields"
+      ],
+      "usages": [],
+      "sdl": "mutation UpdateExtractionEvalCase($id: ID!, $input: UpdateExtractionEvalCaseInput!) {\n  updateExtractionEvalCase(id: $id, input: $input) {\n    ...ExtractionEvalCaseTableRowFields\n  }\n}\n\nfragment ExtractionEvalCaseTableRowFields on ExtractionEvalCase {\n  id\n  status\n  title\n  documentKind\n  documentFingerprint\n  fileName\n  pageCount\n  expectedFieldCount\n  sourceCorrectionId\n  sourceDocumentId\n  notes\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "UpdateFuelCard",
@@ -21069,6 +21416,47 @@
       "sdl": "fragment AIAuditExportFields on AIAuditExport {\n  id\n  requestedByUserId\n  requestedBy {\n    id\n    name\n    username\n    profilePicUrl\n    thumbnailUrl\n  }\n  format\n  filters\n  rangeFrom\n  rangeTo\n  snapshotSeq\n  status\n  rowCount\n  byteSize\n  sha256\n  artifactExpiresAt\n  chainKeyId\n  chainFirstSeq\n  chainLastSeq\n  chainComplete\n  errorMessage\n  startedAt\n  completedAt\n  downloadable\n  createdAt\n  updatedAt\n}"
     },
     {
+      "name": "AICorrectionDetailFields",
+      "typeCondition": "AICorrection",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "fragments": [
+        "AICorrectionFieldResultFields",
+        "AICorrectionTableRowFields"
+      ],
+      "usedByOperations": [
+        "AICorrectionDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment AICorrectionDetailFields on AICorrection {\n  ...AICorrectionTableRowFields\n  fieldResults {\n    ...AICorrectionFieldResultFields\n  }\n}\n\nfragment AICorrectionFieldResultFields on AICorrectionFieldResult {\n  key\n  predicted\n  confirmed\n  outcome\n  source\n  confidence\n}\n\nfragment AICorrectionTableRowFields on AICorrection {\n  id\n  documentId\n  subjectId\n  documentKind\n  documentFingerprint\n  extractionModel\n  predictedConfidence\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  capturedAt\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AICorrectionFieldResultFields",
+      "typeCondition": "AICorrectionFieldResult",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AICorrectionDetail",
+        "ExtractionEvalResultDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment AICorrectionFieldResultFields on AICorrectionFieldResult {\n  key\n  predicted\n  confirmed\n  outcome\n  source\n  confidence\n}"
+    },
+    {
+      "name": "AICorrectionTableRowFields",
+      "typeCondition": "AICorrection",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AICorrectionDetail",
+        "AICorrectionTable"
+      ],
+      "usages": [],
+      "sdl": "fragment AICorrectionTableRowFields on AICorrection {\n  id\n  documentId\n  subjectId\n  documentKind\n  documentFingerprint\n  extractionModel\n  predictedConfidence\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  capturedAt\n  createdAt\n  updatedAt\n}"
+    },
+    {
       "name": "AIFeedbackTableRowFields",
       "typeCondition": "AIFeedback",
       "domain": "ai-feedback",
@@ -21595,6 +21983,7 @@
         "AgentWorstRatedAnswerTable",
         "AIAuditEventTable",
         "AIAuditExportTable",
+        "AICorrectionTable",
         "AIFeedbackTable",
         "AIProviderCards",
         "AIRetrievalFailedEntryTable",
@@ -21620,6 +22009,9 @@
         "EquipmentManufacturerTable",
         "EquipmentTypeTable",
         "EscrowAccountTable",
+        "ExtractionEvalCaseTable",
+        "ExtractionEvalResultTable",
+        "ExtractionEvalRunTable",
         "FiscalYearTable",
         "FleetCodeTable",
         "FormulaTemplateTable",
@@ -22040,6 +22432,90 @@
       ],
       "usages": [],
       "sdl": "fragment EquipmentTypeTableFields on EquipmentType {\n  id\n  code\n  color\n}"
+    },
+    {
+      "name": "ExtractionEvalCaseTableRowFields",
+      "typeCondition": "ExtractionEvalCase",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "ExtractionEvalCaseDetail",
+        "ExtractionEvalCaseTable",
+        "PromoteAICorrection",
+        "UpdateExtractionEvalCase"
+      ],
+      "usages": [],
+      "sdl": "fragment ExtractionEvalCaseTableRowFields on ExtractionEvalCase {\n  id\n  status\n  title\n  documentKind\n  documentFingerprint\n  fileName\n  pageCount\n  expectedFieldCount\n  sourceCorrectionId\n  sourceDocumentId\n  notes\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ExtractionEvalResultTableRowFields",
+      "typeCondition": "ExtractionEvalResult",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "ExtractionEvalResultDetail",
+        "ExtractionEvalResultTable"
+      ],
+      "usages": [],
+      "sdl": "fragment ExtractionEvalResultTableRowFields on ExtractionEvalResult {\n  id\n  runId\n  caseId\n  caseTitle\n  ordinal\n  status\n  model\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  latencyMs\n  costUsd\n  errorMessage\n  completedAt\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ExtractionEvalRunDetailFields",
+      "typeCondition": "ExtractionEvalRun",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "fragments": [
+        "ExtractionEvalRunFields",
+        "ExtractionFieldAccuracyFields"
+      ],
+      "usedByOperations": [
+        "ExtractionEvalRunDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment ExtractionEvalRunDetailFields on ExtractionEvalRun {\n  ...ExtractionEvalRunFields\n  fieldAccuracy {\n    ...ExtractionFieldAccuracyFields\n  }\n}\n\nfragment ExtractionEvalRunFields on ExtractionEvalRun {\n  id\n  status\n  providerId\n  providerName\n  providerModel\n  servedModel\n  caseLimit\n  casesTotal\n  casesCompleted\n  casesFailed\n  casesSkipped\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  costUsd\n  inputTokens\n  outputTokens\n  avgLatencyMs\n  stopReason\n  failureMessage\n  startedAt\n  finishedAt\n  version\n  createdAt\n  updatedAt\n}\n\nfragment ExtractionFieldAccuracyFields on ExtractionFieldAccuracy {\n  key\n  scored\n  correct\n  corrected\n  missed\n  unconfirmed\n  unscored\n  accuracy\n}"
+    },
+    {
+      "name": "ExtractionEvalRunFields",
+      "typeCondition": "ExtractionEvalRun",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "CancelExtractionEvalRun",
+        "ExtractionAccuracy",
+        "ExtractionEvalRunDetail",
+        "ExtractionEvalRunTable",
+        "StartExtractionEvalRun"
+      ],
+      "usages": [],
+      "sdl": "fragment ExtractionEvalRunFields on ExtractionEvalRun {\n  id\n  status\n  providerId\n  providerName\n  providerModel\n  servedModel\n  caseLimit\n  casesTotal\n  casesCompleted\n  casesFailed\n  casesSkipped\n  scoredCount\n  correctCount\n  correctedCount\n  missedCount\n  unconfirmedCount\n  unscoredCount\n  accuracy\n  costUsd\n  inputTokens\n  outputTokens\n  avgLatencyMs\n  stopReason\n  failureMessage\n  startedAt\n  finishedAt\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "ExtractionFieldAccuracyFields",
+      "typeCondition": "ExtractionFieldAccuracy",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "ExtractionAccuracy",
+        "ExtractionEvalRunDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment ExtractionFieldAccuracyFields on ExtractionFieldAccuracy {\n  key\n  scored\n  correct\n  corrected\n  missed\n  unconfirmed\n  unscored\n  accuracy\n}"
+    },
+    {
+      "name": "ExtractionSnapshotFields",
+      "typeCondition": "ExtractionSnapshot",
+      "domain": "extraction-eval",
+      "sourceFile": "src/operations/extraction-eval/extraction-eval.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "ExtractionEvalCaseDetail"
+      ],
+      "usages": [],
+      "sdl": "fragment ExtractionSnapshotFields on ExtractionSnapshot {\n  fields {\n    key\n    value\n  }\n  stops {\n    role\n    sequence\n    name\n    addressLine1\n    addressLine2\n    city\n    state\n    postalCode\n    date\n    timeWindow\n    appointmentRequired\n    scheduledWindowStart\n    timezone\n  }\n}"
     },
     {
       "name": "FiscalPeriodFields",
@@ -29984,6 +30460,27 @@
       ],
       "sdl": "input ProfileChangeFilterInput {\n  limit: Int\n  statuses: [ProfileChangeStatus!]\n  \"\"\"Narrows the queue to the people a manager answers for.\"\"\"\n  teamOnly: Boolean\n  workerId: ID\n}"
     },
+    "PromoteAICorrectionInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "activate",
+          "type": "Boolean",
+          "defaultValue": null
+        },
+        {
+          "name": "correctionId",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input PromoteAICorrectionInput {\n  \"\"\"Start the case as Active rather than Candidate.\"\"\"\n  activate: Boolean\n  correctionId: ID!\n  title: String\n}"
+    },
     "ProposeMyShiftSwapInput": {
       "kind": "input",
       "fields": [
@@ -32881,6 +33378,22 @@
       ],
       "sdl": "input StartBillingTransferRunInput {\n  billType: BillType = Invoice\n  \"\"\"\n  Mark Completed shipments Ready to Invoice before transferring them, when their readiness allows it.\n  \"\"\"\n  markCompletedReadyToInvoice: Boolean = false\n  \"\"\"The search a scope-AllMatching run replays when it starts.\"\"\"\n  query: String\n  scope: BillingTransferRunScope!\n  \"\"\"Required when scope is Selected.\"\"\"\n  shipmentIds: [ID!]\n  \"\"\"Narrow to Completed or ReadyToInvoice shipments.\"\"\"\n  status: ShipmentStatus\n}"
     },
+    "StartExtractionEvalRunInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "caseLimit",
+          "type": "Int",
+          "defaultValue": null
+        },
+        {
+          "name": "providerId",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input StartExtractionEvalRunInput {\n  \"\"\"\n  How many active cases to run, newest first; 50 by default, at most 500.\n  \"\"\"\n  caseLimit: Int\n  providerId: ID!\n}"
+    },
     "StartWorkerChecklistInput": {
       "kind": "input",
       "fields": [
@@ -33868,6 +34381,32 @@
         }
       ],
       "sdl": "input UpdateEscrowAccountInput {\n  annualInterestRate: Decimal!\n  id: ID!\n  targetAmountMinor: Int!\n  version: Int!\n  workerId: ID!\n}"
+    },
+    "UpdateExtractionEvalCaseInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "notes",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "status",
+          "type": "ExtractionEvalCaseStatus",
+          "defaultValue": null
+        },
+        {
+          "name": "title",
+          "type": "String",
+          "defaultValue": null
+        },
+        {
+          "name": "version",
+          "type": "Int!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input UpdateExtractionEvalCaseInput {\n  notes: String\n  status: ExtractionEvalCaseStatus\n  title: String\n  version: Int!\n}"
     },
     "UpdateFuelIndexPriceInput": {
       "kind": "input",
@@ -38692,6 +39231,15 @@
         "Selected"
       ],
       "sdl": "enum RandomEntryStatus {\n  Completed\n  Excused\n  Missed\n  Notified\n  Selected\n}"
+    },
+    "ExtractionEvalCaseStatus": {
+      "kind": "enum",
+      "values": [
+        "Active",
+        "Candidate",
+        "Retired"
+      ],
+      "sdl": "enum ExtractionEvalCaseStatus {\n  Active\n  Candidate\n  Retired\n}"
     },
     "LeaveMeasurementMethod": {
       "kind": "enum",
