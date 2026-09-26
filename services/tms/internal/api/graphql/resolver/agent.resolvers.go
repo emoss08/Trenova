@@ -145,6 +145,10 @@ func (r *agentProposalFieldResolver) Resource(ctx context.Context, obj *toolsche
 	return &obj.Resource, nil
 }
 
+func (r *agentProposalFieldResolver) Choices(ctx context.Context, obj *toolschema.Field) ([]*toolschema.Choice, error) {
+	return r.subsetChoices(ctx, obj), nil
+}
+
 func (r *agentRunResolver) TraceURL(ctx context.Context, obj *agent.AgentRun) (*string, error) {
 	return r.traceURLOf(obj.TraceID), nil
 }

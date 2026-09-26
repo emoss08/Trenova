@@ -3171,6 +3171,10 @@ type AgentProposalEdge {
 One parameter of a proposal's tool as a person can edit it, derived from the tool's schema.
 """
 type AgentProposalField {
+  """
+  For a RecordSubset field, every record the agent proposed, in the order proposed, for a person to untick: bounded by the tool's own limit on the list (at most 5000). Absent for every other kind.
+  """
+  choices: [AgentProposalFieldChoice!]
   description: String!
   kind: AgentProposalFieldKind!
   label: String!
@@ -3193,6 +3197,15 @@ type AgentProposalField {
   resource: String
 }
 
+"""One record a RecordSubset field proposed."""
+type AgentProposalFieldChoice {
+  id: ID!
+  """
+  The words the record is known by, such as a shipment's PRO number; its id when the record is gone or the reader may not read its resource.
+  """
+  label: String!
+}
+
 """
 The control a parameter takes when edited: the schema's type, read for a form.
 """
@@ -3205,7 +3218,7 @@ enum AgentProposalFieldKind {
   Multiline
   Number
   """
-  A list of record ids the agent proposed to act on. An approver may remove ids, never add one, and must keep at least one; the records are listed in the preview by their ids.
+  A list of record ids the agent proposed to act on. An approver may remove ids, never add one, and must keep at least one; the field's choices list every record proposed.
   """
   RecordSubset
   Text

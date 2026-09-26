@@ -1798,6 +1798,7 @@ type ComplexityRoot struct {
 	}
 
 	AgentProposalField struct {
+		Choices     func(childComplexity int) int
 		Description func(childComplexity int) int
 		Kind        func(childComplexity int) int
 		Label       func(childComplexity int) int
@@ -1809,6 +1810,11 @@ type ComplexityRoot struct {
 		ReadOnly    func(childComplexity int) int
 		Required    func(childComplexity int) int
 		Resource    func(childComplexity int) int
+	}
+
+	AgentProposalFieldChoice struct {
+		ID    func(childComplexity int) int
+		Label func(childComplexity int) int
 	}
 
 	AgentProposalPreview struct {
@@ -20292,6 +20298,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentProposalEdge.Node(childComplexity), true
 
+	case "AgentProposalField.choices":
+		if e.ComplexityRoot.AgentProposalField.Choices == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalField.Choices(childComplexity), true
 	case "AgentProposalField.description":
 		if e.ComplexityRoot.AgentProposalField.Description == nil {
 			break
@@ -20358,6 +20370,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentProposalField.Resource(childComplexity), true
+
+	case "AgentProposalFieldChoice.id":
+		if e.ComplexityRoot.AgentProposalFieldChoice.ID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalFieldChoice.ID(childComplexity), true
+	case "AgentProposalFieldChoice.label":
+		if e.ComplexityRoot.AgentProposalFieldChoice.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentProposalFieldChoice.Label(childComplexity), true
 
 	case "AgentProposalPreview.changes":
 		if e.ComplexityRoot.AgentProposalPreview.Changes == nil {
@@ -81382,6 +81407,15 @@ type AgentProposalField {
   readOnly: Boolean!
   "For a RecordSubset field, the permission resource its ids belong to (such as shipment); absent for every other kind."
   resource: String
+  "For a RecordSubset field, every record the agent proposed, in the order proposed, for a person to untick: bounded by the tool's own limit on the list (at most 5000). Absent for every other kind."
+  choices: [AgentProposalFieldChoice!]
+}
+
+"One record a RecordSubset field proposed."
+type AgentProposalFieldChoice {
+  id: ID!
+  "The words the record is known by, such as a shipment's PRO number; its id when the record is gone or the reader may not read its resource."
+  label: String!
 }
 
 "The control a parameter takes when edited: the schema's type, read for a form."
@@ -81394,7 +81428,7 @@ enum AgentProposalFieldKind {
   Choice
   List
   JSON
-  "A list of record ids the agent proposed to act on. An approver may remove ids, never add one, and must keep at least one; the records are listed in the preview by their ids."
+  "A list of record ids the agent proposed to act on. An approver may remove ids, never add one, and must keep at least one; the field's choices list every record proposed."
   RecordSubset
 }
 
@@ -107503,8 +107537,20 @@ func (ec *executionContext) childFields_AgentProposalField(ctx context.Context, 
 		return ec.fieldContext_AgentProposalField_readOnly(ctx, field)
 	case "resource":
 		return ec.fieldContext_AgentProposalField_resource(ctx, field)
+	case "choices":
+		return ec.fieldContext_AgentProposalField_choices(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentProposalField", field.Name)
+}
+
+func (ec *executionContext) childFields_AgentProposalFieldChoice(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "id":
+		return ec.fieldContext_AgentProposalFieldChoice_id(ctx, field)
+	case "label":
+		return ec.fieldContext_AgentProposalFieldChoice_label(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentProposalFieldChoice", field.Name)
 }
 
 func (ec *executionContext) childFields_AgentProposalPreview(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

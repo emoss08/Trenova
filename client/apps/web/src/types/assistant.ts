@@ -866,7 +866,13 @@ export const proposalFieldSchema = z.object({
    * person may drop ids from the proposed set but never add one; the server
    * refuses a widened set.
    */
-  resource: z.string().optional(),
+  resource: z.string().nullish(),
+  /**
+   * For a RecordSubset field, every record the agent proposed, in the order
+   * proposed, named by its label (its id when the record is gone or the
+   * reader may not read it). Absent for every other kind.
+   */
+  choices: z.array(z.object({ id: z.string(), label: z.string() })).nullish(),
 });
 
 /**

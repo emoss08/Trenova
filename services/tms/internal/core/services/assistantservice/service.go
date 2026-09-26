@@ -30,6 +30,8 @@ type Params struct {
 	// person may edit before approving; Decisions carries what they changed.
 	Tools     serviceports.AgentToolRegistry       `optional:"true"`
 	Decisions repositories.AgentDecisionRepository `optional:"true"`
+	// Labeler names the records a proposal offers for a person to untick.
+	Labeler serviceports.RecordLabeler `optional:"true"`
 	// Artifacts keeps what a turn produced besides words; Subjects describes
 	// the record a conversation was opened from.
 	Artifacts repositories.AssistantArtifactRepository `optional:"true"`
@@ -75,6 +77,7 @@ type Service struct {
 	budgets       serviceports.AgentBudgetService
 	tools         serviceports.AgentToolRegistry
 	decisions     repositories.AgentDecisionRepository
+	labeler       serviceports.RecordLabeler
 	artifacts     repositories.AssistantArtifactRepository
 	subjects      serviceports.AgentSubjectDescriber
 	activity      serviceports.AgentActivityPublisher
@@ -102,6 +105,7 @@ func New(p Params) *Service {
 		budgets:       p.Budgets,
 		tools:         p.Tools,
 		decisions:     p.Decisions,
+		labeler:       p.Labeler,
 		artifacts:     p.Artifacts,
 		subjects:      p.Subjects,
 		activity:      p.Activity,

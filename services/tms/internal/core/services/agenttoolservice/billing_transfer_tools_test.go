@@ -283,16 +283,25 @@ func TestTransferToBilling_DeclaresItsShipmentsASubsetAPersonMayNarrow(t *testin
 
 	tool := newTransferToBillingTool(&fakeTransferPlanner{}, &fakeRunStarter{})
 
-	fields := serviceports.ProposalFields(tool, map[string]any{paramShipmentIDs: shipmentIDs(2)})
+	proposed := shipmentIDs(2)
+	fields := serviceports.ProposalFields(tool, map[string]any{paramShipmentIDs: proposed})
 	var subset *toolschema.Field
 	for idx := range fields {
 		if fields[idx].Name == paramShipmentIDs {
 			subset = &fields[idx]
+			continue
 		}
+		assert.Nil(t, fields[idx].Choices, "only a subset field lists records")
 	}
 	require.NotNil(t, subset)
 	assert.Equal(t, toolschema.KindRecordSubset, subset.Kind)
 	assert.Equal(t, permission.ResourceShipment.String(), subset.Resource)
+	assert.Equal(t, []toolschema.Choice{
+		{ID: proposed[0].(string), Label: proposed[0].(string)},
+		{ID: proposed[1].(string), Label: proposed[1].(string)},
+	}, subset.Choices, "every shipment proposed is listed for the approver to untick")
+	assert.LessOrEqual(t, serviceports.MaxBillingTransferCandidateIDs, toolschema.MaxSubsetChoices,
+		"a transfer lists every shipment it may hold")
 
 	policy := tool.Policy()
 	assert.Equal(t, permission.ResourceShipment, policy.Resource)
