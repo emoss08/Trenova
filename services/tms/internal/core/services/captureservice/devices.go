@@ -343,6 +343,9 @@ type RevokeDeviceRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	DeviceID   pulid.ID              `json:"deviceId"`
 	Reason     string                `json:"reason"`
+	// Mine limits the revoke to the caller's own device, and a device that is
+	// somebody else's reads as not found rather than asking for permission.
+	Mine bool `json:"mine"`
 }
 
 // RevokeDevice ends a device. A person may always revoke their own; revoking
@@ -360,6 +363,9 @@ func (s *Service) RevokeDevice(
 	}
 
 	if device.UserID != req.TenantInfo.UserID {
+		if req.Mine {
+			return nil, errortypes.NewNotFoundError("Capture device not found")
+		}
 		if _, err = s.require(
 			ctx,
 			req.TenantInfo,

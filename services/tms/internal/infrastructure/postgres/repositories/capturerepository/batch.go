@@ -105,6 +105,10 @@ func (r *batchRepository) GetByID(
 		})
 	}
 
+	if req.IncludeDevice {
+		query = query.Relation(rel.CaptureDevice)
+	}
+
 	if err := query.Scan(ctx); err != nil {
 		return nil, dberror.HandleNotFoundError(err, "Capture batch")
 	}
@@ -162,7 +166,9 @@ func (r *batchRepository) ListCursor(
 		Cursor:     req.Cursor,
 		TotalCount: totalCount,
 		Query: func(entities *[]*capture.CaptureBatch) *bun.SelectQuery {
-			return dba.NewSelect().Model(entities).Relation(buncolgen.CaptureBatchRelations.CaptureDevice)
+			return dba.NewSelect().
+				Model(entities).
+				Relation(buncolgen.CaptureBatchRelations.CaptureDevice)
 		},
 		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 			sq, err := querybuilder.ApplyCursorFilters(
@@ -178,7 +184,10 @@ func (r *batchRepository) ListCursor(
 }
 
 // narrowBatches applies the queue's own filters on top of the generic ones.
-func narrowBatches(q *bun.SelectQuery, req *repositories.ListCaptureBatchesRequest) *bun.SelectQuery {
+func narrowBatches(
+	q *bun.SelectQuery,
+	req *repositories.ListCaptureBatchesRequest,
+) *bun.SelectQuery {
 	cols := buncolgen.CaptureBatchColumns
 	if len(req.Statuses) > 0 {
 		q = q.Where(cols.Status.In(), bun.List(req.Statuses))

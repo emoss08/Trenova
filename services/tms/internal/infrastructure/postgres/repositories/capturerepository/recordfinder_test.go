@@ -13,8 +13,8 @@ func TestEveryFileableResourceHasALookup(t *testing.T) {
 	t.Parallel()
 
 	for _, resource := range capture.FileableResources() {
-		_, ok := recordLookups[resource.String()]
+		_, ok := recordKinds[resource.String()]
 		assert.True(t, ok, "no lookup for fileable resource %s", resource)
 	}
-	assert.Len(t, recordLookups, len(capture.FileableResources()))
+	assert.Len(t, recordKinds, len(capture.FileableResources()))
 }

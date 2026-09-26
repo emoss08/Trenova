@@ -120,6 +120,11 @@ func (r *CaptureRequest) IsExpired(now int64) bool {
 	}
 }
 
+// IsOpen reports whether the device may still act on the request.
+func (r *CaptureRequest) IsOpen(now int64) bool {
+	return !r.Status.Terminal() && !r.IsExpired(now)
+}
+
 // Transition moves the request, refusing a move its lifecycle does not allow.
 func (r *CaptureRequest) Transition(next RequestStatus, now int64) bool {
 	if !r.Status.CanMoveTo(next) {

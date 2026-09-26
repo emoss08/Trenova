@@ -121,9 +121,10 @@ func (s *Service) GetBatch(
 		tenantInfo,
 		permission.OpRead,
 		&repositories.GetCaptureBatchByIDRequest{
-			ID:           batchID,
-			IncludePages: true,
-			IncludeItems: true,
+			ID:            batchID,
+			IncludePages:  true,
+			IncludeItems:  true,
+			IncludeDevice: true,
 		},
 	)
 }

@@ -149,11 +149,11 @@ func clone[T any](v *T) *T {
 
 type fakeDB struct{}
 
-func (fakeDB) DB() *bun.DB                                  { return nil }
-func (fakeDB) DBForContext(context.Context) bun.IDB         { return nil }
-func (fakeDB) HealthCheck(context.Context) error            { return nil }
-func (fakeDB) IsHealthy(context.Context) bool               { return true }
-func (fakeDB) Close() error                                 { return nil }
+func (fakeDB) DB() *bun.DB                          { return nil }
+func (fakeDB) DBForContext(context.Context) bun.IDB { return nil }
+func (fakeDB) HealthCheck(context.Context) error    { return nil }
+func (fakeDB) IsHealthy(context.Context) bool       { return true }
+func (fakeDB) Close() error                         { return nil }
 func (fakeDB) WithTx(ctx context.Context, _ ports.TxOptions, fn func(context.Context, bun.Tx) error) error {
 	return fn(ctx, bun.Tx{})
 }
@@ -308,15 +308,40 @@ func (f *fakePairings) ExpireStale(_ context.Context, now int64) (int, error) {
 
 type fakeProfiles struct{ w *world }
 
-func (f *fakeProfiles) List(context.Context, *repositories.ListCaptureProfilesRequest) (*pagination.ListResult[*capture.CaptureProfile], error) {
-	return &pagination.ListResult[*capture.CaptureProfile]{}, nil
+func (f *fakeProfiles) List(_ context.Context, req *repositories.ListCaptureProfilesRequest) (*pagination.ListResult[*capture.CaptureProfile], error) {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+
+	out := make([]*capture.CaptureProfile, 0, len(f.w.profiles))
+	for _, p := range f.w.profiles {
+		if !inTenant(p.OrganizationID, p.BusinessUnitID, req.Filter.TenantInfo) {
+			continue
+		}
+		if req.Status != "" && p.Status != req.Status {
+			continue
+		}
+		out = append(out, clone(p))
+	}
+	slices.SortFunc(out, func(a, b *capture.CaptureProfile) int {
+		if a.IsDefault != b.IsDefault {
+			if a.IsDefault {
+				return -1
+			}
+
+			return 1
+		}
+
+		return strings.Compare(a.Name, b.Name)
+	})
+
+	return &pagination.ListResult[*capture.CaptureProfile]{Items: out, Total: len(out)}, nil
 }
 
 func (f *fakeProfiles) GetByID(_ context.Context, req repositories.GetCaptureProfileByIDRequest) (*capture.CaptureProfile, error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	p, ok := f.w.profiles[req.ID]
-	if !ok {
+	if !ok || !inTenant(p.OrganizationID, p.BusinessUnitID, req.TenantInfo) {
 		return nil, notFound("Capture profile")
 	}
 
@@ -335,19 +360,55 @@ func (f *fakeProfiles) GetDefault(_ context.Context, _ pagination.TenantInfo) (*
 	return nil, notFound("Capture profile")
 }
 
+// clearDefault mirrors the repository taking the flag off every other profile
+// in the same transaction as the save that claims it.
+func (f *fakeProfiles) clearDefault(e *capture.CaptureProfile) {
+	if !e.IsDefault {
+		return
+	}
+	for id, p := range f.w.profiles {
+		if id != e.ID && p.IsDefault {
+			p.IsDefault = false
+			p.Version++
+		}
+	}
+}
+
 func (f *fakeProfiles) Create(_ context.Context, e *capture.CaptureProfile) (*capture.CaptureProfile, error) {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	f.clearDefault(e)
 	f.w.profiles[e.ID] = clone(e)
 
 	return e, nil
 }
 
 func (f *fakeProfiles) Update(_ context.Context, e *capture.CaptureProfile) (*capture.CaptureProfile, error) {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	current, ok := f.w.profiles[e.ID]
+	if !ok {
+		return nil, notFound("Capture profile")
+	}
+	if current.Version != e.Version {
+		return nil, errortypes.NewConflictError("version mismatch")
+	}
+	f.clearDefault(e)
+	e.Version++
 	f.w.profiles[e.ID] = clone(e)
 
 	return e, nil
 }
 
-func (f *fakeProfiles) Delete(context.Context, repositories.DeleteCaptureProfileRequest) error {
+func (f *fakeProfiles) Delete(_ context.Context, req repositories.DeleteCaptureProfileRequest) error {
+	f.w.mu.Lock()
+	defer f.w.mu.Unlock()
+	p, ok := f.w.profiles[req.ID]
+	if !ok || !inTenant(p.OrganizationID, p.BusinessUnitID, req.TenantInfo) {
+		return notFound("Capture profile")
+	}
+	delete(f.w.profiles, req.ID)
+
 	return nil
 }
 
@@ -724,6 +785,24 @@ type fakeRecords struct{ w *world }
 
 func (f *fakeRecords) Exists(_ context.Context, _ pagination.TenantInfo, resourceType string, id pulid.ID) (bool, error) {
 	return f.w.records[resourceType+":"+id.String()], nil
+}
+
+func (f *fakeRecords) Labels(
+	_ context.Context,
+	req *repositories.ListCaptureRecordLabelsRequest,
+) ([]*repositories.CaptureRecordLabel, error) {
+	labels := make([]*repositories.CaptureRecordLabel, 0, len(req.IDs))
+	for _, id := range req.IDs {
+		if f.w.records[req.ResourceType+":"+id.String()] {
+			labels = append(labels, &repositories.CaptureRecordLabel{
+				ResourceType: req.ResourceType,
+				ID:           id,
+				Title:        id.String(),
+			})
+		}
+	}
+
+	return labels, nil
 }
 
 type fakeControls struct {

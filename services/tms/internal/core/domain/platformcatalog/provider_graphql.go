@@ -118,6 +118,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 		"self_service.graphqls",
 	},
 	FeatureDocumentManagement: {
+		"capture.graphqls",
 		"document_packet_rule.graphqls",
 		"document_template.graphqls",
 		"document_type.graphqls",

@@ -125,6 +125,24 @@ func (b *CaptureBatch) AcceptsPages() bool {
 	return b.Status == BatchReceiving
 }
 
+// OpenItemCount is how many items still wait on a person. A batch read with
+// its items counts them; a list row, which carries only the counts, reads the
+// items not yet filed, which includes any being filed at that moment.
+func (b *CaptureBatch) OpenItemCount() int {
+	if b.Items == nil {
+		return max(b.ItemCount-b.FiledItemCount, 0)
+	}
+
+	open := 0
+	for _, item := range b.Items {
+		if item.Status.Open() {
+			open++
+		}
+	}
+
+	return open
+}
+
 // SettleFiling rolls the batch forward from its items' counts. It is the one
 // place the counts are read, so the list and the batch cannot disagree about
 // what "filed" means.

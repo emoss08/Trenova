@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/apikeyservice"
 	"github.com/emoss08/trenova/internal/core/services/benefitsservice"
 	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
+	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierassignmentservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierservice"
@@ -231,6 +232,7 @@ type Params struct {
 	AgentSafetyService           services.AgentSafetyService
 	WatchtowerService            services.WatchtowerService
 	InboundMessageService        *inboundmessageservice.Service
+	CaptureService               *captureservice.Service
 	AgentScorecardService        services.AgentScorecardService
 	AgentRunEventRepo            repositories.AgentRunEventRepository
 	AIAuditService               services.AIAuditService
@@ -398,6 +400,7 @@ type Resolver struct {
 	agentSafetyService           services.AgentSafetyService
 	watchtowerService            services.WatchtowerService
 	inboundMessageService        *inboundmessageservice.Service
+	captureService               *captureservice.Service
 	agentScorecardService        services.AgentScorecardService
 	agentRunEventRepo            repositories.AgentRunEventRepository
 	aiAuditService               services.AIAuditService
@@ -566,6 +569,7 @@ func New(p Params) *Resolver {
 		agentSafetyService:           p.AgentSafetyService,
 		watchtowerService:            p.WatchtowerService,
 		inboundMessageService:        p.InboundMessageService,
+		captureService:               p.CaptureService,
 		agentScorecardService:        p.AgentScorecardService,
 		agentRunEventRepo:            p.AgentRunEventRepo,
 		aiAuditService:               p.AIAuditService,

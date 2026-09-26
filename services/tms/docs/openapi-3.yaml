@@ -1201,37 +1201,6 @@ components:
                         $ref: '#/components/schemas/capture.SourceInfo'
                     type: array
             type: object
-        capturehandler.revokeDeviceRequest:
-            properties:
-                reason:
-                    type: string
-            type: object
-        captureservice.CreateRequestInput:
-            properties:
-                deviceId:
-                    type: string
-                documentTypeId:
-                    type: string
-                mode:
-                    $ref: '#/components/schemas/capture.RequestMode'
-                profileId:
-                    type: string
-                sourceName:
-                    type: string
-                targetId:
-                    type: string
-                targetType:
-                    type: string
-            type: object
-        captureservice.DecidePairingRequest:
-            properties:
-                approve:
-                    type: boolean
-                deviceName:
-                    type: string
-                userCode:
-                    type: string
-            type: object
         captureservice.OpenBatchInput:
             properties:
                 clientKey:
@@ -1265,25 +1234,6 @@ components:
                 verificationUri:
                     type: string
                 verificationUriComplete:
-                    type: string
-            type: object
-        captureservice.PairingPreview:
-            properties:
-                agentVersion:
-                    type: string
-                architecture:
-                    $ref: '#/components/schemas/capture.Architecture'
-                clientIp:
-                    type: string
-                expiresAt:
-                    type: integer
-                machineName:
-                    type: string
-                osVersion:
-                    type: string
-                userCode:
-                    type: string
-                windowsUser:
                     type: string
             type: object
         captureservice.RefreshRequest:
@@ -8326,19 +8276,6 @@ components:
                 results:
                     items:
                         $ref: '#/components/schemas/billingqueue.BillingQueueItem'
-                    type: array
-            type: object
-        pagination.Response-array_capture_CaptureDevice:
-            properties:
-                count:
-                    type: integer
-                next:
-                    type: string
-                previous:
-                    type: string
-                results:
-                    items:
-                        $ref: '#/components/schemas/capture.CaptureDevice'
                     type: array
             type: object
         pagination.Response-array_carrier_Carrier:
@@ -19704,85 +19641,6 @@ paths:
             summary: Open the device's live stream
             tags:
                 - Capture
-    /capture/devices/:
-        get:
-            description: |-
-                With mine=true, the caller's own devices; otherwise every device in the
-                organization, which takes capture device read.
-            operationId: listCaptureDevices
-            parameters:
-                - description: Only the caller's own devices
-                  in: query
-                  name: mine
-                  schema:
-                    type: boolean
-                - description: Active or Revoked
-                  in: query
-                  name: status
-                  schema:
-                    type: string
-            responses:
-                "200":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/pagination.Response-array_capture_CaptureDevice'
-                    description: OK
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helpers.ProblemDetail'
-                    description: Forbidden
-            security:
-                - BearerAuth: []
-            summary: List paired devices
-            tags:
-                - Capture
-    /capture/devices/{deviceID}/revoke/:
-        post:
-            description: |-
-                Anyone may revoke their own device; revoking somebody else's takes capture
-                device update. The device's stream is closed and its credential stops working.
-            operationId: revokeCaptureDevice
-            parameters:
-                - description: Device ID
-                  in: path
-                  name: deviceID
-                  required: true
-                  schema:
-                    type: string
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/capturehandler.revokeDeviceRequest'
-                description: Why
-                x-originalParamName: request
-            responses:
-                "200":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/capture.CaptureDevice'
-                    description: OK
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helpers.ProblemDetail'
-                    description: Forbidden
-                "404":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helpers.ProblemDetail'
-                    description: Not Found
-            security:
-                - BearerAuth: []
-            summary: Revoke a paired device
-            tags:
-                - Capture
     /capture/pages/{pageID}/content/:
         get:
             description: |-
@@ -19904,147 +19762,6 @@ paths:
                                 type: object
                     description: Bad Request
             summary: Exchange an approved pairing for device credentials
-            tags:
-                - Capture
-    /capture/pairings/{userCode}/:
-        get:
-            description: Shows which machine is asking to be paired, before the person approves it.
-            operationId: previewCapturePairing
-            parameters:
-                - description: The code the device shows
-                  in: path
-                  name: userCode
-                  required: true
-                  schema:
-                    type: string
-            responses:
-                "200":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/captureservice.PairingPreview'
-                    description: OK
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helpers.ProblemDetail'
-                    description: Forbidden
-                "404":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helpers.ProblemDetail'
-                    description: Not Found
-            security:
-                - BearerAuth: []
-            summary: Preview a pairing code
-            tags:
-                - Capture
-    /capture/pairings/decide/:
-        post:
-            description: |-
-                Approval binds the device to the person approving it, in the organization
-                they are signed in to.
-            operationId: decideCapturePairing
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/captureservice.DecidePairingRequest'
-                description: The decision
-                required: true
-                x-originalParamName: request
-            responses:
-                "204":
-                    description: No Content
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helpers.ProblemDetail'
-                    description: Forbidden
-                "404":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helpers.ProblemDetail'
-                    description: Not Found
-            security:
-                - BearerAuth: []
-            summary: Approve or deny a pairing
-            tags:
-                - Capture
-    /capture/requests/:
-        post:
-            description: |-
-                Sends a scan to one of the caller's own devices, or arms the next print from it,
-                filed onto the record given.
-            operationId: createCaptureRequest
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/captureservice.CreateRequestInput'
-                description: What to capture, and where
-                required: true
-                x-originalParamName: request
-            responses:
-                "201":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/capture.CaptureRequest'
-                    description: Created
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helpers.ProblemDetail'
-                    description: Forbidden
-                "422":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helpers.ProblemDetail'
-                    description: Unprocessable Entity
-            security:
-                - BearerAuth: []
-            summary: Ask a device to capture into a record
-            tags:
-                - Capture
-    /capture/requests/{requestID}/cancel/:
-        post:
-            operationId: cancelCaptureRequest
-            parameters:
-                - description: Capture request ID
-                  in: path
-                  name: requestID
-                  required: true
-                  schema:
-                    type: string
-            responses:
-                "200":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/capture.CaptureRequest'
-                    description: OK
-                "403":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helpers.ProblemDetail'
-                    description: Forbidden
-                "404":
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/helpers.ProblemDetail'
-                    description: Not Found
-            security:
-                - BearerAuth: []
-            summary: Cancel a capture request
             tags:
                 - Capture
     /capture/token/refresh/:

@@ -16,6 +16,7 @@ package capturehandler
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -66,6 +67,24 @@ func New(p Params) *Handler {
 	}
 }
 
+const (
+	// apiPrefix is the versioned group the capture routes are mounted under.
+	apiPrefix        = "/api/v1"
+	captureRoot      = "/capture/"
+	pageContentRoute = "pages/:pageID/content/"
+)
+
+// PageContentPath is where a signed-in person fetches a page to show it.
+// Pages are encrypted at rest, so there is no link to storage to hand out.
+func PageContentPath(pageID pulid.ID, kind captureservice.PageContentKind) string {
+	path := apiPrefix + captureRoot + "pages/" + url.PathEscape(pageID.String()) + "/content/"
+	if kind == captureservice.PageContentPDF {
+		return path
+	}
+
+	return path + "?kind=" + url.QueryEscape(string(kind))
+}
+
 // RegisterPublicRoutes mounts pairing and token refresh.
 func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/capture/")
@@ -89,16 +108,13 @@ func (h *Handler) RegisterDeviceRoutes(rg *gin.RouterGroup) {
 	api.POST("batches/:batchID/seal/", h.sealBatch)
 }
 
-// RegisterRoutes mounts what a signed-in person calls.
+// RegisterRoutes mounts what a signed-in person calls over REST. Everything
+// else a person does with capture goes through GraphQL; a page is served here
+// because it is bytes, and the browser shows it straight from an <img> or a
+// PDF viewer.
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
-	api := rg.Group("/capture/")
-	api.GET("pairings/:userCode/", h.previewPairing)
-	api.POST("pairings/decide/", h.decidePairing)
-	api.GET("devices/", h.listDevices)
-	api.POST("devices/:deviceID/revoke/", h.revokeDevice)
-	api.POST("requests/", h.createRequest)
-	api.POST("requests/:requestID/cancel/", h.cancelRequest)
-	api.GET("pages/:pageID/content/", h.pageContent)
+	api := rg.Group(captureRoot)
+	api.GET(pageContentRoute, h.pageContent)
 }
 
 // fail answers a capture error. The two errors the companion acts on get

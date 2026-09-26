@@ -1,6 +1,6 @@
 # Document Capture — Scanning and Virtual Printing
 
-> Status: phase 1 (server) complete; phase 2 (web) next. Purpose: let a person put paper or
+> Status: phase 1 (server) and the GraphQL half of phase 2 complete; the web screens are next. Purpose: let a person put paper or
 > another program's output into Trenova without first producing a file on their own disk, from a
 > scanner (including one behind Kofax VRS) or from the Windows print dialog of any application.
 
@@ -272,8 +272,8 @@ This is the OAuth 2.0 Device Authorization Grant (RFC 8628), in `captureservice/
    eight-letter `userCode` shown as `XXXX-XXXX` (consonants only, per RFC 8628 §6.1; 10-minute
    life; unique among open codes by a partial index).
 2. It opens the browser to `/capture/pair?code=XXXX-XXXX`. The signed-in person sees the
-   machine name, Windows user, agent version and IP (`GET /api/v1/capture/pairings/:userCode/`)
-   and approves or denies (`POST /api/v1/capture/pairings/decide/`). Approval binds the grant to
+   machine name, Windows user, agent version and IP (the `captureDevicePairing` query) and
+   approves or denies (`approveCaptureDevicePairing` / `denyCaptureDevicePairing`). Approval binds the grant to
    that person and the organization they are signed in to, and needs `capture_batch:create`.
 3. The agent polls `POST /api/v1/capture/pair/token/` every 5 seconds and gets RFC 8628 error
    bodies (`authorization_pending`, `slow_down`, `access_denied`, `expired_token`,
@@ -564,45 +564,42 @@ most 200 MB. The manifest digest is SHA-256 over each page's SHA-256 hex digest 
 newline, in sequence order. A batch holds at most 1,000 pages. The update manifest endpoint
 (`releases/latest`) is part of phase 5.
 
-**Signed-in (session):**
+**Signed-in (session):** one REST route, because it serves bytes a browser shows straight from
+an `<img>` or a PDF viewer.
 
 | Method | Path | Purpose |
 |---|---|---|
-| `GET` | `pairings/:userCode/` | Preview a pairing before approving it |
-| `POST` | `pairings/decide/` | Approve or deny |
-| `GET` | `devices/` | `?mine=true` for your own; everyone's needs `capture_device:read` |
-| `POST` | `devices/:id/revoke/` | Revoke |
-| `POST` | `requests/` | Ask one of your own devices to scan, or arm a print |
-| `POST` | `requests/:id/cancel/` | Cancel your request |
 | `GET` | `pages/:id/content/` | A page as PDF, or `?kind=thumbnail` |
 
 Page and thumbnail bytes are served through the API because they are encrypted at rest; a
-presigned link would hand out ciphertext.
+presigned link would hand out ciphertext. `CapturePage.contentPath` and `thumbnailPath` carry the
+paths, so the web app never builds them.
 
-**Web app (GraphQL, phase 2),** next to `inboundmessage.graphqls`: the intake queue
-(`captureBatches` as a connection honouring the `IncludeTotalCount` gate, `captureBatch`), editing
-(`editCaptureItems` with the batch version), filing (`fileCaptureItem`, bulk `fileCaptureItems`),
-discarding, cover sheets, devices (`myCaptureDevices`) and profiles. The service methods behind
-all of them exist and are tested in phase 1 (`ListBatches`, `GetBatch`, `EditItems`, `FileItem`,
-`DiscardItem`, `DiscardBatch`, `CreateCoverSheets`), apart from the profile administration
-service.
+**Web app (GraphQL),** in `schema/capture.graphqls`, owned by the document-management feature.
+Everything else a signed-in person does is here; the REST routes phase 1 had for pairing,
+devices and requests were removed so there is one way to do each thing.
 
-Permission resources: `capture_batch` (read; create = capture; update = file; delete = discard;
-data scope decides own versus everyone's intake), `capture_device` (read and revoke across the
-organization) and `capture_profile`. Capture settings live on `document_control`.
+- Queries: `captureBatches` (the intake queue, a cursor connection that counts only when
+  `totalCount` is selected), `captureBatch` (pages, items and device), `myCaptureDevices`,
+  `captureDevices`, `availableCaptureProfiles`, `captureProfiles`, `captureProfile`,
+  `captureRequestsForTarget`, `captureDevicePairing`.
+- Mutations: `editCaptureItems` (split, merge, reorder, drop, rotate, against the batch version),
+  `fileCaptureItem`, `fileCaptureItems` (a whole stack at once; each document is filed as it
+  would be alone, and one that cannot be comes back with its reason while the rest file),
+  `discardCaptureItem` (returns the batch with its new counts), `discardCaptureBatch`,
+  `createCaptureRequest`, `cancelCaptureRequest`, `createCaptureCoverSheets` (the QR payload is
+  returned once), `approveCaptureDevicePairing`, `denyCaptureDevicePairing`,
+  `revokeMyCaptureDevice`, `revokeCaptureDevice`, and profile create, update and delete.
+- Where an item or batch points at a record, `suggestedRecord`, `filedRecord` and `target` name
+  it (a PRO and BOL, a worker's name, a unit number and plate), through one dataloader that asks
+  once per record kind per request, and only for a reader who may read that kind of record.
 
-**Web app (GraphQL),** next to `inboundmessage.graphqls`:
-
-- queries `captureBatches` (a connection with the `IncludeTotalCount` gate), `captureBatch`,
-  `myCaptureDevices`, `captureProfiles`;
-- mutations `createCaptureRequest`, `cancelCaptureRequest`, `editCaptureItems` (split, merge,
-  reorder, rotate, delete pages, with batch version), `fileCaptureItem`, `fileCaptureItems`,
-  `discardCaptureBatch`, `createCoverSheets`, `revokeCaptureDevice`/`revokeMyCaptureDevice`,
-  and profile and control CRUD.
-
-Every root resolver reaches a permission check (authzlint). New resources: `capture_batch`,
-`capture_device`, `capture_profile`, `capture_control`. Page and thumbnail bytes are served
-through short-lived presigned URLs, as document previews are now.
+Permission resources: `capture_batch` (read; create = capture, pair, request, print cover
+sheets; update = file; delete = discard; data scope decides own versus everyone's intake),
+`capture_device` (read and revoke across the organization; a person revokes their own with
+`revokeMyCaptureDevice`) and `capture_profile` (administration; choosing one when scanning
+needs only `capture_batch:create`). Capture settings live on `document_control`. Every root
+resolver reaches a permission check (authzlint).
 
 ## 11. Security summary
 
@@ -642,8 +639,11 @@ Every phase is shipped complete; the order only reflects dependencies.
    tests over in-memory stores and real PDFs, adapter tests, handler tests, and a repository
    integration test (`-tags integration`) that ran green against Postgres 16.
 2. **Web:**
-   - the GraphQL schema and resolvers over the phase 1 service, and the profile
-     administration service;
+   - **complete:** the GraphQL schema and resolvers over the phase 1 service, bulk filing,
+     record names for intake rows (one dataloader per request), the profile administration
+     service, and removal of the REST routes GraphQL replaces. Tested by service tests,
+     loader and mapping tests, authzlint, the projection and schema-diff checks, and the label
+     query against Postgres 16;
    - the `/intake` route and page-strip editor, and `capture_batch` in the realtime
      `RESOURCE_QUERY_KEY_MAP`;
    - Scan, Print-into and cover sheets on the Documents tab, including the cover-sheet PDF

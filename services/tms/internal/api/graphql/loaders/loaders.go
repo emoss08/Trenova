@@ -93,6 +93,7 @@ type FactoryParams struct {
 	CarrierIntelOpenEventCount                *CarrierIntelOpenEventCountLoaderFactory
 	InboundAttachmentCount                    *InboundAttachmentCountLoaderFactory
 	ShipmentSummaryByID                       *ShipmentSummaryByIDLoaderFactory
+	CaptureRecordLabel                        *CaptureRecordLabelLoaderFactory
 	CarrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 	AuditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
 	PermissionEngine                          services.PermissionEngine
@@ -149,6 +150,7 @@ type Factory struct {
 	carrierIntelOpenEventCount                *CarrierIntelOpenEventCountLoaderFactory
 	inboundAttachmentCount                    *InboundAttachmentCountLoaderFactory
 	shipmentSummaryByID                       *ShipmentSummaryByIDLoaderFactory
+	captureRecordLabel                        *CaptureRecordLabelLoaderFactory
 	carrierMonitoringEnrollmentByCarrierID    *CarrierMonitoringEnrollmentByCarrierIDLoaderFactory
 	auditEntriesByAIAuditEventID              *AuditEntriesByAIAuditEventIDLoaderFactory
 	permissionEngine                          services.PermissionEngine
@@ -205,6 +207,7 @@ type Loaders struct {
 	CarrierIntelOpenEventCount                *dataloadgen.Loader[string, int]
 	InboundAttachmentCount                    *dataloadgen.Loader[string, int]
 	ShipmentSummaryByID                       *dataloadgen.Loader[string, *repositories.ShipmentSummary]
+	CaptureRecordLabel                        *dataloadgen.Loader[string, *repositories.CaptureRecordLabel]
 	CarrierMonitoringEnrollmentByCarrierID    *dataloadgen.Loader[string, []*carrierintel.CarrierMonitoringEnrollment]
 	AuditEntriesByAIAuditEventID              *dataloadgen.Loader[string, []*audit.Entry]
 	// FieldCeilings is the reader's sensitivity ceiling per resource, asked
@@ -264,6 +267,7 @@ func NewFactory(p FactoryParams) *Factory {
 		carrierIntelOpenEventCount:                p.CarrierIntelOpenEventCount,
 		inboundAttachmentCount:                    p.InboundAttachmentCount,
 		shipmentSummaryByID:                       p.ShipmentSummaryByID,
+		captureRecordLabel:                        p.CaptureRecordLabel,
 		carrierMonitoringEnrollmentByCarrierID:    p.CarrierMonitoringEnrollmentByCarrierID,
 		auditEntriesByAIAuditEventID:              p.AuditEntriesByAIAuditEventID,
 		permissionEngine:                          p.PermissionEngine,
@@ -380,6 +384,7 @@ func (f *Factory) NewForTenant(tenantInfo pagination.TenantInfo) *Loaders {
 			tenantInfo,
 		),
 		ShipmentSummaryByID: f.shipmentSummaryByID.NewForTenant(tenantInfo),
+		CaptureRecordLabel:  f.captureRecordLabel.NewForTenant(tenantInfo),
 		CarrierMonitoringEnrollmentByCarrierID: f.carrierMonitoringEnrollmentByCarrierID.NewForTenant(
 			tenantInfo,
 		),

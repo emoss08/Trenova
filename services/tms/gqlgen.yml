@@ -27,9 +27,11 @@ go_initialisms:
     - BCC
     - BOL
     - DOT
+    - DPI
     - EDI
     - ELD
     - IFTA
+    - JPEG
     - MVR
     - NPI
     - PTO
@@ -2404,6 +2406,149 @@ models:
   WatchtowerSeverity:
     model:
       - github.com/emoss08/trenova/internal/core/domain/watchtower.Severity
+  CaptureDevice:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.CaptureDevice
+    fields:
+      osVersion:
+        fieldName: OSVersion
+      user:
+        resolver: true
+      isOnline:
+        resolver: true
+  CaptureSourceInfo:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.SourceInfo
+  CapturePairingPreview:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/captureservice.PairingPreview
+    fields:
+      osVersion:
+        fieldName: OSVersion
+  CaptureProfile:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.CaptureProfile
+  CaptureRecordRef:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.CaptureRecordLabel
+  CaptureRequest:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.CaptureRequest
+    fields:
+      failureCode:
+        resolver: true
+      isOpen:
+        resolver: true
+  CaptureSettings:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.Settings
+    fields:
+      protocol:
+        resolver: true
+      pixelType:
+        resolver: true
+      refused:
+        resolver: true
+  CapturePage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.CapturePage
+    fields:
+      patchCode:
+        resolver: true
+      isCoverSheet:
+        resolver: true
+      unrecognizedCoverSheet:
+        resolver: true
+      contentPath:
+        resolver: true
+      thumbnailPath:
+        resolver: true
+  CaptureItem:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.CaptureItem
+    fields:
+      pageCount:
+        resolver: true
+      suggestedRecord:
+        resolver: true
+      suggestedDocumentTypeId:
+        fieldName: SuggestedDocTypeID
+      suggestionSource:
+        resolver: true
+      filedRecord:
+        resolver: true
+      filedDocumentTypeId:
+        fieldName: FiledDocTypeID
+  CaptureBatch:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.CaptureBatch
+    fields:
+      user:
+        resolver: true
+      device:
+        resolver: true
+      target:
+        resolver: true
+      openItemCount:
+        resolver: true
+      isEditable:
+        resolver: true
+      pages:
+        resolver: true
+      items:
+        resolver: true
+  CaptureItemFailure:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/captureservice.FileItemFailure
+  FileCaptureItemsResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/captureservice.FileItemsResult
+  CaptureCoverSheet:
+    fields:
+      target:
+        resolver: true
+  CaptureDeviceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.DeviceStatus
+  CaptureArchitecture:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.Architecture
+  CaptureSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.Source
+  CaptureRequestMode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.RequestMode
+  CaptureRequestStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.RequestStatus
+  CaptureRequestFailureCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.RequestFailureCode
+  CaptureBatchStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.BatchStatus
+  CapturePageStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.PageStatus
+  CaptureItemStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.ItemStatus
+  CaptureSuggestionSource:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.SuggestionSource
+  CapturePixelType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.PixelType
+  CaptureSeparatorStrategy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.SeparatorStrategy
+  CaptureProfileStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.ProfileStatus
+  CaptureSourceProtocol:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/capture.SourceProtocol
   InboundMessage:
     model:
       - github.com/emoss08/trenova/internal/core/domain/inboundmessage.InboundMessage

@@ -153,6 +153,8 @@ type GetCaptureBatchByIDRequest struct {
 	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
 	IncludePages bool                  `json:"includePages"`
 	IncludeItems bool                  `json:"includeItems"`
+	// IncludeDevice loads the companion the batch came from.
+	IncludeDevice bool `json:"includeDevice"`
 }
 
 type GetCaptureBatchByClientKeyRequest struct {
@@ -323,4 +325,28 @@ type CaptureRecordFinder interface {
 		resourceType string,
 		id pulid.ID,
 	) (bool, error)
+	// Labels names records of one kind for display. A record that is gone or
+	// outside the tenant is simply absent from the result.
+	Labels(
+		ctx context.Context,
+		req *ListCaptureRecordLabelsRequest,
+	) ([]*CaptureRecordLabel, error)
 }
+
+type ListCaptureRecordLabelsRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+	ResourceType string                `json:"resourceType"`
+	IDs          []pulid.ID            `json:"ids"`
+}
+
+// CaptureRecordLabel is how a person recognises a record a capture is filed
+// onto: a shipment's PRO and BOL, a worker's name, a unit's number and plate.
+type CaptureRecordLabel struct {
+	ResourceType string   `json:"resourceType" bun:"-"`
+	ID           pulid.ID `json:"id"           bun:"id"`
+	Title        string   `json:"title"        bun:"title"`
+	Subtitle     string   `json:"subtitle"     bun:"subtitle"`
+}
+
+// GetID lets a label be loaded by id.
+func (l *CaptureRecordLabel) GetID() pulid.ID { return l.ID }

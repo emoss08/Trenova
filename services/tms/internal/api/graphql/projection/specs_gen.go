@@ -76,6 +76,20 @@ var BriefingSpec TypeSpec
 
 var BusinessUnitSpec TypeSpec
 
+var CaptureBatchSpec TypeSpec
+
+var CaptureCoverSheetSpec TypeSpec
+
+var CaptureDeviceSpec TypeSpec
+
+var CaptureItemSpec TypeSpec
+
+var CapturePageSpec TypeSpec
+
+var CaptureProfileSpec TypeSpec
+
+var CaptureRequestSpec TypeSpec
+
 var CarrierSpec TypeSpec
 
 var CarrierAssignmentSpec TypeSpec
@@ -4246,6 +4260,671 @@ func init() {
 			{
 				Name:        "code",
 				FieldMapKey: "code",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CaptureBatchSpec = TypeSpec{
+		TypeName: "CaptureBatch",
+		FieldMap: buncolgen.CaptureBatchFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "user",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "deviceId",
+				FieldMapKey: "deviceId",
+			},
+			{
+				Name:        "device",
+				FieldMapKey: "deviceId",
+			},
+			{
+				Name:        "requestId",
+				FieldMapKey: "requestId",
+			},
+			{
+				Name:        "profileId",
+				FieldMapKey: "profileId",
+			},
+			{
+				Name:        "source",
+				FieldMapKey: "source",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "sourceName",
+				FieldMapKey: "sourceName",
+			},
+			{
+				Name:        "jobName",
+				FieldMapKey: "jobName",
+			},
+			{
+				Name:        "settings",
+				FieldMapKey: "settings",
+			},
+			{
+				Name:        "targetType",
+				FieldMapKey: "targetType",
+			},
+			{
+				Name:        "targetId",
+				FieldMapKey: "targetId",
+			},
+			{
+				Name:        "target",
+				FieldMapKey: "targetId",
+			},
+			{
+				Name:        "documentTypeId",
+				FieldMapKey: "documentTypeId",
+			},
+			{
+				Name:        "receivedPageCount",
+				FieldMapKey: "receivedPageCount",
+			},
+			{
+				Name:        "itemCount",
+				FieldMapKey: "itemCount",
+			},
+			{
+				Name:        "filedItemCount",
+				FieldMapKey: "filedItemCount",
+			},
+			{
+				Name:        "openItemCount",
+				FieldMapKey: "itemCount",
+			},
+			{
+				Name:        "failureMessage",
+				FieldMapKey: "failureMessage",
+			},
+			{
+				Name:        "sealedAt",
+				FieldMapKey: "sealedAt",
+			},
+			{
+				Name:        "processedAt",
+				FieldMapKey: "processedAt",
+			},
+			{
+				Name:        "retainUntil",
+				FieldMapKey: "retainUntil",
+			},
+			{
+				Name:        "isEditable",
+				FieldMapKey: "status",
+			},
+			{
+				Name: "pages",
+				Relation: &RelationSpec{
+					Target: &CapturePageSpec,
+				},
+			},
+			{
+				Name: "items",
+				Relation: &RelationSpec{
+					Target: &CaptureItemSpec,
+				},
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CaptureCoverSheetSpec = TypeSpec{
+		TypeName: "CaptureCoverSheet",
+		FieldMap: buncolgen.CaptureCoverSheetFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "targetType",
+				FieldMapKey: "targetType",
+			},
+			{
+				Name:        "targetId",
+				FieldMapKey: "targetId",
+			},
+			{
+				Name:    "target",
+				Special: "target",
+			},
+			{
+				Name:        "documentTypeId",
+				FieldMapKey: "documentTypeId",
+			},
+			{
+				Name:    "payload",
+				Special: "payload",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	CaptureDeviceSpec = TypeSpec{
+		TypeName: "CaptureDevice",
+		FieldMap: buncolgen.CaptureDeviceFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "user",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "machineName",
+				FieldMapKey: "machineName",
+			},
+			{
+				Name:        "windowsUser",
+				FieldMapKey: "windowsUser",
+			},
+			{
+				Name:        "agentVersion",
+				FieldMapKey: "agentVersion",
+			},
+			{
+				Name:        "architecture",
+				FieldMapKey: "architecture",
+			},
+			{
+				Name:        "osVersion",
+				FieldMapKey: "osVersion",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "sources",
+				FieldMapKey: "sources",
+			},
+			{
+				Name:        "lastSeenAt",
+				FieldMapKey: "lastSeenAt",
+			},
+			{
+				Name:        "isOnline",
+				FieldMapKey: "lastSeenAt",
+			},
+			{
+				Name:        "lastIp",
+				FieldMapKey: "lastIp",
+			},
+			{
+				Name:        "revokedAt",
+				FieldMapKey: "revokedAt",
+			},
+			{
+				Name:        "revokedById",
+				FieldMapKey: "revokedById",
+			},
+			{
+				Name:        "revokedReason",
+				FieldMapKey: "revokedReason",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CaptureItemSpec = TypeSpec{
+		TypeName: "CaptureItem",
+		FieldMap: buncolgen.CaptureItemFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "batchId",
+				FieldMapKey: "batchId",
+			},
+			{
+				Name:        "position",
+				FieldMapKey: "position",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "pageIds",
+				FieldMapKey: "pageIds",
+			},
+			{
+				Name:        "pageCount",
+				FieldMapKey: "pageIds",
+			},
+			{
+				Name:        "suggestedType",
+				FieldMapKey: "suggestedType",
+			},
+			{
+				Name:        "suggestedId",
+				FieldMapKey: "suggestedId",
+			},
+			{
+				Name:        "suggestedRecord",
+				FieldMapKey: "suggestedId",
+			},
+			{
+				Name:        "suggestedDocumentTypeId",
+				FieldMapKey: "suggestedDocTypeId",
+			},
+			{
+				Name:        "suggestionSource",
+				FieldMapKey: "suggestionSource",
+			},
+			{
+				Name:        "suggestionConfidence",
+				FieldMapKey: "suggestionConfidence",
+			},
+			{
+				Name:        "suggestionReason",
+				FieldMapKey: "suggestionReason",
+			},
+			{
+				Name:        "coverSheetId",
+				FieldMapKey: "coverSheetId",
+			},
+			{
+				Name:        "detectedKind",
+				FieldMapKey: "detectedKind",
+			},
+			{
+				Name:        "filedType",
+				FieldMapKey: "filedType",
+			},
+			{
+				Name:        "filedId",
+				FieldMapKey: "filedId",
+			},
+			{
+				Name:        "filedRecord",
+				FieldMapKey: "filedId",
+			},
+			{
+				Name:        "filedDocumentTypeId",
+				FieldMapKey: "filedDocTypeId",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "filedById",
+				FieldMapKey: "filedById",
+			},
+			{
+				Name:        "filedAt",
+				FieldMapKey: "filedAt",
+			},
+			{
+				Name:        "failureMessage",
+				FieldMapKey: "failureMessage",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CapturePageSpec = TypeSpec{
+		TypeName: "CapturePage",
+		FieldMap: buncolgen.CapturePageFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "batchId",
+				FieldMapKey: "batchId",
+			},
+			{
+				Name:        "sequence",
+				FieldMapKey: "sequence",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "byteSize",
+				FieldMapKey: "byteSize",
+			},
+			{
+				Name:        "widthPx",
+				FieldMapKey: "widthPx",
+			},
+			{
+				Name:        "heightPx",
+				FieldMapKey: "heightPx",
+			},
+			{
+				Name:        "dpi",
+				FieldMapKey: "dpi",
+			},
+			{
+				Name:        "rotation",
+				FieldMapKey: "rotation",
+			},
+			{
+				Name:        "blankScore",
+				FieldMapKey: "blankScore",
+			},
+			{
+				Name:        "isBlank",
+				FieldMapKey: "blankScore",
+			},
+			{
+				Name:        "isSeparator",
+				FieldMapKey: "isSeparator",
+			},
+			{
+				Name:        "patchCode",
+				FieldMapKey: "markers",
+			},
+			{
+				Name:        "isCoverSheet",
+				FieldMapKey: "markers",
+			},
+			{
+				Name:        "unrecognizedCoverSheet",
+				FieldMapKey: "markers",
+			},
+			{
+				Name:        "failureMessage",
+				FieldMapKey: "failureMessage",
+			},
+			{
+				Name:        "contentPath",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "thumbnailPath",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	CaptureProfileSpec = TypeSpec{
+		TypeName: "CaptureProfile",
+		FieldMap: buncolgen.CaptureProfileFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "name",
+				FieldMapKey: "name",
+			},
+			{
+				Name:        "description",
+				FieldMapKey: "description",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "isDefault",
+				FieldMapKey: "isDefault",
+			},
+			{
+				Name:        "dpi",
+				FieldMapKey: "dpi",
+			},
+			{
+				Name:        "pixelType",
+				FieldMapKey: "pixelType",
+			},
+			{
+				Name:        "duplex",
+				FieldMapKey: "duplex",
+			},
+			{
+				Name:        "useFeeder",
+				FieldMapKey: "useFeeder",
+			},
+			{
+				Name:        "discardBlankPages",
+				FieldMapKey: "discardBlankPages",
+			},
+			{
+				Name:        "jpegQuality",
+				FieldMapKey: "jpegQuality",
+			},
+			{
+				Name:        "showDriverUi",
+				FieldMapKey: "showDriverUi",
+			},
+			{
+				Name:        "separatorStrategies",
+				FieldMapKey: "separatorStrategies",
+			},
+			{
+				Name:        "fixedPageCount",
+				FieldMapKey: "fixedPageCount",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	CaptureRequestSpec = TypeSpec{
+		TypeName: "CaptureRequest",
+		FieldMap: buncolgen.CaptureRequestFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "userId",
+				FieldMapKey: "userId",
+			},
+			{
+				Name:        "deviceId",
+				FieldMapKey: "deviceId",
+			},
+			{
+				Name:        "mode",
+				FieldMapKey: "mode",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "targetType",
+				FieldMapKey: "targetType",
+			},
+			{
+				Name:        "targetId",
+				FieldMapKey: "targetId",
+			},
+			{
+				Name:        "documentTypeId",
+				FieldMapKey: "documentTypeId",
+			},
+			{
+				Name:        "profileId",
+				FieldMapKey: "profileId",
+			},
+			{
+				Name:        "sourceName",
+				FieldMapKey: "sourceName",
+			},
+			{
+				Name:        "batchId",
+				FieldMapKey: "batchId",
+			},
+			{
+				Name:        "failureCode",
+				FieldMapKey: "failureCode",
+			},
+			{
+				Name:        "failureMessage",
+				FieldMapKey: "failureMessage",
+			},
+			{
+				Name:        "expiresAt",
+				FieldMapKey: "expiresAt",
+			},
+			{
+				Name:        "deliveredAt",
+				FieldMapKey: "deliveredAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "isOpen",
+				FieldMapKey: "status",
 			},
 			{
 				Name:        "version",
