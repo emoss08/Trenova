@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 202.
+Tools listed: 204.
 
 ## The model
 
@@ -56,8 +56,8 @@ and Confidential fields never reach a model at all.
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 47 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 1 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 5 |
-| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 10 |
-| Money | Moves or commits money. | Automatic | Yes | 7 |
+| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 11 |
+| Money | Moves or commits money. | Automatic | Yes | 8 |
 
 ## Reads only
 
@@ -285,6 +285,7 @@ Sends to someone outside the organization.
 | Resolve service failure (`resolve_service_failure`) | Sent outside the organization | Ask first | — | — | Resolving a failure generates an EDI 214 to the customer's trading partner carrying the reason chosen. |
 | Schedule report (`schedule_report`) | Sent outside the organization | Ask first | — | — | Emails a report on a schedule to whatever addresses the call names, which may be outside the organization. |
 | Send detention notice (`send_detention_notice`) | Sent outside the organization | Ask first | — | — | Sends the customer a detention notice that starts a charge. |
+| Send invoice (`send_invoice`) | Sent outside the organization | Propose | — | — | Emails the customer their invoice; only a person sends it, to the recipients the customer's billing profile names. |
 | Tender move to carriers (`tender_move_to_carriers`) | Sent outside the organization | Ask first | — | — | Offers the load to carriers outside the organization. |
 | Tender move to routing guide (`tender_move_to_routing_guide`) | Sent outside the organization | Ask first | — | — | Offers the load to carriers outside the organization. |
 | Update shipment (`update_shipment`) | Sent outside the organization | Ask first | — | — | A changed shipment is sent as an EDI tender change to the trading partners it was tendered to. |
@@ -301,5 +302,6 @@ Moves or commits money.
 | Correct charge code (`correct_charge_code`) | Money | Automatic | — | — | Rewrites the accessorial charges a customer will be invoiced, so it moves money. |
 | Match bank receipt (`match_bank_receipt`) | Money | Automatic | — | — | Matches a bank receipt to a posted payment, closing its reconciliation. |
 | Post customer payment (`post_customer_payment`) | Money | Automatic | — | — | Records a customer payment and applies it to invoices. |
+| Post invoice (`post_invoice`) | Money | Propose | — | — | Books a receivable to the ledger and queues it for the accounting system and the customer's EDI; only a person posts, and hands-off posting is the billing-control auto-post setting. |
 | Waive detention (`waive_detention`) | Money | Propose | — | — | Gives up detention revenue the organization would otherwise bill; only a person approves it. |
 

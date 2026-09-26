@@ -157,6 +157,8 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"assign_billing_queue_biller":    {agent.EgressInternal},
 		"approve_billing_queue_item":     {agent.EgressMoney},
 		"cancel_billing_queue_item":      {agent.EgressMoney},
+		"post_invoice":                   {agent.EgressMoney},
+		"send_invoice":                   {agent.EgressExternalRecipient},
 		"flag_for_manual_review":         {agent.EgressInternal},
 		"raise_exception":                {agent.EgressInternal},
 		"create_dashboard":               {agent.EgressInternal},

@@ -40,6 +40,8 @@ func ToolProviders() []any {
 		provideHoldBillingQueueItemTool,
 		provideCancelBillingQueueItemTool,
 		provideAssignBillerTool,
+		providePostInvoiceTool,
+		provideSendInvoiceTool,
 		newCorrectChargeCodeTool,
 		newSaveTableViewTool,
 		newCreateDashboardTool,
@@ -292,6 +294,14 @@ func provideCancelBillingQueueItemTool(billing services.BillingQueueService) ser
 
 func provideAssignBillerTool(billing services.BillingQueueService) services.AgentTool {
 	return newAssignBillerTool(billing)
+}
+
+func providePostInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newPostInvoiceTool(invoices)
+}
+
+func provideSendInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newSendInvoiceTool(invoices)
 }
 
 func provideApproveDetentionTool(detention *detentionservice.Service) services.AgentTool {

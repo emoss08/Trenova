@@ -10033,6 +10033,44 @@
       }
     },
     {
+      "name": "post_invoice",
+      "description": "Propose posting a draft invoice, usually the one approve_billing_queue_item just made. Posting books it to the ledger, marks its shipments invoiced, settles its billing queue item and queues it for the accounting system and, where the customer takes it, an EDI 210. It cannot be undone except by voiding, so a person always decides; propose it once the draft's lines and totals are right.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "description": "The draft invoice, from approve_billing_queue_item's result, get_billing_queue_item or list_invoices.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Books a receivable to the ledger and queues it for the accounting system and the customer's EDI; only a person posts, and hands-off posting is the billing-control auto-post setting."
+      }
+    },
+    {
       "name": "preview_report",
       "description": "Run a report definition now and see its first rows, without saving it or producing a file. Use it to check a definition before create_report or update_report, to answer a quick question a small custom report can answer, or to look at what a saved or built-in report produces. Give a definition to preview (the shape describe_report returns and create_report takes), or name an existing report by definitionId or reportKey. The compiler checks every field against the person's access and says what is wrong, in which case fix the definition and try again rather than reporting the error to the person. At most 20 rows come back; for the full result, run_report.",
       "parameters": {
@@ -12200,6 +12238,44 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Sends the customer a detention notice that starts a charge."
+      }
+    },
+    {
+      "name": "send_invoice",
+      "description": "Propose emailing an invoice to the customer, to the recipients, subject, wording and attachments the organization and the customer's billing profile set; nothing is chosen by you. A person always decides. Propose it after post_invoice when the customer is not sent invoices automatically.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "invoiceId": {
+            "description": "The invoice, from list_invoices or post_invoice's proposal.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoiceId"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "invoice",
+        "operation": "submit",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "Propose",
+        "promotableTo": "Propose",
+        "egress": [
+          "external_recipient"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Emails the customer their invoice; only a person sends it, to the recipients the customer's billing profile names."
       }
     },
     {
