@@ -135,8 +135,17 @@ unpinned: an open statement is computed when asked and has no row.
 
 | Template | Runs | Holds |
 | --- | --- | --- |
-| Billing assistant | in chat, as the person | every tool above except `share_invoice` and `list_invoice_share_candidates` |
+| Billing assistant | in chat, as the person | the lifecycle up to an invoice in the customer's hands and its corrections: transfer, the queue decisions, `create_invoice`, `update_invoice_draft`, `generate_invoice_pdf`, `post_invoice`, `send_invoice`, `send_invoice_edi`, `void_invoice`, `create_invoice_memo`, the adjustment tools, invoice runs and statements, and `share_invoice` |
+| Receivables assistant | in chat, as the person | what happens after: `apply_customer_payment`, `reverse_customer_payment`, `apply_credit_memo`, `unapply_credit_memo`, the dispute tools, `assess_late_charges`, `send_invoice` to send a copy again, `share_invoice`, and the reads `get_ar_aging`, `list_ar_open_items`, `list_collections_worklist`, `get_customer_statement`, `list_customer_payments`, `list_credit_memo_applications`, `list_invoice_adjustments` |
+| Cash application agent | unattended, on bank receipt exceptions | `match_bank_receipt` and `post_customer_payment` for money that arrived at the bank |
 | Billing exception agent | unattended, on queue events | the reads, review, hold, exception, send back |
+
+The receivables assistant works cash already recorded and never posts a payment or matches a
+bank receipt, so it does not do the cash application agent's job twice. A dispute settled by a
+credit or a write-off is closed by receivables naming the adjustment, which the billing
+assistant makes. Each prompt tells its agent to hand the other's work over when the other is on
+its delegation allowlist ([agent-delegation.md](agent-delegation.md)); a template cannot carry
+the allowlist itself, since it names agents by their id in one organization.
 
 The agent permission ceiling (`permission/agent.go`) is unchanged but for being claimed: the
 exception desk needs billing queue read and update and shipment read, which it already had.
@@ -151,9 +160,12 @@ on without seeing what it bills.
 
 ## Known limits
 
-- An agent definition holds at most 64 tools and the billing assistant is at 63, so
-  `share_invoice` and its candidate read are registered but on no template; an organization
-  can give them to an agent of its own.
+- An agent definition holds at most 64 tools. Every template leaves room for at least eight of
+  an organization's own (`TestTemplates_LeaveRoomForAnOrganizationsOwnTools`): the billing
+  assistant holds 53 and the receivables assistant 27.
+- A template is copied into an agent when the agent is made. An agent made from the billing
+  assistant before collections moved to receivables keeps the tools it was saved with, and no
+  existing agent gains `share_invoice`; an administrator changes either in AI control.
 
 - A preview shows twenty records; a transfer of more lists its refusals first, and a
   background transfer previews its first hundred shipments and says it is partial.

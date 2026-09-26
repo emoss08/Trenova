@@ -20,6 +20,9 @@ const (
 	SeedAgentDispatchName   = "Dispatch desk"
 	SeedAgentBillingName    = "Billing exceptions"
 	SeedAgentIntakeDeskName = "Inbox desk"
+
+	SeedAgentSettlementsName = "Settlements clerk"
+	SeedAgentReceivablesName = "Receivables"
 )
 
 type AgentDefinitionSeed struct {
@@ -183,7 +186,9 @@ func (s *AgentDefinitionSeed) reconcileToolNames(
 }
 
 // mergeToolNames appends the starters a definition is missing, preserving the
-// order it already had so a developer's arrangement is not reshuffled.
+// order it already had so a developer's arrangement is not reshuffled. It stops
+// at the tool cap: nothing is removed, so a template that moved tools elsewhere
+// and gained others would otherwise grow an agent past what it may hold.
 func mergeToolNames(current, starters []string) ([]string, bool) {
 	held := make(map[string]struct{}, len(current))
 	for _, tool := range current {
@@ -193,6 +198,9 @@ func mergeToolNames(current, starters []string) ([]string, bool) {
 	merged := current
 	changed := false
 	for _, tool := range starters {
+		if len(merged) >= agentdefinition.MaxTools {
+			break
+		}
 		if _, ok := held[tool]; ok {
 			continue
 		}
@@ -238,6 +246,36 @@ func (s *AgentDefinitionSeed) definitions(orgID, buID pulid.ID) []*agentdefiniti
 			ToolNames:         agentdefinition.TemplateBillingAssistant.StarterTools(),
 			AutonomyCeiling:   agent.TierPropose,
 			DataAccessCeiling: agentdefinition.TemplateBillingAssistant.StarterDataAccess(),
+			TriggerMode:       agentdefinition.TriggerChat,
+			Enabled:           true,
+		},
+		{
+			OrganizationID:    orgID,
+			BusinessUnitID:    buID,
+			Name:              SeedAgentSettlementsName,
+			Icon:              agentdefinition.IconBanknote,
+			Accent:            agentdefinition.AccentEmeral,
+			Description:       agentdefinition.TemplateSettlementsClerk.Description(),
+			Template:          agentdefinition.TemplateSettlementsClerk,
+			Instructions:      agentdefinition.TemplateSettlementsClerk.StarterInstructions(),
+			ToolNames:         agentdefinition.TemplateSettlementsClerk.StarterTools(),
+			AutonomyCeiling:   agentdefinition.TemplateSettlementsClerk.StarterCeiling(),
+			DataAccessCeiling: agentdefinition.TemplateSettlementsClerk.StarterDataAccess(),
+			TriggerMode:       agentdefinition.TriggerChat,
+			Enabled:           true,
+		},
+		{
+			OrganizationID:    orgID,
+			BusinessUnitID:    buID,
+			Name:              SeedAgentReceivablesName,
+			Icon:              agentdefinition.IconCoins,
+			Accent:            agentdefinition.AccentSky,
+			Description:       agentdefinition.TemplateReceivables.Description(),
+			Template:          agentdefinition.TemplateReceivables,
+			Instructions:      agentdefinition.TemplateReceivables.StarterInstructions(),
+			ToolNames:         agentdefinition.TemplateReceivables.StarterTools(),
+			AutonomyCeiling:   agentdefinition.TemplateReceivables.StarterCeiling(),
+			DataAccessCeiling: agentdefinition.TemplateReceivables.StarterDataAccess(),
 			TriggerMode:       agentdefinition.TriggerChat,
 			Enabled:           true,
 		},
