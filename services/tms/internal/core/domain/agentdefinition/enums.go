@@ -253,8 +253,12 @@ func (t Template) StarterInstructions() string {
 			"report that it is uncovered and when it starts, and stop, because the coverage sweep " +
 			"raises it again once it comes inside the window. For each uncovered move inside the " +
 			"window, weigh the candidates on hours available, proximity, equipment fit and customer " +
-			"requirements, then propose one assignment with your reasoning. If nothing fits, raise an " +
-			"exception saying what is missing."
+			"requirements, then propose one assignment with your reasoning. When no driver fits and " +
+			"a carrier's contract prices the lane in shop_carriers, propose covering the move with " +
+			"that carrier at that rate with assign_move_to_carrier. A move a carrier already " +
+			"covers needs its rate confirmation: generate it with generate_rate_confirmation when " +
+			"list_rate_confirmations shows none standing, and propose sending it with " +
+			"send_rate_confirmation. If nothing fits, raise an exception saying what is missing."
 	case TemplateImportAssistant:
 		return "You help a person turn a shipment document, usually a rate confirmation, into " +
 			"a shipment on the import page. The page draft shows the shipment as it stands: the " +
@@ -573,6 +577,18 @@ func (t Template) StarterTools() []string {
 			"update_trailer_status",
 			"list_insights",
 			"get_insight",
+			"unassign_moves",
+			"update_move_status",
+			"assign_move_to_carrier",
+			"cancel_carrier_assignment",
+			"list_shipment_tenders",
+			"cancel_tender",
+			"record_tender_response",
+			"list_rate_confirmations",
+			"generate_rate_confirmation",
+			"send_rate_confirmation",
+			"void_rate_confirmation",
+			"record_rate_confirmation_confirmed",
 		}
 	case TemplateBillingAssistant:
 		return []string{
@@ -744,6 +760,11 @@ func (t Template) StarterTools() []string {
 			"assign_move",
 			"tender_move_to_routing_guide",
 			"tender_move_to_carriers",
+			"assign_move_to_carrier",
+			"list_shipment_tenders",
+			"list_rate_confirmations",
+			"generate_rate_confirmation",
+			"send_rate_confirmation",
 		}
 	case TemplateImportAssistant:
 		return []string{

@@ -77,7 +77,7 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 54 |
+| Covered by a tool | 65 |
 | Exempt | 444 |
 | — Security | 58 |
 | — Configuration | 206 |
@@ -87,10 +87,10 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | — Counterparty | 33 |
 | — Read-only | 46 |
 | — Attestation | 8 |
-| **Pending** | **414** |
+| **Pending** | **403** |
 | Total | 912 |
 
-Of the 468 writes an agent should be able to make, 54 have a tool (11%).
+Of the 468 writes an agent should be able to make, 65 have a tool (13%).
 
 ## Pending
 
@@ -159,9 +159,6 @@ The writes no tool performs yet, and what the tool would do.
 | customerpayment | `mutation reverseCustomerPayment` | Reverse customer payment. |
 | customerpayment | `mutation unapplyCreditMemoApplication` | Unapply credit memo application. |
 | detention | `mutation disputeDetentionOccurrence` | Dispute detention occurrence. |
-| dispatchconsole | `mutation dispatchAssignMoveToCarrier` | Assign a carrier to a move from the dispatch console. |
-| dispatchconsole | `mutation dispatchCancelCarrierAssignment` | Cancel a carrier's assignment to a move. |
-| dispatchconsole | `mutation dispatchUnassignMoves` | Remove the driver and equipment assigned to one or more moves. |
 | distanceoverride | `DELETE /api/v1/distance-overrides/:distanceOverrideID/` | Delete a distance override. |
 | distanceoverride | `PATCH /api/v1/distance-overrides/:distanceOverrideID/` | Update some fields of a distance override. |
 | distanceoverride | `POST /api/v1/distance-overrides/` | Create a distance override. |
@@ -362,10 +359,6 @@ The writes no tool performs yet, and what the tool would do.
 | rateagreement | `POST /api/v1/rate-agreements/:rateAgreementID/suspend/` | Suspend a rate agreement. |
 | rateagreement | `POST /api/v1/rate-agreements/rate-increase/apply/` | Apply rate increase (rate agreement). |
 | rateagreement | `PUT /api/v1/rate-agreements/:rateAgreementID/` | Update a rate agreement. |
-| rateconfirmation | `POST /api/v1/rate-confirmations/:rateConfirmationID/confirm/` | Record that a carrier confirmed a rate confirmation outside the link. |
-| rateconfirmation | `POST /api/v1/rate-confirmations/:rateConfirmationID/send/` | Send a rate confirmation. |
-| rateconfirmation | `POST /api/v1/rate-confirmations/:rateConfirmationID/void/` | Void a rate confirmation. |
-| rateconfirmation | `POST /api/v1/shipment-moves/:moveID/rate-confirmations/` | Generate a shipment move. |
 | rateimport | `POST /api/v1/rate-imports/:rateImportID/commit/` | Commit a rate import. |
 | rateimport | `POST /api/v1/rate-imports/:rateImportID/discard/` | Discard a rate import. |
 | ratematrix | `DELETE /api/v1/rate-matrices/:rateMatrixID/` | Delete a rate matrice. |
@@ -422,16 +415,12 @@ The writes no tool performs yet, and what the tool would do.
 | shipment | `POST /api/v1/shipments/auto-cancel/` | Cancel shipments that passed the auto-cancel threshold. |
 | shipment | `POST /api/v1/shipments/delay/` | Mark shipments as delayed. |
 | shipment | `PUT /api/v1/shipments/:shipmentID/holds/:holdID/` | Update hold (shipment). |
-| shipmentmove | `POST /api/v1/shipment-moves/:moveID/split/` | Split move (shipment move). |
-| shipmentmove | `POST /api/v1/shipment-moves/:moveID/update-status/` | Update status (shipment move). |
-| shipmentmove | `POST /api/v1/shipment-moves/bulk-update-status/` | Change the status of several shipment moves at once. |
+| shipmentmove | `POST /api/v1/shipment-moves/:moveID/split/` | Split a two-stop move at a relay point into two moves. Left without a tool: the split needs a relay location and two new scheduled windows the system holds nowhere, so a model would have to invent the times, and the service checks only their order. |
 | storedmileage | `DELETE /api/v1/stored-mileages/:storedMileageID/` | Delete a stored mileage. |
 | tablechangealert | `DELETE /api/v1/tca/subscriptions/:id` | Delete subscription (table change alert). |
 | tablechangealert | `PATCH /api/v1/tca/subscriptions/:id/pause` | Pause subscription (table change alert). |
 | tablechangealert | `PATCH /api/v1/tca/subscriptions/:id/resume` | Resume subscription (table change alert). |
 | tablechangealert | `PUT /api/v1/tca/subscriptions/:id` | Update subscription (table change alert). |
-| tender | `POST /api/v1/tenders/:tenderID/cancel/` | Cancel a tender. |
-| tender | `POST /api/v1/tenders/offers/:offerID/respond/` | Record a carrier's answer to a tender offer given by phone or email. |
 | timesheet | `mutation deleteTimeEntry` | Delete time entry. |
 | timesheet | `mutation generatePayrollExport` | Generate payroll export. |
 | timesheet | `mutation recordTimeEntry` | Record time entry. |
@@ -558,7 +547,7 @@ The writes no tool performs yet, and what the tool would do.
 | decisions | 1 | 0 | 1 | 0 |
 | detention | 8 | 3 | 4 | 1 |
 | detentionpolicy | 1 | 0 | 1 | 0 |
-| dispatchconsole | 5 | 1 | 1 | 3 |
+| dispatchconsole | 5 | 4 | 1 | 0 |
 | dispatchcontrol | 1 | 0 | 1 | 0 |
 | distancecontrol | 2 | 0 | 2 | 0 |
 | distanceoverride | 4 | 0 | 0 | 4 |
@@ -621,7 +610,7 @@ The writes no tool performs yet, and what the tool would do.
 | ptopolicy | 8 | 0 | 4 | 4 |
 | push | 2 | 0 | 2 | 0 |
 | rateagreement | 12 | 0 | 1 | 11 |
-| rateconfirmation | 4 | 0 | 0 | 4 |
+| rateconfirmation | 4 | 4 | 0 | 0 |
 | rateconfirmationpublic | 1 | 0 | 1 | 0 |
 | rateimport | 3 | 0 | 1 | 2 |
 | ratematrix | 4 | 0 | 0 | 4 |
@@ -641,7 +630,7 @@ The writes no tool performs yet, and what the tool would do.
 | servicetype | 4 | 0 | 4 | 0 |
 | shipment | 33 | 6 | 9 | 18 |
 | shipmentcontrol | 1 | 0 | 1 | 0 |
-| shipmentmove | 4 | 1 | 0 | 3 |
+| shipmentmove | 4 | 3 | 0 | 1 |
 | shipmenttype | 4 | 0 | 4 | 0 |
 | sidebarpreference | 1 | 0 | 1 | 0 |
 | storedmileage | 1 | 0 | 0 | 1 |
@@ -650,7 +639,7 @@ The writes no tool performs yet, and what the tool would do.
 | tablequery | 1 | 0 | 1 | 0 |
 | telematics | 4 | 0 | 4 | 0 |
 | tenant | 1 | 0 | 1 | 0 |
-| tender | 4 | 2 | 0 | 2 |
+| tender | 4 | 4 | 0 | 0 |
 | tenderpublic | 2 | 0 | 2 | 0 |
 | timesheet | 7 | 0 | 3 | 4 |
 | tractor | 5 | 1 | 0 | 4 |
@@ -1078,11 +1067,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation dispatchAssignMoveToCarrier`<br>twin `POST /api/v1/shipment-moves/:moveID/carrier-assignment/` | Pending: Assign a carrier to a move from the dispatch console. |
+| `mutation dispatchAssignMoveToCarrier`<br>twin `POST /api/v1/shipment-moves/:moveID/carrier-assignment/` | Tool: `assign_move_to_carrier` |
 | `mutation dispatchAssignMoves`<br>twin `POST /api/v1/shipment-moves/:moveID/assignment/`<br>twin `PUT /api/v1/shipment-moves/:moveID/assignment/` | Tool: `assign_move` |
-| `mutation dispatchCancelCarrierAssignment`<br>twin `DELETE /api/v1/shipment-moves/:moveID/carrier-assignment/` | Pending: Cancel a carrier's assignment to a move. |
+| `mutation dispatchCancelCarrierAssignment`<br>twin `DELETE /api/v1/shipment-moves/:moveID/carrier-assignment/` | Tool: `cancel_carrier_assignment` |
 | `mutation dispatchPlanAutoAssign` | Exempt, read-only: Plans automatic assignments for review and saves nothing. |
-| `mutation dispatchUnassignMoves`<br>twin `DELETE /api/v1/shipment-moves/:moveID/assignment/` | Pending: Remove the driver and equipment assigned to one or more moves. |
+| `mutation dispatchUnassignMoves`<br>twin `DELETE /api/v1/shipment-moves/:moveID/assignment/` | Tool: `unassign_moves` |
 
 ### dispatchcontrol
 
@@ -1850,10 +1839,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/rate-confirmations/:rateConfirmationID/confirm/`<br>rateconfirmationhandler.confirm | Pending: Record that a carrier confirmed a rate confirmation outside the link. |
-| `POST /api/v1/rate-confirmations/:rateConfirmationID/send/`<br>rateconfirmationhandler.send | Pending: Send a rate confirmation. |
-| `POST /api/v1/rate-confirmations/:rateConfirmationID/void/`<br>rateconfirmationhandler.void | Pending: Void a rate confirmation. |
-| `POST /api/v1/shipment-moves/:moveID/rate-confirmations/`<br>rateconfirmationhandler.generate | Pending: Generate a shipment move. |
+| `POST /api/v1/rate-confirmations/:rateConfirmationID/confirm/`<br>rateconfirmationhandler.confirm | Tool: `record_rate_confirmation_confirmed` |
+| `POST /api/v1/rate-confirmations/:rateConfirmationID/send/`<br>rateconfirmationhandler.send | Tool: `send_rate_confirmation` |
+| `POST /api/v1/rate-confirmations/:rateConfirmationID/void/`<br>rateconfirmationhandler.void | Tool: `void_rate_confirmation` |
+| `POST /api/v1/shipment-moves/:moveID/rate-confirmations/`<br>rateconfirmationhandler.generate | Tool: `generate_rate_confirmation` |
 
 ### rateconfirmationpublic
 
@@ -2072,10 +2061,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/shipment-moves/:moveID/split/`<br>shipmentmovehandler.splitMove | Pending: Split move (shipment move). |
+| `POST /api/v1/shipment-moves/:moveID/split/`<br>shipmentmovehandler.splitMove | Pending: Split a two-stop move at a relay point into two moves. Left without a tool: the split needs a relay location and two new scheduled windows the system holds nowhere, so a model would have to invent the times, and the service checks only their order. |
 | `POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/`<br>shipmentmovehandler.recordStopActual | Tool: `record_stop_actual` |
-| `POST /api/v1/shipment-moves/:moveID/update-status/`<br>shipmentmovehandler.updateStatus | Pending: Update status (shipment move). |
-| `POST /api/v1/shipment-moves/bulk-update-status/`<br>shipmentmovehandler.bulkUpdateStatus | Pending: Change the status of several shipment moves at once. |
+| `POST /api/v1/shipment-moves/:moveID/update-status/`<br>shipmentmovehandler.updateStatus | Tool: `update_move_status` |
+| `POST /api/v1/shipment-moves/bulk-update-status/`<br>shipmentmovehandler.bulkUpdateStatus | Tool: `update_move_status` |
 
 ### shipmenttype
 
@@ -2144,8 +2133,8 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/tenders/:tenderID/cancel/`<br>tenderhandler.cancel | Pending: Cancel a tender. |
-| `POST /api/v1/tenders/offers/:offerID/respond/`<br>tenderhandler.recordResponse | Pending: Record a carrier's answer to a tender offer given by phone or email. |
+| `POST /api/v1/tenders/:tenderID/cancel/`<br>tenderhandler.cancel | Tool: `cancel_tender` |
+| `POST /api/v1/tenders/offers/:offerID/respond/`<br>tenderhandler.recordResponse | Tool: `record_tender_response` |
 | `POST /api/v1/tenders/spot/`<br>tenderhandler.createSpot | Tool: `tender_move_to_carriers` |
 | `POST /api/v1/tenders/waterfall/`<br>tenderhandler.createWaterfall | Tool: `tender_move_to_routing_guide` |
 

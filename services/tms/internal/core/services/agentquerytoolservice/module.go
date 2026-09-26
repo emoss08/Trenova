@@ -30,6 +30,7 @@ func ToolProviders() []any {
 		oversightToolProviders(),
 		importDraftToolProviders(),
 		formulaToolProviders(),
+		tenderingToolProviders(),
 	}
 
 	size := 0

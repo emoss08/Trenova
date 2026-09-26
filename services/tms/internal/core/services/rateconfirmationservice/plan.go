@@ -186,7 +186,12 @@ func (s *Service) PreviewVoid(
 		return out, nil
 	}
 
-	return out, s.previewAssignment(ctx, tenantInfo, out, (*shipment.CarrierAssignment).RevertConfirmation)
+	return out, s.previewAssignment(
+		ctx,
+		tenantInfo,
+		out,
+		(*shipment.CarrierAssignment).RevertConfirmation,
+	)
 }
 
 // PreviewMarkConfirmed is what MarkConfirmed would do, from the same checks,

@@ -176,12 +176,17 @@ func (s *Service) ConfirmByToken(
 			return invalidTokenError()
 		}
 		previous := *entity
-		confirmed, confirmErr := s.markConfirmed(ctx, tenantInfo, entity, rateconfirmation.Confirmation{
-			Name:  signerName,
-			Title: signerTitle,
-			Via:   rateconfirmation.ViaPublicSignature,
-			At:    timeutils.NowUnix(),
-		})
+		confirmed, confirmErr := s.markConfirmed(
+			ctx,
+			tenantInfo,
+			entity,
+			rateconfirmation.Confirmation{
+				Name:  signerName,
+				Title: signerTitle,
+				Via:   rateconfirmation.ViaPublicSignature,
+				At:    timeutils.NowUnix(),
+			},
+		)
 		if confirmErr != nil {
 			return confirmErr
 		}

@@ -29,6 +29,10 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 	ResourceShipmentMove: {
 		OpRead:   {},
 		OpUpdate: {},
+		// The coverage desk may put a contract carrier on a move no driver
+		// fits. Unassigning stays a person's: no desk runs unassign_moves or
+		// cancel_carrier_assignment.
+		OpAssign: {},
 	},
 	ResourceWorker: {
 		OpRead: {},
@@ -127,7 +131,20 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead: {},
 	},
 	ResourceTender: {
+		// list_shipment_tenders, so the coverage desk sees a live tender
+		// before it covers a move another way.
+		OpRead:   {},
 		OpCreate: {},
+	},
+	// The coverage desk generates the rate confirmation for a carrier it
+	// covered a move with and proposes sending it; send_rate_confirmation
+	// never runs without a person, whatever the desk's tier. Voiding and
+	// recording a carrier's confirmation share the update grant, and neither
+	// runs before a person approves it either.
+	ResourceRateConfirmation: {
+		OpRead:   {},
+		OpCreate: {},
+		OpUpdate: {},
 	},
 	ResourceCustomer: {
 		OpRead: {},

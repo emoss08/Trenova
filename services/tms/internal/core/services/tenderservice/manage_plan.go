@@ -101,7 +101,10 @@ func (s *Service) PreviewResponse(
 
 // planCancel is everything Cancel decides before it acts: the tender, with
 // its offers, is still live.
-func (s *Service) planCancel(ctx context.Context, req *CancelTenderRequest) (*tender.Tender, error) {
+func (s *Service) planCancel(
+	ctx context.Context,
+	req *CancelTenderRequest,
+) (*tender.Tender, error) {
 	if multiErr := req.Validate(); multiErr != nil {
 		return nil, multiErr
 	}
