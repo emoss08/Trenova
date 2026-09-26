@@ -4,6 +4,7 @@ aliases: [QuickBooks sync, sync log, sync errors, sync history, failed to sync, 
 related:
   - /accounting/sync/mappings
   - /accounting/sync/inbound
+  - /accounting/sync/drift
   - /admin/integrations
 ---
 

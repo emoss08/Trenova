@@ -53,6 +53,13 @@ func (f *fakeConnections) GetByType(
 	return f.current(), nil
 }
 
+func (f *fakeConnections) SaveDriftCheck(
+	context.Context,
+	*repositories.SaveAccountingDriftCheckRequest,
+) error {
+	return nil
+}
+
 func (f *fakeConnections) SaveChangeFeed(
 	_ context.Context,
 	req *repositories.SaveAccountingChangeFeedRequest,

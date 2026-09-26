@@ -25,6 +25,13 @@ func (e *AccountingConnection) GetStaticFieldMap() map[string]string {
 	return buncolgen.AccountingConnectionFieldMap
 }
 
+// GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingDriftFinding].
+// This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
+// the generated [buncolgen.AccountingDriftFindingFieldMap] instead of parsing struct tags via reflection.
+func (e *AccountingDriftFinding) GetStaticFieldMap() map[string]string {
+	return buncolgen.AccountingDriftFindingFieldMap
+}
+
 // GetStaticFieldMap returns the pre-computed JSON→database column mapping for [AccountingInboundChange].
 // This implements [querybuilder.StaticFieldMapper], allowing the QueryBuilder to use
 // the generated [buncolgen.AccountingInboundChangeFieldMap] instead of parsing struct tags via reflection.

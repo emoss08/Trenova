@@ -16,7 +16,15 @@ import {
   fetchAccountingInboundChange,
   fetchAccountingInboundOverview,
 } from "@/lib/graphql/accounting-inbound";
-import type { AccountingSystem } from "@trenova/graphql/generated/graphql";
+import {
+  fetchAccountingDriftFinding,
+  fetchAccountingDriftFixPreview,
+  fetchAccountingDriftOverview,
+} from "@/lib/graphql/accounting-drift";
+import type {
+  AccountingDriftDirection,
+  AccountingSystem,
+} from "@trenova/graphql/generated/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const accountingSync = createQueryKeys("accountingSync", {
@@ -62,6 +70,18 @@ export const accountingSync = createQueryKeys("accountingSync", {
   inboundPreview: (id: string) => ({
     queryKey: [id],
     queryFn: ({ signal }) => fetchAccountingInboundApplyPreview(id, { signal }),
+  }),
+  driftOverview: (integrationType: AccountingSystem) => ({
+    queryKey: [integrationType],
+    queryFn: ({ signal }) => fetchAccountingDriftOverview(integrationType, { signal }),
+  }),
+  driftFinding: (id: string) => ({
+    queryKey: [id],
+    queryFn: ({ signal }) => fetchAccountingDriftFinding(id, { signal }),
+  }),
+  driftPreview: (id: string, direction: AccountingDriftDirection) => ({
+    queryKey: [id, direction],
+    queryFn: ({ signal }) => fetchAccountingDriftFixPreview({ id, direction }, { signal }),
   }),
   referenceSearch: (search: AccountingReferenceSearch) => ({
     queryKey: [search],

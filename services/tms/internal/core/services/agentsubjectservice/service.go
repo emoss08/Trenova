@@ -57,6 +57,7 @@ type Params struct {
 	Accounting        repositories.AccountingConnectionRepository    `optional:"true"`
 	SyncRecords       repositories.AccountingSyncRecordRepository    `optional:"true"`
 	AccountingInbound repositories.AccountingInboundChangeRepository `optional:"true"`
+	AccountingDrift   repositories.AccountingDriftFindingRepository  `optional:"true"`
 	Dispatch          repositories.DispatchControlRepository         `optional:"true"`
 	Formulas          repositories.FormulaTemplateRepository         `optional:"true"`
 }
@@ -83,6 +84,7 @@ type Service struct {
 	accounting        repositories.AccountingConnectionRepository
 	syncRecords       repositories.AccountingSyncRecordRepository
 	accountingInbound repositories.AccountingInboundChangeRepository
+	accountingDrift   repositories.AccountingDriftFindingRepository
 	dispatch          repositories.DispatchControlRepository
 	formulas          repositories.FormulaTemplateRepository
 	logger            *zap.Logger
@@ -103,6 +105,7 @@ func New(p Params) serviceports.AgentSubjectDescriber {
 		carrierIntel:      p.CarrierIntel,
 		ediFiles:          p.EDIFiles,
 		accountingInbound: p.AccountingInbound,
+		accountingDrift:   p.AccountingDrift,
 		reports:           p.Reports,
 		dashboards:        p.Dashboards,
 		accounting:        p.Accounting,
@@ -153,6 +156,8 @@ func (s *Service) Describe(
 		return s.accountingSyncRecord(ctx, tenant, subjectID)
 	case agent.SubjectAccountingInbound:
 		return s.accountingInboundChange(ctx, tenant, subjectID)
+	case agent.SubjectAccountingDrift:
+		return s.accountingDriftFinding(ctx, tenant, subjectID)
 	case agent.SubjectFormulaTemplate:
 		return s.formulaTemplate(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
@@ -1154,6 +1159,49 @@ func (s *Service) accountingInboundChange(
 		"paidOn":      found.TxnDate,
 		"party":       found.PartyName,
 		"lines":       found.Document.Lines,
+	})
+
+	return subject, nil
+}
+
+func (s *Service) accountingDriftFinding(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	findingID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectAccountingDrift,
+		ID:    findingID.String(),
+		Label: "Books differ from Trenova",
+	}
+	if s.accountingDrift == nil {
+		return subject, nil
+	}
+
+	found, err := s.accountingDrift.GetByID(ctx, repositories.GetAccountingDriftFindingRequest{
+		TenantInfo: tenant,
+		ID:         findingID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load accounting drift finding: %w", err)
+	}
+
+	subject.Label = "Books differ from Trenova: " + found.ObjectNumber + " " + found.PartyName
+	subject.Notes = marshalNotes(map[string]any{
+		"kind":               found.Kind,
+		"status":             found.Status,
+		"objectType":         found.ObjectType,
+		"objectId":           found.ObjectID,
+		"trenovaMinor":       found.TrenovaMinor,
+		"providerMinor":      found.ProviderMinor,
+		"differenceMinor":    found.DifferenceMinor,
+		"currency":           found.CurrencyCode,
+		"trenovaState":       found.TrenovaState,
+		"providerState":      found.ProviderState,
+		"providerModifiedAt": found.ProviderModifiedAt,
+		"providerModifiedBy": found.ProviderModifiedBy,
+		"directions":         found.Directions(),
+		"detail":             found.Detail,
 	})
 
 	return subject, nil

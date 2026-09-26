@@ -54,8 +54,9 @@ type Field struct {
 	// Values closes an enum. A value outside the set is refused rather than
 	// passed through, because the query would match nothing and the caller
 	// would report that as "there are none".
-	Values   []string
-	Sortable bool
+	Values         []string
+	ValuesUnlisted bool
+	Sortable       bool
 }
 
 // Resource is one entity and the fields it answers to.

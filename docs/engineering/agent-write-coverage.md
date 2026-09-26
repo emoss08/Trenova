@@ -73,11 +73,11 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 ## Totals
 
-914 writes: 467 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
+917 writes: 470 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 90 |
+| Covered by a tool | 93 |
 | Exempt | 446 |
 | — Security | 58 |
 | — Configuration | 206 |
@@ -89,9 +89,9 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | — Attestation | 8 |
 | — Duplicate | 2 |
 | **Pending** | **378** |
-| Total | 914 |
+| Total | 917 |
 
-Of the 468 writes an agent should be able to make, 90 have a tool (19%).
+Of the 471 writes an agent should be able to make, 93 have a tool (19%).
 
 ## Pending
 
@@ -484,7 +484,7 @@ The writes no tool performs yet, and what the tool would do.
 | --- | --- | --- | --- | --- |
 | accessorialcharge | 3 | 0 | 3 | 0 |
 | accountingcontrol | 1 | 0 | 1 | 0 |
-| accountingsync | 24 | 12 | 8 | 4 |
+| accountingsync | 27 | 15 | 8 | 4 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 0 | 4 |
 | agent | 12 | 2 | 10 | 0 |
@@ -673,12 +673,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation applyAccountingInboundChange` | Tool: `apply_accounting_inbound_change` |
 | `mutation changeAccountingBackfill` | Pending: Change the range or scope of an accounting backfill that has not finished. |
 | `mutation checkAccountingConnection` | Tool: `check_accounting_connection` |
+| `mutation checkAccountingDrift` | Tool: `check_accounting_drift` |
 | `mutation clearAccountingMapping` | Tool: `clear_accounting_mapping` |
 | `mutation completeAccountingAuthorization` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
 | `mutation completeAccountingSetup` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation confirmAccountingMappings` | Pending: Confirm the suggested accounting mappings so sync can use them. |
 | `mutation createAccountingReferenceRecord` | Tool: `create_accounting_reference_record` |
 | `mutation disconnectAccountingSystem` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
+| `mutation dismissAccountingDrift` | Tool: `dismiss_accounting_drift` |
 | `mutation enableAccountingSync` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation ignoreAccountingInboundChange` | Tool: `ignore_accounting_inbound_change` |
 | `mutation pauseAccountingSync` | Tool: `pause_accounting_sync` |
@@ -687,6 +689,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation releaseAccountingSync` | Pending: Release accounting sync records held for review so they post. |
 | `mutation removeAccountingApp` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |
 | `mutation requestAccountingBackfill` | Tool: `request_accounting_backfill` |
+| `mutation resolveAccountingDrift` | Tool: `resolve_accounting_drift` |
 | `mutation resumeAccountingSync` | Tool: `resume_accounting_sync` |
 | `mutation retryAccountingSync` | Tool: `retry_accounting_sync` |
 | `mutation saveAccountingApp` | Exempt, security: Handles the OAuth app and its credentials that let Trenova act in the accounting system. |

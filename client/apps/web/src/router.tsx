@@ -866,6 +866,17 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/accounting/sync/drift",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.AccountingSync),
+            ),
+            async lazy() {
+              const { AccountingDriftPage } = await import("@/routes/accounting-drift/page");
+              return { Component: AccountingDriftPage };
+            },
+          },
+          {
             path: "/accounting/sync/mappings",
             loader: combineLoaders(
               protectedLoader,

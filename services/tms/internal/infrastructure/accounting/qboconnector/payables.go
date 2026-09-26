@@ -155,16 +155,7 @@ func (c *Connector) CreateBillPayment(
 		return nil, err
 	}
 
-	paid, err := client.CreateBillPayment(ctx, doc.RequestID, &quickbooks.BillPaymentTxn{
-		VendorID:      doc.VendorExternalID,
-		BankAccountID: doc.BankAccountExternalID,
-		BillID:        doc.BillExternalID,
-		DocNumber:     doc.DocNumber,
-		TxnDate:       doc.TxnDate,
-		CurrencyCode:  doc.CurrencyCode,
-		PrivateNote:   doc.PrivateNote,
-		Amount:        doc.Amount,
-	})
+	paid, err := client.CreateBillPayment(ctx, doc.RequestID, billPaymentTxnOf(doc))
 	if err != nil {
 		return nil, err
 	}
@@ -173,4 +164,17 @@ func (c *Connector) CreateBillPayment(
 		DocNumber:  paid.DocNumber,
 		Refs:       map[string]string{accountingsync.ExternalRefDocument: paid.ID},
 	}, nil
+}
+
+func billPaymentTxnOf(doc *services.AccountingBillPaymentDocument) *quickbooks.BillPaymentTxn {
+	return &quickbooks.BillPaymentTxn{
+		VendorID:      doc.VendorExternalID,
+		BankAccountID: doc.BankAccountExternalID,
+		BillID:        doc.BillExternalID,
+		DocNumber:     doc.DocNumber,
+		TxnDate:       doc.TxnDate,
+		CurrencyCode:  doc.CurrencyCode,
+		PrivateNote:   doc.PrivateNote,
+		Amount:        doc.Amount,
+	}
 }

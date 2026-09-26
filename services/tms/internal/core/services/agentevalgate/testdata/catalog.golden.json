@@ -1281,6 +1281,51 @@
       }
     },
     {
+      "name": "check_accounting_drift",
+      "description": "Compare the accounting system with Trenova immediately instead of waiting for the nightly check. It runs in the background and changes nothing on either side; read list_accounting_drift_findings once it has finished.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "check drift",
+        "reconcile with the accounting system"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_sync",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads every synced document back from the accounting system, which spends the provider's call allowance, so a person approves it."
+      }
+    },
+    {
       "name": "clear_accounting_mapping",
       "description": "Remove the accounting system record a Trenova record or setting is mapped to, so it is unmatched again and that record is never proposed for it again. Use it when a person says a mapping is wrong and no right record exists yet; to replace it with another record, use set_accounting_mapping instead.",
       "parameters": {
@@ -2662,6 +2707,56 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "dismiss_accounting_drift",
+      "description": "Dismiss an open drift finding, with the reason, keeping both sides as they are. An agent may dismiss only an amount difference within the reconciliation tolerance, which list_accounting_drift_findings marks as withinTolerance. Anything larger, and any deleted, voided or status difference, is a person's decision.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "findingId": {
+            "description": "The finding's id, from list_accounting_drift_findings.",
+            "type": "string"
+          },
+          "note": {
+            "description": "Why both sides stay as they are, in one sentence a bookkeeper would accept.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "findingId",
+          "note"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "dismiss drift",
+        "rounding difference"
+      ],
+      "prerequisites": [
+        "list_accounting_drift_findings"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_sync",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Closes a difference with the books without fixing it, so a person approves it."
       }
     },
     {
@@ -5275,6 +5370,116 @@
       }
     },
     {
+      "name": "list_accounting_drift_findings",
+      "description": "List drift: documents Trenova sent to the accounting system that differ there now, newest first. Each row shows both values, who changed it there and when, whether the difference is within the reconciliation tolerance, and the fixes it offers. Filter by status, such as Open, by kind, or by document type. Pass an Open row's id to resolve_accounting_drift or dismiss_accounting_drift.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Only these kinds of difference.",
+            "items": {
+              "description": "A kind.",
+              "enum": [
+                "AmountMismatch",
+                "StatusMismatch",
+                "DeletedInProvider",
+                "VoidedInProvider",
+                "CustomerBalanceMismatch"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many findings to return, at most 50. Defaults to 25.",
+            "type": "integer"
+          },
+          "objectType": {
+            "description": "Only these document types. Customer means a customer's balance.",
+            "items": {
+              "description": "A document type.",
+              "enum": [
+                "Customer",
+                "Invoice",
+                "CreditMemo",
+                "DebitMemo",
+                "CustomerPayment",
+                "CreditApplication",
+                "CarrierBill",
+                "CarrierBillPayment",
+                "DriverBill",
+                "DriverBillPayment"
+              ],
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "search": {
+            "description": "Words to find in the document number, the party name or who changed it.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only findings in these statuses. Open ones wait for a fix or a dismissal.",
+            "items": {
+              "description": "A status.",
+              "enum": [
+                "Open",
+                "Resolved",
+                "Dismissed"
+              ],
+              "type": "string"
+            },
+            "maxItems": 3,
+            "type": "array"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "drift",
+        "changed after it was sent",
+        "edited in the accounting system",
+        "reconciliation differences"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "accounting_sync",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "list_accounting_inbound_changes",
       "description": "List inbound changes: payments the accounting system recorded against invoices or bills Trenova sent, newest first. Each says what it pays and whether it was brought into Trenova, and if not why. Filter by status, such as Proposed for what waits on a person, by kind, or by reason. Pass a Proposed row's id to apply_accounting_inbound_change or ignore_accounting_inbound_change.",
       "parameters": {
@@ -5585,7 +5790,7 @@
     },
     {
       "name": "list_agent_runs",
-      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is running. get_agent_run reads one. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (BillingQueueItem|ShipmentMove|AssistantThread|Shipment|Document|Organization|Insight|BankReceipt|DetentionOccurrence|Worker|CarrierIntelEvent|EDIInboundFile|InboundMessage|Report|Dashboard|AccountingConnection|FormulaTemplate|AccountingSyncRecord|AccountingInboundChange): the kind of record the run worked on; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
+      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is running. get_agent_run reads one. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (enum): the kind of record the run worked on, named as get_agent_run reports it (Shipment, BillingQueueItem, AccountingDriftFinding); any other name is refused with the full list; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -10645,6 +10850,7 @@
           "entity": {
             "description": "The kind of record to open, with recordId, instead of a page.",
             "enum": [
+              "accounting_drift_finding",
               "accounting_inbound_change",
               "accounting_sync_record",
               "agent_run",
@@ -11678,7 +11884,8 @@
               "AccountingConnection",
               "FormulaTemplate",
               "AccountingSyncRecord",
-              "AccountingInboundChange"
+              "AccountingInboundChange",
+              "AccountingDriftFinding"
             ],
             "type": "string"
           }
@@ -12574,6 +12781,61 @@
         "readsExternal": "never",
         "carriesTaint": false,
         "rationale": "Emails an outside party a request for paperwork in words the model wrote."
+      }
+    },
+    {
+      "name": "resolve_accounting_drift",
+      "description": "Fix an open drift finding in one direction. PushTrenovaValue sends Trenova's document to the accounting system again: an update, a void, or a new copy of a document deleted there. AdjustTrenova changes Trenova to match the accounting system: a credit or debit memo against the invoice, a void of an invoice gone from it, or the reversal of a payment voided there, none of which is sent back. Only the directions the finding lists under fixes are offered. The preview says exactly what happens.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "direction": {
+            "description": "Which side to change: PushTrenovaValue changes the accounting system, AdjustTrenova changes Trenova.",
+            "enum": [
+              "PushTrenovaValue",
+              "AdjustTrenova"
+            ],
+            "type": "string"
+          },
+          "findingId": {
+            "description": "The finding's id, from list_accounting_drift_findings.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "findingId",
+          "direction"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "fix drift",
+        "send trenova's total again",
+        "match the accounting system"
+      ],
+      "prerequisites": [
+        "list_accounting_drift_findings"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_sync",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Changes money on one side of the books: it posts a memo, void or reversal in Trenova, or sends a document to the accounting system, so a person approves each fix."
       }
     },
     {

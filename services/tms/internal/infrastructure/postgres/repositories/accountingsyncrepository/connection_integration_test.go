@@ -278,3 +278,60 @@ func TestConnectionRepository_ReferenceRefreshRunsUntilItFinishesEitherWay(t *te
 	assert.Equal(t, finished, *done.ReferenceRefreshedAt)
 	assert.Empty(t, done.ReferenceRefreshError)
 }
+
+func TestConnectionRepository_DriftCheckKeepsItsLastSuccessThroughAFailure(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
+	now := timeutils.NowUnix()
+
+	created, err := repo.Create(ctx, newConnection(tenant, data.User.ID, realm, now))
+	require.NoError(t, err)
+	get := func() *accountingsync.AccountingConnection {
+		conn, getErr := repo.GetByID(ctx, repositories.GetAccountingConnectionByIDRequest{TenantInfo: tenant, ID: created.ID})
+		require.NoError(t, getErr)
+		return conn
+	}
+
+	checked := now
+	require.NoError(t, repo.SaveDriftCheck(ctx, &repositories.SaveAccountingDriftCheckRequest{
+		TenantInfo: tenant,
+		ID:         created.ID,
+		CheckedAt:  &checked,
+	}))
+	require.NotNil(t, get().DriftCheckedAt)
+
+	require.NoError(t, repo.SaveDriftCheck(ctx, &repositories.SaveAccountingDriftCheckRequest{
+		TenantInfo:    tenant,
+		ID:            created.ID,
+		ErrorCategory: accountingsync.SyncErrorAuth,
+		ErrorMessage:  "QuickBooks refused the authorization",
+	}))
+	failed := get()
+	require.NotNil(t, failed.DriftCheckedAt, "a failure keeps the last good check")
+	assert.Equal(t, checked, *failed.DriftCheckedAt)
+	assert.Equal(t, accountingsync.SyncErrorAuth, failed.DriftErrorCategory)
+	assert.Equal(t, "QuickBooks refused the authorization", failed.DriftErrorMessage)
+
+	later := now + 60
+	require.NoError(t, repo.SaveDriftCheck(ctx, &repositories.SaveAccountingDriftCheckRequest{
+		TenantInfo: tenant,
+		ID:         created.ID,
+		CheckedAt:  &later,
+	}))
+	recovered := get()
+	assert.Equal(t, later, *recovered.DriftCheckedAt)
+	assert.Empty(t, recovered.DriftErrorCategory)
+	assert.Empty(t, recovered.DriftErrorMessage)
+
+	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: tenant.BuID}
+	require.NoError(t, repo.SaveDriftCheck(ctx, &repositories.SaveAccountingDriftCheckRequest{
+		TenantInfo:   other,
+		ID:           created.ID,
+		ErrorMessage: "another tenant",
+	}))
+	assert.Empty(t, get().DriftErrorMessage, "another tenant cannot write this connection")
+}

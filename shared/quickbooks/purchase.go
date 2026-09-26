@@ -64,6 +64,8 @@ type wirePurchaseLine struct {
 }
 
 type purchaseBody struct {
+	ID           string             `json:"Id,omitempty"`
+	SyncToken    string             `json:"SyncToken,omitempty"`
 	VendorRef    refValue           `json:"VendorRef"`
 	APAccountRef *refValue          `json:"APAccountRef,omitempty"`
 	DocNumber    string             `json:"DocNumber,omitempty"`
@@ -79,6 +81,8 @@ type checkPayment struct {
 }
 
 type billPaymentBody struct {
+	ID           string            `json:"Id,omitempty"`
+	SyncToken    string            `json:"SyncToken,omitempty"`
 	VendorRef    refValue          `json:"VendorRef"`
 	PayType      string            `json:"PayType"`
 	CheckPayment checkPayment      `json:"CheckPayment"`

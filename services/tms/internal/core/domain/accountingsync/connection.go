@@ -70,6 +70,9 @@ type AccountingConnection struct {
 	ChangesReadAt                 *int64               `json:"changesReadAt"                 bun:"changes_read_at,type:BIGINT,nullzero"`
 	ChangesErrorCategory          SyncErrorCategory    `json:"changesErrorCategory"          bun:"changes_error_category,type:VARCHAR(30),nullzero"`
 	ChangesErrorMessage           string               `json:"changesErrorMessage"           bun:"changes_error_message,type:TEXT,nullzero"`
+	DriftCheckedAt                *int64               `json:"driftCheckedAt"                bun:"drift_checked_at,type:BIGINT,nullzero"`
+	DriftErrorCategory            SyncErrorCategory    `json:"driftErrorCategory"            bun:"drift_error_category,type:VARCHAR(30),nullzero"`
+	DriftErrorMessage             string               `json:"driftErrorMessage"             bun:"drift_error_message,type:TEXT,nullzero"`
 	PausedAt                      *int64               `json:"pausedAt"                      bun:"paused_at,type:BIGINT,nullzero"`
 	PausedByID                    pulid.ID             `json:"pausedById"                    bun:"paused_by_id,type:VARCHAR(100),nullzero"`
 	PausedReason                  string               `json:"pausedReason"                  bun:"paused_reason,type:TEXT,nullzero"`
@@ -403,6 +406,21 @@ func (c *AccountingConnection) AdvanceChanges(cursor string, now int64) {
 func (c *AccountingConnection) RecordChangesFailure(category SyncErrorCategory, message string) {
 	c.ChangesErrorCategory = category
 	c.ChangesErrorMessage = stringutils.TruncateRunes(message, maxChangesErrorMessage)
+}
+
+func (c *AccountingConnection) ChecksDrift() bool {
+	return c.CanDispatch()
+}
+
+func (c *AccountingConnection) FinishDriftCheck(now int64) {
+	c.DriftCheckedAt = &now
+	c.DriftErrorCategory = ""
+	c.DriftErrorMessage = ""
+}
+
+func (c *AccountingConnection) RecordDriftFailure(category SyncErrorCategory, message string) {
+	c.DriftErrorCategory = category
+	c.DriftErrorMessage = stringutils.TruncateRunes(message, maxChangesErrorMessage)
 }
 
 func (c *AccountingConnection) Pause(userID pulid.ID, reason string, now int64) {

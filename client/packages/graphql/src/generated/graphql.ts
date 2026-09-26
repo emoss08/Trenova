@@ -292,6 +292,45 @@ export type AccountingConnectionStatus =
   /** The authorization was revoked or expired; someone has to reconnect. */
   | 'Revoked';
 
+/** Which side a fix changes. */
+export type AccountingDriftDirection =
+  /** Change Trenova to match the accounting system. */
+  | 'AdjustTrenova'
+  /** Send Trenova's document to the accounting system again. */
+  | 'PushTrenovaValue';
+
+/** What a fix made. */
+export type AccountingDriftFixObject =
+  | 'CreditMemo'
+  | 'DebitMemo'
+  | 'InvoiceVoid'
+  | 'PaymentReversal'
+  | 'SyncRecord';
+
+/** How the accounting system and Trenova differ on a document Trenova sent. */
+export type AccountingDriftKind =
+  /** The total differs. */
+  | 'AmountMismatch'
+  /** A customer's open balance differs over the documents both sides hold. */
+  | 'CustomerBalanceMismatch'
+  /** It was deleted in the accounting system. */
+  | 'DeletedInProvider'
+  /** Trenova voided or reversed it; the accounting system still has it. */
+  | 'StatusMismatch'
+  /** It was voided in the accounting system. */
+  | 'VoidedInProvider';
+
+export type AccountingDriftResolution =
+  | 'AdjustedTrenova'
+  | 'Dismissed'
+  | 'NoLongerDiffers'
+  | 'PushedTrenovaValue';
+
+export type AccountingDriftStatus =
+  | 'Dismissed'
+  | 'Open'
+  | 'Resolved';
+
 /** Why the last call to the accounting system failed. */
 export type AccountingErrorCategory =
   | 'Configuration'
@@ -921,6 +960,7 @@ export type AgentSeverity =
 
 export type AgentSubjectType =
   | 'AccountingConnection'
+  | 'AccountingDriftFinding'
   | 'AccountingInboundChange'
   | 'AccountingSyncRecord'
   | 'AssistantThread'
@@ -2493,6 +2533,12 @@ export type DisciplinaryStatus =
   | 'Active'
   | 'Expired'
   | 'Rescinded';
+
+export type DismissAccountingDriftInput = {
+  id: string | number;
+  /** Why both sides stay as they are. */
+  note: string;
+};
 
 export type DispatchAssignMoveInput = {
   moveId: string | number;
@@ -4981,6 +5027,11 @@ export type RescindDisciplinaryActionInput = {
   version?: number | null | undefined;
 };
 
+export type ResolveAccountingDriftInput = {
+  direction: AccountingDriftDirection;
+  id: string | number;
+};
+
 export type ResolveCarrierIntelEventInput = {
   id: string | number;
   note?: string | null | undefined;
@@ -6929,6 +6980,61 @@ export type AccountTypeTableQueryVariables = Exact<{
 
 
 export type AccountTypeTableQuery = { accountTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AccountingDriftFindingFieldsFragment = { id: string, connectionId: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, partyId: string | null, partyName: string, externalId: string, externalUrl: string, kind: AccountingDriftKind, currencyCode: string, trenovaMinor: number | null, providerMinor: number | null, differenceMinor: number | null, trenovaState: string, providerState: string, providerModifiedAt: number | null, providerModifiedBy: string, status: AccountingDriftStatus, resolution: AccountingDriftResolution | null, resolutionNote: string, fixObjectType: AccountingDriftFixObject | null, fixObjectId: string | null, directions: Array<AccountingDriftDirection>, pushed: boolean, resolvedAt: number | null, detectedAt: number, lastSeenAt: number, version: number, updatedAt: number, detail: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, trenovaMinor: number, providerMinor: number }>, resolvedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingDriftFindingFieldsFragment' };
+
+export type AccountingDriftOverviewFieldsFragment = { connectionId: string, providerName: string, checkedAt: number | null, checkError: string, toleranceMinor: number, currencyCode: string, summary: { open: number, amountOpen: number, goneOpen: number, statusOpen: number, balanceOpen: number, resolvedSince: number } } & { ' $fragmentName'?: 'AccountingDriftOverviewFieldsFragment' };
+
+export type AccountingDriftOverviewQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type AccountingDriftOverviewQuery = { accountingDriftOverview: { ' $fragmentRefs'?: { 'AccountingDriftOverviewFieldsFragment': AccountingDriftOverviewFieldsFragment } } };
+
+export type AccountingDriftFindingQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AccountingDriftFindingQuery = { accountingDriftFinding: { ' $fragmentRefs'?: { 'AccountingDriftFindingFieldsFragment': AccountingDriftFindingFieldsFragment } } };
+
+export type AccountingDriftFixPreviewQueryVariables = Exact<{
+  input: ResolveAccountingDriftInput;
+}>;
+
+
+export type AccountingDriftFixPreviewQuery = { accountingDriftFixPreview: { direction: AccountingDriftDirection | null, fixObject: AccountingDriftFixObject | null, operation: AccountingSyncOperation | null, amountMinor: number, currencyCode: string, toleranceMinor: number, withinTolerance: boolean, summary: string } };
+
+export type ResolveAccountingDriftMutationVariables = Exact<{
+  input: ResolveAccountingDriftInput;
+}>;
+
+
+export type ResolveAccountingDriftMutation = { resolveAccountingDrift: { ' $fragmentRefs'?: { 'AccountingDriftFindingFieldsFragment': AccountingDriftFindingFieldsFragment } } };
+
+export type DismissAccountingDriftMutationVariables = Exact<{
+  input: DismissAccountingDriftInput;
+}>;
+
+
+export type DismissAccountingDriftMutation = { dismissAccountingDrift: { ' $fragmentRefs'?: { 'AccountingDriftFindingFieldsFragment': AccountingDriftFindingFieldsFragment } } };
+
+export type CheckAccountingDriftMutationVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type CheckAccountingDriftMutation = { checkAccountingDrift: { ' $fragmentRefs'?: { 'AccountingDriftOverviewFieldsFragment': AccountingDriftOverviewFieldsFragment } } };
+
+export type AccountingDriftFindingTableQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AccountingDriftFindingTableQuery = { accountingDriftFindingTable: { totalCount?: number | null, edges: Array<{ node: { id: string, connectionId: string, objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, partyId: string | null, partyName: string, externalId: string, externalUrl: string, kind: AccountingDriftKind, currencyCode: string, trenovaMinor: number | null, providerMinor: number | null, differenceMinor: number | null, trenovaState: string, providerState: string, providerModifiedAt: number | null, providerModifiedBy: string, status: AccountingDriftStatus, resolution: AccountingDriftResolution | null, resolutionNote: string, fixObjectType: AccountingDriftFixObject | null, fixObjectId: string | null, directions: Array<AccountingDriftDirection>, pushed: boolean, resolvedAt: number | null, detectedAt: number, lastSeenAt: number, version: number, updatedAt: number, detail: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, trenovaMinor: number, providerMinor: number }>, resolvedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
 export type AccountingInboundChangeFieldsFragment = { id: string, kind: AccountingInboundChangeKind, status: AccountingInboundChangeStatus, reason: AccountingInboundChangeReason | null, resolution: string, externalId: string, externalNumber: string, externalUrl: string, providerModifiedAt: number | null, providerModifiedBy: string, txnDate: number, amountMinor: number, currencyCode: string, partyName: string, partyObjectId: string | null, referenceNumber: string, methodName: string, unappliedMinor: number, decidedAt: number | null, note: string, detectedAt: number, version: number, updatedAt: number, lines: Array<{ documentKind: AccountingInboundDocumentKind, documentExternalId: string, amountMinor: number, objectType: AccountingSyncObjectType | null, objectId: string | null, objectNumber: string, openMinor: number }>, appliedObjects: Array<{ type: AccountingAppliedObjectType, id: string }>, decidedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingInboundChangeFieldsFragment' };
 
@@ -13992,6 +14098,69 @@ export const AccountTypeTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AccountTypeTableRowFields"}) as unknown as TypedDocumentString<AccountTypeTableRowFieldsFragment, unknown>;
+export const AccountingDriftFindingFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccountingDriftFindingFields on AccountingDriftFinding {
+  id
+  connectionId
+  objectType
+  objectId
+  objectNumber
+  partyId
+  partyName
+  externalId
+  externalUrl
+  kind
+  currencyCode
+  trenovaMinor
+  providerMinor
+  differenceMinor
+  trenovaState
+  providerState
+  detail {
+    objectType
+    objectId
+    objectNumber
+    trenovaMinor
+    providerMinor
+  }
+  providerModifiedAt
+  providerModifiedBy
+  status
+  resolution
+  resolutionNote
+  fixObjectType
+  fixObjectId
+  directions
+  pushed
+  resolvedBy {
+    id
+    name
+  }
+  resolvedAt
+  detectedAt
+  lastSeenAt
+  version
+  updatedAt
+}
+    `, {"fragmentName":"AccountingDriftFindingFields"}) as unknown as TypedDocumentString<AccountingDriftFindingFieldsFragment, unknown>;
+export const AccountingDriftOverviewFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccountingDriftOverviewFields on AccountingDriftOverview {
+  connectionId
+  providerName
+  checkedAt
+  checkError
+  toleranceMinor
+  currencyCode
+  summary {
+    open
+    amountOpen
+    goneOpen
+    statusOpen
+    balanceOpen
+    resolvedSince
+  }
+}
+    `, {"fragmentName":"AccountingDriftOverviewFields"}) as unknown as TypedDocumentString<AccountingDriftOverviewFieldsFragment, unknown>;
 export const AccountingInboundChangeFieldsFragmentDoc = new TypedDocumentString(`
     fragment AccountingInboundChangeFields on AccountingInboundChange {
   id
@@ -22317,6 +22486,13 @@ export const WorkerDataTablePageInfoFieldsFragmentDoc = new TypedDocumentString(
     `, {"fragmentName":"WorkerDataTablePageInfoFields"}) as unknown as TypedDocumentString<WorkerDataTablePageInfoFieldsFragment, unknown>;
 export const AccessorialChargeTableDocument = {"__meta__":{"kind":"query","name":"AccessorialChargeTable","hash":"sha256:428bf0351875289ecd242e7153b17c69f386b3edb5106b4bc369b85341769d91"}} as unknown as TypedDocumentString<AccessorialChargeTableQuery, AccessorialChargeTableQueryVariables>;
 export const AccountTypeTableDocument = {"__meta__":{"kind":"query","name":"AccountTypeTable","hash":"sha256:bd52997a38905cd2b8343527e55ae1488b2e2f87bc1e50192a1909481e075956"}} as unknown as TypedDocumentString<AccountTypeTableQuery, AccountTypeTableQueryVariables>;
+export const AccountingDriftOverviewDocument = {"__meta__":{"kind":"query","name":"AccountingDriftOverview","hash":"sha256:7ff3c7aafb89ab9fd66635e951f7571178d1fdaf22fffb05f2ab8f749860417d"}} as unknown as TypedDocumentString<AccountingDriftOverviewQuery, AccountingDriftOverviewQueryVariables>;
+export const AccountingDriftFindingDocument = {"__meta__":{"kind":"query","name":"AccountingDriftFinding","hash":"sha256:872cdd08d8b474ef5ea97d3abccd6060439e0b11d991c6939f2d19818f00913b"}} as unknown as TypedDocumentString<AccountingDriftFindingQuery, AccountingDriftFindingQueryVariables>;
+export const AccountingDriftFixPreviewDocument = {"__meta__":{"kind":"query","name":"AccountingDriftFixPreview","hash":"sha256:26f6acddc3d8bfa84cbae8d1584b3b5e31c27e252180c907aaee27f121ea126d"}} as unknown as TypedDocumentString<AccountingDriftFixPreviewQuery, AccountingDriftFixPreviewQueryVariables>;
+export const ResolveAccountingDriftDocument = {"__meta__":{"kind":"mutation","name":"ResolveAccountingDrift","hash":"sha256:edbc43d826f0597e50a5dd5722a50e2edb8dd15688b9b9ba18e019bfcbc624ca"}} as unknown as TypedDocumentString<ResolveAccountingDriftMutation, ResolveAccountingDriftMutationVariables>;
+export const DismissAccountingDriftDocument = {"__meta__":{"kind":"mutation","name":"DismissAccountingDrift","hash":"sha256:b1599148fe4b81ae5f93731f2b38024c9a852dcd21e054572169f73caa715510"}} as unknown as TypedDocumentString<DismissAccountingDriftMutation, DismissAccountingDriftMutationVariables>;
+export const CheckAccountingDriftDocument = {"__meta__":{"kind":"mutation","name":"CheckAccountingDrift","hash":"sha256:08a6ab303f0f27375a133cfc5d6b64d948b13eca0f69563fb644c8862f49ba18"}} as unknown as TypedDocumentString<CheckAccountingDriftMutation, CheckAccountingDriftMutationVariables>;
+export const AccountingDriftFindingTableDocument = {"__meta__":{"kind":"query","name":"AccountingDriftFindingTable","hash":"sha256:cb94f2fa816752d45146f3fe71515262f399ad67b2b4833d57ab21b2508c4189"}} as unknown as TypedDocumentString<AccountingDriftFindingTableQuery, AccountingDriftFindingTableQueryVariables>;
 export const AccountingInboundOverviewDocument = {"__meta__":{"kind":"query","name":"AccountingInboundOverview","hash":"sha256:8bb89e9286a2800a1ba88e7dc15ea02914e04cbc15df80ada2cb257afdd3cc95"}} as unknown as TypedDocumentString<AccountingInboundOverviewQuery, AccountingInboundOverviewQueryVariables>;
 export const AccountingInboundChangeDocument = {"__meta__":{"kind":"query","name":"AccountingInboundChange","hash":"sha256:6f3efadc2cc9ed08240d7ebbf58152692665c2be44c9d5278cd18fd69b3659eb"}} as unknown as TypedDocumentString<AccountingInboundChangeQuery, AccountingInboundChangeQueryVariables>;
 export const AccountingInboundApplyPreviewDocument = {"__meta__":{"kind":"query","name":"AccountingInboundApplyPreview","hash":"sha256:6ed240897e4b5023961882673fa49ab20323a17555878b703c899908814b3ed0"}} as unknown as TypedDocumentString<AccountingInboundApplyPreviewQuery, AccountingInboundApplyPreviewQueryVariables>;

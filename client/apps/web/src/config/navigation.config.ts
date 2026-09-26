@@ -970,6 +970,12 @@ const accountingModule: NavModule = {
           resource: Resource.AccountingSync,
         },
         {
+          id: "accounting-drift",
+          label: "Drift findings",
+          path: "/accounting/sync/drift",
+          resource: Resource.AccountingSync,
+        },
+        {
           id: "accounting-mappings",
           label: "Mappings",
           path: "/accounting/sync/mappings",
