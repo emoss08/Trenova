@@ -2,12 +2,15 @@ package services
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/exchangerate"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/shopspring/decimal"
 )
+
+var ErrExchangeRateNotCached = errors.New("exchange rate not cached")
 
 type RateConversionResult struct {
 	FromCurrency       string          `json:"fromCurrency"`
@@ -46,6 +49,12 @@ type ExchangeRateService interface {
 		tenantInfo pagination.TenantInfo,
 		fromCurrency, toCurrency string,
 		amount decimal.Decimal,
+		date time.Time,
+	) (*RateConversionResult, error)
+	CachedRate(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		fromCurrency, toCurrency string,
 		date time.Time,
 	) (*RateConversionResult, error)
 	GetLatestRates(

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 
@@ -66,6 +67,7 @@ type Params struct {
 	BillingCtrlRepo    repositories.BillingControlRepository
 	AdjustmentCtrlRepo repositories.InvoiceAdjustmentControlRepository
 	AccountingRepo     repositories.AccountingControlRepository
+	Stamper            *exchangeratestamp.Stamper
 	JournalRepo        repositories.JournalPostingRepository
 	FiscalPeriodRepo   repositories.FiscalPeriodRepository
 	DocumentRepo       repositories.DocumentRepository
@@ -97,6 +99,7 @@ type Service struct {
 	billingCtrlRepo    repositories.BillingControlRepository
 	adjustmentCtrlRepo repositories.InvoiceAdjustmentControlRepository
 	accountingRepo     repositories.AccountingControlRepository
+	stamper            *exchangeratestamp.Stamper
 	journalRepo        repositories.JournalPostingRepository
 	fiscalPeriodRepo   repositories.FiscalPeriodRepository
 	documentRepo       repositories.DocumentRepository
@@ -156,6 +159,7 @@ func New(p Params) servicesports.InvoiceAdjustmentService { //nolint:gocritic //
 		billingCtrlRepo:    p.BillingCtrlRepo,
 		adjustmentCtrlRepo: p.AdjustmentCtrlRepo,
 		accountingRepo:     p.AccountingRepo,
+		stamper:            p.Stamper,
 		journalRepo:        p.JournalRepo,
 		fiscalPeriodRepo:   p.FiscalPeriodRepo,
 		documentRepo:       p.DocumentRepo,
@@ -2209,6 +2213,17 @@ func (s *Service) createCreditMemoInvoice(
 		SourceInvoiceAdjustmentID: adjustment.ID,
 		IsAdjustmentArtifact:      true,
 		Lines:                     lines,
+	}
+	if err := s.stamper.StampInto(ctx, &exchangeratestamp.Request{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		},
+		CurrencyCode:   entity.CurrencyCode,
+		DocumentDate:   entity.InvoiceDate,
+		AccountingDate: postedAt,
+	}, &entity.ExchangeRate, &entity.ExchangeRateDate); err != nil {
+		return nil, err
 	}
 
 	return s.invoiceRepo.Create(ctx, entity)

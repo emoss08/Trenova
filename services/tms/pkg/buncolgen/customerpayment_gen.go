@@ -477,6 +477,8 @@ var PaymentColumns = struct {
 	ReferenceNumber      Column // "reference_number" → qualified: "cp.reference_number"
 	Memo                 Column // "memo" → qualified: "cp.memo"
 	CurrencyCode         Column // "currency_code" → qualified: "cp.currency_code"
+	ExchangeRate         Column // "exchange_rate" → qualified: "cp.exchange_rate"
+	ExchangeRateDate     Column // "exchange_rate_date" → qualified: "cp.exchange_rate_date"
 	PostedBatchID        Column // "posted_batch_id" → qualified: "cp.posted_batch_id"
 	ReversalBatchID      Column // "reversal_batch_id" → qualified: "cp.reversal_batch_id"
 	ReversedByID         Column // "reversed_by_id" → qualified: "cp.reversed_by_id"
@@ -502,6 +504,8 @@ var PaymentColumns = struct {
 	ReferenceNumber:      NewColumn("reference_number", "cp"),
 	Memo:                 NewColumn("memo", "cp"),
 	CurrencyCode:         NewColumn("currency_code", "cp"),
+	ExchangeRate:         NewColumn("exchange_rate", "cp"),
+	ExchangeRateDate:     NewColumn("exchange_rate_date", "cp"),
 	PostedBatchID:        NewColumn("posted_batch_id", "cp"),
 	ReversalBatchID:      NewColumn("reversal_batch_id", "cp"),
 	ReversedByID:         NewColumn("reversed_by_id", "cp"),
@@ -533,6 +537,8 @@ var PaymentFieldMap = map[string]string{
 	"referenceNumber":      "reference_number",
 	"memo":                 "memo",
 	"currencyCode":         "currency_code",
+	"exchangeRate":         "exchange_rate",
+	"exchangeRateDate":     "exchange_rate_date",
 	"postedBatchId":        "posted_batch_id",
 	"reversalBatchId":      "reversal_batch_id",
 	"reversedById":         "reversed_by_id",
@@ -562,6 +568,8 @@ var PaymentInsertableColumns = []string{
 	"reference_number",
 	"memo",
 	"currency_code",
+	"exchange_rate",
+	"exchange_rate_date",
 	"posted_batch_id",
 	"reversal_batch_id",
 	"reversed_by_id",
@@ -651,6 +659,8 @@ var PaymentFilter = struct {
 	ReferenceNumber      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "referenceNumber" → DB: "reference_number"
 	Memo                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "memo" → DB: "memo"
 	CurrencyCode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	ExchangeRate         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRate" → DB: "exchange_rate"
+	ExchangeRateDate     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRateDate" → DB: "exchange_rate_date"
 	PostedBatchID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "postedBatchId" → DB: "posted_batch_id"
 	ReversalBatchID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reversalBatchId" → DB: "reversal_batch_id"
 	ReversedByID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "reversedById" → DB: "reversed_by_id"
@@ -703,6 +713,12 @@ var PaymentFilter = struct {
 	},
 	CurrencyCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("currencyCode", op, value)
+	},
+	ExchangeRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("exchangeRate", op, value)
+	},
+	ExchangeRateDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("exchangeRateDate", op, value)
 	},
 	PostedBatchID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("postedBatchId", op, value)

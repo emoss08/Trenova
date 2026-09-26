@@ -627,6 +627,8 @@ var SettlementColumns = struct {
 	TotalMiles             Column // "total_miles" → qualified: "dstl.total_miles"
 	ShipmentCount          Column // "shipment_count" → qualified: "dstl.shipment_count"
 	CurrencyCode           Column // "currency_code" → qualified: "dstl.currency_code"
+	ExchangeRate           Column // "exchange_rate" → qualified: "dstl.exchange_rate"
+	ExchangeRateDate       Column // "exchange_rate_date" → qualified: "dstl.exchange_rate_date"
 	HasExceptions          Column // "has_exceptions" → qualified: "dstl.has_exceptions"
 	Exceptions             Column // "exceptions" → qualified: "dstl.exceptions"
 	Notes                  Column // "notes" → qualified: "dstl.notes"
@@ -643,6 +645,8 @@ var SettlementColumns = struct {
 	PaymentMethod          Column // "payment_method" → qualified: "dstl.payment_method"
 	PaymentReference       Column // "payment_reference" → qualified: "dstl.payment_reference"
 	PaidJournalBatchID     Column // "paid_journal_batch_id" → qualified: "dstl.paid_journal_batch_id"
+	PaidExchangeRate       Column // "paid_exchange_rate" → qualified: "dstl.paid_exchange_rate"
+	PaidExchangeRateDate   Column // "paid_exchange_rate_date" → qualified: "dstl.paid_exchange_rate_date"
 	VoidedByID             Column // "voided_by_id" → qualified: "dstl.voided_by_id"
 	VoidedAt               Column // "voided_at" → qualified: "dstl.voided_at"
 	VoidReason             Column // "void_reason" → qualified: "dstl.void_reason"
@@ -673,6 +677,8 @@ var SettlementColumns = struct {
 	TotalMiles:             NewColumn("total_miles", "dstl"),
 	ShipmentCount:          NewColumn("shipment_count", "dstl"),
 	CurrencyCode:           NewColumn("currency_code", "dstl"),
+	ExchangeRate:           NewColumn("exchange_rate", "dstl"),
+	ExchangeRateDate:       NewColumn("exchange_rate_date", "dstl"),
 	HasExceptions:          NewColumn("has_exceptions", "dstl"),
 	Exceptions:             NewColumn("exceptions", "dstl"),
 	Notes:                  NewColumn("notes", "dstl"),
@@ -689,6 +695,8 @@ var SettlementColumns = struct {
 	PaymentMethod:          NewColumn("payment_method", "dstl"),
 	PaymentReference:       NewColumn("payment_reference", "dstl"),
 	PaidJournalBatchID:     NewColumn("paid_journal_batch_id", "dstl"),
+	PaidExchangeRate:       NewColumn("paid_exchange_rate", "dstl"),
+	PaidExchangeRateDate:   NewColumn("paid_exchange_rate_date", "dstl"),
 	VoidedByID:             NewColumn("voided_by_id", "dstl"),
 	VoidedAt:               NewColumn("voided_at", "dstl"),
 	VoidReason:             NewColumn("void_reason", "dstl"),
@@ -725,6 +733,8 @@ var SettlementFieldMap = map[string]string{
 	"totalMiles":             "total_miles",
 	"shipmentCount":          "shipment_count",
 	"currencyCode":           "currency_code",
+	"exchangeRate":           "exchange_rate",
+	"exchangeRateDate":       "exchange_rate_date",
 	"hasExceptions":          "has_exceptions",
 	"exceptions":             "exceptions",
 	"notes":                  "notes",
@@ -741,6 +751,8 @@ var SettlementFieldMap = map[string]string{
 	"paymentMethod":          "payment_method",
 	"paymentReference":       "payment_reference",
 	"paidJournalBatchId":     "paid_journal_batch_id",
+	"paidExchangeRate":       "paid_exchange_rate",
+	"paidExchangeRateDate":   "paid_exchange_rate_date",
 	"voidedById":             "voided_by_id",
 	"voidedAt":               "voided_at",
 	"voidReason":             "void_reason",
@@ -775,6 +787,8 @@ var SettlementInsertableColumns = []string{
 	"total_miles",
 	"shipment_count",
 	"currency_code",
+	"exchange_rate",
+	"exchange_rate_date",
 	"has_exceptions",
 	"exceptions",
 	"notes",
@@ -791,6 +805,8 @@ var SettlementInsertableColumns = []string{
 	"payment_method",
 	"payment_reference",
 	"paid_journal_batch_id",
+	"paid_exchange_rate",
+	"paid_exchange_rate_date",
 	"voided_by_id",
 	"voided_at",
 	"void_reason",
@@ -893,6 +909,8 @@ var SettlementFilter = struct {
 	TotalMiles             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "totalMiles" → DB: "total_miles"
 	ShipmentCount          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentCount" → DB: "shipment_count"
 	CurrencyCode           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "currencyCode" → DB: "currency_code"
+	ExchangeRate           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRate" → DB: "exchange_rate"
+	ExchangeRateDate       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exchangeRateDate" → DB: "exchange_rate_date"
 	HasExceptions          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hasExceptions" → DB: "has_exceptions"
 	Exceptions             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "exceptions" → DB: "exceptions"
 	Notes                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "notes" → DB: "notes"
@@ -909,6 +927,8 @@ var SettlementFilter = struct {
 	PaymentMethod          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentMethod" → DB: "payment_method"
 	PaymentReference       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paymentReference" → DB: "payment_reference"
 	PaidJournalBatchID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidJournalBatchId" → DB: "paid_journal_batch_id"
+	PaidExchangeRate       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidExchangeRate" → DB: "paid_exchange_rate"
+	PaidExchangeRateDate   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "paidExchangeRateDate" → DB: "paid_exchange_rate_date"
 	VoidedByID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedById" → DB: "voided_by_id"
 	VoidedAt               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidedAt" → DB: "voided_at"
 	VoidReason             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "voidReason" → DB: "void_reason"
@@ -983,6 +1003,12 @@ var SettlementFilter = struct {
 	CurrencyCode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("currencyCode", op, value)
 	},
+	ExchangeRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("exchangeRate", op, value)
+	},
+	ExchangeRateDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("exchangeRateDate", op, value)
+	},
 	HasExceptions: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("hasExceptions", op, value)
 	},
@@ -1030,6 +1056,12 @@ var SettlementFilter = struct {
 	},
 	PaidJournalBatchID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("paidJournalBatchId", op, value)
+	},
+	PaidExchangeRate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("paidExchangeRate", op, value)
+	},
+	PaidExchangeRateDate: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("paidExchangeRateDate", op, value)
 	},
 	VoidedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("voidedById", op, value)

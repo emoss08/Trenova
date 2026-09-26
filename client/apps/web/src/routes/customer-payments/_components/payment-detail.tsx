@@ -40,7 +40,8 @@ import {
 import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import { getTodayDate } from "@trenova/shared/lib/date";
+import { formatUnixDateMedium, getTodayDate } from "@trenova/shared/lib/date";
+import { formatExchangeRate } from "@/components/accounting/exchange-rate-line";
 import type { CustomerPaymentDetail } from "@/lib/graphql/customer-payment";
 import { reverseCustomerPayment } from "@/lib/graphql/customer-payment";
 import { queries } from "@/lib/queries";
@@ -157,6 +158,16 @@ function PaymentDetailView({
           {payment.referenceNumber || <DescriptionEmpty />}
         </DescriptionItem>
         <DescriptionItem label={t("Currency")}>{payment.currencyCode}</DescriptionItem>
+        {payment.exchangeRate ? (
+          <DescriptionItem label={t("Exchange rate")} numeric>
+            {t(
+              "1 {0} = {1}, quoted {2}",
+              payment.currencyCode,
+              formatExchangeRate(payment.exchangeRate),
+              formatUnixDateMedium(payment.exchangeRateDate),
+            )}
+          </DescriptionItem>
+        ) : null}
         <DescriptionItem label={t("Recorded")} numeric>
           {formatAccountingDate(payment.createdAt)}
         </DescriptionItem>

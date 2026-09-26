@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 type PayableKind string
@@ -33,28 +34,32 @@ type PayableDefaultAccounts struct {
 }
 
 type PayableSettlement struct {
-	Kind             PayableKind
-	ID               pulid.ID
-	Number           string
-	PartyID          pulid.ID
-	PartyName        string
-	OwnerOperator    bool
-	PeriodStart      int64
-	PeriodEnd        int64
-	PayDate          int64
-	PostedAt         *int64
-	PaidAt           *int64
-	Voided           bool
-	NetMinor         int64
-	ShipmentCount    int
-	CurrencyCode     string
-	PaymentMethod    string
-	PaymentReference string
-	PayableAccountID pulid.ID
-	BankAccountID    pulid.ID
-	Defaults         PayableDefaultAccounts
-	Lines            []PayableJournalLine
-	InvoiceNumbers   []string
+	Kind                 PayableKind
+	ID                   pulid.ID
+	Number               string
+	PartyID              pulid.ID
+	PartyName            string
+	OwnerOperator        bool
+	PeriodStart          int64
+	PeriodEnd            int64
+	PayDate              int64
+	PostedAt             *int64
+	PaidAt               *int64
+	Voided               bool
+	NetMinor             int64
+	ShipmentCount        int
+	CurrencyCode         string
+	ExchangeRate         decimal.NullDecimal
+	ExchangeRateDate     *int64
+	PaidExchangeRate     decimal.NullDecimal
+	PaidExchangeRateDate *int64
+	PaymentMethod        string
+	PaymentReference     string
+	PayableAccountID     pulid.ID
+	BankAccountID        pulid.ID
+	Defaults             PayableDefaultAccounts
+	Lines                []PayableJournalLine
+	InvoiceNumbers       []string
 }
 
 type GetPayableSettlementRequest struct {
@@ -63,6 +68,16 @@ type GetPayableSettlementRequest struct {
 	ID         pulid.ID
 }
 
+type StampPayableExchangeRateRequest struct {
+	TenantInfo pagination.TenantInfo
+	Kind       PayableKind
+	ID         pulid.ID
+	Paid       bool
+	Rate       decimal.Decimal
+	Date       int64
+}
+
 type AccountingPayablesSource interface {
 	GetSettlement(ctx context.Context, req *GetPayableSettlementRequest) (*PayableSettlement, error)
+	StampExchangeRate(ctx context.Context, req *StampPayableExchangeRateRequest) error
 }

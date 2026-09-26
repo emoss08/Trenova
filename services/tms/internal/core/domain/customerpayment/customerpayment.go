@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -21,30 +22,32 @@ type Payment struct {
 	bun.BaseModel             `bun:"table:customer_payments,alias:cp" json:"-"`
 	pagination.CursorValueSet `bun:",embed"                           json:"-"`
 
-	ID                   pulid.ID `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID       pulid.ID `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID       pulid.ID `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CustomerID           pulid.ID `json:"customerId"           bun:"customer_id,type:VARCHAR(100),notnull"`
-	PaymentDate          int64    `json:"paymentDate"          bun:"payment_date,type:BIGINT,notnull"`
-	AccountingDate       int64    `json:"accountingDate"       bun:"accounting_date,type:BIGINT,notnull"`
-	AmountMinor          int64    `json:"amountMinor"          bun:"amount_minor,type:BIGINT,notnull"`
-	AppliedAmountMinor   int64    `json:"appliedAmountMinor"   bun:"applied_amount_minor,type:BIGINT,notnull"`
-	UnappliedAmountMinor int64    `json:"unappliedAmountMinor" bun:"unapplied_amount_minor,type:BIGINT,notnull"`
-	Status               Status   `json:"status"               bun:"status,type:VARCHAR(50),notnull"`
-	PaymentMethod        Method   `json:"paymentMethod"        bun:"payment_method,type:VARCHAR(50),notnull"`
-	ReferenceNumber      string   `json:"referenceNumber"      bun:"reference_number,type:VARCHAR(100),nullzero"`
-	Memo                 string   `json:"memo"                 bun:"memo,type:TEXT,nullzero"`
-	CurrencyCode         string   `json:"currencyCode"         bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	PostedBatchID        pulid.ID `json:"postedBatchId"        bun:"posted_batch_id,type:VARCHAR(100),nullzero"`
-	ReversalBatchID      pulid.ID `json:"reversalBatchId"      bun:"reversal_batch_id,type:VARCHAR(100),nullzero"`
-	ReversedByID         pulid.ID `json:"reversedById"         bun:"reversed_by_id,type:VARCHAR(100),nullzero"`
-	ReversedAt           *int64   `json:"reversedAt"           bun:"reversed_at,type:BIGINT,nullzero"`
-	ReversalReason       string   `json:"reversalReason"       bun:"reversal_reason,type:TEXT,nullzero"`
-	CreatedByID          pulid.ID `json:"createdById"          bun:"created_by_id,type:VARCHAR(100),notnull"`
-	UpdatedByID          pulid.ID `json:"updatedById"          bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	Version              int64    `json:"version"              bun:"version,type:BIGINT,notnull"`
-	CreatedAt            int64    `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64    `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                   pulid.ID            `json:"id"                   bun:"id,pk,type:VARCHAR(100),notnull"`
+	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId"       bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
+	CustomerID           pulid.ID            `json:"customerId"           bun:"customer_id,type:VARCHAR(100),notnull"`
+	PaymentDate          int64               `json:"paymentDate"          bun:"payment_date,type:BIGINT,notnull"`
+	AccountingDate       int64               `json:"accountingDate"       bun:"accounting_date,type:BIGINT,notnull"`
+	AmountMinor          int64               `json:"amountMinor"          bun:"amount_minor,type:BIGINT,notnull"`
+	AppliedAmountMinor   int64               `json:"appliedAmountMinor"   bun:"applied_amount_minor,type:BIGINT,notnull"`
+	UnappliedAmountMinor int64               `json:"unappliedAmountMinor" bun:"unapplied_amount_minor,type:BIGINT,notnull"`
+	Status               Status              `json:"status"               bun:"status,type:VARCHAR(50),notnull"`
+	PaymentMethod        Method              `json:"paymentMethod"        bun:"payment_method,type:VARCHAR(50),notnull"`
+	ReferenceNumber      string              `json:"referenceNumber"      bun:"reference_number,type:VARCHAR(100),nullzero"`
+	Memo                 string              `json:"memo"                 bun:"memo,type:TEXT,nullzero"`
+	CurrencyCode         string              `json:"currencyCode"         bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
+	ExchangeRate         decimal.NullDecimal `json:"exchangeRate"         bun:"exchange_rate,type:NUMERIC(24,12),nullzero"`
+	ExchangeRateDate     *int64              `json:"exchangeRateDate"     bun:"exchange_rate_date,type:BIGINT,nullzero"`
+	PostedBatchID        pulid.ID            `json:"postedBatchId"        bun:"posted_batch_id,type:VARCHAR(100),nullzero"`
+	ReversalBatchID      pulid.ID            `json:"reversalBatchId"      bun:"reversal_batch_id,type:VARCHAR(100),nullzero"`
+	ReversedByID         pulid.ID            `json:"reversedById"         bun:"reversed_by_id,type:VARCHAR(100),nullzero"`
+	ReversedAt           *int64              `json:"reversedAt"           bun:"reversed_at,type:BIGINT,nullzero"`
+	ReversalReason       string              `json:"reversalReason"       bun:"reversal_reason,type:TEXT,nullzero"`
+	CreatedByID          pulid.ID            `json:"createdById"          bun:"created_by_id,type:VARCHAR(100),notnull"`
+	UpdatedByID          pulid.ID            `json:"updatedById"          bun:"updated_by_id,type:VARCHAR(100),nullzero"`
+	Version              int64               `json:"version"              bun:"version,type:BIGINT,notnull"`
+	CreatedAt            int64               `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Applications []*Application     `json:"applications,omitempty" bun:"rel:has-many,join:id=customer_payment_id"`
 	Customer     *customer.Customer `json:"customer,omitempty"     bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`

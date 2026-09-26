@@ -1,4 +1,5 @@
 import { AccountingSyncStateLine } from "@/components/accounting-sync/sync-state-line";
+import { ExchangeRateLine } from "@/components/accounting/exchange-rate-line";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { AmountDisplay } from "@trenova/shared/components/accounting/amount-display";
@@ -189,6 +190,13 @@ function SettlementSummary({ settlement }: { settlement: SettlementDetailData })
         </span>
       </div>
       <AccountingSyncStateLine objectId={settlement.id} className="text-xs" />
+      <ExchangeRateLine
+        currency={settlement.currencyCode}
+        rate={settlement.exchangeRate}
+        quotedOn={settlement.exchangeRateDate}
+        paidRate={settlement.paidExchangeRate}
+        paidQuotedOn={settlement.paidExchangeRateDate}
+      />
       <KpiStrip minItemWidth="8rem">
         <KpiStripItem
           label={t("Gross earnings")}

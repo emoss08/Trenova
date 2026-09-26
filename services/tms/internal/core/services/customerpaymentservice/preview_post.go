@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/exchangeratestamp"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
@@ -83,6 +84,14 @@ func (s *Service) planPost(
 		CreatedByID:     actor.UserID,
 		UpdatedByID:     actor.UserID,
 		Applications:    mapApplications(req.Applications),
+	}
+	if err = s.stamper.StampInto(ctx, &exchangeratestamp.Request{
+		TenantInfo:     req.TenantInfo,
+		CurrencyCode:   entity.CurrencyCode,
+		DocumentDate:   entity.PaymentDate,
+		AccountingDate: entity.AccountingDate,
+	}, &entity.ExchangeRate, &entity.ExchangeRateDate); err != nil {
+		return nil, err
 	}
 
 	invoices, period, me := s.validator.ValidatePostAndApply(

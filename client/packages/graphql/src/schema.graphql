@@ -2101,6 +2101,10 @@ type AccountingSyncRecord {
   objectType: AccountingSyncObjectType!
   operation: AccountingSyncOperation!
   queuedAt: Timestamp!
+  """
+  The date it is sent with, when it was moved to the first open day of the books.
+  """
+  redatedTo: Timestamp
   """What to do about it, in plain language."""
   resolution: String!
   revision: Int!
@@ -7001,6 +7005,13 @@ type CarrierSettlement {
   carrierId: ID!
   createdAt: Timestamp!
   currencyCode: String!
+  """
+  Units of the organization's functional currency per one unit of the
+  settlement currency, fixed when the settlement posted. Null when both are the same.
+  """
+  exchangeRate: Decimal
+  """The day the posting exchange rate was quoted for."""
+  exchangeRateDate: Timestamp
   grossCostMinor: Int!
   id: ID!
   lines: [CarrierSettlementLine!]
@@ -7009,6 +7020,10 @@ type CarrierSettlement {
   organizationId: ID!
   paidAt: Timestamp
   paidById: ID
+  """The exchange rate fixed when the settlement was paid."""
+  paidExchangeRate: Decimal
+  """The day the payment exchange rate was quoted for."""
+  paidExchangeRateDate: Timestamp
   paidJournalBatchId: ID
   payDate: Timestamp!
   paymentMethod: String!
@@ -8082,6 +8097,13 @@ type CustomerPayment {
   currencyCode: String!
   customer: Customer
   customerId: ID!
+  """
+  Units of the organization's functional currency per one unit of the payment
+  currency, fixed when the payment posted. Null when both are the same.
+  """
+  exchangeRate: Decimal
+  """The day the exchange rate was quoted for."""
+  exchangeRateDate: Timestamp
   id: ID!
   memo: String!
   organizationId: ID!
@@ -10128,6 +10150,13 @@ type DriverSettlement {
   currencyCode: String!
   deductionsMinor: Int!
   exceptions: [SettlementException!]
+  """
+  Units of the organization's functional currency per one unit of the
+  settlement currency, fixed when the settlement posted. Null when both are the same.
+  """
+  exchangeRate: Decimal
+  """The day the posting exchange rate was quoted for."""
+  exchangeRateDate: Timestamp
   grossEarningsMinor: Int!
   hasExceptions: Boolean!
   id: ID!
@@ -10137,6 +10166,10 @@ type DriverSettlement {
   organizationId: ID!
   paidAt: Timestamp
   paidById: ID
+  """The exchange rate fixed when the settlement was paid."""
+  paidExchangeRate: Decimal
+  """The day the payment exchange rate was quoted for."""
+  paidExchangeRateDate: Timestamp
   payDate: Timestamp!
   payProfileId: ID
   payProfileName: String!
@@ -13646,6 +13679,13 @@ type Invoice {
   ediSendPlan: InvoiceEDISendPlan!
   ediSendStatus: InvoiceEDISendStatus!
   ediSentAt: Timestamp
+  """
+  Units of the organization's functional currency per one unit of the invoice
+  currency, fixed when the invoice posted. Null when both are the same.
+  """
+  exchangeRate: Decimal
+  """The day the exchange rate was quoted for."""
+  exchangeRateDate: Timestamp
   id: ID!
   invoiceDate: Timestamp!
   isAdjustmentArtifact: Boolean!
@@ -15433,6 +15473,10 @@ type Mutation {
   recordTimeEntry(input: RecordTimeEntryInput!): TimeClockEntry!
   recordWorkerEmploymentEvent(input: RecordWorkerEmploymentEventInput!): RecordWorkerEmploymentEventPayload!
   recordWorkerInjury(input: RecordWorkerInjuryInput!): WorkerInjury!
+  """
+  Sends a document held by closed books dated on the first open day, when Trenova's closed-period policy posts to the next open period.
+  """
+  redateAccountingSync(id: ID!): AccountingSyncRecord!
   """
   Reads the accounting system's records again and refreshes the proposals.
   """

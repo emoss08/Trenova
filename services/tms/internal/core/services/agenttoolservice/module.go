@@ -127,6 +127,7 @@ func ToolProviders() []any {
 		provideRefreshAccountingReferenceDataTool,
 		provideRetryAccountingSyncTool,
 		provideSkipAccountingSyncTool,
+		provideRedateAccountingSyncTool,
 		provideApplyAccountingInboundChangeTool,
 		provideIgnoreAccountingInboundChangeTool,
 		provideResolveAccountingDriftTool,

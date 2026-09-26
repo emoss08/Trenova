@@ -112,6 +112,13 @@ type Invoice {
   status: InvoiceStatus!
   paymentTerm: InvoicePaymentTerm!
   currencyCode: String!
+  """
+  Units of the organization's functional currency per one unit of the invoice
+  currency, fixed when the invoice posted. Null when both are the same.
+  """
+  exchangeRate: Decimal
+  "The day the exchange rate was quoted for."
+  exchangeRateDate: Timestamp
   invoiceDate: Timestamp!
   dueDate: Timestamp
   postedAt: Timestamp

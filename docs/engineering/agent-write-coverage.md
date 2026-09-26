@@ -73,11 +73,11 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 ## Totals
 
-949 writes: 492 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
+950 writes: 493 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 166 |
+| Covered by a tool | 167 |
 | Exempt | 475 |
 | — Security | 66 |
 | — Configuration | 213 |
@@ -89,9 +89,9 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | — Attestation | 10 |
 | — Duplicate | 3 |
 | **Pending** | **308** |
-| Total | 949 |
+| Total | 950 |
 
-Of the 474 writes an agent should be able to make, 166 have a tool (35%).
+Of the 475 writes an agent should be able to make, 167 have a tool (35%).
 
 ## Pending
 
@@ -414,7 +414,7 @@ The writes no tool performs yet, and what the tool would do.
 | --- | --- | --- | --- | --- |
 | accessorialcharge | 3 | 0 | 3 | 0 |
 | accountingcontrol | 1 | 0 | 1 | 0 |
-| accountingsync | 27 | 15 | 8 | 4 |
+| accountingsync | 28 | 16 | 8 | 4 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 0 | 4 |
 | agent | 12 | 2 | 10 | 0 |
@@ -617,6 +617,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation enableAccountingSync` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation ignoreAccountingInboundChange` | Tool: `ignore_accounting_inbound_change` |
 | `mutation pauseAccountingSync` | Tool: `pause_accounting_sync` |
+| `mutation redateAccountingSync` | Tool: `redate_accounting_sync` |
 | `mutation refreshAccountingReferenceData` | Tool: `refresh_accounting_reference_data` |
 | `mutation rejectAccountingMapping` | Pending: Reject a suggested accounting mapping. |
 | `mutation releaseAccountingSync` | Pending: Release accounting sync records held for review so they post. |

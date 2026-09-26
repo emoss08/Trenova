@@ -25,6 +25,10 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+func (r *invoiceResolver) ExchangeRate(ctx context.Context, obj *invoice.Invoice) (*string, error) {
+	return nullDecimalStringPtr(obj.ExchangeRate), nil
+}
+
 func (r *invoiceResolver) ShipperCustomer(ctx context.Context, obj *invoice.Invoice) (*customer.Customer, error) {
 	if obj == nil || obj.ShipperCustomerID.IsNil() {
 		return nil, nil

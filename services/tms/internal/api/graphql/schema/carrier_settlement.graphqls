@@ -134,6 +134,17 @@ type CarrierSettlement {
   netPayableMinor: Int!
   shipmentCount: Int!
   currencyCode: String!
+  """
+  Units of the organization's functional currency per one unit of the
+  settlement currency, fixed when the settlement posted. Null when both are the same.
+  """
+  exchangeRate: Decimal
+  "The day the posting exchange rate was quoted for."
+  exchangeRateDate: Timestamp
+  "The exchange rate fixed when the settlement was paid."
+  paidExchangeRate: Decimal
+  "The day the payment exchange rate was quoted for."
+  paidExchangeRateDate: Timestamp
   notes: String!
   submittedById: ID
   submittedAt: Timestamp

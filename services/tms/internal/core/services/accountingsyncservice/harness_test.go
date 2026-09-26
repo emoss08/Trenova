@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/testutil/agenteventstest"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -42,6 +43,8 @@ type harness struct {
 	adjustments *fakeAdjustments
 	payments    *fakePayments
 	payables    *fakePayables
+	controls    *fakeControls
+	rates       *fakeRates
 	audit       *fakeAudit
 	watchtower  *fakeWatchtower
 	dispatcher  *fakeDispatcher
@@ -86,6 +89,8 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 			applications: map[pulid.ID]*customerpayment.CreditMemoApplication{},
 		},
 		payables:   newFakePayables(),
+		rates:      newFakeRates(),
+		controls:   newFakeControls(),
 		audit:      &fakeAudit{},
 		watchtower: newFakeWatchtower(),
 		dispatcher: &fakeDispatcher{},
@@ -124,7 +129,10 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Adjustments:       h.adjustments,
 		Payments:          h.payments,
 		Organizations:     fakeOrganizations{timezone: cfg.timezone},
+		Controls:          h.controls,
 		Payables:          h.payables,
+		Rates:             h.rates,
+		Policy:            accountingcontrolpolicyservice.New(accountingcontrolpolicyservice.Params{Logger: zap.NewNop()}),
 		AuditService:      h.audit,
 		Enqueuer:          h.enqueuer,
 		Dispatcher:        dispatcher,

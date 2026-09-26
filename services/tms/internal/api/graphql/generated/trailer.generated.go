@@ -138,6 +138,7 @@ type MutationResolver interface {
 	RetryAccountingSync(ctx context.Context, input gqlmodel.RetryAccountingSyncInput) (*gqlmodel.AccountingSyncActionResult, error)
 	ReleaseAccountingSync(ctx context.Context, input gqlmodel.ReleaseAccountingSyncInput) (*gqlmodel.AccountingSyncActionResult, error)
 	SkipAccountingSync(ctx context.Context, input gqlmodel.SkipAccountingSyncInput) (*accountingsync.AccountingSyncRecord, error)
+	RedateAccountingSync(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error)
 	RequestAccountingBackfill(ctx context.Context, input gqlmodel.RequestAccountingBackfillInput) (*accountingsync.AccountingBackfill, error)
 	ChangeAccountingBackfill(ctx context.Context, input gqlmodel.ChangeAccountingBackfillInput) (*accountingsync.AccountingBackfill, error)
 	ApplyAccountingInboundChange(ctx context.Context, id string) (*accountingsync.AccountingInboundChange, error)
@@ -5830,6 +5831,20 @@ func (ec *executionContext) field_Mutation_recordWorkerInjury_args(ctx context.C
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_redateAccountingSync_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -18047,6 +18062,50 @@ func (ec *executionContext) fieldContext_Mutation_skipAccountingSync(ctx context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_skipAccountingSync_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_redateAccountingSync(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_redateAccountingSync(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RedateAccountingSync(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *accountingsync.AccountingSyncRecord) graphql.Marshaler {
+			return ec.marshalNAccountingSyncRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋaccountingsyncᚐAccountingSyncRecord(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_redateAccountingSync(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AccountingSyncRecord(ctx, field)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_redateAccountingSync_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -63693,6 +63752,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "skipAccountingSync":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_skipAccountingSync(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "redateAccountingSync":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_redateAccountingSync(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

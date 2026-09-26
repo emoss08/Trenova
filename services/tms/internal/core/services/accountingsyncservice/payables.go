@@ -333,7 +333,12 @@ func (s *Service) pushBill(
 			"Check the settlement's posting in the general ledger, then retry; or skip this record",
 		)
 	}
-	if err = s.checkBooks(sess, settlement.CurrencyCode, *settlement.PostedAt, label); err != nil {
+	if err = s.checkBooks(
+		sess,
+		settlement.CurrencyCode,
+		record.SentDate(*settlement.PostedAt),
+		label,
+	); err != nil {
 		return nil, err
 	}
 	var target *accountingsync.AccountingSyncRecord
@@ -382,6 +387,19 @@ func (s *Service) pushBill(
 		}
 	}
 
+	rate, err := s.exchangeRate(ctx, sess, &documentRate{
+		label:          label,
+		currency:       settlement.CurrencyCode,
+		stamp:          settlement.ExchangeRate,
+		stampDate:      settlement.ExchangeRateDate,
+		documentDate:   *settlement.PostedAt,
+		accountingDate: *settlement.PostedAt,
+		persist:        s.stampPayable(sess, settlement, false),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	doc := &services.AccountingPurchaseDocument{
 		Auth:                sess.auth,
 		RequestID:           record.RequestID,
@@ -390,10 +408,15 @@ func (s *Service) pushBill(
 		VendorExternalID:    vendorID,
 		APAccountExternalID: apAccount,
 		DocNumber:           billNumber(settlement),
-		TxnDate:             timeutils.FormatCalendarDate(*settlement.PostedAt, sess.loc),
-		CurrencyCode:        settlement.CurrencyCode,
-		PrivateNote:         billNote(record.ObjectType, settlement, sess.loc),
-		Lines:               lines,
+		TxnDate: timeutils.FormatCalendarDate(
+			record.SentDate(*settlement.PostedAt),
+			sess.loc,
+		),
+		CurrencyCode: settlement.CurrencyCode,
+		ExchangeRate: rate,
+		PrivateNote: billNote(record.ObjectType, settlement, sess.loc) +
+			sentDateNote(record, *settlement.PostedAt, sess.loc),
+		Lines: lines,
 	}
 	if !credit {
 		doc.DueDate = timeutils.FormatCalendarDate(settlement.PayDate, sess.loc)
@@ -543,7 +566,12 @@ func (s *Service) pushBillPayment(
 	case settlement.NetMinor == 0:
 		return nil, &noopError{reason: label + " is for nothing, so there is nothing to send"}
 	}
-	if err = s.checkBooks(sess, settlement.CurrencyCode, *settlement.PaidAt, label); err != nil {
+	if err = s.checkBooks(
+		sess,
+		settlement.CurrencyCode,
+		record.SentDate(*settlement.PaidAt),
+		label,
+	); err != nil {
 		return nil, err
 	}
 
@@ -574,6 +602,19 @@ func (s *Service) pushBillPayment(
 		return nil, err
 	}
 
+	rate, err := s.exchangeRate(ctx, sess, &documentRate{
+		label:          label,
+		currency:       settlement.CurrencyCode,
+		stamp:          settlement.PaidExchangeRate,
+		stampDate:      settlement.PaidExchangeRateDate,
+		documentDate:   *settlement.PaidAt,
+		accountingDate: *settlement.PaidAt,
+		persist:        s.stampPayable(sess, settlement, true),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	doc := &services.AccountingBillPaymentDocument{
 		Auth:                  sess.auth,
 		RequestID:             record.RequestID,
@@ -585,10 +626,12 @@ func (s *Service) pushBillPayment(
 			settlement.PaymentReference,
 			sess.limits.MaxDocNumberLength,
 		),
-		TxnDate:      timeutils.FormatCalendarDate(*settlement.PaidAt, sess.loc),
+		TxnDate:      timeutils.FormatCalendarDate(record.SentDate(*settlement.PaidAt), sess.loc),
 		CurrencyCode: settlement.CurrencyCode,
-		PrivateNote:  billPaymentNote(record.ObjectType, settlement),
-		Amount:       money.DecimalFromMinor(settlement.NetMinor),
+		ExchangeRate: rate,
+		PrivateNote: billPaymentNote(record.ObjectType, settlement) +
+			sentDateNote(record, *settlement.PaidAt, sess.loc),
+		Amount: money.DecimalFromMinor(settlement.NetMinor),
 	}
 	var written *services.AccountingDocumentResult
 	if target != nil {

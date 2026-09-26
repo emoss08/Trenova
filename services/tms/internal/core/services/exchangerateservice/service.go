@@ -105,11 +105,62 @@ func (s *Service) Convert(
 		return nil, err
 	}
 
+	return conversionOf(rate, amount), nil
+}
+
+func (s *Service) CachedRate(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	fromCurrency, toCurrency string,
+	date time.Time,
+) (*services.RateConversionResult, error) {
+	fromCurrency = normalizeCurrency(fromCurrency)
+	toCurrency = normalizeCurrency(toCurrency)
+	one := decimal.NewFromInt(1)
+
+	if fromCurrency == toCurrency {
+		return &services.RateConversionResult{
+			FromCurrency: fromCurrency,
+			ToCurrency:   toCurrency,
+			Amount:       one,
+			Rate:         one,
+			Converted:    one,
+			Date:         date.Format(defaultDateLayout),
+		}, nil
+	}
+
+	cfg, err := s.oandaConfig(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	cached, err := s.repo.GetRate(ctx, &repositories.GetExchangeRateRequest{
+		TenantInfo:   tenantInfo,
+		Provider:     exchangerate.ProviderOANDA,
+		FromCurrency: fromCurrency,
+		ToCurrency:   toCurrency,
+		RateType:     normalizeRateType("", cfg.DefaultRateType),
+		Date:         date,
+	})
+	if err != nil {
+		if errortypes.IsNotFoundError(err) {
+			return nil, services.ErrExchangeRateNotCached
+		}
+		return nil, errortypes.NewBusinessError("failed to retrieve cached exchange rate").
+			WithInternal(err)
+	}
+
+	return conversionOf(cached, one), nil
+}
+
+func conversionOf(
+	rate *exchangerate.ExchangeRate,
+	amount decimal.Decimal,
+) *services.RateConversionResult {
 	fetchedAt := rate.FetchedAt
 	sourceTimestamp := rate.SourceTimestamp
 	return &services.RateConversionResult{
-		FromCurrency:       fromCurrency,
-		ToCurrency:         toCurrency,
+		FromCurrency:       rate.FromCurrency,
+		ToCurrency:         rate.ToCurrency,
 		Amount:             amount,
 		Rate:               rate.SelectedRate,
 		Converted:          amount.Mul(rate.SelectedRate),
@@ -119,7 +170,7 @@ func (s *Service) Convert(
 		SourceTimestamp:    &sourceTimestamp,
 		FetchedAt:          &fetchedAt,
 		SettlementEligible: false,
-	}, nil
+	}
 }
 
 func (s *Service) GetLatestRates(

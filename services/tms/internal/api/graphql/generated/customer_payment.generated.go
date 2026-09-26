@@ -21,6 +21,8 @@ import (
 // region    ************************** generated!.gotpl **************************
 
 type CustomerPaymentResolver interface {
+	ExchangeRate(ctx context.Context, obj *customerpayment.Payment) (*string, error)
+
 	Customer(ctx context.Context, obj *customerpayment.Payment) (*customer.Customer, error)
 }
 type CustomerPaymentApplicationResolver interface {
@@ -764,6 +766,52 @@ func (ec *executionContext) _CustomerPayment_currencyCode(ctx context.Context, f
 }
 func (ec *executionContext) fieldContext_CustomerPayment_currencyCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CustomerPayment", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerPayment_exchangeRate(ctx context.Context, field graphql.CollectedField, obj *customerpayment.Payment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerPayment_exchangeRate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return ec.Resolvers.CustomerPayment().ExchangeRate(ctx, obj)
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalODecimal2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerPayment_exchangeRate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerPayment", field, true, true, errors.New("field of type Decimal does not have child fields"))
+}
+
+func (ec *executionContext) _CustomerPayment_exchangeRateDate(ctx context.Context, field graphql.CollectedField, obj *customerpayment.Payment) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CustomerPayment_exchangeRateDate(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.ExchangeRateDate, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *int64) graphql.Marshaler {
+			return ec.marshalOTimestamp2ᚖint64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_CustomerPayment_exchangeRateDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CustomerPayment", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
 func (ec *executionContext) _CustomerPayment_postedBatchId(ctx context.Context, field graphql.CollectedField, obj *customerpayment.Payment) (ret graphql.Marshaler) {
@@ -2042,6 +2090,49 @@ func (ec *executionContext) _CustomerPayment(ctx context.Context, sel ast.Select
 		case "currencyCode":
 			out.Values[i] = ec._CustomerPayment_currencyCode(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "exchangeRate":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CustomerPayment_exchangeRate(ctx, field, obj)
+				if res == graphql.RequiredNull {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.IsDeferred() {
+				deferredFieldSet.AddField(field)
+				fieldIndex := len(deferredFieldSet.Values) - 1
+				deferredFieldSet.Concurrently(fieldIndex, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, deferredFieldSet)
+				})
+
+				for _, deferrable := range field.Deferrables {
+					view, ok := deferLabelToView[deferrable.Label]
+					if !ok {
+						view = deferredFieldSet.NewView()
+						deferLabelToView[deferrable.Label] = view
+					}
+					view.AddIndices(fieldIndex)
+				}
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "exchangeRateDate":
+			out.Values[i] = ec._CustomerPayment_exchangeRateDate(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "postedBatchId":

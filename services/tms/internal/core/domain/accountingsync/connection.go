@@ -3,6 +3,7 @@ package accountingsync
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -327,6 +328,19 @@ func (c *AccountingConnection) Covers(documentDate int64) bool {
 
 func (c *AccountingConnection) BooksClosedOn(documentDate int64) bool {
 	return c.ExternalBooksClosedThrough != nil && documentDate <= *c.ExternalBooksClosedThrough
+}
+
+func (c *AccountingConnection) FirstOpenDay(loc *time.Location) (int64, bool) {
+	if c.ExternalBooksClosedThrough == nil {
+		return 0, false
+	}
+	if loc == nil {
+		loc = time.UTC
+	}
+	closed := *c.ExternalBooksClosedThrough
+	year, month, day := time.Unix(closed, 0).UTC().Date()
+	next := time.Date(year, month, day+1, 0, 0, 0, 0, loc).Unix()
+	return max(next, closed+1), true
 }
 
 func (c *AccountingConnection) FinishMappings() bool {

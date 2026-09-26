@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   retryAccountingSync: vi.fn(),
   releaseAccountingSync: vi.fn(),
   skipAccountingSync: vi.fn(),
+  redateAccountingSync: vi.fn(),
   pauseAccountingSync: vi.fn(),
   resumeAccountingSync: vi.fn(),
   requestAccountingBackfill: vi.fn(),
@@ -39,6 +40,7 @@ vi.mock("@/lib/graphql/accounting-sync-ledger", () => ({
   retryAccountingSync: mocks.retryAccountingSync,
   releaseAccountingSync: mocks.releaseAccountingSync,
   skipAccountingSync: mocks.skipAccountingSync,
+  redateAccountingSync: mocks.redateAccountingSync,
   pauseAccountingSync: mocks.pauseAccountingSync,
   resumeAccountingSync: mocks.resumeAccountingSync,
   requestAccountingBackfill: mocks.requestAccountingBackfill,
@@ -151,6 +153,7 @@ function record(overrides: Partial<AccountingSyncRecord> = {}): AccountingSyncRe
     syncedAt: null,
     skippedBy: null,
     skippedReason: "",
+    redatedTo: null,
     version: 1,
     updatedAt: 1_780_000_000,
     ...overrides,
@@ -553,6 +556,31 @@ describe("LedgerRecordPanel", () => {
         errorCategories: null,
       }),
     );
+  });
+
+  it("sends a document held by closed books on the first open day", async () => {
+    mocks.redateAccountingSync.mockResolvedValue(
+      record({ status: "Queued", errorCategory: "ClosedPeriod", redatedTo: 1_780_100_000 }),
+    );
+    renderPanel(
+      record({
+        errorCategory: "ClosedPeriod",
+        resolution:
+          "Reopen the period in QuickBooks Online, send it dated on the first open day, or skip this record",
+      }),
+    );
+
+    await userEvent.click(await screen.findByRole("button", { name: "Send on first open day" }));
+    await waitFor(() => expect(mocks.redateAccountingSync).toHaveBeenCalledWith("acctsr_1"));
+  });
+
+  it("offers the first open day only for a document held by closed books", async () => {
+    renderPanel(record());
+
+    expect(await screen.findByRole("button", { name: "Retry now" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Send on first open day" }),
+    ).not.toBeInTheDocument();
   });
 
   it("releases a record waiting for approval, and offers no retry for it", async () => {
