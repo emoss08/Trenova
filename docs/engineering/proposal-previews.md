@@ -36,6 +36,20 @@ simulation reads it, capped at 8 KiB.
 `record_missing`, `tool_removed`, `preview_failed`, `withheld`, `sensitive_content`,
 `retarget_refused`, `unpinned`.
 
+**Reasons.** A `would_fail` warning also carries `Reasons []PreviewReason{Field, Label,
+Message, Param}`: `toolpreview.WouldFail(err)` splits a validation `MultiError` into one reason
+a field (a refusal of the whole write is a reason with no field), and
+`toolpreview.LocateReasons` walks the tool's parameter schema to name the parameter each field
+rides in (`bol` is `shipment.bol` for `create_shipment`). The preview service locates reasons
+for every tool, including a failing `ToolValidator`. GraphQL serves them as
+`AgentPreviewWarning.reasons`. The client lists each reason ("BOL: already in use by shipment
+SEED-DET-009"), falling back to `Message` without its leading sentence, never the bare "would
+not go through" when the server said why. It offers "Change {label}", which opens the editor
+on that parameter (a nested one such as `shipment.bol` gets an input of its own bound to the
+value inside the JSON field), and "Ask the agent to fix it", which in a conversation sends a
+message naming the reasons and asking for a corrected proposal, and on the Desk and in AI
+Control opens the rejection with the reasons written. Approve stays offered and warned.
+
 ## How a tool previews
 
 A write tool implements `ToolPreviewer` (`ports/services/agenttool.go`):
@@ -134,7 +148,17 @@ When the runtime holds a write for a person, the dispatch activity pins its targ
 previews it in one snapshot (`Baseline`, limited to 5 s) and keeps the preview in
 `agent_proposal_baselines`, keyed by the proposal id the activity already mints. The
 baseline is unfiltered but for Confidential values and is read only to tell which values
-moved since. Nothing about it can fail the proposal.
+moved since. A baseline that cannot be taken never fails the proposal.
+
+**A write that would be refused is not filed.** When the baseline preview carries a
+`would_fail` warning (`ToolPreview.Refusal()`), the activity files nothing and tells the model
+the write was not proposed, each reason with its parameter (`PreviewWarning.ReasonLines()`),
+and to ask the person for the value or look one up and propose again, with the same `invalid`
+trace outcome a `ToolValidator` refusal has. A person could only ever reject that card. The
+baseline service keeps no row for a refused preview unless `ProposalBaselineRequest.FileRefused`
+says the write is filed anyway, which the runtime sets for a write on a record an earlier
+unexecuted write of the same turn changes: the two become steps of one plan, the earlier step
+may be what makes the later one valid, and the plan's preview says it depends on that step.
 
 **It never rides `PendingAction`.** The action is an activity result that
 `DispatchCall.ProposedSoFar` hands to every later tool activity of the turn, so a preview
