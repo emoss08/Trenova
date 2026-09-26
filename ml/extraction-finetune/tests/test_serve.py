@@ -6,17 +6,16 @@ import pytest
 from pydantic import ValidationError
 
 from trenova_finetune import cli
+from trenova_finetune.card import CARD_FILE, CARD_FORMAT, ModelCardError, read_card
 from trenova_finetune.config import (
     PipelineConfig,
     ServeSettings,
     SpeculativeSettings,
     load_config,
 )
-from trenova_finetune.pipeline import CARD_FILE, CARD_FORMAT
 from trenova_finetune.serve import (
     API_KEY_ENV,
     ServeError,
-    read_card,
     serve,
     serve_arguments,
     serve_command,
@@ -184,13 +183,13 @@ def test_a_blank_served_name_is_refused(tmp_path: Path, config_path: Path) -> No
 
 
 def test_only_models_this_pipeline_produced_are_served(tmp_path: Path) -> None:
-    with pytest.raises(ServeError, match=r"no trenova-model\.json"):
+    with pytest.raises(ModelCardError, match=r"no trenova-model\.json"):
         read_card(tmp_path)
     (tmp_path / CARD_FILE).write_text(json.dumps({"format": "something-else"}))
-    with pytest.raises(ServeError, match=CARD_FORMAT):
+    with pytest.raises(ModelCardError, match=CARD_FORMAT):
         read_card(tmp_path)
     (tmp_path / CARD_FILE).write_text("{")
-    with pytest.raises(ServeError, match="cannot read"):
+    with pytest.raises(ModelCardError, match="cannot read"):
         read_card(tmp_path)
 
 

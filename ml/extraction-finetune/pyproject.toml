@@ -22,9 +22,17 @@ train = [
 predict = [
   "vllm>=0.30,<1",
 ]
+quantize = [
+  "llmcompressor>=0.14,<0.15",
+]
 dev = [
   "pytest>=8.0",
   "ruff>=0.6",
+]
+
+[tool.uv]
+conflicts = [
+  [{ extra = "predict" }, { extra = "quantize" }],
 ]
 
 [project.scripts]

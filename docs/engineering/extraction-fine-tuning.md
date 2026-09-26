@@ -113,6 +113,19 @@ uv run trenova-finetune run --config configs/qwen2.5-7b-instruct.yaml \
   --dataset ./datasets/aitx_01J --out ./runs/qwen-2026-10
 ```
 
+Three configurations ship:
+
+| Config | Base model | License | When |
+|---|---|---|---|
+| `qwen2.5-7b-instruct.yaml` | Qwen2.5-7B-Instruct | Apache-2.0 | The reference model |
+| `qwen2.5-7b-instruct-qlora.yaml` | the same, trained in 4-bit | Apache-2.0 | A GPU without the memory for bf16 LoRA |
+| `qwen3-4b-instruct-2507.yaml` | Qwen3-4B-Instruct-2507 | Apache-2.0 | About half the weights to read per token; use it if it scores within the gate |
+
+Qwen2.5-3B-Instruct is deliberately absent. Its license (`qwen-research`) does not allow
+commercial use, unlike the rest of the Qwen2.5 family. Qwen3-4B-Instruct-2507 is the
+non-thinking release; the thinking variants spend output tokens on reasoning that production
+would pay for on every document. Check the license of any base model before adding a config.
+
 `run` works through these stages and records each one in `run.json`:
 
 1. **verify**: every dataset file is checked against the manifest.
@@ -341,10 +354,49 @@ A sensible order:
 1. Prefix caching.
 2. n-gram speculation, adjusting `num_speculative_tokens`.
 3. Batch limits at the concurrency production sees.
-4. `fp8` weights and KV cache.
-5. A smaller base model.
+4. A quantized model (below), and the `fp8` KV cache.
+5. The smaller base model, trained with `configs/qwen3-4b-instruct-2507.yaml` on the same
+   dataset, then quantized and benchmarked the same way.
 
 After each change, score the replies. Keep a change only if the score holds.
+
+### Quantize
+
+Decode reads every weight for every token, so smaller weights make each token cheaper.
+`quantize` compresses a merged model ahead of serving with llm-compressor, in the
+compressed-tensors format vLLM detects on its own:
+
+```bash
+uv sync --extra train --extra quantize        # its own environment; see below
+uv run trenova-finetune quantize --config configs/qwen2.5-7b-instruct.yaml \
+  --model ./runs/qwen-2026-10/dpo/model --scheme w4a16 \
+  --data ./runs/qwen-2026-10/data --out ./runs/qwen-2026-10/w4a16
+```
+
+| Scheme | Weights | Calibration | GPUs |
+|---|---|---|---|
+| `fp8-dynamic` | 8-bit float, activations scaled per token at run time | None | FP8-capable: Ada, Hopper and later |
+| `w4a16` | 4-bit integer by GPTQ, groups of 128 | `quantize.calibration_samples` (512) conversations from the run's training data | Any GPU vLLM supports |
+
+- **Calibration data.** `w4a16` calibrates on whole training conversations: the production
+  prompt followed by the reply the model was trained to give. The error GPTQ minimizes is the
+  error on extraction, not on generic chat. The sample is drawn with the config's seed, so it is
+  reproducible.
+- **The output.** The model card is copied with a `quantization` entry: the scheme, method,
+  calibration size, source directory and llm-compressor version.
+- **Refusals.** `quantize` refuses a model that is already quantized, and an output directory
+  that holds files.
+- **Serving it.** Serve the output with `serve.quantization: null`, because vLLM reads the
+  scheme from the model. `serve` refuses to quantize an already-quantized model a second time.
+- **A separate environment.** llm-compressor 0.14 pins `compressed-tensors` 0.19, and vLLM 0.30
+  pins 0.17. The `predict` and `quantize` extras are declared as conflicting, so each is
+  installed on its own. The two versions write and read the same quantization config and
+  compression formats, so a model quantized with one is served by the other.
+
+`fp8` in the `serve` section quantizes at load time with no step ahead. `fp8-dynamic` produces
+the same kind of weights once, which the benchmark and scorer can then judge as a fixed
+artifact. Score every quantized model before serving it: quantization changes what a model
+writes.
 
 ### Register the provider in Trenova
 

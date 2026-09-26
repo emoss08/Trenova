@@ -5,8 +5,9 @@ from typing import Any
 import pytest
 
 from trenova_finetune import dataset
+from trenova_finetune.card import CARD_FILE
 from trenova_finetune.config import load_config
-from trenova_finetune.pipeline import CARD_FILE, Stages, execute, open_run
+from trenova_finetune.pipeline import Stages, execute, open_run
 from trenova_finetune.training import StageResult
 
 

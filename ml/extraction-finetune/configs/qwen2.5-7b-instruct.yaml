@@ -71,3 +71,8 @@ serve:
     num_speculative_tokens: 4
     prompt_lookup_min: 2
     prompt_lookup_max: 5
+
+quantize:
+  calibration_samples: 512
+  max_seq_length: null
+  ignore: [lm_head]

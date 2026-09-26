@@ -14,10 +14,9 @@ import shlex
 import shutil
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
 
+from .card import read_card
 from .config import PipelineConfig, ServeSettings
-from .pipeline import CARD_FILE, CARD_FORMAT
 
 API_KEY_ENV = "VLLM_API_KEY"
 VLLM_EXECUTABLE = "vllm"
@@ -26,22 +25,6 @@ RESERVED_FLAGS = ("--api-key",)
 
 class ServeError(ValueError):
     """The model, the environment or the arguments cannot be served."""
-
-
-def read_card(model_dir: Path) -> dict[str, Any]:
-    """Return the model card, refusing a directory this pipeline did not produce."""
-    path = model_dir / CARD_FILE
-    try:
-        card = json.loads(path.read_text(encoding="utf-8"))
-    except FileNotFoundError as err:
-        raise ServeError(
-            f"{model_dir} is not a model this pipeline produced (no {CARD_FILE})"
-        ) from err
-    except (OSError, json.JSONDecodeError) as err:
-        raise ServeError(f"cannot read {path}: {err}") from err
-    if not isinstance(card, dict) or card.get("format") != CARD_FORMAT:
-        raise ServeError(f"{path} is not a {CARD_FORMAT} model card")
-    return card
 
 
 def serve_arguments(settings: ServeSettings) -> list[str]:
@@ -119,7 +102,12 @@ def serve(
     dry_run: bool = False,
 ) -> str:
     """Replace this process with `vllm serve`, or return the command when `dry_run` is set."""
-    read_card(model_dir)
+    card = read_card(model_dir)
+    if "quantization" in card and config.serve.quantization is not None:
+        raise ServeError(
+            f"{model_dir} is already quantized ({card['quantization'].get('scheme')}); "
+            "set serve.quantization to null so vLLM loads it as it is"
+        )
     command = serve_command(config, model_dir, served_name, extra)
     if dry_run:
         return shlex.join(command)

@@ -1,7 +1,7 @@
-base_model: Qwen/Qwen2.5-7B-Instruct
+base_model: Qwen/Qwen3-4B-Instruct-2507
 revision: null
 trust_remote_code: false
-quantization: 4bit
+quantization: none
 seed: 42
 
 lora:
@@ -35,7 +35,7 @@ sft:
   max_dropped_fraction: 0.02
 
 dpo:
-  enabled: false
+  enabled: true
   beta: 0.1
   learning_rate: 0.000005
   epochs: 1
@@ -59,7 +59,7 @@ serve:
   gpu_memory_utilization: 0.9
   enable_prefix_caching: true
   enable_chunked_prefill: true
-  max_num_seqs: 64
+  max_num_seqs: 128
   max_num_batched_tokens: 8192
   kv_cache_dtype: auto
   quantization: null

@@ -11,9 +11,11 @@ from pathlib import Path
 
 from . import __version__, dataset
 from .bench import BenchError
+from .card import ModelCardError
 from .config import PRODUCTION_MAX_TOKENS, ConfigError, load_config
 from .lengths import LengthBudgetError
 from .models import HardwareError
+from .quantize import SCHEMES, QuantizeError
 from .run import RunError
 from .serve import API_KEY_ENV, ServeError
 
@@ -25,6 +27,8 @@ USER_ERRORS = (
     HardwareError,
     BenchError,
     ServeError,
+    ModelCardError,
+    QuantizeError,
     FileExistsError,
 )
 DEFAULT_CONCURRENCY = "1,4,16"
@@ -67,6 +71,19 @@ def build_parser() -> argparse.ArgumentParser:
     predict.add_argument("--dataset", type=Path, required=True)
     predict.add_argument("--model", type=Path, required=True)
     predict.add_argument("--out", type=Path, required=True)
+
+    quantize = commands.add_parser(
+        "quantize", help="compress a merged model with llm-compressor for serving"
+    )
+    quantize.add_argument("--config", type=Path, required=True)
+    quantize.add_argument("--model", type=Path, required=True, help="a model this pipeline made")
+    quantize.add_argument("--scheme", choices=sorted(SCHEMES), required=True)
+    quantize.add_argument("--out", type=Path, required=True)
+    quantize.add_argument(
+        "--data",
+        type=Path,
+        help="the run's built training data (runs/<run>/data); w4a16 calibrates on it",
+    )
 
     serve = commands.add_parser(
         "serve",
@@ -190,6 +207,16 @@ def _predict(args: argparse.Namespace) -> int:
     return 0
 
 
+def _quantize(args: argparse.Namespace) -> int:
+    from .quantize import quantize
+
+    metrics = quantize(
+        load_config(args.config), args.model, args.scheme, args.out, data_dir=args.data
+    )
+    print(json.dumps(metrics, indent=2))
+    return 0
+
+
 def _serve(args: argparse.Namespace) -> int:
     from .serve import serve
 
@@ -243,6 +270,7 @@ HANDLERS = {
     "run": _run,
     "merge": _merge,
     "predict": _predict,
+    "quantize": _quantize,
     "serve": _serve,
     "bench": _bench,
     "bench-compare": _bench_compare,

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -10,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from . import dataset, targets
+from .card import CARD_FORMAT, save_card
 from .config import PipelineConfig
 from .run import STATUS_COMPLETED, STATUS_SKIPPED, Run
 
@@ -23,8 +23,6 @@ STAGE_DPO = "dpo"
 STAGE_MERGE_DPO = "merge-dpo"
 STAGE_PREDICT = "predict"
 PREDICTIONS_FILE = "predictions.jsonl"
-CARD_FORMAT = "trenova.extraction-model/v1"
-CARD_FILE = "trenova-model.json"
 
 
 @dataclass(frozen=True)
@@ -180,5 +178,4 @@ def model_card(run: Run, manifest: dataset.DatasetManifest) -> dict[str, Any]:
 
 
 def write_card(model_dir: Path, run: Run, manifest: dataset.DatasetManifest) -> None:
-    card = model_card(run, manifest)
-    (model_dir / CARD_FILE).write_text(json.dumps(card, indent=2, sort_keys=True) + "\n", "utf-8")
+    save_card(model_dir, model_card(run, manifest))

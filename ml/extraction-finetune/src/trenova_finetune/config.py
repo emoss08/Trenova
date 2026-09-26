@@ -87,6 +87,14 @@ class PredictSettings(_Settings):
     gpu_memory_utilization: float = Field(0.9, gt=0.0, le=1.0)
 
 
+class QuantizeSettings(_Settings):
+    """How `quantize` compresses a merged model ahead of serving it."""
+
+    calibration_samples: int = Field(512, ge=16, le=8192)
+    max_seq_length: int | None = Field(None, ge=512)
+    ignore: tuple[str, ...] = Field(("lm_head",), min_length=1)
+
+
 ServeQuantization = Literal["fp8", "awq", "awq_marlin", "gptq", "gptq_marlin", "compressed-tensors"]
 KVCacheDType = Literal["auto", "fp8", "fp8_e4m3", "fp8_e5m2"]
 StructuredOutputsBackend = Literal["auto", "xgrammar", "guidance", "outlines", "lm-format-enforcer"]
@@ -180,6 +188,7 @@ class PipelineConfig(_Settings):
     dpo: DPOSettings = DPOSettings()
     predict: PredictSettings = PredictSettings()
     serve: ServeSettings = ServeSettings()
+    quantize: QuantizeSettings = QuantizeSettings()
 
     @model_validator(mode="after")
     def _prediction_fits_training(self) -> PipelineConfig:
@@ -188,6 +197,10 @@ class PipelineConfig(_Settings):
         if self.serve.max_model_len < self.sft.max_length:
             raise ValueError("serve.max_model_len must be at least sft.max_length")
         return self
+
+    @property
+    def calibration_length(self) -> int:
+        return self.quantize.max_seq_length or self.sft.max_length
 
 
 def load_config(path: str | Path) -> PipelineConfig:
