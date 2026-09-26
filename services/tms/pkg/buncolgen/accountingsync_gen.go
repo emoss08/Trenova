@@ -2603,6 +2603,8 @@ var AccountingSyncRecordColumns = struct {
 	ReleasedByID      Column // "released_by_id" → qualified: "acctsr.released_by_id"
 	SkippedByID       Column // "skipped_by_id" → qualified: "acctsr.skipped_by_id"
 	SkippedReason     Column // "skipped_reason" → qualified: "acctsr.skipped_reason"
+	RedatedTo         Column // "redated_to" → qualified: "acctsr.redated_to"
+	RedatedByID       Column // "redated_by_id" → qualified: "acctsr.redated_by_id"
 	Version           Column // "version" → qualified: "acctsr.version"
 	CreatedAt         Column // "created_at" → qualified: "acctsr.created_at"
 	UpdatedAt         Column // "updated_at" → qualified: "acctsr.updated_at"
@@ -2642,6 +2644,8 @@ var AccountingSyncRecordColumns = struct {
 	ReleasedByID:      NewColumn("released_by_id", "acctsr"),
 	SkippedByID:       NewColumn("skipped_by_id", "acctsr"),
 	SkippedReason:     NewColumn("skipped_reason", "acctsr"),
+	RedatedTo:         NewColumn("redated_to", "acctsr"),
+	RedatedByID:       NewColumn("redated_by_id", "acctsr"),
 	Version:           NewColumn("version", "acctsr"),
 	CreatedAt:         NewColumn("created_at", "acctsr"),
 	UpdatedAt:         NewColumn("updated_at", "acctsr"),
@@ -2686,6 +2690,8 @@ var AccountingSyncRecordFieldMap = map[string]string{
 	"releasedById":      "released_by_id",
 	"skippedById":       "skipped_by_id",
 	"skippedReason":     "skipped_reason",
+	"redatedTo":         "redated_to",
+	"redatedById":       "redated_by_id",
 	"version":           "version",
 	"createdAt":         "created_at",
 	"updatedAt":         "updated_at",
@@ -2729,6 +2735,8 @@ var AccountingSyncRecordInsertableColumns = []string{
 	"released_by_id",
 	"skipped_by_id",
 	"skipped_reason",
+	"redated_to",
+	"redated_by_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -2835,6 +2843,8 @@ var AccountingSyncRecordFilter = struct {
 	ReleasedByID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "releasedById" → DB: "released_by_id"
 	SkippedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "skippedById" → DB: "skipped_by_id"
 	SkippedReason     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "skippedReason" → DB: "skipped_reason"
+	RedatedTo         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "redatedTo" → DB: "redated_to"
+	RedatedByID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "redatedById" → DB: "redated_by_id"
 	Version           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -2940,6 +2950,12 @@ var AccountingSyncRecordFilter = struct {
 	},
 	SkippedReason: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("skippedReason", op, value)
+	},
+	RedatedTo: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("redatedTo", op, value)
+	},
+	RedatedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("redatedById", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

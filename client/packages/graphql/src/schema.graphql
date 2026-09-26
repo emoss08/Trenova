@@ -2101,6 +2101,10 @@ type AccountingSyncRecord {
   objectType: AccountingSyncObjectType!
   operation: AccountingSyncOperation!
   queuedAt: Timestamp!
+  """
+  The date it is sent with, when it was moved to the first open day of the books.
+  """
+  redatedTo: Timestamp
   """What to do about it, in plain language."""
   resolution: String!
   revision: Int!
@@ -15433,6 +15437,10 @@ type Mutation {
   recordTimeEntry(input: RecordTimeEntryInput!): TimeClockEntry!
   recordWorkerEmploymentEvent(input: RecordWorkerEmploymentEventInput!): RecordWorkerEmploymentEventPayload!
   recordWorkerInjury(input: RecordWorkerInjuryInput!): WorkerInjury!
+  """
+  Sends a document held by closed books dated on the first open day, when Trenova's closed-period policy posts to the next open period.
+  """
+  redateAccountingSync(id: ID!): AccountingSyncRecord!
   """
   Reads the accounting system's records again and refreshes the proposals.
   """

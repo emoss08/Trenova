@@ -2407,6 +2407,10 @@ func init() {
 				FieldMapKey: "skippedReason",
 			},
 			{
+				Name:        "redatedTo",
+				FieldMapKey: "redatedTo",
+			},
+			{
 				Name:        "version",
 				FieldMapKey: "version",
 			},

@@ -142,6 +142,16 @@ function LedgerRecordDetail({
                 {t("Release")}
               </Button>
             ) : null}
+            {record.status === "Blocked" && record.errorCategory === "ClosedPeriod" ? (
+              <Button
+                type="button"
+                variant="outline"
+                isLoading={actions.redate.isPending}
+                onClick={() => actions.redate.mutate(record.id)}
+              >
+                {t("Send on first open day")}
+              </Button>
+            ) : null}
             {RETRYABLE.has(record.status) ? (
               <Button
                 type="button"
@@ -208,6 +218,11 @@ function LedgerRecordDetail({
           <DescriptionItem label={t("Document date")} numeric>
             {record.documentDate ? formatUnixDate(record.documentDate) : <DescriptionEmpty />}
           </DescriptionItem>
+          {record.redatedTo ? (
+            <DescriptionItem label={t("Sent dated")} numeric>
+              {formatUnixDate(record.redatedTo)}
+            </DescriptionItem>
+          ) : null}
           <DescriptionItem label={t("Tries")} numeric>
             {record.attemptCount}
           </DescriptionItem>

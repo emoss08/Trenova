@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
@@ -72,13 +73,30 @@ func (s *Service) checkBooks(
 		)
 	}
 	if sess.conn.BooksClosedOn(documentDate) {
+		resolution := "Reopen the period in " + sess.providerName + ", or skip this record"
+		if sess.redatesToNextOpen {
+			resolution = "Reopen the period in " + sess.providerName +
+				", send it dated on the first open day, or skip this record"
+		}
 		return blocked(
 			accountingsync.SyncErrorClosedPeriod,
 			label+" is dated in a period closed in "+sess.providerName,
-			"Reopen the period in "+sess.providerName+", or skip this record",
+			resolution,
 		)
 	}
 	return nil
+}
+
+func sentDateNote(
+	record *accountingsync.AccountingSyncRecord,
+	documentDate int64,
+	loc *time.Location,
+) string {
+	if record.RedatedTo == nil {
+		return ""
+	}
+	return " Dated " + timeutils.FormatCalendarDate(documentDate, loc) +
+		" in Trenova; sent on the first open day of the books."
 }
 
 func (s *Service) customerRef(
@@ -170,7 +188,12 @@ func (s *Service) pushSales(
 		return nil, blocked(accountingsync.SyncErrorValidation,
 			label+" is not posted", "Post it in Trenova, or skip this record")
 	}
-	if err = s.checkBooks(sess, inv.CurrencyCode, inv.InvoiceDate, label); err != nil {
+	if err = s.checkBooks(
+		sess,
+		inv.CurrencyCode,
+		record.SentDate(inv.InvoiceDate),
+		label,
+	); err != nil {
 		return nil, err
 	}
 
@@ -224,9 +247,9 @@ func (s *Service) salesDocument(
 		RequestID:    record.RequestID,
 		Kind:         record.ObjectType,
 		DocNumber:    inv.Number,
-		TxnDate:      timeutils.FormatCalendarDate(inv.InvoiceDate, sess.loc),
+		TxnDate:      timeutils.FormatCalendarDate(record.SentDate(inv.InvoiceDate), sess.loc),
 		CurrencyCode: inv.CurrencyCode,
-		PrivateNote:  salesNote(inv),
+		PrivateNote:  salesNote(inv) + sentDateNote(record, inv.InvoiceDate, sess.loc),
 		CustomerMemo: customerMemo(inv),
 		Lines:        make([]services.AccountingDocumentLine, 0, len(inv.Lines)),
 		Refs:         record.ExternalRefs,
@@ -469,7 +492,12 @@ func (s *Service) pushPayment(
 		return nil, err
 	}
 	label := documentLabel(accountingsync.SyncObjectCustomerPayment, payment.ReferenceNumber)
-	if err = s.checkBooks(sess, payment.CurrencyCode, payment.AccountingDate, label); err != nil {
+	if err = s.checkBooks(
+		sess,
+		payment.CurrencyCode,
+		record.SentDate(payment.AccountingDate),
+		label,
+	); err != nil {
 		return nil, err
 	}
 
@@ -522,17 +550,21 @@ func (s *Service) pushPayment(
 	}
 
 	doc := &services.AccountingPaymentDocument{
-		Auth:                     sess.auth,
-		RequestID:                record.RequestID,
-		ExternalID:               externalID,
-		CustomerExternalID:       refs.customer,
-		TxnDate:                  timeutils.FormatCalendarDate(payment.AccountingDate, sess.loc),
+		Auth:               sess.auth,
+		RequestID:          record.RequestID,
+		ExternalID:         externalID,
+		CustomerExternalID: refs.customer,
+		TxnDate: timeutils.FormatCalendarDate(
+			record.SentDate(payment.AccountingDate),
+			sess.loc,
+		),
 		CurrencyCode:             payment.CurrencyCode,
 		PaymentMethodExternalID:  refs.method,
 		DepositAccountExternalID: refs.deposit,
 		ReferenceNumber:          payment.ReferenceNumber,
-		PrivateNote:              paymentNote(payment),
-		TotalAmount:              money.DecimalFromMinor(payment.AmountMinor),
+		PrivateNote: paymentNote(payment) +
+			sentDateNote(record, payment.AccountingDate, sess.loc),
+		TotalAmount: money.DecimalFromMinor(payment.AmountMinor),
 		Applications: make(
 			[]services.AccountingPaymentApplication,
 			0,
@@ -749,7 +781,12 @@ func (s *Service) pushCreditApplication(
 			"A document this credit application links no longer exists", "Skip this record")
 	}
 	label := documentLabel(accountingsync.SyncObjectCreditApplication, memo.Number)
-	if err = s.checkBooks(sess, memo.CurrencyCode, app.AccountingDate, label); err != nil {
+	if err = s.checkBooks(
+		sess,
+		memo.CurrencyCode,
+		record.SentDate(app.AccountingDate),
+		label,
+	); err != nil {
 		return nil, err
 	}
 
@@ -768,15 +805,19 @@ func (s *Service) pushCreditApplication(
 	}
 
 	doc := &services.AccountingCreditApplicationDocument{
-		Auth:                 sess.auth,
-		RequestID:            record.RequestID,
-		CustomerExternalID:   customerID,
-		TxnDate:              timeutils.FormatCalendarDate(app.AccountingDate, sess.loc),
+		Auth:               sess.auth,
+		RequestID:          record.RequestID,
+		CustomerExternalID: customerID,
+		TxnDate: timeutils.FormatCalendarDate(
+			record.SentDate(app.AccountingDate),
+			sess.loc,
+		),
 		CurrencyCode:         memo.CurrencyCode,
 		InvoiceExternalID:    invoiceID,
 		CreditMemoExternalID: memoID,
 		Amount:               money.DecimalFromMinor(app.AppliedAmountMinor),
-		PrivateNote:          "Applies " + memo.Number + " to " + target.Number,
+		PrivateNote: "Applies " + memo.Number + " to " + target.Number +
+			sentDateNote(record, app.AccountingDate, sess.loc),
 	}
 	written, err := sess.writer.CreateCreditApplication(ctx, doc)
 	if err != nil {

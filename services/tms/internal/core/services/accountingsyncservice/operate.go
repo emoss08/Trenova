@@ -590,6 +590,96 @@ func (s *Service) Release(
 	return released, nil
 }
 
+func (s *Service) PlanRedate(
+	ctx context.Context,
+	req *services.RedateAccountingSyncRequest,
+) (*services.AccountingSyncRedatePlan, error) {
+	record, err := s.GetRecord(ctx, req.TenantInfo, req.ID)
+	if err != nil {
+		return nil, err
+	}
+	conn, err := s.connectionByID(ctx, req.TenantInfo, record.ConnectionID)
+	if err != nil {
+		return nil, err
+	}
+	provider := accountingsync.ProviderName(conn.IntegrationType)
+	label := documentLabel(record.ObjectType, record.ObjectNumber)
+	if record.Status != accountingsync.SyncStatusBlocked ||
+		record.ErrorCategory != accountingsync.SyncErrorClosedPeriod {
+		return nil, errortypes.NewBusinessError(
+			"{0} is not held by a closed period, so it keeps its date",
+			label,
+		)
+	}
+	redates, err := s.redatesToNextOpen(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	if !redates {
+		return nil, errortypes.NewBusinessError(
+			"Trenova's closed-period policy keeps a document in its own period; reopen the period in {0}, or set the policy to post to the next open period",
+			provider,
+		)
+	}
+	loc, err := s.orgLocation(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	sentDate, ok := conn.FirstOpenDay(loc)
+	if !ok {
+		return nil, errortypes.NewBusinessError(
+			"{0} no longer reports closed books, so {1} keeps its date; retry it instead",
+			provider,
+			label,
+		)
+	}
+
+	after := *record
+	if err = after.Redate(req.UserID, sentDate, timeutils.NowUnix()); err != nil {
+		return nil, errortypes.NewBusinessError(
+			"{0} is not held by a closed period, so it keeps its date",
+			label,
+		).WithInternal(err)
+	}
+	return &services.AccountingSyncRedatePlan{
+		Connection: conn,
+		Before:     record,
+		After:      &after,
+		SentDate:   sentDate,
+		SentDay:    timeutils.FormatCalendarDate(sentDate, loc),
+	}, nil
+}
+
+func (s *Service) Redate(
+	ctx context.Context,
+	req *services.RedateAccountingSyncRequest,
+) (*accountingsync.AccountingSyncRecord, error) {
+	plan, err := s.PlanRedate(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	before := jsonutils.MustToJSON(plan.Before)
+	updated, err := s.records.Update(ctx, plan.After)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logAudit(&auditEntry{
+		resource:   permission.ResourceAccountingSync,
+		resourceID: updated.ID,
+		userID:     req.UserID,
+		tenant:     req.TenantInfo,
+		current:    updated,
+		previous:   before,
+		comment: "Sent " + documentLabel(updated.ObjectType, updated.ObjectNumber) +
+			" dated on the first open day of the books",
+	})
+	s.refreshAttention(ctx, plan.Connection)
+	s.publishInvalidation(ctx, req.TenantInfo, req.UserID, updated.ID)
+	s.kick(ctx, req.TenantInfo, plan.Connection.ID)
+	return updated, nil
+}
+
 func (s *Service) Skip(
 	ctx context.Context,
 	req *services.SkipAccountingSyncRequest,

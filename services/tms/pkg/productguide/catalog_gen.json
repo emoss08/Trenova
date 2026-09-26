@@ -1,5 +1,5 @@
 {
-  "version": "sha256:5f95e592eab0319b594fde3435f0c6d86b878fcf3a986c2f006af66a4dde92fc",
+  "version": "sha256:1ce10c747b8ac45b338e8fced0ddfe539be1ce3f847c44e04bb6a4309b8d481a",
   "modules": [
     {
       "id": "home",
@@ -1736,6 +1736,20 @@
             "Open [Sync ledger](/accounting/sync) and open the settlement's record.",
             "When its reason names a GL account, map that account to a QuickBooks account on the [Mappings](/accounting/sync/mappings) page (filter by **GL accounts**). When it names a carrier or an owner-operator, map them to the existing QuickBooks vendor, or let Trenova create one.",
             "Select **Retry now**. A settlement's payment waits for its bill and follows once the bill is in QuickBooks."
+          ]
+        },
+        {
+          "title": "Send a document dated in closed books",
+          "keywords": [
+            "closed period",
+            "books closed",
+            "re-date",
+            "first open day",
+            "closing date"
+          ],
+          "steps": [
+            "Open [Sync ledger](/accounting/sync) and open the record held for a closed period.",
+            "Select **Send on first open day**. The document goes out dated on the day after the closing date in QuickBooks, and its note in QuickBooks keeps Trenova's date. This is offered only while Trenova's closed-period policy is to post to the next open period; otherwise reopen the period in QuickBooks, then select **Retry now**."
           ]
         },
         {

@@ -12,6 +12,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,13 +24,14 @@ import (
 var permissionResource = permission.ResourceAccountingSync.String()
 
 type pushSession struct {
-	tenant       pagination.TenantInfo
-	conn         *accountingsync.AccountingConnection
-	writer       services.AccountingDocumentWriter
-	auth         services.AccountingDocumentAuth
-	loc          *time.Location
-	providerName string
-	limits       services.AccountingDocumentLimits
+	tenant            pagination.TenantInfo
+	conn              *accountingsync.AccountingConnection
+	writer            services.AccountingDocumentWriter
+	auth              services.AccountingDocumentAuth
+	loc               *time.Location
+	providerName      string
+	limits            services.AccountingDocumentLimits
+	redatesToNextOpen bool
 }
 
 type waitError struct {
@@ -90,15 +92,13 @@ func (s *Service) openSession(
 		)
 	}
 
-	loc := time.UTC
-	org, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
-		TenantInfo: tenant,
-	})
+	loc, err := s.orgLocation(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
-	if org != nil {
-		loc = timeutils.LoadLocation(org.Timezone)
+	redates, err := s.redatesToNextOpen(ctx, tenant)
+	if err != nil {
+		return nil, err
 	}
 
 	return &pushSession{
@@ -109,10 +109,38 @@ func (s *Service) openSession(
 			RealmID:     session.Connection.ExternalRealmID,
 			AccessToken: session.AccessToken,
 		},
-		loc:          loc,
-		providerName: accountingsync.ProviderName(conn.IntegrationType),
-		limits:       writer.DocumentLimits(),
+		loc:               loc,
+		providerName:      accountingsync.ProviderName(conn.IntegrationType),
+		limits:            writer.DocumentLimits(),
+		redatesToNextOpen: redates,
 	}, nil
+}
+
+func (s *Service) orgLocation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*time.Location, error) {
+	org, err := s.organizations.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if org == nil {
+		return time.UTC, nil
+	}
+	return timeutils.LoadLocation(org.Timezone), nil
+}
+
+func (s *Service) redatesToNextOpen(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
+	control, err := s.controls.GetByOrgID(ctx, tenantInfo.OrgID)
+	if err != nil {
+		return false, err
+	}
+	return control.ClosedPeriodPostingPolicy == tenant.ClosedPeriodPostingPolicyPostToNextOpen, nil
 }
 
 func (s *Service) Drain(

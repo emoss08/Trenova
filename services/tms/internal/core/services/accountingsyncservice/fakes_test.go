@@ -1520,3 +1520,33 @@ func (f *fakePayables) GetSettlement(
 	}
 	return clonePayable(row.settlement), nil
 }
+
+type fakeControls struct {
+	repositories.AccountingControlRepository
+
+	mu      sync.Mutex
+	control *tenant.AccountingControl
+}
+
+func newFakeControls() *fakeControls {
+	return &fakeControls{control: &tenant.AccountingControl{
+		ClosedPeriodPostingPolicy: tenant.ClosedPeriodPostingPolicyPostToNextOpen,
+	}}
+}
+
+func (f *fakeControls) GetByOrgID(
+	context.Context,
+	pulid.ID,
+) (*tenant.AccountingControl, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	copied := *f.control
+	return &copied, nil
+}
+
+func (f *fakeControls) set(mutate func(*tenant.AccountingControl)) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	mutate(f.control)
+}
+

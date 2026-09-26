@@ -333,7 +333,12 @@ func (s *Service) pushBill(
 			"Check the settlement's posting in the general ledger, then retry; or skip this record",
 		)
 	}
-	if err = s.checkBooks(sess, settlement.CurrencyCode, *settlement.PostedAt, label); err != nil {
+	if err = s.checkBooks(
+		sess,
+		settlement.CurrencyCode,
+		record.SentDate(*settlement.PostedAt),
+		label,
+	); err != nil {
 		return nil, err
 	}
 	var target *accountingsync.AccountingSyncRecord
@@ -390,10 +395,14 @@ func (s *Service) pushBill(
 		VendorExternalID:    vendorID,
 		APAccountExternalID: apAccount,
 		DocNumber:           billNumber(settlement),
-		TxnDate:             timeutils.FormatCalendarDate(*settlement.PostedAt, sess.loc),
-		CurrencyCode:        settlement.CurrencyCode,
-		PrivateNote:         billNote(record.ObjectType, settlement, sess.loc),
-		Lines:               lines,
+		TxnDate: timeutils.FormatCalendarDate(
+			record.SentDate(*settlement.PostedAt),
+			sess.loc,
+		),
+		CurrencyCode: settlement.CurrencyCode,
+		PrivateNote: billNote(record.ObjectType, settlement, sess.loc) +
+			sentDateNote(record, *settlement.PostedAt, sess.loc),
+		Lines: lines,
 	}
 	if !credit {
 		doc.DueDate = timeutils.FormatCalendarDate(settlement.PayDate, sess.loc)
@@ -543,7 +552,12 @@ func (s *Service) pushBillPayment(
 	case settlement.NetMinor == 0:
 		return nil, &noopError{reason: label + " is for nothing, so there is nothing to send"}
 	}
-	if err = s.checkBooks(sess, settlement.CurrencyCode, *settlement.PaidAt, label); err != nil {
+	if err = s.checkBooks(
+		sess,
+		settlement.CurrencyCode,
+		record.SentDate(*settlement.PaidAt),
+		label,
+	); err != nil {
 		return nil, err
 	}
 
@@ -585,10 +599,11 @@ func (s *Service) pushBillPayment(
 			settlement.PaymentReference,
 			sess.limits.MaxDocNumberLength,
 		),
-		TxnDate:      timeutils.FormatCalendarDate(*settlement.PaidAt, sess.loc),
+		TxnDate:      timeutils.FormatCalendarDate(record.SentDate(*settlement.PaidAt), sess.loc),
 		CurrencyCode: settlement.CurrencyCode,
-		PrivateNote:  billPaymentNote(record.ObjectType, settlement),
-		Amount:       money.DecimalFromMinor(settlement.NetMinor),
+		PrivateNote: billPaymentNote(record.ObjectType, settlement) +
+			sentDateNote(record, *settlement.PaidAt, sess.loc),
+		Amount: money.DecimalFromMinor(settlement.NetMinor),
 	}
 	var written *services.AccountingDocumentResult
 	if target != nil {

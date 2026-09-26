@@ -1,5 +1,5 @@
 {
-  "operationCount": 946,
+  "operationCount": 947,
   "fragmentCount": 265,
   "operations": [
     {
@@ -408,7 +408,7 @@
       "kind": "query",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:b18f5f22813de4df41fd57d9916f0257cb454cbf9eaff002e55d5b717e9ed845",
+      "hash": "sha256:357118625f612b1abc8c9241e7959df8f534fdd67183efe696023170bc21389b",
       "rootFields": [
         "accountingSyncObjectStates"
       ],
@@ -423,14 +423,14 @@
         "AccountingSyncRecordFields"
       ],
       "usages": [],
-      "sdl": "query AccountingSyncObjectStates($objectIds: [ID!]!) {\n  accountingSyncObjectStates(objectIds: $objectIds) {\n    objectType\n    objectId\n    providerName\n    record {\n      ...AccountingSyncRecordFields\n    }\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  version\n  updatedAt\n}"
+      "sdl": "query AccountingSyncObjectStates($objectIds: [ID!]!) {\n  accountingSyncObjectStates(objectIds: $objectIds) {\n    objectType\n    objectId\n    providerName\n    record {\n      ...AccountingSyncRecordFields\n    }\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  redatedTo\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountingSyncRecord",
       "kind": "query",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:4383a49db007e46422387d7a4eb5dccd2d5e1df0de4a43ef2ff85a45cfdd3dab",
+      "hash": "sha256:d10395fde62daf184df9475782815886b7d51848c26c8158aea595d304729ee6",
       "rootFields": [
         "accountingSyncRecord"
       ],
@@ -445,14 +445,14 @@
         "AccountingSyncRecordFields"
       ],
       "usages": [],
-      "sdl": "query AccountingSyncRecord($id: ID!) {\n  accountingSyncRecord(id: $id) {\n    ...AccountingSyncRecordFields\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  version\n  updatedAt\n}"
+      "sdl": "query AccountingSyncRecord($id: ID!) {\n  accountingSyncRecord(id: $id) {\n    ...AccountingSyncRecordFields\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  redatedTo\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountingSyncRecords",
       "kind": "query",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:3022089755fa1469cd41421894de5c50fe8121974fa14f2a36709713ed761b40",
+      "hash": "sha256:3e437ac0c9a93c89c4f661f68906503feb3aa12e74eb477385bbb8ea0cf3f3e2",
       "rootFields": [
         "accountingSyncRecords"
       ],
@@ -482,14 +482,14 @@
         "AccountingSyncRecordFields"
       ],
       "usages": [],
-      "sdl": "query AccountingSyncRecords($integrationType: AccountingSystem!, $first: Int, $after: String, $filter: AccountingSyncRecordFilterInput) {\n  accountingSyncRecords(\n    integrationType: $integrationType\n    first: $first\n    after: $after\n    filter: $filter\n  ) {\n    edges {\n      node {\n        ...AccountingSyncRecordFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    totalCount\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  version\n  updatedAt\n}"
+      "sdl": "query AccountingSyncRecords($integrationType: AccountingSystem!, $first: Int, $after: String, $filter: AccountingSyncRecordFilterInput) {\n  accountingSyncRecords(\n    integrationType: $integrationType\n    first: $first\n    after: $after\n    filter: $filter\n  ) {\n    edges {\n      node {\n        ...AccountingSyncRecordFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    totalCount\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  redatedTo\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountingSyncRecordTable",
       "kind": "query",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/table.graphql",
-      "hash": "sha256:044e65c16d681d57e28f63b395f5308354481365cb818e35c44a610e9e4728be",
+      "hash": "sha256:d0768d8ff32a50dfe8cdefc06291ff2301d6c104ba05d9e87f5482b848029766",
       "rootFields": [
         "accountingSyncRecordTable"
       ],
@@ -514,7 +514,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AccountingSyncRecordTable($integrationType: AccountingSystem!, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  accountingSyncRecordTable(integrationType: $integrationType, input: $input) {\n    edges {\n      node {\n        id\n        objectType\n        objectId\n        objectNumber\n        operation\n        sourceEvent\n        revision\n        documentDate\n        dependsOnRecordId\n        status\n        attemptCount\n        nextAttemptAt\n        externalId\n        externalDocNumber\n        externalUrl\n        errorCategory\n        errorCode\n        errorMessage\n        resolution\n        queuedAt\n        startedAt\n        syncedAt\n        skippedBy {\n          id\n          name\n        }\n        skippedReason\n        version\n        updatedAt\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AccountingSyncRecordTable($integrationType: AccountingSystem!, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  accountingSyncRecordTable(integrationType: $integrationType, input: $input) {\n    edges {\n      node {\n        id\n        objectType\n        objectId\n        objectNumber\n        operation\n        sourceEvent\n        revision\n        documentDate\n        dependsOnRecordId\n        status\n        attemptCount\n        nextAttemptAt\n        externalId\n        externalDocNumber\n        externalUrl\n        errorCategory\n        errorCode\n        errorMessage\n        resolution\n        queuedAt\n        startedAt\n        syncedAt\n        skippedBy {\n          id\n          name\n        }\n        skippedReason\n        redatedTo\n        version\n        updatedAt\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AccountingSyncStatus",
@@ -14598,6 +14598,28 @@
       "sdl": "query RecurringShipmentTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  recurringShipments(input: $input) {\n    edges {\n      node {\n        ...RecurringShipmentTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}\n\nfragment RecurringShipmentTableRowFields on RecurringShipment {\n  id\n  businessUnitId\n  organizationId\n  sourceShipmentId\n  customerId\n  originLocationId\n  destinationLocationId\n  name\n  description\n  status\n  cronExpression\n  timezone\n  startDate\n  endDate\n  maxOccurrences\n  leadTimeDays\n  skipWeekends\n  exceptionPolicy\n  blackoutDates\n  autoGenerate\n  nextOccurrenceAt\n  lastOccurrenceAt\n  lastRunAt\n  generationCount\n  consecutiveFailures\n  version\n  createdAt\n  updatedAt\n  customer {\n    id\n    name\n    code\n  }\n  originLocation {\n    id\n    name\n    code\n  }\n  destinationLocation {\n    id\n    name\n    code\n  }\n}"
     },
     {
+      "name": "RedateAccountingSync",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/operations.graphql",
+      "hash": "sha256:33d7c0706b10f300cecc21b81b096f2846719f4e23bf4d305647e9e2d5b2361a",
+      "rootFields": [
+        "redateAccountingSync"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingSyncRecordFields"
+      ],
+      "usages": [],
+      "sdl": "mutation RedateAccountingSync($id: ID!) {\n  redateAccountingSync(id: $id) {\n    ...AccountingSyncRecordFields\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  redatedTo\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "RefreshAccountingReferenceData",
       "kind": "mutation",
       "domain": "accounting-sync",
@@ -17655,7 +17677,7 @@
       "kind": "mutation",
       "domain": "accounting-sync",
       "sourceFile": "src/operations/accounting-sync/operations.graphql",
-      "hash": "sha256:952b395783216172a3ef671af3d707ef257507d24a4cfd055641d0f9938d6168",
+      "hash": "sha256:384a1016023e7f019615d0f10adaffc909ac7b757e51fde7568ba578dcbc25cf",
       "rootFields": [
         "skipAccountingSync"
       ],
@@ -17670,7 +17692,7 @@
         "AccountingSyncRecordFields"
       ],
       "usages": [],
-      "sdl": "mutation SkipAccountingSync($input: SkipAccountingSyncInput!) {\n  skipAccountingSync(input: $input) {\n    ...AccountingSyncRecordFields\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  version\n  updatedAt\n}"
+      "sdl": "mutation SkipAccountingSync($input: SkipAccountingSyncInput!) {\n  skipAccountingSync(input: $input) {\n    ...AccountingSyncRecordFields\n  }\n}\n\nfragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  redatedTo\n  version\n  updatedAt\n}"
     },
     {
       "name": "SkipWorkerChecklistItem",
@@ -22002,10 +22024,11 @@
         "AccountingSyncObjectStates",
         "AccountingSyncRecord",
         "AccountingSyncRecords",
+        "RedateAccountingSync",
         "SkipAccountingSync"
       ],
       "usages": [],
-      "sdl": "fragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  version\n  updatedAt\n}"
+      "sdl": "fragment AccountingSyncRecordFields on AccountingSyncRecord {\n  id\n  objectType\n  objectId\n  objectNumber\n  operation\n  sourceEvent\n  revision\n  documentDate\n  dependsOnRecordId\n  status\n  attemptCount\n  nextAttemptAt\n  externalId\n  externalDocNumber\n  externalUrl\n  errorCategory\n  errorCode\n  errorMessage\n  resolution\n  queuedAt\n  startedAt\n  syncedAt\n  skippedBy {\n    id\n    name\n  }\n  skippedReason\n  redatedTo\n  version\n  updatedAt\n}"
     },
     {
       "name": "AccountingSyncStatusFields",

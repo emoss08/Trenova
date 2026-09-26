@@ -34,18 +34,30 @@ const (
 	fieldRangeEnd      = "rangeEnd"
 	fieldObjectTypes   = "objectTypes"
 	fieldRequestedByID = "requestedById"
+	fieldRedatedTo     = "redatedTo"
+	fieldRedatedByID   = "redatedById"
 )
 
 func syncRecordOptions() []toolpreview.Option {
 	return []toolpreview.Option{
-		toolpreview.Only(fieldStatus, fieldAttemptCount, fieldSkippedReason, fieldSkippedByID),
+		toolpreview.Only(
+			fieldStatus,
+			fieldAttemptCount,
+			fieldSkippedReason,
+			fieldSkippedByID,
+			fieldRedatedTo,
+			fieldRedatedByID,
+		),
 		toolpreview.WithRefs(map[string]permission.Resource{
 			fieldSkippedByID: permission.ResourceUser,
+			fieldRedatedByID: permission.ResourceUser,
 		}),
 		toolpreview.Labels(map[string]string{
 			fieldAttemptCount:  "Attempts",
 			fieldSkippedReason: "Why it is skipped",
 			fieldSkippedByID:   "Skipped by",
+			fieldRedatedTo:     "Sent dated",
+			fieldRedatedByID:   "Re-dated by",
 		}),
 	}
 }
@@ -191,6 +203,39 @@ func (t *skipAccountingSyncTool) Preview(
 			"so the books will not have it unless someone enters it there.",
 		syncDocumentLabel(record),
 		req.Reason,
+	)), nil
+}
+
+func (t *redateAccountingSyncTool) Preview(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
+) (*agent.ToolPreview, error) {
+	req, redatePlan, err := t.request(ctx, &params)
+	if err != nil {
+		return refusedSync(
+			"Would send a document to the accounting system dated on the first open day.",
+			err,
+		)
+	}
+
+	now := timeutils.NowUnix()
+	plan, err := planUpdate(
+		syncRecordRecord(redatePlan.Before),
+		redatePlan.Before,
+		func(redated *accountingsync.AccountingSyncRecord) error {
+			return redated.Redate(req.UserID, redatePlan.SentDate, now)
+		},
+		syncRecordOptions()...,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return plan.preview(fmt.Sprintf(
+		"Would send %s to the accounting system dated %s, the first open day after its books "+
+			"closed. Trenova keeps the document's own date, and the note in the books names it.",
+		syncDocumentLabel(redatePlan.Before),
+		redatePlan.SentDay,
 	)), nil
 }
 

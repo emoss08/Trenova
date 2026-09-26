@@ -42,6 +42,7 @@ type harness struct {
 	adjustments *fakeAdjustments
 	payments    *fakePayments
 	payables    *fakePayables
+	controls    *fakeControls
 	audit       *fakeAudit
 	watchtower  *fakeWatchtower
 	dispatcher  *fakeDispatcher
@@ -86,6 +87,7 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 			applications: map[pulid.ID]*customerpayment.CreditMemoApplication{},
 		},
 		payables:   newFakePayables(),
+		controls:   newFakeControls(),
 		audit:      &fakeAudit{},
 		watchtower: newFakeWatchtower(),
 		dispatcher: &fakeDispatcher{},
@@ -124,6 +126,7 @@ func newHarness(t *testing.T, opts ...harnessOption) *harness {
 		Adjustments:       h.adjustments,
 		Payments:          h.payments,
 		Organizations:     fakeOrganizations{timezone: cfg.timezone},
+		Controls:          h.controls,
 		Payables:          h.payables,
 		AuditService:      h.audit,
 		Enqueuer:          h.enqueuer,

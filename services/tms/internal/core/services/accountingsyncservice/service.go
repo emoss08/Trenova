@@ -46,6 +46,7 @@ type Params struct {
 	Adjustments       repositories.InvoiceAdjustmentRepository
 	Payments          repositories.CustomerPaymentRepository
 	Organizations     repositories.OrganizationRepository
+	Controls          repositories.AccountingControlRepository
 	Payables          repositories.AccountingPayablesSource
 	AuditService      services.AuditService
 	Enqueuer          *Enqueuer
@@ -68,6 +69,7 @@ type Service struct {
 	adjustments    repositories.InvoiceAdjustmentRepository
 	payments       repositories.CustomerPaymentRepository
 	organizations  repositories.OrganizationRepository
+	controls       repositories.AccountingControlRepository
 	payables       repositories.AccountingPayablesSource
 	audit          services.AuditService
 	enqueuer       *Enqueuer
@@ -94,6 +96,7 @@ func New(p Params) *Service {
 		adjustments:    p.Adjustments,
 		payments:       p.Payments,
 		organizations:  p.Organizations,
+		controls:       p.Controls,
 		payables:       p.Payables,
 		audit:          p.AuditService,
 		enqueuer:       p.Enqueuer,

@@ -59,6 +59,14 @@ type accountingSyncOperator interface {
 		ctx context.Context,
 		req *serviceports.SkipAccountingSyncRequest,
 	) (*accountingsync.AccountingSyncRecord, error)
+	PlanRedate(
+		ctx context.Context,
+		req *serviceports.RedateAccountingSyncRequest,
+	) (*serviceports.AccountingSyncRedatePlan, error)
+	Redate(
+		ctx context.Context,
+		req *serviceports.RedateAccountingSyncRequest,
+	) (*accountingsync.AccountingSyncRecord, error)
 	Pause(
 		ctx context.Context,
 		req *serviceports.PauseAccountingSyncRequest,
@@ -459,6 +467,105 @@ func (t *skipAccountingSyncTool) Execute(
 		return err
 	}
 	_, err = t.sync.Skip(ctx, req)
+	return err
+}
+
+type redateAccountingSyncTool struct {
+	sync accountingSyncOperator
+}
+
+func newRedateAccountingSyncTool(sync accountingSyncOperator) serviceports.AgentTool {
+	return &redateAccountingSyncTool{sync: sync}
+}
+
+func provideRedateAccountingSyncTool(
+	sync serviceports.AccountingSyncService,
+) serviceports.AgentTool {
+	return newRedateAccountingSyncTool(sync)
+}
+
+func (t *redateAccountingSyncTool) Name() string { return "redate_accounting_sync" }
+
+func (t *redateAccountingSyncTool) Description() string {
+	return "Send a document the accounting system refused because its date falls in closed " +
+		"books, dated instead on the first open day after the closing date. Use it when the " +
+		"bookkeeper would rather keep the period closed than reopen it. The document keeps " +
+		"its own date in Trenova, and its note in the books names that date. Trenova allows " +
+		"this only when its closed-period posting policy is to post to the next open period; " +
+		"otherwise the period must be reopened in the accounting system and the record retried."
+}
+
+func (t *redateAccountingSyncTool) SearchTerms() []string {
+	return []string{"closed period", "books closed", "re-date", "first open day"}
+}
+
+func (t *redateAccountingSyncTool) Prerequisites() []string {
+	return []string{toolGetSyncRecord}
+}
+
+func (t *redateAccountingSyncTool) ParamSchema() map[string]any {
+	return jsonschemautils.Object(map[string]any{
+		paramSyncRecordID: jsonschemautils.Text(
+			"The sync record's id, from list_accounting_sync_records or " +
+				"get_accounting_sync_record. It must be held for a closed period.",
+		),
+	}, paramSyncRecordID)
+}
+
+func (t *redateAccountingSyncTool) Policy() serviceports.ToolPolicy {
+	return accountingSyncPolicy(t.Name(), accountingSyncPolicySpec{
+		resource:  permission.ResourceAccountingSync,
+		operation: permission.OpUpdate,
+		tier:      agent.TierActWithApproval,
+		rationale: "Changes the date the organization's books record for a document, " +
+			"so a person approves it.",
+	})
+}
+
+func (t *redateAccountingSyncTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, paramSyncRecordID, permission.ResourceAccountingSync)
+}
+
+func (t *redateAccountingSyncTool) request(
+	ctx context.Context,
+	params *serviceports.ToolExecuteParams,
+) (*serviceports.RedateAccountingSyncRequest, *serviceports.AccountingSyncRedatePlan, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return nil, nil, err
+	}
+	id, err := requirePulid(params.Params, paramSyncRecordID)
+	if err != nil {
+		return nil, nil, err
+	}
+	req := &serviceports.RedateAccountingSyncRequest{
+		TenantInfo: tenantFrom(*params),
+		UserID:     params.Actor.UserID,
+		ID:         id,
+	}
+	plan, err := t.sync.PlanRedate(ctx, req)
+	if err != nil {
+		return nil, nil, err
+	}
+	return req, plan, nil
+}
+
+func (t *redateAccountingSyncTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+) error {
+	_, _, err := t.request(ctx, &params)
+	return err
+}
+
+func (t *redateAccountingSyncTool) Execute(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
+) error {
+	req, _, err := t.request(ctx, &params)
+	if err != nil {
+		return err
+	}
+	_, err = t.sync.Redate(ctx, req)
 	return err
 }
 

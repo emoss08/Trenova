@@ -29,6 +29,8 @@ type fakeSyncOperator struct {
 
 	retried    *serviceports.RetryAccountingSyncRequest
 	skipped    *serviceports.SkipAccountingSyncRequest
+	redated    *serviceports.RedateAccountingSyncRequest
+	redateDay  int64
 	paused     *serviceports.PauseAccountingSyncRequest
 	resumed    *serviceports.PauseAccountingSyncRequest
 	backfilled *serviceports.RequestAccountingBackfillRequest
@@ -91,6 +93,46 @@ func (f *fakeSyncOperator) Skip(
 	}
 	f.savedRecords = append(f.savedRecords, &record)
 	return &record, nil
+}
+
+func (f *fakeSyncOperator) PlanRedate(
+	_ context.Context,
+	req *serviceports.RedateAccountingSyncRequest,
+) (*serviceports.AccountingSyncRedatePlan, error) {
+	record, ok := f.records[req.ID]
+	if !ok {
+		return nil, errortypes.NewNotFoundError("Accounting sync record not found")
+	}
+	before := *record
+	after := *record
+	if err := after.Redate(req.UserID, f.redateDay, timeutils.NowUnix()); err != nil {
+		return nil, errortypes.NewBusinessError(
+			"{0} is not held by a closed period, so it keeps its date",
+			syncDocumentLabel(record),
+		).WithInternal(err)
+	}
+	return &serviceports.AccountingSyncRedatePlan{
+		Before:   &before,
+		After:    &after,
+		SentDate: f.redateDay,
+		SentDay:  timeutils.FormatCalendarDate(f.redateDay, nil),
+	}, nil
+}
+
+func (f *fakeSyncOperator) Redate(
+	ctx context.Context,
+	req *serviceports.RedateAccountingSyncRequest,
+) (*accountingsync.AccountingSyncRecord, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
+	plan, err := f.PlanRedate(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	f.redated = req
+	f.savedRecords = append(f.savedRecords, plan.After)
+	return plan.After, nil
 }
 
 func (f *fakeSyncOperator) Pause(
@@ -366,6 +408,67 @@ func TestSkipAccountingSync_NeedsAReasonAndAnUnsentRecord(t *testing.T) {
 		require.Error(t, tool.Execute(t.Context(), syncParams(params)), params)
 	}
 	assert.Nil(t, operator.skipped)
+}
+
+func TestRedateAccountingSync_SendsOnTheFirstOpenDayAndNamesItsTarget(t *testing.T) {
+	t.Parallel()
+
+	held := syncRecord(accountingsync.SyncStatusBlocked)
+	held.ErrorCategory = accountingsync.SyncErrorClosedPeriod
+	operator := newSyncOperator(held)
+	operator.redateDay = syncEnabledDay
+	tool := newRedateAccountingSyncTool(operator)
+	params := syncParams(map[string]any{"syncRecordId": held.ID.String()})
+
+	preview := previewWithoutWrites(t, &operator.guard, func() (*agent.ToolPreview, error) {
+		return tool.(serviceports.ToolPreviewer).Preview(t.Context(), params)
+	})
+	assert.Contains(t, preview.Summary, "first open day")
+	assert.Contains(t, preview.Summary, timeutils.FormatCalendarDate(syncEnabledDay, nil))
+	change := previewChange(t, preview, 0)
+	status := fieldByPath(t, change, "status")
+	assert.Equal(t, "Blocked", status.Before)
+	assert.Equal(t, "Queued", status.After)
+	assert.NotNil(t, fieldByPath(t, change, "redatedTo").After)
+	assert.Nil(t, operator.redated)
+
+	require.NoError(t, tool.Execute(t.Context(), params))
+	require.NotNil(t, operator.redated)
+	assert.Equal(t, held.ID, operator.redated.ID)
+	assert.Equal(t, params.Actor.UserID, operator.redated.UserID)
+	require.Len(t, operator.savedRecords, 1)
+	require.NotNil(t, operator.savedRecords[0].RedatedTo)
+	assert.Equal(t, syncEnabledDay, *operator.savedRecords[0].RedatedTo)
+	requireUpdateParity(t, change, held, operator.savedRecords[0], syncRecordOptions()...)
+
+	target, ok := tool.(serviceports.TargetedTool).Target(params.Params)
+	require.True(t, ok)
+	assert.Equal(t, serviceports.ToolTarget{
+		Resource: permission.ResourceAccountingSync,
+		ID:       held.ID,
+	}, target)
+}
+
+func TestRedateAccountingSync_RefusesARecordNotHeldByAClosedPeriod(t *testing.T) {
+	t.Parallel()
+
+	mapping := syncRecord(accountingsync.SyncStatusBlocked)
+	mapping.ErrorCategory = accountingsync.SyncErrorMapping
+	synced := syncRecord(accountingsync.SyncStatusSynced)
+	operator := newSyncOperator(mapping, synced)
+	operator.redateDay = syncEnabledDay
+	tool := newRedateAccountingSyncTool(operator)
+
+	for _, params := range []map[string]any{
+		{"syncRecordId": mapping.ID.String()},
+		{"syncRecordId": synced.ID.String()},
+		{"syncRecordId": "nope"},
+	} {
+		err := tool.Execute(t.Context(), syncParams(params))
+		require.Error(t, err, params)
+	}
+	assert.Nil(t, operator.redated)
+	assert.Empty(t, operator.savedRecords)
 }
 
 func TestPauseAccountingSync_PausesWithAReason(t *testing.T) {

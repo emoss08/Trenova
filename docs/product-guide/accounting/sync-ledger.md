@@ -44,6 +44,14 @@ Keywords: carrier bill held, settlement not synced, map GL account, vendor missi
 3. Select **Retry now**. A settlement's payment waits for its bill and follows once the bill is
    in QuickBooks.
 
+### Send a document dated in closed books
+Keywords: closed period, books closed, re-date, first open day, closing date
+1. Open [Sync ledger](/accounting/sync) and open the record held for a closed period.
+2. Select **Send on first open day**. The document goes out dated on the day after the closing
+   date in QuickBooks, and its note in QuickBooks keeps Trenova's date. This is offered only while
+   Trenova's closed-period policy is to post to the next open period; otherwise reopen the period
+   in QuickBooks, then select **Retry now**.
+
 ### Release documents waiting for approval
 Keywords: approve sync, send held documents, manual sync
 1. Open [Sync ledger](/accounting/sync) and select **Waiting for release** in the strip.

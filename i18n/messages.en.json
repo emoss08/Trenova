@@ -86638,6 +86638,15 @@
       "api/graphql"
     ]
   },
+  "Invalid sync record": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Invalid tag: {0}": {
     "sites": 1,
     "scope": [
@@ -134994,6 +135003,24 @@
       "routes/invoice-adjustment-batch"
     ]
   },
+  "Queued again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Queued again, dated {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Queued approval for": {
     "sites": 1,
     "scope": [
@@ -158407,6 +158434,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Send on first open day": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "Send one connection's queued documents to its accounting system": {
     "sites": 1,
     "scope": [
@@ -159058,6 +159094,15 @@
       "apps/web/lib",
       "packages/shared/components",
       "routes/billing-queue"
+    ]
+  },
+  "Sent dated": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
     ]
   },
   "Sent from Trenova": {
@@ -170428,7 +170473,7 @@
     ]
   },
   "Sync record": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -191820,6 +191865,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Trenova's closed-period policy keeps a document in its own period; reopen the period in {0}, or set the policy to post to the next open period": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
     ]
   },
   "Trenova's value is on its way to the books": {
@@ -218154,6 +218208,15 @@
       "service/agenttoolservice"
     ]
   },
+  "{0} is not held by a closed period, so it keeps its date": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
+    ]
+  },
   "{0} is not mapped": {
     "sites": 2,
     "scope": [
@@ -218967,6 +219030,15 @@
     ],
     "areas": [
       "service/invoiceservice"
+    ]
+  },
+  "{0} no longer reports closed books, so {1} keeps its date; retry it instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingsyncservice"
     ]
   },
   "{0} not covered": {

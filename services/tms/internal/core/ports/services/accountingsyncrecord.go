@@ -282,6 +282,20 @@ type SkipAccountingSyncRequest struct {
 	Reason     string
 }
 
+type RedateAccountingSyncRequest struct {
+	TenantInfo pagination.TenantInfo
+	UserID     pulid.ID
+	ID         pulid.ID
+}
+
+type AccountingSyncRedatePlan struct {
+	Connection *accountingsync.AccountingConnection
+	Before     *accountingsync.AccountingSyncRecord
+	After      *accountingsync.AccountingSyncRecord
+	SentDate   int64
+	SentDay    string
+}
+
 type RequestAccountingBackfillRequest struct {
 	TenantInfo      pagination.TenantInfo
 	UserID          pulid.ID
@@ -385,6 +399,14 @@ type AccountingSyncService interface {
 	Skip(
 		ctx context.Context,
 		req *SkipAccountingSyncRequest,
+	) (*accountingsync.AccountingSyncRecord, error)
+	PlanRedate(
+		ctx context.Context,
+		req *RedateAccountingSyncRequest,
+	) (*AccountingSyncRedatePlan, error)
+	Redate(
+		ctx context.Context,
+		req *RedateAccountingSyncRequest,
 	) (*accountingsync.AccountingSyncRecord, error)
 	RequestBackfill(
 		ctx context.Context,

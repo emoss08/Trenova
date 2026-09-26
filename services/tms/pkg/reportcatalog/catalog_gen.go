@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/buncolgen"
 )
 
-const Version = "sha256:5f8056c623407d3043832a83f8d08e3a6a9fbfc61d78997d18439437e0241849"
+const Version = "sha256:60f3ef88c6fec2bd9b00140395715331fde9337442d11badb2263671aeee2cb2"
 
 var Default = indexed(defaultCatalog)
 
@@ -1263,6 +1263,26 @@ var defaultCatalog = Catalog{
 					Column:       buncolgen.NewColumn("skipped_reason", "acctsr"),
 					Label:        "Skip Reason",
 					Type:         FieldString,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "redatedTo",
+					Column:       buncolgen.NewColumn("redated_to", "acctsr"),
+					Label:        "Redated To",
+					Type:         FieldInt,
+					Nullable:     true,
+					Aggregations: []Aggregation{AggCount, AggCountDistinct, AggSum, AggAvg, AggMin, AggMax},
+					Filterable:   true,
+					Groupable:    true,
+				},
+				{
+					Key:          "redatedById",
+					Column:       buncolgen.NewColumn("redated_by_id", "acctsr"),
+					Label:        "Redated By ID",
+					Type:         FieldRef,
 					Nullable:     true,
 					Aggregations: []Aggregation{AggCount, AggCountDistinct},
 					Filterable:   true,

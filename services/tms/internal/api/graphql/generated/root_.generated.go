@@ -1388,6 +1388,7 @@ type ComplexityRoot struct {
 		ObjectType        func(childComplexity int) int
 		Operation         func(childComplexity int) int
 		QueuedAt          func(childComplexity int) int
+		RedatedTo         func(childComplexity int) int
 		Resolution        func(childComplexity int) int
 		Revision          func(childComplexity int) int
 		SkippedBy         func(childComplexity int) int
@@ -8543,6 +8544,7 @@ type ComplexityRoot struct {
 		RecordTimeEntry                       func(childComplexity int, input gqlmodel.RecordTimeEntryInput) int
 		RecordWorkerEmploymentEvent           func(childComplexity int, input gqlmodel.RecordWorkerEmploymentEventInput) int
 		RecordWorkerInjury                    func(childComplexity int, input gqlmodel.RecordWorkerInjuryInput) int
+		RedateAccountingSync                  func(childComplexity int, id string) int
 		RefreshAccountingReferenceData        func(childComplexity int, integrationType integration.Type) int
 		RegenerateBriefing                    func(childComplexity int, input gqlmodel.TodaysBriefingInput) int
 		ReindexAIRetrievalSource              func(childComplexity int, sourceType airetrieval.SourceType) int
@@ -19142,6 +19144,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AccountingSyncRecord.QueuedAt(childComplexity), true
+	case "AccountingSyncRecord.redatedTo":
+		if e.ComplexityRoot.AccountingSyncRecord.RedatedTo == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AccountingSyncRecord.RedatedTo(childComplexity), true
 	case "AccountingSyncRecord.resolution":
 		if e.ComplexityRoot.AccountingSyncRecord.Resolution == nil {
 			break
@@ -54134,6 +54142,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.RecordWorkerInjury(childComplexity, args["input"].(gqlmodel.RecordWorkerInjuryInput)), true
+	case "Mutation.redateAccountingSync":
+		if e.ComplexityRoot.Mutation.RedateAccountingSync == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_redateAccountingSync_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RedateAccountingSync(childComplexity, args["id"].(string)), true
 	case "Mutation.refreshAccountingReferenceData":
 		if e.ComplexityRoot.Mutation.RefreshAccountingReferenceData == nil {
 			break
@@ -84631,6 +84650,8 @@ type AccountingSyncRecord {
   syncedAt: Timestamp
   skippedBy: User
   skippedReason: String!
+  "The date it is sent with, when it was moved to the first open day of the books."
+  redatedTo: Timestamp
   version: Int!
   updatedAt: Timestamp!
 }
@@ -85402,6 +85423,8 @@ extend type Mutation {
   releaseAccountingSync(input: ReleaseAccountingSyncInput!): AccountingSyncActionResult!
   "Marks a record as not to be sent."
   skipAccountingSync(input: SkipAccountingSyncInput!): AccountingSyncRecord!
+  "Sends a document held by closed books dated on the first open day, when Trenova's closed-period policy posts to the next open period."
+  redateAccountingSync(id: ID!): AccountingSyncRecord!
   "Queues documents posted before sync was turned on. One backfill runs at a time."
   requestAccountingBackfill(input: RequestAccountingBackfillInput!): AccountingBackfill!
   changeAccountingBackfill(input: ChangeAccountingBackfillInput!): AccountingBackfill!
@@ -112199,6 +112222,8 @@ func (ec *executionContext) childFields_AccountingSyncRecord(ctx context.Context
 		return ec.fieldContext_AccountingSyncRecord_skippedBy(ctx, field)
 	case "skippedReason":
 		return ec.fieldContext_AccountingSyncRecord_skippedReason(ctx, field)
+	case "redatedTo":
+		return ec.fieldContext_AccountingSyncRecord_redatedTo(ctx, field)
 	case "version":
 		return ec.fieldContext_AccountingSyncRecord_version(ctx, field)
 	case "updatedAt":

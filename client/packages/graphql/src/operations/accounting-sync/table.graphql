@@ -33,6 +33,7 @@ query AccountingSyncRecordTable(
           name
         }
         skippedReason
+        redatedTo
         version
         updatedAt
       }
