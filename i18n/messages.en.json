@@ -1467,6 +1467,15 @@
       "service/agenttoolservice"
     ]
   },
+  "A backfill is changed by a person who manages the accounting integration": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A backfill is started by a person who manages the accounting integration": {
     "sites": 1,
     "scope": [
@@ -3259,6 +3268,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "A fiscal period is closed, reopened, locked, unlocked or opened": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/fiscalperiodservice"
     ]
   },
   "A fixed class rule needs a freight class": {
@@ -6815,12 +6833,13 @@
     ]
   },
   "A {0} backfill cannot be changed that way": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "service/accountingsyncservice"
+      "service/accountingsyncservice",
+      "service/agenttoolservice"
     ]
   },
   "A {0} chart plots exactly one measure": {
@@ -51214,6 +51233,15 @@
       "routes/admin"
     ]
   },
+  "Delete rule sets and fixtures": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Delete scenario": {
     "sites": 1,
     "scope": [
@@ -87755,11 +87783,12 @@
     ]
   },
   "Journal reversal": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/config",
       "routes/journal-reversal"
     ]
   },
@@ -95568,6 +95597,15 @@
     "areas": [
       "domain/fuelpurchase",
       "domain/ifta"
+    ]
+  },
+  "Manual journal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
     ]
   },
   "Manual journal actions require an authenticated user": {
@@ -104969,6 +105007,15 @@
     ],
     "areas": [
       "routes/rate-matrix"
+    ]
+  },
+  "No backfill is in progress for {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "No backtest results yet": {
@@ -137242,6 +137289,15 @@
       "routes/invoice-reconciliation"
     ]
   },
+  "Reconciliation item": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Reconciliation mode": {
     "sites": 1,
     "scope": [
@@ -144765,6 +144821,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Retire a rate agreement so it no longer prices shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Retire a template version": {
@@ -155645,6 +155710,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Send a draft rate agreement for approval": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Send a message to a driver": {
@@ -214676,6 +214750,15 @@
     ]
   },
   "{0} is {1}; only Blocked, DeadLettered and Retrying records are retried": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
+  "{0} is {1}; only a document awaiting approval is released": {
     "sites": 1,
     "scope": [
       "go"
