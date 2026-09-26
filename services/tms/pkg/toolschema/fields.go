@@ -45,6 +45,16 @@ type Field struct {
 	// Resource is the permission resource a RecordSubset field's ids belong
 	// to; empty for every other kind.
 	Resource string `json:"resource,omitempty"`
+	// Choices are the records a RecordSubset field proposed, for a person to
+	// untick; nil for every other kind.
+	Choices []Choice `json:"choices,omitempty"`
+}
+
+// Choice is one record a RecordSubset parameter proposed: its id, and the
+// words it is known by, which are its id until its label is read.
+type Choice struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
 }
 
 // multilineThreshold is the declared length past which a string is prose.

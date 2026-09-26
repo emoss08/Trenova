@@ -2364,6 +2364,11 @@ models:
     fields:
       resource:
         resolver: true
+      choices:
+        resolver: true
+  AgentProposalFieldChoice:
+    model:
+      - github.com/emoss08/trenova/pkg/toolschema.Choice
   AgentProposalFieldKind:
     model:
       - github.com/emoss08/trenova/pkg/toolschema.Kind

@@ -17,6 +17,57 @@ func RecordSubset(resource string, property map[string]any) map[string]any {
 	return property
 }
 
+// MaxSubsetChoices is the most records one subset parameter lists for a
+// person to untick, whatever its schema declares.
+const MaxSubsetChoices = 5000
+
+// SubsetChoices lists, per record-subset parameter, the records a call
+// proposed: in the order proposed, each once, at most the parameter's
+// maxItems. Each is named by its id until its label is read.
+func SubsetChoices(schema, params map[string]any) map[string][]Choice {
+	properties, _ := schema[KeyProperties].(map[string]any)
+	choices := make(map[string][]Choice)
+
+	for name, raw := range properties {
+		property, ok := raw.(map[string]any)
+		if !ok || SubsetResource(property) == "" {
+			continue
+		}
+		choices[name] = choicesOf(idsOf(params[name]), subsetCap(property))
+	}
+
+	return choices
+}
+
+func subsetCap(property map[string]any) int {
+	if declared := intOf(property[KeyMaxItems]); declared > 0 && declared < MaxSubsetChoices {
+		return declared
+	}
+
+	return MaxSubsetChoices
+}
+
+func choicesOf(ids []string, limit int) []Choice {
+	out := make([]Choice, 0, min(len(ids), limit))
+	seen := make(map[string]struct{}, min(len(ids), limit))
+	for _, raw := range ids {
+		id := strings.TrimSpace(raw)
+		if id == "" {
+			continue
+		}
+		if _, dup := seen[id]; dup {
+			continue
+		}
+		seen[id] = struct{}{}
+		out = append(out, Choice{ID: id, Label: id})
+		if len(out) == limit {
+			break
+		}
+	}
+
+	return out
+}
+
 // SubsetResource reads the resource a property declares its ids a subset of.
 func SubsetResource(property map[string]any) string {
 	resource, _ := property[KeySubsetOf].(string)
