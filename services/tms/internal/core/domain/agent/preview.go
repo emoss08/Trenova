@@ -26,6 +26,7 @@ const (
 	MaxPreviewSimulationBytes = 8 << 10
 	MaxPreviewSummaryRunes    = 500
 	MaxPreviewWarnings        = 20
+	MaxPreviewReasons         = 20
 	MaxPreviewListEntries     = 50
 	MaxPreviewLabelRunes      = 200
 	MaxPreviewMoneyLines      = 40
@@ -130,6 +131,23 @@ type PreviewWarning struct {
 	Code    PreviewWarningCode `json:"code"`
 	Args    []string           `json:"args,omitempty"`
 	Message string             `json:"message"`
+	// Reasons are the problems a would_fail warning is made of, one per
+	// rule the write breaks, so a person can be told each and change the
+	// value it names. Message keeps the whole refusal as it was worded.
+	Reasons []PreviewReason `json:"reasons,omitempty"`
+}
+
+// PreviewReason is one rule a write would break. Field is the path the rule
+// names in the record's own terms (bol, moves[0].stops[1].locationId) and
+// Label that field in words; both are empty for a refusal of the whole
+// write. Param is the path of the call's parameter that carries the field
+// (shipment.bol), empty when the call does not carry it, so a person can be
+// offered that value to change.
+type PreviewReason struct {
+	Field   string `json:"field,omitempty"`
+	Label   string `json:"label,omitempty"`
+	Message string `json:"message"`
+	Param   string `json:"param,omitempty"`
 }
 
 // PreviewRef is a record a value points at: the id a tool holds, resolved to
@@ -263,13 +281,28 @@ func (p *ProposalPreview) HasWarning(code PreviewWarningCode) bool {
 	if p == nil {
 		return false
 	}
-	for i := range p.Warnings {
-		if p.Warnings[i].Code == code {
-			return true
+
+	return findWarning(p.Warnings, code) != nil
+}
+
+// Refusal is the would_fail warning of a tool's preview: what the write
+// would be refused over, as it stands. Nil when it would go through.
+func (t *ToolPreview) Refusal() *PreviewWarning {
+	if t == nil {
+		return nil
+	}
+
+	return findWarning(t.Warnings, PreviewWarningWouldFail)
+}
+
+func findWarning(warnings []PreviewWarning, code PreviewWarningCode) *PreviewWarning {
+	for i := range warnings {
+		if warnings[i].Code == code {
+			return &warnings[i]
 		}
 	}
 
-	return false
+	return nil
 }
 
 // AddWarning appends a warning once per code and arguments, within bounds.
@@ -484,6 +517,21 @@ func boundedWarning(warning PreviewWarning) PreviewWarning {
 	}
 	if len(warning.Args) > 0 {
 		out.Args = boundedList(warning.Args)
+	}
+	if len(warning.Reasons) > 0 {
+		reasons := warning.Reasons
+		if len(reasons) > MaxPreviewReasons {
+			reasons = reasons[:MaxPreviewReasons]
+		}
+		out.Reasons = make([]PreviewReason, 0, len(reasons))
+		for _, reason := range reasons {
+			out.Reasons = append(out.Reasons, PreviewReason{
+				Field:   stringutils.TruncateRunes(reason.Field, MaxPreviewLabelRunes),
+				Label:   stringutils.TruncateRunes(reason.Label, MaxPreviewLabelRunes),
+				Message: stringutils.TruncateRunes(reason.Message, MaxPreviewSummaryRunes),
+				Param:   stringutils.TruncateRunes(reason.Param, MaxPreviewLabelRunes),
+			})
+		}
 	}
 
 	return out

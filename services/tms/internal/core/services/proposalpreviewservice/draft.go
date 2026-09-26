@@ -145,12 +145,11 @@ func (s *Service) settleParams(
 		ctx,
 		proposalexecutor.ExecutionParams(proposal, &policy, params, in.actor),
 	); err != nil {
+		warnings := []agent.PreviewWarning{toolpreview.WouldFail(err)}
+		toolpreview.LocateReasons(warnings, tool.ParamSchema())
+
 		//nolint:nilerr // a call that would fail is shown with a warning, not refused
-		return params, []agent.PreviewWarning{{
-			Code:    agent.PreviewWarningWouldFail,
-			Args:    []string{err.Error()},
-			Message: "This change would fail as proposed: " + err.Error(),
-		}}, nil
+		return params, warnings, nil
 	}
 
 	return params, nil, nil
@@ -262,6 +261,9 @@ func (s *Service) snapshot(ctx context.Context, in *snapshotInput) (*snapshotRes
 			previewCtx, cancel := context.WithTimeout(txCtx, in.timeout)
 			result.preview, result.previewErr = runPreview(previewCtx, previewer, &in.params)
 			cancel()
+			if result.preview != nil {
+				toolpreview.LocateReasons(result.preview.Warnings, in.tool.ParamSchema())
+			}
 		}
 
 		if in.labelled && result.previewErr == nil && result.preview != nil {

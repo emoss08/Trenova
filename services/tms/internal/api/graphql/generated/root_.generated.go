@@ -1864,6 +1864,13 @@ type ComplexityRoot struct {
 		Label  func(childComplexity int) int
 	}
 
+	AgentPreviewReason struct {
+		Field   func(childComplexity int) int
+		Label   func(childComplexity int) int
+		Message func(childComplexity int) int
+		Param   func(childComplexity int) int
+	}
+
 	AgentPreviewRecordChange struct {
 		DependsOnStep func(childComplexity int) int
 		EntityID      func(childComplexity int) int
@@ -1903,6 +1910,7 @@ type ComplexityRoot struct {
 		Args    func(childComplexity int) int
 		Code    func(childComplexity int) int
 		Message func(childComplexity int) int
+		Reasons func(childComplexity int) int
 	}
 
 	AgentProposal struct {
@@ -21028,6 +21036,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.ComplexityRoot.AgentPreviewMoneyLine.Label(childComplexity), true
 
+	case "AgentPreviewReason.field":
+		if e.ComplexityRoot.AgentPreviewReason.Field == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewReason.Field(childComplexity), true
+	case "AgentPreviewReason.label":
+		if e.ComplexityRoot.AgentPreviewReason.Label == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewReason.Label(childComplexity), true
+	case "AgentPreviewReason.message":
+		if e.ComplexityRoot.AgentPreviewReason.Message == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewReason.Message(childComplexity), true
+	case "AgentPreviewReason.param":
+		if e.ComplexityRoot.AgentPreviewReason.Param == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewReason.Param(childComplexity), true
+
 	case "AgentPreviewRecordChange.dependsOnStep":
 		if e.ComplexityRoot.AgentPreviewRecordChange.DependsOnStep == nil {
 			break
@@ -21188,6 +21221,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AgentPreviewWarning.Message(childComplexity), true
+	case "AgentPreviewWarning.reasons":
+		if e.ComplexityRoot.AgentPreviewWarning.Reasons == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AgentPreviewWarning.Reasons(childComplexity), true
 
 	case "AgentProposal.autonomyTier":
 		if e.ComplexityRoot.AgentProposal.AutonomyTier == nil {
@@ -84884,6 +84923,23 @@ type AgentPreviewWarning {
   code: String!
   args: [String!]!
   message: String!
+  "What a would_fail warning is made of: one reason per rule the write breaks. Empty for every other code."
+  reasons: [AgentPreviewReason!]!
+}
+
+"""
+One rule a write would break, in the record's own terms and, where the call
+carries the field, the parameter a person could change to satisfy it.
+"""
+type AgentPreviewReason {
+  "The field the rule names, as the record calls it (bol, moves[0].stops[1].locationId); empty when the refusal is about the whole write."
+  field: String!
+  "The field in words (BOL); empty when there is no field."
+  label: String!
+  "What is wrong, in the words of the rule."
+  message: String!
+  "The proposal parameter that carries the field (shipment.bol); empty when the call does not carry it."
+  param: String!
 }
 
 "A record as the app opens it: a key of the record-link registry and the record's id."
@@ -110730,6 +110786,20 @@ func (ec *executionContext) childFields_AgentPreviewMoneyLine(ctx context.Contex
 	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewMoneyLine", field.Name)
 }
 
+func (ec *executionContext) childFields_AgentPreviewReason(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "field":
+		return ec.fieldContext_AgentPreviewReason_field(ctx, field)
+	case "label":
+		return ec.fieldContext_AgentPreviewReason_label(ctx, field)
+	case "message":
+		return ec.fieldContext_AgentPreviewReason_message(ctx, field)
+	case "param":
+		return ec.fieldContext_AgentPreviewReason_param(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewReason", field.Name)
+}
+
 func (ec *executionContext) childFields_AgentPreviewRecordChange(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "resource":
@@ -110808,6 +110878,8 @@ func (ec *executionContext) childFields_AgentPreviewWarning(ctx context.Context,
 		return ec.fieldContext_AgentPreviewWarning_args(ctx, field)
 	case "message":
 		return ec.fieldContext_AgentPreviewWarning_message(ctx, field)
+	case "reasons":
+		return ec.fieldContext_AgentPreviewWarning_reasons(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AgentPreviewWarning", field.Name)
 }

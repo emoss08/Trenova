@@ -37,6 +37,23 @@ type AgentPreviewWarning {
   code: String!
   args: [String!]!
   message: String!
+  "What a would_fail warning is made of: one reason per rule the write breaks. Empty for every other code."
+  reasons: [AgentPreviewReason!]!
+}
+
+"""
+One rule a write would break, in the record's own terms and, where the call
+carries the field, the parameter a person could change to satisfy it.
+"""
+type AgentPreviewReason {
+  "The field the rule names, as the record calls it (bol, moves[0].stops[1].locationId); empty when the refusal is about the whole write."
+  field: String!
+  "The field in words (BOL); empty when there is no field."
+  label: String!
+  "What is wrong, in the words of the rule."
+  message: String!
+  "The proposal parameter that carries the field (shipment.bol); empty when the call does not carry it."
+  param: String!
 }
 
 "A record as the app opens it: a key of the record-link registry and the record's id."

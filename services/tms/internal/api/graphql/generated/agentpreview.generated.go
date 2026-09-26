@@ -1087,6 +1087,98 @@ func (ec *executionContext) fieldContext_AgentPreviewMoneyLine_after(_ context.C
 	return graphql.NewScalarFieldContext("AgentPreviewMoneyLine", field, true, true, errors.New("field of type Decimal does not have child fields"))
 }
 
+func (ec *executionContext) _AgentPreviewReason_field(ctx context.Context, field graphql.CollectedField, obj *agent.PreviewReason) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentPreviewReason_field(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Field, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentPreviewReason_field(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentPreviewReason", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentPreviewReason_label(ctx context.Context, field graphql.CollectedField, obj *agent.PreviewReason) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentPreviewReason_label(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Label, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentPreviewReason_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentPreviewReason", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentPreviewReason_message(ctx context.Context, field graphql.CollectedField, obj *agent.PreviewReason) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentPreviewReason_message(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Message, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentPreviewReason_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentPreviewReason", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentPreviewReason_param(ctx context.Context, field graphql.CollectedField, obj *agent.PreviewReason) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentPreviewReason_param(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Param, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v string) graphql.Marshaler {
+			return ec.marshalNString2string(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentPreviewReason_param(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("AgentPreviewReason", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _AgentPreviewRecordChange_resource(ctx context.Context, field graphql.CollectedField, obj *agent.RecordChange) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1728,6 +1820,38 @@ func (ec *executionContext) _AgentPreviewWarning_message(ctx context.Context, fi
 }
 func (ec *executionContext) fieldContext_AgentPreviewWarning_message(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AgentPreviewWarning", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _AgentPreviewWarning_reasons(ctx context.Context, field graphql.CollectedField, obj *agent.PreviewWarning) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_AgentPreviewWarning_reasons(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Reasons, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []agent.PreviewReason) graphql.Marshaler {
+			return ec.marshalNAgentPreviewReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewReasonᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_AgentPreviewWarning_reasons(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AgentPreviewWarning",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_AgentPreviewReason(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _AgentProposalPreview_proposalId(ctx context.Context, field graphql.CollectedField, obj *agent.ProposalPreview) (ret graphql.Marshaler) {
@@ -2772,6 +2896,59 @@ func (ec *executionContext) _AgentPreviewMoneyLine(ctx context.Context, sel ast.
 	return out
 }
 
+var agentPreviewReasonImplementors = []string{"AgentPreviewReason"}
+
+func (ec *executionContext) _AgentPreviewReason(ctx context.Context, sel ast.SelectionSet, obj *agent.PreviewReason) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, agentPreviewReasonImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AgentPreviewReason")
+		case "field":
+			out.Values[i] = ec._AgentPreviewReason_field(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._AgentPreviewReason_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "message":
+			out.Values[i] = ec._AgentPreviewReason_message(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "param":
+			out.Values[i] = ec._AgentPreviewReason_param(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var agentPreviewRecordChangeImplementors = []string{"AgentPreviewRecordChange"}
 
 func (ec *executionContext) _AgentPreviewRecordChange(ctx context.Context, sel ast.SelectionSet, obj *agent.RecordChange) graphql.Marshaler {
@@ -3178,6 +3355,11 @@ func (ec *executionContext) _AgentPreviewWarning(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "reasons":
+			out.Values[i] = ec._AgentPreviewWarning_reasons(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3425,6 +3607,26 @@ func (ec *executionContext) marshalNAgentPreviewOperation2githubᚗcomᚋemoss08
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNAgentPreviewReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewReason(ctx context.Context, sel ast.SelectionSet, v agent.PreviewReason) graphql.Marshaler {
+	return ec._AgentPreviewReason(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAgentPreviewReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewReasonᚄ(ctx context.Context, sel ast.SelectionSet, v []agent.PreviewReason) graphql.Marshaler {
+	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
+		fc := graphql.GetFieldContext(ctx)
+		fc.Result = &v[i]
+		return ec.marshalNAgentPreviewReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐPreviewReason(ctx, sel, v[i])
+	})
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNAgentPreviewRecordChange2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋagentᚐRecordChange(ctx context.Context, sel ast.SelectionSet, v agent.RecordChange) graphql.Marshaler {

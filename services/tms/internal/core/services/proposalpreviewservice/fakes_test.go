@@ -129,6 +129,7 @@ type previewingTool struct {
 	asked   []services.ToolExecuteParams
 	money   bool
 	failErr error
+	refusal error
 }
 
 func (t *previewingTool) Preview(
@@ -143,6 +144,12 @@ func (t *previewingTool) Preview(
 	}
 	if t.failErr != nil {
 		return nil, t.failErr
+	}
+	if t.refusal != nil {
+		preview := toolpreview.Build("Would set PRO " + t.state.ProNumber + ".")
+		preview.AddWarning(toolpreview.WouldFail(t.refusal))
+
+		return preview, nil
 	}
 
 	status, _ := params.Params["status"].(string)

@@ -2,7 +2,13 @@ package resolver
 
 import (
 	"context"
+	"net/http"
 	"testing"
+
+	"github.com/99designs/gqlgen/client"
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/emoss08/trenova/internal/api/graphql/generated"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
@@ -100,6 +106,7 @@ type previewService struct {
 	plans     int
 	viewer    *services.PreviewViewer
 	mods      map[string]any
+	warnings  []agent.PreviewWarning
 }
 
 func (s *previewService) ForProposal(
@@ -110,7 +117,7 @@ func (s *previewService) ForProposal(
 	s.viewer = req.Viewer
 	s.mods = req.Modifications
 
-	return &agent.ProposalPreview{ProposalID: req.Proposal.ID}, nil
+	return &agent.ProposalPreview{ProposalID: req.Proposal.ID, Warnings: s.warnings}, nil
 }
 
 func (s *previewService) ForPlan(
@@ -227,4 +234,70 @@ func TestMyPlanPreview_IsTheCallersOwnAlone(t *testing.T) {
 	_, err = yours.resolver.MyPlanPreview(yours.ctx, pulid.MustNew("apl_").String())
 	require.NoError(t, err)
 	assert.Equal(t, 1, yours.previews.plans)
+}
+
+// A refusal reaches the person deciding as its reasons, each with the field
+// it names and the parameter that carries it, not only as one sentence.
+func TestMyProposalPreview_ServesEachReasonOfARefusal(t *testing.T) {
+	t.Parallel()
+
+	h := newPreviewHarness(t, assistantRead)
+	h.decisions.yours = true
+	h.previews.warnings = []agent.PreviewWarning{{
+		Code:    agent.PreviewWarningWouldFail,
+		Args:    []string{"validation failed"},
+		Message: "This would be refused as it stands: validation failed",
+		Reasons: []agent.PreviewReason{{
+			Field:   "bol",
+			Label:   "BOL",
+			Message: "BOL is already in use by shipment(s) with Pro Number(s): SEED-DET-009",
+			Param:   "shipment.bol",
+		}, {
+			Message: "The customer is on credit hold",
+		}},
+	}, {
+		Code:    agent.PreviewWarningWithheld,
+		Message: "Some of it is hidden.",
+	}}
+
+	server := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: h.resolver.Resolver}))
+	server.AddTransport(transport.POST{})
+	gql := client.New(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server.ServeHTTP(w, r.WithContext(h.ctx))
+	}))
+
+	var response struct {
+		MyProposalPreview struct {
+			Warnings []struct {
+				Code    string
+				Message string
+				Reasons []struct {
+					Field   string
+					Label   string
+					Message string
+					Param   string
+				}
+			}
+		}
+	}
+	gql.MustPost(`query ($id: ID!) {
+		myProposalPreview(id: $id) {
+			warnings { code message reasons { field label message param } }
+		}
+	}`, &response, client.Var("id", h.proposal.String()))
+
+	warnings := response.MyProposalPreview.Warnings
+	require.Len(t, warnings, 2)
+	assert.Equal(t, "would_fail", warnings[0].Code)
+	require.Len(t, warnings[0].Reasons, 2)
+	bol := warnings[0].Reasons[0]
+	assert.Equal(t, "bol", bol.Field)
+	assert.Equal(t, "BOL", bol.Label)
+	assert.Equal(t, "shipment.bol", bol.Param)
+	assert.Contains(t, bol.Message, "SEED-DET-009")
+	whole := warnings[0].Reasons[1]
+	assert.Empty(t, whole.Field, "a refusal of the whole write names no field")
+	assert.Empty(t, whole.Param)
+	assert.NotNil(t, warnings[1].Reasons, "every warning serves a list, empty when it has none")
+	assert.Empty(t, warnings[1].Reasons)
 }

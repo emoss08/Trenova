@@ -51,12 +51,16 @@ type PlanPreviewRequest struct {
 // ProposalBaselineRequest asks for the baseline of a write being proposed:
 // its target's version and what it would do, read in one snapshot. Persist
 // keeps the baseline for the proposal; an evaluation or a simulated write
-// keeps nothing.
+// keeps nothing. A write whose preview says it would be refused is not
+// filed, so its baseline is not kept either, unless FileRefused says the
+// write is filed anyway: an earlier step of its plan changes its record
+// first, and the refusal may be that step's to lift.
 type ProposalBaselineRequest struct {
-	ProposalID pulid.ID
-	Tool       AgentTool
-	Params     ToolExecuteParams
-	Persist    bool
+	ProposalID  pulid.ID
+	Tool        AgentTool
+	Params      ToolExecuteParams
+	Persist     bool
+	FileRefused bool
 }
 
 // ProposalBaselineResult is what a baseline found. Target is nil when the

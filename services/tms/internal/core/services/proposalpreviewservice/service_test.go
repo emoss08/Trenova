@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/toolpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -554,4 +555,103 @@ func TestBaseline_NeverFailsTheProposal(t *testing.T) {
 	require.NotNil(t, result.Target, "the pin survives a failed preview")
 	assert.Nil(t, result.Preview)
 	assert.Empty(t, f.baselines.kept)
+}
+
+func statusRefusal() error {
+	multiErr := errortypes.NewMultiError()
+	multiErr.Add("status", errortypes.ErrInvalid, "A delivered shipment cannot be cancelled")
+
+	return multiErr
+}
+
+func baselineRequest(f *fixture) *services.ProposalBaselineRequest {
+	return &services.ProposalBaselineRequest{
+		ProposalID: pulid.MustNew("ap_"),
+		Tool:       f.tool,
+		Params: services.ToolExecuteParams{
+			OrganizationID: f.org,
+			BusinessUnitID: f.bu,
+			Params:         f.cancelParams(),
+		},
+		Persist: true,
+	}
+}
+
+func TestForProposal_AWouldFailNamesTheParameterEachReasonIsAbout(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.tool.refusal = statusRefusal()
+
+	preview, err := f.svc.ForProposal(t.Context(), &services.ProposalPreviewRequest{
+		Proposal: f.proposal(f.cancelParams()),
+		Viewer:   f.viewer(),
+	})
+	require.NoError(t, err)
+
+	require.Len(t, preview.Warnings, 1)
+	warning := preview.Warnings[0]
+	assert.Equal(t, agent.PreviewWarningWouldFail, warning.Code)
+	require.Len(t, warning.Reasons, 1)
+	assert.Equal(t, agent.PreviewReason{
+		Field:   "status",
+		Label:   "Status",
+		Message: "A delivered shipment cannot be cancelled",
+		Param:   "status",
+	}, warning.Reasons[0])
+}
+
+func TestForProposal_AFailingValidationNamesItsReasons(t *testing.T) {
+	t.Parallel()
+
+	failing := &validatingTool{
+		baseTool: baseTool{name: "release_shipment_hold", resource: permission.ResourceShipment},
+		err:      statusRefusal(),
+	}
+	f := newFixture(failing)
+	proposal := f.proposal(f.cancelParams())
+	proposal.ToolName = failing.name
+
+	preview, err := f.svc.ForProposal(t.Context(), &services.ProposalPreviewRequest{
+		Proposal: proposal,
+		Viewer:   f.viewer(),
+	})
+	require.NoError(t, err)
+
+	var refusal *agent.PreviewWarning
+	for i := range preview.Warnings {
+		if preview.Warnings[i].Code == agent.PreviewWarningWouldFail {
+			refusal = &preview.Warnings[i]
+		}
+	}
+	require.NotNil(t, refusal)
+	assert.Equal(t, toolpreview.WouldFailPrefix+statusRefusal().Error(), refusal.Message)
+	require.Len(t, refusal.Reasons, 1)
+	assert.Equal(t, "status", refusal.Reasons[0].Param)
+}
+
+// A write that would be refused is not filed, so nothing is kept for it: a
+// baseline without its proposal would be an orphan. One the runtime files
+// anyway, because an earlier step of its plan changes its record first, is
+// kept as any other.
+func TestBaseline_KeepsNothingForAWriteThatWouldBeRefused(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	f.tool.refusal = statusRefusal()
+
+	result := f.svc.Baseline(t.Context(), baselineRequest(f))
+
+	require.NotNil(t, result.Preview)
+	refusal := result.Preview.Refusal()
+	require.NotNil(t, refusal, "the runtime reads the refusal off the baseline")
+	require.Len(t, refusal.Reasons, 1)
+	assert.Equal(t, "status", refusal.Reasons[0].Param)
+	assert.Empty(t, f.baselines.kept)
+
+	filed := baselineRequest(f)
+	filed.FileRefused = true
+	f.svc.Baseline(t.Context(), filed)
+	require.Len(t, f.baselines.kept, 1)
+	assert.Equal(t, filed.ProposalID, f.baselines.kept[0].ProposalID)
 }

@@ -2572,6 +2572,9 @@ models:
   AgentPreviewWarning:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.PreviewWarning
+  AgentPreviewReason:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.PreviewReason
   AgentPreviewRecordLink:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.RecordRef
