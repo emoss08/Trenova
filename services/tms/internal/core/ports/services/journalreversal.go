@@ -12,6 +12,7 @@ type JournalReversalChange struct {
 	After         *journalreversal.Reversal
 	OriginalEntry *journalentry.JournalEntry
 	Journal       *JournalPreview
+	CurrencyCode  string
 }
 
 type CreateJournalReversalRequest struct {

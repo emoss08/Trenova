@@ -183,6 +183,7 @@ func (s *Service) PlanCreate(
 		After:         entity,
 		OriginalEntry: entry,
 		Journal:       reversalJournal(entry, period.ID, postingDate),
+		CurrencyCode:  control.FunctionalCurrencyCode,
 	}, nil
 }
 
@@ -334,6 +335,10 @@ func (s *Service) PlanPost(
 	if !originalEntry.ReversedByID.IsNil() {
 		return nil, errortypes.NewBusinessError("Journal entry has already been reversed")
 	}
+	control, err := s.accountingRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
+	if err != nil {
+		return nil, err
+	}
 	after := *entity
 	now := timeutils.NowUnix()
 	after.Status = journalreversal.StatusPosted
@@ -348,6 +353,7 @@ func (s *Service) PlanPost(
 			entity.ResolvedFiscalPeriodID,
 			entity.RequestedAccountingDate,
 		),
+		CurrencyCode: control.FunctionalCurrencyCode,
 	}, nil
 }
 

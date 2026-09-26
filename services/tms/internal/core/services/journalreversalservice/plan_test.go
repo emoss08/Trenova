@@ -108,7 +108,16 @@ func TestPlanPostFlipsTheOriginalLinesWithoutBookingThem(t *testing.T) {
 		GetByID(mock.Anything, mock.Anything).
 		Return(postedEntry(entryID, orgID, buID), nil)
 
-	svc := &Service{journalEntryRepo: entryRepo, journalReversalRepo: reversalRepo}
+	accountingRepo := mocks.NewMockAccountingControlRepository(t)
+	accountingRepo.EXPECT().
+		GetByOrgID(mock.Anything, orgID).
+		Return(&tenant.AccountingControl{FunctionalCurrencyCode: "CAD"}, nil)
+
+	svc := &Service{
+		journalEntryRepo:    entryRepo,
+		journalReversalRepo: reversalRepo,
+		accountingRepo:      accountingRepo,
+	}
 
 	change, err := svc.PlanPost(t.Context(), &serviceports.GetJournalReversalRequest{
 		ReversalID: reversalID,
@@ -119,6 +128,7 @@ func TestPlanPostFlipsTheOriginalLinesWithoutBookingThem(t *testing.T) {
 	assert.Equal(t, journalreversal.StatusApproved, change.Before.Status)
 	assert.Equal(t, journalreversal.StatusPosted, change.After.Status)
 	assert.Equal(t, periodID, change.Journal.FiscalPeriodID)
+	assert.Equal(t, "CAD", change.CurrencyCode)
 	require.Len(t, change.Journal.Lines, 2)
 	assert.Equal(t, int64(1000), change.Journal.Lines[0].CreditMinor)
 }
