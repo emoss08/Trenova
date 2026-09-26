@@ -258,6 +258,12 @@ export type AccountingAppSource =
   /** An app the organization registered with the accounting system itself. */
   | 'Tenant';
 
+export type AccountingAppliedObjectType =
+  | 'CarrierSettlement'
+  | 'CreditMemoApplication'
+  | 'CustomerPayment'
+  | 'DriverSettlement';
+
 /** What to do with a running backfill. */
 export type AccountingBackfillAction =
   | 'Cancel'
@@ -294,6 +300,52 @@ export type AccountingErrorCategory =
   | 'Transient'
   | 'Unauthorized'
   | 'Unknown';
+
+export type AccountingInboundChangeKind =
+  | 'BillPayment'
+  | 'CustomerPayment';
+
+/** Why a payment was not applied on its own. */
+export type AccountingInboundChangeReason =
+  | 'AlreadyPaid'
+  | 'ApplyFailed'
+  | 'CurrencyMismatch'
+  | 'NotTrenovaDocument'
+  | 'Overpayment'
+  | 'PartialBillPayment'
+  | 'PartyMismatch'
+  | 'PeriodNotOpen'
+  | 'PolicyPropose'
+  | 'SentFromTrenova'
+  | 'UnknownDocument'
+  | 'Voided';
+
+export type AccountingInboundChangeStatus =
+  | 'Applied'
+  /** Just read. It is evaluated once it has settled. */
+  | 'Detected'
+  | 'Ignored'
+  /** Waits for a person to apply or ignore it. */
+  | 'Proposed'
+  /** Voided or deleted in the accounting system before it was applied. */
+  | 'Superseded';
+
+export type AccountingInboundDocumentKind =
+  | 'Bill'
+  | 'CreditMemo'
+  | 'DebitMemo'
+  | 'Invoice'
+  | 'Other'
+  | 'VendorCredit';
+
+/** What happens to a payment recorded in the accounting system against documents Trenova sent. */
+export type AccountingInboundPaymentPolicy =
+  /** Payments that match Trenova are applied on their own; the rest wait for a person. */
+  | 'Apply'
+  /** Payments recorded there are not brought into Trenova. */
+  | 'Off'
+  /** Each payment waits for a person to apply it in Trenova. */
+  | 'Propose';
 
 export type AccountingMappingFilterInput = {
   requiredOnly?: boolean | null | undefined;
@@ -867,6 +919,7 @@ export type AgentSeverity =
 
 export type AgentSubjectType =
   | 'AccountingConnection'
+  | 'AccountingInboundChange'
   | 'AccountingSyncRecord'
   | 'AssistantThread'
   | 'BankReceipt'
@@ -3430,6 +3483,12 @@ export type IftaTaxRatesInput = {
   period?: IftaPeriodInput | null | undefined;
   query?: string | null | undefined;
   sort?: Array<SortFieldInput> | null | undefined;
+};
+
+export type IgnoreAccountingInboundChangeInput = {
+  id: string | number;
+  /** Why it is not applied, for example that it was entered in Trenova by hand. */
+  note: string;
 };
 
 export type ImportSourcedCarrierInput = {
@@ -6026,6 +6085,8 @@ export type UpdateAccountingSyncSettingsInput = {
   autoSync: boolean;
   /** Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones. */
   driverSettlements: boolean;
+  /** What happens to payments recorded in the accounting system. Left out, it stays as it is. */
+  inboundPayments?: AccountingInboundPaymentPolicy | null | undefined;
   integrationType: AccountingSystem;
 };
 
@@ -6867,7 +6928,53 @@ export type AccountTypeTableQueryVariables = Exact<{
 
 export type AccountTypeTableQuery = { accountTypes: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AccountTypeTableRowFieldsFragment': AccountTypeTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type AccountingConnectionFieldsFragment = { id: string, integrationType: AccountingSystem, status: AccountingConnectionStatus, appSource: AccountingAppSource, appEnvironment: AccountingAppEnvironment | null, externalCompanyName: string, externalLegalName: string, externalCountry: string, externalHomeCurrency: string, externalMultiCurrencyEnabled: boolean, externalBooksClosedThrough: number | null, lastCheckedAt: number | null, lastSuccessAt: number | null, lastFailureAt: number | null, consecutiveFailures: number, lastErrorCategory: AccountingErrorCategory | null, lastErrorMessage: string, lastWebhookAt: number | null, refreshTokenAbsoluteExpiresAt: number, connectedAt: number, disconnectedAt: number | null, setupStep: AccountingSetupStep, syncStartDate: number | null, syncEnabledAt: number | null, autoSync: boolean, driverSettlementsEnabledAt: number | null, syncsDriverSettlements: boolean, pausedAt: number | null, pausedReason: string, referenceRefreshStartedAt: number | null, referenceRefreshedAt: number | null, referenceRefreshError: string, version: number, updatedAt: number, pausedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingConnectionFieldsFragment' };
+export type AccountingInboundChangeFieldsFragment = { id: string, kind: AccountingInboundChangeKind, status: AccountingInboundChangeStatus, reason: AccountingInboundChangeReason | null, resolution: string, externalId: string, externalNumber: string, externalUrl: string, providerModifiedAt: number | null, providerModifiedBy: string, txnDate: number, amountMinor: number, currencyCode: string, partyName: string, partyObjectId: string | null, referenceNumber: string, methodName: string, unappliedMinor: number, decidedAt: number | null, note: string, detectedAt: number, version: number, updatedAt: number, lines: Array<{ documentKind: AccountingInboundDocumentKind, documentExternalId: string, amountMinor: number, objectType: AccountingSyncObjectType | null, objectId: string | null, objectNumber: string, openMinor: number }>, appliedObjects: Array<{ type: AccountingAppliedObjectType, id: string }>, decidedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingInboundChangeFieldsFragment' };
+
+export type AccountingInboundOverviewQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+}>;
+
+
+export type AccountingInboundOverviewQuery = { accountingInboundOverview: { connectionId: string, policy: AccountingInboundPaymentPolicy, changesReadAt: number | null, changesError: string, summary: { detected: number, proposed: number, appliedSince: number, ignoredSince: number } } };
+
+export type AccountingInboundChangeQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AccountingInboundChangeQuery = { accountingInboundChange: { ' $fragmentRefs'?: { 'AccountingInboundChangeFieldsFragment': AccountingInboundChangeFieldsFragment } } };
+
+export type AccountingInboundApplyPreviewQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AccountingInboundApplyPreviewQuery = { accountingInboundApplyPreview: { canApply: boolean, blocker: string, paidAt: number, cashMinor: number, unappliedMinor: number, lines: Array<{ objectType: AccountingSyncObjectType, objectId: string, objectNumber: string, amountMinor: number, openMinor: number }> } };
+
+export type ApplyAccountingInboundChangeMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ApplyAccountingInboundChangeMutation = { applyAccountingInboundChange: { ' $fragmentRefs'?: { 'AccountingInboundChangeFieldsFragment': AccountingInboundChangeFieldsFragment } } };
+
+export type IgnoreAccountingInboundChangeMutationVariables = Exact<{
+  input: IgnoreAccountingInboundChangeInput;
+}>;
+
+
+export type IgnoreAccountingInboundChangeMutation = { ignoreAccountingInboundChange: { ' $fragmentRefs'?: { 'AccountingInboundChangeFieldsFragment': AccountingInboundChangeFieldsFragment } } };
+
+export type AccountingInboundChangeTableQueryVariables = Exact<{
+  integrationType: AccountingSystem;
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AccountingInboundChangeTableQuery = { accountingInboundChangeTable: { totalCount?: number | null, edges: Array<{ node: { id: string, kind: AccountingInboundChangeKind, status: AccountingInboundChangeStatus, reason: AccountingInboundChangeReason | null, resolution: string, externalId: string, externalNumber: string, externalUrl: string, providerModifiedAt: number | null, providerModifiedBy: string, txnDate: number, amountMinor: number, currencyCode: string, partyName: string, partyObjectId: string | null, referenceNumber: string, methodName: string, unappliedMinor: number, decidedAt: number | null, note: string, detectedAt: number, version: number, updatedAt: number, lines: Array<{ documentKind: AccountingInboundDocumentKind, documentExternalId: string, amountMinor: number, objectType: AccountingSyncObjectType | null, objectId: string | null, objectNumber: string, openMinor: number }>, appliedObjects: Array<{ type: AccountingAppliedObjectType, id: string }>, decidedBy: { id: string, name: string } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AccountingConnectionFieldsFragment = { id: string, integrationType: AccountingSystem, status: AccountingConnectionStatus, appSource: AccountingAppSource, appEnvironment: AccountingAppEnvironment | null, externalCompanyName: string, externalLegalName: string, externalCountry: string, externalHomeCurrency: string, externalMultiCurrencyEnabled: boolean, externalBooksClosedThrough: number | null, lastCheckedAt: number | null, lastSuccessAt: number | null, lastFailureAt: number | null, consecutiveFailures: number, lastErrorCategory: AccountingErrorCategory | null, lastErrorMessage: string, lastWebhookAt: number | null, refreshTokenAbsoluteExpiresAt: number, connectedAt: number, disconnectedAt: number | null, setupStep: AccountingSetupStep, syncStartDate: number | null, syncEnabledAt: number | null, autoSync: boolean, driverSettlementsEnabledAt: number | null, syncsDriverSettlements: boolean, inboundPaymentPolicy: AccountingInboundPaymentPolicy, changesReadAt: number | null, changesErrorMessage: string, pausedAt: number | null, pausedReason: string, referenceRefreshStartedAt: number | null, referenceRefreshedAt: number | null, referenceRefreshError: string, version: number, updatedAt: number, pausedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingConnectionFieldsFragment' };
 
 export type AccountingMappingFieldsFragment = { id: string, targetType: AccountingMappingTargetType, trenovaObjectId: string | null, trenovaKey: string, targetLabel: string, providerKind: AccountingReferenceKind, externalId: string, externalName: string, state: AccountingMappingState, source: AccountingMappingSource | null, confidence: number | null, reason: string, required: boolean, prechecked: boolean, confirmedAt: number | null, version: number, updatedAt: number, candidates: Array<{ externalId: string, name: string, score: number, reason: string }>, confirmedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AccountingMappingFieldsFragment' };
 
@@ -13883,6 +13990,50 @@ export const AccountTypeTableRowFieldsFragmentDoc = new TypedDocumentString(`
   updatedAt
 }
     `, {"fragmentName":"AccountTypeTableRowFields"}) as unknown as TypedDocumentString<AccountTypeTableRowFieldsFragment, unknown>;
+export const AccountingInboundChangeFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AccountingInboundChangeFields on AccountingInboundChange {
+  id
+  kind
+  status
+  reason
+  resolution
+  externalId
+  externalNumber
+  externalUrl
+  providerModifiedAt
+  providerModifiedBy
+  txnDate
+  amountMinor
+  currencyCode
+  partyName
+  partyObjectId
+  referenceNumber
+  methodName
+  unappliedMinor
+  lines {
+    documentKind
+    documentExternalId
+    amountMinor
+    objectType
+    objectId
+    objectNumber
+    openMinor
+  }
+  appliedObjects {
+    type
+    id
+  }
+  decidedBy {
+    id
+    name
+  }
+  decidedAt
+  note
+  detectedAt
+  version
+  updatedAt
+}
+    `, {"fragmentName":"AccountingInboundChangeFields"}) as unknown as TypedDocumentString<AccountingInboundChangeFieldsFragment, unknown>;
 export const AccountingMappingFieldsFragmentDoc = new TypedDocumentString(`
     fragment AccountingMappingFields on AccountingMapping {
   id
@@ -13980,6 +14131,9 @@ export const AccountingConnectionFieldsFragmentDoc = new TypedDocumentString(`
   autoSync
   driverSettlementsEnabledAt
   syncsDriverSettlements
+  inboundPaymentPolicy
+  changesReadAt
+  changesErrorMessage
   pausedAt
   pausedBy {
     id
@@ -14033,6 +14187,9 @@ export const AccountingSyncStatusFieldsFragmentDoc = new TypedDocumentString(`
   autoSync
   driverSettlementsEnabledAt
   syncsDriverSettlements
+  inboundPaymentPolicy
+  changesReadAt
+  changesErrorMessage
   pausedAt
   pausedBy {
     id
@@ -22143,10 +22300,16 @@ export const WorkerDataTablePageInfoFieldsFragmentDoc = new TypedDocumentString(
     `, {"fragmentName":"WorkerDataTablePageInfoFields"}) as unknown as TypedDocumentString<WorkerDataTablePageInfoFieldsFragment, unknown>;
 export const AccessorialChargeTableDocument = {"__meta__":{"kind":"query","name":"AccessorialChargeTable","hash":"sha256:428bf0351875289ecd242e7153b17c69f386b3edb5106b4bc369b85341769d91"}} as unknown as TypedDocumentString<AccessorialChargeTableQuery, AccessorialChargeTableQueryVariables>;
 export const AccountTypeTableDocument = {"__meta__":{"kind":"query","name":"AccountTypeTable","hash":"sha256:bd52997a38905cd2b8343527e55ae1488b2e2f87bc1e50192a1909481e075956"}} as unknown as TypedDocumentString<AccountTypeTableQuery, AccountTypeTableQueryVariables>;
-export const AccountingSyncStatusDocument = {"__meta__":{"kind":"query","name":"AccountingSyncStatus","hash":"sha256:e16e7cd9f706060a6c86ef5cb54f12ae78b3ef05ce98cec0df533405392c9640"}} as unknown as TypedDocumentString<AccountingSyncStatusQuery, AccountingSyncStatusQueryVariables>;
-export const SaveAccountingAppDocument = {"__meta__":{"kind":"mutation","name":"SaveAccountingApp","hash":"sha256:733dc6e12ce68fcbcd7aa7d624d8cbaa4edf6d6ed8d12b5dcb46c2be9c7e982f"}} as unknown as TypedDocumentString<SaveAccountingAppMutation, SaveAccountingAppMutationVariables>;
-export const RemoveAccountingAppDocument = {"__meta__":{"kind":"mutation","name":"RemoveAccountingApp","hash":"sha256:f852854f7e9078476c8d29033afd4a772796708ad7603f4d2dae8df21ffd7d20"}} as unknown as TypedDocumentString<RemoveAccountingAppMutation, RemoveAccountingAppMutationVariables>;
-export const AccountingMappingSummaryDocument = {"__meta__":{"kind":"query","name":"AccountingMappingSummary","hash":"sha256:eeb7c4f23d4f18601d058a077f411ea5b09c64ba58ccee1e9bc780207e258298"}} as unknown as TypedDocumentString<AccountingMappingSummaryQuery, AccountingMappingSummaryQueryVariables>;
+export const AccountingInboundOverviewDocument = {"__meta__":{"kind":"query","name":"AccountingInboundOverview","hash":"sha256:8bb89e9286a2800a1ba88e7dc15ea02914e04cbc15df80ada2cb257afdd3cc95"}} as unknown as TypedDocumentString<AccountingInboundOverviewQuery, AccountingInboundOverviewQueryVariables>;
+export const AccountingInboundChangeDocument = {"__meta__":{"kind":"query","name":"AccountingInboundChange","hash":"sha256:6f3efadc2cc9ed08240d7ebbf58152692665c2be44c9d5278cd18fd69b3659eb"}} as unknown as TypedDocumentString<AccountingInboundChangeQuery, AccountingInboundChangeQueryVariables>;
+export const AccountingInboundApplyPreviewDocument = {"__meta__":{"kind":"query","name":"AccountingInboundApplyPreview","hash":"sha256:6ed240897e4b5023961882673fa49ab20323a17555878b703c899908814b3ed0"}} as unknown as TypedDocumentString<AccountingInboundApplyPreviewQuery, AccountingInboundApplyPreviewQueryVariables>;
+export const ApplyAccountingInboundChangeDocument = {"__meta__":{"kind":"mutation","name":"ApplyAccountingInboundChange","hash":"sha256:998987f54ccaba499d06da50b47015ac79463c6804e5c90a1599d125501dd4f0"}} as unknown as TypedDocumentString<ApplyAccountingInboundChangeMutation, ApplyAccountingInboundChangeMutationVariables>;
+export const IgnoreAccountingInboundChangeDocument = {"__meta__":{"kind":"mutation","name":"IgnoreAccountingInboundChange","hash":"sha256:ba2b021de77e38f27e93b81f449efc57a03a86668dda0c1c2450962a35e1aaa4"}} as unknown as TypedDocumentString<IgnoreAccountingInboundChangeMutation, IgnoreAccountingInboundChangeMutationVariables>;
+export const AccountingInboundChangeTableDocument = {"__meta__":{"kind":"query","name":"AccountingInboundChangeTable","hash":"sha256:bf09f86e030cab8ce591a9c5dd176db8959c4449aed757a8914c87ab5659f680"}} as unknown as TypedDocumentString<AccountingInboundChangeTableQuery, AccountingInboundChangeTableQueryVariables>;
+export const AccountingSyncStatusDocument = {"__meta__":{"kind":"query","name":"AccountingSyncStatus","hash":"sha256:d3801918c0fe8d0e1a61f4f9462747b2be697e0dc369a77eb1d6854daaf77db9"}} as unknown as TypedDocumentString<AccountingSyncStatusQuery, AccountingSyncStatusQueryVariables>;
+export const SaveAccountingAppDocument = {"__meta__":{"kind":"mutation","name":"SaveAccountingApp","hash":"sha256:5642eb72dbb6b1c7e959c54b078bd3087493333dc164641d8333c97f6b924b1b"}} as unknown as TypedDocumentString<SaveAccountingAppMutation, SaveAccountingAppMutationVariables>;
+export const RemoveAccountingAppDocument = {"__meta__":{"kind":"mutation","name":"RemoveAccountingApp","hash":"sha256:ab6987e3f53c22efe3f744478aad466f1beab34759f2639df6440483b7a695b2"}} as unknown as TypedDocumentString<RemoveAccountingAppMutation, RemoveAccountingAppMutationVariables>;
+export const AccountingMappingSummaryDocument = {"__meta__":{"kind":"query","name":"AccountingMappingSummary","hash":"sha256:589d8dd1d17b34db14ddaec9127a494981414bd263fab6f84a8326dc71f6fd82"}} as unknown as TypedDocumentString<AccountingMappingSummaryQuery, AccountingMappingSummaryQueryVariables>;
 export const AccountingMappingsDocument = {"__meta__":{"kind":"query","name":"AccountingMappings","hash":"sha256:ec5c15fcda7c5480585a4bceed9ee0a06b51a918213489948873b69815602e21"}} as unknown as TypedDocumentString<AccountingMappingsQuery, AccountingMappingsQueryVariables>;
 export const AccountingReferenceObjectsDocument = {"__meta__":{"kind":"query","name":"AccountingReferenceObjects","hash":"sha256:c17d6f7e89eb758f813e16f3f368e0e9ff1fa4675322e6635e0b404634c26497"}} as unknown as TypedDocumentString<AccountingReferenceObjectsQuery, AccountingReferenceObjectsQueryVariables>;
 export const ConfirmAccountingMappingsDocument = {"__meta__":{"kind":"mutation","name":"ConfirmAccountingMappings","hash":"sha256:972c4c1295fdfd7686c0941ce7f6d05b5ef38e472d509a40063c660ed8af807b"}} as unknown as TypedDocumentString<ConfirmAccountingMappingsMutation, ConfirmAccountingMappingsMutationVariables>;
@@ -22154,22 +22317,22 @@ export const RejectAccountingMappingDocument = {"__meta__":{"kind":"mutation","n
 export const SetAccountingMappingDocument = {"__meta__":{"kind":"mutation","name":"SetAccountingMapping","hash":"sha256:62076000a35af1ae7f74db441e343d561ba833bbaa2db69a78d2b43f16ff66e6"}} as unknown as TypedDocumentString<SetAccountingMappingMutation, SetAccountingMappingMutationVariables>;
 export const ClearAccountingMappingDocument = {"__meta__":{"kind":"mutation","name":"ClearAccountingMapping","hash":"sha256:3a4c31af7f87007aa586714692ca62e827f49dca04f7581b88cbda6642fbc629"}} as unknown as TypedDocumentString<ClearAccountingMappingMutation, ClearAccountingMappingMutationVariables>;
 export const CreateAccountingReferenceRecordDocument = {"__meta__":{"kind":"mutation","name":"CreateAccountingReferenceRecord","hash":"sha256:38c54277694239f55cc2ee899869f98216caee08c3ca7f73614ac37eb2507710"}} as unknown as TypedDocumentString<CreateAccountingReferenceRecordMutation, CreateAccountingReferenceRecordMutationVariables>;
-export const RefreshAccountingReferenceDataDocument = {"__meta__":{"kind":"mutation","name":"RefreshAccountingReferenceData","hash":"sha256:9dd16cbefc7626732a87394513d20eaad5e64e985556a01191a731863ac872a9"}} as unknown as TypedDocumentString<RefreshAccountingReferenceDataMutation, RefreshAccountingReferenceDataMutationVariables>;
-export const CompleteAccountingSetupDocument = {"__meta__":{"kind":"mutation","name":"CompleteAccountingSetup","hash":"sha256:f5eb426e439f0d92bd525b820988aead49cc811d794620b98ec0a88fc7b9a36c"}} as unknown as TypedDocumentString<CompleteAccountingSetupMutation, CompleteAccountingSetupMutationVariables>;
+export const RefreshAccountingReferenceDataDocument = {"__meta__":{"kind":"mutation","name":"RefreshAccountingReferenceData","hash":"sha256:731b41f68d1d64e9586419c125416c6de3338b78622b24b353519b4fb682daa0"}} as unknown as TypedDocumentString<RefreshAccountingReferenceDataMutation, RefreshAccountingReferenceDataMutationVariables>;
+export const CompleteAccountingSetupDocument = {"__meta__":{"kind":"mutation","name":"CompleteAccountingSetup","hash":"sha256:ab9a8831504f3e4359e23aabbeff5f3e269ef4d8925cb71756f299406badb7c8"}} as unknown as TypedDocumentString<CompleteAccountingSetupMutation, CompleteAccountingSetupMutationVariables>;
 export const StartAccountingAuthorizationDocument = {"__meta__":{"kind":"mutation","name":"StartAccountingAuthorization","hash":"sha256:373bd1c21d5c39a7e820ca7c9442eed0be3481386e556b544455ad7b6c94815f"}} as unknown as TypedDocumentString<StartAccountingAuthorizationMutation, StartAccountingAuthorizationMutationVariables>;
-export const CompleteAccountingAuthorizationDocument = {"__meta__":{"kind":"mutation","name":"CompleteAccountingAuthorization","hash":"sha256:d70e0c4e5de9a50ade90eecafb660ac13f984b48d75362ed62f60e5b88766517"}} as unknown as TypedDocumentString<CompleteAccountingAuthorizationMutation, CompleteAccountingAuthorizationMutationVariables>;
-export const DisconnectAccountingSystemDocument = {"__meta__":{"kind":"mutation","name":"DisconnectAccountingSystem","hash":"sha256:2c575fb840455bb3ceb9f231c3bcd7e2428b3bd9fcbe9285c4ce9f239c52b7ce"}} as unknown as TypedDocumentString<DisconnectAccountingSystemMutation, DisconnectAccountingSystemMutationVariables>;
-export const CheckAccountingConnectionDocument = {"__meta__":{"kind":"mutation","name":"CheckAccountingConnection","hash":"sha256:49b9aaf645d78b2e29c4043109cbf1f1cc72f63827b3bca493ae2db34e63191a"}} as unknown as TypedDocumentString<CheckAccountingConnectionMutation, CheckAccountingConnectionMutationVariables>;
-export const AccountingSyncSummaryDocument = {"__meta__":{"kind":"query","name":"AccountingSyncSummary","hash":"sha256:ed68a2cf908c2c99cf32c4bd82449af383fde7ad67a137a1249f5b4c72aa2251"}} as unknown as TypedDocumentString<AccountingSyncSummaryQuery, AccountingSyncSummaryQueryVariables>;
+export const CompleteAccountingAuthorizationDocument = {"__meta__":{"kind":"mutation","name":"CompleteAccountingAuthorization","hash":"sha256:7b145645e086eb8eb59db0192a4865b6475b8f0ea23c86b464ac2723ed4fa8fb"}} as unknown as TypedDocumentString<CompleteAccountingAuthorizationMutation, CompleteAccountingAuthorizationMutationVariables>;
+export const DisconnectAccountingSystemDocument = {"__meta__":{"kind":"mutation","name":"DisconnectAccountingSystem","hash":"sha256:9431a9d0efd48f288a21c041e70ec9823b50eb3723a4370296e88fc7243a6a4f"}} as unknown as TypedDocumentString<DisconnectAccountingSystemMutation, DisconnectAccountingSystemMutationVariables>;
+export const CheckAccountingConnectionDocument = {"__meta__":{"kind":"mutation","name":"CheckAccountingConnection","hash":"sha256:d4b3e0edb70d7935953b395e7956a297f692ff918ac848704c1466bb6ccd401b"}} as unknown as TypedDocumentString<CheckAccountingConnectionMutation, CheckAccountingConnectionMutationVariables>;
+export const AccountingSyncSummaryDocument = {"__meta__":{"kind":"query","name":"AccountingSyncSummary","hash":"sha256:a369adde120fc2ce2841dcc05d9b27ae8a50061235b094b46a09f6c54b127d02"}} as unknown as TypedDocumentString<AccountingSyncSummaryQuery, AccountingSyncSummaryQueryVariables>;
 export const AccountingSyncRecordsDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecords","hash":"sha256:3022089755fa1469cd41421894de5c50fe8121974fa14f2a36709713ed761b40"}} as unknown as TypedDocumentString<AccountingSyncRecordsQuery, AccountingSyncRecordsQueryVariables>;
 export const AccountingSyncRecordDocument = {"__meta__":{"kind":"query","name":"AccountingSyncRecord","hash":"sha256:4383a49db007e46422387d7a4eb5dccd2d5e1df0de4a43ef2ff85a45cfdd3dab"}} as unknown as TypedDocumentString<AccountingSyncRecordQuery, AccountingSyncRecordQueryVariables>;
 export const AccountingSyncAttemptsDocument = {"__meta__":{"kind":"query","name":"AccountingSyncAttempts","hash":"sha256:d3f0cb9f536ed5e5f3abe09b9abfc0cee6af53b85b6a57dbfb60c70412de4874"}} as unknown as TypedDocumentString<AccountingSyncAttemptsQuery, AccountingSyncAttemptsQueryVariables>;
 export const AccountingSyncObjectStatesDocument = {"__meta__":{"kind":"query","name":"AccountingSyncObjectStates","hash":"sha256:b18f5f22813de4df41fd57d9916f0257cb454cbf9eaff002e55d5b717e9ed845"}} as unknown as TypedDocumentString<AccountingSyncObjectStatesQuery, AccountingSyncObjectStatesQueryVariables>;
 export const AccountingBackfillsDocument = {"__meta__":{"kind":"query","name":"AccountingBackfills","hash":"sha256:949d632c126674d015d12b70208d61672d82b30e3fc9757c55f777e4e710d29b"}} as unknown as TypedDocumentString<AccountingBackfillsQuery, AccountingBackfillsQueryVariables>;
-export const EnableAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"EnableAccountingSync","hash":"sha256:4d59412b58e538deed12f3b4a8031a6179b3e5fef3784b3274ea38f33f1597e9"}} as unknown as TypedDocumentString<EnableAccountingSyncMutation, EnableAccountingSyncMutationVariables>;
-export const UpdateAccountingSyncSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateAccountingSyncSettings","hash":"sha256:286bc6ad30ae8900234d76bbe8a4120fbc498d48f70c1be005e148edf6f53578"}} as unknown as TypedDocumentString<UpdateAccountingSyncSettingsMutation, UpdateAccountingSyncSettingsMutationVariables>;
-export const PauseAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"PauseAccountingSync","hash":"sha256:c21618c88de51d5d71b1b39e23054f30070cf0befea1670e0f118aa71083a636"}} as unknown as TypedDocumentString<PauseAccountingSyncMutation, PauseAccountingSyncMutationVariables>;
-export const ResumeAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"ResumeAccountingSync","hash":"sha256:a468cf9f1c8759b3d37b74997a7445ef2d5de2b9d873b89b1522e5bd76f04ce1"}} as unknown as TypedDocumentString<ResumeAccountingSyncMutation, ResumeAccountingSyncMutationVariables>;
+export const EnableAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"EnableAccountingSync","hash":"sha256:0f6ad70990a94b9aeb57fdc620c0e8192aa3c212ab4ccbf146b9b9af5f4d9113"}} as unknown as TypedDocumentString<EnableAccountingSyncMutation, EnableAccountingSyncMutationVariables>;
+export const UpdateAccountingSyncSettingsDocument = {"__meta__":{"kind":"mutation","name":"UpdateAccountingSyncSettings","hash":"sha256:3ab0205dfdcc2ebbe9b55c3088d976afb468ef57a78f964ab11b286a69e1774b"}} as unknown as TypedDocumentString<UpdateAccountingSyncSettingsMutation, UpdateAccountingSyncSettingsMutationVariables>;
+export const PauseAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"PauseAccountingSync","hash":"sha256:0216314c303c12d72f356fa80f28a9b5505021d3ff9f70e252e3cbe22325ad87"}} as unknown as TypedDocumentString<PauseAccountingSyncMutation, PauseAccountingSyncMutationVariables>;
+export const ResumeAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"ResumeAccountingSync","hash":"sha256:88eed132ab1713276beb3d17bd849208324bce94a4e6510dc90c67d45275ae99"}} as unknown as TypedDocumentString<ResumeAccountingSyncMutation, ResumeAccountingSyncMutationVariables>;
 export const RetryAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"RetryAccountingSync","hash":"sha256:e979623f3d680cc3e11b35af17517321244479a9490b5a33bc0d61a7fd36307b"}} as unknown as TypedDocumentString<RetryAccountingSyncMutation, RetryAccountingSyncMutationVariables>;
 export const ReleaseAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"ReleaseAccountingSync","hash":"sha256:92e93ee66e3af468923f09c1e34ce36127a8ce406ee96c7a484349f60c1bda9e"}} as unknown as TypedDocumentString<ReleaseAccountingSyncMutation, ReleaseAccountingSyncMutationVariables>;
 export const SkipAccountingSyncDocument = {"__meta__":{"kind":"mutation","name":"SkipAccountingSync","hash":"sha256:952b395783216172a3ef671af3d707ef257507d24a4cfd055641d0f9938d6168"}} as unknown as TypedDocumentString<SkipAccountingSyncMutation, SkipAccountingSyncMutationVariables>;

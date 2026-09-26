@@ -74,6 +74,13 @@ func (f *fakeConnections) Update(
 	return &out, nil
 }
 
+func (f *fakeConnections) SaveChangeFeed(
+	context.Context,
+	*repositories.SaveAccountingChangeFeedRequest,
+) (bool, error) {
+	return false, nil
+}
+
 func (f *fakeConnections) MarkReferenceRefresh(
 	_ context.Context,
 	req repositories.MarkAccountingReferenceRefreshRequest,
@@ -119,6 +126,13 @@ func (f *fakeReferences) Upsert(
 		f.rows = append(f.rows, &copied)
 	}
 	return nil
+}
+
+func (f *fakeReferences) MarkRemoved(
+	context.Context,
+	*repositories.MarkAccountingReferencesRemovedRequest,
+) (int64, error) {
+	return 0, nil
 }
 
 func (f *fakeReferences) MarkRemovedUnseen(

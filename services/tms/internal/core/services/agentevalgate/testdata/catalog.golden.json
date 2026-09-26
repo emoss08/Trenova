@@ -433,6 +433,50 @@
       }
     },
     {
+      "name": "apply_accounting_inbound_change",
+      "description": "Accept an inbound change: one payment the accounting system recorded against documents Trenova sent, shown as Proposed by list_accounting_inbound_changes. Accepting brings it into Trenova on the day it was made, with any credits it used, or marks the settlement it pays as paid, and only while it still matches what is open. The preview shows exactly what would post.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "inboundChangeId": {
+            "description": "The payment's id, from list_accounting_inbound_changes.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inboundChangeId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "accept inbound change"
+      ],
+      "prerequisites": [
+        "list_accounting_inbound_changes"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_sync",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "money"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Posts money in Trenova: a customer payment or a settlement payment, so a person approves each one."
+      }
+    },
+    {
       "name": "approve_detention",
       "description": "Propose approving a detention charge that is waiting on approval, so it can be invoiced. list_detention_desk shows these as AwaitingApproval, and while one waits its shipment cannot be billed. The charge is approved exactly as calculated. Propose it only when the evidence holds up: arrival and departure on record, the notice sent inside the policy's window or none required, and nothing on file that contradicts the time. Say what shows that in evidence. Only a pending charge can be approved, and a person always decides; when the evidence does not hold up, propose waive_detention instead or leave it for a person.",
       "parameters": {
@@ -4348,6 +4392,56 @@
       }
     },
     {
+      "name": "ignore_accounting_inbound_change",
+      "description": "Dismiss an inbound change, with the reason, so the accounting system's payment is never brought into Trenova. Use it when a person says the payment was already keyed in Trenova, or belongs to something Trenova does not track.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "inboundChangeId": {
+            "description": "The payment's id, from list_accounting_inbound_changes.",
+            "type": "string"
+          },
+          "note": {
+            "description": "Why it stays out of Trenova, in one sentence a bookkeeper would accept.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inboundChangeId",
+          "note"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "dismiss inbound change",
+        "already keyed"
+      ],
+      "prerequisites": [
+        "list_accounting_inbound_changes"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "accounting_sync",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "ActWithApproval",
+        "promotableTo": "ActWithApproval",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "reversible": false,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Keeps a payment the books hold out of Trenova for good, so a person approves it."
+      }
+    },
+    {
       "name": "link_inbound_message",
       "description": "Say which shipment, customer or carrier a message that arrived on a monitored address is about, when the automatic match missed it or got it wrong. Give the reason in words a person can check — the PRO in the subject, the BOL on the attachment, the sender being the customer's dispatcher. Every id must be one list or get tools returned; a record that does not exist is refused. Linking does not settle the message: mark_inbound_message does that.",
       "parameters": {
@@ -4505,6 +4599,115 @@
       "policy": {
         "kind": "query",
         "resource": "accessorial_charge",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
+      "name": "list_accounting_inbound_changes",
+      "description": "List inbound changes: payments the accounting system recorded against invoices or bills Trenova sent, newest first. Each says what it pays and whether it was brought into Trenova, and if not why. Filter by status, such as Proposed for what waits on a person, by kind, or by reason. Pass a Proposed row's id to apply_accounting_inbound_change or ignore_accounting_inbound_change.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "after": {
+            "description": "The nextCursor from a previous call of this tool, for the next page.",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Only customer payments or only bill payments.",
+            "items": {
+              "description": "A kind.",
+              "enum": [
+                "CustomerPayment",
+                "BillPayment"
+              ],
+              "type": "string"
+            },
+            "maxItems": 2,
+            "type": "array"
+          },
+          "limit": {
+            "description": "How many payments to return, at most 50. Defaults to 25.",
+            "type": "integer"
+          },
+          "reason": {
+            "description": "Only payments held back for these reasons.",
+            "items": {
+              "description": "A reason.",
+              "enum": [
+                "PolicyPropose",
+                "PeriodNotOpen",
+                "UnknownDocument",
+                "PartyMismatch",
+                "Overpayment",
+                "PartialBillPayment",
+                "AlreadyPaid",
+                "CurrencyMismatch",
+                "Voided",
+                "NotTrenovaDocument",
+                "SentFromTrenova",
+                "ApplyFailed"
+              ],
+              "type": "string"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "search": {
+            "description": "Words to find in the payment's number or the customer or vendor name.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Only payments in these statuses. Proposed ones wait for a person.",
+            "items": {
+              "description": "A status.",
+              "enum": [
+                "Detected",
+                "Proposed",
+                "Applied",
+                "Ignored",
+                "Superseded"
+              ],
+              "type": "string"
+            },
+            "maxItems": 5,
+            "type": "array"
+          },
+          "system": {
+            "description": "The accounting system. Example: \"QuickBooksOnline\".",
+            "enum": [
+              "QuickBooksOnline"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "inbound changes",
+        "payments the accounting system recorded"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "accounting_sync",
         "operation": "read",
         "scope": "tenant",
         "defaultTier": "AutoExecute",
@@ -4726,7 +4929,7 @@
     },
     {
       "name": "list_agent_runs",
-      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is still running. get_agent_run reads one in full. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (BillingQueueItem|ShipmentMove|AssistantThread|Shipment|Document|Organization|Insight|BankReceipt|DetentionOccurrence|Worker|CarrierIntelEvent|EDIInboundFile|InboundMessage|Report|Dashboard|AccountingConnection|FormulaTemplate|AccountingSyncRecord): the kind of record the run worked on; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
+      "description": "List agent runs: what each agent did, what started it, the record it worked on, and whether it failed, waits on a decision or is running. get_agent_run reads one. Filters: status (Pending|GatheringContext|Diagnosing|AwaitingDecision|Completed|ShadowCompleted|Failed); trigger (Manual|Chat|Scheduled|Event|Continuous); subjectType (BillingQueueItem|ShipmentMove|AssistantThread|Shipment|Document|Organization|Insight|BankReceipt|DetentionOccurrence|Worker|CarrierIntelEvent|EDIInboundFile|InboundMessage|Report|Dashboard|AccountingConnection|FormulaTemplate|AccountingSyncRecord|AccountingInboundChange): the kind of record the run worked on; subjectId (text): the id of that record; agentDefinitionId (text): the agent's id, from a run or the page you are on; date: createdAt. Dates: today, nextndays/lastndays with days, or YYYY-MM-DD; never Unix time. Pass mine to keep to this agent's own runs.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -9204,6 +9407,7 @@
           "entity": {
             "description": "The kind of record to open, with recordId, instead of a page.",
             "enum": [
+              "accounting_inbound_change",
               "accounting_sync_record",
               "agent_run",
               "ai_audit_event",
@@ -10196,7 +10400,8 @@
               "Dashboard",
               "AccountingConnection",
               "FormulaTemplate",
-              "AccountingSyncRecord"
+              "AccountingSyncRecord",
+              "AccountingInboundChange"
             ],
             "type": "string"
           }

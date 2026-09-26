@@ -388,6 +388,7 @@ func (s *Service) postPaymentJournal(
 	ctx context.Context,
 	entity *carriersettlement.CarrierSettlement,
 	actor *serviceports.RequestActor,
+	paidAt int64,
 ) (*pulid.ID, error) {
 	control, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
@@ -426,6 +427,7 @@ func (s *Service) postPaymentJournal(
 		Description:    "Payment of carrier settlement " + entity.SettlementNumber,
 		SourceEvent:    tenant.JournalSourceEventCarrierSettlementPaid,
 		IdempotencyKey: "carrier-settlement-paid:" + entity.ID.String(),
+		AccountingDate: paidAt,
 	})
 }
 
@@ -437,6 +439,7 @@ type createJournalPostingParams struct {
 	Description    string
 	SourceEvent    tenant.JournalSourceEventType
 	IdempotencyKey string
+	AccountingDate int64
 }
 
 func (s *Service) createJournalPosting(
@@ -444,10 +447,15 @@ func (s *Service) createJournalPosting(
 	params *createJournalPostingParams,
 ) (*pulid.ID, error) {
 	entity := params.Entity
+	now := timeutils.NowUnix()
+	accountingDate := params.AccountingDate
+	if accountingDate == 0 {
+		accountingDate = now
+	}
 	period, err := s.fiscalPeriodRepo.GetPeriodByDate(ctx, repositories.GetPeriodByDateRequest{
 		OrgID: entity.OrganizationID,
 		BuID:  entity.BusinessUnitID,
-		Date:  timeutils.NowUnix(),
+		Date:  accountingDate,
 	})
 	if err != nil {
 		return nil, errortypes.NewValidationError(
@@ -468,7 +476,6 @@ func (s *Service) createJournalPosting(
 		return nil, err
 	}
 
-	now := timeutils.NowUnix()
 	workflow := settlementshared.ResolvePostingWorkflow(params.Control, params.Actor.UserID, now)
 
 	lines := make([]repositories.JournalPostingLine, 0, len(params.Legs))
@@ -498,7 +505,7 @@ func (s *Service) createJournalPosting(
 		BatchDescription:     params.Description,
 		FiscalYearID:         period.FiscalYearID,
 		FiscalPeriodID:       period.ID,
-		AccountingDate:       now,
+		AccountingDate:       accountingDate,
 		PostedAt:             workflow.PostedAt,
 		PostedByID:           workflow.PostedByID,
 		CreatedByID:          params.Actor.UserID,

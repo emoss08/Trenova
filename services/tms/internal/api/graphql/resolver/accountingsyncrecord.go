@@ -80,3 +80,36 @@ func accountingSyncRecordConnectionToModel(
 		TotalCount: page.TotalCount,
 	}, nil
 }
+
+func accountingInboundConnectionToModel(
+	result *pagination.CursorListResult[*accountingsync.AccountingInboundChange],
+) (*gqlmodel.AccountingInboundChangeConnection, error) {
+	page, err := entityCursorConnection(
+		result,
+		func(
+			node *accountingsync.AccountingInboundChange,
+			cursor string,
+		) *gqlmodel.AccountingInboundChangeEdge {
+			return &gqlmodel.AccountingInboundChangeEdge{Node: node, Cursor: cursor}
+		},
+		func(edge *gqlmodel.AccountingInboundChangeEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.AccountingInboundChangeConnection{
+		Edges:      page.Edges,
+		PageInfo:   page.PageInfo,
+		TotalCount: page.TotalCount,
+	}, nil
+}
+
+func inboundPolicyOf(
+	policy *accountingsync.InboundPaymentPolicy,
+) accountingsync.InboundPaymentPolicy {
+	if policy == nil {
+		return ""
+	}
+	return *policy
+}

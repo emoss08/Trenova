@@ -38,6 +38,7 @@ type harness struct {
 	audit        *fakeAudit
 	watchtower   *fakeWatchtower
 	refresher    *fakeRefresher
+	poller       *fakePoller
 	events       *agenteventstest.Recorder
 	encryption   *encryptionservice.Service
 	tenant       pagination.TenantInfo
@@ -55,6 +56,7 @@ func newHarness(t *testing.T) *harness {
 		audit:        &fakeAudit{},
 		watchtower:   newFakeWatchtower(),
 		refresher:    &fakeRefresher{},
+		poller:       &fakePoller{},
 		events:       &agenteventstest.Recorder{},
 		encryption: encryptionservice.New(encryptionservice.Params{Config: &config.Config{
 			Security: config.SecurityConfig{Encryption: config.EncryptionConfig{
@@ -77,6 +79,7 @@ func newHarness(t *testing.T) *harness {
 		Watchtower:   h.watchtower,
 		Publisher:    h.events,
 		Refresher:    h.refresher,
+		Poller:       h.poller,
 	})
 	return h
 }
@@ -511,6 +514,35 @@ func TestReceiveWebhookVerifiesBeforeRecording(t *testing.T) {
 		Body:            []byte("[]"),
 	}))
 	assert.NotNil(t, h.connections.rows[conn.ID].LastWebhookAt)
+}
+
+func TestAVerifiedWebhookWakesTheChangeReaderOfASyncingConnection(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	conn := h.connect(t)
+	h.connector.webhookRealms = []string{testRealm}
+	webhook := &services.ReceiveAccountingWebhookRequest{
+		IntegrationType: integration.TypeQuickBooksOnline,
+		Signature:       "good",
+		Body:            []byte("[]"),
+	}
+
+	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), webhook))
+	assert.Empty(t, h.poller.calls(), "a connection still being set up reads no changes")
+
+	row := h.connections.rows[conn.ID]
+	start, enabled := timeutils.NowUnix(), timeutils.NowUnix()
+	row.SetupStep = accountingsync.SetupStepComplete
+	row.SyncStartDate = &start
+	row.SyncEnabledAt = &enabled
+
+	require.NoError(t, h.svc.ReceiveWebhook(t.Context(), webhook))
+	assert.Equal(t, []pulid.ID{conn.ID}, h.poller.calls())
+
+	h.connector.webhookErr = errProvider
+	require.Error(t, h.svc.ReceiveWebhook(t.Context(), webhook))
+	assert.Len(t, h.poller.calls(), 1, "an unverified webhook wakes nothing")
 }
 
 func TestStatusReportsAvailabilityAndConnection(t *testing.T) {

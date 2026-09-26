@@ -1,0 +1,27 @@
+{
+  "QueryResponse": {
+    "Payment": [
+      {
+        "Id": "288",
+        "TxnDate": "2026-08-01",
+        "TotalAmt": 300.00,
+        "CustomerRef": {"value": "58", "name": "Acme Foods"},
+        "Line": [
+          {"Amount": 300.00, "LinkedTxn": [{"TxnId": "120", "TxnType": "Invoice"}]}
+        ],
+        "MetaData": {"LastUpdatedTime": "2026-08-01T15:00:00Z"}
+      },
+      {
+        "Id": "289",
+        "TxnDate": "2026-08-02",
+        "TotalAmt": 50.00,
+        "CustomerRef": {"value": "60", "name": "Beta Co"},
+        "Line": [],
+        "MetaData": {"LastUpdatedTime": "2026-08-02T15:00:00Z"}
+      }
+    ],
+    "startPosition": 1,
+    "maxResults": 2
+  },
+  "time": "2026-09-25T09:00:00.000-07:00"
+}

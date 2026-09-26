@@ -98,7 +98,10 @@ Keywords: automatic sync, hold documents, owner-operator settlements, 1099 drive
 3. Turn **Send owner-operator settlements** on to send owner-operator settlements to QuickBooks
    as bills, with a 1099 vendor for each driver. Settlements posted from then on are sent; request
    a backfill from the [Sync ledger](/accounting/sync) to send earlier ones.
-4. Select **Save**.
+4. Choose what happens to payments recorded in QuickBooks Online: **Wait for someone to apply them** lists
+   each one on [Payments from the books](/accounting/sync/inbound), **Apply them automatically**
+   brings in those that match, and **Leave them out of Trenova** stops reading them.
+5. Select **Save**.
 
 ### Use your own Intuit app
 Keywords: Intuit app keys, client ID, client secret, redirect URI, QuickBooks developer app, self-hosted QuickBooks

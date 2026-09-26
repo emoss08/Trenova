@@ -52,3 +52,14 @@ func FormatCalendarDate(ts int64, loc *time.Location) string {
 	}
 	return time.Unix(ts, 0).In(loc).Format(ISODateLayout)
 }
+
+func ParseCalendarDate(value string, loc *time.Location) (int64, error) {
+	if loc == nil {
+		loc = time.UTC
+	}
+	day, err := time.ParseInLocation(ISODateLayout, value, loc)
+	if err != nil {
+		return 0, err
+	}
+	return day.Unix(), nil
+}

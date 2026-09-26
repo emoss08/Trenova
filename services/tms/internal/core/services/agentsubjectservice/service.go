@@ -38,76 +38,79 @@ const (
 type Params struct {
 	fx.In
 
-	Logger       *zap.Logger
-	BillingQueue serviceports.BillingQueueService
-	Shipments    serviceports.ShipmentService
-	Console      repositories.DispatchConsoleRepository      `optional:"true"`
-	Content      serviceports.DocumentContentService         `optional:"true"`
-	Insights     repositories.InsightRepository              `optional:"true"`
-	BankReceipts serviceports.BankReceiptService             `optional:"true"`
-	WorkItems    repositories.BankReceiptWorkItemRepository  `optional:"true"`
-	Occurrences  repositories.DetentionOccurrenceRepository  `optional:"true"`
-	Workers      repositories.WorkerRepository               `optional:"true"`
-	Credentials  repositories.WorkerCredentialRepository     `optional:"true"`
-	CarrierIntel repositories.CarrierIntelEventRepository    `optional:"true"`
-	EDIFiles     repositories.EDIInboundFileRepository       `optional:"true"`
-	Inbound      repositories.InboundMessageRepository       `optional:"true"`
-	Reports      repositories.ReportDefinitionRepository     `optional:"true"`
-	Dashboards   repositories.ReportDashboardRepository      `optional:"true"`
-	Accounting   repositories.AccountingConnectionRepository `optional:"true"`
-	SyncRecords  repositories.AccountingSyncRecordRepository `optional:"true"`
-	Dispatch     repositories.DispatchControlRepository      `optional:"true"`
-	Formulas     repositories.FormulaTemplateRepository      `optional:"true"`
+	Logger            *zap.Logger
+	BillingQueue      serviceports.BillingQueueService
+	Shipments         serviceports.ShipmentService
+	Console           repositories.DispatchConsoleRepository         `optional:"true"`
+	Content           serviceports.DocumentContentService            `optional:"true"`
+	Insights          repositories.InsightRepository                 `optional:"true"`
+	BankReceipts      serviceports.BankReceiptService                `optional:"true"`
+	WorkItems         repositories.BankReceiptWorkItemRepository     `optional:"true"`
+	Occurrences       repositories.DetentionOccurrenceRepository     `optional:"true"`
+	Workers           repositories.WorkerRepository                  `optional:"true"`
+	Credentials       repositories.WorkerCredentialRepository        `optional:"true"`
+	CarrierIntel      repositories.CarrierIntelEventRepository       `optional:"true"`
+	EDIFiles          repositories.EDIInboundFileRepository          `optional:"true"`
+	Inbound           repositories.InboundMessageRepository          `optional:"true"`
+	Reports           repositories.ReportDefinitionRepository        `optional:"true"`
+	Dashboards        repositories.ReportDashboardRepository         `optional:"true"`
+	Accounting        repositories.AccountingConnectionRepository    `optional:"true"`
+	SyncRecords       repositories.AccountingSyncRecordRepository    `optional:"true"`
+	AccountingInbound repositories.AccountingInboundChangeRepository `optional:"true"`
+	Dispatch          repositories.DispatchControlRepository         `optional:"true"`
+	Formulas          repositories.FormulaTemplateRepository         `optional:"true"`
 }
 
 // Service describes the record an agent run or a conversation is about, so
 // a run woken by an event and a thread opened from a page both start with
 // the same picture of their subject in front of the model.
 type Service struct {
-	content      serviceports.DocumentContentService
-	billingQueue serviceports.BillingQueueService
-	shipments    serviceports.ShipmentService
-	console      repositories.DispatchConsoleRepository
-	insights     repositories.InsightRepository
-	receipts     serviceports.BankReceiptService
-	workItems    repositories.BankReceiptWorkItemRepository
-	occurrences  repositories.DetentionOccurrenceRepository
-	workers      repositories.WorkerRepository
-	credentials  repositories.WorkerCredentialRepository
-	carrierIntel repositories.CarrierIntelEventRepository
-	ediFiles     repositories.EDIInboundFileRepository
-	inbound      repositories.InboundMessageRepository
-	reports      repositories.ReportDefinitionRepository
-	dashboards   repositories.ReportDashboardRepository
-	accounting   repositories.AccountingConnectionRepository
-	syncRecords  repositories.AccountingSyncRecordRepository
-	dispatch     repositories.DispatchControlRepository
-	formulas     repositories.FormulaTemplateRepository
-	logger       *zap.Logger
+	content           serviceports.DocumentContentService
+	billingQueue      serviceports.BillingQueueService
+	shipments         serviceports.ShipmentService
+	console           repositories.DispatchConsoleRepository
+	insights          repositories.InsightRepository
+	receipts          serviceports.BankReceiptService
+	workItems         repositories.BankReceiptWorkItemRepository
+	occurrences       repositories.DetentionOccurrenceRepository
+	workers           repositories.WorkerRepository
+	credentials       repositories.WorkerCredentialRepository
+	carrierIntel      repositories.CarrierIntelEventRepository
+	ediFiles          repositories.EDIInboundFileRepository
+	inbound           repositories.InboundMessageRepository
+	reports           repositories.ReportDefinitionRepository
+	dashboards        repositories.ReportDashboardRepository
+	accounting        repositories.AccountingConnectionRepository
+	syncRecords       repositories.AccountingSyncRecordRepository
+	accountingInbound repositories.AccountingInboundChangeRepository
+	dispatch          repositories.DispatchControlRepository
+	formulas          repositories.FormulaTemplateRepository
+	logger            *zap.Logger
 }
 
 func New(p Params) serviceports.AgentSubjectDescriber {
 	return &Service{
-		content:      p.Content,
-		billingQueue: p.BillingQueue,
-		shipments:    p.Shipments,
-		console:      p.Console,
-		insights:     p.Insights,
-		receipts:     p.BankReceipts,
-		workItems:    p.WorkItems,
-		occurrences:  p.Occurrences,
-		workers:      p.Workers,
-		credentials:  p.Credentials,
-		carrierIntel: p.CarrierIntel,
-		ediFiles:     p.EDIFiles,
-		inbound:      p.Inbound,
-		reports:      p.Reports,
-		dashboards:   p.Dashboards,
-		accounting:   p.Accounting,
-		syncRecords:  p.SyncRecords,
-		dispatch:     p.Dispatch,
-		formulas:     p.Formulas,
-		logger:       p.Logger.Named("service.agentsubject"),
+		content:           p.Content,
+		billingQueue:      p.BillingQueue,
+		shipments:         p.Shipments,
+		console:           p.Console,
+		insights:          p.Insights,
+		receipts:          p.BankReceipts,
+		workItems:         p.WorkItems,
+		occurrences:       p.Occurrences,
+		workers:           p.Workers,
+		credentials:       p.Credentials,
+		carrierIntel:      p.CarrierIntel,
+		ediFiles:          p.EDIFiles,
+		accountingInbound: p.AccountingInbound,
+		reports:           p.Reports,
+		dashboards:        p.Dashboards,
+		accounting:        p.Accounting,
+		syncRecords:       p.SyncRecords,
+		inbound:           p.Inbound,
+		dispatch:          p.Dispatch,
+		formulas:          p.Formulas,
+		logger:            p.Logger.Named("service.agentsubject"),
 	}
 }
 
@@ -148,6 +151,8 @@ func (s *Service) Describe(
 		return s.accountingConnection(ctx, tenant, subjectID)
 	case agent.SubjectAccountingSyncRecord:
 		return s.accountingSyncRecord(ctx, tenant, subjectID)
+	case agent.SubjectAccountingInbound:
+		return s.accountingInboundChange(ctx, tenant, subjectID)
 	case agent.SubjectFormulaTemplate:
 		return s.formulaTemplate(ctx, tenant, subjectID)
 	case agent.SubjectOrganization, "":
@@ -1110,6 +1115,44 @@ func (s *Service) accountingSyncRecord(
 		"documentDate":  found.DocumentDate,
 		"queuedAt":      found.QueuedAt,
 		"nextAttemptAt": found.NextAttemptAt,
+	})
+
+	return subject, nil
+}
+
+func (s *Service) accountingInboundChange(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	changeID pulid.ID,
+) (*agentdefinition.RuntimeSubject, error) {
+	subject := &agentdefinition.RuntimeSubject{
+		Type:  agent.SubjectAccountingInbound,
+		ID:    changeID.String(),
+		Label: "Payment recorded in the books",
+	}
+	if s.accountingInbound == nil {
+		return subject, nil
+	}
+
+	found, err := s.accountingInbound.GetByID(ctx, repositories.GetAccountingInboundChangeRequest{
+		TenantInfo: tenant,
+		ID:         changeID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("load accounting inbound change: %w", err)
+	}
+
+	subject.Label = "Payment recorded in the books: " + found.PartyName + " " + found.ExternalNumber
+	subject.Notes = marshalNotes(map[string]any{
+		"kind":        found.Kind,
+		"status":      found.Status,
+		"reason":      found.Reason,
+		"resolution":  found.Resolution,
+		"amountMinor": found.AmountMinor,
+		"currency":    found.CurrencyCode,
+		"paidOn":      found.TxnDate,
+		"party":       found.PartyName,
+		"lines":       found.Document.Lines,
 	})
 
 	return subject, nil

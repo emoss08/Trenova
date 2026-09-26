@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -120,14 +121,12 @@ func (r *mutationResolver) MarkCarrierSettlementPaid(ctx context.Context, input 
 	if err != nil {
 		return nil, err
 	}
-	return r.carrierSettlementService.MarkPaid(
-		ctx,
-		tenantInfo(authCtx),
-		settlementID,
-		input.PaymentMethod,
-		stringValue(input.PaymentReference),
-		actorutil.FromAuthContext(authCtx),
-	)
+	return r.carrierSettlementService.MarkPaid(ctx, &services.MarkSettlementPaidRequest{
+		TenantInfo:       tenantInfo(authCtx),
+		SettlementID:     settlementID,
+		PaymentMethod:    input.PaymentMethod,
+		PaymentReference: stringValue(input.PaymentReference),
+	}, actorutil.FromAuthContext(authCtx))
 }
 
 func (r *mutationResolver) VoidCarrierSettlement(ctx context.Context, input gqlmodel.CarrierSettlementActionInput) (*carriersettlement.CarrierSettlement, error) {

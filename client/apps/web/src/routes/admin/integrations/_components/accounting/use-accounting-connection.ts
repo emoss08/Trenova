@@ -168,7 +168,7 @@ export function useAccountingSyncSetupActions(
 
 export function useAccountingSyncSettingsAction(
   vendor: AccountingVendor,
-  form: UseFormReturn<AccountingSyncSettingsValues>,
+  settingsForm: UseFormReturn<AccountingSyncSettingsValues>,
 ) {
   const t = useT();
   const queryClient = useQueryClient();
@@ -179,13 +179,15 @@ export function useAccountingSyncSettingsAction(
         integrationType: vendor.system,
         autoSync: values.autoSync,
         driverSettlements: values.driverSettlements,
+        inboundPayments: values.inboundPayments,
       }),
-    form,
+    form: settingsForm,
     resourceName: vendor.name,
     onSuccess: async (connection) => {
-      form.reset({
+      settingsForm.reset({
         autoSync: connection.autoSync,
         driverSettlements: connection.syncsDriverSettlements,
+        inboundPayments: connection.inboundPaymentPolicy,
       });
       await Promise.all([
         queryClient.invalidateQueries({
@@ -193,6 +195,9 @@ export function useAccountingSyncSettingsAction(
         }),
         queryClient.invalidateQueries({
           queryKey: queries.accountingSync.syncSummary(vendor.system).queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queries.accountingSync.inboundOverview(vendor.system).queryKey,
         }),
       ]);
       toast.success(t("Sync settings saved"));

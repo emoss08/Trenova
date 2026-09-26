@@ -204,14 +204,12 @@ func (s *Service) BulkAction(
 		case BulkActionPost:
 			_, err = s.Post(ctx, req.TenantInfo, settlementID, actor)
 		case BulkActionMarkPaid:
-			_, err = s.MarkPaid(
-				ctx,
-				req.TenantInfo,
-				settlementID,
-				req.PaymentMethod,
-				req.PaymentReference,
-				actor,
-			)
+			_, err = s.MarkPaid(ctx, &serviceports.MarkSettlementPaidRequest{
+				TenantInfo:       req.TenantInfo,
+				SettlementID:     settlementID,
+				PaymentMethod:    req.PaymentMethod,
+				PaymentReference: req.PaymentReference,
+			}, actor)
 		}
 
 		result := &BulkActionResult{SettlementID: settlementID, Success: err == nil}

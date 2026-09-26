@@ -9,6 +9,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { lazy } from "react";
 import { Link } from "react-router";
+import { InboundPaymentsLink } from "@/components/accounting-sync/inbound-payments-link";
 import { LedgerHeaderActions } from "./_components/ledger-header-actions";
 import { LedgerNotices, LedgerSummary, LedgerSummarySkeleton } from "./_components/ledger-summary";
 
@@ -32,7 +33,12 @@ export function AccountingSyncLedgerPage() {
           "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.",
           providerName,
         ),
-        actions: summary ? <LedgerHeaderActions summary={summary} /> : null,
+        actions: summary ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {syncing ? <InboundPaymentsLink system={SYSTEM} /> : null}
+            <LedgerHeaderActions summary={summary} />
+          </div>
+        ) : null,
       }}
     >
       {summaryQuery.isLoading ? <LedgerSummarySkeleton /> : null}

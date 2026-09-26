@@ -52,6 +52,19 @@ type ListAccountingSyncRecordsByObjectsRequest struct {
 	ObjectIDs    []pulid.ID
 }
 
+type ListAccountingSyncRecordsByExternalIDsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	ConnectionID pulid.ID
+	ObjectTypes  []accountingsync.SyncObjectType
+	ExternalIDs  []string
+}
+
+type CountAccountingSyncInFlightRequest struct {
+	TenantInfo   pagination.TenantInfo
+	ConnectionID pulid.ID
+	ObjectTypes  []accountingsync.SyncObjectType
+}
+
 type ClaimAccountingSyncRecordsRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
@@ -193,6 +206,11 @@ type AccountingSyncRecordRepository interface {
 		ctx context.Context,
 		req *ListAccountingSyncRecordsByObjectsRequest,
 	) ([]*accountingsync.AccountingSyncRecord, error)
+	ListByExternalIDs(
+		ctx context.Context,
+		req *ListAccountingSyncRecordsByExternalIDsRequest,
+	) ([]*accountingsync.AccountingSyncRecord, error)
+	CountInFlight(ctx context.Context, req *CountAccountingSyncInFlightRequest) (int, error)
 	Claim(
 		ctx context.Context,
 		req *ClaimAccountingSyncRecordsRequest,

@@ -3,6 +3,7 @@ path: /accounting/sync
 aliases: [QuickBooks sync, sync log, sync errors, sync history, failed to sync, QuickBooks not updating, invoice not in QuickBooks, accounting sync ledger, outbox, settlement not in QuickBooks, carrier bill, bill payment, vendor credit]
 related:
   - /accounting/sync/mappings
+  - /accounting/sync/inbound
   - /admin/integrations
 ---
 

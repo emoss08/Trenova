@@ -118,6 +118,11 @@ export const RECORD_LINKS = {
     path: "/accounting/sync",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
+  accounting_inbound_change: {
+    label: "Payment from the books",
+    path: "/accounting/sync/inbound",
+    params: { panelType: "edit", panelEntityId: "{id}" },
+  },
   agent_run: {
     label: "Agent run",
     path: "/admin/agent-control",

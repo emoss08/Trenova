@@ -157,14 +157,12 @@ func (s *Service) driveToPaid(
 	}
 
 	if current.Status == driversettlement.StatusPosted {
-		paid, err := s.MarkPaid(
-			ctx,
-			req.TenantInfo,
-			current.ID,
-			req.PaymentMethod,
-			req.PaymentReference,
-			actor,
-		)
+		paid, err := s.MarkPaid(ctx, &serviceports.MarkSettlementPaidRequest{
+			TenantInfo:       req.TenantInfo,
+			SettlementID:     current.ID,
+			PaymentMethod:    req.PaymentMethod,
+			PaymentReference: req.PaymentReference,
+		}, actor)
 		if err != nil {
 			return current, s.instantStepError(current, "mark paid", err)
 		}

@@ -859,6 +859,55 @@ func TestPaymentVoidUsesTheSyncedPayment(t *testing.T) {
 		"a pending change to a voided payment is withdrawn")
 }
 
+func TestAPaymentSharedWithOtherDocumentsInTheBooksIsNotVoidedAlone(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	customerID, _ := h.mappedCustomer("Acme")
+	payment := h.postedPayment(customerID, paymentSpec{amountMinor: 5000})
+	created := NewRecordFor(h.conn, services.PaymentSyncRequest(
+		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted,
+	), mayTenth)
+	require.True(t, created.Link(&accountingsync.SyncLink{
+		ExternalID: "qb-pay-301",
+		Resolution: "Recorded in QuickBooks Online and applied in Trenova",
+		Combined:   true,
+	}, mayTenth))
+	h.records.put(created)
+	void := h.enqueuePayment(t, payment, accountingsync.SyncOperationVoid)
+
+	h.drain(t)
+
+	assert.Empty(t, h.writer.callsTo("VoidPayment"),
+		"voiding the provider payment would also undo the credit applied with it")
+	blocked := h.records.get(void.ID)
+	assert.Equal(t, accountingsync.SyncStatusBlocked, blocked.Status)
+	assert.Equal(t, accountingsync.SyncErrorConflict, blocked.ErrorCategory)
+	assert.Contains(t, blocked.Resolution, "Edit that payment in QuickBooks Online")
+}
+
+func TestAPaymentLinkedAloneIsVoidedNormally(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t)
+	customerID, _ := h.mappedCustomer("Acme")
+	payment := h.postedPayment(customerID, paymentSpec{amountMinor: 5000})
+	created := NewRecordFor(h.conn, services.PaymentSyncRequest(
+		payment, accountingsync.SyncOperationCreate, accountingsync.SyncSourceCustomerPaymentPosted,
+	), mayTenth)
+	require.True(t, created.Link(&accountingsync.SyncLink{ExternalID: "qb-pay-301"}, mayTenth))
+	h.records.put(created)
+	h.enqueuePayment(t, payment, accountingsync.SyncOperationVoid)
+
+	h.drain(t)
+
+	calls := h.writer.callsTo("VoidPayment")
+	require.Len(t, calls, 1)
+	ref, ok := calls[0].doc.(*services.AccountingDocumentRef)
+	require.True(t, ok)
+	assert.Equal(t, "qb-pay-301", ref.ExternalID)
+}
+
 func TestVoidOfAPaymentThatNeverReachedTheBooksWithdrawsIt(t *testing.T) {
 	t.Parallel()
 

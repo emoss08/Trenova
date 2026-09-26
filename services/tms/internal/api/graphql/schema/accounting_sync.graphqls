@@ -274,6 +274,12 @@ type AccountingConnection {
   driverSettlementsEnabledAt: Timestamp
   "Whether owner-operator settlements are sent as bills."
   syncsDriverSettlements: Boolean!
+  "What happens to payments recorded in the accounting system against documents Trenova sent."
+  inboundPaymentPolicy: AccountingInboundPaymentPolicy!
+  "When Trenova last read what changed in the accounting system."
+  changesReadAt: Timestamp
+  "Why the last read of changes failed. Empty when it succeeded."
+  changesErrorMessage: String!
   "When sending was paused. Records keep queueing while it is. Absent when it is running."
   pausedAt: Timestamp
   pausedBy: User
@@ -489,6 +495,8 @@ input UpdateAccountingSyncSettingsInput {
   autoSync: Boolean!
   "Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones."
   driverSettlements: Boolean!
+  "What happens to payments recorded in the accounting system. Left out, it stays as it is."
+  inboundPayments: AccountingInboundPaymentPolicy
 }
 
 input PauseAccountingSyncInput {
@@ -700,6 +708,182 @@ input CompleteAccountingAuthorizationInput {
   realmId: String!
 }
 
+"What happens to a payment recorded in the accounting system against documents Trenova sent."
+enum AccountingInboundPaymentPolicy {
+  "Payments recorded there are not brought into Trenova."
+  Off
+  "Each payment waits for a person to apply it in Trenova."
+  Propose
+  "Payments that match Trenova are applied on their own; the rest wait for a person."
+  Apply
+}
+
+enum AccountingInboundChangeKind {
+  CustomerPayment
+  BillPayment
+}
+
+enum AccountingInboundChangeStatus {
+  "Just read. It is evaluated once it has settled."
+  Detected
+  "Waits for a person to apply or ignore it."
+  Proposed
+  Applied
+  Ignored
+  "Voided or deleted in the accounting system before it was applied."
+  Superseded
+}
+
+"Why a payment was not applied on its own."
+enum AccountingInboundChangeReason {
+  PolicyPropose
+  PeriodNotOpen
+  UnknownDocument
+  PartyMismatch
+  Overpayment
+  PartialBillPayment
+  AlreadyPaid
+  CurrencyMismatch
+  Voided
+  NotTrenovaDocument
+  SentFromTrenova
+  ApplyFailed
+}
+
+enum AccountingInboundDocumentKind {
+  Invoice
+  CreditMemo
+  DebitMemo
+  Bill
+  VendorCredit
+  Other
+}
+
+enum AccountingAppliedObjectType {
+  CustomerPayment
+  CreditMemoApplication
+  CarrierSettlement
+  DriverSettlement
+}
+
+"One document a payment in the accounting system pays."
+type AccountingInboundLine {
+  documentKind: AccountingInboundDocumentKind!
+  "The document's ID in the accounting system."
+  documentExternalId: String!
+  amountMinor: Int!
+  "The Trenova document the line pays. Absent when the line names a document Trenova did not send."
+  objectType: AccountingSyncObjectType
+  objectId: ID
+  objectNumber: String!
+  "What was open on the Trenova document when the payment was evaluated."
+  openMinor: Int!
+}
+
+"A Trenova record that applying a payment created or paid."
+type AccountingAppliedObject {
+  type: AccountingAppliedObjectType!
+  id: ID!
+}
+
+"A payment recorded in the accounting system against documents Trenova sent."
+type AccountingInboundChange {
+  id: ID!
+  kind: AccountingInboundChangeKind!
+  status: AccountingInboundChangeStatus!
+  "Why it was not applied on its own. Absent once applied."
+  reason: AccountingInboundChangeReason
+  "What to do about it, in plain language."
+  resolution: String!
+  "The payment's ID in the accounting system."
+  externalId: String!
+  externalNumber: String!
+  "A link to the payment in the accounting system."
+  externalUrl: String!
+  "When it was last changed in the accounting system."
+  providerModifiedAt: Timestamp
+  "Who last changed it there, when the accounting system says."
+  providerModifiedBy: String!
+  "The payment date."
+  txnDate: Timestamp!
+  amountMinor: Int!
+  currencyCode: String!
+  "The customer or vendor as the accounting system names it."
+  partyName: String!
+  "The Trenova customer, carrier or driver it pays for, once matched."
+  partyObjectId: ID
+  referenceNumber: String!
+  methodName: String!
+  "What the accounting system left unapplied on the payment."
+  unappliedMinor: Int!
+  lines: [AccountingInboundLine!]!
+  appliedObjects: [AccountingAppliedObject!]!
+  decidedBy: User
+  decidedAt: Timestamp
+  note: String!
+  detectedAt: Timestamp!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+type AccountingInboundChangeEdge {
+  node: AccountingInboundChange!
+  cursor: String!
+}
+
+type AccountingInboundChangeConnection {
+  edges: [AccountingInboundChangeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AccountingInboundSummary {
+  detected: Int!
+  proposed: Int!
+  "Applied in the last seven days."
+  appliedSince: Int!
+  "Ignored in the last seven days."
+  ignoredSince: Int!
+}
+
+type AccountingInboundOverview {
+  connectionId: ID!
+  policy: AccountingInboundPaymentPolicy!
+  changesReadAt: Timestamp
+  changesError: String!
+  summary: AccountingInboundSummary!
+}
+
+"One Trenova document applying a payment would pay."
+type AccountingInboundPostingLine {
+  objectType: AccountingSyncObjectType!
+  objectId: ID!
+  objectNumber: String!
+  amountMinor: Int!
+  openMinor: Int!
+}
+
+"What applying a payment would post, checked against Trenova as it is now."
+type AccountingInboundApplyPreview {
+  change: AccountingInboundChange!
+  canApply: Boolean!
+  "Why it cannot be applied now. Empty when it can."
+  blocker: String!
+  "The day it would be posted on."
+  paidAt: Timestamp!
+  "Cash applied to invoices."
+  cashMinor: Int!
+  "Cash left on the customer's account as unapplied."
+  unappliedMinor: Int!
+  lines: [AccountingInboundPostingLine!]!
+}
+
+input IgnoreAccountingInboundChangeInput {
+  id: ID!
+  "Why it is not applied, for example that it was entered in Trenova by hand."
+  note: String!
+}
+
 extend type Query {
   "The organization's link to an accounting system, and whether this instance can connect to it at all."
   accountingSyncStatus(integrationType: AccountingSystem!): AccountingSyncStatus!
@@ -731,6 +915,16 @@ extend type Query {
   "Where each document stands in the accounting system. Documents never queued are left out. At most 200 at a time."
   accountingSyncObjectStates(objectIds: [ID!]!): [AccountingSyncObjectState!]!
   accountingBackfills(integrationType: AccountingSystem!): [AccountingBackfill!]!
+  "Counts of payments recorded in the accounting system, and when changes were last read."
+  accountingInboundOverview(integrationType: AccountingSystem!): AccountingInboundOverview!
+  "Payments recorded in the accounting system as a data table, newest first."
+  accountingInboundChangeTable(
+    integrationType: AccountingSystem!
+    input: DataTableConnectionInput!
+  ): AccountingInboundChangeConnection!
+  accountingInboundChange(id: ID!): AccountingInboundChange!
+  "What applying a payment would post, without posting it."
+  accountingInboundApplyPreview(id: ID!): AccountingInboundApplyPreview!
   "Searches the accounting system records Trenova has read."
   accountingReferenceObjects(
     integrationType: AccountingSystem!
@@ -783,4 +977,8 @@ extend type Mutation {
   "Queues documents posted before sync was turned on. One backfill runs at a time."
   requestAccountingBackfill(input: RequestAccountingBackfillInput!): AccountingBackfill!
   changeAccountingBackfill(input: ChangeAccountingBackfillInput!): AccountingBackfill!
+  "Posts a payment recorded in the accounting system in Trenova: the customer payment and credits, or the settlement payment."
+  applyAccountingInboundChange(id: ID!): AccountingInboundChange!
+  "Leaves a payment recorded in the accounting system out of Trenova, with a reason."
+  ignoreAccountingInboundChange(input: IgnoreAccountingInboundChangeInput!): AccountingInboundChange!
 }

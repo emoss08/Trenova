@@ -38,6 +38,7 @@ const (
 	ExternalRefShortPayPrefix = "shortPay:"
 	ExternalRefDocumentType   = "documentType"
 	ExternalRefURL            = "url"
+	ExternalRefCombined       = "combined"
 )
 
 var (
@@ -287,6 +288,35 @@ func (r *AccountingSyncRecord) MarkSynced(result *SyncResult, at int64) {
 	r.NextAttemptAt = nil
 	r.LeaseExpiresAt = nil
 	r.clearError()
+}
+
+type SyncLink struct {
+	ExternalID  string
+	ExternalURL string
+	Resolution  string
+	Combined    bool
+}
+
+func (r *AccountingSyncRecord) Link(link *SyncLink, at int64) bool {
+	if r.Status.IsFinal() || r.Status == SyncStatusInFlight || link.ExternalID == "" {
+		return false
+	}
+	r.Status = SyncStatusSynced
+	r.ExternalID = stringutils.TruncateRunes(link.ExternalID, 100)
+	r.ExternalURL = link.ExternalURL
+	if link.Combined {
+		r.SetExternalRef(ExternalRefCombined, link.ExternalID)
+	}
+	r.SyncedAt = &at
+	r.NextAttemptAt = nil
+	r.LeaseExpiresAt = nil
+	r.clearError()
+	r.Resolution = stringutils.TruncateRunes(link.Resolution, maxSyncResolution)
+	return true
+}
+
+func (r *AccountingSyncRecord) SharesProviderDocument() bool {
+	return r.ExternalRefs[ExternalRefCombined] != ""
 }
 
 func SyncRetryDelay(attempt int) time.Duration {

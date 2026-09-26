@@ -176,6 +176,12 @@ cases:
     expect: [skip_accounting_sync]
   - request: pause sending to quickbooks during the outage
     expect: [pause_accounting_sync]
+  - request: which payments recorded in quickbooks are waiting to be applied in trenova
+    expect: [list_accounting_inbound_changes]
+  - request: apply the customer payment from quickbooks for acme
+    expect: [apply_accounting_inbound_change, list_accounting_inbound_changes]
+  - request: ignore that quickbooks payment, we already keyed it in trenova
+    expect: [ignore_accounting_inbound_change, list_accounting_inbound_changes]
   - request: resume sending documents to quickbooks
     expect: [resume_accounting_sync]
   - request: backfill last year's invoices into quickbooks
