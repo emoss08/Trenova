@@ -82,6 +82,18 @@ describe("agentSuggestions", () => {
     expect(suggestions[0].label).toBe("What is blocking an invoice?");
   });
 
+  // Each money assistant opens on its own work rather than the generic
+  // "what can you do?", which is what an agent with no table entry gets.
+  it("opens the settlements clerk and receivables on their own work", () => {
+    const clerk = agentSuggestions({ template: "SettlementsClerk", starters: [] });
+    const receivables = agentSuggestions({ template: "Receivables", starters: [] });
+
+    expect(clerk.map((item) => item.label)).toContain("Settlements with exceptions");
+    expect(receivables.map((item) => item.label)).toContain("Who to chase today");
+    expect(clerk.some((item) => item.label === "What can you do?")).toBe(false);
+    expect(receivables.some((item) => item.label === "What can you do?")).toBe(false);
+  });
+
   it("puts the page's questions ahead of the agent's", () => {
     const suggestions = agentSuggestions(
       { template: null, starters: [{ label: "Own", prompt: "Own question" }] },

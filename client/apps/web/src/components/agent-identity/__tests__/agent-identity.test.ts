@@ -5,6 +5,7 @@ import {
   agentMonogram,
   agentSigil,
   resolveAgentIdentity,
+  TEMPLATE_ICON,
 } from "@/components/agent-identity/agent-identity";
 import { repoRoot } from "@/test/go-source";
 import { readFileSync } from "node:fs";
@@ -177,5 +178,28 @@ describe("agent icons", () => {
 
     expect(icons.length).toBeGreaterThan(10);
     expect(Object.keys(AGENT_ICONS).sort()).toEqual([...icons].sort());
+  });
+
+  // A starter's icon is served only when the agent chose none, so an agent the
+  // server draws with a banknote must not be drawn here with a robot.
+  it("implies the icon the server implies for every starter", () => {
+    const source = readFileSync(
+      join(repoRoot(), "services/tms/internal/core/domain/agentdefinition/identity.go"),
+      "utf8",
+    );
+    const values = new Map<string, string>();
+    for (const match of source.matchAll(/(Icon\w+)\s*=\s*"([^"]+)"/g)) {
+      values.set(match[1], match[2]);
+    }
+    const map = /var templateIcons = map\[Template\]string\{([^}]*)\}/.exec(source)?.[1] ?? "";
+    const server: Record<string, string> = {};
+    for (const match of map.matchAll(/Template(\w+):\s*(Icon\w+)/g)) {
+      server[match[1]] = values.get(match[2]) ?? "";
+    }
+
+    expect(Object.keys(server).length).toBeGreaterThan(20);
+    expect(TEMPLATE_ICON).toEqual(server);
+    expect(TEMPLATE_ICON.SettlementsClerk).toBe("banknote");
+    expect(TEMPLATE_ICON.Receivables).toBe("coins");
   });
 });

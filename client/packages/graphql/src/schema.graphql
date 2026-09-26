@@ -4147,7 +4147,9 @@ enum AgentTemplate {
   IntakeDesk
   LoadEntryCheck
   LoadMonitor
+  Receivables
   ServiceFailureDesk
+  SettlementsClerk
   ShipmentIntake
 }
 

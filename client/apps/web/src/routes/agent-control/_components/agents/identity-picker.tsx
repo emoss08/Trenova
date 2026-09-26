@@ -54,6 +54,12 @@ function iconLabel(t: Translate, icon: AgentIconName): string {
       return t("Search");
     case "bell":
       return t("Bell");
+    case "inbox":
+      return t("Inbox");
+    case "banknote":
+      return t("Banknote");
+    case "coins":
+      return t("Coins");
     default:
       return t("Spark");
   }
