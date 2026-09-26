@@ -998,6 +998,7 @@ var AccountingInboundChangeColumns = struct {
 	Kind               Column // "kind" → qualified: "acctic.kind"
 	ExternalID         Column // "external_id" → qualified: "acctic.external_id"
 	ExternalNumber     Column // "external_number" → qualified: "acctic.external_number"
+	ExternalURL        Column // "external_url" → qualified: "acctic.external_url"
 	ProviderModifiedAt Column // "provider_modified_at" → qualified: "acctic.provider_modified_at"
 	ProviderModifiedBy Column // "provider_modified_by" → qualified: "acctic.provider_modified_by"
 	TxnDate            Column // "txn_date" → qualified: "acctic.txn_date"
@@ -1026,6 +1027,7 @@ var AccountingInboundChangeColumns = struct {
 	Kind:               NewColumn("kind", "acctic"),
 	ExternalID:         NewColumn("external_id", "acctic"),
 	ExternalNumber:     NewColumn("external_number", "acctic"),
+	ExternalURL:        NewColumn("external_url", "acctic"),
 	ProviderModifiedAt: NewColumn("provider_modified_at", "acctic"),
 	ProviderModifiedBy: NewColumn("provider_modified_by", "acctic"),
 	TxnDate:            NewColumn("txn_date", "acctic"),
@@ -1060,6 +1062,7 @@ var AccountingInboundChangeFieldMap = map[string]string{
 	"kind":               "kind",
 	"externalId":         "external_id",
 	"externalNumber":     "external_number",
+	"externalUrl":        "external_url",
 	"providerModifiedAt": "provider_modified_at",
 	"providerModifiedBy": "provider_modified_by",
 	"txnDate":            "txn_date",
@@ -1092,6 +1095,7 @@ var AccountingInboundChangeInsertableColumns = []string{
 	"kind",
 	"external_id",
 	"external_number",
+	"external_url",
 	"provider_modified_at",
 	"provider_modified_by",
 	"txn_date",
@@ -1186,6 +1190,7 @@ var AccountingInboundChangeFilter = struct {
 	Kind               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "kind" → DB: "kind"
 	ExternalID         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalId" → DB: "external_id"
 	ExternalNumber     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalNumber" → DB: "external_number"
+	ExternalURL        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "externalUrl" → DB: "external_url"
 	ProviderModifiedAt func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerModifiedAt" → DB: "provider_modified_at"
 	ProviderModifiedBy func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "providerModifiedBy" → DB: "provider_modified_by"
 	TxnDate            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "txnDate" → DB: "txn_date"
@@ -1227,6 +1232,9 @@ var AccountingInboundChangeFilter = struct {
 	},
 	ExternalNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("externalNumber", op, value)
+	},
+	ExternalURL: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("externalUrl", op, value)
 	},
 	ProviderModifiedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("providerModifiedAt", op, value)

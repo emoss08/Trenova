@@ -48,6 +48,13 @@ func (k InboundChangeKind) EchoObjectTypes() []SyncObjectType {
 	return []SyncObjectType{SyncObjectCustomerPayment, SyncObjectCreditApplication}
 }
 
+func (k InboundChangeKind) SyncObjectType() SyncObjectType {
+	if k == InboundBillPayment {
+		return SyncObjectCarrierBillPay
+	}
+	return SyncObjectCustomerPayment
+}
+
 func AllInboundChangeKinds() []InboundChangeKind {
 	return []InboundChangeKind{InboundCustomerPayment, InboundBillPayment}
 }

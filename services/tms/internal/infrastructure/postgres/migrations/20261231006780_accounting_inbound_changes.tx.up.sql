@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS "accounting_inbound_changes"(
     "kind" varchar(30) NOT NULL,
     "external_id" varchar(100) NOT NULL,
     "external_number" varchar(100),
+    "external_url" text,
     "provider_modified_at" bigint,
     "provider_modified_by" varchar(200),
     "txn_date" bigint NOT NULL,

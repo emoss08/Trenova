@@ -435,12 +435,17 @@ func (s *Service) observation(
 		modified := payment.ModifiedAt
 		modifiedAt = &modified
 	}
+	externalURL := ""
+	if sess.writer != nil {
+		externalURL = sess.writer.DocumentURL(payment.Kind.SyncObjectType(), payment.ExternalID)
+	}
 	return &accountingsync.InboundObservation{
 		TenantInfo:         sess.tenant,
 		ConnectionID:       sess.conn.ID,
 		Kind:               payment.Kind,
 		ExternalID:         payment.ExternalID,
 		ExternalNumber:     payment.Number,
+		ExternalURL:        externalURL,
 		ProviderModifiedAt: modifiedAt,
 		ProviderModifiedBy: payment.ModifiedBy,
 		TxnDate:            txnDate,

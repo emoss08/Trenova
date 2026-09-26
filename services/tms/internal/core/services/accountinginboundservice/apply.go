@@ -3,10 +3,12 @@ package accountinginboundservice
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -261,6 +263,9 @@ func (s *Service) Apply(
 	if err != nil {
 		return nil, err
 	}
+	if err = s.authorizeApply(ctx, current, actor); err != nil {
+		return nil, err
+	}
 	conn, err := s.connectionByID(ctx, req.TenantInfo, current.ConnectionID)
 	if err != nil {
 		return nil, err
@@ -279,6 +284,62 @@ func (s *Service) Apply(
 	}
 	s.afterDecision(ctx, current, actor.UserID)
 	return nil, errortypes.NewValidationError("id", errortypes.ErrInvalid, blocked.resolution)
+}
+
+type requiredPermission struct {
+	resource  permission.Resource
+	operation permission.Operation
+}
+
+func applyPermissions(change *accountingsync.AccountingInboundChange) []requiredPermission {
+	if change.Kind == accountingsync.InboundCustomerPayment {
+		return []requiredPermission{{permission.ResourceCustomerPayment, permission.OpCreate}}
+	}
+	out := make([]requiredPermission, 0, 2)
+	for _, line := range change.Document.Lines {
+		var needed requiredPermission
+		switch line.ObjectType { //nolint:exhaustive // only bills are paid by a bill payment
+		case accountingsync.SyncObjectCarrierBill:
+			needed = requiredPermission{permission.ResourceCarrierSettlement, permission.OpUpdate}
+		case accountingsync.SyncObjectDriverBill:
+			needed = requiredPermission{permission.ResourceDriverSettlement, permission.OpUpdate}
+		default:
+			continue
+		}
+		if !slices.Contains(out, needed) {
+			out = append(out, needed)
+		}
+	}
+	return out
+}
+
+func (s *Service) authorizeApply(
+	ctx context.Context,
+	change *accountingsync.AccountingInboundChange,
+	actor *services.RequestActor,
+) error {
+	for _, needed := range applyPermissions(change) {
+		result, err := s.permissions.Check(ctx, &services.PermissionCheckRequest{
+			PrincipalType:  actor.PrincipalType,
+			PrincipalID:    actor.PrincipalID,
+			UserID:         actor.UserID,
+			APIKeyID:       actor.APIKeyID,
+			BusinessUnitID: actor.BusinessUnitID,
+			OrganizationID: actor.OrganizationID,
+			Resource:       needed.resource.String(),
+			Operation:      needed.operation,
+		})
+		if err != nil {
+			return err
+		}
+		if result == nil || !result.Allowed {
+			return errortypes.NewAuthorizationError(
+				"Applying this payment posts to {0}, which you do not have permission to change",
+				needed.resource.String(),
+			)
+		}
+	}
+	return nil
 }
 
 func (s *Service) applyChange(

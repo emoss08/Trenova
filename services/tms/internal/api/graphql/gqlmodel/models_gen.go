@@ -208,6 +208,17 @@ type AccountTypeEdge struct {
 	Cursor string                   `json:"cursor"`
 }
 
+type AccountingInboundChangeConnection struct {
+	Edges      []*AccountingInboundChangeEdge `json:"edges"`
+	PageInfo   *PageInfo                      `json:"pageInfo"`
+	TotalCount *int                           `json:"totalCount,omitempty"`
+}
+
+type AccountingInboundChangeEdge struct {
+	Node   *accountingsync.AccountingInboundChange `json:"node"`
+	Cursor string                                  `json:"cursor"`
+}
+
 type AccountingMappingConnection struct {
 	Edges      []*AccountingMappingEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
@@ -3941,6 +3952,12 @@ type IFTATaxRatesInput struct {
 	Period         *IFTAPeriodInput          `json:"period,omitempty"`
 	JurisdictionID *string                   `json:"jurisdictionId,omitempty"`
 	FuelType       *domaintypes.IFTAFuelType `json:"fuelType,omitempty"`
+}
+
+type IgnoreAccountingInboundChangeInput struct {
+	ID string `json:"id"`
+	// Why it is not applied, for example that it was entered in Trenova by hand.
+	Note string `json:"note"`
 }
 
 type ImportSourcedCarrierInput struct {
@@ -8102,6 +8119,8 @@ type UpdateAccountingSyncSettingsInput struct {
 	AutoSync bool `json:"autoSync"`
 	// Send owner-operator settlements as bills. Turning this on sends settlements posted from now on; a backfill reaches earlier ones.
 	DriverSettlements bool `json:"driverSettlements"`
+	// What happens to payments recorded in the accounting system. Left out, it stays as it is.
+	InboundPayments *accountingsync.InboundPaymentPolicy `json:"inboundPayments,omitempty"`
 }
 
 type UpdateAgentEvalCaseInput struct {

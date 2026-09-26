@@ -90,6 +90,7 @@ type AccountingInboundChange struct {
 	Kind               InboundChangeKind   `json:"kind"               bun:"kind,type:VARCHAR(30),notnull"`
 	ExternalID         string              `json:"externalId"         bun:"external_id,type:VARCHAR(100),notnull"`
 	ExternalNumber     string              `json:"externalNumber"     bun:"external_number,type:VARCHAR(100),nullzero"`
+	ExternalURL        string              `json:"externalUrl"        bun:"external_url,type:TEXT,nullzero"`
 	ProviderModifiedAt *int64              `json:"providerModifiedAt" bun:"provider_modified_at,type:BIGINT,nullzero"`
 	ProviderModifiedBy string              `json:"providerModifiedBy" bun:"provider_modified_by,type:VARCHAR(200),nullzero"`
 	TxnDate            int64               `json:"txnDate"            bun:"txn_date,type:BIGINT,notnull"`
@@ -122,6 +123,7 @@ type InboundObservation struct {
 	Kind               InboundChangeKind
 	ExternalID         string
 	ExternalNumber     string
+	ExternalURL        string
 	ProviderModifiedAt *int64
 	ProviderModifiedBy string
 	TxnDate            int64
@@ -151,6 +153,9 @@ func NewAccountingInboundChange(o *InboundObservation) *AccountingInboundChange 
 
 func (c *AccountingInboundChange) observe(o *InboundObservation) {
 	c.ExternalNumber = stringutils.TruncateRunes(o.ExternalNumber, 100)
+	if o.ExternalURL != "" {
+		c.ExternalURL = o.ExternalURL
+	}
 	c.ProviderModifiedAt = o.ProviderModifiedAt
 	c.ProviderModifiedBy = stringutils.TruncateRunes(o.ProviderModifiedBy, maxInboundModifiedBy)
 	c.TxnDate = o.TxnDate

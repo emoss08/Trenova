@@ -134,8 +134,8 @@ func agentRunListSpec() listSpec {
 		name:         "list_agent_runs",
 		entityPlural: "agent runs",
 		summary: "List agent runs: what each agent did, what started it, the record it " +
-			"worked on, and whether it failed, waits on a decision or is still running. " +
-			"get_agent_run reads one in full.",
+			"worked on, and whether it failed, waits on a decision or is running. " +
+			"get_agent_run reads one.",
 		resource: permission.ResourceAgentRun,
 		config:   querybuilder.GetFieldConfiguration((*agent.AgentRun)(nil)),
 		fields: []listField{

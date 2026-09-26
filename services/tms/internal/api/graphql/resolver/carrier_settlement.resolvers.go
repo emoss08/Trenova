@@ -7,7 +7,6 @@ package resolver
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 
 	"github.com/emoss08/trenova/internal/api/actorutil"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
@@ -18,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"

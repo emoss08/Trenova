@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 192.
+Tools listed: 195.
 
 ## The model
 
@@ -51,13 +51,13 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 127 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 128 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 6 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 42 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 43 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 1 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 5 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 10 |
-| Money | Moves or commits money. | Automatic | Yes | 5 |
+| Money | Moves or commits money. | Automatic | Yes | 6 |
 
 ## Reads only
 
@@ -120,6 +120,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get worker earnings summary (`get_worker_earnings_summary`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get worker HOS (`get_worker_hos`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accessorial charges (`list_accessorial_charges`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List accounting inbound changes (`list_accounting_inbound_changes`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accounting mapping gaps (`list_accounting_mapping_gaps`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List accounting sync records (`list_accounting_sync_records`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List agent runs (`list_agent_runs`) | Reads only | Automatic | — | When the record is marked, from run record | Lists agent runs, whose summaries may repeat outside text a run read; a run on a conversation is listed only to the person who owns it. |
@@ -229,6 +230,7 @@ Changes records only people inside the organization see.
 | Flag for manual review (`flag_for_manual_review`) | Inside the organization | Automatic | — | — | Records an exception on the run for a person inside the organization to work. |
 | Forget memory (`forget_memory`) | Inside the organization | Automatic | — | — | Retires an agent memory inside Trenova. |
 | Fork report (`fork_report`) | Inside the organization | Automatic | — | — | Saves a copy of a report inside Trenova; nothing leaves the organization. |
+| Ignore accounting inbound change (`ignore_accounting_inbound_change`) | Inside the organization | Ask first | — | — | Keeps a payment the books hold out of Trenova for good, so a person approves it. |
 | Link inbound message (`link_inbound_message`) | Inside the organization | Automatic | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Links an inbound message to a record inside Trenova; the mailbox decides how far it may run. |
 | Mark inbound message (`mark_inbound_message`) | Inside the organization | Automatic | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Settles an inbound message inside Trenova; the mailbox decides how far it may run. |
 | Pause accounting sync (`pause_accounting_sync`) | Inside the organization | Automatic | — | — | Holds what is waiting to go to the books; nothing is sent, changed or lost, and resuming sends it on. |
@@ -287,6 +289,7 @@ Moves or commits money.
 
 | Tool | Classes | Max tier | Condition | Reads outside text | Rationale |
 | --- | --- | --- | --- | --- | --- |
+| Apply accounting inbound change (`apply_accounting_inbound_change`) | Money | Ask first | — | — | Posts money in Trenova: a customer payment or a settlement payment, so a person approves each one. |
 | Approve detention (`approve_detention`) | Money | Propose | — | — | Releases a held detention charge onto the customer's invoice; only a person approves it. |
 | Correct charge code (`correct_charge_code`) | Money | Automatic | — | — | Rewrites the accessorial charges a customer will be invoiced, so it moves money. |
 | Match bank receipt (`match_bank_receipt`) | Money | Automatic | — | — | Matches a bank receipt to a posted payment, closing its reconciliation. |

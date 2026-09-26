@@ -52,6 +52,7 @@ type harness struct {
 	watchtower *fakeWatchtower
 	events     *agenteventstest.Recorder
 	refresher  *fakeRefresher
+	perms      *fakePermissions
 	tenant     pagination.TenantInfo
 	conn       *accountingsync.AccountingConnection
 	system     *tenant.User
@@ -94,6 +95,7 @@ func newHarness(t *testing.T, policy accountingsync.InboundPaymentPolicy) *harne
 		watchtower: &fakeWatchtower{},
 		events:     &agenteventstest.Recorder{},
 		refresher:  &fakeRefresher{},
+		perms:      &fakePermissions{denied: map[string]bool{}},
 		tenant:     tenantInfo,
 		conn:       conn,
 		system:     &tenant.User{ID: pulid.MustNew("usr_")},
@@ -122,6 +124,7 @@ func newHarness(t *testing.T, policy accountingsync.InboundPaymentPolicy) *harne
 		CarrierPayer:      h.carriers,
 		DriverPayer:       h.drivers,
 		AuditService:      h.audit,
+		Permissions:       h.perms,
 		Refresher:         h.refresher,
 		Publisher:         h.events,
 		Watchtower:        h.watchtower,
@@ -861,4 +864,42 @@ func TestProposalsOlderThanADayRaiseAWatchtowerItemPerReason(t *testing.T) {
 		assert.Equal(t, agent.SubjectAccountingInbound, item.SubjectType)
 		assert.Contains(t, item.Title, "1 payment recorded in QuickBooks Online")
 	}
+}
+
+func TestApplyingNeedsPermissionToPostWhatThePaymentPays(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h.invoice("INV-1001", 10_000, 0, "145")
+	h.poll(t, customerPayment("301", "100", invoiceLine("145", "100")))
+	h.evaluate(t)
+	change := h.changes.byExternal("301")
+	h.perms.denied["customer_payment:create"] = true
+
+	_, err := h.svc.Apply(t.Context(), &services.DecideAccountingInboundChangeRequest{
+		TenantInfo: h.tenant,
+		ID:         change.ID,
+	}, h.person())
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+	assert.Empty(t, h.payments.posted)
+	assert.Equal(t, accountingsync.InboundStatusProposed, h.changes.byExternal("301").Status)
+}
+
+func TestApplyingABillPaymentNeedsSettlementPermission(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t, accountingsync.InboundPaymentsPropose)
+	h.carrierBill("CS-1042", 98_000, "390")
+	h.poll(t, billPayment("410", "980", "390", "980"))
+	h.evaluate(t)
+	change := h.changes.byExternal("410")
+	h.perms.denied["carrier_settlement:update"] = true
+
+	_, err := h.svc.Apply(t.Context(), &services.DecideAccountingInboundChangeRequest{
+		TenantInfo: h.tenant,
+		ID:         change.ID,
+	}, h.person())
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthorizationError(err))
+	assert.Empty(t, h.carriers.paid)
+	assert.Equal(t, []string{"carrier_settlement:update"}, h.perms.asked)
 }

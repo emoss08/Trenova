@@ -41,6 +41,7 @@ type AccountingInboundEvaluation struct {
 }
 
 type ListAccountingInboundChangesRequest struct {
+	TenantInfo      pagination.TenantInfo
 	Filter          *pagination.QueryOptions
 	Cursor          pagination.CursorInfo
 	IntegrationType integration.Type

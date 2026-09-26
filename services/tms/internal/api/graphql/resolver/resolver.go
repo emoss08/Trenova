@@ -181,6 +181,7 @@ type Params struct {
 	AccountingConnectionService  services.AccountingConnectionService
 	AccountingMappingService     services.AccountingMappingService
 	AccountingSyncService        services.AccountingSyncService
+	AccountingInboundService     services.AccountingInboundService
 	DetentionPolicyService       *detentionpolicyservice.Service
 	RateAgreementService         *rateagreementservice.Service
 	RateZoneService              *ratezoneservice.Service
@@ -347,6 +348,7 @@ type Resolver struct {
 	accountingConnections        services.AccountingConnectionService
 	accountingMappings           services.AccountingMappingService
 	accountingSync               services.AccountingSyncService
+	accountingInbound            services.AccountingInboundService
 	detentionPolicyService       *detentionpolicyservice.Service
 	rateAgreementService         *rateagreementservice.Service
 	rateZoneService              *ratezoneservice.Service
@@ -514,6 +516,7 @@ func New(p Params) *Resolver {
 		accountingConnections:        p.AccountingConnectionService,
 		accountingMappings:           p.AccountingMappingService,
 		accountingSync:               p.AccountingSyncService,
+		accountingInbound:            p.AccountingInboundService,
 		detentionPolicyService:       p.DetentionPolicyService,
 		rateAgreementService:         p.RateAgreementService,
 		rateZoneService:              p.RateZoneService,

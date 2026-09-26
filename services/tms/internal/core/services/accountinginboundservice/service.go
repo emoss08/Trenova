@@ -50,6 +50,7 @@ type Params struct {
 	CarrierPayer      services.CarrierSettlementPayer
 	DriverPayer       services.DriverSettlementPayer
 	AuditService      services.AuditService
+	Permissions       services.PermissionEngine
 	Refresher         services.AccountingReferenceRefresher `optional:"true"`
 	Publisher         services.AgentEventPublisher          `optional:"true"`
 	Watchtower        services.WatchtowerProjector          `optional:"true"`
@@ -74,6 +75,7 @@ type Service struct {
 	carrierPayer     services.CarrierSettlementPayer
 	driverPayer      services.DriverSettlementPayer
 	audit            services.AuditService
+	permissions      services.PermissionEngine
 	refresher        services.AccountingReferenceRefresher
 	publisher        services.AgentEventPublisher
 	watchtower       services.WatchtowerProjector
@@ -103,6 +105,7 @@ func New(p Params) *Service {
 		carrierPayer:     p.CarrierPayer,
 		driverPayer:      p.DriverPayer,
 		audit:            p.AuditService,
+		permissions:      p.Permissions,
 		refresher:        p.Refresher,
 		publisher:        p.Publisher,
 		watchtower:       p.Watchtower,
@@ -163,14 +166,19 @@ func (s *Service) List(
 	ctx context.Context,
 	req *services.ListAccountingInboundChangesRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingInboundChange], error) {
-	conn, err := s.connectionFor(ctx, req.Filter.TenantInfo, req.IntegrationType)
+	conn, err := s.connectionFor(ctx, req.TenantInfo, req.IntegrationType)
 	if err != nil {
 		return nil, err
 	}
+	filter := req.Filter
+	if filter == nil {
+		filter = &pagination.QueryOptions{}
+	}
+	filter.TenantInfo = req.TenantInfo
 	return s.changes.ListConnection(
 		ctx,
 		&repositories.ListAccountingInboundChangesConnectionRequest{
-			Filter:       req.Filter,
+			Filter:       filter,
 			Cursor:       req.Cursor,
 			ConnectionID: conn.ID,
 			Statuses:     req.Statuses,

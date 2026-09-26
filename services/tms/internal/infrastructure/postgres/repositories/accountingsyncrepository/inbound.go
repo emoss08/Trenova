@@ -175,6 +175,9 @@ func (r *inboundChangeRepository) applyListFilters(
 	req *repositories.ListAccountingInboundChangesConnectionRequest,
 ) *bun.SelectQuery {
 	cols := buncolgen.AccountingInboundChangeColumns
+	if req.Filter != nil {
+		q = q.Apply(buncolgen.AccountingInboundChangeApplyTenant(req.Filter.TenantInfo))
+	}
 	q = q.Where(cols.ConnectionID.Eq(), req.ConnectionID)
 	if len(req.Statuses) > 0 {
 		q = q.Where(cols.Status.In(), bun.List(req.Statuses))

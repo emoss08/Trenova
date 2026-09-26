@@ -678,3 +678,21 @@ func (f *fakeRefresher) RequestReferenceRefresh(
 	f.requested++
 	return nil
 }
+
+type fakePermissions struct {
+	services.PermissionEngine
+	mu     sync.Mutex
+	denied map[string]bool
+	asked  []string
+}
+
+func (f *fakePermissions) Check(
+	_ context.Context,
+	req *services.PermissionCheckRequest,
+) (*services.PermissionCheckResult, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	key := req.Resource + ":" + string(req.Operation)
+	f.asked = append(f.asked, key)
+	return &services.PermissionCheckResult{Allowed: !f.denied[key]}, nil
+}

@@ -3908,6 +3908,65 @@ models:
   AccountingBackfill:
     model:
       - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingBackfill
+  AccountingInboundPaymentPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundPaymentPolicy
+  AccountingInboundChangeKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundChangeKind
+  AccountingInboundChangeStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundChangeStatus
+  AccountingInboundChangeReason:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundChangeReason
+  AccountingInboundDocumentKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundDocumentKind
+  AccountingAppliedObjectType:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AppliedObjectType
+  AccountingInboundLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.InboundLine
+    fields:
+      objectType:
+        resolver: true
+      objectId:
+        resolver: true
+  AccountingAppliedObject:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AppliedObject
+  AccountingInboundChange:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingInboundChange
+    fields:
+      reason:
+        resolver: true
+      partyObjectId:
+        resolver: true
+      referenceNumber:
+        resolver: true
+      methodName:
+        resolver: true
+      unappliedMinor:
+        resolver: true
+      lines:
+        resolver: true
+      decidedBy:
+        resolver: true
+  AccountingInboundSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingInboundSummary
+  AccountingInboundOverview:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingInboundOverview
+  AccountingInboundPostingLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingInboundPostingLine
+  AccountingInboundApplyPreview:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingInboundApplyPreview
   AccountingSyncStatusCount:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingSyncStatusCount

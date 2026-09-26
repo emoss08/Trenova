@@ -23,6 +23,7 @@ enum AgentSubjectType {
   Dashboard
   AccountingConnection
   AccountingSyncRecord
+  AccountingInboundChange
   FormulaTemplate
 }
 
