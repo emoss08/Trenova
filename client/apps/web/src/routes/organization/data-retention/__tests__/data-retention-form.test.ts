@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   AI_AUDIT_RETENTION_DEFAULT_DAYS,
   AI_AUDIT_RETENTION_MIN_DAYS,
+  AI_CORRECTION_RETENTION_DEFAULT_DAYS,
+  AI_CORRECTION_RETENTION_MIN_DAYS,
   dataRetentionFormSchema,
   dataRetentionFormValues,
 } from "../data-retention-form";
@@ -20,6 +22,7 @@ const valid = {
   aiFeedbackRetentionPeriod: 730,
   agentEvalCaseRetentionPeriod: 365,
   aiAuditRetentionPeriod: 2555,
+  aiCorrectionRetentionPeriod: 730,
 };
 
 describe("AI audit trail retention", () => {
@@ -72,5 +75,44 @@ describe("AI audit trail retention", () => {
       aiAuditRetentionPeriod: 0,
     });
     expect(dataRetentionFormValues(zeroed).aiAuditRetentionPeriod).toBe(2555);
+  });
+});
+
+describe("AI correction retention", () => {
+  it("keeps two years by default and a month at the least", () => {
+    expect(AI_CORRECTION_RETENTION_DEFAULT_DAYS).toBe(730);
+    expect(AI_CORRECTION_RETENTION_MIN_DAYS).toBe(30);
+  });
+
+  it("refuses less than a month and a fraction of a day", () => {
+    for (const value of [29, 0, -1, 45.5]) {
+      const parsed = dataRetentionFormSchema.safeParse({
+        ...valid,
+        aiCorrectionRetentionPeriod: value,
+      });
+      expect(parsed.success, String(value)).toBe(false);
+      expect(parsed.error?.issues[0]?.path).toEqual(["aiCorrectionRetentionPeriod"]);
+    }
+    expect(
+      dataRetentionFormSchema.safeParse({ ...valid, aiCorrectionRetentionPeriod: 30 }).success,
+    ).toBe(true);
+  });
+
+  it("offers the default when an older setting has none", () => {
+    const older = dataRetentionSchema.parse({
+      organizationId: "org_1",
+      businessUnitId: "bu_1",
+      auditRetentionPeriod: 120,
+      aiCorrectionRetentionPeriod: 0,
+    });
+    expect(dataRetentionFormValues(older).aiCorrectionRetentionPeriod).toBe(730);
+
+    const saved = dataRetentionSchema.parse({
+      organizationId: "org_1",
+      businessUnitId: "bu_1",
+      auditRetentionPeriod: 120,
+      aiCorrectionRetentionPeriod: 90,
+    });
+    expect(dataRetentionFormValues(saved).aiCorrectionRetentionPeriod).toBe(90);
   });
 });

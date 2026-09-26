@@ -68,6 +68,13 @@ export type AiAuditVerificationStatus =
   | 'Mismatch'
   | 'Verified';
 
+export type AiCorrectionOutcome =
+  | 'Correct'
+  | 'Corrected'
+  | 'Missed'
+  | 'Unconfirmed'
+  | 'Unscored';
+
 /**
  * How an embedding endpoint is told whether a text is a stored document or a
  * search query. None sends both the same way; VoyageInputType sends Voyage's
@@ -656,6 +663,8 @@ export type AgentContextProvider =
   | 'User';
 
 export type AgentControlInput = {
+  /** Absent leaves training consent as it is. Only a signed-in person can change it. */
+  aiTrainingConsent?: boolean | null | undefined;
   /** @deprecated Enable or disable the billing exception agent definition instead */
   billingAgentEnabled?: boolean | null | undefined;
   /** @deprecated Set decisionTimeoutSeconds on the agent definition instead */
@@ -2930,6 +2939,25 @@ export type EscrowTransactionType =
   | 'InterestAccrual'
   | 'Refund';
 
+export type ExtractionEvalCaseStatus =
+  | 'Active'
+  | 'Candidate'
+  | 'Retired';
+
+export type ExtractionEvalResultStatus =
+  | 'Completed'
+  | 'Failed'
+  | 'Pending'
+  | 'Skipped';
+
+export type ExtractionEvalRunStatus =
+  | 'BudgetStopped'
+  | 'Canceled'
+  | 'Completed'
+  | 'Failed'
+  | 'Queued'
+  | 'Running';
+
 export type FacilityType =
   | 'ColdStorage'
   | 'CrossDock'
@@ -4474,6 +4502,13 @@ export type ProfileChangeStatus =
   | 'Rejected'
   | 'Withdrawn';
 
+export type PromoteAiCorrectionInput = {
+  /** Start the case as Active rather than Candidate. */
+  activate?: boolean | null | undefined;
+  correctionId: string | number;
+  title?: string | null | undefined;
+};
+
 export type ProposeMyShiftSwapInput = {
   /** The day offered back, when the swap is a trade rather than a hand-off. */
   counterpartyShiftDate?: number | null | undefined;
@@ -5939,6 +5974,12 @@ export type StartBillingTransferRunInput = {
   status?: ShipmentStatus | null | undefined;
 };
 
+export type StartExtractionEvalRunInput = {
+  /** How many active cases to run, newest first; 50 by default, at most 500. */
+  caseLimit?: number | null | undefined;
+  providerId: string | number;
+};
+
 export type StartWorkerChecklistInput = {
   startedAt?: number | null | undefined;
   templateId: string | number;
@@ -6274,6 +6315,13 @@ export type UpdateEscrowAccountInput = {
   targetAmountMinor: number;
   version: number;
   workerId: string | number;
+};
+
+export type UpdateExtractionEvalCaseInput = {
+  notes?: string | null | undefined;
+  status?: ExtractionEvalCaseStatus | null | undefined;
+  title?: string | null | undefined;
+  version: number;
 };
 
 export type UpdateFuelIndexPriceInput = {
@@ -7596,7 +7644,7 @@ export type VerifyAiAuditChainMutationVariables = Exact<{ [key: string]: never; 
 
 export type VerifyAiAuditChainMutation = { verifyAIAuditChain: { ' $fragmentRefs'?: { 'AiAuditChainStatusFieldsFragment': AiAuditChainStatusFieldsFragment } } };
 
-export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
+export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, aiTrainingConsent: boolean, aiTrainingConsentChangedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
 
 export type AgentControlSettingsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -7609,6 +7657,11 @@ export type UpdateAgentControlMutationVariables = Exact<{
 
 
 export type UpdateAgentControlMutation = { updateAgentControl: { ' $fragmentRefs'?: { 'AgentControlFieldsFragment': AgentControlFieldsFragment } } };
+
+export type AiTrainingExportHistoryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AiTrainingExportHistoryQuery = { aiTrainingExportHistory: Array<{ exportId: string, examples: number, trainExamples: number, validationExamples: number, consentGrantedAt: number, exportedAt: number }> };
 
 export type PendingProposalFieldsFragment = { id: string, organizationId: string, businessUnitId: string, runId: string, toolName: string, toolParams: unknown, confidence: number, rationale: string, autonomyTier: AgentAutonomyTier, status: AgentProposalStatus, planId: string | null, planStep: number, simulatedAt: number | null, simulation: unknown, modifications: unknown, version: number, createdAt: number, updatedAt: number, parameterFields: Array<{ name: string, label: string, description: string, kind: AgentProposalFieldKind, required: boolean, options: Array<string>, minimum: number | null, maximum: number | null, maxLength: number | null, readOnly: boolean, resource: string | null, choices: Array<{ id: string, label: string }> | null }>, evidence: Array<{ type: string, id: string, note: string }>, run: { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, subjectType: AgentSubjectType, subjectId: string, summary: string, definition: { id: string, name: string, template: AgentTemplate | null, icon: string, accent: string } | null } | null } & { ' $fragmentName'?: 'PendingProposalFieldsFragment' };
 
@@ -10348,6 +10401,140 @@ export type BulkUpdateEquipmentTypeStatusMutationVariables = Exact<{
 
 
 export type BulkUpdateEquipmentTypeStatusMutation = { bulkUpdateEquipmentTypeStatus: Array<{ ' $fragmentRefs'?: { 'EquipmentTypeConfigurationRowFieldsFragment': EquipmentTypeConfigurationRowFieldsFragment } }> };
+
+export type ExtractionFieldAccuracyFieldsFragment = { key: string, scored: number, correct: number, corrected: number, missed: number, unconfirmed: number, unscored: number, accuracy: number } & { ' $fragmentName'?: 'ExtractionFieldAccuracyFieldsFragment' };
+
+export type ExtractionSnapshotFieldsFragment = { fields: Array<{ key: string, value: string }>, stops: Array<{ role: string, sequence: number, name: string, addressLine1: string, addressLine2: string, city: string, state: string, postalCode: string, date: string, timeWindow: string, appointmentRequired: boolean, scheduledWindowStart: number | null, timezone: string }> } & { ' $fragmentName'?: 'ExtractionSnapshotFieldsFragment' };
+
+export type AiCorrectionFieldResultFieldsFragment = { key: string, predicted: string, confirmed: string, outcome: AiCorrectionOutcome, source: string, confidence: number } & { ' $fragmentName'?: 'AiCorrectionFieldResultFieldsFragment' };
+
+export type ExtractionEvalRunFieldsFragment = { id: string, status: ExtractionEvalRunStatus, providerId: string, providerName: string, providerModel: string, servedModel: string, caseLimit: number, casesTotal: number, casesCompleted: number, casesFailed: number, casesSkipped: number, scoredCount: number, correctCount: number, correctedCount: number, missedCount: number, unconfirmedCount: number, unscoredCount: number, accuracy: number, costUsd: string, inputTokens: number, outputTokens: number, avgLatencyMs: number, stopReason: string, failureMessage: string, startedAt: number | null, finishedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionEvalRunFieldsFragment' };
+
+export type ExtractionEvalRunDetailFieldsFragment = (
+  { fieldAccuracy: Array<{ ' $fragmentRefs'?: { 'ExtractionFieldAccuracyFieldsFragment': ExtractionFieldAccuracyFieldsFragment } }> }
+  & { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } }
+) & { ' $fragmentName'?: 'ExtractionEvalRunDetailFieldsFragment' };
+
+export type AiCorrectionTableRowFieldsFragment = { id: string, documentId: string | null, subjectId: string, documentKind: string, documentFingerprint: string, extractionModel: string, predictedConfidence: number, scoredCount: number, correctCount: number, correctedCount: number, missedCount: number, unconfirmedCount: number, unscoredCount: number, accuracy: number, capturedAt: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AiCorrectionTableRowFieldsFragment' };
+
+export type AiCorrectionDetailFieldsFragment = (
+  { fieldResults: Array<{ ' $fragmentRefs'?: { 'AiCorrectionFieldResultFieldsFragment': AiCorrectionFieldResultFieldsFragment } }> }
+  & { ' $fragmentRefs'?: { 'AiCorrectionTableRowFieldsFragment': AiCorrectionTableRowFieldsFragment } }
+) & { ' $fragmentName'?: 'AiCorrectionDetailFieldsFragment' };
+
+export type ExtractionEvalCaseTableRowFieldsFragment = { id: string, status: ExtractionEvalCaseStatus, title: string, documentKind: string, documentFingerprint: string, fileName: string, pageCount: number, expectedFieldCount: number, sourceCorrectionId: string | null, sourceDocumentId: string | null, notes: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionEvalCaseTableRowFieldsFragment' };
+
+export type ExtractionEvalResultTableRowFieldsFragment = { id: string, runId: string, caseId: string, caseTitle: string, ordinal: number, status: ExtractionEvalResultStatus, model: string, scoredCount: number, correctCount: number, correctedCount: number, missedCount: number, unconfirmedCount: number, unscoredCount: number, accuracy: number, latencyMs: number, costUsd: string, errorMessage: string, completedAt: number | null, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'ExtractionEvalResultTableRowFieldsFragment' };
+
+export type ExtractionAccuracyQueryVariables = Exact<{
+  windowDays?: number | null | undefined;
+}>;
+
+
+export type ExtractionAccuracyQuery = { extractionAccuracy: { windowDays: number, since: number, corrections: number, sampled: boolean, scored: number, correct: number, corrected: number, missed: number, unconfirmed: number, accuracy: number, byModel: Array<{ key: string, corrections: number, scored: number, correct: number, accuracy: number }>, byKind: Array<{ key: string, corrections: number, scored: number, correct: number, accuracy: number }>, fields: Array<{ ' $fragmentRefs'?: { 'ExtractionFieldAccuracyFieldsFragment': ExtractionFieldAccuracyFieldsFragment } }>, cases: { candidate: number, active: number, retired: number }, recentRuns: Array<{ ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } }> } };
+
+export type AiCorrectionTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AiCorrectionTableQuery = { aiCorrections: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'AiCorrectionTableRowFieldsFragment': AiCorrectionTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AiCorrectionDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AiCorrectionDetailQuery = { aiCorrection: { ' $fragmentRefs'?: { 'AiCorrectionDetailFieldsFragment': AiCorrectionDetailFieldsFragment } } | null };
+
+export type ExtractionEvalCaseTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type ExtractionEvalCaseTableQuery = { extractionEvalCases: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalCaseTableRowFieldsFragment': ExtractionEvalCaseTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ExtractionEvalCaseDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ExtractionEvalCaseDetailQuery = { extractionEvalCase: (
+    { expected: { ' $fragmentRefs'?: { 'ExtractionSnapshotFieldsFragment': ExtractionSnapshotFieldsFragment } } }
+    & { ' $fragmentRefs'?: { 'ExtractionEvalCaseTableRowFieldsFragment': ExtractionEvalCaseTableRowFieldsFragment } }
+  ) | null };
+
+export type ExtractionEvalRunTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type ExtractionEvalRunTableQuery = { extractionEvalRuns: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ExtractionEvalRunDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ExtractionEvalRunDetailQuery = { extractionEvalRun: { ' $fragmentRefs'?: { 'ExtractionEvalRunDetailFieldsFragment': ExtractionEvalRunDetailFieldsFragment } } | null };
+
+export type ExtractionEvalResultTableQueryVariables = Exact<{
+  runId: string | number;
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type ExtractionEvalResultTableQuery = { extractionEvalResults: { totalCount?: number | null, edges: Array<{ node: { ' $fragmentRefs'?: { 'ExtractionEvalResultTableRowFieldsFragment': ExtractionEvalResultTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type ExtractionEvalResultDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ExtractionEvalResultDetailQuery = { extractionEvalResult: (
+    { fieldResults: Array<{ ' $fragmentRefs'?: { 'AiCorrectionFieldResultFieldsFragment': AiCorrectionFieldResultFieldsFragment } }> }
+    & { ' $fragmentRefs'?: { 'ExtractionEvalResultTableRowFieldsFragment': ExtractionEvalResultTableRowFieldsFragment } }
+  ) | null };
+
+export type PromoteAiCorrectionMutationVariables = Exact<{
+  input: PromoteAiCorrectionInput;
+}>;
+
+
+export type PromoteAiCorrectionMutation = { promoteAICorrection: { ' $fragmentRefs'?: { 'ExtractionEvalCaseTableRowFieldsFragment': ExtractionEvalCaseTableRowFieldsFragment } } };
+
+export type UpdateExtractionEvalCaseMutationVariables = Exact<{
+  id: string | number;
+  input: UpdateExtractionEvalCaseInput;
+}>;
+
+
+export type UpdateExtractionEvalCaseMutation = { updateExtractionEvalCase: { ' $fragmentRefs'?: { 'ExtractionEvalCaseTableRowFieldsFragment': ExtractionEvalCaseTableRowFieldsFragment } } };
+
+export type DeleteExtractionEvalCaseMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeleteExtractionEvalCaseMutation = { deleteExtractionEvalCase: boolean };
+
+export type StartExtractionEvalRunMutationVariables = Exact<{
+  input: StartExtractionEvalRunInput;
+}>;
+
+
+export type StartExtractionEvalRunMutation = { startExtractionEvalRun: { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } } };
+
+export type CancelExtractionEvalRunMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CancelExtractionEvalRunMutation = { cancelExtractionEvalRun: { ' $fragmentRefs'?: { 'ExtractionEvalRunFieldsFragment': ExtractionEvalRunFieldsFragment } } };
 
 export type FiscalPeriodFieldsFragment = { id: string, businessUnitId: string, organizationId: string, fiscalYearId: string, periodNumber: number, periodType: PeriodType, status: FiscalPeriodStatus, name: string, startDate: number, endDate: number, closedAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'FiscalPeriodFieldsFragment' };
 
@@ -14843,6 +15030,8 @@ export const AgentControlFieldsFragmentDoc = new TypedDocumentString(`
   shadowMode
   earnedAutonomy
   promotionThreshold
+  aiTrainingConsent
+  aiTrainingConsentChangedAt
   version
   createdAt
   updatedAt
@@ -17978,6 +18167,229 @@ fragment UsStateTableFields on UsState {
   name
   abbreviation
 }`, {"fragmentName":"TrailerTableRowFields"}) as unknown as TypedDocumentString<TrailerTableRowFieldsFragment, unknown>;
+export const ExtractionSnapshotFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionSnapshotFields on ExtractionSnapshot {
+  fields {
+    key
+    value
+  }
+  stops {
+    role
+    sequence
+    name
+    addressLine1
+    addressLine2
+    city
+    state
+    postalCode
+    date
+    timeWindow
+    appointmentRequired
+    scheduledWindowStart
+    timezone
+  }
+}
+    `, {"fragmentName":"ExtractionSnapshotFields"}) as unknown as TypedDocumentString<ExtractionSnapshotFieldsFragment, unknown>;
+export const ExtractionEvalRunFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionEvalRunFields on ExtractionEvalRun {
+  id
+  status
+  providerId
+  providerName
+  providerModel
+  servedModel
+  caseLimit
+  casesTotal
+  casesCompleted
+  casesFailed
+  casesSkipped
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  unconfirmedCount
+  unscoredCount
+  accuracy
+  costUsd
+  inputTokens
+  outputTokens
+  avgLatencyMs
+  stopReason
+  failureMessage
+  startedAt
+  finishedAt
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ExtractionEvalRunFields"}) as unknown as TypedDocumentString<ExtractionEvalRunFieldsFragment, unknown>;
+export const ExtractionFieldAccuracyFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionFieldAccuracyFields on ExtractionFieldAccuracy {
+  key
+  scored
+  correct
+  corrected
+  missed
+  unconfirmed
+  unscored
+  accuracy
+}
+    `, {"fragmentName":"ExtractionFieldAccuracyFields"}) as unknown as TypedDocumentString<ExtractionFieldAccuracyFieldsFragment, unknown>;
+export const ExtractionEvalRunDetailFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionEvalRunDetailFields on ExtractionEvalRun {
+  ...ExtractionEvalRunFields
+  fieldAccuracy {
+    ...ExtractionFieldAccuracyFields
+  }
+}
+    fragment ExtractionFieldAccuracyFields on ExtractionFieldAccuracy {
+  key
+  scored
+  correct
+  corrected
+  missed
+  unconfirmed
+  unscored
+  accuracy
+}
+fragment ExtractionEvalRunFields on ExtractionEvalRun {
+  id
+  status
+  providerId
+  providerName
+  providerModel
+  servedModel
+  caseLimit
+  casesTotal
+  casesCompleted
+  casesFailed
+  casesSkipped
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  unconfirmedCount
+  unscoredCount
+  accuracy
+  costUsd
+  inputTokens
+  outputTokens
+  avgLatencyMs
+  stopReason
+  failureMessage
+  startedAt
+  finishedAt
+  version
+  createdAt
+  updatedAt
+}`, {"fragmentName":"ExtractionEvalRunDetailFields"}) as unknown as TypedDocumentString<ExtractionEvalRunDetailFieldsFragment, unknown>;
+export const AiCorrectionTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AICorrectionTableRowFields on AICorrection {
+  id
+  documentId
+  subjectId
+  documentKind
+  documentFingerprint
+  extractionModel
+  predictedConfidence
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  unconfirmedCount
+  unscoredCount
+  accuracy
+  capturedAt
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"AICorrectionTableRowFields"}) as unknown as TypedDocumentString<AiCorrectionTableRowFieldsFragment, unknown>;
+export const AiCorrectionFieldResultFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AICorrectionFieldResultFields on AICorrectionFieldResult {
+  key
+  predicted
+  confirmed
+  outcome
+  source
+  confidence
+}
+    `, {"fragmentName":"AICorrectionFieldResultFields"}) as unknown as TypedDocumentString<AiCorrectionFieldResultFieldsFragment, unknown>;
+export const AiCorrectionDetailFieldsFragmentDoc = new TypedDocumentString(`
+    fragment AICorrectionDetailFields on AICorrection {
+  ...AICorrectionTableRowFields
+  fieldResults {
+    ...AICorrectionFieldResultFields
+  }
+}
+    fragment AICorrectionFieldResultFields on AICorrectionFieldResult {
+  key
+  predicted
+  confirmed
+  outcome
+  source
+  confidence
+}
+fragment AICorrectionTableRowFields on AICorrection {
+  id
+  documentId
+  subjectId
+  documentKind
+  documentFingerprint
+  extractionModel
+  predictedConfidence
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  unconfirmedCount
+  unscoredCount
+  accuracy
+  capturedAt
+  createdAt
+  updatedAt
+}`, {"fragmentName":"AICorrectionDetailFields"}) as unknown as TypedDocumentString<AiCorrectionDetailFieldsFragment, unknown>;
+export const ExtractionEvalCaseTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionEvalCaseTableRowFields on ExtractionEvalCase {
+  id
+  status
+  title
+  documentKind
+  documentFingerprint
+  fileName
+  pageCount
+  expectedFieldCount
+  sourceCorrectionId
+  sourceDocumentId
+  notes
+  version
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ExtractionEvalCaseTableRowFields"}) as unknown as TypedDocumentString<ExtractionEvalCaseTableRowFieldsFragment, unknown>;
+export const ExtractionEvalResultTableRowFieldsFragmentDoc = new TypedDocumentString(`
+    fragment ExtractionEvalResultTableRowFields on ExtractionEvalResult {
+  id
+  runId
+  caseId
+  caseTitle
+  ordinal
+  status
+  model
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  unconfirmedCount
+  unscoredCount
+  accuracy
+  latencyMs
+  costUsd
+  errorMessage
+  completedAt
+  createdAt
+  updatedAt
+}
+    `, {"fragmentName":"ExtractionEvalResultTableRowFields"}) as unknown as TypedDocumentString<ExtractionEvalResultTableRowFieldsFragment, unknown>;
 export const FiscalPeriodFieldsFragmentDoc = new TypedDocumentString(`
     fragment FiscalPeriodFields on FiscalPeriod {
   id
@@ -22565,8 +22977,9 @@ export const AiAuditExportDetailDocument = {"__meta__":{"kind":"query","name":"A
 export const RequestAiAuditExportDocument = {"__meta__":{"kind":"mutation","name":"RequestAIAuditExport","hash":"sha256:58b7441c924c34ef725b97617378507ee9fbc255c4807fa0a1c6728b3a686e3f"}} as unknown as TypedDocumentString<RequestAiAuditExportMutation, RequestAiAuditExportMutationVariables>;
 export const AiAuditExportDownloadDocument = {"__meta__":{"kind":"mutation","name":"AIAuditExportDownload","hash":"sha256:c2de785dfd66b796b3fe28d2540c3661146c4fb1ec351a765baa567758c6a80f"}} as unknown as TypedDocumentString<AiAuditExportDownloadMutation, AiAuditExportDownloadMutationVariables>;
 export const VerifyAiAuditChainDocument = {"__meta__":{"kind":"mutation","name":"VerifyAIAuditChain","hash":"sha256:ef094f57f0060f6885edbec0665b81e27e2b8e09b047819be47dae0e6b423ad5"}} as unknown as TypedDocumentString<VerifyAiAuditChainMutation, VerifyAiAuditChainMutationVariables>;
-export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:a44ebbd4e0c314668190068941ad623cefb3b405b0fb345a4dfe58072465cf70"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
-export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:5f38f15ae16abb622bccc80b578ce30e1743ab4b89440782ac1b96232f48a2c3"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
+export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:cd563025c7cab3cccde8facd8817fb14d5e144c41c6c47214970a4a67833e00a"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
+export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:b86ee623bcf6bbc1b1b4471e5dfb96ce75da9de979b96146ad30bf44a603bf25"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
+export const AiTrainingExportHistoryDocument = {"__meta__":{"kind":"query","name":"AITrainingExportHistory","hash":"sha256:01cd3c46644654237a5921cf3f7b335abb7d86a142049dcd571463c3667f6f0a"}} as unknown as TypedDocumentString<AiTrainingExportHistoryQuery, AiTrainingExportHistoryQueryVariables>;
 export const PendingDecisionsDocument = {"__meta__":{"kind":"query","name":"PendingDecisions","hash":"sha256:3441ff2b9f09fce0092083222662d0265fd8dadec8cd5c8caba490fa354d6bff"}} as unknown as TypedDocumentString<PendingDecisionsQuery, PendingDecisionsQueryVariables>;
 export const PendingDecisionSummaryDocument = {"__meta__":{"kind":"query","name":"PendingDecisionSummary","hash":"sha256:4da8f1517d5269e2a6a982d9b22085d0fc060aad3115dfe942ffbbb4318f0aa6"}} as unknown as TypedDocumentString<PendingDecisionSummaryQuery, PendingDecisionSummaryQueryVariables>;
 export const PlanStepsDocument = {"__meta__":{"kind":"query","name":"PlanSteps","hash":"sha256:e68bddfe0b04782f1824389948de415819d6122ced863e86a86564431df715ec"}} as unknown as TypedDocumentString<PlanStepsQuery, PlanStepsQueryVariables>;
@@ -22920,6 +23333,20 @@ export const CreateEquipmentTypeDocument = {"__meta__":{"kind":"mutation","name"
 export const UpdateEquipmentTypeDocument = {"__meta__":{"kind":"mutation","name":"UpdateEquipmentType","hash":"sha256:05012e23f44106760ea0b9c4574517ce5095c9de4eddae711e8582b983f1d849"}} as unknown as TypedDocumentString<UpdateEquipmentTypeMutation, UpdateEquipmentTypeMutationVariables>;
 export const PatchEquipmentTypeDocument = {"__meta__":{"kind":"mutation","name":"PatchEquipmentType","hash":"sha256:c5c81ee0f81421708ff81f3e3e2c42c61d42b40f5a5cee5993a778df6b36ca1d"}} as unknown as TypedDocumentString<PatchEquipmentTypeMutation, PatchEquipmentTypeMutationVariables>;
 export const BulkUpdateEquipmentTypeStatusDocument = {"__meta__":{"kind":"mutation","name":"BulkUpdateEquipmentTypeStatus","hash":"sha256:a7e10803dec124d60c6f74fbce991a84c22d9e6dd45781e8bdc63de2ac10b9b3"}} as unknown as TypedDocumentString<BulkUpdateEquipmentTypeStatusMutation, BulkUpdateEquipmentTypeStatusMutationVariables>;
+export const ExtractionAccuracyDocument = {"__meta__":{"kind":"query","name":"ExtractionAccuracy","hash":"sha256:8b81dc4b87ae565327da143472887589b827a6906d106eacb1c54d5c1ed37e0d"}} as unknown as TypedDocumentString<ExtractionAccuracyQuery, ExtractionAccuracyQueryVariables>;
+export const AiCorrectionTableDocument = {"__meta__":{"kind":"query","name":"AICorrectionTable","hash":"sha256:3be549ba2e6848838b2bae954e6bd4c34a9fe03681870dd83e4e71ae304e40f9"}} as unknown as TypedDocumentString<AiCorrectionTableQuery, AiCorrectionTableQueryVariables>;
+export const AiCorrectionDetailDocument = {"__meta__":{"kind":"query","name":"AICorrectionDetail","hash":"sha256:0ed204533a23a8ffecec788703a5e20e8808904835f2f77d6aa568ec1ab05664"}} as unknown as TypedDocumentString<AiCorrectionDetailQuery, AiCorrectionDetailQueryVariables>;
+export const ExtractionEvalCaseTableDocument = {"__meta__":{"kind":"query","name":"ExtractionEvalCaseTable","hash":"sha256:7216705a09f417b6317453860bd3a0895b1a109353bf79b51db1b61d4ff802ab"}} as unknown as TypedDocumentString<ExtractionEvalCaseTableQuery, ExtractionEvalCaseTableQueryVariables>;
+export const ExtractionEvalCaseDetailDocument = {"__meta__":{"kind":"query","name":"ExtractionEvalCaseDetail","hash":"sha256:0ce9517b2ff163e5ea9bdb52ee582e25c44aeb5f2a8e0e4a6300ba8efce7cf20"}} as unknown as TypedDocumentString<ExtractionEvalCaseDetailQuery, ExtractionEvalCaseDetailQueryVariables>;
+export const ExtractionEvalRunTableDocument = {"__meta__":{"kind":"query","name":"ExtractionEvalRunTable","hash":"sha256:615b9f64a568a57ce4c0330187dcb4e61cbc562c96fc98915dbc0f1ae7262bef"}} as unknown as TypedDocumentString<ExtractionEvalRunTableQuery, ExtractionEvalRunTableQueryVariables>;
+export const ExtractionEvalRunDetailDocument = {"__meta__":{"kind":"query","name":"ExtractionEvalRunDetail","hash":"sha256:c24e85086caa1e469ad7aa6be5622d59c9a11ea663a2f572bd73fced8dab7b20"}} as unknown as TypedDocumentString<ExtractionEvalRunDetailQuery, ExtractionEvalRunDetailQueryVariables>;
+export const ExtractionEvalResultTableDocument = {"__meta__":{"kind":"query","name":"ExtractionEvalResultTable","hash":"sha256:c3024cec4f551f6148e539c3bf3f9637ce62b1c1ec8c751edd6f64a70c5713c0"}} as unknown as TypedDocumentString<ExtractionEvalResultTableQuery, ExtractionEvalResultTableQueryVariables>;
+export const ExtractionEvalResultDetailDocument = {"__meta__":{"kind":"query","name":"ExtractionEvalResultDetail","hash":"sha256:d5e1ffb58ee9b9b27830b744f5220c7734b462aa736d0de005f0c8f8afc5c355"}} as unknown as TypedDocumentString<ExtractionEvalResultDetailQuery, ExtractionEvalResultDetailQueryVariables>;
+export const PromoteAiCorrectionDocument = {"__meta__":{"kind":"mutation","name":"PromoteAICorrection","hash":"sha256:bfae8f704c81b80720e502a892efe8af44a18d0fc5651d7d795ea03664f794e3"}} as unknown as TypedDocumentString<PromoteAiCorrectionMutation, PromoteAiCorrectionMutationVariables>;
+export const UpdateExtractionEvalCaseDocument = {"__meta__":{"kind":"mutation","name":"UpdateExtractionEvalCase","hash":"sha256:91005cef1e2a24e5ecc21680b4ef16a06161cae4fbc4e5ecee337820fb5a0e6d"}} as unknown as TypedDocumentString<UpdateExtractionEvalCaseMutation, UpdateExtractionEvalCaseMutationVariables>;
+export const DeleteExtractionEvalCaseDocument = {"__meta__":{"kind":"mutation","name":"DeleteExtractionEvalCase","hash":"sha256:4c69388ebac0d5ef618839865cc3665156f2f9d625726a3c26caf1708a8e0fb1"}} as unknown as TypedDocumentString<DeleteExtractionEvalCaseMutation, DeleteExtractionEvalCaseMutationVariables>;
+export const StartExtractionEvalRunDocument = {"__meta__":{"kind":"mutation","name":"StartExtractionEvalRun","hash":"sha256:ea672f1a8f3e38c00676db1397816a9ea2fbe76a5984639646caae893a4df346"}} as unknown as TypedDocumentString<StartExtractionEvalRunMutation, StartExtractionEvalRunMutationVariables>;
+export const CancelExtractionEvalRunDocument = {"__meta__":{"kind":"mutation","name":"CancelExtractionEvalRun","hash":"sha256:a10fd933738a3fb17410e9299af3e277c6f8caf4344bab5eb8eef4427e44b24f"}} as unknown as TypedDocumentString<CancelExtractionEvalRunMutation, CancelExtractionEvalRunMutationVariables>;
 export const FiscalYearTableDocument = {"__meta__":{"kind":"query","name":"FiscalYearTable","hash":"sha256:b71efb13dab593e5639accbcbd43154e83864413588b315ef028c1029087a5b7"}} as unknown as TypedDocumentString<FiscalYearTableQuery, FiscalYearTableQueryVariables>;
 export const FleetCodeTableDocument = {"__meta__":{"kind":"query","name":"FleetCodeTable","hash":"sha256:aa2917e7de6d4a5981909b298d418eeaa9d673b8eef470e6ed424667aa344b43"}} as unknown as TypedDocumentString<FleetCodeTableQuery, FleetCodeTableQueryVariables>;
 export const FleetSafetyDocument = {"__meta__":{"kind":"query","name":"FleetSafety","hash":"sha256:6e9a229e80256b02928afbbb05c93d141f6955ef63bf3b19a4bfb228954c1334"}} as unknown as TypedDocumentString<FleetSafetyQuery, FleetSafetyQueryVariables>;

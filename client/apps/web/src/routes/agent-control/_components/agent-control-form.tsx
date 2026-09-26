@@ -3,6 +3,7 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { Card } from "@trenova/shared/components/ui/card";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Switch } from "@trenova/shared/components/ui/switch";
+import { formatUnixDateTime } from "@trenova/shared/lib/date";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -14,21 +15,32 @@ import {
 import type { AgentControlInput } from "@trenova/graphql/generated/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { AwardIcon, PauseCircleIcon } from "lucide-react";
+import { AwardIcon, DatabaseIcon, PauseCircleIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { promotionThresholdOptions } from "./agent-control-options";
+import { TrainingExportHistory } from "./training-export-history";
 
 type ControlPatch = Partial<
-  Pick<AgentControlInput, "shadowMode" | "earnedAutonomy" | "promotionThreshold">
+  Pick<
+    AgentControlInput,
+    "shadowMode" | "earnedAutonomy" | "promotionThreshold" | "aiTrainingConsent"
+  >
 >;
 
-/** The input the mutation sends: the current switches with one of them changed. */
+/**
+ * The input the mutation sends: the current switches with one of them changed.
+ * Training consent is sent only when it is the switch being changed, so saving
+ * any other switch never re-records who consented.
+ */
 function controlInput(current: AgentControl, patch: ControlPatch): AgentControlInput {
   return {
     shadowMode: patch.shadowMode ?? current.shadowMode,
     earnedAutonomy: patch.earnedAutonomy ?? current.earnedAutonomy,
     promotionThreshold: patch.promotionThreshold ?? current.promotionThreshold,
+    ...(patch.aiTrainingConsent === undefined
+      ? {}
+      : { aiTrainingConsent: patch.aiTrainingConsent }),
   };
 }
 
@@ -47,6 +59,12 @@ export default function AgentControlForm() {
         toast.success(patch.shadowMode ? t("All agents paused") : t("Agents resumed"));
       } else if (patch.earnedAutonomy !== undefined) {
         toast.success(patch.earnedAutonomy ? t("Earned autonomy on") : t("Earned autonomy off"));
+      } else if (patch.aiTrainingConsent !== undefined) {
+        toast.success(
+          patch.aiTrainingConsent
+            ? t("Corrections will be shared for model training")
+            : t("Corrections will no longer be shared for model training"),
+        );
       } else {
         toast.success(t("Promotion threshold saved"));
       }
@@ -61,6 +79,10 @@ export default function AgentControlForm() {
   );
   const onEarned = useCallback(
     (checked: boolean) => mutation.mutate({ earnedAutonomy: checked }),
+    [mutation],
+  );
+  const onTrainingConsent = useCallback(
+    (checked: boolean) => mutation.mutate({ aiTrainingConsent: checked }),
     [mutation],
   );
   const onThreshold = useCallback(
@@ -152,6 +174,36 @@ export default function AgentControlForm() {
             />
           </div>
         </div>
+      </Card>
+
+      <Card size="sm" className="gap-3 px-4 py-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
+              <DatabaseIcon className="size-4" />
+            </span>
+            <div className="max-w-prose">
+              <p className="text-sm font-semibold">{t("Share corrections for model training")}</p>
+              <p className="text-muted-foreground text-xs">
+                {t(
+                  "When someone creates a shipment from a document, Trenova keeps what was read from the document beside what they confirmed, so extraction accuracy can be measured for this organization. Turn this on to allow those corrections to be anonymized and used to improve the models that read documents for every customer. Turning it off keeps this organization's corrections out of any training that happens after the change.",
+                )}
+              </p>
+              {data.aiTrainingConsentChangedAt ? (
+                <p className="text-muted-foreground mt-1 text-xs">
+                  {t("Last changed {0}", formatUnixDateTime(data.aiTrainingConsentChangedAt))}
+                </p>
+              ) : null}
+            </div>
+          </div>
+          <Switch
+            checked={data.aiTrainingConsent}
+            disabled={!canUpdate || mutation.isPending}
+            onCheckedChange={onTrainingConsent}
+            aria-label={t("Share corrections for model training")}
+          />
+        </div>
+        <TrainingExportHistory />
       </Card>
     </div>
   );

@@ -19,6 +19,8 @@ var (
 const (
 	DefaultAIFeedbackRetentionDays    = 730
 	DefaultAIFeedbackRetentionMinDays = 30
+	DefaultAICorrectionRetentionDays  = 730
+	MinAICorrectionRetentionDays      = 30
 	DefaultAgentEvalCaseRetentionDays = 365
 	DefaultAIAuditRetentionDays       = 2555
 	MinAIAuditRetentionDays           = 365
@@ -42,6 +44,7 @@ type DataRetention struct {
 	AgentEvalCaseRetentionPeriod       int   `json:"agentEvalCaseRetentionPeriod"       bun:"agent_eval_case_retention_period,type:INTEGER,notnull,default:365"`
 	AIFeedbackRetentionPeriod          int   `json:"aiFeedbackRetentionPeriod"          bun:"ai_feedback_retention_period,type:INTEGER,notnull,default:730"`
 	AIAuditRetentionPeriod             int   `json:"aiAuditRetentionPeriod"             bun:"ai_audit_retention_period,type:INTEGER,notnull,default:2555"` // In days, at least MinAIAuditRetentionDays
+	AICorrectionRetentionPeriod        int   `json:"aiCorrectionRetentionPeriod"        bun:"ai_correction_retention_period,type:INTEGER,notnull,default:730"`
 	Version                            int64 `json:"version"                            bun:"version,type:BIGINT"`
 	CreatedAt                          int64 `json:"createdAt"                          bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt                          int64 `json:"updatedAt"                          bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -73,6 +76,9 @@ func (dr *DataRetention) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&dr.AIFeedbackRetentionPeriod,
 			validation.Min(0).Error("AI feedback retention period cannot be negative"),
 		),
+		validation.Field(&dr.AICorrectionRetentionPeriod,
+			validation.Min(0).Error("AI correction retention period cannot be negative"),
+		),
 		validation.Field(&dr.AIAuditRetentionPeriod,
 			validation.Required.Error("AI audit trail retention period is required"),
 			validation.Min(MinAIAuditRetentionDays).
@@ -88,6 +94,23 @@ func (dr *DataRetention) Validate(multiErr *errortypes.MultiError) {
 			"AI feedback retention period must be at least 30 days",
 		)
 	}
+
+	if dr.AICorrectionRetentionPeriod > 0 &&
+		dr.AICorrectionRetentionPeriod < MinAICorrectionRetentionDays {
+		multiErr.Add(
+			"aiCorrectionRetentionPeriod",
+			errortypes.ErrInvalid,
+			"AI correction retention period must be at least 30 days",
+		)
+	}
+}
+
+func (dr *DataRetention) AICorrectionRetentionDays() int {
+	if dr == nil || dr.AICorrectionRetentionPeriod <= 0 {
+		return DefaultAICorrectionRetentionDays
+	}
+
+	return dr.AICorrectionRetentionPeriod
 }
 
 func (dr *DataRetention) AIFeedbackRetentionDays() int {

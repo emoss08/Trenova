@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -566,4 +567,81 @@ func TestFailureOutcome_KeepsTheMetricLabelForAnUnconfiguredProvider(t *testing.
 	assert.Equal(t, "missing_config", failureOutcome(serviceports.ErrNoProviderConfigured))
 	assert.Equal(t, "invalid_output", failureOutcome(serviceports.ErrModelSchemaValidation))
 	assert.Equal(t, "error", failureOutcome(errors.New("connection refused")))
+}
+
+func TestExtractRateConfirmationForEvaluation_PinsTheProviderAndBillsTheEvaluation(t *testing.T) {
+	t.Parallel()
+
+	providerID := pulid.MustNew("aiprv_")
+	cost := decimal.RequireFromString("0.0042")
+	completion := &stubCompletion{
+		structured: &serviceports.StructuredCompletionResult{
+			Text:            extractPayload,
+			ModelIdentifier: "tuned-extractor",
+			ProviderID:      providerID,
+			InputTokens:     900,
+			OutputTokens:    120,
+			LatencyMs:       1500,
+			CostUSD:         &cost,
+		},
+	}
+	service := newTestService(t, completion)
+	source := extractRequest()
+
+	result, err := service.ExtractRateConfirmationForEvaluation(
+		t.Context(),
+		&serviceports.AIEvaluationExtractRequest{
+			TenantInfo: source.TenantInfo,
+			ProviderID: providerID,
+			FileName:   source.FileName,
+			Pages:      source.Pages,
+		},
+	)
+	require.NoError(t, err)
+
+	request := completion.sawRequest
+	require.NotNil(t, request)
+	assert.Equal(t, aiprovider.TaskDocumentExtraction, request.Task)
+	assert.Equal(t, providerID, request.PreferredProviderID)
+	assert.True(t, request.RequireProvider)
+	assert.Equal(t, serviceports.AIUsagePurposeEvaluation, request.Attribution.Purpose)
+	assert.Equal(t, aiusage.FeatureDocumentIntelligenceExtract, request.Attribution.Feature)
+
+	require.NotNil(t, result.Extract)
+	assert.Equal(t, "4471", result.Extract.Fields["loadNumber"].Value)
+	assert.Equal(t, "tuned-extractor", result.Model)
+	assert.Equal(t, providerID, result.ProviderID)
+	assert.Equal(t, 900, result.InputTokens)
+	assert.Equal(t, 120, result.OutputTokens)
+	assert.Equal(t, int64(1500), result.LatencyMs)
+	require.NotNil(t, result.CostUSD)
+	assert.True(t, cost.Equal(*result.CostUSD))
+}
+
+func TestExtractRateConfirmationForEvaluation_RequiresAProvider(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{}
+	service := newTestService(t, completion)
+
+	_, err := service.ExtractRateConfirmationForEvaluation(
+		t.Context(),
+		&serviceports.AIEvaluationExtractRequest{FileName: "rc.pdf"},
+	)
+	require.Error(t, err)
+	assert.Nil(t, completion.sawRequest)
+}
+
+func TestExtractRateConfirmation_LiveCallsAreNotPinned(t *testing.T) {
+	t.Parallel()
+
+	completion := &stubCompletion{
+		structured: &serviceports.StructuredCompletionResult{Text: extractPayload},
+	}
+	service := newTestService(t, completion)
+
+	_, err := service.ExtractRateConfirmation(t.Context(), extractRequest())
+	require.NoError(t, err)
+	assert.False(t, completion.sawRequest.RequireProvider)
+	assert.Equal(t, serviceports.AIUsagePurposeLive, completion.sawRequest.Attribution.Purpose)
 }

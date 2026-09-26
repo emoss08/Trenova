@@ -103,6 +103,47 @@ func (s *Service) ExtractRateConfirmation(
 	return convertExtractResponse(parsed), nil
 }
 
+func (s *Service) ExtractRateConfirmationForEvaluation(
+	ctx context.Context,
+	req *serviceports.AIEvaluationExtractRequest,
+) (*serviceports.AIEvaluationExtractResult, error) {
+	if !s.cfg.DocumentExtractionEnabled() {
+		return nil, errDisabled
+	}
+	if req.ProviderID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"providerId", errortypes.ErrRequired, "Choose the AI provider to evaluate",
+		)
+	}
+
+	call := s.extractCall(&serviceports.AIExtractRequest{
+		TenantInfo: req.TenantInfo,
+		FileName:   req.FileName,
+		Pages:      req.Pages,
+	})
+	call.metric = "extract_evaluation"
+	call.providerID = req.ProviderID
+	call.evaluation = true
+
+	parsed := new(extractResponse)
+	result, err := s.runStructured(ctx, call, parsed)
+	if err != nil {
+		return nil, err
+	}
+
+	s.recordAIUsage(call.metric, true, "success")
+
+	return &serviceports.AIEvaluationExtractResult{
+		Extract:      convertExtractResponse(parsed),
+		Model:        result.ModelIdentifier,
+		ProviderID:   result.ProviderID,
+		InputTokens:  result.InputTokens,
+		OutputTokens: result.OutputTokens,
+		LatencyMs:    result.LatencyMs,
+		CostUSD:      result.CostUSD,
+	}, nil
+}
+
 func (s *Service) extractCall(req *serviceports.AIExtractRequest) *structuredCall {
 	return &structuredCall{
 		tenant:     req.TenantInfo,

@@ -1,0 +1,311 @@
+fragment ExtractionFieldAccuracyFields on ExtractionFieldAccuracy {
+  key
+  scored
+  correct
+  corrected
+  missed
+  unconfirmed
+  unscored
+  accuracy
+}
+
+fragment ExtractionSnapshotFields on ExtractionSnapshot {
+  fields {
+    key
+    value
+  }
+  stops {
+    role
+    sequence
+    name
+    addressLine1
+    addressLine2
+    city
+    state
+    postalCode
+    date
+    timeWindow
+    appointmentRequired
+    scheduledWindowStart
+    timezone
+  }
+}
+
+fragment AICorrectionFieldResultFields on AICorrectionFieldResult {
+  key
+  predicted
+  confirmed
+  outcome
+  source
+  confidence
+}
+
+fragment ExtractionEvalRunFields on ExtractionEvalRun {
+  id
+  status
+  providerId
+  providerName
+  providerModel
+  servedModel
+  caseLimit
+  casesTotal
+  casesCompleted
+  casesFailed
+  casesSkipped
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  unconfirmedCount
+  unscoredCount
+  accuracy
+  costUsd
+  inputTokens
+  outputTokens
+  avgLatencyMs
+  stopReason
+  failureMessage
+  startedAt
+  finishedAt
+  version
+  createdAt
+  updatedAt
+}
+
+fragment ExtractionEvalRunDetailFields on ExtractionEvalRun {
+  ...ExtractionEvalRunFields
+  fieldAccuracy {
+    ...ExtractionFieldAccuracyFields
+  }
+}
+
+fragment AICorrectionTableRowFields on AICorrection {
+  id
+  documentId
+  subjectId
+  documentKind
+  documentFingerprint
+  extractionModel
+  predictedConfidence
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  unconfirmedCount
+  unscoredCount
+  accuracy
+  capturedAt
+  createdAt
+  updatedAt
+}
+
+fragment AICorrectionDetailFields on AICorrection {
+  ...AICorrectionTableRowFields
+  fieldResults {
+    ...AICorrectionFieldResultFields
+  }
+}
+
+fragment ExtractionEvalCaseTableRowFields on ExtractionEvalCase {
+  id
+  status
+  title
+  documentKind
+  documentFingerprint
+  fileName
+  pageCount
+  expectedFieldCount
+  sourceCorrectionId
+  sourceDocumentId
+  notes
+  version
+  createdAt
+  updatedAt
+}
+
+fragment ExtractionEvalResultTableRowFields on ExtractionEvalResult {
+  id
+  runId
+  caseId
+  caseTitle
+  ordinal
+  status
+  model
+  scoredCount
+  correctCount
+  correctedCount
+  missedCount
+  unconfirmedCount
+  unscoredCount
+  accuracy
+  latencyMs
+  costUsd
+  errorMessage
+  completedAt
+  createdAt
+  updatedAt
+}
+
+query ExtractionAccuracy($windowDays: Int) {
+  extractionAccuracy(windowDays: $windowDays) {
+    windowDays
+    since
+    corrections
+    sampled
+    scored
+    correct
+    corrected
+    missed
+    unconfirmed
+    accuracy
+    byModel {
+      key
+      corrections
+      scored
+      correct
+      accuracy
+    }
+    byKind {
+      key
+      corrections
+      scored
+      correct
+      accuracy
+    }
+    fields {
+      ...ExtractionFieldAccuracyFields
+    }
+    cases {
+      candidate
+      active
+      retired
+    }
+    recentRuns {
+      ...ExtractionEvalRunFields
+    }
+  }
+}
+
+query AICorrectionTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  aiCorrections(input: $input) {
+    edges {
+      node {
+        ...AICorrectionTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AICorrectionDetail($id: ID!) {
+  aiCorrection(id: $id) {
+    ...AICorrectionDetailFields
+  }
+}
+
+query ExtractionEvalCaseTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  extractionEvalCases(input: $input) {
+    edges {
+      node {
+        ...ExtractionEvalCaseTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query ExtractionEvalCaseDetail($id: ID!) {
+  extractionEvalCase(id: $id) {
+    ...ExtractionEvalCaseTableRowFields
+    expected {
+      ...ExtractionSnapshotFields
+    }
+  }
+}
+
+query ExtractionEvalRunTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  extractionEvalRuns(input: $input) {
+    edges {
+      node {
+        ...ExtractionEvalRunFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query ExtractionEvalRunDetail($id: ID!) {
+  extractionEvalRun(id: $id) {
+    ...ExtractionEvalRunDetailFields
+  }
+}
+
+query ExtractionEvalResultTable(
+  $runId: ID!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  extractionEvalResults(runId: $runId, input: $input) {
+    edges {
+      node {
+        ...ExtractionEvalResultTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query ExtractionEvalResultDetail($id: ID!) {
+  extractionEvalResult(id: $id) {
+    ...ExtractionEvalResultTableRowFields
+    fieldResults {
+      ...AICorrectionFieldResultFields
+    }
+  }
+}
+
+mutation PromoteAICorrection($input: PromoteAICorrectionInput!) {
+  promoteAICorrection(input: $input) {
+    ...ExtractionEvalCaseTableRowFields
+  }
+}
+
+mutation UpdateExtractionEvalCase($id: ID!, $input: UpdateExtractionEvalCaseInput!) {
+  updateExtractionEvalCase(id: $id, input: $input) {
+    ...ExtractionEvalCaseTableRowFields
+  }
+}
+
+mutation DeleteExtractionEvalCase($id: ID!) {
+  deleteExtractionEvalCase(id: $id)
+}
+
+mutation StartExtractionEvalRun($input: StartExtractionEvalRunInput!) {
+  startExtractionEvalRun(input: $input) {
+    ...ExtractionEvalRunFields
+  }
+}
+
+mutation CancelExtractionEvalRun($id: ID!) {
+  cancelExtractionEvalRun(id: $id) {
+    ...ExtractionEvalRunFields
+  }
+}

@@ -202,8 +202,14 @@ describe("buildRailItems", () => {
         .find((item) => item.tab === "quality")
         ?.children.map((child) => child.view);
 
-    expect(views(all)).toEqual(["agents", "runs", "ratings", "golden", "settings"]);
-    expect(views({ ...all, ratings: false })).toEqual(["agents", "runs", "golden", "settings"]);
+    expect(views(all)).toEqual(["agents", "runs", "ratings", "golden", "extraction", "settings"]);
+    expect(views({ ...all, ratings: false })).toEqual([
+      "agents",
+      "runs",
+      "golden",
+      "extraction",
+      "settings",
+    ]);
   });
 
   it("lists quality only where the golden set may be read", () => {
