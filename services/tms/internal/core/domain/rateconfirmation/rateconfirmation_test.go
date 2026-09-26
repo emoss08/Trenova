@@ -10,6 +10,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestVoidRecordsWhenAndWhy(t *testing.T) {
+	entity := &RateConfirmation{Status: StatusSent}
+	entity.Void(1790000000, "Carrier assignment canceled")
+
+	assert.Equal(t, StatusVoided, entity.Status)
+	assert.Equal(t, int64(1790000000), *entity.VoidedAt)
+	assert.Equal(t, "Carrier assignment canceled", entity.VoidReason)
+	assert.False(t, entity.IsActive())
+}
+
+func TestConfirmRecordsWhoExecutedItAndHow(t *testing.T) {
+	entity := &RateConfirmation{Status: StatusSent}
+	entity.Confirm(Confirmation{
+		At:    1790000000,
+		Name:  "Dana Ruiz",
+		Title: "Dispatch",
+		Via:   ViaDispatcher,
+	})
+
+	assert.Equal(t, StatusConfirmed, entity.Status)
+	assert.Equal(t, int64(1790000000), *entity.ConfirmedAt)
+	assert.Equal(t, "Dana Ruiz", entity.ConfirmedByName)
+	assert.Equal(t, "Dispatch", entity.ConfirmedByTitle)
+	assert.Equal(t, ViaDispatcher, entity.ConfirmedVia)
+}
+
 func TestViaIsValid(t *testing.T) {
 	assert.True(t, ViaDispatcher.IsValid())
 	assert.True(t, ViaTenderAcceptance.IsValid())

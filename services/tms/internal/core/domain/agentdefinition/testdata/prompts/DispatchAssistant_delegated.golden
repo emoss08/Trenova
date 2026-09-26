@@ -43,11 +43,11 @@ Loaded now:
 - get_shipment
 - search_shipments
 - list_shipments
-- shop_carriers
 - assign_move
 - add_shipment_comment
 - place_shipment_hold
 - release_shipment_hold
+- list_shipment_tenders
 
 Callable after find_tools:
 - get_worker — Retrieve one worker (driver) by id, including their profile and current state.
@@ -59,10 +59,22 @@ Callable after find_tools:
 - list_time_off — List worker (driver) time-off requests — who is out, who is asking to be, and who was turned down.
 - list_hold_reasons — List the reasons a shipment can be put on hold, and what each one blocks — dispatch, delivery, billing.
 - rank_move_candidates — Rank the drivers who could cover a shipment move, scored as the dispatch console scores them: hours left, deadhead, slack against the window, equipment fit.
+- shop_carriers — Price a saved shipment against carriers and rank them by contract cost, margin against the customer's charge, and routing guide rank.
 - update_tractor_status — Change the status of one or more tractors, which is what makes a truck available to dispatch or takes it off the board.
 - update_trailer_status — Change the status of one or more trailers, which is what makes a trailer available to dispatch or takes it off the board.
 - list_insights — List insight detector findings: service slipping for a customer, cash tied up in unbilled work, cost leaking at a location, compliance about to lapse.
 - get_insight — Read one insight in full: the finding with its numbers and records, its earlier runs, and the rule behind it.
+- unassign_moves — Take the driver and equipment off one or more moves that have not started, leaving each uncovered for someone else.
+- update_move_status — Set the status of one or more moves directly: InTransit when a load is rolling, Completed when it has been delivered, Canceled when the move will not run.
+- assign_move_to_carrier — Cover a move with an outside carrier at a rate the carrier has already agreed to, outside a tender: a contract carrier on its contract rate, or a carrier who accepted a load by phone or email.
+- cancel_carrier_assignment — Take the outside carrier off a move that has not started, leaving it uncovered, and void the carrier's rate confirmation.
+- cancel_tender — Withdraw a live tender: every offer a carrier still holds is withdrawn and its answer link stops working, and the carriers not yet asked are skipped.
+- record_tender_response — Record a carrier's answer to a tender offer that reached you by phone or email instead of through the offer's link.
+- list_rate_confirmations — List a move's rate confirmations, newest revision first: the carrier, the revision, its status (Generated, Sent, Confirmed or Voided), who it was sent to and when, and whether and how the carrier confirmed it.
+- generate_rate_confirmation — Generate the rate confirmation for a move covered by an outside carrier: a new revision of the agreement, with the carrier's pay and the stops as they stand, rendered as a PDF and filed on the shipment.
+- send_rate_confirmation — Email a rate confirmation to the carrier: the PDF goes to the carrier's contacts that receive rate confirmations, or the carrier's own address, with a link to sign it while it is unsigned.
+- void_rate_confirmation — Void a rate confirmation: the revision stops standing and its sign link stops working, and voiding one the carrier confirmed returns their assignment to awaiting confirmation.
+- record_rate_confirmation_confirmed — Record that the carrier confirmed a rate confirmation outside its sign link, for instance by signing and returning the PDF or agreeing on the phone.
 
 ## Artifacts
 This conversation keeps what your tools return beside it, where the person can open it: a list or search as a table, a record you fetch as a card, a report preview or run with its rows. A tool result that became one says so. Do not copy those rows or fields into your reply; answer with what matters (the count, the few rows that answer the question, what needs attention) and point to it.

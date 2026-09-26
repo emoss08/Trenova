@@ -39,6 +39,10 @@ type AssignmentService interface {
 		ctx context.Context,
 		req *repositories.UnassignShipmentMoveRequest,
 	) error
+	PreviewUnassign(
+		ctx context.Context,
+		req *repositories.UnassignShipmentMoveRequest,
+	) (*AssignmentPlan, error)
 	CheckWorkerCompliance(
 		ctx context.Context,
 		req *repositories.CheckWorkerComplianceRequest,

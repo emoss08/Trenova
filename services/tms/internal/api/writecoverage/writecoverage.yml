@@ -555,16 +555,16 @@ writes:
 
   # dispatchconsole
   "mutation dispatchAssignMoveToCarrier":
-    pending: "Assign a carrier to a move from the dispatch console."
+    tools: [assign_move_to_carrier]
   "mutation dispatchAssignMoves":
     tools: [assign_move]
   "mutation dispatchCancelCarrierAssignment":
-    pending: "Cancel a carrier's assignment to a move."
+    tools: [cancel_carrier_assignment]
   "mutation dispatchPlanAutoAssign":
     exempt: read-only
     reason: "Plans automatic assignments for review and saves nothing."
   "mutation dispatchUnassignMoves":
-    pending: "Remove the driver and equipment assigned to one or more moves."
+    tools: [unassign_moves]
 
   # dispatchcontrol
   "PUT /api/v1/dispatch-controls/":
@@ -1842,13 +1842,13 @@ writes:
 
   # rateconfirmation
   "POST /api/v1/rate-confirmations/:rateConfirmationID/confirm/":
-    pending: "Record that a carrier confirmed a rate confirmation outside the link."
+    tools: [record_rate_confirmation_confirmed]
   "POST /api/v1/rate-confirmations/:rateConfirmationID/send/":
-    pending: "Send a rate confirmation."
+    tools: [send_rate_confirmation]
   "POST /api/v1/rate-confirmations/:rateConfirmationID/void/":
-    pending: "Void a rate confirmation."
+    tools: [void_rate_confirmation]
   "POST /api/v1/shipment-moves/:moveID/rate-confirmations/":
-    pending: "Generate a shipment move."
+    tools: [generate_rate_confirmation]
 
   # rateconfirmationpublic
   "POST /api/v1/rate-confirmation-links/:token/confirm/":
@@ -2173,13 +2173,13 @@ writes:
 
   # shipmentmove
   "POST /api/v1/shipment-moves/:moveID/split/":
-    pending: "Split move (shipment move)."
+    pending: "Split a two-stop move at a relay point into two moves. Left without a tool: the split needs a relay location and two new scheduled windows the system holds nowhere, so a model would have to invent the times, and the service checks only their order."
   "POST /api/v1/shipment-moves/:moveID/stops/:stopID/record-actual/":
     tools: [record_stop_actual]
   "POST /api/v1/shipment-moves/:moveID/update-status/":
-    pending: "Update status (shipment move)."
+    tools: [update_move_status]
   "POST /api/v1/shipment-moves/bulk-update-status/":
-    pending: "Change the status of several shipment moves at once."
+    tools: [update_move_status]
 
   # shipmenttype
   "PATCH /api/v1/shipment-types/:shipmentTypeID/":
@@ -2261,9 +2261,9 @@ writes:
 
   # tender
   "POST /api/v1/tenders/:tenderID/cancel/":
-    pending: "Cancel a tender."
+    tools: [cancel_tender]
   "POST /api/v1/tenders/offers/:offerID/respond/":
-    pending: "Record a carrier's answer to a tender offer given by phone or email."
+    tools: [record_tender_response]
   "POST /api/v1/tenders/spot/":
     tools: [tender_move_to_carriers]
   "POST /api/v1/tenders/waterfall/":

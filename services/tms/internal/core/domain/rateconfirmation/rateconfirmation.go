@@ -124,6 +124,31 @@ func (rc *RateConfirmation) CanConfirm() bool {
 	return rc.Status == StatusGenerated || rc.Status == StatusSent
 }
 
+// Confirmation is who executed an agreement, how, and when.
+type Confirmation struct {
+	At    int64
+	Name  string
+	Title string
+	Via   Via
+}
+
+// Confirm records the agreement as executed.
+func (rc *RateConfirmation) Confirm(c Confirmation) {
+	at := c.At
+	rc.Status = StatusConfirmed
+	rc.ConfirmedAt = &at
+	rc.ConfirmedByName = c.Name
+	rc.ConfirmedByTitle = c.Title
+	rc.ConfirmedVia = c.Via
+}
+
+// Void retires the agreement, recording when and why.
+func (rc *RateConfirmation) Void(at int64, reason string) {
+	rc.Status = StatusVoided
+	rc.VoidedAt = &at
+	rc.VoidReason = reason
+}
+
 func (rc *RateConfirmation) Validate(multiErr *errortypes.MultiError) {
 	rc.applyDefaults()
 
