@@ -160,6 +160,11 @@ type DistanceCalculationService interface {
 		shipmentID pulid.ID,
 		tenantInfo pagination.TenantInfo,
 	) (*DistanceCalculationResponse, error)
+	PreviewRecalculateShipment(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*ShipmentDistancePreview, error)
 	RecalculateMoveJurisdictionMiles(
 		ctx context.Context,
 		req RecalculateMoveJurisdictionMilesRequest,
@@ -445,6 +450,28 @@ type ShipmentCancelPreview struct {
 	After  *shipment.Shipment
 }
 
+type ShipmentChangePreview struct {
+	Before *shipment.Shipment
+	After  *shipment.Shipment
+}
+
+type ShipmentAutoRatePreview struct {
+	Before      *shipment.Shipment
+	After       *shipment.Shipment
+	Application *ContractRateApplication
+}
+
+type ShipmentDistancePreview struct {
+	Before   *shipment.Shipment
+	After    *shipment.Shipment
+	Distance *DistanceCalculationResponse
+}
+
+type ShipmentDuplicatePreview struct {
+	Source *shipment.Shipment
+	Copies []*shipment.Shipment
+}
+
 type ShipmentService interface {
 	List(
 		ctx context.Context,
@@ -521,16 +548,30 @@ type ShipmentService interface {
 		req *AutoRateShipmentRequest,
 		actor *RequestActor,
 	) (*shipment.Shipment, *ContractRateApplication, error)
+	PreviewAutoRate(
+		ctx context.Context,
+		req *AutoRateShipmentRequest,
+		actor *RequestActor,
+	) (*ShipmentAutoRatePreview, error)
 	Uncancel(
 		ctx context.Context,
 		req *repositories.UncancelShipmentRequest,
 		actor *RequestActor,
 	) (*shipment.Shipment, error)
+	PreviewUncancel(
+		ctx context.Context,
+		req *repositories.UncancelShipmentRequest,
+	) (*ShipmentChangePreview, error)
 	TransferOwnership(
 		ctx context.Context,
 		req *repositories.TransferOwnershipRequest,
 		actor *RequestActor,
 	) (*shipment.Shipment, error)
+	PreviewTransferOwnership(
+		ctx context.Context,
+		req *repositories.TransferOwnershipRequest,
+		actor *RequestActor,
+	) (*ShipmentChangePreview, error)
 	CheckForDuplicateBOLs(
 		ctx context.Context,
 		req *repositories.DuplicateBOLCheckRequest,
@@ -565,6 +606,10 @@ type ShipmentService interface {
 		ctx context.Context,
 		req *repositories.BulkDuplicateShipmentRequest,
 	) (*repositories.ShipmentDuplicateWorkflowResponse, error)
+	PreviewDuplicate(
+		ctx context.Context,
+		req *repositories.BulkDuplicateShipmentRequest,
+	) (*ShipmentDuplicatePreview, error)
 	CalculateTotals(
 		ctx context.Context,
 		entity *shipment.Shipment,
@@ -579,6 +624,11 @@ type ShipmentService interface {
 		shipmentID pulid.ID,
 		tenantInfo pagination.TenantInfo,
 	) (*DistanceCalculationResponse, error)
+	PreviewRecalculateDistance(
+		ctx context.Context,
+		shipmentID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*ShipmentDistancePreview, error)
 	AutoMarkReadyToInvoiceIfEligible(
 		ctx context.Context,
 		shipmentID pulid.ID,

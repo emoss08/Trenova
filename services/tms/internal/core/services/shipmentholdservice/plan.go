@@ -29,6 +29,62 @@ func (s *service) PreviewRelease(
 	return toRelease, err
 }
 
+func (s *service) PreviewUpdate(
+	ctx context.Context,
+	req *repositories.UpdateShipmentHoldRequest,
+	actor *services.RequestActor,
+) (*shipment.ShipmentHold, error) {
+	_, updated, err := s.planUpdate(ctx, req, actor)
+
+	return updated, err
+}
+
+func (s *service) planUpdate(
+	ctx context.Context,
+	req *repositories.UpdateShipmentHoldRequest,
+	actor *services.RequestActor,
+) (original, updated *shipment.ShipmentHold, err error) {
+	if req == nil {
+		return nil, nil, errShipmentHoldRequestRequired()
+	}
+	if multiErr := req.Validate(); multiErr != nil {
+		return nil, nil, multiErr
+	}
+
+	if _, err = requireHoldUser(actor); err != nil {
+		return nil, nil, err
+	}
+
+	original, err = s.repo.GetByID(ctx, &repositories.GetShipmentHoldByIDRequest{
+		HoldID:     req.HoldID,
+		ShipmentID: req.ShipmentID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+	if !original.IsActive() {
+		return nil, nil, errortypes.NewBusinessError("Only active shipment holds can be updated").
+			WithParam("holdId", req.HoldID.String())
+	}
+
+	next := *original
+	next.StartedAt = req.StartedAt
+	next.Severity = req.Severity
+	next.Notes = strings.TrimSpace(req.Notes)
+	next.BlocksDispatch = req.BlocksDispatch
+	next.BlocksDelivery = req.BlocksDelivery
+	next.BlocksBilling = req.BlocksBilling
+	next.VisibleToCustomer = req.VisibleToCustomer
+	next.Version = req.Version
+
+	if multiErr := validateHold(&next); multiErr != nil {
+		return nil, nil, multiErr
+	}
+
+	return original, &next, nil
+}
+
 func (s *service) planCreate(
 	ctx context.Context,
 	req *repositories.CreateShipmentHoldRequest,

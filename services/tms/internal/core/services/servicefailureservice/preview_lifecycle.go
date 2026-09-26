@@ -34,6 +34,60 @@ func (s *service) PreviewResolve(
 	}, nil
 }
 
+func (s *service) PreviewReview(
+	ctx context.Context,
+	req *services.ServiceFailureLifecycleRequest,
+	actor *services.RequestActor,
+) (*services.ServiceFailureLifecyclePreview, error) {
+	return s.previewLifecycle(ctx, lifecycleTransitionParams{
+		req:     req,
+		actor:   actor,
+		next:    servicefailure.StatusReviewed,
+		comment: "Service failure reviewed",
+	})
+}
+
+func (s *service) PreviewVoid(
+	ctx context.Context,
+	req *services.ServiceFailureLifecycleRequest,
+	actor *services.RequestActor,
+) (*services.ServiceFailureLifecyclePreview, error) {
+	return s.previewLifecycle(ctx, lifecycleTransitionParams{
+		req:     req,
+		actor:   actor,
+		next:    servicefailure.StatusVoided,
+		comment: "Service failure voided",
+	})
+}
+
+func (s *service) PreviewUpdate(
+	ctx context.Context,
+	req *services.UpdateServiceFailureRequest,
+) (*services.ServiceFailureLifecyclePreview, error) {
+	original, updated, err := s.planUpdate(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.ServiceFailureLifecyclePreview{Before: original, After: updated}, nil
+}
+
+func (s *service) previewLifecycle(
+	ctx context.Context,
+	params lifecycleTransitionParams,
+) (*services.ServiceFailureLifecyclePreview, error) {
+	plan, err := s.planLifecycle(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.ServiceFailureLifecyclePreview{
+		Before: plan.original,
+		After:  plan.updated,
+		EDI:    plan.edi,
+	}, nil
+}
+
 type lifecyclePlan struct {
 	original *servicefailure.ServiceFailure
 	updated  *servicefailure.ServiceFailure

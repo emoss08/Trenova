@@ -188,6 +188,18 @@ type SplitMoveRequest struct {
 	Weight                *int64                `json:"weight,omitempty"`
 }
 
+func (r *SplitMoveRequest) Spec() *shipment.MoveSplitSpec {
+	return &shipment.MoveSplitSpec{
+		NewDeliveryLocationID: r.NewDeliveryLocationID,
+		RelayPickupStart:      r.SplitPickupTimes.ScheduledWindowStart,
+		RelayPickupEnd:        r.SplitPickupTimes.ScheduledWindowEnd,
+		NewDeliveryStart:      r.NewDeliveryTimes.ScheduledWindowStart,
+		NewDeliveryEnd:        r.NewDeliveryTimes.ScheduledWindowEnd,
+		Pieces:                r.Pieces,
+		Weight:                r.Weight,
+	}
+}
+
 func (r *SplitMoveRequest) Validate() *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 

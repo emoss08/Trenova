@@ -9,10 +9,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,41 +35,9 @@ func (s *Service) VerifyEquipment(
 ) (*carrierintel.CarrierEquipmentVerification, error) {
 	ctx = carrierintel.WithPurpose(ctx, carrierintel.PurposeVerify)
 
-	assignment, err := s.assignmentRepo.GetByID(ctx, &repositories.GetCarrierAssignmentByIDRequest{
-		TenantInfo:          req.TenantInfo,
-		CarrierAssignmentID: req.CarrierAssignmentID,
-	})
+	entity, carrierEntity, err := s.PlanVerifyEquipment(ctx, req)
 	if err != nil {
 		return nil, err
-	}
-
-	carrierEntity, err := s.carrierRepo.GetByID(ctx, repositories.GetCarrierByIDRequest{
-		ID:         assignment.CarrierID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	entity := &carrierintel.CarrierEquipmentVerification{
-		OrganizationID:      req.TenantInfo.OrgID,
-		BusinessUnitID:      req.TenantInfo.BuID,
-		CarrierAssignmentID: assignment.ID,
-		ShipmentMoveID:      assignment.ShipmentMoveID,
-		CarrierID:           carrierEntity.ID,
-		ExpectedDOTNumber:   carrierEntity.DOTNumber,
-		UnitType:            req.UnitType,
-		VIN:                 req.VIN,
-		PlateNumber:         req.PlateNumber,
-		PlateState:          req.PlateState,
-		UnitNumber:          req.UnitNumber,
-		VerifiedByID:        req.TenantInfo.UserID,
-		VerifiedAt:          s.now(),
-	}
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	s.runEquipmentLookup(ctx, req.TenantInfo, entity, carrierEntity.Name)
@@ -254,7 +220,10 @@ func (s *Service) flagEquipmentMismatch(
 			Day:         timeutils.DayIndexUTC(now),
 		}),
 	}
-	if _, err := s.eventRepo.InsertIgnoreDuplicates(ctx, []*carrierintel.CarrierIntelEvent{event}); err != nil {
+	if _, err := s.eventRepo.InsertIgnoreDuplicates(
+		ctx,
+		[]*carrierintel.CarrierIntelEvent{event},
+	); err != nil {
 		s.l.Warn("failed to record equipment mismatch event", zap.Error(err))
 	}
 

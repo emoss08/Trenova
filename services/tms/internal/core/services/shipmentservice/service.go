@@ -5,8 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"time"
+
+	"github.com/emoss08/trenova/internal/core/domain/agent"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -594,25 +595,12 @@ func (s *service) TransferOwnership(
 	req *repositories.TransferOwnershipRequest,
 	actor *services.RequestActor,
 ) (*shipment.Shipment, error) {
-	if req == nil {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add("request", errortypes.ErrRequired, "Transfer ownership request is required")
-		return nil, multiErr
-	}
-
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
+	original, err := s.planTransferOwnership(ctx, req, actor)
+	if err != nil {
+		return nil, err
 	}
 
 	auditActor := actor.AuditActor()
-	if auditActor.PrincipalType == services.PrincipalTypeAPIKey || auditActor.UserID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"actor",
-			errortypes.ErrInvalidOperation,
-			"Shipment ownership transfer requires a user actor",
-		)
-	}
-
 	log := s.l.With(
 		zap.String("operation", "TransferOwnership"),
 		zap.String("principalType", string(auditActor.PrincipalType)),
@@ -620,34 +608,6 @@ func (s *service) TransferOwnership(
 		zap.String("shipmentID", req.ShipmentID.String()),
 		zap.String("ownerID", req.OwnerID.String()),
 	)
-
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID: req.ShipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: req.TenantInfo.OrgID,
-			BuID:  req.TenantInfo.BuID,
-		},
-	})
-	if err != nil {
-		log.Error("failed to get original shipment", zap.Error(err))
-		return nil, err
-	}
-
-	if original.OwnerID == req.OwnerID {
-		return nil, errortypes.NewValidationError(
-			"ownerId",
-			errortypes.ErrInvalid,
-			"Shipment already belongs to this owner",
-		)
-	}
-
-	if err = s.validateTransferActor(ctx, auditActor, original, req.TenantInfo.OrgID); err != nil {
-		return nil, err
-	}
-
-	if err = s.validateTransferTarget(ctx, req); err != nil {
-		return nil, err
-	}
 
 	updatedEntity, err := s.repo.TransferOwnership(ctx, req)
 	if err != nil {
@@ -1077,14 +1037,9 @@ func (s *service) Uncancel(
 	req *repositories.UncancelShipmentRequest,
 	actor *services.RequestActor,
 ) (*shipment.Shipment, error) {
-	if req == nil {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add("request", errortypes.ErrRequired, "Uncancel request is required")
-		return nil, multiErr
-	}
-
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
+	original, err := s.planUncancel(ctx, req)
+	if err != nil {
+		return nil, err
 	}
 
 	auditActor := actor.AuditActor()
@@ -1094,22 +1049,6 @@ func (s *service) Uncancel(
 		zap.String("principalID", auditActor.PrincipalID.String()),
 		zap.String("shipmentID", req.ShipmentID.String()),
 	)
-
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID: req.ShipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: req.TenantInfo.OrgID,
-			BuID:  req.TenantInfo.BuID,
-		},
-	})
-	if err != nil {
-		log.Error("failed to get original shipment", zap.Error(err))
-		return nil, err
-	}
-
-	if !original.IsCanceled() {
-		return nil, errortypes.NewBusinessError("shipment is not canceled")
-	}
 
 	updatedEntity, err := s.repo.Uncancel(ctx, req)
 	if err != nil {
@@ -1148,8 +1087,8 @@ func (s *service) Duplicate(
 	ctx context.Context,
 	req *repositories.BulkDuplicateShipmentRequest,
 ) (*repositories.ShipmentDuplicateWorkflowResponse, error) {
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
+	if err := s.guardDuplicate(req); err != nil {
+		return nil, err
 	}
 
 	payload := &shipmentjobs.BulkDuplicateShipmentsPayload{
@@ -1167,6 +1106,7 @@ func (s *service) Duplicate(
 		ShipmentID:    req.ShipmentID,
 		Count:         req.Count,
 		OverrideDates: req.OverrideDates,
+		FirstPickupAt: req.FirstPickupAt,
 		RequestedBy:   req.TenantInfo.UserID,
 	}
 
@@ -1177,10 +1117,6 @@ func (s *service) Duplicate(
 		req.ShipmentID.String(),
 		time.Now().UnixNano(),
 	)
-
-	if !s.workflowStarter.Enabled() {
-		return nil, errortypes.NewBusinessError("shipment duplication is not configured")
-	}
 
 	run, err := s.workflowStarter.StartWorkflow(
 		ctx,

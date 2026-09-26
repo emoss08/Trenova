@@ -76,64 +76,22 @@ func (s *service) AutoRate(
 		zap.String("shipmentID", req.ShipmentID.String()),
 	)
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         req.ShipmentID,
-		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		log.Error("failed to read shipment for auto-rating", zap.Error(err))
-
-		return nil, nil, err
-	}
-
-	if multiErr := validateShipmentNotLockedForBilling(original); multiErr != nil {
-		return nil, nil, multiErr
-	}
-
-	if multiErr := validateShipmentRateNotLocked(original); multiErr != nil {
-		return nil, nil, multiErr
-	}
-
-	entity, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         req.ShipmentID,
-		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
+	plan, err := s.planAutoRate(ctx, req, actor)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	previousLinehaul := entity.FreightChargeAmount
+	if !plan.rated.Outcome.Priced() {
+		return plan.original, s.describeContractRate(
+			ctx, plan.entity, plan.rated, plan.previousLinehaul,
+		), nil
+	}
 
-	control, err := s.getShipmentControl(ctx, req.TenantInfo)
-	if err != nil {
+	if err = s.commercial.RecordContractQuote(ctx, plan.entity, plan.rated); err != nil {
 		return nil, nil, err
 	}
 
-	rated, err := s.commercial.RateAgainstContract(ctx, entity, auditActor.UserID, false)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Nothing covered the lane, so there is nothing to apply. The shipment is
-	// left exactly as it was and the caller is told why, which is the answer a
-	// rater needs in order to go and write the contract.
-	if !rated.Outcome.Priced() {
-		return original, s.describeContractRate(ctx, entity, rated, previousLinehaul), nil
-	}
-
-	if err = s.commercial.AdoptAndRecordContractRate(
-		ctx, entity, rated, control, auditActor.UserID,
-	); err != nil {
-		return nil, nil, err
-	}
-
-	updatedEntity, err := s.repo.Update(ctx, entity)
+	updatedEntity, err := s.repo.Update(ctx, plan.entity)
 	if err != nil {
 		log.Error("failed to save an auto-rated shipment", zap.Error(err))
 
@@ -144,10 +102,10 @@ func (s *service) AutoRate(
 		updatedEntity,
 		auditActor,
 		permission.OpUpdate,
-		original,
+		plan.original,
 		updatedEntity,
 		auditservice.WithComment("Shipment re-rated from its contract"),
-		auditservice.WithDiff(original, updatedEntity),
+		auditservice.WithDiff(plan.original, updatedEntity),
 	); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
@@ -159,8 +117,101 @@ func (s *service) AutoRate(
 	}
 
 	return updatedEntity, s.describeContractRate(
-		ctx, updatedEntity, rated, previousLinehaul,
+		ctx, updatedEntity, plan.rated, plan.previousLinehaul,
 	), nil
+}
+
+func (s *service) PreviewAutoRate(
+	ctx context.Context,
+	req *services.AutoRateShipmentRequest,
+	actor *services.RequestActor,
+) (*services.ShipmentAutoRatePreview, error) {
+	plan, err := s.planAutoRate(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.ShipmentAutoRatePreview{
+		Before: plan.original,
+		After:  plan.entity,
+		Application: s.describeContractRate(
+			ctx, plan.entity, plan.rated, plan.previousLinehaul,
+		),
+	}, nil
+}
+
+type autoRatePlan struct {
+	original         *shipment.Shipment
+	entity           *shipment.Shipment
+	rated            *services.RatedShipment
+	previousLinehaul decimal.NullDecimal
+}
+
+func (s *service) planAutoRate(
+	ctx context.Context,
+	req *services.AutoRateShipmentRequest,
+	actor *services.RequestActor,
+) (*autoRatePlan, error) {
+	auditActor := actor.AuditActor()
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         req.ShipmentID,
+		TenantInfo: req.TenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if multiErr := validateShipmentNotLockedForBilling(original); multiErr != nil {
+		return nil, multiErr
+	}
+
+	if multiErr := validateShipmentRateNotLocked(original); multiErr != nil {
+		return nil, multiErr
+	}
+
+	entity, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         req.ShipmentID,
+		TenantInfo: req.TenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	plan := &autoRatePlan{
+		original:         original,
+		entity:           entity,
+		previousLinehaul: entity.FreightChargeAmount,
+	}
+
+	control, err := s.getShipmentControl(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	plan.rated, err = s.commercial.RateAgainstContract(ctx, entity, auditActor.UserID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	if !plan.rated.Outcome.Priced() {
+		plan.entity = original
+
+		return plan, nil
+	}
+
+	if err = s.commercial.AdoptAndRecalculateContractRate(
+		ctx, entity, plan.rated, control, auditActor.UserID,
+	); err != nil {
+		return nil, err
+	}
+
+	return plan, nil
 }
 
 // validateShipmentRateNotLocked refuses to reprice a shipment whose numbers the

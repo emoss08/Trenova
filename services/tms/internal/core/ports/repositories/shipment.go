@@ -184,6 +184,24 @@ type BulkDuplicateShipmentRequest struct {
 	ShipmentID    pulid.ID              `json:"shipmentId"`
 	Count         int                   `json:"count"`
 	OverrideDates bool                  `json:"overrideDates"`
+	FirstPickupAt *int64                `json:"firstPickupAt,omitempty"`
+}
+
+func (r *BulkDuplicateShipmentRequest) DateAnchor(now int64) *int64 {
+	if r.FirstPickupAt != nil {
+		anchor := *r.FirstPickupAt
+		return &anchor
+	}
+	if r.OverrideDates {
+		return &now
+	}
+
+	return nil
+}
+
+type ShipmentDuplicatePlan struct {
+	Source *shipment.Shipment
+	Copies []*shipment.Shipment
 }
 
 func (r *BulkDuplicateShipmentRequest) Validate() *errortypes.MultiError {
@@ -563,6 +581,10 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *BulkDuplicateShipmentRequest,
 	) ([]*shipment.Shipment, error)
+	PlanDuplicate(
+		ctx context.Context,
+		req *BulkDuplicateShipmentRequest,
+	) (*ShipmentDuplicatePlan, error)
 	GetDelayedShipments(
 		ctx context.Context,
 		req *GetDelayedShipmentsRequest,
