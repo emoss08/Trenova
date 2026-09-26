@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -120,17 +121,17 @@ func (s *Service) Post(
 		if txErr != nil {
 			return txErr
 		}
-		if entity.Status != carriersettlement.StatusApproved {
-			return transitionError(entity.Status, carriersettlement.StatusPosted)
-		}
 		previous = *entity
+		now := timeutils.NowUnix()
+		if txErr = PlanPost(entity, actor.UserID, now); txErr != nil {
+			return txErr
+		}
 
 		batchID, txErr := s.postSettlementJournal(txCtx, entity, actor, false)
 		if txErr != nil {
 			return txErr
 		}
 
-		now := timeutils.NowUnix()
 		if txErr = s.appendLedgerEntry(txCtx, entity, &ledgerEntryParams{
 			EntryType:       carriersettlement.LedgerEntryTypeBill,
 			SourceEvent:     tenant.JournalSourceEventCarrierSettlementPosted,
@@ -145,9 +146,6 @@ func (s *Service) Post(
 			return txErr
 		}
 
-		entity.Status = carriersettlement.StatusPosted
-		entity.PostedByID = actor.UserID
-		entity.PostedAt = &now
 		entity.PostedJournalBatchID = batchID
 		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
 			return txErr
@@ -322,12 +320,31 @@ func settlementHasUnmappedLines(entity *carriersettlement.CarrierSettlement) boo
 	return false
 }
 
+type journalDraft struct {
+	request *journalposting.WriteRequest
+	posting *journalposting.Plan
+	plan    *settlementshared.JournalPlan
+}
+
 func (s *Service) postSettlementJournal(
 	ctx context.Context,
 	entity *carriersettlement.CarrierSettlement,
 	actor *serviceports.RequestActor,
 	reversal bool,
 ) (*pulid.ID, error) {
+	draft, err := s.planSettlementJournal(ctx, entity, actor.UserID, reversal)
+	if err != nil || draft == nil {
+		return nil, err
+	}
+	return s.writeJournal(ctx, entity, actor, draft)
+}
+
+func (s *Service) planSettlementJournal(
+	ctx context.Context,
+	entity *carriersettlement.CarrierSettlement,
+	userID pulid.ID,
+	reversal bool,
+) (*journalDraft, error) {
 	control, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		return nil, err
@@ -372,9 +389,7 @@ func (s *Service) postSettlementJournal(
 		legs = ReverseLegs(legs)
 	}
 
-	return s.createJournalPosting(ctx, &createJournalPostingParams{
-		Entity:         entity,
-		Actor:          actor,
+	return s.draftJournal(ctx, entity, userID, &createJournalPostingParams{
 		Control:        control,
 		Legs:           legs,
 		Description:    description,
@@ -389,6 +404,19 @@ func (s *Service) postPaymentJournal(
 	actor *serviceports.RequestActor,
 	paidAt int64,
 ) (*pulid.ID, error) {
+	draft, err := s.planPaymentJournal(ctx, entity, actor.UserID, paidAt)
+	if err != nil || draft == nil {
+		return nil, err
+	}
+	return s.writeJournal(ctx, entity, actor, draft)
+}
+
+func (s *Service) planPaymentJournal(
+	ctx context.Context,
+	entity *carriersettlement.CarrierSettlement,
+	userID pulid.ID,
+	paidAt int64,
+) (*journalDraft, error) {
 	control, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		return nil, err
@@ -418,9 +446,7 @@ func (s *Service) postPaymentJournal(
 		return nil, nil //nolint:nilnil // a zero-amount settlement records no payment journal
 	}
 
-	return s.createJournalPosting(ctx, &createJournalPostingParams{
-		Entity:         entity,
-		Actor:          actor,
+	return s.draftJournal(ctx, entity, userID, &createJournalPostingParams{
 		Control:        control,
 		Legs:           legs,
 		Description:    "Payment of carrier settlement " + entity.SettlementNumber,
@@ -431,8 +457,6 @@ func (s *Service) postPaymentJournal(
 }
 
 type createJournalPostingParams struct {
-	Entity         *carriersettlement.CarrierSettlement
-	Actor          *serviceports.RequestActor
 	Control        *tenant.AccountingControl
 	Legs           []PostingLeg
 	Description    string
@@ -441,11 +465,12 @@ type createJournalPostingParams struct {
 	AccountingDate int64
 }
 
-func (s *Service) createJournalPosting(
+func (s *Service) draftJournal(
 	ctx context.Context,
+	entity *carriersettlement.CarrierSettlement,
+	userID pulid.ID,
 	params *createJournalPostingParams,
-) (*pulid.ID, error) {
-	entity := params.Entity
+) (*journalDraft, error) {
 	now := timeutils.NowUnix()
 	accountingDate := params.AccountingDate
 	if accountingDate == 0 {
@@ -461,15 +486,11 @@ func (s *Service) createJournalPosting(
 		})
 	}
 
-	result, err := journalposting.Writer{
-		Periods:  s.fiscalPeriodRepo,
-		Numbers:  s.generator,
-		Journals: s.journalRepo,
-	}.Write(ctx, &journalposting.WriteRequest{
+	request := &journalposting.WriteRequest{
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: entity.BusinessUnitID,
 		Control:        params.Control,
-		ActorID:        params.Actor.UserID,
+		ActorID:        userID,
 		AccountingDate: accountingDate,
 		Now:            now,
 		Subject:        "carrier settlement",
@@ -483,12 +504,38 @@ func (s *Service) createJournalPosting(
 			IdempotencyKey: params.IdempotencyKey,
 		},
 		Lines: lines,
-	})
+	}
+	posting, err := s.journalWriter().Plan(ctx, request)
 	if err != nil {
 		return nil, err
 	}
 
+	return &journalDraft{
+		request: request,
+		posting: posting,
+		plan:    settlementshared.JournalPlanFrom(posting, params.Description),
+	}, nil
+}
+
+func (s *Service) writeJournal(
+	ctx context.Context,
+	_ *carriersettlement.CarrierSettlement,
+	_ *serviceports.RequestActor,
+	draft *journalDraft,
+) (*pulid.ID, error) {
+	result, err := s.journalWriter().WritePlan(ctx, draft.request, draft.posting)
+	if err != nil {
+		return nil, err
+	}
 	return &result.BatchID, nil
+}
+
+func (s *Service) journalWriter() journalposting.Writer {
+	return journalposting.Writer{
+		Periods:  s.fiscalPeriodRepo,
+		Numbers:  s.generator,
+		Journals: s.journalRepo,
+	}
 }
 
 type ledgerEntryParams struct {

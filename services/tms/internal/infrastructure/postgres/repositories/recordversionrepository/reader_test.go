@@ -8,8 +8,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun"
 )
 
 /*
@@ -31,7 +35,7 @@ func TestEveryResourceAToolTargetsHasAVersionLookup(t *testing.T) {
 	require.NoError(t, err)
 
 	target := regexp.MustCompile(
-		`(?:targetOf\([^)]*|ToolTarget\{Resource:\s*)permission\.(Resource\w+)`,
+		`(?:targetOf\([^)]*|ToolTarget\{Resource:\s*)(?:permission|serviceports)\.((?:Resource|Record)\w+)`,
 	)
 	resources := resourceNames(t)
 
@@ -81,6 +85,39 @@ func resourceNames(t *testing.T) map[string]permission.Resource {
 		out[match[1]] = permission.Resource(match[2])
 	}
 	require.NotEmpty(t, out)
+	out["RecordInvoiceAdjustment"] = services.RecordInvoiceAdjustment
+	out["RecordCreditMemoApplication"] = services.RecordCreditMemoApplication
 
 	return out
+}
+
+func TestEDIRecordsAToolTargetsAreToldApartByTheirIDs(t *testing.T) {
+	t.Parallel()
+
+	insert := (*bun.InsertQuery)(nil)
+	transfer := new(edi.EDITransfer)
+	tenderChange := new(edi.TenderChange)
+	transferChange := new(edi.TransferChange)
+	message := new(edi.EDIMessage)
+	file := new(edi.EDIInboundFile)
+	for _, record := range []bun.BeforeAppendModelHook{
+		transfer, tenderChange, transferChange, message, file,
+	} {
+		require.NoError(t, record.BeforeAppendModel(t.Context(), insert))
+	}
+
+	kinds := lookups[permission.ResourceEDI].kinds
+	for name, id := range map[string]pulid.ID{
+		"transfer":        transfer.ID,
+		"tender change":   tenderChange.ID,
+		"transfer change": transferChange.ID,
+		"message":         message.ID,
+		"inbound file":    file.ID,
+	} {
+		entry, ok := kinds[id.Prefix()]
+		require.Truef(t, ok, "the %s id %s has no version lookup", name, id)
+		require.NotNil(t, entry.model, name)
+		require.NotNil(t, entry.scope, name)
+		require.NotEmpty(t, entry.idEq, name)
+	}
 }

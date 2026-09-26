@@ -458,3 +458,7 @@ func hasMeaningfulField(fields map[string]*ReviewField, key string) bool {
 	}
 	return strings.TrimSpace(field.Value) != ""
 }
+
+func ShipmentDraftDataFromAIExtract(aiExtract *services.AIExtractResult) map[string]any {
+	return analysisFromAIExtract(aiExtract).ToMap()
+}

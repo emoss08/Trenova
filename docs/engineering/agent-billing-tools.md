@@ -87,11 +87,55 @@ for (`AccountingSyncPlanner`) and the EDI 210 plan. `send_invoice` takes only th
 the recipients, wording and attachments are `PlanSend`'s, and a send whose attachments would
 go as download links is refused, since those links are built against the browser's address.
 
+## After the invoice: receivables
+
+The same rules carry past posting. Every write calls the service its page calls
+(`invoiceservice`, `invoiceadjustmentservice`, `customerpaymentservice`,
+`invoicedisputeservice`, `invoicerunservice`, `latechargeservice`, `invoiceshareservice`),
+and each preview is that service's own plan, read-only, so it refuses what the write would.
+
+| Tool | Class | Most it may do | Runs only from a person's approval |
+| --- | --- | --- | --- |
+| `update_invoice_draft` | inside | Ask first (a change of recipients: Propose) | no |
+| `generate_invoice_pdf` | inside | Automatic | no |
+| `create_invoice`, `create_invoice_memo`, `void_invoice` | money | Propose | yes |
+| `send_invoice_edi` | sent outside | Propose | yes |
+| `save_invoice_adjustment_draft` | inside | Automatic (from outside content: Propose) | no |
+| `submit_invoice_adjustment`, `approve_invoice_adjustment` | money | Propose | yes |
+| `reject_invoice_adjustment` | inside | Propose | yes |
+| `apply_customer_payment`, `reverse_customer_payment` | money | Propose | yes |
+| `apply_credit_memo`, `unapply_credit_memo` | money | Propose | yes |
+| `open_invoice_dispute`, `withdraw_invoice_dispute` | inside | Ask first (from outside content: Propose) | no |
+| `resolve_invoice_dispute` | inside | Propose | yes |
+| `build_invoice_run` | inside | Automatic | no |
+| `adjust_invoice_run_membership` | inside | Automatic (from outside content: Propose) | no |
+| `cancel_invoice_run` | inside | Ask first | no |
+| `commit_invoice_run`, `bill_statement_now`, `assess_late_charges` | money | Propose | yes |
+| `share_invoice` | inside | Propose | yes |
+
+`create_invoice` covers the four create mutations (one invoice or one per shipment, from
+shipments or an order) through `invoiceservice.PlanCreateInvoices`. A memo is always manual
+and never auto-posted. `generate_invoice_pdf` refuses whenever the customer's billing profile
+would email the invoice the moment its PDF exists, so it cannot send by the back door.
+`submit_invoice_adjustment` covers the single, draft and bulk submit routes. A preview of
+a planned draft or memo shows no number, since numbers are issued when a record is made.
+
+The reads that pick targets: `get_invoice` (now with each line's id), `list_invoices` (a
+bill type filter), `list_invoice_adjustments`, `get_invoice_adjustment`,
+`list_invoice_disputes`, `list_credit_memo_applications`, `list_invoice_runs`,
+`get_invoice_run`, `list_open_statements` and `list_invoice_share_candidates`. Amounts are
+left out when the reader's data access does not reach invoice totals.
+
+Pinning: disputes, runs and payments pin to their version; adjustments to theirs (record
+kind `invoice_adjustment`); a credit memo application to its `updated_at` (record kind
+`credit_memo_application`), which moves only when it is unapplied. `bill_statement_now` is
+unpinned: an open statement is computed when asked and has no row.
+
 ## Who holds them
 
 | Template | Runs | Holds |
 | --- | --- | --- |
-| Billing assistant | in chat, as the person | every tool above |
+| Billing assistant | in chat, as the person | every tool above except `share_invoice` and `list_invoice_share_candidates` |
 | Billing exception agent | unattended, on queue events | the reads, review, hold, exception, send back |
 
 The agent permission ceiling (`permission/agent.go`) is unchanged but for being claimed: the
@@ -106,6 +150,10 @@ resource does, so an unattended desk at Internal data access sees what an item i
 on without seeing what it bills.
 
 ## Known limits
+
+- An agent definition holds at most 64 tools and the billing assistant is at 63, so
+  `share_invoice` and its candidate read are registered but on no template; an organization
+  can give them to an agent of its own.
 
 - A preview shows twenty records; a transfer of more lists its refusals first, and a
   background transfer previews its first hundred shipments and says it is partial.

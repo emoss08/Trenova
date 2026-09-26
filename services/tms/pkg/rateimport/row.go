@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/core/domain/rategeo"
+	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
@@ -126,7 +127,7 @@ func ParseRow(
 		)
 	}
 
-	rate, err := parseMoney(mapping.Value(row, FieldRate))
+	rate, err := decimalutils.ParseMoneyText(mapping.Value(row, FieldRate))
 	if err != nil {
 		return nil, fmt.Errorf("rate: %w", err)
 	}
@@ -175,7 +176,7 @@ func applyGuardrails(
 		{FieldMaxCharge, "maximum charge", func(v decimal.NullDecimal) { rule.MaxCharge = v }},
 		{FieldDiscountPercent, "discount", func(v decimal.NullDecimal) { rule.DiscountPercent = v }},
 	} {
-		value, err := parseMoney(mapping.Value(row, guardrail.field))
+		value, err := decimalutils.ParseMoneyText(mapping.Value(row, guardrail.field))
 		if err != nil {
 			return fmt.Errorf("%s: %w", guardrail.name, err)
 		}
@@ -246,33 +247,6 @@ func parseBasis(raw string) (string, error) {
 	}
 
 	return templateName, nil
-}
-
-// parseMoney reads a number the way a spreadsheet writes one.
-//
-// Currency symbols, thousands separators and trailing percent signs are what a
-// person types; refusing them would send somebody back to reformat a file that
-// reads perfectly well.
-func parseMoney(raw string) (decimal.NullDecimal, error) {
-	cleaned := strings.Map(func(r rune) rune {
-		switch r {
-		case ',', '$', '%', ' ', ' ':
-			return -1
-		default:
-			return r
-		}
-	}, raw)
-
-	if cleaned == "" {
-		return decimal.NullDecimal{}, nil
-	}
-
-	value, err := decimal.NewFromString(cleaned)
-	if err != nil {
-		return decimal.NullDecimal{}, fmt.Errorf("%q is not a number", raw)
-	}
-
-	return decimal.NewNullDecimal(value), nil
 }
 
 // label names the lane when the sheet does not, so a lane list stays scannable.

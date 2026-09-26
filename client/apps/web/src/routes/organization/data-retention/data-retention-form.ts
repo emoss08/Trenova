@@ -9,6 +9,9 @@ export const AI_AUDIT_RETENTION_DEFAULT_DAYS = 2555;
 /** The server refuses less than a year. */
 export const AI_AUDIT_RETENTION_MIN_DAYS = 365;
 
+export const AI_CORRECTION_RETENTION_MIN_DAYS = 30;
+export const AI_CORRECTION_RETENTION_DEFAULT_DAYS = 730;
+
 export const dataRetentionFormSchema = z.object({
   auditRetentionPeriod: z.number().int().min(1, "Audit retention must be at least 1 day"),
   ediInboundFileRetentionPeriod: z
@@ -28,6 +31,10 @@ export const dataRetentionFormSchema = z.object({
     .number()
     .int("AI audit trail retention must be a whole number of days")
     .min(AI_AUDIT_RETENTION_MIN_DAYS, "AI audit trail retention must be at least 365 days"),
+  aiCorrectionRetentionPeriod: z
+    .number()
+    .int("AI correction retention must be a whole number of days")
+    .min(AI_CORRECTION_RETENTION_MIN_DAYS, "AI correction retention must be at least 30 days"),
 });
 
 export type DataRetentionFormValues = z.infer<typeof dataRetentionFormSchema>;
@@ -39,6 +46,7 @@ export const DATA_RETENTION_FORM_DEFAULTS: DataRetentionFormValues = {
   aiFeedbackRetentionPeriod: AI_FEEDBACK_RETENTION_DEFAULT_DAYS,
   agentEvalCaseRetentionPeriod: 365,
   aiAuditRetentionPeriod: AI_AUDIT_RETENTION_DEFAULT_DAYS,
+  aiCorrectionRetentionPeriod: AI_CORRECTION_RETENTION_DEFAULT_DAYS,
 };
 
 /**
@@ -60,5 +68,9 @@ export function dataRetentionFormValues(data: DataRetention): DataRetentionFormV
       data.aiAuditRetentionPeriod > 0
         ? data.aiAuditRetentionPeriod
         : AI_AUDIT_RETENTION_DEFAULT_DAYS,
+    aiCorrectionRetentionPeriod:
+      data.aiCorrectionRetentionPeriod > 0
+        ? data.aiCorrectionRetentionPeriod
+        : AI_CORRECTION_RETENTION_DEFAULT_DAYS,
   };
 }

@@ -826,7 +826,8 @@ func (s *Service) ediInboundFile(
 		notes["ediPartnerId"] = file.EDIPartnerID.String()
 	}
 	if file.Status != edi.InboundFileStatusQuarantined {
-		notes["warning"] = "This file is no longer quarantined; do not act as if it were held back."
+		notes["warning"] = "This file is not held back in quarantine; do not act as if it " +
+			"were. Any load tenders it carried are listed by list_edi_transfers for this file."
 	}
 	subject.Notes = marshalNotes(notes)
 

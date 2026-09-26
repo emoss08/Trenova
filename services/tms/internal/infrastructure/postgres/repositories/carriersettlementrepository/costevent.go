@@ -185,7 +185,29 @@ func (r *costEventRepository) ListPendingByCarrier(
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			sq = buncolgen.CostEventScopeTenant(sq, req.TenantInfo).
 				Where(cols.CarrierID.Eq(), req.CarrierID).
-				Where(cols.Status.Eq(), carriersettlement.CostEventStatusPending)
+				WhereGroup(" AND ", func(status *bun.SelectQuery) *bun.SelectQuery {
+					status = status.Where(
+						cols.Status.Eq(),
+						carriersettlement.CostEventStatusPending,
+					)
+					if req.ReleasedFrom.IsNil() {
+						return status
+					}
+					return status.WhereGroup(
+						" OR ",
+						func(released *bun.SelectQuery) *bun.SelectQuery {
+							return released.
+								Where(
+									cols.Status.In(),
+									bun.List([]carriersettlement.CostEventStatus{
+										carriersettlement.CostEventStatusAttached,
+										carriersettlement.CostEventStatusSettled,
+									}),
+								).
+								Where(cols.SettlementID.Eq(), req.ReleasedFrom)
+						},
+					)
+				})
 			if req.PeriodEnd > 0 {
 				sq = sq.Where(cols.EventDate.Lt(), req.PeriodEnd)
 			}

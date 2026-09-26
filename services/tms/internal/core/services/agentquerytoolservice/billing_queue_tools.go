@@ -25,6 +25,7 @@ const (
 	maxBillingQueueLines    = 50
 	secondsPerDayInQueue    = 86400
 	fieldNumber             = "number"
+	fieldCreatedAt          = "createdAt"
 )
 
 var (

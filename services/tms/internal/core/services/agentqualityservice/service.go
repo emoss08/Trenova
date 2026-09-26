@@ -119,6 +119,8 @@ func New(p Params) *Service {
 
 func AsService(s *Service) services.AgentQualityService { return s }
 
+func AsEvaluationBudget(s *Service) services.EvaluationBudget { return s }
+
 var _ services.AgentQualityService = (*Service)(nil)
 
 func (s *Service) control(

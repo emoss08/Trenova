@@ -136,6 +136,7 @@ func TestTemplates_TheNewDesksWaitOnTheirOwnEvents(t *testing.T) {
 		},
 		agentdefinition.TemplateIntakeDesk: {
 			agent.EventInboundMessageClassified,
+			agent.EventEDITenderReceived,
 		},
 		agentdefinition.TemplateBillingException: {
 			agent.EventBillingQueueItemException,
@@ -168,9 +169,11 @@ without a person. The grant is not the template's to make: each inbox tool holds
 itself to a proposal unless the message's mailbox handles it without review. The
 template only makes room.
 
-It holds nothing that creates a load or money. A tender's attachment already
-wakes shipment intake through the document it became; a second desk holding
-create_shipment would put two proposals for the same load in front of a person.
+It holds nothing that creates a load or money on its own. A tender's attachment
+already wakes shipment intake through the document it became; a second desk
+holding create_shipment would put two proposals for the same load in front of a
+person. A tender that arrives over EDI never becomes a document, so the desk
+answers it, and accepting one is always a proposal a person decides.
 */
 func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
 	t.Parallel()
@@ -186,10 +189,16 @@ func TestTemplates_TheIntakeDeskMayEarnAutonomyTheMailboxGrants(t *testing.T) {
 		"mark_inbound_message",
 		"reply_to_inbound_message",
 		"attach_document_to_shipment",
+		"get_edi_transfer",
+		"accept_edi_tender",
+		"decline_edi_tender",
 	} {
 		require.Containsf(t, tools, tool, "the intake desk needs %s", tool)
 	}
-	for _, tool := range []string{"create_shipment", "post_customer_payment", "tender_move_to_carriers"} {
+	for _, tool := range []string{
+		"create_shipment", "post_customer_payment", "tender_move_to_carriers",
+		"send_edi_tender", "replay_edi_message",
+	} {
 		require.NotContainsf(t, tools, tool, "the intake desk must not hold %s", tool)
 	}
 }
@@ -246,9 +255,12 @@ func TestTemplates_TheNewDesksHoldWhatTheirWorkNeedsAndNothingThatLeaves(t *test
 			template: agentdefinition.TemplateEDIDesk,
 			needs: []string{
 				"list_edi_inbound_files", "get_edi_inbound_file", "list_edi_transfers",
-				"get_edi_partner",
+				"get_edi_partner", "reprocess_edi_inbound_files",
 			},
-			never: []string{"create_shipment", "email_customer", "reply_to_inbound_message"},
+			never: []string{
+				"create_shipment", "email_customer", "reply_to_inbound_message",
+				"accept_edi_tender", "retry_edi_message_delivery", "replay_edi_message",
+			},
 		},
 	}
 

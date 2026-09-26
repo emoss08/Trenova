@@ -17,6 +17,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/journalposting"
+	"github.com/emoss08/trenova/internal/core/services/settlementshared"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
@@ -42,20 +43,15 @@ func (s *Service) Post(
 		if txErr != nil {
 			return txErr
 		}
-		if entity.Status != driversettlement.StatusApproved {
-			return transitionError(entity.Status, driversettlement.StatusPosted)
-		}
 		previous = *entity
+		if txErr = PlanPost(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
+			return txErr
+		}
 
 		batchID, txErr := s.postSettlementJournal(txCtx, entity, actor, false)
 		if txErr != nil {
 			return txErr
 		}
-
-		now := timeutils.NowUnix()
-		entity.Status = driversettlement.StatusPosted
-		entity.PostedByID = actor.UserID
-		entity.PostedAt = &now
 		entity.PostedJournalBatchID = batchID
 		if updated, txErr = s.settlementRepo.Update(txCtx, entity); txErr != nil {
 			return txErr
@@ -284,12 +280,32 @@ func codeLegs(codeDebits, codeCredits map[pulid.ID]int64) []PostingLeg {
 	return legs
 }
 
+type journalDraft struct {
+	request *journalposting.WriteRequest
+	posting *journalposting.Plan
+	plan    *settlementshared.JournalPlan
+}
+
 func (s *Service) postSettlementJournal(
 	ctx context.Context,
 	entity *driversettlement.Settlement,
 	actor *serviceports.RequestActor,
 	reversal bool,
 ) (*pulid.ID, error) {
+	draft, err := s.planSettlementJournal(ctx, entity, actor.UserID, reversal)
+	if err != nil || draft == nil {
+		return nil, err
+	}
+	return s.writeSettlementJournal(ctx, entity, actor, draft)
+}
+
+//nolint:funlen // journal planning enumerates every required account explicitly
+func (s *Service) planSettlementJournal(
+	ctx context.Context,
+	entity *driversettlement.Settlement,
+	userID pulid.ID,
+	reversal bool,
+) (*journalDraft, error) {
 	control, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		return nil, err
@@ -369,10 +385,10 @@ func (s *Service) postSettlementJournal(
 	}
 
 	now := timeutils.NowUnix()
-	return s.writeJournal(ctx, &SettlementJournal{
+	return s.draftJournal(ctx, &SettlementJournal{
 		Entity:         entity,
 		Control:        control,
-		ActorID:        actor.UserID,
+		ActorID:        userID,
 		AccountingDate: now,
 		Now:            now,
 		Description:    description,
@@ -380,6 +396,35 @@ func (s *Service) postSettlementJournal(
 		IdempotencyKey: idempotencyPrefix + entity.ID.String(),
 		Legs:           legs,
 	})
+}
+
+func (s *Service) draftJournal(
+	ctx context.Context,
+	journal *SettlementJournal,
+) (*journalDraft, error) {
+	request := journal.WriteRequest()
+	posting, err := s.journalWriter().Plan(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	return &journalDraft{
+		request: request,
+		posting: posting,
+		plan:    settlementshared.JournalPlanFrom(posting, journal.Description),
+	}, nil
+}
+
+func (s *Service) writeSettlementJournal(
+	ctx context.Context,
+	_ *driversettlement.Settlement,
+	_ *serviceports.RequestActor,
+	draft *journalDraft,
+) (*pulid.ID, error) {
+	result, err := s.journalWriter().WritePlan(ctx, draft.request, draft.posting)
+	if err != nil {
+		return nil, err
+	}
+	return &result.BatchID, nil
 }
 
 type SettlementJournal struct {

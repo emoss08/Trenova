@@ -55,6 +55,24 @@ type ShareInvoiceResult struct {
 	EmailStatus    InvoiceShareEmailStatus `json:"emailStatus"`
 }
 
+type InvoiceShareRecipientPreview struct {
+	UserID       pulid.ID
+	Name         string
+	EmailAddress string
+	Emailed      bool
+	Subject      string
+	Body         string
+}
+
+type InvoiceSharePreview struct {
+	Invoice         *invoice.Invoice
+	SharedByName    string
+	Note            string
+	Tab             invoice.ShareTab
+	EmailConfigured bool
+	Recipients      []InvoiceShareRecipientPreview
+}
+
 type InvoiceShareService interface {
 	List(
 		ctx context.Context,

@@ -11,10 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
@@ -30,11 +29,7 @@ func (s *Service) HoldPayEvent(
 		return nil, err
 	}
 	if reason == "" {
-		return nil, errortypes.NewValidationError(
-			"reason",
-			errortypes.ErrRequired,
-			"A hold reason is required so the driver knows why pay was deferred",
-		)
+		return nil, errHoldReasonRequired()
 	}
 
 	event, err := s.payEventRepo.GetByID(ctx, repositories.GetPayEventByIDRequest{
@@ -44,19 +39,14 @@ func (s *Service) HoldPayEvent(
 	if err != nil {
 		return nil, err
 	}
-	if event.Status != driversettlement.PayEventStatusAccrued {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Only accrued, unsettled pay events can be held",
-		)
+	changed, err := PlanHoldPayEvent(event, reason)
+	if err != nil {
+		return nil, err
 	}
-	if event.OnHold {
+	if !changed {
 		return event, nil
 	}
 
-	event.OnHold = true
-	event.HoldReason = reason
 	updated, err := s.payEventRepo.Update(ctx, event)
 	if err != nil {
 		return nil, err
@@ -96,12 +86,10 @@ func (s *Service) ReleasePayEvent(
 	if err != nil {
 		return nil, err
 	}
-	if !event.OnHold {
+	if !PlanReleasePayEvent(event) {
 		return event, nil
 	}
 
-	event.OnHold = false
-	event.HoldReason = ""
 	updated, err := s.payEventRepo.Update(ctx, event)
 	if err != nil {
 		return nil, err
@@ -132,12 +120,9 @@ func (s *Service) AttachPayEvents(
 	if err := requireActor(actor, "Pay event attachment"); err != nil {
 		return nil, err
 	}
+	eventIDs = sliceutils.Dedupe(eventIDs)
 	if len(eventIDs) == 0 {
-		return nil, errortypes.NewValidationError(
-			"payEventIds",
-			errortypes.ErrRequired,
-			"Select at least one pay event to add",
-		)
+		return nil, errNoPayEventsSelected()
 	}
 
 	var updated *driversettlement.Settlement
@@ -147,12 +132,8 @@ func (s *Service) AttachPayEvents(
 		if txErr != nil {
 			return txErr
 		}
-		if entity.Status != driversettlement.StatusDraft {
-			return errortypes.NewValidationError(
-				"status",
-				errortypes.ErrInvalidOperation,
-				"Pay events can only be added to draft settlements",
-			)
+		if txErr = checkDraftForEvents(entity, "added to"); txErr != nil {
+			return txErr
 		}
 		previous = *entity
 
@@ -175,8 +156,7 @@ func (s *Service) AttachPayEvents(
 			return txErr
 		}
 
-		entity.ShipmentCount = countSettlementShipments(entity.Lines)
-		entity.SyncTotals()
+		FinishAttach(entity)
 		updated, txErr = s.settlementRepo.Update(txCtx, entity)
 		return txErr
 	})
@@ -201,47 +181,17 @@ func (s *Service) appendPayEventToSettlement(
 	if err != nil {
 		return err
 	}
-	if event.Status != driversettlement.PayEventStatusAccrued {
-		return errortypes.NewValidationError(
-			"payEventIds",
-			errortypes.ErrInvalidOperation,
-			"Pay event {0} is not accrued; only unsettled events can be added", event.ProNumber,
-		)
-	}
-	if event.WorkerID != entity.WorkerID {
-		return errortypes.NewValidationError(
-			"payEventIds",
-			errortypes.ErrInvalidOperation,
-			"Pay event {0} belongs to a different driver", event.ProNumber,
-		)
+	if err = checkAttachable(entity, event); err != nil {
+		return err
 	}
 
-	if event.OnHold {
-		event.OnHold = false
-		event.HoldReason = ""
+	if PlanReleasePayEvent(event) {
 		if _, err = s.payEventRepo.Update(ctx, event); err != nil {
 			return err
 		}
 	}
 
-	eventRef := event.ID
-	shipmentID := event.ShipmentID
-	for _, comp := range event.Components {
-		entity.Lines = append(entity.Lines, &driversettlement.SettlementLine{
-			Category:      driversettlement.LineCategoryEarning,
-			ComponentKind: comp.Kind,
-			Method:        comp.Method,
-			Description:   comp.Description,
-			Quantity:      comp.Quantity,
-			Rate:          comp.Rate,
-			AmountMinor:   comp.AmountMinor,
-			ShipmentID:    &shipmentID,
-			MoveID:        event.MoveID,
-			PayEventID:    &eventRef,
-			ProNumber:     event.ProNumber,
-		})
-	}
-	entity.TotalMiles = entity.TotalMiles.Add(event.TotalMiles)
+	AppendPayEventLines(entity, event)
 	return nil
 }
 
@@ -262,34 +212,10 @@ func (s *Service) DetachPayEvent(
 		if txErr != nil {
 			return txErr
 		}
-		if entity.Status != driversettlement.StatusDraft {
-			return errortypes.NewValidationError(
-				"status",
-				errortypes.ErrInvalidOperation,
-				"Pay events can only be removed from draft settlements",
-			)
+		if txErr = checkDraftForEvents(entity, "removed from"); txErr != nil {
+			return txErr
 		}
 		previous = *entity
-
-		found := false
-		remaining := make([]*driversettlement.SettlementLine, 0, len(entity.Lines))
-		for _, line := range entity.Lines {
-			if line == nil {
-				continue
-			}
-			if line.PayEventID != nil && *line.PayEventID == eventID {
-				found = true
-				continue
-			}
-			remaining = append(remaining, line)
-		}
-		if !found {
-			return errortypes.NewValidationError(
-				"payEventId",
-				errortypes.ErrInvalid,
-				"Pay event is not part of this settlement",
-			)
-		}
 
 		event, txErr := s.payEventRepo.GetByID(
 			txCtx,
@@ -298,14 +224,9 @@ func (s *Service) DetachPayEvent(
 		if txErr != nil {
 			return txErr
 		}
-
-		entity.Lines = remaining
-		entity.TotalMiles = entity.TotalMiles.Sub(event.TotalMiles)
-		if entity.TotalMiles.IsNegative() {
-			entity.TotalMiles = decimal.Zero
+		if txErr = PlanDetachPayEvent(entity, event); txErr != nil {
+			return txErr
 		}
-		entity.ShipmentCount = countSettlementShipments(remaining)
-		entity.SyncTotals()
 
 		if txErr = s.settlementRepo.ReplaceLines(txCtx, entity); txErr != nil {
 			return txErr

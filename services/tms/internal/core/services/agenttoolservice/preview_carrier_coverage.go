@@ -197,7 +197,7 @@ func retiredCoverageChanges(
 		return changes, nil
 	}
 	voided, err := rateConfirmationChange(plan.VoidedBefore, plan.VoidedAfter, shipmentLabel,
-		fieldStatus, "voidReason", "voidedAt")
+		fieldStatus, fieldVoidReason, fieldVoidedAt)
 	if err != nil {
 		return nil, err
 	}

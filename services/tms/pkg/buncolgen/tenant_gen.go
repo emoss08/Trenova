@@ -508,29 +508,35 @@ var AgentControlTable = TableInfo{
 //	q.Where(AgentControlColumns.ID.Eq(), id)           // WHERE agc.id = ?
 //	q.Order(AgentControlColumns.CreatedAt.OrderDesc())  // ORDER BY agc.created_at DESC
 var AgentControlColumns = struct {
-	ID                 Column // "id" → qualified: "agc.id"
-	BusinessUnitID     Column // "business_unit_id" → qualified: "agc.business_unit_id"
-	OrganizationID     Column // "organization_id" → qualified: "agc.organization_id"
-	ShadowMode         Column // "shadow_mode" → qualified: "agc.shadow_mode"
-	EarnedAutonomy     Column // "earned_autonomy" → qualified: "agc.earned_autonomy"
-	PromotionThreshold Column // "promotion_threshold" → qualified: "agc.promotion_threshold"
-	BriefingEnabled    Column // "briefing_enabled" → qualified: "agc.briefing_enabled"
-	BriefingHourLocal  Column // "briefing_hour_local" → qualified: "agc.briefing_hour_local"
-	Version            Column // "version" → qualified: "agc.version"
-	CreatedAt          Column // "created_at" → qualified: "agc.created_at"
-	UpdatedAt          Column // "updated_at" → qualified: "agc.updated_at"
+	ID                           Column // "id" → qualified: "agc.id"
+	BusinessUnitID               Column // "business_unit_id" → qualified: "agc.business_unit_id"
+	OrganizationID               Column // "organization_id" → qualified: "agc.organization_id"
+	ShadowMode                   Column // "shadow_mode" → qualified: "agc.shadow_mode"
+	EarnedAutonomy               Column // "earned_autonomy" → qualified: "agc.earned_autonomy"
+	PromotionThreshold           Column // "promotion_threshold" → qualified: "agc.promotion_threshold"
+	BriefingEnabled              Column // "briefing_enabled" → qualified: "agc.briefing_enabled"
+	BriefingHourLocal            Column // "briefing_hour_local" → qualified: "agc.briefing_hour_local"
+	AITrainingConsent            Column // "ai_training_consent" → qualified: "agc.ai_training_consent"
+	AITrainingConsentChangedAt   Column // "ai_training_consent_changed_at" → qualified: "agc.ai_training_consent_changed_at"
+	AITrainingConsentChangedByID Column // "ai_training_consent_changed_by_id" → qualified: "agc.ai_training_consent_changed_by_id"
+	Version                      Column // "version" → qualified: "agc.version"
+	CreatedAt                    Column // "created_at" → qualified: "agc.created_at"
+	UpdatedAt                    Column // "updated_at" → qualified: "agc.updated_at"
 }{
-	ID:                 NewColumn("id", "agc"),
-	BusinessUnitID:     NewColumn("business_unit_id", "agc"),
-	OrganizationID:     NewColumn("organization_id", "agc"),
-	ShadowMode:         NewColumn("shadow_mode", "agc"),
-	EarnedAutonomy:     NewColumn("earned_autonomy", "agc"),
-	PromotionThreshold: NewColumn("promotion_threshold", "agc"),
-	BriefingEnabled:    NewColumn("briefing_enabled", "agc"),
-	BriefingHourLocal:  NewColumn("briefing_hour_local", "agc"),
-	Version:            NewColumn("version", "agc"),
-	CreatedAt:          NewColumn("created_at", "agc"),
-	UpdatedAt:          NewColumn("updated_at", "agc"),
+	ID:                           NewColumn("id", "agc"),
+	BusinessUnitID:               NewColumn("business_unit_id", "agc"),
+	OrganizationID:               NewColumn("organization_id", "agc"),
+	ShadowMode:                   NewColumn("shadow_mode", "agc"),
+	EarnedAutonomy:               NewColumn("earned_autonomy", "agc"),
+	PromotionThreshold:           NewColumn("promotion_threshold", "agc"),
+	BriefingEnabled:              NewColumn("briefing_enabled", "agc"),
+	BriefingHourLocal:            NewColumn("briefing_hour_local", "agc"),
+	AITrainingConsent:            NewColumn("ai_training_consent", "agc"),
+	AITrainingConsentChangedAt:   NewColumn("ai_training_consent_changed_at", "agc"),
+	AITrainingConsentChangedByID: NewColumn("ai_training_consent_changed_by_id", "agc"),
+	Version:                      NewColumn("version", "agc"),
+	CreatedAt:                    NewColumn("created_at", "agc"),
+	UpdatedAt:                    NewColumn("updated_at", "agc"),
 }
 
 // AgentControlFieldMap maps JSON API field names to database column names.
@@ -538,17 +544,20 @@ var AgentControlColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by AgentControl.GetStaticFieldMap().
 var AgentControlFieldMap = map[string]string{
-	"id":                 "id",
-	"businessUnitId":     "business_unit_id",
-	"organizationId":     "organization_id",
-	"shadowMode":         "shadow_mode",
-	"earnedAutonomy":     "earned_autonomy",
-	"promotionThreshold": "promotion_threshold",
-	"briefingEnabled":    "briefing_enabled",
-	"briefingHourLocal":  "briefing_hour_local",
-	"version":            "version",
-	"createdAt":          "created_at",
-	"updatedAt":          "updated_at",
+	"id":                           "id",
+	"businessUnitId":               "business_unit_id",
+	"organizationId":               "organization_id",
+	"shadowMode":                   "shadow_mode",
+	"earnedAutonomy":               "earned_autonomy",
+	"promotionThreshold":           "promotion_threshold",
+	"briefingEnabled":              "briefing_enabled",
+	"briefingHourLocal":            "briefing_hour_local",
+	"aiTrainingConsent":            "ai_training_consent",
+	"aiTrainingConsentChangedAt":   "ai_training_consent_changed_at",
+	"aiTrainingConsentChangedById": "ai_training_consent_changed_by_id",
+	"version":                      "version",
+	"createdAt":                    "created_at",
+	"updatedAt":                    "updated_at",
 }
 
 // AgentControlInsertableColumns lists column names suitable for INSERT statements on the "agent_controls" table.
@@ -562,6 +571,9 @@ var AgentControlInsertableColumns = []string{
 	"promotion_threshold",
 	"briefing_enabled",
 	"briefing_hour_local",
+	"ai_training_consent",
+	"ai_training_consent_changed_at",
+	"ai_training_consent_changed_by_id",
 	"version",
 	"created_at",
 	"updated_at",
@@ -630,17 +642,20 @@ func AgentControlApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *b
 //	AgentControlFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var AgentControlFilter = struct {
-	ID                 func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	BusinessUnitID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	OrganizationID     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	ShadowMode         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shadowMode" → DB: "shadow_mode"
-	EarnedAutonomy     func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "earnedAutonomy" → DB: "earned_autonomy"
-	PromotionThreshold func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "promotionThreshold" → DB: "promotion_threshold"
-	BriefingEnabled    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "briefingEnabled" → DB: "briefing_enabled"
-	BriefingHourLocal  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "briefingHourLocal" → DB: "briefing_hour_local"
-	Version            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	BusinessUnitID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	OrganizationID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	ShadowMode                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shadowMode" → DB: "shadow_mode"
+	EarnedAutonomy               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "earnedAutonomy" → DB: "earned_autonomy"
+	PromotionThreshold           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "promotionThreshold" → DB: "promotion_threshold"
+	BriefingEnabled              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "briefingEnabled" → DB: "briefing_enabled"
+	BriefingHourLocal            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "briefingHourLocal" → DB: "briefing_hour_local"
+	AITrainingConsent            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiTrainingConsent" → DB: "ai_training_consent"
+	AITrainingConsentChangedAt   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiTrainingConsentChangedAt" → DB: "ai_training_consent_changed_at"
+	AITrainingConsentChangedByID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiTrainingConsentChangedById" → DB: "ai_training_consent_changed_by_id"
+	Version                      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -665,6 +680,15 @@ var AgentControlFilter = struct {
 	},
 	BriefingHourLocal: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("briefingHourLocal", op, value)
+	},
+	AITrainingConsent: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("aiTrainingConsent", op, value)
+	},
+	AITrainingConsentChangedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("aiTrainingConsentChangedAt", op, value)
+	},
+	AITrainingConsentChangedByID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("aiTrainingConsentChangedById", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)
@@ -1721,6 +1745,7 @@ var DataRetentionColumns = struct {
 	AgentEvalCaseRetentionPeriod       Column // "agent_eval_case_retention_period" → qualified: "dr.agent_eval_case_retention_period"
 	AIFeedbackRetentionPeriod          Column // "ai_feedback_retention_period" → qualified: "dr.ai_feedback_retention_period"
 	AIAuditRetentionPeriod             Column // "ai_audit_retention_period" → qualified: "dr.ai_audit_retention_period"
+	AICorrectionRetentionPeriod        Column // "ai_correction_retention_period" → qualified: "dr.ai_correction_retention_period"
 	Version                            Column // "version" → qualified: "dr.version"
 	CreatedAt                          Column // "created_at" → qualified: "dr.created_at"
 	UpdatedAt                          Column // "updated_at" → qualified: "dr.updated_at"
@@ -1735,6 +1760,7 @@ var DataRetentionColumns = struct {
 	AgentEvalCaseRetentionPeriod:       NewColumn("agent_eval_case_retention_period", "dr"),
 	AIFeedbackRetentionPeriod:          NewColumn("ai_feedback_retention_period", "dr"),
 	AIAuditRetentionPeriod:             NewColumn("ai_audit_retention_period", "dr"),
+	AICorrectionRetentionPeriod:        NewColumn("ai_correction_retention_period", "dr"),
 	Version:                            NewColumn("version", "dr"),
 	CreatedAt:                          NewColumn("created_at", "dr"),
 	UpdatedAt:                          NewColumn("updated_at", "dr"),
@@ -1755,6 +1781,7 @@ var DataRetentionFieldMap = map[string]string{
 	"agentEvalCaseRetentionPeriod":       "agent_eval_case_retention_period",
 	"aiFeedbackRetentionPeriod":          "ai_feedback_retention_period",
 	"aiAuditRetentionPeriod":             "ai_audit_retention_period",
+	"aiCorrectionRetentionPeriod":        "ai_correction_retention_period",
 	"version":                            "version",
 	"createdAt":                          "created_at",
 	"updatedAt":                          "updated_at",
@@ -1773,6 +1800,7 @@ var DataRetentionInsertableColumns = []string{
 	"agent_eval_case_retention_period",
 	"ai_feedback_retention_period",
 	"ai_audit_retention_period",
+	"ai_correction_retention_period",
 	"version",
 	"created_at",
 	"updated_at",
@@ -1851,6 +1879,7 @@ var DataRetentionFilter = struct {
 	AgentEvalCaseRetentionPeriod       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "agentEvalCaseRetentionPeriod" → DB: "agent_eval_case_retention_period"
 	AIFeedbackRetentionPeriod          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiFeedbackRetentionPeriod" → DB: "ai_feedback_retention_period"
 	AIAuditRetentionPeriod             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiAuditRetentionPeriod" → DB: "ai_audit_retention_period"
+	AICorrectionRetentionPeriod        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "aiCorrectionRetentionPeriod" → DB: "ai_correction_retention_period"
 	Version                            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
 	CreatedAt                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
 	UpdatedAt                          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
@@ -1884,6 +1913,9 @@ var DataRetentionFilter = struct {
 	},
 	AIAuditRetentionPeriod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("aiAuditRetentionPeriod", op, value)
+	},
+	AICorrectionRetentionPeriod: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("aiCorrectionRetentionPeriod", op, value)
 	},
 	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("version", op, value)

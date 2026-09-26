@@ -40,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agentshadow"
 	"github.com/emoss08/trenova/internal/core/services/agentsubjectservice"
 	"github.com/emoss08/trenova/internal/core/services/agenttrustservice"
+	"github.com/emoss08/trenova/internal/core/services/aicorrectionservice"
 	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/aifeedbackservice"
 	"github.com/emoss08/trenova/internal/core/services/aiproviderservice"
@@ -106,6 +107,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/core/services/exchangerateservice"
+	"github.com/emoss08/trenova/internal/core/services/extractionevalservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalcloseservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyearservice"
@@ -354,6 +356,10 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentplanservice.New,
 	agentmemoryservice.NewLabeler,
 	agentmemoryservice.New,
+	aicorrectionservice.New,
+	extractionevalservice.New,
+	extractionevalservice.AsService,
+	extractionevalservice.AsRunner,
 	aifeedbackservice.New,
 	aifeedbackservice.AsService,
 	aifeedbackservice.AsMaintenance,
@@ -362,6 +368,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	agentevalcaseservice.New,
 	agentqualityservice.New,
 	agentqualityservice.AsService,
+	agentqualityservice.AsEvaluationBudget,
 	assignmentservice.New,
 	fx.Annotate(
 		dispatchautoassignservice.New,

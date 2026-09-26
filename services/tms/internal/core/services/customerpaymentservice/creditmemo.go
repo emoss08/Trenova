@@ -2,7 +2,6 @@ package customerpaymentservice
 
 import (
 	"context"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 
@@ -11,11 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 )
 
@@ -28,122 +25,39 @@ func (s *Service) ApplyCreditMemo(
 	req *serviceports.ApplyCreditMemoRequest,
 	actor *serviceports.RequestActor,
 ) ([]*customerpayment.CreditMemoApplication, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Request is required",
-		)
-	}
-	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError(
-			"Applying a credit memo requires an authenticated user",
-		)
-	}
-	if multiErr := s.validateCreditApplications(req); multiErr != nil {
-		return nil, multiErr
+	if err := s.checkCreditRequest(ctx, req, actor); err != nil {
+		return nil, err
 	}
 
-	if _, err := s.validator.fiscalPeriodRepo.GetPeriodByDate(
-		ctx,
-		repositories.GetPeriodByDateRequest{
-			OrgID: req.TenantInfo.OrgID,
-			BuID:  req.TenantInfo.BuID,
-			Date:  req.AccountingDate,
-		},
-	); err != nil {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add(
-			"accountingDate",
-			errortypes.ErrInvalid,
-			"Accounting date must fall within a fiscal period",
-		)
-		return nil, multiErr
-	}
-
-	applied := make([]*customerpayment.CreditMemoApplication, 0, len(req.Applications))
+	var applied []*customerpayment.CreditMemoApplication
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		memo, txErr := s.invoiceRepo.LockForUpdate(txCtx, repositories.GetInvoiceByIDRequest{
-			ID:         req.CreditMemoID,
-			TenantInfo: req.TenantInfo,
-		})
+		plan, txErr := s.planCreditApplication(txCtx, req, actor, s.invoiceRepo.LockForUpdate)
 		if txErr != nil {
 			return txErr
 		}
-		if multiErr := validateCreditMemoSource(memo); multiErr != nil {
-			return multiErr
-		}
 
-		var total int64
-		for _, app := range req.Applications {
-			total += app.AppliedAmountMinor
-		}
-		if total > memo.CreditRemainingMinor() {
-			return errortypes.NewValidationError(
-				"applications",
-				errortypes.ErrInvalid,
-				"Applications exceed the credit memo's remaining balance by {0} minor units",
-				total-memo.CreditRemainingMinor(),
-			)
-		}
-
-		previousMemo := *memo
-		for idx, app := range req.Applications {
-			target, lockErr := s.invoiceRepo.LockForUpdate(
-				txCtx,
-				repositories.GetInvoiceByIDRequest{
-					ID:         app.InvoiceID,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if lockErr != nil {
-				return lockErr
-			}
-			if multiErr := validateCreditTarget(
-				memo,
-				target,
-				app.AppliedAmountMinor,
-				idx,
-			); multiErr != nil {
-				return multiErr
-			}
-
-			previousTarget := *target
-			target.ApplyPaymentMinor(app.AppliedAmountMinor)
+		for idx, target := range plan.targets {
 			updatedTarget, updateErr := s.invoiceRepo.Update(txCtx, target)
 			if updateErr != nil {
 				return updateErr
 			}
-			memo.ApplyCreditMinor(app.AppliedAmountMinor)
-
-			applied = append(applied, &customerpayment.CreditMemoApplication{
-				OrganizationID:      req.TenantInfo.OrgID,
-				BusinessUnitID:      req.TenantInfo.BuID,
-				CreditMemoInvoiceID: memo.ID,
-				InvoiceID:           target.ID,
-				AppliedAmountMinor:  app.AppliedAmountMinor,
-				AccountingDate:      req.AccountingDate,
-				LineNumber:          idx + 1,
-				Status:              customerpayment.CreditApplicationStatusApplied,
-				CreatedByID:         actor.UserID,
-			})
-			s.logInvoiceAudit(&previousTarget, updatedTarget, actor.UserID)
+			s.logInvoiceAudit(plan.targetsBefore[idx], updatedTarget, actor.UserID)
 		}
 
-		updatedMemo, txErr := s.invoiceRepo.Update(txCtx, memo)
+		updatedMemo, txErr := s.invoiceRepo.Update(txCtx, plan.memo)
 		if txErr != nil {
 			return txErr
 		}
-		if txErr = s.repo.CreateCreditMemoApplications(txCtx, applied); txErr != nil {
+		if txErr = s.repo.CreateCreditMemoApplications(txCtx, plan.applications); txErr != nil {
 			return txErr
 		}
-		for _, app := range applied {
+		for _, app := range plan.applications {
 			if txErr = serviceports.EnqueueAccountingSync(
 				txCtx,
 				s.accountingSync,
 				serviceports.CreditApplicationSyncRequest(
 					app,
-					memo.Number,
+					plan.memo.Number,
 					accountingsync.SyncOperationCreate,
 					accountingsync.SyncSourceCreditMemoApplied,
 				),
@@ -151,7 +65,8 @@ func (s *Service) ApplyCreditMemo(
 				return txErr
 			}
 		}
-		s.logInvoiceAudit(&previousMemo, updatedMemo, actor.UserID)
+		s.logInvoiceAudit(plan.memoBefore, updatedMemo, actor.UserID)
+		applied = plan.applications
 		return nil
 	})
 	if err != nil {
@@ -161,94 +76,31 @@ func (s *Service) ApplyCreditMemo(
 	return applied, nil
 }
 
-// UnapplyCreditMemoApplication takes one application back, restoring the
-// invoice's open balance and the credit memo's remaining balance.
 func (s *Service) UnapplyCreditMemoApplication(
 	ctx context.Context,
 	req *serviceports.UnapplyCreditMemoApplicationRequest,
 	actor *serviceports.RequestActor,
 ) (*customerpayment.CreditMemoApplication, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Request is required",
-		)
-	}
-	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError(
-			"Unapplying a credit memo requires an authenticated user",
-		)
-	}
-	if req.ApplicationID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"applicationId",
-			errortypes.ErrRequired,
-			"Application is required",
-		)
+	if err := checkUnapplyRequest(req, actor); err != nil {
+		return nil, err
 	}
 
 	var updated *customerpayment.CreditMemoApplication
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		application, txErr := s.repo.GetCreditMemoApplicationByID(
-			txCtx,
-			repositories.GetCreditMemoApplicationRequest{
-				ID:         req.ApplicationID,
-				TenantInfo: req.TenantInfo,
-			},
-		)
-		if txErr != nil {
-			return txErr
-		}
-		if !application.IsApplied() {
-			return errortypes.NewValidationError(
-				"applicationId",
-				errortypes.ErrInvalidOperation,
-				"This credit memo application has already been unapplied",
-			)
-		}
-
-		memo, txErr := s.invoiceRepo.LockForUpdate(txCtx, repositories.GetInvoiceByIDRequest{
-			ID:         application.CreditMemoInvoiceID,
-			TenantInfo: req.TenantInfo,
-		})
-		if txErr != nil {
-			return txErr
-		}
-		target, txErr := s.invoiceRepo.LockForUpdate(txCtx, repositories.GetInvoiceByIDRequest{
-			ID:         application.InvoiceID,
-			TenantInfo: req.TenantInfo,
-		})
-		if txErr != nil {
-			return txErr
-		}
-		if target.Status == invoice.StatusVoided {
-			return errortypes.NewValidationError(
-				"applicationId",
-				errortypes.ErrInvalidOperation,
-				"The invoice this credit settled has been voided",
-			)
-		}
-
-		previousTarget := *target
-		previousMemo := *memo
-		target.RemovePaymentMinor(application.AppliedAmountMinor)
-		memo.ReleaseCreditMinor(application.AppliedAmountMinor)
-		updatedTarget, txErr := s.invoiceRepo.Update(txCtx, target)
-		if txErr != nil {
-			return txErr
-		}
-		updatedMemo, txErr := s.invoiceRepo.Update(txCtx, memo)
+		plan, txErr := s.planUnapplyCredit(txCtx, req, actor, s.invoiceRepo.LockForUpdate)
 		if txErr != nil {
 			return txErr
 		}
 
-		now := timeutils.NowUnix()
-		application.Status = customerpayment.CreditApplicationStatusUnapplied
-		application.UnappliedAt = &now
-		application.UnappliedByID = actor.UserID
-		application.UnappliedReason = strings.TrimSpace(req.Reason)
-		updated, txErr = s.repo.UpdateCreditMemoApplication(txCtx, application)
+		updatedTarget, txErr := s.invoiceRepo.Update(txCtx, plan.targets[0])
+		if txErr != nil {
+			return txErr
+		}
+		updatedMemo, txErr := s.invoiceRepo.Update(txCtx, plan.memo)
+		if txErr != nil {
+			return txErr
+		}
+		updated, txErr = s.repo.UpdateCreditMemoApplication(txCtx, plan.applications[0])
 		if txErr != nil {
 			return txErr
 		}
@@ -257,7 +109,7 @@ func (s *Service) UnapplyCreditMemoApplication(
 			s.accountingSync,
 			serviceports.CreditApplicationSyncRequest(
 				updated,
-				memo.Number,
+				plan.memo.Number,
 				accountingsync.SyncOperationVoid,
 				accountingsync.SyncSourceCreditMemoUnapplied,
 			),
@@ -265,8 +117,8 @@ func (s *Service) UnapplyCreditMemoApplication(
 			return txErr
 		}
 
-		s.logInvoiceAudit(&previousTarget, updatedTarget, actor.UserID)
-		s.logInvoiceAudit(&previousMemo, updatedMemo, actor.UserID)
+		s.logInvoiceAudit(plan.targetsBefore[0], updatedTarget, actor.UserID)
+		s.logInvoiceAudit(plan.memoBefore, updatedMemo, actor.UserID)
 		return nil
 	})
 	if err != nil {

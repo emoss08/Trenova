@@ -40,6 +40,13 @@ func (noopAIDocumentService) PollRateConfirmationBackgroundExtraction(
 	return nil, nil //nolint:nilnil // intentional noop
 }
 
+func (noopAIDocumentService) ExtractRateConfirmationForEvaluation(
+	context.Context,
+	*services.AIEvaluationExtractRequest,
+) (*services.AIEvaluationExtractResult, error) {
+	return nil, nil //nolint:nilnil // intentional noop
+}
+
 type noopDocumentSearchProjectionService struct{}
 
 func (noopDocumentSearchProjectionService) Upsert(

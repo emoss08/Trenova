@@ -351,3 +351,65 @@ func TestCompleteStructured_RefusesUntrustedProviderForLedgerTask(t *testing.T) 
 	require.Error(t, err)
 	assert.Equal(t, int32(0), calls.Load(), "an untrusted provider must not be called")
 }
+
+func TestCompleteStructured_RequiredProviderNeverFallsThrough(t *testing.T) {
+	t.Parallel()
+
+	failing, failingCalls := chatServer(t, http.StatusInternalServerError, "")
+	healthy, healthyCalls := chatServer(t, http.StatusOK, `{"answer":"other"}`)
+	required := openAIChatProvider("required", failing.URL, 20)
+
+	svc := newTestService(t,
+		openAIChatProvider("preferred-by-priority", healthy.URL, 10),
+		required,
+	)
+
+	request := generalRequest()
+	request.PreferredProviderID = required.ID
+	request.RequireProvider = true
+
+	_, err := svc.CompleteStructured(t.Context(), request)
+	require.Error(t, err)
+	assert.Positive(t, failingCalls.Load())
+	assert.Equal(t, int32(0), healthyCalls.Load(), "a required provider is never replaced by another")
+}
+
+func TestCompleteStructured_RequiredProviderServesTheCall(t *testing.T) {
+	t.Parallel()
+
+	other, otherCalls := chatServer(t, http.StatusOK, `{"answer":"other"}`)
+	chosen, chosenCalls := chatServer(t, http.StatusOK, `{"answer":"chosen"}`)
+	required := openAIChatProvider("required", chosen.URL, 20)
+
+	svc := newTestService(t, openAIChatProvider("first", other.URL, 10), required)
+
+	request := generalRequest()
+	request.PreferredProviderID = required.ID
+	request.RequireProvider = true
+
+	result, err := svc.CompleteStructured(t.Context(), request)
+	require.NoError(t, err)
+	assert.Equal(t, `{"answer":"chosen"}`, result.Text)
+	assert.Equal(t, required.ID, result.ProviderID)
+	assert.Equal(t, int32(1), chosenCalls.Load())
+	assert.Equal(t, int32(0), otherCalls.Load())
+}
+
+func TestCompleteStructured_RequiredProviderMustServeTheTask(t *testing.T) {
+	t.Parallel()
+
+	server, calls := chatServer(t, http.StatusOK, `{"answer":"ok"}`)
+	serving := openAIChatProvider("serving", server.URL, 10)
+	notServing := openAIChatProvider("not-serving", server.URL, 20)
+	notServing.Tasks = []aiprovider.Task{aiprovider.TaskDocumentExtraction}
+
+	svc := newTestService(t, serving, notServing)
+
+	request := generalRequest()
+	request.PreferredProviderID = notServing.ID
+	request.RequireProvider = true
+
+	_, err := svc.CompleteStructured(t.Context(), request)
+	require.ErrorIs(t, err, serviceports.ErrRequiredProviderUnavailable)
+	assert.Equal(t, int32(0), calls.Load())
+}

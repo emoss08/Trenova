@@ -5,9 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
@@ -21,8 +23,58 @@ import (
 	"go.uber.org/zap"
 )
 
+type recordingCorrections struct {
+	requests []*services.CaptureShipmentDraftCorrectionRequest
+	err      error
+}
+
+func (r *recordingCorrections) CaptureShipmentDraft(
+	_ context.Context,
+	req *services.CaptureShipmentDraftCorrectionRequest,
+) (*aicorrection.Correction, error) {
+	r.requests = append(r.requests, req)
+	if r.err != nil {
+		return nil, r.err
+	}
+	return &aicorrection.Correction{}, nil
+}
+
+func (r *recordingCorrections) PurgeExpired(
+	context.Context,
+	services.PurgeExpiredAICorrectionsRequest,
+) (int64, error) {
+	return 0, nil
+}
+
 func TestAttachLineageToResourceUpdatesDraftAttachmentMetadata(t *testing.T) {
 	t.Parallel()
+
+	tests := []struct {
+		name        string
+		corrections *recordingCorrections
+	}{
+		{name: "without correction capture"},
+		{name: "captures the correction", corrections: &recordingCorrections{}},
+		{
+			name:        "a failed capture does not fail the attach",
+			corrections: &recordingCorrections{err: assert.AnError},
+		},
+		{
+			name:        "a draft with nothing predicted is skipped quietly",
+			corrections: &recordingCorrections{err: aicorrection.ErrNothingPredicted},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			attachLineageToShipment(t, tt.corrections)
+		})
+	}
+}
+
+func attachLineageToShipment(t *testing.T, corrections *recordingCorrections) {
+	t.Helper()
 
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
@@ -129,6 +181,7 @@ func TestAttachLineageToResourceUpdatesDraftAttachmentMetadata(t *testing.T) {
 		Config:               cfg,
 		ThumbnailGenerator:   thumbnailservice.NewGenerator(),
 		WorkflowStarter:      workflowstarter.New(workflowstarter.Params{}),
+		AICorrections:        correctionService(corrections),
 	})
 
 	result, err := service.AttachLineageToResource(
@@ -141,6 +194,22 @@ func TestAttachLineageToResourceUpdatesDraftAttachmentMetadata(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Equal(t, updated, result)
+
+	if corrections != nil {
+		require.Len(t, corrections.requests, 1)
+		captured := corrections.requests[0]
+		assert.Same(t, draft, captured.Draft)
+		assert.Equal(t, shipmentID, captured.ShipmentID)
+		assert.Equal(t, userID, captured.CapturedByID)
+		assert.Equal(t, tenantInfo, captured.TenantInfo)
+	}
+}
+
+func correctionService(corrections *recordingCorrections) services.AICorrectionService {
+	if corrections == nil {
+		return nil
+	}
+	return corrections
 }
 
 // The lineage columns hold the shipment id as text with no foreign key, so a

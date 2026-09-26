@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -32,6 +33,7 @@ type Service struct {
 	repo        repositories.AgentControlRepository
 	definitions repositories.AgentDefinitionRepository
 	audit       services.AuditService
+	now         func() int64
 }
 
 func New(p Params) services.AgentControlService {
@@ -40,6 +42,7 @@ func New(p Params) services.AgentControlService {
 		repo:        p.Repo,
 		definitions: p.Definitions,
 		audit:       p.AuditService,
+		now:         timeutils.NowUnix,
 	}
 }
 
@@ -81,6 +84,7 @@ func (s *Service) Update(
 	}
 
 	me := errortypes.NewMultiError()
+	consentChanged := s.applyTrainingConsent(control, req.AITrainingConsent, actor, me)
 	control.Validate(me)
 	if me.HasErrors() {
 		return nil, me
@@ -110,11 +114,45 @@ func (s *Service) Update(
 		PreviousState:  jsonutils.MustToJSON(&previous),
 		OrganizationID: updated.OrganizationID,
 		BusinessUnitID: updated.BusinessUnitID,
-	}, auditservice.WithComment("Agent control updated")); err != nil {
+	}, auditservice.WithComment(agentControlAuditComment(consentChanged, updated))); err != nil {
 		s.l.Error("failed to log agent control audit", zap.Error(err))
 	}
 
 	return updated, nil
+}
+
+func (s *Service) applyTrainingConsent(
+	control *tenant.AgentControl,
+	consent *bool,
+	actor *services.RequestActor,
+	me *errortypes.MultiError,
+) bool {
+	if consent == nil || *consent == control.AITrainingConsent {
+		return false
+	}
+
+	userID := actor.AuditActor().UserID
+	if userID.IsNil() {
+		me.Add(
+			"aiTrainingConsent",
+			errortypes.ErrInvalid,
+			"Training consent can only be changed by a signed-in person",
+		)
+		return false
+	}
+
+	return control.SetAITrainingConsent(*consent, userID, s.now())
+}
+
+func agentControlAuditComment(consentChanged bool, control *tenant.AgentControl) string {
+	switch {
+	case consentChanged && control.AITrainingConsent:
+		return "AI training consent granted"
+	case consentChanged:
+		return "AI training consent withdrawn"
+	default:
+		return "Agent control updated"
+	}
 }
 
 func (s *Service) billingDefinition(

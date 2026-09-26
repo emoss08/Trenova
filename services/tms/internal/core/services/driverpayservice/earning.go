@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,18 +43,8 @@ func (s *Service) CreateEarning(
 	if err := requireActor(actor, "Recurring earning creation"); err != nil {
 		return nil, err
 	}
-	if err := s.resolvePayCode(
-		ctx,
-		pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		entity.PayCodeID,
-		driverpay.PayCodeDirectionEarning,
-	); err != nil {
+	if err := s.CheckEarning(ctx, entity); err != nil {
 		return nil, err
-	}
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	entity.CreatedByID = actor.UserID
@@ -76,18 +65,8 @@ func (s *Service) UpdateEarning(
 	if err := requireActor(actor, "Recurring earning update"); err != nil {
 		return nil, err
 	}
-	if err := s.resolvePayCode(
-		ctx,
-		pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID},
-		entity.PayCodeID,
-		driverpay.PayCodeDirectionEarning,
-	); err != nil {
+	if err := s.CheckEarning(ctx, entity); err != nil {
 		return nil, err
-	}
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
 	}
 
 	previous, err := s.earningRepo.GetByID(ctx, repositories.GetRecurringEarningByIDRequest{

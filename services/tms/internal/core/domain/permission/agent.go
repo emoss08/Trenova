@@ -279,7 +279,8 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead: {},
 	},
 	ResourceEDI: {
-		OpRead: {},
+		OpRead:   {},
+		OpUpdate: {},
 	},
 	ResourceFormulaTemplate: {
 		OpRead: {},

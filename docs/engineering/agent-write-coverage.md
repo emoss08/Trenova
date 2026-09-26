@@ -62,35 +62,36 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 58 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 206 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 210 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 23 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 28 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 42 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 47 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 46 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 10 |
-| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 0 |
+| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 3 |
 
 ## Totals
 
-919 writes: 472 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
+924 writes: 477 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 78 |
-| Exempt | 446 |
+| Covered by a tool | 166 |
+| Exempt | 458 |
 | — Security | 58 |
-| — Configuration | 206 |
+| — Configuration | 210 |
 | — User preference | 23 |
 | — Infrastructure | 28 |
-| — Agent administration | 42 |
+| — Agent administration | 47 |
 | — Counterparty | 33 |
 | — Read-only | 46 |
 | — Attestation | 10 |
-| **Pending** | **395** |
-| Total | 919 |
+| — Duplicate | 3 |
+| **Pending** | **300** |
+| Total | 924 |
 
-Of the 473 writes an agent should be able to make, 78 have a tool (16%).
+Of the 466 writes an agent should be able to make, 166 have a tool (35%).
 
 ## Pending
 
@@ -127,21 +128,6 @@ The writes no tool performs yet, and what the tool would do.
 | carrierintelligence | `mutation verifyCarrierEquipment` | Verify carrier equipment. |
 | carrierintelligence | `mutation vetCarrier` | Vet carrier. |
 | carrierintelligence | `mutation vetCustomerBroker` | Vet customer broker. |
-| carriersettlement | `mutation acceptCarrierInvoiceMatch` | Accept carrier invoice match. |
-| carriersettlement | `mutation acceptCarrierInvoiceMatchWithVariance` | Accept carrier invoice match with variance. |
-| carriersettlement | `mutation addCarrierSettlementAdjustment` | Add carrier settlement adjustment. |
-| carriersettlement | `mutation approveCarrierSettlement` | Approve carrier settlement. |
-| carriersettlement | `mutation createCarrierInvoiceMatch` | Create carrier invoice match. |
-| carriersettlement | `mutation generateCarrierSettlementBatch` | Generate carrier settlement batch. |
-| carriersettlement | `mutation linkEdiCarrierInvoiceToCarrier` | Link EDI carrier invoice to carrier. |
-| carriersettlement | `mutation markCarrierSettlementPaid` | Mark carrier settlement paid. |
-| carriersettlement | `mutation postCarrierSettlement` | Post carrier settlement. |
-| carriersettlement | `mutation recalculateCarrierSettlement` | Recalculate carrier settlement. |
-| carriersettlement | `mutation rejectCarrierInvoiceMatch` | Reject carrier invoice match. |
-| carriersettlement | `mutation rejectCarrierSettlement` | Reject carrier settlement. |
-| carriersettlement | `mutation removeCarrierSettlementAdjustment` | Remove carrier settlement adjustment. |
-| carriersettlement | `mutation submitCarrierSettlement` | Submit carrier settlement. |
-| carriersettlement | `mutation voidCarrierSettlement` | Void carrier settlement. |
 | commodity | `PATCH /api/v1/commodities/:commodityID/` | Update some fields of a commodity. |
 | commodity | `POST /api/v1/commodities/` | Create a commodity. |
 | commodity | `POST /api/v1/commodities/bulk-update-status/` | Change the status of several commodities at once. |
@@ -150,10 +136,6 @@ The writes no tool performs yet, and what the tool would do.
 | customer | `POST /api/v1/customers/` | Create a customer. |
 | customer | `POST /api/v1/customers/bulk-update-status/` | Change the status of several customers at once. |
 | customer | `PUT /api/v1/customers/:customerID/` | Update a customer. |
-| customerpayment | `mutation applyCreditMemo` | Apply credit memo. |
-| customerpayment | `mutation applyUnappliedCustomerPayment` | Apply unapplied customer payment. |
-| customerpayment | `mutation reverseCustomerPayment` | Reverse customer payment. |
-| customerpayment | `mutation unapplyCreditMemoApplication` | Unapply credit memo application. |
 | detention | `mutation disputeDetentionOccurrence` | Dispute detention occurrence. |
 | distanceoverride | `DELETE /api/v1/distance-overrides/:distanceOverrideID/` | Delete a distance override. |
 | distanceoverride | `PATCH /api/v1/distance-overrides/:distanceOverrideID/` | Update some fields of a distance override. |
@@ -166,56 +148,6 @@ The writes no tool performs yet, and what the tool would do.
 | driverportal | `mutation resolveSettlementDispute` | Resolve settlement dispute. |
 | driverportal | `mutation reviewDriverExpense` | Review driver expense. |
 | driverportal | `mutation startSettlementDisputeReview` | Start settlement dispute review. |
-| driversettlement | `mutation addDriverSettlementAdjustment` | Add driver settlement adjustment. |
-| driversettlement | `mutation adjustEscrowAccount` | Adjust escrow account. |
-| driversettlement | `mutation approveDriverSettlement` | Approve driver settlement. |
-| driversettlement | `mutation assignPayProfileToWorker` | Assign pay profile to worker. |
-| driversettlement | `mutation attachPayEventsToSettlement` | Attach pay events to a driver settlement. |
-| driversettlement | `mutation bulkDriverSettlementAction` | Approve, post or void several driver settlements at once. |
-| driversettlement | `mutation closeEscrowAccount` | Close escrow account. |
-| driversettlement | `mutation createPayCode` | Create pay code. |
-| driversettlement | `mutation createPayProfile` | Create pay profile. |
-| driversettlement | `mutation createRecurringDeduction` | Create recurring deduction. |
-| driversettlement | `mutation createRecurringEarning` | Create recurring earning. |
-| driversettlement | `mutation detachPayEventFromSettlement` | Detach a pay event from a driver settlement. |
-| driversettlement | `mutation endWorkerPayAssignment` | End worker pay assignment. |
-| driversettlement | `mutation generateDriverSettlement` | Generate driver settlement. |
-| driversettlement | `mutation generateSettlementBatch` | Generate settlement batch. |
-| driversettlement | `mutation holdDriverPayEvent` | Hold driver pay event. |
-| driversettlement | `mutation issuePayAdvance` | Issue pay advance. |
-| driversettlement | `mutation markDriverSettlementPaid` | Mark driver settlement paid. |
-| driversettlement | `mutation openEscrowAccount` | Open escrow account. |
-| driversettlement | `mutation payWorkerNow` | Pay a worker off cycle now. |
-| driversettlement | `mutation postDriverSettlement` | Post driver settlement. |
-| driversettlement | `mutation recalculateDriverSettlement` | Recalculate driver settlement. |
-| driversettlement | `mutation rejectDriverSettlement` | Reject driver settlement. |
-| driversettlement | `mutation releaseDriverPayEvent` | Release driver pay event. |
-| driversettlement | `mutation removeDriverSettlementAdjustment` | Remove driver settlement adjustment. |
-| driversettlement | `mutation submitDriverSettlement` | Submit driver settlement. |
-| driversettlement | `mutation updateEscrowAccount` | Update escrow account. |
-| driversettlement | `mutation updatePayCode` | Update pay code. |
-| driversettlement | `mutation updatePayProfile` | Update pay profile. |
-| driversettlement | `mutation updateRecurringDeduction` | Update recurring deduction. |
-| driversettlement | `mutation updateRecurringEarning` | Update recurring earning. |
-| driversettlement | `mutation voidDriverSettlement` | Void driver settlement. |
-| driversettlement | `mutation writeOffPayAdvance` | Write off pay advance. |
-| edi | `POST /api/v1/edi/documents/generate/` | Generate an outbound EDI document (a 214, a 210) for a record. |
-| edi | `POST /api/v1/edi/inbound-files/:fileID/reprocess/` | Process a failed inbound EDI file again. |
-| edi | `POST /api/v1/edi/inbound-files/bulk-reprocess/` | Process several failed inbound EDI files again. |
-| edi | `POST /api/v1/edi/load-tenders/` | Send a load tender to a trading partner over EDI. |
-| edi | `POST /api/v1/edi/messages/:messageID/replay/` | Send an EDI message again to its partner. |
-| edi | `POST /api/v1/edi/messages/:messageID/retry-delivery/` | Retry delivery of an EDI message that failed to send. |
-| edi | `POST /api/v1/edi/messages/bulk-retry-delivery/` | Retry delivery of several EDI messages that failed to send. |
-| edi | `POST /api/v1/edi/tender-changes/:changeID/apply/` | Apply a change a trading partner sent to a tendered load. |
-| edi | `POST /api/v1/edi/tender-changes/:changeID/reject/` | Reject a change a trading partner sent to a tendered load. |
-| edi | `POST /api/v1/edi/transfer-changes/:changeID/apply/` | Apply a change to an inbound EDI transfer. |
-| edi | `POST /api/v1/edi/transfer-changes/:changeID/reject/` | Reject a change to an inbound EDI transfer. |
-| edi | `POST /api/v1/edi/transfers/:transferID/approve/` | Accept an inbound EDI load tender and create the shipment. |
-| edi | `POST /api/v1/edi/transfers/:transferID/cancel/` | Cancel an inbound EDI transfer. |
-| edi | `POST /api/v1/edi/transfers/:transferID/expire/` | Expire an inbound EDI transfer that was not answered in time. |
-| edi | `POST /api/v1/edi/transfers/:transferID/reject/` | Decline an inbound EDI load tender. |
-| edi | `POST /api/v1/edi/transfers/bulk-approve/` | Accept several inbound EDI load tenders at once. |
-| edi | `POST /api/v1/edi/transfers/bulk-reject/` | Decline several inbound EDI load tenders at once. |
 | exchangerate | `POST /api/v1/exchange-rates/settlement-quotes` | Lock an exchange rate quote for settling a foreign-currency payment. |
 | fiscalperiod | `DELETE /api/v1/fiscal-periods/:fiscalPeriodID/` | Delete a fiscal period. |
 | fiscalperiod | `PATCH /api/v1/fiscal-periods/:fiscalPeriodID/` | Update some fields of a fiscal period. |
@@ -276,37 +208,11 @@ The writes no tool performs yet, and what the tool would do.
 | insight | `POST /api/v1/insights/:insightID/restore/` | Restore an insight that was dismissed. |
 | integration | `POST /api/v1/integrations/samsara/workers/sync/` | Sync workers from the telematics provider now. |
 | integration | `POST /api/v1/integrations/samsara/workers/sync/drift/repair/` | Repair the drift found between workers and the telematics provider. |
-| invoice | `mutation createInvoiceFromOrder` | Create invoice from order. |
-| invoice | `mutation createInvoiceFromShipments` | Create invoice from shipments. |
-| invoice | `mutation createInvoicesFromOrder` | Create invoices from order. |
-| invoice | `mutation createInvoicesFromShipments` | Create invoices from shipments. |
-| invoice | `mutation createMemo` | Create memo. |
-| invoice | `mutation sendInvoiceEdi` | Send invoice EDI. |
-| invoice | `mutation voidInvoice` | Void invoice. |
-| invoice | `PATCH /api/v1/billing/invoices/:invoiceID/` | Update draft (invoice). |
-| invoice | `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/` | Generate pdf (invoice). |
-| invoiceadjustment | `mutation approveInvoiceAdjustment` | Approve invoice adjustment. |
-| invoiceadjustment | `mutation rejectInvoiceAdjustment` | Reject invoice adjustment. |
-| invoiceadjustment | `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/` | Update draft (invoice adjustment). |
-| invoiceadjustment | `POST /api/v1/billing/invoice-adjustments/bulk-submit/` | Bulk submit (invoice adjustment). |
-| invoiceadjustment | `POST /api/v1/billing/invoice-adjustments/drafts/` | Create draft (invoice adjustment). |
-| invoiceadjustment | `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/` | Submit draft (invoice adjustment). |
-| invoiceadjustment | `POST /api/v1/billing/invoice-adjustments/submit/` | Submit an invoice adjustment. |
-| invoicedispute | `mutation openInvoiceDispute` | Open invoice dispute. |
-| invoicedispute | `mutation resolveInvoiceDispute` | Resolve invoice dispute. |
-| invoicedispute | `mutation withdrawInvoiceDispute` | Withdraw invoice dispute. |
-| invoicerun | `PATCH /api/v1/billing/invoice-runs/:runID/membership/` | Adjust membership (invoice run). |
-| invoicerun | `POST /api/v1/billing/invoice-runs/:runID/cancel/` | Cancel an invoice run. |
-| invoicerun | `POST /api/v1/billing/invoice-runs/:runID/commit/` | Commit an invoice run. |
-| invoicerun | `POST /api/v1/billing/invoice-runs/preview/` | Create an invoice run in preview for review before committing it. |
-| invoicerun | `POST /api/v1/billing/statements/:customerID/bill/` | Bill statement (statement). |
-| invoiceshare | `POST /api/v1/billing/invoices/:invoiceID/shares/` | Share an invoice. |
 | journalreversal | `POST /api/v1/accounting/journal-reversals/` | Create a journal reversal. |
 | journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/approve/` | Approve a journal reversal. |
 | journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/cancel/` | Cancel a journal reversal. |
 | journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/post/` | Post a journal reversal. |
 | journalreversal | `POST /api/v1/accounting/journal-reversals/:reversalID/reject/` | Reject a journal reversal. |
-| latecharge | `mutation assessLateCharges` | Assess late charges. |
 | location | `PATCH /api/v1/locations/:locationID/` | Update some fields of a location. |
 | location | `POST /api/v1/locations/bulk-update-status/` | Change the status of several locations at once. |
 | location | `PUT /api/v1/locations/:locationID/` | Update a location. |
@@ -526,12 +432,12 @@ The writes no tool performs yet, and what the tool would do.
 | briefing | 2 | 0 | 2 | 0 |
 | carrier | 4 | 0 | 0 | 4 |
 | carrierintelligence | 15 | 2 | 5 | 8 |
-| carriersettlement | 16 | 0 | 1 | 15 |
+| carriersettlement | 16 | 15 | 1 | 0 |
 | commodity | 4 | 0 | 0 | 4 |
 | controlplaneprovisioning | 1 | 0 | 1 | 0 |
 | costing | 2 | 0 | 2 | 0 |
 | customer | 4 | 0 | 0 | 4 |
-| customerpayment | 5 | 1 | 0 | 4 |
+| customerpayment | 5 | 5 | 0 | 0 |
 | customfield | 4 | 0 | 4 | 0 |
 | databasesession | 1 | 0 | 1 | 0 |
 | dataentrycontrol | 1 | 0 | 1 | 0 |
@@ -552,12 +458,13 @@ The writes no tool performs yet, and what the tool would do.
 | documenttemplate | 12 | 0 | 12 | 0 |
 | documenttype | 3 | 0 | 3 | 0 |
 | driverportal | 31 | 0 | 28 | 3 |
-| driversettlement | 34 | 0 | 1 | 33 |
-| edi | 56 | 0 | 39 | 17 |
+| driversettlement | 34 | 28 | 6 | 0 |
+| edi | 56 | 15 | 41 | 0 |
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
 | exchangerate | 2 | 0 | 1 | 1 |
+| extractioneval | 5 | 0 | 5 | 0 |
 | fiscalperiod | 9 | 0 | 0 | 9 |
 | fiscalyear | 7 | 0 | 0 | 7 |
 | fleetcode | 3 | 0 | 3 | 0 |
@@ -578,16 +485,16 @@ The writes no tool performs yet, and what the tool would do.
 | inboundmessage | 6 | 2 | 4 | 0 |
 | insight | 2 | 1 | 0 | 1 |
 | integration | 5 | 0 | 3 | 2 |
-| invoice | 12 | 2 | 1 | 9 |
-| invoiceadjustment | 10 | 0 | 3 | 7 |
+| invoice | 12 | 11 | 1 | 0 |
+| invoiceadjustment | 10 | 7 | 3 | 0 |
 | invoiceadjustmentcontrol | 1 | 0 | 1 | 0 |
-| invoicedispute | 3 | 0 | 0 | 3 |
-| invoicerun | 5 | 0 | 0 | 5 |
-| invoiceshare | 1 | 0 | 0 | 1 |
+| invoicedispute | 3 | 3 | 0 | 0 |
+| invoicerun | 5 | 5 | 0 | 0 |
+| invoiceshare | 1 | 1 | 0 | 0 |
 | journalentry | 2 | 0 | 2 | 0 |
 | journalreversal | 5 | 0 | 0 | 5 |
 | jurisdictionrule | 6 | 0 | 6 | 0 |
-| latecharge | 1 | 0 | 0 | 1 |
+| latecharge | 1 | 1 | 0 | 0 |
 | location | 4 | 1 | 0 | 3 |
 | locationcategory | 3 | 0 | 3 | 0 |
 | manualjournal | 7 | 0 | 0 | 7 |
@@ -950,22 +857,22 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation acceptCarrierInvoiceMatch` | Pending: Accept carrier invoice match. |
-| `mutation acceptCarrierInvoiceMatchWithVariance` | Pending: Accept carrier invoice match with variance. |
-| `mutation addCarrierSettlementAdjustment` | Pending: Add carrier settlement adjustment. |
-| `mutation approveCarrierSettlement` | Pending: Approve carrier settlement. |
-| `mutation createCarrierInvoiceMatch` | Pending: Create carrier invoice match. |
-| `mutation generateCarrierSettlementBatch` | Pending: Generate carrier settlement batch. |
-| `mutation linkEdiCarrierInvoiceToCarrier` | Pending: Link EDI carrier invoice to carrier. |
-| `mutation markCarrierSettlementPaid` | Pending: Mark carrier settlement paid. |
-| `mutation postCarrierSettlement` | Pending: Post carrier settlement. |
-| `mutation recalculateCarrierSettlement` | Pending: Recalculate carrier settlement. |
-| `mutation rejectCarrierInvoiceMatch` | Pending: Reject carrier invoice match. |
-| `mutation rejectCarrierSettlement` | Pending: Reject carrier settlement. |
-| `mutation removeCarrierSettlementAdjustment` | Pending: Remove carrier settlement adjustment. |
-| `mutation submitCarrierSettlement` | Pending: Submit carrier settlement. |
+| `mutation acceptCarrierInvoiceMatch` | Tool: `accept_carrier_invoice_match` |
+| `mutation acceptCarrierInvoiceMatchWithVariance` | Tool: `accept_carrier_invoice_match_with_variance` |
+| `mutation addCarrierSettlementAdjustment` | Tool: `add_carrier_settlement_adjustment` |
+| `mutation approveCarrierSettlement` | Tool: `approve_carrier_settlement` |
+| `mutation createCarrierInvoiceMatch` | Tool: `create_carrier_invoice_match` |
+| `mutation generateCarrierSettlementBatch` | Tool: `generate_carrier_settlement_batch` |
+| `mutation linkEdiCarrierInvoiceToCarrier` | Tool: `link_edi_carrier_invoice_to_carrier` |
+| `mutation markCarrierSettlementPaid` | Tool: `record_carrier_settlement_payment` |
+| `mutation postCarrierSettlement` | Tool: `post_carrier_settlement` |
+| `mutation recalculateCarrierSettlement` | Tool: `recalculate_carrier_settlement` |
+| `mutation rejectCarrierInvoiceMatch` | Tool: `reject_carrier_invoice_match` |
+| `mutation rejectCarrierSettlement` | Tool: `reject_carrier_settlement` |
+| `mutation removeCarrierSettlementAdjustment` | Tool: `remove_carrier_settlement_adjustment` |
+| `mutation submitCarrierSettlement` | Tool: `submit_carrier_settlement` |
 | `mutation updateCarrierSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
-| `mutation voidCarrierSettlement` | Pending: Void carrier settlement. |
+| `mutation voidCarrierSettlement` | Tool: `void_carrier_settlement` |
 
 ### commodity
 
@@ -1002,11 +909,11 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation applyCreditMemo`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/` | Pending: Apply credit memo. |
-| `mutation applyUnappliedCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/apply/` | Pending: Apply unapplied customer payment. |
+| `mutation applyCreditMemo`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/` | Tool: `apply_credit_memo` |
+| `mutation applyUnappliedCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/apply/` | Tool: `apply_customer_payment` |
 | `mutation postAndApplyCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/` | Tool: `post_customer_payment` |
-| `mutation reverseCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/reverse/` | Pending: Reverse customer payment. |
-| `mutation unapplyCreditMemoApplication`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/:applicationID/unapply/` | Pending: Unapply credit memo application. |
+| `mutation reverseCustomerPayment`<br>twin `POST /api/v1/accounting/customer-payments/:paymentID/reverse/` | Tool: `reverse_customer_payment` |
+| `mutation unapplyCreditMemoApplication`<br>twin `POST /api/v1/accounting/customer-payments/credit-memo-applications/:applicationID/unapply/` | Tool: `unapply_credit_memo` |
 
 ### customfield
 
@@ -1221,40 +1128,40 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation addDriverSettlementAdjustment` | Pending: Add driver settlement adjustment. |
-| `mutation adjustEscrowAccount` | Pending: Adjust escrow account. |
-| `mutation approveDriverSettlement` | Pending: Approve driver settlement. |
-| `mutation assignPayProfileToWorker` | Pending: Assign pay profile to worker. |
-| `mutation attachPayEventsToSettlement` | Pending: Attach pay events to a driver settlement. |
-| `mutation bulkDriverSettlementAction` | Pending: Approve, post or void several driver settlements at once. |
-| `mutation closeEscrowAccount` | Pending: Close escrow account. |
-| `mutation createPayCode` | Pending: Create pay code. |
-| `mutation createPayProfile` | Pending: Create pay profile. |
-| `mutation createRecurringDeduction` | Pending: Create recurring deduction. |
-| `mutation createRecurringEarning` | Pending: Create recurring earning. |
-| `mutation detachPayEventFromSettlement` | Pending: Detach a pay event from a driver settlement. |
-| `mutation endWorkerPayAssignment` | Pending: End worker pay assignment. |
-| `mutation generateDriverSettlement` | Pending: Generate driver settlement. |
-| `mutation generateSettlementBatch` | Pending: Generate settlement batch. |
-| `mutation holdDriverPayEvent` | Pending: Hold driver pay event. |
-| `mutation issuePayAdvance` | Pending: Issue pay advance. |
-| `mutation markDriverSettlementPaid` | Pending: Mark driver settlement paid. |
-| `mutation openEscrowAccount` | Pending: Open escrow account. |
-| `mutation payWorkerNow` | Pending: Pay a worker off cycle now. |
-| `mutation postDriverSettlement` | Pending: Post driver settlement. |
-| `mutation recalculateDriverSettlement` | Pending: Recalculate driver settlement. |
-| `mutation rejectDriverSettlement` | Pending: Reject driver settlement. |
-| `mutation releaseDriverPayEvent` | Pending: Release driver pay event. |
-| `mutation removeDriverSettlementAdjustment` | Pending: Remove driver settlement adjustment. |
-| `mutation submitDriverSettlement` | Pending: Submit driver settlement. |
-| `mutation updateEscrowAccount` | Pending: Update escrow account. |
-| `mutation updatePayCode` | Pending: Update pay code. |
-| `mutation updatePayProfile` | Pending: Update pay profile. |
-| `mutation updateRecurringDeduction` | Pending: Update recurring deduction. |
-| `mutation updateRecurringEarning` | Pending: Update recurring earning. |
+| `mutation addDriverSettlementAdjustment` | Tool: `add_driver_settlement_adjustment` |
+| `mutation adjustEscrowAccount` | Tool: `adjust_escrow_account` |
+| `mutation approveDriverSettlement` | Tool: `approve_driver_settlement` |
+| `mutation assignPayProfileToWorker` | Tool: `assign_pay_profile` |
+| `mutation attachPayEventsToSettlement` | Tool: `attach_pay_events_to_settlement` |
+| `mutation bulkDriverSettlementAction` | Exempt, duplicate: Runs submit, approve, post or mark paid on several settlements at once; each has its own tool, and an approver decides a batch of those proposals together. |
+| `mutation closeEscrowAccount` | Tool: `close_escrow_account` |
+| `mutation createPayCode` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
+| `mutation createPayProfile` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
+| `mutation createRecurringDeduction` | Tool: `create_recurring_deduction` |
+| `mutation createRecurringEarning` | Tool: `create_recurring_earning` |
+| `mutation detachPayEventFromSettlement` | Tool: `detach_pay_event_from_settlement` |
+| `mutation endWorkerPayAssignment` | Tool: `end_pay_assignment` |
+| `mutation generateDriverSettlement` | Tool: `generate_driver_settlement` |
+| `mutation generateSettlementBatch` | Tool: `generate_driver_settlement_batch` |
+| `mutation holdDriverPayEvent` | Tool: `hold_driver_pay_event` |
+| `mutation issuePayAdvance` | Tool: `issue_pay_advance` |
+| `mutation markDriverSettlementPaid` | Tool: `record_driver_settlement_payment` |
+| `mutation openEscrowAccount` | Tool: `open_escrow_account` |
+| `mutation payWorkerNow` | Tool: `pay_driver_now` |
+| `mutation postDriverSettlement` | Tool: `post_driver_settlement` |
+| `mutation recalculateDriverSettlement` | Tool: `recalculate_driver_settlement` |
+| `mutation rejectDriverSettlement` | Tool: `reject_driver_settlement` |
+| `mutation releaseDriverPayEvent` | Tool: `release_driver_pay_event` |
+| `mutation removeDriverSettlementAdjustment` | Tool: `remove_driver_settlement_adjustment` |
+| `mutation submitDriverSettlement` | Tool: `submit_driver_settlement` |
+| `mutation updateEscrowAccount` | Tool: `update_escrow_account` |
+| `mutation updatePayCode` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
+| `mutation updatePayProfile` | Exempt, configuration: Pay codes and pay profiles are the pay rules an administrator authors once; every settlement is computed from them, and assigning one to a driver is its own tool. |
+| `mutation updateRecurringDeduction` | Tool: `update_recurring_deduction` |
+| `mutation updateRecurringEarning` | Tool: `update_recurring_earning` |
 | `mutation updateSettlementControl` | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
-| `mutation voidDriverSettlement` | Pending: Void driver settlement. |
-| `mutation writeOffPayAdvance` | Pending: Write off pay advance. |
+| `mutation voidDriverSettlement` | Tool: `void_driver_settlement` |
+| `mutation writeOffPayAdvance` | Tool: `write_off_pay_advance` |
 
 ### edi
 
@@ -1276,14 +1183,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/edi/connections/:connectionID/suspend/`<br>edihandler.suspendConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/control-numbers/reset/`<br>edihandler.resetControlNumber | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/document-profiles/`<br>edihandler.createPartnerDocumentProfile | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Pending: Generate an outbound EDI document (a 214, a 210) for a record. |
+| `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Tool: `send_edi_status_update` |
 | `POST /api/v1/edi/documents/preview/`<br>edihandler.previewDocument | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Pending: Process a failed inbound EDI file again. |
-| `POST /api/v1/edi/inbound-files/bulk-reprocess/`<br>edihandler.bulkReprocessInboundFiles | Pending: Process several failed inbound EDI files again. |
-| `POST /api/v1/edi/load-tenders/`<br>edihandler.submitLoadTender | Pending: Send a load tender to a trading partner over EDI. |
-| `POST /api/v1/edi/messages/:messageID/replay/`<br>edihandler.replayMessageDelivery | Pending: Send an EDI message again to its partner. |
-| `POST /api/v1/edi/messages/:messageID/retry-delivery/`<br>edihandler.retryMessageDelivery | Pending: Retry delivery of an EDI message that failed to send. |
-| `POST /api/v1/edi/messages/bulk-retry-delivery/`<br>edihandler.bulkRetryMessageDelivery | Pending: Retry delivery of several EDI messages that failed to send. |
+| `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Tool: `reprocess_edi_inbound_files` |
+| `POST /api/v1/edi/inbound-files/bulk-reprocess/`<br>edihandler.bulkReprocessInboundFiles | Tool: `reprocess_edi_inbound_files` |
+| `POST /api/v1/edi/load-tenders/`<br>edihandler.submitLoadTender | Tool: `send_edi_tender` |
+| `POST /api/v1/edi/messages/:messageID/replay/`<br>edihandler.replayMessageDelivery | Tool: `replay_edi_message` |
+| `POST /api/v1/edi/messages/:messageID/retry-delivery/`<br>edihandler.retryMessageDelivery | Tool: `retry_edi_message_delivery` |
+| `POST /api/v1/edi/messages/bulk-retry-delivery/`<br>edihandler.bulkRetryMessageDelivery | Tool: `retry_edi_message_delivery` |
 | `POST /api/v1/edi/partners/`<br>edihandler.createPartner | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/partners/internal-pairs/`<br>edihandler.createInternalPartnerPair | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/`<br>edihandler.createTemplate | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
@@ -1293,18 +1200,18 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/edi/templates/:templateID/versions/:versionID/certify/`<br>edihandler.certifyTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/:templateID/versions/:versionID/rollback/`<br>edihandler.rollbackTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/:templateID/versions/:versionID/validate/`<br>edihandler.validateTemplateVersion | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/tender-changes/:changeID/apply/`<br>edihandler.applyTenderChange | Pending: Apply a change a trading partner sent to a tendered load. |
-| `POST /api/v1/edi/tender-changes/:changeID/reject/`<br>edihandler.rejectTenderChange | Pending: Reject a change a trading partner sent to a tendered load. |
+| `POST /api/v1/edi/tender-changes/:changeID/apply/`<br>edihandler.applyTenderChange | Tool: `review_edi_tender_change` |
+| `POST /api/v1/edi/tender-changes/:changeID/reject/`<br>edihandler.rejectTenderChange | Tool: `review_edi_tender_change` |
 | `POST /api/v1/edi/test-cases/`<br>edihandler.createTestCase | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/test-cases/:testCaseID/preview/`<br>edihandler.previewTestCase | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/transfer-changes/:changeID/apply/`<br>edihandler.applyTransferChange | Pending: Apply a change to an inbound EDI transfer. |
-| `POST /api/v1/edi/transfer-changes/:changeID/reject/`<br>edihandler.rejectTransferChange | Pending: Reject a change to an inbound EDI transfer. |
-| `POST /api/v1/edi/transfers/:transferID/approve/`<br>edihandler.approveTransfer | Pending: Accept an inbound EDI load tender and create the shipment. |
-| `POST /api/v1/edi/transfers/:transferID/cancel/`<br>edihandler.cancelTransfer | Pending: Cancel an inbound EDI transfer. |
-| `POST /api/v1/edi/transfers/:transferID/expire/`<br>edihandler.expireTransfer | Pending: Expire an inbound EDI transfer that was not answered in time. |
-| `POST /api/v1/edi/transfers/:transferID/reject/`<br>edihandler.rejectTransfer | Pending: Decline an inbound EDI load tender. |
-| `POST /api/v1/edi/transfers/bulk-approve/`<br>edihandler.bulkApproveTransfers | Pending: Accept several inbound EDI load tenders at once. |
-| `POST /api/v1/edi/transfers/bulk-reject/`<br>edihandler.bulkRejectTransfers | Pending: Decline several inbound EDI load tenders at once. |
+| `POST /api/v1/edi/transfer-changes/:changeID/apply/`<br>edihandler.applyTransferChange | Tool: `review_edi_transfer_change` |
+| `POST /api/v1/edi/transfer-changes/:changeID/reject/`<br>edihandler.rejectTransferChange | Tool: `review_edi_transfer_change` |
+| `POST /api/v1/edi/transfers/:transferID/approve/`<br>edihandler.approveTransfer | Tool: `accept_edi_tender` |
+| `POST /api/v1/edi/transfers/:transferID/cancel/`<br>edihandler.cancelTransfer | Tool: `cancel_edi_tender` |
+| `POST /api/v1/edi/transfers/:transferID/expire/`<br>edihandler.expireTransfer | Tool: `expire_edi_tender` |
+| `POST /api/v1/edi/transfers/:transferID/reject/`<br>edihandler.rejectTransfer | Tool: `decline_edi_tender` |
+| `POST /api/v1/edi/transfers/bulk-approve/`<br>edihandler.bulkApproveTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; accept_edi_tender answers one tender per proposal so each is previewed and pinned to its own version. |
+| `POST /api/v1/edi/transfers/bulk-reject/`<br>edihandler.bulkRejectTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; decline_edi_tender answers one tender per proposal so each is previewed and pinned to its own version. |
 | `POST /api/v1/edi/x12/inspect/`<br>edihandler.inspectX12 | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `PUT /api/v1/edi/communication-profiles/:profileID/`<br>edihandler.updateCommunicationProfile | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `PUT /api/v1/edi/document-profiles/:profileID/`<br>edihandler.updatePartnerDocumentProfile | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
@@ -1355,6 +1262,16 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `POST /api/v1/exchange-rates/refresh`<br>exchangeratehandler.refresh | Exempt, infrastructure: Fetches exchange rates from the provider now; the scheduler refreshes them on its own. |
 | `POST /api/v1/exchange-rates/settlement-quotes`<br>exchangeratehandler.createSettlementQuote | Pending: Lock an exchange rate quote for settling a foreign-currency payment. |
+
+### extractioneval
+
+| Write | Decision |
+| --- | --- |
+| `mutation cancelExtractionEvalRun` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
+| `mutation deleteExtractionEvalCase` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
+| `mutation promoteAICorrection` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
+| `mutation startExtractionEvalRun` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
+| `mutation updateExtractionEvalCase` | Exempt, agent-administration: Curating and running the evaluation of AI document extraction is oversight of the agents; an agent must not grade or shape its own test set. |
 
 ### fiscalperiod
 
@@ -1592,15 +1509,15 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation createInvoiceFromOrder`<br>twin `POST /api/v1/billing/invoices/from-order/` | Pending: Create invoice from order. |
-| `mutation createInvoiceFromShipments`<br>twin `POST /api/v1/billing/invoices/from-shipments/` | Pending: Create invoice from shipments. |
-| `mutation createInvoicesFromOrder` | Pending: Create invoices from order. |
-| `mutation createInvoicesFromShipments` | Pending: Create invoices from shipments. |
-| `mutation createMemo`<br>twin `POST /api/v1/billing/invoices/memos/` | Pending: Create memo. |
-| `mutation sendInvoiceEdi` | Pending: Send invoice EDI. |
-| `mutation voidInvoice`<br>twin `POST /api/v1/billing/invoices/:invoiceID/void/` | Pending: Void invoice. |
-| `PATCH /api/v1/billing/invoices/:invoiceID/`<br>invoicehandler.updateDraft | Pending: Update draft (invoice). |
-| `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/`<br>invoicehandler.generatePDF | Pending: Generate pdf (invoice). |
+| `mutation createInvoiceFromOrder`<br>twin `POST /api/v1/billing/invoices/from-order/` | Tool: `create_invoice` |
+| `mutation createInvoiceFromShipments`<br>twin `POST /api/v1/billing/invoices/from-shipments/` | Tool: `create_invoice` |
+| `mutation createInvoicesFromOrder` | Tool: `create_invoice` |
+| `mutation createInvoicesFromShipments` | Tool: `create_invoice` |
+| `mutation createMemo`<br>twin `POST /api/v1/billing/invoices/memos/` | Tool: `create_invoice_memo` |
+| `mutation sendInvoiceEdi` | Tool: `send_invoice_edi` |
+| `mutation voidInvoice`<br>twin `POST /api/v1/billing/invoices/:invoiceID/void/` | Tool: `void_invoice` |
+| `PATCH /api/v1/billing/invoices/:invoiceID/`<br>invoicehandler.updateDraft | Tool: `update_invoice_draft` |
+| `POST /api/v1/billing/invoices/:invoiceID/generate-pdf/`<br>invoicehandler.generatePDF | Tool: `generate_invoice_pdf` |
 | `POST /api/v1/billing/invoices/:invoiceID/post/`<br>invoicehandler.post | Tool: `post_invoice` |
 | `POST /api/v1/billing/invoices/:invoiceID/preview/`<br>invoicehandler.preview | Exempt, read-only: Renders an invoice for review and saves nothing. |
 | `POST /api/v1/billing/invoices/:invoiceID/send/`<br>invoicehandler.send<br>also `POST /api/v1/billing/invoices/:invoiceID/resend/` | Tool: `send_invoice` |
@@ -1609,16 +1526,16 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation approveInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/approve/` | Pending: Approve invoice adjustment. |
-| `mutation rejectInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/reject/` | Pending: Reject invoice adjustment. |
-| `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/`<br>invoiceadjustmenthandler.updateDraft | Pending: Update draft (invoice adjustment). |
+| `mutation approveInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/approve/` | Tool: `approve_invoice_adjustment` |
+| `mutation rejectInvoiceAdjustment`<br>twin `POST /api/v1/billing/invoice-adjustments/:adjustmentID/reject/` | Tool: `reject_invoice_adjustment` |
+| `PATCH /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/`<br>invoiceadjustmenthandler.updateDraft | Tool: `save_invoice_adjustment_draft` |
 | `POST /api/v1/billing/invoice-adjustments/bulk-preview/`<br>invoiceadjustmenthandler.bulkPreview | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/bulk-submit/`<br>invoiceadjustmenthandler.bulkSubmit | Pending: Bulk submit (invoice adjustment). |
-| `POST /api/v1/billing/invoice-adjustments/drafts/`<br>invoiceadjustmenthandler.createDraft | Pending: Create draft (invoice adjustment). |
+| `POST /api/v1/billing/invoice-adjustments/bulk-submit/`<br>invoiceadjustmenthandler.bulkSubmit | Tool: `submit_invoice_adjustment` |
+| `POST /api/v1/billing/invoice-adjustments/drafts/`<br>invoiceadjustmenthandler.createDraft | Tool: `save_invoice_adjustment_draft` |
 | `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/preview/`<br>invoiceadjustmenthandler.previewDraft | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/`<br>invoiceadjustmenthandler.submitDraft | Pending: Submit draft (invoice adjustment). |
+| `POST /api/v1/billing/invoice-adjustments/drafts/:adjustmentID/submit/`<br>invoiceadjustmenthandler.submitDraft | Tool: `submit_invoice_adjustment` |
 | `POST /api/v1/billing/invoice-adjustments/preview/`<br>invoiceadjustmenthandler.preview | Exempt, read-only: Previews an invoice adjustment and saves nothing. |
-| `POST /api/v1/billing/invoice-adjustments/submit/`<br>invoiceadjustmenthandler.submit | Pending: Submit an invoice adjustment. |
+| `POST /api/v1/billing/invoice-adjustments/submit/`<br>invoiceadjustmenthandler.submit | Tool: `submit_invoice_adjustment` |
 
 ### invoiceadjustmentcontrol
 
@@ -1630,25 +1547,25 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation openInvoiceDispute` | Pending: Open invoice dispute. |
-| `mutation resolveInvoiceDispute` | Pending: Resolve invoice dispute. |
-| `mutation withdrawInvoiceDispute` | Pending: Withdraw invoice dispute. |
+| `mutation openInvoiceDispute` | Tool: `open_invoice_dispute` |
+| `mutation resolveInvoiceDispute` | Tool: `resolve_invoice_dispute` |
+| `mutation withdrawInvoiceDispute` | Tool: `withdraw_invoice_dispute` |
 
 ### invoicerun
 
 | Write | Decision |
 | --- | --- |
-| `PATCH /api/v1/billing/invoice-runs/:runID/membership/`<br>invoicerunhandler.adjustMembership | Pending: Adjust membership (invoice run). |
-| `POST /api/v1/billing/invoice-runs/:runID/cancel/`<br>invoicerunhandler.cancel | Pending: Cancel an invoice run. |
-| `POST /api/v1/billing/invoice-runs/:runID/commit/`<br>invoicerunhandler.commit | Pending: Commit an invoice run. |
-| `POST /api/v1/billing/invoice-runs/preview/`<br>invoicerunhandler.preview | Pending: Create an invoice run in preview for review before committing it. |
-| `POST /api/v1/billing/statements/:customerID/bill/`<br>invoicerunhandler.billStatement | Pending: Bill statement (statement). |
+| `PATCH /api/v1/billing/invoice-runs/:runID/membership/`<br>invoicerunhandler.adjustMembership | Tool: `adjust_invoice_run_membership` |
+| `POST /api/v1/billing/invoice-runs/:runID/cancel/`<br>invoicerunhandler.cancel | Tool: `cancel_invoice_run` |
+| `POST /api/v1/billing/invoice-runs/:runID/commit/`<br>invoicerunhandler.commit | Tool: `commit_invoice_run` |
+| `POST /api/v1/billing/invoice-runs/preview/`<br>invoicerunhandler.preview | Tool: `build_invoice_run` |
+| `POST /api/v1/billing/statements/:customerID/bill/`<br>invoicerunhandler.billStatement | Tool: `bill_statement_now` |
 
 ### invoiceshare
 
 | Write | Decision |
 | --- | --- |
-| `POST /api/v1/billing/invoices/:invoiceID/shares/`<br>invoicesharehandler.share | Pending: Share an invoice. |
+| `POST /api/v1/billing/invoices/:invoiceID/shares/`<br>invoicesharehandler.share | Tool: `share_invoice` |
 
 ### journalentry
 
@@ -1682,7 +1599,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation assessLateCharges` | Pending: Assess late charges. |
+| `mutation assessLateCharges` | Tool: `assess_late_charges` |
 
 ### location
 

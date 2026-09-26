@@ -192,6 +192,10 @@ func (r *repository) UpdateTenderChange(
 	return entity, nil
 }
 
+func ScopeTenant(query *bun.SelectQuery, tenantInfo pagination.TenantInfo) *bun.SelectQuery {
+	return applyTenderChangeTenantScope(query, tenantInfo)
+}
+
 func applyTenderChangeTenantScope(
 	query *bun.SelectQuery,
 	tenantInfo pagination.TenantInfo,

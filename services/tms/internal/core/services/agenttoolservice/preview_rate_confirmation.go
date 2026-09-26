@@ -30,7 +30,7 @@ var rateConfirmationLabels = map[string]string{
 	"sentToEmails":        "Sent to",
 	fieldConfirmedByName:  "Confirmed by",
 	"confirmedVia":        "Confirmed through",
-	"voidReason":          "Void reason",
+	fieldVoidReason:       "Void reason",
 	"carrierAssignmentId": "Carrier assignment",
 }
 
@@ -83,7 +83,7 @@ func (t *generateRateConfirmationTool) Preview(
 	)
 	if plan.SupersededBefore != nil {
 		voided, vErr := rateConfirmationChange(plan.SupersededBefore, plan.SupersededAfter,
-			shipmentLabel, fieldStatus, "voidReason", "voidedAt")
+			shipmentLabel, fieldStatus, fieldVoidReason, fieldVoidedAt)
 		if vErr != nil {
 			return nil, vErr
 		}
@@ -171,7 +171,7 @@ func (t *voidRateConfirmationTool) Preview(
 		)), nil
 	}
 
-	changes, err := rateConfirmationChanges(plan, fieldStatus, "voidReason", "voidedAt")
+	changes, err := rateConfirmationChanges(plan, fieldStatus, fieldVoidReason, fieldVoidedAt)
 	if err != nil {
 		return nil, err
 	}

@@ -52,13 +52,17 @@ var (
 	transferDirections = []string{transferInbound, transferOutbound}
 )
 
-func ediToolProviders() []any {
+func ediReadToolProviders() []any {
 	return []any{
 		provideListEDIInboundFilesTool,
 		provideGetEDIInboundFileTool,
 		provideListEDITransfersTool,
 		provideGetEDIPartnerTool,
 	}
+}
+
+func ediToolProviders() []any {
+	return append(ediReadToolProviders(), ediDecisionToolProviders()...)
 }
 
 type inboundFileReader interface {
@@ -378,25 +382,29 @@ func inboundMessages(messages []*edi.EDIMessage) []ediMessageRow {
 		if message == nil || len(rows) == maxInboundMessages {
 			continue
 		}
-		rows = append(rows, ediMessageRow{
-			ID:              message.ID.String(),
-			TransactionSet:  string(message.TransactionSet),
-			Direction:       string(message.Direction),
-			Status:          string(message.Status),
-			X12Version:      message.X12Version,
-			GroupControl:    message.GroupControlNumber,
-			TransactionCtrl: message.TransactionControlNumber,
-			SegmentCount:    message.SegmentCount,
-			ShipmentID:      pulidString(message.ShipmentID),
-			InvoiceID:       pulidString(message.InvoiceID),
-			TransferID:      pulidString(message.TransferID),
-			AckStatus:       string(message.AckStatus),
-			AckError:        message.AckLastError,
-			GeneratedAt:     recordedDate(message.GeneratedAt),
-		})
+		rows = append(rows, ediMessageRowFrom(message))
 	}
 
 	return rows
+}
+
+func ediMessageRowFrom(message *edi.EDIMessage) ediMessageRow {
+	return ediMessageRow{
+		ID:              message.ID.String(),
+		TransactionSet:  string(message.TransactionSet),
+		Direction:       string(message.Direction),
+		Status:          string(message.Status),
+		X12Version:      message.X12Version,
+		GroupControl:    message.GroupControlNumber,
+		TransactionCtrl: message.TransactionControlNumber,
+		SegmentCount:    message.SegmentCount,
+		ShipmentID:      pulidString(message.ShipmentID),
+		InvoiceID:       pulidString(message.InvoiceID),
+		TransferID:      pulidString(message.TransferID),
+		AckStatus:       string(message.AckStatus),
+		AckError:        message.AckLastError,
+		GeneratedAt:     recordedDate(message.GeneratedAt),
+	}
 }
 
 func applyRawX12(view *ediInboundFileView, file *edi.EDIInboundFile, gate *fieldGate) {
@@ -432,7 +440,7 @@ func (t *listEDITransfersTool) Description() string {
 	return "List EDI load tender transfers, the tenders partners sent in or this " +
 		"organization sent out. Each has the partners, status, BOL, customer and why it " +
 		"was rejected or failed. Narrow by direction and status, such as tenders pending " +
-		"approval. The tender text is the partner's."
+		"approval; get_edi_transfer opens one. The tender text is the partner's."
 }
 
 func (t *listEDITransfersTool) ParamSchema() map[string]any {
@@ -440,6 +448,8 @@ func (t *listEDITransfersTool) ParamSchema() map[string]any {
 		paramDirection: enumParam("Inbound for tenders partners sent in, Outbound for ones "+
 			"this organization sent. Defaults to Inbound.", transferDirections),
 		paramStatus: enumParam("Only transfers in this status.", transferStatuses),
+		paramInboundFileID: stringParam("Only the tenders one inbound file carried, by id " +
+			"from list_edi_inbound_files or this run's subject."),
 		paramLimit: intParam(fmt.Sprintf("How many rows to return: %d unless you ask, at most %d.",
 			defaultListLimit, maxListLimit)),
 		paramAfter: stringParam("The nextCursor from a previous call, for the next page."),
@@ -473,7 +483,7 @@ type ediTransferRow struct {
 	ProcessedAt      optionalDate `json:"processedAt"`
 }
 
-type ediTransferOutcome struct {
+type ediCursorOutcome struct {
 	*gatedOutcome
 
 	NextCursor string `json:"nextCursor,omitempty"`
@@ -525,24 +535,25 @@ func (t *listEDITransfersTool) Query(
 	if err != nil {
 		return nil, err
 	}
-	limit := optionalInt(params.Params, paramLimit, defaultListLimit)
-	if limit <= 0 {
-		limit = defaultListLimit
-	}
-	limit = min(limit, maxListLimit)
-
-	cursor, err := pagination.NewCursorInfo(limit, optionalString(params.Params, paramAfter))
+	fileID, err := optionalID(params.Params, paramInboundFileID)
 	if err != nil {
-		return nil, fmt.Errorf("parameter \"after\" is not a cursor this tool returned: %w", err)
+		return nil, err
 	}
-	cursor.IncludeTotalCount = false
+	cursor, err := cursorPage(params)
+	if err != nil {
+		return nil, err
+	}
 
 	req := &repositories.ListEDITransfersRequest{
-		Filter: &pagination.QueryOptions{TenantInfo: tenantOf(params)},
-		Cursor: cursor,
+		Filter:        &pagination.QueryOptions{TenantInfo: tenantOf(params)},
+		Cursor:        cursor,
+		InboundFileID: fileID,
 	}
 	criteria := filtercatalog.NewCriteria("EDI load tender transfers").At(clockFor(params))
 	criteria.Field(paramDirection, direction)
+	if fileID.IsNotNil() {
+		criteria.Field("inbound file", fileID.String())
+	}
 	if status != "" {
 		req.Filter.FieldFilters = []domaintypes.FieldFilter{
 			buncolgen.EDITransferFilter.Status(dbtype.OpEqual, status),
@@ -562,7 +573,6 @@ func (t *listEDITransfersTool) Query(
 
 	rows := make([]ediTransferRow, 0, len(result.Items))
 	refs := make([]agent.RecordRef, 0, len(result.Items))
-	var last *edi.EDITransfer
 	for _, transfer := range result.Items {
 		if transfer == nil {
 			continue
@@ -572,21 +582,11 @@ func (t *listEDITransfersTool) Query(
 			EntityType: ediTransferEntity,
 			ID:         transfer.ID.String(),
 		})
-		last = transfer
 	}
 
 	found := searchResult(criteria, rows, len(rows))
-	outcome := ediTransferOutcome{gatedOutcome: gatedResult(&found, nil).withTaint(refs)}
-	outcome.HasMore = result.HasNextPage
-	if result.HasNextPage && last != nil {
-		next, encodeErr := pagination.EncodeCursorFromEntity(last)
-		if encodeErr != nil {
-			return nil, fmt.Errorf("encode the next page's cursor: %w", encodeErr)
-		}
-		outcome.NextCursor = next
-	}
 
-	return outcome, nil
+	return cursorOutcome(&found, refs, result)
 }
 
 type getEDIPartnerTool struct {

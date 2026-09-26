@@ -172,6 +172,12 @@ type ToolTarget struct {
 	ID       pulid.ID
 }
 
+//nolint:gosec // G101: record kinds; "credit" matches the credential pattern, not a secret
+const (
+	RecordInvoiceAdjustment     permission.Resource = "invoice_adjustment"
+	RecordCreditMemoApplication permission.Resource = "credit_memo_application"
+)
+
 // TargetedTool is a tool that can say which record a call would change, from
 // the arguments alone. It is pure: no lookup, no service — the tool already
 // knows which argument names its subject.
