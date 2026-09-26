@@ -28,7 +28,7 @@ def test_sampling_matches_the_rendered_dataset(dataset_dir: Path, config_path: P
     settings = sampling_settings(dataset.load_manifest(dataset_dir), load_config(config_path))
     assert settings["temperature"] == pytest.approx(0.1)
     assert settings["top_p"] == pytest.approx(0.95)
-    assert settings["max_tokens"] == 2048
+    assert settings["max_tokens"] == 5000
     assert settings["seed"] == 42
 
 

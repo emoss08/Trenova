@@ -7,9 +7,7 @@ half-written and a resumed run can see exactly which stages finished.
 from __future__ import annotations
 
 import json
-import os
 import platform
-import tempfile
 import time
 from dataclasses import asdict, dataclass, field
 from importlib import metadata
@@ -19,6 +17,7 @@ from typing import Any
 from . import __version__
 from .config import PipelineConfig
 from .dataset import DatasetManifest
+from .files import write_json
 
 RUN_FORMAT = "trenova.extraction-finetune-run/v1"
 RUN_FILE = "run.json"
@@ -186,13 +185,4 @@ class Run:
         self.save()
 
     def save(self) -> None:
-        payload = json.dumps(asdict(self.record), indent=2, sort_keys=True)
-        handle, temporary = tempfile.mkstemp(prefix=".run-", suffix=".json", dir=self.directory)
-        try:
-            with os.fdopen(handle, "w", encoding="utf-8") as stream:
-                stream.write(payload)
-                stream.write("\n")
-            os.replace(temporary, self.directory / RUN_FILE)
-        except BaseException:
-            Path(temporary).unlink(missing_ok=True)
-            raise
+        write_json(self.directory / RUN_FILE, asdict(self.record))

@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import json
-import os
-import tempfile
 from pathlib import Path
 from typing import Any, Literal
 
 from . import dataset
 from .config import PipelineConfig
+from .files import write_jsonl
 
 StructuredKind = Literal["json_schema", "json_object", "none"]
 
@@ -63,17 +61,7 @@ def _structured_params(kind: StructuredKind, schema: dict[str, Any]) -> dict[str
 
 
 def write_predictions(path: Path, records: list[dict[str, str]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    handle, temporary = tempfile.mkstemp(prefix=".predictions-", suffix=".jsonl", dir=path.parent)
-    try:
-        with os.fdopen(handle, "w", encoding="utf-8") as stream:
-            for record in records:
-                stream.write(json.dumps(record, ensure_ascii=False))
-                stream.write("\n")
-        os.replace(temporary, path)
-    except BaseException:
-        Path(temporary).unlink(missing_ok=True)
-        raise
+    write_jsonl(path, records)
 
 
 def predict(

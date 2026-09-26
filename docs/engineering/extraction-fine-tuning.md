@@ -9,7 +9,8 @@ trenova ai training-export start            anonymized JSONL in object storage
 trenova ai training-export render           raw examples with the production prompt, on disk
 trenova-finetune run                        targets → SFT → merge → DPO → merge → predict (GPU)
 trenova ai fine-tune score                  model vs. production on the validation set
-scripts/serve.sh + AI provider              vLLM behind an OpenAIChat provider
+trenova-finetune serve / bench              vLLM tuned and timed on production-shaped requests
+AI provider                                 the served model behind an OpenAIChat provider
 AI Control → Quality → Document extraction  evaluation run on the golden set
 ```
 
@@ -121,7 +122,9 @@ uv run trenova-finetune run --config configs/qwen2.5-7b-instruct.yaml \
 5. **dpo**: preference training on top of the SFT model. It is skipped when the configuration
    disables it or there are fewer than `dpo.min_pairs` pairs.
 6. **merge-dpo**: the preference adapter is folded into the SFT model.
-7. **predict**: vLLM answers the validation prompts, asking for JSON the way the provider will.
+7. **predict**: vLLM answers the validation prompts, asking for JSON the way the provider will,
+   with Trenova's default output ceiling of 5000 tokens (`ai.extractionMaxTokens`). A lower
+   ceiling would cut off replies that production would have finished, and count them as misses.
 
 `run.json` records:
 
@@ -172,11 +175,123 @@ up camelCase keys. As a result, those fields read as `Missed` in production corr
 evaluation runs. `aicorrection.CanonicalFieldKey` now maps both spellings onto one key. Accuracy
 captured before this change undercounts reference numbers and pickup and delivery windows.
 
-## 5. Serve and compare in Trenova
+## 5. Serve, measure and tune
+
+Almost all of an extraction's time is spent in the model, in two parts:
+
+- **Prefill.** Reading the prompt. It sets the time to first token.
+- **Decode.** Writing the reply one token at a time. It sets everything after the first token.
+
+The reply is long structured JSON, so decode dominates. Nothing outside the model is worth
+optimizing: rendering, the HTTP round trip and scoring take milliseconds per document against
+seconds of generation. The speed work happens in vLLM's settings and is judged by measurement.
+
+### Serve
 
 ```bash
-VLLM_API_KEY=... scripts/serve.sh ./runs/qwen-2026-10/dpo/model trenova-extract-2026-10
+VLLM_API_KEY=... uv run trenova-finetune serve --config configs/qwen2.5-7b-instruct.yaml \
+  --model ./runs/qwen-2026-10/dpo/model --name trenova-extract-2026-10
 ```
+
+- **The command.** It is built from the config's `serve` section (`serve.py`), so the settings
+  that were benchmarked are the settings that run.
+- **Safety checks.** It refuses a directory without the pipeline's `trenova-model.json`.
+- **The API key.** vLLM reads it from `VLLM_API_KEY`. It is never put on the command line, where
+  any user of the machine could read it from the process list. Passing `--api-key` is refused.
+- **Checking the command.** `--dry-run` prints the command without running it.
+- **Extra flags.** Anything after `--` is passed through to vLLM unchanged.
+
+| Setting | Shipped | What it does for extraction |
+|---|---|---|
+| `enable_prefix_caching` | on | Every request starts with the same system prompt and schema, so their prefill is computed once and reused |
+| `enable_chunked_prefill` | on | A long document's prefill is split so it does not stall other requests' decoding |
+| `speculative` | `ngram`, 4 tokens, lookup 2–5 | Drafts tokens by finding the text just written elsewhere in the prompt. The target model then checks several drafted tokens in one pass. Extracted values are copied from the document, so drafts are often accepted. Structured outputs work with it |
+| `structured_outputs_backend` | `xgrammar` | Grammar-constrained decoding for the strict `json_schema` |
+| `max_num_seqs`, `max_num_batched_tokens` | 64, 8192 | The batch size: the trade between one document's latency and total throughput |
+| `quantization` | none | `fp8` quantizes the merged model's weights when the model loads (Hopper/Ada GPUs). `awq`/`gptq` expect a model quantized ahead of time |
+| `kv_cache_dtype` | `auto` | `fp8` halves the KV cache, which fits more concurrent documents |
+| `report_cached_tokens` | on | Reports cached prompt tokens, so the benchmark can show prefix cache hits |
+
+Speculative decoding, quantization and the KV-cache type can each change what the model writes,
+not only how fast. Score a changed setup with `trenova ai fine-tune score` before using it.
+
+### Benchmark
+
+```bash
+uv run trenova-finetune bench --dataset ./datasets/aitx_01J \
+  --base-url http://gpu-1:8000/v1 --model trenova-extract-2026-10 \
+  --concurrency 1,4,16,64 --label ngram-bf16 \
+  --out ./bench/ngram-bf16.json --predictions-dir ./bench/ngram-bf16
+```
+
+What each request sends:
+
+- The request is the one Trenova's OpenAIChat adapter sends.
+- The prompt is the rendered validation prompt.
+- The reply format is a strict `json_schema` named as in the dataset. It is `json_object` or
+  nothing when the dataset was rendered for those modes.
+- Temperature and top-p come from the dataset.
+- `max_tokens` is 5000, Trenova's `ai.extractionMaxTokens` default; `--max-tokens` changes it.
+- Replies are streamed with usage reporting.
+
+How a run proceeds:
+
+- **Warmup.** Untimed requests go first (`--warmup`). If every one fails, the run stops with the
+  server's error, such as a wrong URL, key or model name.
+- **Levels.** Each level then sends the same requests with that many in flight.
+- **API key.** It comes from `VLLM_API_KEY` (`--api-key-env`) and is never written to the report.
+
+What each level reports:
+
+| Field | Meaning |
+|---|---|
+| `ttftMs` | Time to first token: queueing plus prefill. Mean, p50, p90, p99 and max |
+| `tpotMs` | Time per output token after the first: the decode speed one document sees |
+| `e2eMs` | Request to last token: what a user waiting on an upload feels |
+| `outputTokensPerSecond`, `requestsPerSecond` | What the server sustains at that concurrency |
+| `cachedPromptFraction` | Share of prompt tokens served from the prefix cache |
+| `truncated`, `invalidReplies`, `failed`, `errors` | Replies cut off at `max_tokens`, replies that break the schema, and failed requests with their top errors. A fast setup that breaks replies is not faster |
+
+Caveats:
+
+- **Timing is taken on the client.** Run the benchmark near the server.
+- **Prompts repeat.** The same prompts are sent in the warmup and at every level, so later
+  levels find more of each document in the prefix cache than production would. Decode is
+  unaffected. For a clean time to first token, run a single level against a freshly started
+  server. `promptsRepeat` and `cachedPromptFraction` in the report show when this applies.
+
+`--predictions-dir` writes each level's replies as `predictions-c<N>.jsonl`, in the format
+`trenova ai fine-tune score` reads. Speed and accuracy come from the same run.
+
+### Tune
+
+Change one setting, restart the server, and benchmark again with the same dataset and levels:
+
+```bash
+uv run trenova-finetune bench-compare --baseline ./bench/bf16.json --candidate ./bench/ngram-bf16.json
+```
+
+`bench-compare` lines up the levels the two reports share. For each it shows:
+
+- p50 and p90 end-to-end latency;
+- p50 time to first token and time per output token;
+- output tokens per second and requests per second.
+
+Each row gives the relative change and whether it is better or worse (`--json` prints the rows
+as JSON). It refuses to compare reports whose prompts, dataset or request settings differ,
+because those numbers do not measure the same work.
+
+A sensible order:
+
+1. Prefix caching.
+2. n-gram speculation, adjusting `num_speculative_tokens`.
+3. Batch limits at the concurrency production sees.
+4. `fp8` weights and KV cache.
+5. A smaller base model.
+
+After each change, score the replies. Keep a change only if the score holds.
+
+### Register the provider in Trenova
 
 Register an AI provider for the served model with these settings:
 
