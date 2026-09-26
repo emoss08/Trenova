@@ -28,6 +28,7 @@ type ReadAccountingChangesRequest struct {
 	Now            time.Time
 	Payments       bool
 	BillPayments   bool
+	Documents      bool
 	ReferenceKinds []accountingsync.ReferenceKind
 }
 
@@ -62,8 +63,17 @@ type AccountingChangedReference struct {
 	Deleted bool
 }
 
+type AccountingChangedDocument struct {
+	ObjectTypes []accountingsync.SyncObjectType
+	ExternalID  string
+	Operation   AccountingChangeOperation
+	ModifiedAt  int64
+	ModifiedBy  string
+}
+
 type AccountingChangePage struct {
 	Payments      []AccountingInboundPayment
+	Documents     []AccountingChangedDocument
 	References    []AccountingChangedReference
 	NextCursor    string
 	More          bool

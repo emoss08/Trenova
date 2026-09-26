@@ -101,7 +101,7 @@ func (s *Service) salesRef(
 	if err != nil {
 		return "", err
 	}
-	if created := latestOf(existing, accountingsync.SyncOperationCreate); created != nil {
+	if created := documentRecord(existing); created != nil {
 		switch {
 		case isSynced(created):
 			return created.ExternalID, nil
@@ -174,6 +174,13 @@ func (s *Service) pushSales(
 		return nil, err
 	}
 
+	var target *accountingsync.AccountingSyncRecord
+	if record.Operation == accountingsync.SyncOperationUpdate {
+		if target, err = s.updateTarget(ctx, sess, record, label); err != nil {
+			return nil, err
+		}
+	}
+
 	res := newResolver(s, sess)
 	customerID, err := s.customerRef(ctx, sess, res, inv.CustomerID)
 	if err != nil {
@@ -186,7 +193,14 @@ func (s *Service) pushSales(
 	}
 	doc.CustomerExternalID = customerID
 
-	written, err := sess.writer.CreateSalesDocument(ctx, doc)
+	var written *services.AccountingDocumentResult
+	if target != nil {
+		doc.ExternalID = target.ExternalID
+		doc.Refs = target.ExternalRefs
+		written, err = sess.writer.UpdateSalesDocument(ctx, doc)
+	} else {
+		written, err = sess.writer.CreateSalesDocument(ctx, doc)
+	}
 	if err != nil {
 		return partial(written), err
 	}
@@ -365,7 +379,7 @@ func (s *Service) pushSalesVoid(
 	if err != nil {
 		return nil, err
 	}
-	created := latestOf(existing, accountingsync.SyncOperationCreate)
+	created := documentRecord(existing)
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
 	}
@@ -465,7 +479,7 @@ func (s *Service) pushPayment(
 	}
 	externalID := ""
 	if record.Operation == accountingsync.SyncOperationUpdate {
-		created := latestOf(existing, accountingsync.SyncOperationCreate)
+		created := documentRecord(existing)
 		if created == nil {
 			dependency, enqueueErr := s.enqueueDependency(
 				ctx,
@@ -657,7 +671,7 @@ func (s *Service) pushPaymentVoid(
 	if err != nil {
 		return nil, err
 	}
-	created := latestOf(existing, accountingsync.SyncOperationCreate)
+	created := documentRecord(existing)
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
 	}
@@ -780,7 +794,7 @@ func (s *Service) pushCreditApplicationVoid(
 	if err != nil {
 		return nil, err
 	}
-	created := latestOf(existing, accountingsync.SyncOperationCreate)
+	created := documentRecord(existing)
 	if done, voidErr := s.settleUnsent(ctx, created, record); done {
 		return nil, voidErr
 	}

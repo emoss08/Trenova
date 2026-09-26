@@ -32,6 +32,8 @@ writes:
     tools: [apply_accounting_inbound_change]
   "mutation changeAccountingBackfill":
     pending: "Change the range or scope of an accounting backfill that has not finished."
+  "mutation checkAccountingDrift":
+    tools: [check_accounting_drift]
   "mutation checkAccountingConnection":
     tools: [check_accounting_connection]
   "mutation clearAccountingMapping":
@@ -49,6 +51,8 @@ writes:
   "mutation disconnectAccountingSystem":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
+  "mutation dismissAccountingDrift":
+    tools: [dismiss_accounting_drift]
   "mutation enableAccountingSync":
     exempt: configuration
     reason: "Connects the organization to an outside system; an administrator owns the connection and its credentials."
@@ -67,6 +71,8 @@ writes:
     reason: "Handles the OAuth app and its credentials that let Trenova act in the accounting system."
   "mutation requestAccountingBackfill":
     tools: [request_accounting_backfill]
+  "mutation resolveAccountingDrift":
+    tools: [resolve_accounting_drift]
   "mutation resumeAccountingSync":
     tools: [resume_accounting_sync]
   "mutation retryAccountingSync":

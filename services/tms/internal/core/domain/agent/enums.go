@@ -55,6 +55,7 @@ const (
 	SubjectFormulaTemplate      = SubjectType("FormulaTemplate")
 	SubjectAccountingSyncRecord = SubjectType("AccountingSyncRecord")
 	SubjectAccountingInbound    = SubjectType("AccountingInboundChange")
+	SubjectAccountingDrift      = SubjectType("AccountingDriftFinding")
 )
 
 // Resource is the permission a person needs to read a record of this kind.
@@ -92,7 +93,7 @@ func (s SubjectType) Resource() (permission.Resource, bool) {
 		return permission.ResourceAccountingIntegration, true
 	case SubjectFormulaTemplate:
 		return permission.ResourceFormulaTemplate, true
-	case SubjectAccountingSyncRecord, SubjectAccountingInbound:
+	case SubjectAccountingSyncRecord, SubjectAccountingInbound, SubjectAccountingDrift:
 		return permission.ResourceAccountingSync, true
 	default:
 		return "", false
@@ -142,7 +143,8 @@ func (s SubjectType) IsValid() bool {
 		SubjectAccountingConnection,
 		SubjectFormulaTemplate,
 		SubjectAccountingSyncRecord,
-		SubjectAccountingInbound:
+		SubjectAccountingInbound,
+		SubjectAccountingDrift:
 		return true
 	default:
 		return false
@@ -170,6 +172,7 @@ func AllSubjectTypes() []SubjectType {
 		SubjectFormulaTemplate,
 		SubjectAccountingSyncRecord,
 		SubjectAccountingInbound,
+		SubjectAccountingDrift,
 	}
 }
 

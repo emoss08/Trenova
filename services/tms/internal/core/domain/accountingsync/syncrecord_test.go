@@ -406,3 +406,36 @@ func TestBackfillWalksEachObjectTypeAndStops(t *testing.T) {
 	assert.False(t, backfill.Cancel(now+10))
 	assert.False(t, backfill.Resume())
 }
+
+func TestReflectSkipsARecordTheProviderAlreadyHas(t *testing.T) {
+	t.Parallel()
+
+	actor := pulid.MustNew("usr_")
+	record := queuedRecord(t, false)
+	record.MarkFailed(&accountingsync.SyncError{
+		Category: accountingsync.SyncErrorTransient,
+		Message:  "timeout",
+	}, now)
+	assert.False(t, record.Reflect(actor, "", "Made to match"), "it must name what it is reflected in")
+	assert.Empty(t, record.ReflectedIn())
+
+	require.True(t, record.Reflect(actor, "145", "Made in Trenova to match QuickBooks Online;\nalready there"))
+	assert.Equal(t, accountingsync.SyncStatusSkipped, record.Status)
+	assert.Equal(t, "145", record.ReflectedIn())
+	assert.Equal(t, actor, record.SkippedByID)
+	assert.NotContains(t, record.SkippedReason, "\n")
+	assert.Contains(t, record.Resolution, "already there")
+	assert.Empty(t, record.ErrorMessage)
+	assert.Nil(t, record.NextAttemptAt)
+
+	assert.False(t, record.Reflect(actor, "146", "again"), "a skipped record is final")
+	assert.Equal(t, "145", record.ReflectedIn())
+
+	inFlight := queuedRecord(t, false)
+	inFlight.Status = accountingsync.SyncStatusInFlight
+	assert.False(t, inFlight.Reflect(actor, "145", "now"))
+
+	skipped := queuedRecord(t, false)
+	require.NoError(t, skipped.Skip(actor, "entered by hand"))
+	assert.Empty(t, skipped.ReflectedIn(), "a plain skip is not reflected anywhere")
+}

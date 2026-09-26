@@ -208,7 +208,8 @@
                 "AccountingConnection",
                 "FormulaTemplate",
                 "AccountingSyncRecord",
-                "AccountingInboundChange"
+                "AccountingInboundChange",
+                "AccountingDriftFinding"
             ],
             "type": "string",
             "x-enum-varnames": [
@@ -230,7 +231,8 @@
                 "SubjectAccountingConnection",
                 "SubjectFormulaTemplate",
                 "SubjectAccountingSyncRecord",
-                "SubjectAccountingInbound"
+                "SubjectAccountingInbound",
+                "SubjectAccountingDrift"
             ]
         },
         "agent.TaintMark": {

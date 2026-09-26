@@ -1,5 +1,5 @@
 {
-  "version": "sha256:d035989702d3b02c1cd45dba553d004ce099f16e0378885a3cd5cd477c42a623",
+  "version": "sha256:06e132af7f9a3d58a8edb0ab3bd1f520c2f5b0fa67845cfc040605383419d665",
   "modules": [
     {
       "id": "home",
@@ -1719,6 +1719,102 @@
       "notes": "Viewing the ledger needs read access to accounting sync; retrying, releasing, skipping, pausing and resuming need update access; a backfill needs manage access to the accounting integration. A document that fails for a temporary reason is retried on its own, backing off from 30 seconds to 6 hours, and is marked failed after 8 tries. Invoices, customer payments, customers, carrier and driver settlements, carriers and workers show where they stand in QuickBooks Online on their own pages, with a link back to this ledger.",
       "related": [
         "/accounting/sync/mappings",
+        "/accounting/sync/inbound",
+        "/accounting/sync/drift",
+        "/admin/integrations"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/accounting/sync/drift",
+      "name": "Drift findings",
+      "module": "accounting",
+      "breadcrumb": [
+        "Accounting management",
+        "Accounting sync",
+        "Drift findings"
+      ],
+      "description": "Drift findings lists the documents Trenova sent to QuickBooks Online that differ there now: a total someone edited, a document deleted or voided in QuickBooks, a document voided in Trenova but still live in QuickBooks, or a customer's open balance that no longer adds up to the same figure on both sides.",
+      "summary": "Drift findings lists the documents Trenova sent to QuickBooks Online that differ there now: a total someone edited, a document deleted or voided in QuickBooks, a document voided in Trenova but still live in QuickBooks, or a customer's open balance that no longer adds up to the same figure on both sides. Each finding shows both values, who changed the document in QuickBooks and when, and whether an amount difference is within the reconciliation tolerance.\n\nTrenova compares every synced document dated in an open or locked period each night, and compares a document again within minutes when QuickBooks reports it changed. A finding closes on its own once both sides agree again. A document with a change still on its way to QuickBooks is left out until that change is sent.\n\nThe strip at the top counts **Open differences**, **Different amounts**, documents **Deleted or voided** in the books, and those **Settled** in the last seven days; selecting a figure filters the table to it.",
+      "requires": [
+        {
+          "resource": "accounting_sync",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "QuickBooks drift",
+        "invoice changed in QuickBooks",
+        "document deleted in QuickBooks",
+        "books differ",
+        "reconcile QuickBooks",
+        "reconciliation differences",
+        "QuickBooks does not match",
+        "fix QuickBooks mismatch",
+        "customer balance differs",
+        "sync mismatch"
+      ],
+      "tasks": [
+        {
+          "title": "Send Trenova's value to QuickBooks",
+          "keywords": [
+            "push to QuickBooks",
+            "overwrite QuickBooks",
+            "restore deleted invoice",
+            "send again"
+          ],
+          "steps": [
+            "Open [Drift findings](/accounting/sync/drift) and open the finding.",
+            "Select **Push Trenova's value**. The preview says what is sent: an update of the total, a void, or a new copy of a document deleted or voided in QuickBooks.",
+            "Select **Push Trenova's value** again to confirm. The finding closes once the next check finds QuickBooks matches Trenova."
+          ]
+        },
+        {
+          "title": "Match Trenova to QuickBooks",
+          "keywords": [
+            "adjust Trenova",
+            "credit memo to match",
+            "void to match",
+            "reverse payment deleted in QuickBooks"
+          ],
+          "steps": [
+            "Open [Drift findings](/accounting/sync/drift) and open the finding.",
+            "Select **Adjust Trenova**. The preview says what is posted: a credit memo or a debit memo against the invoice for the difference, a void of an invoice gone from QuickBooks, or the reversal of a payment voided there.",
+            "Select **Adjust Trenova** again to confirm. What is posted is not sent back to QuickBooks, because QuickBooks already has it."
+          ]
+        },
+        {
+          "title": "Dismiss a difference",
+          "keywords": [
+            "ignore difference",
+            "rounding",
+            "accept difference",
+            "keep both"
+          ],
+          "steps": [
+            "Open [Drift findings](/accounting/sync/drift) and open the finding.",
+            "Select **Dismiss**, say why both sides stay as they are, then select **Dismiss difference**."
+          ]
+        },
+        {
+          "title": "Check QuickBooks now",
+          "keywords": [
+            "reconcile now",
+            "compare now",
+            "run drift check"
+          ],
+          "steps": [
+            "Open [Drift findings](/accounting/sync/drift).",
+            "Select **Check now**. The check runs in the background; the page shows when it last finished."
+          ]
+        }
+      ],
+      "notes": "Viewing the page needs read access to accounting sync; fixing and dismissing need update access. Adjusting Trenova also needs permission to change invoices, or customer payments for a reversal. Adjust Trenova is offered for invoices and debit memos, and for customer payments voided or deleted in QuickBooks; settlements, credit memos and customer balances offer only Push Trenova's value or Dismiss. An invoice with payments or credits applied cannot be voided to match until they are unapplied. Agents may dismiss only an amount difference within the reconciliation tolerance.",
+      "related": [
+        "/accounting/sync",
         "/accounting/sync/inbound",
         "/admin/integrations"
       ],
@@ -14819,6 +14915,15 @@
     }
   ],
   "records": [
+    {
+      "entity": "accounting_drift_finding",
+      "label": "Drift finding",
+      "path": "/accounting/sync/drift",
+      "params": {
+        "panelType": "edit",
+        "panelEntityId": "{id}"
+      }
+    },
     {
       "entity": "accounting_inbound_change",
       "label": "Payment from the books",

@@ -537,8 +537,9 @@ func (t Template) StarterInstructions() string {
 			"it."
 	case TemplateBooksKeeper:
 		return "You keep the accounting system in step with what Trenova posts. A run starts " +
-			"when a document is held or gives up on its way to the books, or when the " +
-			"connection to the accounting system degrades. Carrier and owner-operator " +
+			"when a document is held or gives up on its way to the books, when the " +
+			"connection to the accounting system degrades, when the books differ from what " +
+			"Trenova sent, or for the weekly reconciliation. Carrier and owner-operator " +
 			"settlements reach the books as bills, or vendor credits when they net below " +
 			"zero, and their payments as bill payments; a bill payment waits for its bill, " +
 			"and every GL account a bill posts to must be mapped. Read the record with " +
@@ -561,7 +562,18 @@ func (t Template) StarterInstructions() string {
 			"each with what it pays and why it waits. Propose apply_accounting_inbound_change " +
 			"only for a Proposed payment whose preview matches what is open in Trenova, and " +
 			"ignore_accounting_inbound_change only when a person says it was entered here too; " +
-			"for any other reason, say what differs and what a person must fix. Never state an " +
+			"for any other reason, say what differs and what a person must fix. A document the " +
+			"books changed after Trenova sent it is drift; list_accounting_drift_findings shows " +
+			"both values, who changed it there, whether it is within the reconciliation " +
+			"tolerance and the fixes it offers. Propose resolve_accounting_drift in the " +
+			"direction the evidence supports: PushTrenovaValue when Trenova is right, " +
+			"AdjustTrenova only when a person says the books are right. Propose " +
+			"dismiss_accounting_drift only for an amount difference within the tolerance; " +
+			"anything larger is a person's call. On the weekly reconciliation, read the open " +
+			"findings with list_accounting_drift_findings, use check_accounting_drift only " +
+			"when the last check is older than a day, and write a reconciliation note: open " +
+			"differences by kind, what was fixed since last week, and what still needs a " +
+			"person. Never state an " +
 			"amount, a date or an accounting system number you did " +
 			"not read. Report the documents affected, the cause, what you changed or proposed, " +
 			"and the one thing a person must still do."
@@ -893,6 +905,10 @@ func (t Template) StarterTools() []string {
 			"list_accounting_inbound_changes",
 			"apply_accounting_inbound_change",
 			"ignore_accounting_inbound_change",
+			"list_accounting_drift_findings",
+			"resolve_accounting_drift",
+			"dismiss_accounting_drift",
+			"check_accounting_drift",
 		}
 	case TemplateFormulaAssistant:
 		return []string{
@@ -987,6 +1003,8 @@ func (t Template) StarterEvents() []agent.EventKind {
 			agent.EventAccountingSyncBlocked,
 			agent.EventAccountingConnectionDegraded,
 			agent.EventAccountingPaymentProposed,
+			agent.EventAccountingDriftDetected,
+			agent.EventAccountingReconciliationDue,
 		}
 	default:
 		return nil

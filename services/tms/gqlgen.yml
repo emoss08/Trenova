@@ -4049,6 +4049,64 @@ models:
   AccountingInboundApplyPreview:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AccountingInboundApplyPreview
+  AccountingDriftKind:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftKind
+  AccountingDriftStatus:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftStatus
+  AccountingDriftResolution:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftResolution
+  AccountingDriftDirection:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftDirection
+  AccountingDriftFixObject:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftFixObject
+  AccountingDriftLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.DriftLine
+  AccountingDriftFinding:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/accountingsync.AccountingDriftFinding
+    fields:
+      partyId:
+        resolver: true
+      trenovaMinor:
+        resolver: true
+      providerMinor:
+        resolver: true
+      differenceMinor:
+        resolver: true
+      resolution:
+        resolver: true
+      fixObjectType:
+        resolver: true
+      fixObjectId:
+        resolver: true
+      directions:
+        resolver: true
+      pushed:
+        resolver: true
+      resolvedBy:
+        resolver: true
+  AccountingDriftSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingDriftSummary
+  AccountingDriftOverview:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingDriftOverview
+  AccountingDriftFixPreview:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.AccountingDriftFixPreview
+    fields:
+      direction:
+        resolver: true
+      fixObject:
+        resolver: true
+      operation:
+        resolver: true
   AccountingSyncStatusCount:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.AccountingSyncStatusCount

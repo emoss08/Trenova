@@ -177,6 +177,8 @@ type wireSalesLine struct {
 }
 
 type salesBody struct {
+	ID           string          `json:"Id,omitempty"`
+	SyncToken    string          `json:"SyncToken,omitempty"`
 	CustomerRef  refValue        `json:"CustomerRef"`
 	DocNumber    string          `json:"DocNumber,omitempty"`
 	TxnDate      string          `json:"TxnDate,omitempty"`

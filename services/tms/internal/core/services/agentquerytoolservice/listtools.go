@@ -151,7 +151,7 @@ func buildListDescription(spec listSpec) string {
 		separate()
 		b.WriteString(field.Name)
 		b.WriteString(" (")
-		if len(field.Values) > 0 {
+		if len(field.Values) > 0 && !field.ValuesUnlisted {
 			b.WriteString(strings.Join(field.Values, "|"))
 		} else {
 			b.WriteString(string(field.Kind))

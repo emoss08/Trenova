@@ -1,0 +1,18 @@
+{
+  "QueryResponse": {
+    "BillPayment": [
+      {
+        "Id": "501",
+        "SyncToken": "0",
+        "DocNumber": "CS-0042",
+        "TotalAmt": 1500,
+        "CurrencyRef": { "value": "USD" },
+        "PayType": "Check",
+        "MetaData": { "LastUpdatedTime": "2026-09-24T09:12:30-07:00" }
+      }
+    ],
+    "startPosition": 1,
+    "maxResults": 1
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

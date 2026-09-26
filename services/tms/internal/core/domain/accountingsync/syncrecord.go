@@ -39,6 +39,7 @@ const (
 	ExternalRefDocumentType   = "documentType"
 	ExternalRefURL            = "url"
 	ExternalRefCombined       = "combined"
+	ExternalRefReflectedIn    = "reflectedIn"
 )
 
 var (
@@ -406,6 +407,31 @@ func (r *AccountingSyncRecord) Skip(actorID pulid.ID, reason string) error {
 	r.NextAttemptAt = nil
 	r.LeaseExpiresAt = nil
 	return nil
+}
+
+func (r *AccountingSyncRecord) Reflect(actorID pulid.ID, externalID, reason string) bool {
+	if r.Status.IsFinal() || r.Status == SyncStatusInFlight || externalID == "" {
+		return false
+	}
+	r.Status = SyncStatusSkipped
+	r.SkippedByID = actorID
+	r.SkippedReason = stringutils.TruncateRunes(
+		stringutils.OneLine(reason, maxSyncSkipReason),
+		maxSyncSkipReason,
+	)
+	r.SetExternalRef(ExternalRefReflectedIn, externalID)
+	r.NextAttemptAt = nil
+	r.LeaseExpiresAt = nil
+	r.clearError()
+	r.Resolution = stringutils.TruncateRunes(reason, maxSyncResolution)
+	return true
+}
+
+func (r *AccountingSyncRecord) ReflectedIn() string {
+	if r.Status != SyncStatusSkipped {
+		return ""
+	}
+	return r.ExternalRefs[ExternalRefReflectedIn]
 }
 
 func (r *AccountingSyncRecord) Supersede() bool {

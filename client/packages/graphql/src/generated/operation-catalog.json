@@ -1,6 +1,6 @@
 {
-  "operationCount": 894,
-  "fragmentCount": 243,
+  "operationCount": 901,
+  "fragmentCount": 245,
   "operations": [
     {
       "name": "AcceptCarrierInvoiceMatch",
@@ -91,6 +91,102 @@
       ],
       "usages": [],
       "sdl": "query AccountingBackfills($integrationType: AccountingSystem!) {\n  accountingBackfills(integrationType: $integrationType) {\n    ...AccountingBackfillFields\n  }\n}\n\nfragment AccountingBackfillFields on AccountingBackfill {\n  id\n  rangeStart\n  rangeEnd\n  objectTypes\n  status\n  enqueuedCount\n  alreadyQueuedCount\n  startedAt\n  completedAt\n  lastError\n  version\n  createdAt\n  updatedAt\n}"
+    },
+    {
+      "name": "AccountingDriftFinding",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/drift.graphql",
+      "hash": "sha256:872cdd08d8b474ef5ea97d3abccd6060439e0b11d991c6939f2d19818f00913b",
+      "rootFields": [
+        "accountingDriftFinding"
+      ],
+      "variables": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingDriftFindingFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingDriftFinding($id: ID!) {\n  accountingDriftFinding(id: $id) {\n    ...AccountingDriftFindingFields\n  }\n}\n\nfragment AccountingDriftFindingFields on AccountingDriftFinding {\n  id\n  connectionId\n  objectType\n  objectId\n  objectNumber\n  partyId\n  partyName\n  externalId\n  externalUrl\n  kind\n  currencyCode\n  trenovaMinor\n  providerMinor\n  differenceMinor\n  trenovaState\n  providerState\n  detail {\n    objectType\n    objectId\n    objectNumber\n    trenovaMinor\n    providerMinor\n  }\n  providerModifiedAt\n  providerModifiedBy\n  status\n  resolution\n  resolutionNote\n  fixObjectType\n  fixObjectId\n  directions\n  pushed\n  resolvedBy {\n    id\n    name\n  }\n  resolvedAt\n  detectedAt\n  lastSeenAt\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "AccountingDriftFindingTable",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/drift.graphql",
+      "hash": "sha256:cb94f2fa816752d45146f3fe71515262f399ad67b2b4833d57ab21b2508c4189",
+      "rootFields": [
+        "accountingDriftFindingTable"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        },
+        {
+          "name": "input",
+          "type": "DataTableConnectionInput!",
+          "defaultValue": null
+        },
+        {
+          "name": "includeTotalCount",
+          "type": "Boolean",
+          "defaultValue": "true"
+        }
+      ],
+      "fragments": [
+        "DataTablePageInfoFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingDriftFindingTable($integrationType: AccountingSystem!, $input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  accountingDriftFindingTable(integrationType: $integrationType, input: $input) {\n    edges {\n      node {\n        id\n        connectionId\n        objectType\n        objectId\n        objectNumber\n        partyId\n        partyName\n        externalId\n        externalUrl\n        kind\n        currencyCode\n        trenovaMinor\n        providerMinor\n        differenceMinor\n        trenovaState\n        providerState\n        detail {\n          objectType\n          objectId\n          objectNumber\n          trenovaMinor\n          providerMinor\n        }\n        providerModifiedAt\n        providerModifiedBy\n        status\n        resolution\n        resolutionNote\n        fixObjectType\n        fixObjectId\n        directions\n        pushed\n        resolvedBy {\n          id\n          name\n        }\n        resolvedAt\n        detectedAt\n        lastSeenAt\n        version\n        updatedAt\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+    },
+    {
+      "name": "AccountingDriftFixPreview",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/drift.graphql",
+      "hash": "sha256:26f6acddc3d8bfa84cbae8d1584b3b5e31c27e252180c907aaee27f121ea126d",
+      "rootFields": [
+        "accountingDriftFixPreview"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ResolveAccountingDriftInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query AccountingDriftFixPreview($input: ResolveAccountingDriftInput!) {\n  accountingDriftFixPreview(input: $input) {\n    direction\n    fixObject\n    operation\n    amountMinor\n    currencyCode\n    toleranceMinor\n    withinTolerance\n    summary\n  }\n}"
+    },
+    {
+      "name": "AccountingDriftOverview",
+      "kind": "query",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/drift.graphql",
+      "hash": "sha256:7ff3c7aafb89ab9fd66635e951f7571178d1fdaf22fffb05f2ab8f749860417d",
+      "rootFields": [
+        "accountingDriftOverview"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingDriftOverviewFields"
+      ],
+      "usages": [],
+      "sdl": "query AccountingDriftOverview($integrationType: AccountingSystem!) {\n  accountingDriftOverview(integrationType: $integrationType) {\n    ...AccountingDriftOverviewFields\n  }\n}\n\nfragment AccountingDriftOverviewFields on AccountingDriftOverview {\n  connectionId\n  providerName\n  checkedAt\n  checkError\n  toleranceMinor\n  currencyCode\n  summary {\n    open\n    amountOpen\n    goneOpen\n    statusOpen\n    balanceOpen\n    resolvedSince\n  }\n}"
     },
     {
       "name": "AccountingInboundApplyPreview",
@@ -4684,6 +4780,28 @@
       "sdl": "mutation CheckAccountingConnection($integrationType: AccountingSystem!) {\n  checkAccountingConnection(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
+      "name": "CheckAccountingDrift",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/drift.graphql",
+      "hash": "sha256:08a6ab303f0f27375a133cfc5d6b64d948b13eca0f69563fb644c8862f49ba18",
+      "rootFields": [
+        "checkAccountingDrift"
+      ],
+      "variables": [
+        {
+          "name": "integrationType",
+          "type": "AccountingSystem!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingDriftOverviewFields"
+      ],
+      "usages": [],
+      "sdl": "mutation CheckAccountingDrift($integrationType: AccountingSystem!) {\n  checkAccountingDrift(integrationType: $integrationType) {\n    ...AccountingDriftOverviewFields\n  }\n}\n\nfragment AccountingDriftOverviewFields on AccountingDriftOverview {\n  connectionId\n  providerName\n  checkedAt\n  checkError\n  toleranceMinor\n  currencyCode\n  summary {\n    open\n    amountOpen\n    goneOpen\n    statusOpen\n    balanceOpen\n    resolvedSince\n  }\n}"
+    },
+    {
       "name": "CheckShipmentDuplicateBol",
       "kind": "mutation",
       "domain": "shipment",
@@ -7448,6 +7566,28 @@
       ],
       "usages": [],
       "sdl": "mutation DisconnectAccountingSystem($integrationType: AccountingSystem!) {\n  disconnectAccountingSystem(integrationType: $integrationType) {\n    ...AccountingConnectionFields\n  }\n}\n\nfragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "DismissAccountingDrift",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/drift.graphql",
+      "hash": "sha256:b1599148fe4b81ae5f93731f2b38024c9a852dcd21e054572169f73caa715510",
+      "rootFields": [
+        "dismissAccountingDrift"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "DismissAccountingDriftInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingDriftFindingFields"
+      ],
+      "usages": [],
+      "sdl": "mutation DismissAccountingDrift($input: DismissAccountingDriftInput!) {\n  dismissAccountingDrift(input: $input) {\n    ...AccountingDriftFindingFields\n  }\n}\n\nfragment AccountingDriftFindingFields on AccountingDriftFinding {\n  id\n  connectionId\n  objectType\n  objectId\n  objectNumber\n  partyId\n  partyName\n  externalId\n  externalUrl\n  kind\n  currencyCode\n  trenovaMinor\n  providerMinor\n  differenceMinor\n  trenovaState\n  providerState\n  detail {\n    objectType\n    objectId\n    objectNumber\n    trenovaMinor\n    providerMinor\n  }\n  providerModifiedAt\n  providerModifiedBy\n  status\n  resolution\n  resolutionNote\n  fixObjectType\n  fixObjectId\n  directions\n  pushed\n  resolvedBy {\n    id\n    name\n  }\n  resolvedAt\n  detectedAt\n  lastSeenAt\n  version\n  updatedAt\n}"
     },
     {
       "name": "DismissAgentMemorySuggestion",
@@ -14397,6 +14537,28 @@
       "sdl": "mutation ResetHomeLayout {\n  resetHomeLayout {\n    ...HomeLayoutFields\n  }\n}\n\nfragment HomeLayoutFields on HomeLayout {\n  schemaVersion\n  version\n  source\n  presetId\n  presetName\n  locked\n  canCustomize\n  density\n  widgets {\n    ...HomeWidgetFields\n  }\n}\n\nfragment HomeWidgetFields on HomeWidget {\n  id\n  key\n  title\n  w\n  h\n  config {\n    metric\n    metrics\n    definitionId\n    cannedKey\n    chartId\n    columnId\n    dashboardId\n    text\n    limit\n    windowDays\n  }\n}"
     },
     {
+      "name": "ResolveAccountingDrift",
+      "kind": "mutation",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/drift.graphql",
+      "hash": "sha256:edbc43d826f0597e50a5dd5722a50e2edb8dd15688b9b9ba18e019bfcbc624ca",
+      "rootFields": [
+        "resolveAccountingDrift"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "ResolveAccountingDriftInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [
+        "AccountingDriftFindingFields"
+      ],
+      "usages": [],
+      "sdl": "mutation ResolveAccountingDrift($input: ResolveAccountingDriftInput!) {\n  resolveAccountingDrift(input: $input) {\n    ...AccountingDriftFindingFields\n  }\n}\n\nfragment AccountingDriftFindingFields on AccountingDriftFinding {\n  id\n  connectionId\n  objectType\n  objectId\n  objectNumber\n  partyId\n  partyName\n  externalId\n  externalUrl\n  kind\n  currencyCode\n  trenovaMinor\n  providerMinor\n  differenceMinor\n  trenovaState\n  providerState\n  detail {\n    objectType\n    objectId\n    objectNumber\n    trenovaMinor\n    providerMinor\n  }\n  providerModifiedAt\n  providerModifiedBy\n  status\n  resolution\n  resolutionNote\n  fixObjectType\n  fixObjectId\n  directions\n  pushed\n  resolvedBy {\n    id\n    name\n  }\n  resolvedAt\n  detectedAt\n  lastSeenAt\n  version\n  updatedAt\n}"
+    },
+    {
       "name": "ResolveAgentException",
       "kind": "mutation",
       "domain": "agent",
@@ -20691,6 +20853,33 @@
       "sdl": "fragment AccountingConnectionFields on AccountingConnection {\n  id\n  integrationType\n  status\n  appSource\n  appEnvironment\n  externalCompanyName\n  externalLegalName\n  externalCountry\n  externalHomeCurrency\n  externalMultiCurrencyEnabled\n  externalBooksClosedThrough\n  lastCheckedAt\n  lastSuccessAt\n  lastFailureAt\n  consecutiveFailures\n  lastErrorCategory\n  lastErrorMessage\n  lastWebhookAt\n  refreshTokenAbsoluteExpiresAt\n  connectedAt\n  disconnectedAt\n  setupStep\n  syncStartDate\n  syncEnabledAt\n  autoSync\n  driverSettlementsEnabledAt\n  syncsDriverSettlements\n  inboundPaymentPolicy\n  changesReadAt\n  changesErrorMessage\n  pausedAt\n  pausedBy {\n    id\n    name\n  }\n  pausedReason\n  referenceRefreshStartedAt\n  referenceRefreshedAt\n  referenceRefreshError\n  version\n  updatedAt\n}"
     },
     {
+      "name": "AccountingDriftFindingFields",
+      "typeCondition": "AccountingDriftFinding",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/drift.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AccountingDriftFinding",
+        "DismissAccountingDrift",
+        "ResolveAccountingDrift"
+      ],
+      "usages": [],
+      "sdl": "fragment AccountingDriftFindingFields on AccountingDriftFinding {\n  id\n  connectionId\n  objectType\n  objectId\n  objectNumber\n  partyId\n  partyName\n  externalId\n  externalUrl\n  kind\n  currencyCode\n  trenovaMinor\n  providerMinor\n  differenceMinor\n  trenovaState\n  providerState\n  detail {\n    objectType\n    objectId\n    objectNumber\n    trenovaMinor\n    providerMinor\n  }\n  providerModifiedAt\n  providerModifiedBy\n  status\n  resolution\n  resolutionNote\n  fixObjectType\n  fixObjectId\n  directions\n  pushed\n  resolvedBy {\n    id\n    name\n  }\n  resolvedAt\n  detectedAt\n  lastSeenAt\n  version\n  updatedAt\n}"
+    },
+    {
+      "name": "AccountingDriftOverviewFields",
+      "typeCondition": "AccountingDriftOverview",
+      "domain": "accounting-sync",
+      "sourceFile": "src/operations/accounting-sync/drift.graphql",
+      "fragments": [],
+      "usedByOperations": [
+        "AccountingDriftOverview",
+        "CheckAccountingDrift"
+      ],
+      "usages": [],
+      "sdl": "fragment AccountingDriftOverviewFields on AccountingDriftOverview {\n  connectionId\n  providerName\n  checkedAt\n  checkError\n  toleranceMinor\n  currencyCode\n  summary {\n    open\n    amountOpen\n    goneOpen\n    statusOpen\n    balanceOpen\n    resolvedSince\n  }\n}"
+    },
+    {
       "name": "AccountingInboundChangeFields",
       "typeCondition": "AccountingInboundChange",
       "domain": "accounting-sync",
@@ -21728,6 +21917,7 @@
       "fragments": [],
       "usedByOperations": [
         "AccessorialChargeTable",
+        "AccountingDriftFindingTable",
         "AccountingInboundChangeTable",
         "AccountingSyncRecordTable",
         "AccountTypeTable",
@@ -27273,6 +27463,22 @@
       ],
       "sdl": "input DetentionWaiveInput {\n  note: String!\n  occurrenceId: ID!\n  reason: DetentionWaiverReason!\n}"
     },
+    "DismissAccountingDriftInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        },
+        {
+          "name": "note",
+          "type": "String!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input DismissAccountingDriftInput {\n  id: ID!\n  \"\"\"Why both sides stay as they are.\"\"\"\n  note: String!\n}"
+    },
     "DispatchAssignmentPreviewInput": {
       "kind": "input",
       "fields": [
@@ -31352,6 +31558,22 @@
         }
       ],
       "sdl": "input RescindDisciplinaryActionInput {\n  id: ID!\n  reason: String!\n  version: Int\n}"
+    },
+    "ResolveAccountingDriftInput": {
+      "kind": "input",
+      "fields": [
+        {
+          "name": "direction",
+          "type": "AccountingDriftDirection!",
+          "defaultValue": null
+        },
+        {
+          "name": "id",
+          "type": "ID!",
+          "defaultValue": null
+        }
+      ],
+      "sdl": "input ResolveAccountingDriftInput {\n  direction: AccountingDriftDirection!\n  id: ID!\n}"
     },
     "ResolveCarrierIntelEventInput": {
       "kind": "input",
@@ -38148,6 +38370,14 @@
         "Vacation"
       ],
       "sdl": "enum PortalPtoType {\n  Bereavement\n  Holiday\n  Maternity\n  Paternity\n  Personal\n  Sick\n  Vacation\n}"
+    },
+    "AccountingDriftDirection": {
+      "kind": "enum",
+      "values": [
+        "AdjustTrenova",
+        "PushTrenovaValue"
+      ],
+      "sdl": "\"\"\"Which side a fix changes.\"\"\"\nenum AccountingDriftDirection {\n  \"\"\"Change Trenova to match the accounting system.\"\"\"\n  AdjustTrenova\n  \"\"\"Send Trenova's document to the accounting system again.\"\"\"\n  PushTrenovaValue\n}"
     },
     "CarrierIntelEventResolution": {
       "kind": "enum",

@@ -153,6 +153,7 @@ definitions:
             - FormulaTemplate
             - AccountingSyncRecord
             - AccountingInboundChange
+            - AccountingDriftFinding
         type: string
         x-enum-varnames:
             - SubjectBillingQueueItem
@@ -174,6 +175,7 @@ definitions:
             - SubjectFormulaTemplate
             - SubjectAccountingSyncRecord
             - SubjectAccountingInbound
+            - SubjectAccountingDrift
     agent.TaintMark:
         properties:
             at:

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/accountingconnlookup"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -26,6 +27,7 @@ import (
 const (
 	defaultEvaluateLimit = 100
 	summaryWindow        = 7 * 24 * time.Hour
+	driftEventsPerPoll   = 20
 )
 
 var permissionResource = permission.ResourceAccountingSync.String()
@@ -52,6 +54,7 @@ type Params struct {
 	AuditService      services.AuditService
 	Permissions       services.PermissionEngine
 	Refresher         services.AccountingReferenceRefresher `optional:"true"`
+	Drift             services.AccountingDriftRechecker     `optional:"true"`
 	Publisher         services.AgentEventPublisher          `optional:"true"`
 	Watchtower        services.WatchtowerProjector          `optional:"true"`
 	Realtime          services.RealtimeService              `optional:"true"`
@@ -77,6 +80,7 @@ type Service struct {
 	audit            services.AuditService
 	permissions      services.PermissionEngine
 	refresher        services.AccountingReferenceRefresher
+	drift            services.AccountingDriftRechecker
 	publisher        services.AgentEventPublisher
 	watchtower       services.WatchtowerProjector
 	realtime         services.RealtimeService
@@ -107,6 +111,7 @@ func New(p Params) *Service {
 		audit:            p.AuditService,
 		permissions:      p.Permissions,
 		refresher:        p.Refresher,
+		drift:            p.Drift,
 		publisher:        p.Publisher,
 		watchtower:       p.Watchtower,
 		realtime:         p.Realtime,
@@ -138,28 +143,7 @@ func (s *Service) connectionFor(
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
 ) (*accountingsync.AccountingConnection, error) {
-	if !accountingsync.SupportsAccountingSync(typ) {
-		return nil, errortypes.NewValidationError(
-			"integrationType",
-			errortypes.ErrInvalid,
-			"{0} is not an accounting system Trenova can sync with",
-			string(typ),
-		)
-	}
-	conn, err := s.connections.GetByType(ctx, repositories.GetAccountingConnectionRequest{
-		TenantInfo:      tenantInfo,
-		IntegrationType: typ,
-	})
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, errortypes.NewNotFoundError(
-				"{0} has not been connected yet",
-				accountingsync.ProviderName(typ),
-			)
-		}
-		return nil, err
-	}
-	return conn, nil
+	return accountingconnlookup.ByType(ctx, s.connections, tenantInfo, typ)
 }
 
 func (s *Service) List(

@@ -17,6 +17,8 @@ const (
 	entityCustomerLedger    = "customer_ledger_entry"
 	entityDriverSettlement  = "driver_settlement"
 	entityAccountingSync    = "accounting_sync_record"
+	entityAccountingDrift   = "accounting_drift_finding"
+	driftKindParam          = "driftKinds"
 	syncStatusParam         = "syncStatuses"
 	syncDocumentTypeParam   = "syncDocumentTypes"
 	glAccountEdge           = "glAccount"
@@ -232,6 +234,50 @@ func syncExceptionsByWeek() *Entry {
 					sliceutils.Strings(accountingsync.AllSyncObjectTypes()),
 				),
 				windowParam(90),
+			},
+		},
+	}
+}
+
+// openDriftByCustomer lists what still differs between Trenova and the
+// accounting system, by the party on the document and the kind of difference,
+// so the bookkeeper sees which accounts to walk through with the books open.
+func openDriftByCustomer() *Entry {
+	return &Entry{
+		Key:     "accounting-open-drift-by-customer",
+		Version: initialVersion,
+		Name:    "Open Drift by Customer",
+		Description: "Open differences between Trenova and the accounting system, by " +
+			"customer, carrier or driver and the kind of difference, with the net amount",
+		Category:      categoryAccounting,
+		Tags:          []string{tagAccounting, "accounting-sync", "drift"},
+		DefaultFormat: report.FormatXLSX,
+		Definition: &report.Definition{
+			IRVersion: report.CurrentIRVersion,
+			Entity:    entityAccountingDrift,
+			Columns: []report.ColumnSpec{
+				dimCol("party", "Customer, Carrier or Driver", "partyName"),
+				dimCol("kind", "Difference", "kind"),
+				dimCol("currency", "Currency", "currencyCode"),
+				countMeasure("findings", "Findings"),
+				sumMinor("difference", "Net Difference", "differenceMinor"),
+			},
+			Filters: andFilters(
+				report.FieldFilter{
+					Ref:      report.FieldRef{Field: "status"},
+					Operator: dbtype.OpEqual,
+					Value:    string(accountingsync.DriftStatusOpen),
+				},
+				inParam("kind", driftKindParam),
+			),
+			Sort: []report.SortSpec{desc("findings")},
+			Parameters: []report.ParameterDef{
+				enumParam(
+					driftKindParam,
+					"Kinds of difference",
+					sliceutils.Anys(sliceutils.Strings(accountingsync.AllDriftKinds())),
+					sliceutils.Strings(accountingsync.AllDriftKinds()),
+				),
 			},
 		},
 	}

@@ -208,6 +208,17 @@ type AccountTypeEdge struct {
 	Cursor string                   `json:"cursor"`
 }
 
+type AccountingDriftFindingConnection struct {
+	Edges      []*AccountingDriftFindingEdge `json:"edges"`
+	PageInfo   *PageInfo                     `json:"pageInfo"`
+	TotalCount *int                          `json:"totalCount,omitempty"`
+}
+
+type AccountingDriftFindingEdge struct {
+	Node   *accountingsync.AccountingDriftFinding `json:"node"`
+	Cursor string                                 `json:"cursor"`
+}
+
 type AccountingInboundChangeConnection struct {
 	Edges      []*AccountingInboundChangeEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
@@ -2231,6 +2242,12 @@ type DetentionWaiverLeakageStat struct {
 	WaiverCount   int    `json:"waiverCount"`
 	ApproverCount int    `json:"approverCount"`
 	WaivedAmount  string `json:"waivedAmount"`
+}
+
+type DismissAccountingDriftInput struct {
+	ID string `json:"id"`
+	// Why both sides stay as they are.
+	Note string `json:"note"`
 }
 
 type DispatchAssignMoveInput struct {
@@ -5568,6 +5585,11 @@ type RescindDisciplinaryActionInput struct {
 	ID      string `json:"id"`
 	Reason  string `json:"reason"`
 	Version *int   `json:"version,omitempty"`
+}
+
+type ResolveAccountingDriftInput struct {
+	ID        string                        `json:"id"`
+	Direction accountingsync.DriftDirection `json:"direction"`
 }
 
 type ResolveCarrierIntelEventInput struct {

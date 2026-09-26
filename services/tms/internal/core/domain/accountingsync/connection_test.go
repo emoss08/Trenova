@@ -219,3 +219,26 @@ func TestValidateRequiresAStartDateOnceComplete(t *testing.T) {
 	conn.Validate(multiErr)
 	assert.False(t, multiErr.HasErrors(), multiErr.Error())
 }
+
+func TestDriftIsCheckedOnlyWhileSendingAndRecordsTheOutcome(t *testing.T) {
+	t.Parallel()
+
+	conn := connected(t)
+	assert.False(t, conn.ChecksDrift(), "nothing is compared before sync starts")
+	conn.EnableSync(accountingsync.SyncSettings{StartDate: now, AutoSync: true}, now)
+	assert.True(t, conn.ChecksDrift())
+	conn.Pause(pulid.MustNew("usr_"), "close", now+1)
+	assert.False(t, conn.ChecksDrift(), "a paused connection is not compared")
+	conn.Resume()
+
+	conn.RecordDriftFailure(accountingsync.SyncErrorRateLimited, strings.Repeat("x", 5000))
+	assert.Equal(t, accountingsync.SyncErrorRateLimited, conn.DriftErrorCategory)
+	assert.Len(t, conn.DriftErrorMessage, 2000)
+	assert.Nil(t, conn.DriftCheckedAt, "a failed check does not count as a check")
+
+	conn.FinishDriftCheck(now + 10)
+	require.NotNil(t, conn.DriftCheckedAt)
+	assert.Equal(t, now+10, *conn.DriftCheckedAt)
+	assert.Empty(t, conn.DriftErrorCategory)
+	assert.Empty(t, conn.DriftErrorMessage)
+}

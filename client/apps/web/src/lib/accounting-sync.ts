@@ -3,6 +3,8 @@ import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import type {
   AccountingAppliedObjectType,
   AccountingConnectionStatus,
+  AccountingDriftKind,
+  AccountingDriftStatus,
   AccountingInboundChangeReason,
   AccountingInboundChangeStatus,
   AccountingInboundPaymentPolicy,
@@ -23,6 +25,47 @@ export const ACCOUNTING_MAPPINGS_PATH = "/accounting/sync/mappings";
 export const ACCOUNTING_SYNC_PATH = "/accounting/sync";
 
 export const ACCOUNTING_INBOUND_PATH = "/accounting/sync/inbound";
+
+export const ACCOUNTING_DRIFT_PATH = "/accounting/sync/drift";
+
+const DRIFT_PHASES: Record<AccountingDriftStatus, StatusPhase> = {
+  Open: "attention",
+  Resolved: "complete",
+  Dismissed: "closed",
+};
+
+export function accountingDriftPhase(status: AccountingDriftStatus): StatusPhase {
+  return DRIFT_PHASES[status];
+}
+
+export const ACCOUNTING_DRIFT_STATUSES: readonly AccountingDriftStatus[] = [
+  "Open",
+  "Resolved",
+  "Dismissed",
+];
+
+export const ACCOUNTING_DRIFT_KINDS: readonly AccountingDriftKind[] = [
+  "AmountMismatch",
+  "StatusMismatch",
+  "DeletedInProvider",
+  "VoidedInProvider",
+  "CustomerBalanceMismatch",
+];
+
+const MONEY_DRIFT_KINDS = new Set<AccountingDriftKind>([
+  "AmountMismatch",
+  "CustomerBalanceMismatch",
+]);
+
+export function accountingDriftWithinTolerance(
+  finding: { kind: AccountingDriftKind; differenceMinor?: number | null },
+  toleranceMinor: number,
+): boolean {
+  if (!MONEY_DRIFT_KINDS.has(finding.kind) || finding.differenceMinor == null) {
+    return false;
+  }
+  return Math.abs(finding.differenceMinor) <= toleranceMinor;
+}
 
 const INBOUND_PHASES: Record<AccountingInboundChangeStatus, StatusPhase> = {
   Detected: "queued",

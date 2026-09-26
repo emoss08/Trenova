@@ -1,0 +1,38 @@
+{
+  "QueryResponse": {
+    "Invoice": [
+      {
+        "Id": "145",
+        "SyncToken": "4",
+        "DocNumber": "INV-1001",
+        "TxnDate": "2026-09-20",
+        "TotalAmt": 1450.25,
+        "Balance": 450.25,
+        "CurrencyRef": { "value": "USD", "name": "United States Dollar" },
+        "PrivateNote": "Trenova INV-1001",
+        "MetaData": {
+          "CreateTime": "2026-09-20T09:00:00-07:00",
+          "LastUpdatedTime": "2026-09-24T09:12:30-07:00",
+          "LastModifiedByRef": { "value": "9130348921", "name": "J Doe" }
+        }
+      },
+      {
+        "Id": "146",
+        "SyncToken": "2",
+        "DocNumber": "INV-1002",
+        "TxnDate": "2026-09-21",
+        "TotalAmt": 0,
+        "Balance": 0,
+        "CurrencyRef": { "value": "USD" },
+        "PrivateNote": "Voided - Trenova INV-1002",
+        "MetaData": {
+          "LastUpdatedTime": "2026-09-25T10:00:00-07:00",
+          "LastModifiedByRef": { "value": "9130348921" }
+        }
+      }
+    ],
+    "startPosition": 1,
+    "maxResults": 2
+  },
+  "time": "2026-09-25T08:00:00.000-07:00"
+}

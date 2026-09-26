@@ -88,6 +88,7 @@ func Default() *Registry {
 		revenueByGLAccount(),
 		arAgingByDocument(),
 		syncExceptionsByWeek(),
+		openDriftByCustomer(),
 		settlementRegister(),
 	})
 }

@@ -89,6 +89,7 @@ func (e *Enqueuer) Enqueue(ctx context.Context, req *services.AccountingSyncEnqu
 	if err != nil {
 		return err
 	}
+	services.NoteAccountingSyncEnqueued(ctx, result.Inserted)
 	if req.Operation == accountingsync.SyncOperationUpdate {
 		for _, record := range result.Inserted {
 			if _, err = e.records.SupersedeOlder(

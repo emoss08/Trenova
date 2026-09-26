@@ -135,6 +135,26 @@ func TestEnumCheckConstraintsAcceptEveryDeclaredValue(t *testing.T) {
 			values: stringsOf(accountingsync.AllInboundChangeReasons()),
 		},
 		{
+			name:   "ck_accounting_connections_drift_error_category",
+			values: stringsOf(accountingsync.AllSyncErrorCategories()),
+		},
+		{
+			name:   "ck_accounting_drift_findings_object_type",
+			values: stringsOf(accountingsync.AllSyncObjectTypes()),
+		},
+		{
+			name:   "ck_accounting_drift_findings_kind",
+			values: stringsOf(accountingsync.AllDriftKinds()),
+		},
+		{
+			name:   "ck_accounting_drift_findings_status",
+			values: stringsOf(accountingsync.AllDriftStatuses()),
+		},
+		{
+			name:   "ck_accounting_drift_findings_resolution",
+			values: stringsOf(accountingsync.AllDriftResolutions()),
+		},
+		{
 			name:   "ck_agent_definitions_template",
 			values: stringsOf(agentdefinition.AllTemplates()),
 		},
