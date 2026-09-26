@@ -73,11 +73,11 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 ## Totals
 
-912 writes: 465 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
+914 writes: 467 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 54 |
+| Covered by a tool | 56 |
 | Exempt | 444 |
 | — Security | 58 |
 | — Configuration | 206 |
@@ -88,9 +88,9 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | — Read-only | 46 |
 | — Attestation | 8 |
 | **Pending** | **414** |
-| Total | 912 |
+| Total | 914 |
 
-Of the 468 writes an agent should be able to make, 54 have a tool (11%).
+Of the 470 writes an agent should be able to make, 56 have a tool (11%).
 
 ## Pending
 
@@ -519,7 +519,7 @@ The writes no tool performs yet, and what the tool would do.
 | --- | --- | --- | --- | --- |
 | accessorialcharge | 3 | 0 | 3 | 0 |
 | accountingcontrol | 1 | 0 | 1 | 0 |
-| accountingsync | 22 | 10 | 8 | 4 |
+| accountingsync | 24 | 12 | 8 | 4 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 0 | 4 |
 | agent | 12 | 2 | 10 | 0 |
@@ -706,6 +706,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation applyAccountingInboundChange` | Tool: `apply_accounting_inbound_change` |
 | `mutation changeAccountingBackfill` | Pending: Change the range or scope of an accounting backfill that has not finished. |
 | `mutation checkAccountingConnection` | Tool: `check_accounting_connection` |
 | `mutation clearAccountingMapping` | Tool: `clear_accounting_mapping` |
@@ -715,6 +716,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation createAccountingReferenceRecord` | Tool: `create_accounting_reference_record` |
 | `mutation disconnectAccountingSystem` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
 | `mutation enableAccountingSync` | Exempt, configuration: Connects the organization to an outside system; an administrator owns the connection and its credentials. |
+| `mutation ignoreAccountingInboundChange` | Tool: `ignore_accounting_inbound_change` |
 | `mutation pauseAccountingSync` | Tool: `pause_accounting_sync` |
 | `mutation refreshAccountingReferenceData` | Tool: `refresh_accounting_reference_data` |
 | `mutation rejectAccountingMapping` | Pending: Reject a suggested accounting mapping. |
