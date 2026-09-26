@@ -150,6 +150,7 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"create_report":                {agent.EgressPersonal, agent.EgressInternal},
 		"save_table_view":              {agent.EgressPersonal, agent.EgressInternal},
 		"transition_item_to_in_review": {agent.EgressInternal},
+		"transfer_to_billing":          {agent.EgressInternal},
 		"flag_for_manual_review":       {agent.EgressInternal},
 		"raise_exception":              {agent.EgressInternal},
 		"create_dashboard":             {agent.EgressInternal},

@@ -314,6 +314,7 @@ func decisionFor(id pulid.ID, entity *shipment.Shipment) services.BillingTransfe
 
 	decision.ProNumber = entity.ProNumber
 	decision.Status = entity.Status
+	decision.BillingTransferStatus = entity.BillingTransferStatus
 	decision.CustomerID = entity.CustomerID
 	decision.TotalCharge = entity.TotalChargeAmount
 	decision.DeliveredAt = entity.ActualDeliveryDate

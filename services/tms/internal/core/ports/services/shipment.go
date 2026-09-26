@@ -300,19 +300,22 @@ func (o BillingTransferOutcome) Transfers() bool {
 // BillingTransferDecision is one shipment's answer: what a transfer would do
 // and the readiness it was decided from, by the same checks a transfer makes.
 type BillingTransferDecision struct {
-	ShipmentID          pulid.ID                     `json:"shipmentId"`
-	ProNumber           string                       `json:"proNumber"`
-	Status              shipment.Status              `json:"status"`
-	CustomerID          pulid.ID                     `json:"customerId"`
-	CustomerName        string                       `json:"customerName"`
-	TotalCharge         decimal.NullDecimal          `json:"totalCharge"`
-	DeliveredAt         *int64                       `json:"deliveredAt"`
-	Outcome             BillingTransferOutcome       `json:"outcome"`
-	FailureCode         BillingTransferFailureCode   `json:"failureCode,omitempty"`
-	Reason              string                       `json:"reason,omitempty"`
-	MissingRequirements []ShipmentBillingRequirement `json:"missingRequirements"`
-	ValidationFailures  []ShipmentBillingValidation  `json:"validationFailures"`
-	Warnings            []ShipmentBillingWarning     `json:"warnings"`
+	ShipmentID pulid.ID        `json:"shipmentId"`
+	ProNumber  string          `json:"proNumber"`
+	Status     shipment.Status `json:"status"`
+	// BillingTransferStatus is the stage the shipment is at now: empty for
+	// one billing has never received, SentBackToOps for one it returned.
+	BillingTransferStatus shipment.BillingTransferStatus `json:"billingTransferStatus"`
+	CustomerID            pulid.ID                       `json:"customerId"`
+	CustomerName          string                         `json:"customerName"`
+	TotalCharge           decimal.NullDecimal            `json:"totalCharge"`
+	DeliveredAt           *int64                         `json:"deliveredAt"`
+	Outcome               BillingTransferOutcome         `json:"outcome"`
+	FailureCode           BillingTransferFailureCode     `json:"failureCode,omitempty"`
+	Reason                string                         `json:"reason,omitempty"`
+	MissingRequirements   []ShipmentBillingRequirement   `json:"missingRequirements"`
+	ValidationFailures    []ShipmentBillingValidation    `json:"validationFailures"`
+	Warnings              []ShipmentBillingWarning       `json:"warnings"`
 	// AutoApprove means at least one payer's item would clear the queue on
 	// its own, by the organization's deterministic rule.
 	AutoApprove bool `json:"autoApprove"`

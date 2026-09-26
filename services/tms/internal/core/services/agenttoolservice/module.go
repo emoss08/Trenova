@@ -5,6 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/core/services/bankreceiptworkitemservice"
+	"github.com/emoss08/trenova/internal/core/services/billingtransferservice"
 	"github.com/emoss08/trenova/internal/core/services/carrierintelservice"
 	"github.com/emoss08/trenova/internal/core/services/detentionservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
@@ -31,6 +32,7 @@ var Module = fx.Module("agent-tool-service", fx.Provide(append(grouped(), NewReg
 func ToolProviders() []any {
 	return []any{
 		newTransitionToInReviewTool,
+		provideTransferToBillingTool,
 		newCorrectChargeCodeTool,
 		newSaveTableViewTool,
 		newCreateDashboardTool,
@@ -246,6 +248,13 @@ func provideResolveBankReceiptWorkItemTool(
 
 func provideEscalateDetentionTool(detention *detentionservice.Service) services.AgentTool {
 	return newEscalateDetentionTool(detention)
+}
+
+func provideTransferToBillingTool(
+	shipments services.ShipmentService,
+	runs *billingtransferservice.Service,
+) services.AgentTool {
+	return newTransferToBillingTool(shipments, runs)
 }
 
 func provideApproveDetentionTool(detention *detentionservice.Service) services.AgentTool {

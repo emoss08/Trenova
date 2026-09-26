@@ -12548,6 +12548,64 @@
       }
     },
     {
+      "name": "transfer_to_billing",
+      "description": "Transfer delivered shipments to the billing queue, as the transfer-to-billing dialog does: each becomes a queue item a biller reviews. Take the ids from list_billing_transfer_candidates and cover every shipment that can go in one call rather than one call per shipment; a shipment the checks refuse is reported, not transferred, and the rest still go. The person approving may untick shipments. Up to 100 transfer at once; more run as a background transfer.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "billType": {
+            "description": "What the queue items bill. Defaults to Invoice.",
+            "enum": [
+              "Invoice",
+              "CreditMemo",
+              "DebitMemo"
+            ],
+            "type": "string"
+          },
+          "markCompletedReadyToInvoice": {
+            "description": "Mark Completed shipments ready to invoice first, as the dialog can. Defaults to false, which leaves a Completed shipment where it is.",
+            "type": "boolean"
+          },
+          "shipmentIds": {
+            "description": "The shipments to transfer, by id from list_billing_transfer_candidates. Never guess one.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5000,
+            "minItems": 1,
+            "type": "array",
+            "x-subsetOf": "shipment"
+          }
+        },
+        "required": [
+          "shipmentIds"
+        ],
+        "type": "object"
+      },
+      "policy": {
+        "kind": "action",
+        "resource": "shipment",
+        "operation": "update",
+        "scope": "tenant",
+        "defaultTier": "Propose",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "billing_queue_item",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Hands delivered shipments to the billing queue inside Trenova, by the checks the transfer dialog makes; a biller, or the organization's own auto-approve rule, still decides every item."
+      }
+    },
+    {
       "name": "transition_item_to_in_review",
       "description": "Move a blocked billing queue item into the InReview state so a biller can work it.",
       "parameters": {
