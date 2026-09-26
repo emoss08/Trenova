@@ -16,7 +16,6 @@ targets:
   unverified_confidence: 0.7
   overall_confidence: 0.9
   review_status: Ready
-  source: ai
   default_document_kind: RateConfirmation
   evidence_context_chars: 60
   preference_outcomes: [Corrected, Missed]

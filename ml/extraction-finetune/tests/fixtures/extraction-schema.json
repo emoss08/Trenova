@@ -1,191 +1,60 @@
 {
-  "type": "object",
   "additionalProperties": false,
   "properties": {
-    "stops": {
-      "type": "array",
-      "maxItems": 8,
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "name": {
-            "maxLength": 128,
-            "type": "string"
-          },
-          "state": {
-            "type": "string",
-            "maxLength": 16
-          },
-          "pageNumber": {
-            "type": "integer"
-          },
-          "role": {
-            "type": "string"
-          },
-          "city": {
-            "maxLength": 80,
-            "type": "string"
-          },
-          "postalCode": {
-            "maxLength": 20,
-            "type": "string"
-          },
-          "date": {
-            "type": "string",
-            "maxLength": 40
-          },
-          "evidenceExcerpt": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "reviewRequired": {
-            "type": "boolean"
-          },
-          "source": {
-            "type": "string",
-            "maxLength": 32
-          },
-          "timeWindow": {
-            "type": "string",
-            "maxLength": 64
-          },
-          "appointmentRequired": {
-            "type": "boolean"
-          },
-          "sequence": {
-            "type": "integer"
-          },
-          "addressLine1": {
-            "type": "string",
-            "maxLength": 160
-          },
-          "addressLine2": {
-            "type": "string",
-            "maxLength": 160
-          },
-          "confidence": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "sequence",
-          "role",
-          "name",
-          "addressLine1",
-          "addressLine2",
-          "city",
-          "state",
-          "postalCode",
-          "date",
-          "timeWindow",
-          "appointmentRequired",
-          "pageNumber",
-          "evidenceExcerpt",
-          "confidence",
-          "reviewRequired",
-          "source"
-        ]
-      }
-    },
     "conflicts": {
-      "maxItems": 6,
       "items": {
-        "type": "object",
         "additionalProperties": false,
         "properties": {
+          "evidenceExcerpt": {
+            "maxLength": 200,
+            "type": "string"
+          },
           "key": {
             "maxLength": 64,
             "type": "string"
-          },
-          "label": {
-            "type": "string",
-            "maxLength": 64
-          },
-          "values": {
-            "type": "array",
-            "maxItems": 4,
-            "items": {
-              "type": "string",
-              "maxLength": 128
-            }
           },
           "pageNumbers": {
             "items": {
               "type": "integer"
             },
-            "type": "array",
-            "maxItems": 6
+            "maxItems": 6,
+            "type": "array"
           },
-          "evidenceExcerpt": {
-            "maxLength": 200,
-            "type": "string"
-          },
-          "source": {
-            "type": "string",
-            "maxLength": 32
+          "values": {
+            "items": {
+              "maxLength": 128,
+              "type": "string"
+            },
+            "maxItems": 4,
+            "type": "array"
           }
         },
         "required": [
           "key",
-          "label",
           "values",
           "pageNumbers",
-          "evidenceExcerpt",
-          "source"
-        ]
+          "evidenceExcerpt"
+        ],
+        "type": "object"
       },
+      "maxItems": 6,
       "type": "array"
     },
     "documentKind": {
       "type": "string"
     },
-    "overallConfidence": {
-      "type": "number"
-    },
-    "reviewStatus": {
-      "type": "string"
-    },
-    "missingFields": {
-      "type": "array",
-      "maxItems": 12,
-      "items": {
-        "type": "string",
-        "maxLength": 64
-      }
-    },
-    "signals": {
-      "maxItems": 8,
-      "items": {
-        "type": "string",
-        "maxLength": 120
-      },
-      "type": "array"
-    },
     "fields": {
-      "type": "array",
-      "maxItems": 18,
       "items": {
-        "type": "object",
         "additionalProperties": false,
         "properties": {
-          "conflict": {
-            "type": "boolean"
+          "confidence": {
+            "type": "number"
           },
-          "source": {
-            "type": "string",
-            "maxLength": 32
-          },
-          "alternativeValues": {
-            "type": "array",
-            "maxItems": 4,
-            "items": {
-              "type": "string",
-              "maxLength": 128
-            }
+          "evidenceExcerpt": {
+            "maxLength": 200,
+            "type": "string"
           },
           "key": {
-            "type": "string",
             "enum": [
               "loadNumber",
               "referenceNumber",
@@ -214,43 +83,131 @@
               "tractorNumber",
               "fuelSurcharge",
               "serviceType"
-            ]
-          },
-          "value": {
-            "maxLength": 256,
-            "type": "string"
-          },
-          "confidence": {
-            "type": "number"
-          },
-          "evidenceExcerpt": {
-            "maxLength": 200,
+            ],
             "type": "string"
           },
           "pageNumber": {
             "type": "integer"
           },
-          "label": {
-            "type": "string",
-            "maxLength": 64
-          },
           "reviewRequired": {
             "type": "boolean"
+          },
+          "value": {
+            "maxLength": 256,
+            "type": "string"
           }
         },
         "required": [
           "key",
-          "label",
           "value",
           "confidence",
           "evidenceExcerpt",
           "pageNumber",
-          "reviewRequired",
-          "conflict",
-          "source",
-          "alternativeValues"
-        ]
-      }
+          "reviewRequired"
+        ],
+        "type": "object"
+      },
+      "maxItems": 18,
+      "type": "array"
+    },
+    "missingFields": {
+      "items": {
+        "maxLength": 64,
+        "type": "string"
+      },
+      "maxItems": 12,
+      "type": "array"
+    },
+    "overallConfidence": {
+      "type": "number"
+    },
+    "reviewStatus": {
+      "type": "string"
+    },
+    "signals": {
+      "items": {
+        "maxLength": 120,
+        "type": "string"
+      },
+      "maxItems": 8,
+      "type": "array"
+    },
+    "stops": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "addressLine1": {
+            "maxLength": 160,
+            "type": "string"
+          },
+          "addressLine2": {
+            "maxLength": 160,
+            "type": "string"
+          },
+          "appointmentRequired": {
+            "type": "boolean"
+          },
+          "city": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "date": {
+            "maxLength": 40,
+            "type": "string"
+          },
+          "evidenceExcerpt": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 128,
+            "type": "string"
+          },
+          "pageNumber": {
+            "type": "integer"
+          },
+          "postalCode": {
+            "maxLength": 20,
+            "type": "string"
+          },
+          "reviewRequired": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": "string"
+          },
+          "state": {
+            "maxLength": 16,
+            "type": "string"
+          },
+          "timeWindow": {
+            "maxLength": 64,
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "name",
+          "addressLine1",
+          "addressLine2",
+          "city",
+          "state",
+          "postalCode",
+          "date",
+          "timeWindow",
+          "appointmentRequired",
+          "pageNumber",
+          "evidenceExcerpt",
+          "confidence",
+          "reviewRequired"
+        ],
+        "type": "object"
+      },
+      "maxItems": 8,
+      "type": "array"
     }
   },
   "required": [
@@ -262,5 +219,6 @@
     "fields",
     "stops",
     "conflicts"
-  ]
+  ],
+  "type": "object"
 }

@@ -84,7 +84,8 @@ A reply is built in the production wire format:
 - Every string is held to its `maxLength`, and the lists to their `maxItems`.
 - Evidence is found in the visible page text, and money is matched with and without thousands
   separators.
-- Stop dates are the confirmed calendar day in ISO form, and stops are numbered in route order.
+- Stop dates are the confirmed calendar day in ISO form.
+- Nothing Go derives after parsing is built (see [Keeping replies short](#keeping-replies-short)).
 
 Every reply is validated against `schema.json` before it is written, so a recipe change that
 breaks the wire format stops the build instead of reaching training. For each preference pair,
@@ -207,6 +208,7 @@ VLLM_API_KEY=... uv run trenova-finetune serve --config configs/qwen2.5-7b-instr
 | `enable_chunked_prefill` | on | A long document's prefill is split so it does not stall other requests' decoding |
 | `speculative` | `ngram`, 4 tokens, lookup 2–5 | Drafts tokens by finding the text just written elsewhere in the prompt. The target model then checks several drafted tokens in one pass. Extracted values are copied from the document, so drafts are often accepted. Structured outputs work with it |
 | `structured_outputs_backend` | `xgrammar` | Grammar-constrained decoding for the strict `json_schema` |
+| `compact_json` | on | Passed to vLLM as `disable_any_whitespace`, so the reply has no whitespace between tokens. Needs the `xgrammar` or `guidance` backend, which the config enforces |
 | `max_num_seqs`, `max_num_batched_tokens` | 64, 8192 | The batch size: the trade between one document's latency and total throughput |
 | `quantization` | none | `fp8` quantizes the merged model's weights when the model loads (Hopper/Ada GPUs). `awq`/`gptq` expect a model quantized ahead of time |
 | `kv_cache_dtype` | `auto` | `fp8` halves the KV cache, which fits more concurrent documents |
@@ -214,6 +216,42 @@ VLLM_API_KEY=... uv run trenova-finetune serve --config configs/qwen2.5-7b-instr
 
 Speculative decoding, quantization and the KV-cache type can each change what the model writes,
 not only how fast. Score a changed setup with `trenova ai fine-tune score` before using it.
+
+### Keeping replies short
+
+Output tokens dominate an extraction's time, so the reply carries only what the model has to
+decide. A typical rate confirmation reply has 12 fields and 2 stops. Counted with the Qwen2.5
+tokenizer:
+
+| Reply | Tokens |
+|---|---|
+| Former schema, pretty-printed | 1767 |
+| Former schema, compact | 1283 |
+| Current schema, compact | 1040 |
+
+Everything the model used to write that Go can work out is filled in by
+`aidocumentservice.convertExtractResponse` after parsing. That covers production, evaluation
+runs and `trenova ai fine-tune score` alike:
+
+| Property | Derived as | Why it is safe |
+|---|---|---|
+| field `label`, conflict `label` | `aicorrection.FieldLabel(key)`, the same labels the web app's `FIELD_LABELS` shows | The UI preferred the model's label over its own map, so reviewers see the same text |
+| `source` on fields, stops and conflicts | `ai` | Nothing branches on it, and the AI path defaulted it to `ai` already |
+| stop `sequence` | Position in the reply, from 1 | Ordering and scoring use array order, never the model's number |
+| field `conflict` | The field's key appears in `conflicts` | The UI already treated either signal as a conflict |
+| field `alternativeValues` | Not produced | It was dropped before storage; the UI's alternatives come from `conflicts[].values` |
+
+Conflict keys are also run through `aicorrection.CanonicalFieldKey`, so a conflict on
+`pickupwindow` now lines up with the `pickupWindow` field it is about.
+
+The reply reader ignores properties it does not know, so a model fine-tuned on the former
+schema is still read correctly: the dropped properties are derived as above. A schema change
+changes the prompt fingerprint, so exports rendered before it must be rendered again before
+training; `trenova-finetune targets` refuses a dataset whose schema asks for a property the
+recipe no longer builds.
+
+Evidence excerpts are the largest remaining cost, about 30% of a reply. They stay model-written:
+reviewers read them, and `validateAIExtract` rejects an extraction whose stops have none.
 
 ### Benchmark
 

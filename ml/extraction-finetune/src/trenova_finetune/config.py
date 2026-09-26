@@ -72,7 +72,6 @@ class TargetSettings(_Settings):
     unverified_confidence: float = Field(0.7, ge=0.0, le=1.0)
     overall_confidence: float = Field(0.9, ge=0.0, le=1.0)
     review_status: Literal["Ready", "NeedsReview"] = "Ready"
-    source: str = Field("ai", min_length=1, max_length=32)
     default_document_kind: str = Field("RateConfirmation", min_length=1)
     evidence_context_chars: int = Field(60, ge=0, le=500)
     preference_outcomes: tuple[Literal["Corrected", "Missed", "Unconfirmed"], ...] = (

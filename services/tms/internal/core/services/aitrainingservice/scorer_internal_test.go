@@ -50,23 +50,22 @@ func replyFor(t *testing.T, snapshot *aitraining.ExampleSnapshot, dateText strin
 			value = dateText
 		}
 		fields = append(fields, map[string]any{
-			"key": key, "label": key, "value": value, "confidence": 0.9, "evidenceExcerpt": "",
-			"pageNumber": 1, "reviewRequired": false, "conflict": false, "source": "ai",
-			"alternativeValues": []string{},
+			"key": key, "value": value, "confidence": 0.9, "evidenceExcerpt": "",
+			"pageNumber": 1, "reviewRequired": false,
 		})
 	}
 	stops := make([]map[string]any, 0, len(snapshot.Stops))
-	for i, stop := range snapshot.Stops {
+	for _, stop := range snapshot.Stops {
 		date := stop.Date
 		if dateText != "" {
 			date = dateText
 		}
 		stops = append(stops, map[string]any{
-			"sequence": i + 1, "role": stop.Role, "name": stop.Name, "addressLine1": stop.AddressLine1,
+			"role": stop.Role, "name": stop.Name, "addressLine1": stop.AddressLine1,
 			"addressLine2": stop.AddressLine2, "city": stop.City, "state": stop.State,
 			"postalCode": stop.PostalCode, "date": date, "timeWindow": stop.TimeWindow,
 			"appointmentRequired": stop.AppointmentRequired, "pageNumber": 1, "evidenceExcerpt": "",
-			"confidence": 0.9, "reviewRequired": false, "source": "ai",
+			"confidence": 0.9, "reviewRequired": false,
 		})
 	}
 	encoded, err := sonic.Marshal(map[string]any{

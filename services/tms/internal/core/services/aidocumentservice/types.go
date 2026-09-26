@@ -16,16 +16,12 @@ type routeResponse struct {
 }
 
 type extractFieldResponse struct {
-	Key               string   `json:"key"`
-	Label             string   `json:"label"`
-	Value             string   `json:"value"`
-	Confidence        float64  `json:"confidence"`
-	EvidenceExcerpt   string   `json:"evidenceExcerpt"`
-	PageNumber        int      `json:"pageNumber"`
-	ReviewRequired    bool     `json:"reviewRequired"`
-	Conflict          bool     `json:"conflict"`
-	Source            string   `json:"source"`
-	AlternativeValues []string `json:"alternativeValues"`
+	Key             string  `json:"key"`
+	Value           string  `json:"value"`
+	Confidence      float64 `json:"confidence"`
+	EvidenceExcerpt string  `json:"evidenceExcerpt"`
+	PageNumber      int     `json:"pageNumber"`
+	ReviewRequired  bool    `json:"reviewRequired"`
 }
 
 type extractResponse struct {

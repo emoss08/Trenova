@@ -12,7 +12,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import re
 import shutil
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -33,7 +32,6 @@ SFT_VALIDATION_FILE = "sft-validation.jsonl"
 PREFERENCE_FILE = "preference-train.jsonl"
 BUILT_FILES = (SFT_TRAIN_FILE, SFT_VALIDATION_FILE, PREFERENCE_FILE)
 
-_CAMEL_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
 _MONEY_NOISE = str.maketrans("", "", "$,% " + chr(0xA0))
 
 
@@ -83,12 +81,6 @@ def _limits(properties: dict[str, Any]) -> dict[str, int]:
         for name, spec in properties.items()
         if isinstance(spec, dict) and "maxLength" in spec
     }
-
-
-def humanize(key: str) -> str:
-    """`loadNumber` → `Load Number`, the label a person would read."""
-    words = _CAMEL_BOUNDARY.sub(" ", key).split()
-    return " ".join(word[:1].upper() + word[1:] for word in words)
 
 
 def evidence_needles(value: str) -> list[str]:
@@ -157,7 +149,7 @@ class ReplyBuilder:
         stops: list[dict[str, Any]] = []
         if primary is not None:
             positions: dict[str, int] = {}
-            for index, stop in enumerate(primary.stops):
+            for stop in primary.stops:
                 if len(stops) >= self.shape.max_stops:
                     break
                 position = positions.get(stop.role, 0)
@@ -165,7 +157,7 @@ class ReplyBuilder:
                 time_window = stop.time_window or _supplemental_window(
                     supplement, stop.role, position
                 )
-                stops.append(self._stop(index + 1, stop, time_window, confidence, pages))
+                stops.append(self._stop(stop, time_window, confidence, pages))
 
         top = {
             "documentKind": document_kind or self.recipe.default_document_kind,
@@ -199,21 +191,16 @@ class ReplyBuilder:
         page, excerpt = locate_evidence(value, pages, self.recipe.evidence_context_chars)
         field = {
             "key": key,
-            "label": humanize(key),
             "value": value,
             "confidence": confidence,
             "evidenceExcerpt": excerpt,
             "pageNumber": page,
             "reviewRequired": False,
-            "conflict": False,
-            "source": self.recipe.source,
-            "alternativeValues": [],
         }
         return _ordered(_bounded(field, self.shape.field_limits), self.shape.field_order)
 
     def _stop(
         self,
-        sequence: int,
         stop: Stop,
         time_window: str,
         confidence: float,
@@ -221,7 +208,6 @@ class ReplyBuilder:
     ) -> dict:
         page, excerpt = locate_evidence(stop.name, pages, self.recipe.evidence_context_chars)
         reply = {
-            "sequence": sequence,
             "role": stop.role,
             "name": stop.name,
             "addressLine1": stop.address_line1,
@@ -236,7 +222,6 @@ class ReplyBuilder:
             "evidenceExcerpt": excerpt,
             "confidence": confidence,
             "reviewRequired": False,
-            "source": self.recipe.source,
         }
         return _ordered(_bounded(reply, self.shape.stop_limits), self.shape.stop_order)
 
@@ -258,7 +243,10 @@ def _bounded(values: dict[str, Any], limits: dict[str, int]) -> dict[str, Any]:
 def _ordered(values: dict[str, Any], order: tuple[str, ...]) -> dict[str, Any]:
     missing = [key for key in order if key not in values]
     if missing:
-        raise DatasetError(f"the reply schema requires {', '.join(missing)}, which is not built")
+        raise DatasetError(
+            f"the reply schema requires {', '.join(missing)}, which this recipe does not build;"
+            " the dataset was rendered for another schema, so render the export again"
+        )
     return {key: values[key] for key in order}
 
 

@@ -15,7 +15,6 @@ from trenova_finetune.targets import (
     ReplyBuilder,
     build,
     evidence_needles,
-    humanize,
     locate_evidence,
     reply_shape,
     reply_text,
@@ -34,12 +33,6 @@ def _example(dataset_dir: Path) -> dataset.Example:
 
 def _fields(reply: dict) -> dict[str, dict]:
     return {field["key"]: field for field in reply["fields"]}
-
-
-def test_labels_read_like_words() -> None:
-    assert humanize("loadNumber") == "Load Number"
-    assert humanize("referenceNumber") == "Reference Number"
-    assert humanize("bol") == "Bol"
 
 
 def test_money_is_found_with_or_without_separators() -> None:
@@ -81,7 +74,11 @@ def test_the_target_is_the_confirmed_answer(dataset_dir: Path) -> None:
     assert "weight" not in fields
 
     pickup, delivery = reply["stops"]
-    assert (pickup["sequence"], delivery["sequence"]) == (1, 2)
+    assert (pickup["role"], delivery["role"]) == ("pickup", "delivery")
+    for derived in ("label", "source", "conflict", "alternativeValues"):
+        assert all(derived not in field for field in reply["fields"])
+    for derived in ("sequence", "source"):
+        assert derived not in pickup and derived not in delivery
     assert pickup["timeWindow"] == "08:00-14:00"
     assert delivery["timeWindow"] == ""
     assert delivery["appointmentRequired"] is True
