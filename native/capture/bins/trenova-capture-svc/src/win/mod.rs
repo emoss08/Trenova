@@ -29,7 +29,7 @@ fn say(message: &str) {
     let _ = writeln!(std::io::stderr(), "{message}");
 }
 
-const USAGE: &str = "usage: trenova-capture-svc <service | run | install | uninstall | install-printer | uninstall-printer>";
+const USAGE: &str = "usage: trenova-capture-svc <service | run | configure | install | uninstall | install-printer | uninstall-printer>";
 
 /// The loopback port: policy's, the installer's, or the default.
 pub(crate) fn port() -> u16 {
@@ -149,6 +149,10 @@ pub fn main() -> ExitCode {
     match command.as_str() {
         "service" => service::dispatch(),
         "run" => run_console(),
+        "configure" => step(
+            "Creating the service's directories",
+            install::create_directories(),
+        ),
         "install" => step("Installing the print service", install::install_service()),
         "uninstall" => step("Removing the print service", install::uninstall_service()),
         "install-printer" => step(

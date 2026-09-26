@@ -34,8 +34,7 @@ fn say(message: &str) {
     let _ = writeln!(std::io::stderr(), "{message}");
 }
 
-const USAGE: &str =
-    "usage: trenova-capture-update <service | run <manifest url> | relaunch | install | uninstall>";
+const USAGE: &str = "usage: trenova-capture-update <service | run <manifest url> | relaunch | configure | install | uninstall>";
 
 /// The system directory, for tools that must not come from `PATH`.
 pub(crate) fn system_dir() -> std::io::Result<PathBuf> {
@@ -197,6 +196,7 @@ pub fn main() -> ExitCode {
                 .map_err(UpdaterError::from)
                 .and_then(|installer| installer.relaunch_agents()),
         ),
+        "configure" => step("Configuring the updater", install::configure_service()),
         "install" => step("Installing the updater", install::install_service()),
         "uninstall" => step("Removing the updater", install::uninstall_service()),
         _ => {

@@ -72,7 +72,20 @@ pub fn install_service() -> Result<(), UpdaterError> {
     service
         .set_description(SERVICE_DESCRIPTION)
         .map_err(service_error)?;
+    allow_users_to_start(&service)
+}
 
+/// Lets signed-in users start the service the MSI created. Windows Installer
+/// cannot set a service's DACL itself, so the MSI runs this afterwards.
+pub fn configure_service() -> Result<(), UpdaterError> {
+    let manager = manager(ServiceManagerAccess::CONNECT)?;
+    let service = manager
+        .open_service(SERVICE_NAME, ServiceAccess::WRITE_DAC)
+        .map_err(service_error)?;
+    allow_users_to_start(&service)
+}
+
+fn allow_users_to_start(service: &windows_service::service::Service) -> Result<(), UpdaterError> {
     let descriptor = Descriptor::from_sddl(SERVICE_SDDL)?;
     // SAFETY: an open service handle with WRITE_DAC and a descriptor that
     // lives until after the call.
@@ -83,8 +96,7 @@ pub fn install_service() -> Result<(), UpdaterError> {
             descriptor.as_ptr(),
         )
     }
-    .map_err(|err| UpdaterError::Io(io::Error::other(err)))?;
-    Ok(())
+    .map_err(|err| UpdaterError::Io(io::Error::other(err)))
 }
 
 /// Stops and deletes the service.

@@ -101,8 +101,9 @@ pub fn install_service() -> io::Result<()> {
 }
 
 /// `%ProgramData%\Trenova\Capture` and, ACL'd to the service, its `logs` and
-/// `spool` directories.
-fn create_directories() -> io::Result<()> {
+/// `spool` directories. The MSI runs this after it has created the service,
+/// since Windows Installer cannot set these ACLs itself.
+pub fn create_directories() -> io::Result<()> {
     let service_sid = acl::service_sid()?;
     let shared = paths::shared_dir()?;
     std::fs::create_dir_all(&shared)?;
