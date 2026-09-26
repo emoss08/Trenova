@@ -19,6 +19,9 @@ on:
       - "ml/**"
       - ".github/workflows/test-ml.yml"
 
+permissions:
+  contents: read
+
 jobs:
   extraction-finetune:
     name: Extraction fine-tuning
