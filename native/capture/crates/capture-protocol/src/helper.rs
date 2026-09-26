@@ -52,9 +52,6 @@ pub struct ScanJob {
     pub show_driver_ui: bool,
     pub detect_patch_codes: bool,
     pub detect_barcodes: bool,
-    /// The window a driver's own dialog should be owned by, as a raw `HWND`.
-    #[serde(default)]
-    pub parent_window: Option<u64>,
 }
 
 /// What the agent asks of a helper.
@@ -115,6 +112,10 @@ pub struct PageMeta {
 pub enum HelperEvent {
     /// The answer to [`HelperCommand::Enumerate`].
     Sources { sources: Vec<SourceInfo> },
+    /// What the source said it can do once opened. Enumeration cannot ask a
+    /// TWAIN source without opening it, so this is where its capabilities
+    /// are first learned.
+    Described { source: SourceInfo },
     /// The source is open and negotiated; these are the settings in force.
     Started { settings: Settings },
     /// A page follows as one binary frame.
@@ -271,7 +272,6 @@ mod tests {
             show_driver_ui: false,
             detect_patch_codes: true,
             detect_barcodes: false,
-            parent_window: None,
         }
     }
 

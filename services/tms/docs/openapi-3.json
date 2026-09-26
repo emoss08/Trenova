@@ -27943,6 +27943,34 @@
             }
         },
         "/capture/device/": {
+            "delete": {
+                "description": "Revokes the device's own credential, as signing out in the tray does, so the\nperson's device list shows it gone rather than offline. The credential stops\nworking at once.",
+                "operationId": "revokeCaptureDeviceSelf",
+                "responses": {
+                    "204": {
+                        "description": "Signed out"
+                    },
+                    "401": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/helpers.ProblemDetail"
+                                }
+                            }
+                        },
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "summary": "Sign the calling device out",
+                "tags": [
+                    "Capture"
+                ]
+            },
             "get": {
                 "description": "Returns the device record with the person and organization it acts for, so the\ntray can show who it is signed in as.",
                 "operationId": "getCaptureDevice",

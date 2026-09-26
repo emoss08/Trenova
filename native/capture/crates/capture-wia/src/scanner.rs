@@ -479,14 +479,16 @@ fn negotiate(
     refused
 }
 
-/// Scans from a WIA scanner, handing each page to `sink` as it arrives.
-/// Returns the settings in force and how the scan ended.
+/// Scans from a WIA scanner: `on_started` gets the settings in force before
+/// the first page, and `sink` each page as it arrives. Returns how the scan
+/// ended.
 pub fn scan(
     name: &str,
     want: &ScanSettings,
     cancel: &Arc<AtomicBool>,
+    on_started: &mut dyn FnMut(&Settings) -> Result<(), String>,
     sink: PageSink,
-) -> WiaResult<(Settings, ScanEnd)> {
+) -> WiaResult<ScanEnd> {
     let _apartment = ComApartment::enter()?;
     let manager = manager()?;
     let wanted = name.trim();
@@ -536,6 +538,7 @@ pub fn scan(
         application: String::new(),
         refused,
     };
+    on_started(&settings).map_err(WiaError::Delivery)?;
 
     let progress = Rc::new(RefCell::new(Progress {
         stream: None,
@@ -585,5 +588,5 @@ pub fn scan(
         },
         Some(code) => return Err(com("scan")(windows_core::Error::from(code))),
     };
-    Ok((settings, end))
+    Ok(end)
 }

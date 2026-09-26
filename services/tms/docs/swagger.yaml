@@ -18781,6 +18781,24 @@ paths:
             tags:
                 - Invoice Run
     /capture/device/:
+        delete:
+            description: |-
+                Revokes the device's own credential, as signing out in the tray does, so the
+                person's device list shows it gone rather than offline. The credential stops
+                working at once.
+            operationId: revokeCaptureDeviceSelf
+            responses:
+                "204":
+                    description: Signed out
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: Sign the calling device out
+            tags:
+                - Capture
         get:
             description: |-
                 Returns the device record with the person and organization it acts for, so the

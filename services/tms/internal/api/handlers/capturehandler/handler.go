@@ -98,6 +98,7 @@ func (h *Handler) RegisterPublicRoutes(rg *gin.RouterGroup) {
 func (h *Handler) RegisterDeviceRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/capture/device/")
 	api.GET("", h.me)
+	api.DELETE("", h.signOut)
 	api.PUT("sources/", h.reportSources)
 	api.GET("profiles/", h.profiles)
 	api.GET("stream/", h.stream)

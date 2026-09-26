@@ -375,6 +375,75 @@ writes:
     exempt: agent-administration
     reason: "Asks the briefing agent to write the briefing again."
 
+  # capture
+  "DELETE /api/v1/capture/device/":
+    exempt: security
+    reason: "A paired computer revoking its own credential when a person signs out in the tray."
+  "POST /api/v1/capture/device/batches/":
+    exempt: infrastructure
+    reason: "The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision."
+  "POST /api/v1/capture/device/batches/:batchID/seal/":
+    exempt: infrastructure
+    reason: "The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision."
+  "POST /api/v1/capture/device/requests/:requestID/status/":
+    exempt: infrastructure
+    reason: "The companion reporting how a scan request is going; the request itself is the person's write."
+  "POST /api/v1/capture/pair/":
+    exempt: security
+    reason: "Starts pairing a computer to a person: a grant of access that person must approve."
+  "POST /api/v1/capture/pair/token/":
+    exempt: security
+    reason: "Exchanges an approved pairing for the device credential."
+  "POST /api/v1/capture/token/refresh/":
+    exempt: security
+    reason: "Rotates a paired device's credential."
+  "PUT /api/v1/capture/device/batches/:batchID/pages/:sequence/":
+    exempt: infrastructure
+    reason: "The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision."
+  "PUT /api/v1/capture/device/batches/:batchID/print-job/":
+    exempt: infrastructure
+    reason: "The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision."
+  "PUT /api/v1/capture/device/sources/":
+    exempt: infrastructure
+    reason: "The companion reporting which scanners its computer can reach."
+  "mutation approveCaptureDevicePairing":
+    exempt: security
+    reason: "Approving a pairing grants a computer the person's access; only that person may do it."
+  "mutation cancelCaptureRequest":
+    pending: "Cancel a scan or print request that has not started."
+  "mutation createCaptureCoverSheets":
+    pending: "Print cover sheets that route scanned paperwork to a record and document type."
+  "mutation createCaptureProfile":
+    exempt: configuration
+    reason: "Scan profiles are presets an administrator maintains for the organization's scanners."
+  "mutation createCaptureRequest":
+    pending: "Ask a person's paired computer to scan paperwork into a record, or send their next print there."
+  "mutation deleteCaptureProfile":
+    exempt: configuration
+    reason: "Scan profiles are presets an administrator maintains for the organization's scanners."
+  "mutation denyCaptureDevicePairing":
+    exempt: security
+    reason: "Denying a pairing is the person's answer to a request for their access."
+  "mutation discardCaptureBatch":
+    pending: "Discard a scanned stack that holds nothing worth filing."
+  "mutation discardCaptureItem":
+    pending: "Discard one scanned document that is not needed."
+  "mutation editCaptureItems":
+    pending: "Split, merge, reorder, rotate or leave out pages of a scanned stack to form its documents."
+  "mutation fileCaptureItem":
+    pending: "File a scanned document onto the record it belongs to, as the document type it is."
+  "mutation fileCaptureItems":
+    pending: "File every document of a scanned stack onto its record at once."
+  "mutation revokeCaptureDevice":
+    exempt: security
+    reason: "Revoking a paired computer removes a person's access."
+  "mutation revokeMyCaptureDevice":
+    exempt: security
+    reason: "A person removing their own paired computer's access."
+  "mutation updateCaptureProfile":
+    exempt: configuration
+    reason: "Scan profiles are presets an administrator maintains for the organization's scanners."
+
   # carrier
   "PATCH /api/v1/carriers/:carrierID/":
     pending: "Update some fields of a carrier."

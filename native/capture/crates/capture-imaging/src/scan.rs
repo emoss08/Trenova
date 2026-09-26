@@ -45,3 +45,18 @@ pub enum ScanEnd {
         pages: u32,
     },
 }
+
+impl From<&capture_protocol::helper::ScanJob> for ScanSettings {
+    fn from(job: &capture_protocol::helper::ScanJob) -> Self {
+        Self {
+            dpi: job.dpi,
+            pixel_type: job.pixel_type,
+            duplex: job.duplex,
+            use_feeder: job.use_feeder,
+            discard_blank_pages: job.discard_blank_pages,
+            show_ui: job.show_driver_ui,
+            detect_patch_codes: job.detect_patch_codes,
+            detect_barcodes: job.detect_barcodes,
+        }
+    }
+}

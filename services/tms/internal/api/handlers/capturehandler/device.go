@@ -91,6 +91,35 @@ func (h *Handler) me(c *gin.Context) {
 	c.JSON(http.StatusOK, identity)
 }
 
+// signedOutReason is recorded on a device that signed itself out.
+const signedOutReason = "Signed out on the computer"
+
+// @Summary Sign the calling device out
+// @Description Revokes the device's own credential, as signing out in the tray does, so the
+// @Description person's device list shows it gone rather than offline. The credential stops
+// @Description working at once.
+// @ID revokeCaptureDeviceSelf
+// @Tags Capture
+// @Success 204 "Signed out"
+// @Failure 401 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /capture/device/ [delete]
+func (h *Handler) signOut(c *gin.Context) {
+	principal := devicePrincipal(c)
+	if _, err := h.service.RevokeDevice(c.Request.Context(), &captureservice.RevokeDeviceRequest{
+		TenantInfo: principal.TenantInfo(),
+		DeviceID:   principal.Device.ID,
+		Reason:     signedOutReason,
+		Mine:       true,
+	}); err != nil {
+		h.fail(c, err)
+
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
 // @Summary List the scan profiles the device may use
 // @Description The active profiles its person may scan with, for scans started from the tray.
 // @ID listCaptureDeviceProfiles

@@ -61,10 +61,10 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 58 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 206 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 66 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 209 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 23 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 28 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 34 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 42 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 46 |
@@ -73,24 +73,24 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 ## Totals
 
-917 writes: 470 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
+942 writes: 485 GraphQL mutations and 457 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 78 |
-| Exempt | 444 |
-| — Security | 58 |
-| — Configuration | 206 |
+| Exempt | 461 |
+| — Security | 66 |
+| — Configuration | 209 |
 | — User preference | 23 |
-| — Infrastructure | 28 |
+| — Infrastructure | 34 |
 | — Agent administration | 42 |
 | — Counterparty | 33 |
 | — Read-only | 46 |
 | — Attestation | 8 |
-| **Pending** | **395** |
-| Total | 917 |
+| **Pending** | **403** |
+| Total | 942 |
 
-Of the 473 writes an agent should be able to make, 78 have a tool (16%).
+Of the 481 writes an agent should be able to make, 78 have a tool (16%).
 
 ## Pending
 
@@ -115,6 +115,14 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | `POST /api/v1/billing-queue/:itemID/reassign-charge/` | Move a charge from one billing queue item to another. |
 | billingtransfer | `mutation cancelBillingTransferRun` | Cancel billing transfer run. |
 | billingtransfer | `mutation retryBillingTransferRun` | Retry billing transfer run. |
+| capture | `mutation cancelCaptureRequest` | Cancel a scan or print request that has not started. |
+| capture | `mutation createCaptureCoverSheets` | Print cover sheets that route scanned paperwork to a record and document type. |
+| capture | `mutation createCaptureRequest` | Ask a person's paired computer to scan paperwork into a record, or send their next print there. |
+| capture | `mutation discardCaptureBatch` | Discard a scanned stack that holds nothing worth filing. |
+| capture | `mutation discardCaptureItem` | Discard one scanned document that is not needed. |
+| capture | `mutation editCaptureItems` | Split, merge, reorder, rotate or leave out pages of a scanned stack to form its documents. |
+| capture | `mutation fileCaptureItem` | File a scanned document onto the record it belongs to, as the document type it is. |
+| capture | `mutation fileCaptureItems` | File every document of a scanned stack onto its record at once. |
 | carrier | `PATCH /api/v1/carriers/:carrierID/` | Update some fields of a carrier. |
 | carrier | `POST /api/v1/carriers/` | Create a carrier. |
 | carrier | `POST /api/v1/carriers/bulk-update-status/` | Change the status of several carriers at once. |
@@ -524,6 +532,7 @@ The writes no tool performs yet, and what the tool would do.
 | billingqueue | 8 | 4 | 3 | 1 |
 | billingtransfer | 3 | 1 | 0 | 2 |
 | briefing | 2 | 0 | 2 | 0 |
+| capture | 25 | 0 | 17 | 8 |
 | carrier | 4 | 0 | 0 | 4 |
 | carrierintelligence | 15 | 2 | 5 | 8 |
 | carriersettlement | 16 | 0 | 1 | 15 |
@@ -915,6 +924,36 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `mutation markBriefingRead` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation regenerateBriefing` | Exempt, agent-administration: Asks the briefing agent to write the briefing again. |
+
+### capture
+
+| Write | Decision |
+| --- | --- |
+| `mutation approveCaptureDevicePairing` | Exempt, security: Approving a pairing grants a computer the person's access; only that person may do it. |
+| `mutation cancelCaptureRequest` | Pending: Cancel a scan or print request that has not started. |
+| `mutation createCaptureCoverSheets` | Pending: Print cover sheets that route scanned paperwork to a record and document type. |
+| `mutation createCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
+| `mutation createCaptureRequest` | Pending: Ask a person's paired computer to scan paperwork into a record, or send their next print there. |
+| `mutation deleteCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
+| `mutation denyCaptureDevicePairing` | Exempt, security: Denying a pairing is the person's answer to a request for their access. |
+| `mutation discardCaptureBatch` | Pending: Discard a scanned stack that holds nothing worth filing. |
+| `mutation discardCaptureItem` | Pending: Discard one scanned document that is not needed. |
+| `mutation editCaptureItems` | Pending: Split, merge, reorder, rotate or leave out pages of a scanned stack to form its documents. |
+| `mutation fileCaptureItem` | Pending: File a scanned document onto the record it belongs to, as the document type it is. |
+| `mutation fileCaptureItems` | Pending: File every document of a scanned stack onto its record at once. |
+| `mutation revokeCaptureDevice` | Exempt, security: Revoking a paired computer removes a person's access. |
+| `mutation revokeMyCaptureDevice` | Exempt, security: A person removing their own paired computer's access. |
+| `mutation updateCaptureProfile` | Exempt, configuration: Scan profiles are presets an administrator maintains for the organization's scanners. |
+| `DELETE /api/v1/capture/device/`<br>capturehandler.signOut | Exempt, security: A paired computer revoking its own credential when a person signs out in the tray. |
+| `POST /api/v1/capture/device/batches/`<br>capturehandler.openBatch | Exempt, infrastructure: The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision. |
+| `POST /api/v1/capture/device/batches/:batchID/seal/`<br>capturehandler.sealBatch | Exempt, infrastructure: The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision. |
+| `POST /api/v1/capture/device/requests/:requestID/status/`<br>capturehandler.reportRequestStatus | Exempt, infrastructure: The companion reporting how a scan request is going; the request itself is the person's write. |
+| `POST /api/v1/capture/pair/`<br>capturehandler.startPairing | Exempt, security: Starts pairing a computer to a person: a grant of access that person must approve. |
+| `POST /api/v1/capture/pair/token/`<br>capturehandler.exchangePairing | Exempt, security: Exchanges an approved pairing for the device credential. |
+| `POST /api/v1/capture/token/refresh/`<br>capturehandler.refreshToken | Exempt, security: Rotates a paired device's credential. |
+| `PUT /api/v1/capture/device/batches/:batchID/pages/:sequence/`<br>capturehandler.putPage | Exempt, infrastructure: The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision. |
+| `PUT /api/v1/capture/device/batches/:batchID/print-job/`<br>capturehandler.putPrintJob | Exempt, infrastructure: The Trenova Capture companion calls this as it scans or prints; it is transport for pages a person captured at their own scanner, not a decision. |
+| `PUT /api/v1/capture/device/sources/`<br>capturehandler.reportSources | Exempt, infrastructure: The companion reporting which scanners its computer can reach. |
 
 ### carrier
 
