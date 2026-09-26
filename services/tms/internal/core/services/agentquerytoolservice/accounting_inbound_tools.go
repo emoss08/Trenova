@@ -127,15 +127,15 @@ func (t *listAccountingInboundChangesTool) Name() string {
 }
 
 func (t *listAccountingInboundChangesTool) Description() string {
-	return "List payments recorded in the accounting system against invoices or bills " +
-		"Trenova sent, newest first. Each row says what it pays, whether it was applied in " +
-		"Trenova, and if not why, in plain language. Filter by status, such as Proposed for " +
-		"what waits on a person, by kind, or by reason. Pass a Proposed row's id to " +
+	return "List inbound changes: payments the accounting system recorded against invoices " +
+		"or bills Trenova sent, newest first. Each says what it pays and whether it was brought " +
+		"into Trenova, and if not why. Filter by status, such as Proposed for what waits on " +
+		"a person, by kind, or by reason. Pass a Proposed row's id to " +
 		"apply_accounting_inbound_change or ignore_accounting_inbound_change."
 }
 
 func (t *listAccountingInboundChangesTool) SearchTerms() []string {
-	return []string{"paid in quickbooks", "payment from the books", "inbound", "bill payment"}
+	return []string{"inbound changes", "payments the accounting system recorded"}
 }
 
 func (t *listAccountingInboundChangesTool) ParamSchema() map[string]any {

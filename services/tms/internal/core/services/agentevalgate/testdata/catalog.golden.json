@@ -434,7 +434,7 @@
     },
     {
       "name": "apply_accounting_inbound_change",
-      "description": "Post a payment recorded in the accounting system in Trenova. For a customer payment it posts the payment against the invoices it pays and applies any credit memos it used; for a bill payment it marks the settlement paid on the payment's date. It only applies a Proposed payment that still matches what is open in Trenova, and the preview shows exactly what would post.",
+      "description": "Accept an inbound change: one payment the accounting system recorded against documents Trenova sent, shown as Proposed by list_accounting_inbound_changes. Accepting brings it into Trenova on the day it was made, with any credits it used, or marks the settlement it pays as paid, and only while it still matches what is open. The preview shows exactly what would post.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -449,9 +449,7 @@
         "type": "object"
       },
       "searchTerms": [
-        "apply payment",
-        "record payment from the books",
-        "mark paid"
+        "accept inbound change"
       ],
       "prerequisites": [
         "list_accounting_inbound_changes"
@@ -4395,7 +4393,7 @@
     },
     {
       "name": "ignore_accounting_inbound_change",
-      "description": "Leave a payment recorded in the accounting system out of Trenova, with the reason. Use it when a person says the payment was already entered in Trenova, or belongs to something Trenova does not track. An ignored payment is never applied afterwards.",
+      "description": "Dismiss an inbound change, with the reason, so the accounting system's payment is never brought into Trenova. Use it when a person says the payment was already keyed in Trenova, or belongs to something Trenova does not track.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -4415,9 +4413,8 @@
         "type": "object"
       },
       "searchTerms": [
-        "ignore payment",
-        "already entered",
-        "duplicate payment"
+        "dismiss inbound change",
+        "already keyed"
       ],
       "prerequisites": [
         "list_accounting_inbound_changes"
@@ -4623,7 +4620,7 @@
     },
     {
       "name": "list_accounting_inbound_changes",
-      "description": "List payments recorded in the accounting system against invoices or bills Trenova sent, newest first. Each row says what it pays, whether it was applied in Trenova, and if not why, in plain language. Filter by status, such as Proposed for what waits on a person, by kind, or by reason. Pass a Proposed row's id to apply_accounting_inbound_change or ignore_accounting_inbound_change.",
+      "description": "List inbound changes: payments the accounting system recorded against invoices or bills Trenova sent, newest first. Each says what it pays and whether it was brought into Trenova, and if not why. Filter by status, such as Proposed for what waits on a person, by kind, or by reason. Pass a Proposed row's id to apply_accounting_inbound_change or ignore_accounting_inbound_change.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -4705,10 +4702,8 @@
         "type": "object"
       },
       "searchTerms": [
-        "paid in quickbooks",
-        "payment from the books",
-        "inbound",
-        "bill payment"
+        "inbound changes",
+        "payments the accounting system recorded"
       ],
       "policy": {
         "kind": "query",

@@ -93,15 +93,15 @@ func (t *applyAccountingInboundChangeTool) Name() string {
 }
 
 func (t *applyAccountingInboundChangeTool) Description() string {
-	return "Post a payment recorded in the accounting system in Trenova. For a customer " +
-		"payment it posts the payment against the invoices it pays and applies any credit " +
-		"memos it used; for a bill payment it marks the settlement paid on the payment's " +
-		"date. It only applies a Proposed payment that still matches what is open in " +
-		"Trenova, and the preview shows exactly what would post."
+	return "Accept an inbound change: one payment the accounting system recorded against " +
+		"documents Trenova sent, shown as Proposed by list_accounting_inbound_changes. " +
+		"Accepting brings it into Trenova on the day it was made, with any credits it used, " +
+		"or marks the settlement it pays as paid, and only while it still matches what is " +
+		"open. The preview shows exactly what would post."
 }
 
 func (t *applyAccountingInboundChangeTool) SearchTerms() []string {
-	return []string{"apply payment", "record payment from the books", "mark paid"}
+	return []string{"accept inbound change"}
 }
 
 func (t *applyAccountingInboundChangeTool) Prerequisites() []string {
@@ -252,14 +252,13 @@ func (t *ignoreAccountingInboundChangeTool) Name() string {
 }
 
 func (t *ignoreAccountingInboundChangeTool) Description() string {
-	return "Leave a payment recorded in the accounting system out of Trenova, with the " +
-		"reason. Use it when a person says the payment was already entered in Trenova, or " +
-		"belongs to something Trenova does not track. An ignored payment is never applied " +
-		"afterwards."
+	return "Dismiss an inbound change, with the reason, so the accounting system's payment " +
+		"is never brought into Trenova. Use it when a person says the payment was already " +
+		"keyed in Trenova, or belongs to something Trenova does not track."
 }
 
 func (t *ignoreAccountingInboundChangeTool) SearchTerms() []string {
-	return []string{"ignore payment", "already entered", "duplicate payment"}
+	return []string{"dismiss inbound change", "already keyed"}
 }
 
 func (t *ignoreAccountingInboundChangeTool) Prerequisites() []string {
