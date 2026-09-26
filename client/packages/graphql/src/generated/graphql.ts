@@ -1038,7 +1038,9 @@ export type AgentTemplate =
   | 'IntakeDesk'
   | 'LoadEntryCheck'
   | 'LoadMonitor'
+  | 'Receivables'
   | 'ServiceFailureDesk'
+  | 'SettlementsClerk'
   | 'ShipmentIntake';
 
 export type AgentToolEffect =

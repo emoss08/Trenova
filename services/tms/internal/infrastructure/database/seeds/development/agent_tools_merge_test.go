@@ -1,8 +1,10 @@
 package development
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -79,4 +81,35 @@ func TestMergeToolNames_HandlesATemplateWithNoStarters(t *testing.T) {
 
 	assert.False(t, changed)
 	assert.Equal(t, []string{"get_worker"}, merged)
+}
+
+/*
+The merge never grows an agent past the tool cap.
+
+The seeded billing agent held its template's 63 tools when collections moved to
+the receivables assistant. Its old tools stay, because the merge never removes,
+and the two the template gained would have taken it to 65: an agent that no
+longer validates, so nobody could save it again from AI control.
+*/
+func TestMergeToolNames_StopsAtTheToolCap(t *testing.T) {
+	t.Parallel()
+
+	current := make([]string, 0, agentdefinition.MaxTools)
+	for idx := range agentdefinition.MaxTools - 1 {
+		current = append(current, fmt.Sprintf("tool_%d", idx))
+	}
+
+	merged, changed := mergeToolNames(
+		current,
+		[]string{"share_invoice", "list_invoice_share_candidates"},
+	)
+
+	assert.True(t, changed)
+	assert.Len(t, merged, agentdefinition.MaxTools)
+	assert.Equal(t, "share_invoice", merged[len(merged)-1])
+
+	full, changed := mergeToolNames(merged, []string{"list_invoice_share_candidates"})
+
+	assert.False(t, changed, "a full list gains nothing")
+	assert.Len(t, full, agentdefinition.MaxTools)
 }

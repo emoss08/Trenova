@@ -24,6 +24,8 @@ const (
 	IconBell      = "bell"
 	IconSparkle   = "sparkle"
 	IconInbox     = "inbox"
+	IconBanknote  = "banknote"
+	IconCoins     = "coins"
 )
 
 const (
@@ -55,6 +57,8 @@ var knownIcons = []string{
 	IconBell,
 	IconSparkle,
 	IconInbox,
+	IconBanknote,
+	IconCoins,
 }
 
 var knownAccents = []string{
@@ -91,6 +95,8 @@ var templateIcons = map[Template]string{
 	TemplateEDIDesk:             IconFile,
 	TemplateFormulaAssistant:    IconSparkle,
 	TemplateBooksKeeper:         IconReceipt,
+	TemplateSettlementsClerk:    IconBanknote,
+	TemplateReceivables:         IconCoins,
 }
 
 func KnownIcons() []string {

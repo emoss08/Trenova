@@ -195,7 +195,7 @@ func (r *mutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 }
 
 func (r *mutationResolver) DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error) {
-	authCtx, err := r.requirePermission(ctx, permission.ResourceAssistant, permission.OpUpdate)
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -216,7 +216,7 @@ func (r *mutationResolver) DecideMyProposal(ctx context.Context, id string, inpu
 }
 
 func (r *mutationResolver) DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error) {
-	authCtx, err := r.requirePermission(ctx, permission.ResourceAssistant, permission.OpUpdate)
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
 	if err != nil {
 		return nil, err
 	}

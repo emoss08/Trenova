@@ -84543,6 +84543,8 @@ extend type Mutation {
   EDIDesk
   FormulaAssistant
   BooksKeeper
+  SettlementsClerk
+  Receivables
 }
 
 enum AgentTriggerMode {

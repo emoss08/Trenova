@@ -208,7 +208,7 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) { //nolint:funlen // legac
 	)
 	api.DELETE(
 		"/:shipmentID/comments/:commentID/",
-		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpDelete),
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpUpdate),
 		h.deleteComment,
 	)
 	api.POST(

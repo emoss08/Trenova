@@ -2559,6 +2559,15 @@
       "routes/billing-control"
     ]
   },
+  "A customer's balance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A customized home screen needs a layout": {
     "sites": 1,
     "scope": [
@@ -24618,6 +24627,15 @@
       "service/formula"
     ]
   },
+  "Banknote": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Bar": {
     "sites": 1,
     "scope": [
@@ -30599,6 +30617,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Carrier invoice variances": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Carrier invoices are compared to the negotiated buy rate; gaps beyond the tolerance flag a variance.": {
@@ -36890,6 +36917,15 @@
     ],
     "areas": [
       "routes/pay-code"
+    ]
+  },
+  "Coins": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Cold storage": {
@@ -82670,13 +82706,14 @@
     ]
   },
   "Inbox": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "routes/agent-control",
       "routes/carrier-monitoring",
       "routes/inbox"
     ]
@@ -136572,6 +136609,15 @@
       "routes/ar-aging"
     ]
   },
+  "Receivables assistant": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Receivables data is unavailable.": {
     "sites": 1,
     "scope": [
@@ -158172,6 +158218,15 @@
       "service/driversettlementservice"
     ]
   },
+  "Settlements clerk": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agentdefinition"
+    ]
+  },
   "Settlements cover one month, ending on the configured weekday.": {
     "sites": 1,
     "scope": [
@@ -158260,6 +158315,15 @@
     ],
     "areas": [
       "routes/carrier-settlement-workspace"
+    ]
+  },
+  "Settlements with exceptions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Settlements without exceptions skip manual review and go straight to approved.": {
@@ -189837,11 +189901,12 @@
     ]
   },
   "Unapplied cash": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/accounting-dashboard",
       "routes/customer-ledger",
       "routes/customer-payments"
@@ -201236,6 +201301,15 @@
       "routes/review-template"
     ]
   },
+  "Who to chase today": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Who to show": {
     "sites": 2,
     "scope": [
@@ -201366,6 +201440,15 @@
     ],
     "areas": [
       "routes/accounting-inbound"
+    ]
+  },
+  "Why is a load missing?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Why is this adjustment being rejected?": {

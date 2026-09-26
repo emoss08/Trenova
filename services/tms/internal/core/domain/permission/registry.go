@@ -2621,6 +2621,16 @@ func (r *Registry) registerRateResources() {
 		Operations: append(
 			slices.Clone(standardOpsWithDelete),
 			OperationDefinition{
+				Operation:   OpSubmit,
+				DisplayName: "Submit",
+				Description: "Send a draft rate agreement for approval",
+			},
+			OperationDefinition{
+				Operation:   OpArchive,
+				DisplayName: "Archive",
+				Description: "Retire a rate agreement so it no longer prices shipments",
+			},
+			OperationDefinition{
 				Operation:   OpApprove,
 				DisplayName: "Approve",
 				Description: "Activate a rate agreement so it prices shipments",
@@ -3401,7 +3411,7 @@ func (r *Registry) registerAccountingResources() {
 		DisplayName:        "General Ledger Account",
 		Description:        "GL account management",
 		Category:           "Accounting",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 		FieldSensitivities: map[string]FieldSensitivity{
 			"accountCode":    SensitivityInternal,
@@ -4214,7 +4224,7 @@ func (r *Registry) registerComplianceResources() {
 		DisplayName:        "Qualification",
 		Description:        "Driver qualification management",
 		Category:           "Compliance",
-		Operations:         standardOps,
+		Operations:         standardOpsWithDelete,
 		DefaultSensitivity: SensitivityRestricted,
 	})
 
@@ -4255,11 +4265,15 @@ func (r *Registry) registerComplianceResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:           ResourceDocumentParsingRule.String(),
-		DisplayName:        "Document Parsing Rule",
-		Description:        "Tenant-managed parsing rules, versions, fixtures, and simulations",
-		Category:           "Compliance",
-		Operations:         GetAllOperations(),
+		Resource:    ResourceDocumentParsingRule.String(),
+		DisplayName: "Document Parsing Rule",
+		Description: "Tenant-managed parsing rules, versions, fixtures, and simulations",
+		Category:    "Compliance",
+		Operations: append(GetAllOperations(), OperationDefinition{
+			Operation:   OpDelete,
+			DisplayName: "Delete",
+			Description: "Delete rule sets and fixtures",
+		}),
 		DefaultSensitivity: SensitivityInternal,
 	})
 }

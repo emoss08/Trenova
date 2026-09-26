@@ -445,6 +445,53 @@ var templateStarters = map[Template][]starterQuestion{
 			"list_accounting_drift_findings",
 		),
 	},
+	TemplateSettlementsClerk: {
+		ask(
+			"Which settlements need attention?",
+			"Which driver settlements have exceptions or open disputes, and what has to be "+
+				"settled before they can be paid?",
+			"list_driver_settlements",
+		),
+		ask(
+			"What has a driver earned?",
+			"What has this driver earned that is not on a settlement yet, and what advances "+
+				"do they still owe?",
+			"get_worker_earnings_summary",
+		),
+		ask(
+			"Why is a load missing from pay?",
+			"Why is this load missing from the driver's settlement?",
+			"list_driver_pay_events",
+		),
+		ask(
+			"Which carrier invoices do not match?",
+			"Which carrier invoices differ from what the load was expected to cost, and by "+
+				"how much?",
+			"list_carrier_invoice_matches",
+		),
+	},
+	TemplateReceivables: {
+		ask(
+			"Who owes us the most?",
+			"Which customers owe us the most, and how late is it?",
+			"get_ar_aging",
+		),
+		ask(
+			"Who should I chase today?",
+			"Which overdue invoices should I chase today, most urgent first?",
+			"list_collections_worklist",
+		),
+		ask(
+			"Which invoices are disputed?",
+			"Which invoices are in dispute, and what is each customer's reason?",
+			"list_invoice_disputes",
+		),
+		ask(
+			"Which payments are unapplied?",
+			"Which customer payments still have cash that is not applied to an invoice?",
+			"list_customer_payments",
+		),
+	},
 	TemplateFormulaAssistant: {
 		ask(
 			"Write a formula",
@@ -631,6 +678,25 @@ var toolFamilies = [][]starterQuestion{
 			"Which payments came in this week?",
 			"Which customer payments were recorded this week?",
 			"list_customer_payments",
+		),
+		ask(
+			"Who should I chase today?",
+			"Which overdue invoices should I chase today, most urgent first?",
+			"list_collections_worklist",
+		),
+	},
+	{
+		ask(
+			"Which settlements need attention?",
+			"Which driver settlements have exceptions or open disputes, and what has to be "+
+				"settled before they can be paid?",
+			"list_driver_settlements",
+		),
+		ask(
+			"Which carrier invoices do not match?",
+			"Which carrier invoices differ from what the load was expected to cost, and by "+
+				"how much?",
+			"list_carrier_invoice_matches",
 		),
 	},
 	{

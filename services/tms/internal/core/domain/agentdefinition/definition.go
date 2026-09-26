@@ -27,7 +27,7 @@ const (
 	maxInstructionsRunes = 20000
 	maxGuardrails        = 20
 	maxGuardrailRunes    = 300
-	maxTools             = 64
+	MaxTools             = 64
 	maxSystemKeyLength   = 50
 	maxCronLength        = 100
 	minIntervalSeconds   = 60
@@ -545,7 +545,7 @@ func (d *Definition) validateGuardrails(multiErr *errortypes.MultiError) {
 }
 
 func (d *Definition) validateTools(multiErr *errortypes.MultiError) {
-	if len(d.ToolNames) > maxTools {
+	if len(d.ToolNames) > MaxTools {
 		multiErr.Add(
 			"toolNames",
 			errortypes.ErrInvalid,
