@@ -217,7 +217,7 @@ func (r *batchRepository) ListStale(
 	req repositories.ListStaleCaptureBatchesRequest,
 ) ([]*capture.CaptureBatch, error) {
 	limit := boundedLimit(req.Limit)
-	entities := make([]*capture.CaptureBatch, 0, limit)
+	entities := make([]*capture.CaptureBatch, 0)
 	cols := buncolgen.CaptureBatchColumns
 
 	if err := r.db.DBForContext(ctx).
@@ -239,7 +239,7 @@ func (r *batchRepository) ListRetentionDue(
 	req repositories.ListRetentionDueCaptureBatchesRequest,
 ) ([]*capture.CaptureBatch, error) {
 	limit := boundedLimit(req.Limit)
-	entities := make([]*capture.CaptureBatch, 0, limit)
+	entities := make([]*capture.CaptureBatch, 0)
 	cols := buncolgen.CaptureBatchColumns
 
 	if err := r.db.DBForContext(ctx).
@@ -261,7 +261,7 @@ func (r *batchRepository) ListRetentionReminders(
 	req repositories.ListRetentionReminderCaptureBatchesRequest,
 ) ([]*capture.CaptureBatch, error) {
 	limit := boundedLimit(req.Limit)
-	entities := make([]*capture.CaptureBatch, 0, limit)
+	entities := make([]*capture.CaptureBatch, 0)
 	cols := buncolgen.CaptureBatchColumns
 
 	if err := r.db.DBForContext(ctx).

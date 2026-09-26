@@ -132,7 +132,7 @@ func (r *requestRepository) ListForTarget(
 		limit = maxRequestsForTarget
 	}
 
-	entities := make([]*capture.CaptureRequest, 0, limit)
+	entities := make([]*capture.CaptureRequest, 0)
 	cols := buncolgen.CaptureRequestColumns
 
 	query := r.db.DBForContext(ctx).
@@ -160,7 +160,7 @@ func (r *requestRepository) ListExpired(
 	now int64,
 	limit int,
 ) ([]*capture.CaptureRequest, error) {
-	entities := make([]*capture.CaptureRequest, 0, limit)
+	entities := make([]*capture.CaptureRequest, 0)
 	cols := buncolgen.CaptureRequestColumns
 
 	if err := r.db.DBForContext(ctx).
