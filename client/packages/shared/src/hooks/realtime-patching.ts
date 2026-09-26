@@ -78,6 +78,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   // Documents tab shows in flight.
   capture_batch: [
     ["capture", "batches"],
+    ["capture", "batchCount"],
     ["capture", "batch"],
     ["capture", "requests"],
   ],

@@ -74,6 +74,18 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/intake",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.CaptureBatch, Operation.Read),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/intake/page"))),
+            ),
+            async lazy() {
+              const { IntakePage } = await import("@/routes/intake/page");
+              return { Component: IntakePage };
+            },
+          },
+          {
             path: "/organization/data-retention",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Organization)),
             async lazy() {

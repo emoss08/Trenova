@@ -19,6 +19,7 @@ describe("capture invalidation", () => {
 
   it.each([
     ["the intake queue", capture.batches({ statuses: ["Ready"] }).queryKey],
+    ["the queue's counts", capture.batchCount({ statuses: ["Ready"] }).queryKey],
     ["an open batch", capture.batch("cbat_1").queryKey],
     ["a record's requests", capture.requests("shipment", "shp_1").queryKey],
   ])("capture_batch reaches %s", (_, key) => {

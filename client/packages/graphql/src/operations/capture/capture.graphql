@@ -203,6 +203,11 @@ query CaptureBatches($input: CaptureBatchesInput!) {
       hasNextPage
       endCursor
     }
+  }
+}
+
+query CaptureBatchCount($input: CaptureBatchesInput!) {
+  captureBatches(input: $input) {
     totalCount
   }
 }

@@ -1,6 +1,7 @@
 import {
   fetchAvailableCaptureProfiles,
   fetchCaptureBatch,
+  fetchCaptureBatchCount,
   fetchCaptureBatches,
   fetchCaptureDevices,
   fetchCapturePairing,
@@ -21,6 +22,10 @@ export const capture = createQueryKeys("capture", {
   // ones already filed are different questions.
   batches: (filter: Omit<CaptureBatchFilter, "after">) => ({
     queryKey: [filter],
+  }),
+  batchCount: (filter: Omit<CaptureBatchFilter, "after" | "first">) => ({
+    queryKey: [filter],
+    queryFn: ({ signal }: Signal) => fetchCaptureBatchCount(filter, { signal }),
   }),
   batch: (id: string) => ({
     queryKey: [id],

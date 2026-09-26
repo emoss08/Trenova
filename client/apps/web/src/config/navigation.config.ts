@@ -14,6 +14,7 @@ import {
   Package,
   ReceiptTextIcon,
   RouteIcon,
+  ScanLineIcon,
   SettingsIcon,
   TimerIcon,
   TruckIcon,
@@ -63,6 +64,21 @@ const inboxModule: NavModule = {
   routePrefixes: ["/inbox"],
   hideSecondarySidebar: true,
   resource: Resource.InboundMessage,
+  navigation: [],
+};
+
+// Intake sits beside the inbox: both are what arrived and has not been dealt
+// with yet, one from a monitored address and one from a scanner or a print
+// dialog, and a clerk working the paper opens it without the mail.
+const intakeModule: NavModule = {
+  id: "intake",
+  label: "Intake",
+  icon: ScanLineIcon,
+  description: "Scanned and printed paper, split into documents and waiting to be filed",
+  basePath: "/intake",
+  routePrefixes: ["/intake"],
+  hideSecondarySidebar: true,
+  resource: Resource.CaptureBatch,
   navigation: [],
 };
 
@@ -1028,6 +1044,7 @@ export const navigationConfig: NavigationConfig = {
     homeModule,
     deskModule,
     inboxModule,
+    intakeModule,
     shipmentManagementModule,
     dispatchModule,
     humanResourcesModule,
@@ -1453,7 +1470,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "core",
     label: "Core",
-    moduleIds: ["home", "desk", "inbox"],
+    moduleIds: ["home", "desk", "inbox", "intake"],
   },
   {
     id: "operations",

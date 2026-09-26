@@ -8420,7 +8420,14 @@ export type CaptureBatchesQueryVariables = Exact<{
 }>;
 
 
-export type CaptureBatchesQuery = { captureBatches: { totalCount: number | null, edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'CaptureBatchRowFieldsFragment': CaptureBatchRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type CaptureBatchesQuery = { captureBatches: { edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'CaptureBatchRowFieldsFragment': CaptureBatchRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+
+export type CaptureBatchCountQueryVariables = Exact<{
+  input: CaptureBatchesInput;
+}>;
+
+
+export type CaptureBatchCountQuery = { captureBatches: { totalCount: number | null } };
 
 export type CaptureBatchQueryVariables = Exact<{
   id: string | number;
@@ -23038,7 +23045,8 @@ export const RetryBillingTransferRunDocument = {"__meta__":{"kind":"mutation","n
 export const TodaysBriefingDocument = {"__meta__":{"kind":"query","name":"TodaysBriefing","hash":"sha256:efa1e68a6557f06f8c90f3e6482f6a73399254696a433c83e2f5a821f891a838"}} as unknown as TypedDocumentString<TodaysBriefingQuery, TodaysBriefingQueryVariables>;
 export const MarkBriefingReadDocument = {"__meta__":{"kind":"mutation","name":"MarkBriefingRead","hash":"sha256:a528508c33bf6da76c15bf36e4159bdb24aeeb7c644cabbd8e779423cfe86371"}} as unknown as TypedDocumentString<MarkBriefingReadMutation, MarkBriefingReadMutationVariables>;
 export const RegenerateBriefingDocument = {"__meta__":{"kind":"mutation","name":"RegenerateBriefing","hash":"sha256:78838e889a7a2e313f67553e5f19966a6338ae041961bd169a6bf8e9ad5108df"}} as unknown as TypedDocumentString<RegenerateBriefingMutation, RegenerateBriefingMutationVariables>;
-export const CaptureBatchesDocument = {"__meta__":{"kind":"query","name":"CaptureBatches","hash":"sha256:41960e91ee7359303c5c4439cf5bedcd6d60c8a59f6d8550f12881c1d9a6239d"}} as unknown as TypedDocumentString<CaptureBatchesQuery, CaptureBatchesQueryVariables>;
+export const CaptureBatchesDocument = {"__meta__":{"kind":"query","name":"CaptureBatches","hash":"sha256:d40d49842db626aa6d822a89f8f3be992c716d71db561f1a4deb6127f19e40ce"}} as unknown as TypedDocumentString<CaptureBatchesQuery, CaptureBatchesQueryVariables>;
+export const CaptureBatchCountDocument = {"__meta__":{"kind":"query","name":"CaptureBatchCount","hash":"sha256:b72597d4462c7841309af83ee9f1217281f91dac439d6841b736ece7af92f402"}} as unknown as TypedDocumentString<CaptureBatchCountQuery, CaptureBatchCountQueryVariables>;
 export const CaptureBatchDocument = {"__meta__":{"kind":"query","name":"CaptureBatch","hash":"sha256:255eebc82d775317997d672fded4e4026bab5ffc76dcb793de5d5909311e255a"}} as unknown as TypedDocumentString<CaptureBatchQuery, CaptureBatchQueryVariables>;
 export const MyCaptureDevicesDocument = {"__meta__":{"kind":"query","name":"MyCaptureDevices","hash":"sha256:f0a7a8fb1db403a1954eeeb2c75defe50fcb341e515af418b73561ae814d368a"}} as unknown as TypedDocumentString<MyCaptureDevicesQuery, MyCaptureDevicesQueryVariables>;
 export const CaptureDevicesDocument = {"__meta__":{"kind":"query","name":"CaptureDevices","hash":"sha256:7ed34756eb9cbcfe72d1c537858c28eb8195e3379d1135036e1253c99b48e7c8"}} as unknown as TypedDocumentString<CaptureDevicesQuery, CaptureDevicesQueryVariables>;

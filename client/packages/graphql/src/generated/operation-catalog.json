@@ -1,5 +1,5 @@
 {
-  "operationCount": 911,
+  "operationCount": 912,
   "fragmentCount": 252,
   "operations": [
     {
@@ -3885,11 +3885,31 @@
       "sdl": "query CaptureBatch($id: ID!) {\n  captureBatch(id: $id) {\n    ...CaptureBatchDetailFields\n  }\n}\n\nfragment CaptureBatchDetailFields on CaptureBatch {\n  ...CaptureBatchRowFields\n  documentTypeId\n  settings {\n    protocol\n    dpi\n    pixelType\n    duplex\n    feeder\n    driverVersion\n    application\n    refused\n  }\n  pages {\n    ...CapturePageFields\n  }\n  items {\n    ...CaptureItemFields\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureItemFields on CaptureItem {\n  id\n  position\n  status\n  pageIds\n  pageCount\n  suggestedType\n  suggestedId\n  suggestedDocumentTypeId\n  suggestionSource\n  suggestionConfidence\n  suggestionReason\n  detectedKind\n  filedType\n  filedId\n  filedDocumentTypeId\n  documentId\n  filedAt\n  failureMessage\n  version\n  suggestedRecord {\n    ...CaptureRecordRefFields\n  }\n  filedRecord {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CapturePageFields on CapturePage {\n  id\n  sequence\n  status\n  rotation\n  widthPx\n  heightPx\n  dpi\n  isBlank\n  isSeparator\n  patchCode\n  isCoverSheet\n  unrecognizedCoverSheet\n  failureMessage\n  contentPath\n  thumbnailPath\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
     },
     {
+      "name": "CaptureBatchCount",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:b72597d4462c7841309af83ee9f1217281f91dac439d6841b736ece7af92f402",
+      "rootFields": [
+        "captureBatches"
+      ],
+      "variables": [
+        {
+          "name": "input",
+          "type": "CaptureBatchesInput!",
+          "defaultValue": null
+        }
+      ],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query CaptureBatchCount($input: CaptureBatchesInput!) {\n  captureBatches(input: $input) {\n    totalCount\n  }\n}"
+    },
+    {
       "name": "CaptureBatches",
       "kind": "query",
       "domain": "capture",
       "sourceFile": "src/operations/capture/capture.graphql",
-      "hash": "sha256:41960e91ee7359303c5c4439cf5bedcd6d60c8a59f6d8550f12881c1d9a6239d",
+      "hash": "sha256:d40d49842db626aa6d822a89f8f3be992c716d71db561f1a4deb6127f19e40ce",
       "rootFields": [
         "captureBatches"
       ],
@@ -3905,7 +3925,7 @@
         "CaptureRecordRefFields"
       ],
       "usages": [],
-      "sdl": "query CaptureBatches($input: CaptureBatchesInput!) {\n  captureBatches(input: $input) {\n    edges {\n      cursor\n      node {\n        ...CaptureBatchRowFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n    totalCount\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+      "sdl": "query CaptureBatches($input: CaptureBatchesInput!) {\n  captureBatches(input: $input) {\n    edges {\n      cursor\n      node {\n        ...CaptureBatchRowFields\n      }\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment CaptureBatchRowFields on CaptureBatch {\n  id\n  userId\n  source\n  status\n  sourceName\n  jobName\n  targetType\n  targetId\n  receivedPageCount\n  itemCount\n  filedItemCount\n  openItemCount\n  failureMessage\n  sealedAt\n  processedAt\n  retainUntil\n  isEditable\n  version\n  createdAt\n  updatedAt\n  user {\n    id\n    name\n  }\n  device {\n    id\n    name\n    machineName\n  }\n  target {\n    ...CaptureRecordRefFields\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
     },
     {
       "name": "CaptureDevicePairing",

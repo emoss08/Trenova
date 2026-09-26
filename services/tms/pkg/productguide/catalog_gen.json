@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f3a6de2de93576aef7faaf58f65c3191f0823982ba3f358cd4ee4b0c921e4bd4",
+  "version": "sha256:955931bf3121582c0faa327d416d27f5dc423ca688bce836ad924dce756a0ff6",
   "modules": [
     {
       "id": "home",
@@ -15,6 +15,11 @@
       "id": "inbox",
       "label": "Inbox",
       "description": "Mail that arrived on a monitored address, and what was made of it"
+    },
+    {
+      "id": "intake",
+      "label": "Intake",
+      "description": "Scanned and printed paper, split into documents and waiting to be filed"
     },
     {
       "id": "shipment",
@@ -12281,6 +12286,111 @@
       "covers": [],
       "createAction": null,
       "inNavigation": true
+    },
+    {
+      "path": "/intake",
+      "name": "Intake",
+      "module": "intake",
+      "breadcrumb": [
+        "Intake"
+      ],
+      "description": "Paper scanned and documents printed into Trenova, split into documents and waiting to be filed onto their records",
+      "summary": "Intake holds paper scanned into Trenova and documents printed into it from other programs through Trenova Capture, the Windows companion. Each scan or print job arrives as a stack. Trenova splits a stack into documents on patch code sheets, Trenova cover sheets or blank pages, reads each document, and suggests where it goes: the record a cover sheet names, the record it was scanned into, or a shipment whose number appears on the page. Clerks, dispatchers and billing staff use it to check each document and file it onto its record.\n\nIt is one queue with views on the left (**To file**, **Arriving**, **Filed**, **Discarded and expired**, **Everything**), filters for where the stack **Came from** and **Only mine**, the list of stacks in the middle with a search and a sort, and the open stack on the right with its documents.",
+      "requires": [
+        {
+          "resource": "capture_batch",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "scanning",
+        "scanned documents",
+        "scan queue",
+        "virtual printer",
+        "print to Trenova",
+        "paperwork queue",
+        "document intake",
+        "Kofax",
+        "batch scanning"
+      ],
+      "tasks": [
+        {
+          "title": "File a scanned stack",
+          "keywords": [
+            "file scans",
+            "assign documents",
+            "batch scan",
+            "process scanned paperwork"
+          ],
+          "steps": [
+            "Open [Intake](/intake) and select **To file**.",
+            "Select a stack. Each document shows its pages, what Trenova suggested and why, and where it will be filed.",
+            "For each document, check **File onto**, the record and the **Document type**, and change any that are wrong.",
+            "Select **File** on one document, or the button at the top to file every document that has a record chosen. A document that cannot be filed says why on its card; the rest are filed."
+          ]
+        },
+        {
+          "title": "Split, join or reorder pages",
+          "keywords": [
+            "separate documents",
+            "merge pages",
+            "wrong split",
+            "rotate page",
+            "remove page"
+          ],
+          "steps": [
+            "Open the stack in [Intake](/intake).",
+            "Drag a page to another document or to **Set aside**, or open a page's menu and choose **Start a new document after this page**, **Move to**, **Rotate right**, **Rotate left** or **Set aside**.",
+            "Select **Join with next** on a document to make it and the one after it one document.",
+            "Select **Save split**, or **Undo changes** to go back. Documents are filed as saved, so save before filing."
+          ]
+        },
+        {
+          "title": "Bring back a page that was set aside",
+          "keywords": [
+            "missing page",
+            "blank page removed",
+            "separator page"
+          ],
+          "steps": [
+            "Open the stack in [Intake](/intake) and find the page under **Set aside**.",
+            "Drag it into a document, or open its menu and choose **Make it a document of its own**, then **Save split**."
+          ]
+        },
+        {
+          "title": "Discard a stack",
+          "keywords": [
+            "delete scan",
+            "throw away pages",
+            "duplicate scan"
+          ],
+          "steps": [
+            "Open the stack in [Intake](/intake).",
+            "Open the menu beside the filing button and choose **Discard the stack**, then **Discard stack**. Documents already filed stay on their records; every other page is deleted."
+          ]
+        },
+        {
+          "title": "Find a stack",
+          "keywords": [
+            "search scans",
+            "find print job",
+            "expiring scans"
+          ],
+          "steps": [
+            "Open [Intake](/intake) and pick a view on the left.",
+            "Type in **Search scanner, print job or device**, or change the sort to **Expiring soonest** to see what will be deleted first."
+          ]
+        }
+      ],
+      "notes": "Needs read access to capture batches to see the queue; filing needs update access and the permission to add documents to the record, and discarding needs delete access. A person whose access is limited to their own records sees only the stacks they captured.\n\nPages that are not filed are deleted when the stack's retention runs out, set in the organization's document settings. A stack within a week of that says so on its row and when it is opened.",
+      "related": [
+        "/inbox",
+        "/shipment-management/shipments"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": false
     },
     {
       "path": "/organization/data-retention",

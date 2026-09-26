@@ -4,6 +4,7 @@ import {
   AvailableCaptureProfilesDocument,
   CancelCaptureRequestDocument,
   CaptureBatchDetailFieldsFragmentDoc,
+  CaptureBatchCountDocument,
   CaptureBatchDocument,
   CaptureBatchRowFieldsFragmentDoc,
   CaptureBatchesDocument,
@@ -117,9 +118,7 @@ function batchRow(masked: FragmentType<typeof CaptureBatchRowFieldsFragmentDoc>)
 function batchDetail(
   masked: FragmentType<typeof CaptureBatchDetailFieldsFragmentDoc>,
 ): CaptureBatchDetail {
-  return unmasked<CaptureBatchDetail>(
-    getFragmentData(CaptureBatchDetailFieldsFragmentDoc, masked),
-  );
+  return unmasked<CaptureBatchDetail>(getFragmentData(CaptureBatchDetailFieldsFragmentDoc, masked));
 }
 
 function item(masked: FragmentType<typeof CaptureItemFieldsFragmentDoc>): CaptureItem {
@@ -133,9 +132,7 @@ function device(masked: FragmentType<typeof CaptureDeviceFieldsFragmentDoc>): Ca
 function fleetDevice(
   masked: FragmentType<typeof CaptureDeviceFleetFieldsFragmentDoc>,
 ): CaptureFleetDevice {
-  return unmasked<CaptureFleetDevice>(
-    getFragmentData(CaptureDeviceFleetFieldsFragmentDoc, masked),
-  );
+  return unmasked<CaptureFleetDevice>(getFragmentData(CaptureDeviceFleetFieldsFragmentDoc, masked));
 }
 
 function profile(masked: FragmentType<typeof CaptureProfileFieldsFragmentDoc>): CaptureProfile {
@@ -165,8 +162,21 @@ export type CaptureBatchPage = {
   batches: CaptureBatchRow[];
   endCursor: string | null;
   hasNextPage: boolean;
-  totalCount: number | null;
 };
+
+function batchesInput(filter: CaptureBatchFilter, first: number) {
+  return {
+    first,
+    after: filter.after ?? null,
+    sort: filter.sort ?? "Newest",
+    statuses: filter.statuses ?? [],
+    source: filter.source ?? null,
+    mine: filter.mine ?? false,
+    targetType: filter.targetType ?? null,
+    targetId: filter.targetId ?? null,
+    query: filter.query ?? null,
+  };
+}
 
 export async function fetchCaptureBatches(
   filter: CaptureBatchFilter = {},
@@ -175,19 +185,7 @@ export async function fetchCaptureBatches(
   const data = await requestGraphQL({
     document: CaptureBatchesDocument,
     operationName: "CaptureBatches",
-    variables: {
-      input: {
-        first: filter.first ?? CAPTURE_BATCH_PAGE_SIZE,
-        after: filter.after ?? null,
-        sort: filter.sort ?? "Newest",
-        statuses: filter.statuses ?? [],
-        source: filter.source ?? null,
-        mine: filter.mine ?? false,
-        targetType: filter.targetType ?? null,
-        targetId: filter.targetId ?? null,
-        query: filter.query ?? null,
-      },
-    },
+    variables: { input: batchesInput(filter, filter.first ?? CAPTURE_BATCH_PAGE_SIZE) },
     signal: options?.signal,
   });
 
@@ -195,8 +193,25 @@ export async function fetchCaptureBatches(
     batches: data.captureBatches.edges.map((edge) => batchRow(edge.node)),
     endCursor: data.captureBatches.pageInfo.endCursor ?? null,
     hasNextPage: data.captureBatches.pageInfo.hasNextPage,
-    totalCount: data.captureBatches.totalCount ?? null,
   };
+}
+
+/**
+ * How many stacks a filter holds. Asked apart from the list, so paging the
+ * list never runs the count again; the server counts only when this asks.
+ */
+export async function fetchCaptureBatchCount(
+  filter: Omit<CaptureBatchFilter, "after" | "first">,
+  options?: RequestOptions,
+): Promise<number> {
+  const data = await requestGraphQL({
+    document: CaptureBatchCountDocument,
+    operationName: "CaptureBatchCount",
+    variables: { input: batchesInput(filter, 1) },
+    signal: options?.signal,
+  });
+
+  return data.captureBatches.totalCount ?? 0;
 }
 
 export async function fetchCaptureBatch(

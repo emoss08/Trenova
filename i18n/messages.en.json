@@ -1368,6 +1368,15 @@
       "service/reporting"
     ]
   },
+  "A PDF must have between 1 and {0} pages": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "A PTO policy with this code already exists": {
     "sites": 1,
     "scope": [
@@ -1483,6 +1492,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A barcode may be at most {0} characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "A batch decides one kind of change at a time.": {
@@ -2432,6 +2450,15 @@
       "service/workertrainingservice"
     ]
   },
+  "A cover sheet this organization did not issue, or one that expired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "A credential expires in {0, plural, one {# day} other {# days}}.": {
     "sites": 1,
     "scope": [
@@ -2833,6 +2860,42 @@
       "service/detentionpolicyservice"
     ]
   },
+  "A device credential is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "A device may report a request delivered, in progress, failed or cancelled": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "A device may report at most {0} scanners": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "A different page is already stored at sequence {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "A digest needs driver reminders switched on — there would be nothing to bundle": {
     "sites": 2,
     "scope": [
@@ -2882,6 +2945,15 @@
       "domain/agent"
     ]
   },
+  "A document in this batch is being filed; wait for it to finish": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "A document kept failing to reach the accounting system and stopped retrying after its last attempt.": {
     "sites": 1,
     "scope": [
@@ -2889,6 +2961,24 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "A document needs at least one page": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
+  "A document type needs a record to file onto": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
     ]
   },
   "A driver": {
@@ -4003,6 +4093,42 @@
       "routes/osha"
     ]
   },
+  "A page already filed cannot be moved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "A page can be in only one document": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "A page is not part of this batch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "A page may carry at most {0} barcodes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "A parsed import must reference the uploaded file": {
     "sites": 1,
     "scope": [
@@ -4417,6 +4543,33 @@
       "routes/worker"
     ]
   },
+  "A print has no scan profile": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
+  "A print job is uploaded whole, not a page at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "A profile with this name already exists": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "A promotion needs a new driver type or worker type": {
     "sites": 1,
     "scope": [
@@ -4726,6 +4879,15 @@
       "service/iftaservice"
     ]
   },
+  "A record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "A record hidden by your data access": {
     "sites": 1,
     "scope": [
@@ -4733,6 +4895,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "A record is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
     ]
   },
   "A record named {0} already exists in the accounting system. Refresh the reference data and map to it, or choose another name.": {
@@ -5134,6 +5305,15 @@
       "domain/permission"
     ]
   },
+  "A rotated page is not part of this batch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "A rotation is 1 to 8 weeks": {
     "sites": 1,
     "scope": [
@@ -5267,6 +5447,15 @@
     ],
     "areas": [
       "routes/worker-credential-type"
+    ]
+  },
+  "A scanned page must be a PDF of exactly one page": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "A scatter plot needs a measure on the horizontal axis": {
@@ -12750,6 +12939,15 @@
       "service/agentqualityservice"
     ]
   },
+  "Agent or OS version is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "Agent plan not found": {
     "sites": 2,
     "scope": [
@@ -12895,6 +13093,16 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Agent version is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture",
+      "service/captureservice"
     ]
   },
   "Agent version {0}": {
@@ -16129,6 +16337,15 @@
       "routes/rate-matrix"
     ]
   },
+  "An inactive profile cannot be the default": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
   "An inactive zone stops matching, and every lane written against it stops with it": {
     "sites": 1,
     "scope": [
@@ -16721,6 +16938,15 @@
     ],
     "areas": [
       "service/inboundmessageservice"
+    ]
+  },
+  "Another profile was made the default at the same time; try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Another template is already the organization default for this kind. Clear that one first.": {
@@ -18735,6 +18961,24 @@
       "routes/shipment"
     ]
   },
+  "Architecture is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
+  "Architecture must be x64": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "Archive": {
     "sites": 14,
     "scope": [
@@ -19293,6 +19537,15 @@
       "routes/detention-policy"
     ]
   },
+  "Arriving": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Arrow keys move a month and T returns to today {0}": {
     "sites": 1,
     "scope": [
@@ -19355,6 +19608,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "As it was captured": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "As it was captured. It will be filed turned {0}° clockwise.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "As it was shown when it was decided.": {
@@ -21292,6 +21563,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "At the scanner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "At-risk": {
@@ -23627,6 +23907,15 @@
       "routes/inbox"
     ]
   },
+  "Back to the queue": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Back to this month": {
     "sites": 1,
     "scope": [
@@ -24587,11 +24876,12 @@
     ]
   },
   "Batch is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/capture",
       "domain/invoiceadjustment"
     ]
   },
@@ -26149,7 +26439,25 @@
       "go/other"
     ]
   },
+  "Bitness must be 32 or 64": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "Biweekly": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Black and white": {
     "sites": 1,
     "scope": [
       "ts"
@@ -26186,12 +26494,22 @@
     ]
   },
   "Blank": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake",
+      "routes/reports"
+    ]
+  },
+  "Blank pages": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/reports"
+      "apps/web/lib"
     ]
   },
   "Blind carbon copy recipients. Other recipients will not see these addresses — useful for internal archiving or compliance.": {
@@ -28050,6 +28368,15 @@
       "routes/agent-control"
     ]
   },
+  "Came from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Can": {
     "sites": 2,
     "scope": [
@@ -28708,7 +29035,7 @@
     ]
   },
   "Cancelled": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -28730,6 +29057,15 @@
     ],
     "areas": [
       "service/workertrainingservice"
+    ]
+  },
+  "Cancelled at the scanner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Cancelled at worker's request": {
@@ -29324,6 +29660,15 @@
       "routes/detention-policy"
     ]
   },
+  "Capture batch not found": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "Capture blank lines": {
     "sites": 1,
     "scope": [
@@ -29340,6 +29685,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Capture device not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Capture jurisdiction miles": {
@@ -29361,6 +29715,15 @@
       "domain/permission"
     ]
   },
+  "Capture request not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "Captured": {
     "sites": 2,
     "scope": [
@@ -29377,6 +29740,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Captured documents cannot be filed onto that kind of record": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
     ]
   },
   "Captured from": {
@@ -29609,7 +29981,7 @@
     ]
   },
   "Carrier": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -33106,6 +33478,24 @@
       "service/homelayoutservice"
     ]
   },
+  "Choose a record for each document you want to file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "Choose a record to file onto": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Choose a resolution": {
     "sites": 1,
     "scope": [
@@ -33122,6 +33512,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Choose a stack to file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Choose a status": {
@@ -34976,12 +35375,13 @@
     ]
   },
   "Clear the search": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/inbox"
+      "routes/inbox",
+      "routes/intake"
     ]
   },
   "Clear the unread count without opening each one": {
@@ -35157,6 +35557,15 @@
     ],
     "areas": [
       "domain/tenant"
+    ]
+  },
+  "Client key is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
     ]
   },
   "Client secret": {
@@ -36379,11 +36788,12 @@
     ]
   },
   "Color": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/account-type",
       "routes/admin",
       "routes/document-type",
@@ -36460,6 +36870,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Colour mode is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
     ]
   },
   "Column": {
@@ -38039,11 +38458,12 @@
     ]
   },
   "Confidence must be between 0 and 1": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/capture",
       "domain/documentcontent",
       "domain/documentshipmentdraft",
       "domain/inboundmessage",
@@ -42747,6 +43167,15 @@
       "routes/fuel-management"
     ]
   },
+  "Cover sheet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Cover that has been arranged but has not begun, soonest first.": {
     "sites": 1,
     "scope": [
@@ -45449,7 +45878,7 @@
     ]
   },
   "Customer": {
-    "sites": 45,
+    "sites": 46,
     "scope": [
       "go",
       "ts"
@@ -50516,6 +50945,15 @@
       "apps/web/components"
     ]
   },
+  "Deletes every page not already filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Deleting...": {
     "sites": 7,
     "scope": [
@@ -52368,6 +52806,33 @@
       "routes/admin"
     ]
   },
+  "Device is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
+  "Device name must be at most {0} characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "Device not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "Diagnose a blocked billing item and propose resolutions.": {
     "sites": 1,
     "scope": [
@@ -52914,6 +53379,15 @@
       "routes/admin"
     ]
   },
+  "Discard captured pages without filing them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Discard changes": {
     "sites": 1,
     "scope": [
@@ -52941,6 +53415,24 @@
       "routes/dispatch-console"
     ]
   },
+  "Discard stack": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "Discard the stack": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Discard this import?": {
     "sites": 1,
     "scope": [
@@ -52948,6 +53440,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Discard this stack?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Discard unsaved changes?": {
@@ -52960,14 +53461,24 @@
     ]
   },
   "Discarded": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "domain/fuelpurchase",
       "packages/shared/components"
+    ]
+  },
+  "Discarded and expired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Discarding...": {
@@ -54994,6 +55505,15 @@
       "service/invoiceservice"
     ]
   },
+  "Document set aside": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Document sorting": {
     "sites": 1,
     "scope": [
@@ -55040,7 +55560,7 @@
     ]
   },
   "Document type": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -55048,6 +55568,7 @@
       "routes/document-packet-rule",
       "routes/document-type",
       "routes/edi",
+      "routes/intake",
       "routes/worker-checklist-template"
     ]
   },
@@ -55109,6 +55630,15 @@
       "domain/documentpacketrule",
       "domain/edi",
       "service/ediservice"
+    ]
+  },
+  "Document type not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Document types": {
@@ -55201,6 +55731,15 @@
     ],
     "areas": [
       "routes/customer"
+    ]
+  },
+  "Document {0}": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Documentation": {
@@ -55449,12 +55988,13 @@
     ]
   },
   "Done": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/lib",
       "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
@@ -55842,6 +56382,15 @@
     ],
     "areas": [
       "service/ediservice"
+    ]
+  },
+  "Drag a page here to keep it out of every document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Drag a position onto the one it should report to, or use its menu. Drop it on the bar at the bottom to make it top level.": {
@@ -58656,6 +59205,15 @@
       "routes/detention-desk"
     ]
   },
+  "Each document can be filed only once in a request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "Each document is sent as soon as it is posted.": {
     "sites": 2,
     "scope": [
@@ -58816,6 +59374,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Each stack is split into documents. Check where each one goes, then file them together.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Each waiting change. Range over it: Tool is what the agent asked to do and Rationale is why.": {
@@ -64028,6 +64595,24 @@
       "routes/accounting-sync"
     ]
   },
+  "Every document is filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Every document needs its pages": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Every document that moved a customer balance — invoices, credits, payments and adjustments — with its signed amount": {
     "sites": 1,
     "scope": [
@@ -64116,6 +64701,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Every few pages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Every gallon bought for a tractor, keyed by hand or imported from a fuel card statement. Tax-paid gallons credit the jurisdiction they were bought in on the quarterly IFTA return.": {
@@ -64242,6 +64836,33 @@
     ],
     "areas": [
       "routes/ifta-tax-rate"
+    ]
+  },
+  "Every page arrived; the stack is waiting to be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Every page in it is deleted. This cannot be undone.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "Every page is set aside. Make a document from one to file it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Every parameter must match exactly.": {
@@ -64774,12 +65395,13 @@
     ]
   },
   "Everything": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/inbox",
+      "routes/intake",
       "routes/policies",
       "routes/scheduling"
     ]
@@ -66140,8 +66762,17 @@
       "domain/documentpacketrule"
     ]
   },
+  "Expire stale capture requests, restart lost batch runs and enforce intake retention": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Expired": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -66197,6 +66828,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Expires stale capture requests and pairings, restarts lost runs and enforces retention.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Expires today": {
@@ -66284,6 +66924,15 @@
       "routes/worker"
     ]
   },
+  "Expiring soonest": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Expiring within a month": {
     "sites": 1,
     "scope": [
@@ -66321,11 +66970,12 @@
     ]
   },
   "Expiry is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/capture",
       "domain/documentupload",
       "domain/invoice"
     ]
@@ -68007,7 +68657,7 @@
     ]
   },
   "Failed": {
-    "sites": 34,
+    "sites": 37,
     "scope": [
       "go",
       "ts"
@@ -69652,6 +70302,15 @@
       "domain/documentupload"
     ]
   },
+  "Failure code is not one Trenova recognises": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "Failure count cannot be negative": {
     "sites": 2,
     "scope": [
@@ -70320,14 +70979,15 @@
     ]
   },
   "File": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
-      "routes/edi"
+      "routes/edi",
+      "routes/intake"
     ]
   },
   "File Format": {
@@ -70357,6 +71017,15 @@
       "go/other"
     ]
   },
+  "File between 1 and {0} documents at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "File cannot be empty": {
     "sites": 1,
     "scope": [
@@ -70364,6 +71033,15 @@
     ],
     "areas": [
       "service/documentservice"
+    ]
+  },
+  "File documents": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "File envelope was parsed and transactions are being processed.": {
@@ -70440,6 +71118,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "File onto": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "File path cannot be longer than 500 characters": {
@@ -70562,17 +71249,28 @@
     ]
   },
   "Filed": {
-    "sites": 5,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "domain/ifta",
       "domain/worker",
       "packages/shared/components",
       "routes/agent-control",
+      "routes/intake",
       "routes/osha"
+    ]
+  },
+  "Filed from this stack": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Filed on": {
@@ -70620,6 +71318,16 @@
       "domain/documenttemplate"
     ]
   },
+  "Filing": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/intake"
+    ]
+  },
   "Filing reference": {
     "sites": 1,
     "scope": [
@@ -70636,6 +71344,15 @@
     ],
     "areas": [
       "domain/ifta"
+    ]
+  },
+  "Filing the document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Filings": {
@@ -70966,6 +71683,15 @@
     "areas": [
       "domain/ifta",
       "packages/shared/components"
+    ]
+  },
+  "Finalizes a captured document's upload and records the document it became.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Finalize…": {
@@ -73526,6 +74252,15 @@
       "routes/org-structure"
     ]
   },
+  "From a cover sheet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "From address": {
     "sites": 1,
     "scope": [
@@ -76062,6 +76797,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Grayscale": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Greater than": {
@@ -80295,6 +81039,33 @@
       "routes/shipment"
     ]
   },
+  "Image quality is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
+  "Image quality must be at least 30": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
+  "Image quality must be at most 95": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
   "Images": {
     "sites": 1,
     "scope": [
@@ -82523,6 +83294,16 @@
       "routes/worker"
     ]
   },
+  "Intake": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/intake"
+    ]
+  },
   "Intake desk": {
     "sites": 1,
     "scope": [
@@ -82530,6 +83311,42 @@
     ],
     "areas": [
       "domain/agentdefinition"
+    ]
+  },
+  "Intake retention is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/tenant"
+    ]
+  },
+  "Intake retention must be at least 1 day": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/tenant"
+    ]
+  },
+  "Intake retention must be at most 365 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/tenant"
+    ]
+  },
+  "Intake views": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Integration": {
@@ -85460,6 +86277,15 @@
       "domain/tenant"
     ]
   },
+  "Issuer is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
   "Issues": {
     "sites": 2,
     "scope": [
@@ -85647,6 +86473,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "It may have been discarded, or you may no longer be able to see it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "It may have been removed by the retention sweep, or it belongs to another organization.": {
@@ -86032,6 +86867,15 @@
     "areas": [
       "apps/web/lib",
       "domain/worker"
+    ]
+  },
+  "Join with next": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Journal approved": {
@@ -86582,13 +87426,14 @@
     ]
   },
   "Keep it": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/desk",
+      "routes/intake",
       "routes/time-attendance"
     ]
   },
@@ -86815,6 +87660,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Keeps the page out of every document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Kentucky (KY)": {
@@ -87241,12 +88095,13 @@
     ]
   },
   "Kind of record": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/intake"
     ]
   },
   "Known Host Key": {
@@ -90794,6 +91649,15 @@
       "api/handlers"
     ]
   },
+  "Live updates are not available": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "Live updates paused — reconnecting…": {
     "sites": 1,
     "scope": [
@@ -90921,7 +91785,7 @@
     ]
   },
   "Load more": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -90933,6 +91797,7 @@
       "routes/carrier-sourcing",
       "routes/fuel-purchase",
       "routes/inbox",
+      "routes/intake",
       "routes/notifications.tsx",
       "routes/worker"
     ]
@@ -91151,7 +92016,7 @@
     ]
   },
   "Loading": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -91159,6 +92024,7 @@
       "routes/benefits",
       "routes/carrier-sourcing",
       "routes/home",
+      "routes/intake",
       "routes/org-structure",
       "routes/reports",
       "routes/shipment",
@@ -93148,6 +94014,25 @@
       "apps/web/lib"
     ]
   },
+  "Machine name is required": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture",
+      "service/captureservice"
+    ]
+  },
+  "Machine name is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "Made a change": {
     "sites": 1,
     "scope": [
@@ -93318,6 +94203,15 @@
     "areas": [
       "routes/tractor",
       "routes/trailer"
+    ]
+  },
+  "Make it a document of its own": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Make must be between 0 and 50 characters": {
@@ -98012,11 +98906,12 @@
     ]
   },
   "Mode is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
+      "domain/capture",
       "domain/carrierintel",
       "domain/tender"
     ]
@@ -99065,6 +99960,15 @@
       "routes/shipment"
     ]
   },
+  "Most pages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Most recent FMCSA safety rating on record for this carrier.": {
     "sites": 1,
     "scope": [
@@ -99352,6 +100256,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Move to": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Move to another shift": {
@@ -100139,7 +101052,7 @@
     ]
   },
   "Name is required": {
-    "sites": 104,
+    "sites": 106,
     "scope": [
       "go",
       "ts"
@@ -100151,6 +101064,7 @@
       "domain/aiprovider",
       "domain/apikey",
       "domain/billingqueuefilterpreset",
+      "domain/capture",
       "domain/carrier",
       "domain/carriersettlement",
       "domain/commodity",
@@ -100577,6 +101491,15 @@
     ]
   },
   "Named groupings of geography that lane rules and rate matrices are written against": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Named scan settings offered to people who scan": {
     "sites": 1,
     "scope": [
       "go"
@@ -102204,6 +103127,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Newest first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Newly submitted by the driver and waiting for a first look.": {
@@ -105765,6 +106697,15 @@
       "apps/web/components"
     ]
   },
+  "No preview": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "No preview was recorded when this was decided; the parameters it was proposed with are shown.": {
     "sites": 1,
     "scope": [
@@ -108054,6 +108995,15 @@
       "domain/worker"
     ]
   },
+  "Not filed before the retention date; its pages were deleted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Not finished yet": {
     "sites": 1,
     "scope": [
@@ -108107,6 +109057,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Not in any document. Drag a page into one to file it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Not in use": {
@@ -108237,6 +109196,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Not picked up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Not priced": {
@@ -109008,13 +109976,14 @@
     ]
   },
   "Nothing here": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/carrier-monitoring",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/intake"
     ]
   },
   "Nothing here yet": {
@@ -109189,6 +110158,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Nothing is waiting to be filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Nothing is written until you apply.": {
@@ -111268,6 +112246,15 @@
       "apps/web/components"
     ]
   },
+  "Oldest first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Oldest open invoice": {
     "sites": 1,
     "scope": [
@@ -112326,6 +113313,15 @@
       "service/customerpaymentservice"
     ]
   },
+  "Only a document waiting to be filed can be discarded": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "Only a draft can be deleted. A published version is the record of what was sent — archive it instead.": {
     "sites": 1,
     "scope": [
@@ -112532,6 +113528,15 @@
     ],
     "areas": [
       "service/invoiceservice"
+    ]
+  },
+  "Only a print batch takes a print job": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Only a proposal a person approved or rejected can become an evaluation case": {
@@ -113368,6 +114373,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "Only mine": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Only new or assigned moves can be split": {
@@ -115795,7 +116809,7 @@
     ]
   },
   "Optional": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -115804,6 +116818,7 @@
       "routes/bank-receipt-batch",
       "routes/edi",
       "routes/formula-template",
+      "routes/intake",
       "routes/shipment",
       "routes/worker"
     ]
@@ -119269,6 +120284,15 @@
       "domain/documentcontent"
     ]
   },
+  "Page count must be between 0 and {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "Page is required": {
     "sites": 1,
     "scope": [
@@ -119303,6 +120327,24 @@
     ],
     "areas": [
       "domain/documentcontent"
+    ]
+  },
+  "Page sequence must be a number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Page sequence must be between 1 and {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Page snapshots": {
@@ -119342,14 +120384,33 @@
     ]
   },
   "Page {0}": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/admin",
+      "routes/intake",
       "routes/shipment"
+    ]
+  },
+  "Page {0} actions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "Page {0} is missing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Page {0} of {1}": {
@@ -119361,6 +120422,15 @@
       "routes/insights"
     ]
   },
+  "Page {0}. Drag to move it, or open its menu.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Pages": {
     "sites": 4,
     "scope": [
@@ -119368,6 +120438,51 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Pages are still arriving from the scanner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Pages are still arriving. The documents appear here once every page is in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "Pages per document must be between 1 and {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
+  "Pages per document only applies when splitting by page count": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
+  "Pages rotate in quarter turns": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Pages you open show up here.": {
@@ -119511,6 +120626,15 @@
       "routes/pto-policy"
     ]
   },
+  "Paired Trenova Capture installs across the organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Pairs with the local certificate for signing and decryption. Leave blank to keep the saved value.": {
     "sites": 1,
     "scope": [
@@ -119518,6 +120642,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Paper scanned and documents printed into Trenova, split into documents and waiting to be filed onto their records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Param: {0}": {
@@ -119893,6 +121026,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Partly filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Partner": {
@@ -120478,6 +121620,33 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Patch code must be 1, 2, 3, 4, 6 or T": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "Patch code sheets": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Patch {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Paternity": {
@@ -126730,7 +127899,7 @@
     ]
   },
   "Preview": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -126739,6 +127908,7 @@
       "routes/admin",
       "routes/edi",
       "routes/fuel-management",
+      "routes/intake",
       "routes/invoice",
       "routes/reports"
     ]
@@ -127566,12 +128736,40 @@
     ]
   },
   "Print": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/shipment"
+    ]
+  },
+  "Print between 1 and {0} cover sheets at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "Printed": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/shipment"
+      "routes/intake"
+    ]
+  },
+  "Printed document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Printed on the card. Leave empty when the provider does not set one.": {
@@ -128099,6 +129297,15 @@
     "areas": [
       "routes/edi",
       "routes/organization"
+    ]
+  },
+  "Profile not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Profile picture file cannot be empty": {
@@ -128723,6 +129930,15 @@
     ],
     "areas": [
       "domain/iam"
+    ]
+  },
+  "Protocol must be TWAIN or WIA": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Provenance": {
@@ -130567,7 +131783,7 @@
     ]
   },
   "Queued": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -132864,6 +134080,15 @@
       "routes/fuel-management"
     ]
   },
+  "Read from the document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Read from the provider's API.": {
     "sites": 1,
     "scope": [
@@ -133073,6 +134298,15 @@
       "routes/admin"
     ]
   },
+  "Reading": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Reading at the pump, if recorded. Lets fuel be checked against miles run.": {
     "sites": 1,
     "scope": [
@@ -133180,6 +134414,15 @@
     ],
     "areas": [
       "service/formula"
+    ]
+  },
+  "Reads a captured batch, divides it into documents and files what needs no person.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Reads a staged inbound message and decides what it is.": {
@@ -133793,11 +135036,12 @@
     ]
   },
   "Reason must be at most {0} characters": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
+      "service/captureservice",
       "service/invoiceservice"
     ]
   },
@@ -134293,6 +135537,15 @@
     ],
     "areas": [
       "routes/carrier"
+    ]
+  },
+  "Receiving": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Recent": {
@@ -135357,6 +136610,15 @@
       "domain/agent"
     ]
   },
+  "Record is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
   "Record it on the timeline": {
     "sites": 1,
     "scope": [
@@ -135366,6 +136628,15 @@
       "routes/worker"
     ]
   },
+  "Record key is malformed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Record kind is not recognized": {
     "sites": 1,
     "scope": [
@@ -135373,6 +136644,15 @@
     ],
     "areas": [
       "service/accountingmappingservice"
+    ]
+  },
+  "Record kind is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
     ]
   },
   "Record manual carrier responses": {
@@ -135409,6 +136689,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Record not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Record not found. It may have been deleted.": {
@@ -141281,6 +142570,42 @@
       "domain/carrierintel"
     ]
   },
+  "Resolution is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
+  "Resolution must be a whole number": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
+  "Resolution must be at least 100 DPI": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
+  "Resolution must be at most 600 DPI": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/capture"
+    ]
+  },
   "Resolution note": {
     "sites": 1,
     "scope": [
@@ -144062,6 +145387,15 @@
       "routes/worker"
     ]
   },
+  "Revoke any paired device": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "Revoke key": {
     "sites": 3,
     "scope": [
@@ -144637,6 +145971,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Rotate left": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "Rotate right": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Rotate secret": {
@@ -147747,6 +149099,15 @@
       "routes/organization"
     ]
   },
+  "Save split": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Save tags": {
     "sites": 1,
     "scope": [
@@ -147853,6 +149214,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Save the split before filing": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Save the template before adding scenarios": {
@@ -148070,6 +149440,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Saving": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Saving clears the agents it can ask": {
@@ -148463,6 +149842,105 @@
     ],
     "areas": [
       "service/invoicerunservice"
+    ]
+  },
+  "Scan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Scan from a record's Documents tab, or print into Trenova from any program, and the pages land here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "Scan or print into Trenova from a paired device": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Scanned": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "Scanned and printed paper, split into documents and waiting to be filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Scanned into this record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Scanned stack": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Scanner name must be 1 to 255 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "Scanning": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Scans and print jobs waiting in intake, and filing them onto records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
+  "Scans and prints": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Scatter": {
@@ -149342,11 +150820,12 @@
     ]
   },
   "Search by Pro # or BOL...": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/recurring-shipment"
     ]
   },
@@ -149360,12 +150839,22 @@
     ]
   },
   "Search by code or name": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/carrier-invoice-matching"
+    ]
+  },
+  "Search by name": {
     "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-invoice-matching"
+      "apps/web/components"
     ]
   },
   "Search by name, field, or domain to inspect a GraphQL query, mutation, or fragment.": {
@@ -149375,6 +150864,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Search by unit number": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Search cannot be longer than 200 characters": {
@@ -149989,6 +151487,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Search scanner, print job or device": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Search scope": {
@@ -155028,6 +156535,15 @@
       "apps/web/components"
     ]
   },
+  "Set aside": {
+    "sites": 5,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Set by a Terminated event in the employment history.": {
     "sites": 1,
     "scope": [
@@ -155035,6 +156551,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Set by a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Set credit limits and automatic hold rules to manage financial exposure": {
@@ -156261,7 +157786,7 @@
     ]
   },
   "Shipment": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -159763,6 +161288,15 @@
       "routes/fleet-safety"
     ]
   },
+  "Some documents are filed and some are still waiting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Some items could not be indexed; they are listed below": {
     "sites": 1,
     "scope": [
@@ -159869,6 +161403,33 @@
     ],
     "areas": [
       "template/account.password_reset.email"
+    ]
+  },
+  "Somebody else changed this batch; reload it and try again": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "Somebody else changed this document; reload it and try again": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "Somebody else changed this profile; reload it and try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Somebody has to be named": {
@@ -159999,12 +161560,13 @@
     ]
   },
   "Sort": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/intake",
       "routes/reports",
       "routes/service-failure-reason-code"
     ]
@@ -160401,13 +161963,14 @@
     ]
   },
   "Source is required": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/agent",
       "domain/agentquality",
+      "domain/capture",
       "domain/carrierintel",
       "domain/distancecalculation",
       "domain/edi",
@@ -160912,6 +162475,15 @@
       "routes/worker"
     ]
   },
+  "Split and waiting for a person to file it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Split between payers": {
     "sites": 2,
     "scope": [
@@ -161030,6 +162602,15 @@
       "service/shipmentmoveservice"
     ]
   },
+  "Split saved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Split sleeper": {
     "sites": 1,
     "scope": [
@@ -161064,6 +162645,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Split, reorder and file captured pages onto records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "Splits an oversized group across several invoices. Zero means no limit.": {
@@ -161220,6 +162810,24 @@
       "routes/edi"
     ]
   },
+  "Stack actions": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "Stack discarded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Stack trace": {
     "sites": 1,
     "scope": [
@@ -161245,6 +162853,15 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Stacks appear here as they are scanned or printed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Staff": {
@@ -161553,6 +163170,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Start a new document after this page": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Start a new thumbnail workflow": {
@@ -162539,7 +164165,7 @@
     ]
   },
   "Status is required": {
-    "sites": 130,
+    "sites": 135,
     "scope": [
       "go"
     ],
@@ -162552,6 +164178,7 @@
       "domain/assistantartifact",
       "domain/billingtransfer",
       "domain/briefing",
+      "domain/capture",
       "domain/carrier",
       "domain/carrierintel",
       "domain/conversation",
@@ -162623,12 +164250,13 @@
     ]
   },
   "Status must be Active or Inactive": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "domain/distanceprofile"
+      "domain/distanceprofile",
+      "service/captureservice"
     ]
   },
   "Status must be Draft, Open, Closed, or PermanentlyClosed": {
@@ -163544,7 +165172,7 @@
     ]
   },
   "Streaming is not supported": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -167792,6 +169420,24 @@
       "service/schedulingservice"
     ]
   },
+  "That capture request already has a batch": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "That capture request is no longer open": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "That case number is already used for this year; try again": {
     "sites": 1,
     "scope": [
@@ -167799,6 +169445,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "That code is not valid or has expired": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "That cover has already ended": {
@@ -167844,6 +169499,15 @@
     ],
     "areas": [
       "service/orgstructureservice"
+    ]
+  },
+  "That device has been revoked; pair it again to use it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "That event belongs to another worker": {
@@ -167988,6 +169652,15 @@
     ],
     "areas": [
       "service/orgstructureservice"
+    ]
+  },
+  "That profile is no longer offered": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "That proposal has not been decided yet": {
@@ -168349,6 +170022,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The PDF could not be read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "The PDF renderer is not available, so this template cannot be printed. The HTML preview still works.": {
@@ -168962,6 +170644,24 @@
     ],
     "areas": [
       "service/driversettlementservice"
+    ]
+  },
+  "The batch has {0} of the {1} pages; upload the rest before sealing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "The batch source does not match the request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "The biennial MCS-150 update has not been filed within the configured window.": {
@@ -169992,6 +171692,15 @@
       "routes/ifta-return"
     ]
   },
+  "The computer was off or Trenova Capture was not running": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "The confirmation reference returned when the 300A was filed, so it can be found again.": {
     "sites": 1,
     "scope": [
@@ -170928,6 +172637,24 @@
       "service/detentionservice"
     ]
   },
+  "The device changed while it was being revoked; try again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "The device credential is not valid": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "The directory where inbound files are stored.": {
     "sites": 1,
     "scope": [
@@ -171821,6 +173548,15 @@
     ],
     "areas": [
       "routes/fuel-management"
+    ]
+  },
+  "The feeder is empty": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The file carries each row's place in the chain and its hash, and the export records the file's SHA-256, so it can be checked later. Requesting it is written to the audit log.": {
@@ -173879,6 +175615,15 @@
       "routes/hazardous-material"
     ]
   },
+  "The page is empty": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "The page they are on": {
     "sites": 1,
     "scope": [
@@ -173888,6 +175633,24 @@
       "routes/agent-control"
     ]
   },
+  "The pages could not be uploaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The pages stored do not match the pages the device captured": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "The pages you starred": {
     "sites": 1,
     "scope": [
@@ -173895,6 +175658,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "The paper jammed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "The part of the body affected; it goes in the 300 log description.": {
@@ -174305,6 +176077,15 @@
       "routes/tractor"
     ]
   },
+  "The print job could not be split into pages": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "The printable form of any report. One template serves every report definition, so columns are positional rather than named.": {
     "sites": 1,
     "scope": [
@@ -174620,6 +176401,15 @@
       "domain/agentquality"
     ]
   },
+  "The queue could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "The quoted price and currency the order is billed in": {
     "sites": 1,
     "scope": [
@@ -174798,6 +176588,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "The reason is shown on each one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "The reason recorded on the event itself.": {
@@ -175577,6 +177376,33 @@
       "service/accountingconnectionservice"
     ]
   },
+  "The scanner is busy with another job": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The scanner is not connected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "The scanner's driver reported an error": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "The schedule could not be computed: {0}": {
     "sites": 1,
     "scope": [
@@ -176116,6 +177942,16 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "The stack could not be read": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/intake"
     ]
   },
   "The stage is read off what has been recorded, so it can never drift from the file underneath it.": {
@@ -176927,6 +178763,24 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "The upload is larger than {0} bytes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "The upload is not a PDF": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "The upload must complete before extraction can start.": {
@@ -178070,6 +179924,24 @@
       "routes/customer-payments"
     ]
   },
+  "This batch can no longer be edited": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "This batch is sealed and takes no more pages": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "This broker has not been vetted": {
     "sites": 1,
     "scope": [
@@ -178788,6 +180660,15 @@
     ],
     "areas": [
       "service/carriersettlementservice"
+    ]
+  },
+  "This document can no longer be filed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "This document is already attached to a shipment.": {
@@ -180012,6 +181893,15 @@
       "routes/desk"
     ]
   },
+  "This page has no thumbnail yet": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "This page is under construction": {
     "sites": 2,
     "scope": [
@@ -180902,6 +182792,15 @@
       "apps/web/components"
     ]
   },
+  "This stack could not be opened": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "This state restricts holiday movement; an override cannot lift that": {
     "sites": 1,
     "scope": [
@@ -181588,6 +183487,15 @@
     ],
     "areas": [
       "service/reporting"
+    ]
+  },
+  "Thrown away without filing what was left": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Thrown away without importing anything.": {
@@ -182558,6 +184466,16 @@
     ],
     "areas": [
       "domain/exchangerate"
+    ]
+  },
+  "To file": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib",
+      "routes/intake"
     ]
   },
   "To get a Google Maps API key, visit the": {
@@ -184135,7 +186053,7 @@
     ]
   },
   "Tractor": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "go",
       "ts"
@@ -184361,7 +186279,7 @@
     ]
   },
   "Trailer": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -185321,6 +187239,33 @@
       "routes/auth"
     ]
   },
+  "Trenova Capture has not picked the request up yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Trenova Capture never picked the request up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Trenova Capture ran into a problem": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Trenova EDI Document": {
     "sites": 1,
     "scope": [
@@ -185346,6 +187291,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Trenova cover sheets": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Trenova creates the {0} in {1} and maps {2} to it.": {
@@ -185382,6 +187336,24 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Trenova is splitting the stack and suggesting where each part goes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
+  "Trenova is splitting the stack and suggesting where each part goes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Trenova logo": {
@@ -185801,7 +187773,7 @@
     ]
   },
   "Try again": {
-    "sites": 39,
+    "sites": 41,
     "scope": [
       "ts"
     ],
@@ -185817,6 +187789,7 @@
       "routes/detention-intelligence",
       "routes/hos.tsx",
       "routes/inbox",
+      "routes/intake",
       "routes/rate-confirmation-public",
       "routes/shipment",
       "routes/tender-offer-public",
@@ -187220,6 +189193,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Undo changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Unenroll inactive carriers": {
     "sites": 1,
     "scope": [
@@ -187782,6 +189764,15 @@
       "service/watchtowerservice"
     ]
   },
+  "Unknown sheet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "Unknown sidebar section: {0}": {
     "sites": 1,
     "scope": [
@@ -187789,6 +189780,15 @@
     ],
     "areas": [
       "domain/sidebarpreference"
+    ]
+  },
+  "Unknown status": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
     ]
   },
   "Unknown table resource": {
@@ -188101,6 +190101,15 @@
     ],
     "areas": [
       "domain/homelayout"
+    ]
+  },
+  "Unreadable": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "Unrecognized ISO 4217 currency code: \"{0}\"": {
@@ -190065,12 +192074,13 @@
     ]
   },
   "User is required": {
-    "sites": 15,
+    "sites": 18,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/aifeedback",
+      "domain/capture",
       "domain/conversation",
       "domain/documentaiextraction",
       "domain/homelayout",
@@ -191984,6 +193994,15 @@
       "domain/permission"
     ]
   },
+  "View every paired device and who it acts for": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
+    ]
+  },
   "View everyone's ratings of AI output and each agent's satisfaction": {
     "sites": 1,
     "scope": [
@@ -192504,6 +194523,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "View scanned and printed batches in intake": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/permission"
     ]
   },
   "View service failure reason codes": {
@@ -193484,6 +195512,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Waiting for the scanner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Waiting for the trading partner to acknowledge this message.": {
@@ -198908,7 +200945,7 @@
     ]
   },
   "Worker": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -200438,6 +202475,24 @@
       "service/agentdefinitionservice"
     ]
   },
+  "You can only cancel your own requests": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
+  "You can only capture with your own devices": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/captureservice"
+    ]
+  },
   "You can view these settings but not change them.": {
     "sites": 1,
     "scope": [
@@ -200473,6 +202528,15 @@
     "areas": [
       "domain/invoice",
       "service/invoiceshareservice"
+    ]
+  },
+  "You changed how the pages divide. Save the split to file these documents.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "You choose what it shows before it lands.": {
@@ -205096,6 +207160,15 @@
       "routes/shipment"
     ]
   },
+  "kind must be pdf or thumbnail": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/handlers"
+    ]
+  },
   "last rated {0}": {
     "sites": 1,
     "scope": [
@@ -207559,6 +209632,24 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# document could not be filed} other {# documents could not be filed}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "{0, plural, one {# document} other {# documents}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "{0, plural, one {# doc} other {# docs}}": {
     "sites": 1,
     "scope": [
@@ -208001,6 +210092,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# page} other {# pages}}": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "{0, plural, one {# pairing} other {# pairings}}": {
     "sites": 1,
     "scope": [
@@ -208395,6 +210495,24 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# stack is waiting to be filed} other {# stacks are waiting to be filed}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "{0, plural, one {# stack} other {# stacks}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "{0, plural, one {# step} other {# steps}}": {
     "sites": 3,
     "scope": [
@@ -208591,6 +210709,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {Deleted in # day} other {Deleted in # days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "{0, plural, one {Drawn from # rating} other {Drawn from # ratings}}": {
     "sites": 1,
     "scope": [
@@ -208598,6 +210725,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {File # document} other {File # documents}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
+  "{0, plural, one {Filing # document} other {Filing # documents}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "{0, plural, one {Found # record} other {Found # records}}": {
@@ -208699,6 +210844,15 @@
       "routes/desk"
     ]
   },
+  "{0, plural, one {The # document already filed stays on its record.} other {The # documents already filed stay on their records.}} Every other page is deleted.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "{0, plural, one {The desk has handled # message. It is under Handled.} other {The desk has handled # messages. They are under Handled.}}": {
     "sites": 1,
     "scope": [
@@ -208715,6 +210869,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "{0, plural, one {Unfiled pages are deleted in # day, on {1}.} other {Unfiled pages are deleted in # days, on {1}.}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
     ]
   },
   "{0, plural, one {and one more agent} other {and # more agents}}": {
@@ -211640,6 +213803,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} of {1} filed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/intake"
+    ]
+  },
   "{0} of {1} indexed under {2}. Searches use {3} until every source is done.": {
     "sites": 1,
     "scope": [
@@ -213605,13 +215777,14 @@
     ]
   },
   "{0}% sure": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/desk",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/intake"
     ]
   },
   "{0}% sure, clear of this mailbox's {1}% bar": {
