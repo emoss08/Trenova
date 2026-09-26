@@ -117,6 +117,7 @@ func (r *repository) Upsert(
 		existing.AgentEvalCaseRetentionPeriod = entity.AgentEvalCaseRetentionPeriod
 		existing.AIFeedbackRetentionPeriod = entity.AIFeedbackRetentionPeriod
 		existing.AIAuditRetentionPeriod = entity.AIAuditRetentionPeriod
+		existing.AICorrectionRetentionPeriod = entity.AICorrectionRetentionPeriod
 		return r.Update(ctx, existing)
 	}
 	if !dberror.IsNotFoundError(err) {
@@ -133,6 +134,7 @@ func (r *repository) Upsert(
 		Set(buncolgen.DataRetentionColumns.AgentEvalCaseRetentionPeriod.SetExcluded()).
 		Set(buncolgen.DataRetentionColumns.AIFeedbackRetentionPeriod.SetExcluded()).
 		Set(buncolgen.DataRetentionColumns.AIAuditRetentionPeriod.SetExcluded()).
+		Set(buncolgen.DataRetentionColumns.AICorrectionRetentionPeriod.SetExcluded()).
 		Returning("*").
 		Exec(ctx); err != nil {
 		log.Error("failed to upsert data retention", zap.Error(err))

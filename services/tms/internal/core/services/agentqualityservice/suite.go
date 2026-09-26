@@ -121,6 +121,28 @@ func (s *Service) CheckBudget(
 	return &decision, nil
 }
 
+func (s *Service) CheckEvaluationBudget(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+) (*agentquality.BudgetDecision, error) {
+	control, err := s.control(ctx, tenant)
+	if err != nil {
+		return nil, err
+	}
+
+	dayStart, monthStart, err := windows(s.now(), s.timezoneOf(ctx, control, tenant))
+	if err != nil {
+		return nil, err
+	}
+
+	return s.CheckBudget(ctx, &CheckBudgetRequest{
+		TenantInfo: tenant,
+		DayStart:   dayStart,
+		MonthStart: monthStart,
+		Settings:   control.Settings(),
+	})
+}
+
 type suiteOutcome struct {
 	evaluations   []*agent.Evaluation
 	scored        []agentscoring.CaseResult

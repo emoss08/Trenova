@@ -1,0 +1,342 @@
+enum AICorrectionOutcome {
+  Correct
+  Corrected
+  Missed
+  Unconfirmed
+  Unscored
+}
+
+enum ExtractionEvalCaseStatus {
+  Candidate
+  Active
+  Retired
+}
+
+enum ExtractionEvalRunStatus {
+  Queued
+  Running
+  Completed
+  BudgetStopped
+  Canceled
+  Failed
+}
+
+enum ExtractionEvalResultStatus {
+  Pending
+  Completed
+  Failed
+  Skipped
+}
+
+type ExtractionSnapshotField {
+  key: String!
+  value: String!
+}
+
+type ExtractionStop {
+  "pickup or delivery."
+  role: String!
+  sequence: Int!
+  name: String!
+  addressLine1: String!
+  addressLine2: String!
+  city: String!
+  state: String!
+  postalCode: String!
+  "As read from the document for a prediction; the calendar day for a confirmed stop."
+  date: String!
+  timeWindow: String!
+  appointmentRequired: Boolean!
+  scheduledWindowStart: Timestamp
+  timezone: String!
+}
+
+"Field values and stops, either as an extraction predicted them or as a person confirmed them."
+type ExtractionSnapshot {
+  fields: [ExtractionSnapshotField!]!
+  stops: [ExtractionStop!]!
+}
+
+type AICorrectionFieldResult {
+  "A field key, or a stop field such as stops.pickup[0].city."
+  key: String!
+  predicted: String!
+  confirmed: String!
+  outcome: AICorrectionOutcome!
+  "Where the predicted value came from: ai, template, hybrid or deterministic."
+  source: String!
+  confidence: Float!
+}
+
+type ExtractionFieldAccuracy {
+  "A field key, with stop fields grouped across stops (stops.pickup.city)."
+  key: String!
+  scored: Int!
+  correct: Int!
+  corrected: Int!
+  missed: Int!
+  unconfirmed: Int!
+  unscored: Int!
+  "Correct divided by scored; zero when nothing was scored."
+  accuracy: Float!
+}
+
+"What an extraction predicted beside what a person confirmed when they created a record from it."
+type AICorrection {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  task: String!
+  sourceType: String!
+  sourceId: ID!
+  documentId: ID
+  subjectType: String!
+  subjectId: ID!
+  capturedById: ID!
+  documentKind: String!
+  documentFingerprint: String!
+  "Empty when the prediction came from rules alone."
+  extractionModel: String!
+  extractionProviderId: ID
+  predictedConfidence: Float!
+  predicted: ExtractionSnapshot!
+  confirmed: ExtractionSnapshot!
+  fieldResults: [AICorrectionFieldResult!]!
+  scoredCount: Int!
+  correctCount: Int!
+  correctedCount: Int!
+  missedCount: Int!
+  unconfirmedCount: Int!
+  unscoredCount: Int!
+  "Correct fields divided by scored fields."
+  accuracy: Float!
+  capturedAt: Timestamp!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type AICorrectionEdge {
+  node: AICorrection!
+  cursor: String!
+}
+
+type AICorrectionConnection {
+  edges: [AICorrectionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ExtractionEvalPage {
+  number: Int!
+  text: String!
+}
+
+"A frozen extraction test: the page text the extractor reads and the values a person confirmed."
+type ExtractionEvalCase {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  task: String!
+  status: ExtractionEvalCaseStatus!
+  title: String!
+  documentKind: String!
+  documentFingerprint: String!
+  fileName: String!
+  pages: [ExtractionEvalPage!]!
+  pageCount: Int!
+  inputHash: String!
+  expected: ExtractionSnapshot!
+  expectedFieldCount: Int!
+  sourceCorrectionId: ID
+  sourceDocumentId: ID
+  notes: String!
+  createdById: ID!
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type ExtractionEvalCaseEdge {
+  node: ExtractionEvalCase!
+  cursor: String!
+}
+
+type ExtractionEvalCaseConnection {
+  edges: [ExtractionEvalCaseEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"One model, pinned to one AI provider, run over the active extraction cases."
+type ExtractionEvalRun {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  task: String!
+  status: ExtractionEvalRunStatus!
+  providerId: ID!
+  providerName: String!
+  "The model the provider was configured with when the run was requested."
+  providerModel: String!
+  "The model the provider reported serving."
+  servedModel: String!
+  caseLimit: Int!
+  casesTotal: Int!
+  casesCompleted: Int!
+  casesFailed: Int!
+  casesSkipped: Int!
+  scoredCount: Int!
+  correctCount: Int!
+  correctedCount: Int!
+  missedCount: Int!
+  unconfirmedCount: Int!
+  unscoredCount: Int!
+  accuracy: Float!
+  fieldAccuracy: [ExtractionFieldAccuracy!]!
+  costUsd: Decimal!
+  inputTokens: Int!
+  outputTokens: Int!
+  avgLatencyMs: Int!
+  "Why the run ended before every case ran."
+  stopReason: String!
+  failureMessage: String!
+  requestedById: ID!
+  workflowId: String!
+  startedAt: Timestamp
+  finishedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type ExtractionEvalRunEdge {
+  node: ExtractionEvalRun!
+  cursor: String!
+}
+
+type ExtractionEvalRunConnection {
+  edges: [ExtractionEvalRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+"One case evaluated within a run."
+type ExtractionEvalResult {
+  id: ID!
+  organizationId: ID!
+  businessUnitId: ID!
+  runId: ID!
+  caseId: ID!
+  caseTitle: String!
+  ordinal: Int!
+  status: ExtractionEvalResultStatus!
+  model: String!
+  providerId: ID
+  predicted: ExtractionSnapshot
+  fieldResults: [AICorrectionFieldResult!]!
+  scoredCount: Int!
+  correctCount: Int!
+  correctedCount: Int!
+  missedCount: Int!
+  unconfirmedCount: Int!
+  unscoredCount: Int!
+  accuracy: Float!
+  latencyMs: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  costUsd: Decimal!
+  errorMessage: String!
+  startedAt: Timestamp
+  completedAt: Timestamp
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type ExtractionEvalResultEdge {
+  node: ExtractionEvalResult!
+  cursor: String!
+}
+
+type ExtractionEvalResultConnection {
+  edges: [ExtractionEvalResultEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type ExtractionAccuracyGroup {
+  "The model, or the document kind; empty for drafts read by rules alone."
+  key: String!
+  corrections: Int!
+  scored: Int!
+  correct: Int!
+  accuracy: Float!
+}
+
+type ExtractionEvalCaseCounts {
+  candidate: Int!
+  active: Int!
+  retired: Int!
+}
+
+"How well extraction did in production over a window, from the corrections people made."
+type ExtractionAccuracy {
+  windowDays: Int!
+  since: Timestamp!
+  corrections: Int!
+  "True when the window held more corrections than were read."
+  sampled: Boolean!
+  scored: Int!
+  correct: Int!
+  corrected: Int!
+  missed: Int!
+  unconfirmed: Int!
+  accuracy: Float!
+  byModel: [ExtractionAccuracyGroup!]!
+  byKind: [ExtractionAccuracyGroup!]!
+  fields: [ExtractionFieldAccuracy!]!
+  cases: ExtractionEvalCaseCounts!
+  recentRuns: [ExtractionEvalRun!]!
+}
+
+input PromoteAICorrectionInput {
+  correctionId: ID!
+  title: String
+  "Start the case as Active rather than Candidate."
+  activate: Boolean
+}
+
+input UpdateExtractionEvalCaseInput {
+  version: Int!
+  title: String
+  notes: String
+  status: ExtractionEvalCaseStatus
+}
+
+input StartExtractionEvalRunInput {
+  providerId: ID!
+  "How many active cases to run, newest first; 50 by default, at most 500."
+  caseLimit: Int
+}
+
+extend type Query {
+  extractionAccuracy(windowDays: Int): ExtractionAccuracy!
+  aiCorrections(input: DataTableConnectionInput!): AICorrectionConnection!
+  aiCorrection(id: ID!): AICorrection
+  extractionEvalCases(input: DataTableConnectionInput!): ExtractionEvalCaseConnection!
+  extractionEvalCase(id: ID!): ExtractionEvalCase
+  extractionEvalRuns(input: DataTableConnectionInput!): ExtractionEvalRunConnection!
+  extractionEvalRun(id: ID!): ExtractionEvalRun
+  extractionEvalResults(runId: ID!, input: DataTableConnectionInput!): ExtractionEvalResultConnection!
+  extractionEvalResult(id: ID!): ExtractionEvalResult
+}
+
+extend type Mutation {
+  "Freezes a correction's document text and confirmed values into an evaluation case."
+  promoteAICorrection(input: PromoteAICorrectionInput!): ExtractionEvalCase!
+  updateExtractionEvalCase(id: ID!, input: UpdateExtractionEvalCaseInput!): ExtractionEvalCase!
+  deleteExtractionEvalCase(id: ID!): Boolean!
+  "Runs one provider's model over the active cases, within the evaluation budget."
+  startExtractionEvalRun(input: StartExtractionEvalRunInput!): ExtractionEvalRun!
+  cancelExtractionEvalRun(id: ID!): ExtractionEvalRun!
+}

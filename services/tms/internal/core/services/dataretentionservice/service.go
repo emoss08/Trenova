@@ -56,6 +56,7 @@ func (s *Service) Get(
 		AIFeedbackRetentionPeriod:    tenant.DefaultAIFeedbackRetentionDays,
 		AgentEvalCaseRetentionPeriod: tenant.DefaultAgentEvalCaseRetentionDays,
 		AIAuditRetentionPeriod:       tenant.DefaultAIAuditRetentionDays,
+		AICorrectionRetentionPeriod:  tenant.DefaultAICorrectionRetentionDays,
 	}, nil
 }
 
@@ -67,10 +68,12 @@ type UpdateDataRetentionRequest struct {
 	AIFeedbackRetentionPeriod     int                   `json:"aiFeedbackRetentionPeriod"`
 	AgentEvalCaseRetentionPeriod  *int                  `json:"agentEvalCaseRetentionPeriod,omitempty"`
 	AIAuditRetentionPeriod        *int                  `json:"aiAuditRetentionPeriod,omitempty"`
+	AICorrectionRetentionPeriod   *int                  `json:"aiCorrectionRetentionPeriod,omitempty"`
 }
 
 func (r *UpdateDataRetentionRequest) keepsCurrent() bool {
-	return r.AgentEvalCaseRetentionPeriod == nil || r.AIAuditRetentionPeriod == nil
+	return r.AgentEvalCaseRetentionPeriod == nil || r.AIAuditRetentionPeriod == nil ||
+		r.AICorrectionRetentionPeriod == nil
 }
 
 func (s *Service) Update(
@@ -92,12 +95,16 @@ func (s *Service) Update(
 		}
 		entity.AgentEvalCaseRetentionPeriod = current.AgentEvalCaseRetentionPeriod
 		entity.AIAuditRetentionPeriod = current.AIAuditRetentionDays()
+		entity.AICorrectionRetentionPeriod = current.AICorrectionRetentionDays()
 	}
 	if req.AgentEvalCaseRetentionPeriod != nil {
 		entity.AgentEvalCaseRetentionPeriod = *req.AgentEvalCaseRetentionPeriod
 	}
 	if req.AIAuditRetentionPeriod != nil {
 		entity.AIAuditRetentionPeriod = *req.AIAuditRetentionPeriod
+	}
+	if req.AICorrectionRetentionPeriod != nil {
+		entity.AICorrectionRetentionPeriod = *req.AICorrectionRetentionPeriod
 	}
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)

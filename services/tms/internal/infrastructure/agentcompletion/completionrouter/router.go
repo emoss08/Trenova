@@ -113,6 +113,7 @@ func (s *Service) CompleteStructured(
 		SchemaName:          req.SchemaName,
 		MaxTokens:           req.MaxTokens,
 		PreferredProviderID: req.PreferredProviderID,
+		RequireProvider:     req.RequireProvider,
 		Attribution:         req.Attribution,
 	})
 	if err != nil {
@@ -142,6 +143,7 @@ type runRequest struct {
 	// PreferredProviderID asks for one configured provider first, subject to the
 	// same task and trust checks as any other candidate.
 	PreferredProviderID pulid.ID
+	RequireProvider     bool
 	Attribution         serviceports.AIUsageAttribution
 }
 
@@ -171,6 +173,11 @@ func (s *Service) candidatesFor(
 	if err != nil {
 		return nil, err
 	}
+	if req.RequireProvider {
+		if usable, err = requiredProvider(usable, req.PreferredProviderID, req.Task); err != nil {
+			return nil, err
+		}
+	}
 
 	ready, err := s.awake(usable)
 	if err != nil {
@@ -178,6 +185,22 @@ func (s *Service) candidatesFor(
 	}
 
 	return preferFirst(ready, req.PreferredProviderID), nil
+}
+
+func requiredProvider(
+	providers []*aiprovider.Provider,
+	required pulid.ID,
+	task aiprovider.Task,
+) ([]*aiprovider.Provider, error) {
+	for _, provider := range providers {
+		if provider.ID == required {
+			return []*aiprovider.Provider{provider}, nil
+		}
+	}
+
+	return nil, errortypes.NewBusinessError(
+		"The chosen AI provider is not enabled for {0}", string(task),
+	).WithInternal(serviceports.ErrRequiredProviderUnavailable)
 }
 
 func (s *Service) usableFor(

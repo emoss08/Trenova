@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/emoss08/trenova/cmd/cli/ai"
 	"github.com/emoss08/trenova/cmd/cli/api"
 	"github.com/emoss08/trenova/cmd/cli/db"
 	"github.com/emoss08/trenova/cmd/cli/redis"
@@ -294,6 +295,7 @@ func init() {
 		StringVar(&cfgFile, "config", "", "config file (default is config/config.yaml)")
 
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(ai.AICmd)
 	rootCmd.AddCommand(api.APICmd)
 	rootCmd.AddCommand(db.DbCmd)
 	rootCmd.AddCommand(redis.RedisCmd)

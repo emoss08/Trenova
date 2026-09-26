@@ -10,6 +10,7 @@ export const dataRetentionSchema = z.object({
   agentEvalCaseRetentionPeriod: z.number().default(365),
   aiFeedbackRetentionPeriod: z.number().default(730),
   aiAuditRetentionPeriod: z.number().default(2555),
+  aiCorrectionRetentionPeriod: z.number().default(730),
   version: z.number().default(0),
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
@@ -24,4 +25,5 @@ export type UpdateDataRetentionRequest = {
   agentEvalCaseRetentionPeriod: number;
   aiFeedbackRetentionPeriod: number;
   aiAuditRetentionPeriod: number;
+  aiCorrectionRetentionPeriod: number;
 };

@@ -141,6 +141,17 @@ export function DataRetentionPage() {
                   )}
                 />
               </FormControl>
+              <FormControl>
+                <NumberField
+                  control={control}
+                  name="aiCorrectionRetentionPeriod"
+                  label={t("AI correction retention (days)")}
+                  rules={{ required: true }}
+                  description={t(
+                    "What was read from a document, kept beside what a person confirmed when they created a shipment from it, is deleted after this many days. These corrections measure extraction accuracy. At least 30.",
+                  )}
+                />
+              </FormControl>
             </FormGroup>
           </FormSection>
           {canUpdate && (

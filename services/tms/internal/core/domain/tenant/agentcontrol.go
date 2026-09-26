@@ -39,6 +39,10 @@ type AgentControl struct {
 	BriefingEnabled   bool `json:"briefingEnabled"   bun:"briefing_enabled,type:BOOLEAN,notnull"`
 	BriefingHourLocal int  `json:"briefingHourLocal" bun:"briefing_hour_local,type:INTEGER,notnull,default:6"`
 
+	AITrainingConsent            bool      `json:"aiTrainingConsent"            bun:"ai_training_consent,type:BOOLEAN,notnull,default:false"`
+	AITrainingConsentChangedAt   *int64    `json:"aiTrainingConsentChangedAt"   bun:"ai_training_consent_changed_at,type:BIGINT,nullzero"`
+	AITrainingConsentChangedByID *pulid.ID `json:"aiTrainingConsentChangedById" bun:"ai_training_consent_changed_by_id,type:VARCHAR(100),nullzero"`
+
 	BillingAgentEnabled    bool `json:"billingAgentEnabled"    bun:"-"`
 	DecisionTimeoutSeconds int  `json:"decisionTimeoutSeconds" bun:"-"`
 
@@ -77,6 +81,18 @@ func (ac *AgentControl) Validate(multiErr *errortypes.MultiError) {
 			"The briefing hour must be between 0 and 23",
 		)
 	}
+}
+
+func (ac *AgentControl) SetAITrainingConsent(consent bool, changedByID pulid.ID, at int64) bool {
+	if ac.AITrainingConsent == consent {
+		return false
+	}
+
+	ac.AITrainingConsent = consent
+	ac.AITrainingConsentChangedAt = &at
+	ac.AITrainingConsentChangedByID = &changedByID
+
+	return true
 }
 
 func (ac *AgentControl) BeforeAppendModel(_ context.Context, query bun.Query) error {

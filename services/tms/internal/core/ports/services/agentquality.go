@@ -279,3 +279,10 @@ type AgentSuiteRunStart struct {
 type AgentSuiteStarter interface {
 	StartSuiteRun(ctx context.Context, start *AgentSuiteRunStart) (string, error)
 }
+
+type EvaluationBudget interface {
+	CheckEvaluationBudget(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*agentquality.BudgetDecision, error)
+}

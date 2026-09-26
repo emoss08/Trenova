@@ -8,6 +8,8 @@ var AIAuditEventSpec TypeSpec
 
 var AIAuditExportSpec TypeSpec
 
+var AICorrectionSpec TypeSpec
+
 var AIFeedbackSpec TypeSpec
 
 var AIProviderSpec TypeSpec
@@ -229,6 +231,12 @@ var EquipmentTypeSpec TypeSpec
 var EscrowAccountSpec TypeSpec
 
 var EscrowTransactionSpec TypeSpec
+
+var ExtractionEvalCaseSpec TypeSpec
+
+var ExtractionEvalResultSpec TypeSpec
+
+var ExtractionEvalRunSpec TypeSpec
 
 var FiscalPeriodSpec TypeSpec
 
@@ -982,6 +990,129 @@ func init() {
 			{
 				Name:    "downloadable",
 				Special: "downloadable",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	AICorrectionSpec = TypeSpec{
+		TypeName: "AICorrection",
+		FieldMap: buncolgen.CorrectionFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "task",
+				FieldMapKey: "task",
+			},
+			{
+				Name:        "sourceType",
+				FieldMapKey: "sourceType",
+			},
+			{
+				Name:        "sourceId",
+				FieldMapKey: "sourceId",
+			},
+			{
+				Name:        "documentId",
+				FieldMapKey: "documentId",
+			},
+			{
+				Name:        "subjectType",
+				FieldMapKey: "subjectType",
+			},
+			{
+				Name:        "subjectId",
+				FieldMapKey: "subjectId",
+			},
+			{
+				Name:        "capturedById",
+				FieldMapKey: "capturedById",
+			},
+			{
+				Name:        "documentKind",
+				FieldMapKey: "documentKind",
+			},
+			{
+				Name:        "documentFingerprint",
+				FieldMapKey: "documentFingerprint",
+			},
+			{
+				Name:        "extractionModel",
+				FieldMapKey: "extractionModel",
+			},
+			{
+				Name:        "extractionProviderId",
+				FieldMapKey: "extractionProviderId",
+			},
+			{
+				Name:        "predictedConfidence",
+				FieldMapKey: "predictedConfidence",
+			},
+			{
+				Name:        "predicted",
+				FieldMapKey: "predicted",
+			},
+			{
+				Name:        "confirmed",
+				FieldMapKey: "confirmed",
+			},
+			{
+				Name:        "fieldResults",
+				FieldMapKey: "fieldResults",
+			},
+			{
+				Name:        "scoredCount",
+				FieldMapKey: "scoredCount",
+			},
+			{
+				Name:        "correctCount",
+				FieldMapKey: "correctCount",
+			},
+			{
+				Name:        "correctedCount",
+				FieldMapKey: "correctedCount",
+			},
+			{
+				Name:        "missedCount",
+				FieldMapKey: "missedCount",
+			},
+			{
+				Name:        "unconfirmedCount",
+				FieldMapKey: "unconfirmedCount",
+			},
+			{
+				Name:        "unscoredCount",
+				FieldMapKey: "unscoredCount",
+			},
+			{
+				Name:    "accuracy",
+				Special: "accuracy",
+			},
+			{
+				Name:        "capturedAt",
+				FieldMapKey: "capturedAt",
 			},
 			{
 				Name:        "createdAt",
@@ -2303,6 +2434,18 @@ func init() {
 			{
 				Name:        "promotionThreshold",
 				FieldMapKey: "promotionThreshold",
+			},
+			{
+				Name:        "aiTrainingConsent",
+				FieldMapKey: "aiTrainingConsent",
+			},
+			{
+				Name:        "aiTrainingConsentChangedAt",
+				FieldMapKey: "aiTrainingConsentChangedAt",
+			},
+			{
+				Name:        "aiTrainingConsentChangedById",
+				FieldMapKey: "aiTrainingConsentChangedById",
 			},
 			{
 				Name:    "billingAgentEnabled",
@@ -11248,6 +11391,379 @@ func init() {
 			{
 				Name:        "createdAt",
 				FieldMapKey: "createdAt",
+			},
+		},
+	}
+
+	ExtractionEvalCaseSpec = TypeSpec{
+		TypeName: "ExtractionEvalCase",
+		FieldMap: buncolgen.ExtractionCaseFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "task",
+				FieldMapKey: "task",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "title",
+				FieldMapKey: "title",
+			},
+			{
+				Name:        "documentKind",
+				FieldMapKey: "documentKind",
+			},
+			{
+				Name:        "documentFingerprint",
+				FieldMapKey: "documentFingerprint",
+			},
+			{
+				Name:        "fileName",
+				FieldMapKey: "fileName",
+			},
+			{
+				Name:        "pages",
+				FieldMapKey: "pages",
+			},
+			{
+				Name:        "pageCount",
+				FieldMapKey: "pageCount",
+			},
+			{
+				Name:        "inputHash",
+				FieldMapKey: "inputHash",
+			},
+			{
+				Name:        "expected",
+				FieldMapKey: "expected",
+			},
+			{
+				Name:        "expectedFieldCount",
+				FieldMapKey: "expectedFieldCount",
+			},
+			{
+				Name:        "sourceCorrectionId",
+				FieldMapKey: "sourceCorrectionId",
+			},
+			{
+				Name:        "sourceDocumentId",
+				FieldMapKey: "sourceDocumentId",
+			},
+			{
+				Name:        "notes",
+				FieldMapKey: "notes",
+			},
+			{
+				Name:        "createdById",
+				FieldMapKey: "createdById",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	ExtractionEvalResultSpec = TypeSpec{
+		TypeName: "ExtractionEvalResult",
+		FieldMap: buncolgen.ExtractionResultFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "runId",
+				FieldMapKey: "runId",
+			},
+			{
+				Name:        "caseId",
+				FieldMapKey: "caseId",
+			},
+			{
+				Name:        "caseTitle",
+				FieldMapKey: "caseTitle",
+			},
+			{
+				Name:        "ordinal",
+				FieldMapKey: "ordinal",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "model",
+				FieldMapKey: "model",
+			},
+			{
+				Name:        "providerId",
+				FieldMapKey: "providerId",
+			},
+			{
+				Name:        "predicted",
+				FieldMapKey: "predicted",
+			},
+			{
+				Name:        "fieldResults",
+				FieldMapKey: "fieldResults",
+			},
+			{
+				Name:        "scoredCount",
+				FieldMapKey: "scoredCount",
+			},
+			{
+				Name:        "correctCount",
+				FieldMapKey: "correctCount",
+			},
+			{
+				Name:        "correctedCount",
+				FieldMapKey: "correctedCount",
+			},
+			{
+				Name:        "missedCount",
+				FieldMapKey: "missedCount",
+			},
+			{
+				Name:        "unconfirmedCount",
+				FieldMapKey: "unconfirmedCount",
+			},
+			{
+				Name:        "unscoredCount",
+				FieldMapKey: "unscoredCount",
+			},
+			{
+				Name:        "accuracy",
+				FieldMapKey: "accuracy",
+			},
+			{
+				Name:        "latencyMs",
+				FieldMapKey: "latencyMs",
+			},
+			{
+				Name:        "inputTokens",
+				FieldMapKey: "inputTokens",
+			},
+			{
+				Name:        "outputTokens",
+				FieldMapKey: "outputTokens",
+			},
+			{
+				Name:        "costUsd",
+				FieldMapKey: "costUsd",
+			},
+			{
+				Name:        "errorMessage",
+				FieldMapKey: "errorMessage",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "completedAt",
+				FieldMapKey: "completedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
+			},
+		},
+	}
+
+	ExtractionEvalRunSpec = TypeSpec{
+		TypeName: "ExtractionEvalRun",
+		FieldMap: buncolgen.ExtractionRunFieldMap,
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:        "id",
+				FieldMapKey: "id",
+			},
+			{
+				Name:        "organizationId",
+				FieldMapKey: "organizationId",
+			},
+			{
+				Name:        "businessUnitId",
+				FieldMapKey: "businessUnitId",
+			},
+			{
+				Name:        "task",
+				FieldMapKey: "task",
+			},
+			{
+				Name:        "status",
+				FieldMapKey: "status",
+			},
+			{
+				Name:        "providerId",
+				FieldMapKey: "providerId",
+			},
+			{
+				Name:        "providerName",
+				FieldMapKey: "providerName",
+			},
+			{
+				Name:        "providerModel",
+				FieldMapKey: "providerModel",
+			},
+			{
+				Name:        "servedModel",
+				FieldMapKey: "servedModel",
+			},
+			{
+				Name:        "caseLimit",
+				FieldMapKey: "caseLimit",
+			},
+			{
+				Name:        "casesTotal",
+				FieldMapKey: "casesTotal",
+			},
+			{
+				Name:        "casesCompleted",
+				FieldMapKey: "casesCompleted",
+			},
+			{
+				Name:        "casesFailed",
+				FieldMapKey: "casesFailed",
+			},
+			{
+				Name:        "casesSkipped",
+				FieldMapKey: "casesSkipped",
+			},
+			{
+				Name:        "scoredCount",
+				FieldMapKey: "scoredCount",
+			},
+			{
+				Name:        "correctCount",
+				FieldMapKey: "correctCount",
+			},
+			{
+				Name:        "correctedCount",
+				FieldMapKey: "correctedCount",
+			},
+			{
+				Name:        "missedCount",
+				FieldMapKey: "missedCount",
+			},
+			{
+				Name:        "unconfirmedCount",
+				FieldMapKey: "unconfirmedCount",
+			},
+			{
+				Name:        "unscoredCount",
+				FieldMapKey: "unscoredCount",
+			},
+			{
+				Name:        "accuracy",
+				FieldMapKey: "accuracy",
+			},
+			{
+				Name:        "fieldAccuracy",
+				FieldMapKey: "fieldAccuracy",
+			},
+			{
+				Name:        "costUsd",
+				FieldMapKey: "costUsd",
+			},
+			{
+				Name:        "inputTokens",
+				FieldMapKey: "inputTokens",
+			},
+			{
+				Name:        "outputTokens",
+				FieldMapKey: "outputTokens",
+			},
+			{
+				Name:        "avgLatencyMs",
+				FieldMapKey: "avgLatencyMs",
+			},
+			{
+				Name:        "stopReason",
+				FieldMapKey: "stopReason",
+			},
+			{
+				Name:        "failureMessage",
+				FieldMapKey: "failureMessage",
+			},
+			{
+				Name:        "requestedById",
+				FieldMapKey: "requestedById",
+			},
+			{
+				Name:        "workflowId",
+				FieldMapKey: "workflowId",
+			},
+			{
+				Name:        "startedAt",
+				FieldMapKey: "startedAt",
+			},
+			{
+				Name:        "finishedAt",
+				FieldMapKey: "finishedAt",
+			},
+			{
+				Name:        "version",
+				FieldMapKey: "version",
+			},
+			{
+				Name:        "createdAt",
+				FieldMapKey: "createdAt",
+			},
+			{
+				Name:        "updatedAt",
+				FieldMapKey: "updatedAt",
 			},
 		},
 	}

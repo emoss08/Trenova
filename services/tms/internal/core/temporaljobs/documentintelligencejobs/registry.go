@@ -30,9 +30,9 @@ type RegistryParams struct {
 	Logger     *zap.Logger
 }
 
-func NewRegistry(p RegistryParams) registry.WorkerRegistry {
+func QueueWorkerConfig(cfg *config.Config) registry.WorkerConfig {
 	workerConfig := registry.DefaultWorkerConfig()
-	workerConfig.MaxConcurrentActivityExecutionSize = p.Config.GetAIConfig().
+	workerConfig.MaxConcurrentActivityExecutionSize = cfg.GetAIConfig().
 		GetMaxConcurrentActivities()
 	workerConfig.MaxConcurrentWorkflowTaskExecutionSize = max(
 		2, workerConfig.MaxConcurrentActivityExecutionSize,
@@ -40,11 +40,15 @@ func NewRegistry(p RegistryParams) registry.WorkerRegistry {
 	workerConfig.MaxConcurrentActivityTaskPollers = 2
 	workerConfig.MaxConcurrentWorkflowTaskPollers = 2
 
+	return workerConfig
+}
+
+func NewRegistry(p RegistryParams) registry.WorkerRegistry {
 	return registry.NewDomainRegistry(
 		&registry.DomainConfig{
 			Name:         "document-intelligence-worker",
 			TaskQueue:    temporaltype.DocumentIntelligenceTaskQueue,
-			WorkerConfig: workerConfig,
+			WorkerConfig: QueueWorkerConfig(p.Config),
 		},
 		p.Activities,
 		Workflows,

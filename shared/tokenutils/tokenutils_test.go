@@ -52,3 +52,29 @@ func TestHashIsDeterministic(t *testing.T) {
 	require.Equal(t, Hash("token-value"), Hash("token-value"))
 	require.NotEqual(t, Hash("token-value"), Hash("token-value2"))
 }
+
+func TestRandomHex(t *testing.T) {
+	t.Parallel()
+
+	first, err := RandomHex(16)
+	require.NoError(t, err)
+	second, err := RandomHex(16)
+	require.NoError(t, err)
+
+	require.Len(t, first, 32)
+	require.NotEqual(t, first, second)
+
+	_, err = RandomHex(0)
+	require.Error(t, err)
+}
+
+func TestRandomSeed(t *testing.T) {
+	t.Parallel()
+
+	first, err := RandomSeed()
+	require.NoError(t, err)
+	second, err := RandomSeed()
+	require.NoError(t, err)
+
+	require.NotEqual(t, first, second)
+}
