@@ -10,6 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -68,6 +70,29 @@ func captureBatchConnection(
 		PageInfo:   page.PageInfo,
 		TotalCount: page.TotalCount,
 	}, nil
+}
+
+// captureBatchSort is the queue's order as the fields the cursor sorts by. The
+// id breaks ties, which the cursor adds on its own.
+func captureBatchSort(sort *gqlmodel.CaptureBatchSort) []domaintypes.SortField {
+	if sort == nil {
+		return nil
+	}
+
+	switch *sort {
+	case gqlmodel.CaptureBatchSortOldest:
+		return []domaintypes.SortField{{Field: "createdAt", Direction: dbtype.SortDirectionAsc}}
+	case gqlmodel.CaptureBatchSortExpiringSoonest:
+		return []domaintypes.SortField{{Field: "retainUntil", Direction: dbtype.SortDirectionAsc}}
+	case gqlmodel.CaptureBatchSortMostPages:
+		return []domaintypes.SortField{
+			{Field: "receivedPageCount", Direction: dbtype.SortDirectionDesc},
+		}
+	case gqlmodel.CaptureBatchSortNewest:
+		return []domaintypes.SortField{{Field: "createdAt", Direction: dbtype.SortDirectionDesc}}
+	default:
+		return nil
+	}
 }
 
 // optionalIDRef parses an optional id into the pointer form the capture
@@ -170,6 +195,7 @@ func issuedCoverSheet(issued *captureservice.IssuedCoverSheet) *gqlmodel.Capture
 		TargetID:       idPtrFromPtr(sheet.TargetID),
 		DocumentTypeID: idPtrFromPtr(sheet.DocumentTypeID),
 		Payload:        issued.Payload,
+		QRCode:         issued.QRCode,
 		ExpiresAt:      int(sheet.ExpiresAt),
 		CreatedAt:      int(sheet.CreatedAt),
 	}

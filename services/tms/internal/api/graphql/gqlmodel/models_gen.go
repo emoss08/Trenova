@@ -1153,8 +1153,9 @@ type CaptureBatchEdge struct {
 }
 
 type CaptureBatchesInput struct {
-	First *int    `json:"first,omitempty"`
-	After *string `json:"after,omitempty"`
+	First *int              `json:"first,omitempty"`
+	After *string           `json:"after,omitempty"`
+	Sort  *CaptureBatchSort `json:"sort,omitempty"`
 	// Only these statuses; empty is every status.
 	Statuses []capture.BatchStatus `json:"statuses,omitempty"`
 	Source   *capture.Source       `json:"source,omitempty"`
@@ -1179,8 +1180,10 @@ type CaptureCoverSheet struct {
 	Target         *repositories.CaptureRecordLabel `json:"target,omitempty"`
 	DocumentTypeID *string                          `json:"documentTypeId,omitempty"`
 	Payload        string                           `json:"payload"`
-	ExpiresAt      int                              `json:"expiresAt"`
-	CreatedAt      int                              `json:"createdAt"`
+	// The code to print, drawn from the payload.
+	QRCode    *services.CaptureQRCode `json:"qrCode"`
+	ExpiresAt int                     `json:"expiresAt"`
+	CreatedAt int                     `json:"createdAt"`
 }
 
 type CaptureCoverSheetInput struct {
@@ -9217,6 +9220,70 @@ func (e *AssignmentStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e AssignmentStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// How the intake queue is ordered.
+type CaptureBatchSort string
+
+const (
+	// Most recently captured first.
+	CaptureBatchSortNewest CaptureBatchSort = "Newest"
+	// Longest waiting first.
+	CaptureBatchSortOldest CaptureBatchSort = "Oldest"
+	// Soonest to have its unfiled pages deleted first.
+	CaptureBatchSortExpiringSoonest CaptureBatchSort = "ExpiringSoonest"
+	// Largest stack first.
+	CaptureBatchSortMostPages CaptureBatchSort = "MostPages"
+)
+
+var AllCaptureBatchSort = []CaptureBatchSort{
+	CaptureBatchSortNewest,
+	CaptureBatchSortOldest,
+	CaptureBatchSortExpiringSoonest,
+	CaptureBatchSortMostPages,
+}
+
+func (e CaptureBatchSort) IsValid() bool {
+	switch e {
+	case CaptureBatchSortNewest, CaptureBatchSortOldest, CaptureBatchSortExpiringSoonest, CaptureBatchSortMostPages:
+		return true
+	}
+	return false
+}
+
+func (e CaptureBatchSort) String() string {
+	return string(e)
+}
+
+func (e *CaptureBatchSort) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CaptureBatchSort(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CaptureBatchSort", str)
+	}
+	return nil
+}
+
+func (e CaptureBatchSort) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CaptureBatchSort) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CaptureBatchSort) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

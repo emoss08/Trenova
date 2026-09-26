@@ -1320,6 +1320,17 @@ export type CancelWorkerTrainingInput = {
 export type CaptureArchitecture =
   | 'x64';
 
+/** How the intake queue is ordered. */
+export type CaptureBatchSort =
+  /** Soonest to have its unfiled pages deleted first. */
+  | 'ExpiringSoonest'
+  /** Largest stack first. */
+  | 'MostPages'
+  /** Most recently captured first. */
+  | 'Newest'
+  /** Longest waiting first. */
+  | 'Oldest';
+
 /** How far a captured stack has got, from the first page arriving to the last document being filed. */
 export type CaptureBatchStatus =
   | 'Discarded'
@@ -1339,6 +1350,7 @@ export type CaptureBatchesInput = {
   mine?: boolean | null | undefined;
   /** Words from the scanner, print job or device name. */
   query?: string | null | undefined;
+  sort?: CaptureBatchSort | null | undefined;
   source?: CaptureSource | null | undefined;
   /** Only these statuses; empty is every status. */
   statuses?: Array<CaptureBatchStatus> | null | undefined;
@@ -8519,7 +8531,7 @@ export type CreateCaptureCoverSheetsMutationVariables = Exact<{
 }>;
 
 
-export type CreateCaptureCoverSheetsMutation = { createCaptureCoverSheets: Array<{ id: string, targetType: string, targetId: string | null, documentTypeId: string | null, payload: string, expiresAt: number, target: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null }> };
+export type CreateCaptureCoverSheetsMutation = { createCaptureCoverSheets: Array<{ id: string, targetType: string, targetId: string | null, documentTypeId: string | null, payload: string, expiresAt: number, qrCode: { size: number, modules: Array<string> }, target: { ' $fragmentRefs'?: { 'CaptureRecordRefFieldsFragment': CaptureRecordRefFieldsFragment } } | null }> };
 
 export type ApproveCaptureDevicePairingMutationVariables = Exact<{
   userCode: string;
@@ -23041,7 +23053,7 @@ export const DiscardCaptureItemDocument = {"__meta__":{"kind":"mutation","name":
 export const DiscardCaptureBatchDocument = {"__meta__":{"kind":"mutation","name":"DiscardCaptureBatch","hash":"sha256:58fba2eb65ea4ee0f0a268f1e1d1f43603612e23e3cfb2b7b33e0c485829a357"}} as unknown as TypedDocumentString<DiscardCaptureBatchMutation, DiscardCaptureBatchMutationVariables>;
 export const CreateCaptureRequestDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureRequest","hash":"sha256:c6ab98771f332dcd609f88468c69d5cb046414a8ab5454d211d378fd4957113f"}} as unknown as TypedDocumentString<CreateCaptureRequestMutation, CreateCaptureRequestMutationVariables>;
 export const CancelCaptureRequestDocument = {"__meta__":{"kind":"mutation","name":"CancelCaptureRequest","hash":"sha256:523c78072a4b0888ebc217c6c591a0a80ab6bd37332a1bc8f2dc1086c6479738"}} as unknown as TypedDocumentString<CancelCaptureRequestMutation, CancelCaptureRequestMutationVariables>;
-export const CreateCaptureCoverSheetsDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureCoverSheets","hash":"sha256:4ea673e4ff1e8d0cd7da36690b2746a2278663749af0de2d816fdcfa09209579"}} as unknown as TypedDocumentString<CreateCaptureCoverSheetsMutation, CreateCaptureCoverSheetsMutationVariables>;
+export const CreateCaptureCoverSheetsDocument = {"__meta__":{"kind":"mutation","name":"CreateCaptureCoverSheets","hash":"sha256:92cdbeededfd2516038b67e659007032a039c7edd3beb8d5f82a930d1b578bf4"}} as unknown as TypedDocumentString<CreateCaptureCoverSheetsMutation, CreateCaptureCoverSheetsMutationVariables>;
 export const ApproveCaptureDevicePairingDocument = {"__meta__":{"kind":"mutation","name":"ApproveCaptureDevicePairing","hash":"sha256:a067e97cc02b4eca7b297eba42cbf83b4a50cff9e4a209ccdeeeacdc47ec5095"}} as unknown as TypedDocumentString<ApproveCaptureDevicePairingMutation, ApproveCaptureDevicePairingMutationVariables>;
 export const DenyCaptureDevicePairingDocument = {"__meta__":{"kind":"mutation","name":"DenyCaptureDevicePairing","hash":"sha256:237bff94778c77c4f486752e4e75be79e727ab7d06fb1c17566c6af97686407b"}} as unknown as TypedDocumentString<DenyCaptureDevicePairingMutation, DenyCaptureDevicePairingMutationVariables>;
 export const RevokeMyCaptureDeviceDocument = {"__meta__":{"kind":"mutation","name":"RevokeMyCaptureDevice","hash":"sha256:56477b12d596360918b78d4d1bad09d67fde4a40e055561d24df95725f02c7b5"}} as unknown as TypedDocumentString<RevokeMyCaptureDeviceMutation, RevokeMyCaptureDeviceMutationVariables>;

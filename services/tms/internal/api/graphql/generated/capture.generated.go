@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/captureservice"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -1157,6 +1158,38 @@ func (ec *executionContext) _CaptureCoverSheet_payload(ctx context.Context, fiel
 }
 func (ec *executionContext) fieldContext_CaptureCoverSheet_payload(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("CaptureCoverSheet", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
+func (ec *executionContext) _CaptureCoverSheet_qrCode(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CaptureCoverSheet) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureCoverSheet_qrCode(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.QRCode, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *services.CaptureQRCode) graphql.Marshaler {
+			return ec.marshalNCaptureQRCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCaptureQRCode(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureCoverSheet_qrCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CaptureCoverSheet",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_CaptureQRCode(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _CaptureCoverSheet_expiresAt(ctx context.Context, field graphql.CollectedField, obj *gqlmodel.CaptureCoverSheet) (ret graphql.Marshaler) {
@@ -3449,6 +3482,52 @@ func (ec *executionContext) fieldContext_CaptureProfile_updatedAt(_ context.Cont
 	return graphql.NewScalarFieldContext("CaptureProfile", field, false, false, errors.New("field of type Timestamp does not have child fields"))
 }
 
+func (ec *executionContext) _CaptureQRCode_size(ctx context.Context, field graphql.CollectedField, obj *services.CaptureQRCode) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureQRCode_size(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Size, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureQRCode_size(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureQRCode", field, false, false, errors.New("field of type Int does not have child fields"))
+}
+
+func (ec *executionContext) _CaptureQRCode_modules(ctx context.Context, field graphql.CollectedField, obj *services.CaptureQRCode) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureQRCode_modules(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Modules, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v []string) graphql.Marshaler {
+			return ec.marshalNString2ᚕstringᚄ(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureQRCode_modules(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureQRCode", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _CaptureRecordRef_resourceType(ctx context.Context, field graphql.CollectedField, obj *repositories.CaptureRecordLabel) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -4566,8 +4645,11 @@ func (ec *executionContext) unmarshalInputCaptureBatchesInput(ctx context.Contex
 	if _, present := asMap["first"]; !present {
 		asMap["first"] = 25
 	}
+	if _, present := asMap["sort"]; !present {
+		asMap["sort"] = "Newest"
+	}
 
-	fieldsInOrder := [...]string{"first", "after", "statuses", "source", "mine", "targetType", "targetId", "query"}
+	fieldsInOrder := [...]string{"first", "after", "sort", "statuses", "source", "mine", "targetType", "targetId", "query"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4588,6 +4670,13 @@ func (ec *executionContext) unmarshalInputCaptureBatchesInput(ctx context.Contex
 				return it, err
 			}
 			it.After = data
+		case "sort":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sort"))
+			data, err := ec.unmarshalOCaptureBatchSort2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCaptureBatchSort(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Sort = data
 		case "statuses":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
 			data, err := ec.unmarshalOCaptureBatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐBatchStatusᚄ(ctx, v)
@@ -5683,6 +5772,11 @@ func (ec *executionContext) _CaptureCoverSheet(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "qrCode":
+			out.Values[i] = ec._CaptureCoverSheet_qrCode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "expiresAt":
 			out.Values[i] = ec._CaptureCoverSheet_expiresAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -6755,6 +6849,49 @@ func (ec *executionContext) _CaptureProfile(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var captureQRCodeImplementors = []string{"CaptureQRCode"}
+
+func (ec *executionContext) _CaptureQRCode(ctx context.Context, sel ast.SelectionSet, obj *services.CaptureQRCode) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, captureQRCodeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CaptureQRCode")
+		case "size":
+			out.Values[i] = ec._CaptureQRCode_size(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "modules":
+			out.Values[i] = ec._CaptureQRCode_modules(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var captureRecordRefImplementors = []string{"CaptureRecordRef"}
 
 func (ec *executionContext) _CaptureRecordRef(ctx context.Context, sel ast.SelectionSet, obj *repositories.CaptureRecordLabel) graphql.Marshaler {
@@ -7702,6 +7839,16 @@ func (ec *executionContext) marshalNCaptureProfileStatus2githubᚗcomᚋemoss08�
 	return res
 }
 
+func (ec *executionContext) marshalNCaptureQRCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋportsᚋservicesᚐCaptureQRCode(ctx context.Context, sel ast.SelectionSet, v *services.CaptureQRCode) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CaptureQRCode(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNCaptureRequest2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐCaptureRequestᚄ(ctx context.Context, sel ast.SelectionSet, v []*capture.CaptureRequest) graphql.Marshaler {
 	ret := graphql.MarshalSliceConcurrently(ctx, len(v), 32, false, func(ctx context.Context, i int) graphql.Marshaler {
 		fc := graphql.GetFieldContext(ctx)
@@ -7909,6 +8056,22 @@ func (ec *executionContext) marshalNFileCaptureItemsResult2ᚖgithubᚗcomᚋemo
 		return graphql.Null
 	}
 	return ec._FileCaptureItemsResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOCaptureBatchSort2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCaptureBatchSort(ctx context.Context, v any) (*gqlmodel.CaptureBatchSort, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(gqlmodel.CaptureBatchSort)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOCaptureBatchSort2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCaptureBatchSort(ctx context.Context, sel ast.SelectionSet, v *gqlmodel.CaptureBatchSort) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOCaptureBatchStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐBatchStatusᚄ(ctx context.Context, v any) ([]capture.BatchStatus, error) {

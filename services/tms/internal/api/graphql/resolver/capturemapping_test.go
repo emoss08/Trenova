@@ -74,3 +74,15 @@ func TestCaptureCoverSheetSpecsAllowAPlainSeparator(t *testing.T) {
 	require.NotNil(t, specs[1].TargetID)
 	assert.Equal(t, shipmentID, *specs[1].TargetID)
 }
+
+func TestCaptureBatchSortNamesFieldsTheCursorKnows(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, captureBatchSort(nil), "no sort leaves the cursor's own default")
+	for _, sort := range gqlmodel.AllCaptureBatchSort {
+		fields := captureBatchSort(&sort)
+		require.Len(t, fields, 1, sort)
+		assert.Contains(t,
+			[]string{"createdAt", "retainUntil", "receivedPageCount"}, fields[0].Field, sort)
+	}
+}

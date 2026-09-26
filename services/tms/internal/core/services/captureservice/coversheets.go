@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,11 +30,13 @@ type CreateCoverSheetsInput struct {
 	Sheets     []CoverSheetSpec      `json:"sheets"`
 }
 
-// IssuedCoverSheet is a sheet and the payload its QR code must carry. The
-// payload is returned once, to be printed; only its hash is kept.
+// IssuedCoverSheet is a sheet, the payload its QR code must carry and the code
+// drawn from it. The payload is returned once, to be printed; only its hash is
+// kept.
 type IssuedCoverSheet struct {
 	Sheet   *capture.CaptureCoverSheet `json:"sheet"`
 	Payload string                     `json:"payload"`
+	QRCode  *services.CaptureQRCode    `json:"qrCode"`
 }
 
 // CreateCoverSheets issues sheets for printing. Each routing sheet is checked
@@ -103,11 +106,14 @@ func (s *Service) CreateCoverSheets(
 			return nil, multiErr
 		}
 
+		payload := capture.CoverSheetPayload(token)
+		code, err := s.qrCodes.Encode(payload)
+		if err != nil {
+			return nil, err
+		}
+
 		sheets = append(sheets, sheet)
-		issued = append(
-			issued,
-			IssuedCoverSheet{Sheet: sheet, Payload: capture.CoverSheetPayload(token)},
-		)
+		issued = append(issued, IssuedCoverSheet{Sheet: sheet, Payload: payload, QRCode: code})
 	}
 
 	if err := s.coverSheets.CreateMany(ctx, sheets); err != nil {

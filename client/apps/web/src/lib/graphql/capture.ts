@@ -32,6 +32,7 @@ import {
   UpdateCaptureProfileDocument,
   type CaptureBatchDetailFieldsFragment,
   type CaptureBatchRowFieldsFragment,
+  type CaptureBatchSort,
   type CaptureBatchStatus,
   type CaptureCoverSheetInput,
   type CaptureDeviceFieldsFragment,
@@ -80,6 +81,7 @@ export type CaptureRequest = UnmaskFragments<CaptureRequestFieldsFragment>;
 export type CapturePairingPreview = CaptureDevicePairingQuery["captureDevicePairing"];
 export type IssuedCoverSheet = CreateCaptureCoverSheetsMutation["createCaptureCoverSheets"][number];
 export type {
+  CaptureBatchSort,
   CaptureBatchStatus,
   CaptureCoverSheetInput,
   CaptureDeviceStatus,
@@ -148,6 +150,7 @@ function request(masked: FragmentType<typeof CaptureRequestFieldsFragmentDoc>): 
 export const CAPTURE_BATCH_PAGE_SIZE = 30;
 
 export type CaptureBatchFilter = {
+  sort?: CaptureBatchSort;
   statuses?: CaptureBatchStatus[];
   source?: CaptureSource | null;
   mine?: boolean;
@@ -176,6 +179,7 @@ export async function fetchCaptureBatches(
       input: {
         first: filter.first ?? CAPTURE_BATCH_PAGE_SIZE,
         after: filter.after ?? null,
+        sort: filter.sort ?? "Newest",
         statuses: filter.statuses ?? [],
         source: filter.source ?? null,
         mine: filter.mine ?? false,

@@ -460,6 +460,7 @@ func (r *queryResolver) CaptureBatches(ctx context.Context, input gqlmodel.Captu
 			Cursor:     cursor,
 			UseCursor:  true,
 			Query:      stringutils.FromPtr(input.Query),
+			Sort:       captureBatchSort(input.Sort),
 		},
 		Cursor:     cursor,
 		Statuses:   input.Statuses,

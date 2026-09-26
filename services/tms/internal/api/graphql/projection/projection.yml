@@ -138,6 +138,7 @@ virtuals:
     - kindLabel
   CaptureCoverSheet:
     - payload
+    - qrCode
     - target
   InboundMailbox:
     - hasSigningSecret

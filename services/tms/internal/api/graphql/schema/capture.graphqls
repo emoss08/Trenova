@@ -405,9 +405,22 @@ type CaptureBatchConnection {
   totalCount: Int
 }
 
+"How the intake queue is ordered."
+enum CaptureBatchSort {
+  "Most recently captured first."
+  Newest
+  "Longest waiting first."
+  Oldest
+  "Soonest to have its unfiled pages deleted first."
+  ExpiringSoonest
+  "Largest stack first."
+  MostPages
+}
+
 input CaptureBatchesInput {
   first: Int = 25
   after: String
+  sort: CaptureBatchSort = Newest
   "Only these statuses; empty is every status."
   statuses: [CaptureBatchStatus!]
   source: CaptureSource
@@ -487,6 +500,14 @@ input CaptureCoverSheetInput {
   documentTypeId: ID
 }
 
+"A QR code as its modules, for drawing on a printed sheet."
+type CaptureQRCode {
+  "How many modules along each side. The quiet zone is not included."
+  size: Int!
+  "One string per row, top to bottom; 1 is a dark module."
+  modules: [String!]!
+}
+
 """
 A cover sheet ready to print.
 
@@ -501,6 +522,8 @@ type CaptureCoverSheet {
   target: CaptureRecordRef
   documentTypeId: ID
   payload: String!
+  "The code to print, drawn from the payload."
+  qrCode: CaptureQRCode!
   expiresAt: Timestamp!
   createdAt: Timestamp!
 }

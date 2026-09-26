@@ -4452,6 +4452,10 @@ func init() {
 				Special: "payload",
 			},
 			{
+				Name:    "qrCode",
+				Special: "qrCode",
+			},
+			{
 				Name:        "expiresAt",
 				FieldMapKey: "expiresAt",
 			},

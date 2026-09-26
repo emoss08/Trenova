@@ -63,6 +63,7 @@ type Params struct {
 	Uploads         services.DocumentUploadService
 	Assembler       services.CapturePDFAssembler
 	Inspector       services.CapturePageInspector
+	QRCodes         services.CaptureQREncoder
 	// Workflows is optional so an installation without a worker still
 	// receives pages. A sealed batch then waits, and the reconcile sweep
 	// starts its processing once a worker appears.
@@ -99,6 +100,7 @@ type Service struct {
 	uploads       services.DocumentUploadService
 	assembler     services.CapturePDFAssembler
 	inspector     services.CapturePageInspector
+	qrCodes       services.CaptureQREncoder
 	workflows     services.WorkflowStarter
 	realtime      services.RealtimeService
 	audit         services.AuditService
@@ -134,6 +136,7 @@ func New(p Params) *Service {
 		uploads:       p.Uploads,
 		assembler:     p.Assembler,
 		inspector:     p.Inspector,
+		qrCodes:       p.QRCodes,
 		workflows:     p.Workflows,
 		realtime:      p.Realtime,
 		audit:         p.Audit,

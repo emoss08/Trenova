@@ -31,6 +31,20 @@ type CapturePageInspector interface {
 	Inspect(ctx context.Context, pdf []byte) (*CapturePageInspection, error)
 }
 
+// CaptureQRCode is a QR code as its modules: one string per row, top to
+// bottom, "1" for a dark module. It carries no quiet zone; whoever draws it
+// leaves the four-module margin the symbology requires.
+type CaptureQRCode struct {
+	Size    int      `json:"size"`
+	Modules []string `json:"modules"`
+}
+
+// CaptureQREncoder draws the code a cover sheet carries, so the sheet can be
+// printed wherever it is laid out.
+type CaptureQREncoder interface {
+	Encode(payload string) (*CaptureQRCode, error)
+}
+
 // CaptureAssemblyPage is one page going into an assembled document.
 type CaptureAssemblyPage struct {
 	PDF []byte

@@ -387,6 +387,8 @@ func TestProcessSplitsOnPatchCodesAndCoverSheets(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, issued, 1)
+	require.NotNil(t, issued[0].QRCode, "a sheet comes with the code to print on it")
+	assert.Positive(t, issued[0].QRCode.Size)
 
 	pages := [][]byte{pdfPage(t, 1), pdfPage(t, 2), pdfPage(t, 3), pdfPage(t, 4), pdfPage(t, 5), pdfPage(t, 6)}
 	w.inspections[string(pages[3])] = &services.CapturePageInspection{

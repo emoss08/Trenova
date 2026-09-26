@@ -5328,7 +5328,7 @@
       "kind": "mutation",
       "domain": "capture",
       "sourceFile": "src/operations/capture/capture.graphql",
-      "hash": "sha256:4ea673e4ff1e8d0cd7da36690b2746a2278663749af0de2d816fdcfa09209579",
+      "hash": "sha256:92cdbeededfd2516038b67e659007032a039c7edd3beb8d5f82a930d1b578bf4",
       "rootFields": [
         "createCaptureCoverSheets"
       ],
@@ -5343,7 +5343,7 @@
         "CaptureRecordRefFields"
       ],
       "usages": [],
-      "sdl": "mutation CreateCaptureCoverSheets($sheets: [CaptureCoverSheetInput!]!) {\n  createCaptureCoverSheets(sheets: $sheets) {\n    id\n    targetType\n    targetId\n    documentTypeId\n    payload\n    expiresAt\n    target {\n      ...CaptureRecordRefFields\n    }\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
+      "sdl": "mutation CreateCaptureCoverSheets($sheets: [CaptureCoverSheetInput!]!) {\n  createCaptureCoverSheets(sheets: $sheets) {\n    id\n    targetType\n    targetId\n    documentTypeId\n    payload\n    expiresAt\n    qrCode {\n      size\n      modules\n    }\n    target {\n      ...CaptureRecordRefFields\n    }\n  }\n}\n\nfragment CaptureRecordRefFields on CaptureRecordRef {\n  resourceType\n  id\n  title\n  subtitle\n}"
     },
     {
       "name": "CreateCaptureProfile",
@@ -26058,6 +26058,12 @@
           "defaultValue": null
         },
         {
+          "name": "sort",
+          "type": "CaptureBatchSort",
+          "defaultValue": "Newest",
+          "defaultJson": "Newest"
+        },
+        {
           "name": "source",
           "type": "CaptureSource",
           "defaultValue": null
@@ -26078,7 +26084,7 @@
           "defaultValue": null
         }
       ],
-      "sdl": "input CaptureBatchesInput {\n  after: String\n  first: Int = 25\n  \"\"\"Only the caller's own batches, even when they could see everybody's.\"\"\"\n  mine: Boolean\n  \"\"\"Words from the scanner, print job or device name.\"\"\"\n  query: String\n  source: CaptureSource\n  \"\"\"Only these statuses; empty is every status.\"\"\"\n  statuses: [CaptureBatchStatus!]\n  targetId: ID\n  \"\"\"Only batches scanned into this record.\"\"\"\n  targetType: String\n}"
+      "sdl": "input CaptureBatchesInput {\n  after: String\n  first: Int = 25\n  \"\"\"Only the caller's own batches, even when they could see everybody's.\"\"\"\n  mine: Boolean\n  \"\"\"Words from the scanner, print job or device name.\"\"\"\n  query: String\n  sort: CaptureBatchSort = Newest\n  source: CaptureSource\n  \"\"\"Only these statuses; empty is every status.\"\"\"\n  statuses: [CaptureBatchStatus!]\n  targetId: ID\n  \"\"\"Only batches scanned into this record.\"\"\"\n  targetType: String\n}"
     },
     "CaptureCoverSheetInput": {
       "kind": "input",
@@ -37304,6 +37310,16 @@
         "Reject"
       ],
       "sdl": "enum WorkerPTOBulkAction {\n  Approve\n  Cancel\n  Reject\n}"
+    },
+    "CaptureBatchSort": {
+      "kind": "enum",
+      "values": [
+        "ExpiringSoonest",
+        "MostPages",
+        "Newest",
+        "Oldest"
+      ],
+      "sdl": "\"\"\"How the intake queue is ordered.\"\"\"\nenum CaptureBatchSort {\n  \"\"\"Soonest to have its unfiled pages deleted first.\"\"\"\n  ExpiringSoonest\n  \"\"\"Largest stack first.\"\"\"\n  MostPages\n  \"\"\"Most recently captured first.\"\"\"\n  Newest\n  \"\"\"Longest waiting first.\"\"\"\n  Oldest\n}"
     },
     "CaptureSource": {
       "kind": "enum",

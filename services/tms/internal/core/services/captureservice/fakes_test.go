@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/encryptionservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/captureqr"
 	"github.com/emoss08/trenova/internal/infrastructure/pdfassembly"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -110,6 +111,7 @@ func (w *world) service() *Service {
 		uploads:       &fakeUploads{w},
 		assembler:     pdfassembly.New(),
 		inspector:     &fakeInspector{w},
+		qrCodes:       captureqr.New(),
 		realtime:      &fakeRealtime{w},
 	}
 }

@@ -312,6 +312,10 @@ mutation CreateCaptureCoverSheets($sheets: [CaptureCoverSheetInput!]!) {
     documentTypeId
     payload
     expiresAt
+    qrCode {
+      size
+      modules
+    }
     target {
       ...CaptureRecordRefFields
     }

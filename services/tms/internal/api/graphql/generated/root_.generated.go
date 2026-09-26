@@ -2553,6 +2553,7 @@ type ComplexityRoot struct {
 		ExpiresAt      func(childComplexity int) int
 		ID             func(childComplexity int) int
 		Payload        func(childComplexity int) int
+		QRCode         func(childComplexity int) int
 		Target         func(childComplexity int) int
 		TargetID       func(childComplexity int) int
 		TargetType     func(childComplexity int) int
@@ -2670,6 +2671,11 @@ type ComplexityRoot struct {
 		UpdatedAt           func(childComplexity int) int
 		UseFeeder           func(childComplexity int) int
 		Version             func(childComplexity int) int
+	}
+
+	CaptureQRCode struct {
+		Modules func(childComplexity int) int
+		Size    func(childComplexity int) int
 	}
 
 	CaptureRecordRef struct {
@@ -23817,6 +23823,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CaptureCoverSheet.Payload(childComplexity), true
+	case "CaptureCoverSheet.qrCode":
+		if e.ComplexityRoot.CaptureCoverSheet.QRCode == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureCoverSheet.QRCode(childComplexity), true
 	case "CaptureCoverSheet.target":
 		if e.ComplexityRoot.CaptureCoverSheet.Target == nil {
 			break
@@ -24417,6 +24429,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CaptureProfile.Version(childComplexity), true
+
+	case "CaptureQRCode.modules":
+		if e.ComplexityRoot.CaptureQRCode.Modules == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureQRCode.Modules(childComplexity), true
+	case "CaptureQRCode.size":
+		if e.ComplexityRoot.CaptureQRCode.Size == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureQRCode.Size(childComplexity), true
 
 	case "CaptureRecordRef.id":
 		if e.ComplexityRoot.CaptureRecordRef.ID == nil {
@@ -86128,9 +86153,22 @@ type CaptureBatchConnection {
   totalCount: Int
 }
 
+"How the intake queue is ordered."
+enum CaptureBatchSort {
+  "Most recently captured first."
+  Newest
+  "Longest waiting first."
+  Oldest
+  "Soonest to have its unfiled pages deleted first."
+  ExpiringSoonest
+  "Largest stack first."
+  MostPages
+}
+
 input CaptureBatchesInput {
   first: Int = 25
   after: String
+  sort: CaptureBatchSort = Newest
   "Only these statuses; empty is every status."
   statuses: [CaptureBatchStatus!]
   source: CaptureSource
@@ -86210,6 +86248,14 @@ input CaptureCoverSheetInput {
   documentTypeId: ID
 }
 
+"A QR code as its modules, for drawing on a printed sheet."
+type CaptureQRCode {
+  "How many modules along each side. The quiet zone is not included."
+  size: Int!
+  "One string per row, top to bottom; 1 is a dark module."
+  modules: [String!]!
+}
+
 """
 A cover sheet ready to print.
 
@@ -86224,6 +86270,8 @@ type CaptureCoverSheet {
   target: CaptureRecordRef
   documentTypeId: ID
   payload: String!
+  "The code to print, drawn from the payload."
+  qrCode: CaptureQRCode!
   expiresAt: Timestamp!
   createdAt: Timestamp!
 }
@@ -110450,6 +110498,8 @@ func (ec *executionContext) childFields_CaptureCoverSheet(ctx context.Context, f
 		return ec.fieldContext_CaptureCoverSheet_documentTypeId(ctx, field)
 	case "payload":
 		return ec.fieldContext_CaptureCoverSheet_payload(ctx, field)
+	case "qrCode":
+		return ec.fieldContext_CaptureCoverSheet_qrCode(ctx, field)
 	case "expiresAt":
 		return ec.fieldContext_CaptureCoverSheet_expiresAt(ctx, field)
 	case "createdAt":
@@ -110684,6 +110734,16 @@ func (ec *executionContext) childFields_CaptureProfile(ctx context.Context, fiel
 		return ec.fieldContext_CaptureProfile_updatedAt(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CaptureProfile", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureQRCode(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "size":
+		return ec.fieldContext_CaptureQRCode_size(ctx, field)
+	case "modules":
+		return ec.fieldContext_CaptureQRCode_modules(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureQRCode", field.Name)
 }
 
 func (ec *executionContext) childFields_CaptureRecordRef(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

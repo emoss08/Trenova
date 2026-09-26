@@ -4831,6 +4831,18 @@ type CaptureBatchEdge {
   node: CaptureBatch!
 }
 
+"""How the intake queue is ordered."""
+enum CaptureBatchSort {
+  """Soonest to have its unfiled pages deleted first."""
+  ExpiringSoonest
+  """Largest stack first."""
+  MostPages
+  """Most recently captured first."""
+  Newest
+  """Longest waiting first."""
+  Oldest
+}
+
 """
 How far a captured stack has got, from the first page arriving to the last document being filed.
 """
@@ -4853,6 +4865,7 @@ input CaptureBatchesInput {
   mine: Boolean
   """Words from the scanner, print job or device name."""
   query: String
+  sort: CaptureBatchSort = Newest
   source: CaptureSource
   """Only these statuses; empty is every status."""
   statuses: [CaptureBatchStatus!]
@@ -4874,6 +4887,8 @@ type CaptureCoverSheet {
   expiresAt: Timestamp!
   id: ID!
   payload: String!
+  """The code to print, drawn from the payload."""
+  qrCode: CaptureQRCode!
   target: CaptureRecordRef
   targetId: ID
   targetType: String!
@@ -5112,6 +5127,14 @@ input CaptureProfileInput {
 enum CaptureProfileStatus {
   Active
   Inactive
+}
+
+"""A QR code as its modules, for drawing on a printed sheet."""
+type CaptureQRCode {
+  """One string per row, top to bottom; 1 is a dark module."""
+  modules: [String!]!
+  """How many modules along each side. The quiet zone is not included."""
+  size: Int!
 }
 
 """How a person recognises a record a capture is filed onto."""

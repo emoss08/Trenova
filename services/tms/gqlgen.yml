@@ -2497,6 +2497,9 @@ models:
         resolver: true
       items:
         resolver: true
+  CaptureQRCode:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.CaptureQRCode
   CaptureItemFailure:
     model:
       - github.com/emoss08/trenova/internal/core/services/captureservice.FileItemFailure
