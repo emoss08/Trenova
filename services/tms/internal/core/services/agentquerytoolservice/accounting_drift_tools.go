@@ -151,14 +151,19 @@ func (t *listAccountingDriftFindingsTool) Name() string {
 
 func (t *listAccountingDriftFindingsTool) Description() string {
 	return "List drift: documents Trenova sent to the accounting system that differ there " +
-		"now, newest first. Each row shows both values, who changed it in the books and when, " +
+		"now, newest first. Each row shows both values, who changed it there and when, " +
 		"whether the difference is within the reconciliation tolerance, and the fixes it " +
 		"offers. Filter by status, such as Open, by kind, or by document type. Pass an Open " +
 		"row's id to resolve_accounting_drift or dismiss_accounting_drift."
 }
 
 func (t *listAccountingDriftFindingsTool) SearchTerms() []string {
-	return []string{"drift", "books differ", "reconciliation differences"}
+	return []string{
+		"drift",
+		"changed after it was sent",
+		"edited in the accounting system",
+		"reconciliation differences",
+	}
 }
 
 func (t *listAccountingDriftFindingsTool) ParamSchema() map[string]any {

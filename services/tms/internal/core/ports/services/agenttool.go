@@ -207,12 +207,18 @@ func TargetParameters(tool any, params map[string]any) []string {
 
 // ProposalFields is a pending proposal's parameters as a person may edit
 // them, from the tool's schema, with the parameters that name its target
-// read-only.
+// read-only and each record-subset parameter listing the records proposed,
+// named by their ids until LabelSubsetChoices names them.
 func ProposalFields(tool AgentTool, params map[string]any) []toolschema.Field {
-	fields := toolschema.Fields(tool.ParamSchema())
+	schema := tool.ParamSchema()
+	fields := toolschema.Fields(schema)
 	targets := TargetParameters(tool, params)
+	choices := toolschema.SubsetChoices(schema, params)
 	for i := range fields {
 		fields[i].ReadOnly = slices.Contains(targets, fields[i].Name)
+		if fields[i].Kind == toolschema.KindRecordSubset {
+			fields[i].Choices = choices[fields[i].Name]
+		}
 	}
 
 	return fields

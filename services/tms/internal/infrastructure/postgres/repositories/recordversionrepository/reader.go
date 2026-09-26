@@ -13,10 +13,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tender"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -159,6 +162,46 @@ var lookups = map[permission.Resource]lookup{
 				return 0
 			}
 			return record.Version
+		},
+	},
+	// A tender is withdrawn as a whole; its version moves as the tender
+	// advances or ends.
+	permission.ResourceTender: {
+		model: func() versioned { return new(tender.Tender) },
+		scope: buncolgen.TenderScopeTenant,
+		idEq:  buncolgen.TenderColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			entity, ok := v.(*tender.Tender)
+			if !ok {
+				return 0
+			}
+			return entity.Version
+		},
+	},
+	permission.ResourceRateConfirmation: {
+		model: func() versioned { return new(rateconfirmation.RateConfirmation) },
+		scope: buncolgen.RateConfirmationScopeTenant,
+		idEq:  buncolgen.RateConfirmationColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			entity, ok := v.(*rateconfirmation.RateConfirmation)
+			if !ok {
+				return 0
+			}
+			return entity.Version
+		},
+	},
+	// An invoice is posted or sent as a whole; its version moves with each
+	// change to it, so an approval refuses one edited since it was proposed.
+	permission.ResourceInvoice: {
+		model: func() versioned { return new(invoice.Invoice) },
+		scope: buncolgen.InvoiceScopeTenant,
+		idEq:  buncolgen.InvoiceColumns.ID.Eq(),
+		version: func(v versioned) int64 {
+			entity, ok := v.(*invoice.Invoice)
+			if !ok {
+				return 0
+			}
+			return entity.Version
 		},
 	},
 	// Likewise the carrier intelligence tools act on one event.

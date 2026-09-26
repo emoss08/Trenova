@@ -94,14 +94,14 @@ func (t *resolveAccountingDriftTool) Name() string {
 func (t *resolveAccountingDriftTool) Description() string {
 	return "Fix an open drift finding in one direction. PushTrenovaValue sends Trenova's " +
 		"document to the accounting system again: an update, a void, or a new copy of a " +
-		"document deleted there. AdjustTrenova changes Trenova to match the books: a credit " +
-		"or debit memo against the invoice, a void of an invoice gone from the books, or the " +
+		"document deleted there. AdjustTrenova changes Trenova to match the accounting system: " +
+		"a credit or debit memo against the invoice, a void of an invoice gone from it, or the " +
 		"reversal of a payment voided there, none of which is sent back. Only the directions " +
 		"the finding lists under fixes are offered. The preview says exactly what happens."
 }
 
 func (t *resolveAccountingDriftTool) SearchTerms() []string {
-	return []string{"fix drift", "push to the books", "match the books"}
+	return []string{"fix drift", "send trenova's total again", "match the accounting system"}
 }
 
 func (t *resolveAccountingDriftTool) Prerequisites() []string {
@@ -112,7 +112,7 @@ func (t *resolveAccountingDriftTool) ParamSchema() map[string]any {
 	return jsonschemautils.Object(map[string]any{
 		paramDriftFindingID: jsonschemautils.Text(driftFindingHelp),
 		paramDriftDirection: jsonschemautils.Enum(
-			"Which side to change: PushTrenovaValue changes the books, AdjustTrenova changes Trenova.",
+			"Which side to change: PushTrenovaValue changes the accounting system, AdjustTrenova changes Trenova.",
 			sliceutils.Strings(accountingsync.AllDriftDirections())...,
 		),
 	}, paramDriftFindingID, paramDriftDirection)
@@ -337,13 +337,13 @@ func (t *checkAccountingDriftTool) Name() string {
 }
 
 func (t *checkAccountingDriftTool) Description() string {
-	return "Compare the accounting system with Trenova now instead of waiting for the " +
+	return "Compare the accounting system with Trenova immediately instead of waiting for the " +
 		"nightly check. It runs in the background and changes nothing on either side; read " +
 		"list_accounting_drift_findings once it has finished."
 }
 
 func (t *checkAccountingDriftTool) SearchTerms() []string {
-	return []string{"check drift now", "reconcile now"}
+	return []string{"check drift", "reconcile with the accounting system"}
 }
 
 func (t *checkAccountingDriftTool) ParamSchema() map[string]any {

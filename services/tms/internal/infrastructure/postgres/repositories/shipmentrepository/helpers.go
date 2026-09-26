@@ -19,19 +19,7 @@ func standardShipmentFilter(
 		q = q.Relation(buncolgen.ShipmentRelations.Customer).
 			Relation(buncolgen.ShipmentRelations.BillToCustomer)
 
-		q = q.RelationWithOpts(buncolgen.ShipmentRelations.AdditionalCharges, bun.RelationOpts{
-			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Relation(buncolgen.AdditionalChargeRelations.AccessorialCharge)
-			},
-		})
-
-		q = q.RelationWithOpts(buncolgen.ShipmentRelations.ChargeAllocations, bun.RelationOpts{
-			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				cols := buncolgen.ChargeAllocationColumns
-				return sq.Relation(buncolgen.ChargeAllocationRelations.BillToCustomer).
-					Order(cols.Sequence.OrderAsc(), cols.ID.OrderAsc())
-			},
-		})
+		q = withCharges(q)
 
 		q = q.RelationWithOpts(buncolgen.ShipmentRelations.Commodities, bun.RelationOpts{
 			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -215,4 +203,22 @@ func (r *repository) hydrateMoves(
 	}
 
 	return nil
+}
+
+// withCharges loads the additional charges and the charge allocations that
+// divide a shipment among its payers.
+func withCharges(q *bun.SelectQuery) *bun.SelectQuery {
+	q = q.RelationWithOpts(buncolgen.ShipmentRelations.AdditionalCharges, bun.RelationOpts{
+		Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Relation(buncolgen.AdditionalChargeRelations.AccessorialCharge)
+		},
+	})
+
+	return q.RelationWithOpts(buncolgen.ShipmentRelations.ChargeAllocations, bun.RelationOpts{
+		Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+			cols := buncolgen.ChargeAllocationColumns
+			return sq.Relation(buncolgen.ChargeAllocationRelations.BillToCustomer).
+				Order(cols.Sequence.OrderAsc(), cols.ID.OrderAsc())
+		},
+	})
 }

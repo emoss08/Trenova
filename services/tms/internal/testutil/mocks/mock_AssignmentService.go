@@ -494,3 +494,71 @@ func (_c *MockAssignmentService_PreviewAssignToMove_Call) RunAndReturn(run func(
 	_c.Call.Return(run)
 	return _c
 }
+
+// PreviewUnassign provides a mock function for the type MockAssignmentService
+func (_mock *MockAssignmentService) PreviewUnassign(ctx context.Context, req *repositories.UnassignShipmentMoveRequest) (*services.AssignmentPlan, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewUnassign")
+	}
+
+	var r0 *services.AssignmentPlan
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UnassignShipmentMoveRequest) (*services.AssignmentPlan, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UnassignShipmentMoveRequest) *services.AssignmentPlan); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.AssignmentPlan)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.UnassignShipmentMoveRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAssignmentService_PreviewUnassign_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewUnassign'
+type MockAssignmentService_PreviewUnassign_Call struct {
+	*mock.Call
+}
+
+// PreviewUnassign is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UnassignShipmentMoveRequest
+func (_e *MockAssignmentService_Expecter) PreviewUnassign(ctx any, req any) *MockAssignmentService_PreviewUnassign_Call {
+	return &MockAssignmentService_PreviewUnassign_Call{Call: _e.mock.On("PreviewUnassign", ctx, req)}
+}
+
+func (_c *MockAssignmentService_PreviewUnassign_Call) Run(run func(ctx context.Context, req *repositories.UnassignShipmentMoveRequest)) *MockAssignmentService_PreviewUnassign_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UnassignShipmentMoveRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UnassignShipmentMoveRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAssignmentService_PreviewUnassign_Call) Return(assignmentPlan *services.AssignmentPlan, err error) *MockAssignmentService_PreviewUnassign_Call {
+	_c.Call.Return(assignmentPlan, err)
+	return _c
+}
+
+func (_c *MockAssignmentService_PreviewUnassign_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UnassignShipmentMoveRequest) (*services.AssignmentPlan, error)) *MockAssignmentService_PreviewUnassign_Call {
+	_c.Call.Return(run)
+	return _c
+}

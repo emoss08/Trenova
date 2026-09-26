@@ -1396,7 +1396,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/proposals.graphql",
-      "hash": "sha256:f099f071d05e17291714533568e09673169e7234a66a98098624adcbcc8ec826",
+      "hash": "sha256:98e4414f6480a6ee129aa3bb58274ff2507958b28ae959b9642f63bb477957a1",
       "rootFields": [
         "agentProposal"
       ],
@@ -1413,7 +1413,7 @@
         "AgentProposalTableRowFields"
       ],
       "usages": [],
-      "sdl": "query AgentProposalDetail($id: ID!) {\n  agentProposal(id: $id) {\n    ...AgentProposalDetailFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "query AgentProposalDetail($id: ID!) {\n  agentProposal(id: $id) {\n    ...AgentProposalDetailFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n    resource\n    choices {\n      id\n      label\n    }\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentProposalPreview",
@@ -1447,7 +1447,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/proposals.graphql",
-      "hash": "sha256:fb30332a91016c92c863b7ae2d4504ca5f097ed77f0583216d92ecc403582380",
+      "hash": "sha256:3ea91ea4a12bd093d74e5812e6f7a869441854dff05bf953622037dbbe289e83",
       "rootFields": [
         "agentProposals"
       ],
@@ -1468,7 +1468,7 @@
         "DataTablePageInfoFields"
       ],
       "usages": [],
-      "sdl": "query AgentProposalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...AgentProposalTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
+      "sdl": "query AgentProposalTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...AgentProposalTableRowFields\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      ...DataTablePageInfoFields\n    }\n  }\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n    resource\n    choices {\n      id\n      label\n    }\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}\n\nfragment DataTablePageInfoFields on PageInfo {\n  hasNextPage\n  endCursor\n}"
     },
     {
       "name": "AgentQuality",
@@ -12642,7 +12642,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/decisions.graphql",
-      "hash": "sha256:f81797b6723f5a53cc3d5fa9f98285e347b14158be8f0039c6a93769ce5cb00c",
+      "hash": "sha256:3441ff2b9f09fce0092083222662d0265fd8dadec8cd5c8caba490fa354d6bff",
       "rootFields": [
         "pendingDecisions"
       ],
@@ -12663,7 +12663,7 @@
         "PendingProposalFields"
       ],
       "usages": [],
-      "sdl": "query PendingDecisions($input: PendingDecisionsInput!, $includeTotalCount: Boolean = true) {\n  pendingDecisions(input: $input) {\n    edges {\n      cursor\n      node {\n        __typename\n        ... on AgentProposal {\n          ...PendingProposalFields\n        }\n        ... on AgentPlan {\n          ...PendingPlanFields\n        }\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment PendingPlanFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  planStatus: status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}\n\nfragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
+      "sdl": "query PendingDecisions($input: PendingDecisionsInput!, $includeTotalCount: Boolean = true) {\n  pendingDecisions(input: $input) {\n    edges {\n      cursor\n      node {\n        __typename\n        ... on AgentProposal {\n          ...PendingProposalFields\n        }\n        ... on AgentPlan {\n          ...PendingPlanFields\n        }\n      }\n    }\n    totalCount @include(if: $includeTotalCount)\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n\nfragment PendingPlanFields on AgentPlan {\n  id\n  organizationId\n  businessUnitId\n  runId\n  title\n  summary\n  planStatus: status\n  stepCount\n  completedSteps\n  failedStep\n  failureError\n  decidedByUserId\n  decidedAt\n  expiresAt\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}\n\nfragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n    resource\n    choices {\n      id\n      label\n    }\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
     },
     {
       "name": "PendingDecisionSummary",
@@ -12756,7 +12756,7 @@
       "kind": "query",
       "domain": "agent",
       "sourceFile": "src/operations/agent/decisions.graphql",
-      "hash": "sha256:be027bd8678aed7dad10ecd7053e48b476074bdfd2f37ffbab2df21aaaa50d02",
+      "hash": "sha256:e68bddfe0b04782f1824389948de415819d6122ced863e86a86564431df715ec",
       "rootFields": [
         "agentProposals"
       ],
@@ -12771,7 +12771,7 @@
         "PendingProposalFields"
       ],
       "usages": [],
-      "sdl": "query PlanSteps($input: DataTableConnectionInput!) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...PendingProposalFields\n      }\n    }\n  }\n}\n\nfragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
+      "sdl": "query PlanSteps($input: DataTableConnectionInput!) {\n  agentProposals(input: $input) {\n    edges {\n      node {\n        ...PendingProposalFields\n      }\n    }\n  }\n}\n\nfragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n    resource\n    choices {\n      id\n      label\n    }\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
     },
     {
       "name": "PostAndApplyCustomerPayment",
@@ -21180,7 +21180,7 @@
         "AgentProposalDetail"
       ],
       "usages": [],
-      "sdl": "fragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentProposalDetailFields on AgentProposal {\n  ...AgentProposalTableRowFields\n  evidence {\n    ...AgentEvidenceRefFields\n  }\n}\n\nfragment AgentEvidenceRefFields on AgentEvidenceRef {\n  type\n  id\n  note\n}\n\nfragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n    resource\n    choices {\n      id\n      label\n    }\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentProposalPreviewFields",
@@ -21208,7 +21208,7 @@
         "AgentProposalTable"
       ],
       "usages": [],
-      "sdl": "fragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
+      "sdl": "fragment AgentProposalTableRowFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n    resource\n    choices {\n      id\n      label\n    }\n  }\n  modifications\n  tainted\n  egressClass\n  heldBy\n  traceId\n  traceUrl\n  version\n  createdAt\n  updatedAt\n}"
     },
     {
       "name": "AgentQualityControlFields",
@@ -23150,7 +23150,7 @@
         "PlanSteps"
       ],
       "usages": [],
-      "sdl": "fragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
+      "sdl": "fragment PendingProposalFields on AgentProposal {\n  id\n  organizationId\n  businessUnitId\n  runId\n  toolName\n  toolParams\n  confidence\n  rationale\n  autonomyTier\n  status\n  planId\n  planStep\n  simulatedAt\n  simulation\n  parameterFields {\n    name\n    label\n    description\n    kind\n    required\n    options\n    minimum\n    maximum\n    maxLength\n    readOnly\n    resource\n    choices {\n      id\n      label\n    }\n  }\n  modifications\n  evidence {\n    type\n    id\n    note\n  }\n  version\n  createdAt\n  updatedAt\n  run {\n    id\n    agentDefinitionId\n    trigger\n    subjectType\n    subjectId\n    summary\n    definition {\n      id\n      name\n      template\n      icon\n      accent\n    }\n  }\n}"
     },
     {
       "name": "PerformanceReviewFields",

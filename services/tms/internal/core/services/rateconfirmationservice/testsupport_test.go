@@ -34,6 +34,7 @@ type fakeRateConRepo struct {
 	activeByAssignment map[pulid.ID]*rateconfirmation.RateConfirmation
 	tokensByHash       map[string]*rateconfirmation.RateConfirmationToken
 
+	maxRevision   int64
 	updated       []*rateconfirmation.RateConfirmation
 	updateErr     error
 	createdTokens []*rateconfirmation.RateConfirmationToken
@@ -77,6 +78,14 @@ func (f *fakeRateConRepo) GetActiveByAssignmentID(
 		return nil, nil //nolint:nilnil // mirrors the production contract
 	}
 	return entity, nil
+}
+
+func (f *fakeRateConRepo) MaxRevisionForAssignment(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ pulid.ID,
+) (int64, error) {
+	return f.maxRevision, nil
 }
 
 func (f *fakeRateConRepo) Update(

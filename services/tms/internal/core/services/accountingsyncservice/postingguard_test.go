@@ -45,6 +45,9 @@ var postingAllowList = map[string]string{
 	"customerpaymentservice.Service.planPost": "builds the payment a post would record without " +
 		"saving it, for the preview and for PostAndApply; PostAndApply, the only caller that " +
 		"saves it, enqueues the sync record",
+	"invoiceservice.Service.planPost": "marks the loaded invoice Posted without saving it, for " +
+		"PreviewPost and for Post; Post, the only caller that saves it, enqueues the sync " +
+		"record in the same transaction",
 }
 
 var postedStatusPackages = []string{"invoice", "customerpayment"}

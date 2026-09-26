@@ -2,19 +2,36 @@ package billingqueueservice
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
+// PlanStatusChange is what UpdateStatus does to the item, refused where the
+// actor may not make the move.
 func PlanStatusChange(
 	entity *billingqueue.BillingQueueItem,
 	req *services.UpdateBillingQueueStatusRequest,
 	actor *services.RequestActor,
 	now int64,
 ) error {
-	if actor.IsAgent() {
-		return errAgentCannotTransition()
+	if err := guardAgentTransition(actor, req.NewStatus); err != nil {
+		return err
 	}
+
+	return PlanTransition(entity, req, actor, now)
+}
+
+// PlanTransition is the move itself, whoever makes it. A preview of a
+// decision only a person makes plans it for the person who will approve it;
+// the write still goes through UpdateStatus, which refuses an agent.
+func PlanTransition(
+	entity *billingqueue.BillingQueueItem,
+	req *services.UpdateBillingQueueStatusRequest,
+	actor *services.RequestActor,
+	now int64,
+) error {
 	if err := checkStatusTransition(entity, req); err != nil {
 		return err
 	}
@@ -23,6 +40,58 @@ func PlanStatusChange(
 	applyStatusFields(entity, req, actor, now)
 
 	return nil
+}
+
+// AgentMayMoveTo reports whether an agent principal may move an item to a
+// status. Review, hold, exception and a return to operations create no money
+// and are undone by moving the item again. Approving creates the invoice,
+// canceling drops the charge, posting books it and returning an item to
+// review re-opens what a person closed, so those stay a person's.
+func AgentMayMoveTo(status billingqueue.Status) bool {
+	switch status { //nolint:exhaustive // every other status is a person's decision
+	case billingqueue.StatusInReview,
+		billingqueue.StatusOnHold,
+		billingqueue.StatusException,
+		billingqueue.StatusSentBackToOps:
+		return true
+	default:
+		return false
+	}
+}
+
+func guardAgentTransition(actor *services.RequestActor, status billingqueue.Status) error {
+	if actor.IsAgent() && !AgentMayMoveTo(status) {
+		return errAgentCannotTransition()
+	}
+
+	return nil
+}
+
+// SendBackComment is the operations note a return to operations posts on the
+// item's shipment.
+func SendBackComment(
+	entity *billingqueue.BillingQueueItem,
+	userID pulid.ID,
+) *shipment.ShipmentComment {
+	comment := "Sent back from billing"
+	if entity.ExceptionReasonCode != nil {
+		comment += ": " + string(*entity.ExceptionReasonCode)
+	}
+	if entity.ExceptionNotes != "" {
+		comment += "\n\n" + entity.ExceptionNotes
+	}
+
+	return &shipment.ShipmentComment{
+		OrganizationID: entity.OrganizationID,
+		BusinessUnitID: entity.BusinessUnitID,
+		ShipmentID:     entity.ShipmentID,
+		UserID:         userID,
+		Comment:        comment,
+		Type:           shipment.CommentTypeBilling,
+		Visibility:     shipment.CommentVisibilityOperations,
+		Priority:       shipment.CommentPriorityHigh,
+		Source:         shipment.CommentSourceSystem,
+	}
 }
 
 func checkStatusTransition(
@@ -83,4 +152,24 @@ func applyStatusFields(
 			entity.ReviewNotes = req.ReviewNotes
 		}
 	}
+}
+
+// PlanAssignBiller is what AssignBiller does to the item: it names the biller,
+// and an item waiting for review moves into review with them.
+func PlanAssignBiller(entity *billingqueue.BillingQueueItem, billerID pulid.ID, now int64) error {
+	if billingqueue.IsTerminalStatus(entity.Status) {
+		return errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Cannot assign a biller to a billing queue item in {0} status", string(entity.Status),
+		)
+	}
+
+	entity.AssignedBillerID = &billerID
+	if entity.Status == billingqueue.StatusReadyForReview {
+		entity.Status = billingqueue.StatusInReview
+		entity.ReviewStartedAt = &now
+	}
+
+	return nil
 }

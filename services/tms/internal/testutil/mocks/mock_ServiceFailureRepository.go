@@ -783,3 +783,71 @@ func (_c *MockServiceFailureRepository_UpdateDetectionSnapshot_Call) RunAndRetur
 	_c.Call.Return(run)
 	return _c
 }
+
+// ListUnresolvedByShipmentIDs provides a mock function for the type MockServiceFailureRepository
+func (_mock *MockServiceFailureRepository) ListUnresolvedByShipmentIDs(ctx context.Context, req *repositories.ServiceFailuresByShipmentIDsRequest) ([]*servicefailure.ServiceFailure, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListUnresolvedByShipmentIDs")
+	}
+
+	var r0 []*servicefailure.ServiceFailure
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ServiceFailuresByShipmentIDsRequest) ([]*servicefailure.ServiceFailure, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ServiceFailuresByShipmentIDsRequest) []*servicefailure.ServiceFailure); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*servicefailure.ServiceFailure)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ServiceFailuresByShipmentIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockServiceFailureRepository_ListUnresolvedByShipmentIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUnresolvedByShipmentIDs'
+type MockServiceFailureRepository_ListUnresolvedByShipmentIDs_Call struct {
+	*mock.Call
+}
+
+// ListUnresolvedByShipmentIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.ServiceFailuresByShipmentIDsRequest
+func (_e *MockServiceFailureRepository_Expecter) ListUnresolvedByShipmentIDs(ctx any, req any) *MockServiceFailureRepository_ListUnresolvedByShipmentIDs_Call {
+	return &MockServiceFailureRepository_ListUnresolvedByShipmentIDs_Call{Call: _e.mock.On("ListUnresolvedByShipmentIDs", ctx, req)}
+}
+
+func (_c *MockServiceFailureRepository_ListUnresolvedByShipmentIDs_Call) Run(run func(ctx context.Context, req *repositories.ServiceFailuresByShipmentIDsRequest)) *MockServiceFailureRepository_ListUnresolvedByShipmentIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.ServiceFailuresByShipmentIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.ServiceFailuresByShipmentIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockServiceFailureRepository_ListUnresolvedByShipmentIDs_Call) Return(serviceFailures []*servicefailure.ServiceFailure, err error) *MockServiceFailureRepository_ListUnresolvedByShipmentIDs_Call {
+	_c.Call.Return(serviceFailures, err)
+	return _c
+}
+
+func (_c *MockServiceFailureRepository_ListUnresolvedByShipmentIDs_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ServiceFailuresByShipmentIDsRequest) ([]*servicefailure.ServiceFailure, error)) *MockServiceFailureRepository_ListUnresolvedByShipmentIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}

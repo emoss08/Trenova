@@ -419,86 +419,24 @@ func (s *service) unassignWithinTx(
 	var previousWorkers []pulid.ID
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		move, err := s.repo.GetMoveByID(txCtx, req.TenantInfo, req.ShipmentMoveID)
+		plan, err := s.planUnassign(txCtx, req)
 		if err != nil {
 			return err
 		}
 
-		if move.Status != shipment.MoveStatusAssigned {
-			return errortypes.NewBusinessError("Only fresh assigned shipment moves can be unassigned").
-				WithParam("shipmentMoveId", req.ShipmentMoveID.String())
-		}
-
-		original, err := s.shipmentRepo.GetByID(txCtx, &repositories.GetShipmentByIDRequest{
-			ID: move.ShipmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: req.TenantInfo.OrgID,
-				BuID:  req.TenantInfo.BuID,
-			},
-			ShipmentOptions: repositories.ShipmentOptions{
-				ExpandShipmentDetails: true,
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		existing, err := s.repo.GetByMoveID(txCtx, req.TenantInfo, req.ShipmentMoveID)
-		if err != nil {
-			return err
-		}
-		if existing == nil {
-			return errortypes.NewNotFoundError("Assignment not found within your organization")
-		}
-		if existing.Status != shipment.AssignmentStatusNew {
-			return errortypes.NewBusinessError("Only fresh assignments can be unassigned").
-				WithParam("shipmentMoveId", req.ShipmentMoveID.String())
-		}
-
-		previousWorkers = assignmentWorkerIDs(existing)
-		if _, err = s.repo.Unassign(txCtx, existing); err != nil {
+		previousWorkers = assignmentWorkerIDs(plan.existing)
+		if _, err = s.repo.Unassign(txCtx, plan.existing); err != nil {
 			return err
 		}
 		ref = &shipmenteventservice.AssignmentRef{
-			ShipmentID:   move.ShipmentID,
+			ShipmentID:   plan.move.ShipmentID,
 			MoveID:       req.ShipmentMoveID,
-			AssignmentID: existing.ID,
+			AssignmentID: plan.existing.ID,
 		}
-		updatedShipment := shipment.CloneForUpdate(original)
-		targetMove := updatedShipment.FindMove(req.ShipmentMoveID)
-		if targetMove == nil {
-			return errortypes.NewBusinessError("Shipment does not contain the target move").
-				WithParam("shipmentMoveId", req.ShipmentMoveID.String())
-		}
-		targetMove.Assignment = nil
-		targetMove.CoverageType = shipment.MoveCoverageTypeUnassigned
-		targetMove.Status = shipment.MoveStatusNew
 
-		control, err := s.controlRepo.Get(txCtx, repositories.GetShipmentControlRequest{
-			TenantInfo: req.TenantInfo,
-		})
+		updatedShipment, err := s.projectUnassign(txCtx, req, plan)
 		if err != nil {
 			return err
-		}
-
-		if multiErr := s.coordinator.PrepareForUpdateWithDelayThreshold(
-			original,
-			updatedShipment,
-			shipmentstate.ResolveControlDelayThreshold(control),
-		); multiErr != nil {
-			return multiErr
-		}
-
-		if err = s.commercial.Recalculate(txCtx, updatedShipment, control, pulid.Nil); err != nil {
-			return err
-		}
-
-		if multiErr := s.shipmentValidator.ValidateUpdateWithOriginal(
-			txCtx,
-			original,
-			updatedShipment,
-		); multiErr != nil {
-			return multiErr
 		}
 
 		_, err = s.shipmentRepo.Update(txCtx, updatedShipment)

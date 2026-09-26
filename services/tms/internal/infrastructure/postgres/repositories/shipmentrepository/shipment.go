@@ -141,7 +141,7 @@ func (r *repository) GetByIDs(
 ) ([]*shipment.Shipment, error) {
 	sp := buncolgen.ShipmentColumns
 	entities := make([]*shipment.Shipment, 0, len(req.ShipmentIDs))
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -150,6 +150,13 @@ func (r *repository) GetByIDs(
 		}).
 		Relation(buncolgen.ShipmentRelations.Customer).
 		Relation(buncolgen.ShipmentRelations.ServiceType).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			if !req.IncludeCharges {
+				return sq
+			}
+
+			return withCharges(sq.Relation(buncolgen.ShipmentRelations.BillToCustomer))
+		}).
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "Shipment")

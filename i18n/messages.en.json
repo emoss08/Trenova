@@ -1548,6 +1548,15 @@
       "domain/agent"
     ]
   },
+  "A billing queue item in {0} status cannot be approved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/invoiceservice"
+    ]
+  },
   "A billing queue item must be attached to a shipment, an order, a source invoice or a bill-to customer": {
     "sites": 1,
     "scope": [
@@ -2404,6 +2413,15 @@
       "routes/agent-control"
     ]
   },
+  "A contract-priced assignment is priced when it is saved, so it cannot be previewed. Give the rate instead": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/carrierassignmentservice"
+    ]
+  },
   "A conversation answers in prose; a report in sections.": {
     "sites": 1,
     "scope": [
@@ -3196,6 +3214,15 @@
     ],
     "areas": [
       "domain/ifta"
+    ]
+  },
+  "A first revision is generated as far as the agent allows; one that would void a revision already standing, which the carrier may hold or have signed, is a proposal a person decides, as is one the service would refuse or that cannot be read.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "A fixed class rule needs a freight class": {
@@ -5107,6 +5134,15 @@
       "domain/agent"
     ]
   },
+  "A revision the carrier has been sent or has signed is voided only as a proposal a person decides, as is one that cannot be read; one never sent is voided once a person approves it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A revoked connection must record when it was revoked": {
     "sites": 1,
     "scope": [
@@ -6196,6 +6232,15 @@
       "service/formulatemplateservice"
     ]
   },
+  "A tender waiting on review holds a carrier's acceptance, so withdrawing it is a proposal a person decides, as is one the service would refuse or that cannot be read; an active tender is withdrawn once a person approves it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "A terminal is where somebody works; a position is what they do. Headcount is read both ways.": {
     "sites": 1,
     "scope": [
@@ -6349,6 +6394,15 @@
     ],
     "areas": [
       "domain/billingtransfer"
+    ]
+  },
+  "A transfer can include at most {0} shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/shipmentservice"
     ]
   },
   "A transfer must include at least one shipment": {
@@ -21173,12 +21227,13 @@
     ]
   },
   "At least one shipment ID is required": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "service/shipmentservice"
     ]
   },
   "At least one table row is required for table-based methods": {
@@ -28873,6 +28928,15 @@
       "domain/shipmentstate"
     ]
   },
+  "Canceling a move ends it for good, so a cancellation is a proposal a person decides; any other status runs once a person approves it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Canceling...": {
     "sites": 4,
     "scope": [
@@ -35003,7 +35067,7 @@
     ]
   },
   "Clear": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -48169,15 +48233,17 @@
     ]
   },
   "Debit": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/customer-ledger",
       "routes/journal-entry",
-      "routes/trial-balance"
+      "routes/trial-balance",
+      "service/agenttoolservice"
     ]
   },
   "Debit amount cannot be negative": {
@@ -71223,6 +71289,15 @@
       "routes/worker"
     ]
   },
+  "Filter by name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Filter by status": {
     "sites": 1,
     "scope": [
@@ -71320,6 +71395,15 @@
     ],
     "areas": [
       "domain/agent"
+    ]
+  },
+  "Filter {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Filter {0}…": {
@@ -74497,7 +74581,7 @@
     ]
   },
   "Fuel surcharge": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -74511,6 +74595,7 @@
       "routes/customer",
       "routes/formula-template",
       "routes/shipment",
+      "service/agenttoolservice",
       "service/carriersettlementservice",
       "template/rateconfirmation.pdf"
     ]
@@ -86532,6 +86617,15 @@
       "routes/policies"
     ]
   },
+  "Its notes are what a biller or operations reads next, so a run that has read outside text proposes it rather than writing it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Its own tools": {
     "sites": 1,
     "scope": [
@@ -87137,6 +87231,24 @@
     ]
   },
   "Keep assignment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Keep at least one of the proposed records, or reject the proposal": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Keep at least one, or reject the proposal instead.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -91693,7 +91805,7 @@
     ]
   },
   "Load tender offer": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -99965,7 +100077,7 @@
     ]
   },
   "Move status transition from {0} to {1} is not allowed": {
-    "sites": 7,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -100262,6 +100374,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "Must be a list of the proposed records": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Must be a valid decimal number": {
@@ -109937,6 +110058,15 @@
       "apps/web/components"
     ]
   },
+  "Nothing matches that filter.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Nothing matches that search": {
     "sites": 1,
     "scope": [
@@ -113674,7 +113804,7 @@
     ]
   },
   "Only completed or ready to invoice shipments can be transferred to billing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -114062,6 +114192,15 @@
     ],
     "areas": [
       "domain/carrier"
+    ]
+  },
+  "Only one move at a time, still freshly assigned, is taken off its driver without a decision; several moves, a move the service would refuse and a move that cannot be read each wait for a person.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Only one row may have an open-ended minimum": {
@@ -136953,6 +137092,15 @@
       "routes/detention-desk"
     ]
   },
+  "Recording an acceptance commits the load to the carrier at the offered rate, so it is a proposal a person decides; a decline runs once a person approves it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Recording an event is the only way a worker's employment status moves. A leave or suspension takes them off the dispatch board, a termination ends employment and closes their PTO and pay assignments, a rehire reopens it.": {
     "sites": 1,
     "scope": [
@@ -140133,6 +140281,15 @@
       "service/formula"
     ]
   },
+  "Replacing a carrier already on the move, or overriding the new carrier's insurance warning, is a proposal a person decides; any other assignment runs once a person approves it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Replay a rate agreement against historical shipments and report what it would have charged": {
     "sites": 1,
     "scope": [
@@ -140910,7 +141067,7 @@
     ]
   },
   "Request is required": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "go"
     ],
@@ -152283,7 +152440,7 @@
     ]
   },
   "Select all": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -157447,7 +157604,7 @@
     ]
   },
   "Shipment billing readiness service is unavailable": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -157840,7 +157997,7 @@
     ]
   },
   "Shipment does not contain the target move": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -158418,12 +158575,14 @@
     ]
   },
   "Shipment not found": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "service/shipmentservice"
     ]
   },
   "Shipment ownership transfer requires a user actor": {
@@ -166622,6 +166781,15 @@
       "routes/worker"
     ]
   },
+  "Taking off a carrier who has confirmed the rate breaks an executed agreement, so it is a proposal a person decides, as is one the service would refuse or that cannot be read; a carrier who has not confirmed comes off once a person approves it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Talk to it, run it on a schedule, fire it from an event, or keep it going.": {
     "sites": 1,
     "scope": [
@@ -168080,7 +168248,7 @@
     ]
   },
   "Tender has already finished": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -170024,6 +170192,15 @@
       "routes/bank-receipt-batch"
     ]
   },
+  "The base rate must be greater than zero; a carrier is never covered for nothing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "The batch for this pay period is already completed; generate individual settlements for late accruals instead": {
     "sites": 1,
     "scope": [
@@ -170112,6 +170289,15 @@
     ],
     "areas": [
       "routes/home"
+    ]
+  },
+  "The billing queue is unavailable": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agentquerytoolservice"
     ]
   },
   "The billing queue item has been assigned.": {
@@ -200969,6 +201155,15 @@
       "routes/time-attendance"
     ]
   },
+  "Would change {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Would charge": {
     "sites": 1,
     "scope": [
@@ -213062,6 +213257,24 @@
       "routes/reports"
     ]
   },
+  "{0} of 1 record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "{0} of 1 shipment": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} of 17 characters. VINs never use the letters I, O or Q.": {
     "sites": 1,
     "scope": [
@@ -213221,6 +213434,15 @@
       "routes/shipment"
     ]
   },
+  "{0} of {1} records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} of {1} required courses are current.": {
     "sites": 1,
     "scope": [
@@ -213264,6 +213486,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "{0} of {1} shipments": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0} of {1} shipments checked": {
@@ -213399,6 +213630,15 @@
     ],
     "areas": [
       "routes/time-attendance"
+    ]
+  },
+  "{0} on this item's shipment still waits on approval; approve or waive it first": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "{0} on {1}, opens in a new tab": {
@@ -214495,6 +214735,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} was not in the proposal; an approver may remove records, never add them": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} was unavailable; the fallback provider answered instead.": {

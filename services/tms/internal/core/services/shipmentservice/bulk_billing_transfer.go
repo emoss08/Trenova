@@ -161,27 +161,9 @@ func (s *service) attemptBillingTransfer(
 	}
 	attempt.entity = entity
 
-	if !entity.BillingTransferStatus.IsOutsideBillingQueue() {
-		return attempt.fail(
-			services.BillingTransferFailureAlreadyTransferred,
-			errortypes.NewValidationError(
-				"billingTransferStatus",
-				errortypes.ErrInvalidOperation,
-				"Shipment has already been transferred to billing",
-			),
-		)
-	}
-
-	markReady := p.MarkCompletedReadyToInvoice && entity.Status == shipment.StatusCompleted
-	if entity.Status != shipment.StatusReadyToInvoice && !markReady {
-		return attempt.fail(
-			services.BillingTransferFailureInvalidStatus,
-			errortypes.NewValidationError(
-				"shipmentId",
-				errortypes.ErrInvalidOperation,
-				"Shipment must be in ReadyToInvoice status to transfer to billing",
-			),
-		)
+	markReady, code, gateErr := transferGate(entity, p.MarkCompletedReadyToInvoice)
+	if gateErr != nil {
+		return attempt.fail(code, gateErr)
 	}
 
 	readiness, err := s.evaluateBillingReadinessCached(ctx, entity, p.Cache, true)

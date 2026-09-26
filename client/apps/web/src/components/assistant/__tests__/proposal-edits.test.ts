@@ -30,6 +30,7 @@ const FIELDS: ProposalField[] = [
   field({ name: "urgent", label: "Urgent", kind: "Boolean" }),
   field({ name: "codes", label: "Codes", kind: "List" }),
   field({ name: "extra", label: "Extra", kind: "JSON" }),
+  field({ name: "shipmentIds", label: "Shipment IDs", kind: "RecordSubset", resource: "shipment" }),
 ];
 
 /**
@@ -53,6 +54,29 @@ describe("proposal edits", () => {
     expect(draft.urgent).toBe("true");
     expect(draft.codes).toBe("A, B");
     expect(draft.extra).toBe('{\n  "a": 1\n}');
+  });
+
+  it("edits a record subset as the ids it holds, and reads it back as a list", () => {
+    const draft = draftFromArguments(FIELDS, { shipmentIds: ["shp_a", "shp_b", "shp_c"] });
+
+    expect(draft.shipmentIds).toBe("shp_a, shp_b, shp_c");
+    expect(parseDraftValue(FIELDS[7], "shp_a, shp_c")).toEqual({ value: ["shp_a", "shp_c"] });
+  });
+
+  // toolschema.CheckSubsets refuses an empty list, and a null or absent one,
+  // whether or not the parameter is required: emptying a subset is never a
+  // value the server takes, so the form refuses it rather than sending null.
+  it("refuses an emptied record subset even when the parameter is optional", () => {
+    expect(FIELDS[7].required).toBe(false);
+    expect(parseDraftValue(FIELDS[7], "")).toEqual({
+      error: "Keep at least one, or reject the proposal instead.",
+    });
+    expect(parseDraftValue(FIELDS[7], " , ")).toEqual({
+      error: "Keep at least one, or reject the proposal instead.",
+    });
+    expect(
+      changedValues(FIELDS, { shipmentIds: ["shp_a"] }, { shipmentIds: "" }),
+    ).not.toHaveProperty("shipmentIds");
   });
 
   it("reads each kind back into the value the tool takes", () => {

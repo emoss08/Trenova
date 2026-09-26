@@ -92,10 +92,19 @@ func TestTransitionToInReview_PreviewMatchesWhatIsSaved(t *testing.T) {
 		toolpreview.Only(inReviewFields...), toolpreview.Volatile(inReviewVolatileFields...))
 }
 
-func TestTransitionToInReview_PreviewWarnsWhenAnAgentWouldRunIt(t *testing.T) {
+// An unattended run is an agent principal, and moving an item into review is
+// a move an agent may make: the preview shows it and the write lands. Both
+// used to be refused, so the tool failed on every run it could run on alone.
+func TestTransitionToInReview_AnAgentMovesTheItemIntoReview(t *testing.T) {
 	t.Parallel()
 
-	item := &billingqueue.BillingQueueItem{ID: pulid.MustNew("bqi_"), Status: billingqueue.StatusOnHold}
+	billerID := pulid.MustNew("usr_")
+	item := &billingqueue.BillingQueueItem{
+		ID:               pulid.MustNew("bqi_"),
+		Number:           "BQ-2001",
+		Status:           billingqueue.StatusException,
+		AssignedBillerID: &billerID,
+	}
 	guard := &writeGuard{}
 	tool := newTransitionToInReviewTool(billingQueueFor(t, item, guard)).(*transitionToInReviewTool)
 	params := executeParams(map[string]any{"billingQueueItemId": item.ID.String()})
@@ -105,6 +114,10 @@ func TestTransitionToInReview_PreviewWarnsWhenAnAgentWouldRunIt(t *testing.T) {
 		return tool.Preview(t.Context(), params)
 	})
 
-	assert.Empty(t, preview.Changes)
-	requireWarning(t, preview, agent.PreviewWarningWouldFail)
+	assert.Empty(t, preview.Warnings)
+	change := previewChange(t, preview, 0)
+	assert.Equal(t, "InReview", fieldByPath(t, change, "status").After)
+
+	require.NoError(t, tool.Execute(t.Context(), params))
+	assert.Equal(t, billingqueue.StatusInReview, item.Status)
 }

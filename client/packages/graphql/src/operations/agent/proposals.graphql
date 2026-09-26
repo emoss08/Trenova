@@ -26,6 +26,11 @@ fragment AgentProposalTableRowFields on AgentProposal {
     maximum
     maxLength
     readOnly
+    resource
+    choices {
+      id
+      label
+    }
   }
   modifications
   tainted
