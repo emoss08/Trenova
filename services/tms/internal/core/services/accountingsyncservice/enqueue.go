@@ -34,7 +34,10 @@ type Enqueuer struct {
 	dispatcher  services.AccountingSyncDispatcher
 }
 
-var _ services.AccountingSyncEnqueuer = (*Enqueuer)(nil)
+var (
+	_ services.AccountingSyncEnqueuer = (*Enqueuer)(nil)
+	_ services.AccountingSyncPlanner  = (*Enqueuer)(nil)
+)
 
 func NewEnqueuer(p EnqueuerParams) *Enqueuer {
 	return &Enqueuer{
@@ -68,21 +71,14 @@ func (e *Enqueuer) Enqueue(ctx context.Context, req *services.AccountingSyncEnqu
 		return err
 	}
 
-	conns, err := e.connections.ListByTenant(ctx, req.TenantInfo)
+	conns, err := e.coveringConnections(ctx, req)
 	if err != nil {
-		return fmt.Errorf("accounting sync: list connections: %w", err)
+		return err
 	}
 
 	now := timeutils.NowUnix()
 	records := make([]*accountingsync.AccountingSyncRecord, 0, len(conns))
 	for _, conn := range conns {
-		include, includeErr := e.covers(ctx, req, conn)
-		if includeErr != nil {
-			return includeErr
-		}
-		if !include {
-			continue
-		}
 		records = append(records, NewRecordFor(conn, req, now))
 	}
 	if len(records) == 0 {
@@ -113,6 +109,58 @@ func (e *Enqueuer) Enqueue(ctx context.Context, req *services.AccountingSyncEnqu
 
 	e.kickAfterCommit(ctx, req.TenantInfo, result.Inserted)
 	return nil
+}
+
+// Destinations is where Enqueue would queue the record: the connections that
+// cover it, decided by the same rule. It writes nothing.
+func (e *Enqueuer) Destinations(
+	ctx context.Context,
+	req *services.AccountingSyncEnqueueRequest,
+) ([]services.AccountingSyncDestination, error) {
+	if err := validateEnqueue(req); err != nil {
+		return nil, err
+	}
+
+	conns, err := e.coveringConnections(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	destinations := make([]services.AccountingSyncDestination, 0, len(conns))
+	for _, conn := range conns {
+		destinations = append(destinations, services.AccountingSyncDestination{
+			ConnectionID: conn.ID,
+			Integration:  string(conn.IntegrationType),
+			Company:      conn.ExternalCompanyName,
+			AwaitsRelease: !conn.AutoSync &&
+				req.SourceEvent != accountingsync.SyncSourceDependencyOf,
+		})
+	}
+
+	return destinations, nil
+}
+
+func (e *Enqueuer) coveringConnections(
+	ctx context.Context,
+	req *services.AccountingSyncEnqueueRequest,
+) ([]*accountingsync.AccountingConnection, error) {
+	conns, err := e.connections.ListByTenant(ctx, req.TenantInfo)
+	if err != nil {
+		return nil, fmt.Errorf("accounting sync: list connections: %w", err)
+	}
+
+	covering := make([]*accountingsync.AccountingConnection, 0, len(conns))
+	for _, conn := range conns {
+		include, includeErr := e.covers(ctx, req, conn)
+		if includeErr != nil {
+			return nil, includeErr
+		}
+		if include {
+			covering = append(covering, conn)
+		}
+	}
+
+	return covering, nil
 }
 
 func NewRecordFor(

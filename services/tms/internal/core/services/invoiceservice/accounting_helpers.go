@@ -16,30 +16,52 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (s *Service) createInvoiceJournalPosting(
+// invoiceJournalPlan is the journal entry posting an invoice writes, and the
+// customer ledger line beside it, before the batch and entry numbers that
+// only a write takes.
+type invoiceJournalPlan struct {
+	event            tenant.JournalSourceEventType
+	period           *fiscalperiod.FiscalPeriod
+	postingDate      int64
+	amount           int64
+	ledgerAmount     int64
+	entryStatus      string
+	batchStatus      string
+	postedAt         *int64
+	postedByID       pulid.ID
+	requiresApproval bool
+	isApproved       bool
+	approvedByID     pulid.ID
+	approvedAt       *int64
+	lines            []repositories.JournalPostingLine
+}
+
+// planInvoiceJournal is the ledger output posting the invoice creates, or nil
+// when the organization's accounting control creates none for it.
+func (s *Service) planInvoiceJournal(
 	ctx context.Context,
 	entity *invoice.Invoice,
 	actor *servicesports.RequestActor,
-) error {
+) (*invoiceJournalPlan, error) {
 	if s.accountingRepo == nil || s.journalRepo == nil || s.sequenceGenerator == nil ||
 		entity == nil ||
 		actor == nil {
-		return nil
+		return nil, nil
 	}
 
 	accountingControl, err := s.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil
+			return nil, nil
 		}
-		return err
+		return nil, err
 	}
 	event := invoicePostingSourceEvent(entity.BillType)
 	if !s.accountingPolicyService().CanCreateInvoiceLedgerEntry(accountingControl, event) {
-		return nil
+		return nil, nil
 	}
 	if !invoicePostingHasRequiredAccounts(accountingControl) {
-		return errortypes.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"accountingControl",
 			errortypes.ErrRequired,
 			"Invoice posting requires default Accounts Receivable and revenue accounts",
@@ -48,6 +70,77 @@ func (s *Service) createInvoiceJournalPosting(
 
 	period, postingDate, err := s.resolveInvoicePostingPeriod(ctx, entity, accountingControl)
 	if err != nil {
+		return nil, err
+	}
+
+	amount := entity.TotalAmountMinor
+	if amount < 0 {
+		amount = -amount
+	}
+	if amount == 0 {
+		return nil, nil
+	}
+
+	plan := &invoiceJournalPlan{
+		event:        event,
+		period:       period,
+		postingDate:  postingDate,
+		amount:       amount,
+		ledgerAmount: entity.TotalAmountMinor,
+	}
+	plan.entryStatus, plan.batchStatus, plan.postedAt, plan.postedByID, plan.requiresApproval,
+		plan.isApproved, plan.approvedByID, plan.approvedAt = invoicePostingWorkflow(
+		accountingControl,
+		actor.UserID,
+		*entity.PostedAt,
+	)
+	//nolint:exhaustive // only actionable enum states require explicit handling here
+	switch entity.BillType {
+	case billingqueue.BillTypeCreditMemo:
+		plan.ledgerAmount = -amount
+	case billingqueue.BillTypeDebitMemo:
+		plan.ledgerAmount = amount
+	}
+
+	debitAccountID := accountingControl.DefaultARAccountID
+	creditAccountID := accountingControl.DefaultRevenueAccountID
+	if entity.BillType == billingqueue.BillTypeCreditMemo {
+		debitAccountID = accountingControl.DefaultRevenueAccountID
+		creditAccountID = accountingControl.DefaultARAccountID
+	}
+	plan.lines = []repositories.JournalPostingLine{
+		{
+			ID:           pulid.MustNew("jel_"),
+			GLAccountID:  debitAccountID,
+			LineNumber:   1,
+			Description:  fmt.Sprintf("Invoice posted for %s", entity.Number),
+			DebitAmount:  amount,
+			CreditAmount: 0,
+			NetAmount:    amount,
+			CustomerID:   entity.CustomerID,
+		},
+		{
+			ID:           pulid.MustNew("jel_"),
+			GLAccountID:  creditAccountID,
+			LineNumber:   2,
+			Description:  fmt.Sprintf("Invoice posted for %s", entity.Number),
+			DebitAmount:  0,
+			CreditAmount: amount,
+			NetAmount:    -amount,
+			CustomerID:   entity.CustomerID,
+		},
+	}
+
+	return plan, nil
+}
+
+func (s *Service) createInvoiceJournalPosting(
+	ctx context.Context,
+	entity *invoice.Invoice,
+	actor *servicesports.RequestActor,
+) error {
+	plan, err := s.planInvoiceJournal(ctx, entity, actor)
+	if err != nil || plan == nil {
 		return err
 	}
 
@@ -72,92 +165,46 @@ func (s *Service) createInvoiceJournalPosting(
 		return err
 	}
 
-	now := *entity.PostedAt
-	entryStatus, batchStatus, postedAt, postedByID, requiresApproval, isApproved, approvedByID, approvedAt := invoicePostingWorkflow(
-		accountingControl,
-		actor.UserID,
-		now,
-	)
-	amount := entity.TotalAmountMinor
-	if amount < 0 {
-		amount = -amount
-	}
-	if amount == 0 {
-		return nil
-	}
-
-	debitAccountID := accountingControl.DefaultARAccountID
-	creditAccountID := accountingControl.DefaultRevenueAccountID
-	if entity.BillType == billingqueue.BillTypeCreditMemo {
-		debitAccountID = accountingControl.DefaultRevenueAccountID
-		creditAccountID = accountingControl.DefaultARAccountID
-	}
-
-	batchID := pulid.MustNew("jb_")
-	entryID := pulid.MustNew("je_")
-	sourceID := pulid.MustNew("jsrc_")
-	lines := []repositories.JournalPostingLine{
-		{
-			ID:           pulid.MustNew("jel_"),
-			GLAccountID:  debitAccountID,
-			LineNumber:   1,
-			Description:  fmt.Sprintf("Invoice posted for %s", entity.Number),
-			DebitAmount:  amount,
-			CreditAmount: 0,
-			NetAmount:    amount,
-			CustomerID:   entity.CustomerID,
-		},
-		{
-			ID:           pulid.MustNew("jel_"),
-			GLAccountID:  creditAccountID,
-			LineNumber:   2,
-			Description:  fmt.Sprintf("Invoice posted for %s", entity.Number),
-			DebitAmount:  0,
-			CreditAmount: amount,
-			NetAmount:    -amount,
-			CustomerID:   entity.CustomerID,
-		},
-	}
-
+	event := plan.event
 	err = s.journalRepo.CreatePosting(ctx, repositories.CreateJournalPostingParams{
-		BatchID:              batchID,
+		BatchID:              pulid.MustNew("jb_"),
 		OrganizationID:       entity.OrganizationID,
 		BusinessUnitID:       entity.BusinessUnitID,
 		BatchNumber:          batchNumber,
 		BatchType:            "System",
-		BatchStatus:          batchStatus,
+		BatchStatus:          plan.batchStatus,
 		BatchDescription:     fmt.Sprintf("Invoice posted for %s", entity.Number),
-		FiscalYearID:         period.FiscalYearID,
-		FiscalPeriodID:       period.ID,
-		AccountingDate:       postingDate,
-		PostedAt:             postedAt,
-		PostedByID:           postedByID,
+		FiscalYearID:         plan.period.FiscalYearID,
+		FiscalPeriodID:       plan.period.ID,
+		AccountingDate:       plan.postingDate,
+		PostedAt:             plan.postedAt,
+		PostedByID:           plan.postedByID,
 		CreatedByID:          actor.UserID,
 		UpdatedByID:          actor.UserID,
-		EntryID:              entryID,
+		EntryID:              pulid.MustNew("je_"),
 		EntryNumber:          entryNumber,
 		EntryType:            "Standard",
-		EntryStatus:          entryStatus,
+		EntryStatus:          plan.entryStatus,
 		ReferenceNumber:      entity.Number,
 		ReferenceType:        event.String(),
 		ReferenceID:          entity.ID.String(),
 		EntryDescription:     fmt.Sprintf("Invoice posted for %s", entity.Number),
-		TotalDebit:           amount,
-		TotalCredit:          amount,
-		IsPosted:             postedAt != nil,
+		TotalDebit:           plan.amount,
+		TotalCredit:          plan.amount,
+		IsPosted:             plan.postedAt != nil,
 		IsAutoGenerated:      true,
-		RequiresApproval:     requiresApproval,
-		IsApproved:           isApproved,
-		ApprovedByID:         approvedByID,
-		ApprovedAt:           approvedAt,
-		SourceID:             sourceID,
+		RequiresApproval:     plan.requiresApproval,
+		IsApproved:           plan.isApproved,
+		ApprovedByID:         plan.approvedByID,
+		ApprovedAt:           plan.approvedAt,
+		SourceID:             pulid.MustNew("jsrc_"),
 		SourceObjectType:     "Invoice",
 		SourceObjectID:       entity.ID.String(),
 		SourceEventType:      event.String(),
-		SourceStatus:         entryStatus,
+		SourceStatus:         plan.entryStatus,
 		SourceDocumentNumber: entity.Number,
 		SourceIdempotencyKey: "invoice-posted:" + entity.ID.String(),
-		Lines:                lines,
+		Lines:                plan.lines,
 	})
 	if err != nil {
 		return err
@@ -165,14 +212,7 @@ func (s *Service) createInvoiceJournalPosting(
 	if s.customerLedgerRepo == nil {
 		return nil
 	}
-	ledgerAmount := entity.TotalAmountMinor
-	//nolint:exhaustive // only actionable enum states require explicit handling here
-	switch entity.BillType {
-	case billingqueue.BillTypeCreditMemo:
-		ledgerAmount = -amount
-	case billingqueue.BillTypeDebitMemo:
-		ledgerAmount = amount
-	}
+
 	return s.customerLedgerRepo.AppendEntries(ctx, []*customerledger.CustomerLedgerEntry{{
 		ID:               pulid.MustNew("cledg_"),
 		OrganizationID:   entity.OrganizationID,
@@ -182,9 +222,9 @@ func (s *Service) createInvoiceJournalPosting(
 		SourceObjectID:   entity.ID.String(),
 		SourceEventType:  event.String(),
 		DocumentNumber:   entity.Number,
-		TransactionDate:  postingDate,
+		TransactionDate:  plan.postingDate,
 		LineNumber:       1,
-		AmountMinor:      ledgerAmount,
+		AmountMinor:      plan.ledgerAmount,
 		CreatedByID:      actor.UserID,
 	}})
 }
