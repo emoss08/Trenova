@@ -4,6 +4,7 @@ package journalreversalservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/journalentry"
 	"github.com/emoss08/trenova/internal/core/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -91,6 +92,31 @@ func (s *Service) Create(
 	req *serviceports.CreateJournalReversalRequest,
 	actor *serviceports.RequestActor,
 ) (*journalreversal.Reversal, error) {
+	change, err := s.PlanCreate(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+	entity := change.After
+	entity.ID = pulid.MustNew("jrev_")
+	created, err := s.journalReversalRepo.Create(ctx, entity)
+	if err != nil {
+		return nil, err
+	}
+	s.logAudit(
+		permission.OpCreate,
+		created,
+		nil,
+		entity.RequestedByID,
+		"Journal reversal requested",
+	)
+	return created, nil
+}
+
+func (s *Service) PlanCreate(
+	ctx context.Context,
+	req *serviceports.CreateJournalReversalRequest,
+	actor *serviceports.RequestActor,
+) (*serviceports.JournalReversalChange, error) {
 	userID, err := requireUser(actor)
 	if err != nil {
 		return nil, err
@@ -135,7 +161,6 @@ func (s *Service) Create(
 	}
 	now := timeutils.NowUnix()
 	entity := &journalreversal.Reversal{
-		ID:                      pulid.MustNew("jrev_"),
 		OrganizationID:          req.TenantInfo.OrgID,
 		BusinessUnitID:          req.TenantInfo.BuID,
 		OriginalJournalEntryID:  req.OriginalJournalEntryID,
@@ -154,12 +179,11 @@ func (s *Service) Create(
 		entity.ApprovedByID = pulid.Nil
 		entity.ApprovedAt = nil
 	}
-	created, err := s.journalReversalRepo.Create(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
-	s.logAudit(permission.OpCreate, created, nil, userID, "Journal reversal requested")
-	return created, nil
+	return &serviceports.JournalReversalChange{
+		After:         entity,
+		OriginalEntry: entry,
+		Journal:       reversalJournal(entry, period.ID, postingDate),
+	}, nil
 }
 
 func (s *Service) Approve(
@@ -227,11 +251,11 @@ func (s *Service) Reject(
 	return updated, nil
 }
 
-func (s *Service) Cancel(
+func (s *Service) PlanCancel(
 	ctx context.Context,
 	req *serviceports.CancelJournalReversalRequest,
 	actor *serviceports.RequestActor,
-) (*journalreversal.Reversal, error) {
+) (*serviceports.JournalReversalChange, error) {
 	userID, err := requireUser(actor)
 	if err != nil {
 		return nil, err
@@ -246,26 +270,43 @@ func (s *Service) Cancel(
 	if me := s.validator.ValidateCancel(entity, req.Reason); me != nil {
 		return nil, me
 	}
-	original := *entity
+	after := *entity
 	now := timeutils.NowUnix()
-	entity.Status = journalreversal.StatusCancelled
-	entity.CancelledByID = userID
-	entity.CancelledAt = &now
-	entity.CancelReason = req.Reason
-	updated, err := s.journalReversalRepo.Update(ctx, entity)
+	after.Status = journalreversal.StatusCancelled
+	after.CancelledByID = userID
+	after.CancelledAt = &now
+	after.CancelReason = req.Reason
+	return &serviceports.JournalReversalChange{Before: entity, After: &after}, nil
+}
+
+func (s *Service) Cancel(
+	ctx context.Context,
+	req *serviceports.CancelJournalReversalRequest,
+	actor *serviceports.RequestActor,
+) (*journalreversal.Reversal, error) {
+	change, err := s.PlanCancel(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(permission.OpCancel, updated, &original, userID, "Journal reversal cancelled")
+	updated, err := s.journalReversalRepo.Update(ctx, change.After)
+	if err != nil {
+		return nil, err
+	}
+	s.logAudit(
+		permission.OpCancel,
+		updated,
+		change.Before,
+		change.After.CancelledByID,
+		"Journal reversal cancelled",
+	)
 	return updated, nil
 }
 
-//nolint:govet // existing scoped variable reuse is local and behavior-preserving
-func (s *Service) Post(
+func (s *Service) PlanPost(
 	ctx context.Context,
 	req *serviceports.GetJournalReversalRequest,
 	actor *serviceports.RequestActor,
-) (*journalreversal.Reversal, error) {
+) (*serviceports.JournalReversalChange, error) {
 	userID, err := requireUser(actor)
 	if err != nil {
 		return nil, err
@@ -293,6 +334,36 @@ func (s *Service) Post(
 	if !originalEntry.ReversedByID.IsNil() {
 		return nil, errortypes.NewBusinessError("Journal entry has already been reversed")
 	}
+	after := *entity
+	now := timeutils.NowUnix()
+	after.Status = journalreversal.StatusPosted
+	after.PostedByID = userID
+	after.PostedAt = &now
+	return &serviceports.JournalReversalChange{
+		Before:        entity,
+		After:         &after,
+		OriginalEntry: originalEntry,
+		Journal: reversalJournal(
+			originalEntry,
+			entity.ResolvedFiscalPeriodID,
+			entity.RequestedAccountingDate,
+		),
+	}, nil
+}
+
+//nolint:govet // existing scoped variable reuse is local and behavior-preserving
+func (s *Service) Post(
+	ctx context.Context,
+	req *serviceports.GetJournalReversalRequest,
+	actor *serviceports.RequestActor,
+) (*journalreversal.Reversal, error) {
+	plan, err := s.PlanPost(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+	userID := plan.After.PostedByID
+	entity := plan.Before
+	originalEntry := plan.OriginalEntry
 	batchNumber, err := s.sequenceGenerator.GenerateJournalBatchNumber(
 		ctx,
 		entity.OrganizationID,
@@ -428,6 +499,32 @@ func requireUser(actor *serviceports.RequestActor) (pulid.ID, error) {
 		)
 	}
 	return actor.UserID, nil
+}
+
+func reversalJournal(
+	entry *journalentry.JournalEntry,
+	periodID pulid.ID,
+	accountingDate int64,
+) *serviceports.JournalPreview {
+	lines := make([]serviceports.JournalLinePreview, 0, len(entry.Lines))
+	for _, line := range entry.Lines {
+		if line == nil {
+			continue
+		}
+		lines = append(lines, serviceports.JournalLinePreview{
+			GLAccountID: line.GLAccountID,
+			Description: line.Description,
+			DebitMinor:  line.CreditAmount,
+			CreditMinor: line.DebitAmount,
+		})
+	}
+
+	return &serviceports.JournalPreview{
+		AccountingDate: accountingDate,
+		FiscalPeriodID: periodID,
+		EntryStatus:    "Posted",
+		Lines:          lines,
+	}
 }
 
 func (s *Service) logAudit(
