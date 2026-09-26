@@ -218,3 +218,23 @@ func TestRevokingMineRefusesAnotherPersonsDevice(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, capture.DeviceRevoked, device.Status)
 }
+
+func TestAccessSaysWhetherCaptureIsOnAndWhetherThePersonMayUseIt(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld()
+	s := w.service()
+
+	w.control.EnableCapture = false
+	access, err := s.Access(t.Context(), w.tenant)
+	require.NoError(t, err)
+	assert.False(t, access.Enabled)
+	assert.True(t, access.CanCapture)
+
+	w.control.EnableCapture = true
+	w.denied[permission.ResourceCaptureBatch.String()+":create"] = true
+	access, err = s.Access(t.Context(), w.tenant)
+	require.NoError(t, err)
+	assert.True(t, access.Enabled)
+	assert.False(t, access.CanCapture)
+}

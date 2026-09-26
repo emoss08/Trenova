@@ -267,3 +267,31 @@ export function captureRetention(retainUntil: number, now: number): CaptureReten
 
   return { state: "soon", daysLeft: Math.ceil(remaining / DAY_SECONDS) };
 }
+
+/** How long a finished request stays on its record's page, so the person sees how it went. */
+export const CAPTURE_REQUEST_LINGER_SECONDS = 15 * 60;
+
+type RequestTiming = {
+  isOpen: boolean;
+  completedAt: number | null;
+  createdAt: number;
+};
+
+/**
+ * The requests a record's page shows: everything still open, and anything
+ * that finished in the last quarter of an hour, newest first. Older ones are
+ * history, and the intake queue holds what they produced.
+ */
+export function captureRequestsToShow<T extends RequestTiming>(
+  requests: readonly T[],
+  now: number,
+): T[] {
+  return requests
+    .filter(
+      (request) =>
+        request.isOpen ||
+        (request.completedAt !== null &&
+          now - request.completedAt <= CAPTURE_REQUEST_LINGER_SECONDS),
+    )
+    .sort((a, b) => b.createdAt - a.createdAt);
+}

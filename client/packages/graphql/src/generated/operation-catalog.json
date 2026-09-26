@@ -1,5 +1,5 @@
 {
-  "operationCount": 912,
+  "operationCount": 913,
   "fragmentCount": 252,
   "operations": [
     {
@@ -11543,6 +11543,20 @@
       "fragments": [],
       "usages": [],
       "sdl": "query MyAvailability {\n  myAvailability {\n    id\n    dayOfWeek\n    preference\n    note\n  }\n}"
+    },
+    {
+      "name": "MyCaptureAccess",
+      "kind": "query",
+      "domain": "capture",
+      "sourceFile": "src/operations/capture/capture.graphql",
+      "hash": "sha256:0e0e3bed6cfbb9210e5d3a2f3d7a07d91e26763205dd3c68f4b4885d3d7b23c2",
+      "rootFields": [
+        "myCaptureAccess"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query MyCaptureAccess {\n  myCaptureAccess {\n    enabled\n    canCapture\n  }\n}"
     },
     {
       "name": "MyCaptureDevices",

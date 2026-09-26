@@ -81,6 +81,52 @@ type CaptureSettingsResolver interface {
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _CaptureAccess_enabled(ctx context.Context, field graphql.CollectedField, obj *captureservice.Access) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureAccess_enabled(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Enabled, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureAccess_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureAccess", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
+func (ec *executionContext) _CaptureAccess_canCapture(ctx context.Context, field graphql.CollectedField, obj *captureservice.Access) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_CaptureAccess_canCapture(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.CanCapture, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v bool) graphql.Marshaler {
+			return ec.marshalNBoolean2bool(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_CaptureAccess_canCapture(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("CaptureAccess", field, false, false, errors.New("field of type Boolean does not have child fields"))
+}
+
 func (ec *executionContext) _CaptureBatch_id(ctx context.Context, field graphql.CollectedField, obj *capture.CaptureBatch) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -5182,6 +5228,49 @@ func (ec *executionContext) unmarshalInputFileCaptureItemsEntryInput(ctx context
 
 // region    **************************** object.gotpl ****************************
 
+var captureAccessImplementors = []string{"CaptureAccess"}
+
+func (ec *executionContext) _CaptureAccess(ctx context.Context, sel ast.SelectionSet, obj *captureservice.Access) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, captureAccessImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferredFieldSet := graphql.NewFieldSet(nil)
+	deferLabelToView := make(map[string]*graphql.FieldSetView)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CaptureAccess")
+		case "enabled":
+			out.Values[i] = ec._CaptureAccess_enabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "canCapture":
+			out.Values[i] = ec._CaptureAccess_canCapture(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.Deferred, int32(min(len(deferLabelToView), math.MaxInt32)))
+
+	ec.ProcessDeferredGroup(graphql.DeferredGroup{
+		Defers:   deferLabelToView,
+		Path:     graphql.GetPath(ctx),
+		FieldSet: deferredFieldSet,
+		Context:  ctx,
+	})
+
+	return out
+}
+
 var captureBatchImplementors = []string{"CaptureBatch"}
 
 func (ec *executionContext) _CaptureBatch(ctx context.Context, sel ast.SelectionSet, obj *capture.CaptureBatch) graphql.Marshaler {
@@ -7460,6 +7549,16 @@ func (ec *executionContext) _FileCaptureItemsResult(ctx context.Context, sel ast
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) marshalNCaptureAccess2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋservicesᚋcaptureserviceᚐAccess(ctx context.Context, sel ast.SelectionSet, v *captureservice.Access) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			graphql.AddErrorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CaptureAccess(ctx, sel, v)
+}
 
 func (ec *executionContext) unmarshalNCaptureArchitecture2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋcoreᚋdomainᚋcaptureᚐArchitecture(ctx context.Context, v any) (capture.Architecture, error) {
 	tmp, err := graphql.UnmarshalString(v)

@@ -4761,6 +4761,16 @@ type CannedReport {
   version: String!
 }
 
+"""Whether the caller can scan or print into Trenova."""
+type CaptureAccess {
+  """
+  Whether the caller may start a scan, print into a record, or pair a computer.
+  """
+  canCapture: Boolean!
+  """Whether this organization has turned capture on."""
+  enabled: Boolean!
+}
+
 """
 The processor a companion was built for. Trenova Capture ships for 64-bit Windows only.
 """
@@ -17069,6 +17079,8 @@ type Query {
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   """What the signed-in driver has said they would rather work."""
   myAvailability: [WorkerAvailabilityPreference!]!
+  """Whether capture is on here and whether the caller may use it."""
+  myCaptureAccess: CaptureAccess!
   """The companions the caller has paired."""
   myCaptureDevices(status: CaptureDeviceStatus): [CaptureDevice!]!
   myCarrierIntelligence(refresh: Boolean): MyCarrierIntelligence!

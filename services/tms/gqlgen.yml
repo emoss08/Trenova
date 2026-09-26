@@ -2497,6 +2497,9 @@ models:
         resolver: true
       items:
         resolver: true
+  CaptureAccess:
+    model:
+      - github.com/emoss08/trenova/internal/core/services/captureservice.Access
   CaptureQRCode:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.CaptureQRCode

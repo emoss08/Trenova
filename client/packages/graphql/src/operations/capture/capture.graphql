@@ -191,6 +191,13 @@ fragment CaptureBatchDetailFields on CaptureBatch {
   }
 }
 
+query MyCaptureAccess {
+  myCaptureAccess {
+    enabled
+    canCapture
+  }
+}
+
 query CaptureBatches($input: CaptureBatchesInput!) {
   captureBatches(input: $input) {
     edges {

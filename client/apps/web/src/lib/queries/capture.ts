@@ -7,6 +7,7 @@ import {
   fetchCapturePairing,
   fetchCaptureProfiles,
   fetchCaptureRequestsForTarget,
+  fetchMyCaptureAccess,
   fetchMyCaptureDevices,
   type CaptureBatchFilter,
   type CaptureBatchPage,
@@ -18,6 +19,10 @@ import { createQueryKeys } from "@lukemorales/query-key-factory";
 type Signal = { signal?: AbortSignal };
 
 export const capture = createQueryKeys("capture", {
+  access: () => ({
+    queryKey: ["access"],
+    queryFn: ({ signal }: Signal) => fetchMyCaptureAccess({ signal }),
+  }),
   // The filter is part of the key: the stacks waiting on a person and the
   // ones already filed are different questions.
   batches: (filter: Omit<CaptureBatchFilter, "after">) => ({

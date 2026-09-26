@@ -2501,6 +2501,11 @@ type ComplexityRoot struct {
 		Version       func(childComplexity int) int
 	}
 
+	CaptureAccess struct {
+		CanCapture func(childComplexity int) int
+		Enabled    func(childComplexity int) int
+	}
+
 	CaptureBatch struct {
 		BusinessUnitID    func(childComplexity int) int
 		CreatedAt         func(childComplexity int) int
@@ -9396,6 +9401,7 @@ type ComplexityRoot struct {
 		MyAdvances                          func(childComplexity int) int
 		MyAgents                            func(childComplexity int, input gqlmodel.MyAgentsInput) int
 		MyAvailability                      func(childComplexity int) int
+		MyCaptureAccess                     func(childComplexity int) int
 		MyCaptureDevices                    func(childComplexity int, status *capture.DeviceStatus) int
 		MyCarrierIntelligence               func(childComplexity int, refresh *bool) int
 		MyComplianceProfile                 func(childComplexity int) int
@@ -23567,6 +23573,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.CannedReport.Version(childComplexity), true
+
+	case "CaptureAccess.canCapture":
+		if e.ComplexityRoot.CaptureAccess.CanCapture == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAccess.CanCapture(childComplexity), true
+	case "CaptureAccess.enabled":
+		if e.ComplexityRoot.CaptureAccess.Enabled == nil {
+			break
+		}
+
+		return e.ComplexityRoot.CaptureAccess.Enabled(childComplexity), true
 
 	case "CaptureBatch.businessUnitId":
 		if e.ComplexityRoot.CaptureBatch.BusinessUnitID == nil {
@@ -60387,6 +60406,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.MyAvailability(childComplexity), true
+	case "Query.myCaptureAccess":
+		if e.ComplexityRoot.Query.MyCaptureAccess == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.MyCaptureAccess(childComplexity), true
 	case "Query.myCaptureDevices":
 		if e.ComplexityRoot.Query.MyCaptureDevices == nil {
 			break
@@ -86276,7 +86301,17 @@ type CaptureCoverSheet {
   createdAt: Timestamp!
 }
 
+"Whether the caller can scan or print into Trenova."
+type CaptureAccess {
+  "Whether this organization has turned capture on."
+  enabled: Boolean!
+  "Whether the caller may start a scan, print into a record, or pair a computer."
+  canCapture: Boolean!
+}
+
 extend type Query {
+  "Whether capture is on here and whether the caller may use it."
+  myCaptureAccess: CaptureAccess!
   "The intake queue: captured stacks, newest first."
   captureBatches(input: CaptureBatchesInput!): CaptureBatchConnection!
   "One stack with its pages and proposed documents."
@@ -110390,6 +110425,16 @@ func (ec *executionContext) childFields_CannedReport(ctx context.Context, field 
 		return ec.fieldContext_CannedReport_definition(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type CannedReport", field.Name)
+}
+
+func (ec *executionContext) childFields_CaptureAccess(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "enabled":
+		return ec.fieldContext_CaptureAccess_enabled(ctx, field)
+	case "canCapture":
+		return ec.fieldContext_CaptureAccess_canCapture(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type CaptureAccess", field.Name)
 }
 
 func (ec *executionContext) childFields_CaptureBatch(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

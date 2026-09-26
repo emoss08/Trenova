@@ -436,6 +436,15 @@ func (r *mutationResolver) DeleteCaptureProfile(ctx context.Context, id string) 
 	return true, nil
 }
 
+func (r *queryResolver) MyCaptureAccess(ctx context.Context) (*captureservice.Access, error) {
+	authCtx, err := r.requireAuth(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.captureService.Access(ctx, tenantInfo(authCtx))
+}
+
 func (r *queryResolver) CaptureBatches(ctx context.Context, input gqlmodel.CaptureBatchesInput) (*gqlmodel.CaptureBatchConnection, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceCaptureBatch, permission.OpRead)
 	if err != nil {

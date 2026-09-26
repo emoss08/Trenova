@@ -528,7 +528,17 @@ type CaptureCoverSheet {
   createdAt: Timestamp!
 }
 
+"Whether the caller can scan or print into Trenova."
+type CaptureAccess {
+  "Whether this organization has turned capture on."
+  enabled: Boolean!
+  "Whether the caller may start a scan, print into a record, or pair a computer."
+  canCapture: Boolean!
+}
+
 extend type Query {
+  "Whether capture is on here and whether the caller may use it."
+  myCaptureAccess: CaptureAccess!
   "The intake queue: captured stacks, newest first."
   captureBatches(input: CaptureBatchesInput!): CaptureBatchConnection!
   "One stack with its pages and proposed documents."

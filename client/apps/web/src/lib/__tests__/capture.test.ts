@@ -2,6 +2,7 @@ import {
   CAPTURE_RECORD_KINDS,
   CAPTURE_RETENTION_WARNING_SECONDS,
   captureDocumentCategory,
+  captureRequestsToShow,
   captureRetention,
   isCaptureRecordKind,
 } from "@/lib/capture";
@@ -51,5 +52,31 @@ describe("capture record kinds", () => {
     expect(captureDocumentCategory("shipment")).toBe("Shipment");
     expect(captureDocumentCategory("worker")).toBe("Worker");
     expect(captureDocumentCategory("tractor")).toBeNull();
+  });
+});
+
+describe("captureRequestsToShow", () => {
+  const request = (id: string, isOpen: boolean, completedAt: number | null, createdAt: number) => ({
+    id,
+    isOpen,
+    completedAt,
+    createdAt,
+  });
+
+  it("shows open requests and those finished in the last quarter hour, newest first", () => {
+    const shown = captureRequestsToShow(
+      [
+        request("old", false, NOW - 16 * 60, NOW - 20 * 60),
+        request("open", true, null, NOW - 60),
+        request("recent", false, NOW - 15 * 60, NOW - 18 * 60),
+        request("newest", true, null, NOW),
+      ],
+      NOW,
+    );
+    expect(shown.map((row) => row.id)).toEqual(["newest", "open", "recent"]);
+  });
+
+  it("drops a closed request with no finish time", () => {
+    expect(captureRequestsToShow([request("x", false, null, NOW)], NOW)).toEqual([]);
   });
 });

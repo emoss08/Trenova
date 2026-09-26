@@ -27,6 +27,7 @@ import {
   EditCaptureItemsDocument,
   FileCaptureItemDocument,
   FileCaptureItemsDocument,
+  MyCaptureAccessDocument,
   MyCaptureDevicesDocument,
   RevokeCaptureDeviceDocument,
   RevokeMyCaptureDeviceDocument,
@@ -60,6 +61,7 @@ import {
   type EditCaptureItemsInput,
   type FileCaptureItemInput,
   type FileCaptureItemsEntryInput,
+  type MyCaptureAccessQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { UnmaskFragments } from "@trenova/shared/types/graphql-connection";
@@ -79,8 +81,11 @@ export type CaptureFleetDevice = UnmaskFragments<CaptureDeviceFleetFieldsFragmen
 export type CaptureSourceInfo = UnmaskFragments<CaptureSourceInfoFieldsFragment>;
 export type CaptureProfile = UnmaskFragments<CaptureProfileFieldsFragment>;
 export type CaptureRequest = UnmaskFragments<CaptureRequestFieldsFragment>;
+export type CaptureAccess = MyCaptureAccessQuery["myCaptureAccess"];
 export type CapturePairingPreview = CaptureDevicePairingQuery["captureDevicePairing"];
-export type IssuedCoverSheet = CreateCaptureCoverSheetsMutation["createCaptureCoverSheets"][number];
+export type IssuedCoverSheet = UnmaskFragments<
+  CreateCaptureCoverSheetsMutation["createCaptureCoverSheets"][number]
+>;
 export type {
   CaptureBatchSort,
   CaptureBatchStatus,
@@ -141,6 +146,17 @@ function profile(masked: FragmentType<typeof CaptureProfileFieldsFragmentDoc>): 
 
 function request(masked: FragmentType<typeof CaptureRequestFieldsFragmentDoc>): CaptureRequest {
   return unmasked<CaptureRequest>(getFragmentData(CaptureRequestFieldsFragmentDoc, masked));
+}
+
+export async function fetchMyCaptureAccess(options?: RequestOptions): Promise<CaptureAccess> {
+  const data = await requestGraphQL({
+    document: MyCaptureAccessDocument,
+    operationName: "MyCaptureAccess",
+    variables: {},
+    signal: options?.signal,
+  });
+
+  return data.myCaptureAccess;
 }
 
 /** How many batches one request of the intake queue asks for. */
@@ -411,7 +427,7 @@ export async function createCaptureCoverSheets(
     variables: { sheets },
   });
 
-  return data.createCaptureCoverSheets;
+  return unmasked<IssuedCoverSheet[]>(data.createCaptureCoverSheets);
 }
 
 export async function approveCapturePairing(

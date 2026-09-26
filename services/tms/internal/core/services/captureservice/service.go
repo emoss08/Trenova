@@ -275,3 +275,27 @@ func (s *Service) logAudit(params *services.LogActionParams, comment string) {
 			zap.Error(err))
 	}
 }
+
+// Access is what the web app needs to decide whether to offer capture at
+// all: whether the organization turned it on, and whether this person may
+// use it. Neither is a secret, and asking needs no permission beyond being
+// signed in, so a record's page can hide the scan button rather than show
+// one that fails.
+type Access struct {
+	Enabled    bool `json:"enabled"`
+	CanCapture bool `json:"canCapture"`
+}
+
+func (s *Service) Access(ctx context.Context, tenantInfo pagination.TenantInfo) (*Access, error) {
+	control, err := s.control(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := s.allowed(ctx, tenantInfo, permission.ResourceCaptureBatch, permission.OpCreate)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Access{Enabled: control.EnableCapture, CanCapture: result.Allowed}, nil
+}
