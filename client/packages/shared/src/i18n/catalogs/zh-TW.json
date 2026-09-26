@@ -4159,6 +4159,7 @@
   "EDI invoicing is not enabled for this customer": "此客戶尚未啟用 EDI 開票功能",
   "EDI is running clean.": "EDI 運作正常。",
   "EDI load tender submitted": "EDI 貨載要約已送出",
+  "EDI message": "EDI 訊息",
   "EDI message generated and archived": "已產生並封存 EDI 訊息",
   "EDI needs attention": "EDI 待處理",
   "EDI overrides": "EDI 覆寫",

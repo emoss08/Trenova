@@ -243,6 +243,17 @@ func TestEveryRegisteredToolIsInTheClassItWasGiven(t *testing.T) {
 		"cancel_carrier_assignment":          {agent.EgressMoney},
 		"void_rate_confirmation":             {agent.EgressMoney},
 		"record_rate_confirmation_confirmed": {agent.EgressMoney},
+		"accept_edi_tender":                  {agent.EgressExternalRecipient},
+		"decline_edi_tender":                 {agent.EgressExternalRecipient},
+		"cancel_edi_tender":                  {agent.EgressExternalRecipient},
+		"expire_edi_tender":                  {agent.EgressExternalRecipient},
+		"review_edi_tender_change":           {agent.EgressExternalRecipient},
+		"review_edi_transfer_change":         {agent.EgressExternalRecipient},
+		"retry_edi_message_delivery":         {agent.EgressExternalRecipient},
+		"replay_edi_message":                 {agent.EgressExternalRecipient},
+		"reprocess_edi_inbound_files":        {agent.EgressExternalRecipient},
+		"send_edi_tender":                    {agent.EgressExternalRecipient},
+		"send_edi_status_update":             {agent.EgressExternalRecipient},
 	}
 
 	tools := buildRegistered(t)

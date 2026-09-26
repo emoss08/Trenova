@@ -44,12 +44,8 @@ func (r *repository) ListTransferChanges(
 	query := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
-		Join(transferChangeShipmentLinkJoin()).
-		Where(cols.BusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			linkCols := buncolgen.ShipmentLinkColumns
-			return sq.WhereOr(linkCols.SourceOrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
-				WhereOr(linkCols.TargetOrganizationID.Eq(), req.Filter.TenantInfo.OrgID)
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return ScopeTenant(sq, req.Filter.TenantInfo)
 		})
 	if req.ShipmentLinkID.IsNotNil() {
 		query = query.Where(cols.ShipmentLinkID.Eq(), req.ShipmentLinkID)
@@ -79,13 +75,9 @@ func (r *repository) GetTransferChangeByID(
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(entity).
-		Join(transferChangeShipmentLinkJoin()).
 		Where(cols.ID.Eq(), req.ID).
-		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			linkCols := buncolgen.ShipmentLinkColumns
-			return sq.WhereOr(linkCols.SourceOrganizationID.Eq(), req.TenantInfo.OrgID).
-				WhereOr(linkCols.TargetOrganizationID.Eq(), req.TenantInfo.OrgID)
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return ScopeTenant(sq, req.TenantInfo)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -183,6 +175,18 @@ func (r *repository) UpdateTransferChange(
 	}
 
 	return entity, nil
+}
+
+func ScopeTenant(query *bun.SelectQuery, tenantInfo pagination.TenantInfo) *bun.SelectQuery {
+	linkCols := buncolgen.ShipmentLinkColumns
+
+	return query.
+		Join(transferChangeShipmentLinkJoin()).
+		Where(buncolgen.TransferChangeColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.WhereOr(linkCols.SourceOrganizationID.Eq(), tenantInfo.OrgID).
+				WhereOr(linkCols.TargetOrganizationID.Eq(), tenantInfo.OrgID)
+		})
 }
 
 func transferChangeShipmentLinkJoin() string {

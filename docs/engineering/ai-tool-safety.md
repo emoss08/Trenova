@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 223.
+Tools listed: 239.
 
 ## The model
 
@@ -51,12 +51,12 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 134 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 139 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 6 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 53 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 1 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 5 |
-| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 14 |
+| Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 25 |
 | Money | Moves or commits money. | Automatic | Yes | 15 |
 
 ## Reads only
@@ -97,6 +97,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get driver settlement (`get_driver_settlement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get EDI inbound file (`get_edi_inbound_file`) | Reads only | Automatic | — | Always, from EDI | Reads an EDI file a trading partner sent, raw X12 included on request; nothing changes and nothing is sent. |
 | Get EDI partner (`get_edi_partner`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get EDI transfer (`get_edi_transfer`) | Reads only | Automatic | — | Always, from EDI | Reads a load tender a trading partner wrote, stops and references included; nothing changes and nothing is sent. |
 | Get fiscal close blockers (`get_fiscal_close_blockers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get fuel surcharge rates (`get_fuel_surcharge_rates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get inbound message (`get_inbound_message`) | Reads only | Automatic | — | Always, from inbound message | Reads mail an outsider wrote; nothing changes and nothing is sent. |
@@ -143,6 +144,10 @@ Looks something up. Nothing changes and nothing is sent.
 | List driver pay events (`list_driver_pay_events`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List driver settlements (`list_driver_settlements`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List EDI inbound files (`list_edi_inbound_files`) | Reads only | Automatic | — | Always, from EDI | Lists EDI files trading partners sent, whose names and failure reasons repeat the partner's text; nothing changes and nothing is sent. |
+| List EDI messages (`list_edi_messages`) | Reads only | Automatic | — | Always, from EDI | Lists EDI documents and the errors partners' systems returned for them; nothing changes and nothing is sent. |
+| List EDI partners (`list_edi_partners`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List EDI tender changes (`list_edi_tender_changes`) | Reads only | Automatic | — | Always, from EDI | Lists changes another organization wrote to loads tendered over EDI; nothing changes and nothing is sent. |
+| List EDI transfer changes (`list_edi_transfer_changes`) | Reads only | Automatic | — | Always, from EDI | Lists statuses another organization reported on a linked load; nothing changes and nothing is sent. |
 | List EDI transfers (`list_edi_transfers`) | Reads only | Automatic | — | Always, from EDI | Lists load tenders trading partners sent, whose contents the partner wrote; nothing changes and nothing is sent. |
 | List email profiles (`list_email_profiles`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List equipment types (`list_equipment_types`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -288,14 +293,25 @@ Sends to someone outside the organization.
 
 | Tool | Classes | Max tier | Condition | Reads outside text | Rationale |
 | --- | --- | --- | --- | --- | --- |
+| Accept EDI tender (`accept_edi_tender`) | Sent outside the organization | Propose | — | — | Commits the organization to haul the load, creates the shipment and sends the partner an acceptance they act on; it cannot be taken back. A person always decides. |
+| Cancel EDI tender (`cancel_edi_tender`) | Sent outside the organization | Propose | — | — | Withdraws freight offered to another organization, which sees the tender canceled; a withdrawn tender is sent afresh, never reopened. A person always decides. |
 | Cancel shipment (`cancel_shipment`) | Sent outside the organization | Ask first | — | — | Cancelling withdraws live tenders from carriers and sends the model's cancel reason to a linked partner over EDI. |
 | Cancel tender (`cancel_tender`) | Sent outside the organization | Ask first | A tender waiting on review holds a carrier's acceptance, so withdrawing it is a proposal a person decides, as is one the service would refuse or that cannot be read; an active tender is withdrawn once a person approves it. | — | Withdraws the offers carriers outside the organization hold, whose answer links stop working; a withdrawn tender cannot be reopened, only tendered afresh. |
+| Decline EDI tender (`decline_edi_tender`) | Sent outside the organization | Propose | — | — | Turns down freight a partner offered and sends them the decline; the partner moves the load elsewhere and it cannot be taken back. A person always decides. |
 | Email customer (`email_customer`) | Sent outside the organization | Ask first | — | — | Emails the customer's contacts a message the model wrote. |
+| Expire EDI tender (`expire_edi_tender`) | Sent outside the organization | Propose | — | — | Closes a tender on both sides of the trading relationship, which the other side sees; an expired tender is sent afresh, never reopened. A person always decides. |
+| Replay EDI message (`replay_edi_message`) | Sent outside the organization | Propose | — | — | Sends a trading partner a document it already has, which it may act on a second time; a document sent cannot be recalled. A person always decides. |
 | Reply to inbound message (`reply_to_inbound_message`) | Sent outside the organization | Ask first | A call on an inbound message runs only as far as its mailbox allows: a classified message the mailbox handles without review may run on its own, and anything held, quarantined, settled or unreadable waits for a person. | — | Replies to whoever wrote in with text the model composed. |
+| Reprocess EDI inbound files (`reprocess_edi_inbound_files`) | Sent outside the organization | Propose | — | — | Turns what trading partners sent into tenders, status updates and invoices again, and sends each partner acknowledgments they act on. A person always decides. |
 | Request missing docs (`request_missing_docs`) | Sent outside the organization | Ask first | — | — | Emails an outside party a request for paperwork in words the model wrote. |
 | Resolve service failure (`resolve_service_failure`) | Sent outside the organization | Ask first | — | — | Resolving a failure generates an EDI 214 to the customer's trading partner carrying the reason chosen. |
+| Retry EDI message delivery (`retry_edi_message_delivery`) | Sent outside the organization | Propose | — | — | Sends documents to trading partners outside the organization, who act on what they receive; a document sent cannot be recalled. A person always decides. |
+| Review EDI tender change (`review_edi_tender_change`) | Sent outside the organization | Propose | — | — | Changes a load this organization committed to on another organization's word, and that organization sees the outcome. A person always decides. |
+| Review EDI transfer change (`review_edi_transfer_change`) | Sent outside the organization | Propose | — | — | Changes a shipment on another organization's report, and that organization sees the outcome on its own shipment. A person always decides. |
 | Schedule report (`schedule_report`) | Sent outside the organization | Ask first | — | — | Emails a report on a schedule to whatever addresses the call names, which may be outside the organization. |
 | Send detention notice (`send_detention_notice`) | Sent outside the organization | Ask first | — | — | Sends the customer a detention notice that starts a charge. |
+| Send EDI status update (`send_edi_status_update`) | Sent outside the organization | Propose | — | — | Sends a trading partner a shipment status they act on and pass to their own customers; a document sent cannot be recalled. A person always decides. |
+| Send EDI tender (`send_edi_tender`) | Sent outside the organization | Propose | — | — | Offers a load to another organization, which may accept it and haul it on the terms tendered; a tender is withdrawn, never recalled. A person always decides. |
 | Send invoice (`send_invoice`) | Sent outside the organization | Propose | — | — | Emails the customer their invoice; only a person sends it, to the recipients the customer's billing profile names. |
 | Send rate confirmation (`send_rate_confirmation`) | Sent outside the organization | Propose | — | — | Emails a binding agreement, with a link to sign it, to a carrier outside the organization; the recipients come from the carrier's record, and a sent email cannot be recalled, so a person decides every send. |
 | Tender move to carriers (`tender_move_to_carriers`) | Sent outside the organization | Ask first | — | — | Offers the load to carriers outside the organization. |

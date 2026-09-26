@@ -16446,6 +16446,15 @@
       "routes/rate-zone"
     ]
   },
+  "An inbound EDI file carried load tenders that now wait for someone to accept or decline them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "An inbound EDI file could not be processed and is holding in quarantine rather than becoming shipments or updates.": {
     "sites": 1,
     "scope": [
@@ -58686,6 +58695,15 @@
       "service/agenttoolservice"
     ]
   },
+  "EDI 214 shipment status": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "EDI Inbound File Retention (days)": {
     "sites": 1,
     "scope": [
@@ -58950,6 +58968,15 @@
       "routes/home"
     ]
   },
+  "EDI load tender received": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "EDI load tender submitted": {
     "sites": 1,
     "scope": [
@@ -58959,8 +58986,17 @@
       "routes/shipment"
     ]
   },
+  "EDI message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
   "EDI message ID is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "go"
     ],

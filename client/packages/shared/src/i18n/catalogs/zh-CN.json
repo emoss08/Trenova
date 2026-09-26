@@ -4159,6 +4159,7 @@
   "EDI invoicing is not enabled for this customer": "此客户尚未启用 EDI 开票",
   "EDI is running clean.": "EDI 运作正常。",
   "EDI load tender submitted": "EDI 货载要约已提交",
+  "EDI message": "EDI 消息",
   "EDI message generated and archived": "已生成并归档 EDI 消息",
   "EDI needs attention": "EDI 待处理",
   "EDI overrides": "EDI 覆盖",

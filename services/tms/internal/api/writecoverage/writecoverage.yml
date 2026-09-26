@@ -970,22 +970,22 @@ writes:
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
   "POST /api/v1/edi/documents/generate/":
-    pending: "Generate an outbound EDI document (a 214, a 210) for a record."
+    tools: [send_edi_status_update]
   "POST /api/v1/edi/documents/preview/":
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/inbound-files/:fileID/reprocess/":
-    pending: "Process a failed inbound EDI file again."
+    tools: [reprocess_edi_inbound_files]
   "POST /api/v1/edi/inbound-files/bulk-reprocess/":
-    pending: "Process several failed inbound EDI files again."
+    tools: [reprocess_edi_inbound_files]
   "POST /api/v1/edi/load-tenders/":
-    pending: "Send a load tender to a trading partner over EDI."
+    tools: [send_edi_tender]
   "POST /api/v1/edi/messages/:messageID/replay/":
-    pending: "Send an EDI message again to its partner."
+    tools: [replay_edi_message]
   "POST /api/v1/edi/messages/:messageID/retry-delivery/":
-    pending: "Retry delivery of an EDI message that failed to send."
+    tools: [retry_edi_message_delivery]
   "POST /api/v1/edi/messages/bulk-retry-delivery/":
-    pending: "Retry delivery of several EDI messages that failed to send."
+    tools: [retry_edi_message_delivery]
   "POST /api/v1/edi/partners/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
@@ -1014,9 +1014,9 @@ writes:
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/tender-changes/:changeID/apply/":
-    pending: "Apply a change a trading partner sent to a tendered load."
+    tools: [review_edi_tender_change]
   "POST /api/v1/edi/tender-changes/:changeID/reject/":
-    pending: "Reject a change a trading partner sent to a tendered load."
+    tools: [review_edi_tender_change]
   "POST /api/v1/edi/test-cases/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies."
@@ -1024,21 +1024,23 @@ writes:
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
   "POST /api/v1/edi/transfer-changes/:changeID/apply/":
-    pending: "Apply a change to an inbound EDI transfer."
+    tools: [review_edi_transfer_change]
   "POST /api/v1/edi/transfer-changes/:changeID/reject/":
-    pending: "Reject a change to an inbound EDI transfer."
+    tools: [review_edi_transfer_change]
   "POST /api/v1/edi/transfers/:transferID/approve/":
-    pending: "Accept an inbound EDI load tender and create the shipment."
+    tools: [accept_edi_tender]
   "POST /api/v1/edi/transfers/:transferID/cancel/":
-    pending: "Cancel an inbound EDI transfer."
+    tools: [cancel_edi_tender]
   "POST /api/v1/edi/transfers/:transferID/expire/":
-    pending: "Expire an inbound EDI transfer that was not answered in time."
+    tools: [expire_edi_tender]
   "POST /api/v1/edi/transfers/:transferID/reject/":
-    pending: "Decline an inbound EDI load tender."
+    tools: [decline_edi_tender]
   "POST /api/v1/edi/transfers/bulk-approve/":
-    pending: "Accept several inbound EDI load tenders at once."
+    exempt: duplicate
+    reason: "Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; accept_edi_tender answers one tender per proposal so each is previewed and pinned to its own version."
   "POST /api/v1/edi/transfers/bulk-reject/":
-    pending: "Decline several inbound EDI load tenders at once."
+    exempt: duplicate
+    reason: "Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; decline_edi_tender answers one tender per proposal so each is previewed and pinned to its own version."
   "POST /api/v1/edi/x12/inspect/":
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."

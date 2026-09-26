@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -221,6 +222,26 @@ func (r *repository) GetTransferForUpdate(
 	return entity, nil
 }
 
+func inboundFileMessages(
+	db bun.IDB,
+	fileID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) *bun.SelectQuery {
+	cols := buncolgen.EDIMessageColumns
+
+	return db.NewSelect().
+		Model((*edi.EDIMessage)(nil)).
+		ColumnExpr(cols.ID.Qualified()).
+		Where(cols.InboundFileID.Eq(), fileID).
+		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.EDIMessageScopeTenant(sq, tenantInfo)
+		})
+}
+
+func ScopeTenant(query *bun.SelectQuery, tenantInfo pagination.TenantInfo) *bun.SelectQuery {
+	return applyTransferTenantFilter(query, tenantInfo, "")
+}
+
 func applyTransferTenantFilter(
 	query *bun.SelectQuery,
 	tenantInfo pagination.TenantInfo,
@@ -379,6 +400,12 @@ func (r *repository) listCursor(
 		sq = applyTransferTenantFilter(sq, req.Filter.TenantInfo, direction)
 		if direction == "outbound" {
 			sq = sq.Where("eltt.inbound_message_id IS NULL")
+		}
+		if req.InboundFileID.IsNotNil() {
+			sq = sq.Where(
+				buncolgen.EDITransferColumns.InboundMessageID.In(),
+				inboundFileMessages(dba, req.InboundFileID, req.Filter.TenantInfo),
+			)
 		}
 		return sq
 	}

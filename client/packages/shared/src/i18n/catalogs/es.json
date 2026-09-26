@@ -4159,6 +4159,7 @@
   "EDI invoicing is not enabled for this customer": "La facturación por EDI no está habilitada para este cliente",
   "EDI is running clean.": "EDI funciona sin incidencias.",
   "EDI load tender submitted": "Oferta de carga EDI enviada",
+  "EDI message": "Mensaje EDI",
   "EDI message generated and archived": "Mensaje EDI generado y archivado",
   "EDI needs attention": "EDI requiere atención",
   "EDI overrides": "Anulaciones de EDI",

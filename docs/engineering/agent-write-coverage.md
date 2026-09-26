@@ -69,7 +69,7 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 46 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 8 |
-| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 0 |
+| `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 2 |
 
 ## Totals
 
@@ -77,8 +77,8 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 78 |
-| Exempt | 444 |
+| Covered by a tool | 93 |
+| Exempt | 446 |
 | — Security | 58 |
 | — Configuration | 206 |
 | — User preference | 23 |
@@ -87,10 +87,11 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | — Counterparty | 33 |
 | — Read-only | 46 |
 | — Attestation | 8 |
-| **Pending** | **395** |
+| — Duplicate | 2 |
+| **Pending** | **378** |
 | Total | 917 |
 
-Of the 473 writes an agent should be able to make, 78 have a tool (16%).
+Of the 471 writes an agent should be able to make, 93 have a tool (19%).
 
 ## Pending
 
@@ -199,23 +200,6 @@ The writes no tool performs yet, and what the tool would do.
 | driversettlement | `mutation updateRecurringEarning` | Update recurring earning. |
 | driversettlement | `mutation voidDriverSettlement` | Void driver settlement. |
 | driversettlement | `mutation writeOffPayAdvance` | Write off pay advance. |
-| edi | `POST /api/v1/edi/documents/generate/` | Generate an outbound EDI document (a 214, a 210) for a record. |
-| edi | `POST /api/v1/edi/inbound-files/:fileID/reprocess/` | Process a failed inbound EDI file again. |
-| edi | `POST /api/v1/edi/inbound-files/bulk-reprocess/` | Process several failed inbound EDI files again. |
-| edi | `POST /api/v1/edi/load-tenders/` | Send a load tender to a trading partner over EDI. |
-| edi | `POST /api/v1/edi/messages/:messageID/replay/` | Send an EDI message again to its partner. |
-| edi | `POST /api/v1/edi/messages/:messageID/retry-delivery/` | Retry delivery of an EDI message that failed to send. |
-| edi | `POST /api/v1/edi/messages/bulk-retry-delivery/` | Retry delivery of several EDI messages that failed to send. |
-| edi | `POST /api/v1/edi/tender-changes/:changeID/apply/` | Apply a change a trading partner sent to a tendered load. |
-| edi | `POST /api/v1/edi/tender-changes/:changeID/reject/` | Reject a change a trading partner sent to a tendered load. |
-| edi | `POST /api/v1/edi/transfer-changes/:changeID/apply/` | Apply a change to an inbound EDI transfer. |
-| edi | `POST /api/v1/edi/transfer-changes/:changeID/reject/` | Reject a change to an inbound EDI transfer. |
-| edi | `POST /api/v1/edi/transfers/:transferID/approve/` | Accept an inbound EDI load tender and create the shipment. |
-| edi | `POST /api/v1/edi/transfers/:transferID/cancel/` | Cancel an inbound EDI transfer. |
-| edi | `POST /api/v1/edi/transfers/:transferID/expire/` | Expire an inbound EDI transfer that was not answered in time. |
-| edi | `POST /api/v1/edi/transfers/:transferID/reject/` | Decline an inbound EDI load tender. |
-| edi | `POST /api/v1/edi/transfers/bulk-approve/` | Accept several inbound EDI load tenders at once. |
-| edi | `POST /api/v1/edi/transfers/bulk-reject/` | Decline several inbound EDI load tenders at once. |
 | exchangerate | `POST /api/v1/exchange-rates/settlement-quotes` | Lock an exchange rate quote for settling a foreign-currency payment. |
 | fiscalperiod | `DELETE /api/v1/fiscal-periods/:fiscalPeriodID/` | Delete a fiscal period. |
 | fiscalperiod | `PATCH /api/v1/fiscal-periods/:fiscalPeriodID/` | Update some fields of a fiscal period. |
@@ -553,7 +537,7 @@ The writes no tool performs yet, and what the tool would do.
 | documenttype | 3 | 0 | 3 | 0 |
 | driverportal | 31 | 0 | 28 | 3 |
 | driversettlement | 34 | 0 | 1 | 33 |
-| edi | 56 | 0 | 39 | 17 |
+| edi | 56 | 15 | 41 | 0 |
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
@@ -1275,14 +1259,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/edi/connections/:connectionID/suspend/`<br>edihandler.suspendConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/control-numbers/reset/`<br>edihandler.resetControlNumber | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/document-profiles/`<br>edihandler.createPartnerDocumentProfile | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Pending: Generate an outbound EDI document (a 214, a 210) for a record. |
+| `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Tool: `send_edi_status_update` |
 | `POST /api/v1/edi/documents/preview/`<br>edihandler.previewDocument | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Pending: Process a failed inbound EDI file again. |
-| `POST /api/v1/edi/inbound-files/bulk-reprocess/`<br>edihandler.bulkReprocessInboundFiles | Pending: Process several failed inbound EDI files again. |
-| `POST /api/v1/edi/load-tenders/`<br>edihandler.submitLoadTender | Pending: Send a load tender to a trading partner over EDI. |
-| `POST /api/v1/edi/messages/:messageID/replay/`<br>edihandler.replayMessageDelivery | Pending: Send an EDI message again to its partner. |
-| `POST /api/v1/edi/messages/:messageID/retry-delivery/`<br>edihandler.retryMessageDelivery | Pending: Retry delivery of an EDI message that failed to send. |
-| `POST /api/v1/edi/messages/bulk-retry-delivery/`<br>edihandler.bulkRetryMessageDelivery | Pending: Retry delivery of several EDI messages that failed to send. |
+| `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Tool: `reprocess_edi_inbound_files` |
+| `POST /api/v1/edi/inbound-files/bulk-reprocess/`<br>edihandler.bulkReprocessInboundFiles | Tool: `reprocess_edi_inbound_files` |
+| `POST /api/v1/edi/load-tenders/`<br>edihandler.submitLoadTender | Tool: `send_edi_tender` |
+| `POST /api/v1/edi/messages/:messageID/replay/`<br>edihandler.replayMessageDelivery | Tool: `replay_edi_message` |
+| `POST /api/v1/edi/messages/:messageID/retry-delivery/`<br>edihandler.retryMessageDelivery | Tool: `retry_edi_message_delivery` |
+| `POST /api/v1/edi/messages/bulk-retry-delivery/`<br>edihandler.bulkRetryMessageDelivery | Tool: `retry_edi_message_delivery` |
 | `POST /api/v1/edi/partners/`<br>edihandler.createPartner | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/partners/internal-pairs/`<br>edihandler.createInternalPartnerPair | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/`<br>edihandler.createTemplate | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
@@ -1292,18 +1276,18 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/edi/templates/:templateID/versions/:versionID/certify/`<br>edihandler.certifyTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/:templateID/versions/:versionID/rollback/`<br>edihandler.rollbackTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/templates/:templateID/versions/:versionID/validate/`<br>edihandler.validateTemplateVersion | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/tender-changes/:changeID/apply/`<br>edihandler.applyTenderChange | Pending: Apply a change a trading partner sent to a tendered load. |
-| `POST /api/v1/edi/tender-changes/:changeID/reject/`<br>edihandler.rejectTenderChange | Pending: Reject a change a trading partner sent to a tendered load. |
+| `POST /api/v1/edi/tender-changes/:changeID/apply/`<br>edihandler.applyTenderChange | Tool: `review_edi_tender_change` |
+| `POST /api/v1/edi/tender-changes/:changeID/reject/`<br>edihandler.rejectTenderChange | Tool: `review_edi_tender_change` |
 | `POST /api/v1/edi/test-cases/`<br>edihandler.createTestCase | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `POST /api/v1/edi/test-cases/:testCaseID/preview/`<br>edihandler.previewTestCase | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/transfer-changes/:changeID/apply/`<br>edihandler.applyTransferChange | Pending: Apply a change to an inbound EDI transfer. |
-| `POST /api/v1/edi/transfer-changes/:changeID/reject/`<br>edihandler.rejectTransferChange | Pending: Reject a change to an inbound EDI transfer. |
-| `POST /api/v1/edi/transfers/:transferID/approve/`<br>edihandler.approveTransfer | Pending: Accept an inbound EDI load tender and create the shipment. |
-| `POST /api/v1/edi/transfers/:transferID/cancel/`<br>edihandler.cancelTransfer | Pending: Cancel an inbound EDI transfer. |
-| `POST /api/v1/edi/transfers/:transferID/expire/`<br>edihandler.expireTransfer | Pending: Expire an inbound EDI transfer that was not answered in time. |
-| `POST /api/v1/edi/transfers/:transferID/reject/`<br>edihandler.rejectTransfer | Pending: Decline an inbound EDI load tender. |
-| `POST /api/v1/edi/transfers/bulk-approve/`<br>edihandler.bulkApproveTransfers | Pending: Accept several inbound EDI load tenders at once. |
-| `POST /api/v1/edi/transfers/bulk-reject/`<br>edihandler.bulkRejectTransfers | Pending: Decline several inbound EDI load tenders at once. |
+| `POST /api/v1/edi/transfer-changes/:changeID/apply/`<br>edihandler.applyTransferChange | Tool: `review_edi_transfer_change` |
+| `POST /api/v1/edi/transfer-changes/:changeID/reject/`<br>edihandler.rejectTransferChange | Tool: `review_edi_transfer_change` |
+| `POST /api/v1/edi/transfers/:transferID/approve/`<br>edihandler.approveTransfer | Tool: `accept_edi_tender` |
+| `POST /api/v1/edi/transfers/:transferID/cancel/`<br>edihandler.cancelTransfer | Tool: `cancel_edi_tender` |
+| `POST /api/v1/edi/transfers/:transferID/expire/`<br>edihandler.expireTransfer | Tool: `expire_edi_tender` |
+| `POST /api/v1/edi/transfers/:transferID/reject/`<br>edihandler.rejectTransfer | Tool: `decline_edi_tender` |
+| `POST /api/v1/edi/transfers/bulk-approve/`<br>edihandler.bulkApproveTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/approve/ once per selected tender; accept_edi_tender answers one tender per proposal so each is previewed and pinned to its own version. |
+| `POST /api/v1/edi/transfers/bulk-reject/`<br>edihandler.bulkRejectTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; decline_edi_tender answers one tender per proposal so each is previewed and pinned to its own version. |
 | `POST /api/v1/edi/x12/inspect/`<br>edihandler.inspectX12 | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `PUT /api/v1/edi/communication-profiles/:profileID/`<br>edihandler.updateCommunicationProfile | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 | `PUT /api/v1/edi/document-profiles/:profileID/`<br>edihandler.updatePartnerDocumentProfile | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |

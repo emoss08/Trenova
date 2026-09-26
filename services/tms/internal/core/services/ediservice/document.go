@@ -356,30 +356,48 @@ func (s *Service) PreviewDocument(
 	if err != nil {
 		return nil, err
 	}
-	edix12.SetProvisionalControlNumbers(resolved.runtime)
-	result, err := edix12.RenderX12(resolved.renderInput())
+
+	return resolved.renderPreview()
+}
+
+func (r *resolvedDocumentContext) renderPreview() (*EDIDocumentPreview, error) {
+	edix12.SetProvisionalControlNumbers(r.runtime)
+	result, err := edix12.RenderX12(r.renderInput())
 	if err != nil {
 		return nil, err
 	}
-	diagnostics := mergeEDIDiagnostics(result.Diagnostics, resolved.partnerDiagnostics)
+	diagnostics := mergeEDIDiagnostics(result.Diagnostics, r.partnerDiagnostics)
 	return &EDIDocumentPreview{
 		RawX12:                   result.RawX12,
 		SegmentCount:             result.SegmentCount,
-		X12Version:               resolved.x12Version,
-		InterchangeControlNumber: fmt.Sprint(resolved.runtime["isaControlNumber"]),
-		GroupControlNumber:       fmt.Sprint(resolved.runtime["groupControlNumber"]),
-		TransactionControlNumber: fmt.Sprint(resolved.runtime["transactionControlNumber"]),
+		X12Version:               r.x12Version,
+		InterchangeControlNumber: fmt.Sprint(r.runtime["isaControlNumber"]),
+		GroupControlNumber:       fmt.Sprint(r.runtime["groupControlNumber"]),
+		TransactionControlNumber: fmt.Sprint(r.runtime["transactionControlNumber"]),
 		Diagnostics:              diagnostics,
-		Profile:                  resolved.profile,
-		TemplateVersion:          resolved.templateVersion,
+		Profile:                  r.profile,
+		TemplateVersion:          r.templateVersion,
 	}, nil
 }
 
-//nolint:funlen // Document generation keeps the validation, render, persist, and audit flow together transactionally.
-func (s *Service) GenerateDocument(
+func (r *resolvedDocumentContext) provisionalRender() (*EDIDocumentPreview, error) {
+	provisional := *r
+	provisional.runtime = maputils.CloneShallow(r.runtime)
+	preview, err := provisional.renderPreview()
+	if err != nil {
+		return nil, err
+	}
+	if edix12.HasBlockingDiagnostics(preview.Diagnostics, r.profile.ValidationMode) {
+		return nil, diagnosticsToValidationError(preview.Diagnostics)
+	}
+
+	return preview, nil
+}
+
+func (s *Service) resolveGenerateContext(
 	ctx context.Context,
 	req *GenerateEDIDocumentRequest,
-) (*edi.EDIMessage, error) {
+) (*resolvedDocumentContext, error) {
 	if req == nil {
 		return nil, errortypes.NewValidationError(
 			"document",
@@ -387,7 +405,7 @@ func (s *Service) GenerateDocument(
 			"Document request is required",
 		)
 	}
-	previewReq := &PreviewEDIDocumentRequest{
+	resolved, err := s.resolveDocumentContext(ctx, &PreviewEDIDocumentRequest{
 		TenantInfo:               req.TenantInfo,
 		PartnerDocumentProfileID: req.PartnerDocumentProfileID,
 		EDIPartnerID:             req.EDIPartnerID,
@@ -401,30 +419,28 @@ func (s *Service) GenerateDocument(
 		Direction:                req.Direction,
 		Payload:                  req.Payload,
 		CarrierSCAC:              req.CarrierSCAC,
-	}
-	resolved, err := s.resolveDocumentContext(ctx, previewReq)
+	})
 	if err != nil {
 		return nil, err
 	}
 	if err = validateProductionTemplateVersion(resolved.templateVersion); err != nil {
 		return nil, err
 	}
-	provisional := *resolved
-	provisional.runtime = maputils.CloneShallow(resolved.runtime)
-	edix12.SetProvisionalControlNumbers(provisional.runtime)
-	provisionalResult, err := edix12.RenderX12(provisional.renderInput())
+
+	return resolved, nil
+}
+
+//nolint:funlen // Document generation keeps the validation, render, persist, and audit flow together transactionally.
+func (s *Service) GenerateDocument(
+	ctx context.Context,
+	req *GenerateEDIDocumentRequest,
+) (*edi.EDIMessage, error) {
+	resolved, err := s.resolveGenerateContext(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	provisionalDiagnostics := mergeEDIDiagnostics(
-		provisionalResult.Diagnostics,
-		provisional.partnerDiagnostics,
-	)
-	if edix12.HasBlockingDiagnostics(
-		provisionalDiagnostics,
-		resolved.profile.ValidationMode,
-	) {
-		return nil, diagnosticsToValidationError(provisionalDiagnostics)
+	if _, err = resolved.provisionalRender(); err != nil {
+		return nil, err
 	}
 
 	controlNumbers, err := s.controlNumberRepo.AllocateControlNumbers(
