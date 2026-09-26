@@ -36,7 +36,11 @@ func Reasons(err error) []agent.PreviewReason {
 	}
 
 	if multiErr, ok := errors.AsType[*errortypes.MultiError](err); ok && multiErr.HasErrors() {
-		reasons := make([]agent.PreviewReason, 0, min(len(multiErr.Errors), agent.MaxPreviewReasons))
+		reasons := make(
+			[]agent.PreviewReason,
+			0,
+			min(len(multiErr.Errors), agent.MaxPreviewReasons),
+		)
 		for _, fieldErr := range multiErr.Errors {
 			if len(reasons) == agent.MaxPreviewReasons {
 				break

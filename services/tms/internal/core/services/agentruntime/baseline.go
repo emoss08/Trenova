@@ -68,7 +68,7 @@ func (s *Service) fileBaseline(
 // plan's preview says it depends on the earlier step.
 func dependsOnEarlierStep(
 	tool serviceports.AgentTool,
-	call serviceports.ToolCall,
+	call *serviceports.ToolCall,
 	proposedSoFar []serviceports.PendingAction,
 ) bool {
 	targeted, ok := tool.(serviceports.TargetedTool)

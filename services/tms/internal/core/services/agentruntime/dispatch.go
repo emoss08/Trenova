@@ -223,7 +223,7 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		// told why and asked for what is missing instead. A write on a record
 		// an earlier step of this turn changes is the exception, since that
 		// step may be what makes it valid.
-		dependsOnStep := dependsOnEarlierStep(tool, call, proposedSoFar)
+		dependsOnStep := dependsOnEarlierStep(tool, &call, proposedSoFar)
 		target, baseline := s.fileBaseline(ctx, &baselineCall{
 			req:         req,
 			tool:        tool,
