@@ -119,32 +119,45 @@ func rememberKind(params map[string]any) agent.MemoryKind {
 }
 
 func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExecuteParams) error {
-	if err := guardExecute(t, params); err != nil {
+	request, err := t.request(&params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.memories.Remember(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *rememberTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*serviceports.RememberRequest, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return nil, err
 	}
 
 	content, err := requireString(params.Params, "content")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	kind := rememberKind(params.Params)
 	if kind == agent.MemoryKindCorrection || !kind.IsValid() {
-		return fmt.Errorf("kind must be Instruction or Fact, not %q", kind)
+		return nil, fmt.Errorf("kind must be Instruction or Fact, not %q", kind)
 	}
 
 	subjectType, subjectID, err := memorySubject(params.Params)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	expiresAt, err := memoryExpiry(optionalString(params.Params, "expiresOn"))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = t.memories.Remember(ctx, &serviceports.RememberRequest{
-		TenantInfo:  tenantFrom(params),
+	return &serviceports.RememberRequest{
+		TenantInfo:  tenantFrom(*params),
 		Kind:        kind,
 		Content:     content,
 		SubjectType: subjectType,
@@ -153,9 +166,7 @@ func (t *rememberTool) Execute(ctx context.Context, params serviceports.ToolExec
 		RunID:       params.RunID,
 		ProposalID:  params.ProposalID,
 		Taint:       params.CarriedTaint(timeutils.NowUnix()),
-	}, params.Actor)
-
-	return err
+	}, nil
 }
 
 // forgetMemoryTool retires a memory that no longer holds. It is a status
@@ -213,22 +224,33 @@ func (t *forgetMemoryTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	memoryID, err := requirePulid(params.Params, "memoryId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.memories.SetStatus(ctx, serviceports.SetAgentMemoryStatusRequest{
-		ID:         memoryID,
-		TenantInfo: tenantFrom(params),
-		Status:     agent.MemoryStatusRetired,
-	}, params.Actor)
+	_, err = t.memories.SetStatus(ctx, request, params.Actor)
 
 	return err
+}
+
+func (t *forgetMemoryTool) request(
+	params *serviceports.ToolExecuteParams,
+) (serviceports.SetAgentMemoryStatusRequest, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return serviceports.SetAgentMemoryStatusRequest{}, err
+	}
+
+	memoryID, err := requirePulid(params.Params, "memoryId")
+	if err != nil {
+		return serviceports.SetAgentMemoryStatusRequest{}, err
+	}
+
+	return serviceports.SetAgentMemoryStatusRequest{
+		ID:         memoryID,
+		TenantInfo: tenantFrom(*params),
+		Status:     agent.MemoryStatusRetired,
+	}, nil
 }
 
 func memorySubjectTypeNames() []string {

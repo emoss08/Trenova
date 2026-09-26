@@ -9,7 +9,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -242,45 +241,6 @@ func (t *linkInboundMessageTool) Validate(
 	return t.inbox.CheckLink(ctx, req)
 }
 
-func (t *linkInboundMessageTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	req, err := t.request(params)
-	if err != nil {
-		return nil, err
-	}
-	message, err := loadInboundMessage(ctx, t.inbox, params)
-	if err != nil {
-		return nil, err
-	}
-
-	changes := make([]agent.FieldChange, 0, 4)
-	for _, field := range []struct {
-		name     string
-		from, to pulid.ID
-	}{
-		{name: "shipment", from: message.MatchedShipmentID, to: req.ShipmentID},
-		{name: "customer", from: message.MatchedCustomerID, to: req.CustomerID},
-		{name: "carrier", from: message.MatchedCarrierID, to: req.CarrierID},
-	} {
-		if field.from != field.to {
-			changes = append(changes, agent.FieldChange{
-				Field: field.name, From: pulidText(field.from), To: pulidText(field.to),
-			})
-		}
-	}
-	changes = append(changes, agent.FieldChange{
-		Field: "reason", From: message.MatchReason, To: strings.TrimSpace(req.Reason),
-	})
-
-	return &agent.ToolSimulation{
-		Summary:   "Would link the message " + describeInboundMessage(message),
-		Changes:   changes,
-		Previewed: true,
-	}, nil
-}
-
 func (t *linkInboundMessageTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
@@ -297,14 +257,6 @@ func (t *linkInboundMessageTool) Execute(
 	_, err = t.inbox.Link(ctx, req)
 
 	return err
-}
-
-func pulidText(id pulid.ID) string {
-	if id.IsNil() {
-		return "none"
-	}
-
-	return id.String()
 }
 
 type markInboundMessageTool struct {
@@ -426,26 +378,6 @@ func (t *markInboundMessageTool) Validate(
 	return err
 }
 
-func (t *markInboundMessageTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	message, status, note, err := t.settle(ctx, params)
-	if err != nil {
-		return nil, err
-	}
-
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf("Would mark the message %s %s",
-			describeInboundMessage(message), strings.ToLower(string(status))),
-		Changes: []agent.FieldChange{
-			{Field: "status", From: string(message.Status), To: string(status)},
-			{Field: "note", From: message.ReviewNote, To: note},
-		},
-		Previewed: true,
-	}, nil
-}
-
 func (t *markInboundMessageTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
@@ -459,15 +391,24 @@ func (t *markInboundMessageTool) Execute(
 		return err
 	}
 
-	_, err = t.inbox.Review(ctx, inboundmessageservice.ReviewRequest{
+	_, err = t.inbox.Review(ctx, reviewRequest(&params, message, status, note))
+
+	return err
+}
+
+func reviewRequest(
+	params *serviceports.ToolExecuteParams,
+	message *inboundmessage.InboundMessage,
+	status inboundmessage.Status,
+	note string,
+) inboundmessageservice.ReviewRequest {
+	return inboundmessageservice.ReviewRequest{
 		MessageID:  message.ID,
-		TenantInfo: tenantFrom(params),
+		TenantInfo: tenantFrom(*params),
 		ReviewerID: params.Actor.UserID,
 		Status:     status,
 		Note:       note,
-	})
-
-	return err
+	}
 }
 
 // inboundReplier is what a reply needs beyond the inbox: the mailer, the
@@ -480,6 +421,7 @@ type inboundReplier struct {
 	inliner   serviceports.AssetInliner
 	customers repositories.CustomerRepository
 	shipments repositories.ShipmentRepository
+	senders   serviceports.EmailSenderResolver
 }
 
 type replyToInboundMessageParams struct {
@@ -492,6 +434,7 @@ type replyToInboundMessageParams struct {
 	Inliner   serviceports.AssetInliner
 	Customers repositories.CustomerRepository
 	Shipments repositories.ShipmentRepository
+	Senders   serviceports.EmailSenderResolver `optional:"true"`
 }
 
 type replyToInboundMessageTool struct {
@@ -509,6 +452,7 @@ func newReplyToInboundMessageTool(p replyToInboundMessageParams) serviceports.Ag
 			inliner:   p.Inliner,
 			customers: p.Customers,
 			shipments: p.Shipments,
+			senders:   p.Senders,
 		},
 	}
 }
@@ -643,86 +587,25 @@ func (t *replyToInboundMessageTool) Validate(
 	return err
 }
 
-func (t *replyToInboundMessageTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	reply, err := t.prepare(ctx, params)
-	if err != nil {
-		return nil, err
-	}
-
-	return &agent.ToolSimulation{
-		Summary: "Would reply to " + reply.message.FromAddress + " in the thread " +
-			describeInboundMessage(reply.message) + ", and mark the message actioned",
-		Changes: []agent.FieldChange{
-			{Field: "to", To: reply.message.FromAddress},
-			{Field: "subject", To: reply.subject},
-			{Field: "body", To: reply.body},
-			{
-				Field: "status",
-				From:  string(reply.message.Status),
-				To:    string(inboundmessage.StatusActioned),
-			},
-		},
-		Previewed: true,
-	}, nil
-}
-
 func (t *replyToInboundMessageTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	reply, err := t.prepare(ctx, params)
+	composed, err := t.compose(ctx, &params)
 	if err != nil {
 		return err
 	}
 
-	tenant := tenantFrom(params)
-	data := documenttemplate.AgentEmailContext{
-		AgentSubject: reply.subject,
-		AgentBody:    reply.body,
-	}
-	t.describeMatch(ctx, reply.message, tenant, &data)
-	brandAgentEmail(ctx, t.deps.orgRepo, t.deps.inliner, tenant, &data)
-
-	rendered, err := t.deps.templates.RenderMessage(ctx, &serviceports.RenderMessageRequest{
-		TenantInfo: tenant,
-		Kind:       documenttemplate.KindAgentInboundReplyEmail,
-		CustomerID: pulid.PtrOrNil(reply.message.MatchedCustomerID),
-		Data:       data,
-	})
-	if err != nil {
-		return err
-	}
-
-	if _, err = t.deps.email.Send(ctx, &serviceports.SendEmailRequest{
-		TenantInfo:     tenant,
-		ProfileID:      reply.profileID,
-		Purpose:        email.PurposeOperations,
-		To:             []string{reply.message.FromAddress},
-		Subject:        rendered.Subject,
-		HTML:           rendered.HTML,
-		Text:           rendered.Text,
-		Headers:        threadHeaders(reply.message),
-		IdempotencyKey: params.IdempotencyKey,
-	}); err != nil {
+	if _, err = t.deps.email.Send(ctx, composed.send); err != nil {
 		return err
 	}
 
 	if _, err = t.inbox.Review(ctx, inboundmessageservice.ReviewRequest{
-		MessageID:  reply.message.ID,
-		TenantInfo: tenant,
+		MessageID:  composed.reply.message.ID,
+		TenantInfo: composed.send.TenantInfo,
 		ReviewerID: params.Actor.UserID,
 		Status:     inboundmessage.StatusActioned,
-		Note: stringutils.TruncateRunes(
-			"Replied to "+reply.message.FromAddress+": "+reply.body,
-			maxInboundReviewNote,
-		),
+		Note:       replyReviewNote(composed.reply),
 	}); err != nil {
 		return fmt.Errorf("the reply was sent but the message could not be marked: %w", err)
 	}

@@ -22,6 +22,10 @@ import (
 
 const testNow = int64(1_800_000_000)
 
+const previewDigest = "5f2b1c9e0d8a7f6e5d4c3b2a19087f6e5d4c3b2a19087f6e5d4c3b2a1908a7f6"
+
+var previewVersion = int64(4)
+
 type scenario struct {
 	tenant   pagination.TenantInfo
 	user     pulid.ID
@@ -198,7 +202,10 @@ func newScenario() *scenario {
 			ID: pulid.MustNew("ad_"), OrganizationID: org, BusinessUnitID: bu,
 			ProposalID: &s.proposal, DecidedByUserID: s.approver,
 			Decision: agent.DecisionAccepted, ReasonCode: "looks_right",
-			CreatedAt: testNow - 805,
+			CreatedAt:            testNow - 805,
+			PreviewDigest:        previewDigest,
+			PreviewReviewed:      true,
+			PreviewTargetVersion: &previewVersion,
 		}},
 	}
 
@@ -356,6 +363,20 @@ func TestProjector_DerivesEveryKind(t *testing.T) {
 	assert.Equal(t, "Grace Hopper", decided.DecidedByUserName)
 	assert.Equal(t, "update_worker", decided.ToolName)
 	assert.Equal(t, s.user, decided.OnBehalfOfUserID)
+	assert.Equal(t, "Reviewed preview sha256:"+previewDigest, decided.ResultSummary,
+		"the trail says the approver approved the preview they reviewed")
+	require.NotNil(t, decided.VersionBefore)
+	assert.Equal(t, previewVersion, *decided.VersionBefore)
+}
+
+func TestPreviewSummary_SaysWhetherTheDeciderReviewedWhatTheyApproved(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, previewSummary(&agent.AgentDecision{}), "a decision before previews says nothing")
+	assert.Equal(t, "Preview not reviewed; sha256:"+previewDigest,
+		previewSummary(&agent.AgentDecision{PreviewDigest: previewDigest}))
+	assert.Equal(t, "Reviewed preview sha256:"+previewDigest,
+		previewSummary(&agent.AgentDecision{PreviewDigest: previewDigest, PreviewReviewed: true}))
 }
 
 func TestProjector_ChainsEveryTenantsRowsInOrder(t *testing.T) {

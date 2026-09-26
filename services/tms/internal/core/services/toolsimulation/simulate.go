@@ -5,87 +5,108 @@ package toolsimulation
 
 import (
 	"context"
-	"fmt"
-	"sort"
-	"strings"
+	"database/sql"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
+	"github.com/emoss08/trenova/internal/core/ports"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/internal/core/services/toolpreview"
+	"github.com/uptrace/bun"
 )
 
-const maxParameterChars = 120
-
-// Simulate returns what the tool would change. A tool's own preview that
-// fails is not a failure of the simulation: the fallback description still
-// tells a person what was asked for, with the error as the reason no more
-// could be said.
-func Simulate(
-	ctx context.Context,
-	tool serviceports.AgentTool,
-	params serviceports.ToolExecuteParams,
+// FromBaseline is the simulation a baseline already took in its read-only
+// snapshot. A preview that failed there is never run again outside it: the
+// failure is the reason no more can be said, and a write the snapshot
+// refused must not get a second chance to land.
+func FromBaseline(
+	toolName string,
+	params map[string]any,
+	baseline *serviceports.ProposalBaselineResult,
 ) *agent.ToolSimulation {
-	if simulator, ok := tool.(serviceports.ToolSimulator); ok {
-		preview, err := simulator.Simulate(ctx, params)
-		if err == nil && preview != nil {
-			preview.Previewed = true
+	if baseline == nil {
+		return Describe(toolName, params)
+	}
+	if baseline.Preview != nil {
+		return baseline.Preview.Bounded().Simulation()
+	}
+	if baseline.PreviewErr != nil {
+		return failedPreview(toolName, params, baseline.PreviewErr)
+	}
 
-			return preview
-		}
-		if err != nil {
-			fallback := Describe(tool.Name(), params.Params)
-			fallback.Summary += " The preview could not be completed: " + err.Error()
+	return Describe(toolName, params)
+}
 
-			return fallback
-		}
+// InSnapshot is Simulate inside one read-only, repeatable-read transaction,
+// so a write the preview attempted fails there instead of landing. Without a
+// database it is Simulate alone.
+func InSnapshot(
+	ctx context.Context,
+	db ports.DBConnection,
+	tool serviceports.AgentTool,
+	params *serviceports.ToolExecuteParams,
+) *agent.ToolSimulation {
+	if db == nil {
+		return Simulate(ctx, tool, params)
+	}
+
+	var simulation *agent.ToolSimulation
+	err := db.WithTx(ctx, ports.TxOptions{
+		ReadOnly:  true,
+		Isolation: sql.LevelRepeatableRead,
+	}, func(txCtx context.Context, _ bun.Tx) error {
+		simulation = Simulate(txCtx, tool, params)
+
+		return nil
+	})
+	if simulation != nil {
+		return simulation
+	}
+	if err != nil {
+		return failedPreview(tool.Name(), params.Params, err)
 	}
 
 	return Describe(tool.Name(), params.Params)
 }
 
+// Simulate returns what the tool would change, for a caller with no
+// snapshot of its own. The context is marked read-only, so work the
+// preview hands off outside its transaction is skipped. A tool's own preview
+// that fails is not a failure of the simulation: the fallback description
+// still tells a person what was asked for, with the error as the reason no
+// more could be said.
+func Simulate(
+	ctx context.Context,
+	tool serviceports.AgentTool,
+	params *serviceports.ToolExecuteParams,
+) *agent.ToolSimulation {
+	previewer, ok := tool.(serviceports.ToolPreviewer)
+	if !ok {
+		return Describe(tool.Name(), params.Params)
+	}
+
+	preview, err := previewer.Preview(ports.WithReadOnly(ctx), *params)
+	if err != nil {
+		return failedPreview(tool.Name(), params.Params, err)
+	}
+	if preview == nil {
+		return Describe(tool.Name(), params.Params)
+	}
+
+	return preview.Bounded().Simulation()
+}
+
 // Describe is the preview for a tool that has none of its own: what would
 // be called, with what.
 func Describe(toolName string, params map[string]any) *agent.ToolSimulation {
-	keys := make([]string, 0, len(params))
-	for key := range params {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
+	simulation := toolpreview.Describe(toolName, params).Simulation()
+	simulation.Previewed = false
 
-	changes := make([]agent.FieldChange, 0, len(keys))
-	for _, key := range keys {
-		changes = append(changes, agent.FieldChange{Field: key, To: describeValue(params[key])})
-	}
-
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would run %s with the parameters below. This tool has no preview of its own, "+
-				"so what it would change is not shown.",
-			toolName,
-		),
-		Changes: changes,
-	}
+	return simulation
 }
 
-func describeValue(value any) string {
-	switch v := value.(type) {
-	case nil:
-		return "nothing"
-	case string:
-		if strings.TrimSpace(v) == "" {
-			return "nothing"
-		}
+func failedPreview(toolName string, params map[string]any, err error) *agent.ToolSimulation {
+	fallback := Describe(toolName, params)
+	fallback.Summary += " The preview could not be completed: " + err.Error()
 
-		return stringutils.Ellipsize(v, maxParameterChars)
-	case bool, int, int32, int64, float32, float64:
-		return fmt.Sprint(v)
-	default:
-		encoded, err := sonic.MarshalString(v)
-		if err != nil {
-			return fmt.Sprint(v)
-		}
-
-		return stringutils.Ellipsize(encoded, maxParameterChars)
-	}
+	return fallback
 }

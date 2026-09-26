@@ -35,6 +35,8 @@ type Registry struct {
 	RateLimit  *RateLimit
 	Realtime   *Realtime
 	AIAudit    *AIAudit
+	// ProposalPreview measures what people are shown before they approve.
+	ProposalPreview *ProposalPreview
 }
 
 func graphQLOptions(cfg *config.Config) GraphQLOptions {
@@ -52,23 +54,24 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 		logger.Warn("Metrics collection is disabled")
 		dberror.SetConcurrencyObserver(nil)
 		return &Registry{
-			enabled:    false,
-			cfg:        cfg,
-			logger:     logger,
-			HTTP:       NewHTTP(nil, logger, false),
-			Error:      NewError(nil, logger, false),
-			Database:   NewDatabase(nil, logger, false),
-			Temporal:   NewTemporal(nil, logger, false),
-			Assistant:  NewAssistant(nil, logger, false),
-			Audit:      NewAudit(nil, logger, false),
-			Document:   NewDocument(nil, logger, false),
-			EDI:        NewEDI(nil, logger, false),
-			Report:     NewReport(nil, logger, false),
-			GraphQL:    NewGraphQL(nil, logger, false, graphQLOptions(cfg)),
-			Permission: NewPermission(nil, logger, false),
-			RateLimit:  NewRateLimit(nil, logger, false),
-			Realtime:   NewRealtime(nil, logger, false),
-			AIAudit:    NewAIAudit(nil, logger, false),
+			enabled:         false,
+			cfg:             cfg,
+			logger:          logger,
+			HTTP:            NewHTTP(nil, logger, false),
+			Error:           NewError(nil, logger, false),
+			Database:        NewDatabase(nil, logger, false),
+			Temporal:        NewTemporal(nil, logger, false),
+			Assistant:       NewAssistant(nil, logger, false),
+			Audit:           NewAudit(nil, logger, false),
+			Document:        NewDocument(nil, logger, false),
+			EDI:             NewEDI(nil, logger, false),
+			Report:          NewReport(nil, logger, false),
+			GraphQL:         NewGraphQL(nil, logger, false, graphQLOptions(cfg)),
+			Permission:      NewPermission(nil, logger, false),
+			RateLimit:       NewRateLimit(nil, logger, false),
+			Realtime:        NewRealtime(nil, logger, false),
+			AIAudit:         NewAIAudit(nil, logger, false),
+			ProposalPreview: NewProposalPreview(nil, logger, false),
 		}, nil
 	}
 
@@ -77,24 +80,25 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 	registry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
 
 	m := &Registry{
-		registry:   registry,
-		cfg:        cfg,
-		logger:     logger,
-		enabled:    true,
-		HTTP:       NewHTTP(registry, logger, true),
-		Error:      NewError(registry, logger, true),
-		Database:   NewDatabase(registry, logger, true),
-		Temporal:   NewTemporal(registry, logger, true),
-		Assistant:  NewAssistant(registry, logger, true),
-		Audit:      NewAudit(registry, logger, true),
-		Document:   NewDocument(registry, logger, true),
-		EDI:        NewEDI(registry, logger, true),
-		Report:     NewReport(registry, logger, true),
-		GraphQL:    NewGraphQL(registry, logger, true, graphQLOptions(cfg)),
-		Permission: NewPermission(registry, logger, true),
-		RateLimit:  NewRateLimit(registry, logger, true),
-		Realtime:   NewRealtime(registry, logger, true),
-		AIAudit:    NewAIAudit(registry, logger, true),
+		registry:        registry,
+		cfg:             cfg,
+		logger:          logger,
+		enabled:         true,
+		HTTP:            NewHTTP(registry, logger, true),
+		Error:           NewError(registry, logger, true),
+		Database:        NewDatabase(registry, logger, true),
+		Temporal:        NewTemporal(registry, logger, true),
+		Assistant:       NewAssistant(registry, logger, true),
+		Audit:           NewAudit(registry, logger, true),
+		Document:        NewDocument(registry, logger, true),
+		EDI:             NewEDI(registry, logger, true),
+		Report:          NewReport(registry, logger, true),
+		GraphQL:         NewGraphQL(registry, logger, true, graphQLOptions(cfg)),
+		Permission:      NewPermission(registry, logger, true),
+		RateLimit:       NewRateLimit(registry, logger, true),
+		Realtime:        NewRealtime(registry, logger, true),
+		AIAudit:         NewAIAudit(registry, logger, true),
+		ProposalPreview: NewProposalPreview(registry, logger, true),
 	}
 
 	dberror.SetConcurrencyObserver(m.Database.RecordConcurrencyEvent)

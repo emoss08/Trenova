@@ -33,7 +33,7 @@ func (s *Service) historyUse(
 	return usage[row.ID], nil
 }
 
-func (s *Service) guardHistory(
+func (s *Service) GuardHistory(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	row *accountingsync.AccountingMapping,

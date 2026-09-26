@@ -1,8 +1,15 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AssistantProposal } from "@/types/assistant";
 import { ProposalCard } from "../proposal-card";
+
+// What the card shows around its preview is what these pin; the preview
+// itself is read in proposal-card-preview.test.tsx, so here it stays loading.
+vi.mock("@/lib/graphql/agent-preview", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/agent-preview")>()),
+  fetchProposalPreview: () => new Promise(() => {}),
+}));
 
 afterEach(cleanup);
 

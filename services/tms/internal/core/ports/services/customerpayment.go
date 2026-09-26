@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/core/domain/invoice"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -68,6 +69,15 @@ type UnapplyCreditMemoApplicationRequest struct {
 	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
 }
 
+// CustomerPaymentPostPreview is a payment as posting it would record it,
+// and each invoice it pays, in the order of its applications, before and
+// after.
+type CustomerPaymentPostPreview struct {
+	Payment        *customerpayment.Payment
+	InvoicesBefore []*invoice.Invoice
+	InvoicesAfter  []*invoice.Invoice
+}
+
 type CustomerPaymentService interface {
 	List(
 		ctx context.Context,
@@ -79,6 +89,14 @@ type CustomerPaymentService interface {
 		req *PostCustomerPaymentRequest,
 		actor *RequestActor,
 	) (*customerpayment.Payment, error)
+	// PreviewPostAndApply validates a post exactly as PostAndApply does and
+	// returns the payment and invoices as it would leave them, writing
+	// nothing.
+	PreviewPostAndApply(
+		ctx context.Context,
+		req *PostCustomerPaymentRequest,
+		actor *RequestActor,
+	) (*CustomerPaymentPostPreview, error)
 	ApplyUnapplied(
 		ctx context.Context,
 		req *ApplyCustomerPaymentRequest,

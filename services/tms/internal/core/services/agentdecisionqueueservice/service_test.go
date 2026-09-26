@@ -84,6 +84,7 @@ type stubDecider struct {
 	services.AgentDecisionService
 
 	decided []pulid.ID
+	digests map[pulid.ID]string
 	fail    map[pulid.ID]error
 	execErr map[pulid.ID]error
 }
@@ -94,6 +95,9 @@ func (d *stubDecider) DecideWithOutcome(
 	_ *services.RequestActor,
 ) (*services.DecisionOutcome, error) {
 	d.decided = append(d.decided, req.ProposalID)
+	if d.digests != nil {
+		d.digests[req.ProposalID] = req.PreviewDigest
+	}
 	if err, ok := d.fail[req.ProposalID]; ok {
 		return nil, err
 	}
@@ -220,6 +224,47 @@ func TestDecideMany_ReportsEachOutcomeAndCarriesOn(t *testing.T) {
 	assert.False(t, results[2].Executed)
 	assert.Equal(t, "move is no longer open", results[2].Error)
 	require.NotNil(t, results[2].Decision)
+}
+
+// Each proposal of a batch is checked against the preview its row showed. A
+// digest that no longer matches fails that proposal alone, with words the
+// approver can act on; one sent without a digest is decided unreviewed.
+func TestDecideMany_ChecksEachProposalAgainstItsOwnPreview(t *testing.T) {
+	t.Parallel()
+
+	first := proposal("assign_move")
+	second := proposal("assign_move")
+	third := proposal("assign_move")
+	proposals := &stubProposals{byID: map[pulid.ID]*agent.AgentProposal{
+		first.ID: first, second.ID: second, third.ID: third,
+	}}
+	changed := "What this change would do has changed since you reviewed it. " +
+		"Review it again, then decide"
+	decider := &stubDecider{
+		digests: map[pulid.ID]string{},
+		fail:    map[pulid.ID]error{second.ID: errortypes.NewConflictError(changed)},
+	}
+	svc := newService(proposals, decider)
+
+	results, err := svc.DecideMany(t.Context(), &services.DecideAgentProposalsRequest{
+		ProposalIDs: []pulid.ID{first.ID, second.ID, third.ID},
+		Decision:    agent.DecisionAccepted,
+		PreviewDigests: map[pulid.ID]string{
+			first.ID:  "digest-one",
+			second.ID: "digest-two",
+		},
+	}, actor())
+	require.NoError(t, err)
+	require.Len(t, results, 3)
+
+	assert.Equal(t, "digest-one", decider.digests[first.ID])
+	assert.Equal(t, "digest-two", decider.digests[second.ID])
+	assert.Empty(t, decider.digests[third.ID], "no digest was sent for the third")
+
+	assert.True(t, results[0].Executed)
+	assert.Equal(t, changed, results[1].Error, "the conflict is told as it was written")
+	assert.False(t, results[1].Executed)
+	assert.True(t, results[2].Executed, "one proposal's conflict does not stop the rest")
 }
 
 // An internal fault is not wording for the approver; the row says what to

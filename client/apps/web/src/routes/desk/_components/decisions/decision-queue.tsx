@@ -1,4 +1,9 @@
 import { ProposalEditor, type ProposalEditorRequest } from "@/components/assistant/proposal-editor";
+import { batchPreviewDigests } from "@/components/assistant/proposal-preview/preview-gate";
+import {
+  prefetchPlanPreview,
+  prefetchProposalPreview,
+} from "@/components/assistant/proposal-preview/use-proposal-preview";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { usePermission } from "@/hooks/use-permission";
 import { decideAgentPlan, decideAgentProposal } from "@/lib/graphql/agent-decisions";
@@ -83,6 +88,37 @@ export function DecisionQueue() {
   });
 
   const focused = selection.focusedId !== null ? (byId.get(selection.focusedId) ?? null) : null;
+
+  // The digest of every proposal preview the detail pane has put on screen,
+  // by proposal. A batch approval sends these and only these: a proposal the
+  // person never opened goes without one and is recorded as unreviewed.
+  const shownDigests = useRef(new Map<string, string>());
+  const onPreviewShown = useCallback((proposalId: string, digest: string) => {
+    shownDigests.current.set(proposalId, digest);
+  }, []);
+
+  // Walking the queue reads the row ahead before the key that reaches it, so
+  // its preview is on screen the moment it is focused.
+  const lastFocusIndex = useRef(-1);
+  useEffect(() => {
+    const index = selection.focusedId === null ? -1 : ids.indexOf(selection.focusedId);
+    if (index === -1) {
+      lastFocusIndex.current = -1;
+      return;
+    }
+    const direction = index < lastFocusIndex.current ? -1 : 1;
+    lastFocusIndex.current = index;
+    const ahead = byId.get(ids[index + direction] ?? "");
+    if (!ahead) {
+      return;
+    }
+    if (isPendingPlan(ahead)) {
+      void prefetchPlanPreview(queryClient, "approver", ahead.id);
+    } else {
+      void prefetchProposalPreview(queryClient, "approver", ahead.id);
+    }
+  }, [byId, ids, queryClient, selection.focusedId]);
+
   const selectedRows = rows.filter((row) => selection.selectedIds.includes(row.id));
   const selectedTools = new Set(selectedRows.map((row) => row.toolName));
   const mixedTools = selectedTools.size > 1;
@@ -110,12 +146,21 @@ export function DecisionQueue() {
         reasonLabel: t("Reason"),
         requireReason: !accepting,
         destructive: !accepting,
-        onConfirm: async (reason) => {
+        // The same preview the detail pane shows, read from the same cache
+        // entry, so the digest the key sends is the one on screen.
+        preview: {
+          kind: isPendingPlan(node) ? "plan" : "proposal",
+          scope: "approver",
+          id: node.id,
+          approving: accepting,
+          density: "compact",
+        },
+        onConfirm: async (reason, previewDigest) => {
           const reasonCode = reason || (accepting ? "approved_from_desk" : "rejected_from_desk");
           if (isPendingPlan(node)) {
-            await decideAgentPlan(node.id, { decision, reasonCode });
+            await decideAgentPlan(node.id, { decision, reasonCode, previewDigest });
           } else {
-            await decideAgentProposal(node.id, { decision, reasonCode });
+            await decideAgentProposal(node.id, { decision, reasonCode, previewDigest });
           }
           await afterDecision(accepting ? t("Change approved") : t("Change rejected"));
         },
@@ -139,11 +184,13 @@ export function DecisionQueue() {
         fields: proposal.fields,
         arguments: proposal.arguments,
         withReason: { label: t("Reason"), required: false },
-        onConfirm: async (modifications, reason) => {
+        preview: { scope: "approver", proposalId: node.id },
+        onConfirm: async (modifications, reason, previewDigest) => {
           await decideAgentProposal(node.id, {
             decision: "Modified",
             modifications,
             reasonCode: reason || "modified_from_desk",
+            previewDigest,
           });
           await afterDecision(t("Change approved with your values"));
         },
@@ -169,14 +216,23 @@ export function DecisionQueue() {
         }
         return;
       }
+      // Read when the dialog opens, so the count it states is the count sent.
+      const previewDigests = batchPreviewDigests(targets, shownDigests.current);
+      const unreviewed = targets.length - previewDigests.length;
+      const runsAsProposed = t(
+        "Each will run exactly as proposed, one after another. A change that cannot run is reported on its own; the rest still go.",
+      );
       setDialog({
         title: accepting
           ? t("Approve {0} changes?", targets.length)
           : t("Reject {0} changes?", targets.length),
         description: accepting
-          ? t(
-              "Each will run exactly as proposed, one after another. A change that cannot run is reported on its own; the rest still go.",
-            )
+          ? unreviewed > 0
+            ? `${runsAsProposed} ${t(
+                "{0, plural, one {# of them you have not opened; it is recorded as approved without reviewing what it changes.} other {# of them you have not opened; they are recorded as approved without reviewing what they change.}}",
+                unreviewed,
+              )}`
+            : runsAsProposed
           : t("None will run and each agent run is closed. Say why once for all of them."),
         confirmLabel: accepting ? t("Approve all") : t("Reject all"),
         reasonLabel: t("Reason"),
@@ -189,6 +245,7 @@ export function DecisionQueue() {
               decision,
               reasonCode:
                 reason || (accepting ? "approved_from_desk_batch" : "rejected_from_desk_batch"),
+              previewDigests,
             });
             const failed = results.filter((result) => result.error);
             const succeeded = results.length - failed.length;
@@ -360,7 +417,7 @@ export function DecisionQueue() {
         <ResizableHandle />
         <ResizablePanel minSize="40%">
           <div className="flex h-full min-h-0 flex-col">
-            <DecisionDetail node={focused} actions={actions} />
+            <DecisionDetail node={focused} actions={actions} onPreviewShown={onPreviewShown} />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

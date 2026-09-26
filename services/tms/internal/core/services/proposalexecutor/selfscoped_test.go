@@ -206,13 +206,13 @@ func TestMergeParams_KeepsTheStoredOwner(t *testing.T) {
 	t.Parallel()
 
 	stored := pulid.MustNew("usr_").String()
-	merged := mergeParams(
+	merged := MergeParams(
 		map[string]any{"message": "Call in", services.SelfScopeOwnerParam: stored},
 		map[string]any{services.SelfScopeOwnerParam: pulid.MustNew("usr_").String()},
 	)
 	assert.Equal(t, stored, merged[services.SelfScopeOwnerParam])
 
-	unowned := mergeParams(
+	unowned := MergeParams(
 		map[string]any{"message": "Call in"},
 		map[string]any{services.SelfScopeOwnerParam: stored},
 	)

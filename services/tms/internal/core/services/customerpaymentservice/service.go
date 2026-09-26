@@ -96,49 +96,11 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 	req *serviceports.PostCustomerPaymentRequest,
 	actor *serviceports.RequestActor,
 ) (*customerpayment.Payment, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Request is required",
-		)
-	}
-	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError(
-			"Customer payment posting requires an authenticated user",
-		)
-	}
-	control, err := s.accountingRepo.GetByOrgID(ctx, req.TenantInfo.OrgID)
+	plan, err := s.planPost(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-
-	entity := &customerpayment.Payment{
-		OrganizationID:  req.TenantInfo.OrgID,
-		BusinessUnitID:  req.TenantInfo.BuID,
-		CustomerID:      req.CustomerID,
-		PaymentDate:     req.PaymentDate,
-		AccountingDate:  req.AccountingDate,
-		AmountMinor:     req.AmountMinor,
-		Status:          customerpayment.StatusPosted,
-		PaymentMethod:   req.PaymentMethod,
-		ReferenceNumber: req.ReferenceNumber,
-		Memo:            req.Memo,
-		CurrencyCode:    req.CurrencyCode,
-		CreatedByID:     actor.UserID,
-		UpdatedByID:     actor.UserID,
-		Applications:    mapApplications(req.Applications),
-	}
-
-	invoices, period, me := s.validator.ValidatePostAndApply(
-		ctx,
-		entity,
-		repositories.GetInvoiceByIDRequest{TenantInfo: req.TenantInfo},
-		control,
-	)
-	if me != nil {
-		return nil, me
-	}
+	control, entity, invoices, period := plan.control, plan.entity, plan.invoices, plan.period
 
 	batchNumber, err := s.generator.GenerateJournalBatchNumber(
 		ctx,
@@ -177,9 +139,7 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 		}
 
 		for idx, inv := range invoices {
-			inv.ApplyPaymentMinor(
-				entity.Applications[idx].AppliedAmountMinor + entity.Applications[idx].ShortPayAmountMinor,
-			)
+			applyPostedApplication(inv, entity.Applications[idx])
 			inv, txErr = s.invoiceRepo.Update(txCtx, inv)
 			if txErr != nil {
 				return txErr

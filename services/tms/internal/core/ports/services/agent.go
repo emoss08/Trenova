@@ -142,6 +142,17 @@ type DecideAgentProposalRequest struct {
 	// step, and a step's execution failure is reported to the caller so the
 	// plan can stop rather than logged and swallowed.
 	WithinPlan bool
+	// PreviewDigest is the digest of the preview the decider was shown. An
+	// approval naming a digest that no longer matches is refused, and nothing
+	// is recorded.
+	PreviewDigest string
+	// StepPreview, StepPreviewReviewed and ExpectedTargetVersion are set only
+	// by the plan service, never from a request: the step's preview projected
+	// with the plan, whether the plan's digest was reviewed, and the version
+	// the step's target is expected at once the steps before it have run.
+	StepPreview           *agent.ProposalPreview
+	StepPreviewReviewed   bool
+	ExpectedTargetVersion *int64
 }
 
 // DecideAgentPlanRequest decides every pending step of a plan at once.
@@ -150,6 +161,8 @@ type DecideAgentPlanRequest struct {
 	Decision   agent.DecisionType
 	ReasonCode string
 	TenantInfo pagination.TenantInfo
+	// PreviewDigest is the digest of the plan preview the decider was shown.
+	PreviewDigest string
 }
 
 type AgentPlanService interface {
@@ -170,6 +183,14 @@ type AgentPlanService interface {
 		ctx context.Context,
 		req *repositories.ListAgentPlanConnectionRequest,
 	) (*pagination.CursorListResult[*agent.AgentPlan], error)
+	// AssertOwnPlan refuses a plan not raised in one of the actor's own
+	// conversations, or by an agent they may no longer use, as not found.
+	AssertOwnPlan(
+		ctx context.Context,
+		planID pulid.ID,
+		tenant pagination.TenantInfo,
+		actor *RequestActor,
+	) error
 }
 
 // PendingProposalsNotice is what the recorder hands the notifier once a run's
@@ -220,6 +241,9 @@ type AgentTrustService interface {
 type DecisionOutcome struct {
 	Decision       *agent.AgentDecision
 	ExecutionError error
+	// ExecutedTargetVersion is the version the approved write left its
+	// target at, when the target is pinned and could be read.
+	ExecutedTargetVersion *int64
 }
 
 type AgentDecisionService interface {
@@ -242,6 +266,14 @@ type AgentDecisionService interface {
 		req *DecideAgentProposalRequest,
 		actor *RequestActor,
 	) (*agent.AgentDecision, error)
+	// AssertOwnProposal refuses a proposal not raised in one of the actor's
+	// own conversations, as not found.
+	AssertOwnProposal(
+		ctx context.Context,
+		proposalID pulid.ID,
+		tenant pagination.TenantInfo,
+		actor *RequestActor,
+	) error
 }
 
 type UpdateAgentControlRequest struct {
@@ -409,6 +441,10 @@ type DecideAgentProposalsRequest struct {
 	Decision    agent.DecisionType
 	ReasonCode  string
 	TenantInfo  pagination.TenantInfo
+	// PreviewDigests is the digest of the preview the decider was shown for
+	// each proposal. One that no longer matches fails that proposal alone; a
+	// proposal without one is recorded as approved unreviewed.
+	PreviewDigests map[pulid.ID]string
 }
 
 // AgentProposalDecisionResult is what became of one proposal in a batch.

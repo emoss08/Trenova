@@ -1,10 +1,12 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { AssistantProposal } from "@/types/assistant";
 import { DecisionFollowUpProvider } from "../decision-follow-up";
 import { ProposalCard } from "../proposal-card";
+import { preview } from "./preview-fixtures";
 
 const decideMyProposal = vi.fn(async () => undefined);
 const decideAgentProposal = vi.fn(async () => undefined);
@@ -13,6 +15,18 @@ vi.mock("@/lib/graphql/agent-decisions", () => ({
   decideMyProposal: (...args: unknown[]) => decideMyProposal(...(args as [])),
   decideAgentProposal: (...args: unknown[]) => decideAgentProposal(...(args as [])),
 }));
+
+// Approve waits for the preview and sends its digest.
+vi.mock("@/lib/graphql/agent-preview", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/agent-preview")>()),
+  fetchProposalPreview: async () => preview({ digest: "sha256:shown" }),
+}));
+
+const approveWhenReady = async () => {
+  const button = screen.getByRole("button", { name: /approve/i });
+  await waitFor(() => expect(button).toBeEnabled());
+  await userEvent.click(button);
+};
 
 afterEach(() => {
   cleanup();
@@ -53,17 +67,20 @@ describe("a decision in the thread", () => {
     render(
       <QueryClientProvider client={client}>
         <DecisionFollowUpProvider value={followUp}>
-          <ProposalCard proposal={proposal()} threadId="athr_1" />
+          <MemoryRouter>
+            <ProposalCard proposal={proposal()} threadId="athr_1" />
+          </MemoryRouter>
         </DecisionFollowUpProvider>
       </QueryClientProvider>,
     );
 
-    await userEvent.click(screen.getByRole("button", { name: /approve/i }));
+    await approveWhenReady();
 
     await waitFor(() => expect(followUp).toHaveBeenCalledWith("aprop_1"));
     expect(decideMyProposal).toHaveBeenCalledWith("aprop_1", {
       decision: "Accepted",
       reasonCode: "",
+      previewDigest: "sha256:shown",
     });
   });
 
@@ -73,17 +90,19 @@ describe("a decision in the thread", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <ProposalCard proposal={proposal()} threadId="athr_1" />
+        <MemoryRouter>
+          <ProposalCard proposal={proposal()} threadId="athr_1" />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
 
     await userEvent.click(screen.getByRole("button", { name: /reject/i }));
 
     await waitFor(() =>
-      expect(decideMyProposal).toHaveBeenCalledWith("aprop_1", {
-        decision: "Rejected",
-        reasonCode: "",
-      }),
+      expect(decideMyProposal).toHaveBeenCalledWith(
+        "aprop_1",
+        expect.objectContaining({ decision: "Rejected", reasonCode: "" }),
+      ),
     );
     expect(decideAgentProposal).not.toHaveBeenCalled();
   });
@@ -92,11 +111,13 @@ describe("a decision in the thread", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <ProposalCard proposal={proposal()} threadId="athr_1" />
+        <MemoryRouter>
+          <ProposalCard proposal={proposal()} threadId="athr_1" />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
 
-    await userEvent.click(screen.getByRole("button", { name: /approve/i }));
+    await approveWhenReady();
 
     await waitFor(() => expect(decideMyProposal).toHaveBeenCalled());
   });

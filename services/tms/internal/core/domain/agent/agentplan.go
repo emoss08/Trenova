@@ -65,6 +65,10 @@ type AgentPlan struct {
 
 const maxPlanTitleLength = 200
 
+// PlanToolName is how a plan reads where a tool's name would: several
+// writes decided as one, not any single tool's.
+const PlanToolName = "plan"
+
 func (p *AgentPlan) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(p,
 		validation.Field(&p.OrganizationID, validation.Required.Error("Organization is required")),

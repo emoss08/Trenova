@@ -679,7 +679,7 @@ func (s *Service) RequestBackfill(
 			"A backfill covers documents posted between the start date and when sync began",
 		)
 	}
-	types, err := backfillTypes(conn, req.ObjectTypes)
+	types, err := BackfillTypes(conn, req.ObjectTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -719,7 +719,7 @@ func (s *Service) RequestBackfill(
 	return backfill, nil
 }
 
-func backfillTypes(
+func BackfillTypes(
 	conn *accountingsync.AccountingConnection,
 	requested []accountingsync.SyncObjectType,
 ) ([]accountingsync.SyncObjectType, error) {

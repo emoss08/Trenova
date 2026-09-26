@@ -1,3 +1,4 @@
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -18,9 +19,14 @@ import {
 } from "@trenova/shared/components/ui/select";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
 import { cn } from "@trenova/shared/lib/utils";
+import type { PreviewScope } from "@/lib/graphql/agent-preview";
+import { modificationsKey } from "@/lib/queries/agent-preview";
 import type { ProposalField } from "@/types/assistant";
+import { CircleAlertIcon, LockIcon } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import {
   changedValues,
@@ -28,6 +34,17 @@ import {
   validateDraft,
   type ProposalDraft,
 } from "./proposal-edits";
+import {
+  canApprove,
+  gateDigest,
+  isPreviewRefusal,
+  type ApprovalGate,
+} from "./proposal-preview/preview-gate";
+import { PreviewLoadState, ProposalPreview } from "./proposal-preview/proposal-preview";
+import { useApprovalGate, useProposalPreview } from "./proposal-preview/use-proposal-preview";
+
+/** How long typing settles before the draft is previewed. */
+export const PREVIEW_DEBOUNCE_MS = 400;
 
 export type ProposalEditorRequest = {
   /** The sentence the card shows, so the person knows which change they are editing. */
@@ -36,7 +53,16 @@ export type ProposalEditorRequest = {
   arguments: Record<string, unknown> | null | undefined;
   /** When set, a reason is asked for beside the values and passed along. */
   withReason?: { label: string; required: boolean };
-  onConfirm: (modifications: Record<string, unknown>, reason: string) => Promise<void> | void;
+  /**
+   * Where the draft's preview is read. The editor previews each valid draft
+   * and approves against the preview it shows, sending its digest.
+   */
+  preview?: { scope: PreviewScope; proposalId: string };
+  onConfirm: (
+    modifications: Record<string, unknown>,
+    reason: string,
+    previewDigest: string | undefined,
+  ) => Promise<void> | void;
 };
 
 /**
@@ -47,6 +73,11 @@ export type ProposalEditorRequest = {
  * built from the tool's own schema, and approval carries what was changed.
  * Only real changes are sent: the server records them on the decision, runs
  * the tool with them, and tells the model what actually ran.
+ *
+ * Beside the values sits what they would do: once typing settles, the draft
+ * is previewed by the tool's own code, and approval waits for the preview of
+ * exactly the values in the form. The record the change is about stays as
+ * proposed — a change may alter what is done to it, never which record it is.
  */
 export function ProposalEditor({
   request,
@@ -57,12 +88,14 @@ export function ProposalEditor({
 }) {
   return (
     <Dialog open={request !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent size="md">
+      <DialogContent size="lg">
         {request && <EditorForm request={request} onClose={onClose} />}
       </DialogContent>
     </Dialog>
   );
 }
+
+const LOADING: ApprovalGate = { state: "loading" };
 
 // Mounted only while open, so each request starts from the proposed values
 // without an effect having to reset the draft.
@@ -84,9 +117,36 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
     [request.fields, request.arguments, draft],
   );
   const changeCount = Object.keys(changes).length;
+  const valid = Object.keys(errors).length === 0;
+
+  // A valid draft is previewed once typing settles; an invalid one is not
+  // sent at all. The preview of an unchanged draft is the proposal as
+  // proposed, which the card beside the editor has usually read already.
+  const draftModifications = valid ? changes : null;
+  const settledModifications = useDebounce(draftModifications, PREVIEW_DEBOUNCE_MS);
+  const target = request.preview;
+  const previewQuery = useProposalPreview({
+    scope: target?.scope ?? "mine",
+    id: target?.proposalId ?? "",
+    modifications: settledModifications,
+    enabled: target !== undefined && settledModifications !== null,
+    keepPrevious: true,
+  });
+  const approval = useApprovalGate(previewQuery);
+
+  // What is on screen is the preview of the values in the form only once the
+  // debounce has caught up and the read for them has landed.
+  const previewCurrent =
+    draftModifications !== null &&
+    settledModifications !== null &&
+    modificationsKey(settledModifications) === modificationsKey(draftModifications) &&
+    !previewQuery.isPlaceholderData;
+  const refused = previewCurrent && isPreviewRefusal(previewQuery.error);
+  const gate = previewCurrent ? approval.gate : LOADING;
+
   const reasonMissing = request.withReason?.required === true && reason.trim() === "";
-  const canConfirm =
-    !isPending && Object.keys(errors).length === 0 && changeCount > 0 && !reasonMissing;
+  const previewAllows = target === undefined || (canApprove(gate) && !refused);
+  const canConfirm = !isPending && valid && changeCount > 0 && !reasonMissing && previewAllows;
 
   const set = (name: string, value: string) => {
     setDraft((current) => ({ ...current, [name]: value }));
@@ -98,13 +158,19 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
     if (!canConfirm) {
       return;
     }
+    approval.acknowledge();
     setIsPending(true);
     setFailure(null);
     try {
-      await request.onConfirm(changes, reason.trim());
+      await request.onConfirm(changes, reason.trim(), target ? gateDigest(gate) : undefined);
       onClose();
     } catch (error) {
-      setFailure(error instanceof Error ? error.message : t("The change could not be saved."));
+      // What these values would do moved while the person read it: the
+      // server recorded nothing, the preview is read again, and the form
+      // stays open on the new one.
+      if (!(target && approval.handleDecisionError(error))) {
+        setFailure(graphQLErrorMessage(error, t("The change could not be saved.")));
+      }
     } finally {
       setIsPending(false);
     }
@@ -117,47 +183,93 @@ function EditorForm({ request, onClose }: { request: ProposalEditorRequest; onCl
         <DialogDescription>{request.summary}</DialogDescription>
       </DialogHeader>
 
-      <div className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto py-1">
-        {request.fields.map((field) => {
-          const id = `${idPrefix}-${field.name}`;
-          const error = touched[field.name] || submitted ? errors[field.name] : undefined;
+      <div className="flex max-h-[65vh] flex-col gap-4 overflow-y-auto py-1">
+        <div className="flex flex-col gap-3">
+          {request.fields.map((field) => {
+            const id = `${idPrefix}-${field.name}`;
+            const error = touched[field.name] || submitted ? errors[field.name] : undefined;
+            const readOnly = field.readOnly === true;
 
-          return (
-            <div key={field.name} className="flex flex-col gap-1.5">
-              <Label htmlFor={id}>
-                {field.label}
-                {field.required ? "" : ` (${t("optional")})`}
+            return (
+              <div key={field.name} className="flex flex-col gap-1.5">
+                <Label htmlFor={id}>
+                  {field.label}
+                  {field.required ? "" : ` (${t("optional")})`}
+                </Label>
+                <FieldControl
+                  id={id}
+                  field={field}
+                  value={draft[field.name] ?? ""}
+                  invalid={error !== undefined}
+                  readOnly={readOnly}
+                  onChange={(value) => set(field.name, value)}
+                />
+                {readOnly ? (
+                  <p className="text-foreground-subtle flex items-center gap-1 text-xs">
+                    <LockIcon aria-hidden className="size-3 shrink-0" />
+                    {t("Stays as proposed: a change can't point this at a different record.")}
+                  </p>
+                ) : (
+                  field.description !== "" && (
+                    <p className="text-muted-foreground text-xs">{field.description}</p>
+                  )
+                )}
+                {error && <p className="text-danger text-xs">{error}</p>}
+              </div>
+            );
+          })}
+
+          {request.withReason && (
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`${idPrefix}-reason`}>
+                {request.withReason.label}
+                {request.withReason.required ? "" : ` (${t("optional")})`}
               </Label>
-              <FieldControl
-                id={id}
-                field={field}
-                value={draft[field.name] ?? ""}
-                invalid={error !== undefined}
-                onChange={(value) => set(field.name, value)}
+              <Textarea
+                id={`${idPrefix}-reason`}
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                minRows={2}
+                maxLength={500}
+                placeholder={t("Why the values changed, for the audit trail.")}
               />
-              {field.description !== "" && (
-                <p className="text-muted-foreground text-xs">{field.description}</p>
-              )}
-              {error && <p className="text-danger text-xs">{error}</p>}
             </div>
-          );
-        })}
+          )}
+        </div>
 
-        {request.withReason && (
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`${idPrefix}-reason`}>
-              {request.withReason.label}
-              {request.withReason.required ? "" : ` (${t("optional")})`}
-            </Label>
-            <Textarea
-              id={`${idPrefix}-reason`}
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              minRows={2}
-              maxLength={500}
-              placeholder={t("Why the values changed, for the audit trail.")}
-            />
-          </div>
+        {target && (
+          <section
+            className="border-border-subtle flex flex-col gap-2 border-t pt-3"
+            aria-live="polite"
+          >
+            <h3 className="text-foreground-subtle text-xs font-medium">
+              {changeCount > 0 ? t("What your values would do") : t("What it would do as proposed")}
+            </h3>
+            {!valid ? (
+              <p className="text-foreground-muted text-xs">
+                {t("Fix the values above to see what they would do.")}
+              </p>
+            ) : refused ? (
+              <Alert size="sm" variant="destructive">
+                <CircleAlertIcon />
+                <AlertDescription>
+                  {t(
+                    "These values would not go through: {0}",
+                    graphQLErrorMessage(previewQuery.error, t("The values are not valid.")),
+                  )}
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <div
+                className={cn("min-w-0", !previewCurrent && "opacity-60")}
+                aria-busy={!previewCurrent}
+              >
+                <PreviewLoadState query={previewQuery} changed={approval.changed}>
+                  {(preview) => <ProposalPreview preview={preview} density="full" />}
+                </PreviewLoadState>
+              </div>
+            )}
+          </section>
         )}
       </div>
 
@@ -192,12 +304,14 @@ function FieldControl({
   field,
   value,
   invalid,
+  readOnly,
   onChange,
 }: {
   id: string;
   field: ProposalField;
   value: string;
   invalid: boolean;
+  readOnly: boolean;
   onChange: (value: string) => void;
 }) {
   const t = useT();
@@ -213,6 +327,7 @@ function FieldControl({
           minRows={field.kind === "JSON" ? 4 : 3}
           maxLength={field.maxLength ?? undefined}
           isInvalid={invalid}
+          readOnly={readOnly}
           className={cn(field.kind === "JSON" && "font-mono text-xs")}
         />
       );
@@ -222,6 +337,7 @@ function FieldControl({
           <Switch
             id={id}
             checked={value === "true"}
+            disabled={readOnly}
             onCheckedChange={(checked) => onChange(checked ? "true" : "false")}
           />
           <span className="text-muted-foreground text-xs">
@@ -231,7 +347,11 @@ function FieldControl({
       );
     case "Choice":
       return (
-        <Select value={value === "" ? null : value} onValueChange={(next) => onChange(next ?? "")}>
+        <Select
+          value={value === "" ? null : value}
+          disabled={readOnly}
+          onValueChange={(next) => onChange(next ?? "")}
+        >
           <SelectTrigger id={id} aria-invalid={invalid}>
             <SelectValue placeholder={t("Choose…")} />
           </SelectTrigger>
@@ -255,6 +375,7 @@ function FieldControl({
           min={field.minimum ?? undefined}
           max={field.maximum ?? undefined}
           value={value}
+          readOnly={readOnly}
           onChange={(event) => onChange(event.target.value)}
           aria-invalid={invalid}
         />
@@ -264,6 +385,7 @@ function FieldControl({
         <Input
           id={id}
           value={value}
+          readOnly={readOnly}
           onChange={(event) => onChange(event.target.value)}
           placeholder={
             field.options.length > 0 ? field.options.join(", ") : t("Comma-separated values")
@@ -276,6 +398,7 @@ function FieldControl({
         <Input
           id={id}
           value={value}
+          readOnly={readOnly}
           onChange={(event) => onChange(event.target.value)}
           maxLength={field.maxLength ?? undefined}
           aria-invalid={invalid}

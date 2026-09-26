@@ -28,6 +28,14 @@ type tenderStarter interface {
 		ctx context.Context,
 		req *tenderservice.CreateSpotTenderRequest,
 	) (*tender.Tender, error)
+	PreviewWaterfall(
+		ctx context.Context,
+		req *tenderservice.CreateWaterfallTenderRequest,
+	) (*tenderservice.TenderPreview, error)
+	PreviewSpot(
+		ctx context.Context,
+		req *tenderservice.CreateSpotTenderRequest,
+	) (*tenderservice.TenderPreview, error)
 }
 
 // tenderToRoutingGuideTool offers a move down its routing guide, carrier by
@@ -96,28 +104,39 @@ func (t *tenderToRoutingGuideTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
-		return err
-	}
-
-	moveID, err := requirePulid(params.Params, "shipmentMoveId")
+	req, err := t.request(&params)
 	if err != nil {
 		return err
-	}
-
-	req := &tenderservice.CreateWaterfallTenderRequest{
-		TenantInfo:     tenantFrom(params),
-		ShipmentMoveID: moveID,
-	}
-	if guideID, ok, pErr := optionalPulid(params.Params, "routingGuideId"); pErr != nil {
-		return pErr
-	} else if ok {
-		req.RoutingGuideID = &guideID
 	}
 
 	_, err = t.tenders.CreateWaterfall(ctx, req)
 
 	return err
+}
+
+func (t *tenderToRoutingGuideTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*tenderservice.CreateWaterfallTenderRequest, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return nil, err
+	}
+
+	moveID, err := requirePulid(params.Params, "shipmentMoveId")
+	if err != nil {
+		return nil, err
+	}
+
+	req := &tenderservice.CreateWaterfallTenderRequest{
+		TenantInfo:     tenantFrom(*params),
+		ShipmentMoveID: moveID,
+	}
+	if guideID, ok, pErr := optionalPulid(params.Params, "routingGuideId"); pErr != nil {
+		return nil, pErr
+	} else if ok {
+		req.RoutingGuideID = &guideID
+	}
+
+	return req, nil
 }
 
 func (t *tenderToRoutingGuideTool) Target(params map[string]any) (serviceports.ToolTarget, bool) {
@@ -239,25 +258,38 @@ func (t *tenderToCarriersTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams,
 ) error {
-	if err := guardExecute(t, params); err != nil {
+	req, err := t.request(&params)
+	if err != nil {
 		return err
+	}
+
+	_, err = t.tenders.CreateSpot(ctx, req)
+
+	return err
+}
+
+func (t *tenderToCarriersTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*tenderservice.CreateSpotTenderRequest, error) {
+	if err := guardExecute(t, *params); err != nil {
+		return nil, err
 	}
 
 	moveID, err := requirePulid(params.Params, "shipmentMoveId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	mode, err := requireString(params.Params, "mode")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var lineParams []tenderLineParam
 	if err = decodeParam(params.Params, "lines", &lineParams); err != nil {
-		return err
+		return nil, err
 	}
 	if len(lineParams) == 0 || len(lineParams) > maxTenderLines {
-		return errortypes.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"lines",
 			errortypes.ErrInvalid,
 			fmt.Sprintf("A spot tender needs between 1 and %d carrier lines", maxTenderLines),
@@ -268,20 +300,18 @@ func (t *tenderToCarriersTool) Execute(
 	for idx, line := range lineParams {
 		parsed, lineErr := spotTenderLineOf(idx, line)
 		if lineErr != nil {
-			return lineErr
+			return nil, lineErr
 		}
 		lines = append(lines, parsed)
 	}
 
-	_, err = t.tenders.CreateSpot(ctx, &tenderservice.CreateSpotTenderRequest{
-		TenantInfo:                tenantFrom(params),
+	return &tenderservice.CreateSpotTenderRequest{
+		TenantInfo:                tenantFrom(*params),
 		ShipmentMoveID:            moveID,
 		Mode:                      tender.Mode(mode),
 		Lines:                     lines,
 		OverrideInsuranceWarnings: optionalBool(params.Params, "overrideInsuranceWarnings"),
-	})
-
-	return err
+	}, nil
 }
 
 func spotTenderLineOf(idx int, line tenderLineParam) (tenderservice.SpotTenderLine, error) {

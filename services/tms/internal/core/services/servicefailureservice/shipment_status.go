@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
@@ -89,9 +88,7 @@ func (m *shipmentStatusMarker) MarkDelayedForServiceFailure(
 	ctx context.Context,
 	params delayedShipmentMarkParams,
 ) (*shipment.Shipment, error) {
-	if params.shipment == nil ||
-		!shipmentstate.IsDelayedEligibleShipmentStatus(params.shipment.Status) ||
-		!shipmentstate.CanTransitionShipmentStatus(params.shipment.Status, shipment.StatusDelayed) {
+	if !canMarkDelayed(params.shipment) {
 		return nil, nil
 	}
 

@@ -513,6 +513,13 @@ path carries the modification checks, the trust ledger, memory and follow-ups,
 the approval UI reads its result synchronously, and a chat proposal has no run
 to execute it.
 
+What a person approves is the preview they were shown: the decision service
+previews the write as the decider sees it, refuses one whose record moved on
+before anything is recorded, refuses a digest that no longer matches as a
+conflict, and records the preview with the decision. A plan's later step on a
+record an earlier step changed runs against the version that step left. See
+[proposal-previews.md](proposal-previews.md).
+
 ### Starting runs
 
 - **Events.** A run is keyed by its subject:
@@ -786,6 +793,15 @@ counted from the answering call, the proposal insert mints its id, and the root
 has no origin link. The histories under `agentjobs/testdata/replay-loop` and
 `assistantjobs/testdata/replay` were recorded before the change and replay
 against it. See [ai-tracing.md](ai-tracing.md#determinism).
+
+Proposal previews took no gate. When a write is held for a person, the dispatch
+activity pins its target and previews it in one read-only snapshot, and keeps the
+preview in `agent_proposal_baselines` keyed by the proposal id it already mints; the
+preview never rides `PendingAction`, which `DispatchCall.ProposedSoFar` carries into
+every later tool activity, so nothing about the action, the activity results or the
+commands changed. An evaluation keeps no baseline, a retried activity's orphan is purged
+by the expiry sweep inside its activity, and a settled step replayed from the ledger
+never previews again. See [proposal-previews.md](proposal-previews.md).
 
 Agent delegation (`delegate_task`) took no gate: whether a turn holds the tool
 is decided when it opens, in an activity, and kept in `TurnState.Held`, so an

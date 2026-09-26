@@ -2,7 +2,6 @@ package agenttoolservice
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
@@ -11,9 +10,7 @@ import (
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
-	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const (
@@ -190,47 +187,6 @@ func (t *applyAccountingInboundChangeTool) Execute(
 	return err
 }
 
-func (t *applyAccountingInboundChangeTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	preview, err := t.preview(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-	change := preview.Change
-	currency := change.CurrencyCode
-	changes := make([]agent.FieldChange, 0, len(preview.Lines)+1)
-	changes = append(changes, agent.FieldChange{
-		Field: fieldInboundStatus,
-		From:  string(change.Status),
-		To:    string(accountingsync.InboundStatusApplied),
-	})
-	for _, line := range preview.Lines {
-		changes = append(changes, agent.FieldChange{
-			Field: line.ObjectNumber,
-			From:  "open " + money.FormatMinor(line.OpenMinor, currency),
-			To:    "pays " + money.FormatMinor(line.AmountMinor, currency),
-		})
-	}
-
-	summary := fmt.Sprintf(
-		"Would post %s for %s on %s",
-		inboundLabel(change),
-		money.FormatMinor(change.AmountMinor, currency),
-		timeutils.FormatCalendarDate(preview.PaidAt, nil),
-	)
-	if preview.UnappliedMinor > 0 {
-		summary += fmt.Sprintf(", leaving %s as unapplied cash",
-			money.FormatMinor(preview.UnappliedMinor, currency))
-	}
-	return &agent.ToolSimulation{
-		Summary:   summary,
-		Previewed: true,
-		Changes:   changes,
-	}, nil
-}
-
 type ignoreAccountingInboundChangeTool struct {
 	inbound accountingInboundOperator
 }
@@ -349,28 +305,4 @@ func (t *ignoreAccountingInboundChangeTool) Execute(
 	}
 	_, err = t.inbound.Ignore(ctx, req, params.Actor)
 	return err
-}
-
-func (t *ignoreAccountingInboundChangeTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	req, change, err := t.request(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would leave %s for %s out of Trenova for good: %s",
-			inboundLabel(change),
-			money.FormatMinor(change.AmountMinor, change.CurrencyCode),
-			req.Note,
-		),
-		Previewed: true,
-		Changes: []agent.FieldChange{{
-			Field: fieldInboundStatus,
-			From:  string(change.Status),
-			To:    string(accountingsync.InboundStatusIgnored),
-		}},
-	}, nil
 }

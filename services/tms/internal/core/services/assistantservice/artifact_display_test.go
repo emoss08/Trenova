@@ -222,7 +222,7 @@ func TestClassifyValues_ReadsEachColumnByItsNameAndItsValues(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, shown := classifyValues(tc.key, tc.values, true)
+			got, shown := assistantartifact.ClassifyValues(tc.key, tc.values, true)
 			assert.Equal(t, tc.shown, shown)
 			if tc.shown {
 				assert.Equal(t, tc.want, got)
@@ -236,11 +236,11 @@ func TestClassifyValues_ReadsEachColumnByItsNameAndItsValues(t *testing.T) {
 func TestClassifyValues_AnAmountBesideAMethodIsNotMoney(t *testing.T) {
 	t.Parallel()
 
-	got, shown := classifyValues("amount", []any{"12.50"}, false)
+	got, shown := assistantartifact.ClassifyValues("amount", []any{"12.50"}, false)
 	require.True(t, shown)
 	assert.NotEqual(t, assistantartifact.DisplayMoney, got)
 
-	got, _ = classifyValues("amount", []any{"12.50"}, true)
+	got, _ = assistantartifact.ClassifyValues("amount", []any{"12.50"}, true)
 	assert.Equal(t, assistantartifact.DisplayMoney, got)
 }
 
@@ -255,11 +255,11 @@ func TestDisplayLabel_SaysWhatHappenedRatherThanWhen(t *testing.T) {
 		"cdlClass":     "CDL class",
 		"proNumber":    "Pro number",
 	} {
-		_, displayType := datedKey(key)
+		_, displayType := assistantartifact.DatedKey(key)
 		if displayType == "" {
 			displayType = assistantartifact.DisplayText
 		}
-		assert.Equal(t, want, displayLabel(key, displayType), key)
+		assert.Equal(t, want, assistantartifact.DisplayLabel(key, displayType), key)
 	}
 }
 

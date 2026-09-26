@@ -154,6 +154,19 @@ proposal was decided in; `execute` holds an `execute_tool` and a
 `trenova.ai.write` span for the approved write. A run's expiry links to the
 run's root; the organisation-wide sweep links to nothing.
 
+### `trenova.ai.preview {tool}` (INTERNAL)
+
+One per preview of a proposed write, wherever it is computed: a person reading it
+(`proposalpreviewservice.ForProposal`, `ForPlan`), a decision checking it, or the baseline
+the dispatch activity takes as the write is filed (inside `execute_tool`).
+`gen_ai.tool.name`, `trenova.ai.proposal.id`, the tenant, `trenova.ai.preview.purpose`
+(`read`, `decide`, `baseline`), `trenova.ai.preview.coverage` (`Full`, `Partial`,
+`Unavailable`), `trenova.ai.preview.stale`, `trenova.ai.preview.records`,
+`trenova.ai.preview.withheld`, `trenova.ai.preview.recorded` and `error.type`. It carries no
+value the preview showed. The decide span adds `trenova.ai.preview.digest` and
+`trenova.ai.preview.reviewed`, and a decision refused for its preview ends with `error.type`
+`preview_stale` or `preview_conflict`. See [proposal-previews.md](proposal-previews.md).
+
 ### `trenova.ai.job {feature}` (INTERNAL, root)
 
 A one-shot call a request waits on starts a new trace with
@@ -168,6 +181,11 @@ test is its own trace rather than a thread inside the request.
 `gen_ai.client.operation.duration` histograms, per provider attempt, with the
 semantic-convention buckets, through the metrics registry's OpenTelemetry bridge
 (`metrics.Registry.GenAI()`), so they appear on `/metrics` beside everything else.
+
+`trenova_ai_proposal_preview_total{tool,coverage}` and
+`trenova_ai_proposal_preview_duration_seconds{tool}` count and time previews;
+`trenova_ai_proposal_preview_conflicts_total{tool}` counts approvals refused because the
+preview no longer matched (`plan` for a plan), which is how an unstable digest would show.
 
 ## Link columns
 
@@ -189,6 +207,8 @@ was sampled, so the audit trail can always name it.
 | `agent_proposals.executed_by_user_id` | the recorder (the person in the conversation, for an automatic or simulated write they ran as; none for an unattended run); the executor (the approver, on success, failure and simulation) | same |
 | `agent_proposals.executed_target_version` | the recorder, from `PendingAction.ExecutedVersion`; the executor, read after the write | same |
 | `agent_decisions.trace_id` | `agentdecisionservice`, the `decide` span's trace | when the decision is recorded |
+| `agent_decisions.preview`, `.preview_digest`, `.preview_reviewed`, `.preview_target_version` | `agentdecisionservice`, from the preview settled for the decider (a plan's step: the plan's) | same |
+| `agent_proposal_baselines` | `proposalpreviewservice.Baseline`, from the dispatch activity, keyed by `PendingAction.ProposalID` | when a held write is decided, before the proposal is filed |
 | `ai_usage_records.trace_id`, `.span_id` | `completionrouter.record`, the attempt's `chat` span | per attempt, off the request path |
 | `ai_usage_records.owner_kind`, `.owner_id`, `.delegate_call_id`, `.agent_definition_version` | the same, from `AIUsageAttribution`, set in `Turn.completionRequest()` | same |
 | `ai_usage_records.attempt`, `.failover`, `.cache_read_tokens`, `.cache_write_tokens` | the same | same |

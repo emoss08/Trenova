@@ -207,6 +207,12 @@ type AccountingMappingService interface {
 		ctx context.Context,
 		req *AccountingMappingActionRequest,
 	) (*accountingsync.AccountingMapping, error)
+	GuardHistory(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		row *accountingsync.AccountingMapping,
+		acknowledged bool,
+	) (int, error)
 	CreateReferenceRecord(
 		ctx context.Context,
 		req *CreateAccountingReferenceRecordRequest,

@@ -1,22 +1,36 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { PlanPreview } from "@/lib/graphql/agent-preview";
 import type { AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { PlanCard } from "../plan-card";
+import { planPreview, preview } from "./preview-fixtures";
 
 const decideMyPlan = vi.fn(async () => undefined);
 const decideAgentPlan = vi.fn(async () => undefined);
+const fetchPlanPreview = vi.fn<(...args: unknown[]) => Promise<PlanPreview>>();
 
 vi.mock("@/lib/graphql/agent-decisions", () => ({
   decideMyPlan: (...args: unknown[]) => decideMyPlan(...(args as [])),
   decideAgentPlan: (...args: unknown[]) => decideAgentPlan(...(args as [])),
 }));
 
+vi.mock("@/lib/graphql/agent-preview", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/agent-preview")>()),
+  fetchPlanPreview: (...args: unknown[]) => fetchPlanPreview(...args),
+}));
+
+beforeEach(() => {
+  fetchPlanPreview.mockResolvedValue(planPreview());
+});
+
 afterEach(() => {
   cleanup();
   decideMyPlan.mockClear();
   decideAgentPlan.mockClear();
+  fetchPlanPreview.mockReset();
 });
 
 function plan(overrides: Partial<AssistantPlan> = {}): AssistantPlan {
@@ -63,10 +77,14 @@ function renderCard(value = plan(), steps = [step(1), step(2)]) {
 
   return render(
     <QueryClientProvider client={client}>
-      <PlanCard plan={value} steps={steps} threadId="athr_1" />
+      <MemoryRouter>
+        <PlanCard plan={value} steps={steps} threadId="athr_1" />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }
+
+const approveAll = () => screen.getByRole("button", { name: /approve all/i });
 
 describe("PlanCard", () => {
   it("takes one answer for every step and lists them in order", () => {
@@ -88,16 +106,66 @@ describe("PlanCard", () => {
     const user = userEvent.setup();
     renderCard();
 
-    await user.click(screen.getByRole("button", { name: /approve all/i }));
+    await waitFor(() => expect(approveAll()).toBeEnabled());
+    await user.click(approveAll());
     await waitFor(() =>
-      expect(decideMyPlan).toHaveBeenCalledWith("apl_1", { decision: "Accepted", reasonCode: "" }),
+      expect(decideMyPlan).toHaveBeenCalledWith("apl_1", {
+        decision: "Accepted",
+        reasonCode: "",
+        previewDigest: "sha256:plan",
+      }),
     );
 
     await user.click(screen.getByRole("button", { name: /reject all/i }));
     await waitFor(() =>
-      expect(decideMyPlan).toHaveBeenCalledWith("apl_1", { decision: "Rejected", reasonCode: "" }),
+      expect(decideMyPlan).toHaveBeenCalledWith("apl_1", {
+        decision: "Rejected",
+        reasonCode: "",
+        previewDigest: "sha256:plan",
+      }),
     );
     expect(decideAgentPlan).not.toHaveBeenCalled();
+    expect(fetchPlanPreview).toHaveBeenCalledWith(
+      { scope: "mine", id: "apl_1" },
+      expect.anything(),
+    );
+  });
+
+  // Approving a plan approves every step's preview at once; until they are
+  // in there is nothing to approve.
+  it("keeps Approve all off until the plan's preview is in", () => {
+    fetchPlanPreview.mockReturnValue(new Promise(() => {}));
+    renderCard();
+
+    expect(approveAll()).toBeDisabled();
+    expect(screen.getByRole("button", { name: /reject all/i })).toBeEnabled();
+  });
+
+  // A later step on a record an earlier step changes is shown as that step
+  // leaves it, and the step says which.
+  it("shows each step's changes with a note where it starts from an earlier step", async () => {
+    renderCard();
+
+    expect(await screen.findByText("Uses the record step 1 changes")).toBeInTheDocument();
+    expect(screen.getAllByText("Uses the record step 1 changes")).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "S-1001" })).toHaveLength(2);
+  });
+
+  it("turns Approve all off when a step's record changed since the plan was proposed", async () => {
+    fetchPlanPreview.mockResolvedValue(
+      planPreview({
+        stale: true,
+        steps: [
+          { proposalId: "aprop_1", step: 1, preview: preview({ stale: true }) },
+          { proposalId: "aprop_2", step: 2, preview: preview({ proposalId: "aprop_2" }) },
+        ],
+      }),
+    );
+    renderCard();
+
+    expect(await screen.findByText("Changed since it was proposed")).toBeInTheDocument();
+    expect(approveAll()).toBeDisabled();
+    expect(screen.getByRole("button", { name: /reject all/i })).toBeEnabled();
   });
 
   it("names the switch holding it instead of offering a decision it will refuse", () => {

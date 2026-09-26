@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
@@ -212,7 +213,7 @@ func (s *Service) resolveForShipment(
 				})
 				resp.Moves = append(resp.Moves, moveResult(move, idx, warnings))
 				resp.TotalDistance = addDistance(resp.TotalDistance, storedDistance.Distance)
-				s.incrementStoredMileageHit(entity, storedDistance.ID)
+				s.incrementStoredMileageHit(ctx, entity, storedDistance.ID)
 				continue
 			}
 			if runtime.ready {
@@ -927,8 +928,12 @@ func storedJurisdictionsFromPCMiler(
 	return converted
 }
 
-func (s *Service) incrementStoredMileageHit(entity *shipment.Shipment, storedMileageID pulid.ID) {
-	if storedMileageID.IsNil() {
+func (s *Service) incrementStoredMileageHit(
+	ctx context.Context,
+	entity *shipment.Shipment,
+	storedMileageID pulid.ID,
+) {
+	if storedMileageID.IsNil() || ports.IsReadOnly(ctx) {
 		return
 	}
 	go func() {
@@ -952,7 +957,8 @@ func (s *Service) enqueueStoredMileageCandidate(
 	control *distancecontrol.DistanceControl,
 	hazmatTypes []string,
 ) {
-	if control == nil || !control.AutoCreateStoredMileage || s.storedMileageBuffer == nil {
+	if control == nil || !control.AutoCreateStoredMileage || s.storedMileageBuffer == nil ||
+		ports.IsReadOnly(ctx) {
 		return
 	}
 	candidate, ok := buildStoredMileageCandidate(

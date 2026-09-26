@@ -3,6 +3,7 @@ package distancecalculationservice
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/distancecalculation"
 	"github.com/emoss08/trenova/internal/core/domain/distancecontrol"
@@ -11,8 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/storedmileage"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pcmiler"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -501,4 +504,50 @@ func TestJurisdictionAttributionStates(t *testing.T) {
 	)
 	attribution, _ = jurisdictionAttribution(100, "Miles", rows)
 	assert.Equal(t, JurisdictionAttributionAttributed, attribution)
+}
+
+func TestResolveForShipmentInAReadOnlyTransactionCountsNoHit(t *testing.T) {
+	t.Parallel()
+
+	f := newResolveFixture(t)
+	stored := f.storedWithoutBreakdown()
+	f.stored.EXPECT().Lookup(mock.Anything, mock.Anything).Return(stored, nil)
+	hit := make(chan struct{}, 1)
+	f.stored.EXPECT().
+		IncrementHit(mock.Anything, stored.ID, mock.Anything).
+		Run(func(context.Context, pulid.ID, pagination.TenantInfo) { hit <- struct{}{} }).
+		Return(nil).
+		Maybe()
+
+	ctx := ports.WithReadOnly(t.Context())
+	_, err := f.service.resolveForShipment(ctx, f.entity, f.runtime(&fakeMileageClient{}, false))
+	require.NoError(t, err)
+
+	assert.Equal(t, distancecalculation.SourceStoredMileage, f.move.DistanceSource)
+	select {
+	case <-hit:
+		t.Fatal("a read-only resolution counted a stored mileage hit")
+	case <-time.After(200 * time.Millisecond):
+	}
+}
+
+func TestResolveForShipmentInAReadOnlyTransactionBuffersNoCandidate(t *testing.T) {
+	t.Parallel()
+
+	f := newResolveFixture(t)
+	f.control.AutoCreateStoredMileage = true
+	f.stored.EXPECT().
+		Lookup(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("StoredMileage"))
+	f.buffer.EXPECT().Push(mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	client := &fakeMileageClient{
+		results: []pcmiler.RouteMileage{{Distance: 200, DataVersion: "Current"}},
+	}
+	ctx := ports.WithReadOnly(t.Context())
+	resp, err := f.service.resolveForShipment(ctx, f.entity, f.runtime(client, true))
+	require.NoError(t, err)
+
+	assert.Equal(t, 200.0, resp.TotalDistance)
+	f.buffer.AssertNotCalled(t, "Push", mock.Anything, mock.Anything)
 }

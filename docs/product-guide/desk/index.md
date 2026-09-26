@@ -24,6 +24,12 @@ Keywords: chat with AI, ask the assistant, start a conversation
 3. Type your question and send it, or select one of the starter questions under the box.
 4. Keep asking follow-ups in the conversation. Open anything the agent produces in the workspace beside it.
 
+### Answer a change an agent proposes in the conversation
+Keywords: approve in chat, review agent change, preview before approving, what will this change
+1. In the conversation, read the change's card: what each record would look like before and after, and any message or amount it would send or move. Select **Show all changes** to see all of it.
+2. Select **Approve** once the preview has loaded, **Reject** to turn it down, or **Modify** to change the values; the dialog shows what your values would do as you type, and confirms with **Approve with changes**.
+3. If the card says **Changed since it was proposed**, it can only be rejected; ask the agent again for a fresh proposal.
+
 ### Start a conversation without asking a question yet
 Keywords: new chat, blank conversation
 1. Open [Desk](/desk) and select **Conversations** at the top.
@@ -50,6 +56,8 @@ Keywords: pin chat, delete conversation, export transcript, rename conversation
 ## Notes
 Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI control** on the Desk.
 
-When an agent in your own conversation asks to make several changes as one plan, answer it right there with **Approve all** or **Reject all**; you need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.
+When an agent in your own conversation proposes a change, its card shows what the change would do before you answer: each record it would touch with its values before and after, the message it would send as it would go out, and any amounts it would move. Select **Show all changes** for the rest of a long change. **Approve** waits until this has loaded, and stays off if the record was edited after the agent proposed the change (**Changed since it was proposed**); reject it and ask again. Values you may not see read **Hidden by your data access**. If the change moved while you were reading it, nothing is recorded and the card shows it again so you can approve what is there now. An email draft in the workspace shows the message as it would really go out, with its real recipients.
+
+When an agent in your own conversation asks to make several changes as one plan, answer it right there with **Approve all** or **Reject all**; each step shows what it would change, and a step that starts from a record an earlier step changes says so. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.
 
 A long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.

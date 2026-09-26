@@ -69,26 +69,6 @@ var draftSpecs = map[string]draftSpec{
 	},
 }
 
-// recordLabelKeys are tried in order for the words that name a record on
-// its card: a shipment by its PRO, an invoice by its number, a person by
-// their name, a unit by its number, a finding by its headline.
-var recordLabelKeys = []string{
-	"proNumber",
-	"invoiceNumber",
-	"referenceNumber",
-	"name",
-	"displayName",
-	"fullName",
-	"code",
-	"unitNumber",
-	"licenseNumber",
-	"number",
-	"title",
-	"label",
-	"headline",
-	"subject",
-}
-
 // artifactRecorder collects what one turn produced. It saves each artifact
 // as the tool that made it finishes, so the pane can open it while the reply
 // is still arriving, and ties them to their messages once the turn is saved.
@@ -574,7 +554,7 @@ func runDiffArtifact(callID string, result map[string]any) *assistantartifact.Ar
 // reopening a conversation never drags anybody anywhere.
 func navigationArtifact(callID string, result map[string]any) *assistantartifact.Artifact {
 	path := stringOf(result["path"])
-	if !isAppPath(path) {
+	if !assistantartifact.IsAppPath(path) {
 		return nil
 	}
 
@@ -792,7 +772,7 @@ func entityCardArtifact(
 		Status: assistantartifact.StatusReady,
 		Title: artifactTitle(strings.TrimSpace(
 			stringutils.CapitalizeFirst(stringutils.HumanizeSnakeCase(entity)) +
-				" " + recordLabel(result),
+				" " + assistantartifact.RecordLabel(result),
 		)),
 		Payload:          payload,
 		SourceToolCallID: callID,
@@ -965,26 +945,12 @@ func toJSONDocument(data any) (jsonDocument, bool) {
 // when it arrived as a map and so declared none.
 func (d jsonDocument) keyOrder() []string {
 	if len(d.encoded) > 0 {
-		if keys := objectKeyOrder(d.encoded); len(keys) == len(d.fields) {
+		if keys := jsonutils.ObjectKeyOrder(d.encoded); len(keys) == len(d.fields) {
 			return keys
 		}
 	}
 
 	return slices.Sorted(maps.Keys(d.fields))
-}
-
-// recordLabel is the words that name a record, or "" when nothing does. A
-// record's id is never its name: a card titled "Insight inst_01M37R…" says
-// nothing a person can use.
-func recordLabel(record map[string]any) string {
-	for _, key := range recordLabelKeys {
-		if value := readableString(record[key]); value != "" {
-			return value
-		}
-	}
-	first, last := readableString(record["firstName"]), readableString(record["lastName"])
-
-	return strings.TrimSpace(first + " " + last)
 }
 
 func artifactTitle(title string) string {

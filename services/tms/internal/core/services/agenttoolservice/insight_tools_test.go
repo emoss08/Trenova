@@ -8,22 +8,47 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type fakeInsightDismisser struct {
 	dismissed *serviceports.DismissInsightRequest
+	finding   *insight.Insight
+	guard     writeGuard
+}
+
+func (f *fakeInsightDismisser) GetDetail(
+	_ context.Context,
+	req serviceports.GetInsightDetailRequest,
+) (*serviceports.InsightDetail, error) {
+	if f.finding == nil || f.finding.ID != req.ID {
+		return nil, errortypes.NewNotFoundError("Insight not found")
+	}
+	copied := *f.finding
+
+	return &serviceports.InsightDetail{Insight: &copied}, nil
 }
 
 func (f *fakeInsightDismisser) Dismiss(
 	_ context.Context,
 	req serviceports.DismissInsightRequest,
 ) (*insight.Insight, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.dismissed = &req
+	if f.finding == nil {
+		return &insight.Insight{ID: req.ID, Status: insight.StatusDismissed}, nil
+	}
+	if err := f.finding.Dismiss(req.UserID, req.Reason, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
 
-	return &insight.Insight{ID: req.ID, Status: insight.StatusDismissed}, nil
+	return f.finding, nil
 }
 
 func TestDismissInsight_RecordsTheReasonAsTheApprover(t *testing.T) {
@@ -81,24 +106,4 @@ func TestDismissInsight_IsAnApprovedUpdateOnTheInsight(t *testing.T) {
 	assert.Equal(t, id, target.ID)
 	_, ok = targeted.Target(map[string]any{})
 	assert.False(t, ok)
-}
-
-func TestDismissInsight_SimulatesWithoutDismissing(t *testing.T) {
-	t.Parallel()
-
-	insights := &fakeInsightDismisser{}
-	tool := newDismissInsightTool(insights)
-	simulator, ok := tool.(serviceports.ToolSimulator)
-	require.True(t, ok)
-
-	preview, err := simulator.Simulate(t.Context(), memoryParams(map[string]any{
-		"insightId": pulid.MustNew("inst_").String(),
-		"reason":    "Already being handled by the account manager.",
-	}))
-	require.NoError(t, err)
-
-	assert.Nil(t, insights.dismissed)
-	assert.True(t, preview.Previewed)
-	assert.Contains(t, preview.Describe(), "Dismissed")
-	assert.Contains(t, preview.Describe(), "account manager")
 }

@@ -229,6 +229,8 @@ type AgentProposalField {
   minimum: Float
   maximum: Float
   maxLength: Int
+  "The parameter names the record the change is for, which an approver may not change."
+  readOnly: Boolean!
 }
 
 "The control a parameter takes when edited: the schema's type, read for a form."
@@ -578,12 +580,16 @@ input AgentProposalDecisionInput {
   decision: AgentDecisionType!
   modifications: JSON
   reasonCode: String!
+  "The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed."
+  previewDigest: String
 }
 
 input AgentPlanDecisionInput {
   "Accepted runs every step in order; Rejected rejects them all."
   decision: AgentDecisionType!
   reasonCode: String!
+  "The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded."
+  previewDigest: String
 }
 
 input AgentExceptionResolveInput {

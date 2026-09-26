@@ -58,10 +58,12 @@ export default function AgentPlanTable() {
       reasonLabel: t("Reason"),
       requireReason: !accepting,
       destructive: !accepting,
-      onConfirm: async (reason) => {
+      preview: { kind: "plan", scope: "approver", id: plan.id, approving: accepting },
+      onConfirm: async (reason, previewDigest) => {
         await decideAgentPlan(plan.id, {
           decision,
           reasonCode: reason || (accepting ? "approved_from_activity" : "rejected_from_activity"),
+          previewDigest,
         });
         await afterDecision(accepting ? t("Plan approved") : t("Plan rejected"));
       },

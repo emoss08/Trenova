@@ -238,6 +238,7 @@ type Params struct {
 	BriefingService              services.BriefingService
 	AgentTools                   services.AgentToolRegistry
 	AgentControlService          services.AgentControlService
+	ProposalPreviewService       services.ProposalPreviewService `optional:"true"`
 	IAMService                   services.IAMService
 	RoleService                  *roleservice.Service
 	UserService                  *userservice.Service
@@ -405,6 +406,7 @@ type Resolver struct {
 	briefingService              services.BriefingService
 	agentTools                   services.AgentToolRegistry
 	agentControlService          services.AgentControlService
+	proposalPreviewService       services.ProposalPreviewService
 	iamService                   services.IAMService
 	roleService                  *roleservice.Service
 	userService                  *userservice.Service
@@ -573,6 +575,7 @@ func New(p Params) *Resolver {
 		briefingService:              p.BriefingService,
 		agentTools:                   p.AgentTools,
 		agentControlService:          p.AgentControlService,
+		proposalPreviewService:       p.ProposalPreviewService,
 		iamService:                   p.IAMService,
 		roleService:                  p.RoleService,
 		userService:                  p.UserService,

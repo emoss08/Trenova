@@ -2492,6 +2492,80 @@ models:
   AgentDecision:
     model:
       - github.com/emoss08/trenova/internal/core/domain/agent.AgentDecision
+    fields:
+      preview:
+        resolver: true
+  AgentPreviewCoverage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.PreviewCoverage
+  AgentPreviewOperation:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.PreviewOperation
+  AgentPreviewMessageChannel:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MessageChannel
+  AgentPreviewWarning:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.PreviewWarning
+  AgentPreviewRecordLink:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.RecordRef
+  AgentPreviewRef:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.PreviewRef
+  AgentPreviewFieldChange:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.PreviewFieldChange
+    fields:
+      valueType:
+        fieldName: Type
+  AgentPreviewMessage:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MessagePreview
+    fields:
+      templateVersionId:
+        resolver: true
+  AgentPreviewMoneyLine:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MoneyLine
+    fields:
+      before:
+        resolver: true
+      after:
+        resolver: true
+  AgentPreviewMoney:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.MoneyPreview
+    fields:
+      totalBefore:
+        resolver: true
+      totalAfter:
+        resolver: true
+      delta:
+        resolver: true
+  AgentPreviewRecordChange:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.RecordChange
+    fields:
+      entityId:
+        resolver: true
+  AgentPreviewStaleness:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.PreviewStaleness
+  AgentProposalPreview:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.ProposalPreview
+    fields:
+      stale:
+        fieldName: IsStale
+      staleness:
+        fieldName: Staleness
+  AgentPlanStepPreview:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.PlanStepPreview
+  AgentPlanPreview:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/agent.PlanPreview
   AgentControl:
     model:
       - github.com/emoss08/trenova/internal/core/domain/tenant.AgentControl

@@ -89,7 +89,7 @@ func newInboundOperator(
 	}
 }
 
-func TestApplyAccountingInboundChange_PreviewsWhatItPostsAndAppliesAsTheApprover(t *testing.T) {
+func TestApplyAccountingInboundChange_AppliesAsTheApprover(t *testing.T) {
 	t.Parallel()
 
 	change := proposedPayment(accountingsync.InboundStatusProposed)
@@ -109,18 +109,8 @@ func TestApplyAccountingInboundChange_PreviewsWhatItPostsAndAppliesAsTheApprover
 	tool := newApplyAccountingInboundChangeTool(operator)
 	params := syncParams(map[string]any{"inboundChangeId": change.ID.String()})
 
-	sim, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), params)
-	require.NoError(t, err)
-	assert.Equal(t,
-		"Would post Payment 10442 from Acme Foods for 1500.25 USD on 2026-09-24, "+
-			"leaving 50.00 USD as unapplied cash",
-		sim.Summary,
-	)
-	assert.Equal(t, []agent.FieldChange{
-		{Field: "status", From: "Proposed", To: "Applied"},
-		{Field: "INV-1001", From: "open 1450.25 USD", To: "pays 1450.25 USD"},
-	}, sim.Changes)
-	assert.Nil(t, operator.applied, "a preview posts nothing")
+	require.NoError(t, tool.(serviceports.ToolValidator).Validate(t.Context(), params))
+	assert.Nil(t, operator.applied, "validating posts nothing")
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, operator.applied)
@@ -159,10 +149,6 @@ func TestIgnoreAccountingInboundChange_IgnoresWithTheNote(t *testing.T) {
 		"inboundChangeId": change.ID.String(),
 		"note":            "  Keyed in Trenova\n by the AR team.  ",
 	})
-
-	sim, err := tool.(serviceports.ToolSimulator).Simulate(t.Context(), params)
-	require.NoError(t, err)
-	assert.Equal(t, []agent.FieldChange{{Field: "status", From: "Proposed", To: "Ignored"}}, sim.Changes)
 
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, operator.ignored)

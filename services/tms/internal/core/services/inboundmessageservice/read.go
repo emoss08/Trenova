@@ -200,16 +200,8 @@ func (s *Service) Review(
 	ctx context.Context,
 	req ReviewRequest,
 ) (*inboundmessage.InboundMessage, error) {
-	if req.Status != inboundmessage.StatusActioned &&
-		req.Status != inboundmessage.StatusIgnored {
-		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalid,
-			"A message can be marked handled or ignored, nothing else")
-	}
-
-	note := strings.TrimSpace(req.Note)
-	if len(note) > maxReviewNoteLength {
-		return nil, errortypes.NewValidationError("note", errortypes.ErrInvalid,
-			fmt.Sprintf("A note may be at most %d characters", maxReviewNoteLength))
+	if _, err := reviewNote(&req); err != nil {
+		return nil, err
 	}
 
 	message, err := s.messageRepo.GetByID(ctx, repositories.GetInboundMessageByIDRequest{
@@ -220,11 +212,8 @@ func (s *Service) Review(
 		return nil, err
 	}
 
-	message.Status = req.Status
-	message.ReviewedBy = req.ReviewerID
-	message.ReviewedAt = timeutils.NowUnix()
-	if note != "" {
-		message.ReviewNote = note
+	if err = ApplyReview(message, &req, timeutils.NowUnix()); err != nil {
+		return nil, err
 	}
 
 	updated, err := s.messageRepo.Update(ctx, message)
@@ -261,11 +250,7 @@ func (s *Service) Link(
 		return nil, err
 	}
 
-	message.MatchedShipmentID = req.ShipmentID
-	message.MatchedCustomerID = req.CustomerID
-	message.MatchedCarrierID = req.CarrierID
-	message.MatchReason = strings.TrimSpace(req.Reason)
-	message.ReviewedBy = req.ReviewerID
+	ApplyLink(message, &req)
 
 	updated, err := s.messageRepo.Update(ctx, message)
 	if err != nil {

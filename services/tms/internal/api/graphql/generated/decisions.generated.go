@@ -500,7 +500,7 @@ func (ec *executionContext) unmarshalInputDecideAgentProposalsInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"decision", "reasonCode"}
+	fieldsInOrder := [...]string{"decision", "reasonCode", "previewDigests"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -521,6 +521,13 @@ func (ec *executionContext) unmarshalInputDecideAgentProposalsInput(ctx context.
 				return it, err
 			}
 			it.ReasonCode = data
+		case "previewDigests":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("previewDigests"))
+			data, err := ec.unmarshalOAgentProposalPreviewDigestInput2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalPreviewDigestInputᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreviewDigests = data
 		}
 	}
 	return it, nil

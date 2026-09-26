@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/accountingsyncservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonschemautils"
@@ -253,7 +254,7 @@ func (t *retryAccountingSyncTool) plan(
 	ctx context.Context,
 	params *serviceports.ToolExecuteParams,
 ) (*retryPlan, error) {
-	if err := guardExecute(t, *params); err != nil {
+	if err := guardPreview(t, params); err != nil {
 		return nil, err
 	}
 	system, err := accountingSystemFrom(params.Params)
@@ -334,58 +335,15 @@ func (t *retryAccountingSyncTool) Execute(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
 ) error {
+	if err := guardExecute(t, params); err != nil {
+		return err
+	}
 	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return err
 	}
 	_, err = t.sync.Retry(ctx, plan.req)
 	return err
-}
-
-func (t *retryAccountingSyncTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	plan, err := t.plan(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(plan.records) > 0 {
-		changes := make([]agent.FieldChange, 0, len(plan.records))
-		for _, record := range plan.records {
-			changes = append(changes, agent.FieldChange{
-				Field: syncDocumentLabel(record),
-				From:  string(record.Status),
-				To:    string(accountingsync.SyncStatusQueued),
-			})
-		}
-		return &agent.ToolSimulation{
-			Summary: fmt.Sprintf(
-				"Would send %d document(s) to %s again.",
-				len(plan.records),
-				plan.summary.ProviderName,
-			),
-			Previewed: true,
-			Changes:   changes,
-		}, nil
-	}
-
-	waiting := 0
-	for _, group := range plan.summary.Attention {
-		if slices.Contains(plan.req.ErrorCategories, group.ErrorCategory) {
-			waiting += group.Count
-		}
-	}
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would send again every record that last failed as %s; %d are blocked or gave up "+
-				"that way now, plus any still retrying.",
-			strings.Join(sliceutils.Strings(plan.req.ErrorCategories), " or "),
-			waiting,
-		),
-		Previewed: true,
-	}, nil
 }
 
 type skipAccountingSyncTool struct {
@@ -504,29 +462,6 @@ func (t *skipAccountingSyncTool) Execute(
 	return err
 }
 
-func (t *skipAccountingSyncTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	req, record, err := t.request(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would keep %s out of the accounting system for good: %s",
-			syncDocumentLabel(record),
-			req.Reason,
-		),
-		Previewed: true,
-		Changes: []agent.FieldChange{{
-			Field: fieldSyncStatus,
-			From:  string(record.Status),
-			To:    string(accountingsync.SyncStatusSkipped),
-		}},
-	}, nil
-}
-
 type pauseAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
@@ -639,33 +574,6 @@ func (t *pauseAccountingSyncTool) Execute(
 	return err
 }
 
-func (t *pauseAccountingSyncTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	req, summary, err := t.request(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would stop sending to %s; %d document(s) waiting now would wait until it resumes. "+
-				"Reason: %s",
-			summary.ProviderName,
-			countWithStatus(
-				summary,
-				accountingsync.SyncStatusQueued,
-				accountingsync.SyncStatusRetrying,
-			),
-			req.Reason,
-		),
-		Previewed: true,
-		Changes: []agent.FieldChange{
-			{Field: fieldSending, From: sendingRunningLabel, To: sendingPausedLabel},
-		},
-	}, nil
-}
-
 type resumeAccountingSyncTool struct {
 	sync accountingSyncOperator
 }
@@ -766,33 +674,6 @@ func (t *resumeAccountingSyncTool) Execute(
 	return err
 }
 
-func (t *resumeAccountingSyncTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	_, summary, err := t.request(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would start sending to %s again; %d queued document(s) would go out now. It was "+
-				"paused because: %s",
-			summary.ProviderName,
-			countWithStatus(
-				summary,
-				accountingsync.SyncStatusQueued,
-				accountingsync.SyncStatusRetrying,
-			),
-			summary.Connection.PausedReason,
-		),
-		Previewed: true,
-		Changes: []agent.FieldChange{
-			{Field: fieldSending, From: sendingPausedLabel, To: sendingRunningLabel},
-		},
-	}, nil
-}
-
 type requestAccountingBackfillTool struct {
 	sync accountingSyncOperator
 }
@@ -882,11 +763,12 @@ func dayLabel(seconds int64) string {
 }
 
 type backfillPlan struct {
-	req      *serviceports.RequestAccountingBackfillRequest
-	provider string
-	from     int64
-	to       int64
-	types    []accountingsync.SyncObjectType
+	req        *serviceports.RequestAccountingBackfillRequest
+	connection *accountingsync.AccountingConnection
+	provider   string
+	from       int64
+	to         int64
+	types      []accountingsync.SyncObjectType
 }
 
 func (t *requestAccountingBackfillTool) plan(
@@ -923,13 +805,13 @@ func (t *requestAccountingBackfillTool) plan(
 	if err != nil {
 		return nil, err
 	}
-	if len(types) == 0 {
-		types = accountingsync.BackfillObjectTypes()
-	}
 
 	tenant := tenantFrom(*params)
 	summary, err := syncingConnectionFor(ctx, t.sync, tenant, system)
 	if err != nil {
+		return nil, err
+	}
+	if types, err = accountingsyncservice.BackfillTypes(summary.Connection, types); err != nil {
 		return nil, err
 	}
 	if summary.ActiveBackfill != nil {
@@ -976,10 +858,11 @@ func (t *requestAccountingBackfillTool) plan(
 			RangeEnd:        &rangeEnd,
 			ObjectTypes:     types,
 		},
-		provider: summary.ProviderName,
-		from:     rangeStart,
-		to:       rangeEnd,
-		types:    types,
+		connection: conn,
+		provider:   summary.ProviderName,
+		from:       rangeStart,
+		to:         rangeEnd,
+		types:      types,
 	}, nil
 }
 
@@ -1001,31 +884,4 @@ func (t *requestAccountingBackfillTool) Execute(
 	}
 	_, err = t.sync.RequestBackfill(ctx, plan.req)
 	return err
-}
-
-func (t *requestAccountingBackfillTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams, //nolint:gocritic // the AgentTool interface passes params by value
-) (*agent.ToolSimulation, error) {
-	plan, err := t.plan(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf(
-			"Would send every %s dated %s to %s that Trenova has not already sent to %s. "+
-				"Anything already entered there by hand would arrive twice.",
-			strings.Join(sliceutils.Strings(plan.types), ", "),
-			dayLabel(plan.from),
-			dayLabel(plan.to),
-			plan.provider,
-		),
-		Previewed: true,
-		Changes: []agent.FieldChange{{
-			Field: "backfill",
-			From:  "no backfill",
-			To: dayLabel(plan.from) + " to " + dayLabel(plan.to) + ": " +
-				strings.Join(sliceutils.Strings(plan.types), ", "),
-		}},
-	}, nil
 }
