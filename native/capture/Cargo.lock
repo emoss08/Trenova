@@ -98,6 +98,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "capture-platform"
+version = "1.0.0"
+dependencies = [
+ "capture-client",
+ "serde_json",
+ "tracing",
+ "windows",
+ "windows-core",
+ "zeroize",
+]
+
+[[package]]
 name = "capture-protocol"
 version = "1.0.0"
 dependencies = [
