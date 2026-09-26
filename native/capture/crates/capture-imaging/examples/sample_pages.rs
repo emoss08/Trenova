@@ -1,10 +1,12 @@
-//! Writes one page of each kind to a directory, so the output can be read
-//! back by an independent PDF reader: `cargo run -p capture-imaging --example
+//! Writes one page of each kind, and a printed two-page PWG raster job
+//! converted to PDF, to a directory, so the output can be read back by an
+//! independent PDF reader: `cargo run -p capture-imaging --example
 //! sample_pages -- <dir>`.
 
 use std::path::PathBuf;
 
-use capture_imaging::{PixelFormat, Raster, Resolution, encode_page};
+use capture_imaging::pwg::encode::{Kind, Page, stream};
+use capture_imaging::{ConvertLimits, PixelFormat, Raster, Resolution, encode_page, pwg_to_pdf};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dir = PathBuf::from(std::env::args().nth(1).ok_or("usage: sample_pages <dir>")?);
@@ -42,5 +44,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         90,
     )?;
     std::fs::write(dir.join("colour.pdf"), &page.pdf)?;
+
+    let ink: Vec<u8> = bilevel.iter().map(|byte| !byte).collect();
+    let job = stream(&[
+        Page {
+            kind: Kind::Black1,
+            width,
+            height,
+            dpi: 100,
+            pixels: &ink,
+        },
+        Page {
+            kind: Kind::Srgb8,
+            width,
+            height,
+            dpi: 100,
+            pixels: &rgb,
+        },
+    ]);
+    let printed = pwg_to_pdf(
+        &job,
+        ConvertLimits {
+            max_pages: 10,
+            max_bytes: 10 << 20,
+            jpeg_quality: 90,
+        },
+    )?;
+    std::fs::write(dir.join("printed.pdf"), &printed.pdf)?;
     Ok(())
 }

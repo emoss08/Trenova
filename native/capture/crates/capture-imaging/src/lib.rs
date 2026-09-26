@@ -1,16 +1,19 @@
-//! Turns what a scanner hands over into what the server takes: one PDF per
-//! page, bilevel pages as CCITT Group 4 and the rest as JPEG.
+//! Turns what a scanner or a print job hands over into what the server takes:
+//! PDFs whose pages are bilevel CCITT Group 4 or JPEG images.
 //!
-//! It runs inside the scan helper, so raw bitmaps are encoded where they are
-//! produced and never cross a process boundary.
+//! It runs inside the scan helper, so scanned bitmaps are encoded where they
+//! are produced and never cross a process boundary, and inside the print
+//! service, which turns PWG raster into a PDF.
 
 pub mod dib;
 pub mod page;
+pub mod pwg;
 pub mod raster;
 pub mod scan;
 
 pub use dib::{Bitmap, decode_bmp};
-pub use page::{EncodedPage, Resolution, encode_page};
+pub use page::{EncodedPage, PdfDocument, Resolution, encode_page};
+pub use pwg::{ConvertLimits, PrintedDocument, PwgError, PwgPage, PwgReader, pwg_to_pdf};
 pub use raster::{OwnedRaster, PixelFormat, Raster, binarize};
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]

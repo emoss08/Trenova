@@ -1,4 +1,5 @@
-//! One scanned page, encoded and wrapped as a one-page PDF.
+//! Pages encoded and wrapped as PDF: one scanned page at a time, or a whole
+//! printed document.
 //!
 //! Black and white pages are CCITT Group 4, which is what fax machines and
 //! every document scanner speak and what keeps a letter page at 300 DPI to a
@@ -62,27 +63,10 @@ pub fn encode_page(
         });
     }
 
-    let image = match raster.format {
-        PixelFormat::Bilevel { zero_is_black } => {
-            EncodedImage::G4(encode_g4(raster, zero_is_black))
-        }
-        PixelFormat::Gray8 => EncodedImage::Jpeg {
-            data: encode_jpeg(raster, ColorType::Luma, jpeg_quality, resolution)?,
-            gray: true,
-        },
-        PixelFormat::Rgb8 => EncodedImage::Jpeg {
-            data: encode_jpeg(raster, ColorType::Rgb, jpeg_quality, resolution)?,
-            gray: false,
-        },
-        PixelFormat::Bgr8 => EncodedImage::Jpeg {
-            data: encode_jpeg(raster, ColorType::Bgr, jpeg_quality, resolution)?,
-            gray: false,
-        },
-    };
-    let bilevel = matches!(image, EncodedImage::G4(_));
-
+    let image = PageImage::encode(raster, resolution, jpeg_quality)?;
+    let bilevel = image.bilevel();
     Ok(EncodedPage {
-        pdf: single_page_pdf(&image, raster.width, raster.height, resolution),
+        pdf: write_pdf(std::slice::from_ref(&image)),
         width_px: raster.width,
         height_px: raster.height,
         resolution,
@@ -90,6 +74,108 @@ pub fn encode_page(
     })
 }
 
+/// A document assembled a page at a time, as a printed job is. Each page is
+/// encoded as it is pushed, so only the compressed pages are held.
+#[derive(Debug, Default)]
+pub struct PdfDocument {
+    pages: Vec<PageImage>,
+    encoded_bytes: usize,
+}
+
+impl PdfDocument {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Encodes a page and appends it.
+    pub fn push(
+        &mut self,
+        raster: &Raster<'_>,
+        resolution: Resolution,
+        jpeg_quality: u8,
+    ) -> Result<(), ImagingError> {
+        let image = PageImage::encode(raster, resolution, jpeg_quality)?;
+        self.encoded_bytes += image.data().len();
+        self.pages.push(image);
+        Ok(())
+    }
+
+    pub fn len(&self) -> usize {
+        self.pages.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.pages.is_empty()
+    }
+
+    /// The size of the encoded images so far, which the PDF exceeds only by
+    /// a few hundred bytes a page.
+    pub fn encoded_bytes(&self) -> usize {
+        self.encoded_bytes
+    }
+
+    pub fn finish(self) -> Vec<u8> {
+        write_pdf(&self.pages)
+    }
+}
+
+#[derive(Debug)]
+struct PageImage {
+    image: EncodedImage,
+    width: u32,
+    height: u32,
+    resolution: Resolution,
+}
+
+impl PageImage {
+    fn encode(
+        raster: &Raster<'_>,
+        resolution: Resolution,
+        jpeg_quality: u8,
+    ) -> Result<Self, ImagingError> {
+        if !DPI_RANGE.contains(&resolution.x) || !DPI_RANGE.contains(&resolution.y) {
+            return Err(ImagingError::Resolution {
+                x: resolution.x,
+                y: resolution.y,
+            });
+        }
+        let image = match raster.format {
+            PixelFormat::Bilevel { zero_is_black } => {
+                EncodedImage::G4(encode_g4(raster, zero_is_black))
+            }
+            PixelFormat::Gray8 => EncodedImage::Jpeg {
+                data: encode_jpeg(raster, ColorType::Luma, jpeg_quality, resolution)?,
+                gray: true,
+            },
+            PixelFormat::Rgb8 => EncodedImage::Jpeg {
+                data: encode_jpeg(raster, ColorType::Rgb, jpeg_quality, resolution)?,
+                gray: false,
+            },
+            PixelFormat::Bgr8 => EncodedImage::Jpeg {
+                data: encode_jpeg(raster, ColorType::Bgr, jpeg_quality, resolution)?,
+                gray: false,
+            },
+        };
+        Ok(Self {
+            image,
+            width: raster.width,
+            height: raster.height,
+            resolution,
+        })
+    }
+
+    fn bilevel(&self) -> bool {
+        matches!(self.image, EncodedImage::G4(_))
+    }
+
+    fn data(&self) -> &[u8] {
+        match &self.image {
+            EncodedImage::G4(data) | EncodedImage::Jpeg { data, .. } => data,
+        }
+    }
+}
+
+#[derive(Debug)]
 enum EncodedImage {
     G4(Vec<u8>),
     Jpeg { data: Vec<u8>, gray: bool },
@@ -154,73 +240,75 @@ fn points(pixels: u32, dpi: u32) -> f32 {
     pixels as f32 * 72.0 / dpi as f32
 }
 
-fn single_page_pdf(
-    image: &EncodedImage,
-    width: u32,
-    height: u32,
-    resolution: Resolution,
-) -> Vec<u8> {
-    let catalog_id = Ref::new(1);
-    let page_tree_id = Ref::new(2);
-    let page_id = Ref::new(3);
-    let image_id = Ref::new(4);
-    let content_id = Ref::new(5);
-    let info_id = Ref::new(6);
+/// Each page's image stored as encoded, as the page's only content, with
+/// the page sized so the image is at its resolution.
+fn write_pdf(pages: &[PageImage]) -> Vec<u8> {
+    const CATALOG: Ref = Ref::new(1);
+    const PAGE_TREE: Ref = Ref::new(2);
+    const INFO: Ref = Ref::new(3);
+    const FIRST_PAGE: i32 = 4;
 
-    let width_pt = points(width, resolution.x);
-    let height_pt = points(height, resolution.y);
-    let columns = i32::try_from(width).unwrap_or(i32::MAX);
-    let rows = i32::try_from(height).unwrap_or(i32::MAX);
+    let object = |page: usize, offset: i32| {
+        let page = i32::try_from(page).unwrap_or(i32::MAX / 4);
+        Ref::new(FIRST_PAGE + page * 3 + offset)
+    };
 
     let mut pdf = Pdf::new();
-    pdf.catalog(catalog_id).pages(page_tree_id);
-    pdf.pages(page_tree_id).kids([page_id]).count(1);
+    pdf.catalog(CATALOG).pages(PAGE_TREE);
+    pdf.pages(PAGE_TREE)
+        .kids((0..pages.len()).map(|i| object(i, 0)))
+        .count(i32::try_from(pages.len()).unwrap_or(i32::MAX));
 
-    let mut page = pdf.page(page_id);
-    page.media_box(Rect::new(0.0, 0.0, width_pt, height_pt));
-    page.parent(page_tree_id);
-    page.contents(content_id);
-    page.resources().x_objects().pair(IMAGE_NAME, image_id);
-    page.finish();
+    for (i, page) in pages.iter().enumerate() {
+        let (page_id, image_id, content_id) = (object(i, 0), object(i, 1), object(i, 2));
+        let width_pt = points(page.width, page.resolution.x);
+        let height_pt = points(page.height, page.resolution.y);
+        let columns = i32::try_from(page.width).unwrap_or(i32::MAX);
+        let rows = i32::try_from(page.height).unwrap_or(i32::MAX);
 
-    let data = match image {
-        EncodedImage::G4(data) | EncodedImage::Jpeg { data, .. } => data.as_slice(),
-    };
-    let mut xobject = pdf.image_xobject(image_id, data);
-    xobject.width(columns);
-    xobject.height(rows);
-    match image {
-        EncodedImage::G4(_) => {
-            xobject.filter(Filter::CcittFaxDecode);
-            xobject.color_space().device_gray();
-            xobject.bits_per_component(1);
-            xobject
-                .decode_parms()
-                .k(-1)
-                .columns(columns)
-                .rows(rows)
-                .black_is_1(false);
-        }
-        EncodedImage::Jpeg { gray, .. } => {
-            xobject.filter(Filter::DctDecode);
-            if *gray {
+        let mut writer = pdf.page(page_id);
+        writer.media_box(Rect::new(0.0, 0.0, width_pt, height_pt));
+        writer.parent(PAGE_TREE);
+        writer.contents(content_id);
+        writer.resources().x_objects().pair(IMAGE_NAME, image_id);
+        writer.finish();
+
+        let mut xobject = pdf.image_xobject(image_id, page.data());
+        xobject.width(columns);
+        xobject.height(rows);
+        match &page.image {
+            EncodedImage::G4(_) => {
+                xobject.filter(Filter::CcittFaxDecode);
                 xobject.color_space().device_gray();
-            } else {
-                xobject.color_space().device_rgb();
+                xobject.bits_per_component(1);
+                xobject
+                    .decode_parms()
+                    .k(-1)
+                    .columns(columns)
+                    .rows(rows)
+                    .black_is_1(false);
             }
-            xobject.bits_per_component(8);
+            EncodedImage::Jpeg { gray, .. } => {
+                xobject.filter(Filter::DctDecode);
+                if *gray {
+                    xobject.color_space().device_gray();
+                } else {
+                    xobject.color_space().device_rgb();
+                }
+                xobject.bits_per_component(8);
+            }
         }
+        xobject.finish();
+
+        let mut content = Content::new();
+        content.save_state();
+        content.transform([width_pt, 0.0, 0.0, height_pt, 0.0, 0.0]);
+        content.x_object(IMAGE_NAME);
+        content.restore_state();
+        pdf.stream(content_id, &content.finish());
     }
-    xobject.finish();
 
-    let mut content = Content::new();
-    content.save_state();
-    content.transform([width_pt, 0.0, 0.0, height_pt, 0.0, 0.0]);
-    content.x_object(IMAGE_NAME);
-    content.restore_state();
-    pdf.stream(content_id, &content.finish());
-
-    pdf.document_info(info_id).producer(TextStr(PRODUCER));
+    pdf.document_info(INFO).producer(TextStr(PRODUCER));
     pdf.finish()
 }
 

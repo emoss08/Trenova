@@ -1,6 +1,6 @@
 [package]
 name = "capture-imaging"
-description = "Encodes scanned pages (CCITT G4 or JPEG) and wraps each as a single-page PDF."
+description = "Encodes scanned and printed pages (CCITT G4 or JPEG) as PDF, and decodes PWG raster."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
