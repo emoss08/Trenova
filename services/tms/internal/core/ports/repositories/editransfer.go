@@ -9,8 +9,9 @@ import (
 )
 
 type ListEDITransfersRequest struct {
-	Filter *pagination.QueryOptions `json:"filter"`
-	Cursor pagination.CursorInfo    `json:"-"`
+	Filter        *pagination.QueryOptions `json:"filter"`
+	Cursor        pagination.CursorInfo    `json:"-"`
+	InboundFileID pulid.ID                 `json:"inboundFileId"`
 }
 
 type GetEDITransferByIDRequest struct {

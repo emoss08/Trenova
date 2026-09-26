@@ -3,7 +3,9 @@ package ediinboundservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -39,4 +41,16 @@ func (s *Service) BulkReprocessInboundFiles(
 		result.Succeeded = append(result.Succeeded, fileID)
 	}
 	return result, nil
+}
+
+func CheckReprocessable(file *edi.EDIInboundFile) error {
+	if file != nil && file.Status.IsReprocessable() {
+		return nil
+	}
+
+	return errortypes.NewValidationError(
+		"status",
+		errortypes.ErrInvalidOperation,
+		"Only quarantined or partially processed EDI inbound files can be reprocessed",
+	)
 }

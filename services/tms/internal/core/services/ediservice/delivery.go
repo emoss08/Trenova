@@ -314,62 +314,26 @@ func (s *Service) RetryMessageDelivery(
 	ctx context.Context,
 	req *RetryMessageDeliveryRequest,
 ) (*edi.EDIMessage, error) {
-	if req == nil || req.MessageID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"messageId",
-			errortypes.ErrRequired,
-			"EDI message ID is required",
-		)
-	}
-	message, err := s.messageRepo.GetMessageByID(ctx, repositories.GetEDIMessageByIDRequest{
-		ID:         req.MessageID,
-		TenantInfo: req.TenantInfo,
-	})
+	plan, err := s.PlanRetryMessageDelivery(ctx, req)
 	if err != nil {
-		return nil, err
-	}
-	if message.Direction != edi.DocumentDirectionOutbound {
-		return nil, errortypes.NewValidationError(
-			"messageId",
-			errortypes.ErrInvalidOperation,
-			"Only outbound EDI messages can be delivered",
-		)
-	}
-	if message.DeliveryStatus != edi.MessageDeliveryStatusQueued &&
-		!message.DeliveryStatus.IsRetryable() {
-		return nil, errortypes.NewValidationError(
-			"deliveryStatus",
-			errortypes.ErrInvalidOperation,
-			"Only queued, failed, or dead-lettered EDI messages can be retried",
-		)
-	}
-	profile, err := s.deliveryProfileForMessage(ctx, message)
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, errortypes.NewValidationError(
-				"messageId",
-				errortypes.ErrInvalidOperation,
-				"EDI partner has no active SFTP or VAN communication profile for delivery",
-			)
-		}
 		return nil, err
 	}
 	now := timeutils.NowUnix()
-	message, err = s.messageRepo.UpdateMessageDelivery(
+	message, err := s.messageRepo.UpdateMessageDelivery(
 		ctx,
 		&repositories.UpdateEDIMessageDeliveryRequest{
-			ID:                    message.ID,
-			TenantInfo:            messageTenantInfo(message),
+			ID:                    plan.Message.ID,
+			TenantInfo:            messageTenantInfo(plan.Message),
 			DeliveryStatus:        edi.MessageDeliveryStatusQueued,
-			DeliveryRemotePath:    message.DeliveryRemotePath,
+			DeliveryRemotePath:    plan.Message.DeliveryRemotePath,
 			DeliveryLastAttemptAt: &now,
-			DeliveryLastError:     message.DeliveryLastError,
+			DeliveryLastError:     plan.Message.DeliveryLastError,
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
-	if err = s.startDeliveryWorkflow(ctx, message, profile); err != nil {
+	if err = s.startDeliveryWorkflow(ctx, message, plan.Profile); err != nil {
 		return nil, err
 	}
 	return message, nil
@@ -379,53 +343,18 @@ func (s *Service) ReplayMessageDelivery(
 	ctx context.Context,
 	req *RetryMessageDeliveryRequest,
 ) (*edi.EDIMessage, error) {
-	if req == nil || req.MessageID.IsNil() {
-		return nil, errortypes.NewValidationError(
-			"messageId",
-			errortypes.ErrRequired,
-			"EDI message ID is required",
-		)
-	}
-	message, err := s.messageRepo.GetMessageByID(ctx, repositories.GetEDIMessageByIDRequest{
-		ID:         req.MessageID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if message.Direction != edi.DocumentDirectionOutbound {
-		return nil, errortypes.NewValidationError(
-			"messageId",
-			errortypes.ErrInvalidOperation,
-			"Only outbound EDI messages can be replayed",
-		)
-	}
-	if message.DeliveryStatus != edi.MessageDeliveryStatusSent {
-		return nil, errortypes.NewValidationError(
-			"deliveryStatus",
-			errortypes.ErrInvalidOperation,
-			"Only delivered EDI messages can be replayed; use retry for failed messages",
-		)
-	}
-	if message.RawPurgedAt != nil {
-		return nil, errortypes.NewValidationError(
-			"messageId",
-			errortypes.ErrInvalidOperation,
-			"The raw X12 payload was purged by the retention policy and can no longer be replayed",
-		)
-	}
-	profile, err := s.deliveryProfileForMessage(ctx, message)
+	plan, err := s.PlanReplayMessageDelivery(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	now := timeutils.NowUnix()
-	message, err = s.messageRepo.UpdateMessageDelivery(
+	message, err := s.messageRepo.UpdateMessageDelivery(
 		ctx,
 		&repositories.UpdateEDIMessageDeliveryRequest{
-			ID:                    message.ID,
-			TenantInfo:            messageTenantInfo(message),
+			ID:                    plan.Message.ID,
+			TenantInfo:            messageTenantInfo(plan.Message),
 			DeliveryStatus:        edi.MessageDeliveryStatusQueued,
-			DeliveryRemotePath:    message.DeliveryRemotePath,
+			DeliveryRemotePath:    plan.Message.DeliveryRemotePath,
 			DeliveryLastAttemptAt: &now,
 		},
 	)
@@ -437,7 +366,7 @@ func (s *Service) ReplayMessageDelivery(
 		zap.String("messageId", message.ID.String()),
 		zap.String("requestedBy", req.TenantInfo.UserID.String()),
 	)
-	if err = s.startDeliveryWorkflow(ctx, message, profile); err != nil {
+	if err = s.startDeliveryWorkflow(ctx, message, plan.Profile); err != nil {
 		return nil, err
 	}
 	return message, nil

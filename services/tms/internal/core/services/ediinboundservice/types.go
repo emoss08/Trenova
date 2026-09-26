@@ -56,6 +56,7 @@ type transactionOutcome struct {
 	message  *edi.EDIMessage
 	warnings []string
 	err      error
+	tendered bool
 }
 
 type acknowledgmentEntry struct {

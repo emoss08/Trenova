@@ -19,6 +19,7 @@ const (
 	EventCarrierIntelEventOpened      = EventKind("carrier_intel.event_opened")
 	EventShipmentMoveCoverageAtRisk   = EventKind("shipment_move.coverage_at_risk")
 	EventEDIFileQuarantined           = EventKind("edi.file_quarantined")
+	EventEDITenderReceived            = EventKind("edi.tender_received")
 	EventInboundMessageClassified     = EventKind("inbound_message.classified")
 	EventAccountingConnectionDegraded = EventKind("accounting.connection_degraded")
 	EventAccountingSyncFailed         = EventKind("accounting.sync_failed")
@@ -129,6 +130,12 @@ var knownEvents = []EventDescriptor{
 		SubjectType: SubjectEDIInboundFile,
 		Label:       "EDI file held back",
 		Description: "An inbound EDI file could not be processed and is holding in quarantine rather than becoming shipments or updates.",
+	},
+	{
+		Kind:        EventEDITenderReceived,
+		SubjectType: SubjectEDIInboundFile,
+		Label:       "EDI load tender received",
+		Description: "An inbound EDI file carried load tenders that now wait for someone to accept or decline them.",
 	},
 	{
 		Kind:        EventInboundMessageClassified,

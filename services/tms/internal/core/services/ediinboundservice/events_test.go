@@ -73,9 +73,10 @@ func TestProcessInboundFile_WakesIntakeOnlyOnQuarantine(t *testing.T) {
 }
 
 // A file that reaches transfers is doing its job, however much of it needs a
-// person's attention later; intake is woken by a held-back file, not by an
-// unmapped one.
-func TestProcessInboundFile_LeavesIntakeAloneWhenTheFileProcesses(t *testing.T) {
+// person's attention later: the quarantine desk is woken by a held-back file,
+// not by an unmapped one. The tender it carried waits on an answer, so the
+// file is raised once as a tender received, for whoever answers tenders.
+func TestProcessInboundFile_RaisesTheTenderItCarriedAndNotAQuarantine(t *testing.T) {
 	t.Parallel()
 
 	raw := renderBase204(t, sampleTenderPayload())
@@ -108,5 +109,8 @@ func TestProcessInboundFile_LeavesIntakeAloneWhenTheFileProcesses(t *testing.T) 
 
 	require.NoError(t, err)
 	require.Equal(t, edi.InboundFileStatusPartiallyProcessed, file.Status)
-	require.Empty(t, publisher.events)
+	require.Len(t, publisher.events, 1)
+	require.Equal(t, agent.EventEDITenderReceived, publisher.events[0].Kind)
+	require.Equal(t, fixture.file.ID, publisher.events[0].SubjectID)
+	require.Equal(t, fixture.tenantInfo(), publisher.events[0].TenantInfo)
 }

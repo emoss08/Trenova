@@ -34,6 +34,7 @@ func TestIsAgentAllowedCoversWhatTheRegisteredToolsNeed(t *testing.T) {
 		{permission.ResourceWorkerCredential, permission.OpRead},
 		{permission.ResourceDriverMessage, permission.OpCreate},
 		{permission.ResourceCustomerCommunication, permission.OpCreate},
+		{permission.ResourceEDI, permission.OpUpdate},
 	}
 	for _, entry := range allowed {
 		assert.True(t, permission.IsAgentAllowed(entry.resource, entry.operation),
@@ -58,6 +59,8 @@ func TestIsAgentAllowedNeverGrantsApprovalOrDeletion(t *testing.T) {
 		{permission.ResourceUser, permission.OpRead},
 		{permission.ResourceRole, permission.OpRead},
 		{permission.ResourceAPIKey, permission.OpRead},
+		{permission.ResourceEDI, permission.OpCreate},
+		{permission.ResourceEDI, permission.OpDelete},
 	}
 	for _, entry := range denied {
 		assert.False(t, permission.IsAgentAllowed(entry.resource, entry.operation),

@@ -177,13 +177,17 @@ func TestListEDITransfers_FiltersAndHandsBackACursor(t *testing.T) {
 	fake := &fakeTransfers{transfers: []*edi.EDITransfer{transfer}}
 	tool := newListEDITransfersTool(fake)
 
-	result, err := tool.Query(t.Context(),
-		agentParams(map[string]any{"status": "PendingApproval"}, ""))
+	fileID := pulid.MustNew("ediinf_")
+	result, err := tool.Query(t.Context(), agentParams(map[string]any{
+		"status":        "PendingApproval",
+		"inboundFileId": fileID.String(),
+	}, ""))
 	require.NoError(t, err)
 
 	assert.Equal(t, transferInbound, fake.direction)
+	assert.Equal(t, fileID, fake.request.InboundFileID, "a file's own tenders")
 	require.Len(t, fake.request.Filter.FieldFilters, 1)
-	outcome := result.(ediTransferOutcome)
+	outcome := result.(ediCursorOutcome)
 	rows := outcome.Items.([]ediTransferRow)
 	require.Len(t, rows, 1)
 	assert.Equal(t, 2, rows[0].StopCount)
