@@ -60,9 +60,10 @@ A correction is left out, and counted in `dropped`, for any of these reasons:
 
 ## Anonymization
 
-`aitraining.Anonymize` runs inside the worker, before anything is written. Nothing leaves the
-tenant unanonymized, and no model is called. Each example gets its own random surrogates, from a
-fresh ChaCha8 seed. The same original becomes the same surrogate throughout one example, in the
+`aitraining.Anonymize` runs inside the worker, before anything is written, and no model is
+called. It replaces the values Trenova knows and the patterns below; an identifier it does not
+know can survive in free text (see **Known limits**). Each example gets its own random
+surrogates, from a fresh ChaCha8 seed. The same original becomes the same surrogate throughout one example, in the
 page text, the target and the prediction alike. Across examples it does not, so examples cannot
 be linked by a shared surrogate.
 
