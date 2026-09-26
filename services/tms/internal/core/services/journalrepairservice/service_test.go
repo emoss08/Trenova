@@ -166,6 +166,6 @@ func TestRepairReportsAMemoWhoseAdjustmentIsMissingAndPagesPastIt(t *testing.T) 
 	require.Len(t, report.Skipped, 1)
 	assert.Equal(t, KindCreditMemo, report.Skipped[0].Kind)
 	assert.Equal(t, "CM-7", report.Skipped[0].Number)
-	assert.Contains(t, report.Skipped[0].Reason, "could not be found")
+	assert.Contains(t, report.Skipped[0].Reason, "is missing or belongs to another organization")
 	assert.Equal(t, []pulid.ID{pulid.Nil, orphan.ID}, repo.memoAfter)
 }

@@ -129,7 +129,7 @@ func (s *Service) repairCreditMemos(ctx context.Context, req *Request, report *R
 					ID:             candidate.Memo.ID,
 					Number:         candidate.Memo.Number,
 					OrganizationID: candidate.Memo.OrganizationID,
-					Reason:         "the invoice adjustment that issued it could not be found",
+					Reason:         "the invoice adjustment that issued it is missing or belongs to another organization or business unit",
 				})
 				continue
 			}
