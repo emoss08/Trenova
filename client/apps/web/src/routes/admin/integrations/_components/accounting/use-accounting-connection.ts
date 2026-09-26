@@ -168,7 +168,7 @@ export function useAccountingSyncSetupActions(
 
 export function useAccountingSyncSettingsAction(
   vendor: AccountingVendor,
-  form: UseFormReturn<AccountingSyncSettingsValues>,
+  settingsForm: UseFormReturn<AccountingSyncSettingsValues>,
 ) {
   const t = useT();
   const queryClient = useQueryClient();
@@ -181,10 +181,10 @@ export function useAccountingSyncSettingsAction(
         driverSettlements: values.driverSettlements,
         inboundPayments: values.inboundPayments,
       }),
-    form,
+    form: settingsForm,
     resourceName: vendor.name,
     onSuccess: async (connection) => {
-      form.reset({
+      settingsForm.reset({
         autoSync: connection.autoSync,
         driverSettlements: connection.syncsDriverSettlements,
         inboundPayments: connection.inboundPaymentPolicy,

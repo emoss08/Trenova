@@ -207,7 +207,8 @@
                 "Dashboard",
                 "AccountingConnection",
                 "FormulaTemplate",
-                "AccountingSyncRecord"
+                "AccountingSyncRecord",
+                "AccountingInboundChange"
             ],
             "type": "string",
             "x-enum-varnames": [
@@ -228,7 +229,8 @@
                 "SubjectDashboard",
                 "SubjectAccountingConnection",
                 "SubjectFormulaTemplate",
-                "SubjectAccountingSyncRecord"
+                "SubjectAccountingSyncRecord",
+                "SubjectAccountingInbound"
             ]
         },
         "agent.TaintMark": {
