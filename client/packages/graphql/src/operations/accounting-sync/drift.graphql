@@ -1,0 +1,161 @@
+fragment AccountingDriftFindingFields on AccountingDriftFinding {
+  id
+  connectionId
+  objectType
+  objectId
+  objectNumber
+  partyId
+  partyName
+  externalId
+  externalUrl
+  kind
+  currencyCode
+  trenovaMinor
+  providerMinor
+  differenceMinor
+  trenovaState
+  providerState
+  detail {
+    objectType
+    objectId
+    objectNumber
+    trenovaMinor
+    providerMinor
+  }
+  providerModifiedAt
+  providerModifiedBy
+  status
+  resolution
+  resolutionNote
+  fixObjectType
+  fixObjectId
+  directions
+  pushed
+  resolvedBy {
+    id
+    name
+  }
+  resolvedAt
+  detectedAt
+  lastSeenAt
+  version
+  updatedAt
+}
+
+fragment AccountingDriftOverviewFields on AccountingDriftOverview {
+  connectionId
+  providerName
+  checkedAt
+  checkError
+  toleranceMinor
+  currencyCode
+  summary {
+    open
+    amountOpen
+    goneOpen
+    statusOpen
+    balanceOpen
+    resolvedSince
+  }
+}
+
+query AccountingDriftOverview($integrationType: AccountingSystem!) {
+  accountingDriftOverview(integrationType: $integrationType) {
+    ...AccountingDriftOverviewFields
+  }
+}
+
+query AccountingDriftFinding($id: ID!) {
+  accountingDriftFinding(id: $id) {
+    ...AccountingDriftFindingFields
+  }
+}
+
+query AccountingDriftFixPreview($input: ResolveAccountingDriftInput!) {
+  accountingDriftFixPreview(input: $input) {
+    direction
+    fixObject
+    operation
+    amountMinor
+    currencyCode
+    toleranceMinor
+    withinTolerance
+    summary
+  }
+}
+
+mutation ResolveAccountingDrift($input: ResolveAccountingDriftInput!) {
+  resolveAccountingDrift(input: $input) {
+    ...AccountingDriftFindingFields
+  }
+}
+
+mutation DismissAccountingDrift($input: DismissAccountingDriftInput!) {
+  dismissAccountingDrift(input: $input) {
+    ...AccountingDriftFindingFields
+  }
+}
+
+mutation CheckAccountingDrift($integrationType: AccountingSystem!) {
+  checkAccountingDrift(integrationType: $integrationType) {
+    ...AccountingDriftOverviewFields
+  }
+}
+
+query AccountingDriftFindingTable(
+  $integrationType: AccountingSystem!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+) {
+  accountingDriftFindingTable(integrationType: $integrationType, input: $input) {
+    edges {
+      node {
+        id
+        connectionId
+        objectType
+        objectId
+        objectNumber
+        partyId
+        partyName
+        externalId
+        externalUrl
+        kind
+        currencyCode
+        trenovaMinor
+        providerMinor
+        differenceMinor
+        trenovaState
+        providerState
+        detail {
+          objectType
+          objectId
+          objectNumber
+          trenovaMinor
+          providerMinor
+        }
+        providerModifiedAt
+        providerModifiedBy
+        status
+        resolution
+        resolutionNote
+        fixObjectType
+        fixObjectId
+        directions
+        pushed
+        resolvedBy {
+          id
+          name
+        }
+        resolvedAt
+        detectedAt
+        lastSeenAt
+        version
+        updatedAt
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

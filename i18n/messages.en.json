@@ -2873,6 +2873,15 @@
       "packages/shared/types"
     ]
   },
+  "A document Trenova sent now differs in the accounting system: its amount changed, it was voided or deleted there, or a customer's balance no longer matches.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "A document cannot reach the accounting system until something is fixed: a missing mapping, a closed period, a duplicate number, or a rejected value.": {
     "sites": 1,
     "scope": [
@@ -12052,6 +12061,15 @@
       "domain/permission"
     ]
   },
+  "Adjust Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Adjust any band's range or rate, then save the program.": {
     "sites": 1,
     "scope": [
@@ -13179,6 +13197,15 @@
     ],
     "areas": [
       "domain/documenttemplate"
+    ]
+  },
+  "Agreed with the customer; the books keep their figure": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Agreement": {
@@ -14925,6 +14952,15 @@
       "routes/detention-policy"
     ]
   },
+  "Amount difference": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "Amount is required": {
     "sites": 3,
     "scope": [
@@ -15382,6 +15418,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "An agent may dismiss only an amount difference within the reconciliation tolerance of {0}. A person needs to decide this one": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
     ]
   },
   "An agent needs at least one tool call per run": {
@@ -23841,6 +23886,16 @@
       "service/accountingsyncservice"
     ]
   },
+  "Background work is not available on this server, so the books cannot be checked now": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other",
+      "service/accountingdriftservice"
+    ]
+  },
   "Background work is not available on this server, so the reference data cannot be refreshed": {
     "sites": 1,
     "scope": [
@@ -26736,6 +26791,16 @@
       "routes/admin"
     ]
   },
+  "Books differ from Trenova": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent",
+      "service/agentsubjectservice"
+    ]
+  },
   "Books keeper": {
     "sites": 1,
     "scope": [
@@ -26798,6 +26863,24 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Both sides stay as they are. The difference is larger than the tolerance.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
+  "Both sides stay as they are. The difference is within the tolerance.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Both versions must exist for comparison": {
@@ -28291,7 +28374,7 @@
     ]
   },
   "Cancel": {
-    "sites": 264,
+    "sites": 266,
     "scope": [
       "ts"
     ],
@@ -28299,6 +28382,7 @@
       "apps/dash/_components",
       "apps/web/components",
       "apps/web/lib",
+      "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-sync",
       "routes/admin",
@@ -31807,12 +31891,22 @@
       "routes/table-change-alert"
     ]
   },
-  "Changed in {0}": {
-    "sites": 1,
+  "Changed in the books": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-drift"
+    ]
+  },
+  "Changed in {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift",
       "routes/accounting-inbound"
     ]
   },
@@ -32681,11 +32775,12 @@
     ]
   },
   "Check now": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-drift",
       "routes/admin"
     ]
   },
@@ -32813,6 +32908,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Checking the books now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Checking the product guide…": {
@@ -37348,6 +37452,24 @@
       "routes/formula-template"
     ]
   },
+  "Compare what every syncing accounting system holds with what Trenova sent it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Compare what one accounting system holds with what Trenova sent it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Compare with any version": {
     "sites": 1,
     "scope": [
@@ -39219,11 +39341,12 @@
     ]
   },
   "Connect {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-sync",
       "routes/admin"
@@ -44462,7 +44585,7 @@
     ]
   },
   "Credit memo": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -46084,6 +46207,15 @@
     ],
     "areas": [
       "service/agenttoolservice"
+    ]
+  },
+  "Customer, carrier or driver": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Customer, rating method, and charge amounts": {
@@ -48067,7 +48199,7 @@
     ]
   },
   "Debit memo": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -50668,6 +50800,24 @@
       "service/shipmentcommentservice"
     ]
   },
+  "Deleted in the books": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Deleted or voided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "Deleted this resource": {
     "sites": 1,
     "scope": [
@@ -52677,13 +52827,33 @@
     ]
   },
   "Difference": {
-    "sites": 2,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
+      "routes/accounting-drift",
       "routes/manual-journal"
+    ]
+  },
+  "Difference dismissed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Difference with the books": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Different allowance for delivery stops, when the contract splits them.": {
@@ -52704,7 +52874,34 @@
       "routes/detention-policy"
     ]
   },
+  "Different amounts": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "Different currency": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Different customer balance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Different total": {
     "sites": 1,
     "scope": [
       "ts"
@@ -52886,6 +53083,15 @@
     ],
     "areas": [
       "domain/driverpay"
+    ]
+  },
+  "Direction must be PushTrenovaValue or AdjustTrenova": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
     ]
   },
   "Direction must be inbound or outbound": {
@@ -53321,12 +53527,13 @@
     ]
   },
   "Dismiss": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/accounting-drift",
       "routes/agent-control",
       "routes/bank-receipt-queue",
       "routes/desk",
@@ -53344,6 +53551,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Dismiss difference": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Dismiss for 30 days": {
@@ -53411,23 +53627,25 @@
     ]
   },
   "Dismissed": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "routes/agent-control",
       "routes/insights"
     ]
   },
   "Dismissed by": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-drift",
       "routes/carrier-monitoring"
     ]
   },
@@ -54630,7 +54848,7 @@
     ]
   },
   "Document": {
-    "sites": 17,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -54638,6 +54856,7 @@
     "areas": [
       "apps/web/components",
       "packages/shared/lib",
+      "routes/accounting-drift",
       "routes/accounting-sync",
       "routes/admin",
       "routes/agent-control",
@@ -55428,6 +55647,24 @@
       "routes/invoice"
     ]
   },
+  "Documents Trenova sent that differ in {0} now. Last checked {1}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
+  "Documents Trenova sent that differ in {0} now. Not checked yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "Documents and search queries are sent as they are.": {
     "sites": 1,
     "scope": [
@@ -55480,6 +55717,15 @@
     ],
     "areas": [
       "routes/document-packet-rule"
+    ]
+  },
+  "Documents that differ": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Documents that must be attached before an invoice can be generated (e.g., signed BOL, proof of delivery). Missing documents will block billing.": {
@@ -56129,6 +56375,44 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "Drift check": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Drift finding": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config"
+    ]
+  },
+  "Drift findings": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/config",
+      "routes/accounting-drift",
+      "routes/accounting-sync"
+    ]
+  },
+  "Drift findings could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Drift type cannot be longer than 64 characters": {
@@ -71533,11 +71817,12 @@
     ]
   },
   "Finish setup": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-mapping",
       "routes/accounting-sync",
@@ -72072,6 +72357,24 @@
     ],
     "areas": [
       "routes/ifta-jurisdiction-mileage"
+    ]
+  },
+  "Fixing a difference with the accounting system requires an authenticated user": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
+    ]
+  },
+  "Fixing...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Fixture created": {
@@ -73259,6 +73562,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "Found by Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Found by the hourly check": {
@@ -80999,11 +81311,12 @@
     ]
   },
   "In Trenova": {
-    "sites": 1,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-drift",
       "routes/carrier-sourcing"
     ]
   },
@@ -81084,6 +81397,15 @@
       "routes/settlement-dispute"
     ]
   },
+  "In the books": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "In the hat": {
     "sites": 5,
     "scope": [
@@ -81144,12 +81466,13 @@
     ]
   },
   "In {0}": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-sync",
       "routes/formula-template"
@@ -85199,6 +85522,15 @@
       "apps/web/lib"
     ]
   },
+  "Invoice void": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Invoice was not found": {
     "sites": 3,
     "scope": [
@@ -85280,6 +85612,15 @@
       "service/invoicedisputeservice"
     ]
   },
+  "Invoice {0} has payments or credits applied. Unapply them before voiding it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
+    ]
+  },
   "Invoice {0} is already voided": {
     "sites": 1,
     "scope": [
@@ -85305,6 +85646,15 @@
     ],
     "areas": [
       "template/invoice.email"
+    ]
+  },
+  "Invoice {0} is not posted": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
     ]
   },
   "Invoice {0} is waiting for you to review.": {
@@ -91648,6 +91998,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Loading difference...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Loading document preview": {
@@ -105303,6 +105662,15 @@
       "routes/admin"
     ]
   },
+  "No longer differs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "No longer found": {
     "sites": 1,
     "scope": [
@@ -114410,16 +114778,18 @@
     ]
   },
   "Open": {
-    "sites": 45,
+    "sites": 47,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components",
       "packages/shared/lib",
+      "routes/accounting-drift",
       "routes/admin",
       "routes/agent-control",
       "routes/ar-open-items",
@@ -114827,6 +115197,24 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Open differences": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
+  "Open differences between Trenova and the accounting system, by customer, carrier or driver and the kind of difference, with the net amount": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/reporting"
     ]
   },
   "Open dispatch board": {
@@ -121979,6 +122367,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "Payment reversal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Payment reversed": {
     "sites": 2,
     "scope": [
@@ -122059,6 +122456,15 @@
     "areas": [
       "template/rateconfirmation.email",
       "template/rateconfirmation.pdf"
+    ]
+  },
+  "Payment {0} is already reversed": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
     ]
   },
   "Payment, billing, and remittance terms": {
@@ -130442,6 +130848,15 @@
       "domain/ratequote"
     ]
   },
+  "Push Trenova's value": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
   "Push drivers reminders at 30/14/3 days before a credential expires. Compliance always gets expired-credential alerts.": {
     "sites": 1,
     "scope": [
@@ -131428,6 +131843,15 @@
     ],
     "areas": [
       "routes/pto-policy"
+    ]
+  },
+  "Raise the weekly books reconciliation for every syncing accounting connection": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Raised": {
@@ -135444,6 +135868,15 @@
     ],
     "areas": [
       "routes/reconciliation-summary"
+    ]
+  },
+  "Reconciliation tolerance": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Reconciliation tolerance amount": {
@@ -142076,7 +142509,7 @@
     ]
   },
   "Resolved": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -142084,6 +142517,7 @@
     "areas": [
       "apps/dash/_components",
       "apps/web/components",
+      "apps/web/hooks",
       "apps/web/lib",
       "domain/worker",
       "packages/shared/components",
@@ -142988,12 +143422,13 @@
     ]
   },
   "Retry": {
-    "sites": 24,
+    "sites": 25,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-mapping",
       "routes/accounting-sync",
@@ -148854,6 +149289,15 @@
       "service/agenttoolservice"
     ]
   },
+  "Say why both sides stay as they are": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/agenttoolservice"
+    ]
+  },
   "Say why in at least ten characters; cancelling is permanent": {
     "sites": 1,
     "scope": [
@@ -154616,6 +155060,15 @@
       "routes/worker"
     ]
   },
+  "Sent, waiting to match": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "Separate invoice for each": {
     "sites": 1,
     "scope": [
@@ -155905,13 +156358,14 @@
     ]
   },
   "Settled": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/lib",
       "packages/shared/components",
+      "routes/accounting-drift",
       "routes/invoice"
     ]
   },
@@ -162377,6 +162831,15 @@
       "go/other"
     ]
   },
+  "Start the nightly drift check for every syncing accounting connection": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Start the renewal before it lapses.": {
     "sites": 1,
     "scope": [
@@ -162633,11 +163096,12 @@
     ]
   },
   "Starting...": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-drift",
       "routes/accounting-sync",
       "routes/admin",
       "routes/dispatch-console",
@@ -162753,6 +163217,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "State in Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
+  "State in {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "State is required": {
@@ -162955,7 +163437,7 @@
     ]
   },
   "Status": {
-    "sites": 250,
+    "sites": 252,
     "scope": [
       "go",
       "ts"
@@ -162966,6 +163448,7 @@
       "packages/shared/components",
       "routes/accessorial-charge",
       "routes/account-type",
+      "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-sync",
       "routes/admin",
@@ -165545,12 +166028,13 @@
     ]
   },
   "Sync ledger": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-sync"
     ]
@@ -165574,7 +166058,7 @@
     ]
   },
   "Sync record": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -171513,6 +171997,15 @@
       "service/detentionservice"
     ]
   },
+  "The difference closes once the next check finds {0} matches Trenova.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "The directory where inbound files are stored.": {
     "sites": 1,
     "scope": [
@@ -173226,6 +173719,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "The last check could not read {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "The last day being reviewed; it also dates the default title.": {
@@ -177694,6 +178196,15 @@
       "domain/worker"
     ]
   },
+  "The weekly point to review how the accounting system and Trenova compare: open differences, what was fixed, and what still needs a person.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "The weekly price series this program keys off (DOE region or custom index).": {
     "sites": 1,
     "scope": [
@@ -179339,6 +179850,15 @@
       "routes/rate-agreement"
     ]
   },
+  "This difference could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "This dispute could not be loaded.": {
     "sites": 1,
     "scope": [
@@ -179806,6 +180326,24 @@
     ],
     "areas": [
       "service/fiscalyearservice"
+    ]
+  },
+  "This fix cannot be made now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
+  "This fix changes {0}, which you do not have permission to change": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
     ]
   },
   "This formula template could not be loaded.": {
@@ -185905,13 +186443,14 @@
     ]
   },
   "Trenova": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "packages/shared/components",
+      "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/auth"
     ]
@@ -185923,6 +186462,24 @@
     ],
     "areas": [
       "service/editransport"
+    ]
+  },
+  "Trenova adjusted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Trenova adjusted to match the books": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Trenova billing": {
@@ -185941,6 +186498,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Trenova compares {0} with what it sent once setup is finished and syncing is on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Trenova could not read the latest changes from {0}": {
@@ -186049,6 +186615,33 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Trenova's value is on its way to the books": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Trenova's value sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
+    ]
+  },
+  "Trenova's value was sent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Trial balance": {
@@ -188306,11 +188899,12 @@
     ]
   },
   "Unknown party": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-drift",
       "routes/accounting-inbound"
     ]
   },
@@ -193906,7 +194500,7 @@
     ]
   },
   "Voided in the books": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -193930,6 +194524,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Voided only in Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/hooks"
     ]
   },
   "Voided {0}": {
@@ -193976,6 +194579,15 @@
     ],
     "areas": [
       "routes/driver-settlement"
+    ]
+  },
+  "Voiding {0} needs an approver, so it cannot be done in one step here. Void it from the invoice, then dismiss this finding": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
     ]
   },
   "Voids revision {0}. Generate again to file a fresh revision with the current buy rate.": {
@@ -195236,6 +195848,15 @@
       "routes/reports"
     ]
   },
+  "Weekly books reconciliation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/agent"
+    ]
+  },
   "Weekly dry van out of the Elk Grove DC, per the 2026 Acme contract": {
     "sites": 1,
     "scope": [
@@ -196035,6 +196656,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What it would do could not be worked out.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "What it would have done": {
@@ -198803,6 +199433,15 @@
       "apps/dash/_components"
     ]
   },
+  "Why do both sides stay as they are?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "Why does this bill on its own? (e.g. billing to a different party)": {
     "sites": 1,
     "scope": [
@@ -199493,6 +200132,15 @@
       "apps/web/components"
     ]
   },
+  "Within tolerance": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "Words only": {
     "sites": 1,
     "scope": [
@@ -200147,6 +200795,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Working out what it does...": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "Working out what it posts...": {
@@ -203323,6 +203980,15 @@
       "routes/shipment"
     ]
   },
+  "differ in the books": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-sync"
+    ]
+  },
   "disciplinary action": {
     "sites": 1,
     "scope": [
@@ -205710,6 +206376,15 @@
       "routes/agent-control"
     ]
   },
+  "in the books": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
+    ]
+  },
   "in {0}": {
     "sites": 1,
     "scope": [
@@ -205846,11 +206521,12 @@
     ]
   },
   "last 7 days": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-drift",
       "routes/accounting-inbound"
     ]
   },
@@ -207401,6 +208077,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "totals and customer balances": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "trailer continues": {
@@ -209880,6 +210565,15 @@
       "service/accountingmappingservice"
     ]
   },
+  "{0} already has a change on its way to {1}. Fix it once that change is sent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
+    ]
+  },
   "{0} already holds the maximum of {1} tiles": {
     "sites": 1,
     "scope": [
@@ -210115,12 +210809,13 @@
     ]
   },
   "{0} by {1}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/accounting-drift",
       "routes/accounting-inbound"
     ]
   },
@@ -211013,15 +211708,14 @@
     ]
   },
   "{0} has not been connected yet": {
-    "sites": 5,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "api/graphql",
-      "service/accountinginboundservice",
-      "service/accountingmappingservice",
-      "service/accountingsyncservice"
+      "service/accountingconnlookup",
+      "service/accountingmappingservice"
     ]
   },
   "{0} has set up a Dash account for you. Dash is where you will see your assigned loads, submit expenses, and check your pay.": {
@@ -211094,6 +211788,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} in Trenova, {1} in {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "{0} in it": {
@@ -211270,6 +211973,15 @@
       "service/accountingmappingservice"
     ]
   },
+  "{0} is already queued to be sent again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
+    ]
+  },
   "{0} is already the primary carrier intelligence provider. Disable it, or switch the primary provider from Carrier Monitoring, before enabling {1} as primary": {
     "sites": 1,
     "scope": [
@@ -211424,15 +212136,13 @@
     ]
   },
   "{0} is not an accounting system Trenova can sync with": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
       "service/accountingconnectionservice",
-      "service/accountinginboundservice",
-      "service/accountingmappingservice",
-      "service/accountingsyncservice"
+      "service/accountingconnlookup"
     ]
   },
   "{0} is not an active jurisdiction": {
@@ -211499,11 +212209,12 @@
     ]
   },
   "{0} is not connected yet.": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-sync"
     ]
@@ -211564,6 +212275,24 @@
     ],
     "areas": [
       "service/documenttemplateservice"
+    ]
+  },
+  "{0} is not syncing, so nothing can be sent to it or matched with it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
+    ]
+  },
+  "{0} is not syncing, so there is nothing to compare": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
     ]
   },
   "{0} is not tracked by this policy": {
@@ -213750,6 +214479,15 @@
       "service/accountingmappingservice"
     ]
   },
+  "{0} was never sent to {1}, so there is nothing to send again": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/accountingdriftservice"
+    ]
+  },
   "{0} was not connected": {
     "sites": 1,
     "scope": [
@@ -214253,6 +214991,15 @@
     ],
     "areas": [
       "routes/ifta-tax-rate"
+    ]
+  },
+  "{0} · {1} · in {2}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/accounting-drift"
     ]
   },
   "{0} · {1} · recorded in {2}": {
