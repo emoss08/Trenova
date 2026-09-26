@@ -8,10 +8,9 @@ use std::time::Duration;
 
 use capture_client::{AgentInfo, SecretStore, Server};
 use capture_platform::settings::{self, ServerSource};
-use capture_platform::{CredentialManager, Dpapi, SingleInstance, machine, paths, shell};
+use capture_platform::{CredentialManager, Dpapi, SingleInstance, logging, machine, paths, shell};
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
-use tracing_subscriber::EnvFilter;
 use trenova_capture::agent::{self, Environment, Machine, ServerSetting};
 use trenova_capture::scanners::HelperHost;
 use trenova_capture::state::{Command, Shared, Ui};
@@ -23,8 +22,6 @@ use crate::tray::Tray;
 
 /// How long to wait before trying again after capture is paused.
 const RECHECK_AFTER: Duration = Duration::from_secs(600);
-/// How many days of logs are kept.
-const LOG_DAYS: usize = 14;
 
 /// What was asked for on the command line.
 #[derive(Debug, Default)]
@@ -66,26 +63,6 @@ impl ServerSetting for RegistrySetting {
     }
 }
 
-fn logging(dir: &Path) -> Option<tracing_appender::non_blocking::WorkerGuard> {
-    let appender = tracing_appender::rolling::Builder::new()
-        .rotation(tracing_appender::rolling::Rotation::DAILY)
-        .filename_prefix("agent")
-        .filename_suffix("log")
-        .max_log_files(LOG_DAYS)
-        .build(dir)
-        .ok()?;
-    let (writer, guard) = tracing_appender::non_blocking(appender);
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::try_from_env("TRENOVA_CAPTURE_LOG")
-                .unwrap_or_else(|_| EnvFilter::new("info")),
-        )
-        .with_writer(writer)
-        .with_ansi(false)
-        .init();
-    Some(guard)
-}
-
 fn environment(data_dir: &Path) -> Environment {
     let helpers = std::env::current_exe()
         .ok()
@@ -124,7 +101,7 @@ pub fn run() -> ExitCode {
     let Ok(data_dir) = paths::data_dir() else {
         return ExitCode::FAILURE;
     };
-    let _log = logging(&data_dir.join("logs"));
+    let _log = logging::init(&data_dir.join("logs"), "agent");
     tracing::info!(
         version = env!("CARGO_PKG_VERSION"),
         "Trenova Capture starting"

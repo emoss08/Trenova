@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/capture-protocol", "crates/capture-imaging", "crates/capture-ipp", "crates/capture-twain", "crates/capture-wia", "crates/capture-client", "crates/capture-platform", "bins/trenova-capture-scan", "bins/trenova-capture"]
+members = ["crates/capture-protocol", "crates/capture-imaging", "crates/capture-ipp", "crates/capture-twain", "crates/capture-wia", "crates/capture-client", "crates/capture-platform", "bins/trenova-capture-scan", "bins/trenova-capture", "bins/trenova-capture-svc"]
 
 [workspace.package]
 version = "1.0.0"
@@ -24,6 +24,10 @@ fastrand = "2.5"
 fax = "0.3"
 futures-util = { version = "0.3", default-features = false, features = ["std"] }
 hex = "0.4"
+http = "1.4"
+http-body-util = "0.1"
+hyper = { version = "1.9", features = ["server", "http1"] }
+hyper-util = { version = "0.1.20", features = ["tokio", "server", "server-graceful", "http1"] }
 jpeg-encoder = "0.7"
 pdf-writer = "0.15"
 rand = "0.10"
@@ -41,6 +45,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 url = "2.5"
 windows = "0.62"
 windows-core = "0.62"
+windows-service = "0.8"
 wiremock = "0.6"
 winresource = "0.1"
 zeroize = "1.9"

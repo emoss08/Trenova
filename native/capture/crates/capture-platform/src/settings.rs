@@ -8,8 +8,8 @@
 
 use windows::Win32::Foundation::ERROR_SUCCESS;
 use windows::Win32::System::Registry::{
-    HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, REG_SZ, RRF_RT_REG_SZ, RegGetValueW,
-    RegSetKeyValueW,
+    HKEY, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, REG_SZ, RRF_RT_REG_DWORD, RRF_RT_REG_SZ,
+    RegGetValueW, RegSetKeyValueW,
 };
 use windows_core::PCWSTR;
 
@@ -18,6 +18,9 @@ use crate::wide::{from_buffer, wide};
 const POLICY_KEY: &str = "SOFTWARE\\Policies\\Trenova\\Capture";
 const KEY: &str = "SOFTWARE\\Trenova\\Capture";
 const SERVER_URL: &str = "ServerUrl";
+const PRINT_PORT: &str = "PrintPort";
+const CRYPTOGRAPHY_KEY: &str = "SOFTWARE\\Microsoft\\Cryptography";
+const MACHINE_GUID: &str = "MachineGuid";
 
 fn read_string(root: HKEY, key: &str, value: &str) -> Option<String> {
     let key = wide(key);
@@ -54,6 +57,44 @@ fn read_string(root: HKEY, key: &str, value: &str) -> Option<String> {
     (status == ERROR_SUCCESS)
         .then(|| from_buffer(&buffer).trim().to_owned())
         .filter(|s| !s.is_empty())
+}
+
+fn read_dword(root: HKEY, key: &str, value: &str) -> Option<u32> {
+    let key = wide(key);
+    let value = wide(value);
+    let mut data = 0u32;
+    let mut size = u32::try_from(std::mem::size_of::<u32>()).unwrap_or(4);
+    // SAFETY: a DWORD-sized buffer and its size.
+    let status = unsafe {
+        RegGetValueW(
+            root,
+            PCWSTR(key.as_ptr()),
+            PCWSTR(value.as_ptr()),
+            RRF_RT_REG_DWORD,
+            None,
+            Some((&raw mut data).cast()),
+            Some(&raw mut size),
+        )
+    };
+    (status == ERROR_SUCCESS).then_some(data)
+}
+
+/// The loopback port the print service listens on and the Trenova printer
+/// points at, when policy or the installer set one
+/// (`HKLM\SOFTWARE\...\Trenova\Capture\PrintPort`). Port 0 and values
+/// above 65535 are ignored.
+pub fn print_port() -> Option<u16> {
+    [POLICY_KEY, KEY]
+        .iter()
+        .find_map(|key| read_dword(HKEY_LOCAL_MACHINE, key, PRINT_PORT))
+        .and_then(|port| u16::try_from(port).ok())
+        .filter(|&port| port != 0)
+}
+
+/// The GUID Windows generated for this installation, which names the
+/// printer stably across restarts.
+pub fn machine_guid() -> Option<String> {
+    read_string(HKEY_LOCAL_MACHINE, CRYPTOGRAPHY_KEY, MACHINE_GUID)
 }
 
 /// Where the server address came from.

@@ -1,6 +1,6 @@
 [package]
 name = "capture-protocol"
-description = "Wire types shared by the Trenova Capture companion: the API it calls and the pipe between the agent and its scan helpers."
+description = "Wire types shared by the Trenova Capture companion: the API it calls, the pipe between the agent and its scan helpers, and the print hand-off."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,6 +13,9 @@ serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
 thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
 
 [lints]
 workspace = true

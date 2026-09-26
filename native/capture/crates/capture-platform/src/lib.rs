@@ -9,13 +9,23 @@
 //!   installer configured, and the one a person typed.
 //! - [`shell`] opens a web page, and [`SingleInstance`] keeps one agent per
 //!   Windows session.
+//! - [`paths`] names the per-user data directory and the machine-wide one
+//!   the print service shares with each user's agent, and [`logging`] writes
+//!   both processes' logs.
+//!
+//! - [`accounts`] turns Windows accounts into the SIDs that name and guard a
+//!   person's print inbox.
 //!
 //! On anything but Windows this crate is empty.
 
 #[cfg(windows)]
+pub mod accounts;
+#[cfg(windows)]
 mod credman;
 #[cfg(windows)]
 mod dpapi;
+#[cfg(windows)]
+pub mod logging;
 #[cfg(windows)]
 pub mod machine;
 #[cfg(windows)]

@@ -1,6 +1,6 @@
 [package]
 name = "capture-platform"
-description = "Windows services for the Trenova Capture agent: DPAPI, Credential Manager, machine identity, settings and the shell."
+description = "Windows services for the Trenova Capture agent and print service: DPAPI, Credential Manager, identity, settings, paths, logging and the shell."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,6 +11,8 @@ publish.workspace = true
 capture-client.workspace = true
 serde_json.workspace = true
 tracing.workspace = true
+tracing-appender.workspace = true
+tracing-subscriber.workspace = true
 zeroize.workspace = true
 
 [target.'cfg(windows)'.dependencies]
@@ -19,6 +21,7 @@ windows = { workspace = true, features = [
     "Wdk_System_SystemServices",
     "Win32_Foundation",
     "Win32_Security",
+    "Win32_Security_Authorization",
     "Win32_Security_Credentials",
     "Win32_Security_Cryptography",
     "Win32_System_Com",
