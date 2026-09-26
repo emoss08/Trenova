@@ -668,10 +668,3 @@ Every phase is shipped complete; the order only reflects dependencies.
 3. **Terminal servers:** not a target; customers use the cloud product, and self-hosters run
    the documented Docker deployment.
 4. **Queues:** one intake queue with filters and sorting; no named queues.
-
-## 14. Known issues outside this work
-
-- `TestFullSeedRunOnSQLite` fails on `master` because the committed SQLite migrations have
-  drifted from the Postgres ones (`driver_settlements.posted_payable_account_id` is missing).
-  Regenerating with `task sqlite-convert` fixes it; it is left to its own change so this one
-  does not rewrite unrelated migrations.

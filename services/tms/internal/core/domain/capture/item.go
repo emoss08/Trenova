@@ -49,7 +49,7 @@ type CaptureItem struct {
 
 func (i *CaptureItem) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(i,
-		validation.Field(&i.BatchID, validation.Required.Error("CaptureBatch is required")),
+		validation.Field(&i.BatchID, validation.Required.Error("Batch is required")),
 		validation.Field(&i.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[ItemStatus]("Status is not an item status"),

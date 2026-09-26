@@ -1089,7 +1089,7 @@ definitions:
     capture.SeparatorStrategy:
         enum:
             - PatchCode
-            - CaptureCoverSheet
+            - CoverSheet
             - BlankPage
             - FixedPageCount
         type: string
@@ -1179,8 +1179,8 @@ definitions:
             - ProtocolWIA
     capture.SuggestionSource:
         enum:
-            - CaptureCoverSheet
-            - CaptureRequest
+            - CoverSheet
+            - Request
             - Classifier
             - Person
         type: string

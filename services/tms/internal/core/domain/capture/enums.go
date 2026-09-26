@@ -399,8 +399,8 @@ func AllItemStatuses() []ItemStatus {
 type SuggestionSource string
 
 const (
-	SuggestionCoverSheet = SuggestionSource("CaptureCoverSheet")
-	SuggestionRequest    = SuggestionSource("CaptureRequest")
+	SuggestionCoverSheet = SuggestionSource("CoverSheet")
+	SuggestionRequest    = SuggestionSource("Request")
 	SuggestionClassifier = SuggestionSource("Classifier")
 	SuggestionPerson     = SuggestionSource("Person")
 )
@@ -454,7 +454,7 @@ const (
 	SeparatorPatchCode = SeparatorStrategy("PatchCode")
 	// SeparatorCoverSheet splits on a Trenova cover sheet and routes what
 	// follows it to the record the sheet names.
-	SeparatorCoverSheet = SeparatorStrategy("CaptureCoverSheet")
+	SeparatorCoverSheet = SeparatorStrategy("CoverSheet")
 	// SeparatorBlankPage splits on a page with no content on it.
 	SeparatorBlankPage = SeparatorStrategy("BlankPage")
 	// SeparatorFixedPageCount splits every N pages.

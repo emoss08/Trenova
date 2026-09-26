@@ -65,7 +65,7 @@ type CaptureRequest struct {
 func (r *CaptureRequest) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(r,
 		validation.Field(&r.UserID, validation.Required.Error("User is required")),
-		validation.Field(&r.DeviceID, validation.Required.Error("CaptureDevice is required")),
+		validation.Field(&r.DeviceID, validation.Required.Error("Device is required")),
 		validation.Field(&r.Mode,
 			validation.Required.Error("Mode is required"),
 			domainvalidation.ValidEnum[RequestMode]("Mode must be Scan or Print"),

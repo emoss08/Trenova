@@ -88,7 +88,7 @@ type Settings struct {
 func (b *CaptureBatch) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(b,
 		validation.Field(&b.UserID, validation.Required.Error("User is required")),
-		validation.Field(&b.DeviceID, validation.Required.Error("CaptureDevice is required")),
+		validation.Field(&b.DeviceID, validation.Required.Error("Device is required")),
 		validation.Field(&b.ClientKey,
 			validation.Required.Error("Client key is required"),
 			validation.Length(1, maxClientKeyLength),
