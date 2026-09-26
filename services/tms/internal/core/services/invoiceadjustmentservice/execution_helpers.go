@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
@@ -135,7 +136,7 @@ func (s *Service) createWriteOffJournalEntry(
 		Control:        accountingControl,
 		ActorID:        actor.UserID,
 		AccountingDate: preview.AccountingDate,
-		Now:            adjustment.AccountingDate,
+		Now:            timeutils.NowUnix(),
 		Subject:        "invoice write-off",
 		Description:    description,
 		EntryType:      "Adjusting",

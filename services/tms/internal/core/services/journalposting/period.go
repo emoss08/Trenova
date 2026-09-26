@@ -70,7 +70,8 @@ func ResolvePeriod(
 		return nextOpenPeriod(ctx, periods, req, period)
 	default:
 		return nil, errortypes.NewBusinessError(
-			"The "+req.Subject+" cannot be posted to an inactive fiscal period",
+			"The {0} cannot be posted to an inactive fiscal period",
+			req.subject(ctx),
 		).WithParam("fiscalPeriodId", period.ID.String())
 	}
 }
@@ -83,7 +84,8 @@ func nextOpenPeriod(
 ) (*ResolvedPeriod, error) {
 	if req.Policy != tenant.ClosedPeriodPostingPolicyPostToNextOpen {
 		return nil, errortypes.NewBusinessError(
-			"The "+req.Subject+" falls in a closed fiscal period; reopen the period first",
+			"The {0} falls in a closed fiscal period; reopen the period first",
+			req.subject(ctx),
 		).WithParam("fiscalPeriodId", closed.ID.String())
 	}
 
@@ -108,7 +110,8 @@ func nextOpenPeriod(
 	}
 	if next == nil {
 		return nil, errortypes.NewBusinessError(
-			"No next open fiscal period is available for the "+req.Subject,
+			"No next open fiscal period is available for the {0}",
+			req.subject(ctx),
 		).WithParam("fiscalPeriodId", closed.ID.String())
 	}
 
