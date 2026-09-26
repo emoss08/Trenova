@@ -332,12 +332,8 @@ func (s *Service) processInboundFile(
 		return nil, err
 	}
 	if req.Reprocess {
-		if !file.Status.IsReprocessable() {
-			return nil, errortypes.NewValidationError(
-				"status",
-				errortypes.ErrInvalidOperation,
-				"Only quarantined or partially processed EDI inbound files can be reprocessed",
-			)
+		if err = CheckReprocessable(file); err != nil {
+			return nil, err
 		}
 	} else if file.Status != edi.InboundFileStatusReceived {
 		return file, nil
@@ -384,10 +380,12 @@ func (s *Service) processInboundFile(
 	warnings := make([]string, 0)
 	failures := 0
 	processed := 0
+	tendered := false
 	for index := range interchange.transactions {
 		transaction := &interchange.transactions[index]
 		outcome := s.processTransaction(ctx, file, partner, transaction)
 		warnings = append(warnings, outcome.warnings...)
+		tendered = tendered || outcome.tendered
 		if outcome.err != nil {
 			failures++
 			warnings = append(warnings, fmt.Sprintf(
@@ -422,7 +420,21 @@ func (s *Service) processInboundFile(
 	if updated.Status == edi.InboundFileStatusQuarantined {
 		s.notifyQuarantinedFile(ctx, updated)
 	}
+	if tendered {
+		services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
+			Kind:       agent.EventEDITenderReceived,
+			SubjectID:  updated.ID,
+			TenantInfo: inboundFileTenant(updated),
+		})
+	}
 	return updated, nil
+}
+
+func inboundFileTenant(file *edi.EDIInboundFile) pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID: file.OrganizationID,
+		BuID:  file.BusinessUnitID,
+	}
 }
 
 func (s *Service) quarantineFile(
@@ -449,12 +461,9 @@ func (s *Service) notifyQuarantinedFile(ctx context.Context, file *edi.EDIInboun
 	}
 
 	services.PublishAgentEvent(ctx, s.publisher, services.AgentEvent{
-		Kind:      agent.EventEDIFileQuarantined,
-		SubjectID: file.ID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: file.OrganizationID,
-			BuID:  file.BusinessUnitID,
-		},
+		Kind:       agent.EventEDIFileQuarantined,
+		SubjectID:  file.ID,
+		TenantInfo: inboundFileTenant(file),
 	})
 
 	s.ediService.NotifyOperationalFailure(ctx, &ediservice.EDIOperationalAlert{
@@ -499,7 +508,13 @@ func (s *Service) processTransaction(
 	case edi.TransactionSet214:
 		outcome.warnings, outcome.err = s.routeShipmentStatus(ctx, file, partner, transaction)
 	case edi.TransactionSet204:
-		outcome.warnings, outcome.err = s.routeLoadTender(ctx, file, partner, message, transaction)
+		outcome.tendered, outcome.warnings, outcome.err = s.routeLoadTender(
+			ctx,
+			file,
+			partner,
+			message,
+			transaction,
+		)
 	case edi.TransactionSet210:
 		outcome.warnings, outcome.err = s.routeFreightInvoice(
 			ctx,
