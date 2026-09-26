@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
@@ -33,6 +34,12 @@ func ToolProviders() []any {
 	return []any{
 		newTransitionToInReviewTool,
 		provideTransferToBillingTool,
+		provideApproveBillingQueueItemTool,
+		provideSendBackToOpsTool,
+		provideMoveToExceptionTool,
+		provideHoldBillingQueueItemTool,
+		provideCancelBillingQueueItemTool,
+		provideAssignBillerTool,
 		newCorrectChargeCodeTool,
 		newSaveTableViewTool,
 		newCreateDashboardTool,
@@ -255,6 +262,36 @@ func provideTransferToBillingTool(
 	runs *billingtransferservice.Service,
 ) services.AgentTool {
 	return newTransferToBillingTool(shipments, runs)
+}
+
+// The billing queue decision tools take the narrow billingQueueDecider; fx
+// holds the service port, so the widening happens here.
+
+func provideApproveBillingQueueItemTool(
+	billing services.BillingQueueService,
+	invoices *invoiceservice.Service,
+) services.AgentTool {
+	return newApproveBillingQueueItemTool(billing, invoices)
+}
+
+func provideSendBackToOpsTool(billing services.BillingQueueService) services.AgentTool {
+	return newSendBackToOpsTool(billing)
+}
+
+func provideMoveToExceptionTool(billing services.BillingQueueService) services.AgentTool {
+	return newMoveToExceptionTool(billing)
+}
+
+func provideHoldBillingQueueItemTool(billing services.BillingQueueService) services.AgentTool {
+	return newHoldBillingQueueItemTool(billing)
+}
+
+func provideCancelBillingQueueItemTool(billing services.BillingQueueService) services.AgentTool {
+	return newCancelBillingQueueItemTool(billing)
+}
+
+func provideAssignBillerTool(billing services.BillingQueueService) services.AgentTool {
+	return newAssignBillerTool(billing)
 }
 
 func provideApproveDetentionTool(detention *detentionservice.Service) services.AgentTool {

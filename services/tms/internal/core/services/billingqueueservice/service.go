@@ -592,12 +592,9 @@ func (s *service) AssignBiller(
 		return nil, err
 	}
 
-	if billingqueue.IsTerminalStatus(entity.Status) {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Cannot assign a biller to a billing queue item in {0} status", string(entity.Status),
-		)
+	previous := *entity
+	if err = PlanAssignBiller(entity, req.BillerID, timeutils.NowUnix()); err != nil {
+		return nil, err
 	}
 
 	if _, err = s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
@@ -616,15 +613,6 @@ func (s *service) AssignBiller(
 		}
 
 		return nil, err
-	}
-
-	previous := *entity
-	entity.AssignedBillerID = &req.BillerID
-
-	if entity.Status == billingqueue.StatusReadyForReview {
-		entity.Status = billingqueue.StatusInReview
-		now := timeutils.NowUnix()
-		entity.ReviewStartedAt = &now
 	}
 
 	updated, err := s.repo.Update(ctx, entity)

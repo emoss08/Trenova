@@ -153,3 +153,23 @@ func applyStatusFields(
 		}
 	}
 }
+
+// PlanAssignBiller is what AssignBiller does to the item: it names the biller,
+// and an item waiting for review moves into review with them.
+func PlanAssignBiller(entity *billingqueue.BillingQueueItem, billerID pulid.ID, now int64) error {
+	if billingqueue.IsTerminalStatus(entity.Status) {
+		return errortypes.NewValidationError(
+			"status",
+			errortypes.ErrInvalidOperation,
+			"Cannot assign a biller to a billing queue item in {0} status", string(entity.Status),
+		)
+	}
+
+	entity.AssignedBillerID = &billerID
+	if entity.Status == billingqueue.StatusReadyForReview {
+		entity.Status = billingqueue.StatusInReview
+		entity.ReviewStartedAt = &now
+	}
+
+	return nil
+}
