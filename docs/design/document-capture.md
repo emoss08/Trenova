@@ -1,8 +1,8 @@
 # Document Capture — Scanning and Virtual Printing
 
-> Status: design, not started. Purpose: let a person put paper or another program's output
-> into Trenova without first producing a file on their own disk, from a scanner (including one
-> behind Kofax VRS) or from the Windows print dialog of any application.
+> Status: phase 1 (server) complete; phase 2 (web) next. Purpose: let a person put paper or
+> another program's output into Trenova without first producing a file on their own disk, from a
+> scanner (including one behind Kofax VRS) or from the Windows print dialog of any application.
 
 ---
 
@@ -30,8 +30,10 @@ Something has to run on the machine.
 
 ## 3. Decisions made
 
-These follow from the product answers (Windows only, our own companion, both landing options,
-batch scanning with assignment). Everything below is built on them.
+These follow from the product answers: Windows only, our own companion, both landing options,
+batch scanning with assignment, one intake queue with filters rather than named queues, Trenova
+owns the code-signing certificate, and customers run the cloud product (terminal-server
+deployments are not a target). Everything below is built on them.
 
 1. **The companion is written in Rust.** See §4.
 2. **The browser never talks to the companion.** The web app creates a *capture request* on the
@@ -48,6 +50,9 @@ batch scanning with assignment). Everything below is built on them.
 6. **A filed capture item becomes an ordinary `document.Document`** through the existing upload
    and intelligence pipeline. Capture adds a front door; it does not fork document storage,
    versioning, packet rules or extraction.
+7. **x64 only.** Scanner vendors do not ship TWAIN drivers for Windows on ARM, Ricoh's fi series
+   does not run there, and Kofax VRS has known ARM issues, so an ARM build would pair and find
+   nothing to scan with. `capture.Architecture` accepts `x64` alone.
 
 ## 4. Why Rust for the companion
 
@@ -65,8 +70,9 @@ credential.
   credential. Rust removes that class of bug from our side of the boundary.
 - **Deployment.** One statically linked `.exe` per architecture, static CRT, no runtime or VC++
   redistributable to install. That matters for GPO/Intune rollouts.
-- **The 32-bit problem.** Many scanner TWAIN drivers, and older Kofax VRS installs, are 32-bit
-  only. A 64-bit process cannot load them. `cargo build --target i686-pc-windows-msvc` produces
+- **The 32-bit problem.** Many scanner TWAIN drivers are 32-bit only, and Kofax VRS 5.3's
+  TWAIN source appears to be too: it installs under `Program Files (x86)` and requires only the
+  x86 VC++ runtime, and no Tungsten document mentions a 64-bit source (§5.7). A 64-bit process cannot load them. `cargo build --target i686-pc-windows-msvc` produces
   the 32-bit scan helper from the same crate (§5.2). Go can target 386, but TWAIN wants its own
   OS thread with a message loop, plus callbacks arriving on driver threads, and doing that
   through cgo on both architectures is where Go costs more than it gives.
@@ -104,8 +110,9 @@ in the web app.
 - **The per-user agent** is where identity lives. It holds the device credential, keeps the
   stream to the API, owns the upload queue, and starts scans. It runs in the user's session,
   which TWAIN needs because data sources, VRS's QC window included, show UI.
-- **The service** exists because the spooler, not the user, connects to the printer, and on an
-  RDS/Citrix host many users share one machine. The service receives the job, attributes it
+- **The service** exists because the spooler, not the user, connects to the printer, and a
+  print must be accepted even before the tray agent has started. (It also keeps a shared
+  workstation correct, although terminal servers are not a target.) The service receives the job, attributes it
   to the submitting user (§5.4), and hands it to that user's agent over a named pipe whose
   ACL admits only that user's SID. If the agent is not running, the job waits in a spool
   directory ACL'd to that SID and the service, and is handed over at next logon.
@@ -191,6 +198,10 @@ background task, which would be the only non-Rust piece.
 
 ### 5.5 Tray UI
 
+The tray icon is the Trenova logo, `client/apps/web/public/logo.ico` (it already carries the 16,
+24 and 32 px sizes a tray needs). The agent's build script embeds that file as its Win32 icon
+resource, so there is one source for the mark rather than a copy that drifts.
+
 - Sign in / sign out (pairing, §6.1), connection state, pending uploads, the last few batches
   with "Open in Trenova".
 - "Scan to intake…": pick source and profile, then scan. This is the no-browser path.
@@ -217,23 +228,68 @@ native/capture/                  Cargo workspace
 └── installer/                   WiX v4 MSI
 ```
 
+### 5.7 Supported scanners
+
+Trucking imaging vendors do not publish certified lists: Transflo supports "any TWAIN
+compatible scanner", and McLeod and Trimble name no models publicly. Trenova Capture also works
+with any TWAIN or WIA source; the list below is what we test against and recommend. Every model
+listed is on Tungsten's Scanner Configurator as VRS-certified.
+
+| Tier | Model | TWAIN 64 | TWAIN 32 | WIA | Patch codes | Notes |
+|---|---|---|---|---|---|---|
+| Desk | Ricoh fi-8040 | Yes | Yes | Yes | Yes (PaperStream IP) | 40 ppm, 50-sheet ADF |
+| Desk | Canon DR-C225 II | Unverified | Yes | Yes | No | 25 ppm, 45-sheet ADF |
+| Desk | Epson DS-530 II | Yes (Epson Scan 2) | Yes | Unverified | Unverified | 35 ppm, 50-sheet ADF |
+| Workgroup | **Ricoh fi-8170** (reference) | Yes | Yes | Yes | Yes | 70 ppm, 100-sheet ADF; replaces fi-7160 |
+| Workgroup | Canon DR-M260 | Unverified | Yes | Yes | Unverified | 60 ppm, 80-sheet ADF, ships with VRS Pro |
+| Workgroup | Epson DS-790WN | Yes (Epson Scan 2) | Yes | Yes | Unverified | 45 ppm, network |
+| Workgroup | Brother ADS-4900W | Unverified | Yes | Yes | Unverified | 60 ppm, 100-sheet ADF |
+| Workgroup | Alaris S2080w | Yes | Yes | Yes | Unverified (barcodes yes) | 80 ppm, 80-sheet ADF |
+| Production | Ricoh fi-8190 | Yes | Yes | Yes | Yes | 90 ppm, 100-sheet ADF |
+| Production | Canon DR-G2110 | Yes | Yes | Yes | Yes | 110 ppm, 500-sheet ADF |
+
+Legacy, supported but not recommended: Fujitsu fi-7160 (replaced by the fi-8170) and Panasonic
+KV-S (Panasonic left the market in 2023; support ends 2029).
+
+Two consequences for the build:
+
+- **Patch-code separation is a TWAIN feature.** Ricoh notes PaperStream IP features, patch codes
+  included, may be unavailable over WIA, so profiles offer patch codes only for TWAIN sources.
+  Cover sheets work on every source, because the server reads them.
+- **Epson Scan and Epson Scan 2 cannot be installed together**, and only Epson Scan 2 is 64-bit.
+  The companion lists both bitnesses, so either works, but the support note says which to use.
+
+The phase-0 lab is the reference fi-8170 with VRS 5.3, one Canon DR, one Epson DS and one Alaris.
+The 64-bit VRS question is settled there with the free VRS Elite trial.
+
 ## 6. Identity and the channel to the server
 
 ### 6.1 Pairing
 
-This is the OAuth 2.0 Device Authorization Grant shape (RFC 8628), implemented in `authservice`.
+This is the OAuth 2.0 Device Authorization Grant (RFC 8628), in `captureservice/pairing.go`.
 
-1. The agent calls `POST /capture/v1/pair` and receives a `device_code` and a short `user_code`
-   (8 characters, 10-minute life).
-2. It opens the browser to `/capture/pair?code=ABCD-EFGH`. The signed-in user sees the machine
-   name, Windows user and agent version, and approves.
-3. The agent, polling with the `device_code`, receives a **refresh token** (opaque, stored hashed
-   the way `apikey` stores secrets, rotated on every use, reuse detection revokes the device)
-   and a 15-minute **access token**.
-4. Tokens are kept in Windows Credential Manager, DPAPI-protected to that Windows user.
+1. The agent calls `POST /api/v1/capture/pair/` and receives a `deviceCode` and an
+   eight-letter `userCode` shown as `XXXX-XXXX` (consonants only, per RFC 8628 §6.1; 10-minute
+   life; unique among open codes by a partial index).
+2. It opens the browser to `/capture/pair?code=XXXX-XXXX`. The signed-in person sees the
+   machine name, Windows user, agent version and IP (`GET /api/v1/capture/pairings/:userCode/`)
+   and approves or denies (`POST /api/v1/capture/pairings/decide/`). Approval binds the grant to
+   that person and the organization they are signed in to, and needs `capture_batch:create`.
+3. The agent polls `POST /api/v1/capture/pair/token/` every 5 seconds and gets RFC 8628 error
+   bodies (`authorization_pending`, `slow_down`, `access_denied`, `expired_token`,
+   `invalid_grant`) until approval, then its credential, exactly once. A second exchange of the
+   same grant is `invalid_grant`.
+4. The credential is a 15-minute access token (`tcd_at_…`) and a refresh token (`tcd_rt_…`),
+   both 32 random bytes stored as SHA-256 only. `POST /api/v1/capture/token/refresh/` rotates
+   both; the replaced refresh hash is kept, and presenting it again revokes the device, since
+   it means the credential exists in two places. A device idle for 90 days is revoked on its
+   next refresh. The refresh is also where the person's current standing is checked: capture
+   still enabled, `capture_batch:create` still held, and the agent at least the organization's
+   minimum version (answered `426` with `minimumVersion` so the tray can offer to update).
+5. On Windows the tokens live in Credential Manager, DPAPI-protected to that Windows user.
 
-Pairing polls and code attempts are rate-limited per IP and per code. A user can revoke a device
-from their settings; an admin can revoke any device in the organisation.
+A person can revoke their own device; revoking anybody else's takes `capture_device:update`.
+Revocation clears both hashes and closes the device's stream.
 
 ### 6.2 The principal
 
@@ -241,18 +297,30 @@ A new principal type `capture_device` in `authctx`, which **carries the paired u
 well as org and BU. This matters: `documentservice.Upload` requires `UploadedByID` from
 `TenantInfo.UserID`, which is why an `api_key` principal cannot upload documents today.
 
-Device tokens are narrow. They reach only `/capture/v1/*`: pair, stream, sources, batches and
-pages, and releases. They cannot call the rest of the API. Actions still run the **user's**
-permission checks (document create, read on the target record), so a device can never do more
-than its user.
+Device tokens are narrow: `capturehandler.RequireDevice` guards `/api/v1/capture/device/*` and
+nothing else, and the session middleware never accepts a device token. The device group has no
+CSRF check, because nothing there is reachable with a cookie, but it keeps the per-person rate
+limit and the control-plane entitlement check. Every action runs the **person's** permission
+checks through the permission engine, so a device can never do more than its person. It shares
+the person's rate budget (600 requests a minute by default), which a companion honouring
+`Retry-After` stays well inside.
 
 ### 6.3 Server → companion: the device stream
 
-The agent keeps one SSE connection, `GET /capture/v1/stream`, carried on the existing realtime
-broker with the audience set to the **device**. The browser asks for a scan by creating a
-`capture.Request` through GraphQL; the server publishes it to that device's stream. Progress
-flows back through the batch's status and is published to the user's browser as ordinary
-resource invalidations.
+The agent keeps one SSE connection, `GET /api/v1/capture/device/stream/`. It is opened on the
+existing realtime gateway as the device's person, and the handler forwards only what the device
+needs:
+
+- `ready`, `heartbeat`, `reset` and `close`, as the web app's stream has them;
+- `capture.request`, when an invalidation addressed to the person names this device: fetch
+  `GET /api/v1/capture/device/requests/`;
+- `capture.revoked`, after which the stream ends.
+
+Frames are filtered on raw bytes before any decoding, so a busy tenant costs a device nothing.
+The device fetches its requests on `capture.request`, on `reset` and on every reconnect, so a
+lost event never loses a request. Heartbeats keep `LastSeenAt` current (at most one write per 30
+seconds). The stream is recycled on the same jittered lifetime as the web app's, so a revoked
+credential is noticed at the next reconnect even without the event.
 
 Why not have the browser call the companion on `localhost`:
 
@@ -263,17 +331,18 @@ Why not have the browser call the companion on `localhost`:
 - It works identically when the browser and the companion are in different sessions (browser on
   a laptop, scanner on a shared workstation, a Citrix-published browser).
 
-Presence: the agent heartbeats on the stream, and `capture.Device.LastSeenAt` plus the broker's
-connection state give the web app an "online" dot per device.
+Presence: `CaptureDevice.IsOnline` is true when the device was heard from in the last 90
+seconds, which the web app shows as an "online" dot per device.
 
 ## 7. Server domain (`internal/core/domain/capture`)
 
 ### 7.1 Device — `capture_devices`, prefix `cdev_`
 
 The paired user, org and BU, display name, machine name, Windows user, agent version and
-architecture, status (`Active`, `Revoked`), `LastSeenAt`, refresh-token hash and family ID
-(for reuse detection), and a **sources snapshot** (JSONB: each scanner's name, protocol,
-bitness and supported capabilities).
+architecture, status (`Active`, `Revoked`), `LastSeenAt` and IP, the access and refresh token
+hashes plus the replaced refresh hash (for reuse detection), and a **sources snapshot** (JSONB:
+each scanner's name, protocol, bitness, duplex, feeder, patch codes, barcodes, blank discard,
+resolutions and pixel types).
 
 ### 7.2 Request — `capture_requests`, prefix `creq_`
 
@@ -308,7 +377,8 @@ A proposed document within a batch. It holds:
 - an ordered list of page IDs;
 - the suggested document type and target, with the **provenance** of each suggestion
   (`CoverSheet`, `Request`, `Classifier`, `Person`) and a confidence;
-- status: `Proposed` → `Filed` | `Discarded`;
+- status: `Proposed` → `Filing` → `Filed`, or `Discarded`; a failed filing is `Failed` and
+  can be filed again;
 - once filed, the `DocumentID` and who filed it, when.
 
 A page belongs to at most one live item. Edits are optimistic-locked on the batch `Version`, so
@@ -316,30 +386,38 @@ two people cannot split the same stack two ways.
 
 ### 7.6 Profile — `capture_profiles`, prefix `cprf_`
 
-Organisation-level scan presets: dpi, pixel type, duplex, feeder, blank-page removal, JPEG
-quality, whether to show the driver UI, **separator strategy**
-(`None`, `PatchCode`, `CoverSheet`, `BlankPage`, `FixedPageCount(n)`, or a combination), and a
-default flag. Users pick one; the admin page manages them.
+Organization-level scan presets: DPI (100–600), pixel type, duplex, feeder, blank-page removal,
+JPEG quality, whether to show the driver UI, **separator strategies** (`PatchCode`,
+`CoverSheet`, `BlankPage`, `FixedPageCount` with a page count, in any combination), and a
+default flag (at most one per tenant, enforced by a partial unique index; setting a new default
+clears the old one in the same transaction). Patch sheets and cover sheets divide a stack
+whatever the profile says, because a person put them there on purpose. The default is 300 DPI
+black and white, duplex, blank pages dropped.
 
 ### 7.7 Cover sheet — `capture_cover_sheets`, prefix `ccs_`
 
 A printable separator that says where the following pages go: target record and document type,
-issued by, issued at, and optional expiry. The QR code encodes
-`TRNV1:<cover-sheet-id>:<hmac>`, with the HMAC keyed per organisation. A sheet scanned in
-another tenant, or a forged one, fails verification and is treated as a plain separator. Filing
-still re-checks the user's permission on the target, so a valid sheet never grants access.
+issued by, and an expiry (180 days). The QR code encodes `TRNV-CS1:<token>`, where the token is
+32 random bytes stored only as its SHA-256, looked up inside the tenant that scanned it. That
+replaced the per-organization HMAC in the first draft: a random token needs no key management,
+names no record on paper, and a sheet copied into another tenant's stack finds no row. An
+unknown, foreign or expired sheet still divides the stack and routes nothing. Filing re-checks
+the person's permission on the target, so a valid sheet never grants access.
 
 ### 7.8 Organisation settings
 
-On a `CaptureControl`, alongside the existing per-tenant controls:
+On the existing `DocumentControl` rather than a new control, since these are document settings
+and the document-intelligence admin page already edits that record:
 
-- capture enabled;
-- **review policy** for cover-sheet-routed items: `AlwaysReview`, `ReviewBelowConfidence` or
-  `AutoFile`. This is the same three-way choice `inboundmessage.ReviewPolicy` makes, so it is
-  lifted into a shared type rather than copied.
-- unfiled batch retention (default 30 days, with a reminder at 7 days left);
-- minimum agent version;
-- auto-update allowed.
+- `enableCapture`;
+- `captureAutoFileCoverSheets`. The first draft had a three-way review policy borrowed from
+  inbound mail, but a verified cover sheet is not a guess with a confidence: somebody printed
+  it for that record and that document type. The only question is whether the organization
+  trusts that without a second look, which is a yes or no. Classifier suggestions always wait
+  for a person.
+- `captureRetentionDays` (1–365, default 30);
+- `captureMinAgentVersion` (`MAJOR.MINOR.PATCH`, compared by `shared/versionutils`);
+- `captureAllowAutoUpdate`.
 
 ## 8. Flows
 
@@ -403,61 +481,115 @@ filing waits for a person. Cover sheets can also be printed blank (split-only) f
 
 1. It checks, as the **acting person**, `document:create` and read on the target via
    `document.OwnerResource()`.
-2. It assembles the item's pages into one PDF. An untouched print job reuses the original PDF,
-   so the text layer survives.
+2. It assembles the item's pages into one PDF (`pdfcpu`, in `infrastructure/pdfassembly`),
+   applying each page's rotation. A print job was split into pages by page tree, not
+   rasterized, so each printed page keeps its own text layer when it is joined again.
 3. It creates the document through `documentuploadservice` with a new `ProcessingProfile`,
    `capture`, which `SupportsIntelligence`. It gets the same encryption, checksum, thumbnail,
    extraction, packet-rule and auto-ready-to-invoice behaviour as any upload.
-4. It marks the item `Filed`, rolls the batch status forward, publishes invalidations for the
-   batch and the target's document list, and writes an audit entry.
+4. With a worker, `FileCaptureItemWorkflow` runs the upload pipeline's own finalize workflow as
+   a child and records the document it returns; without one, the upload service finalizes
+   inline. Either way the item becomes `Filed` with its `DocumentID`, the batch is recounted
+   (`PartiallyFiled`, then `Filed`), the cover sheet's use is recorded, an audit entry is written
+   and the batch and the target record are invalidated.
 
-Filing is idempotent per item: a retried file returns the existing document.
+Filing is idempotent per item: an item already filing or filed returns as it is, and recording
+the same document twice changes nothing. A filing that fails returns the item to the person as
+`Failed` with the reason, pages intact.
 
 ## 9. Processing (Temporal)
 
-`ProcessCaptureBatchWorkflow`, on a `CaptureTaskQueue`, starts when a batch is sealed:
+`ProcessCaptureBatchWorkflow`, on the new `capture-queue`, starts when a batch is sealed. Its
+activity heartbeats per page, so a worker lost halfway through a long stack is replaced in
+minutes.
 
-1. Per page, in parallel with a bound: rasterize (`go-fitz`), then compute:
-   - the thumbnail;
-   - the blank score (ink coverage after thresholding);
-   - QR/barcode payloads (`gozxing`), with cover sheets verified by HMAC.
-2. Propose items from the profile's separator strategy, the device-reported patch codes and the
-   verified cover sheets. Separator pages are dropped from items but kept on the batch, so a
-   wrong split can be undone.
-3. Suggest a type and target per item. This reuses the document-intelligence analysis
-   (text extraction, OCR, feature and provider detection, parsing rules, the kind → type
-   mapping, and the reference matching inbound email uses to find a shipment from PRO/BOL
-   numbers) through one analyzer port. Today that logic sits inside
-   `documentintelligencejobs/activities.go` and only runs against a stored `Document`; it is
-   extracted so both callers share it rather than copied.
-4. Move the batch to `Ready`. Apply auto-filing where the request or review policy allows it.
+1. Each page not yet read is rendered at 150 DPI (`go-fitz`, in `infrastructure/captureimaging`)
+   and measured: a 240 px JPEG thumbnail (stored encrypted beside the page), ink coverage inside
+   a 6% margin (blank below 0.4%), and every QR code on it (`gozxing`). Cover-sheet codes are
+   looked up in the tenant. A page that cannot be read is kept and marked `Failed`, never
+   dropped. In a `nofitz` build inspection is skipped and pages are still kept and filed.
+2. `capture.SplitPages` divides the stack: patch sheets and cover sheets always, blank pages and
+   fixed page counts when the profile says so. A cover sheet routes what follows it until the
+   next division; a page-count division keeps the route. Separator pages are flagged but kept.
+3. Each item gets a suggestion from the most trusted source available: its cover sheet, then
+   the record the scan was started from, then its content. Content is read by
+   `documentintelligencejobs.CaptureAnalyzer`, which runs the same extraction, OCR,
+   classification and parsing rules as a stored document, without storing or recording
+   anything, and maps the kind to a document type code. Reference numbers (the extracted
+   reference field, then numbers from the text, via `shared/referenceutils`, which inbound mail
+   now uses too) are looked up with the inbound shipment finder, which refuses a reference
+   naming two shipments.
+4. The batch becomes `Ready` (or `Discarded` if nothing survived). Items that need no person are
+   filed as the capturing person: the only document of a scan started from a record with a
+   document type, and cover-sheet routes when `captureAutoFileCoverSheets` is on. An automatic
+   filing the person could not have made stays in intake.
 
-Two scheduled workflows go with it:
-
-- `ExpireCaptureWorkflow` expires stale requests, sends the retention reminder, and
-  discards and purges batches past retention.
-- `ReconcileCaptureWorkflow` catches batches whose processing was lost.
-
-Both follow `ReconcileDocumentUploadsWorkflow`.
+`CaptureMaintenanceWorkflow` runs every five minutes: it expires pairings and requests nobody
+picked up, restarts sealed or processing batches untouched for 30 minutes, fails or seals
+uploads abandoned for 7 days, expires unfiled batches past retention, and deletes the stored
+pages and thumbnails of every batch past retention, filed or not (a filed document has its own
+copy).
 
 ## 10. API surface
 
-**Companion (REST, `capture_device` principal only),** under `/capture/v1/`:
+All paths are under `/api/v1/capture/` and documented in the OpenAPI spec (tag `Capture`).
+
+**Public (rate-limited per IP):**
 
 | Method | Path | Purpose |
 |---|---|---|
-| `POST` | `pair`, `pair/token` | Device authorisation grant |
-| `POST` | `token/refresh` | Rotate the refresh token, issue an access token |
-| `GET` | `stream` | SSE: requests, revocation, config |
-| `PUT` | `sources` | Sources snapshot |
-| `POST` | `batches` | Open a batch (from a request or ad hoc) |
-| `PUT` | `batches/:id/pages/:seq` | Upload one page (idempotent) |
-| `POST` | `batches/:id/seal` | Seal with count + digest |
-| `POST` | `requests/:id/status` | Delivered, in progress, failed (with code) |
-| `GET` | `releases/latest` | Signed update manifest |
+| `POST` | `pair/` | Start a device authorization grant |
+| `POST` | `pair/token/` | Poll it; returns the credential once |
+| `POST` | `token/refresh/` | Rotate the credential |
 
-Page uploads are raw bodies, not multipart, capped per page (20 MB) and per batch (1,000 pages).
-They are content-sniffed and must decode as a PDF with exactly one page, or a PDF/PWG print job.
+**Device (`Authorization: Bearer tcd_at_…` only):**
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `device/` | The device record, including who it acts for |
+| `PUT` | `device/sources/` | Report reachable scanners |
+| `GET` | `device/stream/` | SSE stream (§6.3) |
+| `GET` | `device/requests/` | Open requests, oldest first |
+| `POST` | `device/requests/:id/status/` | Delivered, in progress, failed or cancelled, with a code |
+| `POST` | `device/batches/` | Open a batch; idempotent on `clientKey` |
+| `PUT` | `device/batches/:id/pages/:seq/` | Upload one page |
+| `PUT` | `device/batches/:id/print-job/` | Upload a whole print job; splits and seals |
+| `POST` | `device/batches/:id/seal/` | Seal with page count and manifest digest |
+
+A page is a raw `application/pdf` body of exactly one page, at most 20 MB, sniffed rather than
+trusted, with scanner markers in `X-Capture-Dpi`, `X-Capture-Patch-Code` and repeatable
+`X-Capture-Barcode` headers. Uploads are idempotent on `(batch, sequence)`: the same page again
+returns the stored page, and a different page at a taken sequence is `409`. A print job is at
+most 200 MB. The manifest digest is SHA-256 over each page's SHA-256 hex digest followed by a
+newline, in sequence order. A batch holds at most 1,000 pages. The update manifest endpoint
+(`releases/latest`) is part of phase 5.
+
+**Signed-in (session):**
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `pairings/:userCode/` | Preview a pairing before approving it |
+| `POST` | `pairings/decide/` | Approve or deny |
+| `GET` | `devices/` | `?mine=true` for your own; everyone's needs `capture_device:read` |
+| `POST` | `devices/:id/revoke/` | Revoke |
+| `POST` | `requests/` | Ask one of your own devices to scan, or arm a print |
+| `POST` | `requests/:id/cancel/` | Cancel your request |
+| `GET` | `pages/:id/content/` | A page as PDF, or `?kind=thumbnail` |
+
+Page and thumbnail bytes are served through the API because they are encrypted at rest; a
+presigned link would hand out ciphertext.
+
+**Web app (GraphQL, phase 2),** next to `inboundmessage.graphqls`: the intake queue
+(`captureBatches` as a connection honouring the `IncludeTotalCount` gate, `captureBatch`), editing
+(`editCaptureItems` with the batch version), filing (`fileCaptureItem`, bulk `fileCaptureItems`),
+discarding, cover sheets, devices (`myCaptureDevices`) and profiles. The service methods behind
+all of them exist and are tested in phase 1 (`ListBatches`, `GetBatch`, `EditItems`, `FileItem`,
+`DiscardItem`, `DiscardBatch`, `CreateCoverSheets`), apart from the profile administration
+service.
+
+Permission resources: `capture_batch` (read; create = capture; update = file; delete = discard;
+data scope decides own versus everyone's intake), `capture_device` (read and revoke across the
+organization) and `capture_profile`. Capture settings live on `document_control`.
 
 **Web app (GraphQL),** next to `inboundmessage.graphqls`:
 
@@ -482,7 +614,8 @@ through short-lived presigned URLs, as document previews are now.
   through the spooler, and takes no commands.
 - **Local isolation:** named pipes and spool directories are ACL'd per user SID. Scan helpers
   run in isolated processes with no network or credential.
-- **Cover sheets:** HMAC'd per organisation, and never a grant of access.
+- **Cover sheets:** random tokens, hashed at rest and resolved only within the scanning tenant;
+  never a grant of access.
 - **At rest:** pages are envelope-encrypted like documents, and purged with the batch.
 - **Updates:** the manifest is signed (ed25519, key pinned in the binary). The MSI is
   Authenticode-signed and checked with `WinVerifyTrust` before the service installs it.
@@ -501,14 +634,23 @@ Every phase is shipped complete; the order only reflects dependencies.
      with Protected Print Mode, and which formats it sends;
    - TWAIN memory transfer in both bitnesses against a VRS-equipped scanner, plus one of each
      common family (Fujitsu/Ricoh fi, Canon DR, Epson DS, Kodak Alaris).
-1. **Server domain and companion API:** migrations, domain, repositories (buncolgen),
-   pairing and the `capture_device` principal, the device stream, batch and page upload, the
-   processing workflow, filing, and the analyzer-port extraction.
+1. **Server domain and companion API — complete.** Migration `20261231006800_document_capture`
+   (and its generated SQLite twin); the `capture` domain with the split rules; repositories on
+   buncolgen; pairing, credentials and the `capture_device` principal; the device stream; batch,
+   page and print-job intake; processing, auto-filing and filing workflows on `capture-queue`;
+   the capture analyzer; maintenance; permissions; OpenAPI. Tested by domain and service unit
+   tests over in-memory stores and real PDFs, adapter tests, handler tests, and a repository
+   integration test (`-tags integration`) that ran green against Postgres 16.
 2. **Web:**
-   - the `/intake` route and page-strip editor;
-   - Scan, Print-into and cover sheets on the Documents tab;
-   - device settings and the capture admin (profiles, control, device fleet, installer
-     download);
+   - the GraphQL schema and resolvers over the phase 1 service, and the profile
+     administration service;
+   - the `/intake` route and page-strip editor, and `capture_batch` in the realtime
+     `RESOURCE_QUERY_KEY_MAP`;
+   - Scan, Print-into and cover sheets on the Documents tab, including the cover-sheet PDF
+     (QR code and label per sheet);
+   - the `/capture/pair` approval page, device settings, and the capture section of the
+     document admin (settings, profiles, device fleet, installer download);
+   - the retention reminder notification to a batch's owner seven days before it expires;
    - product guide regeneration.
 3. **Companion core:** agent, tray, pairing, stream, spool/upload queue, TWAIN helper (x64 and
    x86) and WIA.
@@ -518,13 +660,18 @@ Every phase is shipped complete; the order only reflects dependencies.
    - a `native-capture.yml` workflow on `windows-latest`: `cargo fmt`/`clippy`/`test`, both
      targets, MSI build.
 
-## 13. Open questions
+## 13. Answered questions
 
-1. **Code signing:** who owns the certificate? An EV certificate or Azure Trusted Signing
+1. **Code signing:** Trenova owns the certificate. An EV certificate or Azure Trusted Signing
    avoids SmartScreen warnings on first run.
-2. **Test hardware:** which scanners and VRS versions do the pilot customers run? That fixes
-   the phase-0 test lab.
-3. **RDS/Citrix:** do any customers publish Trenova from a terminal server? The design supports
-   it; it only changes how much testing phase 4 needs.
-4. **Shared intake:** is "Everyone's" (by data scope) enough, or do teams need named queues,
-   such as a billing intake separate from a dispatch intake?
+2. **Test hardware:** no customer list exists, so §5.7 sets the supported list and the lab.
+3. **Terminal servers:** not a target; customers use the cloud product, and self-hosters run
+   the documented Docker deployment.
+4. **Queues:** one intake queue with filters and sorting; no named queues.
+
+## 14. Known issues outside this work
+
+- `TestFullSeedRunOnSQLite` fails on `master` because the committed SQLite migrations have
+  drifted from the Postgres ones (`driver_settlements.posted_payable_account_id` is missing).
+  Regenerating with `task sqlite-convert` fixes it; it is left to its own change so this one
+  does not rewrite unrelated migrations.
