@@ -3,6 +3,7 @@ package agenttoolservice
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -49,20 +50,11 @@ func (t *evaluateServiceFailuresTool) Preview(
 	ctx context.Context,
 	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolPreviewer interface passes params by value
 ) (*agent.ToolPreview, error) {
-	if err := guardPreview(t, &params); err != nil {
-		return nil, err
-	}
-
-	request, err := t.request(&params)
-	if err != nil {
-		return nil, err
-	}
-
-	plan, err := t.failures.PreviewEvaluateShipment(ctx, request)
+	plans, err := t.plans(ctx, &params)
 	if err != nil {
 		if isRefusal(err) {
 			return warnWouldFail(
-				toolpreview.Build("Would check this shipment's stops for service failures."),
+				toolpreview.Build("Would check the shipment's stops for service failures."),
 				err,
 			), nil
 		}
@@ -70,12 +62,85 @@ func (t *evaluateServiceFailuresTool) Preview(
 		return nil, err
 	}
 
-	changes, err := detectedFailureChanges(plan)
+	summaries := make([]string, 0, len(plans))
+	changes := make([]*agent.RecordChange, 0, len(plans))
+	for _, plan := range plans {
+		planChanges, changeErr := detectedFailureChanges(plan)
+		if changeErr != nil {
+			return nil, changeErr
+		}
+		changes = append(changes, planChanges...)
+		summaries = append(summaries, detectionSummary(plan))
+	}
+
+	return toolpreview.Build(strings.Join(summaries, " "), changes...), nil
+}
+
+func (t *evaluateServiceFailuresTool) Validate(
+	ctx context.Context,
+	params serviceports.ToolExecuteParams, //nolint:gocritic // the ToolValidator interface passes params by value
+) error {
+	_, err := t.plans(ctx, &params)
+
+	return err
+}
+
+func (t *evaluateServiceFailuresTool) plans(
+	ctx context.Context,
+	params *serviceports.ToolExecuteParams,
+) ([]*serviceports.ServiceFailureDetectionPlan, error) {
+	if err := guardPreview(t, params); err != nil {
+		return nil, err
+	}
+
+	scope, err := t.request(params)
 	if err != nil {
 		return nil, err
 	}
 
-	return toolpreview.Build(detectionSummary(plan), changes...), nil
+	shipmentIDs := scope.shipmentIDs
+	if len(shipmentIDs) == 0 {
+		shipmentIDs = []pulid.ID{scope.shipmentID}
+	}
+
+	plans := make([]*serviceports.ServiceFailureDetectionPlan, 0, len(shipmentIDs))
+	for _, shipmentID := range shipmentIDs {
+		plan, planErr := t.failures.PreviewEvaluateShipment(ctx, scope.shipmentRequest(shipmentID))
+		if planErr != nil {
+			return nil, planErr
+		}
+		if scope.stopID.IsNotNil() {
+			plan = restrictDetectionToStop(plan, scope.stopID)
+		}
+		plans = append(plans, plan)
+	}
+
+	return plans, nil
+}
+
+func restrictDetectionToStop(
+	plan *serviceports.ServiceFailureDetectionPlan,
+	stopID pulid.ID,
+) *serviceports.ServiceFailureDetectionPlan {
+	restricted := &serviceports.ServiceFailureDetectionPlan{
+		Shipment:     plan.Shipment,
+		Detected:     make([]serviceports.DetectedServiceFailure, 0, 1),
+		SkippedStops: make([]serviceports.ServiceFailureSkippedStop, 0, 1),
+		MarksDelayed: false,
+	}
+	for idx := range plan.Detected {
+		if plan.Detected[idx].Failure != nil && plan.Detected[idx].Failure.StopID == stopID {
+			restricted.Detected = append(restricted.Detected, plan.Detected[idx])
+		}
+	}
+	for idx := range plan.SkippedStops {
+		if plan.SkippedStops[idx].StopID == stopID {
+			restricted.SkippedStops = append(restricted.SkippedStops, plan.SkippedStops[idx])
+		}
+	}
+	restricted.MarksDelayed = plan.MarksDelayed && len(restricted.Detected) > 0
+
+	return restricted
 }
 
 func detectedFailureChanges(
