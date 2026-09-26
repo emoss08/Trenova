@@ -86,6 +86,11 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						// previewed, no baseline is kept and no digest checked.
 						services.ProposalPreviewService,
 						services.RecordLabeler,
+						services.AICorrectionService,
+						services.EvaluationBudget,
+						services.ExtractionPredictor,
+						services.ExtractionEvalRunStarter,
+						services.ExtractionEvalRunner,
 					) {
 					},
 				),

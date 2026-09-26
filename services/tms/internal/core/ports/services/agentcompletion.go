@@ -20,6 +20,7 @@ var (
 	// ErrProvidersResting reports that every provider the request could use
 	// is paused after repeated failures, so nothing was attempted.
 	ErrProvidersResting = errors.New("every usable AI provider is resting after repeated failures")
+	ErrRequiredProviderUnavailable = errors.New("the required AI provider cannot serve this task")
 )
 
 type ContextSection struct {
@@ -47,6 +48,7 @@ type StructuredCompletionRequest struct {
 	// only when that provider is enabled and serves the task; otherwise the usual
 	// priority order applies, so a deleted preference never strands a caller.
 	PreferredProviderID pulid.ID
+	RequireProvider bool
 	// Attribution says who the call is for, so its cost lands somewhere.
 	Attribution AIUsageAttribution
 }

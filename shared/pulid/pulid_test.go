@@ -431,3 +431,11 @@ func TestLooksLike(t *testing.T) {
 		assert.False(t, pulid.LooksLike(value), value)
 	}
 }
+
+func TestFirstNotNil(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, pulid.ID("usr_b"), pulid.FirstNotNil(pulid.Nil, "", "usr_b", "usr_c"))
+	assert.Equal(t, pulid.Nil, pulid.FirstNotNil())
+	assert.Equal(t, pulid.Nil, pulid.FirstNotNil(pulid.Nil, ""))
+}

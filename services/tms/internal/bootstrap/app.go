@@ -7,7 +7,6 @@ import (
 	modulesinfra "github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/agentextensionservice"
-	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
 	"github.com/emoss08/trenova/internal/core/services/agentguard"
 	"github.com/emoss08/trenova/internal/core/services/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/core/services/agentruneventservice"
@@ -15,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolcatalog"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
+	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
@@ -56,6 +56,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/edijobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/exchangeratejobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/extractionevaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fiscaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/formulatemplatejobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fuelcardjobs"
@@ -185,6 +186,7 @@ func Options() fx.Option {
 		inboundjobs.Module,
 		briefingjobs.Module,
 		aicorrectionjobs.Module,
+		extractionevaljobs.Module,
 		aifeedbackjobs.Module,
 		retrievaljobs.Module,
 		iftajobs.Module,

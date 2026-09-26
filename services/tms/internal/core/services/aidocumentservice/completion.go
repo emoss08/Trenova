@@ -24,10 +24,12 @@ type structuredCall struct {
 	schemaName string
 	context    serviceports.DelimitedContext
 	schema     map[string]any
+	providerID pulid.ID
+	evaluation bool
 }
 
 func (c *structuredCall) request() *serviceports.StructuredCompletionRequest {
-	return &serviceports.StructuredCompletionRequest{
+	request := &serviceports.StructuredCompletionRequest{
 		TenantInfo:   c.tenant,
 		Task:         c.task,
 		System:       c.system,
@@ -36,6 +38,13 @@ func (c *structuredCall) request() *serviceports.StructuredCompletionRequest {
 		SchemaName:   c.schemaName,
 		Attribution:  documentAttribution(c.tenant, c.documentID, c.feature),
 	}
+	if c.evaluation {
+		request.PreferredProviderID = c.providerID
+		request.RequireProvider = true
+		request.Attribution.Purpose = serviceports.AIUsagePurposeEvaluation
+	}
+
+	return request
 }
 
 func documentAttribution(

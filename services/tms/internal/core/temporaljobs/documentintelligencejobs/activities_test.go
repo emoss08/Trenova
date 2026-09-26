@@ -2,6 +2,7 @@ package documentintelligencejobs
 
 import (
 	"context"
+	"errors"
 	"io"
 	"strings"
 	"testing"
@@ -30,6 +31,13 @@ import (
 )
 
 type asyncRouteOnlyAIDocumentService struct{}
+
+func (asyncRouteOnlyAIDocumentService) ExtractRateConfirmationForEvaluation(
+	context.Context,
+	*services.AIEvaluationExtractRequest,
+) (*services.AIEvaluationExtractResult, error) {
+	return nil, errors.New("evaluation extraction is not used by these tests")
+}
 
 func (asyncRouteOnlyAIDocumentService) RouteDocument(
 	context.Context,
@@ -748,4 +756,33 @@ func TestHasUsableShipmentDraft_FalseForIncompleteDraft(t *testing.T) {
 	}
 
 	require.False(t, hasUsableShipmentDraft(intelligence))
+}
+
+func TestShipmentDraftDataFromAIExtract_MatchesTheProductionDraftShape(t *testing.T) {
+	t.Parallel()
+
+	data := ShipmentDraftDataFromAIExtract(&services.AIExtractResult{
+		DocumentKind: "RateConfirmation",
+		Fields: map[string]services.AIDocumentField{
+			"Total Rate": {Label: "Total Rate", Value: "$1,850.00", Confidence: 0.9},
+		},
+		Stops: []*services.AIDocumentStop{
+			{Sequence: 0, Role: "Shipper", Name: "Northwind Foods", City: "Dallas"},
+		},
+	})
+
+	fields, ok := data["fields"].(map[string]any)
+	require.True(t, ok)
+	rate, ok := fields["rate"].(map[string]any)
+	require.True(t, ok, "field keys are normalized the way production normalizes them")
+	assert.Equal(t, "$1,850.00", rate["value"])
+
+	stops, ok := data["stops"].([]map[string]any)
+	require.True(t, ok)
+	require.Len(t, stops, 1)
+	assert.Equal(t, "pickup", stops[0]["role"])
+	assert.Equal(t, "Northwind Foods", stops[0]["name"])
+
+	empty := ShipmentDraftDataFromAIExtract(nil)
+	assert.NotNil(t, empty["fields"])
 }

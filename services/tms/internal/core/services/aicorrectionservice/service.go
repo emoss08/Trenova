@@ -103,8 +103,8 @@ func (s *Service) CaptureShipmentDraft(
 		)
 	}
 
-	predicted := readPrediction(req.Draft.DraftData)
-	if predicted.empty() {
+	predicted := aicorrection.ReadPrediction(req.Draft.DraftData)
+	if predicted.Empty() {
 		return nil, aicorrection.ErrNothingPredicted
 	}
 
@@ -130,14 +130,14 @@ func (s *Service) CaptureShipmentDraft(
 		SubjectID:      shp.ID,
 		CapturedByID:   req.CapturedByID,
 		DocumentKind: stringutils.TruncateRunes(
-			stringutils.FirstNonEmpty(req.Draft.DocumentKind, predicted.kind),
+			stringutils.FirstNonEmpty(req.Draft.DocumentKind, predicted.Kind),
 			aicorrection.MaxDocumentKindLength,
 		),
-		DocumentFingerprint: stringutils.TruncateRunes(predicted.issuer, aicorrection.MaxFingerprintLength),
-		PredictedConfidence: predictedConfidence(req.Draft.Confidence, predicted.confidence),
-		Predicted:           predicted.snapshot,
-		Confirmed:           confirmed.snapshot,
-		FieldResults:        compareSnapshots(predicted, confirmed),
+		DocumentFingerprint: stringutils.TruncateRunes(predicted.Issuer, aicorrection.MaxFingerprintLength),
+		PredictedConfidence: predictedConfidence(req.Draft.Confidence, predicted.Confidence),
+		Predicted:           predicted.Snapshot,
+		Confirmed:           confirmed,
+		FieldResults:        aicorrection.Score(predicted, confirmed),
 		CapturedAt:          s.now(),
 	}
 	s.attachExtractionModel(ctx, entity, documentID, req.TenantInfo)

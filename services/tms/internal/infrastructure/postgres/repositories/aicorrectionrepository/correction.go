@@ -9,6 +9,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -16,8 +20,11 @@ import (
 )
 
 const (
-	defaultPurgeLimit = 1000
-	maxPurgeLimit     = 10000
+	defaultPurgeLimit    = 1000
+	maxPurgeLimit        = 10000
+	defaultAccuracyLimit = 2000
+	maxAccuracyLimit     = 10000
+	correctionEntity     = "AICorrection"
 )
 
 type Params struct {
@@ -140,4 +147,130 @@ func (r *repository) PurgeBefore(
 	}
 
 	return rows, nil
+}
+
+func (r *repository) GetByID(
+	ctx context.Context,
+	req repositories.GetAICorrectionRequest,
+) (*aicorrection.Correction, error) {
+	entity := new(aicorrection.Correction)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.CorrectionColumns.ID.Eq(), req.ID)
+		}).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, correctionEntity)
+	}
+
+	return entity, nil
+}
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *repositories.ListAICorrectionConnectionRequest,
+) (*pagination.CursorListResult[*aicorrection.Correction], error) {
+	dba := r.db.DBForContext(ctx)
+
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.NewSelect().
+			Model((*aicorrection.Correction)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				sq = querybuilder.ApplyFiltersWithoutSort(
+					sq,
+					buncolgen.CorrectionTable.Alias,
+					req.Filter,
+					(*aicorrection.Correction)(nil),
+				)
+
+				return sq.Apply(buncolgen.CorrectionApplyTenant(req.Filter.TenantInfo))
+			}).
+			Count(ctx)
+		if err != nil {
+			r.l.Error("failed to count ai corrections", zap.Error(err))
+
+			return nil, err
+		}
+		totalCount = &total
+	}
+
+	result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*aicorrection.Correction]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: totalCount,
+		Query: func(entities *[]*aicorrection.Correction) *bun.SelectQuery {
+			q := dba.NewSelect().Model(entities)
+			if len(req.Columns) > 0 {
+				q = q.Column(req.Columns...)
+			}
+
+			return q
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			return querybuilder.ApplyCursorFilters(
+				sq,
+				buncolgen.CorrectionTable.Alias,
+				req.Filter,
+				req.Cursor,
+				(*aicorrection.Correction)(nil),
+			)
+		},
+	})
+	if err != nil {
+		r.l.Error("failed to list ai corrections", zap.Error(err))
+
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (r *repository) ListForAccuracy(
+	ctx context.Context,
+	req repositories.ListAICorrectionsForAccuracyRequest,
+) ([]*aicorrection.Correction, error) {
+	cols := buncolgen.CorrectionColumns
+	limit := req.Limit
+	if limit <= 0 {
+		limit = defaultAccuracyLimit
+	}
+	limit = min(limit, maxAccuracyLimit)
+
+	entities := make([]*aicorrection.Correction, 0, min(limit, defaultAccuracyLimit))
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Column(
+			cols.ID.Bare(),
+			cols.DocumentKind.Bare(),
+			cols.ExtractionModel.Bare(),
+			cols.ExtractionProviderID.Bare(),
+			cols.FieldResults.Bare(),
+			cols.ScoredCount.Bare(),
+			cols.CorrectCount.Bare(),
+			cols.CorrectedCount.Bare(),
+			cols.MissedCount.Bare(),
+			cols.UnconfirmedCount.Bare(),
+			cols.UnscoredCount.Bare(),
+			cols.CapturedAt.Bare(),
+		).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
+				Where(cols.Task.Eq(), req.Task).
+				Where(cols.CapturedAt.Gte(), req.Since)
+		}).
+		Order(cols.CapturedAt.OrderDesc(), cols.ID.OrderAsc()).
+		Limit(limit).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list ai corrections for accuracy", zap.Error(err))
+
+		return nil, fmt.Errorf("list ai corrections for accuracy: %w", err)
+	}
+
+	return entities, nil
 }

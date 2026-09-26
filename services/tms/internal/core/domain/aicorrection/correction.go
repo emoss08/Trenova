@@ -6,15 +6,21 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*Correction)(nil)
+var (
+	_ bun.BeforeAppendModelHook      = (*Correction)(nil)
+	_ pagination.CursorEntity        = (*Correction)(nil)
+	_ domaintypes.PostgresSearchable = (*Correction)(nil)
+)
 
 var ErrNothingPredicted = errors.New("the source holds no prediction to compare")
 
@@ -88,6 +94,8 @@ func TallyResults(results []FieldResult) Tally {
 
 type Correction struct {
 	bun.BaseModel `bun:"table:ai_corrections,alias:aicr" json:"-"`
+
+	pagination.CursorValueSet `json:"-" bun:",embed"`
 
 	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
@@ -205,11 +213,26 @@ func (c *Correction) Validate(multiErr *errortypes.MultiError) {
 
 func (c *Correction) GetID() pulid.ID { return c.ID }
 
+func (c *Correction) GetCreatedAt() int64 { return c.CreatedAt }
+
 func (c *Correction) GetOrganizationID() pulid.ID { return c.OrganizationID }
 
 func (c *Correction) GetBusinessUnitID() pulid.ID { return c.BusinessUnitID }
 
 func (c *Correction) GetTableName() string { return "ai_corrections" }
+
+func (c *Correction) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "aicr",
+		UseSearchVector: false,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "document_kind", Type: domaintypes.FieldTypeText},
+			{Name: "document_fingerprint", Type: domaintypes.FieldTypeText},
+			{Name: "extraction_model", Type: domaintypes.FieldTypeText},
+			{Name: "task", Type: domaintypes.FieldTypeEnum},
+		},
+	}
+}
 
 func (c *Correction) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	now := timeutils.NowUnix()

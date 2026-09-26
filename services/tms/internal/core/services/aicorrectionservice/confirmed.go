@@ -4,75 +4,48 @@ import (
 	"cmp"
 	"slices"
 	"strconv"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const (
-	confirmedReference = "referenceNumber"
-	confirmedRate      = "rate"
-	confirmedWeight    = "weight"
-	confirmedPieces    = "pieceCount"
-	confirmedCommodity = "commodity"
-	confirmedShipper   = "shipper"
-	confirmedConsignee = "consignee"
-	confirmedPickup    = "pickupWindow"
-	confirmedDelivery  = "deliveryWindow"
-)
-
-type confirmedStop struct {
-	snapshot aicorrection.StopSnapshot
-	location *time.Location
-}
-
-type confirmation struct {
-	snapshot *aicorrection.Snapshot
-	stops    []confirmedStop
-}
-
-func readConfirmation(shp *shipment.Shipment) *confirmation {
-	c := &confirmation{
-		snapshot: &aicorrection.Snapshot{Fields: map[string]string{}, Stops: []aicorrection.StopSnapshot{}},
+func readConfirmation(shp *shipment.Shipment) *aicorrection.Snapshot {
+	snapshot := &aicorrection.Snapshot{
+		Fields: map[string]string{},
+		Stops:  orderedStops(shp),
 	}
 
-	setField(c.snapshot.Fields, confirmedReference, shp.BOL)
+	setField(snapshot.Fields, aicorrection.FieldReference, shp.BOL)
 	if shp.FreightChargeAmount.Valid && !shp.FreightChargeAmount.Decimal.IsZero() {
-		setField(c.snapshot.Fields, confirmedRate, shp.FreightChargeAmount.Decimal.StringFixed(2))
+		setField(snapshot.Fields, aicorrection.FieldRate, shp.FreightChargeAmount.Decimal.StringFixed(2))
 	}
 	if shp.Weight != nil && *shp.Weight > 0 {
-		setField(c.snapshot.Fields, confirmedWeight, strconv.FormatInt(*shp.Weight, 10))
+		setField(snapshot.Fields, aicorrection.FieldWeight, strconv.FormatInt(*shp.Weight, 10))
 	}
 	if shp.Pieces != nil && *shp.Pieces > 0 {
-		setField(c.snapshot.Fields, confirmedPieces, strconv.FormatInt(*shp.Pieces, 10))
+		setField(snapshot.Fields, aicorrection.FieldPieces, strconv.FormatInt(*shp.Pieces, 10))
 	}
 	for _, sc := range shp.Commodities {
 		if sc != nil && sc.Commodity != nil && sc.Commodity.Name != "" {
-			setField(c.snapshot.Fields, confirmedCommodity, sc.Commodity.Name)
+			setField(snapshot.Fields, aicorrection.FieldCommodity, sc.Commodity.Name)
 			break
 		}
 	}
 
-	c.stops = orderedStops(shp)
-	for i := range c.stops {
-		c.snapshot.Stops = append(c.snapshot.Stops, c.stops[i].snapshot)
+	if first := snapshot.FirstStop(aicorrection.RolePickup); first != nil {
+		setField(snapshot.Fields, aicorrection.FieldShipper, first.Name)
+		setField(snapshot.Fields, aicorrection.FieldPickupWindow, first.Date)
+	}
+	if last := snapshot.LastStop(aicorrection.RoleDelivery); last != nil {
+		setField(snapshot.Fields, aicorrection.FieldConsignee, last.Name)
+		setField(snapshot.Fields, aicorrection.FieldDeliveryWindow, last.Date)
 	}
 
-	if first := firstStop(c.stops, rolePickup); first != nil {
-		setField(c.snapshot.Fields, confirmedShipper, first.snapshot.Name)
-		setField(c.snapshot.Fields, confirmedPickup, first.snapshot.Date)
-	}
-	if last := lastStop(c.stops, roleDelivery); last != nil {
-		setField(c.snapshot.Fields, confirmedConsignee, last.snapshot.Name)
-		setField(c.snapshot.Fields, confirmedDelivery, last.snapshot.Date)
-	}
-
-	return c
+	return snapshot
 }
 
-func orderedStops(shp *shipment.Shipment) []confirmedStop {
+func orderedStops(shp *shipment.Shipment) []aicorrection.StopSnapshot {
 	moves := make([]*shipment.ShipmentMove, 0, len(shp.Moves))
 	for _, move := range shp.Moves {
 		if move != nil {
@@ -84,7 +57,7 @@ func orderedStops(shp *shipment.Shipment) []confirmedStop {
 	})
 
 	perRole := map[string]int{}
-	result := make([]confirmedStop, 0, len(moves)*2)
+	result := make([]aicorrection.StopSnapshot, 0, len(moves)*2)
 	for _, move := range moves {
 		stops := make([]*shipment.Stop, 0, len(move.Stops))
 		for _, stop := range move.Stops {
@@ -98,7 +71,7 @@ func orderedStops(shp *shipment.Shipment) []confirmedStop {
 
 		for _, stop := range stops {
 			role := stopRole(stop.Type)
-			if perRole[role] >= maxStopsPerRole {
+			if perRole[role] >= aicorrection.MaxStopsPerRole {
 				continue
 			}
 			result = append(result, confirmedStopFrom(stop, role, perRole[role]))
@@ -109,8 +82,7 @@ func orderedStops(shp *shipment.Shipment) []confirmedStop {
 	return result
 }
 
-func confirmedStopFrom(stop *shipment.Stop, role string, sequence int) confirmedStop {
-	loc := time.UTC
+func confirmedStopFrom(stop *shipment.Stop, role string, sequence int) aicorrection.StopSnapshot {
 	snapshot := aicorrection.StopSnapshot{
 		Role:                 role,
 		Sequence:             sequence,
@@ -120,61 +92,39 @@ func confirmedStopFrom(stop *shipment.Stop, role string, sequence int) confirmed
 	}
 
 	if l := stop.Location; l != nil {
-		snapshot.Name = boundedText(l.Name)
-		snapshot.AddressLine1 = boundedText(l.AddressLine1)
-		snapshot.AddressLine2 = boundedText(l.AddressLine2)
-		snapshot.City = boundedText(l.City)
-		snapshot.PostalCode = boundedText(l.PostalCode)
+		snapshot.Name = aicorrection.BoundedText(l.Name)
+		snapshot.AddressLine1 = aicorrection.BoundedText(l.AddressLine1)
+		snapshot.AddressLine2 = aicorrection.BoundedText(l.AddressLine2)
+		snapshot.City = aicorrection.BoundedText(l.City)
+		snapshot.PostalCode = aicorrection.BoundedText(l.PostalCode)
 		if l.State != nil {
 			snapshot.State = l.State.Abbreviation
 		}
-		if l.Timezone != "" {
-			if parsed, err := time.LoadLocation(l.Timezone); err == nil {
-				loc = parsed
-				snapshot.Timezone = l.Timezone
-			}
+		snapshot.Timezone = l.Timezone
+		if snapshot.Location().String() != l.Timezone {
+			snapshot.Timezone = ""
 		}
 	}
 	if snapshot.AddressLine1 == "" {
-		snapshot.AddressLine1 = boundedText(stop.AddressLine)
+		snapshot.AddressLine1 = aicorrection.BoundedText(stop.AddressLine)
 	}
 	if stop.ScheduledWindowStart > 0 {
-		snapshot.Date = timeutils.FormatCalendarDate(stop.ScheduledWindowStart, loc)
+		snapshot.Date = timeutils.FormatCalendarDate(stop.ScheduledWindowStart, snapshot.Location())
 	}
 
-	return confirmedStop{snapshot: snapshot, location: loc}
+	return snapshot
 }
 
 func stopRole(stopType shipment.StopType) string {
 	if slices.Contains(shipment.DeliveryStopTypes(), stopType) {
-		return roleDelivery
+		return aicorrection.RoleDelivery
 	}
 
-	return rolePickup
-}
-
-func firstStop(stops []confirmedStop, role string) *confirmedStop {
-	for i := range stops {
-		if stops[i].snapshot.Role == role {
-			return &stops[i]
-		}
-	}
-
-	return nil
-}
-
-func lastStop(stops []confirmedStop, role string) *confirmedStop {
-	for i := len(stops) - 1; i >= 0; i-- {
-		if stops[i].snapshot.Role == role {
-			return &stops[i]
-		}
-	}
-
-	return nil
+	return aicorrection.RolePickup
 }
 
 func setField(fields map[string]string, key, value string) {
-	if bounded := boundedText(value); bounded != "" {
+	if bounded := aicorrection.BoundedText(value); bounded != "" {
 		fields[key] = bounded
 	}
 }

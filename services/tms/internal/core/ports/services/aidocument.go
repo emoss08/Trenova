@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 )
 
 type AIDocumentPage struct {
@@ -159,6 +160,23 @@ type AIBackgroundExtractPollResult struct {
 	FailureMessage string                       `json:"failureMessage,omitempty"`
 }
 
+type AIEvaluationExtractRequest struct {
+	TenantInfo pagination.TenantInfo
+	ProviderID pulid.ID
+	FileName   string
+	Pages      []AIDocumentPage
+}
+
+type AIEvaluationExtractResult struct {
+	Extract      *AIExtractResult
+	Model        string
+	ProviderID   pulid.ID
+	InputTokens  int
+	OutputTokens int
+	LatencyMs    int64
+	CostUSD      *decimal.Decimal
+}
+
 type AIDocumentService interface {
 	RouteDocument(ctx context.Context, req *AIRouteRequest) (*AIRouteResult, error)
 	ExtractRateConfirmation(ctx context.Context, req *AIExtractRequest) (*AIExtractResult, error)
@@ -170,4 +188,8 @@ type AIDocumentService interface {
 		ctx context.Context,
 		req *AIBackgroundExtractPollRequest,
 	) (*AIBackgroundExtractPollResult, error)
+	ExtractRateConfirmationForEvaluation(
+		ctx context.Context,
+		req *AIEvaluationExtractRequest,
+	) (*AIEvaluationExtractResult, error)
 }
