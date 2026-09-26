@@ -219,15 +219,15 @@ func (s *Service) PlanEventTransfer(
 			return nil, getErr
 		}
 		if req.Detach {
-			if plan.Refusal = PlanDetachPayEvent(plan.After, event); plan.Refusal != nil {
+			if plan.Refusal = PlanDetachPayEvent(plan.After, event); plan.Refused() {
 				return plan, nil
 			}
 			continue
 		}
-		if plan.Refusal = checkDraftForEvents(plan.After, "added to"); plan.Refusal != nil {
+		if plan.Refusal = checkDraftForEvents(plan.After, "added to"); plan.Refused() {
 			return plan, nil
 		}
-		if plan.Refusal = checkAttachable(plan.After, event); plan.Refusal != nil {
+		if plan.Refusal = checkAttachable(plan.After, event); plan.Refused() {
 			return plan, nil
 		}
 		AppendPayEventLines(plan.After, event)

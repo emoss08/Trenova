@@ -35,6 +35,10 @@ type BatchPlan struct {
 	Refusal       error
 }
 
+func (p *BatchPlan) Refused() bool {
+	return p.Refusal != nil
+}
+
 func (s *Service) PlanBatch(ctx context.Context, req *BatchPlanRequest) (*BatchPlan, error) {
 	batchReq := req.Batch
 	control, err := s.settlementControl.GetOrCreate(ctx, batchReq.TenantInfo)
@@ -49,7 +53,7 @@ func (s *Service) PlanBatch(ctx context.Context, req *BatchPlanRequest) (*BatchP
 		batchReq.PeriodEnd,
 		timeutils.NowUnix(),
 	)
-	if plan.Refusal != nil {
+	if plan.Refused() {
 		return plan, nil
 	}
 

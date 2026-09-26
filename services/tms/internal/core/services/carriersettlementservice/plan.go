@@ -336,7 +336,7 @@ func (s *Service) planApprove(
 	plan *ActionPlan,
 	now int64,
 ) error {
-	if plan.Refusal = PlanApprove(plan.After, req.TenantInfo.UserID, now); plan.Refusal != nil {
+	if plan.Refusal = PlanApprove(plan.After, req.TenantInfo.UserID, now); plan.Refused() {
 		return nil
 	}
 	control, err := s.settlementControl.GetOrCreate(ctx, req.TenantInfo)
@@ -367,7 +367,7 @@ func (s *Service) planPost(
 	userID pulid.ID,
 	now int64,
 ) error {
-	if plan.Refusal = PlanPost(plan.After, userID, now); plan.Refusal != nil {
+	if plan.Refusal = PlanPost(plan.After, userID, now); plan.Refused() {
 		return nil
 	}
 	draft, err := s.planSettlementJournal(ctx, plan.After, userID, false)
@@ -385,7 +385,7 @@ func (s *Service) planMarkPaid(
 		PaymentReference: req.PaymentReference,
 		PaidAt:           now,
 		UserID:           req.TenantInfo.UserID,
-	}); plan.Refusal != nil {
+	}); plan.Refused() {
 		return nil
 	}
 	draft, err := s.planPaymentJournal(ctx, plan.Before, req.TenantInfo.UserID, now)
@@ -399,7 +399,7 @@ func (s *Service) planVoid(
 	now int64,
 ) error {
 	wasPosted := plan.Before.Status == carriersettlement.StatusPosted
-	if plan.Refusal = PlanVoid(plan.After, req.Reason, req.TenantInfo.UserID, now); plan.Refusal != nil {
+	if plan.Refusal = PlanVoid(plan.After, req.Reason, req.TenantInfo.UserID, now); plan.Refused() {
 		return nil
 	}
 	if !wasPosted {
@@ -414,7 +414,7 @@ func (s *Service) planRecalculate(
 	req *settlementshared.ActionRequest,
 	plan *ActionPlan,
 ) error {
-	if plan.Refusal = PlanRecalculate(plan.After); plan.Refusal != nil {
+	if plan.Refusal = PlanRecalculate(plan.After); plan.Refused() {
 		return nil
 	}
 	rebuilt, _, err := s.buildSettlement(ctx, &GenerateForCarrierRequest{

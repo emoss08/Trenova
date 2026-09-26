@@ -281,7 +281,109 @@ type matchDraft struct {
 	toleranceMinor int64
 }
 
-//nolint:cyclop,funlen // match assembly enumerates both invoice sources explicitly
+type matchSource struct {
+	carrierID         pulid.ID
+	invoiceNumber     string
+	invoiceTotalMinor int64
+	proNumber         string
+	shipmentID        pulid.ID
+	invoice           *edi.CarrierInvoice
+}
+
+func requestedMatchSource(req *CreateMatchRequest) *matchSource {
+	return &matchSource{
+		carrierID:         req.CarrierID,
+		invoiceNumber:     req.InvoiceNumber,
+		invoiceTotalMinor: req.InvoiceTotalMinor,
+		proNumber:         req.ProNumber,
+		shipmentID:        req.ShipmentID,
+	}
+}
+
+func (s *Service) ediMatchSource(
+	ctx context.Context,
+	req *CreateMatchRequest,
+) (*matchSource, error) {
+	existing, err := s.invoiceMatchRepo.GetOpenByEDIInvoiceID(
+		ctx,
+		req.TenantInfo,
+		*req.EDICarrierInvoiceID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return nil, errortypes.NewValidationError(
+			"ediCarrierInvoiceId",
+			errortypes.ErrDuplicate,
+			"This EDI carrier invoice already has an open match",
+		)
+	}
+
+	invoice, err := s.ediInvoiceRepo.GetCarrierInvoiceByID(
+		ctx,
+		repositories.GetEDICarrierInvoiceByIDRequest{
+			ID:         *req.EDICarrierInvoiceID,
+			TenantInfo: req.TenantInfo,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if invoice.CarrierID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"carrierId",
+			errortypes.ErrInvalid,
+			"Link the EDI invoice to a carrier before matching",
+		)
+	}
+
+	source := requestedMatchSource(req)
+	source.invoice = invoice
+	source.carrierID = invoice.CarrierID
+	source.invoiceNumber = invoice.InvoiceNumber
+	if invoice.TotalAmount.Valid {
+		source.invoiceTotalMinor = money.MinorUnits(invoice.TotalAmount.Decimal)
+	}
+	if source.proNumber == "" {
+		source.proNumber = invoice.ProNumber
+	}
+	if source.shipmentID.IsNil() {
+		source.shipmentID = invoice.ShipmentID
+	}
+	return source, nil
+}
+
+func (s *Service) documentMatchSource(
+	ctx context.Context,
+	req *CreateMatchRequest,
+) (*matchSource, error) {
+	if req.CarrierID.IsNil() {
+		return nil, errortypes.NewValidationError(
+			"carrierId",
+			errortypes.ErrRequired,
+			"Carrier is required for document AI invoice matches",
+		)
+	}
+
+	existing, err := s.invoiceMatchRepo.GetOpenByExtractionID(
+		ctx,
+		req.TenantInfo,
+		*req.DocumentAIExtractionID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return nil, errortypes.NewValidationError(
+			"documentAiExtractionId",
+			errortypes.ErrDuplicate,
+			"This document AI extraction already has an open match",
+		)
+	}
+	return requestedMatchSource(req), nil
+}
+
 func (s *Service) draftMatch(ctx context.Context, req *CreateMatchRequest) (*matchDraft, error) {
 	hasEDI := req.EDICarrierInvoiceID != nil && !req.EDICarrierInvoiceID.IsNil()
 	hasDocAI := req.DocumentAIExtractionID != nil && !req.DocumentAIExtractionID.IsNil()
@@ -293,85 +395,26 @@ func (s *Service) draftMatch(ctx context.Context, req *CreateMatchRequest) (*mat
 		)
 	}
 
-	carrierID := req.CarrierID
-	invoiceNumber := req.InvoiceNumber
-	invoiceTotalMinor := req.InvoiceTotalMinor
-	proNumber := req.ProNumber
-	shipmentID := req.ShipmentID
-	var invoice *edi.CarrierInvoice
-
+	var (
+		source *matchSource
+		err    error
+	)
 	if hasEDI {
-		existing, err := s.invoiceMatchRepo.GetOpenByEDIInvoiceID(
-			ctx,
-			req.TenantInfo,
-			*req.EDICarrierInvoiceID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if existing != nil {
-			return nil, errortypes.NewValidationError(
-				"ediCarrierInvoiceId",
-				errortypes.ErrDuplicate,
-				"This EDI carrier invoice already has an open match",
-			)
-		}
-
-		invoice, err = s.ediInvoiceRepo.GetCarrierInvoiceByID(
-			ctx,
-			repositories.GetEDICarrierInvoiceByIDRequest{
-				ID:         *req.EDICarrierInvoiceID,
-				TenantInfo: req.TenantInfo,
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-		if invoice.CarrierID.IsNil() {
-			return nil, errortypes.NewValidationError(
-				"carrierId",
-				errortypes.ErrInvalid,
-				"Link the EDI invoice to a carrier before matching",
-			)
-		}
-		carrierID = invoice.CarrierID
-		invoiceNumber = invoice.InvoiceNumber
-		if invoice.TotalAmount.Valid {
-			invoiceTotalMinor = money.MinorUnits(invoice.TotalAmount.Decimal)
-		}
-		if proNumber == "" {
-			proNumber = invoice.ProNumber
-		}
-		if shipmentID.IsNil() {
-			shipmentID = invoice.ShipmentID
-		}
+		source, err = s.ediMatchSource(ctx, req)
 	} else {
-		if carrierID.IsNil() {
-			return nil, errortypes.NewValidationError(
-				"carrierId",
-				errortypes.ErrRequired,
-				"Carrier is required for document AI invoice matches",
-			)
-		}
-
-		existing, err := s.invoiceMatchRepo.GetOpenByExtractionID(
-			ctx,
-			req.TenantInfo,
-			*req.DocumentAIExtractionID,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if existing != nil {
-			return nil, errortypes.NewValidationError(
-				"documentAiExtractionId",
-				errortypes.ErrDuplicate,
-				"This document AI extraction already has an open match",
-			)
-		}
+		source, err = s.documentMatchSource(ctx, req)
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	assignment, err := s.resolveMatchAssignment(ctx, req, carrierID, proNumber, shipmentID)
+	assignment, err := s.resolveMatchAssignment(
+		ctx,
+		req,
+		source.carrierID,
+		source.proNumber,
+		source.shipmentID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -386,13 +429,13 @@ func (s *Service) draftMatch(ctx context.Context, req *CreateMatchRequest) (*mat
 			tenantInfo:             req.TenantInfo,
 			ediCarrierInvoiceID:    req.EDICarrierInvoiceID,
 			documentAIExtractionID: req.DocumentAIExtractionID,
-			carrierID:              carrierID,
-			invoiceNumber:          invoiceNumber,
-			invoiceTotalMinor:      invoiceTotalMinor,
+			carrierID:              source.carrierID,
+			invoiceNumber:          source.invoiceNumber,
+			invoiceTotalMinor:      source.invoiceTotalMinor,
 			matchedVia:             carriersettlement.MatchViaManual,
 		},
 		assignment:     assignment,
-		invoice:        invoice,
+		invoice:        source.invoice,
 		toleranceMinor: control.VarianceToleranceMinor,
 	}, nil
 }
