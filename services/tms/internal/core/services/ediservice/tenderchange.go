@@ -31,46 +31,17 @@ func (s *Service) AfterShipmentUpdate(
 	updated *shipment.Shipment,
 	actor *services.RequestActor,
 ) error {
-	if original == nil || updated == nil {
-		return nil
-	}
-	if original.ID != updated.ID || original.OrganizationID != updated.OrganizationID {
-		return nil
-	}
-
-	oldPayload := buildTenderPayload(original)
-	newPayload := buildTenderPayload(updated)
-	newPayload.PurposeCode = edi.LoadTenderPurposeChange
-	newHash := tenderPayloadHash(&newPayload)
-	if tenderPayloadHash(&oldPayload) == newHash {
-		return nil
-	}
-
-	tenantInfo := pagination.TenantInfo{
-		OrgID:  updated.OrganizationID,
-		BuID:   updated.BusinessUnitID,
-		UserID: actorUserID(actor),
-	}
-	recipients, err := s.tenderRecipientRepo.ListActiveTenderRecipientsForSourceShipment(
-		ctx,
-		repositories.ListEDITenderRecipientsForSourceShipmentRequest{
-			TenantInfo:       tenantInfo,
-			SourceShipmentID: updated.ID,
-		},
-	)
-	if err != nil {
+	plan, err := s.planTenderChanges(ctx, original, updated, actor)
+	if err != nil || plan == nil {
 		return err
 	}
 
 	var recipientErrs []error
-	for _, recipient := range recipients {
-		if recipient == nil || recipient.LatestBaselineHash == newHash {
-			continue
-		}
+	for _, recipient := range plan.recipients {
 		if err = s.createTenderChangeForRecipient(
 			ctx,
 			recipient,
-			&newPayload,
+			plan.payload,
 			updated.Version,
 			actor,
 		); err != nil {

@@ -11358,8 +11358,14 @@
             "type": "array"
           },
           "formats": {
-            "description": "Which formats to attach. Defaults to the report's own.",
+            "description": "Which formats to attach. Defaults to xlsx, as the schedule form does.",
             "items": {
+              "enum": [
+                "xlsx",
+                "csv",
+                "pdf",
+                "json"
+              ],
               "type": "string"
             },
             "type": "array"

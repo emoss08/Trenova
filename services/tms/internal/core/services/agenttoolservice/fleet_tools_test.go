@@ -17,28 +17,84 @@ import (
 
 type fakeTractorStatusUpdater struct {
 	request *repositories.BulkUpdateTractorStatusRequest
+	units   map[pulid.ID]*tractor.Tractor
+	guard   writeGuard
+}
+
+func (f *fakeTractorStatusUpdater) GetByIDs(
+	_ context.Context,
+	req repositories.GetTractorsByIDsRequest,
+) ([]*tractor.Tractor, error) {
+	found := make([]*tractor.Tractor, 0, len(req.TractorIDs))
+	for _, id := range req.TractorIDs {
+		if unit, ok := f.units[id]; ok {
+			copied := *unit
+			found = append(found, &copied)
+		}
+	}
+
+	return found, nil
 }
 
 func (f *fakeTractorStatusUpdater) BulkUpdateStatus(
 	_ context.Context,
 	req *repositories.BulkUpdateTractorStatusRequest,
 ) ([]*tractor.Tractor, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.request = req
+	updated := make([]*tractor.Tractor, 0, len(req.TractorIDs))
+	for _, id := range req.TractorIDs {
+		if unit, ok := f.units[id]; ok {
+			unit.Status = req.Status
+			unit.Version++
+			updated = append(updated, unit)
+		}
+	}
 
-	return nil, nil
+	return updated, nil
 }
 
 type fakeTrailerStatusUpdater struct {
 	request *repositories.BulkUpdateTrailerStatusRequest
+	units   map[pulid.ID]*trailer.Trailer
+	guard   writeGuard
+}
+
+func (f *fakeTrailerStatusUpdater) GetByIDs(
+	_ context.Context,
+	req repositories.GetTrailersByIDsRequest,
+) ([]*trailer.Trailer, error) {
+	found := make([]*trailer.Trailer, 0, len(req.TrailerIDs))
+	for _, id := range req.TrailerIDs {
+		if unit, ok := f.units[id]; ok {
+			copied := *unit
+			found = append(found, &copied)
+		}
+	}
+
+	return found, nil
 }
 
 func (f *fakeTrailerStatusUpdater) BulkUpdateStatus(
 	_ context.Context,
 	req *repositories.BulkUpdateTrailerStatusRequest,
 ) ([]*trailer.Trailer, error) {
+	if err := f.guard.write(); err != nil {
+		return nil, err
+	}
 	f.request = req
+	updated := make([]*trailer.Trailer, 0, len(req.TrailerIDs))
+	for _, id := range req.TrailerIDs {
+		if unit, ok := f.units[id]; ok {
+			unit.Status = req.Status
+			unit.Version++
+			updated = append(updated, unit)
+		}
+	}
 
-	return nil, nil
+	return updated, nil
 }
 
 func TestUpdateTractorStatus_PassesTheIdsAndStatusThrough(t *testing.T) {

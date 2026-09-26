@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
@@ -84,6 +85,7 @@ type Params struct {
 	Budgets     services.AgentBudgetService `optional:"true"`
 	Runs        repositories.AgentRunRepository
 	Definitions repositories.AgentDefinitionRepository
+	DB          ports.DBConnection
 }
 
 type Service struct {
@@ -95,6 +97,7 @@ type Service struct {
 	audit        actionLogger
 	budgets      services.AgentBudgetService
 	definitions  definitionResolver
+	db           ports.DBConnection
 }
 
 func New(p Params) *Service {
@@ -107,6 +110,7 @@ func New(p Params) *Service {
 		audit:        p.AuditService,
 		budgets:      p.Budgets,
 		definitions:  runDefinitions{runs: p.Runs, definitions: p.Definitions},
+		db:           p.DB,
 	}
 }
 
@@ -520,7 +524,7 @@ func (s *Service) simulate(ctx context.Context, r *approvedRun) error {
 	actor := r.actor
 	toolCtx, toolSpan := startTool(ctx, proposal, r.policy)
 	writeCtx, write := startWrite(toolCtx, proposal, true)
-	preview := toolsimulation.Simulate(writeCtx, r.tool, *r.params)
+	preview := toolsimulation.InSnapshot(writeCtx, s.db, r.tool, r.params)
 	write.End()
 	finishTool(toolSpan, aitrace.OutcomeSimulated)
 	toolSpan.End()

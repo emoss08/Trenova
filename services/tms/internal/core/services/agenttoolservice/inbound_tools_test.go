@@ -116,27 +116,6 @@ func TestLinkInboundMessage_RefusesARecordTheServiceCannotFind(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestLinkInboundMessage_SimulationShowsWhatChanges(t *testing.T) {
-	t.Parallel()
-
-	desk := &fakeInboundDesk{message: inboundMessage()}
-	shipmentID := pulid.MustNew("shp_")
-	simulation, err := newLinkInboundMessageTool(desk).(serviceports.ToolSimulator).Simulate(
-		t.Context(),
-		deskParams(map[string]any{
-			"messageId":  desk.message.ID.String(),
-			"shipmentId": shipmentID.String(),
-			"reason":     "The PRO in the subject.",
-		}),
-	)
-	require.NoError(t, err)
-
-	require.NotEmpty(t, simulation.Changes)
-	assert.Equal(t, "shipment", simulation.Changes[0].Field)
-	assert.Equal(t, "none", simulation.Changes[0].From)
-	assert.Equal(t, shipmentID.String(), simulation.Changes[0].To)
-}
-
 func TestMarkInboundMessage_SettlesWithTheNote(t *testing.T) {
 	t.Parallel()
 

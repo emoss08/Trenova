@@ -43,12 +43,13 @@ func (req *SaveScheduleRequest) delivery() *report.ScheduleDelivery {
 func (s *Service) validateScheduleRequest(
 	ctx context.Context,
 	req *SaveScheduleRequest,
-) error {
-	if _, err := s.GetDefinition(ctx, &GetDefinitionRequest{
+) (*report.ReportDefinition, error) {
+	definition, err := s.GetDefinition(ctx, &GetDefinitionRequest{
 		Request:      req.Request,
 		DefinitionID: req.DefinitionID,
-	}); err != nil {
-		return err
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	timezone := req.Timezone
@@ -57,13 +58,17 @@ func (s *Service) validateScheduleRequest(
 		req.Timezone = timezone
 	}
 
-	if _, err := cronutils.NextRun(req.CronExpression, timezone, timeutils.NowUnix()); err != nil {
-		return errortypes.NewValidationError(
+	if _, err = cronutils.NextRun(req.CronExpression, timezone, timeutils.NowUnix()); err != nil {
+		return nil, errortypes.NewValidationError(
 			"cronExpression", errortypes.ErrInvalid, err.Error(),
 		)
 	}
 
-	return s.validateNotifyUsers(ctx, req)
+	if err = s.validateNotifyUsers(ctx, req); err != nil {
+		return nil, err
+	}
+
+	return definition, nil
 }
 
 // validateNotifyUsers rejects in-app recipients that are not members of the
@@ -109,36 +114,12 @@ func (s *Service) CreateSchedule(
 	ctx context.Context,
 	req *SaveScheduleRequest,
 ) (*report.ReportSchedule, error) {
-	if err := s.validateScheduleRequest(ctx, req); err != nil {
-		return nil, err
-	}
-
-	nextRun, err := cronutils.NextRun(req.CronExpression, req.Timezone, timeutils.NowUnix())
+	planned, err := s.planSchedule(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	entity := &report.ReportSchedule{
-		BusinessUnitID: req.TenantInfo.BuID,
-		OrganizationID: req.TenantInfo.OrgID,
-		DefinitionID:   req.DefinitionID,
-		CronExpression: req.CronExpression,
-		Timezone:       req.Timezone,
-		Formats:        req.Formats,
-		Delivery:       req.delivery(),
-		Alert:          req.Alert,
-		Enabled:        req.Enabled,
-		RunAsID:        req.TenantInfo.UserID,
-		NextRunAt:      nextRun,
-	}
-
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
-
-	created, err := s.scheduleRepo.Create(ctx, entity)
+	created, err := s.scheduleRepo.Create(ctx, planned.Schedule)
 	if err != nil {
 		s.l.Error("failed to create report schedule", zap.Error(err))
 		return nil, err
@@ -164,7 +145,7 @@ func (s *Service) UpdateSchedule(
 		)
 	}
 
-	if err = s.validateScheduleRequest(ctx, req); err != nil {
+	if _, err = s.validateScheduleRequest(ctx, req); err != nil {
 		return nil, err
 	}
 

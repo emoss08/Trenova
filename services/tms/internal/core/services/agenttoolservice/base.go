@@ -28,22 +28,29 @@ var (
 )
 
 func guardExecute(tool serviceports.AgentTool, params serviceports.ToolExecuteParams) error {
+	if err := guardPreview(tool, &params); err != nil {
+		return err
+	}
+
+	if tool.Policy().Idempotent && strings.TrimSpace(params.IdempotencyKey) == "" {
+		return ErrMissingIdempotencyKey
+	}
+
+	return nil
+}
+
+func guardPreview(tool serviceports.AgentTool, params *serviceports.ToolExecuteParams) error {
 	if params.Actor == nil {
 		return ErrMissingActor
 	}
 
-	policy := tool.Policy()
-	if params.Actor.IsAgent() && policy.Operation == permission.OpApprove {
+	if params.Actor.IsAgent() && tool.Policy().Operation == permission.OpApprove {
 		return ErrAgentCannotApprove
 	}
 
 	if params.Actor.OrganizationID != params.OrganizationID ||
 		params.Actor.BusinessUnitID != params.BusinessUnitID {
 		return ErrTenantMismatch
-	}
-
-	if policy.Idempotent && strings.TrimSpace(params.IdempotencyKey) == "" {
-		return ErrMissingIdempotencyKey
 	}
 
 	return nil

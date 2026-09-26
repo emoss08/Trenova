@@ -279,59 +279,8 @@ func (s *service) Create(
 		zap.String("orgID", entity.OrganizationID.String()),
 	)
 
-	control, err := s.getShipmentControl(ctx, pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	})
+	prepared, err := s.prepareCreate(ctx, entity, auditActor.UserID)
 	if err != nil {
-		return nil, err
-	}
-
-	entity.ApplyEntryMethodDefault(nil)
-	entity.ApplyFreightTermsDefault(nil)
-	entity.NormalizeBillTo()
-
-	if multiErr := s.coordinator.PrepareForCreateWithDelayThreshold(
-		entity,
-		delayThresholdMinutes(control),
-	); multiErr != nil {
-		return nil, multiErr
-	}
-
-	s.dropSystemGeneratedAdditionalChargesForCreate(entity)
-
-	if err = s.hydrateShipmentCommodityDetails(ctx, entity); err != nil {
-		return nil, err
-	}
-
-	s.applyShipmentEnvelope(ctx, entity)
-
-	if s.distanceCalculation != nil {
-		if _, err = s.distanceCalculation.ResolveForShipment(ctx, entity); err != nil {
-			return nil, err
-		}
-	}
-
-	rating, err := s.commercial.RateAndAdoptContract(ctx, entity, control, auditActor.UserID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = s.validateExplicitOrder(ctx, entity); err != nil {
-		return nil, err
-	}
-
-	if multiErr := s.validateChargeAllocations(ctx, entity); multiErr != nil {
-		return nil, multiErr
-	}
-
-	multiErr, advisories := s.validator.ValidateCreateWithAdvisories(ctx, entity)
-	if multiErr != nil {
-		return nil, multiErr
-	}
-
-	req := duplicateBOLCheckRequest(entity)
-	if err = s.checkDuplicateBOLsWithControl(ctx, control, req); err != nil {
 		return nil, err
 	}
 
@@ -347,7 +296,7 @@ func (s *service) Create(
 	}
 
 	if err = s.commercial.CommitContractRating(
-		ctx, createdEntity, rating, auditActor.UserID,
+		ctx, createdEntity, prepared.rating, auditActor.UserID,
 	); err != nil {
 		return nil, err
 	}
@@ -360,7 +309,7 @@ func (s *service) Create(
 		}
 	}
 
-	s.recordCapabilityDeviations(ctx, createdEntity, advisories)
+	s.recordCapabilityDeviations(ctx, createdEntity, prepared.advisories)
 	s.syncPermits(ctx, createdEntity, actor)
 
 	if err = s.logShipmentAction(
@@ -1059,14 +1008,9 @@ func (s *service) Cancel(
 	req *repositories.CancelShipmentRequest,
 	actor *services.RequestActor,
 ) (*shipment.Shipment, error) {
-	if req == nil {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add("request", errortypes.ErrRequired, "Cancel request is required")
-		return nil, multiErr
-	}
-
-	if multiErr := req.Validate(); multiErr != nil {
-		return nil, multiErr
+	original, err := s.planCancel(ctx, req, actor)
+	if err != nil {
+		return nil, err
 	}
 
 	auditActor := actor.AuditActor()
@@ -1076,25 +1020,6 @@ func (s *service) Cancel(
 		zap.String("principalID", auditActor.PrincipalID.String()),
 		zap.String("shipmentID", req.ShipmentID.String()),
 	)
-
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID: req.ShipmentID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: req.TenantInfo.OrgID,
-			BuID:  req.TenantInfo.BuID,
-		},
-	})
-	if err != nil {
-		log.Error("failed to get original shipment", zap.Error(err))
-		return nil, err
-	}
-
-	if original.IsCanceled() {
-		return nil, errortypes.NewBusinessError("shipment is already canceled")
-	}
-
-	req.CanceledByID = auditActor.UserID
-	req.CanceledAt = timeutils.NowUnix()
 
 	updatedEntity, err := s.repo.Cancel(ctx, req)
 	if err != nil {

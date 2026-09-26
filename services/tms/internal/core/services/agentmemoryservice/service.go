@@ -118,6 +118,38 @@ func (s *Service) Remember(
 	req *services.RememberRequest,
 	actor *services.RequestActor,
 ) (*agent.Memory, error) {
+	plan, err := s.planRemember(ctx, req, actor)
+	if err != nil {
+		return nil, err
+	}
+	if plan.Existing != nil {
+		return plan.Existing, nil
+	}
+
+	created, err := s.repo.Create(ctx, plan.Memory)
+	if err != nil {
+		return nil, err
+	}
+
+	s.log(created, actor, permission.OpCreate, "Agent memory recorded")
+	s.queueForRetrieval(ctx, created)
+
+	return created, nil
+}
+
+func (s *Service) PreviewRemember(
+	ctx context.Context,
+	req *services.RememberRequest,
+	actor *services.RequestActor,
+) (*services.RememberPlan, error) {
+	return s.planRemember(ctx, req, actor)
+}
+
+func (s *Service) planRemember(
+	ctx context.Context,
+	req *services.RememberRequest,
+	actor *services.RequestActor,
+) (*services.RememberPlan, error) {
 	if actor == nil {
 		return nil, errortypes.NewValidationError(
 			"actor",
@@ -126,6 +158,43 @@ func (s *Service) Remember(
 		)
 	}
 
+	entity := NewMemory(req, actor)
+
+	if req.RunID.IsNotNil() {
+		if run, err := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
+			ID:         req.RunID,
+			TenantInfo: &req.TenantInfo,
+		}); err != nil {
+			s.l.Warn(
+				"agent memory: run lookup failed",
+				zap.String("run", req.RunID.String()),
+				zap.Error(err),
+			)
+		} else if run.AgentDefinitionID.IsNotNil() {
+			definitionID := run.AgentDefinitionID
+			entity.AgentDefinitionID = &definitionID
+		}
+	}
+
+	if err := s.label(ctx, req.TenantInfo, entity); err != nil {
+		return nil, err
+	}
+
+	me := errortypes.NewMultiError()
+	entity.Validate(me)
+	if me.HasErrors() {
+		return nil, me
+	}
+
+	existing, err := s.repo.FindActive(ctx, sameMemoryRequest(req.TenantInfo, entity))
+	if err != nil {
+		return nil, err
+	}
+
+	return &services.RememberPlan{Memory: entity, Existing: existing}, nil
+}
+
+func NewMemory(req *services.RememberRequest, actor *services.RequestActor) *agent.Memory {
 	kind := req.Kind
 	if kind == "" {
 		kind = agent.MemoryKindFact
@@ -146,34 +215,15 @@ func (s *Service) Remember(
 		id := req.SubjectID
 		entity.SubjectID = &id
 	}
-	if actor.IsUser() && actor.UserID.IsNotNil() {
+	if actor != nil && actor.IsUser() && actor.UserID.IsNotNil() {
 		id := actor.UserID
 		entity.CreatedByUserID = &id
 	}
-
-	// A memory recorded from inside a run is the agent's, whoever approved
-	// the tool call: the run says which agent, and that is what the list
-	// shows as its author.
 	if req.RunID.IsNotNil() {
 		entity.Source = agent.MemorySourceAgent
 		runID := req.RunID
 		entity.SourceRunID = &runID
-		if run, err := s.runs.GetByID(ctx, repositories.GetAgentRunByIDRequest{
-			ID:         req.RunID,
-			TenantInfo: &req.TenantInfo,
-		}); err != nil {
-			s.l.Warn(
-				"agent memory: run lookup failed",
-				zap.String("run", req.RunID.String()),
-				zap.Error(err),
-			)
-		} else if run.AgentDefinitionID.IsNotNil() {
-			definitionID := run.AgentDefinitionID
-			entity.AgentDefinitionID = &definitionID
-		}
 	}
-	// A memory written by a run that had read outside content keeps that,
-	// so a later run that reads it back is tainted by it.
 	if req.ProposalID.IsNotNil() {
 		proposalID := req.ProposalID
 		entity.SourceProposalID = &proposalID
@@ -186,36 +236,7 @@ func (s *Service) Remember(
 		}
 	}
 
-	if err := s.label(ctx, req.TenantInfo, entity); err != nil {
-		return nil, err
-	}
-
-	me := errortypes.NewMultiError()
-	entity.Validate(me)
-	if me.HasErrors() {
-		return nil, me
-	}
-
-	// The same sentence about the same record is one memory. Returning the
-	// existing row is what lets an agent say "noted" twice without the
-	// prompt carrying it twice.
-	existing, err := s.repo.FindActive(ctx, sameMemoryRequest(req.TenantInfo, entity))
-	if err != nil {
-		return nil, err
-	}
-	if existing != nil {
-		return existing, nil
-	}
-
-	created, err := s.repo.Create(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
-
-	s.log(created, actor, permission.OpCreate, "Agent memory recorded")
-	s.queueForRetrieval(ctx, created)
-
-	return created, nil
+	return entity
 }
 
 func (s *Service) Update(
@@ -286,19 +307,8 @@ func (s *Service) SetStatus(
 			"An actor is required",
 		)
 	}
-	if !req.Status.IsValid() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			fmt.Sprintf("%q is not a memory status", req.Status),
-		)
-	}
-	if req.Status.IsSuggestion() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"A memory is suggested only by feedback; approve or dismiss the suggestion instead",
-		)
+	if err := checkStatusTarget(req.Status); err != nil {
+		return nil, err
 	}
 
 	current, err := s.repo.GetByID(ctx, repositories.GetAgentMemoryByIDRequest{
@@ -308,25 +318,23 @@ func (s *Service) SetStatus(
 	if err != nil {
 		return nil, err
 	}
-	if current.Status.IsSuggestion() {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			"A suggested memory is approved or dismissed, not retired or restored",
-		)
-	}
 
-	byUser := pulid.Nil
-	if actor.IsUser() {
-		byUser = actor.UserID
+	change := StatusChange{
+		Status:   req.Status,
+		ByUserID: StatusActor(actor),
+		At:       timeutils.NowUnix(),
+	}
+	planned := *current
+	if err = PlanStatus(&planned, change); err != nil {
+		return nil, err
 	}
 
 	updated, err := s.repo.SetStatus(ctx, repositories.SetAgentMemoryStatusRequest{
 		ID:         req.ID,
 		TenantInfo: req.TenantInfo,
-		Status:     req.Status,
-		ByUserID:   byUser,
-		At:         timeutils.NowUnix(),
+		Status:     change.Status,
+		ByUserID:   change.ByUserID,
+		At:         change.At,
 	})
 	if err != nil {
 		return nil, err

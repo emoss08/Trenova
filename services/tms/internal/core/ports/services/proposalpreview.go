@@ -60,10 +60,12 @@ type ProposalBaselineRequest struct {
 
 // ProposalBaselineResult is what a baseline found. Target is nil when the
 // tool names no single record or its version could not be read; Preview is
-// nil when the tool has no preview or it failed.
+// nil when the tool has no preview or it failed, and PreviewErr then says
+// why it failed.
 type ProposalBaselineResult struct {
-	Target  *ProposalTarget
-	Preview *agent.ToolPreview
+	Target     *ProposalTarget
+	Preview    *agent.ToolPreview
+	PreviewErr error
 }
 
 // RecordLabels are the words each record is known by, per resource and id.

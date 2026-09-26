@@ -103,37 +103,50 @@ func (t *flagManualReviewTool) Execute(
 		return err
 	}
 
-	runID, err := requirePulid(params.Params, "runId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
+	}
+
+	_, err = t.exceptions.Flag(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *flagManualReviewTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*serviceports.FlagAgentExceptionRequest, error) {
+	runID, err := requirePulid(params.Params, "runId")
+	if err != nil {
+		return nil, err
 	}
 
 	subjectID, err := requirePulid(params.Params, "subjectId")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	category, err := requireString(params.Params, "category")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	severity, err := requireString(params.Params, "severity")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	attemptSummary, err := requireString(params.Params, "attemptSummary")
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var evidence []agent.EvidenceRef
 	if err = decodeParam(params.Params, "evidence", &evidence); err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = t.exceptions.Flag(ctx, &serviceports.FlagAgentExceptionRequest{
+	return &serviceports.FlagAgentExceptionRequest{
 		RunID:          runID,
 		Category:       agent.ExceptionCategory(category),
 		Severity:       agent.Severity(severity),
@@ -146,7 +159,5 @@ func (t *flagManualReviewTool) Execute(
 			OrgID: params.OrganizationID,
 			BuID:  params.BusinessUnitID,
 		},
-	}, params.Actor)
-
-	return err
+	}, nil
 }

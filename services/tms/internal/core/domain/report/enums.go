@@ -98,6 +98,14 @@ const (
 	FormatJSON = Format("json")
 )
 
+// DefaultScheduleFormat is the format a new schedule starts on, as the
+// schedule form in the app starts it.
+const DefaultScheduleFormat = FormatXLSX
+
+func AllFormats() []Format {
+	return []Format{FormatXLSX, FormatCSV, FormatPDF, FormatJSON}
+}
+
 func (f Format) IsValid() bool {
 	switch f {
 	case FormatCSV, FormatXLSX, FormatPDF, FormatJSON:

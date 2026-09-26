@@ -2,7 +2,6 @@ package agenttoolservice
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"unicode/utf8"
@@ -31,7 +30,7 @@ const (
 var (
 	_ serviceports.ToolResultReporter = (*createLocationTool)(nil)
 	_ serviceports.ToolValidator      = (*createLocationTool)(nil)
-	_ serviceports.ToolSimulator      = (*createLocationTool)(nil)
+	_ serviceports.ToolPreviewer      = (*createLocationTool)(nil)
 )
 
 type locationCreator interface {
@@ -203,18 +202,12 @@ func (t *createLocationTool) ExecuteWithResult(
 		return nil, err
 	}
 
-	draft, err := readLocationDraft(params.Params)
+	plan, err := t.plan(ctx, &params)
 	if err != nil {
 		return nil, err
 	}
 
-	tenant := tenantFrom(params)
-	entity, err := t.build(ctx, draft, tenant)
-	if err != nil {
-		return nil, err
-	}
-
-	created, err := t.locations.Create(ctx, entity, params.Actor)
+	created, err := t.locations.Create(ctx, plan.entity, params.Actor)
 	if err != nil {
 		return nil, err
 	}
@@ -230,11 +223,29 @@ func (t *createLocationTool) ExecuteWithResult(
 	}, nil
 }
 
+type locationPlan struct {
+	entity   *location.Location
+	state    *usstate.UsState
+	category *locationcategory.LocationCategory
+}
+
+func (t *createLocationTool) plan(
+	ctx context.Context,
+	params *serviceports.ToolExecuteParams,
+) (*locationPlan, error) {
+	draft, err := readLocationDraft(params.Params)
+	if err != nil {
+		return nil, err
+	}
+
+	return t.build(ctx, draft, tenantFrom(*params))
+}
+
 func (t *createLocationTool) build(
 	ctx context.Context,
 	draft *locationDraft,
 	tenant pagination.TenantInfo,
-) (*location.Location, error) {
+) (*locationPlan, error) {
 	state, err := t.states.GetByAbbreviation(ctx, draft.state)
 	if err != nil || state == nil {
 		return nil, errortypes.NewValidationError(
@@ -255,17 +266,21 @@ func (t *createLocationTool) build(
 		)
 	}
 
-	return &location.Location{
-		OrganizationID:     tenant.OrgID,
-		BusinessUnitID:     tenant.BuID,
-		LocationCategoryID: category.ID,
-		StateID:            state.ID,
-		Status:             domaintypes.StatusActive,
-		Name:               draft.name,
-		AddressLine1:       draft.addressLine1,
-		AddressLine2:       draft.addressLine2,
-		City:               draft.city,
-		PostalCode:         draft.postalCode,
+	return &locationPlan{
+		entity: &location.Location{
+			OrganizationID:     tenant.OrgID,
+			BusinessUnitID:     tenant.BuID,
+			LocationCategoryID: category.ID,
+			StateID:            state.ID,
+			Status:             domaintypes.StatusActive,
+			Name:               draft.name,
+			AddressLine1:       draft.addressLine1,
+			AddressLine2:       draft.addressLine2,
+			City:               draft.city,
+			PostalCode:         draft.postalCode,
+		},
+		state:    state,
+		category: category,
 	}, nil
 }
 
@@ -277,34 +292,7 @@ func (t *createLocationTool) Validate(
 		return ErrMissingActor
 	}
 
-	draft, err := readLocationDraft(params.Params)
-	if err != nil {
-		return err
-	}
-	_, err = t.build(ctx, draft, tenantFrom(params))
+	_, err := t.plan(ctx, &params)
 
 	return err
-}
-
-func (t *createLocationTool) Simulate(
-	ctx context.Context,
-	params serviceports.ToolExecuteParams,
-) (*agent.ToolSimulation, error) {
-	if params.Actor == nil {
-		return nil, errors.New("a simulation needs the actor it would run as")
-	}
-
-	draft, err := readLocationDraft(params.Params)
-	if err != nil {
-		return nil, err
-	}
-	if _, err = t.build(ctx, draft, tenantFrom(params)); err != nil {
-		return nil, err
-	}
-
-	return &agent.ToolSimulation{
-		Summary: fmt.Sprintf("Would create the location %s at %s, %s, %s %s",
-			draft.name, draft.addressLine1, draft.city, draft.state, draft.postalCode),
-		Previewed: true,
-	}, nil
 }

@@ -62,7 +62,6 @@ fields, services compute totals — so each tool shares one plan function betwee
 | `MoneyBlock(currency, lines...)`, `Money(rec, block, opts...)`, `AttachMoney(change, block, opts...)` | Amounts with totals and delta; the block takes the highest sensitivity of the fields named by `SensitiveAs`, and a Confidential one is dropped. |
 | `Build(summary, changes...)`, `Warn(preview, code, message, args...)` | The preview, bounded. |
 | `Describe(tool, params)`, `Parameters(tool, resource, params)` | The `Unavailable` fallback: the parameters, never the owner a self-scoped call records, stamped with their sensitivity on the tool's resource. |
-| `FromSimulation(rec, simulation)` | A tool that simulates rather than previews, read as a `Partial` preview. |
 | `Chain(steps)` | A plan's projection (below). |
 
 Options: `WithRefs(path → resource)` (ids shown by the record's label, resolved later),
@@ -75,8 +74,15 @@ objects and bare ids, types each value with the artifact display classifier
 sensitivity from the permission registry and **drops a Confidential value where it is
 built**, so none reaches a baseline or a recorded preview.
 
-Until a tool previews itself, `toolsimulation.Simulate` and the preview service read its
-`ToolSimulator` as a `Partial` preview, and any other tool as `Unavailable`.
+Every write tool previews itself; `TestEveryActionToolPreviewsWhatItWouldDo` fails for one that does
+not. A tool that does not preview is shown as `Unavailable`: its parameters.
+
+An agent in simulation records what its write would have done from the same snapshot.
+The runtime reads the baseline it has just taken (`toolsimulation.FromBaseline`). A
+preview that failed there is reported as failed and **never run again outside the
+snapshot**, because the failure may be the snapshot refusing a write. The executor, on an
+approved proposal for an agent in simulation, runs the preview in a read-only,
+repeatable-read transaction of its own (`toolsimulation.InSnapshot`).
 
 ## The preview service
 
@@ -225,6 +231,12 @@ unstable digest shows itself.
   is not scoped to one tenant.
 - **A digest is per reader.** Two people with different access see different digests for
   the same proposal; each approves what they saw.
-- **Calls outside the database are guarded by tests only.** The read-only transaction stops
-  a preview writing to the database, not sending mail or starting a workflow.
+- **Calls outside the database are guarded by the read-only mark and by tests.** The
+  read-only transaction stops a preview writing to the database. `WithTx` also marks a
+  read-only transaction's context (`ports.IsReadOnly`), and after-commit callbacks queued
+  in it are dropped, since nothing was committed. Work a service hands off outside its
+  transaction must check the mark. Distance resolution does: it counts no stored-mileage
+  hit and buffers no stored-mileage candidate, though it still asks PC*Miler, as the
+  billing panel's rate preview does. The mark does not stop mail or a workflow start a
+  preview calls directly; the previewers' tests do.
 - **Field labels are English**, humanized from the record's keys, as artifacts' are.

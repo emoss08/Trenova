@@ -253,7 +253,7 @@ Read (query) tools, `readPolicy`:
 | `get_accounting_mapping` | `accounting_integration` | Current mapping for an account, item, customer, vendor or role, with usage count |
 | `list_accounting_mapping_gaps` | `accounting_integration` | Unmapped or low-confidence items blocking sync, with candidate matches and reasons |
 
-Action tools (all implement `ToolSimulator` and `TargetedTool`; all that touch the provider set `Idempotent: true`):
+Action tools (all implement `ToolPreviewer` and `TargetedTool`; all that touch the provider set `Idempotent: true`):
 
 | Tool | Resource / op | Default tier | Max tier | Reversible | Validator | Purpose |
 |---|---|---|---|---|---|---|

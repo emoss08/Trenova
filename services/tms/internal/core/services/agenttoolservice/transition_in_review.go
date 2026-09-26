@@ -96,19 +96,30 @@ func (t *transitionToInReviewTool) Execute(
 		return err
 	}
 
-	itemID, err := requirePulid(params.Params, "billingQueueItemId")
+	request, err := t.request(&params)
 	if err != nil {
 		return err
 	}
 
-	_, err = t.billing.UpdateStatus(ctx, &serviceports.UpdateBillingQueueStatusRequest{
+	_, err = t.billing.UpdateStatus(ctx, request, params.Actor)
+
+	return err
+}
+
+func (t *transitionToInReviewTool) request(
+	params *serviceports.ToolExecuteParams,
+) (*serviceports.UpdateBillingQueueStatusRequest, error) {
+	itemID, err := requirePulid(params.Params, "billingQueueItemId")
+	if err != nil {
+		return nil, err
+	}
+
+	return &serviceports.UpdateBillingQueueStatusRequest{
 		ItemID:    itemID,
 		NewStatus: billingqueue.StatusInReview,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: params.OrganizationID,
 			BuID:  params.BusinessUnitID,
 		},
-	}, params.Actor)
-
-	return err
+	}, nil
 }

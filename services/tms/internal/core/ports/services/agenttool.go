@@ -40,13 +40,6 @@ func (p ToolExecuteParams) CarriedTaint(at int64) *agent.RunTaint {
 	return agent.RunRecordTaint(p.RunID, at)
 }
 
-// ToolSimulator is a tool that can say what it would change without
-// changing it. The runtime and the executor use it when the agent is in
-// simulation; a tool without it is described by its name and parameters.
-type ToolSimulator interface {
-	Simulate(ctx context.Context, params ToolExecuteParams) (*agent.ToolSimulation, error)
-}
-
 // ToolPreviewer is a tool that can say, record by record, what its write
 // would do. Preview is read-only and deterministic given the database and
 // the parameters, and it decides what changes with the same code Execute

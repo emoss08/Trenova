@@ -29,6 +29,18 @@ func (f *fakePTODecider) Approve(
 	return &worker.WorkerPTO{ID: req.ID}, nil
 }
 
+func (f *fakePTODecider) PreviewApprove(
+	_ context.Context,
+	req *repositories.UpdatePTOStatusRequest,
+) (*serviceports.WorkerPTOTransitionPreview, error) {
+	current := &worker.WorkerPTO{ID: req.ID, Status: worker.PTOStatusRequested}
+	approved := *current
+	approved.Status = worker.PTOStatusApproved
+	approved.ApproverID = req.UserID
+
+	return &serviceports.WorkerPTOTransitionPreview{Before: current, After: &approved}, nil
+}
+
 func (f *fakePTODecider) Reject(
 	_ context.Context,
 	req *repositories.UpdatePTOStatusRequest,

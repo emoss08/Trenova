@@ -3,6 +3,7 @@ package assignmentservice
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
@@ -16,8 +17,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/capabilityguard"
-	"github.com/emoss08/trenova/internal/core/services/dispatchguard"
 	"github.com/emoss08/trenova/internal/core/services/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/core/services/shipmenteventservice"
@@ -280,21 +279,7 @@ func (s *service) AssignToMove(
 		req.TenantInfo,
 		req.ShipmentMoveID,
 		func(existing *shipment.Assignment) (*shipment.Assignment, error) {
-			if existing != nil {
-				return nil, errortypes.NewBusinessError("Shipment move already has an assignment").
-					WithParam("shipmentMoveId", req.ShipmentMoveID.String())
-			}
-
-			return &shipment.Assignment{
-				OrganizationID:    req.TenantInfo.OrgID,
-				BusinessUnitID:    req.TenantInfo.BuID,
-				ShipmentMoveID:    req.ShipmentMoveID,
-				PrimaryWorkerID:   &req.PrimaryWorkerID,
-				TractorID:         &req.TractorID,
-				TrailerID:         req.TrailerID,
-				SecondaryWorkerID: req.SecondaryWorkerID,
-				Status:            shipment.AssignmentStatusNew,
-			}, nil
+			return NewMoveAssignment(req, existing)
 		},
 		func(txCtx context.Context, entity *shipment.Assignment) (*shipment.Assignment, error) {
 			return s.repo.Create(txCtx, entity)
@@ -674,68 +659,12 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 	var result *shipment.Assignment
 
 	err := s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		move, err := s.repo.GetMoveByID(txCtx, tenantInfo, moveID)
+		plan, err := s.planAssignment(txCtx, tenantInfo, moveID, build)
 		if err != nil {
 			return err
 		}
 
-		if err = move.EnsureAssignable(); err != nil {
-			return err
-		}
-		if err = capabilityguard.EnsureDriverAssignable(
-			txCtx,
-			s.orgRepo,
-			tenantInfo,
-			moveID,
-		); err != nil {
-			return err
-		}
-		if err = dispatchguard.EnsureNoDispatchHold(
-			txCtx,
-			s.holdRepo,
-			tenantInfo,
-			move.ShipmentID,
-		); err != nil {
-			return err
-		}
-
-		original, err := s.shipmentRepo.GetByID(txCtx, &repositories.GetShipmentByIDRequest{
-			ID: move.ShipmentID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: tenantInfo.OrgID,
-				BuID:  tenantInfo.BuID,
-			},
-			ShipmentOptions: repositories.ShipmentOptions{
-				ExpandShipmentDetails: true,
-			},
-		})
-		if err != nil {
-			return err
-		}
-		targetMove := original.FindMove(moveID)
-		if targetMove == nil {
-			return errortypes.NewBusinessError("Shipment does not contain the target move").
-				WithParam("shipmentMoveId", moveID.String())
-		}
-		if targetMove.HasCarrierAssignment() {
-			return errortypes.NewBusinessError("Shipment move is covered by an external carrier. Cancel the carrier assignment before assigning a driver").
-				WithParam("shipmentMoveId", moveID.String())
-		}
-
-		existing, err := s.repo.GetByMoveID(txCtx, tenantInfo, moveID)
-		if err != nil {
-			return err
-		}
-
-		entity, err := build(existing)
-		if err != nil {
-			return err
-		}
-		if err = s.validateTrailerContinuity(txCtx, tenantInfo, targetMove, entity); err != nil {
-			return err
-		}
-
-		savedAssignment, err := persist(txCtx, entity)
+		savedAssignment, err := persist(txCtx, plan.assignment)
 		if err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return errortypes.NewBusinessError("Shipment move already has an assignment").
@@ -744,40 +673,9 @@ func (s *service) upsertAssignment( //nolint:gocognit // legacy workflow
 			return err
 		}
 
-		updatedShipment := shipment.CloneForUpdate(original)
-		targetMove = updatedShipment.FindMove(moveID)
-		if targetMove == nil {
-			return errortypes.NewBusinessError("Shipment does not contain the target move").
-				WithParam("shipmentMoveId", moveID.String())
-		}
-		targetMove.Assignment = savedAssignment
-		targetMove.CoverageType = shipment.MoveCoverageTypeDriver
-
-		control, err := s.controlRepo.Get(txCtx, repositories.GetShipmentControlRequest{
-			TenantInfo: tenantInfo,
-		})
+		updatedShipment, err := s.projectAssignment(txCtx, tenantInfo, plan, savedAssignment)
 		if err != nil {
 			return err
-		}
-
-		if multiErr := s.coordinator.PrepareForUpdateWithDelayThreshold(
-			original,
-			updatedShipment,
-			shipmentstate.ResolveControlDelayThreshold(control),
-		); multiErr != nil {
-			return multiErr
-		}
-
-		if err = s.commercial.Recalculate(txCtx, updatedShipment, control, pulid.Nil); err != nil {
-			return err
-		}
-
-		if multiErr := s.shipmentValidator.ValidateUpdateWithOriginal(
-			txCtx,
-			original,
-			updatedShipment,
-		); multiErr != nil {
-			return multiErr
 		}
 
 		if _, err = s.shipmentRepo.Update(txCtx, updatedShipment); err != nil {

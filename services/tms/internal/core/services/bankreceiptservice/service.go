@@ -177,73 +177,21 @@ func (s *Service) Match(
 	req *serviceports.MatchBankReceiptRequest,
 	actor *serviceports.RequestActor,
 ) (*bankreceipt.BankReceipt, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Request is required",
-		)
-	}
-	if actor == nil || actor.UserID.IsNil() {
-		return nil, errortypes.NewAuthorizationError(
-			"Bank receipt matching requires an authenticated user",
-		)
-	}
-	receipt, err := s.repo.GetByID(
-		ctx,
-		repositoryports.GetBankReceiptByIDRequest{ID: req.ReceiptID, TenantInfo: req.TenantInfo},
-	)
+	plan, err := s.planStoredMatch(ctx, req, actor)
 	if err != nil {
 		return nil, err
 	}
-	payment, err := s.paymentRepo.GetByID(
-		ctx,
-		repositoryports.GetCustomerPaymentByIDRequest{
-			ID:         req.PaymentID,
-			TenantInfo: req.TenantInfo,
-		},
-	)
+	updated, err := s.repo.Update(ctx, plan.ReceiptAfter)
 	if err != nil {
 		return nil, err
 	}
-	if receipt.Status == bankreceipt.StatusMatched {
-		return nil, errortypes.NewBusinessError("Bank receipt is already matched")
-	}
-	if payment.Status != customerpayment.StatusPosted {
-		return nil, errortypes.NewBusinessError("Only posted customer payments can be matched")
-	}
-	if receipt.AmountMinor != payment.AmountMinor {
-		return nil, errortypes.NewBusinessError(
-			"Bank receipt amount must match customer payment amount",
-		)
-	}
-	original := *receipt
-	now := timeutils.NowUnix()
-	receipt.Status = bankreceipt.StatusMatched
-	receipt.MatchedCustomerPaymentID = payment.ID
-	receipt.MatchedAt = &now
-	receipt.MatchedByID = actor.UserID
-	receipt.UpdatedByID = actor.UserID
-	updated, err := s.repo.Update(ctx, receipt)
-	if err != nil {
-		return nil, err
-	}
-	if s.workItemRepo != nil {
-		if item := s.activeWorkItem(ctx, req.TenantInfo, receipt.ID); item != nil {
-			resolvedAt := timeutils.NowUnix()
-			item.Status = bankreceiptworkitem.StatusResolved
-			item.ResolutionType = bankreceiptworkitem.ResolutionMatchedToPayment
-			item.ResolutionNote = "Resolved by matching bank receipt to customer payment"
-			item.ResolvedByUserID = actor.UserID
-			item.ResolvedAt = &resolvedAt
-			item.UpdatedByID = actor.UserID
-			_, _ = s.workItemRepo.Update(ctx, item)
-		}
+	if plan.WorkItemAfter != nil {
+		_, _ = s.workItemRepo.Update(ctx, plan.WorkItemAfter)
 	}
 	if !req.SkipAudit {
 		s.logAudit(
 			updated,
-			&original,
+			plan.ReceiptBefore,
 			actor.UserID,
 			permission.OpUpdate,
 			"Bank receipt matched to customer payment",

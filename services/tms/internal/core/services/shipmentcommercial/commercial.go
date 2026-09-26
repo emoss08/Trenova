@@ -870,7 +870,7 @@ func groupChargeableOccurrences(
 	index := make(map[pulid.ID]int, 1)
 
 	for _, occurrence := range occurrences {
-		if !detentionOccurrenceIsChargeable(occurrence) {
+		if !occurrence.Chargeable() {
 			continue
 		}
 
@@ -892,13 +892,6 @@ func groupChargeableOccurrences(
 	}
 
 	return groups
-}
-
-func detentionOccurrenceIsChargeable(occurrence *detention.DetentionOccurrence) bool {
-	return occurrence != nil &&
-		occurrence.PolicySnapshot != nil &&
-		occurrence.Status.IsBillable() &&
-		occurrence.BillableAmount.GreaterThan(decimal.Zero)
 }
 
 func detentionGroupCharge(

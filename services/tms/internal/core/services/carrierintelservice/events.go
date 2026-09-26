@@ -103,18 +103,38 @@ type ResolveEventRequest struct {
 	Note       string
 }
 
+func PlanResolve(
+	event *carrierintel.CarrierIntelEvent,
+	req *ResolveEventRequest,
+	now int64,
+) error {
+	if err := checkResolveNote(req); err != nil {
+		return err
+	}
+
+	return event.Resolve(req.TenantInfo.UserID, req.Resolution, strings.TrimSpace(req.Note), now)
+}
+
+func checkResolveNote(req *ResolveEventRequest) error {
+	note := strings.TrimSpace(req.Note)
+	if len(note) > 2000 {
+		return errortypes.NewValidationError("note", errortypes.ErrInvalid,
+			"Note cannot exceed 2000 characters")
+	}
+	if req.Resolution == carrierintel.EventResolutionFalsePositive && note == "" {
+		return errortypes.NewValidationError("note", errortypes.ErrRequired,
+			"Explain why this change is a false positive")
+	}
+
+	return nil
+}
+
 func (s *Service) ResolveEvent(
 	ctx context.Context,
 	req *ResolveEventRequest,
 ) (*carrierintel.CarrierIntelEvent, error) {
-	note := strings.TrimSpace(req.Note)
-	if len(note) > 2000 {
-		return nil, errortypes.NewValidationError("note", errortypes.ErrInvalid,
-			"Note cannot exceed 2000 characters")
-	}
-	if req.Resolution == carrierintel.EventResolutionFalsePositive && note == "" {
-		return nil, errortypes.NewValidationError("note", errortypes.ErrRequired,
-			"Explain why this change is a false positive")
+	if err := checkResolveNote(req); err != nil {
+		return nil, err
 	}
 
 	event, err := s.GetEvent(ctx, req.TenantInfo, req.EventID)
@@ -123,7 +143,7 @@ func (s *Service) ResolveEvent(
 	}
 	original := *event
 
-	if err = event.Resolve(req.TenantInfo.UserID, req.Resolution, note, s.now()); err != nil {
+	if err = PlanResolve(event, req, s.now()); err != nil {
 		return nil, err
 	}
 	updated, err := s.eventRepo.Update(ctx, event)

@@ -73,6 +73,16 @@ type UpdateChargesRequest struct {
 	ConvertAmountSplitsToPercent bool
 }
 
+// ChargeUpdatePreview is a billing queue item's shipment before and after a
+// charge edit. Before is the shipment as it was read; its charges are the
+// ones the edit replaces.
+type ChargeUpdatePreview struct {
+	Item            *billingqueue.BillingQueueItem
+	Before          *shipment.Shipment
+	After           *shipment.Shipment
+	ConvertedSplits int
+}
+
 // ReassignChargeRequest changes who pays for one charge on the item's shipment.
 // An empty Allocations list gives the charge back whole to the shipment's payer.
 type ReassignChargeRequest struct {
@@ -131,6 +141,15 @@ type BillingQueueService interface {
 		req *UpdateChargesRequest,
 		actor *RequestActor,
 	) (*billingqueue.BillingQueueItem, error)
+	// PreviewUpdateCharges is UpdateCharges up to the save: the item's
+	// shipment with the charges and totals the edit would leave. A rate or
+	// formula change reprices through the rating engine, which writes, and is
+	// refused rather than previewed.
+	PreviewUpdateCharges(
+		ctx context.Context,
+		req *UpdateChargesRequest,
+		actor *RequestActor,
+	) (*ChargeUpdatePreview, error)
 	ReassignCharge(
 		ctx context.Context,
 		req *ReassignChargeRequest,

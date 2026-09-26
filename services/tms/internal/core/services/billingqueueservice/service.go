@@ -2,6 +2,7 @@ package billingqueueservice
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
@@ -23,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -652,11 +652,7 @@ func (s *service) UpdateStatus(
 	actor *services.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
 	if actor.IsAgent() {
-		return nil, errortypes.NewValidationError(
-			"actor",
-			errortypes.ErrForbidden,
-			"Agent principals cannot transition billing queue items; a human must decide",
-		)
+		return nil, errAgentCannotTransition()
 	}
 
 	var (
@@ -674,12 +670,8 @@ func (s *service) UpdateStatus(
 			return getErr
 		}
 
-		if !billingqueue.IsAllowedTransition(entity.Status, req.NewStatus) {
-			return errortypes.NewValidationError(
-				"status",
-				errortypes.ErrInvalidOperation,
-				"Cannot transition from {0} to {1}", string(entity.Status), string(req.NewStatus),
-			)
+		if transitionErr := checkStatusTransition(entity, req); transitionErr != nil {
+			return transitionErr
 		}
 
 		if req.NewStatus == billingqueue.StatusApproved {
@@ -690,9 +682,9 @@ func (s *service) UpdateStatus(
 
 		prev := *entity
 		previous = &prev
-		entity.Status = req.NewStatus
-
-		s.applyStatusFields(entity, req, actor)
+		if planErr := PlanStatusChange(entity, req, actor, timeutils.NowUnix()); planErr != nil {
+			return planErr
+		}
 
 		if multiErr := s.validator.ValidateUpdate(txCtx, entity); multiErr != nil {
 			return multiErr
@@ -884,85 +876,11 @@ func (s *service) UpdateCharges(
 	req *services.UpdateChargesRequest,
 	actor *services.RequestActor,
 ) (*billingqueue.BillingQueueItem, error) {
-	if req == nil {
-		return nil, errortypes.NewValidationError(
-			"request",
-			errortypes.ErrRequired,
-			"Update charges request is required",
-		)
-	}
-
-	item, err := s.repo.GetByID(ctx, &repositories.GetBillingQueueItemByIDRequest{
-		ItemID:     req.ItemID,
-		TenantInfo: req.TenantInfo,
-	})
+	plan, err := s.planChargeUpdate(ctx, req, actor, true)
 	if err != nil {
 		return nil, err
 	}
-
-	if item.Status != billingqueue.StatusInReview {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalidOperation,
-			"Charges can only be edited when the item is in InReview status",
-		)
-	}
-
-	if err = s.guardSiblingPayersUnposted(ctx, item, req.TenantInfo); err != nil {
-		return nil, err
-	}
-
-	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         item.ShipmentID,
-		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if req.FormulaTemplateID != nil && !req.FormulaTemplateID.IsNil() {
-		shp.FormulaTemplateID = *req.FormulaTemplateID
-
-		if err = s.rerateShipment(ctx, shp, req.TenantInfo, actor.UserID); err != nil {
-			return nil, errortypes.NewValidationError(
-				"formulaTemplateId",
-				errortypes.ErrInvalid,
-				"Failed to recalculate charges with the selected formula template",
-			)
-		}
-	} else if req.BaseRate != nil {
-		shp.BaseRate = decimal.NewNullDecimal(*req.BaseRate)
-
-		if err = s.rerateShipment(ctx, shp, req.TenantInfo, actor.UserID); err != nil {
-			return nil, errortypes.NewValidationError(
-				"baseRate",
-				errortypes.ErrInvalid,
-				"Failed to recalculate charges with updated base rate",
-			)
-		}
-	}
-
-	chargeNames := accessorialNames(shp.AdditionalCharges)
-	if req.AdditionalCharges != nil {
-		shipment.RestoreSystemOwnedCharges(shp.AdditionalCharges, req.AdditionalCharges)
-		shp.AdditionalCharges = req.AdditionalCharges
-	}
-
-	freight := shp.FreightChargeAmount.Decimal
-	otherTotal := shipment.AdditionalChargesTotal(shp.AdditionalCharges, freight)
-	shp.OtherChargeAmount = decimal.NewNullDecimal(otherTotal)
-	shp.TotalChargeAmount = decimal.NewNullDecimal(freight.Add(otherTotal))
-
-	convertedSplits := 0
-	if stale := shipment.FindStaleAmountSplits(shp, shp.ChargeAllocations); len(stale) > 0 {
-		if !req.ConvertAmountSplitsToPercent {
-			return nil, staleAmountSplitError(stale, chargeNames)
-		}
-		convertedSplits = shipment.ConvertAmountSplitsToPercent(shp, shp.ChargeAllocations)
-	}
+	item, shp := plan.Item, plan.After
 
 	if _, err = s.shipmentRepo.UpdateDerivedState(ctx, shp); err != nil {
 		return nil, err
@@ -979,7 +897,7 @@ func (s *service) UpdateCharges(
 		permission.OpUpdate,
 		nil,
 		nil,
-		chargesUpdatedComment(convertedSplits),
+		chargesUpdatedComment(plan.ConvertedSplits),
 	)
 	s.publishInvalidation(ctx, item, auditActor, "updated", item)
 
@@ -1024,44 +942,6 @@ func (s *service) guardSiblingPayersUnposted(
 	}
 
 	return nil
-}
-
-func (s *service) applyStatusFields(
-	entity *billingqueue.BillingQueueItem,
-	req *services.UpdateBillingQueueStatusRequest,
-	actor *services.RequestActor,
-) {
-	now := timeutils.NowUnix()
-
-	switch req.NewStatus {
-	case billingqueue.StatusInReview:
-		if entity.ReviewStartedAt == nil {
-			entity.ReviewStartedAt = &now
-		}
-		entity.ReviewCompletedAt = nil
-	case billingqueue.StatusApproved:
-		entity.ReviewCompletedAt = &now
-		if req.ReviewNotes != "" {
-			entity.ReviewNotes = req.ReviewNotes
-		}
-	case billingqueue.StatusPosted:
-		entity.ReviewCompletedAt = &now
-	case billingqueue.StatusSentBackToOps, billingqueue.StatusException:
-		entity.ExceptionReasonCode = req.ExceptionReasonCode
-		entity.ExceptionNotes = req.ExceptionNotes
-	case billingqueue.StatusCanceled:
-		userID := actor.UserID
-		entity.CanceledByID = &userID
-		entity.CanceledAt = &now
-		entity.CancelReason = req.CancelReason
-	case billingqueue.StatusReadyForReview:
-		entity.ExceptionReasonCode = nil
-		entity.ExceptionNotes = ""
-	case billingqueue.StatusOnHold:
-		if req.ReviewNotes != "" {
-			entity.ReviewNotes = req.ReviewNotes
-		}
-	}
 }
 
 func (s *service) logAction(

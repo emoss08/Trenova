@@ -37,10 +37,8 @@ func (s *Service) SetDispatchHold(
 	ctx context.Context,
 	req DispatchHoldRequest,
 ) (*worker.Worker, error) {
-	reason := strings.TrimSpace(req.Reason)
-	if reason == "" {
-		return nil, errortypes.NewValidationError("reason", errortypes.ErrRequired,
-			"Say why this driver is being held")
+	if strings.TrimSpace(req.Reason) == "" {
+		return nil, errDispatchHoldReason()
 	}
 
 	entity, err := s.repo.GetByID(ctx, repositories.GetWorkerByIDRequest{
@@ -51,14 +49,30 @@ func (s *Service) SetDispatchHold(
 		return nil, err
 	}
 
+	if err = ApplyDispatchHold(entity, &req); err != nil {
+		return nil, err
+	}
+
+	return s.UpdateFromEmployment(ctx, entity, req.Actor)
+}
+
+func ApplyDispatchHold(entity *worker.Worker, req *DispatchHoldRequest) error {
+	if strings.TrimSpace(req.Reason) == "" {
+		return errDispatchHoldReason()
+	}
 	if entity.CanBeAssigned != req.Held {
-		return nil, errortypes.NewValidationError("held", errortypes.ErrInvalidOperation,
+		return errortypes.NewValidationError("held", errortypes.ErrInvalidOperation,
 			holdNoOpMessage(req.Held))
 	}
 
 	entity.CanBeAssigned = !req.Held
 
-	return s.UpdateFromEmployment(ctx, entity, req.Actor)
+	return nil
+}
+
+func errDispatchHoldReason() error {
+	return errortypes.NewValidationError("reason", errortypes.ErrRequired,
+		"Say why this driver is being held")
 }
 
 func holdNoOpMessage(held bool) string {

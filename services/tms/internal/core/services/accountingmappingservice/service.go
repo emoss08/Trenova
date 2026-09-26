@@ -507,7 +507,7 @@ func (s *Service) Set(
 
 	used := 0
 	if row.ExternalID != ref.ExternalID {
-		if used, err = s.guardHistory(
+		if used, err = s.GuardHistory(
 			ctx,
 			req.TenantInfo,
 			row,
@@ -516,20 +516,8 @@ func (s *Service) Set(
 			return nil, err
 		}
 	}
-
-	source := req.Source
-	if source != accountingsync.MappingSourceAgent {
-		source = accountingsync.MappingSourceManual
-	}
 	before := jsonutils.MustToJSON(row)
-	row.Confirm(&accountingsync.Choice{
-		ExternalID:   ref.ExternalID,
-		ExternalName: ref.Label(),
-		Source:       source,
-		Reason:       req.Reason,
-		ActorID:      req.UserID,
-		At:           timeutils.NowUnix(),
-	})
+	row.Confirm(MappingChoice(req, ref, timeutils.NowUnix()))
 
 	updated, err := s.mappings.Update(ctx, row)
 	if err != nil {
@@ -559,7 +547,7 @@ func (s *Service) Clear(
 	if err != nil {
 		return nil, err
 	}
-	used, err := s.guardHistory(ctx, req.TenantInfo, row, req.AcknowledgeHistory)
+	used, err := s.GuardHistory(ctx, req.TenantInfo, row, req.AcknowledgeHistory)
 	if err != nil {
 		return nil, err
 	}

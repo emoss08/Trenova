@@ -6,12 +6,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"go.uber.org/zap"
 )
 
 type evaluateShipmentParams struct {
@@ -56,18 +53,7 @@ func (s *service) EvaluateShipment(
 		return nil, multiErr
 	}
 
-	source, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         req.ShipmentID,
-		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	control, err := s.dispatchControl(ctx, req.TenantInfo)
+	source, control, err := s.evaluationSource(ctx, req.TenantInfo, req.ShipmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -89,18 +75,7 @@ func (s *service) EvaluateStop(
 		return nil, multiErr
 	}
 
-	source, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
-		ID:         req.ShipmentID,
-		TenantInfo: req.TenantInfo,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	control, err := s.dispatchControl(ctx, req.TenantInfo)
+	source, control, err := s.evaluationSource(ctx, req.TenantInfo, req.ShipmentID)
 	if err != nil {
 		return nil, err
 	}
@@ -151,73 +126,27 @@ func (s *service) evaluateShipment(
 	ctx context.Context,
 	params evaluateShipmentParams,
 ) (*services.ServiceFailureEvaluationResult, error) {
-	result := newServiceFailureEvaluationResult()
-	if params.source == nil {
-		return result, nil
-	}
-	if params.source.Status == shipment.StatusCanceled {
-		addSkippedEvaluation(addSkippedEvaluationParams{
-			result:     result,
-			shipmentID: params.source.ID,
-			reason:     "shipment canceled",
-		})
-		return result, nil
+	plan, err := s.planDetection(ctx, params)
+	if err != nil {
+		return nil, err
 	}
 
-	shipperStop := params.source.ShipperStop()
-	gracePeriod := normalizedGracePeriod(params.control)
-	for _, move := range params.source.Moves {
-		if move == nil || move.IsCanceled() {
+	result := newServiceFailureEvaluationResult()
+	result.SkippedStops = append(result.SkippedStops, plan.SkippedStops...)
+	result.Skipped = len(plan.SkippedStops)
+	for _, detected := range plan.Detected {
+		failure, pErr := s.persistDetected(ctx, detected, params.actor)
+		if pErr != nil {
+			return nil, pErr
+		}
+		if detected.Existing != nil {
+			result.UpdatedIDs = append(result.UpdatedIDs, failure.ID)
+			result.UpdatedStops = append(result.UpdatedStops, serviceFailureStopSummary(failure))
 			continue
 		}
-		for _, stop := range move.Stops {
-			if stop == nil {
-				continue
-			}
-			if params.onlyStopID != nil && stop.ID != *params.onlyStopID {
-				continue
-			}
-			action, reason := s.qualifyingFailure(qualifyingFailureParams{
-				source:      params.source,
-				move:        move,
-				stop:        stop,
-				shipperStop: shipperStop,
-				control:     params.control,
-				gracePeriod: gracePeriod,
-				force:       params.force,
-			})
-			if action == nil {
-				addSkippedEvaluation(addSkippedEvaluationParams{
-					result:             result,
-					shipmentID:         params.source.ID,
-					shipmentMoveID:     move.ID,
-					stop:               stop,
-					gracePeriodMinutes: gracePeriod,
-					reason:             reason,
-				})
-				s.l.Debug(
-					"service failure stop skipped",
-					zap.String("stopID", stop.ID.String()),
-					zap.String("reason", reason),
-				)
-				continue
-			}
-			failure, err := s.createOrUpdateDetected(ctx, action, params.actor)
-			if err != nil {
-				return nil, err
-			}
-			if action.existing {
-				result.UpdatedIDs = append(result.UpdatedIDs, failure.ID)
-				result.UpdatedStops = append(
-					result.UpdatedStops,
-					serviceFailureStopSummary(failure),
-				)
-				continue
-			}
-			result.CreatedIDs = append(result.CreatedIDs, failure.ID)
-			result.CreatedStops = append(result.CreatedStops, serviceFailureStopSummary(failure))
-			s.transitionShipmentToDelayed(ctx, params.source, params.actor, failure)
-		}
+		result.CreatedIDs = append(result.CreatedIDs, failure.ID)
+		result.CreatedStops = append(result.CreatedStops, serviceFailureStopSummary(failure))
+		s.transitionShipmentToDelayed(ctx, params.source, params.actor, failure)
 	}
 
 	return result, nil
@@ -279,53 +208,13 @@ func (s *service) createOrUpdateDetected(
 	action *detectedAction,
 	actor *services.RequestActor,
 ) (*servicefailure.ServiceFailure, error) {
-	entity := action.entity
-	tenantInfo := serviceFailureTenantInfo(entity)
-	defaultReason, err := s.defaultReasonCode(ctx, tenantInfo, entity.StopType)
+	detected, err := s.planDetected(ctx, action.entity)
 	if err != nil {
 		return nil, err
 	}
-	if defaultReason != nil {
-		entity.ReasonCodeID = pulid.PtrOrNil(defaultReason.ID)
-		entity.Notes = defaultReason.DefaultNote
-	}
-	if entity.Notes == "" {
-		entity.Notes = detectedFailureNote(entity)
-	}
+	action.existing = detected.Existing != nil
 
-	existing, err := s.repo.FindUnresolvedByStop(ctx, activeStopRequest(entity))
-	switch {
-	case err == nil:
-		action.existing = true
-		updated := *existing
-		updated.ScheduledCutoff = entity.ScheduledCutoff
-		updated.ActualArrival = entity.ActualArrival
-		updated.GracePeriodMinutes = entity.GracePeriodMinutes
-		updated.LateMinutes = entity.LateMinutes
-		if updated.ReasonCodeID == nil {
-			updated.ReasonCodeID = entity.ReasonCodeID
-			updated.Notes = entity.Notes
-		}
-		return s.repo.UpdateDetectionSnapshot(ctx, &updated)
-	case errortypes.IsNotFoundError(err):
-	default:
-		return nil, err
-	}
-
-	if multiErr := validateServiceFailure(entity); multiErr != nil {
-		return nil, multiErr
-	}
-	created, err := s.repo.Create(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
-	s.afterServiceFailureCreate(ctx, created, actor, "Service failure detected")
-	s.comment(ctx, commentParams{
-		entity:   created,
-		comment:  "Service failure detected",
-		metadata: serviceFailureMetadata(created, actor),
-	})
-	return created, nil
+	return s.persistDetected(ctx, detected, actor)
 }
 
 func mergeEvaluationResult(target, source *services.ServiceFailureEvaluationResult) {
@@ -354,6 +243,10 @@ func addSkippedEvaluation(params addSkippedEvaluationParams) {
 		return
 	}
 	params.result.Skipped++
+	params.result.SkippedStops = append(params.result.SkippedStops, skippedStopDetail(params))
+}
+
+func skippedStopDetail(params addSkippedEvaluationParams) services.ServiceFailureSkippedStop {
 	detail := stopSummaryFromStop(
 		params.shipmentID,
 		params.shipmentMoveID,
@@ -361,7 +254,8 @@ func addSkippedEvaluation(params addSkippedEvaluationParams) {
 		params.gracePeriodMinutes,
 	)
 	detail.Reason = params.reason
-	params.result.SkippedStops = append(params.result.SkippedStops, detail)
+
+	return detail
 }
 
 func serviceFailureStopSummary(

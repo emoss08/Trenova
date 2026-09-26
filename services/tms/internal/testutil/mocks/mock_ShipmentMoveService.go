@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -307,6 +308,74 @@ func (_c *MockShipmentMoveService_UpdateStatus_Call) Return(shipmentMove *shipme
 }
 
 func (_c *MockShipmentMoveService_UpdateStatus_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateMoveStatusRequest) (*shipment.ShipmentMove, error)) *MockShipmentMoveService_UpdateStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreviewStopActual provides a mock function for the type MockShipmentMoveService
+func (_mock *MockShipmentMoveService) PreviewStopActual(ctx context.Context, req *repositories.RecordStopActualRequest) (*services.StopActualPlan, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PreviewStopActual")
+	}
+
+	var r0 *services.StopActualPlan
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.RecordStopActualRequest) (*services.StopActualPlan, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.RecordStopActualRequest) *services.StopActualPlan); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.StopActualPlan)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.RecordStopActualRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockShipmentMoveService_PreviewStopActual_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreviewStopActual'
+type MockShipmentMoveService_PreviewStopActual_Call struct {
+	*mock.Call
+}
+
+// PreviewStopActual is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.RecordStopActualRequest
+func (_e *MockShipmentMoveService_Expecter) PreviewStopActual(ctx any, req any) *MockShipmentMoveService_PreviewStopActual_Call {
+	return &MockShipmentMoveService_PreviewStopActual_Call{Call: _e.mock.On("PreviewStopActual", ctx, req)}
+}
+
+func (_c *MockShipmentMoveService_PreviewStopActual_Call) Run(run func(ctx context.Context, req *repositories.RecordStopActualRequest)) *MockShipmentMoveService_PreviewStopActual_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.RecordStopActualRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.RecordStopActualRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockShipmentMoveService_PreviewStopActual_Call) Return(stopActualPlan *services.StopActualPlan, err error) *MockShipmentMoveService_PreviewStopActual_Call {
+	_c.Call.Return(stopActualPlan, err)
+	return _c
+}
+
+func (_c *MockShipmentMoveService_PreviewStopActual_Call) RunAndReturn(run func(ctx context.Context, req *repositories.RecordStopActualRequest) (*services.StopActualPlan, error)) *MockShipmentMoveService_PreviewStopActual_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -346,6 +346,25 @@ type ContractRateAccessorial struct {
 	Unit                int16                    `json:"unit"`
 }
 
+type ShipmentRatingOutcome struct {
+	Adopted       bool
+	Amount        decimal.Decimal
+	Currency      string
+	AgreementName string
+	Explanation   string
+}
+
+type ShipmentCreatePlan struct {
+	Shipment *shipment.Shipment
+	Rating   *ShipmentRatingOutcome
+}
+
+// ShipmentCancelPreview is a shipment before and after a cancellation.
+type ShipmentCancelPreview struct {
+	Before *shipment.Shipment
+	After  *shipment.Shipment
+}
+
 type ShipmentService interface {
 	List(
 		ctx context.Context,
@@ -395,6 +414,13 @@ type ShipmentService interface {
 		req *repositories.CancelShipmentRequest,
 		actor *RequestActor,
 	) (*shipment.Shipment, error)
+	// PreviewCancel checks a cancellation as Cancel does and returns the
+	// shipment before and as cancelling it would leave it, writing nothing.
+	PreviewCancel(
+		ctx context.Context,
+		req *repositories.CancelShipmentRequest,
+		actor *RequestActor,
+	) (*ShipmentCancelPreview, error)
 	// PreviewContractRate answers what the agreements would charge for a
 	// shipment that has not been saved, which is what the billing panel offers
 	// before anyone commits to it. Nothing is written.
@@ -403,6 +429,11 @@ type ShipmentService interface {
 		entity *shipment.Shipment,
 		actor *RequestActor,
 	) (*ContractRateApplication, error)
+	PreviewCreate(
+		ctx context.Context,
+		entity *shipment.Shipment,
+		actor *RequestActor,
+	) (*ShipmentCreatePlan, error)
 	// AutoRate prices a saved shipment from its contract again, overwriting its
 	// rating method, base rate and contract accessorials.
 	AutoRate(

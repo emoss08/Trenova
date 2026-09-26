@@ -49,24 +49,9 @@ func (s *Service) Flag(
 	req *services.FlagAgentExceptionRequest,
 	actor *services.RequestActor,
 ) (*agent.AgentException, error) {
-	entity := &agent.AgentException{
-		OrganizationID:  req.TenantInfo.OrgID,
-		BusinessUnitID:  req.TenantInfo.BuID,
-		RunID:           req.RunID,
-		Category:        req.Category,
-		Severity:        req.Severity,
-		SubjectType:     req.SubjectType,
-		SubjectID:       req.SubjectID,
-		AttemptSummary:  req.AttemptSummary,
-		Evidence:        req.Evidence,
-		BlastRadius:     req.BlastRadius,
-		ResolutionState: agent.ResolutionStateOpen,
-	}
-
-	me := errortypes.NewMultiError()
-	entity.Validate(me)
-	if me.HasErrors() {
-		return nil, me
+	entity, err := PlanException(req)
+	if err != nil {
+		return nil, err
 	}
 
 	created, err := s.repo.Create(ctx, entity)

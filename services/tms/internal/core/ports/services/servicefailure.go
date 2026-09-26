@@ -109,6 +109,18 @@ type ServiceFailureEvaluatedStopSummary struct {
 
 type ServiceFailureSkippedStop = ServiceFailureEvaluatedStopSummary
 
+type DetectedServiceFailure struct {
+	Failure  *servicefailure.ServiceFailure
+	Existing *servicefailure.ServiceFailure
+}
+
+type ServiceFailureDetectionPlan struct {
+	Shipment     *shipment.Shipment
+	Detected     []DetectedServiceFailure
+	SkippedStops []ServiceFailureSkippedStop
+	MarksDelayed bool
+}
+
 type ServiceFailureEDIPayloadResult struct {
 	Payload     edi.DocumentPayload `json:"payload"`
 	Diagnostics []edix12.Diagnostic `json:"diagnostics"`
@@ -318,6 +330,15 @@ type ServiceFailureEvaluator interface {
 	) (*ServiceFailureEvaluationResult, error)
 }
 
+// ServiceFailureLifecyclePreview is a service failure before and after a
+// lifecycle change, and the EDI 214 the change would send the customer's
+// trading partner. EDI is nil when no 214 applies.
+type ServiceFailureLifecyclePreview struct {
+	Before *servicefailure.ServiceFailure
+	After  *servicefailure.ServiceFailure
+	EDI    *ServiceFailure214LifecycleResult
+}
+
 type ServiceFailureService interface {
 	ServiceFailureEvaluator
 	List(
@@ -350,6 +371,10 @@ type ServiceFailureService interface {
 		req *BulkEvaluateServiceFailuresRequest,
 		actor *RequestActor,
 	) (*ServiceFailureEvaluationResult, error)
+	PreviewEvaluateShipment(
+		ctx context.Context,
+		req *EvaluateShipmentServiceFailuresRequest,
+	) (*ServiceFailureDetectionPlan, error)
 	Update(
 		ctx context.Context,
 		req *UpdateServiceFailureRequest,
@@ -365,6 +390,14 @@ type ServiceFailureService interface {
 		req *ServiceFailureLifecycleRequest,
 		actor *RequestActor,
 	) (*servicefailure.ServiceFailure, error)
+	// PreviewResolve checks a resolution as Resolve does and returns the
+	// failure as it would leave it and the EDI 214 it would generate,
+	// writing nothing.
+	PreviewResolve(
+		ctx context.Context,
+		req *ServiceFailureLifecycleRequest,
+		actor *RequestActor,
+	) (*ServiceFailureLifecyclePreview, error)
 	Void(
 		ctx context.Context,
 		req *ServiceFailureLifecycleRequest,

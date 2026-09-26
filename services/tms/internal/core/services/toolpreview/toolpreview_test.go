@@ -364,30 +364,6 @@ func TestParameters_StampsEachParameterAndDropsConfidentialOnes(t *testing.T) {
 	assert.Equal(t, permission.SensitivityInternal, change.Fields[1].Sensitivity)
 }
 
-func TestFromSimulation_ReadsASimulationAsAPartialPreview(t *testing.T) {
-	t.Parallel()
-
-	record := pulid.MustNew("shp_")
-	preview := FromSimulation(Record{Resource: testResource, ID: record}, &agent.ToolSimulation{
-		Summary: "Would put PRO-100 on hold.",
-		Changes: []agent.FieldChange{
-			{Field: "status", From: "New", To: "Hold"},
-			{Field: "bankAccount", To: "999"},
-			{Field: " ", To: "ignored"},
-		},
-	}, WithRegistry(testRegistry(t)))
-
-	assert.True(t, preview.Partial)
-	assert.Equal(t, "Would put PRO-100 on hold.", preview.Summary)
-	require.Len(t, preview.Changes, 1)
-	change := preview.Changes[0]
-	assert.Equal(t, record, change.EntityID)
-	require.Len(t, change.Fields, 1)
-	assert.Equal(t, "New", change.Fields[0].Before)
-	assert.Equal(t, "Hold", change.Fields[0].After)
-	assert.Nil(t, FromSimulation(Record{}, nil))
-}
-
 func TestChain_ProjectsALaterStepFromTheEarlierOne(t *testing.T) {
 	t.Parallel()
 
