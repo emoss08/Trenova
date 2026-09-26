@@ -35,6 +35,14 @@ import (
 // pages and tells the person why.
 var ErrCaptureDisabled = errors.New("document capture is turned off for this organization")
 
+// DisabledReasonParam and DisabledReason tag ErrCaptureDisabled in the problem
+// body, so the companion can tell "hold the pages until capture is turned
+// back on" from a refusal of the upload itself without reading its text.
+const (
+	DisabledReasonParam = "reason"
+	DisabledReason      = "capture_disabled"
+)
+
 // envelopeCipher is the slice of the encryption service capture uses: sealing
 // pages and thumbnails at rest and opening them again.
 type envelopeCipher interface {
@@ -213,6 +221,7 @@ func (s *Service) requireEnabled(
 	}
 	if !control.EnableCapture {
 		return nil, errortypes.NewBusinessError(ErrCaptureDisabled.Error()).
+			WithParam(DisabledReasonParam, DisabledReason).
 			WithInternal(ErrCaptureDisabled)
 	}
 

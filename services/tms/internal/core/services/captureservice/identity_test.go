@@ -68,4 +68,8 @@ func TestDeviceProfilesRefusedWhileCaptureIsOff(t *testing.T) {
 
 	_, err := s.DeviceProfiles(t.Context(), principal)
 	require.ErrorIs(t, err, ErrCaptureDisabled)
+
+	var businessErr *errortypes.BusinessError
+	require.ErrorAs(t, err, &businessErr)
+	assert.Equal(t, DisabledReason, businessErr.Params[DisabledReasonParam])
 }

@@ -344,9 +344,23 @@ pub struct ProblemDetail {
     pub errors: Vec<FieldError>,
     #[serde(default)]
     pub trace_id: String,
+    #[serde(default, deserialize_with = "null_as_default")]
+    pub params: std::collections::HashMap<String, String>,
 }
 
+/// `captureservice.DisabledReasonParam` and `DisabledReason`.
+pub const DISABLED_REASON_PARAM: &str = "reason";
+pub const DISABLED_REASON: &str = "capture_disabled";
+
 impl ProblemDetail {
+    /// Whether the organization has turned capture off. Nothing can be sent
+    /// until it is turned back on, and pages already captured are kept.
+    pub fn is_capture_disabled(&self) -> bool {
+        self.params
+            .get(DISABLED_REASON_PARAM)
+            .is_some_and(|reason| reason == DISABLED_REASON)
+    }
+
     /// The most useful single line to show a person.
     pub fn summary(&self) -> &str {
         if let Some(first) = self.errors.first().filter(|e| !e.message.is_empty()) {
@@ -794,6 +808,16 @@ mod tests {
             serde_json::from_str(r#"{"title":"Forbidden","status":403,"errors":null}"#)
                 .expect("problem");
         assert_eq!(bare.summary(), "Forbidden");
+        assert!(!bare.is_capture_disabled());
+    }
+
+    #[test]
+    fn capture_turned_off_is_read_from_its_param_not_its_text() {
+        let raw = r#"{"type":"business-rule-violation","title":"Business Rule Violation","status":422,
+            "detail":"document capture is turned off for this organization",
+            "params":{"reason":"capture_disabled"}}"#;
+        let problem: ProblemDetail = serde_json::from_str(raw).expect("problem");
+        assert!(problem.is_capture_disabled());
     }
 
     #[test]
