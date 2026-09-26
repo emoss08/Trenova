@@ -99,6 +99,7 @@ func (h *Handler) RegisterDeviceRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/capture/device/")
 	api.GET("", h.me)
 	api.PUT("sources/", h.reportSources)
+	api.GET("profiles/", h.profiles)
 	api.GET("stream/", h.stream)
 	api.GET("requests/", h.openRequests)
 	api.POST("requests/:requestID/status/", h.reportRequestStatus)

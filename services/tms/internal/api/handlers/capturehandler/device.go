@@ -71,17 +71,45 @@ func devicePrincipal(c *gin.Context) *captureservice.DevicePrincipal {
 }
 
 // @Summary Describe the calling device
-// @Description Returns the device record, including the person it acts for, so the tray can
-// @Description show who it is signed in as.
+// @Description Returns the device record with the person and organization it acts for, so the
+// @Description tray can show who it is signed in as.
 // @ID getCaptureDevice
 // @Tags Capture
 // @Produce json
-// @Success 200 {object} capture.CaptureDevice
+// @Success 200 {object} captureservice.DeviceIdentity
 // @Failure 401 {object} helpers.ProblemDetail
 // @Security BearerAuth
 // @Router /capture/device/ [get]
 func (h *Handler) me(c *gin.Context) {
-	c.JSON(http.StatusOK, devicePrincipal(c).Device)
+	identity, err := h.service.DescribeDevice(c.Request.Context(), devicePrincipal(c))
+	if err != nil {
+		h.fail(c, err)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, identity)
+}
+
+// @Summary List the scan profiles the device may use
+// @Description The active profiles its person may scan with, for scans started from the tray.
+// @ID listCaptureDeviceProfiles
+// @Tags Capture
+// @Produce json
+// @Success 200 {array} capture.CaptureProfile
+// @Failure 401 {object} helpers.ProblemDetail
+// @Failure 403 {object} helpers.ProblemDetail
+// @Security BearerAuth
+// @Router /capture/device/profiles/ [get]
+func (h *Handler) profiles(c *gin.Context) {
+	profiles, err := h.service.DeviceProfiles(c.Request.Context(), devicePrincipal(c))
+	if err != nil {
+		h.fail(c, err)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, profiles)
 }
 
 type reportSourcesRequest struct {

@@ -59,6 +59,8 @@ type Params struct {
 	Records         repositories.CaptureRecordFinder
 	DocumentControl repositories.DocumentControlRepository
 	DocumentTypes   repositories.DocumentTypeRepository
+	Users           repositories.UserRepository
+	Organizations   repositories.OrganizationRepository
 	Permissions     services.PermissionEngine
 	Storage         storage.Client
 	Encryption      *encryptionservice.Service
@@ -84,6 +86,19 @@ type Params struct {
 	Notifications *notificationservice.Service `optional:"true"`
 }
 
+// userReader and organizationReader name the person and organization a device
+// acts for, so the companion can say who it is signed in as.
+type userReader interface {
+	GetByID(ctx context.Context, req repositories.GetUserByIDRequest) (*tenant.User, error)
+}
+
+type organizationReader interface {
+	GetByID(
+		ctx context.Context,
+		req repositories.GetOrganizationByIDRequest,
+	) (*tenant.Organization, error)
+}
+
 // notifier is the one thing capture asks of notifications.
 type notifier interface {
 	Create(
@@ -107,6 +122,8 @@ type Service struct {
 	records       repositories.CaptureRecordFinder
 	controls      repositories.DocumentControlRepository
 	documentTypes repositories.DocumentTypeRepository
+	users         userReader
+	organizations organizationReader
 	permissions   services.PermissionEngine
 	storage       storage.Client
 	cipher        envelopeCipher
@@ -148,6 +165,8 @@ func New(p Params) *Service {
 		records:       p.Records,
 		controls:      p.DocumentControl,
 		documentTypes: p.DocumentTypes,
+		users:         p.Users,
+		organizations: p.Organizations,
 		permissions:   p.Permissions,
 		storage:       p.Storage,
 		cipher:        cipher,

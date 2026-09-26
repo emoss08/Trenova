@@ -1205,6 +1205,31 @@ definitions:
                     $ref: '#/definitions/capture.SourceInfo'
                 type: array
         type: object
+    captureservice.DeviceIdentity:
+        properties:
+            device:
+                $ref: '#/definitions/capture.CaptureDevice'
+            organization:
+                $ref: '#/definitions/captureservice.DeviceOrganization'
+            person:
+                $ref: '#/definitions/captureservice.DevicePerson'
+        type: object
+    captureservice.DeviceOrganization:
+        properties:
+            id:
+                type: string
+            name:
+                type: string
+        type: object
+    captureservice.DevicePerson:
+        properties:
+            emailAddress:
+                type: string
+            id:
+                type: string
+            name:
+                type: string
+        type: object
     captureservice.OpenBatchInput:
         properties:
             clientKey:
@@ -18758,8 +18783,8 @@ paths:
     /capture/device/:
         get:
             description: |-
-                Returns the device record, including the person it acts for, so the tray can
-                show who it is signed in as.
+                Returns the device record with the person and organization it acts for, so the
+                tray can show who it is signed in as.
             operationId: getCaptureDevice
             produces:
                 - application/json
@@ -18767,7 +18792,7 @@ paths:
                 "200":
                     description: OK
                     schema:
-                        $ref: '#/definitions/capture.CaptureDevice'
+                        $ref: '#/definitions/captureservice.DeviceIdentity'
                 "401":
                     description: Unauthorized
                     schema:
@@ -18956,6 +18981,32 @@ paths:
             security:
                 - BearerAuth: []
             summary: Seal a capture batch
+            tags:
+                - Capture
+    /capture/device/profiles/:
+        get:
+            description: The active profiles its person may scan with, for scans started from the tray.
+            operationId: listCaptureDeviceProfiles
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        items:
+                            $ref: '#/definitions/capture.CaptureProfile'
+                        type: array
+                "401":
+                    description: Unauthorized
+                    schema:
+                        $ref: '#/definitions/helpers.ProblemDetail'
+                "403":
+                    description: Forbidden
+                    schema:
+                        $ref: '#/definitions/helpers.ProblemDetail'
+            security:
+                - BearerAuth: []
+            summary: List the scan profiles the device may use
             tags:
                 - Capture
     /capture/device/requests/:

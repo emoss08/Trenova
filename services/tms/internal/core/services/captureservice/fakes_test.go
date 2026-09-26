@@ -15,8 +15,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/capture"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
-	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
+	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -107,6 +107,8 @@ func (w *world) service() *Service {
 		records:       &fakeRecords{w},
 		controls:      &fakeControls{w: w},
 		documentTypes: &fakeDocTypes{w: w},
+		users:         fakeUsers{w},
+		organizations: fakeOrganizations{w},
 		permissions:   &fakePermissions{w: w},
 		storage:       &fakeStorage{w: w},
 		cipher:        fakeCipher{},
@@ -1036,4 +1038,34 @@ func (f *fakeNotifier) Create(_ context.Context, n *notification.Notification) (
 	f.w.notified = append(f.w.notified, n)
 
 	return n, nil
+}
+
+type fakeUsers struct{ w *world }
+
+func (f fakeUsers) GetByID(
+	_ context.Context,
+	req repositories.GetUserByIDRequest,
+) (*tenant.User, error) {
+	if req.LookupUserID != f.w.tenant.UserID {
+		return nil, errortypes.NewNotFoundError("User not found")
+	}
+
+	return &tenant.User{
+		ID:           f.w.tenant.UserID,
+		Name:         "Jordan Doe",
+		EmailAddress: "jordan@carrier.test",
+	}, nil
+}
+
+type fakeOrganizations struct{ w *world }
+
+func (f fakeOrganizations) GetByID(
+	_ context.Context,
+	req repositories.GetOrganizationByIDRequest,
+) (*tenant.Organization, error) {
+	if req.TenantInfo.OrgID != f.w.tenant.OrgID {
+		return nil, errortypes.NewNotFoundError("Organization not found")
+	}
+
+	return &tenant.Organization{ID: f.w.tenant.OrgID, Name: "Acme Freight"}, nil
 }
