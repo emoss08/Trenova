@@ -1,0 +1,18 @@
+[package]
+name = "capture-imaging"
+description = "Encodes scanned pages (CCITT G4 or JPEG) and wraps each as a single-page PDF."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+capture-protocol.workspace = true
+fax.workspace = true
+jpeg-encoder.workspace = true
+pdf-writer.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

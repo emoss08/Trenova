@@ -1,0 +1,18 @@
+[package]
+name = "capture-protocol"
+description = "Wire types shared by the Trenova Capture companion: the API it calls and the pipe between the agent and its scan helpers."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+hex.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+
+[lints]
+workspace = true

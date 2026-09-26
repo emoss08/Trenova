@@ -1,0 +1,68 @@
+[workspace]
+resolver = "3"
+members = ["crates/capture-protocol", "crates/capture-imaging"]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2024"
+rust-version = "1.94"
+license = "FSL-1.1-ALv2"
+publish = false
+repository = "https://github.com/emoss08/trenova"
+
+[workspace.dependencies]
+capture-protocol = { path = "crates/capture-protocol" }
+capture-imaging = { path = "crates/capture-imaging" }
+capture-twain = { path = "crates/capture-twain" }
+capture-wia = { path = "crates/capture-wia" }
+capture-platform = { path = "crates/capture-platform" }
+capture-client = { path = "crates/capture-client" }
+
+bytes = "1.12"
+fax = "0.3"
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+hex = "0.4"
+jpeg-encoder = "0.7"
+pdf-writer = "0.15"
+rand = "0.10"
+reqwest = { version = "0.13", default-features = false, features = ["native-tls", "json", "stream", "http2", "charset"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.11"
+tempfile = "3"
+thiserror = "2"
+tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "sync", "time", "fs", "io-util"] }
+tracing = "0.1"
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+url = "2.5"
+windows = "0.62"
+windows-core = "0.62"
+wiremock = "0.6"
+winresource = "0.1"
+zeroize = "1.9"
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+unused_must_use = "deny"
+missing_debug_implementations = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+undocumented_unsafe_blocks = "warn"
+unwrap_used = "warn"
+dbg_macro = "warn"
+print_stdout = "warn"
+print_stderr = "warn"
+module_name_repetitions = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+struct_excessive_bools = "allow"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+opt-level = 3
