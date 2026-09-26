@@ -354,6 +354,11 @@ func newUnapplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool
 			paramReason: stringProperty("Why it is taken back.", maxReceivableReasonChars),
 		},
 		required: []string{paramCreditMemoApplicationID, paramReason},
+		target: func(params map[string]any) (serviceports.ToolTarget, bool) {
+			return targetOf(
+				params, paramCreditMemoApplicationID, serviceports.RecordCreditMemoApplication,
+			)
+		},
 	}), receivablePlan[*serviceports.UnapplyCreditMemoApplicationRequest, *serviceports.CreditMemoApplicationPreview]{
 		request: unapplyCreditRequest,
 		plan: func(

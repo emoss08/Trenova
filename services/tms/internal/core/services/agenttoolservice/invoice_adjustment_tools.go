@@ -388,7 +388,16 @@ func newSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.Ag
 	})
 }
 
+func targetAdjustment(params map[string]any) (serviceports.ToolTarget, bool) {
+	return targetOf(params, paramAdjustmentID, serviceports.RecordInvoiceAdjustment)
+}
+
 func targetSubmittedInvoice(params map[string]any) (serviceports.ToolTarget, bool) {
+	if target, ok := targetOf(
+		params, paramDraftAdjustmentID, serviceports.RecordInvoiceAdjustment,
+	); ok {
+		return target, true
+	}
 	items, _ := params[paramAdjustments].([]any)
 	if len(items) != 1 {
 		return serviceports.ToolTarget{}, false
@@ -725,6 +734,7 @@ func newApproveInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.A
 			"approving is a person's decision.",
 		properties: map[string]any{paramAdjustmentID: adjustmentIDProperty("pending")},
 		required:   []string{paramAdjustmentID},
+		target:     targetAdjustment,
 	})
 }
 
@@ -748,6 +758,7 @@ func newRejectInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.Ag
 				maxAdjustmentReasonChars),
 		},
 		required: []string{paramAdjustmentID, paramReason},
+		target:   targetAdjustment,
 	})
 }
 

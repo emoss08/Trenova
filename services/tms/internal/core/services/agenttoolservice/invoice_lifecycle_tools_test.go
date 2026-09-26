@@ -514,3 +514,61 @@ func TestSendInvoiceEDI_PreviewsThePartnerAndOnlyAPersonSends(t *testing.T) {
 	assert.Equal(t, permission.OpSubmit, policy.Operation)
 	assert.Equal(t, []agent.EgressClass{agent.EgressExternalRecipient}, policy.Egress)
 }
+
+func TestReceivableTools_PinTheRecordTheyChange(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("x_")
+	cases := []struct {
+		tool     serviceports.AgentTool
+		key      string
+		resource permission.Resource
+	}{
+		{newResolveInvoiceDisputeTool(nil), paramDisputeID, permission.ResourceInvoiceDispute},
+		{newWithdrawInvoiceDisputeTool(nil), paramDisputeID, permission.ResourceInvoiceDispute},
+		{
+			newApplyCustomerPaymentTool(nil),
+			paramCustomerPaymentID,
+			permission.ResourceCustomerPayment,
+		},
+		{
+			newReverseCustomerPaymentTool(nil),
+			paramCustomerPaymentID,
+			permission.ResourceCustomerPayment,
+		},
+		{
+			newUnapplyCreditMemoTool(nil),
+			paramCreditMemoApplicationID,
+			serviceports.RecordCreditMemoApplication,
+		},
+		{
+			newApproveInvoiceAdjustmentTool(nil),
+			paramAdjustmentID,
+			serviceports.RecordInvoiceAdjustment,
+		},
+		{
+			newRejectInvoiceAdjustmentTool(nil),
+			paramAdjustmentID,
+			serviceports.RecordInvoiceAdjustment,
+		},
+		{
+			newSubmitInvoiceAdjustmentTool(nil),
+			paramDraftAdjustmentID,
+			serviceports.RecordInvoiceAdjustment,
+		},
+		{newCommitInvoiceRunTool(nil), paramInvoiceRunID, permission.ResourceInvoiceRun},
+		{newCancelInvoiceRunTool(nil), paramInvoiceRunID, permission.ResourceInvoiceRun},
+		{newUpdateInvoiceDraftTool(nil), paramInvoiceID, permission.ResourceInvoice},
+		{newVoidInvoiceTool(nil), paramInvoiceID, permission.ResourceInvoice},
+		{newSendInvoiceEDITool(nil), paramInvoiceID, permission.ResourceInvoice},
+	}
+	for _, tc := range cases {
+		t.Run(tc.tool.Name(), func(t *testing.T) {
+			t.Parallel()
+			target, ok := tc.tool.(serviceports.TargetedTool).
+				Target(map[string]any{tc.key: id.String()})
+			require.True(t, ok)
+			assert.Equal(t, serviceports.ToolTarget{Resource: tc.resource, ID: id}, target)
+		})
+	}
+}

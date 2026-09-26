@@ -13,7 +13,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/ediservice"
 	"github.com/emoss08/trenova/internal/core/services/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/core/services/insightservice"
+	"github.com/emoss08/trenova/internal/core/services/invoicerunservice"
 	"github.com/emoss08/trenova/internal/core/services/invoiceservice"
+	"github.com/emoss08/trenova/internal/core/services/invoiceshareservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
 	"github.com/emoss08/trenova/internal/core/services/tenderservice"
@@ -42,6 +44,30 @@ func ToolProviders() []any {
 		provideAssignBillerTool,
 		providePostInvoiceTool,
 		provideSendInvoiceTool,
+		provideOpenInvoiceDisputeTool,
+		provideResolveInvoiceDisputeTool,
+		provideWithdrawInvoiceDisputeTool,
+		provideApplyCustomerPaymentTool,
+		provideReverseCustomerPaymentTool,
+		provideApplyCreditMemoTool,
+		provideUnapplyCreditMemoTool,
+		provideSaveInvoiceAdjustmentDraftTool,
+		provideSubmitInvoiceAdjustmentTool,
+		provideApproveInvoiceAdjustmentTool,
+		provideRejectInvoiceAdjustmentTool,
+		provideBuildInvoiceRunTool,
+		provideAdjustInvoiceRunMembershipTool,
+		provideCommitInvoiceRunTool,
+		provideCancelInvoiceRunTool,
+		provideBillStatementNowTool,
+		provideAssessLateChargesTool,
+		provideShareInvoiceTool,
+		provideUpdateInvoiceDraftTool,
+		provideGenerateInvoicePDFTool,
+		provideCreateInvoiceTool,
+		provideCreateInvoiceMemoTool,
+		provideVoidInvoiceTool,
+		provideSendInvoiceEDITool,
 		newCorrectChargeCodeTool,
 		newSaveTableViewTool,
 		newCreateDashboardTool,
@@ -352,4 +378,100 @@ func provideLinkInboundMessageTool(inbox *inboundmessageservice.Service) service
 
 func provideMarkInboundMessageTool(inbox *inboundmessageservice.Service) services.AgentTool {
 	return newMarkInboundMessageTool(inbox)
+}
+
+func provideOpenInvoiceDisputeTool(disputes services.InvoiceDisputeService) services.AgentTool {
+	return newOpenInvoiceDisputeTool(disputes)
+}
+
+func provideResolveInvoiceDisputeTool(disputes services.InvoiceDisputeService) services.AgentTool {
+	return newResolveInvoiceDisputeTool(disputes)
+}
+
+func provideWithdrawInvoiceDisputeTool(disputes services.InvoiceDisputeService) services.AgentTool {
+	return newWithdrawInvoiceDisputeTool(disputes)
+}
+
+func provideApplyCustomerPaymentTool(payments services.CustomerPaymentService) services.AgentTool {
+	return newApplyCustomerPaymentTool(payments)
+}
+
+func provideReverseCustomerPaymentTool(payments services.CustomerPaymentService) services.AgentTool {
+	return newReverseCustomerPaymentTool(payments)
+}
+
+func provideApplyCreditMemoTool(payments services.CustomerPaymentService) services.AgentTool {
+	return newApplyCreditMemoTool(payments)
+}
+
+func provideUnapplyCreditMemoTool(payments services.CustomerPaymentService) services.AgentTool {
+	return newUnapplyCreditMemoTool(payments)
+}
+
+func provideSaveInvoiceAdjustmentDraftTool(adjustments services.InvoiceAdjustmentService) services.AgentTool {
+	return newSaveInvoiceAdjustmentDraftTool(adjustments)
+}
+
+func provideSubmitInvoiceAdjustmentTool(adjustments services.InvoiceAdjustmentService) services.AgentTool {
+	return newSubmitInvoiceAdjustmentTool(adjustments)
+}
+
+func provideApproveInvoiceAdjustmentTool(adjustments services.InvoiceAdjustmentService) services.AgentTool {
+	return newApproveInvoiceAdjustmentTool(adjustments)
+}
+
+func provideRejectInvoiceAdjustmentTool(adjustments services.InvoiceAdjustmentService) services.AgentTool {
+	return newRejectInvoiceAdjustmentTool(adjustments)
+}
+
+func provideBuildInvoiceRunTool(runs *invoicerunservice.Service) services.AgentTool {
+	return newBuildInvoiceRunTool(runs)
+}
+
+func provideAdjustInvoiceRunMembershipTool(runs *invoicerunservice.Service) services.AgentTool {
+	return newAdjustInvoiceRunMembershipTool(runs)
+}
+
+func provideCommitInvoiceRunTool(runs *invoicerunservice.Service) services.AgentTool {
+	return newCommitInvoiceRunTool(runs)
+}
+
+func provideCancelInvoiceRunTool(runs *invoicerunservice.Service) services.AgentTool {
+	return newCancelInvoiceRunTool(runs)
+}
+
+func provideBillStatementNowTool(runs *invoicerunservice.Service) services.AgentTool {
+	return newBillStatementNowTool(runs)
+}
+
+func provideAssessLateChargesTool(charges services.LateChargeService) services.AgentTool {
+	return newAssessLateChargesTool(charges)
+}
+
+func provideShareInvoiceTool(shares *invoiceshareservice.Service) services.AgentTool {
+	return newShareInvoiceTool(shares)
+}
+
+func provideUpdateInvoiceDraftTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newUpdateInvoiceDraftTool(invoices)
+}
+
+func provideGenerateInvoicePDFTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newGenerateInvoicePDFTool(invoices)
+}
+
+func provideCreateInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newCreateInvoiceTool(invoices)
+}
+
+func provideCreateInvoiceMemoTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newCreateInvoiceMemoTool(invoices)
+}
+
+func provideVoidInvoiceTool(invoices *invoiceservice.Service) services.AgentTool {
+	return newVoidInvoiceTool(invoices)
+}
+
+func provideSendInvoiceEDITool(invoices *invoiceservice.Service) services.AgentTool {
+	return newSendInvoiceEDITool(invoices)
 }

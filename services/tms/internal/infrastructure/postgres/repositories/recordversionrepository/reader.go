@@ -9,11 +9,14 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/bankreceiptworkitem"
 	"github.com/emoss08/trenova/internal/core/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/core/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/core/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/core/domain/detention"
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/core/domain/insight"
 	"github.com/emoss08/trenova/internal/core/domain/invoice"
+	"github.com/emoss08/trenova/internal/core/domain/invoiceadjustment"
+	"github.com/emoss08/trenova/internal/core/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/rateconfirmation"
 	"github.com/emoss08/trenova/internal/core/domain/report"
@@ -203,6 +206,36 @@ var lookups = map[permission.Resource]lookup{
 			}
 			return entity.Version
 		},
+	},
+	permission.ResourceInvoiceDispute: {
+		model:   func() versioned { return new(invoice.InvoiceDispute) },
+		scope:   buncolgen.InvoiceDisputeScopeTenant,
+		idEq:    buncolgen.InvoiceDisputeColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*invoice.InvoiceDispute).Version },
+	},
+	permission.ResourceInvoiceRun: {
+		model:   func() versioned { return new(invoicerun.InvoiceRun) },
+		scope:   buncolgen.InvoiceRunScopeTenant,
+		idEq:    buncolgen.InvoiceRunColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*invoicerun.InvoiceRun).Version },
+	},
+	permission.ResourceCustomerPayment: {
+		model:   func() versioned { return new(customerpayment.Payment) },
+		scope:   buncolgen.PaymentScopeTenant,
+		idEq:    buncolgen.PaymentColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*customerpayment.Payment).Version },
+	},
+	services.RecordInvoiceAdjustment: {
+		model:   func() versioned { return new(invoiceadjustment.InvoiceAdjustment) },
+		scope:   buncolgen.InvoiceAdjustmentScopeTenant,
+		idEq:    buncolgen.InvoiceAdjustmentColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*invoiceadjustment.InvoiceAdjustment).Version },
+	},
+	services.RecordCreditMemoApplication: {
+		model:   func() versioned { return new(customerpayment.CreditMemoApplication) },
+		scope:   buncolgen.CreditMemoApplicationScopeTenant,
+		idEq:    buncolgen.CreditMemoApplicationColumns.ID.Eq(),
+		version: func(v versioned) int64 { return v.(*customerpayment.CreditMemoApplication).UpdatedAt },
 	},
 	// Likewise the carrier intelligence tools act on one event.
 	permission.ResourceCarrierIntelligence: {
