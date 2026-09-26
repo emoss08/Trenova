@@ -172,6 +172,7 @@ type ToolTarget struct {
 	ID       pulid.ID
 }
 
+//nolint:gosec // G101: record kinds; "credit" matches the credential pattern, not a secret
 const (
 	RecordInvoiceAdjustment     permission.Resource = "invoice_adjustment"
 	RecordCreditMemoApplication permission.Resource = "credit_memo_application"

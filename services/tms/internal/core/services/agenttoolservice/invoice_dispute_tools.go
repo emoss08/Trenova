@@ -81,7 +81,7 @@ func disputeIDProperty() map[string]any {
 }
 
 func newOpenInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool {
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "open_invoice_dispute",
 		description: "Open a dispute on a posted invoice the customer is withholding payment on. " +
 			"The invoice is marked Disputed until the case is resolved or withdrawn. The disputed " +
@@ -169,7 +169,7 @@ func openDisputeRequest(
 }
 
 func newResolveInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool {
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "resolve_invoice_dispute",
 		description: "Propose closing an open invoice dispute with its outcome. A credit or a " +
 			"write-off must name the executed adjustment that settled it, from " +
@@ -255,7 +255,7 @@ func resolveDisputeRequest(
 }
 
 func newWithdrawInvoiceDisputeTool(disputes invoiceDisputer) serviceports.AgentTool {
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "withdraw_invoice_dispute",
 		description: "Withdraw an open invoice dispute the customer no longer pursues, without " +
 			"recording an outcome. The invoice's Disputed flag clears and it goes back to " +

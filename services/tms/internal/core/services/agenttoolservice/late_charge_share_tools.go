@@ -65,7 +65,7 @@ type invoiceSharer interface {
 }
 
 func newAssessLateChargesTool(charges lateChargeAssessor) serviceports.AgentTool {
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "assess_late_charges",
 		description: "Propose assessing late charges on overdue invoices as of a date, as one " +
 			"debit memo per customer. Each has a line per invoice and overdue period at the " +
@@ -205,7 +205,7 @@ func renderLateCharges(
 }
 
 func newShareInvoiceTool(shares invoiceSharer) serviceports.AgentTool {
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "share_invoice",
 		description: "Propose sharing an invoice with teammates, who get a notification and an " +
 			"email with your note and a link to it. Pick them with " +
@@ -255,7 +255,9 @@ func newShareInvoiceTool(shares invoiceSharer) serviceports.AgentTool {
 	})
 }
 
-func shareRequest(params *serviceports.ToolExecuteParams) (*serviceports.ShareInvoiceRequest, error) {
+func shareRequest(
+	params *serviceports.ToolExecuteParams,
+) (*serviceports.ShareInvoiceRequest, error) {
 	invoiceID, err := requirePulid(params.Params, paramInvoiceID)
 	if err != nil {
 		return nil, err

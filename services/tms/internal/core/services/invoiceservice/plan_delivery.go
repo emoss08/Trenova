@@ -248,6 +248,11 @@ func (s *Service) planEDISend(
 				errortypes.ErrInvalidOperation,
 				"This invoice has already been sent by EDI; resend it with force",
 			)
+		case invoice.EDISendStatusNotSent,
+			invoice.EDISendStatusNotConfigured,
+			invoice.EDISendStatusGenerated,
+			invoice.EDISendStatusFailed,
+			invoice.EDISendStatusDeadLettered:
 		}
 	}
 

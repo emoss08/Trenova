@@ -143,7 +143,14 @@ func (s *Service) Resolve(
 
 		snapshot := *entity
 		previous = &snapshot
-		if txErr = s.planResolve(txCtx, req, entity, inv, actor, timeutils.NowUnix()); txErr != nil {
+		if txErr = s.planResolve(
+			txCtx,
+			req,
+			entity,
+			inv,
+			actor,
+			timeutils.NowUnix(),
+		); txErr != nil {
 			return txErr
 		}
 		updated, txErr = s.repo.Update(txCtx, entity)

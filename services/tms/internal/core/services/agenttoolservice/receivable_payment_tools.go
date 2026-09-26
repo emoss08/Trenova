@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
+//nolint:gosec // G101: parameter names; "credit" matches the credential pattern, not a secret
 const (
 	paramCustomerPaymentID       = "customerPaymentId"
 	paramAccountingDate          = "accountingDate"
@@ -105,7 +106,7 @@ func applicationsProperty(description string, withShortPay bool) map[string]any 
 	}
 }
 
-func receivableMoneySpec(spec receivableSpec) receivableSpec {
+func receivableMoneySpec(spec *receivableSpec) *receivableSpec {
 	spec.egress = agent.EgressMoney
 	spec.defaultTier = agent.TierPropose
 	spec.maxTier = agent.TierPropose
@@ -115,7 +116,7 @@ func receivableMoneySpec(spec receivableSpec) receivableSpec {
 }
 
 func newApplyCustomerPaymentTool(payments receivablesKeeper) serviceports.AgentTool {
-	return newReceivableTool(receivableMoneySpec(receivableSpec{
+	return newReceivableTool(receivableMoneySpec(&receivableSpec{
 		name: "apply_customer_payment",
 		description: "Propose applying a posted payment's unapplied cash to that customer's open " +
 			"invoices. Name each invoice and the amount it takes, and any short pay to write off; " +
@@ -187,7 +188,7 @@ func applyPaymentRequest(
 }
 
 func newReverseCustomerPaymentTool(payments receivablesKeeper) serviceports.AgentTool {
-	return newReceivableTool(receivableMoneySpec(receivableSpec{
+	return newReceivableTool(receivableMoneySpec(&receivableSpec{
 		name: "reverse_customer_payment",
 		description: "Propose reversing a posted customer payment that bounced, was charged back " +
 			"or was recorded in error. Every invoice it paid is reopened by what it applied and a " +
@@ -254,7 +255,7 @@ func reversePaymentRequest(
 }
 
 func newApplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool {
-	return newReceivableTool(receivableMoneySpec(receivableSpec{
+	return newReceivableTool(receivableMoneySpec(&receivableSpec{
 		name: "apply_credit_memo",
 		description: "Propose settling a customer's open invoices with a posted credit memo of " +
 			"theirs. Name each invoice and the amount of credit it takes; together they cannot " +
@@ -339,7 +340,7 @@ func applyCreditRequest(
 }
 
 func newUnapplyCreditMemoTool(payments receivablesKeeper) serviceports.AgentTool {
-	return newReceivableTool(receivableMoneySpec(receivableSpec{
+	return newReceivableTool(receivableMoneySpec(&receivableSpec{
 		name: "unapply_credit_memo",
 		description: "Propose taking back one credit memo application: the invoice it settled " +
 			"is reopened by that amount and the credit is available again. Use it when credit " +

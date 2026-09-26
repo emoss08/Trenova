@@ -67,7 +67,11 @@ func (s *Service) planShare(
 	}); err != nil {
 		return nil, err
 	}
-	if plan.recipients, err = s.resolveRecipients(ctx, req.TenantInfo, plan.input.userIDs); err != nil {
+	if plan.recipients, err = s.resolveRecipients(
+		ctx,
+		req.TenantInfo,
+		plan.input.userIDs,
+	); err != nil {
 		return nil, err
 	}
 	if plan.shares, err = buildShares(
@@ -119,7 +123,11 @@ func (s *Service) PreviewShare(
 		Note:            plan.input.note,
 		Tab:             plan.input.tab,
 		EmailConfigured: canEmail,
-		Recipients:      make([]servicesports.InvoiceShareRecipientPreview, 0, len(plan.recipients)),
+		Recipients: make(
+			[]servicesports.InvoiceShareRecipientPreview,
+			0,
+			len(plan.recipients),
+		),
 	}
 	for _, recipient := range plan.recipients {
 		entry := servicesports.InvoiceShareRecipientPreview{

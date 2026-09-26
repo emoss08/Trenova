@@ -144,7 +144,7 @@ func decisionVerb(status billingqueue.Status) string {
 	case billingqueue.StatusSentBackToOps:
 		return "send back to operations"
 	case billingqueue.StatusApproved:
-		return "approve"
+		return verbApprove
 	case billingqueue.StatusCanceled:
 		return "cancel, dropping its charge from billing,"
 	default:

@@ -274,7 +274,7 @@ func matchVerb(decision carriersettlementservice.MatchDecision) string {
 	case carriersettlementservice.MatchDecisionAcceptWithVariance:
 		return "accept with its variance"
 	case carriersettlementservice.MatchDecisionReject:
-		return "reject"
+		return verbReject
 	default:
 		return string(decision)
 	}

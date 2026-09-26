@@ -21,17 +21,17 @@ var (
 		paramDisputeNotes,
 		paramDisputeResolution,
 		paramResolutionNotes,
-		"resolvedById",
-		"resolvedAt",
-		"openedById",
+		fieldResolvedByID,
+		fieldResolvedAt,
+		fieldOpenedByID,
 		paramInvoiceID,
-		"customerId",
+		fieldCustomerID,
 	}
 	disputeRefs = map[string]permission.Resource{
-		paramInvoiceID: permission.ResourceInvoice,
-		"customerId":   permission.ResourceCustomer,
-		"openedById":   permission.ResourceUser,
-		"resolvedById": permission.ResourceUser,
+		paramInvoiceID:    permission.ResourceInvoice,
+		fieldCustomerID:   permission.ResourceCustomer,
+		fieldOpenedByID:   permission.ResourceUser,
+		fieldResolvedByID: permission.ResourceUser,
 	}
 )
 
@@ -50,7 +50,7 @@ func disputePreview(
 	opts := []toolpreview.Option{
 		toolpreview.Only(disputeFields...),
 		toolpreview.WithRefs(disputeRefs),
-		toolpreview.Volatile("resolvedAt"),
+		toolpreview.Volatile(fieldResolvedAt),
 	}
 
 	var (

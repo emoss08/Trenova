@@ -278,60 +278,16 @@ func (s *Service) PostAndApply( //nolint:funlen,gocognit // legacy workflow
 			return txErr
 		}
 		if s.customerLedgerRepo != nil {
-			ledgerEntries := make(
-				[]*customerledger.CustomerLedgerEntry,
-				0,
-				len(created.Applications)*2,
-			)
-			line := 1
-			for _, app := range created.Applications {
-				if app == nil {
-					continue
-				}
-				if app.AppliedAmountMinor > 0 {
-					ledgerEntries = append(
-						ledgerEntries,
-						&customerledger.CustomerLedgerEntry{
-							ID:               pulid.MustNew("cledg_"),
-							OrganizationID:   created.OrganizationID,
-							BusinessUnitID:   created.BusinessUnitID,
-							CustomerID:       created.CustomerID,
-							SourceObjectType: "CustomerPayment",
-							SourceObjectID:   created.ID.String(),
-							SourceEventType:  tenant.JournalSourceEventCustomerPaymentPosted.String(),
-							RelatedInvoiceID: app.InvoiceID,
-							DocumentNumber:   created.ReferenceNumber,
-							TransactionDate:  created.AccountingDate,
-							LineNumber:       line,
-							AmountMinor:      -app.AppliedAmountMinor,
-							CreatedByID:      actor.UserID,
-						},
-					)
-					line++
-				}
-				if app.ShortPayAmountMinor > 0 {
-					ledgerEntries = append(
-						ledgerEntries,
-						&customerledger.CustomerLedgerEntry{
-							ID:               pulid.MustNew("cledg_"),
-							OrganizationID:   created.OrganizationID,
-							BusinessUnitID:   created.BusinessUnitID,
-							CustomerID:       created.CustomerID,
-							SourceObjectType: "CustomerPayment",
-							SourceObjectID:   created.ID.String(),
-							SourceEventType:  tenant.JournalSourceEventCustomerShortPayRecognized.String(),
-							RelatedInvoiceID: app.InvoiceID,
-							DocumentNumber:   created.ReferenceNumber,
-							TransactionDate:  created.AccountingDate,
-							LineNumber:       line,
-							AmountMinor:      -app.ShortPayAmountMinor,
-							CreatedByID:      actor.UserID,
-						},
-					)
-					line++
-				}
-			}
-			if txErr = s.customerLedgerRepo.AppendEntries(txCtx, ledgerEntries); txErr != nil {
+			if txErr = s.customerLedgerRepo.AppendEntries(
+				txCtx,
+				applicationLedgerEntries(&applicationLedgerParams{
+					payment:         created,
+					applications:    created.Applications,
+					appliedEvent:    tenant.JournalSourceEventCustomerPaymentPosted.String(),
+					transactionDate: created.AccountingDate,
+					actorID:         actor.UserID,
+				}),
+			); txErr != nil {
 				return txErr
 			}
 		}
@@ -472,56 +428,16 @@ func (s *Service) ApplyUnapplied( //nolint:funlen // legacy workflow
 			return txErr
 		}
 		if s.customerLedgerRepo != nil {
-			ledgerEntries := make([]*customerledger.CustomerLedgerEntry, 0, len(applications)*2)
-			projectionLine := 1
-			for _, app := range applications {
-				if app == nil {
-					continue
-				}
-				if app.AppliedAmountMinor > 0 {
-					ledgerEntries = append(
-						ledgerEntries,
-						&customerledger.CustomerLedgerEntry{
-							ID:               pulid.MustNew("cledg_"),
-							OrganizationID:   payment.OrganizationID,
-							BusinessUnitID:   payment.BusinessUnitID,
-							CustomerID:       payment.CustomerID,
-							SourceObjectType: "CustomerPayment",
-							SourceObjectID:   payment.ID.String(),
-							SourceEventType:  "CustomerPaymentApplied",
-							RelatedInvoiceID: app.InvoiceID,
-							DocumentNumber:   payment.ReferenceNumber,
-							TransactionDate:  req.AccountingDate,
-							LineNumber:       projectionLine,
-							AmountMinor:      -app.AppliedAmountMinor,
-							CreatedByID:      actor.UserID,
-						},
-					)
-					projectionLine++
-				}
-				if app.ShortPayAmountMinor > 0 {
-					ledgerEntries = append(
-						ledgerEntries,
-						&customerledger.CustomerLedgerEntry{
-							ID:               pulid.MustNew("cledg_"),
-							OrganizationID:   payment.OrganizationID,
-							BusinessUnitID:   payment.BusinessUnitID,
-							CustomerID:       payment.CustomerID,
-							SourceObjectType: "CustomerPayment",
-							SourceObjectID:   payment.ID.String(),
-							SourceEventType:  tenant.JournalSourceEventCustomerShortPayRecognized.String(),
-							RelatedInvoiceID: app.InvoiceID,
-							DocumentNumber:   payment.ReferenceNumber,
-							TransactionDate:  req.AccountingDate,
-							LineNumber:       projectionLine,
-							AmountMinor:      -app.ShortPayAmountMinor,
-							CreatedByID:      actor.UserID,
-						},
-					)
-					projectionLine++
-				}
-			}
-			if txErr = s.customerLedgerRepo.AppendEntries(txCtx, ledgerEntries); txErr != nil {
+			if txErr = s.customerLedgerRepo.AppendEntries(
+				txCtx,
+				applicationLedgerEntries(&applicationLedgerParams{
+					payment:         payment,
+					applications:    applications,
+					appliedEvent:    "CustomerPaymentApplied",
+					transactionDate: req.AccountingDate,
+					actorID:         actor.UserID,
+				}),
+			); txErr != nil {
 				return txErr
 			}
 		}
@@ -841,4 +757,51 @@ func (s *Service) logInvoiceAudit(
 			zap.String("invoiceId", current.ID.String()),
 		)
 	}
+}
+
+type applicationLedgerParams struct {
+	payment         *customerpayment.Payment
+	applications    []*customerpayment.Application
+	appliedEvent    string
+	transactionDate int64
+	actorID         pulid.ID
+}
+
+func applicationLedgerEntries(
+	params *applicationLedgerParams,
+) []*customerledger.CustomerLedgerEntry {
+	entries := make([]*customerledger.CustomerLedgerEntry, 0, len(params.applications)*2)
+	appendEntry := func(app *customerpayment.Application, event string, amount int64) {
+		entries = append(entries, &customerledger.CustomerLedgerEntry{
+			ID:               pulid.MustNew("cledg_"),
+			OrganizationID:   params.payment.OrganizationID,
+			BusinessUnitID:   params.payment.BusinessUnitID,
+			CustomerID:       params.payment.CustomerID,
+			SourceObjectType: "CustomerPayment",
+			SourceObjectID:   params.payment.ID.String(),
+			SourceEventType:  event,
+			RelatedInvoiceID: app.InvoiceID,
+			DocumentNumber:   params.payment.ReferenceNumber,
+			TransactionDate:  params.transactionDate,
+			LineNumber:       len(entries) + 1,
+			AmountMinor:      -amount,
+			CreatedByID:      params.actorID,
+		})
+	}
+	for _, app := range params.applications {
+		if app == nil {
+			continue
+		}
+		if app.AppliedAmountMinor > 0 {
+			appendEntry(app, params.appliedEvent, app.AppliedAmountMinor)
+		}
+		if app.ShortPayAmountMinor > 0 {
+			appendEntry(
+				app,
+				tenant.JournalSourceEventCustomerShortPayRecognized.String(),
+				app.ShortPayAmountMinor,
+			)
+		}
+	}
+	return entries
 }

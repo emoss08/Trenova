@@ -84,7 +84,11 @@ func (s *Service) planOrderInvoices(
 	if err != nil {
 		return nil, err
 	}
-	if err = invoicelines.HydrateAccessorials(ctx, s.accessorialRepo, req.TenantInfo, legs...); err != nil {
+	if err = invoicelines.HydrateAccessorials(
+		ctx,
+		s.accessorialRepo,
+		req.TenantInfo,
+		legs...); err != nil {
 		return nil, err
 	}
 	if len(legs) == 0 {
@@ -363,11 +367,15 @@ func (s *Service) planShipmentDrafts(
 			return nil, payerErr
 		}
 		anchor := unnumberedAnchor(req.TenantInfo, shp, share.PayerID, share)
-		draft, draftErr := s.planDraftFromItem(ctx, &servicesports.CreateInvoiceFromBillingQueueRequest{
-			BillingQueueItemID: anchor.ID,
-			TenantInfo:         req.TenantInfo,
-			OffCycleReason:     offCycleReasonFor(cus, req.OffCycleReason),
-		}, anchor)
+		draft, draftErr := s.planDraftFromItem(
+			ctx,
+			&servicesports.CreateInvoiceFromBillingQueueRequest{
+				BillingQueueItemID: anchor.ID,
+				TenantInfo:         req.TenantInfo,
+				OffCycleReason:     offCycleReasonFor(cus, req.OffCycleReason),
+			},
+			anchor,
+		)
 		if draftErr != nil {
 			return nil, draftErr
 		}

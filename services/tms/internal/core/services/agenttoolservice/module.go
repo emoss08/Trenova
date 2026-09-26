@@ -464,7 +464,9 @@ func provideApplyCustomerPaymentTool(payments services.CustomerPaymentService) s
 	return newApplyCustomerPaymentTool(payments)
 }
 
-func provideReverseCustomerPaymentTool(payments services.CustomerPaymentService) services.AgentTool {
+func provideReverseCustomerPaymentTool(
+	payments services.CustomerPaymentService,
+) services.AgentTool {
 	return newReverseCustomerPaymentTool(payments)
 }
 
@@ -476,19 +478,27 @@ func provideUnapplyCreditMemoTool(payments services.CustomerPaymentService) serv
 	return newUnapplyCreditMemoTool(payments)
 }
 
-func provideSaveInvoiceAdjustmentDraftTool(adjustments services.InvoiceAdjustmentService) services.AgentTool {
+func provideSaveInvoiceAdjustmentDraftTool(
+	adjustments services.InvoiceAdjustmentService,
+) services.AgentTool {
 	return newSaveInvoiceAdjustmentDraftTool(adjustments)
 }
 
-func provideSubmitInvoiceAdjustmentTool(adjustments services.InvoiceAdjustmentService) services.AgentTool {
+func provideSubmitInvoiceAdjustmentTool(
+	adjustments services.InvoiceAdjustmentService,
+) services.AgentTool {
 	return newSubmitInvoiceAdjustmentTool(adjustments)
 }
 
-func provideApproveInvoiceAdjustmentTool(adjustments services.InvoiceAdjustmentService) services.AgentTool {
+func provideApproveInvoiceAdjustmentTool(
+	adjustments services.InvoiceAdjustmentService,
+) services.AgentTool {
 	return newApproveInvoiceAdjustmentTool(adjustments)
 }
 
-func provideRejectInvoiceAdjustmentTool(adjustments services.InvoiceAdjustmentService) services.AgentTool {
+func provideRejectInvoiceAdjustmentTool(
+	adjustments services.InvoiceAdjustmentService,
+) services.AgentTool {
 	return newRejectInvoiceAdjustmentTool(adjustments)
 }
 

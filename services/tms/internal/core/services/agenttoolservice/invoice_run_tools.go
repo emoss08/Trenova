@@ -113,7 +113,7 @@ func requireUTCDay(params map[string]any, key string) (time.Time, error) {
 }
 
 func newBuildInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "build_invoice_run",
 		description: "Build an invoice run: a reviewable proposal of the consolidated invoices " +
 			"for customers' approved, uninvoiced freight over a period. Nothing is invoiced " +
@@ -202,7 +202,7 @@ func newAdjustInvoiceRunMembershipTool(runs invoiceRunKeeper) serviceports.Agent
 	itemProperty := stringProperty("A shipment on the run, by the item id get_invoice_run "+
 		"lists under each group.", 0)
 
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "adjust_invoice_run_membership",
 		description: "Take shipments off an invoice run that is still a proposal, put them back, " +
 			"or move them to another of the same customer's invoices on it. An excluded shipment " +
@@ -294,7 +294,11 @@ func membershipRequest(
 		return nil, err
 	}
 	if _, ok := params.Params[paramInclude]; ok {
-		if req.Include, err = requirePulidSlice(params.Params, paramInclude, maxRunEdits); err != nil {
+		if req.Include, err = requirePulidSlice(
+			params.Params,
+			paramInclude,
+			maxRunEdits,
+		); err != nil {
 			return nil, err
 		}
 	}
@@ -389,7 +393,7 @@ func commitRunRequest(
 }
 
 func newCommitInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "commit_invoice_run",
 		description: "Propose committing an invoice run, which turns each of its proposed " +
 			"invoices into a draft invoice for the customer. A group below the customer's " +
@@ -431,7 +435,7 @@ func newCommitInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 }
 
 func newCancelInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "cancel_invoice_run",
 		description: "Cancel an invoice run that will never be committed, such as one built " +
 			"for the wrong period or customers. Its shipments stay approved for the next run. " +
@@ -488,7 +492,7 @@ func newCancelInvoiceRunTool(runs invoiceRunKeeper) serviceports.AgentTool {
 }
 
 func newBillStatementNowTool(runs invoiceRunKeeper) serviceports.AgentTool {
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "bill_statement_now",
 		description: "Propose billing a statement customer's open period now, before its cycle " +
 			"closes, with the reason recorded on the run. Shipments you name in exclude stay on " +
@@ -503,7 +507,10 @@ func newBillStatementNowTool(runs invoiceRunKeeper) serviceports.AgentTool {
 		rationale: "Invoices a customer off their agreed cycle; only a person decides to bill " +
 			"early, and the reason stays on the run.",
 		properties: map[string]any{
-			paramCustomerID: stringProperty("The statement customer, from list_open_statements.", 0),
+			paramCustomerID: stringProperty(
+				"The statement customer, from list_open_statements.",
+				0,
+			),
 			paramReason: stringProperty("Why it is billed before the cycle closes.",
 				maxRunReasonChars),
 			paramExclude: map[string]any{
@@ -517,7 +524,10 @@ func newBillStatementNowTool(runs invoiceRunKeeper) serviceports.AgentTool {
 							"The shipment's billing queue item, from list_open_statements.", 0),
 						paramReason: stringProperty("Why it is held back.", maxRunReasonChars),
 					},
-					toolschema.KeyRequired:             []string{paramBillingQueueItems, paramReason},
+					toolschema.KeyRequired: []string{
+						paramBillingQueueItems,
+						paramReason,
+					},
 					toolschema.KeyAdditionalProperties: false,
 				},
 			},

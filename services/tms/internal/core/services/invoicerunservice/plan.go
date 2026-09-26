@@ -325,11 +325,11 @@ func (s *Service) decideGroup(
 	return decision, nil
 }
 
-func (d groupDecision) skip(reason string) groupDecision {
+func (d *groupDecision) skip(reason string) groupDecision {
 	d.plan.Outcome = servicesports.InvoiceRunGroupSkips
 	d.plan.Reason = reason
 
-	return d
+	return *d
 }
 
 func includedTotal(items []*invoicerun.InvoiceRunGroupItem) decimal.Decimal {

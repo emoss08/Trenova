@@ -38,7 +38,7 @@ func settlementVerb(action settlementshared.Action) string {
 	case settlementshared.ActionSubmit:
 		return "submit for approval"
 	case settlementshared.ActionApprove:
-		return "approve"
+		return verbApprove
 	case settlementshared.ActionReject:
 		return "send back to draft"
 	case settlementshared.ActionPost:

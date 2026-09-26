@@ -203,6 +203,8 @@ func (s *Service) renderShareEmail(
 	ctx context.Context,
 	p *emailParams,
 ) (*servicesports.RenderedMessage, error) {
+	//nolint:gosec // G203: a configured base URL joined to a server-encoded path
+	invoiceURL := template.URL(p.invoiceURL)
 	return s.templates.RenderMessage(ctx, &servicesports.RenderMessageRequest{
 		TenantInfo: p.tenantInfo,
 		Kind:       documenttemplate.KindInvoiceShareEmail,
@@ -212,10 +214,8 @@ func (s *Service) renderShareEmail(
 			InvoiceNumber:      p.delivery.invoice.Number,
 			CustomerName:       p.delivery.invoice.BillToName,
 			Note:               p.delivery.note,
-			InvoiceURL: template.URL(
-				p.invoiceURL,
-			), //nolint:gosec // configured base URL + server-encoded path
-			CompanyName: p.companyName,
+			InvoiceURL:         invoiceURL,
+			CompanyName:        p.companyName,
 		},
 		ReferenceID:       p.delivery.invoice.ID,
 		UserID:            p.recipient.ID,

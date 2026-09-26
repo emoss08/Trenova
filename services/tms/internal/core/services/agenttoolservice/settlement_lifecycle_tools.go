@@ -70,7 +70,7 @@ func submitDecision(text *lifecycleText) *settlementDecision {
 
 func approveDecision(text *lifecycleText) *settlementDecision {
 	return &settlementDecision{
-		name: text.name("approve"),
+		name: text.name(verbApprove),
 		description: "Propose approving a " + text.noun + " that is pending approval, " +
 			"which commits the organization to paying the " + text.payee + " what it comes to. " +
 			"A person always decides. Propose it only when " + text.getTool + " shows no " +
@@ -90,7 +90,7 @@ func approveDecision(text *lifecycleText) *settlementDecision {
 
 func rejectDecision(text *lifecycleText) *settlementDecision {
 	return &settlementDecision{
-		name: text.name("reject"),
+		name: text.name(verbReject),
 		description: "Send a " + text.noun + " that is pending approval back to draft, " +
 			"with the reason. Use it when a line, a rate or a deduction is wrong and " +
 			"someone must fix it before it is approved; the reason is added to its notes.",
@@ -178,7 +178,7 @@ func voidDecision(text *lifecycleText) *settlementDecision {
 		},
 		required: []string{paramSettlementReason},
 		fill:     fillSettlementReason,
-		fields:   []string{fieldStatus, fieldVoidedAt, "voidReason"},
+		fields:   []string{fieldStatus, fieldVoidedAt, fieldVoidReason},
 		volatile: []string{fieldVoidedAt},
 	}
 }

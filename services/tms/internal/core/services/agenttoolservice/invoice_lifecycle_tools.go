@@ -59,7 +59,10 @@ var (
 		"name the freight to invoice: an orderId, shipmentIds, or an orderId with the " +
 			"shipmentIds of it to bill",
 	)
-	memoBillTypes    = []billingqueue.BillType{billingqueue.BillTypeCreditMemo, billingqueue.BillTypeDebitMemo}
+	memoBillTypes = []billingqueue.BillType{
+		billingqueue.BillTypeCreditMemo,
+		billingqueue.BillTypeDebitMemo,
+	}
 	voidDispositions = []invoice.VoidDisposition{
 		invoice.VoidDispositionRebill,
 		invoice.VoidDispositionDoNotRebill,
@@ -161,7 +164,7 @@ func recipientsProperty(description string) map[string]any {
 }
 
 func newUpdateInvoiceDraftTool(invoices invoiceDraftEditor) serviceports.AgentTool {
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "update_invoice_draft",
 		description: "Change what a draft invoice says and where it goes: its memo, remittance " +
 			"instructions, email subject and body, recipients and attached documents. Only " +
@@ -265,8 +268,12 @@ func draftUpdateRequest(
 		{paramEmailBody, maxInvoiceEmailBodyChars, &req.EmailBody},
 	}
 	for _, text := range texts {
-		if *text.into, err = presentText(params.Params, text.key, text.limit); err != nil {
-			return nil, err
+		value, present, textErr := presentText(params.Params, text.key, text.limit)
+		if textErr != nil {
+			return nil, textErr
+		}
+		if present {
+			*text.into = &value
 		}
 	}
 	recipients := []struct {
@@ -297,23 +304,30 @@ func draftUpdateRequest(
 	return req, nil
 }
 
-func presentText(params map[string]any, key string, limit int) (*string, error) {
+func presentText(
+	params map[string]any,
+	key string,
+	limit int,
+) (text string, present bool, err error) {
 	raw, ok := params[key]
 	if !ok {
-		return nil, nil
+		return "", false, nil
 	}
 	if _, isString := raw.(string); !isString {
-		return nil, fmt.Errorf("parameter %q must be a string", key)
+		return "", false, fmt.Errorf("parameter %q must be a string", key)
 	}
-	text, err := boundedText(params, key, limit)
-	if err != nil {
-		return nil, err
+	if text, err = boundedText(params, key, limit); err != nil {
+		return "", false, err
 	}
 
-	return &text, nil
+	return text, true, nil
 }
 
-func presentList(params map[string]any, key string, limit int) ([]string, bool, error) {
+func presentList(
+	params map[string]any,
+	key string,
+	limit int,
+) (values []string, present bool, err error) {
 	raw, ok := params[key]
 	if !ok {
 		return nil, false, nil
@@ -327,7 +341,7 @@ func presentList(params map[string]any, key string, limit int) ([]string, bool, 
 			key, len(entries), limit)
 	}
 
-	values := make([]string, 0, len(entries))
+	values = make([]string, 0, len(entries))
 	for idx, entry := range entries {
 		text, isString := entry.(string)
 		if !isString || strings.TrimSpace(text) == "" {
@@ -389,7 +403,7 @@ func newGenerateInvoicePDFTool(invoices invoicePDFGenerator) serviceports.AgentT
 		return generation, nil
 	}
 
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "generate_invoice_pdf",
 		description: "Render an invoice's PDF from what it says now and file it on the " +
 			"invoice, replacing the one there. Refused when the customer's billing profile " +
@@ -439,7 +453,7 @@ type createInvoicesRequest struct {
 }
 
 func newCreateInvoiceTool(invoices invoiceCreator) serviceports.AgentTool {
-	return newReportingReceivableTool(receivableSpec{
+	return newReportingReceivableTool(&receivableSpec{
 		name: "create_invoice",
 		description: "Propose drafting invoices for completed freight: an order's billable " +
 			"shipments as one grouped invoice, or shipments on their own. A split-billed " +
@@ -513,7 +527,9 @@ func newCreateInvoiceTool(invoices invoiceCreator) serviceports.AgentTool {
 	})
 }
 
-func createInvoicesRequestFrom(params *serviceports.ToolExecuteParams) (*createInvoicesRequest, error) {
+func createInvoicesRequestFrom(
+	params *serviceports.ToolExecuteParams,
+) (*createInvoicesRequest, error) {
 	orderID, hasOrder, err := optionalPulid(params.Params, paramOrderID)
 	if err != nil {
 		return nil, err
@@ -558,7 +574,7 @@ func invoiceResult(action string, entity *invoice.Invoice) *agent.ToolExecutionR
 }
 
 func newCreateInvoiceMemoTool(invoices invoiceMemoRaiser) serviceports.AgentTool {
-	return newReportingReceivableTool(receivableSpec{
+	return newReportingReceivableTool(&receivableSpec{
 		name: "create_invoice_memo",
 		description: "Propose a draft credit or debit memo to a customer with no shipment " +
 			"behind it, such as a goodwill credit or a returned-check fee. It stays a draft " +
@@ -717,7 +733,10 @@ func memoLine(fields map[string]any) (*serviceports.CreateMemoLineInput, error) 
 		}
 		line.Quantity = quantity
 	}
-	if line.AccessorialChargeID, _, err = optionalPulid(fields, paramAccessorialChargeID); err != nil {
+	if line.AccessorialChargeID, _, err = optionalPulid(
+		fields,
+		paramAccessorialChargeID,
+	); err != nil {
 		return nil, err
 	}
 
@@ -725,7 +744,7 @@ func memoLine(fields map[string]any) (*serviceports.CreateMemoLineInput, error) 
 }
 
 func newVoidInvoiceTool(invoices invoiceVoider) serviceports.AgentTool {
-	return newReportingReceivableTool(receivableSpec{
+	return newReportingReceivableTool(&receivableSpec{
 		name: "void_invoice",
 		description: "Propose voiding an invoice. A draft is voided in place; a posted one " +
 			"through a full-reversal adjustment that credits it, which may wait for an " +
@@ -803,7 +822,7 @@ func voidRequest(params *serviceports.ToolExecuteParams) (*serviceports.VoidInvo
 }
 
 func newSendInvoiceEDITool(invoices invoiceEDISender) serviceports.AgentTool {
-	return newReceivableTool(receivableSpec{
+	return newReceivableTool(&receivableSpec{
 		name: "send_invoice_edi",
 		description: "Propose sending a posted invoice to the customer's EDI partner as a 210. " +
 			"Set force only to resend one that already went, when the partner asks for it " +

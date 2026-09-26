@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/invoicerunservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -126,23 +127,26 @@ func (a amounts) minor(value int64) string {
 
 func idListProperty(description string, limit int) map[string]any {
 	return map[string]any{
-		"type":        "array",
-		"items":       map[string]any{"type": "string"},
-		"minItems":    1,
-		"maxItems":    limit,
-		"description": description,
+		toolschema.KeyType:        toolschema.TypeArray,
+		toolschema.KeyItems:       map[string]any{toolschema.KeyType: toolschema.TypeString},
+		toolschema.KeyMinItems:    1,
+		toolschema.KeyMaxItems:    limit,
+		toolschema.KeyDescription: description,
 	}
 }
 
 func limitProperty() map[string]any {
 	return map[string]any{
-		"type":        "integer",
-		"description": fmt.Sprintf("How many to return, at most %d.", maxReceivableRows),
+		toolschema.KeyType: toolschema.TypeInteger,
+		toolschema.KeyDescription: fmt.Sprintf(
+			"How many to return, at most %d.",
+			maxReceivableRows,
+		),
 	}
 }
 
 func receivableLimit(params map[string]any) int {
-	limit := optionalInt(params, "limit", defaultReceivableRows)
+	limit := optionalInt(params, paramLimit, defaultReceivableRows)
 	if limit <= 0 || limit > maxReceivableRows {
 		return maxReceivableRows
 	}
@@ -209,7 +213,7 @@ func (t *listInvoiceAdjustmentsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramReceivableInvoice: stringParam("Optional: the invoice, from list_invoices or " +
 			"get_invoice. Leave it out for the approval queue."),
-		"limit": limitProperty(),
+		paramLimit: limitProperty(),
 	})
 }
 
@@ -696,7 +700,7 @@ func newListInvoiceRunsTool(
 		config:   querybuilder.GetFieldConfiguration((*invoicerun.InvoiceRun)(nil)),
 		fields: []listField{
 			{
-				Name: "status",
+				Name: paramStatus,
 				Kind: filterEnum,
 				Values: []string{
 					string(invoicerun.StatusBuilding),
@@ -708,9 +712,9 @@ func newListInvoiceRunsTool(
 				},
 				Note: "Ready runs are waiting to be committed or canceled",
 			},
-			{Name: "number", Kind: filterText, Sortable: true},
+			{Name: fieldNumber, Kind: filterText, Sortable: true},
 			{Name: "periodEnd", Kind: filterDate, Sortable: true},
-			{Name: "createdAt", Kind: filterDate, Sortable: true},
+			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 		access: access,
 		fetchGated: func(
@@ -917,7 +921,7 @@ func (t *listOpenStatementsTool) Description() string {
 
 func (t *listOpenStatementsTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
-		"customerId": stringParam("Optional: one customer, from list_customers, with the " +
+		paramCustomerID: stringParam("Optional: one customer, from list_customers, with the " +
 			"shipments on their statement."),
 	})
 }
@@ -933,7 +937,7 @@ func (t *listOpenStatementsTool) Query(
 	if err := guardQuery(params); err != nil {
 		return nil, err
 	}
-	customerID, oneCustomer, err := optionalPulid(params.Params, "customerId")
+	customerID, oneCustomer, err := optionalPulid(params.Params, paramCustomerID)
 	if err != nil {
 		return nil, err
 	}
@@ -1030,8 +1034,8 @@ func (t *listInvoiceShareCandidatesTool) Description() string {
 func (t *listInvoiceShareCandidatesTool) ParamSchema() map[string]any {
 	return objectSchema(map[string]any{
 		paramReceivableInvoice: stringParam("The invoice, from list_invoices or get_invoice."),
-		"query":                stringParam("Optional: part of a name or username."),
-		"limit":                limitProperty(),
+		paramQuery:             stringParam("Optional: part of a name or username."),
+		paramLimit:             limitProperty(),
 	}, paramReceivableInvoice)
 }
 
@@ -1054,7 +1058,7 @@ func (t *listInvoiceShareCandidatesTool) Query(
 	result, err := t.shares.ListCandidates(ctx, &serviceports.ListShareCandidatesRequest{
 		TenantInfo: tenantOf(params),
 		InvoiceID:  invoiceID,
-		Query:      strings.TrimSpace(optionalString(params.Params, "query")),
+		Query:      strings.TrimSpace(optionalString(params.Params, paramQuery)),
 		Pagination: pagination.Info{Limit: receivableLimit(params.Params)},
 	})
 	if err != nil {

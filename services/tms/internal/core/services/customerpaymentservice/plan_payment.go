@@ -55,7 +55,10 @@ func (s *Service) loadPaymentAndControl(
 ) (*customerpayment.Payment, *tenant.AccountingControl, error) {
 	payment, err := s.repo.GetByID(
 		ctx,
-		repositories.GetCustomerPaymentByIDRequest{ID: paymentID, TenantInfo: tenantInfo.TenantInfo},
+		repositories.GetCustomerPaymentByIDRequest{
+			ID:         paymentID,
+			TenantInfo: tenantInfo.TenantInfo,
+		},
 	)
 	if err != nil {
 		return nil, nil, err
@@ -352,7 +355,12 @@ func (s *Service) PreviewApplyUnapplied(
 		PaymentAfter:   &after,
 		InvoicesBefore: plan.invoices,
 		InvoicesAfter:  invoicesAfter,
-		Journal:        journal.preview(plan.control, req.AccountingDate, plan.period, actor.UserID),
+		Journal: journal.preview(
+			plan.control,
+			req.AccountingDate,
+			plan.period,
+			actor.UserID,
+		),
 	}, nil
 }
 
@@ -384,6 +392,11 @@ func (s *Service) PreviewReverse(
 		PaymentAfter:   &after,
 		InvoicesBefore: plan.invoices,
 		InvoicesAfter:  invoicesAfter,
-		Journal:        journal.preview(plan.control, req.AccountingDate, plan.period, actor.UserID),
+		Journal: journal.preview(
+			plan.control,
+			req.AccountingDate,
+			plan.period,
+			actor.UserID,
+		),
 	}, nil
 }

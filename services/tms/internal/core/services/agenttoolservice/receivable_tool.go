@@ -51,7 +51,7 @@ type receivablePlan[R, P any] struct {
 }
 
 type receivableTool[R, P any] struct {
-	spec  receivableSpec
+	spec  *receivableSpec
 	steps receivablePlan[R, P]
 }
 
@@ -67,14 +67,14 @@ var (
 )
 
 func newReceivableTool[R, P any](
-	spec receivableSpec,
+	spec *receivableSpec,
 	steps receivablePlan[R, P],
 ) *receivableTool[R, P] {
 	return &receivableTool[R, P]{spec: spec, steps: steps}
 }
 
 func newReportingReceivableTool[R, P any](
-	spec receivableSpec,
+	spec *receivableSpec,
 	steps receivablePlan[R, P],
 ) reportingReceivableTool[R, P] {
 	return reportingReceivableTool[R, P]{receivableTool: newReceivableTool(spec, steps)}

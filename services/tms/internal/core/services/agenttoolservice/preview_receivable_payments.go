@@ -142,7 +142,9 @@ func renderReversePayment(
 	))
 }
 
-func creditMemoChange(plan *serviceports.CreditMemoApplicationPreview) (*agent.RecordChange, error) {
+func creditMemoChange(
+	plan *serviceports.CreditMemoApplicationPreview,
+) (*agent.RecordChange, error) {
 	before, after := plan.CreditMemoBefore, plan.CreditMemoAfter
 	change, err := toolpreview.Changed(
 		toolpreview.Record{

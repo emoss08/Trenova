@@ -89,7 +89,7 @@ func runTotalMoney(change *agent.RecordChange, before, after *invoicerun.Invoice
 }
 
 func proposedInvoiceChange(
-	plan serviceports.InvoiceRunGroupPlan,
+	plan *serviceports.InvoiceRunGroupPlan,
 	operation agent.PreviewOperation,
 	before decimal.NullDecimal,
 ) (*agent.RecordChange, error) {
@@ -157,9 +157,10 @@ func renderBuiltRun(
 	runTotalMoney(header, nil, run)
 
 	changes := []*agent.RecordChange{header}
-	for _, plan := range groupPlansFromRun(run) {
+	plans := groupPlansFromRun(run)
+	for idx := range plans {
 		change, changeErr := proposedInvoiceChange(
-			plan,
+			&plans[idx],
 			agent.PreviewOperationCreate,
 			decimal.NullDecimal{},
 		)
@@ -191,7 +192,9 @@ func renderMembership(
 
 	changes := []*agent.RecordChange{header}
 	before := groupPlansFromRun(plan.Before)
-	for idx, after := range groupPlansFromRun(plan.After) {
+	afterPlans := groupPlansFromRun(plan.After)
+	for idx := range afterPlans {
+		after := &afterPlans[idx]
 		if idx < len(before) && before[idx].ShipmentCount == after.ShipmentCount &&
 			before[idx].Total.Equal(after.Total) {
 			continue
@@ -217,11 +220,13 @@ func renderMembership(
 	), changes...), nil
 }
 
-func outcomeSummary(plans []serviceports.InvoiceRunGroupPlan) (int, decimal.Decimal, []string) {
-	billed := 0
-	total := decimal.Zero
-	notes := make([]string, 0, len(plans))
-	for _, plan := range plans {
+func outcomeSummary(
+	plans []serviceports.InvoiceRunGroupPlan,
+) (billed int, total decimal.Decimal, notes []string) {
+	total = decimal.Zero
+	notes = make([]string, 0, len(plans))
+	for idx := range plans {
+		plan := &plans[idx]
 		switch plan.Outcome {
 		case serviceports.InvoiceRunGroupBills:
 			billed++
@@ -238,7 +243,8 @@ func outcomeSummary(plans []serviceports.InvoiceRunGroupPlan) (int, decimal.Deci
 
 func groupChanges(plans []serviceports.InvoiceRunGroupPlan) ([]*agent.RecordChange, error) {
 	changes := make([]*agent.RecordChange, 0, len(plans))
-	for _, plan := range plans {
+	for idx := range plans {
+		plan := &plans[idx]
 		operation := agent.PreviewOperationCreate
 		if plan.Outcome != serviceports.InvoiceRunGroupBills {
 			operation = agent.PreviewOperationRun
@@ -294,9 +300,14 @@ func renderCancel(
 	_ *serviceports.CancelInvoiceRunRequest,
 	plan *serviceports.InvoiceRunChangePreview,
 ) (*agent.ToolPreview, error) {
-	change, err := toolpreview.Changed(runRecord(plan.Before), plan.Before, plan.After,
+	change, err := toolpreview.Changed(
+		runRecord(plan.Before),
+		plan.Before,
+		plan.After,
 		toolpreview.Only(fieldStatus, "failureReason", "canceledById", "canceledAt"),
-		toolpreview.WithRefs(map[string]permission.Resource{"canceledById": permission.ResourceUser}),
+		toolpreview.WithRefs(
+			map[string]permission.Resource{"canceledById": permission.ResourceUser},
+		),
 		toolpreview.Volatile("canceledAt"),
 	)
 	if err != nil {

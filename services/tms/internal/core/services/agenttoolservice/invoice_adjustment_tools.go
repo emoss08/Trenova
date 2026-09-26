@@ -314,7 +314,7 @@ type submissionPlan struct {
 }
 
 func newSubmitInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.AgentTool {
-	return newReportingReceivableTool(receivableSpec{
+	return newReportingReceivableTool(&receivableSpec{
 		name: "submit_invoice_adjustment",
 		description: "Propose crediting, rebilling, reversing or writing off posted invoices. " +
 			"Give adjustments, one per invoice and up to 25 at once, or draftAdjustmentId to " +
@@ -498,47 +498,75 @@ func planSubmission(
 	req *adjustmentSubmission,
 	params *serviceports.ToolExecuteParams,
 ) (*submissionPlan, error) {
-	plan := &submissionPlan{}
+	var (
+		plan *submissionPlan
+		err  error
+	)
 	if req.draftID.IsNotNil() {
-		detail := &serviceports.GetInvoiceAdjustmentDetailRequest{
-			AdjustmentID: req.draftID,
-			TenantInfo:   tenantFrom(*params),
-		}
-		draft, err := adjustments.GetDetail(ctx, detail)
-		if err != nil {
-			return nil, err
-		}
-		if draft.Status != invoiceadjustment.StatusDraft {
-			return nil, errortypes.NewValidationError(
-				paramDraftAdjustmentID,
-				errortypes.ErrInvalidOperation,
-				"Only draft adjustments may be submitted; this one is {0}",
-				string(draft.Status),
-			)
-		}
-		figures, err := adjustments.PreviewDraft(ctx, detail, params.Actor)
-		if err != nil {
-			return nil, err
-		}
-		plan.draft = draft
-		plan.figures = []*serviceports.InvoiceAdjustmentPreview{figures}
+		plan, err = planDraftSubmission(ctx, adjustments, req, params)
 	} else {
-		figures, err := adjustments.BulkPreview(ctx, &serviceports.InvoiceAdjustmentBulkRequest{
-			IdempotencyKey: req.key,
-			Items:          req.items,
-			TenantInfo:     tenantFrom(*params),
-		}, params.Actor)
-		if err != nil {
-			return nil, err
-		}
-		plan.figures = figures
+		plan, err = planBulkSubmission(ctx, adjustments, req, params)
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	if err := figuresRefusal(plan.figures); err != nil {
+	if err = figuresRefusal(plan.figures); err != nil {
 		return nil, err
 	}
 
 	return plan, nil
+}
+
+func planDraftSubmission(
+	ctx context.Context,
+	adjustments invoiceAdjuster,
+	req *adjustmentSubmission,
+	params *serviceports.ToolExecuteParams,
+) (*submissionPlan, error) {
+	detail := &serviceports.GetInvoiceAdjustmentDetailRequest{
+		AdjustmentID: req.draftID,
+		TenantInfo:   tenantFrom(*params),
+	}
+	draft, err := adjustments.GetDetail(ctx, detail)
+	if err != nil {
+		return nil, err
+	}
+	if draft.Status != invoiceadjustment.StatusDraft {
+		return nil, errortypes.NewValidationError(
+			paramDraftAdjustmentID,
+			errortypes.ErrInvalidOperation,
+			"Only draft adjustments may be submitted; this one is {0}",
+			string(draft.Status),
+		)
+	}
+	figures, err := adjustments.PreviewDraft(ctx, detail, params.Actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return &submissionPlan{
+		draft:   draft,
+		figures: []*serviceports.InvoiceAdjustmentPreview{figures},
+	}, nil
+}
+
+func planBulkSubmission(
+	ctx context.Context,
+	adjustments invoiceAdjuster,
+	req *adjustmentSubmission,
+	params *serviceports.ToolExecuteParams,
+) (*submissionPlan, error) {
+	figures, err := adjustments.BulkPreview(ctx, &serviceports.InvoiceAdjustmentBulkRequest{
+		IdempotencyKey: req.key,
+		Items:          req.items,
+		TenantInfo:     tenantFrom(*params),
+	}, params.Actor)
+	if err != nil {
+		return nil, err
+	}
+
+	return &submissionPlan{figures: figures}, nil
 }
 
 func runSubmission(
@@ -549,10 +577,14 @@ func runSubmission(
 ) (*agent.ToolExecutionResult, error) {
 	switch {
 	case req.draftID.IsNotNil():
-		submitted, err := adjustments.SubmitDraft(ctx, &serviceports.GetInvoiceAdjustmentDetailRequest{
-			AdjustmentID: req.draftID,
-			TenantInfo:   tenantFrom(*params),
-		}, params.Actor)
+		submitted, err := adjustments.SubmitDraft(
+			ctx,
+			&serviceports.GetInvoiceAdjustmentDetailRequest{
+				AdjustmentID: req.draftID,
+				TenantInfo:   tenantFrom(*params),
+			},
+			params.Actor,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -597,7 +629,7 @@ func adjustmentResult(adjustment *invoiceadjustment.InvoiceAdjustment) *agent.To
 }
 
 func newSaveInvoiceAdjustmentDraftTool(adjustments invoiceAdjuster) serviceports.AgentTool {
-	return newReportingReceivableTool(receivableSpec{
+	return newReportingReceivableTool(&receivableSpec{
 		name: "save_invoice_adjustment_draft",
 		description: "Save a draft credit, rebill, reversal or write-off on a posted invoice for " +
 			"a biller to review and submit; nothing is credited until it is submitted. Give " +
@@ -718,7 +750,7 @@ type adjustmentDecision struct {
 }
 
 func newApproveInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.AgentTool {
-	return newDecisionTool(adjustments, true, receivableSpec{
+	return newDecisionTool(adjustments, true, &receivableSpec{
 		name: "approve_invoice_adjustment",
 		description: "Propose approving an invoice adjustment that waits for approval, which " +
 			"executes it: the credit memo and any replacement invoice are made and posted. It is " +
@@ -739,7 +771,7 @@ func newApproveInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.A
 }
 
 func newRejectInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.AgentTool {
-	return newDecisionTool(adjustments, false, receivableSpec{
+	return newDecisionTool(adjustments, false, &receivableSpec{
 		name: "reject_invoice_adjustment",
 		description: "Propose rejecting an invoice adjustment that waits for approval, with the " +
 			"reason the submitter will read. Nothing is credited and the invoice is left as it " +
@@ -765,72 +797,78 @@ func newRejectInvoiceAdjustmentTool(adjustments invoiceAdjuster) serviceports.Ag
 func newDecisionTool(
 	adjustments invoiceAdjuster,
 	approve bool,
-	spec receivableSpec,
+	spec *receivableSpec,
 ) serviceports.AgentTool {
-	return newReceivableTool(spec, receivablePlan[*adjustmentDecision, *serviceports.InvoiceAdjustmentDecisionPreview]{
-		request: func(params *serviceports.ToolExecuteParams) (*adjustmentDecision, error) {
-			id, err := requirePulid(params.Params, paramAdjustmentID)
-			if err != nil {
-				return nil, err
-			}
-			decision := &adjustmentDecision{adjustmentID: id, approve: approve}
-			if !approve {
-				if decision.reason, err = requireBoundedText(
-					params.Params, paramReason, maxAdjustmentReasonChars,
-				); err != nil {
+	return newReceivableTool(
+		spec,
+		receivablePlan[*adjustmentDecision, *serviceports.InvoiceAdjustmentDecisionPreview]{
+			request: func(params *serviceports.ToolExecuteParams) (*adjustmentDecision, error) {
+				id, err := requirePulid(params.Params, paramAdjustmentID)
+				if err != nil {
 					return nil, err
 				}
-			}
-			return decision, nil
-		},
-		plan: func(
-			ctx context.Context,
-			req *adjustmentDecision,
-			params *serviceports.ToolExecuteParams,
-		) (*serviceports.InvoiceAdjustmentDecisionPreview, error) {
-			plan, err := adjustments.PreviewDecision(ctx, &serviceports.InvoiceAdjustmentDecisionRequest{
-				AdjustmentID: req.adjustmentID,
-				Approve:      req.approve,
-				TenantInfo:   tenantFrom(*params),
-			})
-			if err != nil {
-				return nil, err
-			}
-			if req.approve {
-				if refusal := figuresRefusal([]*serviceports.InvoiceAdjustmentPreview{
-					plan.Figures,
-				}); refusal != nil {
-					return nil, refusal
+				decision := &adjustmentDecision{adjustmentID: id, approve: approve}
+				if !approve {
+					if decision.reason, err = requireBoundedText(
+						params.Params, paramReason, maxAdjustmentReasonChars,
+					); err != nil {
+						return nil, err
+					}
 				}
-			}
-			return plan, nil
+				return decision, nil
+			},
+			plan: func(
+				ctx context.Context,
+				req *adjustmentDecision,
+				params *serviceports.ToolExecuteParams,
+			) (*serviceports.InvoiceAdjustmentDecisionPreview, error) {
+				plan, err := adjustments.PreviewDecision(
+					ctx,
+					&serviceports.InvoiceAdjustmentDecisionRequest{
+						AdjustmentID: req.adjustmentID,
+						Approve:      req.approve,
+						TenantInfo:   tenantFrom(*params),
+					},
+				)
+				if err != nil {
+					return nil, err
+				}
+				if req.approve {
+					if refusal := figuresRefusal([]*serviceports.InvoiceAdjustmentPreview{
+						plan.Figures,
+					}); refusal != nil {
+						return nil, refusal
+					}
+				}
+				return plan, nil
+			},
+			refused: func(req *adjustmentDecision) string {
+				if req.approve {
+					return "Would approve the invoice adjustment."
+				}
+				return "Would reject the invoice adjustment."
+			},
+			render: renderDecision,
+			run: func(
+				ctx context.Context,
+				req *adjustmentDecision,
+				params *serviceports.ToolExecuteParams,
+			) (*agent.ToolExecutionResult, error) {
+				var err error
+				if req.approve {
+					_, err = adjustments.Approve(ctx, &serviceports.ApproveInvoiceAdjustmentRequest{
+						AdjustmentID: req.adjustmentID,
+						TenantInfo:   tenantFrom(*params),
+					}, params.Actor)
+				} else {
+					_, err = adjustments.Reject(ctx, &serviceports.RejectInvoiceAdjustmentRequest{
+						AdjustmentID: req.adjustmentID,
+						Reason:       req.reason,
+						TenantInfo:   tenantFrom(*params),
+					}, params.Actor)
+				}
+				return nil, err
+			},
 		},
-		refused: func(req *adjustmentDecision) string {
-			if req.approve {
-				return "Would approve the invoice adjustment."
-			}
-			return "Would reject the invoice adjustment."
-		},
-		render: renderDecision,
-		run: func(
-			ctx context.Context,
-			req *adjustmentDecision,
-			params *serviceports.ToolExecuteParams,
-		) (*agent.ToolExecutionResult, error) {
-			var err error
-			if req.approve {
-				_, err = adjustments.Approve(ctx, &serviceports.ApproveInvoiceAdjustmentRequest{
-					AdjustmentID: req.adjustmentID,
-					TenantInfo:   tenantFrom(*params),
-				}, params.Actor)
-			} else {
-				_, err = adjustments.Reject(ctx, &serviceports.RejectInvoiceAdjustmentRequest{
-					AdjustmentID: req.adjustmentID,
-					Reason:       req.reason,
-					TenantInfo:   tenantFrom(*params),
-				}, params.Actor)
-			}
-			return nil, err
-		},
-	})
+	)
 }

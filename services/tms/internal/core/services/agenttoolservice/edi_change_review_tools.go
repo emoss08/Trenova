@@ -238,7 +238,7 @@ func (c *changeReviewCall) verb() string {
 		return "apply"
 	}
 
-	return "reject"
+	return verbReject
 }
 
 func newReviewEDITenderChangeTool(reviewer tenderChangeReviewer) serviceports.AgentTool {

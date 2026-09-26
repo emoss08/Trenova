@@ -80,7 +80,7 @@ func renderSubmission(req *adjustmentSubmission, plan *submissionPlan) (*agent.T
 	changes := make([]*agent.RecordChange, 0, len(plan.figures))
 	credited := decimal.Zero
 	outcomes := make(map[string]int, 2)
-	notes := ""
+	var notes strings.Builder
 	for idx, figures := range plan.figures {
 		view := &adjustmentView{
 			InvoiceID:      figures.InvoiceID,
@@ -111,7 +111,7 @@ func renderSubmission(req *adjustmentSubmission, plan *submissionPlan) (*agent.T
 		changes = append(changes, change)
 		credited = credited.Add(figures.CreditTotalAmount.Abs())
 		outcomes[outcomeSentence(figures)]++
-		notes += figureWarnings(figures)
+		notes.WriteString(figureWarnings(figures))
 	}
 
 	subject := countOf(len(plan.figures), "invoice adjustment")
@@ -121,7 +121,7 @@ func renderSubmission(req *adjustmentSubmission, plan *submissionPlan) (*agent.T
 	summary := fmt.Sprintf("Would submit %s crediting %s in all; %s.",
 		subject, credited.StringFixed(2), describeOutcomes(outcomes))
 	preview := toolpreview.Build(summary+" Credit memos and any replacement invoices are made "+
-		"when each executes."+notes, changes...)
+		"when each executes."+notes.String(), changes...)
 	preview.Partial = true
 
 	return preview, nil
@@ -187,7 +187,9 @@ func renderDraft(
 
 	summary := fmt.Sprintf("Would save a draft %s adjustment of %s for a biller to submit; "+
 		"nothing is credited until then.", plan.After.Kind, invoiceLabel(plan.Invoice))
-	if refusal := figuresRefusal([]*serviceports.InvoiceAdjustmentPreview{plan.Figures}); refusal != nil {
+	if refusal := figuresRefusal(
+		[]*serviceports.InvoiceAdjustmentPreview{plan.Figures},
+	); refusal != nil {
 		summary += " As it stands it could not be submitted: " + refusal.Error() + "."
 	}
 
@@ -209,13 +211,13 @@ func renderDecision(
 		LineCount:      len(adjustment.Lines),
 	}
 	after := *before
-	verb := "approve"
+	verb := verbApprove
 	figures := plan.Figures
 	if req.approve {
 		after.Status = string(invoiceadjustment.StatusExecuted)
 		after.ApprovalStatus = string(invoiceadjustment.ApprovalStatusApproved)
 	} else {
-		verb = "reject"
+		verb = verbReject
 		after.Status = string(invoiceadjustment.StatusRejected)
 		after.ApprovalStatus = string(invoiceadjustment.ApprovalStatusRejected)
 		figures = &serviceports.InvoiceAdjustmentPreview{

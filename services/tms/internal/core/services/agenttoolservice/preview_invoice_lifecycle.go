@@ -134,7 +134,10 @@ func renderCreateInvoices(
 	return preview, nil
 }
 
-func renderMemo(req *serviceports.CreateMemoRequest, memo *invoice.Invoice) (*agent.ToolPreview, error) {
+func renderMemo(
+	req *serviceports.CreateMemoRequest,
+	memo *invoice.Invoice,
+) (*agent.ToolPreview, error) {
 	change, err := draftInvoiceChange(memo)
 	if err != nil {
 		return nil, err
@@ -165,7 +168,7 @@ func renderVoid(
 	plan *serviceports.InvoiceVoidPreview,
 ) (*agent.ToolPreview, error) {
 	label := invoiceLabel(plan.Before)
-	fields := []string{"voidReason", "voidDisposition"}
+	fields := []string{fieldVoidReason, "voidDisposition"}
 	if !plan.Posted {
 		fields = append(fields, fieldStatus, "voidedAt", "voidedById")
 	}
@@ -210,7 +213,9 @@ func renderVoid(
 		disposition, figureWarnings(figures),
 	), reversal, invoiceChange)
 	preview.Partial = true
-	if refusal := figuresRefusal([]*serviceports.InvoiceAdjustmentPreview{figures}); refusal != nil {
+	if refusal := figuresRefusal(
+		[]*serviceports.InvoiceAdjustmentPreview{figures},
+	); refusal != nil {
 		return warnWouldFail(preview, refusal), nil
 	}
 
