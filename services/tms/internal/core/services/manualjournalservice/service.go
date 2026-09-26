@@ -170,7 +170,13 @@ func (s *Service) CreateDraft(
 		return nil, err
 	}
 
-	s.logAudit(permission.OpCreate, created, nil, entity.CreatedByID, "Manual journal draft created")
+	s.logAudit(
+		permission.OpCreate,
+		created,
+		nil,
+		entity.CreatedByID,
+		"Manual journal draft created",
+	)
 	return created, nil
 }
 

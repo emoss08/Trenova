@@ -96,7 +96,7 @@ func (s *Service) Transition(
 			ReopenReason: req.Reason,
 		}, userID)
 	case TransitionLock:
-		return s.Lock(ctx, repositories.LockFiscalPeriodRequest{
+		return s.Lock(ctx, &repositories.LockFiscalPeriodRequest{
 			ID:         req.ID,
 			TenantInfo: req.TenantInfo,
 		}, userID)

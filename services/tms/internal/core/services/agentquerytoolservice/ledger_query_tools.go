@@ -12,7 +12,10 @@ import (
 	"github.com/emoss08/trenova/pkg/querybuilder"
 )
 
-const paramManualJournalID = "manualJournalId"
+const (
+	paramManualJournalID    = "manualJournalId"
+	fieldJournalDescription = "description"
+)
 
 var manualJournalStatuses = []string{
 	string(manualjournal.StatusDraft),
@@ -111,9 +114,9 @@ func newListManualJournalsTool(
 				Note:   "Approved journals are waiting to be posted",
 			},
 			{Name: "requestNumber", Kind: filterText, Sortable: true},
-			{Name: "description", Kind: filterText},
+			{Name: fieldJournalDescription, Kind: filterText},
 			{Name: "accountingDate", Kind: filterDate, Sortable: true},
-			{Name: "createdAt", Kind: filterDate, Sortable: true},
+			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 		access: newFieldAccess(permissions),
 		fetchGated: func(
@@ -286,7 +289,7 @@ func newListJournalReversalsTool(
 			{Name: "reasonCode", Kind: filterText},
 			{Name: "originalJournalEntryId", Kind: filterText},
 			{Name: "requestedAccountingDate", Kind: filterDate, Sortable: true},
-			{Name: "createdAt", Kind: filterDate, Sortable: true},
+			{Name: fieldCreatedAt, Kind: filterDate, Sortable: true},
 		},
 		access: newFieldAccess(permissions),
 		fetchGated: func(

@@ -418,14 +418,14 @@ func (s *Service) Reopen(
 
 func (s *Service) Lock(
 	ctx context.Context,
-	req repositories.LockFiscalPeriodRequest,
+	req *repositories.LockFiscalPeriodRequest,
 	userID pulid.ID,
 ) (*fiscalperiod.FiscalPeriod, error) {
 	t := lockTransition()
 	t.apply = func(ctx context.Context, _ transitionState) (*fiscalperiod.FiscalPeriod, error) {
 		req.LockedByID = userID
 		req.LockedAt = timeutils.NowUnix()
-		return s.repo.Lock(ctx, req)
+		return s.repo.Lock(ctx, *req)
 	}
 
 	return s.runTransition(ctx, req.ID, req.TenantInfo, userID, t)
