@@ -884,6 +884,170 @@ input IgnoreAccountingInboundChangeInput {
   note: String!
 }
 
+"How the accounting system and Trenova differ on a document Trenova sent."
+enum AccountingDriftKind {
+  "The total differs."
+  AmountMismatch
+  "Trenova voided or reversed it; the accounting system still has it."
+  StatusMismatch
+  "It was deleted in the accounting system."
+  DeletedInProvider
+  "It was voided in the accounting system."
+  VoidedInProvider
+  "A customer's open balance differs over the documents both sides hold."
+  CustomerBalanceMismatch
+}
+
+enum AccountingDriftStatus {
+  Open
+  Resolved
+  Dismissed
+}
+
+enum AccountingDriftResolution {
+  PushedTrenovaValue
+  AdjustedTrenova
+  NoLongerDiffers
+  Dismissed
+}
+
+"Which side a fix changes."
+enum AccountingDriftDirection {
+  "Send Trenova's document to the accounting system again."
+  PushTrenovaValue
+  "Change Trenova to match the accounting system."
+  AdjustTrenova
+}
+
+"What a fix made."
+enum AccountingDriftFixObject {
+  SyncRecord
+  CreditMemo
+  DebitMemo
+  InvoiceVoid
+  PaymentReversal
+}
+
+"One document inside a customer balance difference, with both sides."
+type AccountingDriftLine {
+  objectType: AccountingSyncObjectType!
+  objectId: ID!
+  objectNumber: String!
+  trenovaMinor: Int!
+  providerMinor: Int!
+}
+
+"A difference between a document Trenova sent and what the accounting system holds now."
+type AccountingDriftFinding {
+  id: ID!
+  connectionId: ID!
+  objectType: AccountingSyncObjectType!
+  objectId: ID!
+  objectNumber: String!
+  "The customer, carrier or driver on the document."
+  partyId: ID
+  partyName: String!
+  "The document's ID in the accounting system."
+  externalId: String!
+  "A link to the document in the accounting system."
+  externalUrl: String!
+  kind: AccountingDriftKind!
+  currencyCode: String!
+  "Trenova's value, in minor units. Absent when the difference has no amount."
+  trenovaMinor: Int
+  "The accounting system's value, in minor units. Absent when it no longer has the document."
+  providerMinor: Int
+  "The accounting system's value less Trenova's."
+  differenceMinor: Int
+  trenovaState: String!
+  providerState: String!
+  "For a customer balance, the documents that differ."
+  detail: [AccountingDriftLine!]!
+  "When it was last changed in the accounting system."
+  providerModifiedAt: Timestamp
+  "Who last changed it there, when the accounting system says."
+  providerModifiedBy: String!
+  status: AccountingDriftStatus!
+  resolution: AccountingDriftResolution
+  resolutionNote: String!
+  "What the fix made: the record sent, or the memo, void or reversal posted."
+  fixObjectType: AccountingDriftFixObject
+  fixObjectId: ID
+  "The fixes this finding offers while it is open."
+  directions: [AccountingDriftDirection!]!
+  "True while Trenova's value was sent and a later check has yet to confirm it."
+  pushed: Boolean!
+  resolvedBy: User
+  resolvedAt: Timestamp
+  detectedAt: Timestamp!
+  lastSeenAt: Timestamp!
+  version: Int!
+  updatedAt: Timestamp!
+}
+
+type AccountingDriftFindingEdge {
+  node: AccountingDriftFinding!
+  cursor: String!
+}
+
+type AccountingDriftFindingConnection {
+  edges: [AccountingDriftFindingEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AccountingDriftSummary {
+  open: Int!
+  "Open differences in a total or a balance."
+  amountOpen: Int!
+  "Open documents deleted or voided in the accounting system."
+  goneOpen: Int!
+  statusOpen: Int!
+  balanceOpen: Int!
+  "Resolved or dismissed in the last seven days."
+  resolvedSince: Int!
+}
+
+type AccountingDriftOverview {
+  connectionId: ID!
+  providerName: String!
+  "When the last full check finished."
+  checkedAt: Timestamp
+  "Why the last check could not read the accounting system. Empty when it could."
+  checkError: String!
+  "The reconciliation tolerance, in minor units. Agents dismiss only amount differences within it."
+  toleranceMinor: Int!
+  "The accounting system's home currency, which the tolerance is in."
+  currencyCode: String!
+  summary: AccountingDriftSummary!
+}
+
+"What a fix or a dismissal would do, checked against both sides as they are now."
+type AccountingDriftFixPreview {
+  finding: AccountingDriftFinding!
+  direction: AccountingDriftDirection
+  fixObject: AccountingDriftFixObject
+  "The operation sent to the accounting system when pushing."
+  operation: AccountingSyncOperation
+  "The amount a memo or reversal posts, in minor units."
+  amountMinor: Int!
+  currencyCode: String!
+  toleranceMinor: Int!
+  withinTolerance: Boolean!
+  summary: String!
+}
+
+input ResolveAccountingDriftInput {
+  id: ID!
+  direction: AccountingDriftDirection!
+}
+
+input DismissAccountingDriftInput {
+  id: ID!
+  "Why both sides stay as they are."
+  note: String!
+}
+
 extend type Query {
   "The organization's link to an accounting system, and whether this instance can connect to it at all."
   accountingSyncStatus(integrationType: AccountingSystem!): AccountingSyncStatus!
@@ -925,6 +1089,16 @@ extend type Query {
   accountingInboundChange(id: ID!): AccountingInboundChange!
   "What applying a payment would post, without posting it."
   accountingInboundApplyPreview(id: ID!): AccountingInboundApplyPreview!
+  "Open and recent differences with the accounting system, and when it was last checked."
+  accountingDriftOverview(integrationType: AccountingSystem!): AccountingDriftOverview!
+  "Differences with the accounting system as a data table, newest first."
+  accountingDriftFindingTable(
+    integrationType: AccountingSystem!
+    input: DataTableConnectionInput!
+  ): AccountingDriftFindingConnection!
+  accountingDriftFinding(id: ID!): AccountingDriftFinding!
+  "What fixing a difference in one direction would do, without doing it."
+  accountingDriftFixPreview(input: ResolveAccountingDriftInput!): AccountingDriftFixPreview!
   "Searches the accounting system records Trenova has read."
   accountingReferenceObjects(
     integrationType: AccountingSystem!
@@ -981,4 +1155,10 @@ extend type Mutation {
   applyAccountingInboundChange(id: ID!): AccountingInboundChange!
   "Leaves a payment recorded in the accounting system out of Trenova, with a reason."
   ignoreAccountingInboundChange(input: IgnoreAccountingInboundChangeInput!): AccountingInboundChange!
+  "Fixes a difference with the accounting system: sends Trenova's document again, or changes Trenova to match."
+  resolveAccountingDrift(input: ResolveAccountingDriftInput!): AccountingDriftFinding!
+  "Keeps both sides as they are, with a reason."
+  dismissAccountingDrift(input: DismissAccountingDriftInput!): AccountingDriftFinding!
+  "Compares the accounting system with Trenova now instead of waiting for the nightly check."
+  checkAccountingDrift(integrationType: AccountingSystem!): AccountingDriftOverview!
 }

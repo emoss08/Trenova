@@ -26,30 +26,39 @@ type ActivitiesParams struct {
 	Dispatcher            services.AccountingSyncDispatcher
 	Inbound               services.AccountingInboundService
 	Poller                services.AccountingChangePoller
+	Drift                 services.AccountingDriftReconciler
+	DriftChecker          services.AccountingDriftChecker
+	Publisher             services.AgentEventPublisher `optional:"true"`
 	Logger                *zap.Logger
 }
 
 type Activities struct {
-	connections services.AccountingConnectionService
-	connRepo    repositories.AccountingConnectionRepository
-	mappings    services.AccountingMappingService
-	sync        services.AccountingSyncService
-	dispatcher  services.AccountingSyncDispatcher
-	inbound     services.AccountingInboundService
-	poller      services.AccountingChangePoller
-	l           *zap.Logger
+	connections  services.AccountingConnectionService
+	connRepo     repositories.AccountingConnectionRepository
+	mappings     services.AccountingMappingService
+	sync         services.AccountingSyncService
+	dispatcher   services.AccountingSyncDispatcher
+	inbound      services.AccountingInboundService
+	poller       services.AccountingChangePoller
+	drift        services.AccountingDriftReconciler
+	driftChecker services.AccountingDriftChecker
+	publisher    services.AgentEventPublisher
+	l            *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		connections: p.Connections,
-		connRepo:    p.ConnectionsRepository,
-		mappings:    p.Mappings,
-		sync:        p.Sync,
-		dispatcher:  p.Dispatcher,
-		inbound:     p.Inbound,
-		poller:      p.Poller,
-		l:           p.Logger.Named("job.accounting-sync"),
+		connections:  p.Connections,
+		connRepo:     p.ConnectionsRepository,
+		mappings:     p.Mappings,
+		sync:         p.Sync,
+		dispatcher:   p.Dispatcher,
+		inbound:      p.Inbound,
+		poller:       p.Poller,
+		drift:        p.Drift,
+		driftChecker: p.DriftChecker,
+		publisher:    p.Publisher,
+		l:            p.Logger.Named("job.accounting-sync"),
 	}
 }
 

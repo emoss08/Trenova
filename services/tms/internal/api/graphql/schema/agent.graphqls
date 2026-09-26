@@ -24,6 +24,7 @@ enum AgentSubjectType {
   AccountingConnection
   AccountingSyncRecord
   AccountingInboundChange
+  AccountingDriftFinding
   FormulaTemplate
 }
 

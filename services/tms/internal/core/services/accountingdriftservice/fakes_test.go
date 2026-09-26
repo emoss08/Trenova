@@ -212,8 +212,9 @@ func (f *fakeRecords) ListByObjects(
 
 type fakeFindings struct {
 	repositories.AccountingDriftFindingRepository
-	mu   sync.Mutex
-	rows []*accountingsync.AccountingDriftFinding
+	mu       sync.Mutex
+	rows     []*accountingsync.AccountingDriftFinding
+	lastList *repositories.ListAccountingDriftFindingsConnectionRequest
 }
 
 func cloneFinding(f *accountingsync.AccountingDriftFinding) *accountingsync.AccountingDriftFinding {

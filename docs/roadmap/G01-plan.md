@@ -844,7 +844,7 @@ M5b is drift: Trenova compares what it sent with what the provider holds now, ra
 - **Watchtower:** open findings older than a day, grouped by kind per connection.
 
 **Reporting.**
-- A catalog entity `accounting_drift_finding`, with an edge to the connection.
+- A catalog entity `accounting_drift_finding`, with an edge to the person who settled it. Like sync records, it carries no edge to the connection: a tenant holds one connection per accounting system.
 - A canned report, **Open drift by customer**: open findings by party, kind and difference.
 
 **UI.**

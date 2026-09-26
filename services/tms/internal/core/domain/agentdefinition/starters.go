@@ -439,6 +439,11 @@ var templateStarters = map[Template][]starterQuestion{
 			"Which payments recorded in the accounting system wait to be applied in Trenova, and why?",
 			"list_accounting_inbound_changes",
 		),
+		ask(
+			"Where do the books differ?",
+			"Which documents differ between the accounting system and Trenova, and how should each be fixed?",
+			"list_accounting_drift_findings",
+		),
 	},
 	TemplateFormulaAssistant: {
 		ask(

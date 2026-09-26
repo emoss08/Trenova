@@ -1422,3 +1422,36 @@ entities:
       decidedAt: { label: "Decided At" }
       note: { label: "Note" }
       detectedAt: { label: "Read At" }
+  accounting_drift_finding:
+    struct: accountingsync.AccountingDriftFinding
+    resource: accounting_sync
+    label: Drift Finding
+    pluralLabel: Drift Findings
+    description: Documents Trenova sent to the accounting system that now differ there, with both values and how each was settled
+    category: Accounting
+    excludeFields:
+      - detail
+    fields:
+      objectType: { label: "Document Type" }
+      objectId: { label: "Document ID" }
+      objectNumber: { label: "Document Number" }
+      partyId: { label: "Party ID" }
+      partyName: { label: "Customer, Carrier or Driver" }
+      externalId: { label: "ID in the Books" }
+      externalUrl: { label: "Link in the Books" }
+      kind: { label: "Difference" }
+      currencyCode: { label: "Currency" }
+      trenovaMinor: { label: "Trenova Value (Minor)" }
+      providerMinor: { label: "Books Value (Minor)" }
+      differenceMinor: { label: "Difference (Minor)" }
+      trenovaState: { label: "State in Trenova" }
+      providerState: { label: "State in the Books" }
+      providerModifiedAt: { label: "Changed in the Books At" }
+      providerModifiedBy: { label: "Changed in the Books By" }
+      resolution: { label: "Resolution" }
+      resolutionNote: { label: "Note" }
+      fixObjectType: { label: "Fixed With" }
+      fixObjectId: { label: "Fix ID" }
+      resolvedAt: { label: "Resolved At" }
+      detectedAt: { label: "Detected At" }
+      lastSeenAt: { label: "Last Seen At" }

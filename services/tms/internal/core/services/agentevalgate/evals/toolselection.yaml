@@ -182,6 +182,14 @@ cases:
     expect: [apply_accounting_inbound_change, list_accounting_inbound_changes]
   - request: ignore that quickbooks payment, we already keyed it in trenova
     expect: [ignore_accounting_inbound_change, list_accounting_inbound_changes]
+  - request: which invoices were changed in quickbooks after we sent them
+    expect: [list_accounting_drift_findings]
+  - request: send trenova's total for that invoice to quickbooks again
+    expect: [resolve_accounting_drift, list_accounting_drift_findings]
+  - request: dismiss that small rounding difference with quickbooks
+    expect: [dismiss_accounting_drift, list_accounting_drift_findings]
+  - request: compare quickbooks with trenova now
+    expect: [check_accounting_drift]
   - request: resume sending documents to quickbooks
     expect: [resume_accounting_sync]
   - request: backfill last year's invoices into quickbooks

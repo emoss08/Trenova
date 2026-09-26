@@ -89,6 +89,9 @@ func (s *Service) RecheckDocuments(
 		return nil, err
 	}
 	s.finishTally(ctx, sess, tally, req.EventBudget, result)
+	if result.Opened+result.Resolved > 0 {
+		s.refreshAttention(ctx, sess.conn)
+	}
 	return result, nil
 }
 
@@ -108,7 +111,7 @@ func (s *Service) startRead(
 	if err != nil {
 		s.l.Warn("drift checks are holding: the connection cannot be used",
 			zap.String("connectionId", conn.ID.String()), zap.Error(err))
-		s.recordFailure(ctx, tenant, conn.ID, s.classify(nil, err))
+		s.recordFailure(ctx, conn, s.classify(nil, err))
 		return nil, true, nil
 	}
 	return sess, false, nil
@@ -394,7 +397,7 @@ func (s *Service) readProvider(
 			Targets: targets,
 		})
 		if err != nil {
-			s.recordFailure(ctx, sess.tenant, sess.conn.ID, s.classify(sess, err))
+			s.recordFailure(ctx, sess.conn, s.classify(sess, err))
 			return nil, err
 		}
 		for _, state := range states {

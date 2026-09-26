@@ -57,6 +57,101 @@ func (r *accountingConnectionResolver) PausedBy(ctx context.Context, obj *accoun
 	return loadUser(ctx, obj.PausedByID)
 }
 
+func (r *accountingDriftFindingResolver) PartyID(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*string, error) {
+	if obj.PartyID.IsNil() {
+		return nil, nil
+	}
+	id := obj.PartyID.String()
+
+	return &id, nil
+}
+
+func (r *accountingDriftFindingResolver) TrenovaMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error) {
+	return intPtr(obj.TrenovaMinor), nil
+}
+
+func (r *accountingDriftFindingResolver) ProviderMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error) {
+	return intPtr(obj.ProviderMinor), nil
+}
+
+func (r *accountingDriftFindingResolver) DifferenceMinor(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*int, error) {
+	return intPtr(obj.DifferenceMinor), nil
+}
+
+func (r *accountingDriftFindingResolver) Resolution(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*accountingsync.DriftResolution, error) {
+	if obj.Resolution == "" {
+		return nil, nil
+	}
+	resolution := obj.Resolution
+
+	return &resolution, nil
+}
+
+func (r *accountingDriftFindingResolver) FixObjectType(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*accountingsync.DriftFixObject, error) {
+	if obj.FixObjectType == "" {
+		return nil, nil
+	}
+	fix := obj.FixObjectType
+
+	return &fix, nil
+}
+
+func (r *accountingDriftFindingResolver) FixObjectID(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*string, error) {
+	if obj.FixObjectID.IsNil() {
+		return nil, nil
+	}
+	id := obj.FixObjectID.String()
+
+	return &id, nil
+}
+
+func (r *accountingDriftFindingResolver) Directions(ctx context.Context, obj *accountingsync.AccountingDriftFinding) ([]accountingsync.DriftDirection, error) {
+	if !obj.IsOpen() {
+		return []accountingsync.DriftDirection{}, nil
+	}
+
+	return obj.Directions(), nil
+}
+
+func (r *accountingDriftFindingResolver) Pushed(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (bool, error) {
+	return obj.Pushed(), nil
+}
+
+func (r *accountingDriftFindingResolver) ResolvedBy(ctx context.Context, obj *accountingsync.AccountingDriftFinding) (*tenant.User, error) {
+	if obj.ResolvedBy != nil {
+		return obj.ResolvedBy, nil
+	}
+
+	return loadUser(ctx, obj.ResolvedByID)
+}
+
+func (r *accountingDriftFixPreviewResolver) Direction(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.DriftDirection, error) {
+	if obj.Direction == "" {
+		return nil, nil
+	}
+	direction := obj.Direction
+
+	return &direction, nil
+}
+
+func (r *accountingDriftFixPreviewResolver) FixObject(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.DriftFixObject, error) {
+	if obj.FixObject == "" {
+		return nil, nil
+	}
+	fix := obj.FixObject
+
+	return &fix, nil
+}
+
+func (r *accountingDriftFixPreviewResolver) Operation(ctx context.Context, obj *services.AccountingDriftFixPreview) (*accountingsync.SyncOperation, error) {
+	if obj.Operation == "" {
+		return nil, nil
+	}
+	operation := obj.Operation
+
+	return &operation, nil
+}
+
 func (r *accountingInboundChangeResolver) Reason(ctx context.Context, obj *accountingsync.AccountingInboundChange) (*accountingsync.InboundChangeReason, error) {
 	if obj.Reason == "" {
 		return nil, nil
@@ -588,6 +683,55 @@ func (r *mutationResolver) IgnoreAccountingInboundChange(ctx context.Context, in
 	}, actorutil.FromAuthContext(authCtx))
 }
 
+func (r *mutationResolver) ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.UserID.IsNil() {
+		return nil, errAccountingNeedsAPerson()
+	}
+	findingID, err := pulid.MustParse(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingDrift.Resolve(ctx, &services.ResolveAccountingDriftRequest{
+		TenantInfo: tenantInfo(authCtx),
+		ID:         findingID,
+		Direction:  input.Direction,
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *mutationResolver) DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if authCtx.UserID.IsNil() {
+		return nil, errAccountingNeedsAPerson()
+	}
+	findingID, err := pulid.MustParse(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingDrift.Dismiss(ctx, &services.DismissAccountingDriftRequest{
+		TenantInfo: tenantInfo(authCtx),
+		ID:         findingID,
+		Note:       strings.TrimSpace(input.Note),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *mutationResolver) CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*services.AccountingDriftOverview, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingSync, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingDrift.CheckNow(ctx, tenantInfo(authCtx), integrationType)
+}
+
 func (r *queryResolver) AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*services.AccountingSyncStatus, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpRead)
 	if err != nil {
@@ -823,6 +967,74 @@ func (r *queryResolver) AccountingInboundApplyPreview(ctx context.Context, id st
 	})
 }
 
+func (r *queryResolver) AccountingDriftOverview(ctx context.Context, integrationType integration.Type) (*services.AccountingDriftOverview, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingDrift.Overview(ctx, &services.AccountingDriftOverviewRequest{
+		TenantInfo:      tenantInfo(authCtx),
+		IntegrationType: integrationType,
+	})
+}
+
+func (r *queryResolver) AccountingDriftFindingTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingDriftFindingConnection, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := dataTableConnectionFromGraphQL(ctx, &input, tenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := r.accountingDrift.List(ctx, &services.ListAccountingDriftFindingsRequest{
+		TenantInfo:      tenantInfo(authCtx),
+		Filter:          tableInput.Filter,
+		Cursor:          tableInput.Cursor,
+		IntegrationType: integrationType,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return accountingDriftConnectionToModel(result)
+}
+
+func (r *queryResolver) AccountingDriftFinding(ctx context.Context, id string) (*accountingsync.AccountingDriftFinding, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	findingID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingDrift.Get(ctx, &services.GetAccountingDriftFindingRequest{
+		TenantInfo: tenantInfo(authCtx),
+		ID:         findingID,
+	})
+}
+
+func (r *queryResolver) AccountingDriftFixPreview(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*services.AccountingDriftFixPreview, error) {
+	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingSync, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	findingID, err := pulid.MustParse(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.accountingDrift.PreviewResolve(ctx, &services.ResolveAccountingDriftRequest{
+		TenantInfo: tenantInfo(authCtx),
+		ID:         findingID,
+		Direction:  input.Direction,
+	}, actorutil.FromAuthContext(authCtx))
+}
+
 func (r *queryResolver) AccountingReferenceObjects(ctx context.Context, integrationType integration.Type, kind accountingsync.ReferenceKind, query *string, usableOnly *bool, limit *int) ([]*accountingsync.AccountingReferenceObject, error) {
 	authCtx, err := r.requirePermission(ctx, permission.ResourceAccountingIntegration, permission.OpRead)
 	if err != nil {
@@ -849,6 +1061,14 @@ func (r *Resolver) AccountingAppSettings() generated.AccountingAppSettingsResolv
 
 func (r *Resolver) AccountingConnection() generated.AccountingConnectionResolver {
 	return &accountingConnectionResolver{r}
+}
+
+func (r *Resolver) AccountingDriftFinding() generated.AccountingDriftFindingResolver {
+	return &accountingDriftFindingResolver{r}
+}
+
+func (r *Resolver) AccountingDriftFixPreview() generated.AccountingDriftFixPreviewResolver {
+	return &accountingDriftFixPreviewResolver{r}
 }
 
 func (r *Resolver) AccountingInboundChange() generated.AccountingInboundChangeResolver {
@@ -883,6 +1103,8 @@ type (
 	accountingAppCredentialResolver      struct{ *Resolver }
 	accountingAppSettingsResolver        struct{ *Resolver }
 	accountingConnectionResolver         struct{ *Resolver }
+	accountingDriftFindingResolver       struct{ *Resolver }
+	accountingDriftFixPreviewResolver    struct{ *Resolver }
 	accountingInboundChangeResolver      struct{ *Resolver }
 	accountingInboundLineResolver        struct{ *Resolver }
 	accountingMappingResolver            struct{ *Resolver }

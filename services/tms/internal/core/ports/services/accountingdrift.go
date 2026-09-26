@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/core/domain/integration"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -51,7 +53,6 @@ type AccountingDriftBalanceResult struct {
 type FinishAccountingDriftCheckRequest struct {
 	TenantInfo   pagination.TenantInfo
 	ConnectionID pulid.ID
-	Failure      string
 }
 
 type RecheckAccountingDriftRequest struct {
@@ -129,4 +130,57 @@ type AccountingDriftFixer interface {
 		req *DismissAccountingDriftRequest,
 		actor *RequestActor,
 	) (*accountingsync.AccountingDriftFinding, error)
+}
+
+type ListAccountingDriftFindingsRequest struct {
+	TenantInfo      pagination.TenantInfo
+	Filter          *pagination.QueryOptions
+	Cursor          pagination.CursorInfo
+	IntegrationType integration.Type
+	Statuses        []accountingsync.DriftStatus
+	Kinds           []accountingsync.DriftKind
+	ObjectTypes     []accountingsync.SyncObjectType
+	ObjectID        pulid.ID
+	Search          string
+}
+
+type AccountingDriftOverviewRequest struct {
+	TenantInfo      pagination.TenantInfo
+	IntegrationType integration.Type
+}
+
+type AccountingDriftOverview struct {
+	ConnectionID   pulid.ID
+	ProviderName   string
+	CheckedAt      *int64
+	CheckError     string
+	ToleranceMinor int64
+	CurrencyCode   string
+	Summary        *repositories.AccountingDriftSummary
+}
+
+type AccountingDriftService interface {
+	AccountingDriftFixer
+	Overview(
+		ctx context.Context,
+		req *AccountingDriftOverviewRequest,
+	) (*AccountingDriftOverview, error)
+	List(
+		ctx context.Context,
+		req *ListAccountingDriftFindingsRequest,
+	) (*pagination.CursorListResult[*accountingsync.AccountingDriftFinding], error)
+	Get(
+		ctx context.Context,
+		req *GetAccountingDriftFindingRequest,
+	) (*accountingsync.AccountingDriftFinding, error)
+	CheckNow(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		integrationType integration.Type,
+	) (*AccountingDriftOverview, error)
+}
+
+type GetAccountingDriftFindingRequest struct {
+	TenantInfo pagination.TenantInfo
+	ID         pulid.ID
 }

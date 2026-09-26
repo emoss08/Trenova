@@ -123,6 +123,7 @@ func (s *Service) Dismiss(
 	}
 
 	s.logAudit(updated, actor.UserID, previous, "Dismissed a difference with the accounting system")
+	s.refreshAttentionFor(ctx, updated)
 	s.publishInvalidation(ctx, req.TenantInfo, actor.UserID, updated.ID)
 	return updated, nil
 }

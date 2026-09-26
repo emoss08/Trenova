@@ -16,6 +16,17 @@ func CapitalizeFirst(s string) string {
 	return string(runes)
 }
 
+func LowerFirst(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+
+	runes := []rune(s)
+	runes[0] = unicode.ToLower(runes[0])
+
+	return string(runes)
+}
+
 var humanizeSpecialWords = map[string]string{
 	"id":   "ID",
 	"url":  "URL",

@@ -105,6 +105,30 @@ func accountingInboundConnectionToModel(
 	}, nil
 }
 
+func accountingDriftConnectionToModel(
+	result *pagination.CursorListResult[*accountingsync.AccountingDriftFinding],
+) (*gqlmodel.AccountingDriftFindingConnection, error) {
+	page, err := entityCursorConnection(
+		result,
+		func(
+			node *accountingsync.AccountingDriftFinding,
+			cursor string,
+		) *gqlmodel.AccountingDriftFindingEdge {
+			return &gqlmodel.AccountingDriftFindingEdge{Node: node, Cursor: cursor}
+		},
+		func(edge *gqlmodel.AccountingDriftFindingEdge) string { return edge.Cursor },
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.AccountingDriftFindingConnection{
+		Edges:      page.Edges,
+		PageInfo:   page.PageInfo,
+		TotalCount: page.TotalCount,
+	}, nil
+}
+
 func inboundPolicyOf(
 	policy *accountingsync.InboundPaymentPolicy,
 ) accountingsync.InboundPaymentPolicy {

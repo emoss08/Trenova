@@ -8,9 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/core/domain/agent"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/watchtower"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/watchtowersources"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -44,7 +46,9 @@ type Params struct {
 	Permissions       services.PermissionEngine
 	AuditService      services.AuditService
 	Dispatcher        services.AccountingSyncDispatcher `optional:"true"`
+	Checker           services.AccountingDriftChecker   `optional:"true"`
 	Publisher         services.AgentEventPublisher      `optional:"true"`
+	Watchtower        services.WatchtowerProjector      `optional:"true"`
 	Realtime          services.RealtimeService          `optional:"true"`
 }
 
@@ -63,7 +67,9 @@ type Service struct {
 	permissions services.PermissionEngine
 	audit       services.AuditService
 	dispatcher  services.AccountingSyncDispatcher
+	checker     services.AccountingDriftChecker
 	publisher   services.AgentEventPublisher
+	watchtower  services.WatchtowerProjector
 	realtime    services.RealtimeService
 	now         func() time.Time
 }
@@ -71,7 +77,7 @@ type Service struct {
 var (
 	_ services.AccountingDriftReconciler = (*Service)(nil)
 	_ services.AccountingDriftRechecker  = (*Service)(nil)
-	_ services.AccountingDriftFixer      = (*Service)(nil)
+	_ services.AccountingDriftService    = (*Service)(nil)
 )
 
 //nolint:gocritic // dependency injection
@@ -91,7 +97,9 @@ func New(p Params) *Service {
 		permissions: p.Permissions,
 		audit:       p.AuditService,
 		dispatcher:  p.Dispatcher,
+		checker:     p.Checker,
 		publisher:   p.Publisher,
+		watchtower:  p.Watchtower,
 		realtime:    p.Realtime,
 		now:         time.Now,
 	}
@@ -165,18 +173,19 @@ func (s *Service) classify(sess *readSession, readErr error) *accountingsync.Syn
 
 func (s *Service) recordFailure(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
-	connectionID pulid.ID,
+	conn *accountingsync.AccountingConnection,
 	failure *accountingsync.SyncError,
 ) {
+	recorded := *conn
+	recorded.RecordDriftFailure(failure.Category, failure.Message)
 	if err := s.connections.SaveDriftCheck(ctx, &repositories.SaveAccountingDriftCheckRequest{
-		TenantInfo:    tenant,
-		ID:            connectionID,
-		ErrorCategory: failure.Category,
-		ErrorMessage:  failure.Message,
+		TenantInfo:    tenantOf(conn),
+		ID:            conn.ID,
+		ErrorCategory: recorded.DriftErrorCategory,
+		ErrorMessage:  recorded.DriftErrorMessage,
 	}); err != nil {
 		s.l.Warn("failed to record a drift check failure",
-			zap.String("connectionId", connectionID.String()), zap.Error(err))
+			zap.String("connectionId", conn.ID.String()), zap.Error(err))
 	}
 }
 
@@ -188,11 +197,7 @@ func (s *Service) FinishCheck(
 	if err != nil {
 		return err
 	}
-	if req.Failure != "" {
-		conn.RecordDriftFailure(accountingsync.SyncErrorTransient, req.Failure)
-	} else {
-		conn.FinishDriftCheck(s.now().Unix())
-	}
+	conn.FinishDriftCheck(s.now().Unix())
 	if err = s.connections.SaveDriftCheck(ctx, &repositories.SaveAccountingDriftCheckRequest{
 		TenantInfo:    req.TenantInfo,
 		ID:            conn.ID,
@@ -202,8 +207,59 @@ func (s *Service) FinishCheck(
 	}); err != nil {
 		return err
 	}
+	s.refreshAttention(ctx, conn)
 	s.publishInvalidation(ctx, req.TenantInfo, pulid.Nil, conn.ID)
 	return nil
+}
+
+func (s *Service) refreshAttention(ctx context.Context, conn *accountingsync.AccountingConnection) {
+	if s.watchtower == nil {
+		return
+	}
+	tenant := tenantOf(conn)
+	groups, err := s.findings.ListAttention(ctx, &repositories.ListAccountingDriftAttentionRequest{
+		TenantInfo:     tenant,
+		ConnectionID:   conn.ID,
+		DetectedBefore: s.now().Add(-watchtowersources.AccountingDriftAfter).Unix(),
+	})
+	if err != nil {
+		s.l.Warn("failed to read accounting drift attention", zap.Error(err))
+		return
+	}
+	byKind := make(
+		map[accountingsync.DriftKind]*repositories.AccountingDriftAttentionGroup,
+		len(groups),
+	)
+	for idx := range groups {
+		byKind[groups[idx].Kind] = &groups[idx]
+	}
+	for _, kind := range accountingsync.AllDriftKinds() {
+		if item, open := watchtowersources.DescribeAccountingDriftAttention(
+			conn,
+			byKind[kind],
+		); open {
+			s.watchtower.Upsert(ctx, item)
+			continue
+		}
+		s.watchtower.Resolve(
+			ctx,
+			tenant,
+			watchtower.SourceAccountingSync,
+			watchtowersources.AccountingDriftAttentionSourceID(conn, kind),
+		)
+	}
+}
+
+func (s *Service) refreshAttentionFor(
+	ctx context.Context,
+	finding *accountingsync.AccountingDriftFinding,
+) {
+	conn, err := s.connectionByID(ctx, finding.TenantInfo(), finding.ConnectionID)
+	if err != nil {
+		s.l.Warn("failed to reload the connection after a drift decision", zap.Error(err))
+		return
+	}
+	s.refreshAttention(ctx, conn)
 }
 
 func (s *Service) announce(

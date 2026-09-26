@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/internal/core/services/accountingconnlookup"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -109,28 +109,7 @@ func (s *Service) connectionFor(
 	tenantInfo pagination.TenantInfo,
 	typ integration.Type,
 ) (*accountingsync.AccountingConnection, error) {
-	if !accountingsync.SupportsAccountingSync(typ) {
-		return nil, errortypes.NewValidationError(
-			"integrationType",
-			errortypes.ErrInvalid,
-			"{0} is not an accounting system Trenova can sync with",
-			string(typ),
-		)
-	}
-	conn, err := s.connections.GetByType(ctx, repositories.GetAccountingConnectionRequest{
-		TenantInfo:      tenantInfo,
-		IntegrationType: typ,
-	})
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, errortypes.NewNotFoundError(
-				"{0} has not been connected yet",
-				accountingsync.ProviderName(typ),
-			)
-		}
-		return nil, err
-	}
-	return conn, nil
+	return accountingconnlookup.ByType(ctx, s.connections, tenantInfo, typ)
 }
 
 func (s *Service) connectionByID(

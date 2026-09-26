@@ -2,6 +2,7 @@ package accountingdriftservice
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -468,4 +469,19 @@ func TestFinishCheckStampsTheConnection(t *testing.T) {
 	require.NotNil(t, conn.DriftCheckedAt)
 	assert.Equal(t, h.now.Unix(), *conn.DriftCheckedAt)
 	assert.Empty(t, conn.DriftErrorMessage)
+}
+
+func TestAReadFailureMessageIsKeptToItsLimit(t *testing.T) {
+	t.Parallel()
+	h := newHarness(t)
+	h.synced(accountingsync.SyncObjectInvoice, "101", 125_000)
+	h.reader.failWith = errors.New(strings.Repeat("x", 5000))
+
+	_, err := h.svc.ReconcileBatch(t.Context(), &services.ReconcileAccountingDriftRequest{
+		TenantInfo:   h.tenant,
+		ConnectionID: h.conn.ID,
+	})
+
+	require.Error(t, err)
+	assert.Less(t, len(h.conns.current().DriftErrorMessage), 5000)
 }

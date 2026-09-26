@@ -21,6 +21,10 @@ var Module = fx.Module("accounting-sync-jobs",
 		NewChangesPoller,
 		fx.As(new(services.AccountingChangePoller)),
 	)),
+	fx.Provide(fx.Annotate(
+		NewDriftChecker,
+		fx.As(new(services.AccountingDriftChecker)),
+	)),
 	fx.Provide(schedule.AsProvider(NewScheduleProvider)),
 	fx.Provide(
 		fx.Annotate(
