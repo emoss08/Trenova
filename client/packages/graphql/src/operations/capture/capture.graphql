@@ -1,0 +1,355 @@
+fragment CaptureRecordRefFields on CaptureRecordRef {
+  resourceType
+  id
+  title
+  subtitle
+}
+
+fragment CaptureSourceInfoFields on CaptureSourceInfo {
+  name
+  protocol
+  bitness
+  isDefault
+  duplex
+  feeder
+  patchCodes
+  barcodes
+  blankDiscard
+  resolutions
+}
+
+fragment CaptureDeviceFields on CaptureDevice {
+  id
+  userId
+  name
+  machineName
+  windowsUser
+  agentVersion
+  architecture
+  osVersion
+  status
+  lastSeenAt
+  isOnline
+  lastIp
+  revokedAt
+  revokedReason
+  version
+  createdAt
+  sources {
+    ...CaptureSourceInfoFields
+  }
+}
+
+fragment CaptureDeviceFleetFields on CaptureDevice {
+  ...CaptureDeviceFields
+  user {
+    id
+    name
+    emailAddress
+  }
+}
+
+fragment CaptureProfileFields on CaptureProfile {
+  id
+  name
+  description
+  status
+  isDefault
+  dpi
+  pixelType
+  duplex
+  useFeeder
+  discardBlankPages
+  jpegQuality
+  showDriverUi
+  separatorStrategies
+  fixedPageCount
+  version
+  createdAt
+  updatedAt
+}
+
+fragment CaptureRequestFields on CaptureRequest {
+  id
+  deviceId
+  mode
+  status
+  targetType
+  targetId
+  documentTypeId
+  profileId
+  sourceName
+  batchId
+  failureCode
+  failureMessage
+  expiresAt
+  deliveredAt
+  completedAt
+  isOpen
+  createdAt
+}
+
+fragment CaptureBatchRowFields on CaptureBatch {
+  id
+  userId
+  source
+  status
+  sourceName
+  jobName
+  targetType
+  targetId
+  receivedPageCount
+  itemCount
+  filedItemCount
+  openItemCount
+  failureMessage
+  sealedAt
+  processedAt
+  retainUntil
+  isEditable
+  version
+  createdAt
+  updatedAt
+  user {
+    id
+    name
+  }
+  device {
+    id
+    name
+    machineName
+  }
+  target {
+    ...CaptureRecordRefFields
+  }
+}
+
+fragment CapturePageFields on CapturePage {
+  id
+  sequence
+  status
+  rotation
+  widthPx
+  heightPx
+  dpi
+  isBlank
+  isSeparator
+  patchCode
+  isCoverSheet
+  unrecognizedCoverSheet
+  failureMessage
+  contentPath
+  thumbnailPath
+}
+
+fragment CaptureItemFields on CaptureItem {
+  id
+  position
+  status
+  pageIds
+  pageCount
+  suggestedType
+  suggestedId
+  suggestedDocumentTypeId
+  suggestionSource
+  suggestionConfidence
+  suggestionReason
+  detectedKind
+  filedType
+  filedId
+  filedDocumentTypeId
+  documentId
+  filedAt
+  failureMessage
+  version
+  suggestedRecord {
+    ...CaptureRecordRefFields
+  }
+  filedRecord {
+    ...CaptureRecordRefFields
+  }
+}
+
+fragment CaptureBatchDetailFields on CaptureBatch {
+  ...CaptureBatchRowFields
+  documentTypeId
+  settings {
+    protocol
+    dpi
+    pixelType
+    duplex
+    feeder
+    driverVersion
+    application
+    refused
+  }
+  pages {
+    ...CapturePageFields
+  }
+  items {
+    ...CaptureItemFields
+  }
+}
+
+query CaptureBatches($input: CaptureBatchesInput!) {
+  captureBatches(input: $input) {
+    edges {
+      cursor
+      node {
+        ...CaptureBatchRowFields
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query CaptureBatch($id: ID!) {
+  captureBatch(id: $id) {
+    ...CaptureBatchDetailFields
+  }
+}
+
+query MyCaptureDevices($status: CaptureDeviceStatus) {
+  myCaptureDevices(status: $status) {
+    ...CaptureDeviceFields
+  }
+}
+
+query CaptureDevices($status: CaptureDeviceStatus, $query: String) {
+  captureDevices(status: $status, query: $query) {
+    ...CaptureDeviceFleetFields
+  }
+}
+
+query AvailableCaptureProfiles {
+  availableCaptureProfiles {
+    ...CaptureProfileFields
+  }
+}
+
+query CaptureProfiles($status: CaptureProfileStatus, $query: String) {
+  captureProfiles(status: $status, query: $query) {
+    ...CaptureProfileFields
+  }
+}
+
+query CaptureRequestsForTarget($targetType: String!, $targetId: ID!, $limit: Int) {
+  captureRequestsForTarget(targetType: $targetType, targetId: $targetId, limit: $limit) {
+    ...CaptureRequestFields
+  }
+}
+
+query CaptureDevicePairing($userCode: String!) {
+  captureDevicePairing(userCode: $userCode) {
+    userCode
+    machineName
+    windowsUser
+    agentVersion
+    architecture
+    osVersion
+    clientIp
+    expiresAt
+  }
+}
+
+mutation EditCaptureItems($batchId: ID!, $input: EditCaptureItemsInput!) {
+  editCaptureItems(batchId: $batchId, input: $input) {
+    ...CaptureBatchDetailFields
+  }
+}
+
+mutation FileCaptureItem($id: ID!, $input: FileCaptureItemInput!) {
+  fileCaptureItem(id: $id, input: $input) {
+    ...CaptureItemFields
+  }
+}
+
+mutation FileCaptureItems($items: [FileCaptureItemsEntryInput!]!) {
+  fileCaptureItems(items: $items) {
+    filed {
+      ...CaptureItemFields
+    }
+    failures {
+      itemId
+      message
+    }
+  }
+}
+
+mutation DiscardCaptureItem($id: ID!, $version: Int!) {
+  discardCaptureItem(id: $id, version: $version) {
+    ...CaptureBatchRowFields
+  }
+}
+
+mutation DiscardCaptureBatch($id: ID!, $version: Int!) {
+  discardCaptureBatch(id: $id, version: $version) {
+    ...CaptureBatchRowFields
+  }
+}
+
+mutation CreateCaptureRequest($input: CreateCaptureRequestInput!) {
+  createCaptureRequest(input: $input) {
+    ...CaptureRequestFields
+  }
+}
+
+mutation CancelCaptureRequest($id: ID!) {
+  cancelCaptureRequest(id: $id) {
+    ...CaptureRequestFields
+  }
+}
+
+mutation CreateCaptureCoverSheets($sheets: [CaptureCoverSheetInput!]!) {
+  createCaptureCoverSheets(sheets: $sheets) {
+    id
+    targetType
+    targetId
+    documentTypeId
+    payload
+    expiresAt
+    target {
+      ...CaptureRecordRefFields
+    }
+  }
+}
+
+mutation ApproveCaptureDevicePairing($userCode: String!, $deviceName: String) {
+  approveCaptureDevicePairing(userCode: $userCode, deviceName: $deviceName)
+}
+
+mutation DenyCaptureDevicePairing($userCode: String!) {
+  denyCaptureDevicePairing(userCode: $userCode)
+}
+
+mutation RevokeMyCaptureDevice($id: ID!, $reason: String) {
+  revokeMyCaptureDevice(id: $id, reason: $reason) {
+    ...CaptureDeviceFields
+  }
+}
+
+mutation RevokeCaptureDevice($id: ID!, $reason: String) {
+  revokeCaptureDevice(id: $id, reason: $reason) {
+    ...CaptureDeviceFleetFields
+  }
+}
+
+mutation CreateCaptureProfile($input: CaptureProfileInput!) {
+  createCaptureProfile(input: $input) {
+    ...CaptureProfileFields
+  }
+}
+
+mutation UpdateCaptureProfile($id: ID!, $version: Int!, $input: CaptureProfileInput!) {
+  updateCaptureProfile(id: $id, version: $version, input: $input) {
+    ...CaptureProfileFields
+  }
+}
+
+mutation DeleteCaptureProfile($id: ID!) {
+  deleteCaptureProfile(id: $id)
+}
