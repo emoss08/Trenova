@@ -295,3 +295,24 @@ export function captureRequestsToShow<T extends RequestTiming>(
     )
     .sort((a, b) => b.createdAt - a.createdAt);
 }
+
+/** A pairing code's length without its dash; the server's `capture.UserCodeLength`. */
+export const CAPTURE_PAIRING_CODE_LENGTH = 8;
+
+/**
+ * A pairing code however it was typed or pasted — lower case, with or without
+ * the dash, with stray spaces — as the letters the server compares. It keeps
+ * only letters, as the server does, and never more than a code holds.
+ */
+export function normalizePairingCode(raw: string): string {
+  return raw
+    .toUpperCase()
+    .replace(/[^A-Z]/g, "")
+    .slice(0, CAPTURE_PAIRING_CODE_LENGTH);
+}
+
+/** A code the way the companion shows it: two groups of four. */
+export function formatPairingCode(raw: string): string {
+  const code = normalizePairingCode(raw);
+  return code.length > 4 ? `${code.slice(0, 4)}-${code.slice(4)}` : code;
+}

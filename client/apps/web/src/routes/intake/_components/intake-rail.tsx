@@ -9,11 +9,13 @@ import {
   InboxIcon,
   LayersIcon,
   LoaderIcon,
+  MonitorIcon,
   PrinterIcon,
   ScanLineIcon,
   type LucideIcon,
 } from "lucide-react";
 import { useId } from "react";
+import { Link } from "react-router";
 import { INTAKE_VIEWS, viewLabel, type IntakeFilter, type IntakeView } from "./queue-filter";
 
 const VIEW_ICON: Record<IntakeView, LucideIcon> = {
@@ -91,6 +93,16 @@ export function IntakeRail({
           </div>
         </div>
       </ScrollArea>
+
+      <div className="border-border flex flex-col gap-0.5 border-t p-3">
+        <Link
+          to="/capture/devices"
+          className="ui-focus-ring text-foreground-muted hover:bg-surface-hover hover:text-foreground flex h-8 items-center gap-2.5 rounded-md px-2 text-sm"
+        >
+          <MonitorIcon className="size-4 shrink-0" aria-hidden />
+          {t("My scanners")}
+        </Link>
+      </div>
     </nav>
   );
 }

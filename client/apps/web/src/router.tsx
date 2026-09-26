@@ -86,6 +86,25 @@ export const routes: RouteObject[] = [
             },
           },
           {
+            path: "/capture/pair",
+            loader: protectedLoader,
+            async lazy() {
+              const { CapturePairPage } = await import("@/routes/capture/pair/page");
+              return { Component: CapturePairPage };
+            },
+          },
+          {
+            path: "/capture/devices",
+            loader: combineLoaders(
+              protectedLoader,
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/capture/devices/page"))),
+            ),
+            async lazy() {
+              const { CaptureDevicesPage } = await import("@/routes/capture/devices/page");
+              return { Component: CaptureDevicesPage };
+            },
+          },
+          {
             path: "/organization/data-retention",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Organization)),
             async lazy() {

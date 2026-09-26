@@ -1,5 +1,5 @@
 {
-  "version": "sha256:955931bf3121582c0faa327d416d27f5dc423ca688bce836ad924dce756a0ff6",
+  "version": "sha256:20032c5f16a051b2f21debb173bf763a9f26cb4f0cca815beced25e788cc222c",
   "modules": [
     {
       "id": "home",
@@ -6919,6 +6919,65 @@
       "covers": [],
       "createAction": null,
       "inNavigation": true
+    },
+    {
+      "path": "/capture/devices",
+      "name": "My scanners",
+      "module": "",
+      "breadcrumb": [
+        "My scanners"
+      ],
+      "description": "The computers you paired with Trenova Capture to scan and print into Trenova",
+      "summary": "My scanners lists the computers you have paired with Trenova Capture, the Windows companion that scans and prints into Trenova. Each one shows whether it is online, which scanners it can reach, and its Trenova Capture version. A paired computer acts as you: it can only file what you could file yourself, and it stops working if it is revoked or your access changes.\n\nPairing happens on the pairing page, where you approve the code Trenova Capture shows.",
+      "requires": [],
+      "capabilities": [],
+      "aliases": [
+        "my scanners",
+        "pair a scanner",
+        "Trenova Capture",
+        "companion app",
+        "scanner computer",
+        "pairing code",
+        "revoke scanner"
+      ],
+      "tasks": [
+        {
+          "title": "Pair a computer",
+          "keywords": [
+            "set up scanner",
+            "connect Trenova Capture",
+            "sign in the companion",
+            "approve code"
+          ],
+          "steps": [
+            "On the computer your scanner is plugged into, install Trenova Capture and choose Sign in from its tray icon. It shows an eight-letter code and opens the pairing page.",
+            "If the page did not open, open [My scanners](/capture/devices), select **Enter a pairing code**, type the code and select **Look up**.",
+            "Check that **The computer asking** is the one in front of you, change **Name it** if you like, and select **Approve**."
+          ]
+        },
+        {
+          "title": "Stop a computer from scanning as you",
+          "keywords": [
+            "lost laptop",
+            "remove scanner",
+            "unpair",
+            "revoke device"
+          ],
+          "steps": [
+            "Open [My scanners](/capture/devices).",
+            "Select **Revoke** beside the computer, optionally say why, and select **Revoke** again. It stops at once; pages it already sent stay in [Intake](/intake)."
+          ]
+        }
+      ],
+      "notes": "Scanning and printing into Trenova must be turned on for the organization, and you need permission to capture documents, before a computer can be approved. A code lasts ten minutes; start again from the tray icon for a new one. Only approve a computer you are using: once paired it uploads documents as you.",
+      "related": [
+        "/intake"
+      ],
+      "covers": [
+        "/capture/pair"
+      ],
+      "createAction": null,
+      "inNavigation": false
     },
     {
       "path": "/carrier-settlements/batches",

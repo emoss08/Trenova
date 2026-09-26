@@ -4,7 +4,9 @@ import {
   captureDocumentCategory,
   captureRequestsToShow,
   captureRetention,
+  formatPairingCode,
   isCaptureRecordKind,
+  normalizePairingCode,
 } from "@/lib/capture";
 import { RECORD_LINKS } from "@/config/record-links";
 import { describe, expect, it } from "vitest";
@@ -78,5 +80,19 @@ describe("captureRequestsToShow", () => {
 
   it("drops a closed request with no finish time", () => {
     expect(captureRequestsToShow([request("x", false, null, NOW)], NOW)).toEqual([]);
+  });
+});
+
+describe("pairing codes", () => {
+  it("accept a code however it was typed", () => {
+    expect(normalizePairingCode(" bcdf-ghjk ")).toBe("BCDFGHJK");
+    expect(normalizePairingCode("BCDF GHJK")).toBe("BCDFGHJK");
+    expect(normalizePairingCode("bcdf1ghjkx9zz")).toBe("BCDFGHJK");
+  });
+
+  it("show as two groups of four, and a partial code as typed", () => {
+    expect(formatPairingCode("bcdfghjk")).toBe("BCDF-GHJK");
+    expect(formatPairingCode("bcd")).toBe("BCD");
+    expect(formatPairingCode("bcdfg")).toBe("BCDF-G");
   });
 });

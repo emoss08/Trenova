@@ -5656,6 +5656,15 @@
       "routes/agent-control"
     ]
   },
+  "A sheet that routes a scanned stack here, from any scanner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A shift is a pattern of days and hours. Add one, then put workers on it from their Schedule tab and the board fills in.": {
     "sites": 1,
     "scope": [
@@ -18374,7 +18383,7 @@
     ]
   },
   "Approve": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "ts"
     ],
@@ -18383,6 +18392,7 @@
       "apps/web/lib",
       "routes/agent-control",
       "routes/billing-queue",
+      "routes/capture",
       "routes/carrier-settlement",
       "routes/desk",
       "routes/driver-settlement",
@@ -18423,6 +18433,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Approve a computer running Trenova Capture so it can scan and print into Trenova as you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "Approve a proposal": {
@@ -18606,6 +18625,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Approve only a computer you are using now. Once paired it uploads documents as you, with your permissions, until it is revoked.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "Approve or reject driver expenses": {
@@ -20019,6 +20047,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Asked from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "Asked you to choose": {
@@ -28506,7 +28543,7 @@
     ]
   },
   "Cancel": {
-    "sites": 263,
+    "sites": 266,
     "scope": [
       "ts"
     ],
@@ -33240,6 +33277,15 @@
       "routes/worker"
     ]
   },
+  "Choose a computer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Choose a course": {
     "sites": 2,
     "scope": [
@@ -36422,6 +36468,24 @@
       "domain/dataentrycontrol"
     ]
   },
+  "Code expires": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
+  "Code from Trenova Capture": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "Code is required": {
     "sites": 50,
     "scope": [
@@ -38270,6 +38334,16 @@
     ],
     "areas": [
       "packages/shared/types"
+    ]
+  },
+  "Computer": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/capture"
     ]
   },
   "Concat": {
@@ -51374,12 +51448,13 @@
     ]
   },
   "Deny": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/capture",
       "routes/settlement-dispute",
       "routes/worker"
     ]
@@ -55560,11 +55635,12 @@
     ]
   },
   "Document type": {
-    "sites": 8,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/document-packet-rule",
       "routes/document-type",
       "routes/edi",
@@ -62420,6 +62496,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Enter a pairing code": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "Enter a percentage with up to two decimals": {
@@ -71183,6 +71268,15 @@
     "areas": [
       "domain/document",
       "domain/documentupload"
+    ]
+  },
+  "File the next thing you print to Trenova here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "File type": {
@@ -83136,6 +83230,15 @@
       "routes/formula-template"
     ]
   },
+  "Install Trenova Capture on the computer your scanner is plugged into, choose Sign in from its tray icon, and approve the code it shows.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "Install standard templates": {
     "sites": 1,
     "scope": [
@@ -86565,6 +86668,15 @@
       "routes/agent-control"
     ]
   },
+  "It stops working at once, including a scan it is in the middle of. Pages it already uploaded stay in Intake. To use it again, pair it again.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "It will come back if the condition is still there in a month.": {
     "sites": 1,
     "scope": [
@@ -87426,7 +87538,7 @@
     ]
   },
   "Keep it": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -89017,6 +89129,15 @@
     ],
     "areas": [
       "domain/edi"
+    ]
+  },
+  "Last seen {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Last sent {0}": {
@@ -93558,6 +93679,15 @@
     "areas": [
       "domain/geofence",
       "domain/telematics"
+    ]
+  },
+  "Look up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "Look up MC {0}": {
@@ -99915,6 +100045,15 @@
       "routes/admin"
     ]
   },
+  "More ways to capture": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Most billed": {
     "sites": 1,
     "scope": [
@@ -100666,6 +100805,17 @@
       "routes/reports"
     ]
   },
+  "My scanners": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/capture",
+      "routes/intake"
+    ]
+  },
   "My shipment alerts": {
     "sites": 1,
     "scope": [
@@ -101123,6 +101273,15 @@
     ],
     "areas": [
       "domain/tenant"
+    ]
+  },
+  "Name it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "Name must be between 1 and 100 characters": {
@@ -102252,6 +102411,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Never connected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Never convert": {
@@ -104565,6 +104733,24 @@
     ],
     "areas": [
       "routes/loads.tsx"
+    ]
+  },
+  "No computer is set up to scan for you yet. Install Trenova Capture, sign in from its tray icon, and approve the code it shows.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "No computers paired yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "No conditions": {
@@ -107394,6 +107580,15 @@
     ]
   },
   "No saved views": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "No scanner reported yet": {
     "sites": 1,
     "scope": [
       "ts"
@@ -112112,11 +112307,12 @@
     ]
   },
   "Offline": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/shipment"
     ]
   },
@@ -113057,6 +113253,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Online": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Online courses need a link the driver can open": {
@@ -115652,6 +115857,15 @@
       "apps/web/components"
     ]
   },
+  "Open in Intake": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Open in Trenova": {
     "sites": 1,
     "scope": [
@@ -116809,11 +117023,12 @@
     ]
   },
   "Optional": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "routes/bank-receipt-batch",
       "routes/edi",
@@ -117281,6 +117496,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Optional, for the audit trail": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Optional. Only agents holding this tool read it, such as a correction to how it was proposed.": {
@@ -117824,11 +118048,12 @@
     ]
   },
   "Organization default": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/detention-policy",
       "routes/reports"
@@ -120626,6 +120851,15 @@
       "routes/pto-policy"
     ]
   },
+  "Pair a computer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "Paired Trenova Capture installs across the organization": {
     "sites": 1,
     "scope": [
@@ -120633,6 +120867,24 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Pairing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
+  "Pairing refused": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "Pairs with the local certificate for signing and decryption. Leave blank to keep the saved value.": {
@@ -127742,6 +127994,15 @@
       "apps/web/components"
     ]
   },
+  "Preparing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Preparing extraction": {
     "sites": 1,
     "scope": [
@@ -128736,11 +128997,12 @@
     ]
   },
   "Print": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "routes/shipment"
     ]
@@ -128752,6 +129014,33 @@
     ],
     "areas": [
       "service/captureservice"
+    ]
+  },
+  "Print cover sheets": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Print into this record": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Print to Trenova from any program on {0} in the next ten minutes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Printed": {
@@ -131171,6 +131460,15 @@
       "routes/agent-control"
     ]
   },
+  "Put a sheet on top of the paper for this record. When the stack is scanned, anywhere, the pages after it are filed here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Put a worker into a position or under a manager": {
     "sites": 1,
     "scope": [
@@ -131259,6 +131557,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Put this sheet between two documents to split the stack there.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Put this sheet on top of the pages that belong here and scan the stack. Every page after it is filed onto this record, until the next cover sheet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Puts the first rows in the message body, so recipients read the answer without opening a file.": {
@@ -145350,7 +145666,7 @@
     ]
   },
   "Revoke": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -145451,8 +145767,17 @@
       "routes/admin"
     ]
   },
+  "Revoke {0}?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Revoked": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -145468,6 +145793,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Revoked {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Revoking...": {
@@ -149845,11 +150179,12 @@
     ]
   },
   "Scan": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib"
     ]
   },
@@ -149862,6 +150197,15 @@
       "routes/intake"
     ]
   },
+  "Scan into this record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Scan or print into Trenova from a paired device": {
     "sites": 1,
     "scope": [
@@ -149869,6 +150213,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Scan settings": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Scanned": {
@@ -149907,6 +150260,15 @@
       "apps/web/lib"
     ]
   },
+  "Scanner": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Scanner name must be 1 to 255 characters": {
     "sites": 1,
     "scope": [
@@ -149916,6 +150278,15 @@
       "service/captureservice"
     ]
   },
+  "Scanners: {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Scanning": {
     "sites": 1,
     "scope": [
@@ -149923,6 +150294,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Scanning and printing into Trenova is turned off for your organization. Ask an administrator to turn it on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
+  "Scanning and printing into Trenova is turned off for your organization. Paired computers wait until it is turned on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "Scans and print jobs waiting in intake, and filing them onto records": {
@@ -149941,6 +150330,15 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Scans and prints for this record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Scatter": {
@@ -155225,11 +155623,12 @@
     ]
   },
   "Sending": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/hooks",
       "apps/web/lib",
       "packages/shared/components",
@@ -155522,6 +155921,15 @@
       "routes/invoice"
     ]
   },
+  "Sent to {0}. Put the pages in the scanner.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Sent {0}": {
     "sites": 2,
     "scope": [
@@ -155559,11 +155967,12 @@
     ]
   },
   "Separator": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/edi"
     ]
@@ -157691,6 +158100,15 @@
     ],
     "areas": [
       "template/invoice.share.email"
+    ]
+  },
+  "Sheets": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Shield": {
@@ -163373,6 +163791,15 @@
     ],
     "areas": [
       "domain/permission"
+    ]
+  },
+  "Start scan": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Start sending": {
@@ -169456,6 +169883,24 @@
       "service/captureservice"
     ]
   },
+  "That code is not valid or has expired. Codes last ten minutes; start again from Trenova Capture's tray icon for a new one.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
+  "That computer was not paired. If it was yours, start again from its tray icon.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "That cover has already ended": {
     "sites": 1,
     "scope": [
@@ -171692,6 +172137,15 @@
       "routes/ifta-return"
     ]
   },
+  "The computer asking": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "The computer was off or Trenova Capture was not running": {
     "sites": 1,
     "scope": [
@@ -171699,6 +172153,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "The computer's default scanner": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "The computers you paired with Trenova Capture to scan and print into Trenova": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "The confirmation reference returned when the 300A was filed, so it can be found again.": {
@@ -173004,6 +173476,15 @@
     ],
     "areas": [
       "apps/web/types"
+    ]
+  },
+  "The eight letters the computer shows": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "The eligibility check has been refreshed.": {
@@ -175264,6 +175745,15 @@
       "service/briefingservice"
     ]
   },
+  "The next document you print to the Trenova printer on the computer you choose is filed here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The next page didn't load": {
     "sites": 1,
     "scope": [
@@ -177374,6 +177864,15 @@
     ],
     "areas": [
       "service/accountingconnectionservice"
+    ]
+  },
+  "The scan starts on the computer you choose, and its pages are filed onto this record as they arrive. Anything Trenova cannot place waits in Intake.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The scanner is busy with another job": {
@@ -187239,6 +187738,15 @@
       "routes/auth"
     ]
   },
+  "Trenova Capture": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "Trenova Capture has not picked the request up yet": {
     "sites": 1,
     "scope": [
@@ -187266,6 +187774,24 @@
       "apps/web/lib"
     ]
   },
+  "Trenova Capture signs in on its own in a few seconds. You can close this tab.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
+  "Trenova Capture {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Trenova EDI Document": {
     "sites": 1,
     "scope": [
@@ -187291,6 +187817,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "Trenova cover sheet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Trenova cover sheets": {
@@ -191539,6 +192074,15 @@
       "routes/detention-policy"
     ]
   },
+  "Use by {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Use city and state when postal codes are unavailable or inconsistent.": {
     "sites": 1,
     "scope": [
@@ -195429,6 +195973,15 @@
       "routes/shipment"
     ]
   },
+  "Wait for my print": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Wait for this transfer to finish before retrying it": {
     "sites": 1,
     "scope": [
@@ -195451,6 +196004,15 @@
     ]
   },
   "Waiting for a confirming refresh": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Waiting for a print to Trenova": {
     "sites": 1,
     "scope": [
       "ts"
@@ -200096,7 +200658,7 @@
     ]
   },
   "Why": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -200565,6 +201127,24 @@
     ],
     "areas": [
       "domain/insight"
+    ]
+  },
+  "Windows": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
+  "Windows user": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "Winter weather": {
@@ -202639,6 +203219,15 @@
       "service/aifeedbackservice"
     ]
   },
+  "You do not have permission to scan into Trenova. Ask an administrator.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "You do not have permission to transfer ownership of this shipment": {
     "sites": 1,
     "scope": [
@@ -203254,6 +203843,15 @@
     ],
     "areas": [
       "apps/dash/_components"
+    ]
+  },
+  "Your computers could not be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "Your conversations with the agents, what they produced, and what they ask you to decide": {
@@ -210700,6 +211298,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {(# minute left)} other {(# minutes left)}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0, plural, one {A plan of # step} other {A plan of # steps}}, decided as one": {
     "sites": 1,
     "scope": [
@@ -210707,6 +211314,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {Cover sheet ready to print} other {# cover sheets ready to print}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {Deleted in # day} other {Deleted in # days}}": {
@@ -212864,6 +213480,15 @@
       "service/fuelpurchaseservice"
     ]
   },
+  "{0} is not connected right now. The request waits a few minutes for it to come online.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} is not connected yet.": {
     "sites": 1,
     "scope": [
@@ -213003,6 +213628,15 @@
       "api/graphql"
     ]
   },
+  "{0} is paired": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
+    ]
+  },
   "{0} is paused for {1} seconds after repeated failures. Try again then, or pick another model": {
     "sites": 1,
     "scope": [
@@ -213057,6 +213691,15 @@
     ],
     "areas": [
       "service/integrationservice"
+    ]
+  },
+  "{0} is revoked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/capture"
     ]
   },
   "{0} is scored; enter the result": {
