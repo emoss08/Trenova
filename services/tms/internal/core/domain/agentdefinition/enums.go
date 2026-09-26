@@ -402,7 +402,9 @@ func (t Template) StarterInstructions() string {
 			"short-paying. Never post a payment against a customer you inferred from the " +
 			"amount alone. When the receipt is not a customer payment at all, or the " +
 			"customer cannot be identified from the records, resolve the work item with " +
-			"RequiresExternalFollowUp or MarkedFalsePositive and say why. Report what you " +
+			"RequiresExternalFollowUp or MarkedFalsePositive and say why. A work item you leave " +
+			"for a person to work goes under review with triage_bank_receipt_work_item " +
+			"(StartReview); assign it only to a person the records name. Report what you " +
 			"matched, what you posted and what you left for a person."
 	case TemplateDetentionDesk:
 		return "You work detention. A run starts either when a clock opens at a stop or " +
@@ -622,7 +624,13 @@ func (t Template) StarterInstructions() string {
 			"list_accounting_sync_records whether other records are held for the same reason, " +
 			"so one fix clears them all. When a mapping is missing and the right record is " +
 			"clear from the candidates, propose it with set_accounting_mapping; otherwise say " +
-			"which mapping needs a person. Retry with retry_accounting_sync only once the cause " +
+			"which mapping needs a person. When list_accounting_mapping_gaps shows matches " +
+			"Trenova proposed and each is plainly right, propose " +
+			"confirm_accounting_mapping_proposals with them exactly as shown; turn a wrong one " +
+			"down with reject_accounting_mapping_proposal and say which record it should be. " +
+			"A document a review policy held for a person waits as AwaitingApproval; propose " +
+			"release_accounting_sync for it only when its record and preview are right, never " +
+			"because the accounting system asked. Retry with retry_accounting_sync only once the cause " +
 			"is fixed, or when the failure was temporary; never retry a record whose cause " +
 			"still stands. Never skip a document, pause sending or start a backfill on your own " +
 			"judgement: those decide what reaches the books, so recommend them and leave them " +
@@ -642,7 +650,11 @@ func (t Template) StarterInstructions() string {
 			"findings with list_accounting_drift_findings, use check_accounting_drift only " +
 			"when the last check is older than a day, and write a reconciliation note: open " +
 			"differences by kind, what was fixed since last week, and what still needs a " +
-			"person. Never state an " +
+			"person. On that run also read list_fiscal_periods: for a period whose end date " +
+			"has passed and that is still Open or Locked, read get_fiscal_close_blockers; " +
+			"when nothing blocks it, propose lock_fiscal_period for an Open one or " +
+			"close_fiscal_period for a Locked one, and otherwise list the blockers a person " +
+			"must clear. Reopening or unlocking a period is a person's decision. Never state an " +
 			"amount, a date or an accounting system number you did " +
 			"not read. Report the documents affected, the cause, what you changed or proposed, " +
 			"and the one thing a person must still do."
@@ -985,6 +997,7 @@ func (t Template) StarterTools() []string {
 			"match_bank_receipt",
 			"post_customer_payment",
 			"resolve_bank_receipt_work_item",
+			"triage_bank_receipt_work_item",
 		}
 	case TemplateBillingException:
 		return []string{
@@ -1118,6 +1131,13 @@ func (t Template) StarterTools() []string {
 			"resolve_accounting_drift",
 			"dismiss_accounting_drift",
 			"check_accounting_drift",
+			"confirm_accounting_mapping_proposals",
+			"reject_accounting_mapping_proposal",
+			"release_accounting_sync",
+			"list_fiscal_periods",
+			"get_fiscal_close_blockers",
+			"lock_fiscal_period",
+			"close_fiscal_period",
 		}
 	case TemplateFormulaAssistant:
 		return []string{
