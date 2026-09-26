@@ -30,6 +30,7 @@ type receivableSpec struct {
 	reversible  bool
 	idempotent  bool
 	taintHold   string
+	condition   *serviceports.TierCondition
 	artifact    string
 	rationale   string
 	properties  map[string]any
@@ -108,6 +109,7 @@ func (t *receivableTool[R, P]) Policy() serviceports.ToolPolicy {
 		ReadsExternal: agent.ExternalReadNever,
 		Artifact:      t.spec.artifact,
 		Rationale:     t.spec.rationale,
+		Condition:     t.spec.condition,
 	}
 	if t.spec.taintHold != "" {
 		policy.TaintHold = &serviceports.TaintHold{
