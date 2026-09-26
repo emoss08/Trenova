@@ -366,3 +366,134 @@ async fn capture_turned_off_stops_uploads_and_keeps_every_page() {
         (1, 2, 0)
     );
 }
+
+const PRINTED: &[u8] = b"%PDF-1.7 a printed rate confirmation";
+
+fn printed(dir: &std::path::Path) -> (Arc<Spool>, String) {
+    let spool = Arc::new(Spool::open(dir, Arc::new(Xor)).expect("spool"));
+    let key = "prt-0001718000000000-1f-0".to_owned();
+    let print = OpenBatchInput {
+        client_key: key.clone(),
+        source: BatchSource::Print,
+        request_id: None,
+        profile_id: None,
+        source_name: "Trenova printer".into(),
+        job_name: "Rate confirmation".into(),
+        settings: Settings::default(),
+    };
+    spool
+        .create_print(print.clone(), "Rate confirmation", PRINTED, None)
+        .expect("spooled");
+    let again = spool
+        .create_print(print, "Rate confirmation", b"%PDF-1.7 different", None)
+        .expect("spooled again");
+    assert_eq!(
+        again.document.expect("document").checksum,
+        page_checksum(PRINTED),
+        "spooling the same job twice keeps the first"
+    );
+    (spool, key)
+}
+
+#[tokio::test]
+async fn a_printed_job_is_sent_whole_and_goes_where_the_server_says() {
+    let server = MockServer::start().await;
+    let dir = tempfile::tempdir().expect("dir");
+    let (spool, key) = printed(dir.path());
+
+    Mock::given(method("POST"))
+        .and(path("/api/v1/capture/device/batches/"))
+        .and(body_partial_json(json!({
+            "clientKey": key,
+            "source": "Print",
+            "requestId": null,
+            "jobName": "Rate confirmation"
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(
+            json!({"id": "cbat_9", "status": "Receiving", "source": "Print", "requestId": "creq_armed"}),
+        ))
+        .expect(1)
+        .mount(&server)
+        .await;
+    Mock::given(method("PUT"))
+        .and(path("/api/v1/capture/device/batches/cbat_9/print-job/"))
+        .and(header("content-type", "application/pdf"))
+        .and(body_bytes(PRINTED))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "cbat_9",
+            "status": "Sealed",
+            "source": "Print",
+            "requestId": "creq_armed",
+            "expectedPageCount": 3,
+            "receivedPageCount": 3
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let device = device(&server, 900);
+    let (tx, mut rx) = mpsc::channel(32);
+    let events =
+        run_until_settled(Uploader::new(device.api, Arc::clone(&spool), tx), &mut rx).await;
+
+    assert!(events.iter().any(|e| matches!(e,
+        UploadEvent::Sent { source: BatchSource::Print, pages: 3, requested: true, label, .. }
+            if label == "Rate confirmation")));
+    assert!(spool.pending().expect("pending").is_empty());
+    assert!(
+        server
+            .received_requests()
+            .await
+            .expect("requests")
+            .iter()
+            .all(|r| !r.url.path().ends_with("/seal/")),
+        "the server seals a print job itself"
+    );
+}
+
+#[tokio::test]
+async fn a_print_the_server_ended_is_set_aside_and_an_opened_one_is_not_reopened() {
+    let server = MockServer::start().await;
+    let dir = tempfile::tempdir().expect("dir");
+    let (spool, key) = printed(dir.path());
+    spool
+        .set_batch_id(&key, Id::from("cbat_7"))
+        .expect("opened before");
+
+    Mock::given(method("PUT"))
+        .and(path("/api/v1/capture/device/batches/cbat_7/print-job/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "cbat_7",
+            "status": "Expired",
+            "source": "Print",
+            "failureMessage": "The batch expired before its pages arrived"
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let device = device(&server, 900);
+    let (tx, mut rx) = mpsc::channel(32);
+    let events =
+        run_until_settled(Uploader::new(device.api, Arc::clone(&spool), tx), &mut rx).await;
+
+    assert!(events.iter().any(|e| matches!(e,
+        UploadEvent::Refused { source: BatchSource::Print, reason, .. }
+            if reason.contains("expired"))));
+    assert!(
+        dir.path()
+            .join("failed")
+            .join(&key)
+            .join("document.bin")
+            .exists()
+    );
+    assert!(
+        server
+            .received_requests()
+            .await
+            .expect("requests")
+            .iter()
+            .all(|r| r.url.path() != "/api/v1/capture/device/batches/"),
+        "a batch already opened is not opened again"
+    );
+}

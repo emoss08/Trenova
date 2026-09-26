@@ -23,6 +23,7 @@ use crate::manifest::page_checksum;
 /// The description format this build writes and reads.
 pub const VERSION: u32 = 1;
 const PART: &str = "part";
+const REJECTED: &str = "rejected";
 const DESCRIPTION: &str = "json";
 const DOCUMENT: &str = "pdf";
 /// The most a description may be; anything larger was not written by the
@@ -37,6 +38,8 @@ pub enum HandoffError {
     Io(#[from] io::Error),
     #[error("the job description {0} is unreadable")]
     Description(String),
+    #[error("{0} is not a print job's name")]
+    InvalidId(String),
     #[error("the printed document for {0} does not match its description")]
     Mismatch(String),
 }
@@ -199,10 +202,27 @@ impl Inbox {
     /// [`Inbox::sweep`] removes, never a description without its document.
     pub fn remove(&self, id: &str) -> Result<(), HandoffError> {
         if !valid_id(id) {
-            return Err(HandoffError::Description(id.to_owned()));
+            return Err(HandoffError::InvalidId(id.to_owned()));
         }
         for extension in [DESCRIPTION, DOCUMENT] {
             match fs::remove_file(self.path(id, extension)) {
+                Err(err) if err.kind() != io::ErrorKind::NotFound => return Err(err.into()),
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+
+    /// Renames a job that cannot be read to `<name>.rejected`, so it stops
+    /// being offered but is not deleted before someone has looked at it.
+    pub fn set_aside(&self, id: &str) -> Result<(), HandoffError> {
+        if !valid_id(id) {
+            return Err(HandoffError::InvalidId(id.to_owned()));
+        }
+        for extension in [DESCRIPTION, DOCUMENT] {
+            let from = self.path(id, extension);
+            let to = self.dir.join(format!("{id}.{extension}.{REJECTED}"));
+            match fs::rename(&from, &to) {
                 Err(err) if err.kind() != io::ErrorKind::NotFound => return Err(err.into()),
                 _ => {}
             }
@@ -299,6 +319,16 @@ mod tests {
             Err(HandoffError::Mismatch(_))
         ));
         assert!(inbox.remove("../escape").is_err());
+        assert!(inbox.set_aside("../escape").is_err());
+
+        inbox.set_aside(&job.id).expect("sets aside");
+        assert!(inbox.waiting().expect("lists").is_empty());
+        assert!(dir.path().join(format!("{}.pdf.rejected", job.id)).exists());
+        assert_eq!(
+            inbox.sweep(Duration::ZERO).expect("sweeps"),
+            0,
+            "kept for a person"
+        );
     }
 
     #[test]

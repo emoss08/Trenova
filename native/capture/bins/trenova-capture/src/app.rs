@@ -8,7 +8,9 @@ use std::time::Duration;
 
 use capture_client::{AgentInfo, SecretStore, Server};
 use capture_platform::settings::{self, ServerSource};
-use capture_platform::{CredentialManager, Dpapi, SingleInstance, logging, machine, paths, shell};
+use capture_platform::{
+    CredentialManager, Dpapi, SingleInstance, accounts, logging, machine, paths, shell,
+};
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use trenova_capture::agent::{self, Environment, Machine, ServerSetting};
@@ -63,6 +65,18 @@ impl ServerSetting for RegistrySetting {
     }
 }
 
+/// `%ProgramData%\Trenova\Capture\spool\<this user's SID>`, where the print
+/// service leaves what this person prints.
+fn print_inbox() -> Option<PathBuf> {
+    let root = paths::print_spool_dir()
+        .inspect_err(|err| tracing::warn!(error = %err, "no print spool directory"))
+        .ok()?;
+    let sid = accounts::current_user_sid()
+        .inspect_err(|err| tracing::warn!(error = %err, "could not read this user's SID"))
+        .ok()?;
+    Some(root.join(sid))
+}
+
 fn environment(data_dir: &Path) -> Environment {
     let helpers = std::env::current_exe()
         .ok()
@@ -70,6 +84,7 @@ fn environment(data_dir: &Path) -> Environment {
         .unwrap_or_else(|| PathBuf::from("."));
     Environment {
         spool_dir: data_dir.join("spool"),
+        print_inbox: print_inbox(),
         agent: AgentInfo {
             version: env!("CARGO_PKG_VERSION").to_owned(),
             os_version: machine::os_version(),

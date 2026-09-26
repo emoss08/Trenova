@@ -1,5 +1,6 @@
 //! The agent end to end: a mock server asks for a scan, a scripted scanner
-//! produces pages, and the pages arrive and are sealed.
+//! produces pages, and the pages arrive and are sealed; a job the print
+//! service left in the inbox is sent whole.
 
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex, PoisonError};
@@ -7,6 +8,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use capture_client::{AgentInfo, Credential, MemoryStore, Protector, SecretStore, Server};
 use capture_protocol::api::{Id, PixelType, Settings, SourceInfo, SourceProtocol, TokenPair};
+use capture_protocol::handoff::Inbox;
 use capture_protocol::helper::{PageMeta, ScanCondition, ScanJob};
 use capture_protocol::page_checksum;
 use serde_json::json;
@@ -276,6 +278,7 @@ struct Running {
     commands: mpsc::UnboundedSender<Command>,
     task: tokio::task::JoinHandle<()>,
     scanner: Arc<FakeScanner>,
+    inbox: Inbox,
     _dir: tempfile::TempDir,
 }
 
@@ -286,8 +289,11 @@ fn start(server: &MockServer, scripts: Vec<Script>) -> Running {
         scripts: Mutex::new(scripts.into()),
         jobs: Mutex::new(Vec::new()),
     });
+    let inbox_dir = dir.path().join("inbox");
+    std::fs::create_dir_all(&inbox_dir).expect("inbox");
     let env = Environment {
         spool_dir: dir.path().join("spool"),
+        print_inbox: Some(inbox_dir.clone()),
         agent: AgentInfo {
             version: "1.0.0".into(),
             os_version: "Windows 10.0.22631".into(),
@@ -318,6 +324,7 @@ fn start(server: &MockServer, scripts: Vec<Script>) -> Running {
         commands,
         task,
         scanner,
+        inbox: Inbox::new(inbox_dir),
         _dir: dir,
     }
 }
@@ -497,4 +504,56 @@ async fn a_request_for_a_scanner_this_computer_lacks_is_reported_failed() {
     }
     stop(running).await;
     server.verify().await;
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_print_left_in_the_inbox_is_sent_whole_to_where_it_was_armed() {
+    let server = server(json!([])).await;
+    Mock::given(method("POST"))
+        .and(path("/api/v1/capture/device/batches/"))
+        .and(body_partial_json(
+            json!({"source": "Print", "jobName": "Rate confirmation"}),
+        ))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "cbat_p", "status": "Receiving", "source": "Print", "requestId": "creq_armed"
+        })))
+        .with_priority(1)
+        .mount(&server)
+        .await;
+    Mock::given(method("PUT"))
+        .and(path("/api/v1/capture/device/batches/cbat_p/print-job/"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "cbat_p", "status": "Sealed", "source": "Print", "requestId": "creq_armed",
+            "expectedPageCount": 3, "receivedPageCount": 3
+        })))
+        .with_priority(1)
+        .expect(1)
+        .mount(&server)
+        .await;
+    let running = start(&server, Vec::new());
+    running
+        .inbox
+        .deliver("Rate confirmation", Some(3), b"%PDF-1.7 printed")
+        .expect("the service delivers");
+
+    until(&running, "the print to be sent", |s, titles| {
+        titles.iter().any(|t| t == "3 pages sent to Trenova") && s.pages_waiting == 0
+    })
+    .await;
+    let snapshot = running.shared.snapshot();
+    assert_eq!(snapshot.recent[0].label, "Rate confirmation");
+    assert!(
+        snapshot.recent[0].requested,
+        "the armed destination took it"
+    );
+    assert!(running.inbox.waiting().expect("lists").is_empty());
+
+    let requests = server.received_requests().await.expect("requests");
+    let sent = requests
+        .iter()
+        .find(|r| r.url.path().ends_with("/print-job/"))
+        .expect("sent");
+    assert_eq!(sent.body, b"%PDF-1.7 printed");
+    assert!(requests.iter().all(|r| !r.url.path().ends_with("/seal/")));
+    stop(running).await;
 }

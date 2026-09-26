@@ -2,7 +2,9 @@
 //!
 //! Each batch is opened (idempotent on its client key), its pages sent in
 //! order (idempotent on their sequence), and, once acquisition has ended and
-//! every page is there, sealed with the manifest digest. Every step is
+//! every page is there, sealed with the manifest digest. A printed job is
+//! sent whole instead, and the server splits and seals it; sending it again
+//! returns the batch as it is. Every step is
 //! recorded in the spool as it succeeds, so a batch interrupted anywhere
 //! resumes where it stopped, and a retry never duplicates anything.
 //!
@@ -18,7 +20,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use bytes::Bytes;
-use capture_protocol::api::{Id, SealBatchInput};
+use capture_protocol::api::{BatchSource, BatchStatus, CaptureBatch, Id, SealBatchInput};
 use capture_protocol::manifest::manifest_digest;
 use tokio::sync::{Notify, mpsc};
 use tokio_util::sync::CancellationToken;
@@ -26,7 +28,7 @@ use tokio_util::sync::CancellationToken;
 use crate::api::Api;
 use crate::backoff::Backoff;
 use crate::error::ApiError;
-use crate::spool::{Spool, SpoolError, SpoolSummary, SpooledBatch};
+use crate::spool::{Spool, SpoolError, SpoolSummary, SpooledBatch, SpooledDocument};
 
 /// What the uploader tells the tray.
 #[derive(Debug)]
@@ -36,13 +38,18 @@ pub enum UploadEvent {
     /// A batch reached the server in full and was sealed.
     Sent {
         batch_id: Id,
+        source: BatchSource,
         pages: u32,
         label: String,
         /// Whether it was for a record the person chose, rather than intake.
         requested: bool,
     },
     /// The server refused a batch; its pages are kept aside.
-    Refused { label: String, reason: String },
+    Refused {
+        source: BatchSource,
+        label: String,
+        reason: String,
+    },
     /// Uploads are stopped until something changes.
     Blocked(ApiError),
     /// A failure worth retrying; the next attempt is in `retry_in`.
@@ -75,8 +82,10 @@ impl From<SpoolError> for Step {
             SpoolError::Missing(_)
             | SpoolError::Full
             | SpoolError::PageTooLarge(_)
+            | SpoolError::DocumentTooLarge(_)
             | SpoolError::Complete
             | SpoolError::Corrupt { .. }
+            | SpoolError::CorruptDocument
             | SpoolError::Manifest(_) => Self::Refused(err.to_string()),
         }
     }
@@ -183,6 +192,7 @@ impl Uploader {
                     let _ = self
                         .events
                         .send(UploadEvent::Refused {
+                            source: batch.input.source,
                             label: batch.label.clone(),
                             reason,
                         })
@@ -196,6 +206,9 @@ impl Uploader {
 
     /// Takes one batch as far as it can go.
     async fn send(&self, batch: &SpooledBatch) -> Result<(), Step> {
+        if let Some(document) = &batch.document {
+            return self.send_document(batch, document).await;
+        }
         let key = batch.key().to_owned();
         let (batch_id, requested) = match &batch.batch_id {
             Some(id) => (id.clone(), batch.input.request_id.is_some()),
@@ -234,9 +247,44 @@ impl Uploader {
             .events
             .send(UploadEvent::Sent {
                 batch_id,
+                source: batch.input.source,
                 pages: seal.page_count,
                 label: batch.label.clone(),
                 requested,
+            })
+            .await;
+        Ok(())
+    }
+
+    /// Sends a printed job whole. Where it went is the server's to say: a
+    /// print with no request named goes to the destination the person armed,
+    /// if there is one.
+    async fn send_document(
+        &self,
+        batch: &SpooledBatch,
+        document: &SpooledDocument,
+    ) -> Result<(), Step> {
+        let key = batch.key().to_owned();
+        let batch_id = match &batch.batch_id {
+            Some(id) => id.clone(),
+            None => self.open(batch).await?.0,
+        };
+        let (read_key, read_document) = (key.clone(), document.clone());
+        let pdf = blocking(&self.spool, move |s| {
+            s.read_document(&read_key, &read_document)
+        })
+        .await?;
+        let stored = self.api.put_print_job(&batch_id, Bytes::from(pdf)).await?;
+        refused_print(&stored)?;
+        blocking(&self.spool, move |s| s.remove(&key)).await?;
+        let _ = self
+            .events
+            .send(UploadEvent::Sent {
+                batch_id,
+                source: batch.input.source,
+                pages: stored.received_page_count,
+                label: batch.label.clone(),
+                requested: stored.request_id.is_some(),
             })
             .await;
         Ok(())
@@ -266,5 +314,20 @@ impl Uploader {
         let id = opened.id.clone();
         blocking(&self.spool, move |s| s.set_batch_id(&key, opened.id)).await?;
         Ok((id, requested))
+    }
+}
+
+/// A print batch the server ended without taking the document.
+fn refused_print(stored: &CaptureBatch) -> Result<(), Step> {
+    match stored.status {
+        BatchStatus::Discarded | BatchStatus::Expired | BatchStatus::Failed => {
+            let reason = if stored.failure_message.is_empty() {
+                format!("the server ended the batch ({:?})", stored.status)
+            } else {
+                stored.failure_message.clone()
+            };
+            Err(Step::Refused(reason))
+        }
+        _ => Ok(()),
     }
 }

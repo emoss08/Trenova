@@ -2,11 +2,14 @@
 //!
 //! It keeps the session with the server (the device stream, the uploader),
 //! turns requests into scans, runs one scan at a time through the helpers,
-//! and spools every page before anything else happens to it. Network calls
+//! and spools every page before anything else happens to it. It also takes
+//! printed jobs from this person's print inbox (`prints`) into the same spool.
+//! Network calls
 //! run as their own tasks and report back here, so a slow server never holds
 //! up a command from the tray, and there is exactly one place state changes.
 
 pub mod plan;
+pub mod prints;
 
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::io;
@@ -21,13 +24,15 @@ use capture_client::{
     AgentInfo, Api, ApiError, PageMarkers, Protector, SecretStore, Server, Spool, SpoolError,
 };
 use capture_protocol::api::{
-    Architecture, CaptureProfile, CaptureRequest, DeviceIdentity, Id, RequestFailureCode,
-    RequestMode, RequestStatus, RequestStatusReport, SourceInfo, SourceProtocol,
-    StartPairingRequest,
+    Architecture, BatchSource, CaptureProfile, CaptureRequest, DeviceIdentity, Id,
+    RequestFailureCode, RequestMode, RequestStatus, RequestStatusReport, SourceInfo,
+    SourceProtocol, StartPairingRequest,
 };
+use capture_protocol::handoff::Inbox;
 use tokio::sync::{Notify, mpsc};
 use tokio_util::sync::CancellationToken;
 
+use self::prints::Imported;
 use crate::scanners::{ScanOutcome, ScanRun, ScanUpdate, ScannerHost};
 use crate::state::{
     Command, Connection, Notice, PausedBatch, RECENT, RecentBatch, Severity, Shared,
@@ -54,6 +59,8 @@ pub struct Machine {
 /// Everything the agent needs from the platform.
 pub struct Environment {
     pub spool_dir: PathBuf,
+    /// This Windows user's print inbox, when the print service is installed.
+    pub print_inbox: Option<PathBuf>,
     pub agent: AgentInfo,
     pub machine: Machine,
     pub scanners: Arc<dyn ScannerHost>,
@@ -69,6 +76,7 @@ impl std::fmt::Debug for Environment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Environment")
             .field("spool_dir", &self.spool_dir)
+            .field("print_inbox", &self.print_inbox)
             .field("agent", &self.agent)
             .finish_non_exhaustive()
     }
@@ -113,6 +121,7 @@ struct Agent {
     session: Option<CancellationToken>,
     stream_rx: Option<mpsc::Receiver<DeviceEvent>>,
     upload_rx: Option<mpsc::Receiver<UploadEvent>>,
+    prints_rx: Option<mpsc::Receiver<Imported>>,
     wake: Option<Arc<Notify>>,
     pairing: Option<CancellationToken>,
     internal_tx: mpsc::Sender<Internal>,
@@ -158,6 +167,7 @@ pub async fn run(
         session: None,
         stream_rx: None,
         upload_rx: None,
+        prints_rx: None,
         wake: None,
         pairing: None,
         internal_tx,
@@ -175,6 +185,16 @@ pub async fn run(
         fetch_again: false,
         blocked: false,
     };
+    if let Some(dir) = agent.env.print_inbox.clone() {
+        let (tx, rx) = mpsc::channel(16);
+        tokio::spawn(prints::watch(
+            Inbox::new(dir),
+            Arc::clone(&agent.spool),
+            tx,
+            cancel.child_token(),
+        ));
+        agent.prints_rx = Some(rx);
+    }
     let failed_dir = agent.spool.failed_dir();
     agent.shared.update(|s| s.failed_dir = Some(failed_dir));
     let configured = agent.env.server_setting.load();
@@ -195,6 +215,10 @@ pub async fn run(
             event = next(agent.upload_rx.as_mut()) => match event {
                 Some(event) => agent.upload_event(event),
                 None => agent.upload_rx = None,
+            },
+            imported = next(agent.prints_rx.as_mut()) => match imported {
+                Some(imported) => agent.printed(imported).await,
+                None => agent.prints_rx = None,
             },
             update = next(agent.active.as_mut().map(|a| &mut a.run.updates)) => match update {
                 Some(update) => agent.scan_update(update),
@@ -1006,6 +1030,7 @@ impl Agent {
                 pages,
                 label,
                 requested,
+                ..
             } => {
                 let link = self.shared.snapshot().intake_link(Some(&batch_id));
                 let recent = RecentBatch {
@@ -1031,9 +1056,17 @@ impl Agent {
                     link,
                 );
             }
-            UploadEvent::Refused { label, reason } => self.notify(
+            UploadEvent::Refused {
+                source,
+                label,
+                reason,
+            } => self.notify(
                 Severity::Error,
-                "A scan could not be sent",
+                if source == BatchSource::Print {
+                    "A print could not be sent"
+                } else {
+                    "A scan could not be sent"
+                },
                 format!("{label}: {reason} Its pages are kept in the failed uploads folder."),
                 None,
             ),
@@ -1041,6 +1074,39 @@ impl Agent {
             UploadEvent::Waiting { reason, retry_in } => {
                 tracing::info!(reason, retry_in = ?retry_in, "uploads are waiting");
             }
+        }
+    }
+
+    /// A printed job reached the spool, or could not be read.
+    async fn printed(&mut self, imported: Imported) {
+        match imported {
+            Imported::Spooled { name, .. } => {
+                tracing::info!(name, "took a print from the print inbox");
+                if self.signed_in() {
+                    self.wake_uploader();
+                } else {
+                    self.notify(
+                        Severity::Warning,
+                        "Your print is waiting",
+                        format!("Sign in to Trenova Capture to send {name} to Trenova."),
+                        None,
+                    );
+                }
+                let spool = Arc::clone(&self.spool);
+                if let Ok(Ok(summary)) = tokio::task::spawn_blocking(move || spool.summary()).await
+                {
+                    self.shared.update(|s| {
+                        s.pages_waiting = summary.pages_waiting;
+                        s.failed = summary.failed;
+                    });
+                }
+            }
+            Imported::Rejected { name, reason } => self.notify(
+                Severity::Error,
+                "A print could not be read",
+                format!("{name}: {reason}. Print it again; the unreadable copy was kept on this computer."),
+                None,
+            ),
         }
     }
 

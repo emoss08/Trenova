@@ -7,6 +7,7 @@
 //! ```text
 //! <root>/batches/<client key>/manifest.json
 //! <root>/batches/<client key>/page-0001.bin
+//! <root>/batches/<client key>/document.bin  (a printed job, sent whole)
 //! <root>/failed/<client key>/...           (the server refused it)
 //! ```
 //!
@@ -22,7 +23,9 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use capture_protocol::api::{Id, MAX_BATCH_PAGES, MAX_PAGE_BYTES, OpenBatchInput, Settings};
+use capture_protocol::api::{
+    Id, MAX_BATCH_PAGES, MAX_PAGE_BYTES, MAX_PRINT_JOB_BYTES, OpenBatchInput, Settings,
+};
 use capture_protocol::page_checksum;
 use serde::{Deserialize, Serialize};
 
@@ -30,6 +33,7 @@ use crate::api::PageMarkers;
 
 const MANIFEST: &str = "manifest.json";
 const FAILURE: &str = "failure.txt";
+const DOCUMENT: &str = "document.bin";
 const MANIFEST_VERSION: u32 = 1;
 
 /// Encrypts page files at rest. On Windows this is DPAPI, scoped to the
@@ -65,6 +69,19 @@ impl SpooledPage {
     }
 }
 
+/// A printed job as the manifest records it. The server splits it into
+/// pages, so it is sent whole.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpooledDocument {
+    /// SHA-256 of the PDF.
+    pub checksum: String,
+    pub byte_size: u64,
+    /// Pages, when the print service counted them.
+    #[serde(default)]
+    pub pages: Option<u32>,
+}
+
 /// A batch waiting to reach the server.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -78,6 +95,9 @@ pub struct SpooledBatch {
     #[serde(default)]
     pub batch_id: Option<Id>,
     pub pages: Vec<SpooledPage>,
+    /// A printed job, which takes the place of pages.
+    #[serde(default)]
+    pub document: Option<SpooledDocument>,
     /// Acquisition has ended; the batch can be sealed once uploaded.
     pub complete: bool,
 }
@@ -88,6 +108,9 @@ impl SpooledBatch {
     }
 
     pub fn pages_waiting(&self) -> u32 {
+        if let Some(document) = &self.document {
+            return document.pages.unwrap_or(1);
+        }
         u32::try_from(self.pages.iter().filter(|p| !p.uploaded).count()).unwrap_or(u32::MAX)
     }
 }
@@ -110,10 +133,14 @@ pub enum SpoolError {
     Full,
     #[error("a page of {0} bytes is over the server's limit")]
     PageTooLarge(usize),
+    #[error("a printed document of {0} bytes is over the server's limit")]
+    DocumentTooLarge(usize),
     #[error("the batch has already been finished")]
     Complete,
     #[error("page {sequence} on disk does not match what was scanned")]
     Corrupt { sequence: u32 },
+    #[error("the printed document on disk does not match what was printed")]
+    CorruptDocument,
     #[error("the manifest is unreadable: {0}")]
     Manifest(String),
 }
@@ -241,7 +268,49 @@ impl Spool {
             input,
             batch_id: None,
             pages: Vec::new(),
+            document: None,
             complete: false,
+        };
+        self.write_manifest(&batch)?;
+        Ok(batch)
+    }
+
+    /// Spools a printed job, complete, under `input.client_key`. Spooling
+    /// the same key again returns the batch already there, so a job taken
+    /// from the print inbox twice is sent once.
+    pub fn create_print(
+        &self,
+        input: OpenBatchInput,
+        label: impl Into<String>,
+        pdf: &[u8],
+        pages: Option<u32>,
+    ) -> Result<SpooledBatch, SpoolError> {
+        if pdf.len() > MAX_PRINT_JOB_BYTES {
+            return Err(SpoolError::DocumentTooLarge(pdf.len()));
+        }
+        let sealed = self.protector.protect(pdf)?;
+        let _guard = self.guard();
+        match self.read_manifest(&input.client_key) {
+            Ok(existing) => return Ok(existing),
+            Err(SpoolError::Missing(_)) => {}
+            Err(err) => return Err(err),
+        }
+        let dir = self.dir(&input.client_key)?;
+        fs::create_dir_all(&dir)?;
+        write_atomic(&dir.join(DOCUMENT), &sealed)?;
+        let batch = SpooledBatch {
+            version: MANIFEST_VERSION,
+            created_at: now_unix_millis(),
+            label: label.into(),
+            input,
+            batch_id: None,
+            pages: Vec::new(),
+            document: Some(SpooledDocument {
+                checksum: page_checksum(pdf),
+                byte_size: u64::try_from(pdf.len()).unwrap_or(u64::MAX),
+                pages,
+            }),
+            complete: true,
         };
         self.write_manifest(&batch)?;
         Ok(batch)
@@ -339,6 +408,20 @@ impl Spool {
             return Err(SpoolError::Corrupt {
                 sequence: page.sequence,
             });
+        }
+        Ok(pdf)
+    }
+
+    /// A printed job's PDF, decrypted and checked against what was printed.
+    pub fn read_document(
+        &self,
+        key: &str,
+        document: &SpooledDocument,
+    ) -> Result<Vec<u8>, SpoolError> {
+        let sealed = fs::read(self.dir(key)?.join(DOCUMENT))?;
+        let pdf = self.protector.unprotect(&sealed)?;
+        if page_checksum(&pdf) != document.checksum {
+            return Err(SpoolError::CorruptDocument);
         }
         Ok(pdf)
     }
