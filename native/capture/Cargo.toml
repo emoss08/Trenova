@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/capture-protocol", "crates/capture-imaging"]
+members = ["crates/capture-protocol", "crates/capture-imaging", "crates/capture-twain"]
 
 [workspace.package]
 version = "1.0.0"
