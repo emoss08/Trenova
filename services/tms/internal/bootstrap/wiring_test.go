@@ -91,10 +91,23 @@ func TestWiring_BestEffortPortsAreActuallyProvided(t *testing.T) {
 						services.ExtractionPredictor,
 						services.ExtractionEvalRunStarter,
 						services.ExtractionEvalRunner,
+						services.AITrainingExportStarter,
+						services.AITrainingExportOperator,
+						services.AITrainingExportRunner,
+						services.AITrainingHistoryService,
 					) {
 					},
 				),
 			))
 		})
 	}
+}
+
+func TestWiring_TrainingExportCommandResolvesWithoutAProcess(t *testing.T) {
+	t.Parallel()
+
+	require.NoError(t, fx.ValidateApp(
+		bootstrap.TrainingExportCommandOptions(),
+		fx.Invoke(func(services.AITrainingExportOperator) {}),
+	))
 }

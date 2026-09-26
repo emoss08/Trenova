@@ -32,6 +32,16 @@ type ListAICorrectionsForAccuracyRequest struct {
 	Limit      int
 }
 
+type ListAICorrectionsForTrainingRequest struct {
+	TenantInfo      pagination.TenantInfo
+	Task            aicorrection.Task
+	CapturedFrom    int64
+	CapturedTo      int64
+	AfterCapturedAt int64
+	AfterID         pulid.ID
+	Limit           int
+}
+
 type AICorrectionRepository interface {
 	Upsert(ctx context.Context, entity *aicorrection.Correction) (*aicorrection.Correction, error)
 	GetByID(ctx context.Context, req GetAICorrectionRequest) (*aicorrection.Correction, error)
@@ -42,6 +52,10 @@ type AICorrectionRepository interface {
 	ListForAccuracy(
 		ctx context.Context,
 		req ListAICorrectionsForAccuracyRequest,
+	) ([]*aicorrection.Correction, error)
+	ListForTraining(
+		ctx context.Context,
+		req *ListAICorrectionsForTrainingRequest,
 	) ([]*aicorrection.Correction, error)
 	PurgeBefore(ctx context.Context, req PurgeAICorrectionsRequest) (int64, error)
 }

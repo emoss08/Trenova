@@ -6342,6 +6342,15 @@
       "service/reporting"
     ]
   },
+  "A training export is already running; wait for it to finish or cancel it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A transfer can include at most 5000 shipments": {
     "sites": 1,
     "scope": [
@@ -39589,6 +39598,15 @@
       "domain/worker"
     ]
   },
+  "Consent granted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Consent obtained": {
     "sites": 1,
     "scope": [
@@ -41659,7 +41677,7 @@
     ]
   },
   "Corrections": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -67076,6 +67094,15 @@
       "routes/formula-template"
     ]
   },
+  "Export at least one example per organization": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
+    ]
+  },
   "Export bank receipts and their match state": {
     "sites": 1,
     "scope": [
@@ -67579,6 +67606,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Exported": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Exporting...": {
@@ -73241,12 +73277,13 @@
     ]
   },
   "Format is required": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/aiaudit",
+      "domain/aitraining",
       "domain/report"
     ]
   },
@@ -77805,6 +77842,15 @@
       "apps/web/components"
     ]
   },
+  "Held out for validation": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Held past its retention window. Purging is a deliberate act, never automatic.": {
     "sites": 1,
     "scope": [
@@ -81971,6 +82017,15 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Included in {0, plural, one {# training export} other {# training exports}}, {1, plural, one {# correction} other {# corrections}} in all": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Included on a posted carrier settlement.": {
@@ -107693,6 +107748,15 @@
       "service/dispatcheligibility"
     ]
   },
+  "No training export has included this organization's corrections.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No transactions yet": {
     "sites": 1,
     "scope": [
@@ -113182,6 +113246,15 @@
     ],
     "areas": [
       "service/accountingmappingservice"
+    ]
+  },
+  "Only a queued or running export can be canceled; this one is {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
     ]
   },
   "Only a rated reply in a conversation can become an evaluation case": {
@@ -140632,12 +140705,13 @@
     ]
   },
   "Request is required": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "go"
     ],
     "areas": [
       "go/other",
+      "service/aitrainingservice",
       "service/bankreceiptbatchservice",
       "service/bankreceiptservice",
       "service/billingqueueservice",
@@ -149025,6 +149099,15 @@
     ],
     "areas": [
       "service/orgstructureservice"
+    ]
+  },
+  "Say who is requesting the export": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
     ]
   },
   "Say who it goes to": {
@@ -163323,7 +163406,7 @@
     ]
   },
   "Status is required": {
-    "sites": 132,
+    "sites": 133,
     "scope": [
       "go"
     ],
@@ -163332,6 +163415,7 @@
       "domain/accounttype",
       "domain/agent",
       "domain/agentquality",
+      "domain/aitraining",
       "domain/apikey",
       "domain/assistantartifact",
       "domain/billingtransfer",
@@ -166800,12 +166884,13 @@
     ]
   },
   "Task is required": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go"
     ],
     "areas": [
       "domain/aicorrection",
+      "domain/aitraining",
       "domain/extractioneval"
     ]
   },
@@ -177602,6 +177687,15 @@
       "domain/documenttemplate"
     ]
   },
+  "The training exports that included this organization could not be loaded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The transfer could not be queued — try again shortly": {
     "sites": 1,
     "scope": [
@@ -177836,6 +177930,15 @@
       "routes/edi"
     ]
   },
+  "The validation share cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
+    ]
+  },
   "The value is not a valid PEM certificate.": {
     "sites": 1,
     "scope": [
@@ -177998,6 +178101,24 @@
       "routes/agent-control"
     ]
   },
+  "The window cannot end in the future": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
+    ]
+  },
+  "The window cannot start before 1970": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
+    ]
+  },
   "The window must be between 1 and 365 days": {
     "sites": 1,
     "scope": [
@@ -178015,6 +178136,24 @@
     "areas": [
       "service/agentqualityservice",
       "service/aifeedbackservice"
+    ]
+  },
+  "The window must end after it starts": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
+    ]
+  },
+  "The window must have an end": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "domain/aitraining"
     ]
   },
   "The wording drivers read and sign; short policies fit here, longer ones are better attached as a document.": {
@@ -185562,6 +185701,15 @@
     ],
     "areas": [
       "domain/platformcatalog"
+    ]
+  },
+  "Training exports cannot run on this installation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "service/aitrainingservice"
     ]
   },
   "Training matrix": {
@@ -200631,6 +200779,15 @@
     ],
     "areas": [
       "domain/worker"
+    ]
+  },
+  "Write an anonymized model-training export from the AI corrections of every organization that consented": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Write it here": {

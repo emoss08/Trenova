@@ -50,7 +50,8 @@ it (an API key cannot), and each change records `ai_training_consent_changed_at`
 Corrections are captured whether or not consent is on: without it they stay inside the
 tenant and serve only that organization's accuracy and evaluations.
 
-Any export for training must:
+The training export that does this is described in
+[ai-training-export.md](ai-training-export.md). Any export for training must:
 
 - read consent **at export time**, so withdrawing it excludes every existing row from later
   exports;

@@ -817,6 +817,20 @@ enum AITask {
 }
 
 """
+A model-training export that included this organization's AI corrections, anonymized.
+"""
+type AITrainingExportHistoryEntry {
+  """When the AI training consent the export relied on was granted."""
+  consentGrantedAt: Timestamp!
+  """Corrections from this organization in the export."""
+  examples: Int!
+  exportId: ID!
+  exportedAt: Timestamp!
+  trainExamples: Int!
+  validationExamples: Int!
+}
+
+"""
 One failed model call: which provider and model, what kind of failure, and
 what the provider said. The class is one of a handful of words; the message
 is the provider's, cut to fit.
@@ -16514,6 +16528,10 @@ type Query {
   Whether search by meaning works, what is indexed, and what it has cost this month.
   """
   aiRetrievalStatus: AIRetrievalStatus!
+  """
+  Training exports that included this organization's AI corrections, newest first.
+  """
+  aiTrainingExportHistory: [AITrainingExportHistoryEntry!]!
   """
   Model usage since the given instant, defaulting to the last seven days.
   """

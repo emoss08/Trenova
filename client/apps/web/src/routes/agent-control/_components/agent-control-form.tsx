@@ -19,6 +19,7 @@ import { AwardIcon, DatabaseIcon, PauseCircleIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { promotionThresholdOptions } from "./agent-control-options";
+import { TrainingExportHistory } from "./training-export-history";
 
 type ControlPatch = Partial<
   Pick<
@@ -202,6 +203,7 @@ export default function AgentControlForm() {
             aria-label={t("Share corrections for model training")}
           />
         </div>
+        <TrainingExportHistory />
       </Card>
     </div>
   );

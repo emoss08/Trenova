@@ -25,3 +25,26 @@ func Hash(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
 }
+
+// RandomHex returns size bytes of crypto randomness as lowercase hex.
+func RandomHex(size int) (string, error) {
+	if size <= 0 {
+		return "", fmt.Errorf("random hex size must be positive, got %d", size)
+	}
+	raw := make([]byte, size)
+	if _, err := rand.Read(raw); err != nil {
+		return "", fmt.Errorf("generate random hex: %w", err)
+	}
+
+	return hex.EncodeToString(raw), nil
+}
+
+// RandomSeed returns 32 bytes of crypto randomness, sized for a ChaCha8 seed.
+func RandomSeed() ([32]byte, error) {
+	var seed [32]byte
+	if _, err := rand.Read(seed[:]); err != nil {
+		return seed, fmt.Errorf("generate random seed: %w", err)
+	}
+
+	return seed, nil
+}

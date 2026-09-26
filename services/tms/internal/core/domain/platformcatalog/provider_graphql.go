@@ -149,6 +149,7 @@ var graphQLSourceOwners = map[FeatureKey][]GraphQLSource{
 		"aifeedback.graphqls",
 		"aiprovider.graphqls",
 		"airetrieval.graphqls",
+		"aitraining.graphqls",
 		"aiusage.graphqls",
 		"decisions.graphqls",
 		"extractioneval.graphqls",

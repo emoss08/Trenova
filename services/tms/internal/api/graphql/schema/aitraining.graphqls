@@ -1,0 +1,16 @@
+"A model-training export that included this organization's AI corrections, anonymized."
+type AITrainingExportHistoryEntry {
+  exportId: ID!
+  "Corrections from this organization in the export."
+  examples: Int!
+  trainExamples: Int!
+  validationExamples: Int!
+  "When the AI training consent the export relied on was granted."
+  consentGrantedAt: Timestamp!
+  exportedAt: Timestamp!
+}
+
+extend type Query {
+  "Training exports that included this organization's AI corrections, newest first."
+  aiTrainingExportHistory: [AITrainingExportHistoryEntry!]!
+}

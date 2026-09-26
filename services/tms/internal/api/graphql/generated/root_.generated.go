@@ -652,6 +652,15 @@ type ComplexityRoot struct {
 		Sources                func(childComplexity int) int
 	}
 
+	AITrainingExportHistoryEntry struct {
+		ConsentGrantedAt   func(childComplexity int) int
+		Examples           func(childComplexity int) int
+		ExportID           func(childComplexity int) int
+		ExportedAt         func(childComplexity int) int
+		TrainExamples      func(childComplexity int) int
+		ValidationExamples func(childComplexity int) int
+	}
+
 	AIUsageFailure struct {
 		At           func(childComplexity int) int
 		ErrorClass   func(childComplexity int) int
@@ -9174,6 +9183,7 @@ type ComplexityRoot struct {
 		AiRetrievalFailedEntryConnection    func(childComplexity int, sourceType *airetrieval.SourceType, input gqlmodel.DataTableConnectionInput) int
 		AiRetrievalReindexEstimate          func(childComplexity int, sourceType airetrieval.SourceType) int
 		AiRetrievalStatus                   func(childComplexity int) int
+		AiTrainingExportHistory             func(childComplexity int) int
 		AiUsageSummary                      func(childComplexity int, since *int) int
 		ApprovalDelegations                 func(childComplexity int, delegatorID *string, delegateID *string, activeOnly *bool) int
 		ArAgingSummary                      func(childComplexity int, asOfDate *int) int
@@ -15350,6 +15360,43 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AIRetrievalStatus.Sources(childComplexity), true
+
+	case "AITrainingExportHistoryEntry.consentGrantedAt":
+		if e.ComplexityRoot.AITrainingExportHistoryEntry.ConsentGrantedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AITrainingExportHistoryEntry.ConsentGrantedAt(childComplexity), true
+	case "AITrainingExportHistoryEntry.examples":
+		if e.ComplexityRoot.AITrainingExportHistoryEntry.Examples == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AITrainingExportHistoryEntry.Examples(childComplexity), true
+	case "AITrainingExportHistoryEntry.exportId":
+		if e.ComplexityRoot.AITrainingExportHistoryEntry.ExportID == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AITrainingExportHistoryEntry.ExportID(childComplexity), true
+	case "AITrainingExportHistoryEntry.exportedAt":
+		if e.ComplexityRoot.AITrainingExportHistoryEntry.ExportedAt == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AITrainingExportHistoryEntry.ExportedAt(childComplexity), true
+	case "AITrainingExportHistoryEntry.trainExamples":
+		if e.ComplexityRoot.AITrainingExportHistoryEntry.TrainExamples == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AITrainingExportHistoryEntry.TrainExamples(childComplexity), true
+	case "AITrainingExportHistoryEntry.validationExamples":
+		if e.ComplexityRoot.AITrainingExportHistoryEntry.ValidationExamples == nil {
+			break
+		}
+
+		return e.ComplexityRoot.AITrainingExportHistoryEntry.ValidationExamples(childComplexity), true
 
 	case "AIUsageFailure.at":
 		if e.ComplexityRoot.AIUsageFailure.At == nil {
@@ -57980,6 +58027,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Query.AiRetrievalStatus(childComplexity), true
+	case "Query.aiTrainingExportHistory":
+		if e.ComplexityRoot.Query.AiTrainingExportHistory == nil {
+			break
+		}
+
+		return e.ComplexityRoot.Query.AiTrainingExportHistory(childComplexity), true
 	case "Query.aiUsageSummary":
 		if e.ComplexityRoot.Query.AiUsageSummary == nil {
 			break
@@ -84981,6 +85034,23 @@ extend type Mutation {
   reindexAIRetrievalSource(sourceType: AIRetrievalSourceType!): AIRetrievalStatus!
 }
 `, BuiltIn: false},
+	{Name: "../schema/aitraining.graphqls", Input: `"A model-training export that included this organization's AI corrections, anonymized."
+type AITrainingExportHistoryEntry {
+  exportId: ID!
+  "Corrections from this organization in the export."
+  examples: Int!
+  trainExamples: Int!
+  validationExamples: Int!
+  "When the AI training consent the export relied on was granted."
+  consentGrantedAt: Timestamp!
+  exportedAt: Timestamp!
+}
+
+extend type Query {
+  "Training exports that included this organization's AI corrections, newest first."
+  aiTrainingExportHistory: [AITrainingExportHistoryEntry!]!
+}
+`, BuiltIn: false},
 	{Name: "../schema/aiusage.graphqls", Input: `"""
 One provider and model's share of a usage window.
 """
@@ -106368,6 +106438,24 @@ func (ec *executionContext) childFields_AIRetrievalStatus(ctx context.Context, f
 		return ec.fieldContext_AIRetrievalStatus_configuredModelDiffers(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type AIRetrievalStatus", field.Name)
+}
+
+func (ec *executionContext) childFields_AITrainingExportHistoryEntry(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "exportId":
+		return ec.fieldContext_AITrainingExportHistoryEntry_exportId(ctx, field)
+	case "examples":
+		return ec.fieldContext_AITrainingExportHistoryEntry_examples(ctx, field)
+	case "trainExamples":
+		return ec.fieldContext_AITrainingExportHistoryEntry_trainExamples(ctx, field)
+	case "validationExamples":
+		return ec.fieldContext_AITrainingExportHistoryEntry_validationExamples(ctx, field)
+	case "consentGrantedAt":
+		return ec.fieldContext_AITrainingExportHistoryEntry_consentGrantedAt(ctx, field)
+	case "exportedAt":
+		return ec.fieldContext_AITrainingExportHistoryEntry_exportedAt(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type AITrainingExportHistoryEntry", field.Name)
 }
 
 func (ec *executionContext) childFields_AIUsageFailure(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {

@@ -1964,6 +1964,9 @@ models:
   ExtractionAccuracyGroup:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.ExtractionAccuracyGroup
+  AITrainingExportHistoryEntry:
+    model:
+      - github.com/emoss08/trenova/internal/core/domain/aitraining.ExportHistoryEntry
   ExtractionEvalCaseCounts:
     model:
       - github.com/emoss08/trenova/internal/core/ports/repositories.ExtractionEvalCaseCounts

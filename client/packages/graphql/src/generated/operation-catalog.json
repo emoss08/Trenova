@@ -1,5 +1,5 @@
 {
-  "operationCount": 902,
+  "operationCount": 903,
   "fragmentCount": 251,
   "operations": [
     {
@@ -2027,6 +2027,20 @@
       ],
       "usages": [],
       "sdl": "query AIRetrievalStatus {\n  aiRetrievalStatus {\n    ...AIRetrievalStatusFields\n  }\n}\n\nfragment AIRetrievalStatusFields on AIRetrievalStatus {\n  availability {\n    available\n    reason\n    extensionInstalled\n    extensionVersion\n  }\n  settings {\n    memoryEnabled\n    documentsEnabled\n    inboundMessagesEnabled\n    monthlyIndexingBudgetUsd\n    paused\n    pausedReason\n    pausedAt\n    activeModelKey\n    dimensions\n    pendingModelKey\n    pendingDimensions\n    version\n    updatedAt\n  }\n  sources {\n    sourceType\n    enabled\n    total\n    indexed\n    pending\n    failed\n    skipped\n    lastIndexedAt\n    lastAttemptAt\n  }\n  monthStartedAt\n  indexingCostMonthUsd\n  indexingUnpricedCalls\n  retrievalCostMonthUsd\n  retrievalUnpricedCalls\n  lastIndexedAt\n  modelChange {\n    fromModelKey\n    toModelKey\n    dimensions\n    total\n    indexed\n    pending\n    failed\n  }\n  configuredModelKey\n  configuredModelDiffers\n}"
+    },
+    {
+      "name": "AITrainingExportHistory",
+      "kind": "query",
+      "domain": "agent",
+      "sourceFile": "src/operations/agent/control.graphql",
+      "hash": "sha256:01cd3c46644654237a5921cf3f7b335abb7d86a142049dcd571463c3667f6f0a",
+      "rootFields": [
+        "aiTrainingExportHistory"
+      ],
+      "variables": [],
+      "fragments": [],
+      "usages": [],
+      "sdl": "query AITrainingExportHistory {\n  aiTrainingExportHistory {\n    exportId\n    examples\n    trainExamples\n    validationExamples\n    consentGrantedAt\n    exportedAt\n  }\n}"
     },
     {
       "name": "AIUsageSummary",

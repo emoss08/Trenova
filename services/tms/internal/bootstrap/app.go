@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
+	"github.com/emoss08/trenova/internal/core/services/aitrainingservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantservice"
@@ -39,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aiauditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aicorrectionjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/aifeedbackjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/aitrainingjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/assistantjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/billingjobs"
@@ -87,6 +89,7 @@ import (
 	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/aitrainingrepository"
 	reportingexecutor "github.com/emoss08/trenova/internal/infrastructure/reporting/executor"
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
 	reportingresultcache "github.com/emoss08/trenova/internal/infrastructure/reporting/resultcache"
@@ -187,6 +190,8 @@ func Options() fx.Option {
 		briefingjobs.Module,
 		aicorrectionjobs.Module,
 		extractionevaljobs.Module,
+		aitrainingservice.Module,
+		aitrainingjobs.Module,
 		aifeedbackjobs.Module,
 		retrievaljobs.Module,
 		iftajobs.Module,
@@ -229,6 +234,25 @@ func APIOptions() fx.Option {
 		modulesinfra.RealtimePublisherModule,
 		modulesinfra.RealtimeGatewayModule,
 		modulesinfra.MeilisearchClientModule,
+	)
+}
+
+func TrainingExportCommandOptions() fx.Option {
+	return fx.Options(
+		fx.NopLogger,
+		config.Module,
+		infrastructure.ObservabilityModule,
+		infrastructure.DatabaseModule,
+		modulesinfra.StorageModule,
+		fx.Provide(
+			temporaljobs.NewTemporalClient,
+			aitrainingrepository.NewExports,
+			aitrainingrepository.NewRecords,
+			aitrainingjobs.NewExportStarter,
+			aitrainingjobs.AsExportStarter,
+			aitrainingservice.NewOperator,
+			aitrainingservice.AsOperator,
+		),
 	)
 }
 

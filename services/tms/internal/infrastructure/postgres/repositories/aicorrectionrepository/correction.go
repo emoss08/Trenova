@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/aicorrection"
+	"github.com/emoss08/trenova/internal/core/domain/extractioneval"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
@@ -23,6 +24,8 @@ const (
 	defaultPurgeLimit    = 1000
 	maxPurgeLimit        = 10000
 	defaultAccuracyLimit = 2000
+	defaultTrainingLimit = 100
+	maxTrainingLimit     = 500
 	maxAccuracyLimit     = 10000
 	correctionEntity     = "AICorrection"
 )
@@ -270,6 +273,60 @@ func (r *repository) ListForAccuracy(
 		r.l.Error("failed to list ai corrections for accuracy", zap.Error(err))
 
 		return nil, fmt.Errorf("list ai corrections for accuracy: %w", err)
+	}
+
+	return entities, nil
+}
+
+func (r *repository) ListForTraining(
+	ctx context.Context,
+	req *repositories.ListAICorrectionsForTrainingRequest,
+) ([]*aicorrection.Correction, error) {
+	cols := buncolgen.CorrectionColumns
+	caseCols := buncolgen.ExtractionCaseColumns
+	limit := req.Limit
+	if limit <= 0 {
+		limit = defaultTrainingLimit
+	}
+	limit = min(limit, maxTrainingLimit)
+
+	db := r.db.DBForContext(ctx)
+	promoted := db.NewSelect().
+		Model((*extractioneval.ExtractionCase)(nil)).
+		ColumnExpr("1").
+		Where(caseCols.SourceCorrectionID.EqColumn(cols.ID)).
+		Where(caseCols.OrganizationID.EqColumn(cols.OrganizationID)).
+		Where(caseCols.BusinessUnitID.EqColumn(cols.BusinessUnitID))
+
+	entities := make([]*aicorrection.Correction, 0, limit)
+	err := db.NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = buncolgen.CorrectionScopeTenant(sq, req.TenantInfo).
+				Where(cols.Task.Eq(), req.Task).
+				Where(cols.CapturedAt.Gte(), req.CapturedFrom).
+				Where(cols.CapturedAt.Lt(), req.CapturedTo).
+				Where(cols.DocumentID.IsNotNull()).
+				Where(cols.ScoredCount.Gt(), 0).
+				Where("NOT EXISTS (?)", promoted)
+			if req.AfterID.IsNotNil() {
+				sq = sq.WhereGroup(" AND ", func(cq *bun.SelectQuery) *bun.SelectQuery {
+					return cq.Where(cols.CapturedAt.Gt(), req.AfterCapturedAt).
+						WhereGroup(" OR ", func(tq *bun.SelectQuery) *bun.SelectQuery {
+							return tq.Where(cols.CapturedAt.Eq(), req.AfterCapturedAt).
+								Where(cols.ID.Gt(), req.AfterID)
+						})
+				})
+			}
+			return sq
+		}).
+		Order(cols.CapturedAt.OrderAsc(), cols.ID.OrderAsc()).
+		Limit(limit).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list ai corrections for training", zap.Error(err))
+
+		return nil, fmt.Errorf("list ai corrections for training: %w", err)
 	}
 
 	return entities, nil
