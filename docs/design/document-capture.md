@@ -1,6 +1,6 @@
 # Document Capture — Scanning and Virtual Printing
 
-> Status: phase 1 (server) and the GraphQL half of phase 2 complete; the web screens are next. Purpose: let a person put paper or
+> Status: phases 1 (server) and 2 (web) complete; the Windows companion (phase 3) is next. Purpose: let a person put paper or
 > another program's output into Trenova without first producing a file on their own disk, from a
 > scanner (including one behind Kofax VRS) or from the Windows print dialog of any application.
 
@@ -638,27 +638,32 @@ Every phase is shipped complete; the order only reflects dependencies.
    the capture analyzer; maintenance; permissions; OpenAPI. Tested by domain and service unit
    tests over in-memory stores and real PDFs, adapter tests, handler tests, and a repository
    integration test (`-tags integration`) that ran green against Postgres 16.
-2. **Web:**
-   - **complete:** the GraphQL schema and resolvers over the phase 1 service, bulk filing,
-     record names for intake rows (one dataloader per request), the profile administration
-     service, and removal of the REST routes GraphQL replaces. Tested by service tests,
-     loader and mapping tests, authzlint, the projection and schema-diff checks, and the label
-     query against Postgres 16;
-   - the `/intake` route and page-strip editor, and `capture_batch` in the realtime
-     `RESOURCE_QUERY_KEY_MAP`;
+2. **Web — complete.**
+   - the GraphQL schema and resolvers over the phase 1 service, bulk filing, record names for
+     intake rows (one dataloader per request), the profile administration service, and removal
+     of the REST routes GraphQL replaces;
+   - the `/intake` route and page-strip editor, and `capture_batch`, `capture_device` and
+     `capture_profile` in the realtime `RESOURCE_QUERY_KEY_MAP`;
    - Scan, Print-into and cover sheets on the Documents tab, including the cover-sheet PDF
      (QR code and label per sheet);
-   - the `/capture/pair` approval page, device settings, and the capture section of the
-     document admin (settings, profiles, device fleet, installer download);
-   - **complete:** the retention reminder: a week before a stack still waiting on a person
-     loses its unfiled pages, its owner is notified once (the stack is claimed through
-     `retention_reminded_at` before the notification is sent, so concurrent sweeps notify once);
-   - product guide regeneration.
+   - the `/capture/pair` approval page, `/capture/devices`, and the capture section of the
+     admin (settings, profiles, device fleet);
+   - the retention reminder: a week before a stack still waiting on a person loses its unfiled
+     pages, its owner is notified once (the stack is claimed through `retention_reminded_at`
+     before the notification is sent, so concurrent sweeps notify once);
+   - product guides for Intake, scanners and the admin page, i18n in all four catalogs.
+
+   Tested by service tests, loader and mapping tests, authzlint, the projection and
+   schema-diff checks, the label and reminder queries against Postgres 16, and web unit tests
+   for the page-layout editor, queue filters, destinations, cover-sheet PDF, profile schema and
+   realtime keys.
 3. **Companion core:** agent, tray, pairing, stream, spool/upload queue, TWAIN helper (x64 and
    x86) and WIA.
 4. **Virtual printer:** service, IPP server, attribution, pipe handoff, printer installation.
 5. **Distribution:**
    - MSI (WiX v4), signing, and the update manifest and flow;
+   - the installer download on the admin page and `/capture/devices`, served from
+     `releases/latest` once there is an installer to serve;
    - a `native-capture.yml` workflow on `windows-latest`: `cargo fmt`/`clippy`/`test`, both
      targets, MSI build.
 
