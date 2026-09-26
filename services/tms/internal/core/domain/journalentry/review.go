@@ -25,7 +25,8 @@ func (e *JournalEntry) CanApprove() error {
 		)
 	default:
 		return errortypes.NewBusinessError(
-			"Journal entry " + e.EntryNumber + " is in an unknown state",
+			"Journal entry {0} is in an unknown state",
+			e.EntryNumber,
 		)
 	}
 }
@@ -41,17 +42,21 @@ func (e *JournalEntry) CanPost() error {
 		return e.balanceError()
 	case StatusPending:
 		return errortypes.NewBusinessError(
-			"Journal entry " + e.EntryNumber + " needs approval before it can be posted",
+			"Journal entry {0} needs approval before it can be posted",
+			e.EntryNumber,
 		)
 	case StatusPosted:
-		return errortypes.NewBusinessError("Journal entry " + e.EntryNumber + " is already posted")
+		return errortypes.NewBusinessError("Journal entry {0} is already posted", e.EntryNumber)
 	case StatusDraft, StatusReversed, StatusRejected, StatusVoid:
 		return errortypes.NewBusinessError(
-			"Journal entry " + e.EntryNumber + " is " + string(e.Status) + " and cannot be posted",
+			"Journal entry {0} is {1} and cannot be posted",
+			e.EntryNumber,
+			string(e.Status),
 		)
 	default:
 		return errortypes.NewBusinessError(
-			"Journal entry " + e.EntryNumber + " is in an unknown state",
+			"Journal entry {0} is in an unknown state",
+			e.EntryNumber,
 		)
 	}
 }
@@ -67,7 +72,8 @@ func (e *JournalEntry) balanceError() error {
 	}
 	if len(e.Lines) < 2 || debit != credit || debit != e.TotalDebit || credit != e.TotalCredit {
 		return errortypes.NewBusinessError(
-			"Journal entry " + e.EntryNumber + " does not balance and cannot be posted",
+			"Journal entry {0} does not balance and cannot be posted",
+			e.EntryNumber,
 		)
 	}
 	return nil

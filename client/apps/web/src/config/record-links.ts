@@ -128,6 +128,10 @@ export const RECORD_LINKS = {
     path: "/accounting/sync/drift",
     params: { panelType: "edit", panelEntityId: "{id}" },
   },
+  journal_entry: {
+    label: "Journal entry",
+    path: "/accounting/journal-entries/{id}",
+  },
   agent_run: {
     label: "Agent run",
     path: "/admin/agent-control",

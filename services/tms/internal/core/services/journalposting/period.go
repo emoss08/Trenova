@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -54,7 +55,8 @@ func ResolvePeriod(
 			return nil, errortypes.NewValidationError(
 				req.field(),
 				errortypes.ErrInvalid,
-				"No fiscal period covers the "+req.Subject+" date",
+				"No fiscal period covers the {0} date",
+				req.subject(ctx),
 			)
 		}
 		return nil, err
@@ -118,4 +120,8 @@ func (req *ResolvePeriodRequest) field() string {
 		return "accountingDate"
 	}
 	return req.Field
+}
+
+func (req *ResolvePeriodRequest) subject(ctx context.Context) string {
+	return i18n.T(ctx, req.Subject)
 }

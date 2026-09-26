@@ -68,17 +68,17 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 42 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 33 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 46 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 8 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 10 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 0 |
 
 ## Totals
 
-917 writes: 470 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
+919 writes: 472 GraphQL mutations and 447 REST writes, after merging 68 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 78 |
-| Exempt | 444 |
+| Exempt | 446 |
 | — Security | 58 |
 | — Configuration | 206 |
 | — User preference | 23 |
@@ -86,9 +86,9 @@ commit this page; `task generate-write-coverage-check` runs the CI check.
 | — Agent administration | 42 |
 | — Counterparty | 33 |
 | — Read-only | 46 |
-| — Attestation | 8 |
+| — Attestation | 10 |
 | **Pending** | **395** |
-| Total | 917 |
+| Total | 919 |
 
 Of the 473 writes an agent should be able to make, 78 have a tool (16%).
 
@@ -584,6 +584,7 @@ The writes no tool performs yet, and what the tool would do.
 | invoicedispute | 3 | 0 | 0 | 3 |
 | invoicerun | 5 | 0 | 0 | 5 |
 | invoiceshare | 1 | 0 | 0 | 1 |
+| journalentry | 2 | 0 | 2 | 0 |
 | journalreversal | 5 | 0 | 0 | 5 |
 | jurisdictionrule | 6 | 0 | 6 | 0 |
 | latecharge | 1 | 0 | 0 | 1 |
@@ -1648,6 +1649,13 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `POST /api/v1/billing/invoices/:invoiceID/shares/`<br>invoicesharehandler.share | Pending: Share an invoice. |
+
+### journalentry
+
+| Write | Decision |
+| --- | --- |
+| `mutation approveJournalEntries` | Exempt, attestation: Approving a journal for the general ledger is a sign-off an accountable person makes; agents never hold the approve permission. |
+| `mutation postJournalEntries` | Exempt, attestation: Posting approved journals changes the general ledger balances a person signs off on; agents never hold the approve permission. |
 
 ### journalreversal
 

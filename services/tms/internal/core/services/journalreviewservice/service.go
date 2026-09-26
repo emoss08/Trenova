@@ -2,6 +2,7 @@ package journalreviewservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -151,7 +153,7 @@ func (s *Service) reviewOne(
 	}
 	if isRefusal(err) {
 		outcome.Changed = false
-		outcome.Error = refusalMessage(err)
+		outcome.Error = refusalMessage(ctx, err)
 		return outcome, nil, nil, nil
 	}
 	return nil, nil, nil, fmt.Errorf("review journal entry %s: %w", entryID, err)
@@ -209,7 +211,7 @@ func (s *Service) postEntry(
 			BusinessUnitID: req.TenantInfo.BuID,
 			Date:           entry.AccountingDate,
 			Policy:         control.ClosedPeriodPostingPolicy,
-			Subject:        "journal entry " + entry.EntryNumber,
+			Subject:        "journal entry",
 		},
 	)
 	if err != nil {
@@ -298,10 +300,8 @@ func validateRequest(
 		return nil, errortypes.NewValidationError(
 			"entryIds",
 			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Choose at most %d journal entries at a time",
-				serviceports.MaxJournalReviewEntries,
-			),
+			"Choose at most {0} journal entries at a time",
+			serviceports.MaxJournalReviewEntries,
 		)
 	}
 	return entryIDs, nil
@@ -314,9 +314,18 @@ func isRefusal(err error) bool {
 		errortypes.IsError(err)
 }
 
-func refusalMessage(err error) string {
+type localizedError interface {
+	LocalizedMessage() (message string, args []any)
+}
+
+func refusalMessage(ctx context.Context, err error) string {
 	if errortypes.IsNotFoundError(err) {
-		return "Journal entry not found"
+		return i18n.T(ctx, "Journal entry not found")
+	}
+	var localized localizedError
+	if errors.As(err, &localized) {
+		message, args := localized.LocalizedMessage()
+		return i18n.T(ctx, message, args...)
 	}
 	return err.Error()
 }

@@ -199,7 +199,8 @@ func buildLines(
 		if line.AccountID.IsNil() || line.Debit < 0 || line.Credit < 0 ||
 			(line.Debit == 0) == (line.Credit == 0) {
 			return nil, 0, 0, errortypes.NewBusinessError(
-				"Every line of the " + req.Subject + " journal needs an account and one positive side",
+				"Every line of the {0} journal needs an account and one positive side",
+				req.Subject,
 			)
 		}
 		description := line.Description
@@ -221,7 +222,8 @@ func buildLines(
 	}
 	if len(lines) < 2 || totalDebit != totalCredit {
 		return nil, 0, 0, errortypes.NewBusinessError(
-			"The " + req.Subject + " journal does not balance",
+			"The {0} journal does not balance",
+			req.Subject,
 		)
 	}
 	return lines, totalDebit, totalCredit, nil

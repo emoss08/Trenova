@@ -4097,6 +4097,15 @@ models:
   AccountingDriftOverview:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AccountingDriftOverview
+  JournalReviewSummary:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.JournalReviewSummary
+  JournalReviewResult:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.JournalReviewResult
+  JournalReviewOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/core/ports/services.JournalReviewOutcome
   AccountingDriftFixPreview:
     model:
       - github.com/emoss08/trenova/internal/core/ports/services.AccountingDriftFixPreview

@@ -14199,6 +14199,7 @@ definitions:
             - CarrierSettlementPosted
             - CarrierSettlementVoided
             - CarrierSettlementPaid
+            - DriverSettlementPaid
         type: string
         x-enum-varnames:
             - JournalSourceEventInvoicePosted
@@ -14215,6 +14216,7 @@ definitions:
             - JournalSourceEventCarrierSettlementPosted
             - JournalSourceEventCarrierSettlementVoided
             - JournalSourceEventCarrierSettlementPaid
+            - JournalSourceEventDriverSettlementPaid
     tenant.LateChargeAssessmentMode:
         enum:
             - Disabled
