@@ -7,23 +7,14 @@ import (
 )
 
 const (
-	DatasetFormat         = "trenova.extraction-dataset/v1"
+	DatasetFormat         = "trenova.extraction-dataset/v2"
 	DatasetManifestFile   = "dataset-manifest.json"
 	DatasetSchemaFile     = "schema.json"
-	DatasetSFTTrainFile   = "sft-train.jsonl"
-	DatasetSFTValidFile   = "sft-validation.jsonl"
-	DatasetPreferenceFile = "preference-train.jsonl"
+	DatasetTrainFile      = "examples-train.jsonl"
+	DatasetValidationFile = "examples-validation.jsonl"
 	DatasetEvaluationFile = "eval-validation.jsonl"
 	RoleSystem            = "system"
 	RoleUser              = "user"
-	RoleAssistant         = "assistant"
-	TargetVerifiedScore   = 0.95
-	TargetUnverifiedScore = 0.7
-	TargetOverallScore    = 0.9
-	TargetReviewStatus    = "Ready"
-	TargetSource          = "ai"
-	DefaultTargetKind     = "RateConfirmation"
-	EvidenceContextRunes  = 60
 )
 
 type ChatMessage struct {
@@ -31,17 +22,15 @@ type ChatMessage struct {
 	Content string `json:"content"`
 }
 
-type SFTRecord struct {
-	ID         string        `json:"id"`
-	Prompt     []ChatMessage `json:"prompt"`
-	Completion []ChatMessage `json:"completion"`
-}
-
-type PreferenceRecord struct {
-	ID       string        `json:"id"`
-	Prompt   []ChatMessage `json:"prompt"`
-	Chosen   []ChatMessage `json:"chosen"`
-	Rejected []ChatMessage `json:"rejected"`
+type TrainingRecord struct {
+	ID           string                          `json:"id"`
+	Split        Split                           `json:"split"`
+	DocumentKind string                          `json:"documentKind,omitempty"`
+	Prompt       []ChatMessage                   `json:"prompt"`
+	VisiblePages []ExamplePage                   `json:"visiblePages"`
+	Target       *ExampleSnapshot                `json:"target"`
+	Prediction   *ExampleSnapshot                `json:"prediction"`
+	Outcomes     map[string]aicorrection.Outcome `json:"outcomes"`
 }
 
 type EvaluationRecord struct {
@@ -68,7 +57,6 @@ type DatasetCounts struct {
 	Examples          int `json:"examples"`
 	Train             int `json:"train"`
 	Validation        int `json:"validation"`
-	Preference        int `json:"preference"`
 	WithdrawnExcluded int `json:"withdrawnExcluded"`
 }
 
@@ -83,7 +71,8 @@ type DatasetManifest struct {
 	PromptSHA256         string                          `json:"promptSha256"`
 	Temperature          *float64                        `json:"temperature,omitempty"`
 	TopP                 *float64                        `json:"topP,omitempty"`
-	KeepUnverified       bool                            `json:"keepUnverified"`
+	PageLimit            int                             `json:"pageLimit"`
+	FieldKeys            []string                        `json:"fieldKeys"`
 	Counts               DatasetCounts                   `json:"counts"`
 	Files                []DatasetFile                   `json:"files"`
 	RenderedAt           int64                           `json:"renderedAt"`
@@ -115,14 +104,4 @@ func (s *ExampleSnapshot) Correction() *aicorrection.Snapshot {
 	}
 
 	return out
-}
-
-func (e *Example) NeedsCorrection() bool {
-	for _, outcome := range e.Outcomes {
-		if outcome == aicorrection.OutcomeCorrected || outcome == aicorrection.OutcomeMissed {
-			return true
-		}
-	}
-
-	return false
 }

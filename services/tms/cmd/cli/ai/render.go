@@ -13,7 +13,6 @@ import (
 var (
 	renderOutput           string
 	renderStructuredOutput string
-	renderDropUnverified   bool
 )
 
 var trainingExportRenderCmd = &cobra.Command{
@@ -23,8 +22,9 @@ var trainingExportRenderCmd = &cobra.Command{
 
 Every part and the manifest are checked against the checksums the export
 recorded, examples whose organization has since withdrawn consent are left
-out, and each example is rendered with the production extraction prompt, so
-the model is trained on exactly what it will be sent. The output directory
+out, and each example is written with the production extraction prompt, the
+page text the model sees, and the confirmed and predicted values. The
+fine-tuning pipeline turns those into training targets. The output directory
 must not exist; it is written in full or not at all.
 
 --structured-output must match how the fine-tuned model will be registered as
@@ -33,7 +33,7 @@ or Prompted.
 
 Examples:
   trenova ai training-export render aitx_01J... --out ./datasets/aitx_01J
-  trenova ai training-export render aitx_01J... --out ./datasets/strict --drop-unverified`,
+  trenova ai training-export render aitx_01J... --out ./datasets/prompted --structured-output Prompted`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		id, err := exportID(args[0])
@@ -55,7 +55,6 @@ Examples:
 			dataset, renderErr := renderer.Render(ctx, &services.RenderTrainingDatasetRequest{
 				ExportID:             id,
 				StructuredOutputMode: mode,
-				KeepUnverified:       !renderDropUnverified,
 				Sink:                 sink,
 			})
 			if renderErr != nil {
@@ -67,8 +66,7 @@ Examples:
 
 			out := cmd.OutOrStdout()
 			fmt.Fprintf(out, "Rendered %d example(s) to %s\n", dataset.Counts.Examples, sink.dir)
-			fmt.Fprintf(out, "  train %d, validation %d, preference pairs %d\n",
-				dataset.Counts.Train, dataset.Counts.Validation, dataset.Counts.Preference)
+			fmt.Fprintf(out, "  train %d, validation %d\n", dataset.Counts.Train, dataset.Counts.Validation)
 			if dataset.Counts.WithdrawnExcluded > 0 {
 				fmt.Fprintf(out, "  %d example(s) left out: their organization has withdrawn consent\n",
 					dataset.Counts.WithdrawnExcluded)
@@ -89,8 +87,6 @@ func init() {
 	trainingExportRenderCmd.Flags().StringVar(&renderStructuredOutput, "structured-output",
 		string(aiprovider.StructuredOutputJSONSchema),
 		"how the served model will be asked for JSON: JSONSchema, JSONMode or Prompted")
-	trainingExportRenderCmd.Flags().BoolVar(&renderDropUnverified, "drop-unverified", false,
-		"train only on fields a person confirmed, leaving out the other fields the model predicted")
 	_ = trainingExportRenderCmd.MarkFlagRequired("out")
 	trainingExportCmd.AddCommand(trainingExportRenderCmd)
 }

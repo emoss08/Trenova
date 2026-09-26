@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
@@ -64,12 +65,11 @@ func NewRenderer(p RendererParams) *Renderer {
 func AsRenderer(r *Renderer) services.AITrainingDatasetRenderer { return r }
 
 type renderJob struct {
-	mode           aiprovider.StructuredOutputMode
-	keepUnverified bool
-	withdrawn      map[string]struct{}
-	files          *datasetFiles
-	replies        replyBuilder
-	counts         aitraining.DatasetCounts
+	mode      aiprovider.StructuredOutputMode
+	pageLimit int
+	withdrawn map[string]struct{}
+	files     *datasetFiles
+	counts    aitraining.DatasetCounts
 }
 
 func (r *Renderer) Render(
@@ -109,20 +109,18 @@ func (r *Renderer) Render(
 	}
 
 	files, err := openDatasetFiles(req.Sink,
-		aitraining.DatasetSFTTrainFile,
-		aitraining.DatasetSFTValidFile,
-		aitraining.DatasetPreferenceFile,
+		aitraining.DatasetTrainFile,
+		aitraining.DatasetValidationFile,
 		aitraining.DatasetEvaluationFile,
 	)
 	if err != nil {
 		return nil, err
 	}
 	job := &renderJob{
-		mode:           mode,
-		keepUnverified: req.KeepUnverified,
-		withdrawn:      withdrawn,
-		files:          files,
-		replies:        newReplyBuilder(r.contract),
+		mode:      mode,
+		pageLimit: r.contract.PageLimit(),
+		withdrawn: withdrawn,
+		files:     files,
 	}
 
 	for i := range manifest.Parts {
@@ -159,7 +157,8 @@ func (r *Renderer) Render(
 		PromptSHA256:         hashutils.SHA256Hex(prompt.System + "\n" + string(schemaJSON)),
 		Temperature:          prompt.Temperature,
 		TopP:                 prompt.TopP,
-		KeepUnverified:       req.KeepUnverified,
+		PageLimit:            job.pageLimit,
+		FieldKeys:            r.contract.FieldKeys(),
 		Counts:               job.counts,
 		Files:                append(written, schemaFile),
 		RenderedAt:           r.now(),
@@ -279,62 +278,33 @@ func (r *Renderer) renderExample(job *renderJob, part *aitraining.ManifestPart, 
 		return nil
 	}
 
-	prompt := r.promptFor(job.mode, example)
-	target, err := r.contract.FormatReply(job.replies.build(&replyInput{
-		primary:    example.Target,
-		supplement: supplementFor(job.keepUnverified, example),
-		confidence: aitraining.TargetVerifiedScore,
-		kind:       example.DocumentKind,
-		pages:      example.Input.Pages,
-	}))
-	if err != nil {
-		return err
+	record := &aitraining.TrainingRecord{
+		ID:           example.ID,
+		Split:        example.Split,
+		DocumentKind: example.DocumentKind,
+		Prompt:       r.promptFor(job.mode, example),
+		VisiblePages: visiblePages(example.Input.Pages, job.pageLimit),
+		Target:       example.Target,
+		Prediction:   example.Prediction,
+		Outcomes:     example.Outcomes,
 	}
-	completion := []aitraining.ChatMessage{{Role: aitraining.RoleAssistant, Content: target}}
 	job.counts.Examples++
 
 	if example.Split == aitraining.SplitValidation {
 		job.counts.Validation++
-		if err = job.files.write(aitraining.DatasetSFTValidFile, &aitraining.SFTRecord{
-			ID: example.ID, Prompt: prompt, Completion: completion,
-		}); err != nil {
+		if err := job.files.write(aitraining.DatasetValidationFile, record); err != nil {
 			return err
 		}
 		return job.files.write(aitraining.DatasetEvaluationFile, &aitraining.EvaluationRecord{
-			ID: example.ID, Prompt: prompt, Expected: example.Target, Baseline: example.Prediction,
+			ID:       example.ID,
+			Prompt:   record.Prompt,
+			Expected: example.Target,
+			Baseline: example.Prediction,
 		})
 	}
 
 	job.counts.Train++
-	if err = job.files.write(aitraining.DatasetSFTTrainFile, &aitraining.SFTRecord{
-		ID: example.ID, Prompt: prompt, Completion: completion,
-	}); err != nil {
-		return err
-	}
-	if !example.NeedsCorrection() {
-		return nil
-	}
-
-	rejected, err := r.contract.FormatReply(job.replies.build(&replyInput{
-		primary:    example.Prediction,
-		confidence: aitraining.TargetUnverifiedScore,
-		kind:       example.DocumentKind,
-		pages:      example.Input.Pages,
-	}))
-	if err != nil {
-		return err
-	}
-	if rejected == target {
-		return nil
-	}
-	job.counts.Preference++
-
-	return job.files.write(aitraining.DatasetPreferenceFile, &aitraining.PreferenceRecord{
-		ID:       example.ID,
-		Prompt:   prompt,
-		Chosen:   completion,
-		Rejected: []aitraining.ChatMessage{{Role: aitraining.RoleAssistant, Content: rejected}},
-	})
+	return job.files.write(aitraining.DatasetTrainFile, record)
 }
 
 func (r *Renderer) promptFor(
@@ -373,10 +343,15 @@ func (r *Renderer) writeDocument(
 	return file.close()
 }
 
-func supplementFor(keep bool, example *aitraining.Example) *aitraining.ExampleSnapshot {
-	if !keep {
-		return nil
+func visiblePages(pages []aitraining.ExamplePage, limit int) []aitraining.ExamplePage {
+	out := make([]aitraining.ExamplePage, 0, len(pages))
+	for _, page := range pages {
+		text := page.Text
+		if len(text) > limit {
+			text = strings.ToValidUTF8(text[:limit], "")
+		}
+		out = append(out, aitraining.ExamplePage{Number: page.Number, Text: text})
 	}
 
-	return example.Prediction
+	return out
 }

@@ -92,7 +92,7 @@ def new_record(config: PipelineConfig, dataset: DatasetManifest) -> RunRecord:
             "promptSha256": dataset.prompt_sha256,
             "structuredOutputMode": dataset.structured_output_mode,
             "schemaName": dataset.schema_name,
-            "keepUnverified": dataset.keep_unverified,
+            "pageLimit": dataset.page_limit,
             "counts": dataset.counts,
         },
         environment={"python": platform.python_version(), "packages": installed_versions()},

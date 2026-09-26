@@ -5603,6 +5603,7 @@ name = "trenova-extraction-finetune"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [
+    { name = "jsonschema" },
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
@@ -5630,6 +5631,7 @@ requires-dist = [
     { name = "accelerate", marker = "extra == 'train'", specifier = ">=1.0,<2" },
     { name = "bitsandbytes", marker = "sys_platform == 'linux' and extra == 'train'", specifier = ">=0.45" },
     { name = "datasets", marker = "extra == 'train'", specifier = ">=5.0,<6" },
+    { name = "jsonschema", specifier = ">=4.23,<5" },
     { name = "peft", marker = "extra == 'train'", specifier = ">=0.21,<1" },
     { name = "pydantic", specifier = ">=2.7,<3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },

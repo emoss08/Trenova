@@ -103,25 +103,26 @@ func newTestRenderer(f *runnerFixture) *Renderer {
 	}
 }
 
-func TestRenderWritesVerifiedDatasets(t *testing.T) {
+func TestRenderWritesRawExamples(t *testing.T) {
 	t.Parallel()
 
 	f := exportedFixture(t, 6, 50)
 	sink := &memorySink{}
 	dataset, err := newTestRenderer(f).Render(t.Context(), &services.RenderTrainingDatasetRequest{
-		ExportID:       f.export.ID,
-		KeepUnverified: true,
-		Sink:           sink,
+		ExportID: f.export.ID,
+		Sink:     sink,
 	})
 	require.NoError(t, err)
 
+	contract := aidocumentservice.Contract{}
 	assert.Equal(t, aitraining.DatasetFormat, dataset.Format)
 	assert.Equal(t, aiprovider.StructuredOutputJSONSchema, dataset.StructuredOutputMode)
+	assert.Equal(t, contract.PageLimit(), dataset.PageLimit)
+	assert.Equal(t, contract.FieldKeys(), dataset.FieldKeys)
 	assert.Equal(t, 6, dataset.Counts.Examples)
 	assert.Equal(t, 6, dataset.Counts.Train+dataset.Counts.Validation)
-	assert.Equal(t, dataset.Counts.Train, dataset.Counts.Preference)
-	assert.Len(t, sink.lines(aitraining.DatasetSFTTrainFile), dataset.Counts.Train)
-	assert.Len(t, sink.lines(aitraining.DatasetSFTValidFile), dataset.Counts.Validation)
+	assert.Len(t, sink.lines(aitraining.DatasetTrainFile), dataset.Counts.Train)
+	assert.Len(t, sink.lines(aitraining.DatasetValidationFile), dataset.Counts.Validation)
 	assert.Len(t, sink.lines(aitraining.DatasetEvaluationFile), dataset.Counts.Validation)
 	assert.Len(t, dataset.PromptSHA256, 64)
 	require.NotNil(t, dataset.Temperature)
@@ -136,42 +137,27 @@ func TestRenderWritesVerifiedDatasets(t *testing.T) {
 	assert.Equal(t, f.export.ID, manifest.ExportID)
 	assert.Contains(t, sink.files[aitraining.DatasetSchemaFile].String(), `"fields"`)
 
-	for _, line := range append(sink.lines(aitraining.DatasetSFTTrainFile), sink.lines(aitraining.DatasetSFTValidFile)...) {
-		var record aitraining.SFTRecord
+	lines := append(sink.lines(aitraining.DatasetTrainFile), sink.lines(aitraining.DatasetValidationFile)...)
+	for _, line := range lines {
+		var record aitraining.TrainingRecord
 		require.NoError(t, sonic.Unmarshal(line, &record))
 		require.Len(t, record.Prompt, 2)
 		assert.Equal(t, aitraining.RoleSystem, record.Prompt[0].Role)
 		assert.True(t, strings.HasSuffix(record.Prompt[0].Content, "|JSONSchema"))
-		require.Len(t, record.Completion, 1)
+		require.Len(t, record.VisiblePages, 1)
+		assert.Contains(t, record.Prompt[1].Content, record.VisiblePages[0].Text)
 
-		reply, parseErr := aidocumentservice.Contract{}.ParseReply(record.Completion[0].Content)
-		require.NoError(t, parseErr)
-		reference := reply.Fields[aicorrection.FieldReference]
-		assert.NotEmpty(t, reference.Value)
-		assert.Contains(t, record.Prompt[1].Content, reference.Value)
-		assert.Equal(t, 1, reference.PageNumber)
-		assert.Contains(t, reference.EvidenceExcerpt, reference.Value)
-		assert.InDelta(t, aitraining.TargetVerifiedScore, reference.Confidence, 1e-9)
-		assert.InDelta(t, aitraining.TargetUnverifiedScore, reply.Fields["loadNumber"].Confidence, 1e-9)
-		assert.Equal(t, reply.Stops[0].Name, reply.Fields[aicorrection.FieldShipper].Value)
-		rate := reply.Fields[aicorrection.FieldRate]
-		assert.Equal(t, 1, rate.PageNumber)
-		assert.NotEmpty(t, rate.EvidenceExcerpt)
-		require.Len(t, reply.Stops, 1)
-		assert.Equal(t, 1, reply.Stops[0].Sequence)
+		reference := record.Target.Fields[aicorrection.FieldReference]
+		assert.NotEmpty(t, reference)
+		assert.Contains(t, record.VisiblePages[0].Text, reference)
+		assert.NotEqual(t,
+			record.Target.Fields[aicorrection.FieldShipper],
+			record.Prediction.Fields[aicorrection.FieldShipper],
+		)
+		assert.Equal(t, aicorrection.OutcomeCorrected, record.Outcomes[aicorrection.FieldShipper])
+		assert.Equal(t, "RateConfirmation", record.DocumentKind)
 	}
 
-	for _, line := range sink.lines(aitraining.DatasetPreferenceFile) {
-		var record aitraining.PreferenceRecord
-		require.NoError(t, sonic.Unmarshal(line, &record))
-		chosen, parseErr := aidocumentservice.Contract{}.ParseReply(record.Chosen[0].Content)
-		require.NoError(t, parseErr)
-		rejected, parseErr := aidocumentservice.Contract{}.ParseReply(record.Rejected[0].Content)
-		require.NoError(t, parseErr)
-		assert.Equal(t, chosen.Stops[0].Name, chosen.Fields[aicorrection.FieldShipper].Value)
-		assert.NotEqual(t, chosen.Fields[aicorrection.FieldShipper].Value, rejected.Fields[aicorrection.FieldShipper].Value)
-		assert.NotContains(t, strings.ToLower(record.Rejected[0].Content), "wrong shipper")
-	}
 	for _, line := range sink.lines(aitraining.DatasetEvaluationFile) {
 		var record aitraining.EvaluationRecord
 		require.NoError(t, sonic.Unmarshal(line, &record))
@@ -183,22 +169,17 @@ func TestRenderWritesVerifiedDatasets(t *testing.T) {
 	}
 }
 
-func TestRenderCanDropUnverifiedFields(t *testing.T) {
+func TestVisiblePagesCutWhereProductionCuts(t *testing.T) {
 	t.Parallel()
 
-	f := exportedFixture(t, 2, 0)
-	sink := &memorySink{}
-	_, err := newTestRenderer(f).Render(t.Context(), &services.RenderTrainingDatasetRequest{
-		ExportID: f.export.ID,
-		Sink:     sink,
-	})
-	require.NoError(t, err)
+	pages := visiblePages([]aitraining.ExamplePage{
+		{Number: 1, Text: "short"},
+		{Number: 2, Text: "abcdé"},
+	}, 5)
 
-	for _, line := range sink.lines(aitraining.DatasetSFTTrainFile) {
-		var record aitraining.SFTRecord
-		require.NoError(t, sonic.Unmarshal(line, &record))
-		assert.NotContains(t, record.Completion[0].Content, `"loadNumber"`)
-	}
+	assert.Equal(t, "short", pages[0].Text)
+	assert.Equal(t, "abcd", pages[1].Text)
+	assert.Equal(t, 2, pages[1].Number)
 }
 
 func TestRenderExcludesWithdrawnExamples(t *testing.T) {
@@ -217,7 +198,7 @@ func TestRenderExcludesWithdrawnExamples(t *testing.T) {
 
 	assert.Equal(t, 1, dataset.Counts.WithdrawnExcluded)
 	assert.Equal(t, 2, dataset.Counts.Examples)
-	assert.NotContains(t, sink.files[aitraining.DatasetSFTTrainFile].String(), `"id":"`+withdrawn+`"`)
+	assert.NotContains(t, sink.files[aitraining.DatasetTrainFile].String(), `"id":"`+withdrawn+`"`)
 }
 
 func TestRenderRejectsATamperedPart(t *testing.T) {

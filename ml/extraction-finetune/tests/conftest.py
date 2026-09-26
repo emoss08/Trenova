@@ -8,40 +8,116 @@ import pytest
 
 from trenova_finetune import dataset
 
-REPLY = json.dumps({"documentKind": "RateConfirmation", "fields": [], "stops": []})
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+SCHEMA = json.loads((FIXTURES / "extraction-schema.json").read_text())
+FIELD_KEYS = SCHEMA["properties"]["fields"]["items"]["properties"]["key"]["enum"]
+
+PAGE = (
+    "Rate Confirmation Load # OUG-8393964\n"
+    "Shipper: Juniper Manufacturing, 8862 Poplar Rd, Hartwell, CA 85055\n"
+    "Pickup 03/14/2026 08:00-14:00\n"
+    "Consignee: Granite Brands, Crestview, CO 52999\n"
+    "Total: $2,563.12 USD"
+)
 PROMPT = [
     {"role": "system", "content": "Extract the fields."},
-    {"role": "user", "content": "## Document Pages\n<untrusted_data>\nLoad 1\n</untrusted_data>"},
+    {"role": "user", "content": f"## Document Pages\n<untrusted_data>\n{PAGE}\n</untrusted_data>"},
 ]
+
+
+def target_snapshot() -> dict:
+    return {
+        "fields": {
+            "referenceNumber": "OUG-8393964",
+            "rate": "2563.12",
+            "shipper": "Juniper Manufacturing",
+            "consignee": "Granite Brands",
+            "pickupWindow": "2026-03-14",
+            "weight": "42000",
+        },
+        "stops": [
+            {
+                "role": "pickup",
+                "sequence": 0,
+                "name": "Juniper Manufacturing",
+                "addressLine1": "8862 Poplar Rd",
+                "city": "Hartwell",
+                "state": "CA",
+                "postalCode": "85055",
+                "date": "2026-03-14",
+                "appointmentRequired": False,
+            },
+            {
+                "role": "delivery",
+                "sequence": 0,
+                "name": "Granite Brands",
+                "city": "Crestview",
+                "state": "CO",
+                "postalCode": "52999",
+                "date": "2026-03-16",
+                "appointmentRequired": True,
+            },
+        ],
+    }
+
+
+def prediction_snapshot() -> dict:
+    snapshot = target_snapshot()
+    snapshot["fields"]["shipper"] = "Harbor Supply"
+    snapshot["fields"]["loadNumber"] = "OUG-8393964"
+    snapshot["stops"][0]["timeWindow"] = "08:00-14:00"
+    return snapshot
+
+
+def example(identifier: str, split: str, *, corrected: bool = True) -> dict:
+    return {
+        "id": identifier,
+        "split": split,
+        "documentKind": "RateConfirmation",
+        "prompt": PROMPT,
+        "visiblePages": [{"number": 1, "text": PAGE}],
+        "target": target_snapshot(),
+        "prediction": prediction_snapshot(),
+        "outcomes": {
+            "referenceNumber": "Correct",
+            "shipper": "Corrected" if corrected else "Correct",
+        },
+    }
 
 
 def _jsonl(records: list[dict]) -> bytes:
     return b"".join(json.dumps(record).encode() + b"\n" for record in records)
 
 
-def write_dataset(root: Path, *, train: int = 3, validation: int = 2, pairs: int = 2) -> Path:
+def write_dataset(
+    root: Path,
+    *,
+    train: int = 3,
+    validation: int = 2,
+    corrected: bool = True,
+    schema: dict | None = None,
+    field_keys: list[str] | None = None,
+) -> Path:
     root.mkdir(parents=True, exist_ok=True)
-    completion = [{"role": "assistant", "content": REPLY}]
     contents = {
-        dataset.SFT_TRAIN_FILE: _jsonl(
-            [{"id": f"t{i}", "prompt": PROMPT, "completion": completion} for i in range(train)]
+        dataset.TRAIN_FILE: _jsonl(
+            [example(f"t{i}", "train", corrected=corrected) for i in range(train)]
         ),
-        dataset.SFT_VALIDATION_FILE: _jsonl(
-            [{"id": f"v{i}", "prompt": PROMPT, "completion": completion} for i in range(validation)]
-        ),
-        dataset.PREFERENCE_FILE: _jsonl(
-            [
-                {"id": f"t{i}", "prompt": PROMPT, "chosen": completion, "rejected": completion}
-                for i in range(pairs)
-            ]
+        dataset.VALIDATION_FILE: _jsonl(
+            [example(f"v{i}", "validation") for i in range(validation)]
         ),
         dataset.EVALUATION_FILE: _jsonl(
             [
-                {"id": f"v{i}", "prompt": PROMPT, "expected": {"fields": {}}, "baseline": None}
+                {
+                    "id": f"v{i}",
+                    "prompt": PROMPT,
+                    "expected": target_snapshot(),
+                    "baseline": prediction_snapshot(),
+                }
                 for i in range(validation)
             ]
         ),
-        dataset.SCHEMA_FILE: json.dumps({"type": "object"}).encode() + b"\n",
+        dataset.SCHEMA_FILE: json.dumps(schema or SCHEMA, indent=2).encode() + b"\n",
     }
     files = []
     for name, content in contents.items():
@@ -65,7 +141,8 @@ def write_dataset(root: Path, *, train: int = 3, validation: int = 2, pairs: int
         "promptSha256": "p" * 64,
         "temperature": 0.1,
         "topP": 0.95,
-        "keepUnverified": True,
+        "pageLimit": 2500,
+        "fieldKeys": field_keys or FIELD_KEYS,
         "counts": {"examples": train + validation, "train": train, "validation": validation},
         "files": files,
         "renderedAt": 1790000000,

@@ -10,7 +10,6 @@ type ExtractionContract interface {
 	PageLimit() int
 	FieldKeys() []string
 	ParseReply(text string) (*AIExtractResult, error)
-	FormatReply(result *AIExtractResult) (string, error)
 }
 
 type RenderedPrompt struct {

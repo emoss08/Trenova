@@ -44,17 +44,38 @@ func jsonLines(t *testing.T, records ...any) string {
 
 func replyFor(t *testing.T, snapshot *aitraining.ExampleSnapshot, dateText string) string {
 	t.Helper()
-	builder := newReplyBuilder(aidocumentservice.Contract{})
-	result := builder.build(&replyInput{primary: snapshot, confidence: aitraining.TargetVerifiedScore})
-	if dateText != "" {
-		field := result.Fields[aicorrection.FieldPickupWindow]
-		field.Value = dateText
-		result.Fields[aicorrection.FieldPickupWindow] = field
-		result.Stops[0].Date = dateText
+	fields := make([]map[string]any, 0, len(snapshot.Fields))
+	for key, value := range snapshot.Fields {
+		if key == aicorrection.FieldPickupWindow && dateText != "" {
+			value = dateText
+		}
+		fields = append(fields, map[string]any{
+			"key": key, "label": key, "value": value, "confidence": 0.9, "evidenceExcerpt": "",
+			"pageNumber": 1, "reviewRequired": false, "conflict": false, "source": "ai",
+			"alternativeValues": []string{},
+		})
 	}
-	reply, err := aidocumentservice.Contract{}.FormatReply(result)
+	stops := make([]map[string]any, 0, len(snapshot.Stops))
+	for i, stop := range snapshot.Stops {
+		date := stop.Date
+		if dateText != "" {
+			date = dateText
+		}
+		stops = append(stops, map[string]any{
+			"sequence": i + 1, "role": stop.Role, "name": stop.Name, "addressLine1": stop.AddressLine1,
+			"addressLine2": stop.AddressLine2, "city": stop.City, "state": stop.State,
+			"postalCode": stop.PostalCode, "date": date, "timeWindow": stop.TimeWindow,
+			"appointmentRequired": stop.AppointmentRequired, "pageNumber": 1, "evidenceExcerpt": "",
+			"confidence": 0.9, "reviewRequired": false, "source": "ai",
+		})
+	}
+	encoded, err := sonic.Marshal(map[string]any{
+		"documentKind": "RateConfirmation", "overallConfidence": 0.9, "reviewStatus": "Ready",
+		"missingFields": []string{}, "signals": []string{}, "conflicts": []any{},
+		"fields": fields, "stops": stops,
+	})
 	require.NoError(t, err)
-	return reply
+	return string(encoded)
 }
 
 func newTestScorer() *Scorer {

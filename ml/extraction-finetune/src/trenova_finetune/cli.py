@@ -37,6 +37,11 @@ def build_parser() -> argparse.ArgumentParser:
     verify = commands.add_parser("verify", help="check a rendered dataset against its manifest")
     verify.add_argument("--dataset", type=Path, required=True)
 
+    build = commands.add_parser("targets", help="build SFT and preference data from a recipe")
+    build.add_argument("--config", type=Path, required=True)
+    build.add_argument("--dataset", type=Path, required=True)
+    build.add_argument("--out", type=Path, required=True)
+
     run = commands.add_parser("run", help="train, merge and predict in one resumable run")
     run.add_argument("--config", type=Path, required=True)
     run.add_argument("--dataset", type=Path, required=True)
@@ -64,6 +69,17 @@ def _verify(args: argparse.Namespace) -> int:
     manifest = dataset.load_manifest(args.dataset)
     dataset.verify(args.dataset, manifest)
     print(json.dumps({"exportId": manifest.export_id, "counts": manifest.counts}, indent=2))
+    return 0
+
+
+def _targets(args: argparse.Namespace) -> int:
+    from .targets import build
+
+    config = load_config(args.config)
+    manifest = dataset.load_manifest(args.dataset)
+    dataset.verify(args.dataset, manifest)
+    data = build(args.dataset, args.out, manifest, config.targets)
+    print(json.dumps({"out": str(data.directory), "counts": data.counts}, indent=2))
     return 0
 
 
@@ -110,7 +126,13 @@ def _predict(args: argparse.Namespace) -> int:
     return 0
 
 
-HANDLERS = {"verify": _verify, "run": _run, "merge": _merge, "predict": _predict}
+HANDLERS = {
+    "verify": _verify,
+    "targets": _targets,
+    "run": _run,
+    "merge": _merge,
+    "predict": _predict,
+}
 
 
 def main(argv: list[str] | None = None) -> int:

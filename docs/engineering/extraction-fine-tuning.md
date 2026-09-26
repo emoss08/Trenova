@@ -6,16 +6,17 @@ an [AI training export](ai-training-export.md); read that first.
 
 ```
 trenova ai training-export start            anonymized JSONL in object storage
-trenova ai training-export render           prompt-completion datasets on disk
-trenova-finetune run                        SFT → merge → DPO → merge → predict   (GPU)
+trenova ai training-export render           raw examples with the production prompt, on disk
+trenova-finetune run                        targets → SFT → merge → DPO → merge → predict (GPU)
 trenova ai fine-tune score                  model vs. production on the validation set
 scripts/serve.sh + AI provider              vLLM behind an OpenAIChat provider
 AI Control → Quality → Document extraction  evaluation run on the golden set
 ```
 
 The Go side owns everything that must match production exactly: the prompt, the reply schema,
-reading a reply, and scoring it. The Python side in `ml/extraction-finetune` only trains and
-generates. Neither re-implements the other.
+reading a reply, and scoring it. The Python side in `ml/extraction-finetune` owns the training
+recipe: how a confirmed answer becomes the reply the model learns, which examples become
+preference pairs, and the training itself. Neither re-implements the other.
 
 ## 1. Render the export
 
@@ -35,11 +36,15 @@ is written. A failed render leaves nothing behind.
 
 | File | What it holds |
 | --- | --- |
-| `sft-train.jsonl`, `sft-validation.jsonl` | `{id, prompt: [system, user], completion: [assistant]}` |
-| `preference-train.jsonl` | `{id, prompt, chosen, rejected}` for training examples a person corrected |
+| `examples-train.jsonl`, `examples-validation.jsonl` | `{id, split, documentKind, prompt: [system, user], visiblePages, target, prediction, outcomes}` |
 | `eval-validation.jsonl` | `{id, prompt, expected, baseline}`, which the scorer reads |
 | `schema.json` | The reply schema a served model is held to |
-| `dataset-manifest.json` | Size, SHA-256 and record count of every file. Also the export lineage, the prompt fingerprint, the structured output mode, and production's sampling settings |
+| `dataset-manifest.json` | Size, SHA-256 and record count of every file. Also the export lineage, the prompt fingerprint, the structured output mode, production's sampling settings, the page limit, and the field keys the reply may use |
+
+`visiblePages` is the page text cut where production cuts it, so evidence is only ever found in
+text the model was shown. `target` is what a person confirmed, `prediction` what the production
+model said, and `outcomes` how each field scored. Nothing here decides what the model is trained
+to say; that is the recipe's job.
 
 **The prompt is production's prompt.**
 
@@ -58,20 +63,43 @@ be registered with:
 - A model trained on `JSONSchema` prompts and then served `Prompted` has never seen the schema
   instruction it is given.
 
-**The target is the confirmed answer**, formatted by `Contract.FormatReply` into the reply schema:
+## 2. The training recipe
 
-- Fields a person confirmed carry confidence 0.95. Other fields the production model predicted
-  carry 0.7; `--drop-unverified` leaves them out. They are included by default because a target
-  without them would teach the model to omit those fields.
-- Each value's evidence excerpt and page number are found in the page text the model actually
-  sees. Money is matched with and without thousands separators.
+`trenova_finetune/targets.py` turns examples into training data. The `targets` section of the
+configuration sets every choice it makes:
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `keep_unverified` | `true` | Also train on fields the production model predicted but nobody confirmed. Without them, the model would learn to omit those fields |
+| `verified_confidence` | `0.95` | Confidence given to a confirmed field or stop |
+| `unverified_confidence` | `0.7` | Confidence given to an unconfirmed field, and to every value in a rejected reply |
+| `overall_confidence`, `review_status` | `0.9`, `Ready` | The reply's top-level confidence and status |
+| `evidence_context_chars` | `60` | How much page text surrounds a value in its evidence excerpt |
+| `preference_outcomes` | `[Corrected, Missed]` | A training example becomes a preference pair when a field has one of these outcomes |
+
+A reply is built in the production wire format:
+
+- Keys are ordered as the schema's `required` lists, with field keys in schema order.
+- Every string is held to its `maxLength`, and the lists to their `maxItems`.
+- Evidence is found in the visible page text, and money is matched with and without thousands
+  separators.
 - Stop dates are the confirmed calendar day in ISO form, and stops are numbered in route order.
 
-**Preference pairs** are built only for training examples with a `Corrected` or `Missed` field.
-`chosen` is the confirmed answer; `rejected` is what the production model said, rendered the
-same way.
+Every reply is validated against `schema.json` before it is written, so a recipe change that
+breaks the wire format stops the build instead of reaching training. For each preference pair,
+`chosen` is the confirmed reply; `rejected` is the production model's answer, built the same way.
 
-## 2. Train
+`trenova-finetune targets --config … --dataset … --out …` builds the data on its own for
+inspection. `run` builds it as its first stage, into the run directory, with its own checksummed
+manifest. The recipe is part of the configuration, so `--resume` refuses a changed recipe.
+
+The builder has two cross-checks. `tests/fixtures/extraction-schema.json` is the production reply
+schema, and a Go test (`TestFineTuningPipelineSchemaFixtureIsCurrent`) fails when it goes stale.
+Regenerate it with `TRENOVA_UPDATE_FIXTURES=1 go test ./internal/core/services/aidocumentservice/`.
+In the other direction, `trenova ai fine-tune score` reads the recipe's replies with production's
+reply reader.
+
+## 3. Train
 
 On the GPU machine:
 
@@ -86,13 +114,14 @@ uv run trenova-finetune run --config configs/qwen2.5-7b-instruct.yaml \
 `run` works through these stages and records each one in `run.json`:
 
 1. **verify**: every dataset file is checked against the manifest.
-2. **sft**: LoRA on the base model, with loss on the completion only. That is TRL's default for
+2. **targets**: the recipe builds the SFT and preference data into `data/`.
+3. **sft**: LoRA on the base model, with loss on the completion only. That is TRL's default for
    prompt-completion data, set explicitly here.
-3. **merge-sft**: the adapter is folded into the base model.
-4. **dpo**: preference training on top of the SFT model. It is skipped when the configuration
+4. **merge-sft**: the adapter is folded into the base model.
+5. **dpo**: preference training on top of the SFT model. It is skipped when the configuration
    disables it or there are fewer than `dpo.min_pairs` pairs.
-5. **merge-dpo**: the preference adapter is folded into the SFT model.
-6. **predict**: vLLM answers the validation prompts, asking for JSON the way the provider will.
+6. **merge-dpo**: the preference adapter is folded into the SFT model.
+7. **predict**: vLLM answers the validation prompts, asking for JSON the way the provider will.
 
 `run.json` records:
 
@@ -117,7 +146,7 @@ against: trl 1, transformers 5, peft 0.x, vLLM 0.x. Raise a pin only together wi
 `training.py`, `models.py` and `predict.py`. The pipeline's own tests need no GPU, and run in CI
 (`test-ml.yml`).
 
-## 3. Score
+## 4. Score
 
 ```bash
 trenova ai fine-tune score \
@@ -143,7 +172,7 @@ up camelCase keys. As a result, those fields read as `Missed` in production corr
 evaluation runs. `aicorrection.CanonicalFieldKey` now maps both spellings onto one key. Accuracy
 captured before this change undercounts reference numbers and pickup and delivery windows.
 
-## 4. Serve and compare in Trenova
+## 5. Serve and compare in Trenova
 
 ```bash
 VLLM_API_KEY=... scripts/serve.sh ./runs/qwen-2026-10/dpo/model trenova-extract-2026-10

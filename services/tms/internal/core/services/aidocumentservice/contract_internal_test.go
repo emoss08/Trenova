@@ -1,8 +1,12 @@
 package aidocumentservice
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/bytedance/sonic"
 
 	"github.com/emoss08/trenova/internal/core/domain/aiprovider"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
@@ -35,61 +39,25 @@ func TestContractFieldKeysMatchTheSchemaEnum(t *testing.T) {
 	assert.Equal(t, enum, Contract{}.FieldKeys())
 }
 
-func TestContractFormatReplyRoundTrips(t *testing.T) {
+func TestContractParseReplyReadsTheWireFormat(t *testing.T) {
 	t.Parallel()
 
-	result := &serviceports.AIExtractResult{
-		DocumentKind:      "RateConfirmation",
-		OverallConfidence: 1.4,
-		ReviewStatus:      "ready",
-		Fields: map[string]serviceports.AIDocumentField{
-			"rate":            {Label: "Rate", Value: "1500.00", Confidence: 0.9, PageNumber: 1, Source: "ai"},
-			"shipper":         {Label: "Shipper", Value: "Harbor Supply", Confidence: 0.95},
-			"notInSchema":     {Label: "Nope", Value: "dropped"},
-			"referenceNumber": {Label: "Reference", Value: "", Confidence: 0.5},
-		},
-		Stops: []*serviceports.AIDocumentStop{
-			{Sequence: 2, Role: "delivery", Name: "B"},
-			nil,
-			{Sequence: 1, Role: "pickup", Name: "A", EvidenceExcerpt: strings.Repeat("e", maxEvidenceRunes+10)},
-		},
-	}
+	reply := `{"documentKind":"RateConfirmation","overallConfidence":1.4,"reviewStatus":"ready",` +
+		`"missingFields":[],"signals":[],"conflicts":[],` +
+		`"fields":[{"key":"rate","label":"Rate","value":"1500.00","confidence":0.9,"evidenceExcerpt":"",` +
+		`"pageNumber":1,"reviewRequired":false,"conflict":false,"source":"ai","alternativeValues":[]}],` +
+		`"stops":[{"sequence":1,"role":"pickup","name":"A","addressLine1":"","addressLine2":"","city":"",` +
+		`"state":"","postalCode":"","date":"","timeWindow":"","appointmentRequired":false,"pageNumber":1,` +
+		`"evidenceExcerpt":"","confidence":0.9,"reviewRequired":false,"source":"ai"}]}`
 
-	text, err := Contract{}.FormatReply(result)
+	parsed, err := Contract{}.ParseReply(reply)
 	require.NoError(t, err)
-	parsed, err := Contract{}.ParseReply(text)
-	require.NoError(t, err)
-
 	assert.Equal(t, "RateConfirmation", parsed.DocumentKind)
 	assert.InDelta(t, 1.0, parsed.OverallConfidence, 1e-9)
 	assert.Equal(t, "Ready", parsed.ReviewStatus)
-	assert.Len(t, parsed.Fields, 2)
 	assert.Equal(t, "1500.00", parsed.Fields["rate"].Value)
-	assert.NotNil(t, parsed.Fields["rate"].AlternativeValues)
-	require.Len(t, parsed.Stops, 2)
+	require.Len(t, parsed.Stops, 1)
 	assert.Equal(t, "A", parsed.Stops[0].Name)
-	assert.Len(t, []rune(parsed.Stops[0].EvidenceExcerpt), maxEvidenceRunes)
-	assert.Contains(t, text, `"fields":[{"key":"shipper"`)
-}
-
-func TestContractFormatReplyCapsFieldsAndStops(t *testing.T) {
-	t.Parallel()
-
-	fields := map[string]serviceports.AIDocumentField{}
-	for _, key := range extractFieldKeys {
-		fields[key] = serviceports.AIDocumentField{Value: "v"}
-	}
-	stops := make([]*serviceports.AIDocumentStop, 0, maxExtractStops+3)
-	for i := range maxExtractStops + 3 {
-		stops = append(stops, &serviceports.AIDocumentStop{Sequence: i})
-	}
-
-	text, err := Contract{}.FormatReply(&serviceports.AIExtractResult{Fields: fields, Stops: stops})
-	require.NoError(t, err)
-	parsed, err := Contract{}.ParseReply(text)
-	require.NoError(t, err)
-	assert.Len(t, parsed.Fields, maxExtractFields)
-	assert.Len(t, parsed.Stops, maxExtractStops)
 }
 
 func TestContractParseReplyRejectsMalformedText(t *testing.T) {
@@ -97,4 +65,25 @@ func TestContractParseReplyRejectsMalformedText(t *testing.T) {
 
 	_, err := Contract{}.ParseReply("not json")
 	require.ErrorIs(t, err, serviceports.ErrModelSchemaValidation)
+}
+
+const pipelineSchemaFixture = "../../../../../../ml/extraction-finetune/tests/fixtures/extraction-schema.json"
+
+func TestFineTuningPipelineSchemaFixtureIsCurrent(t *testing.T) {
+	t.Parallel()
+
+	encoded, err := sonic.MarshalIndent(Contract{}.CompletionRequest("", nil).OutputSchema, "", "  ")
+	require.NoError(t, err)
+	encoded = append(encoded, '\n')
+
+	if os.Getenv("TRENOVA_UPDATE_FIXTURES") == "1" {
+		require.NoError(t, os.MkdirAll(filepath.Dir(pipelineSchemaFixture), 0o755))
+		require.NoError(t, os.WriteFile(pipelineSchemaFixture, encoded, 0o644))
+	}
+
+	fixture, err := os.ReadFile(pipelineSchemaFixture)
+	require.NoError(t, err, "regenerate with TRENOVA_UPDATE_FIXTURES=1 go test ./internal/core/services/aidocumentservice/")
+	assert.JSONEq(t, string(encoded), string(fixture),
+		"the fine-tuning pipeline's schema fixture is stale; regenerate it with "+
+			"TRENOVA_UPDATE_FIXTURES=1 go test ./internal/core/services/aidocumentservice/")
 }

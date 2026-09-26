@@ -82,7 +82,6 @@ type TrainingDatasetSink interface {
 type RenderTrainingDatasetRequest struct {
 	ExportID             pulid.ID
 	StructuredOutputMode aiprovider.StructuredOutputMode
-	KeepUnverified       bool
 	Sink                 TrainingDatasetSink
 }
 

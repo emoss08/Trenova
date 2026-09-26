@@ -9,13 +9,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from . import dataset
+from . import dataset, targets
 from .config import PipelineConfig
 from .run import STATUS_COMPLETED, STATUS_SKIPPED, Run
 
 log = logging.getLogger(__name__)
 
 STAGE_VERIFY = "verify"
+STAGE_TARGETS = "targets"
 STAGE_SFT = "sft"
 STAGE_MERGE_SFT = "merge-sft"
 STAGE_DPO = "dpo"
@@ -82,8 +83,12 @@ def execute(
         dataset.verify(dataset_dir, manifest)
         run.finish(STAGE_VERIFY, None, metrics=dict(manifest.counts))
 
+    def build_targets() -> None:
+        data = targets.build(dataset_dir, run.path("data"), manifest, config.targets)
+        run.finish(STAGE_TARGETS, data.directory, metrics=dict(data.counts))
+
     def sft() -> None:
-        result = stages.train_sft(config, dataset_dir, run.path("sft"))
+        result = stages.train_sft(config, run.path("data"), run.path("sft"))
         run.finish(STAGE_SFT, result.output, metrics=result.metrics)
 
     def merge_sft() -> None:
@@ -100,7 +105,9 @@ def execute(
         if not config.dpo.enabled:
             run.finish(STAGE_DPO, None, note="disabled in the configuration", status=STATUS_SKIPPED)
             return
-        result = stages.train_dpo(config, dataset_dir, run.path("sft", "model"), run.path("dpo"))
+        result = stages.train_dpo(
+            config, run.path("data"), run.path("sft", "model"), run.path("dpo")
+        )
         run.finish(
             STAGE_DPO,
             result.output,
@@ -122,6 +129,7 @@ def execute(
         run.finish(STAGE_MERGE_DPO, output)
 
     step(STAGE_VERIFY, verify)
+    step(STAGE_TARGETS, build_targets)
     step(STAGE_SFT, sft)
     step(STAGE_MERGE_SFT, merge_sft)
     step(STAGE_DPO, dpo)

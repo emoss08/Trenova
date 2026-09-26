@@ -61,6 +61,23 @@ class DPOSettings(_Settings):
     min_pairs: int = Field(50, ge=1)
 
 
+class TargetSettings(_Settings):
+    """The recipe that turns a confirmed answer into the reply the model is trained to give."""
+
+    keep_unverified: bool = True
+    verified_confidence: float = Field(0.95, ge=0.0, le=1.0)
+    unverified_confidence: float = Field(0.7, ge=0.0, le=1.0)
+    overall_confidence: float = Field(0.9, ge=0.0, le=1.0)
+    review_status: Literal["Ready", "NeedsReview"] = "Ready"
+    source: str = Field("ai", min_length=1, max_length=32)
+    default_document_kind: str = Field("RateConfirmation", min_length=1)
+    evidence_context_chars: int = Field(60, ge=0, le=500)
+    preference_outcomes: tuple[Literal["Corrected", "Missed", "Unconfirmed"], ...] = (
+        "Corrected",
+        "Missed",
+    )
+
+
 class PredictSettings(_Settings):
     max_model_len: int = Field(16384, ge=1024)
     max_tokens: int = Field(2048, ge=128)
@@ -75,6 +92,7 @@ class PipelineConfig(_Settings):
     quantization: Literal["none", "4bit"] = "none"
     seed: int = 42
     lora: LoraSettings = LoraSettings()
+    targets: TargetSettings = TargetSettings()
     sft: SFTSettings = SFTSettings()
     dpo: DPOSettings = DPOSettings()
     predict: PredictSettings = PredictSettings()

@@ -1,0 +1,266 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "stops": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "maxLength": 128,
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "maxLength": 16
+          },
+          "pageNumber": {
+            "type": "integer"
+          },
+          "role": {
+            "type": "string"
+          },
+          "city": {
+            "maxLength": 80,
+            "type": "string"
+          },
+          "postalCode": {
+            "maxLength": 20,
+            "type": "string"
+          },
+          "date": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "evidenceExcerpt": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "reviewRequired": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "timeWindow": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "appointmentRequired": {
+            "type": "boolean"
+          },
+          "sequence": {
+            "type": "integer"
+          },
+          "addressLine1": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "addressLine2": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "confidence": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "sequence",
+          "role",
+          "name",
+          "addressLine1",
+          "addressLine2",
+          "city",
+          "state",
+          "postalCode",
+          "date",
+          "timeWindow",
+          "appointmentRequired",
+          "pageNumber",
+          "evidenceExcerpt",
+          "confidence",
+          "reviewRequired",
+          "source"
+        ]
+      }
+    },
+    "conflicts": {
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "maxLength": 64,
+            "type": "string"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "values": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          "pageNumbers": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 6
+          },
+          "evidenceExcerpt": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 32
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "values",
+          "pageNumbers",
+          "evidenceExcerpt",
+          "source"
+        ]
+      },
+      "type": "array"
+    },
+    "documentKind": {
+      "type": "string"
+    },
+    "overallConfidence": {
+      "type": "number"
+    },
+    "reviewStatus": {
+      "type": "string"
+    },
+    "missingFields": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "string",
+        "maxLength": 64
+      }
+    },
+    "signals": {
+      "maxItems": 8,
+      "items": {
+        "type": "string",
+        "maxLength": 120
+      },
+      "type": "array"
+    },
+    "fields": {
+      "type": "array",
+      "maxItems": 18,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "conflict": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "alternativeValues": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "type": "string",
+              "maxLength": 128
+            }
+          },
+          "key": {
+            "type": "string",
+            "enum": [
+              "loadNumber",
+              "referenceNumber",
+              "shipper",
+              "consignee",
+              "rate",
+              "equipmentType",
+              "commodity",
+              "pickupDate",
+              "deliveryDate",
+              "pickupWindow",
+              "deliveryWindow",
+              "pickupNumber",
+              "deliveryNumber",
+              "appointmentNumber",
+              "bol",
+              "poNumber",
+              "scac",
+              "proNumber",
+              "paymentTerms",
+              "billTo",
+              "carrierName",
+              "carrierContact",
+              "containerNumber",
+              "trailerNumber",
+              "tractorNumber",
+              "fuelSurcharge",
+              "serviceType"
+            ]
+          },
+          "value": {
+            "maxLength": 256,
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number"
+          },
+          "evidenceExcerpt": {
+            "maxLength": 200,
+            "type": "string"
+          },
+          "pageNumber": {
+            "type": "integer"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "reviewRequired": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "value",
+          "confidence",
+          "evidenceExcerpt",
+          "pageNumber",
+          "reviewRequired",
+          "conflict",
+          "source",
+          "alternativeValues"
+        ]
+      }
+    }
+  },
+  "required": [
+    "documentKind",
+    "overallConfidence",
+    "reviewStatus",
+    "missingFields",
+    "signals",
+    "fields",
+    "stops",
+    "conflicts"
+  ]
+}

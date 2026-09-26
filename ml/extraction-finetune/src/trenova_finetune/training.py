@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from . import dataset
+from . import built
 from .config import PipelineConfig
 from .lengths import enforce_budget, partition_by_length
 from .models import compute_dtype, conversation_tokens, load_causal_lm, load_tokenizer
@@ -52,12 +52,13 @@ def last_metrics(history: list[dict[str, Any]]) -> dict[str, Any]:
     return metrics
 
 
-def train_sft(config: PipelineConfig, dataset_dir: Path, output: Path) -> StageResult:
+def train_sft(config: PipelineConfig, data_dir: Path, output: Path) -> StageResult:
     from datasets import Dataset
     from trl import SFTConfig, SFTTrainer
 
+    built.verify(data_dir)
     tokenizer = load_tokenizer(config.base_model, config, config.revision)
-    train, validation = dataset.load_sft(dataset_dir)
+    train, validation = built.load_sft(data_dir)
 
     def tokens(record: dict) -> int:
         return conversation_tokens(tokenizer, record["prompt"] + record["completion"])
@@ -134,11 +135,12 @@ def train_sft(config: PipelineConfig, dataset_dir: Path, output: Path) -> StageR
 
 def train_dpo(
     config: PipelineConfig,
-    dataset_dir: Path,
+    data_dir: Path,
     model_dir: Path,
     output: Path,
 ) -> StageResult:
-    pairs = dataset.load_preferences(dataset_dir)
+    built.verify(data_dir)
+    pairs = built.load_preferences(data_dir)
     if len(pairs) < config.dpo.min_pairs:
         return StageResult(
             output=None,

@@ -13,6 +13,7 @@ from trenova_finetune.training import StageResult
 class FakeStages:
     def __init__(self, *, dpo_skipped: bool = False, fail_at: str | None = None) -> None:
         self.calls: list[str] = []
+        self.data_dirs: list[Path] = []
         self.dpo_skipped = dpo_skipped
         self.fail_at = fail_at
 
@@ -21,8 +22,9 @@ class FakeStages:
         if self.fail_at == name:
             raise RuntimeError(f"{name} broke")
 
-    def train_sft(self, config: Any, dataset_dir: Path, out: Path) -> StageResult:
+    def train_sft(self, config: Any, data_dir: Path, out: Path) -> StageResult:
         self._maybe_fail("sft")
+        self.data_dirs.append(data_dir)
         (out / "adapter").mkdir(parents=True)
         return StageResult(output=out / "adapter", metrics={"train_loss": 0.4})
 
@@ -31,8 +33,9 @@ class FakeStages:
         out.mkdir(parents=True)
         return out
 
-    def train_dpo(self, config: Any, dataset_dir: Path, model: Path, out: Path) -> StageResult:
+    def train_dpo(self, config: Any, data_dir: Path, model: Path, out: Path) -> StageResult:
         self._maybe_fail("dpo")
+        self.data_dirs.append(data_dir)
         if self.dpo_skipped:
             return StageResult(output=None, metrics={"pairs": 0}, note="too few", skipped=True)
         (out / "adapter").mkdir(parents=True)
@@ -66,6 +69,8 @@ def test_the_full_pipeline_ends_on_the_preference_model(
     final = execute(config, dataset_dir, run, manifest, fake.stages())
 
     assert fake.calls == ["sft", "merge:sft", "dpo", "merge:dpo", "predict"]
+    assert fake.data_dirs == [run.path("data"), run.path("data")]
+    assert run.record.stages["targets"].metrics == {"train": 3, "validation": 2, "preference": 3}
     assert final == run.path("dpo", "model")
     card = json.loads((final / CARD_FILE).read_text())
     assert card["provider"]["structuredOutputMode"] == "JSONSchema"
@@ -105,7 +110,7 @@ def test_a_tampered_dataset_stops_before_training(
     tmp_path: Path, dataset_dir: Path, config_path: Path
 ) -> None:
     config, run, manifest = _open(tmp_path, dataset_dir, config_path)
-    path = dataset_dir / dataset.PREFERENCE_FILE
+    path = dataset_dir / dataset.VALIDATION_FILE
     path.write_bytes(path.read_bytes() + b"\n")
     fake = FakeStages()
     with pytest.raises(dataset.DatasetError):
