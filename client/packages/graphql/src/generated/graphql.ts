@@ -795,6 +795,8 @@ export type AgentProposalFieldKind =
   | 'List'
   | 'Multiline'
   | 'Number'
+  /** A list of record ids the agent proposed to act on. An approver may remove ids, never add one, and must keep at least one; the records are listed in the preview by their ids. */
+  | 'RecordSubset'
   | 'Text';
 
 /** The digest of the preview a person was shown for one proposal of a batch. */

@@ -381,6 +381,7 @@ function FieldControl({
         />
       );
     case "List":
+    case "RecordSubset":
       return (
         <Input
           id={id}
