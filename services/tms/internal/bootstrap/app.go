@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/core/services/agenttoolservice"
 	"github.com/emoss08/trenova/internal/core/services/aiauditservice"
+	"github.com/emoss08/trenova/internal/core/services/aidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/aitrainingservice"
 	"github.com/emoss08/trenova/internal/core/services/analyticsservice"
 	"github.com/emoss08/trenova/internal/core/services/assistantfollowupservice"
@@ -192,6 +193,7 @@ func Options() fx.Option {
 		extractionevaljobs.Module,
 		aitrainingservice.Module,
 		aitrainingjobs.Module,
+		fx.Provide(aidocumentservice.NewContract),
 		aifeedbackjobs.Module,
 		retrievaljobs.Module,
 		iftajobs.Module,
@@ -252,6 +254,10 @@ func TrainingExportCommandOptions() fx.Option {
 			aitrainingjobs.AsExportStarter,
 			aitrainingservice.NewOperator,
 			aitrainingservice.AsOperator,
+			aitrainingservice.NewRenderer,
+			aitrainingservice.AsRenderer,
+			aidocumentservice.NewContract,
+			completionrouter.NewPromptRenderer,
 		),
 	)
 }

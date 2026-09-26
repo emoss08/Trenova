@@ -601,7 +601,16 @@ func (a *Activities) ApplyDocumentAIExtractionResultActivity(
 		}, nil
 	}
 
-	updatedIntelligence, diagnostics := a.mergeCompletionIntoIntelligence(content, payload)
+	pages, err := a.contentRepo.ListPagesByDocumentID(ctx, payload.DocumentID, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	updatedIntelligence, diagnostics := a.mergeCompletionIntoIntelligence(
+		content,
+		toAIDocumentPages(pages, a.cfg.GetMaxInputChars()),
+		payload,
+	)
 
 	content.StructuredData = buildStructuredData(updatedIntelligence, diagnostics)
 	content.ClassificationConfidence = updatedIntelligence.OverallConfidence
@@ -695,6 +704,7 @@ func (a *Activities) markExtractionApplied(
 
 func (a *Activities) mergeCompletionIntoIntelligence(
 	content *documentcontent.Content,
+	pages []services.AIDocumentPage,
 	payload *ApplyDocumentAIExtractionPayload,
 ) (*DocumentIntelligenceAnalysis, *AIDiagnostics) {
 	fallback := analysisFromStructuredData(content.StructuredData)
@@ -710,12 +720,9 @@ func (a *Activities) mergeCompletionIntoIntelligence(
 	updatedIntelligence := fallback
 	if payload.Completion.Status == services.AIBackgroundExtractionStatusCompleted &&
 		payload.Completion.ExtractResult != nil {
-		candidate := analysisFromAIExtract(payload.Completion.ExtractResult)
-		diagnostics.CandidateAnalysis = candidate
-		merged, ok, rejectionReason := mergeAIAnalysis(
-			fallback,
-			payload.Completion.ExtractResult,
-		)
+		extract := withFieldEvidence(payload.Completion.ExtractResult, pages)
+		diagnostics.CandidateAnalysis = analysisFromAIExtract(extract)
+		merged, ok, rejectionReason := mergeAIAnalysis(fallback, extract)
 		if ok {
 			diagnostics.AcceptanceStatus = aiAcceptanceStatusAccepted
 			diagnostics.RejectionReason = ""

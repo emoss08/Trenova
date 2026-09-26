@@ -237,14 +237,20 @@ func withOperator(
 	parent context.Context,
 	run func(ctx context.Context, operator services.AITrainingExportOperator) error,
 ) error {
+	var operator services.AITrainingExportOperator
+	return withCommandApp(parent, []any{&operator}, func(ctx context.Context) error {
+		return run(ctx, operator)
+	})
+}
+
+func withCommandApp(parent context.Context, targets []any, run func(ctx context.Context) error) error {
 	if parent == nil {
 		parent = context.Background()
 	}
 
-	var operator services.AITrainingExportOperator
 	app := fx.New(
 		bootstrap.TrainingExportCommandOptions(),
-		fx.Populate(&operator),
+		fx.Populate(targets...),
 		fx.StartTimeout(startupTimeout),
 		fx.StopTimeout(shutdownTimeout),
 	)
@@ -258,7 +264,7 @@ func withOperator(
 		return fmt.Errorf("start training export command: %w", err)
 	}
 
-	runErr := run(parent, operator)
+	runErr := run(parent)
 
 	stopCtx, cancelStop := context.WithTimeout(context.WithoutCancel(parent), shutdownTimeout)
 	defer cancelStop()

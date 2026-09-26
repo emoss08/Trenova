@@ -295,14 +295,29 @@ func comparePostalCode(predicted, confirmed string, _ *StopSnapshot) comparison 
 	return comparisonDifferent
 }
 
-func compareDate(predicted, _ string, stop *StopSnapshot) comparison {
+func compareDate(predicted, confirmed string, stop *StopSnapshot) comparison {
 	day, ok := timeutils.FindDocumentDate(predicted)
-	if !ok || stop == nil || stop.ScheduledWindowStart <= 0 {
+	if !ok {
 		return comparisonUnreadable
+	}
+	if stop == nil || stop.ScheduledWindowStart <= 0 {
+		return compareCalendarDays(day, confirmed)
 	}
 
 	at := time.Unix(stop.ScheduledWindowStart, 0)
 	if day.Matches(at.In(stop.Location())) || day.Matches(at.UTC()) {
+		return comparisonEqual
+	}
+
+	return comparisonDifferent
+}
+
+func compareCalendarDays(predicted timeutils.CalendarDay, confirmed string) comparison {
+	expected, ok := timeutils.FindDocumentDate(confirmed)
+	if !ok || !expected.HasYear() {
+		return comparisonUnreadable
+	}
+	if predicted.Matches(time.Date(expected.Year, expected.Month, expected.Day, 0, 0, 0, 0, time.UTC)) {
 		return comparisonEqual
 	}
 
