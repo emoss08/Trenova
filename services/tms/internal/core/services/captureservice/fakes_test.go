@@ -504,7 +504,7 @@ func (f *fakeBatches) GetByClientKey(_ context.Context, req repositories.GetCapt
 	return nil, notFound("Capture batch")
 }
 
-func (f *fakeBatches) List(_ context.Context, req *repositories.ListCaptureBatchesRequest) (*pagination.ListResult[*capture.CaptureBatch], error) {
+func (f *fakeBatches) ListCursor(_ context.Context, req *repositories.ListCaptureBatchesRequest) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
 	f.w.mu.Lock()
 	defer f.w.mu.Unlock()
 	out := []*capture.CaptureBatch{}
@@ -515,7 +515,9 @@ func (f *fakeBatches) List(_ context.Context, req *repositories.ListCaptureBatch
 		out = append(out, clone(b))
 	}
 
-	return &pagination.ListResult[*capture.CaptureBatch]{Items: out, Total: len(out)}, nil
+	total := len(out)
+
+	return &pagination.CursorListResult[*capture.CaptureBatch]{Items: out, TotalCount: &total}, nil
 }
 
 func (f *fakeBatches) ListStale(_ context.Context, req repositories.ListStaleCaptureBatchesRequest) ([]*capture.CaptureBatch, error) {

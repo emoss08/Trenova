@@ -131,6 +131,7 @@ func (s *Service) GetBatch(
 type ListBatchesInput struct {
 	TenantInfo pagination.TenantInfo    `json:"-"`
 	Filter     *pagination.QueryOptions `json:"-"`
+	Cursor     pagination.CursorInfo    `json:"-"`
 	Statuses   []capture.BatchStatus    `json:"statuses"`
 	Source     capture.Source           `json:"source"`
 	// Mine narrows to the caller's own batches even when they could see
@@ -145,7 +146,7 @@ type ListBatchesInput struct {
 func (s *Service) ListBatches(
 	ctx context.Context,
 	in *ListBatchesInput,
-) (*pagination.ListResult[*capture.CaptureBatch], error) {
+) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
 	result, err := s.require(ctx, in.TenantInfo, permission.ResourceCaptureBatch, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -153,6 +154,7 @@ func (s *Service) ListBatches(
 
 	req := &repositories.ListCaptureBatchesRequest{
 		Filter:     in.Filter,
+		Cursor:     in.Cursor,
 		Statuses:   in.Statuses,
 		Source:     in.Source,
 		TargetType: in.TargetType,
@@ -162,7 +164,7 @@ func (s *Service) ListBatches(
 		req.UserID = in.TenantInfo.UserID
 	}
 
-	return s.batches.List(ctx, req)
+	return s.batches.ListCursor(ctx, req)
 }
 
 type PageContentKind string

@@ -163,6 +163,7 @@ type GetCaptureBatchByClientKeyRequest struct {
 
 type ListCaptureBatchesRequest struct {
 	Filter   *pagination.QueryOptions `json:"filter"`
+	Cursor   pagination.CursorInfo    `json:"-"`
 	Statuses []capture.BatchStatus    `json:"statuses"`
 	Source   capture.Source           `json:"source"`
 	// UserID limits the queue to one person's batches. The service sets it
@@ -208,10 +209,10 @@ type CaptureBatchRepository interface {
 		ctx context.Context,
 		req GetCaptureBatchByClientKeyRequest,
 	) (*capture.CaptureBatch, error)
-	List(
+	ListCursor(
 		ctx context.Context,
 		req *ListCaptureBatchesRequest,
-	) (*pagination.ListResult[*capture.CaptureBatch], error)
+	) (*pagination.CursorListResult[*capture.CaptureBatch], error)
 	ListStale(
 		ctx context.Context,
 		req ListStaleCaptureBatchesRequest,

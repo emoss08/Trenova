@@ -164,10 +164,20 @@ func TestCaptureRepositoriesAgainstPostgres(t *testing.T) {
 	stale, err := batches.ListStale(ctx, repositories.ListStaleCaptureBatchesRequest{Statuses: []capture.BatchStatus{capture.BatchReady}, UpdatedBefore: 1 << 40})
 	require.NoError(t, err)
 	assert.NotEmpty(t, stale)
-	bl, err := batches.List(ctx, &repositories.ListCaptureBatchesRequest{Filter: &pagination.QueryOptions{TenantInfo: ti},
-		Statuses: []capture.BatchStatus{capture.BatchReady}, UserID: userID})
+	cursor, err := pagination.NewCursorInfo(10, "")
 	require.NoError(t, err)
-	assert.GreaterOrEqual(t, bl.Total, 1)
+	cursor.IncludeTotalCount = true
+	bl, err := batches.ListCursor(ctx, &repositories.ListCaptureBatchesRequest{
+		Filter:   &pagination.QueryOptions{TenantInfo: ti, Cursor: cursor, UseCursor: true},
+		Cursor:   cursor,
+		Statuses: []capture.BatchStatus{capture.BatchReady},
+		UserID:   userID,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, bl.TotalCount)
+	assert.GreaterOrEqual(t, *bl.TotalCount, 1)
+	require.NotEmpty(t, bl.Items)
+	assert.NotNil(t, bl.Items[0].CaptureDevice, "the queue row carries its device")
 
 	sheets := NewCoverSheetRepository(p)
 	cs := &capture.CaptureCoverSheet{OrganizationID: orgID, BusinessUnitID: buID, TokenHash: "h" + pulid.MustNew("x_").String(),

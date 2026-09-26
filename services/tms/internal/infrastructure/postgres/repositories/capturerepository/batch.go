@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
@@ -131,44 +132,68 @@ func (r *batchRepository) GetByClientKey(
 	return entity, nil
 }
 
-func (r *batchRepository) List(
+// ListCursor is the intake queue, newest first by default. The count runs
+// only when the caller asked for it.
+func (r *batchRepository) ListCursor(
 	ctx context.Context,
 	req *repositories.ListCaptureBatchesRequest,
-) (*pagination.ListResult[*capture.CaptureBatch], error) {
-	entities := make([]*capture.CaptureBatch, 0, req.Filter.Pagination.SafeLimit())
-	cols := buncolgen.CaptureBatchColumns
+) (*pagination.CursorListResult[*capture.CaptureBatch], error) {
+	dba := r.db.DBForContext(ctx)
+	alias := buncolgen.CaptureBatchTable.Alias
 
-	query := r.db.DBForContext(ctx).NewSelect().Model(&entities)
+	var totalCount *int
+	if req.Cursor.IncludeTotalCount {
+		total, err := dba.NewSelect().
+			Model((*capture.CaptureBatch)(nil)).
+			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return narrowBatches(querybuilder.ApplyFiltersWithoutSort(
+					sq, alias, req.Filter, (*capture.CaptureBatch)(nil),
+				), req)
+			}).
+			Count(ctx)
+		if err != nil {
+			return nil, err
+		}
+		totalCount = &total
+	}
+
+	return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*capture.CaptureBatch]{
+		Filter:     req.Filter,
+		Cursor:     req.Cursor,
+		TotalCount: totalCount,
+		Query: func(entities *[]*capture.CaptureBatch) *bun.SelectQuery {
+			return dba.NewSelect().Model(entities).Relation(buncolgen.CaptureBatchRelations.CaptureDevice)
+		},
+		Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
+			sq, err := querybuilder.ApplyCursorFilters(
+				sq, alias, req.Filter, req.Cursor, (*capture.CaptureBatch)(nil),
+			)
+			if err != nil {
+				return sq, err
+			}
+
+			return narrowBatches(sq, req), nil
+		},
+	})
+}
+
+// narrowBatches applies the queue's own filters on top of the generic ones.
+func narrowBatches(q *bun.SelectQuery, req *repositories.ListCaptureBatchesRequest) *bun.SelectQuery {
+	cols := buncolgen.CaptureBatchColumns
 	if len(req.Statuses) > 0 {
-		query = query.Where(cols.Status.In(), bun.List(req.Statuses))
+		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
 	}
 	if req.Source != "" {
-		query = query.Where(cols.Source.Eq(), req.Source)
+		q = q.Where(cols.Source.Eq(), req.Source)
 	}
 	if req.UserID.IsNotNil() {
-		query = query.Where(cols.UserID.Eq(), req.UserID)
+		q = q.Where(cols.UserID.Eq(), req.UserID)
 	}
 	if req.TargetType != "" && req.TargetID.IsNotNil() {
-		query = query.
-			Where(cols.TargetType.Eq(), req.TargetType).
-			Where(cols.TargetID.Eq(), req.TargetID)
+		q = q.Where(cols.TargetType.Eq(), req.TargetType).Where(cols.TargetID.Eq(), req.TargetID)
 	}
 
-	total, err := querybuilder.ApplyFilters(
-		query,
-		buncolgen.CaptureBatchTable.Alias,
-		req.Filter,
-		(*capture.CaptureBatch)(nil),
-	).
-		Order(cols.CreatedAt.OrderDesc()).
-		Limit(req.Filter.Pagination.SafeLimit()).
-		Offset(req.Filter.Pagination.SafeOffset()).
-		ScanAndCount(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &pagination.ListResult[*capture.CaptureBatch]{Items: entities, Total: total}, nil
+	return q
 }
 
 func (r *batchRepository) ListStale(
